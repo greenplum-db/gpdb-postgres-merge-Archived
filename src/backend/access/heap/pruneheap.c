@@ -583,44 +583,6 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 */
 		heap_prune_record_dead(prstate, rootoffnum);
 	}
-<<<<<<< HEAD
-	else if (redirect_move && ItemIdIsRedirected(rootlp))
-	{
-		/*
-		 * If we desire to eliminate LP_REDIRECT items by moving tuples, make
-		 * a redirection entry for each redirected root item; this will cause
-		 * heap_page_prune_execute to actually do the move. (We get here only
-		 * when there are no DEAD tuples in the chain; otherwise the
-		 * redirection entry was made above.)
-		 */
-		heap_prune_record_redirect(prstate, rootoffnum, chainitems[1]);
-		redirect_target = chainitems[1];
-	}
-
-	/*
-	 * If we are going to implement a redirect by moving tuples, we have to
-	 * issue a cache invalidation against the redirection target tuple,
-	 * because its CTID will be effectively changed by the move.  Note that
-	 * CacheInvalidateHeapTuple only queues the request, it doesn't send it;
-	 * if we fail before reaching EndNonTransactionalInvalidation, nothing
-	 * happens and no harm is done.
-	 */
-	if (OffsetNumberIsValid(redirect_target))
-	{
-		ItemId		firstlp = PageGetItemId(dp, redirect_target);
-		HeapTupleData firsttup;
-
-		Assert(ItemIdIsNormal(firstlp));
-		/* Set up firsttup to reference the tuple at its existing CTID */
-		firsttup.t_data = (HeapTupleHeader) PageGetItem(dp, firstlp);
-		firsttup.t_len = ItemIdGetLength(firstlp);
-		ItemPointerSet(&firsttup.t_self,
-					   BufferGetBlockNumber(buffer),
-					   redirect_target);
-		CacheInvalidateHeapTuple(relation, &firsttup);
-	}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return ndeleted;
 }

@@ -157,14 +157,6 @@ extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 
 extern void tuplesort_end(Tuplesortstate *state);
 
-<<<<<<< HEAD
-=======
-extern void tuplesort_get_stats(Tuplesortstate *state,
-					const char **sortMethod,
-					const char **spaceType,
-					long *spaceUsed);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern int	tuplesort_merge_order(long allowedMem);
 
 /*

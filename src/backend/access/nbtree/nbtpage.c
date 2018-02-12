@@ -719,14 +719,8 @@ _bt_page_recyclable(Page page)
  * ensure correct locking.
  */
 void
-<<<<<<< HEAD
-_bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems,
-			 bool inVacuum)
-=======
 _bt_delitems_vacuum(Relation rel, Buffer buf,
 			OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	Page		page;
 	BTPageOpaque opaque;
@@ -745,8 +739,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 * page has certainly been processed by the current vacuum scan.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	if (inVacuum)
-		opaque->btpo_cycleid = 0;
+	opaque->btpo_cycleid = 0;
 
 	/*
 	 * Mark the page as not containing any LP_DEAD items.  This is not
@@ -798,7 +791,6 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();

@@ -447,15 +447,11 @@ GetNewObjectIdUnderLock(void)
 {
 	Oid result;
 
-<<<<<<< HEAD
-	Assert(LWLockHeldByMe(OidGenLock));
-=======
 	/* safety check, we should never get this far in a HS slave */
 	if (RecoveryInProgress())
 		elog(ERROR, "cannot assign OIDs during recovery");
 
-	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	Assert(LWLockHeldByMe(OidGenLock));
 
 	/*
 	 * Check for wraparound of the OID counter.  We *must* not return 0

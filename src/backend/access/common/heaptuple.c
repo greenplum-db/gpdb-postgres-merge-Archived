@@ -357,11 +357,8 @@ nocachegetattr(HeapTuple tuple,
 	bool		slow = false;	/* do we have to walk attrs? */
 	int			off;			/* current offset within data */
 
-<<<<<<< HEAD
 	Assert(!is_memtuple((GenericTuple) tuple));
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* ----------------
 	 *	 Three cases:
 	 *

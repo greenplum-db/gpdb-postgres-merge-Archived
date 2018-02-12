@@ -48,14 +48,11 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
-<<<<<<< HEAD
 #include "postmaster/postmaster.h"
-#include "storage/bufpage.h"
-=======
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -203,12 +200,8 @@ static bool InArchiveRecovery = false;
 /* Was the last xlog file restored from archive, or local? */
 static bool restoredFromArchive = false;
 
-<<<<<<< HEAD
-/* options taken from recovery.conf */
-#ifdef NOT_USED
-=======
 /* options taken from recovery.conf for archive recovery */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#ifdef NOT_USED
 static char *recoveryRestoreCommand = NULL;
 #endif
 static char *recoveryEndCommand = NULL;
@@ -219,16 +212,9 @@ static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
 
 /* options taken from recovery.conf for XLOG streaming */
-static bool StandbyMode = false;
-static char *PrimaryConnInfo = NULL;
-static char *TriggerFile = NULL;
-
-static char *replay_image_masked = NULL;
-static char *master_image_masked = NULL;
-
-/* options taken from recovery.conf for XLOG streaming */
 static bool StandbyModeRequested = false;
 static char *PrimaryConnInfo = NULL;
+static char *TriggerFile = NULL;
 
 /* are we currently in standby mode? */
 bool StandbyMode = false;
@@ -237,6 +223,9 @@ bool StandbyMode = false;
 static TransactionId recoveryStopXid;
 static TimestampTz recoveryStopTime;
 static bool recoveryStopAfter;
+
+static char *replay_image_masked = NULL;
+static char *master_image_masked = NULL;
 
 /*
  * During normal operation, the only timeline we care about is ThisTimeLineID.
@@ -438,7 +427,6 @@ typedef struct XLogCtlData
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + XLOG_BLCKSZ */
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
-	TimeLineID	RecoveryTargetTLI;
 
 	/*
 	 * archiveCleanupCommand is read from recovery.conf but needs to be in
@@ -489,11 +477,11 @@ typedef struct XLogCtlData
 	XLogRecPtr	recoveryLastRecPtr;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
 	TimestampTz recoveryLastXTime;
+	/* current effective recovery target timeline */
+	TimeLineID	RecoveryTargetTLI;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
 
-	/* current effective recovery target timeline */
-	TimeLineID	RecoveryTargetTLI;
 
 	/*
 	 * timestamp of when we started replaying the current chunk of WAL data,
@@ -581,11 +569,7 @@ static uint32 openLogOff = 0;
  * These variables are used similarly to the ones above, but for reading
  * the XLOG.  Note, however, that readOff generally represents the offset
  * of the page just read, not the seek position of the FD itself, which
-<<<<<<< HEAD
  * will be just past that page.readLen indicates how much of the current
-=======
- * will be just past that page. readLen indicates how much of the current
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * page has been read into readBuf, and readSource indicates where we got
  * the currently open file from.
  */
@@ -2454,15 +2438,9 @@ XLogBackgroundFlush(void)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * If already known flushed, we're done. Just need to check if we
-	 * are holding an open file handle to a logfile that's no longer
-	 * in use, preventing the file from being deleted.
-=======
 	 * If already known flushed, we're done. Just need to check if we are
 	 * holding an open file handle to a logfile that's no longer in use,
 	 * preventing the file from being deleted.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
 	{
@@ -3094,13 +3072,8 @@ XLogFileClose(void)
 	/*
 	 * WAL segment files will not be re-read in normal operation, so we advise
 	 * the OS to release any cached pages.	But do not do so if WAL archiving
-<<<<<<< HEAD
-	 * is active, because archiver process could use the cache to read the WAL
-	 * segment.
-=======
 	 * or streaming is active, because archiver and walsender process could
 	 * use the cache to read the WAL segment.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 	if (!XLogIsNeeded())

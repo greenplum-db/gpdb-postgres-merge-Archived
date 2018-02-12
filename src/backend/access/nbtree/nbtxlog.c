@@ -545,7 +545,6 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -703,13 +702,10 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * We don't need to take a cleanup lock to apply these changes. See
 	 * nbtree/README for details.
 	 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	buffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(buffer))
 		return;
@@ -1258,17 +1254,11 @@ btree_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-<<<<<<< HEAD
-				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u",
-								 xlrec->node.spcNode, xlrec->node.dbNode,
-								 xlrec->node.relNode, xlrec->block);
-				out_delete(buf, record);
-=======
 				appendStringInfo(buf, "delete: index %u/%u/%u; iblk %u, heap %u/%u/%u;",
 				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
 								 xlrec->block,
 								 xlrec->hnode.spcNode, xlrec->hnode.dbNode, xlrec->hnode.relNode);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				out_delete(buf, record);
 				break;
 			}
 		case XLOG_BTREE_DELETE_PAGE:

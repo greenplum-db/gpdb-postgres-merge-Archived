@@ -1133,9 +1133,6 @@ restart:
 		 */
 		if (ndeletable > 0)
 		{
-<<<<<<< HEAD
-			_bt_delitems(rel, buf, deletable, ndeletable, true);
-=======
 			BlockNumber lastBlockVacuumed = BufferGetBlockNumber(buf);
 
 			_bt_delitems_vacuum(rel, buf, deletable, ndeletable, vstate->lastBlockVacuumed);
@@ -1149,7 +1146,6 @@ restart:
 			if (lastBlockVacuumed > vstate->lastBlockVacuumed)
 				vstate->lastBlockVacuumed = lastBlockVacuumed;
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			stats->tuples_removed += ndeletable;
 			/* must recompute maxoff */
 			maxoff = PageGetMaxOffsetNumber(page);

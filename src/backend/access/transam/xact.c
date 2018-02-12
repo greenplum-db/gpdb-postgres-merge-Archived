@@ -45,28 +45,23 @@
 #include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
+#include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
-<<<<<<< HEAD
-#include "storage/freespace.h"
-=======
 #include "storage/standby.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/combocid.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-<<<<<<< HEAD
+#include "utils/relmapper.h"
+
 #include "utils/resource_manager.h"
 #include "utils/sharedsnapshot.h"
 #include "access/clog.h"
-=======
-#include "utils/relmapper.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/snapmgr.h"
 #include "pg_trace.h"
 
@@ -177,11 +172,8 @@ typedef struct TransactionStateData
 	Oid			prevUser;		/* previous CurrentUserId setting */
 	int			prevSecContext; /* previous SecurityRestrictionContext */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
-<<<<<<< HEAD
-	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
-=======
 	bool		startedInRecovery;		/* did we start in recovery? */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
 	struct TransactionStateData *parent;		/* back link to parent */
 
 	struct TransactionStateData *fastLink;        /* back link to jump to parent for efficient search */
@@ -216,14 +208,10 @@ static TransactionStateData TopTransactionStateData = {
 	InvalidOid,					/* previous CurrentUserId setting */
 	0,							/* previous SecurityRestrictionContext */
 	false,						/* entry-time xact r/o state */
-<<<<<<< HEAD
+	false,						/* startedInRecovery */
 	false,						/* executorSaysXactDoesWrites */
 	NULL,						/* link to parent state block */
 	NULL
-=======
-	false,						/* startedInRecovery */
-	NULL						/* link to parent state block */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 };
 
 /*
@@ -555,14 +543,10 @@ AssignTransactionId(TransactionState s)
 			(errmsg("AssignTransactionId(): assigned xid %u", s->transactionId)));
 
 	if (isSubXact)
-<<<<<<< HEAD
 	{
 		Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
-		SubTransSetParent(s->transactionId, s->parent->transactionId);
-	}
-=======
 		SubTransSetParent(s->transactionId, s->parent->transactionId, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	}
 
 	/*
 	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
@@ -1165,7 +1149,9 @@ RecordTransactionCommit(void)
 	bool		haveNonTemp;
 	int			nchildren;
 	TransactionId *children;
-<<<<<<< HEAD
+	int			nmsgs;
+	SharedInvalidationMessage *invalMessages = NULL;
+	bool		RelcacheInitFileInval;
 	bool		isDtxPrepared = 0;
 	bool		omitCommitRecordForDirtyQEReader;
 	TMGXACT_LOG gxact_log;
@@ -1180,11 +1166,6 @@ RecordTransactionCommit(void)
 	else
 		xid = GetTopTransactionIdIfAny();
 	markXidCommitted = TransactionIdIsValid(xid);
-=======
-	int			nmsgs;
-	SharedInvalidationMessage *invalMessages = NULL;
-	bool		RelcacheInitFileInval;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rels, &haveNonTemp);
@@ -1298,7 +1279,7 @@ RecordTransactionCommit(void)
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
 		 */
-		XLogRecData rdata[4];
+		XLogRecData rdata[5];
 		int			lastrdata = 0;
 		xl_xact_commit xlrec;
 
@@ -1364,25 +1345,25 @@ RecordTransactionCommit(void)
 			rdata[2].buffer = InvalidBuffer;
 			lastrdata = 2;
 		}
-<<<<<<< HEAD
-		/* add global transaction information */
-		if (isDtxPrepared)
-		{
-			getDtxLogInfo(&gxact_log);
-
-			rdata[lastrdata].next = &(rdata[3]);
-			rdata[3].data = (char *) &gxact_log;
-			rdata[3].len = sizeof(gxact_log);
-=======
 		/* dump shared cache invalidation messages */
 		if (nmsgs > 0)
 		{
 			rdata[lastrdata].next = &(rdata[3]);
 			rdata[3].data = (char *) invalMessages;
 			rdata[3].len = nmsgs * sizeof(SharedInvalidationMessage);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			rdata[3].buffer = InvalidBuffer;
 			lastrdata = 3;
+		}
+		/* add global transaction information */
+		if (isDtxPrepared)
+		{
+			getDtxLogInfo(&gxact_log);
+
+			rdata[lastrdata].next = &(rdata[3]);
+			rdata[4].data = (char *) &gxact_log;
+			rdata[4].len = sizeof(gxact_log);
+			rdata[4].buffer = InvalidBuffer;
+			lastrdata = 4;
 		}
 		rdata[lastrdata].next = NULL;
 
@@ -2678,11 +2659,8 @@ CommitTransaction(void)
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
 
-<<<<<<< HEAD
 	AtEOXact_AppendOnly();
-=======
 	AtCommit_Notify();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
@@ -3094,7 +3072,6 @@ AbortTransaction(void)
 	 */
 	AfterTriggerEndXact(false); /* 'false' means it's abort */
 	AtAbort_Portals();
-<<<<<<< HEAD
 
 	AtEOXact_SharedSnapshot();
 
@@ -3107,8 +3084,9 @@ AbortTransaction(void)
 
 	AtEOXact_DispatchOids(false);
 
-	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
+	AtEOXact_LargeObject(false);
 	AtAbort_Notify();
+	AtEOXact_RelationMap(false);
 	AtAbort_Twophase();
 
 	/* Like in CommitTransaction(), treat a QE reader as if there was no XID */
@@ -3119,11 +3097,6 @@ AbortTransaction(void)
 	}
 	else
 		localXid = GetTopTransactionIdIfAny();
-=======
-	AtEOXact_LargeObject(false);
-	AtAbort_Notify();
-	AtEOXact_RelationMap(false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
@@ -3148,10 +3121,7 @@ AbortTransaction(void)
 	if (TopTransactionResourceOwner != NULL)
 	{
 		CallXactCallbacks(XACT_EVENT_ABORT);
-<<<<<<< HEAD
 		CallXactCallbacksOnce(XACT_EVENT_ABORT);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -3160,12 +3130,6 @@ AbortTransaction(void)
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
 		smgrDoPendingDeletes(false);
-<<<<<<< HEAD
-	}
-	if (TopTransactionResourceOwner != NULL)
-	{
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		AtEOXact_MultiXact();
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_LOCKS,
@@ -3175,10 +3139,7 @@ AbortTransaction(void)
 							 false, true);
 		AtEOXact_CatCache(false);
 
-<<<<<<< HEAD
 		AtEOXact_AppendOnly();
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		AtEOXact_GUC(false, 1);
 		AtEOXact_SPI(false);
 		AtEOXact_on_commit_actions(false);
@@ -3190,7 +3151,6 @@ AbortTransaction(void)
 		AtEOXact_Snapshot(false);
 		pgstat_report_xact_timestamp(0);
 	}
-<<<<<<< HEAD
 
 	/*
 	 * Do abort to all QE. NOTE: we don't process
@@ -3208,8 +3168,6 @@ AbortTransaction(void)
 	rollbackDtxTransaction();
 
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().
@@ -5715,36 +5673,19 @@ xact_get_distributed_info_from_commit(xl_xact_commit *xlrec)
  * actions for which the order of execution is critical.
  */
 static void
-<<<<<<< HEAD
-xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid,
+xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn,
 				 DistributedTransactionId distribXid,
 				 DistributedTransactionTimeStamp distribTimeStamp)
-=======
-xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	TransactionId *sub_xids;
 	SharedInvalidationMessage *inval_msgs;
 	TransactionId max_xid;
 	int			i;
 
-<<<<<<< HEAD
-	/* Mark the transaction committed in pg_clog */
-	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-
-	if (distribXid != 0 && distribTimeStamp != 0)
-	{
-		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
-										distribTimeStamp, distribXid,
-										/* isRedo */ true);
-	}
-	TransactionIdCommitTree(xid, xlrec->nsubxacts, sub_xids);
-=======
 	/* subxid array follows relfilenodes */
-	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
+	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
 	/* invalidation messages array follows subxids */
 	inval_msgs = (SharedInvalidationMessage *) &(sub_xids[xlrec->nsubxacts]);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
 
@@ -5762,6 +5703,14 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn)
 		ShmemVariableCache->nextXid = max_xid;
 		TransactionIdAdvance(ShmemVariableCache->nextXid);
 		LWLockRelease(XidGenLock);
+	}
+
+	/* also update distributed commit log */
+	if (distribXid != 0 && distribTimeStamp != 0)
+	{
+		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+										distribTimeStamp, distribXid,
+										/* isRedo */ true);
 	}
 
 	if (standbyState == STANDBY_DISABLED)
@@ -5974,14 +5923,8 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	TransactionId max_xid;
 	int			i;
 
-<<<<<<< HEAD
-	/* Mark the transaction aborted in pg_clog */
-	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	TransactionIdAbortTree(xid, xlrec->nsubxacts, sub_xids);
-=======
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
 	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Make sure nextXid is beyond any XID mentioned in the record */
 
@@ -6070,11 +6013,7 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
 
-<<<<<<< HEAD
-		xact_redo_commit(xlrec, record->xl_xid, 0, 0);
-=======
-		xact_redo_commit(xlrec, record->xl_xid, lsn);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		xact_redo_commit(xlrec, record->xl_xid, lsn, 0, 0);
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
@@ -6092,11 +6031,7 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 	{
 		xl_xact_commit_prepared *xlrec = (xl_xact_commit_prepared *) XLogRecGetData(record);
 
-<<<<<<< HEAD
-		xact_redo_commit(&xlrec->crec, xlrec->xid, xlrec->distribXid, xlrec->distribTimeStamp);
-=======
-		xact_redo_commit(&xlrec->crec, xlrec->xid, lsn);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		xact_redo_commit(&xlrec->crec, xlrec->xid, lsn,  xlrec->distribXid, xlrec->distribTimeStamp);
 		RemoveTwoPhaseFile(xlrec->xid, false);
 	}
 	else if (info == XLOG_XACT_ABORT_PREPARED)
@@ -6106,7 +6041,6 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 		xact_redo_abort(&xlrec->arec, xlrec->xid);
 		RemoveTwoPhaseFile(xlrec->xid, false);
 	}
-<<<<<<< HEAD
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) XLogRecGetData(record);
@@ -6118,7 +6052,7 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 		xl_xact_distributed_forget *xlrec = (xl_xact_distributed_forget *) XLogRecGetData(record);
 
 		xact_redo_distributed_forget(xlrec, record->xl_xid);
-=======
+	}
 	else if (info == XLOG_XACT_ASSIGNMENT)
 	{
 		xl_xact_assignment *xlrec = (xl_xact_assignment *) XLogRecGetData(record);
@@ -6126,7 +6060,6 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 		if (standbyState >= STANDBY_INITIALIZED)
 			ProcArrayApplyXidAssignment(xlrec->xtop,
 										xlrec->nsubxacts, xlrec->xsub);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);
@@ -6136,13 +6069,11 @@ static char*
 xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	int			i;
-<<<<<<< HEAD
-	TransactionId *sub_xids;
-=======
 	TransactionId *xacts;
+	SharedInvalidationMessage *msgs;
 
 	xacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 
@@ -6163,20 +6094,8 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		for (i = 0; i < xlrec->nsubxacts; i++)
 			appendStringInfo(buf, " %u", xacts[i]);
 	}
-<<<<<<< HEAD
-
-	/*
--	 * MPP: Return end of regular commit information.
-	 */
-	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	return (char*) &sub_xids[xlrec->nsubxacts];
-=======
 	if (xlrec->nmsgs > 0)
 	{
-		SharedInvalidationMessage *msgs;
-
-		msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
-
 		if (XactCompletionRelcacheInitFileInval(xlrec))
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 							 xlrec->dbId, xlrec->tsId);
@@ -6201,7 +6120,11 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " unknown id %d", msg->id);
 		}
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+	/*
+-	 * MPP: Return end of regular commit information.
+	 */
+	return (char *) &msgs[xlrec->nmsgs];
 }
 
 static void
@@ -6302,7 +6225,18 @@ xact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 		appendStringInfo(buf, "abort prepared %u: ", xlrec->xid);
 		xact_desc_abort(buf, &xlrec->arec);
 	}
-<<<<<<< HEAD
+	else if (info == XLOG_XACT_ASSIGNMENT)
+	{
+		xl_xact_assignment *xlrec = (xl_xact_assignment *) rec;
+
+		/*
+		 * Note that we ignore the WAL record's xid, since we're more
+		 * interested in the top-level xid that issued the record and which
+		 * xids are being reported here.
+		 */
+		appendStringInfo(buf, "xid assignment xtop %u: ", xlrec->xtop);
+		xact_desc_assignment(buf, xlrec);
+	}
 	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
@@ -6316,19 +6250,6 @@ xact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 
 		appendStringInfo(buf, "distributed forget ");
 		xact_desc_distributed_forget(buf, xlrec);
-=======
-	else if (info == XLOG_XACT_ASSIGNMENT)
-	{
-		xl_xact_assignment *xlrec = (xl_xact_assignment *) rec;
-
-		/*
-		 * Note that we ignore the WAL record's xid, since we're more
-		 * interested in the top-level xid that issued the record and which
-		 * xids are being reported here.
-		 */
-		appendStringInfo(buf, "xid assignment xtop %u: ", xlrec->xtop);
-		xact_desc_assignment(buf, xlrec);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
