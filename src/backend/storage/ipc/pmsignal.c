@@ -47,15 +47,10 @@
  * child processes at random, and postmaster.c is responsible for tracking
  * which one goes with which PID.
  *
-<<<<<<< HEAD
  * Actually there is a fourth state, WALSENDER.  This is just like ACTIVE,
  * but carries the extra information that the child is a WAL sender.
  * WAL senders too start in ACTIVE state, but switch to WALSENDER once they
  * start streaming the WAL (and they never go back to ACTIVE after that).
-=======
- * The fourth state, WALSENDER, is just like ACTIVE, but carries the extra
- * information that the child is a WAL sender.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #define PM_CHILD_UNUSED		0	/* these values must fit in sig_atomic_t */
