@@ -755,7 +755,6 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <winsock2.h> header file. */
 #undef HAVE_WINSOCK2_H
 
@@ -783,10 +782,7 @@
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #undef HAVE__VA_ARGS
 
-/* Define to the appropriate snprintf format for 64-bit ints, if any. */
-=======
 /* Define to the appropriate snprintf format for 64-bit ints. */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #undef INT64_FORMAT
 
 /* Define to build with Kerberos 5 support. (--with-krb5) */
@@ -907,14 +903,8 @@
    (Always defined in GPDB) */
 #undef USE_FLOAT8_BYVAL
 
-<<<<<<< HEAD
 /* Define to 1 to build with gpcloud (--enable-gpcloud) */
 #undef USE_GPCLOUD
-=======
-/* Define to 1 if "static inline" works without unwanted warnings from
-   compilations where static inline functions are defined but not called. */
-#undef USE_INLINE
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
