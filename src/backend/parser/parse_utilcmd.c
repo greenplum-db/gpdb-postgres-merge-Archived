@@ -95,13 +95,8 @@ static void transformColumnDefinition(ParseState *pstate,
 static void transformTableConstraint(ParseState *pstate,
 						 CreateStmtContext *cxt,
 						 Constraint *constraint);
-<<<<<<< HEAD
-=======
-static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation *inhrelation);
 static void transformOfType(ParseState *pstate, CreateStmtContext *cxt,
 				TypeName *ofTypename);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation source_idx,
@@ -221,7 +216,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	cxt.pkey = NULL;
 	cxt.hasoids = interpretOidsOption(stmt->options);
 
-<<<<<<< HEAD
+	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
+
+	if (stmt->ofTypename)
+		transformOfType(pstate, &cxt, stmt->ofTypename);
+
 	stmt->policy = NULL;
 
 	/* Disallow inheritance in combination with partitioning. */
@@ -239,12 +238,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	/* Only on top-most partitioned tables. */
 	if (stmt->partitionBy && !stmt->is_part_child)
 		fixCreateStmtForPartitionedTable(stmt);
-=======
-	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
-
-	if (stmt->ofTypename)
-		transformOfType(pstate, &cxt, stmt->ofTypename);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
@@ -1114,11 +1107,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	 */
 	if (index->primary || index->unique || idxrelrec->relhasexclusion)
 	{
-<<<<<<< HEAD
 		constraintId = get_index_constraint(source_relid);
-=======
-		Oid			constraintId = get_index_constraint(source_relid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (OidIsValid(constraintId))
 		{
@@ -2929,17 +2918,13 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 
 		if (ielem->expr)
 		{
-<<<<<<< HEAD
-			ielem->expr = transformExpr(pstate, ielem->expr,
-										EXPR_KIND_INDEX_EXPRESSION);
-=======
 			/* Extract preliminary index col name before transforming expr */
 			if (ielem->indexcolname == NULL)
 				ielem->indexcolname = FigureIndexColname(ielem->expr);
 
 			/* Now do parse transformation of the expression */
-			ielem->expr = transformExpr(pstate, ielem->expr);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+			ielem->expr = transformExpr(pstate, ielem->expr,
+										EXPR_KIND_INDEX_EXPRESSION);
 
 			/*
 			 * transformExpr() should have already rejected subqueries,

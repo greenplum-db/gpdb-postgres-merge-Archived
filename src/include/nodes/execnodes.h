@@ -546,7 +546,6 @@ typedef struct EState
 
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;		/* trigger-only ResultRelInfos */
-<<<<<<< HEAD
 
 	/* partitioning info for target relation */
 	PartitionNode *es_result_partitions;
@@ -554,12 +553,8 @@ typedef struct EState
 	/* AO fileseg info for target relation */
 	List	   *es_result_aosegnos;
 
-	TupleTableSlot *es_trig_tuple_slot;		/* for trigger output tuples */
-	TupleTableSlot *es_trig_oldtup_slot;	/* for trigger old tuples */
-=======
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 	TupleTableSlot *es_trig_oldtup_slot;		/* for trigger old tuples */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */
@@ -599,10 +594,9 @@ typedef struct EState
 	 * remember if the tuple has been returned already.  Arrays are of size
 	 * list_length(es_range_table) and are indexed by scan node scanrelid - 1.
 	 */
-<<<<<<< HEAD
-	HeapTuple  *es_epqTuple;		/* array of EPQ substitute tuples */
-	bool	   *es_epqTupleSet;		/* true if EPQ tuple is provided */
-	bool	   *es_epqScanDone;		/* true if EPQ tuple has been fetched */
+	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
+	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
+	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
 	/* Additions for MPP plan slicing. */
 	struct SliceTable *es_sliceTable;
@@ -669,11 +663,6 @@ typedef struct EState
 
 	/* Should the executor skip past the alien plan nodes */
 	bool eliminateAliens;
-=======
-	HeapTuple  *es_epqTuple;	/* array of EPQ substitute tuples */
-	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
-	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } EState;
 
 struct PlanState;
@@ -2558,7 +2547,6 @@ typedef struct WindowAggState
 	Datum		startOffsetValue;		/* result of startOffset evaluation */
 	Datum		endOffsetValue; /* result of endOffset evaluation */
 
-<<<<<<< HEAD
 	FmgrInfo	ordCmpFunction;	/* btree cmp function for first ORDER BY col */
 	bool		ordReverse;		/* is the first ORDER BY col reversed? */
 	bool		start_offset_valid;	/* is startOffsetValue valid for current row? */
@@ -2585,8 +2573,6 @@ typedef struct WindowAggState
 	bool		start_offset_var_free;
 	bool		end_offset_var_free;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	MemoryContext partcontext;	/* context for partition-lifespan data */
 	MemoryContext aggcontext;	/* context for each aggregate data */
 	ExprContext *tmpcontext;	/* short-term evaluation context */

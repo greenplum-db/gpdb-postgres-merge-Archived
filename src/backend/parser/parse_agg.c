@@ -75,7 +75,6 @@ static List* get_groupclause_exprs(Node *grpcl, List *targetList);
  *		Finish initial transformation of an aggregate call
  *
  * parse_func.c has recognized the function as an aggregate, and has set up
-<<<<<<< HEAD
  * all the fields of the Aggref except aggdirectargs, args, aggorder,
  * aggdistinct and agglevelsup.  The passed-in args list has been through
  * standard expression transformation and type coercion to match the agg's
@@ -91,17 +90,6 @@ static List* get_groupclause_exprs(Node *grpcl, List *targetList);
  * adding resjunk expressions to the targetlist; but for ordered-set
  * aggregates the aggorder list will always be one-to-one with the aggregated
  * args.)
-=======
- * all the fields of the Aggref except args, aggorder, aggdistinct and
- * agglevelsup.  The passed-in args list has been through standard expression
- * transformation, while the passed-in aggorder list hasn't been transformed
- * at all.
- *
- * Here we convert the args list into a targetlist by inserting TargetEntry
- * nodes, and then transform the aggorder and agg_distinct specifications to
- * produce lists of SortGroupClause nodes.	(That might also result in adding
- * resjunk expressions to the targetlist.)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * We must also determine which query level the aggregate actually belongs to,
  * set agglevelsup accordingly, and mark p_hasAggs true in the corresponding
@@ -111,24 +99,16 @@ void
 transformAggregateCall(ParseState *pstate, Aggref *agg,
 					   List *args, List *aggorder, bool agg_distinct)
 {
-<<<<<<< HEAD
 	List	   *tlist = NIL;
 	List	   *torder = NIL;
 	List	   *tdistinct = NIL;
 	AttrNumber	attno = 1;
-=======
-	List	   *tlist;
-	List	   *torder;
-	List	   *tdistinct = NIL;
-	AttrNumber	attno;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			save_next_resno;
 	int			min_varlevel;
 	ListCell   *lc;
 	const char *err;
 	bool		errkind;
 
-<<<<<<< HEAD
 	if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
 	{
 		/*
@@ -138,18 +118,6 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 		int			numDirectArgs = list_length(args) - list_length(aggorder);
 		List	   *aargs;
 		ListCell   *lc2;
-=======
-	/*
-	 * Transform the plain list of Exprs into a targetlist.  We don't bother
-	 * to assign column names to the entries.
-	 */
-	tlist = NIL;
-	attno = 1;
-	foreach(lc, args)
-	{
-		Expr	   *arg = (Expr *) lfirst(lc);
-		TargetEntry *tle = makeTargetEntry(arg, attno++, NULL, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		Assert(numDirectArgs >= 0);
 
@@ -180,33 +148,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 		/* Never any DISTINCT in an ordered-set agg */
 		Assert(!agg_distinct);
 	}
-<<<<<<< HEAD
 	else
-=======
-
-	/*
-	 * If we have an ORDER BY, transform it.  This will add columns to the
-	 * tlist if they appear in ORDER BY but weren't already in the arg list.
-	 * They will be marked resjunk = true so we can tell them apart from
-	 * regular aggregate arguments later.
-	 *
-	 * We need to mess with p_next_resno since it will be used to number any
-	 * new targetlist entries.
-	 */
-	save_next_resno = pstate->p_next_resno;
-	pstate->p_next_resno = attno;
-
-	torder = transformSortClause(pstate,
-								 aggorder,
-								 &tlist,
-								 true /* fix unknowns */ ,
-								 true /* force SQL99 rules */ );
-
-	/*
-	 * If we have DISTINCT, transform that to produce a distinctList.
-	 */
-	if (agg_distinct)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		/* Regular aggregate, so it has no direct args */
 		agg->aggdirectargs = NIL;
@@ -256,7 +198,6 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 			 */
 			foreach(lc, tdistinct)
 			{
-<<<<<<< HEAD
 				SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
 
 				if (!OidIsValid(sortcl->sortop))
@@ -270,16 +211,6 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 							 errdetail("Aggregates with DISTINCT must be able to sort their inputs."),
 							 parser_errposition(pstate, exprLocation(expr))));
 				}
-=======
-				Node	   *expr = get_sortgroupclause_expr(sortcl, tlist);
-
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an ordering operator for type %s",
-					   format_type_be(exprType(expr))),
-						 errdetail("Aggregates with DISTINCT must be able to sort their inputs."),
-						 parser_errposition(pstate, exprLocation(expr))));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 		}
 
@@ -978,94 +909,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * parseCheckWindowFuncs
- *	Check for window functions where they shouldn't be.
- *
- *	We have to forbid window functions in WHERE, JOIN/ON, HAVING, GROUP BY,
- *	and window specifications.	(Other clauses, such as RETURNING and LIMIT,
- *	have already been checked.)  Transformation of all these clauses must
- *	be completed already.
- */
-void
-parseCheckWindowFuncs(ParseState *pstate, Query *qry)
-{
-	ListCell   *l;
-
-	/* This should only be called if we found window functions */
-	Assert(pstate->p_hasWindowFuncs);
-
-	if (checkExprHasWindowFuncs(qry->jointree->quals))
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("window functions not allowed in WHERE clause"),
-				 parser_errposition(pstate,
-								  locate_windowfunc(qry->jointree->quals))));
-	if (checkExprHasWindowFuncs((Node *) qry->jointree->fromlist))
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("window functions not allowed in JOIN conditions"),
-				 parser_errposition(pstate,
-					  locate_windowfunc((Node *) qry->jointree->fromlist))));
-	if (checkExprHasWindowFuncs(qry->havingQual))
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("window functions not allowed in HAVING clause"),
-				 parser_errposition(pstate,
-									locate_windowfunc(qry->havingQual))));
-
-	foreach(l, qry->groupClause)
-	{
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
-		Node	   *expr;
-
-		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
-		if (checkExprHasWindowFuncs(expr))
-			ereport(ERROR,
-					(errcode(ERRCODE_WINDOWING_ERROR),
-				   errmsg("window functions not allowed in GROUP BY clause"),
-					 parser_errposition(pstate,
-										locate_windowfunc(expr))));
-	}
-
-	foreach(l, qry->windowClause)
-	{
-		WindowClause *wc = (WindowClause *) lfirst(l);
-		ListCell   *l2;
-
-		foreach(l2, wc->partitionClause)
-		{
-			SortGroupClause *grpcl = (SortGroupClause *) lfirst(l2);
-			Node	   *expr;
-
-			expr = get_sortgroupclause_expr(grpcl, qry->targetList);
-			if (checkExprHasWindowFuncs(expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("window functions not allowed in window definition"),
-						 parser_errposition(pstate,
-											locate_windowfunc(expr))));
-		}
-		foreach(l2, wc->orderClause)
-		{
-			SortGroupClause *grpcl = (SortGroupClause *) lfirst(l2);
-			Node	   *expr;
-
-			expr = get_sortgroupclause_expr(grpcl, qry->targetList);
-			if (checkExprHasWindowFuncs(expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("window functions not allowed in window definition"),
-						 parser_errposition(pstate,
-											locate_windowfunc(expr))));
-		}
-		/* startOffset and limitOffset were checked in transformFrameOffset */
-	}
-}
-
-/*
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * check_ungrouped_columns -
  *	  Scan the given expression tree for ungrouped variables (variables
  *	  that are not listed in the groupClauses list and are not within

@@ -211,17 +211,13 @@ extern int	XLOGbuffers;
 extern int	XLogArchiveTimeout;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
-<<<<<<< HEAD
-extern int	XLogArchiveTimeout;
+extern bool EnableHotStandby;
 extern bool gp_keep_all_xlog;
 extern int keep_wal_segments;
 
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 
-=======
-extern bool EnableHotStandby;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern bool log_checkpoints;
 
 /* WAL levels */
@@ -237,15 +233,6 @@ extern int	wal_level;
 #define XLogArchiveCommandSet() (XLogArchiveCommand[0] != '\0')
 
 /*
-<<<<<<< HEAD
- * Is WAL-logging necessary? We need to log an XLOG record iff either
- * WAL archiving is enabled or XLOG streaming is allowed.
- */
-
-#define XLogIsNeeded() (XLogArchivingActive() || (max_wal_senders > 0))
-
-extern bool am_startup;
-=======
  * Is WAL-logging necessary for archival or log-shipping, or can we skip
  * WAL-logging if we fsync() the data before committing instead?
  */
@@ -253,7 +240,6 @@ extern bool am_startup;
 
 /* Do we need to WAL-log information required only for Hot Standby? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;
@@ -296,18 +282,20 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
-<<<<<<< HEAD
 /* File path names (all relative to $PGDATA) */
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
 #define PROMOTE_SIGNAL_FILE "promote"
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern XLogRecPtr XLogInsert_OverrideXid(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId overrideXid);
 extern XLogRecPtr XLogLastInsertBeginLoc(void);
 extern void XLogFlush(XLogRecPtr RecPtr);
+extern void XLogBackgroundFlush(void);
+extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
+extern int XLogFileInit(uint32 log, uint32 seg,
+			 bool *use_existent, bool use_lock);
+extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
@@ -318,36 +306,15 @@ extern void xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr ls
 extern void xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
-extern void XLogBackgroundFlush(void);
-extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int XLogFileInit(uint32 log, uint32 seg,
-			 bool *use_existent, bool use_lock);
-extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 
-extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
-extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
-
-<<<<<<< HEAD
-=======
-extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
-
-extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void xlog_desc(StringInfo buf, uint8 xl_info, char *rec);
-
-extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern bool RecoveryInProgress(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
-<<<<<<< HEAD
 extern bool DataChecksumsEnabled(void);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);
@@ -366,7 +333,6 @@ extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern TimeLineID GetRecoveryTargetTLI(void);
 
-<<<<<<< HEAD
 extern void XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint);
 extern char *XLogLocationToString(XLogRecPtr *loc);
 extern char *XLogLocationToString2(XLogRecPtr *loc);
@@ -379,8 +345,6 @@ extern char *XLogLocationToString3_Long(XLogRecPtr *loc);
 extern char *XLogLocationToString4_Long(XLogRecPtr *loc);
 extern char *XLogLocationToString5_Long(XLogRecPtr *loc);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 

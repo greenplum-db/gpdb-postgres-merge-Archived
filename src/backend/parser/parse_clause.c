@@ -3,13 +3,9 @@
  * parse_clause.c
  *	  handle clauses in parser
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -104,15 +100,11 @@ static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 bool resolveUnknown);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
-<<<<<<< HEAD
 								  Node *clause,
 								  List *orderClause, List *targetlist, bool isFollowing,
 								  int location);
 static SortGroupClause *make_group_clause(TargetEntry *tle, List *targetlist,
 				  Oid eqop, Oid sortop, bool nulls_first);
-=======
-					 Node *clause);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef struct grouping_rewrite_ctx
 {
@@ -1452,11 +1444,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 
 	qual = coerce_to_specific_type(pstate, qual, INT8OID, constructName);
 
-<<<<<<< HEAD
 	/* LIMIT can't refer to any variables of the current query */
-=======
-	/* LIMIT can't refer to any vars or aggregates of the current query */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	checkExprIsVarFree(pstate, qual, constructName);
 
 	return qual;
@@ -1465,11 +1453,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 /*
  * checkExprIsVarFree
  *		Check that given expr has no Vars of the current query level
-<<<<<<< HEAD
  *		(aggregates and window functions should have been rejected already).
-=======
- *		(and no aggregates or window functions, either).
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * This is used to check expressions that have to have a consistent value
  * across all rows of the query, such as a LIMIT.  Arguably it should reject
@@ -1491,7 +1475,6 @@ checkExprIsVarFree(ParseState *pstate, Node *n, const char *constructName)
 				 parser_errposition(pstate,
 									locate_var_of_level(n, 0))));
 	}
-<<<<<<< HEAD
 }
 
 
@@ -1633,31 +1616,6 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
             else
                 tle = findTargetlistEntrySQL92(pstate, rowexpr_arg, tlist,
                                                exprKind);
-=======
-	if (pstate->p_hasAggs &&
-		checkExprHasAggs(n))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain aggregate functions",
-						constructName),
-				 parser_errposition(pstate,
-									locate_agg_of_level(n, 0))));
-	}
-	if (pstate->p_hasWindowFuncs &&
-		checkExprHasWindowFuncs(n))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain window functions",
-						constructName),
-				 parser_errposition(pstate,
-									locate_windowfunc(n))));
-	}
-}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			/* If RowExpr does not appear immediately inside a GROUPING SETS,
 			 * we append its targetlit to the given targetlist.
@@ -2497,33 +2455,18 @@ transformWindowDefinitions(ParseState *pstate,
 		 * almost exactly like top-level GROUP BY and ORDER BY clauses,
 		 * including the special handling of nondefault operator semantics.
 		 */
-<<<<<<< HEAD
-		orderClause =
-			transformSortClause(pstate,
-								windef->orderClause,
-								targetlist,
-								EXPR_KIND_WINDOW_ORDER,
-								true /* fix unknowns */ ,
-								true /* force SQL99 rules */ );
-		partitionClause =
-			transformSortClause(pstate,
-								windef->partitionClause,
-								targetlist,
-								EXPR_KIND_WINDOW_PARTITION,
-								true /* fix unknowns */ ,
-								true /* force SQL99 rules */ );
-=======
 		orderClause = transformSortClause(pstate,
 										  windef->orderClause,
 										  targetlist,
+										  EXPR_KIND_WINDOW_ORDER,
 										  true /* fix unknowns */ ,
 										  true /* force SQL99 rules */ );
-		partitionClause = transformGroupClause(pstate,
-											   windef->partitionClause,
-											   targetlist,
-											   orderClause,
-											   true /* force SQL99 rules */ );
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		partitionClause = transformSortClause(pstate,
+											  windef->partitionClause,
+											  targetlist,
+											  EXPR_KIND_WINDOW_PARTITION,
+											  true /* fix unknowns */ ,
+											  true /* force SQL99 rules */ );
 
 		/*
 		 * And prepare the new WindowClause.
@@ -2628,12 +2571,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 */
 
 		wc->frameOptions = windef->frameOptions;
-		/* Process frame offset expressions */
-		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
-											   windef->startOffset);
-		wc->endOffset = transformFrameOffset(pstate, wc->frameOptions,
-											 windef->endOffset);
-		wc->winref = winref;
 		/* Process frame offset expressions */
 		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
 											   windef->startOffset, wc->orderClause,
@@ -3497,13 +3434,9 @@ findWindowClause(List *wclist, const char *name)
  *		Process a window frame offset expression
  */
 static Node *
-<<<<<<< HEAD
 transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
 					 List *orderClause, List *targetlist, bool isFollowing,
 					 int location)
-=======
-transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	const char *constructName = NULL;
 	Node	   *node;
@@ -3512,19 +3445,11 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	if (clause == NULL)
 		return NULL;
 
-<<<<<<< HEAD
 	if (frameOptions & FRAMEOPTION_ROWS)
 	{
 		/* Transform the raw expression tree */
 		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_ROWS);
 
-=======
-	/* Transform the raw expression tree */
-	node = transformExpr(pstate, clause);
-
-	if (frameOptions & FRAMEOPTION_ROWS)
-	{
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/*
 		 * Like LIMIT clause, simply coerce to int8
 		 */
@@ -3533,7 +3458,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	}
 	else if (frameOptions & FRAMEOPTION_RANGE)
 	{
-<<<<<<< HEAD
 		TargetEntry *te;
 		Oid			otype;
 		Oid			rtype;
@@ -3547,14 +3471,11 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 		/* Transform the raw expression tree */
 		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_RANGE);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/*
 		 * this needs a lot of thought to decide how to support in the context
 		 * of Postgres' extensible datatype framework
 		 */
 		constructName = "RANGE";
-<<<<<<< HEAD
 
 		/* caller should've checked this already, but better safe than sorry */
 		if (list_length(orderClause) == 0)
@@ -3711,16 +3632,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	/* Disallow variables in frame offsets */
 	checkExprIsVarFree(pstate, node, constructName);
 #endif
-=======
-		/* error was already thrown by gram.y, this is just a backstop */
-		elog(ERROR, "window frame with value offset is not implemented");
-	}
-	else
-		Assert(false);
-
-	/* Disallow variables and aggregates in frame offsets */
-	checkExprIsVarFree(pstate, node, constructName);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return node;
 }

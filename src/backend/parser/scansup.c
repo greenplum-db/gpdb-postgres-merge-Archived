@@ -178,17 +178,10 @@ truncate_identifier(char *ident, int len, bool warn)
 		if (warn)
 		{
 			/*
-<<<<<<< HEAD
-			 * Cannot use %.*s here because some machines interpret %s's
-			 * precision in characters, others in bytes.
-			 */
-			char	buf[NAMEDATALEN];
-=======
 			 * We avoid using %.*s here because it can misbehave if the data
 			 * is not valid in what libc thinks is the prevailing encoding.
 			 */
 			char		buf[NAMEDATALEN];
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			memcpy(buf, ident, len);
 			buf[len] = '\0';

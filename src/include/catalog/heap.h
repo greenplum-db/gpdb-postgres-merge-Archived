@@ -142,8 +142,8 @@ extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 						 bool allow_system_table_mods);
 
 extern void CheckAttributeType(const char *attname, Oid atttypid,
-<<<<<<< HEAD
-							   List *containing_rowtypes);
+				   List *containing_rowtypes,
+				   bool allow_system_table_mods);
 extern void SetRelationNumChecks(Relation rel, int numchecks);
 
 /* MPP-6929: metadata tracking */
@@ -167,8 +167,5 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_VIEW)) 
 
 extern bool should_have_valid_relfrozenxid(Oid oid, char relkind, char relstorage);
-=======
-				   bool allow_system_table_mods);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* HEAP_H */

@@ -654,13 +654,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-<<<<<<< HEAD
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
 		aggref->aggfilter = agg_filter;
-=======
-		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;

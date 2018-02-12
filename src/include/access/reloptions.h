@@ -55,14 +55,11 @@ typedef enum relopt_kind
 	RELOPT_KIND_HASH = (1 << 3),
 	RELOPT_KIND_GIN = (1 << 4),
 	RELOPT_KIND_GIST = (1 << 5),
-<<<<<<< HEAD
-	RELOPT_KIND_BITMAP = (1 << 6),
-=======
 	RELOPT_KIND_ATTRIBUTE = (1 << 6),
 	RELOPT_KIND_TABLESPACE = (1 << 7),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	RELOPT_KIND_BITMAP = (1 << 8),
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_TABLESPACE,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_BITMAP,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;

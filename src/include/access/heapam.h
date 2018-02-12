@@ -155,7 +155,6 @@ extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 extern void heap_mask(char *pagedata, BlockNumber blkno);
 
-<<<<<<< HEAD
 extern void log_heap_newpage(Relation rel, 
 							 Page page,
 							 BlockNumber bno);
@@ -163,10 +162,6 @@ extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 			  ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup,
 			  bool all_visible_cleared, bool new_all_visible_cleared);
-=======
-extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
-					  TransactionId latestRemovedXid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *redirected, int nredirected,
 			   OffsetNumber *nowdead, int ndead,

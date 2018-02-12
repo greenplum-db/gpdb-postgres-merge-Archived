@@ -14,13 +14,9 @@
  * optimizable statements.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.402 2010/02/26 02:00:49 momjian Exp $
@@ -1532,22 +1528,16 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
-										  true, /* fix unknowns */
-                                          false /* allow SQL92 rules */);
-=======
 										  true /* fix unknowns */ ,
 										  false /* allow SQL92 rules */ );
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
 											&qry->targetList,
 											qry->sortClause,
-<<<<<<< HEAD
 											EXPR_KIND_GROUP_BY,
-                                            false /* allow SQL92 rules */);
+											false /* allow SQL92 rules */ );
 
 	/*
 	 * SCATTER BY clause on a table function TableValueExpr subquery.
@@ -1561,9 +1551,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->scatterClause = transformScatterClause(pstate,
 												stmt->scatterClause,
 												&qry->targetList);
-=======
-											false /* allow SQL92 rules */ );
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (stmt->distinctClause == NIL)
 	{
@@ -1810,14 +1797,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
-										  true, /* fix unknowns */
-                                          false /* allow SQL92 rules */);
-=======
 										  true /* fix unknowns */ ,
 										  false /* allow SQL92 rules */ );
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
 											EXPR_KIND_OFFSET, "OFFSET");
@@ -1967,7 +1949,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
-<<<<<<< HEAD
 	/* process the WITH clause */
 	if (withClause)
 	{
@@ -1975,8 +1956,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->cteList = transformWithClause(pstate, withClause);
 	}
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Recursively transform the components of the tree.
 	 */
@@ -2085,14 +2064,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
 										  &qry->targetList,
-<<<<<<< HEAD
 										  EXPR_KIND_ORDER_BY,
-										  false /* no unknowns expected */,
-                                          false /* allow SQL92 rules */ );
-=======
 										  false /* no unknowns expected */ ,
 										  false /* allow SQL92 rules */ );
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	pstate->p_rtable = list_truncate(pstate->p_rtable, sv_rtable_length);
 	pstate->p_relnamespace = sv_relnamespace;

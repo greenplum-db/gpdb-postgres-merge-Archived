@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -317,13 +313,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	DefACLOptionList
 
 %type <list>	stmtblock stmtmulti
-<<<<<<< HEAD
 				OptTableElementList OptExtTableElementList TableElementList ExtTableElementList
-				OptInherit definition
-=======
-				OptTableElementList TableElementList OptInherit definition
 				OptTypedTableElementList TypedTableElementList
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				OptInherit definition
 				reloptions opt_reloptions
 				OptWith opt_distinct opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
@@ -347,12 +339,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 				TableFuncElementList opt_type_modifiers
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
-<<<<<<< HEAD
-				opt_enum_val_list enum_val_list
-				table_func_column_list scatter_clause
-=======
 				opt_enum_val_list enum_val_list table_func_column_list
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				scatter_clause
 				create_generic_options alter_generic_options
 				relation_expr_list dostmt_opt_list
 				columnListUnique
@@ -385,15 +373,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <node>	overlay_placing substr_from substr_for
 
 %type <boolean> opt_instead
-<<<<<<< HEAD
-%type <boolean> index_opt_unique opt_verbose opt_full
+%type <boolean> opt_unique opt_concurrently opt_verbose opt_full
 %type <boolean> opt_freeze opt_default opt_ordered opt_recheck
 %type <boolean> opt_rootonly_all
 %type <boolean> opt_dxl
-=======
-%type <boolean> opt_unique opt_concurrently opt_verbose opt_full
-%type <boolean> opt_freeze opt_default opt_recheck
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 %type <defelt>	opt_binary opt_oids copy_delimiter
 
 %type <boolean> copy_from opt_program skip_external_partition
@@ -412,19 +395,12 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <istmt>	insert_rest
 
 %type <vsetstmt> set_rest SetResetClause
-<<<<<<< HEAD
-%type <node>	TableElement ConstraintElem TableFuncElement
-%type <node>	columnDef
+%type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
+%type <node>	columnDef columnOptions
 %type <defelt>	def_elem reloption_elem old_aggr_elem keyvalue_pair
 %type <node>	ExtTableElement
 %type <node>	ExtcolumnDef
 %type <node>	cdb_string
-=======
-
-%type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
-%type <node>	columnDef columnOptions
-%type <defelt>	def_elem reloption_elem old_aggr_elem
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 %type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -547,11 +523,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <windef>	window_definition over_clause window_specification
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
-<<<<<<< HEAD
-%type <windef>	opt_frame_clause frame_extent frame_bound
 %type <ival>	window_frame_exclusion
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /*
@@ -753,7 +725,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
  */
 %nonassoc	UNBOUNDED		/* ideally should have same precedence as IDENT */
 %nonassoc	IDENT PARTITION RANGE ROWS PRECEDING FOLLOWING
-<<<<<<< HEAD
 
 /*
  * This is a bit ugly... To allow these to be column aliases without
@@ -1073,8 +1044,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			
 
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
@@ -3620,13 +3589,8 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-		| CREATE OptTemp TABLE qualified_name OF qualified_name
-			'(' OptTableElementList ')' OptWith OnCommitOption OptTableSpace OptDistributedBy OptTabPartitionBy
-=======
 		| CREATE OptTemp TABLE qualified_name OF any_name
-			OptTypedTableElementList OptWith OnCommitOption OptTableSpace
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+			OptTypedTableElementList OptWith OnCommitOption OptTableSpace OptDistributedBy OptTabPartitionBy
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->istemp = $2;
@@ -3635,21 +3599,15 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->ofTypename = makeTypeNameFromNameList($6);
 					n->ofTypename->location = @6;
 					n->constraints = NIL;
-<<<<<<< HEAD
-					n->options = $10;
-					n->oncommit = $11;
-					n->tablespacename = $12;
-					n->distributedBy = $13;
-					n->partitionBy = $14;
+					n->options = $8;
+					n->oncommit = $9;
+					n->tablespacename = $10;
+					n->distributedBy = $11;
+					n->partitionBy = $12;
 					n->relKind = RELKIND_RELATION;
 					n->policy = 0;
                     n->postCreate = NULL;
 
-=======
-					n->options = $8;
-					n->oncommit = $9;
-					n->tablespacename = $10;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					$$ = (Node *)n;
 				}
 		;
@@ -3709,7 +3667,11 @@ TableElement:
 			| column_reference_storage_directive { $$ = $1; }
 		;
 
-<<<<<<< HEAD
+TypedTableElement:
+			columnOptions						{ $$ = $1; }
+			| TableConstraint					{ $$ = $1; }
+		;
+
 column_reference_storage_directive:
 			COLUMN ColId ENCODING definition
 				{
@@ -3733,14 +3695,6 @@ column_reference_storage_directive:
 		;
 
 columnDef:	ColId Typename ColQualList opt_storage_encoding
-=======
-TypedTableElement:
-			columnOptions						{ $$ = $1; }
-			| TableConstraint					{ $$ = $1; }
-		;
-
-columnDef:	ColId Typename ColQualList
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -6257,20 +6211,27 @@ DefineStmt:
 					n->coldeflist = $6;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			| CREATE opt_trusted PROTOCOL name definition
+			| CREATE opt_or_replace opt_trusted PROTOCOL name definition
 				{
+					/*
+					 * The opt_or_replace is here just to avoid a grammar conflict.
+					 * It's not actually supported.
+					 */
+					if ($2)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("syntax error"),
+								 parser_errposition(@2)));
+
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_EXTPROTOCOL;
 					n->oldstyle = false;
-					n->trusted = $2;
-					n->defnames = list_make1(makeString($4));
+					n->trusted = $3;
+					n->defnames = list_make1(makeString($5));
 					n->args = NIL;
-					n->definition = $5;
+					n->definition = $6;
 					$$ = (Node *)n;
 				}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			| CREATE TYPE_P any_name AS ENUM_P '(' opt_enum_val_list ')'
 				{
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
@@ -13075,10 +13036,7 @@ opt_frame_clause:
 				{
 					WindowDef *n = $2;
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE;
-<<<<<<< HEAD
 #if 0
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					if (n->frameOptions & (FRAMEOPTION_START_VALUE_PRECEDING |
 										   FRAMEOPTION_END_VALUE_PRECEDING))
 						ereport(ERROR,
@@ -13091,10 +13049,7 @@ opt_frame_clause:
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("RANGE FOLLOWING is only supported with UNBOUNDED"),
 								 parser_errposition(@1)));
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					$$ = n;
 				}
 			| ROWS frame_extent
@@ -13199,25 +13154,6 @@ frame_bound:
 					n->startOffset = NULL;
 					n->endOffset = NULL;
 					$$ = n;
-<<<<<<< HEAD
-=======
-				}
-			| a_expr PRECEDING
-				{
-					WindowDef *n = makeNode(WindowDef);
-					n->frameOptions = FRAMEOPTION_START_VALUE_PRECEDING;
-					n->startOffset = $1;
-					n->endOffset = NULL;
-					$$ = n;
-				}
-			| a_expr FOLLOWING
-				{
-					WindowDef *n = makeNode(WindowDef);
-					n->frameOptions = FRAMEOPTION_START_VALUE_FOLLOWING;
-					n->startOffset = $1;
-					n->endOffset = NULL;
-					$$ = n;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				}
 			| a_expr PRECEDING
 				{
@@ -14033,11 +13969,7 @@ unreserved_keyword:
 			| COMMENTS
 			| COMMIT
 			| COMMITTED
-<<<<<<< HEAD
 			| CONCURRENCY
-			| CONCURRENTLY
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			| CONFIGURATION
 			| CONNECTION
 			| CONSTRAINTS
@@ -14360,7 +14292,6 @@ PartitionIdentKeyword: ABORT_P
 			| COMMIT
 			| COMMITTED
 			| CONCURRENCY
-			| CONCURRENTLY
 			| CONNECTION
 			| CONSTRAINTS
 			| CONTAINS
@@ -14736,7 +14667,6 @@ reserved_keyword:
 			| AS
 			| ASC
 			| ASYMMETRIC
-			| BETWEEN
 			| BOTH
 			| CASE
 			| CAST
