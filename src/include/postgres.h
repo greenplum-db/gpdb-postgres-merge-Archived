@@ -266,15 +266,7 @@ typedef struct
 
 /*
  * Port Notes:
-<<<<<<< HEAD
- *     Postgres makes the following assumption about machines:
- *
- *     sizeof(Datum) == sizeof(long) >= sizeof(void *) >= 4
- *
- *     Postgres also assumes that
-=======
  *	Postgres makes the following assumptions about datatype sizes:
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *	sizeof(Datum) == sizeof(void *) == 4 or 8
  *	sizeof(char) == 1
@@ -282,7 +274,7 @@ typedef struct
  *
  *  Greenplum CDB:
  *     Datum is always 8 bytes, regardless if it is 32bit or 64bit machine.
- *  so may be > sizeof(long).
+ *  so may be > sizeof(void *).
  *
  * When a type narrower than Datum is stored in a Datum, we place it in the
  * low-order bits and are careful that the DatumGetXXX macro for it discards
@@ -292,7 +284,6 @@ typedef struct
  * or short may contain garbage when called as if it returned Datum.
  */
 
-<<<<<<< HEAD
 typedef int64 Datum;
 typedef union Datum_U
 {
@@ -305,11 +296,6 @@ typedef union Datum_U
 } Datum_U;
 
 #define SIZEOF_DATUM 8
-=======
-typedef uintptr_t Datum;
-
-#define SIZEOF_DATUM SIZEOF_VOID_P
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef Datum *DatumPtr;
 
