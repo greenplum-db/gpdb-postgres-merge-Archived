@@ -18,13 +18,9 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.44 2010/02/13 20:46:52 tgl Exp $
@@ -135,18 +131,13 @@ extern void MemoryContextFreeImpl(void *pointer, const char* file, const char *f
 		MemoryContextAllocZeroImpl(CurrentMemoryContext, (sz), __FILE__, PG_FUNCNAME_MACRO, __LINE__))
 
 /*
- * MemoryContextSwitchTo can't be a macro in standard C compilers.
- * But we can make it an inline function if the compiler supports it.
- *
- * This file has to be includable by some non-backend code such as
- * pg_resetxlog, so don't expose the CurrentMemoryContext reference
- * if FRONTEND is defined.
+ * Although this header file is nominally backend-only, certain frontend
+ * programs like pg_controldata include it via postgres.h.  For some compilers
+ * it's necessary to hide the inline definition of MemoryContextSwitchTo in
+ * this scenario; hence the #ifndef FRONTEND.
  */
-<<<<<<< HEAD
-=======
-#if defined(USE_INLINE) && !defined(FRONTEND)
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#ifndef FRONTEND
 static inline MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
@@ -155,13 +146,7 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
-<<<<<<< HEAD
-=======
-#else
-
-extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
-#endif   /* USE_INLINE && !FRONTEND */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#endif   /* FRONTEND */
 
 /*
  * These are like standard strdup() except the copied string is
