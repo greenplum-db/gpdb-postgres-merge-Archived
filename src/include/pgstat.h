@@ -757,18 +757,10 @@ extern void pgstat_reset_shared_counters(const char *);
 extern void pgstat_reset_single_counter(Oid objectid, PgStat_Single_Reset_Type type);
 
 extern void pgstat_report_autovac(Oid dboid);
-<<<<<<< HEAD
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
-					 bool analyze, PgStat_Counter tuples);
-extern void pgstat_report_analyze(Relation rel,
-					  PgStat_Counter livetuples,
-					  PgStat_Counter deadtuples);
-=======
-extern void pgstat_report_vacuum(Oid tableoid, bool shared, bool adopt_counts,
 					 PgStat_Counter tuples);
-extern void pgstat_report_analyze(Relation rel, bool adopt_counts,
+extern void pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);

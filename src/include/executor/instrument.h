@@ -37,16 +37,11 @@ typedef struct BufferUsage
 /* Flag bits included in InstrAlloc's instrument_options bitmask */
 typedef enum InstrumentOption
 {
-<<<<<<< HEAD
 	INSTRUMENT_NONE = 0,
 	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage (not implemented yet) */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
 	INSTRUMENT_CDB = 0x40000000,	/* needs cdb statistics */
-=======
-	INSTRUMENT_TIMER = 1 << 0,	/* needs timer */
-	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	INSTRUMENT_ALL = 0x7FFFFFFF
 } InstrumentOption;
 
@@ -62,7 +57,6 @@ typedef struct Instrumentation
 	instr_time	starttime;		/* Start time of current iteration of node */
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
-<<<<<<< HEAD
 	uint64		tuplecount;		/* Tuples emitted so far this cycle */
 	BufferUsage	bufusage_start;	/* Buffer usage at start */
 	/* Accumulated statistics across all completed cycles: */
@@ -83,16 +77,6 @@ typedef struct Instrumentation
 	const char *sortSpaceType;	/* CDB: Sort space type (Memory / Disk) */
 	long		sortSpaceUsed;	/* CDB: Memory / Disk used by sort(KBytes) */
 	struct CdbExplain_NodeSummary *cdbNodeSummary;	/* stats from all qExecs */
-=======
-	double		tuplecount;		/* Tuples emitted so far this cycle */
-	BufferUsage bufusage_start; /* Buffer usage at start */
-	/* Accumulated statistics across all completed cycles: */
-	double		startup;		/* Total startup time (in seconds) */
-	double		total;			/* Total total time (in seconds) */
-	double		ntuples;		/* Total tuples produced */
-	double		nloops;			/* # of run cycles for this node */
-	BufferUsage bufusage;		/* Total buffer usage */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } Instrumentation;
 
 extern PGDLLIMPORT BufferUsage pgBufferUsage;

@@ -392,19 +392,12 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		if (result->size != size)
 		{
 			LWLockRelease(ShmemIndexLock);
-<<<<<<< HEAD
-
-			elog(WARNING, "ShmemIndex entry size is wrong.  entry is %ld, we were looking for %ld", result->size, (long)size);
-			/* let caller print its message too */
-			return NULL;
-=======
 			ereport(ERROR,
 				  (errmsg("ShmemIndex entry size is wrong for data structure"
 						  " \"%s\": expected %lu, actual %lu",
 						  name,
 						  (unsigned long) size,
 						  (unsigned long) result->size)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		structPtr = result->location;
 	}

@@ -4,13 +4,9 @@
  *	  per-process shared memory data structures
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.123 2010/07/06 19:19:00 momjian Exp $
@@ -24,15 +20,11 @@
 #include "storage/lock.h"
 #include "storage/spin.h"
 #include "storage/pg_sema.h"
-<<<<<<< HEAD
+#include "utils/timestamp.h"
 #include "access/xlog.h"
 
 #include "cdb/cdblocaldistribxact.h"  /* LocalDistribXactData */
 #include "cdb/cdbtm.h"  /* TMGXACT */
-
-=======
-#include "utils/timestamp.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -214,21 +206,18 @@ typedef struct PROC_HDR
 	PGPROC	   *autovacFreeProcs;
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
-<<<<<<< HEAD
+
+	/* The proc of the Startup process, since not in ProcArray */
+	PGPROC	   *startupProc;
+	int			startupProcPid;
+	/* Buffer id of the buffer that Startup process waits for pin on */
+	int			startupBufferPinWaitBufId;
 
     /* Counter for assigning serial numbers to processes */
     int         mppLocalProcessCounter;
 
 	/* Number of free PGPROC entries in freeProcs list. */
 	int			numFreeProcs;
-
-=======
-	/* The proc of the Startup process, since not in ProcArray */
-	PGPROC	   *startupProc;
-	int			startupProcPid;
-	/* Buffer id of the buffer that Startup process waits for pin on */
-	int			startupBufferPinWaitBufId;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } PROC_HDR;
 
 /*
@@ -236,20 +225,13 @@ typedef struct PROC_HDR
  * ie things that aren't full-fledged backends but need shmem access.
  *
  * Background writer and WAL writer run during normal operation. Startup
-<<<<<<< HEAD
- * process also consumes one slot, but WAL writer is launched only after
- * startup has exited, so we only need 2 slots.
+ * process and WAL receiver also consume 2 slots, but WAL writer is
+ * launched only after startup has exited, so we only need 3 slots.
  *
  * In GPDB, we have some extra processes.
  * GDPB_90_MERGE_FIXME: count them correctly. 10 is an exaggeration.
  */
-#define NUM_AUXILIARY_PROCS		(/* PG */ 2 + /* GPDB */ 10)
-=======
- * process and WAL receiver also consume 2 slots, but WAL writer is
- * launched only after startup has exited, so we only need 3 slots.
- */
-#define NUM_AUXILIARY_PROCS		3
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#define NUM_AUXILIARY_PROCS		(/* PG */ 3 + /* GPDB */ 10)
 
 
 /* configurable options */

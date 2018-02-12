@@ -22,27 +22,19 @@
 #include "access/nbtree.h"
 #include "access/subtrans.h"
 #include "access/twophase.h"
-<<<<<<< HEAD
 #include "access/distributedlog.h"
 #include "access/appendonlywriter.h"
 #include "cdb/cdblocaldistribxact.h"
 #include "cdb/cdbvars.h"
-=======
 #include "commands/async.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
-<<<<<<< HEAD
 #include "postmaster/seqserver.h"
-#include "replication/walsender.h"
-#include "replication/walreceiver.h"
-=======
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -157,45 +149,33 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, LWLockShmemSize());
 		size = add_size(size, ProcArrayShmemSize());
 		size = add_size(size, BackendStatusShmemSize());
-		size = add_size(size, SharedSnapshotShmemSize());
-
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
 		//size = add_size(size, AutoVacuumShmemSize());
-		size = add_size(size, FtsShmemSize());
-		size = add_size(size, tmShmemSize());
-		size = add_size(size, SeqServerShmemSize());
-
-#ifdef FAULT_INJECTOR
-		size = add_size(size, FaultInjector_ShmemSize());
-#endif			
-		
-#ifdef EXEC_BACKEND
-		size = add_size(size, ShmemBackendArraySize());
-#endif
-
-		/* This elog happens before we know the name of the log file we are supposed to use */
-		elog(DEBUG1, "Size not including the buffer pool %lu",
-			 (unsigned long) size);
-
-		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, WalSndShmemSize());
 		size = add_size(size, WalRcvShmemSize());
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
-<<<<<<< HEAD
-		size = add_size(size, CheckpointerShmemSize());
-		size = add_size(size, CancelBackendMsgShmemSize());
-
-		size = add_size(size, WalSndShmemSize());
-		size = add_size(size, WalRcvShmemSize());
-=======
 		size = add_size(size, AsyncShmemSize());
 #ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
 #endif
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+		size = add_size(size, SharedSnapshotShmemSize());
+		size = add_size(size, FtsShmemSize());
+		size = add_size(size, tmShmemSize());
+		size = add_size(size, SeqServerShmemSize());
+		size = add_size(size, CheckpointerShmemSize());
+		size = add_size(size, CancelBackendMsgShmemSize());
+
+#ifdef FAULT_INJECTOR
+		size = add_size(size, FaultInjector_ShmemSize());
+#endif			
+
+		/* This elog happens before we know the name of the log file we are supposed to use */
+		elog(DEBUG1, "Size not including the buffer pool %lu",
+			 (unsigned long) size);
 
 		/* freeze the addin request size and include it */
 		addin_request_allowed = false;
@@ -322,7 +302,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
-<<<<<<< HEAD
 	CheckpointerShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
@@ -332,19 +311,13 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 #ifdef FAULT_INJECTOR
 	FaultInjector_ShmemInit();
 #endif
-=======
-	BgWriterShmemInit();
-	AutoVacuumShmemInit();
-	WalSndShmemInit();
-	WalRcvShmemInit();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Set up other modules that need some shared memory space
 	 */
 	BTreeShmemInit();
 	SyncScanShmemInit();
-<<<<<<< HEAD
+	AsyncShmemInit();
 	workfile_mgr_cache_init();
 	BackendCancelShmemInit();
 
@@ -353,9 +326,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	if (!IsUnderPostmaster)
 		InstrShmemInit();
-=======
-	AsyncShmemInit();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #ifdef EXEC_BACKEND
 

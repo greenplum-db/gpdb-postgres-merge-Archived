@@ -4,17 +4,10 @@
  *	  Routines for interprocess signalling
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/procsignal.h
-=======
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/include/storage/procsignal.h,v 1.6 2010/02/26 02:01:28 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +32,8 @@ typedef enum
 	PROCSIG_CATCHUP_INTERRUPT,	/* sinval catchup interrupt */
 	PROCSIG_NOTIFY_INTERRUPT,	/* listen/notify interrupt */
 
-<<<<<<< HEAD
 	PROCSIG_QUERY_FINISH,		/* query finish */
-=======
+
 	/* Recovery conflict reasons */
 	PROCSIG_RECOVERY_CONFLICT_DATABASE,
 	PROCSIG_RECOVERY_CONFLICT_TABLESPACE,
@@ -49,7 +41,6 @@ typedef enum
 	PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
 	PROCSIG_RECOVERY_CONFLICT_BUFFERPIN,
 	PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	NUM_PROCSIGNALS				/* Must be last! */
 } ProcSignalReason;

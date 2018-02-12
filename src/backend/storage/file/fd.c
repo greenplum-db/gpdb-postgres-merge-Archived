@@ -351,21 +351,6 @@ pg_fdatasync(int fd)
 }
 
 /*
-<<<<<<< HEAD
- * Retrying close in case it gets interrupted. If that happens, it will cause
- * unlink to fail later.
- */
-int
-gp_retry_close(int fd) {
-	int err = 0;
-	do
-	{
-		err = close(fd);
-	} while (err == -1 && errno == EINTR);
-	return err;
-}
-
-=======
  * pg_flush_data --- advise OS that the data described won't be needed soon
  *
  * Not all platforms have posix_fadvise; treat as noop if not available.
@@ -380,8 +365,21 @@ pg_flush_data(int fd, off_t offset, off_t amount)
 #endif
 }
 
+/*
+ * Retrying close in case it gets interrupted. If that happens, it will cause
+ * unlink to fail later.
+ */
+int
+gp_retry_close(int fd) {
+	int err = 0;
+	do
+	{
+		err = close(fd);
+	} while (err == -1 && errno == EINTR);
+	return err;
+}
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
 /*
  * InitFileAccess --- initialize this module during backend startup
  *
@@ -1123,7 +1121,7 @@ GetTempFilePath(const char *filename, bool createdir)
 	{
 		/* All other tablespaces are accessed via symlinks */
 		snprintf(tempdirpath, sizeof(tempdirpath), "pg_tblspc/%u/%s/%s",
-				 tblspcOid, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
+				 tblspcOid, tablespace_version_directory(), PG_TEMP_FILES_DIR);
 	}
 
 	/*

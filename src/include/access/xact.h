@@ -85,11 +85,9 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_ABORT				0x20
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
-<<<<<<< HEAD
-#define XLOG_XACT_DISTRIBUTED_COMMIT 0x50
-#define XLOG_XACT_DISTRIBUTED_FORGET 0x60
-=======
 #define XLOG_XACT_ASSIGNMENT		0x50
+#define XLOG_XACT_DISTRIBUTED_COMMIT 0x60
+#define XLOG_XACT_DISTRIBUTED_FORGET 0x70
 
 typedef struct xl_xact_assignment
 {
@@ -99,16 +97,12 @@ typedef struct xl_xact_assignment
 } xl_xact_assignment;
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
-<<<<<<< HEAD
 	time_t		xtime;
-=======
 	uint32		xinfo;			/* info flags */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	int			nmsgs;			/* number of shared inval msgs */
@@ -117,11 +111,8 @@ typedef struct xl_xact_commit
 	/* Array of RelFileNode(s) to drop at commit */
 	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
-<<<<<<< HEAD
-	/* DISTRIBUTED XACT STUFF FOLLOWS */
-=======
 	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	/* DISTRIBUTED XACT STUFF FOLLOWS */
 } xl_xact_commit;
 
 #define MinSizeOfXactCommit offsetof(xl_xact_commit, xnodes)
@@ -254,11 +245,8 @@ extern void UnregisterXactCallbackOnce(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
 extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
-<<<<<<< HEAD
 extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void xact_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);

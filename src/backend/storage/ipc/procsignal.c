@@ -58,11 +58,7 @@ typedef struct
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
-<<<<<<< HEAD
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXILIARY_PROCS)
-=======
-#define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;

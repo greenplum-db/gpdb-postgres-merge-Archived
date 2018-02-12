@@ -160,14 +160,6 @@ typedef struct ProcState
 	bool		sendOnly;		/* backend only sends, never receives */
 
 	/*
-	 * Backend only sends invalidations, never receives them. This only makes
-	 * sense for Startup process during recovery because it doesn't maintain a
-	 * relcache, yet it fires inval messages to allow query backends to see
-	 * schema changes.
-	 */
-	bool		sendOnly;		/* backend only sends, never receives */
-
-	/*
 	 * Next LocalTransactionId to use for each idle backend slot.  We keep
 	 * this here because it is indexed by BackendId and it is convenient to
 	 * copy the value to and from local memory when MyBackendId is set. It's
@@ -330,10 +322,7 @@ SharedInvalBackendInit(bool sendOnly)
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
 	stateP->signaled = false;
-<<<<<<< HEAD
 	stateP->hasMessages = false;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	stateP->sendOnly = sendOnly;
 
 	LWLockRelease(SInvalWriteLock);

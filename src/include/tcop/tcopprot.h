@@ -70,18 +70,12 @@ extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from S
 																 * handler */
 extern void prepare_for_client_read(void);
 extern void client_read_ended(void);
-<<<<<<< HEAD
 extern void prepare_for_client_write(void);
 extern void client_write_ended(void);
 extern void process_postgres_switches(int argc, char *argv[],
 						  GucContext ctx, const char **dbname);
 extern int	PostgresMain(int argc, char *argv[],
 			 const char *dbname, const char *username);
-=======
-extern const char *process_postgres_switches(int argc, char *argv[],
-						  GucContext ctx);
-extern int	PostgresMain(int argc, char *argv[], const char *username);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);

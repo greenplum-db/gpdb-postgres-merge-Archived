@@ -6,13 +6,9 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -282,9 +278,6 @@ smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
 
 	DropRelFileNodeBuffers(rnode, forknum, isTemp, 0);
 
-<<<<<<< HEAD
-	mdunlink(rnode, forknum, isRedo);
-=======
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
 	 * But we can't because we don't know the OID (and in cases involving
@@ -309,8 +302,7 @@ smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
-	(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	mdunlink(rnode, forknum, isRedo);
 }
 
 /*
@@ -402,11 +394,6 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 	 */
 	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, isLocalBuf, nblocks);
 
-<<<<<<< HEAD
-	/* Do the truncation */
-	// GPDB_84_MERGE_FIXME: is allowedNotFound = false correct here?
-	mdtruncate(reln, forknum, nblocks, isLocalBuf, false /* allowedNotFound */);
-=======
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
 	 * references they may have for this rel.  This is useful because they
@@ -422,9 +409,8 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 	/*
 	 * Do the truncation.
 	 */
-	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, forknum, nblocks,
-												 isTemp);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	// GPDB_84_MERGE_FIXME: is allowedNotFound = false correct here?
+	mdtruncate(reln, forknum, nblocks, isLocalBuf, false /* allowedNotFound */);
 }
 
 /*

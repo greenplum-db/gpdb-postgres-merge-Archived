@@ -178,15 +178,6 @@ proc_exit_prepare(int code)
 	CritSectionCount = 0;
 
 	/*
-<<<<<<< HEAD
-	 * Also clear the error context stack, to prevent error callbacks
-	 * from being invoked by any elog/ereport calls made during proc_exit.
-	 * Whatever context they might want to offer is probably not relevant,
-	 * and in any case they are likely to fail outright after we've done
-	 * things like aborting any open transaction.  (In normal exit scenarios
-	 * the context stack should be empty anyway, but it might not be in the
-	 * case of elog(FATAL) for example.)
-=======
 	 * Also clear the error context stack, to prevent error callbacks from
 	 * being invoked by any elog/ereport calls made during proc_exit. Whatever
 	 * context they might want to offer is probably not relevant, and in any
@@ -194,13 +185,11 @@ proc_exit_prepare(int code)
 	 * aborting any open transaction.  (In normal exit scenarios the context
 	 * stack should be empty anyway, but it might not be in the case of
 	 * elog(FATAL) for example.)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	error_context_stack = NULL;
 	/* For the same reason, reset debug_query_string before it's clobbered */
 	debug_query_string = NULL;
 
-<<<<<<< HEAD
 	/*
 	 * Make sure threads get cleaned up: there might be still ongoing
 	 * dispatch threads with something that will be cleaned up during
@@ -230,8 +219,6 @@ proc_exit_prepare(int code)
 
 	elog(DEBUG3, "proc_exit(%d)", code);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* do our shared memory exits first */
 	shmem_exit(code);
 

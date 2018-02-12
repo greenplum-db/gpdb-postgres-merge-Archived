@@ -236,32 +236,20 @@ MarkPostmasterChildActive(void)
 }
 
 /*
-<<<<<<< HEAD
  * MarkPostmasterChildWalSender - mark a postmaster child as a WAL sender
  * process.  This is called in the child process, sometime after marking the
  * child as active.
-=======
- * MarkPostmasterChildWalSender - like MarkPostmasterChildActive(), but
- * marks the postmaster child as a WAL sender instead of a regular backend.
- * This is called in the child process.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 void
 MarkPostmasterChildWalSender(void)
 {
 	int			slot = MyPMChildSlot;
 
-<<<<<<< HEAD
 	Assert(am_walsender);
 
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
 	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ACTIVE);
-=======
-	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
-	slot--;
-	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_WALSENDER;
 }
 

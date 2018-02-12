@@ -54,13 +54,10 @@
 #include "miscadmin.h"
 #include "port/atomics.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
-#include "utils/combocid.h"
-=======
 #include "storage/spin.h"
 #include "storage/standby.h"
 #include "utils/builtins.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#include "utils/combocid.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 #include "utils/guc.h"
@@ -442,27 +439,14 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 			/* must be cleared with xid/xmin: */
 			proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 			proc->inCommit = false; /* be sure this is cleared in abort */
+			proc->recoveryConflictPending = false;
 			proc->serializableIsoLevel = false;
 			proc->inDropTransaction = false;
 
-<<<<<<< HEAD
 			/* Clear the subtransaction-XID cache too while holding the lock */
 			proc->subxids.nxids = 0;
 			proc->subxids.overflowed = false;
 		}
-=======
-		proc->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		proc->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->inCommit = false; /* be sure this is cleared in abort */
-		proc->recoveryConflictPending = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		proc->subxids.nxids = 0;
-		proc->subxids.overflowed = false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Also advance global latestCompletedXid while holding the lock */
 		/*
@@ -492,12 +476,9 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 		/* must be cleared with xid/xmin: */
 		proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 		proc->inCommit = false; /* be sure this is cleared in abort */
-<<<<<<< HEAD
+		proc->recoveryConflictPending = false;
 		proc->serializableIsoLevel = false;
 		proc->inDropTransaction = false;
-=======
-		proc->recoveryConflictPending = false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		Assert(proc->subxids.nxids == 0);
 		Assert(proc->subxids.overflowed == false);
@@ -553,7 +534,6 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 }
 
 /*
-<<<<<<< HEAD
  * Clears the current transaction from PGPROC.
  *
  * Must be called while holding the ProcArrayLock.
@@ -566,7 +546,9 @@ ClearTransactionFromPgProc_UnderLock(PGPROC *proc, bool commit)
 	 * directly.
 	 */
 	ProcArrayClearTransaction(proc, commit);
-=======
+}
+
+/*
  * ProcArrayInitRecoveryInfo
  *
  * When trying to assemble our snapshot we only care about xids after this value.
@@ -882,7 +864,6 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
 		procArray->lastOverflowedXid = max_xid;
 
 	LWLockRelease(ProcArrayLock);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -2274,27 +2255,6 @@ GetSnapshotData(Snapshot snapshot)
 
 	if (!snapshot->takenDuringRecovery)
 	{
-<<<<<<< HEAD
-		volatile PGPROC *proc = arrayP->procs[index];
-		TransactionId xid;
-
-#if 0 /* Upstream code not applicable to GPDB, why explained in vacuumStatement_Relation */
-		/* Ignore procs running LAZY VACUUM */
-		if (proc->vacuumFlags & PROC_IN_VACUUM)
-			continue;
-#endif
-
-		/* Update globalxmin to be the smallest valid xmin */
-		xid = proc->xmin;		/* fetch just once */
-		if (TransactionIdIsNormal(xid) &&
-			TransactionIdPrecedes(xid, globalxmin))
-			globalxmin = xid;
-
-		/* Fetch xid just once - see GetNewTransactionId */
-		xid = proc->xid;
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/*
 		 * Spin over procArray checking xid, xmin, and subxids.  The goal is
 		 * to gather all active xids, find the lowest xmin, and try to record
@@ -2308,9 +2268,11 @@ GetSnapshotData(Snapshot snapshot)
 			volatile PGPROC *proc = arrayP->procs[index];
 			TransactionId xid;
 
+#if 0 /* Upstream code not applicable to GPDB, why explained in vacuumStatement_Relation */
 			/* Ignore procs running LAZY VACUUM */
 			if (proc->vacuumFlags & PROC_IN_VACUUM)
 				continue;
+#endif
 
 			/* Update globalxmin to be the smallest valid xmin */
 			xid = proc->xmin;	/* fetch just once */
@@ -2485,10 +2447,6 @@ GetSnapshotData(Snapshot snapshot)
 }
 
 /*
-<<<<<<< HEAD
- * GetVirtualXIDsDelayingChkpt -- Get the VXIDs of transactions that are
- * delaying checkpoint because they have critical actions in progress.
-=======
  * GetRunningTransactionData -- returns information about running transactions.
  *
  * Similar to GetSnapshotData but returns more information. We include
@@ -2624,8 +2582,8 @@ GetRunningTransactionData(void)
 }
 
 /*
- * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+ * GetVirtualXIDsDelayingChkpt -- Get the VXIDs of transactions that are
+ * delaying checkpoint because they have critical actions in progress.
  *
  * Constructs an array of VXIDs of transactions that are currently in commit
  * critical sections, as shown by having inCommit set in their PGXACT.
@@ -3423,7 +3381,6 @@ DisplayXidCache(void)
 }
 #endif   /* XIDCACHE_DEBUG */
 
-<<<<<<< HEAD
 PGPROC *
 FindProcByGpSessionId(long gp_session_id)
 {
@@ -3503,7 +3460,7 @@ FindAndSignalProcess(int sessionId, int commandId)
 	}
 
 	return queryCancelled;
-=======
+}
 
 /* ----------------------------------------------
  *		KnownAssignedTransactions sub-module
@@ -4301,5 +4258,4 @@ KnownAssignedXidsDisplay(int trace_level)
 		 buf.data);
 
 	pfree(buf.data);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }

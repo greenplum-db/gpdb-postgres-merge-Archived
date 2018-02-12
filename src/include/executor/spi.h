@@ -74,15 +74,9 @@ extern int	SPI_execute(const char *src, bool read_only, int64 tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 				 bool read_only, int64 tcount);
 extern int SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
-<<<<<<< HEAD
-										   ParamListInfo params,
-										   bool read_only, int64 tcount);
-extern int	SPI_exec(const char *src, int64 tcount);
-=======
 								ParamListInfo params,
 								bool read_only, long tcount);
-extern int	SPI_exec(const char *src, long tcount);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+extern int	SPI_exec(const char *src, int64 tcount);
 extern int SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 		  int64 tcount);
 extern int SPI_execute_snapshot(SPIPlanPtr plan,
