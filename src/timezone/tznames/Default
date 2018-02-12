@@ -4,11 +4,7 @@
 # timezone_abbreviations to 'Default'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
 #
-<<<<<<< HEAD
 # src/timezone/tznames/Default
-=======
-# $PostgreSQL: pgsql/src/timezone/tznames/Default,v 1.9 2010/05/11 22:36:52 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 #################### AFRICA ####################
@@ -253,7 +249,6 @@ KGT     Asia/Bishkek  # Kyrgyzstan Time (obsolete)
 KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
 KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time (obsolete)
 KST     32400    # Korean Standard Time
-<<<<<<< HEAD
                  #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
 MAGST   Asia/Magadan  # Magadan Summer Time (obsolete)
@@ -268,40 +263,10 @@ OMST    Asia/Omsk  # Omsk Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
 PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time (obsolete)
 PHT     28800    # Philippine Time (obsolete)
-=======
-                 #     (Asia/Pyongyang)
-LKT     21600    # Lanka Time
-                 #     (Asia/Colombo)
-MAGST   43200 D  # Magadan Summer Time
-                 #     (Asia/Magadan)
-MAGT    39600    # Magadan Time
-                 #     (Asia/Magadan)
-MMT     23400    # Myanmar Time
-                 #     (Asia/Rangoon)
-MYT     28800    # Malaysia Time
-                 #     (Asia/Kuala_Lumpur)
-                 #     (Asia/Kuching)
-NOVST   25200 D  # Novosibirsk Summer Time
-                 #     (Asia/Novosibirsk)
-NOVT    21600    # Novosibirsk Time
-                 #     (Asia/Novosibirsk)
-NPT     20700    # Nepal Time
-                 #     (Asia/Katmandu)
-OMSST   25200 D  # Omsk Summer Time
-                 #     (Asia/Omsk)
-OMST    21600    # Omsk Time
-                 #     (Asia/Omsk)
-PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
-                 #     (Asia/Kamchatka)
-PETT    43200    # Petropavlovsk-Kamchatski Time
-                 #     (Asia/Kamchatka)
-PHT     28800    # Phillipine Time (not in zic)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
-<<<<<<< HEAD
 SGT     Asia/Singapore  # Singapore Time (obsolete)
 TJT     18000    # Tajikistan Time (obsolete)
 TMT     Asia/Ashgabat  # Turkmenistan Time (obsolete)
@@ -316,36 +281,6 @@ YAKST   Asia/Yakutsk  # Yakutsk Summer Time (obsolete)
 YAKT    Asia/Yakutsk  # Yakutsk Time (obsolete)
 YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
 YEKT    Asia/Yekaterinburg  # Yekaterinburg Time (obsolete)
-=======
-SGT     28800    # Singapore Time
-                 #     (Asia/Singapore)
-TJT     18000    # Tajikistan Time
-                 #     (Asia/Dushanbe)
-TMT     18000    # Turkmenistan Time
-                 #     (Asia/Ashgabat)
-ULAST   32400 D  # Ulan Bator Summer Time
-                 #     (Asia/Ulaanbaatar)
-ULAT    28800    # Ulan Bator Time
-                 #     (Asia/Ulaanbaatar)
-UZST    21600 D  # Uzbekistan Summer Time
-                 #     (Asia/Samarkand)
-                 #     (Asia/Tashkent)
-UZT     18000    # Uzbekistan Time
-                 #     (Asia/Samarkand)
-                 #     (Asia/Tashkent)
-VLAST   39600 D  # Vladivostok Summer Time
-                 #     (Asia/Vladivostok)
-VLAT    36000    # Vladivostok Time
-                 #     (Asia/Vladivostok)
-YAKST   36000 D  # Yakutsk Summer Time
-                 #     (Asia/Yakutsk)
-YAKT    32400    # Yakutsk Time
-                 #     (Asia/Yakutsk)
-YEKST   21600 D  # Yekaterinburg Summer Time
-                 #     (Asia/Yekaterinburg)
-YEKT    18000    # Yekaterinburg Time
-                 #     (Asia/Yekaterinburg)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #################### ATLANTIC ####################
 

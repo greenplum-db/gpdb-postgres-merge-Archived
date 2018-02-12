@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # tz zone descriptions (deprecated version)
 #
-=======
-# <pre>
-# @(#)zone.tab	8.36
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
@@ -44,11 +39,7 @@ AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
 AQ	-7824+10654	Antarctica/Vostok	Vostok Station, Lake Vostok
 AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Adelie Land
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
-<<<<<<< HEAD
 AQ	-720041+0023206	Antarctica/Troll	Troll Station, Queen Maud Land
-=======
-AQ	-5430+15857	Antarctica/Macquarie	Macquarie Island Station, Macquarie Island
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, MN, SE, SF)
 AR	-2447-06525	America/Argentina/Salta	(SA, LP, NQ, RN)
@@ -339,11 +330,7 @@ RU	+5443+02030	Europe/Kaliningrad	Moscow-01 - Kaliningrad
 RU	+554521+0373704	Europe/Moscow	Moscow+00 - west Russia
 RU	+4457+03406	Europe/Simferopol	Moscow+00 - Crimea
 RU	+4844+04425	Europe/Volgograd	Moscow+00 - Caspian Sea
-<<<<<<< HEAD
 RU	+5312+05009	Europe/Samara	Moscow+00 (Moscow+01 after 2014-10-26) - Samara, Udmurtia
-=======
-RU	+5312+05009	Europe/Samara	Moscow - Samara, Udmurtia
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 RU	+5651+06036	Asia/Yekaterinburg	Moscow+02 - Urals
 RU	+5500+07324	Asia/Omsk	Moscow+03 - west Siberia
 RU	+5502+08255	Asia/Novosibirsk	Moscow+03 - Novosibirsk
@@ -355,17 +342,11 @@ RU	+6200+12940	Asia/Yakutsk	Moscow+06 - Lena River
 RU	+623923+1353314	Asia/Khandyga	Moscow+06 - Tomponsky, Ust-Maysky
 RU	+4310+13156	Asia/Vladivostok	Moscow+07 - Amur River
 RU	+4658+14242	Asia/Sakhalin	Moscow+07 - Sakhalin Island
-<<<<<<< HEAD
 RU	+643337+1431336	Asia/Ust-Nera	Moscow+07 - Oymyakonsky
 RU	+5934+15048	Asia/Magadan	Moscow+08 (Moscow+07 after 2014-10-26) - Magadan
 RU	+6728+15343	Asia/Srednekolymsk	Moscow+08 - E Sakha, N Kuril Is
 RU	+5301+15839	Asia/Kamchatka	Moscow+08 (Moscow+09 after 2014-10-26) - Kamchatka
 RU	+6445+17729	Asia/Anadyr	Moscow+08 (Moscow+09 after 2014-10-26) - Bering Sea
-=======
-RU	+5934+15048	Asia/Magadan	Moscow+08 - Magadan
-RU	+5301+15839	Asia/Kamchatka	Moscow+08 - Kamchatka
-RU	+6445+17729	Asia/Anadyr	Moscow+08 - Bering Sea
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 RW	-0157+03004	Africa/Kigali
 SA	+2438+04643	Asia/Riyadh
 SB	-0932+16012	Pacific/Guadalcanal

@@ -3,11 +3,7 @@
  * 2006-07-17 by Arthur David Olson.
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/timezone/zic.c
-=======
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.26 2010/03/13 00:40:43 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "postgres_fe.h"
@@ -51,14 +47,10 @@ typedef int64 zic_t;
 	(itssymlink(from) ? (errno = ENOTSUP, -1) : link(from, to))
 #endif
 
-<<<<<<< HEAD
 /* The maximum ptrdiff_t value, for pre-C99 platforms.  */
 #ifndef PTRDIFF_MAX
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
-=======
-static char elsieid[] = "@(#)zic.c	8.20";
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * The type for line numbers.  In Postgres, use %d to format them; upstream
@@ -160,7 +152,6 @@ static void rulesub(struct rule *rp,
 		const char *loyearp, const char *hiyearp,
 		const char *typep, const char *monthp,
 		const char *dayp, const char *timep);
-<<<<<<< HEAD
 static zic_t tadd(zic_t t1, zic_t t2);
 static bool yearistype(zic_t year, const char *type);
 
@@ -177,13 +168,6 @@ PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1};
 enum
 {
 WORK_AROUND_QTBUG_53071 = true};
-=======
-static void setboundaries(void);
-static pg_time_t tadd(const pg_time_t t1, long t2);
-static void usage(FILE *stream, int status);
-static void writezone(const char *name, const char *string);
-static int	yearistype(int year, const char *type);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static int	charcnt;
 static bool errors;
@@ -520,7 +504,6 @@ error(const char *string,...)
 }
 
 static void
-<<<<<<< HEAD
 warning(const char *string,...)
 {
 	va_list		args;
@@ -584,17 +567,6 @@ change_directory(char const *dir)
 			exit(EXIT_FAILURE);
 		}
 	}
-=======
-usage(FILE *stream, int status)
-{
-	(void) fprintf(stream, _("%s: usage is %s \
-[ --version ] [ --help ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\
-\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n\
-\n\
-Report bugs to tz@elsie.nci.nih.gov.\n"),
-				   progname, progname);
-	exit(status);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 static const char *psxrules;
@@ -628,19 +600,11 @@ main(int argc, char **argv)
 			close_file(stdout, NULL, NULL);
 			return EXIT_SUCCESS;
 		}
-<<<<<<< HEAD
 		else if (strcmp(argv[k], "--help") == 0)
 		{
 			usage(stdout, EXIT_SUCCESS);
 		}
 	while ((c = getopt(argc, argv, "d:l:p:L:vPsy:")) != EOF && c != -1)
-=======
-		else if (strcmp(argv[i], "--help") == 0)
-		{
-			usage(stdout, EXIT_SUCCESS);
-		}
-	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF && c != -1)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		switch (c)
 		{
 			default:
@@ -2642,11 +2606,7 @@ stringzone(char *result, struct zone const *zpfirst, ptrdiff_t zonecount)
 		}
 	}
 	if (stdrp == NULL && (zp->z_nrules != 0 || zp->z_stdoff != 0))
-<<<<<<< HEAD
 		return -1;
-=======
-		return;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	abbrvar = (stdrp == NULL) ? "" : stdrp->r_abbrvar;
 	len = doabbr(result, zp, abbrvar, 0, true);
 	offsetlen = stringoffset(result + len, -zp->z_gmtoff);
@@ -2750,11 +2710,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	if (leapseen)
 	{
 		updateminmax(leapminyear);
-<<<<<<< HEAD
 		updateminmax(leapmaxyear + (leapmaxyear < ZIC_MAX));
-=======
-		updateminmax(leapmaxyear + (leapmaxyear < INT_MAX));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	for (i = 0; i < zonecount; ++i)
 	{

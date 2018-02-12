@@ -35,11 +35,7 @@
  * This is ANSIish only when "multibyte character == plain character".
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/timezone/strftime.c
-=======
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.15 2010/03/11 18:43:24 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "postgres.h"
