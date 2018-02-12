@@ -9,11 +9,7 @@
  * Portions Copyright (c) 2011 - present, EMC Greenplum.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  *
-<<<<<<< HEAD
  * src/include/parser/parse_cte.h
-=======
- * $PostgreSQL: pgsql/src/include/parser/parse_cte.h,v 1.5 2010/02/26 02:01:26 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
