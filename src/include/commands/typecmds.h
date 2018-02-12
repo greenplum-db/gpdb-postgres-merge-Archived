@@ -26,11 +26,7 @@ extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void DefineEnum(CreateEnumStmt *stmt);
 extern Oid	DefineCompositeType(const RangeVar *typevar, List *coldeflist);
-<<<<<<< HEAD
 extern Oid	AssignTypeArrayOid(Oid namespace, const char *arrayname);
-=======
-extern Oid	AssignTypeArrayOid(void);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 extern void AlterDomainDefault(List *names, Node *defaultRaw);
 extern void AlterDomainNotNull(List *names, bool notNull);

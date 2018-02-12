@@ -480,13 +480,8 @@ ExecInsert(TupleTableSlot *slot,
 	 * insert index entries for tuple
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
-<<<<<<< HEAD
 		recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-											   estate, false);
-=======
-		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
 											   estate);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* AFTER ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
@@ -495,7 +490,6 @@ ExecInsert(TupleTableSlot *slot,
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
 
-<<<<<<< HEAD
 		/*
 		 * GPDB_90_MERGE_FIXME: do we really need this? It seems like if ORCA
 		 * can get us here, we shouldn't worry about it. Commenting to get
@@ -507,11 +501,9 @@ ExecInsert(TupleTableSlot *slot,
 		ExecARInsertTriggers(estate, resultRelInfo, tuple, recheckIndexes);
 	}
 
-#if 0 /* RETURNING not implemented in GPDB */
-=======
 	list_free(recheckIndexes);
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#if 0 /* RETURNING not implemented in GPDB */
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
@@ -1058,27 +1050,6 @@ ExecUpdate(ItemPointer tupleid,
 
 		if (slot == NULL)	/* "do nothing" */
 			return NULL;
-<<<<<<< HEAD
-=======
-
-		if (newtuple != tuple)	/* modified by Trigger(s) */
-		{
-			/*
-			 * Put the modified tuple into a slot for convenience of routines
-			 * below.  We assume the tuple was allocated in per-tuple memory
-			 * context, and therefore will go away by itself. The tuple table
-			 * slot should not try to clear it.
-			 */
-			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
-			TupleDesc	tupdesc = RelationGetDescr(resultRelationDesc);
-
-			if (newslot->tts_tupleDescriptor != tupdesc)
-				ExecSetSlotDescriptor(newslot, tupdesc);
-			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
-			slot = newslot;
-			tuple = newtuple;
-		}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -1224,15 +1195,9 @@ lreplace:;
 	 *
 	 * If it's a HOT update, we mustn't insert new index entries.
 	 */
-<<<<<<< HEAD
 	if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
 		recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-											   estate, false);
-=======
-	if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
-		recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
 											   estate);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
@@ -1245,12 +1210,9 @@ lreplace:;
 						 recheckIndexes);
 	}
 
-<<<<<<< HEAD
-#if 0 /* RETURNING not implemented in GPDB */
-=======
 	list_free(recheckIndexes);
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#if 0 /* RETURNING not implemented in GPDB */
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,

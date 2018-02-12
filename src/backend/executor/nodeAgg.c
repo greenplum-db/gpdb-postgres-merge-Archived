@@ -59,34 +59,6 @@
  *	  is used to run finalize functions and compute the output tuple;
  *	  this context can be reset once per output tuple.
  *
-<<<<<<< HEAD
- *	  Beginning in PostgreSQL 8.1, the executor's AggState node is passed as
- *	  the fmgr "context" value in all transfunc and finalfunc calls.  It is
- *	  not really intended that the transition functions will look into the
- *	  AggState node, but they can use code like
- *			if (fcinfo->context && IsA(fcinfo->context, AggState))
- *	  to verify that they are being called by nodeAgg.c and not as ordinary
- *	  SQL functions.  The main reason a transition function might want to know
- *	  that is that it can avoid palloc'ing a fixed-size pass-by-ref transition
- *	  value on every call: it can instead just scribble on and return its left
- *	  input.  Ordinarily it is completely forbidden for functions to modify
- *	  pass-by-ref inputs, but in the aggregate case we know the left input is
- *	  either the initial transition value or a previous function result, and
- *	  in either case its value need not be preserved.  See int8inc() for an
- *	  example.	Notice that advance_transition_function() is coded to avoid a
- *	  data copy step when the previous transition value pointer is returned.
- *
- *	  As of 9.4, aggregate transition functions can also use AggGetAggref()
- *	  to get hold of the Aggref expression node for their aggregate call.
- *	  This is mainly intended for ordered-set aggregates, which are not
- *	  supported as window functions.  (A regular aggregate function would
- *	  need some fallback logic to use this, since there's no Aggref node
- *	  for a window function.)
- *
- * Portions Copyright (c) 2007-2008, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
-=======
  *	  The executor's AggState node is passed as the fmgr "context" value in
  *	  all transfunc and finalfunc calls.  It is not recommended that the
  *	  transition functions look at the AggState node directly, but they can
@@ -98,7 +70,7 @@
  *	  it is completely forbidden for functions to modify pass-by-ref inputs,
  *	  but in the aggregate case we know the left input is either the initial
  *	  transition value or a previous function result, and in either case its
- *	  value need not be preserved.	See int8inc() for an example.  Notice that
+ *	  value need not be preserved.  See int8inc() for an example.  Notice that
  *	  advance_transition_function() is coded to avoid a data copy step when
  *	  the previous transition value pointer is returned.  Also, some
  *	  transition functions want to store working state in addition to the
@@ -109,9 +81,17 @@
  *	  AggState is available as context in earlier releases (back to 8.1),
  *	  but direct examination of the node is needed to use it before 9.0.
  *
+ *	  As of 9.4, aggregate transition functions can also use AggGetAggref()
+ *	  to get hold of the Aggref expression node for their aggregate call.
+ *	  This is mainly intended for ordered-set aggregates, which are not
+ *	  supported as window functions.  (A regular aggregate function would
+ *	  need some fallback logic to use this, since there's no Aggref node
+ *	  for a window function.)
  *
+ *
+ * Portions Copyright (c) 2007-2008, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -146,111 +126,7 @@
 #include "cdb/cdbexplain.h"
 #include "cdb/cdbvars.h" /* mpp_hybrid_hash_agg */
 
-<<<<<<< HEAD
 #define IS_HASHAGG(aggstate) (((Agg *) (aggstate)->ss.ps.plan)->aggstrategy == AGG_HASHED)
-=======
-/*
- * AggStatePerAggData - per-aggregate working state for the Agg scan
- */
-typedef struct AggStatePerAggData
-{
-	/*
-	 * These values are set up during ExecInitAgg() and do not change
-	 * thereafter:
-	 */
-
-	/* Links to Aggref expr and state nodes this working state is for */
-	AggrefExprState *aggrefstate;
-	Aggref	   *aggref;
-
-	/* number of input arguments for aggregate function proper */
-	int			numArguments;
-
-	/* number of inputs including ORDER BY expressions */
-	int			numInputs;
-
-	/* Oids of transfer functions */
-	Oid			transfn_oid;
-	Oid			finalfn_oid;	/* may be InvalidOid */
-
-	/*
-	 * fmgr lookup data for transfer functions --- only valid when
-	 * corresponding oid is not InvalidOid.  Note in particular that fn_strict
-	 * flags are kept here.
-	 */
-	FmgrInfo	transfn;
-	FmgrInfo	finalfn;
-
-	/* number of sorting columns */
-	int			numSortCols;
-
-	/* number of sorting columns to consider in DISTINCT comparisons */
-	/* (this is either zero or the same as numSortCols) */
-	int			numDistinctCols;
-
-	/* deconstructed sorting information (arrays of length numSortCols) */
-	AttrNumber *sortColIdx;
-	Oid		   *sortOperators;
-	bool	   *sortNullsFirst;
-
-	/*
-	 * fmgr lookup data for input columns' equality operators --- only
-	 * set/used when aggregate has DISTINCT flag.  Note that these are in
-	 * order of sort column index, not parameter index.
-	 */
-	FmgrInfo   *equalfns;		/* array of length numDistinctCols */
-
-	/*
-	 * initial value from pg_aggregate entry
-	 */
-	Datum		initValue;
-	bool		initValueIsNull;
-
-	/*
-	 * We need the len and byval info for the agg's input, result, and
-	 * transition data types in order to know how to copy/delete values.
-	 *
-	 * Note that the info for the input type is used only when handling
-	 * DISTINCT aggs with just one argument, so there is only one input type.
-	 */
-	int16		inputtypeLen,
-				resulttypeLen,
-				transtypeLen;
-	bool		inputtypeByVal,
-				resulttypeByVal,
-				transtypeByVal;
-
-	/*
-	 * Stuff for evaluation of inputs.	We used to just use ExecEvalExpr, but
-	 * with the addition of ORDER BY we now need at least a slot for passing
-	 * data to the sort object, which requires a tupledesc, so we might as
-	 * well go whole hog and use ExecProject too.
-	 */
-	TupleDesc	evaldesc;		/* descriptor of input tuples */
-	ProjectionInfo *evalproj;	/* projection machinery */
-
-	/*
-	 * Slots for holding the evaluated input arguments.  These are set up
-	 * during ExecInitAgg() and then used for each input row.
-	 */
-	TupleTableSlot *evalslot;	/* current input tuple */
-	TupleTableSlot *uniqslot;	/* used for multi-column DISTINCT */
-
-	/*
-	 * These values are working state that is initialized at the start of an
-	 * input tuple group and updated for each input tuple.
-	 *
-	 * For a simple (non DISTINCT/ORDER BY) aggregate, we just feed the input
-	 * values straight to the transition function.	If it's DISTINCT or
-	 * requires ORDER BY, we pass the input values into a Tuplesort object;
-	 * then at completion of the input tuple group, we scan the sorted values,
-	 * eliminate duplicates if needed, and run the transition function on the
-	 * rest.
-	 */
-
-	Tuplesortstate *sortstate;	/* sort object, if DISTINCT or ORDER BY */
-} AggStatePerAggData;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * AggStatePerAggData -- per-aggregate working state
@@ -649,11 +525,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 			/*
 			 * If the transfn is strict, we want to check for nullity before
 			 * storing the row in the sorter, to save space if there are a lot
-<<<<<<< HEAD
 			 * of nulls.  Note that we must only check numTransInputs columns,
-=======
-			 * of nulls.  Note that we must only check numArguments columns,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 * not numInputs, since nullity in columns used only for sorting
 			 * is not relevant here.
 			 */
@@ -817,11 +689,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	FunctionCallInfoData fcinfo;
 	TupleTableSlot *slot1 = peraggstate->evalslot;
 	TupleTableSlot *slot2 = peraggstate->uniqslot;
-<<<<<<< HEAD
 	int			numTransInputs = peraggstate->numTransInputs;
-=======
-	int			numArguments = peraggstate->numArguments;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			numDistinctCols = peraggstate->numDistinctCols;
 	bool		haveOldValue = false;
 	int			i;
@@ -1367,26 +1235,7 @@ agg_retrieve_direct(AggState *aggstate)
 			}
 		}
 
-<<<<<<< HEAD
 		if (!aggstate->has_partial_agg)
-=======
-		/*
-		 * Clear the per-output-tuple context for each group, as well as
-		 * aggcontext (which contains any pass-by-ref transvalues of the old
-		 * group).	We also clear any child contexts of the aggcontext; some
-		 * aggregate functions store working state in such contexts.
-		 */
-		ResetExprContext(econtext);
-
-		MemoryContextResetAndDeleteChildren(aggstate->aggcontext);
-
-		/*
-		 * Initialize working state for a new input tuple group
-		 */
-		initialize_aggregates(aggstate, peragg, pergroup);
-
-		if (aggstate->grp_firstTuple != NULL)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			/*
 			 * Clear the per-output-tuple context for each group, as well as
@@ -2088,25 +1937,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		peraggstate->aggref = aggref;
 		peraggstate->sortstate = NULL;
 
-<<<<<<< HEAD
 		/* Fetch the pg_aggregate row */
-=======
-		/*
-		 * Get actual datatypes of the inputs.	These could be different from
-		 * the agg's declared input types, when the agg accepts ANY or a
-		 * polymorphic type.
-		 */
-		numArguments = 0;
-		foreach(lc, aggref->args)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-			if (!tle->resjunk)
-				inputTypes[numArguments++] = exprType((Node *) tle->expr);
-		}
-		peraggstate->numArguments = numArguments;
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		aggTuple = SearchSysCache1(AGGFNOID,
 								   ObjectIdGetDatum(aggref->aggfnoid));
 		if (!HeapTupleIsValid(aggTuple))
@@ -2306,16 +2137,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 														NULL);
 
 		/*
-<<<<<<< HEAD
 		 * If we're doing either DISTINCT or ORDER BY for a plain agg, then we
 		 * have a list of SortGroupClause nodes; fish out the data in them and
 		 * stick them into arrays.	We ignore ORDER BY for an ordered-set agg,
 		 * however; the agg's transfn and finalfn are responsible for that.
-=======
-		 * If we're doing either DISTINCT or ORDER BY, then we have a list of
-		 * SortGroupClause nodes; fish out the data in them and stick them
-		 * into arrays.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 *
 		 * Note that by construction, if there is a DISTINCT clause then the
 		 * ORDER BY clause is a prefix of it (see transformDistinctClause).
@@ -2661,43 +2486,6 @@ AggGetPerAggEContext(FunctionCallInfo fcinfo)
 		return aggstate->ss.ps.ps_ExprContext;
 	}
 	return NULL;
-}
-
-
-/*
- * AggCheckCallContext - test if a SQL function is being called as an aggregate
- *
- * The transition and/or final functions of an aggregate may want to verify
- * that they are being called as aggregates, rather than as plain SQL
- * functions.  They should use this function to do so.	The return value
- * is nonzero if being called as an aggregate, or zero if not.	(Specific
- * nonzero values are AGG_CONTEXT_AGGREGATE or AGG_CONTEXT_WINDOW, but more
- * values could conceivably appear in future.)
- *
- * If aggcontext isn't NULL, the function also stores at *aggcontext the
- * identity of the memory context that aggregate transition values are
- * being stored in.
- */
-int
-AggCheckCallContext(FunctionCallInfo fcinfo, MemoryContext *aggcontext)
-{
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-	{
-		if (aggcontext)
-			*aggcontext = ((AggState *) fcinfo->context)->aggcontext;
-		return AGG_CONTEXT_AGGREGATE;
-	}
-	if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
-	{
-		if (aggcontext)
-			*aggcontext = ((WindowAggState *) fcinfo->context)->aggcontext;
-		return AGG_CONTEXT_WINDOW;
-	}
-
-	/* this is just to prevent "uninitialized variable" warnings */
-	if (aggcontext)
-		*aggcontext = NULL;
-	return 0;
 }
 
 /*

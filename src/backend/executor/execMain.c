@@ -21,13 +21,9 @@
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1430,21 +1426,18 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 }
 
 /*
-<<<<<<< HEAD
+ * Check that the query does not imply any writes to non-temp tables.
+ *
  * This function is used to check if the current statement will perform any writes.
  * It is used to enforce:
  *  (1) read-only mode (both fts and transcation isolation level read only)
  *      as well as
  *  (2) to keep track of when a distributed transaction becomes
  *      "dirty" and will require 2pc.
- Check that the query does not imply any writes to non-temp tables.
-=======
- * Check that the query does not imply any writes to non-temp tables.
  *
  * Note: in a Hot Standby slave this would need to reject writes to temp
  * tables as well; but an HS slave can't have created any temp tables
  * in the first place, so no need to check that.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static void
 ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
@@ -1460,17 +1453,13 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	 * it would still require catalog changes, probably not.
 	 */
 	if (plannedstmt->intoClause != NULL)
-<<<<<<< HEAD
 	{
 		Assert(plannedstmt->intoClause->rel);
 		if (plannedstmt->intoClause->rel->istemp)
 			changesTempTables = true;
 		else
-			goto fail;
+			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
-=======
-		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Fail if write permissions are requested on any non-temp table */
     rti = 0;
@@ -1516,20 +1505,9 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 
 		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
-<<<<<<< HEAD
 	if (changesTempTables)
 		ExecutorMarkTransactionDoesWrites();
 	return;
-
-fail:
-	if (XactReadOnly)
-		ereport(ERROR,
-				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-				 errmsg("transaction is read-only")));
-	else
-		ExecutorMarkTransactionDoesWrites();
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -1623,17 +1601,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * initialize result relation stuff, and open/lock the result rels.
 	 *
-<<<<<<< HEAD
-	 * We must do this before initializing the plan tree, else we might
-	 * try to do a lock upgrade if a result rel is also a source rel.
+	 * We must do this before initializing the plan tree, else we might try to
+	 * do a lock upgrade if a result rel is also a source rel.
 	 *
 	 * CDB: Note that we need this info even if we aren't the slice that will be doing
 	 * the actual updating, since it's where we learn things, such as if the row needs to
 	 * contain OIDs or not.
-=======
-	 * We must do this before initializing the plan tree, else we might try to
-	 * do a lock upgrade if a result rel is also a source rel.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (plannedstmt->resultRelations)
 	{
@@ -3697,14 +3670,9 @@ OpenIntoRel(QueryDesc *queryDesc)
 									 false);
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, reloptions, true);
-	AlterTableCreateToastTable(intoRelationId, InvalidOid, reloptions, false, false);
-
-<<<<<<< HEAD
+	AlterTableCreateToastTable(intoRelationId, reloptions, false);
 	AlterTableCreateAoSegTable(intoRelationId, false);
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
-=======
-	AlterTableCreateToastTable(intoRelationId, reloptions);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
     /* don't create AO block directory here, it'll be created when needed */
 	/*
@@ -3739,23 +3707,15 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * replication is in use. We can skip the FSM in any case.
 	 */
 	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-<<<<<<< HEAD
 		(use_wal ? 0 : HEAP_INSERT_SKIP_WAL);
-	myState->bistate = GetBulkInsertState();
-
-	/* Not using WAL requires rd_targblock be initially invalid */
-	Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
-
-	relFileNode.spcNode = tablespaceId;
-	relFileNode.dbNode = MyDatabaseId;
-	relFileNode.relNode = intoRelationId;
-=======
-		(XLogIsNeeded() ? 0 : HEAP_INSERT_SKIP_WAL);
 	myState->bistate = GetBulkInsertState();
 
 	/* Not using WAL requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(intoRelationDesc) == InvalidBlockNumber);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+	relFileNode.spcNode = tablespaceId;
+	relFileNode.dbNode = MyDatabaseId;
+	relFileNode.relNode = intoRelationId;
 }
 
 /*

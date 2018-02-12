@@ -333,12 +333,8 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 	hashtable->outerBatchFile = NULL;
 	hashtable->work_set = NULL;
 	hashtable->spaceUsed = 0;
-<<<<<<< HEAD
 	hashtable->spaceAllowed = operatorMemKB * 1024L;
-=======
 	hashtable->spacePeak = 0;
-	hashtable->spaceAllowed = work_mem * 1024L;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	hashtable->spaceUsedSkew = 0;
 	hashtable->spaceAllowedSkew =
 		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
@@ -911,13 +907,8 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		hashTuple->next = hashtable->buckets[bucketno];
 		hashtable->buckets[bucketno] = hashTuple;
 		hashtable->spaceUsed += hashTupleSize;
-<<<<<<< HEAD
-
-		/* Double the number of batches when too much data in hash table. */
-=======
 		if (hashtable->spaceUsed > hashtable->spacePeak)
 			hashtable->spacePeak = hashtable->spaceUsed;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		if (hashtable->spaceUsed > hashtable->spaceAllowed)
 		{
 			ExecHashIncreaseNumBatches(hashtable);
@@ -1629,13 +1620,7 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 
 	if (get_attstatsslot(&sslot, statsTuple,
 						 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
-=======
-						 NULL,
-						 &values, &nvalues,
-						 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		double		frac;
 		int			nbuckets;

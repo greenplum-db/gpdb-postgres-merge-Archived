@@ -53,12 +53,9 @@ InstrAlloc(int n, int instrument_options)
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_CDB))
 	{
-<<<<<<< HEAD
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
 		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		int			i;
 
 		for (i = 0; i < n; i++)
