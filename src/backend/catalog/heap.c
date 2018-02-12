@@ -3,13 +3,9 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -61,6 +57,8 @@
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_stat_last_operation.h"
+#include "catalog/pg_stat_last_shoperation.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
@@ -207,7 +205,7 @@ static FormData_pg_attribute a7 = {
 
 /*CDB*/
 static FormData_pg_attribute a8 = {
-	0, {"gp_segment_id"}, INT4OID, 0, 0, sizeof(gpsegmentId),
+	0, {"gp_segment_id"}, INT4OID, 0, sizeof(gpsegmentId),
 	GpSegmentIdAttributeNumber, 0, -1, -1,
 	true, 'p', 'i', true, false, false, true, 0
 };
@@ -352,13 +350,9 @@ heap_create(const char *relname,
 									 tupDesc,
 									 relid,
 									 reltablespace,
-<<<<<<< HEAD
                                      relkind,           /*CDB*/
-									 shared_relation);
-=======
 									 shared_relation,
 									 mapped_relation);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
@@ -483,11 +477,8 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	{
 		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
 						   tupdesc->attrs[i]->atttypid,
-<<<<<<< HEAD
-						   NIL /* assume we're creating a new rowtype */);
-=======
+						   NIL,	/* assume we're creating a new rowtype */
 						   allow_system_table_mods);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }
 
@@ -508,11 +499,8 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
  */
 void
 CheckAttributeType(const char *attname, Oid atttypid,
-<<<<<<< HEAD
-				   List *containing_rowtypes)
-=======
+				   List *containing_rowtypes,
 				   bool allow_system_table_mods)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	char		att_typtype = get_typtype(atttypid);
 	Oid			att_typelem;
@@ -587,11 +575,8 @@ CheckAttributeType(const char *attname, Oid atttypid,
 			if (attr->attisdropped)
 				continue;
 			CheckAttributeType(NameStr(attr->attname), attr->atttypid,
-<<<<<<< HEAD
-							   containing_rowtypes);
-=======
+							   containing_rowtypes,
 							   allow_system_table_mods);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 
 		relation_close(relation, AccessShareLock);
@@ -604,7 +589,8 @@ CheckAttributeType(const char *attname, Oid atttypid,
 		 * Must recurse into array types, too, in case they are composite.
 		 */
 		CheckAttributeType(attname, att_typelem,
-						   containing_rowtypes);
+						   containing_rowtypes,
+						   allow_system_table_mods);
 	}
 }
 
@@ -1320,7 +1306,6 @@ heap_create_with_catalog(const char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 
-<<<<<<< HEAD
 	/*
 	 * Was "appendonly" specified in the relopts? If yes, fix our relstorage.
 	 * Also, check for override (debug) GUCs.
@@ -1371,10 +1356,7 @@ heap_create_with_catalog(const char *relname,
 							 )));
 	}
 
-	CheckAttributeNamesTypes(tupdesc, relkind);
-=======
 	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (get_relname_relid(relname, relnamespace))
 		ereport(ERROR,
@@ -1422,33 +1404,12 @@ heap_create_with_catalog(const char *relname,
 	 * which locks both the Oid and relfilenode counter, syncs them, and
 	 * allocates the synced value to here.
 	 */
-<<<<<<< HEAD
 	if (!OidIsValid(relid) && Gp_role != GP_ROLE_EXECUTE)
 	{
 		if (relkind == RELKIND_SEQUENCE)
 			relid = GetNewSequenceRelationOid(pg_class_desc);
 		else
 			relid = GetNewOid(pg_class_desc);
-=======
-	if (!OidIsValid(relid))
-	{
-		/* Use binary-upgrade overrides if applicable */
-		if (OidIsValid(binary_upgrade_next_heap_relfilenode) &&
-			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE))
-		{
-			relid = binary_upgrade_next_heap_relfilenode;
-			binary_upgrade_next_heap_relfilenode = InvalidOid;
-		}
-		else if (OidIsValid(binary_upgrade_next_toast_relfilenode) &&
-				 relkind == RELKIND_TOASTVALUE)
-		{
-			relid = binary_upgrade_next_toast_relfilenode;
-			binary_upgrade_next_toast_relfilenode = InvalidOid;
-		}
-		else
-			relid = GetNewRelFileNode(reltablespace, pg_class_desc);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -1505,7 +1466,6 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (IsUnderPostmaster && ((relkind == RELKIND_RELATION && !appendOnlyRel) ||
 							  relkind == RELKIND_VIEW ||
-<<<<<<< HEAD
 							  relkind == RELKIND_COMPOSITE_TYPE) &&
 		relnamespace != PG_BITMAPINDEX_NAMESPACE)
 	{
@@ -1531,10 +1491,6 @@ heap_create_with_catalog(const char *relname,
 			new_array_oid = GetNewOid(pg_type);
 		heap_close(pg_type, AccessShareLock);
 	}
-=======
-							  relkind == RELKIND_COMPOSITE_TYPE))
-		new_array_oid = AssignTypeArrayOid();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Since defining a relation also defines a complex type, we add a new
@@ -3188,7 +3144,7 @@ heap_truncate(List *relids)
 			 * assumptions in the above comment?
 			 */
 			TruncateRelfiles(rel, InvalidSubTransactionId);
-			reindex_relation(RelationGetRelid(rel), true);
+			reindex_relation(RelationGetRelid(rel), true, true);
 		}
 		else
 		{

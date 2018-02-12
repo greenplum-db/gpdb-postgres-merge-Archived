@@ -38,8 +38,7 @@ all: $(BKIFILES) schemapg.h $(CATALOG_JSON)
 # indexing.h had better be last, and toasting.h just before it.
 # And pg_proc_gp.h must be immediately after pg_proc.h
 
-POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
-	pg_proc.h pg_proc_gp.h \
+POSTGRES_PLAIN_BKI_HEADERS := \
 	pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
@@ -47,14 +46,16 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_statistic.h pg_rewrite.h pg_trigger.h pg_description.h \
 	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_db_role_setting.h pg_tablespace.h pg_pltemplate.h \
-	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h pg_resgroup.h\
+	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
 	pg_default_acl.h \
+	pg_resqueue.h pg_resqueuecapability.h pg_resourcetype.h \
+	pg_resgroup.h pg_resgroupcapability.h \
 	gp_configuration_history.h gp_id.h gp_policy.h gp_version.h \
 	gp_segment_config.h \
-	pg_exttable.h pg_appendonly.h aoseg.h \
+	pg_exttable.h pg_appendonly.h \
 	gp_fastsequence.h pg_extprotocol.h \
 	pg_partition.h pg_partition_rule.h \
 	pg_attribute_encoding.h \
@@ -63,8 +64,14 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_proc_callback.h \
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
-	toasting.h indexing.h \
-    )
+	pg_stat_last_operation.h pg_stat_last_shoperation.h \
+	toasting.h indexing.h
+
+POSTGRES_PROCESSED_BKI_HEADERS := \
+	pg_proc.h pg_am.h
+
+POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, $(POSTGRES_PLAIN_BKI_HEADERS)) \
+	 $(addsuffix .processed, $(addprefix $(top_builddir)/src/include/catalog/, $(POSTGRES_PROCESSED_BKI_HEADERS)))
 
 # location of Catalog.pm
 catalogdir = $(top_srcdir)/src/backend/catalog
@@ -90,14 +97,19 @@ schemapg.h: postgres.bki ;
 # process_col_defaults.pl reads the catalog headers, and creates a modified
 # source file (postgres_bki_srcs) that has all the defaults injected into
 # the DATA rows. That is fed to genbki.sh, instead of the original headers.
-postgres_bki_srcs: process_col_defaults.pl $(POSTGRES_BKI_SRCS)
-	cat $(POSTGRES_BKI_SRCS) | $(PERL) process_col_defaults.pl > postgres_bki_srcs
+
+$(top_builddir)/src/include/catalog/pg_proc.h.processed: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
+	cat $^ | $(PERL) process_col_defaults.pl > $@
+
+$(top_builddir)/src/include/catalog/pg_am.h.processed: $(top_srcdir)/src/include/catalog/pg_am.h
+	cat $^ | $(PERL) process_col_defaults.pl > $@
+
 
 $(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
 	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
 
-postgres.bki: genbki.pl Catalog.pm postgres_bki_srcs
-	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(MAJORVERSION) postgres_bki_srcs
+postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
+	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(PG_MAJORVERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs

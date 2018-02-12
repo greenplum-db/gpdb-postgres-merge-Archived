@@ -36,7 +36,9 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
+#include "catalog/pg_resourcetype.h"
 #include "catalog/pg_resqueue.h"
+#include "catalog/pg_resqueuecapability.h"
 #include "catalog/pg_resgroup.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_shdepend.h"
@@ -48,6 +50,8 @@
 
 #include "catalog/gp_configuration_history.h"
 #include "catalog/gp_segment_config.h"
+#include "catalog/pg_stat_last_operation.h"
+#include "catalog/pg_stat_last_shoperation.h"
 
 #include "catalog/gp_id.h"
 #include "catalog/gp_version.h"
@@ -148,7 +152,6 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-<<<<<<< HEAD
 		if (forknum != MAIN_FORKNUM)
 			path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
 					 rnode.spcNode, tablespace_version_directory(),
@@ -156,18 +159,6 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 		else
 			path = psprintf("pg_tblspc/%u/%s/%u/%u",
 					 rnode.spcNode, tablespace_version_directory(),
-=======
-		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
-			1 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-		path = (char *) palloc(pathlen);
-		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
-					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
-		else
-			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
-					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					 rnode.dbNode, rnode.relNode);
 	}
 	return path;
@@ -236,16 +227,8 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-<<<<<<< HEAD
 		path = psprintf("pg_tblspc/%u/%s/%u",
 						spcNode, tablespace_version_directory(), dbNode);
-=======
-		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
-			1 + OIDCHARS + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "pg_tblspc/%u/%s/%u",
-				 spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	return path;
 }
@@ -780,11 +763,7 @@ GetNewSequenceRelationOid(Relation relation)
  * created by bootstrap have preassigned OIDs, so there's no need.
  */
 Oid
-<<<<<<< HEAD
-GetNewRelFileNode(Oid reltablespace, bool relisshared)
-=======
-GetNewRelFileNode(Oid reltablespace, Relation pg_class)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+GetNewRelFileNode(Oid reltablespace)
 {
 	RelFileNode rnode;
 	char	   *rpath;

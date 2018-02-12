@@ -34,7 +34,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 
 /*
@@ -69,9 +68,6 @@ add_type_encoding(Oid typid, Datum typoptions)
 
 	heap_close(pg_type_encoding_desc, RowExclusiveLock);
 }
-=======
-Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* ----------------------------------------------------------------
  *		TypeShellMake
@@ -158,12 +154,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 * create a new type tuple
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
-
-	if (OidIsValid(binary_upgrade_next_pg_type_oid))
-	{
-		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-		binary_upgrade_next_pg_type_oid = InvalidOid;
-	}
 
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
@@ -459,11 +449,6 @@ TypeCreateWithOptions(Oid newTypeOid,
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
-		else if (OidIsValid(binary_upgrade_next_pg_type_oid))
-		{
-			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-			binary_upgrade_next_pg_type_oid = InvalidOid;
-		}
 		/* else allow system to assign oid */
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);

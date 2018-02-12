@@ -59,7 +59,7 @@ extern Oid GetNewOid(Relation relation);
 extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 				   AttrNumber oidcolumn);
 extern Oid GetNewSequenceRelationOid(Relation relation);
-extern Oid	GetNewRelFileNode(Oid reltablespace, Relation pg_class);
+extern Oid	GetNewRelFileNode(Oid reltablespace_class);
 
 const char *tablespace_version_directory(void);
 

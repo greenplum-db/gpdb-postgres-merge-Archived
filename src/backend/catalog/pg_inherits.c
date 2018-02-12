@@ -35,16 +35,6 @@
 static int	oid_cmp(const void *p1, const void *p2);
 
 
-static int
-oid_cmp(const void *left, const void *right)
-{
-	if (*(Oid *)left < *(Oid *)right)
-		return -1;
-	if (*(Oid *)left > *(Oid *)right)
-		return 1;
-	return 0;
-}
-
 /*
  * find_inheritance_children
  *
@@ -65,16 +55,10 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 	ScanKeyData key[1];
 	HeapTuple	inheritsTuple;
 	Oid			inhrelid;
-<<<<<<< HEAD
-	ListCell   *item;
-	int         i;
-	Oid        *ordered_list;
-=======
 	Oid		   *oidarr;
 	int			maxoids,
 				numoids,
 				i;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Can skip the scan if pg_class shows the relation has never had a
@@ -164,19 +148,24 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 	 * child.  To guarantee that the child <--> new OID pairs are
 	 * identical on master and segments, we need the following sort.
 	 */
-	ordered_list = (Oid *) palloc(sizeof(Oid) * list_length(list));
-	i = 0;
-	foreach(item, list)
 	{
-		ordered_list[i++] = lfirst_oid(item);
+		ListCell   *item;
+		Oid        *ordered_list;
+
+		ordered_list = (Oid *) palloc(sizeof(Oid) * list_length(list));
+		i = 0;
+		foreach(item, list)
+		{
+			ordered_list[i++] = lfirst_oid(item);
+		}
+		qsort(ordered_list, list_length(list), sizeof(Oid), oid_cmp);
+		i = 0;
+		foreach(item, list)
+		{
+			lfirst_oid(item) = ordered_list[i++];
+		}
+		pfree(ordered_list);
 	}
-	qsort(ordered_list, list_length(list), sizeof(Oid), oid_cmp);
-	i = 0;
-	foreach(item, list)
-	{
-		lfirst_oid(item) = ordered_list[i++];
-	}
-	pfree(ordered_list);
 
 	return list;
 }

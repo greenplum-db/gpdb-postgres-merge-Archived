@@ -67,15 +67,6 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
-<<<<<<< HEAD
-	{
-		if (num_elems != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("EnumValuesCreate() can only set a single OID")));
-		oids[0] = binary_upgrade_next_pg_enum_oid;
-		binary_upgrade_next_pg_enum_oid = InvalidOid;
-=======
 	{
 		if (num_elems != 1)
 			ereport(ERROR,
@@ -96,20 +87,6 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 		for (elemno = 0; elemno < num_elems; elemno++)
 		{
 			/*
-			 * The pg_enum.oid is stored in user tables.  This oid must be
-			 * preserved by binary upgrades.
-			 */
-			oids[elemno] = GetNewOid(pg_enum);
-		}
-		/* sort them, just in case counter wrapped from high to low */
-		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-	}
-	else
-	{
-		for (elemno = 0; elemno < num_elems; elemno++)
-		{
-			/*
 			 * In QE node, however, use the OIDs assigned by the master (they are delivered
 			 * out-of-band, see oid_dispatch.c.
 			 */
@@ -119,13 +96,10 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 				oids[elemno] = GetNewOid(pg_enum);
 		}
 
-<<<<<<< HEAD
 		/* sort them, just in case counter wrapped from high to low */
 		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 	}
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* and make the entries */
 	memset(nulls, false, sizeof(nulls));
 

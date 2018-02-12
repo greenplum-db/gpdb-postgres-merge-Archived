@@ -200,12 +200,8 @@ static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, int cacheid, ItemPointer tuplePtr);
 static bool MatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
-<<<<<<< HEAD
-						   int **argnumbers);
-static bool TempNamespaceValid(bool error_if_removed);
-=======
 			   int **argnumbers);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+static bool TempNamespaceValid(bool error_if_removed);
 
 /* These don't really need to appear in any header file */
 Datum		pg_table_is_visible(PG_FUNCTION_ARGS);
@@ -742,17 +738,9 @@ TypeIsVisible(Oid typid)
 				visible = true;
 				break;
 			}
-<<<<<<< HEAD
-
-			if (SearchSysCacheExists(TYPENAMENSP,
-									 PointerGetDatum(typname),
-									 ObjectIdGetDatum(namespaceId),
-									 0, 0))
-=======
 			if (SearchSysCacheExists2(TYPENAMENSP,
 									  PointerGetDatum(typname),
 									  ObjectIdGetDatum(namespaceId)))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			{
 				/* Found something else first in path */
 				break;
@@ -3089,15 +3077,9 @@ get_conversion_oid(List *name, bool missing_ok)
 	{
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(schemaname);
-<<<<<<< HEAD
 		conoid = GetSysCacheOid2(CONNAMENSP,
-								 PointerGetDatum(conversion_name),
-								 ObjectIdGetDatum(namespaceId));
-=======
-		return GetSysCacheOid2(CONNAMENSP,
 							   PointerGetDatum(conversion_name),
 							   ObjectIdGetDatum(namespaceId));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -3333,7 +3315,6 @@ InitTempTableNamespace(void)
 						get_database_name(MyDatabaseId))));
 
 	/*
-<<<<<<< HEAD
 	 * TempNamespace name creation rules are different depending on the
 	 * nature of the current connection role.
 	 */
@@ -3355,6 +3336,21 @@ InitTempTableNamespace(void)
 			break;
 	}
 
+	/*
+	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
+	 * from problems with modifying the system catalogs, there is a naming
+	 * conflict: pg_temp_N belongs to the session with BackendId N on the
+	 * master, not to a slave session with the same BackendId.	We should not
+	 * be able to get here anyway due to XactReadOnly checks, but let's just
+	 * make real sure.	Note that this also backstops various operations that
+	 * allow XactReadOnly transactions to modify temp tables; they'd need
+	 * RecoveryInProgress checks if not for this.
+	 */
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+				 errmsg("cannot create temporary tables during recovery")));
+
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
@@ -3375,27 +3371,6 @@ InitTempTableNamespace(void)
 	 * old schemas.
 	 */
 	if (OidIsValid(namespaceId))
-=======
-	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
-	 * from problems with modifying the system catalogs, there is a naming
-	 * conflict: pg_temp_N belongs to the session with BackendId N on the
-	 * master, not to a slave session with the same BackendId.	We should not
-	 * be able to get here anyway due to XactReadOnly checks, but let's just
-	 * make real sure.	Note that this also backstops various operations that
-	 * allow XactReadOnly transactions to modify temp tables; they'd need
-	 * RecoveryInProgress checks if not for this.
-	 */
-	if (RecoveryInProgress())
-		ereport(ERROR,
-				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-				 errmsg("cannot create temporary tables during recovery")));
-
-	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
-
-	namespaceId = GetSysCacheOid1(NAMESPACENAME,
-								  CStringGetDatum(namespaceName));
-	if (!OidIsValid(namespaceId))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		RemoveTempRelations(namespaceId);
 		RemoveSchemaById(namespaceId);
@@ -3427,16 +3402,10 @@ InitTempTableNamespace(void)
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
 			 session_suffix);
 
-<<<<<<< HEAD
 	toastspaceId = GetSysCacheOid(NAMESPACENAME,
 								  CStringGetDatum(namespaceName),
 								  0, 0, 0);
 	if (OidIsValid(toastspaceId))
-=======
-	toastspaceId = GetSysCacheOid1(NAMESPACENAME,
-								   CStringGetDatum(namespaceName));
-	if (!OidIsValid(toastspaceId))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		RemoveSchemaById(toastspaceId);
 		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
@@ -3797,18 +3766,11 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 				continue;
 			if (strcmp(curname, "pg_temp") == 0)
 				continue;
-<<<<<<< HEAD
-			if (!SearchSysCacheExists(NAMESPACENAME,
-									  CStringGetDatum(curname),
-									  0, 0, 0))
+			if (!SearchSysCacheExists1(NAMESPACENAME,
+									   CStringGetDatum(curname)))
 			{
 				if (Gp_role != GP_ROLE_EXECUTE)
 					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
-=======
-			if (!SearchSysCacheExists1(NAMESPACENAME,
-									   CStringGetDatum(curname)))
-				ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 						(errcode(ERRCODE_UNDEFINED_SCHEMA),
 						 errmsg("schema \"%s\" does not exist", curname)));
 			}

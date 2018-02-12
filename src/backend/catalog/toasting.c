@@ -38,11 +38,7 @@ extern Oid	binary_upgrade_next_toast_relfilenode;
 Oid			binary_upgrade_next_pg_type_toast_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-<<<<<<< HEAD
-				   Datum reloptions, bool force, bool is_part_child);
-=======
-				   Datum reloptions);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				   Datum reloptions, bool is_part_child);
 static bool needs_toast_table(Relation rel);
 
 
@@ -59,12 +55,7 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-<<<<<<< HEAD
-AlterTableCreateToastTable(Oid relOid, Oid toastOid,
-						   Datum reloptions, bool force, bool is_part_child)
-=======
-AlterTableCreateToastTable(Oid relOid, Datum reloptions)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child)
 {
 	Relation	rel;
 
@@ -79,11 +70,7 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions)
 		rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
-<<<<<<< HEAD
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, force, is_part_child);
-=======
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, is_part_child);
 
 	heap_close(rel, NoLock);
 }
@@ -109,11 +96,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-<<<<<<< HEAD
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false, false))
-=======
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -129,12 +112,8 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
-<<<<<<< HEAD
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, bool force, bool is_part_child)
-=======
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions,
+				   bool is_part_child)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;

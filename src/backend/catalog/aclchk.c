@@ -457,7 +457,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				else if (rel_is_child_partition(relid))
 				{
 					/* get my children */
-					a = find_all_inheritors(relid, NoLock);
+					a = find_all_inheritors(relid, NoLock, NULL);
 					if (a)
 						added_objs = true;
 
@@ -2259,7 +2259,7 @@ CopyRelationAcls(Oid srcId, Oid destId)
 	nnewmembers = aclmembers(acl, &newmembers);
 
 	updateAclDependencies(RelationRelationId, destId, 0,
-						  ownerId, true /* isGrant */,
+						  ownerId,
 						  0, NULL,
 						  nnewmembers, newmembers);
 
@@ -2318,7 +2318,7 @@ CopyRelationAcls(Oid srcId, Oid destId)
 		nnewmembers = aclmembers(acl, &newmembers);
 
 		updateAclDependencies(RelationRelationId, destId, attnum,
-							  ownerId, true /* isGrant */,
+							  ownerId,
 							  0, NULL,
 							  nnewmembers, newmembers);
 
@@ -3528,7 +3528,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ExtprotocolRelationId,
 							  HeapTupleGetOid(tuple), 0,
-							  ownerId, istmt->is_grant,
+							  ownerId,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 

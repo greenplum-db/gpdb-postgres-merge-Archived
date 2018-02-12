@@ -859,16 +859,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	bool		haspolyarg;
 	int			i;
 
-<<<<<<< HEAD
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
 
-	tuple = SearchSysCache(PROCOID,
-						   ObjectIdGetDatum(funcoid),
-						   0, 0, 0);
-=======
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
