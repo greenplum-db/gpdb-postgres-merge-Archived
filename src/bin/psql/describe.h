@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/describe.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/describe.h,v 1.43 2010/01/02 16:57:59 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H

@@ -45,11 +45,8 @@
 
 #include <signal.h>
 
-<<<<<<< HEAD
-#include "access/distributedlog.h"
-=======
 #include "access/clog.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#include "access/distributedlog.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"

@@ -3,13 +3,9 @@
  * fd.c
  *	  Virtual file descriptor code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2267,11 +2263,7 @@ RemovePgTempFiles(void)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
-<<<<<<< HEAD
 				 spc_de->d_name, tablespace_version_directory(), PG_TEMP_FILES_DIR);
-=======
-			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		RemovePgTempFilesInDir(temp_path);
 	}
 

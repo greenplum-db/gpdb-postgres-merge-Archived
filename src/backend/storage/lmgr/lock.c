@@ -38,11 +38,8 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-<<<<<<< HEAD
 #include "storage/lmgr.h"
-=======
 #include "storage/standby.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"

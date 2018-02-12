@@ -4,19 +4,11 @@
  *	  Routines for interprocess signalling
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/backend/storage/ipc/procsignal.c
-=======
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.6 2010/02/26 02:01:00 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +25,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
-<<<<<<< HEAD
-=======
 #include "storage/standby.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "tcop/tcopprot.h"
 
 

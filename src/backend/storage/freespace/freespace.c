@@ -306,13 +306,8 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 			return;				/* nothing to do; the FSM was already smaller */
 	}
 
-<<<<<<< HEAD
-	/* Truncate the unused FSM pages */
-	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_isLocalBuf);
-=======
 	/* Truncate the unused FSM pages, and send smgr inval message */
-	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_istemp);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks, rel->rd_isLocalBuf);
 
 	/*
 	 * We might as well update the local smgr_fsm_nblocks setting.

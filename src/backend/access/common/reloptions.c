@@ -253,11 +253,8 @@ initialize_reloptions(void)
 	int			i;
 	int			j;
 
-<<<<<<< HEAD
 	initialize_reloptions_gp();
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	j = 0;
 	for (i = 0; boolRelOpts[i].gen.name; i++)
 		j++;

@@ -144,16 +144,10 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
-<<<<<<< HEAD
-			/*
-			 * We assume the commandTag is plain ASCII and therefore
-			 * requires no encoding conversion.
-=======
 
 			/*
 			 * We assume the commandTag is plain ASCII and therefore requires
 			 * no encoding conversion.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 */
 			pq_putmessage('C', commandTag, strlen(commandTag) + 1);
 			break;

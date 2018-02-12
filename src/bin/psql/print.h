@@ -3,11 +3,7 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
-<<<<<<< HEAD
  * src/bin/psql/print.h
-=======
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.46 2010/07/06 19:19:00 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #ifndef PRINT_H
 #define PRINT_H
