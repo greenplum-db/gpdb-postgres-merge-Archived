@@ -71,11 +71,7 @@ get_preassigned_oids_for_db(migratorContext *ctx, char *line)
  *	split_old_dump
  *
  *	This function splits pg_dumpall output into global values and
-<<<<<<< HEAD
- *	database creation, and per-db schemas.  This allows us to create
-=======
  *	database creation, and per-db schemas.	This allows us to create
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *	the toast place holders between restoring these two parts of the
  *	dump.  We split on the first "\connect " after a CREATE ROLE
  *	username match;  this is where the per-db restore starts.

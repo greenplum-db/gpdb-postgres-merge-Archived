@@ -184,11 +184,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 					int			matched = MatchText(t, tlen, p, plen);
 
 					if (matched != LIKE_FALSE)
-<<<<<<< HEAD
-						return matched;		/* TRUE or ABORT */
-=======
 						return matched; /* TRUE or ABORT */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				}
 
 				NextChar(t, tlen);

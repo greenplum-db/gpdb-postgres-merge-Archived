@@ -63,13 +63,8 @@
 
 /* static function decls */
 static Datum ExecEvalArrayRef(ArrayRefExprState *astate,
-<<<<<<< HEAD
-			 ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
-=======
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static bool isAssignmentIndirectionExpr(ExprState *exprstate);
 static Datum ExecEvalAggref(AggrefExprState *aggref,
 		   ExprContext *econtext,
@@ -405,11 +400,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		 * We might have a nested-assignment situation, in which the
 		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
 		 * obtain and modify the previous value of the array element or slice
-<<<<<<< HEAD
-		 * being replaced.  If so, we have to extract that value from the
-=======
 		 * being replaced.	If so, we have to extract that value from the
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 * array and pass it down via the econtext's caseValue.  It's safe to
 		 * reuse the CASE mechanism because there cannot be a CASE between
 		 * here and where the value would be needed, and an array assignment
@@ -438,11 +429,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 													  astate->refelemlength,
 													  astate->refelembyval,
 													  astate->refelemalign,
-<<<<<<< HEAD
-													  &econtext->caseValue_isNull);
-=======
 												&econtext->caseValue_isNull);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 			else
 			{

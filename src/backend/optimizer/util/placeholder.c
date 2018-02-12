@@ -373,11 +373,7 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
  * If any placeholder can be computed at a base rel and is needed above it,
  * add it to that rel's targetlist.  We have to do this separately from
  * fix_placeholder_eval_levels() because join removal happens in between,
-<<<<<<< HEAD
- * and can change the ph_eval_at sets.  There is essentially the same logic
-=======
  * and can change the ph_eval_at sets.	There is essentially the same logic
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * in add_placeholders_to_joinrel, but we can't do that part until joinrels
  * are formed.
  */

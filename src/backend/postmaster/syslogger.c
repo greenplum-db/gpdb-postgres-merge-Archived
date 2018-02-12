@@ -493,19 +493,11 @@ SysLoggerMain(int argc, char *argv[])
 		}
 #ifndef WIN32
 
-<<<<<<< HEAD
-        /*
-         * Wait for some data, timing out after 1 second
-         */
-        FD_ZERO(&rfds);
-        FD_SET(syslogPipe[0], &rfds);
-=======
 		/*
 		 * Wait for some data, timing out after 1 second
 		 */
 		FD_ZERO(&rfds);
 		FD_SET(syslogPipe[0], &rfds);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -1994,15 +1986,9 @@ pipeThread(void *arg)
     char		logbuffer[READ_BUF_SIZE];
     int			bytes_in_logbuffer = 0;
 
-<<<<<<< HEAD
-    for (;;)
-    {
-        DWORD		bytesRead;
-=======
 	for (;;)
 	{
 		DWORD		bytesRead;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		BOOL		result;
 
 		result = ReadFile(syslogPipe[0],
@@ -2069,13 +2055,8 @@ pipeThread(void *arg)
     flush_pipe_input(logbuffer, &bytes_in_logbuffer);
 
 	LeaveCriticalSection(&sysloggerSection);
-<<<<<<< HEAD
-     _endthread();
-    return 0;
-=======
 	_endthread();
 	return 0;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 #endif   /* WIN32 */
 

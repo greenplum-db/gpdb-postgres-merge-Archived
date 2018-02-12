@@ -4,11 +4,7 @@
  *	controldata functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9.2.1 2010/09/07 14:10:38 momjian Exp $
-=======
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
@@ -34,11 +30,7 @@ static void putenv2(migratorContext *ctx, const char *var, const char *val);
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the migration, but it provides enough for
-<<<<<<< HEAD
- * check mode.  We do not implement pg_resetxlog -n because it is hard to
-=======
  * check mode.	We do not implement pg_resetxlog -n because it is hard to
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * return valid xid data for a running server.
  */
 void

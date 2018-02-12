@@ -326,11 +326,7 @@ advance_windowaggregate(WindowAggState *winstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-<<<<<<< HEAD
-	 * pfree the prior transValue.  But if transfn returned a pointer to its
-=======
 	 * pfree the prior transValue.	But if transfn returned a pointer to its
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
@@ -485,11 +481,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * TODO: Rerunning aggregates from the frame start can be pretty slow. For
 	 * some aggregates like SUM and COUNT we could avoid that by implementing
 	 * a "negative transition function" that would be called for each row as
-<<<<<<< HEAD
-	 * it exits the frame.  We'd have to think about avoiding recalculation of
-=======
 	 * it exits the frame.	We'd have to think about avoiding recalculation of
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * volatile arguments of aggregate functions, too.
 	 */
 
@@ -566,11 +558,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * Advance until we reach a row not in frame (or end of partition).
 	 *
 	 * Note the loop invariant: agg_row_slot is either empty or holds the row
-<<<<<<< HEAD
-	 * at position aggregatedupto.  We advance aggregatedupto after processing
-=======
 	 * at position aggregatedupto.	We advance aggregatedupto after processing
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * a row.
 	 */
 	for (;;)
@@ -1057,11 +1045,7 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
-<<<<<<< HEAD
- * not be past the currently known frame head.  Also uses the specified slot
-=======
  * not be past the currently known frame head.	Also uses the specified slot
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * for any required fetches.
  */
 static void
@@ -1204,11 +1188,7 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
-<<<<<<< HEAD
- * not be past the currently known frame tail.  Also uses the specified slot
-=======
  * not be past the currently known frame tail.	Also uses the specified slot
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * for any required fetches.
  */
 static void

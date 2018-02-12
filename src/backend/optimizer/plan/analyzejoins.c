@@ -16,11 +16,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< HEAD
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.3.2.1 2010/09/14 23:15:36 tgl Exp $
-=======
  *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.3 2010/07/06 19:18:56 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -54,11 +50,7 @@ static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
  *		Check for relations that don't actually need to be joined at all,
  *		and remove them from the query.
  *
-<<<<<<< HEAD
- * We are passed the current joinlist and return the updated list.  Other
-=======
  * We are passed the current joinlist and return the updated list.	Other
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * data structures that have to be updated are accessible via "root".
  */
 List *
@@ -112,11 +104,7 @@ restart:
 		 * Restart the scan.  This is necessary to ensure we find all
 		 * removable joins independently of ordering of the join_info_list
 		 * (note that removal of attr_needed bits may make a join appear
-<<<<<<< HEAD
-		 * removable that did not before).  Also, since we just deleted the
-=======
 		 * removable that did not before).	Also, since we just deleted the
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 * current list cell, we'd have to have some kluge to continue the
 		 * list scan anyway.
 		 */
@@ -133,11 +121,7 @@ restart:
  * We already know that the clause is a binary opclause referencing only the
  * rels in the current join.  The point here is to check whether it has the
  * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
-<<<<<<< HEAD
- * rather than mixing outer and inner vars on either side.  If it matches,
-=======
  * rather than mixing outer and inner vars on either side.	If it matches,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * we set the transient flag outer_is_left to identify which side is which.
  */
 static inline bool
@@ -184,11 +168,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Currently, we only know how to remove left joins to a baserel with
-<<<<<<< HEAD
-	 * unique indexes.  We can check most of these criteria pretty trivially
-=======
 	 * unique indexes.	We can check most of these criteria pretty trivially
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * to avoid doing useless extra work.  But checking whether any of the
 	 * indexes are unique would require iterating over the indexlist, so for
 	 * now we just make sure there are indexes of some sort or other.  If none

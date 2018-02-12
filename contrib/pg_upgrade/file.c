@@ -4,11 +4,7 @@
  *	file system operations
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13.2.2 2010/07/13 20:15:51 momjian Exp $
-=======
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
@@ -527,11 +523,7 @@ win32_pghardlink(const char *src, const char *dst)
 /*
  * copy_dir()
  *
-<<<<<<< HEAD
- *	Copies either a directory or a single file within a directory.  If the
-=======
  *	Copies either a directory or a single file within a directory.	If the
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *	source argument names a directory, we recursively copy that directory,
  *	otherwise we copy a single file.
  */

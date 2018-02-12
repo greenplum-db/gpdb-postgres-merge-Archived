@@ -90,11 +90,7 @@ transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 /*
  * get_pg_database_relfilenode()
  *
-<<<<<<< HEAD
- *	Retrieves the relfilenode for a few system-catalog tables.  We need these
-=======
  *	Retrieves the relfilenode for a few system-catalog tables.	We need these
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *	relfilenodes later in the upgrade process.
  */
 void

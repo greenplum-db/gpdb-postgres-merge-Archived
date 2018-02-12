@@ -860,13 +860,8 @@ initialize_SSL(void)
 		 */
 		if (errno != ENOENT)
 			ereport(FATAL,
-<<<<<<< HEAD
-					(errmsg("could not access root certificate file \"%s\": %m",
-							ROOT_CERT_FILE)));
-=======
 				 (errmsg("could not access root certificate file \"%s\": %m",
 						 ROOT_CERT_FILE)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
 		  (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)

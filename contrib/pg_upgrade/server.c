@@ -4,11 +4,7 @@
  *	database server functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.8.2.1 2010/07/13 20:15:51 momjian Exp $
-=======
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"

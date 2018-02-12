@@ -1819,11 +1819,7 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-<<<<<<< HEAD
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
-=======
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (tgt_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
@@ -1906,11 +1902,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfo(&buf, "%s",
-<<<<<<< HEAD
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
-=======
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		val = tgt_pkattvals[i];
 
@@ -2025,11 +2017,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 			appendStringInfoString(&buf, "NULL");
 		else
 			appendStringInfoString(&buf,
-<<<<<<< HEAD
-								   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
-=======
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	appendStringInfo(&buf, " FROM %s WHERE ", relname);
@@ -2042,11 +2030,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 			appendStringInfo(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-<<<<<<< HEAD
-		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
-=======
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (src_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",

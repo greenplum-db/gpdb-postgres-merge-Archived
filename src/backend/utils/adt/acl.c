@@ -1686,15 +1686,9 @@ Datum
 aclexplode(PG_FUNCTION_ARGS)
 {
 	Acl		   *acl = PG_GETARG_ACL_P(0);
-<<<<<<< HEAD
-	FuncCallContext	*funcctx;
-	int		   *idx;
-	AclItem	   *aidat;
-=======
 	FuncCallContext *funcctx;
 	int		   *idx;
 	AclItem    *aidat;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -1746,11 +1740,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		{
 			idx[1] = 0;
 			idx[0]++;
-<<<<<<< HEAD
-			if (idx[0] >= ACL_NUM(acl))				/* done */
-=======
 			if (idx[0] >= ACL_NUM(acl)) /* done */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				break;
 		}
 		aidata = &aidat[idx[0]];

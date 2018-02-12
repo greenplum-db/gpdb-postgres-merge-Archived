@@ -2041,11 +2041,7 @@ RelationDestroyRelation(Relation relation)
  *
  *	 NB: when rebuilding, we'd better hold some lock on the relation,
  *	 else the catalog data we need to read could be changing under us.
-<<<<<<< HEAD
- *	 Also, a rel to be rebuilt had better have refcnt > 0.  This is because
-=======
  *	 Also, a rel to be rebuilt had better have refcnt > 0.	This is because
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *	 an sinval reset could happen while we're accessing the catalogs, and
  *	 the rel would get blown away underneath us by RelationCacheInvalidate
  *	 if it has zero refcnt.
@@ -2390,11 +2386,7 @@ RelationFlushRelation(Relation relation)
 		/*
 		 * Pre-existing rels can be dropped from the relcache if not open.
 		 */
-<<<<<<< HEAD
-		bool	rebuild = !RelationHasReferenceCountZero(relation);
-=======
 		bool		rebuild = !RelationHasReferenceCountZero(relation);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		RelationClearRelation(relation, rebuild);
 	}

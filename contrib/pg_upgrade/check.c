@@ -4,11 +4,7 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
-<<<<<<< HEAD
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11.2.3 2010/07/25 03:47:33 momjian Exp $
-=======
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
@@ -374,11 +370,7 @@ check_cluster_compatibility(migratorContext *ctx, bool live_check)
 	FILE	   *lib_test;
 
 	/*
-<<<<<<< HEAD
-	 * Test pg_upgrade_support.so is in the proper place.    We cannot copy it
-=======
 	 * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * ourselves because install directories are typically root-owned.
 	 */
 	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", ctx->new.libpath,

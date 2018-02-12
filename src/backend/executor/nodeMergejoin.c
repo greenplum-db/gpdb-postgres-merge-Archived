@@ -286,11 +286,7 @@ MJExamineQuals(List *mergeclauses,
  * input, since we assume mergejoin operators are strict.  If the NULL
  * is in the first join column, and that column sorts nulls last, then
  * we can further conclude that no following tuple can match anything
-<<<<<<< HEAD
- * either, since they must all have nulls in the first column.  However,
-=======
  * either, since they must all have nulls in the first column.	However,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * that case is only interesting if we're not in FillOuter mode, else
  * we have to visit all the tuples anyway.
  *

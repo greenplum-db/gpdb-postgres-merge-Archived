@@ -292,13 +292,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_order != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-<<<<<<< HEAD
-					 errmsg("ORDER BY specified, but %s is not an aggregate function",
-							NameListToString(funcname)),
-=======
 			errmsg("ORDER BY specified, but %s is not an aggregate function",
 				   NameListToString(funcname)),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					 parser_errposition(pstate, location)));
 		if (agg_filter)
 			ereport(ERROR,

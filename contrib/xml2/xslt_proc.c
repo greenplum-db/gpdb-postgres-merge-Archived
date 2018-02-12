@@ -286,8 +286,4 @@ parse_params(const char **params, text *paramstr)
 	params[i] = NULL;
 }
 
-<<<<<<< HEAD
-#endif /* USE_LIBXSLT */
-=======
 #endif   /* USE_LIBXSLT */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

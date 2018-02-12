@@ -114,11 +114,7 @@ char	   *temp_tablespaces = NULL;
 
 
 static void create_tablespace_directories(const char *location,
-<<<<<<< HEAD
-										 const Oid tablespaceoid);
-=======
 							  const Oid tablespaceoid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static bool destroy_tablespace_directories(Oid tablespaceoid, bool redo);
 
 

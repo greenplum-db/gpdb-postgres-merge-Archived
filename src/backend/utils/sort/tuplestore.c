@@ -324,11 +324,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
  * tuple store are allowed.
  *
  * interXact: if true, the files used for on-disk storage persist beyond the
-<<<<<<< HEAD
- * end of the current transaction.  NOTE: It's the caller's responsibility to
-=======
  * end of the current transaction.	NOTE: It's the caller's responsibility to
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * create such a tuplestore in a memory context and resource owner that will
  * also survive transaction boundaries, and to ensure the tuplestore is closed
  * when it's no longer wanted.

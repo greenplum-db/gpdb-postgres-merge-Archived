@@ -291,11 +291,7 @@ QueryFinishHandler(void)
 void
 procsignal_sigusr1_handler(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
-	int save_errno = errno;
-=======
 	int			save_errno = errno;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	PG_TRY();
 	{

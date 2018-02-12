@@ -1375,11 +1375,7 @@ pullup_replace_vars_callback(Var *var,
 				  &colnames, &fields);
 		/* Adjust the generated per-field Vars, but don't insert PHVs */
 		rcon->need_phvs = false;
-<<<<<<< HEAD
-		context->sublevels_up = 0; /* to match the expandRTE output */
-=======
 		context->sublevels_up = 0;		/* to match the expandRTE output */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		fields = (List *) replace_rte_variables_mutator((Node *) fields,
 														context);
 		rcon->need_phvs = save_need_phvs;
