@@ -7,13 +7,9 @@
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.13 2010/04/20 23:48:47 tgl Exp $
@@ -48,11 +44,7 @@
 #define AuthIdRelationId	1260
 #define AuthIdRelation_Rowtype_Id	2842
 
-<<<<<<< HEAD
-CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842)
-=======
 CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MACRO
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	NameData	rolname;		/* name of role */
 	bool		rolsuper;		/* read this field via superuser() only! */

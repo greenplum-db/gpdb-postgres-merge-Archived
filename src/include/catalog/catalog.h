@@ -19,7 +19,6 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
 
 #define OIDCHARS		10		/* max chars printed by %u */
@@ -30,10 +29,6 @@
  * upstream uses of TABLESPACE_VERSION_DIRECTORY.
  */
 #define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
-=======
-#define OIDCHARS		10		/* max chars printed by %u */
-#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 									CppAsString2(CATALOG_VERSION_NO)
 
 extern const char *forkNames[];
@@ -63,13 +58,9 @@ extern bool IsSharedRelation(Oid relationId);
 extern Oid GetNewOid(Relation relation);
 extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 				   AttrNumber oidcolumn);
-<<<<<<< HEAD
 extern Oid GetNewSequenceRelationOid(Relation relation);
-extern Oid GetNewRelFileNode(Oid reltablespace, bool relisshared);
+extern Oid	GetNewRelFileNode(Oid reltablespace, Relation pg_class);
 
 const char *tablespace_version_directory(void);
-=======
-extern Oid	GetNewRelFileNode(Oid reltablespace, Relation pg_class);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* CATALOG_H */

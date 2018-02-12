@@ -55,14 +55,9 @@ typedef FormData_pg_tablespace *Form_pg_tablespace;
 #define Natts_pg_tablespace				5
 #define Anum_pg_tablespace_spcname		1
 #define Anum_pg_tablespace_spcowner		2
-<<<<<<< HEAD
-#define Anum_pg_tablespace_spclocation  3
-#define Anum_pg_tablespace_spcacl       4
-=======
 #define Anum_pg_tablespace_spclocation	3
 #define Anum_pg_tablespace_spcacl		4
 #define Anum_pg_tablespace_spcoptions	5
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 DATA(insert OID = 1663 ( pg_default PGUID "" _null_ _null_ ));
 DATA(insert OID = 1664 ( pg_global	PGUID "" _null_ _null_ ));
