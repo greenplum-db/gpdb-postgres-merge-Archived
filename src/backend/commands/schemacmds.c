@@ -3,13 +3,17 @@
  * schemacmds.c
  *	  schema creation/manipulation commands
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.54 2009/12/09 21:57:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.57 2010/02/26 02:00:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +126,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 */
 	if (saved_uid != owner_uid)
 		SetUserIdAndSecContext(owner_uid,
-							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
 	if (shouldDispatch || Gp_role != GP_ROLE_EXECUTE)
@@ -241,9 +245,8 @@ RemoveSchemas(DropStmt *drop)
 					 errmsg("schema name cannot be qualified")));
 		namespaceName = strVal(linitial(names));
 
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(namespaceName),
-									 0, 0, 0);
+		namespaceId = GetSysCacheOid1(NAMESPACENAME,
+									  CStringGetDatum(namespaceName));
 
 		if (!OidIsValid(namespaceId))
 		{
@@ -326,9 +329,8 @@ RemoveSchemaById(Oid schemaOid)
 
 	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache(NAMESPACEOID,
-						 ObjectIdGetDatum(schemaOid),
-						 0, 0, 0);
+	tup = SearchSysCache1(NAMESPACEOID,
+						  ObjectIdGetDatum(schemaOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for namespace %u", schemaOid);
 
@@ -352,9 +354,7 @@ RenameSchema(const char *oldname, const char *newname)
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(NAMESPACENAME,
-							 CStringGetDatum(oldname),
-							 0, 0, 0);
+	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -362,9 +362,8 @@ RenameSchema(const char *oldname, const char *newname)
 
 	/* make sure the new name doesn't exist */
 	if (HeapTupleIsValid(
-						 SearchSysCache(NAMESPACENAME,
-										CStringGetDatum(newname),
-										0, 0, 0)))
+						 SearchSysCache1(NAMESPACENAME,
+										 CStringGetDatum(newname))))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", newname)));
@@ -425,9 +424,7 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache(NAMESPACEOID,
-						 ObjectIdGetDatum(oid),
-						 0, 0, 0);
+	tup = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(oid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for schema %u", oid);
 
@@ -450,9 +447,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCache(NAMESPACENAME,
-						 CStringGetDatum(name),
-						 0, 0, 0);
+	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(name));
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),

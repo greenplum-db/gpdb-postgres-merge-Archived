@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.23 2009/06/11 14:48:53 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xpath.c,v 1.30 2010/07/06 19:18:55 momjian Exp $
  *
  * Parser interface for DOM-based parser (libxml) rather than
  * stream-based SAX-type parser
@@ -40,6 +40,7 @@ Datum		xpath_table(PG_FUNCTION_ARGS);
 
 void		pgxml_parser_init(void);
 
+<<<<<<< HEAD
 /* workspace for pgxml_xpath() */
 
 typedef struct
@@ -49,6 +50,8 @@ typedef struct
 	xmlXPathObjectPtr res;
 } xpath_workspace;
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /* local declarations */
 
 static xmlChar *pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
@@ -60,12 +63,16 @@ static text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
 
 static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
+<<<<<<< HEAD
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath,
 									 xpath_workspace *workspace);
 
 static void cleanup_workspace(xpath_workspace *workspace);
 
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
+=======
+static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /*
@@ -228,6 +235,7 @@ PG_FUNCTION_INFO_V1(xpath_nodeset);
 Datum
 xpath_nodeset(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	text	   *document = PG_GETARG_TEXT_P(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
@@ -244,6 +252,27 @@ xpath_nodeset(PG_FUNCTION_ARGS)
 	xpres = pgxml_result_to_text(res, toptag, septag, NULL);
 
 	cleanup_workspace(&workspace);
+=======
+	xmlChar    *xpath,
+			   *toptag,
+			   *septag;
+	int32		pathsize;
+	text	   *xpathsupp,
+			   *xpres;
+
+	/* PG_GETARG_TEXT_P(0) is document buffer */
+	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+
+	toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
+	septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(3));
+
+	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+
+	xpath = pgxml_texttoxmlchar(xpathsupp);
+
+	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
+								 toptag, septag, NULL);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	pfree(xpath);
 
@@ -261,6 +290,7 @@ PG_FUNCTION_INFO_V1(xpath_list);
 Datum
 xpath_list(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	text	   *document = PG_GETARG_TEXT_P(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
@@ -276,6 +306,25 @@ xpath_list(PG_FUNCTION_ARGS)
 	xpres = pgxml_result_to_text(res, NULL, NULL, plainsep);
 
 	cleanup_workspace(&workspace);
+=======
+	xmlChar    *xpath,
+			   *plainsep;
+	int32		pathsize;
+	text	   *xpathsupp,
+			   *xpres;
+
+	/* PG_GETARG_TEXT_P(0) is document buffer */
+	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+
+	plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
+
+	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
+
+	xpath = pgxml_texttoxmlchar(xpathsupp);
+
+	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
+								 NULL, NULL, plainsep);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	pfree(xpath);
 
@@ -294,9 +343,17 @@ xpath_string(PG_FUNCTION_ARGS)
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
 	int32		pathsize;
+<<<<<<< HEAD
 	text	   *xpres;
 	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
+=======
+	text	   *xpathsupp,
+			   *xpres;
+
+	/* PG_GETARG_TEXT_P(0) is document buffer */
+	xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
 
@@ -312,11 +369,16 @@ xpath_string(PG_FUNCTION_ARGS)
 	xpath[pathsize + 7] = ')';
 	xpath[pathsize + 8] = '\0';
 
+<<<<<<< HEAD
 	res = pgxml_xpath(document, xpath, &workspace);
 
 	xpres = pgxml_result_to_text(res, NULL, NULL, NULL);
 
 	cleanup_workspace(&workspace);
+=======
+	xpres = pgxml_result_to_text(pgxml_xpath(PG_GETARG_TEXT_P(0), xpath),
+								 NULL, NULL, NULL);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	pfree(xpath);
 
@@ -334,6 +396,11 @@ xpath_number(PG_FUNCTION_ARGS)
 	text	   *document = PG_GETARG_TEXT_P(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
+<<<<<<< HEAD
+=======
+	int32		pathsize;
+	text	   *xpathsupp;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	float4		fRes;
 	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
@@ -349,8 +416,11 @@ xpath_number(PG_FUNCTION_ARGS)
 
 	fRes = xmlXPathCastToNumber(res);
 
+<<<<<<< HEAD
 	cleanup_workspace(&workspace);
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (xmlXPathIsNaN(fRes))
 		PG_RETURN_NULL();
 
@@ -366,6 +436,11 @@ xpath_bool(PG_FUNCTION_ARGS)
 	text	   *document = PG_GETARG_TEXT_P(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
 	xmlChar    *xpath;
+<<<<<<< HEAD
+=======
+	int32		pathsize;
+	text	   *xpathsupp;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			bRes;
 	xmlXPathObjectPtr res;
 	xpath_workspace workspace;
@@ -381,8 +456,11 @@ xpath_bool(PG_FUNCTION_ARGS)
 
 	bRes = xmlXPathCastToBoolean(res);
 
+<<<<<<< HEAD
 	cleanup_workspace(&workspace);
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	PG_RETURN_BOOL(bRes);
 }
 
@@ -391,6 +469,7 @@ xpath_bool(PG_FUNCTION_ARGS)
 /* Core function to evaluate XPath query */
 
 static xmlXPathObjectPtr
+<<<<<<< HEAD
 pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 {
 	int32		docsize = VARSIZE(document) - VARHDRSZ;
@@ -410,11 +489,36 @@ pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 	workspace->ctxt = xmlXPathNewContext(workspace->doctree);
 	workspace->ctxt->node = xmlDocGetRootElement(workspace->doctree);
 
+=======
+pgxml_xpath(text *document, xmlChar *xpath)
+{
+	xmlDocPtr	doctree;
+	xmlXPathContextPtr ctxt;
+	xmlXPathObjectPtr res;
+	xmlXPathCompExprPtr comppath;
+	int32		docsize;
+
+	docsize = VARSIZE(document) - VARHDRSZ;
+
+	pgxml_parser_init();
+
+	doctree = xmlParseMemory((char *) VARDATA(document), docsize);
+	if (doctree == NULL)
+		return NULL;			/* not well-formed */
+
+	ctxt = xmlXPathNewContext(doctree);
+	ctxt->node = xmlDocGetRootElement(doctree);
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* compile the path */
 	comppath = xmlXPathCompile(xpath);
 	if (comppath == NULL)
 	{
+<<<<<<< HEAD
 		cleanup_workspace(workspace);
+=======
+		xmlFreeDoc(doctree);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"XPath Syntax Error");
 	}
@@ -426,11 +530,18 @@ pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 	xmlXPathFreeCompExpr(comppath);
 
 	if (res == NULL)
+<<<<<<< HEAD
 		cleanup_workspace(workspace);
+=======
+	{
+		xmlXPathFreeContext(ctxt);
+		xmlFreeDoc(doctree);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return res;
 }
 
+<<<<<<< HEAD
 /* Clean up after processing the result of pgxml_xpath() */
 static void
 cleanup_workspace(xpath_workspace *workspace)
@@ -446,6 +557,8 @@ cleanup_workspace(xpath_workspace *workspace)
 	workspace->doctree = NULL;
 }
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static text *
 pgxml_result_to_text(xmlXPathObjectPtr res,
 					 xmlChar *toptag,
@@ -650,8 +763,13 @@ xpath_table(PG_FUNCTION_ARGS)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Setup the parser.  This should happen after we are done evaluating
 	 * the query, in case it calls functions that set up libxml differently.
+=======
+	 * Setup the parser.  This should happen after we are done evaluating the
+	 * query, in case it calls functions that set up libxml differently.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	pgxml_parser_init();
 

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* $PostgreSQL: pgsql/contrib/xml2/pgxml.sql.in,v 1.11.2.1 2010/03/01 18:08:16 tgl Exp $ */
+=======
+/* $PostgreSQL: pgsql/contrib/xml2/pgxml.sql.in,v 1.12 2010/03/01 18:07:59 tgl Exp $ */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;

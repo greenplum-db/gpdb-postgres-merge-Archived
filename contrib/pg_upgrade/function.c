@@ -4,13 +4,18 @@
  *	server-side function support
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.6.2.1 2010/07/25 03:28:39 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.6 2010/07/03 16:33:14 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
 
+<<<<<<< HEAD
 static void
 install_system_functions_internal(migratorContext *ctx, char *dbname)
 {
@@ -205,6 +210,8 @@ install_system_functions_internal(migratorContext *ctx, char *dbname)
 
 	PQfinish(conn);
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * install_support_functions()
@@ -213,6 +220,7 @@ install_system_functions_internal(migratorContext *ctx, char *dbname)
  * backend behavior.
  */
 void
+<<<<<<< HEAD
 install_system_support_functions(migratorContext *ctx)
 {
 	prep_status(ctx, "Adding support functions to new cluster (postgres)");
@@ -221,6 +229,8 @@ install_system_support_functions(migratorContext *ctx)
 }
 
 void
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 install_support_functions(migratorContext *ctx)
 {
 	int			dbnum;
@@ -230,7 +240,66 @@ install_support_functions(migratorContext *ctx)
 	for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
 	{
 		DbInfo	   *newdb = &ctx->new.dbarr.dbs[dbnum];
+<<<<<<< HEAD
 		install_system_functions_internal(ctx, newdb->db_name);
+=======
+		PGconn	   *conn = connectToServer(ctx, newdb->db_name, CLUSTER_NEW);
+
+		/* suppress NOTICE of dropped objects */
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "SET client_min_messages = warning;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+						   "DROP SCHEMA IF EXISTS binary_upgrade CASCADE;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "RESET client_min_messages;"));
+
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE SCHEMA binary_upgrade;"));
+
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+					 "		binary_upgrade.set_next_pg_type_oid(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+			   "		binary_upgrade.set_next_pg_type_array_oid(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+			   "		binary_upgrade.set_next_pg_type_toast_oid(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+				"		binary_upgrade.set_next_heap_relfilenode(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+			   "		binary_upgrade.set_next_toast_relfilenode(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+			   "		binary_upgrade.set_next_index_relfilenode(OID) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQclear(executeQueryOrDie(ctx, conn,
+								  "CREATE OR REPLACE FUNCTION "
+			 "		binary_upgrade.add_pg_enum_label(OID, OID, NAME) "
+								  "RETURNS VOID "
+								  "AS '$libdir/pg_upgrade_support' "
+								  "LANGUAGE C STRICT;"));
+		PQfinish(conn);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	check_ok(ctx);
 }
@@ -274,12 +343,16 @@ get_loadable_libraries(migratorContext *ctx)
 	PGresult  **ress;
 	int			totaltups;
 	int			dbnum;
+<<<<<<< HEAD
 	char	   *pg83_str;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	ress = (PGresult **)
 		pg_malloc(ctx, active_cluster->dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
 
+<<<<<<< HEAD
 	/*
 	 * gpoptutils was removed during the 5.0 development cycle and the
 	 * functionality is now in backend, skip when checking for loadable
@@ -290,6 +363,8 @@ get_loadable_libraries(migratorContext *ctx)
 	else
 		pg83_str = "";
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* Fetch all library names, removing duplicates within each DB */
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
 	{
@@ -301,10 +376,15 @@ get_loadable_libraries(migratorContext *ctx)
 										"SELECT DISTINCT probin "
 										"FROM	pg_catalog.pg_proc "
 										"WHERE	prolang = 13 /* C */ AND "
+<<<<<<< HEAD
 										"		probin IS NOT NULL AND "
 										"		%s "
 										"		oid >= %u;",
 										pg83_str,
+=======
+									 "		probin IS NOT NULL AND "
+										"		oid >= %u;",
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
@@ -413,7 +493,11 @@ check_loadable_libraries(migratorContext *ctx)
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
+<<<<<<< HEAD
 			 "| Your installation references loadable libraries that are missing\n"
+=======
+			 "| Your installation uses loadable libraries that are missing\n"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 "| from the new installation.  You can add these libraries to\n"
 			   "| the new installation, or remove the functions using them\n"
 			"| from the old installation.  A list of the problem libraries\n"

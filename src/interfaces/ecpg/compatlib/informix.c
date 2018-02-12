@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.62 2009/10/01 18:03:54 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.64 2010/02/26 02:01:29 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -767,7 +767,7 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	size_t		fmt_len = strlen(fmt);
 	size_t		temp_len;
 	int			i,
-				j, /* position in temp */
+				j,				/* position in temp */
 				k,
 				dotpos;
 	int			leftalign = 0,
@@ -1004,16 +1004,10 @@ rtypwidth(int sqltype, int sqllen)
 	return 0;
 }
 
-static struct var_list
-{
-	int			number;
-	void	   *pointer;
-	struct var_list *next;
-}	*ivlist = NULL;
-
 void
 ECPG_informix_set_var(int number, void *pointer, int lineno)
 {
+<<<<<<< HEAD
 	struct var_list *ptr;
 
 	for (ptr = ivlist; ptr != NULL; ptr = ptr->next)
@@ -1049,15 +1043,15 @@ ECPG_informix_set_var(int number, void *pointer, int lineno)
 		ptr->next = ivlist;
 		ivlist = ptr;
 	}
+=======
+	ECPGset_var(number, pointer, lineno);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 void *
 ECPG_informix_get_var(int number)
 {
-	struct var_list *ptr;
-
-	for (ptr = ivlist; ptr != NULL && ptr->number != number; ptr = ptr->next);
-	return (ptr) ? ptr->pointer : NULL;
+	return ECPGget_var(number);
 }
 
 void

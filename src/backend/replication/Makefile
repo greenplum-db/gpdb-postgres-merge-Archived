@@ -4,7 +4,11 @@
 #    Makefile for src/backend/replication
 #
 # IDENTIFICATION
+<<<<<<< HEAD
 #    src/backend/replication/Makefile
+=======
+#    $PostgreSQL: pgsql/src/backend/replication/Makefile,v 1.2 2010/01/20 09:16:24 heikki Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +16,7 @@ subdir = src/backend/replication
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
@@ -43,3 +48,8 @@ endif
 
 # repl_gram.c and repl_scanner.c are in the distribution tarball, so
 # they are not cleaned here.
+=======
+OBJS = walsender.o walreceiverfuncs.o walreceiver.o
+
+include $(top_srcdir)/src/backend/common.mk
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

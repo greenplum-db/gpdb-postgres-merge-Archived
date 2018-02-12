@@ -4,11 +4,19 @@
  *	  Routines for interprocess signalling
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/backend/storage/ipc/procsignal.c
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procsignal.c,v 1.6 2010/02/26 02:01:00 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +33,10 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
+<<<<<<< HEAD
+=======
+#include "storage/standby.h"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "tcop/tcopprot.h"
 
 
@@ -57,7 +69,11 @@ typedef struct
  * possible auxiliary process type.  (This scheme assumes there is not
  * more than one of any auxiliary process type at a time.)
  */
+<<<<<<< HEAD
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXILIARY_PROCS)
+=======
+#define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
@@ -275,7 +291,11 @@ QueryFinishHandler(void)
 void
 procsignal_sigusr1_handler(SIGNAL_ARGS)
 {
+<<<<<<< HEAD
 	int save_errno = errno;
+=======
+	int			save_errno = errno;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	PG_TRY();
 	{
@@ -296,6 +316,24 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_DATABASE))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_DATABASE);
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_TABLESPACE))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_LOCK))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_LOCK);
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_SNAPSHOT))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+
+	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN))
+		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 
 	errno = save_errno;
 }

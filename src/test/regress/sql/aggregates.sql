@@ -382,6 +382,7 @@ select string_agg(a,',') from (values('aaaa'),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values(null),(null),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values(null),(null)) g(a);
+<<<<<<< HEAD
 
 -- FILTER tests
 
@@ -529,3 +530,5 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

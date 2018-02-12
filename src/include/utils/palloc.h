@@ -18,12 +18,16 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.41 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.44 2010/02/13 20:46:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,8 +136,17 @@ extern void MemoryContextFreeImpl(void *pointer, const char* file, const char *f
 
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
- * But we can make it an inline function when using GCC.
+ * But we can make it an inline function if the compiler supports it.
+ *
+ * This file has to be includable by some non-backend code such as
+ * pg_resetxlog, so don't expose the CurrentMemoryContext reference
+ * if FRONTEND is defined.
  */
+<<<<<<< HEAD
+=======
+#if defined(USE_INLINE) && !defined(FRONTEND)
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static inline MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
@@ -142,6 +155,13 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
+<<<<<<< HEAD
+=======
+#else
+
+extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
+#endif   /* USE_INLINE && !FRONTEND */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * These are like standard strdup() except the copied string is

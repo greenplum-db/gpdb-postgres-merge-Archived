@@ -6,8 +6,14 @@ SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
  enable_hashagg    | on
  enable_hashjoin   | on
  enable_indexscan  | on
+<<<<<<< HEAD
  enable_mergejoin  | off
  enable_nestloop   | off
+=======
+ enable_material   | on
+ enable_mergejoin  | on
+ enable_nestloop   | on
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  enable_seqscan    | on
  enable_sort       | on
  enable_tidscan    | on

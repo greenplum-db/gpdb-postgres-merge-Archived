@@ -18,13 +18,17 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.376 2009/12/15 17:57:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.385 2010/02/26 02:00:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -660,6 +664,7 @@ _equalNullTest(NullTest *a, NullTest *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(nulltesttype);
+	COMPARE_SCALAR_FIELD(argisrow);
 
 	return true;
 }
@@ -1254,8 +1259,12 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
+<<<<<<< HEAD
 	COMPARE_NODE_FIELD(inhOids);
 	COMPARE_SCALAR_FIELD(parentOidCount);
+=======
+	COMPARE_NODE_FIELD(ofTypename);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(oncommit);
@@ -1548,6 +1557,7 @@ static bool
 _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 {
 	COMPARE_STRING_FIELD(conditionname);
+	COMPARE_STRING_FIELD(payload);
 
 	return true;
 }
@@ -1794,6 +1804,17 @@ _equalDropTableSpaceStmt(DropTableSpaceStmt *a, DropTableSpaceStmt *b)
 }
 
 static bool
+_equalAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *a,
+								 AlterTableSpaceOptionsStmt *b)
+{
+	COMPARE_STRING_FIELD(tablespacename);
+	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(isReset);
+
+	return true;
+}
+
+static bool
 _equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
 {
 	COMPARE_STRING_FIELD(fdwname);
@@ -1922,6 +1943,7 @@ _equalDropPropertyStmt(DropPropertyStmt *a, DropPropertyStmt *b)
 static bool
 _equalCreatePLangStmt(CreatePLangStmt *a, CreatePLangStmt *b)
 {
+	COMPARE_SCALAR_FIELD(replace);
 	COMPARE_STRING_FIELD(plname);
 	COMPARE_NODE_FIELD(plhandler);
 	COMPARE_NODE_FIELD(plinline);
@@ -2373,6 +2395,7 @@ _equalIndexElem(IndexElem *a, IndexElem *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(expr);
+	COMPARE_STRING_FIELD(indexcolname);
 	COMPARE_NODE_FIELD(opclass);
 	COMPARE_SCALAR_FIELD(ordering);
 	COMPARE_SCALAR_FIELD(nulls_ordering);
@@ -3114,6 +3137,9 @@ equal(void *a, void *b)
 			break;
 		case T_DropTableSpaceStmt:
 			retval = _equalDropTableSpaceStmt(a, b);
+			break;
+		case T_AlterTableSpaceOptionsStmt:
+			retval = _equalAlterTableSpaceOptionsStmt(a, b);
 			break;
 		case T_CreateFdwStmt:
 			retval = _equalCreateFdwStmt(a, b);

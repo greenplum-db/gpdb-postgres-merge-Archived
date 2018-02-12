@@ -21,17 +21,21 @@
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
+<<<<<<< HEAD
  * For hash tables in shared memory, the memory allocator function should
  * match malloc's semantics of returning NULL on failure.  For hash tables
  * in local memory, we typically use palloc() which will throw error on
  * failure.  The code in this file has to cope with both cases.
  *
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.79 2009/01/01 17:23:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.80 2010/01/02 16:57:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

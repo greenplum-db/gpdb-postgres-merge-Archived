@@ -4,12 +4,16 @@
  *	  prototypes for functions in backend/catalog/heap.c
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.94 2009/10/05 19:24:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.98 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +65,7 @@ extern Relation heap_create(const char *relname,
 			char relkind,
 			char relstorage,
 			bool shared_relation,
+			bool mapped_relation,
 			bool allow_system_table_mods);
 
 extern Oid heap_create_with_catalog(const char *relname,
@@ -68,6 +73,7 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 Oid reltablespace,
 						 Oid relid,
 						 Oid reltypeid,
+						 Oid reloftypeid,
 						 Oid ownerid,
 						 TupleDesc tupdesc,
 						 List *cooked_constraints,
@@ -75,6 +81,7 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 char relkind,
 						 char relstorage,
 						 bool shared_relation,
+						 bool mapped_relation,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
@@ -135,9 +142,11 @@ extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
 extern Form_pg_attribute SystemAttributeByName(const char *attname,
 					  bool relhasoids);
 
-extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind);
+extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
+						 bool allow_system_table_mods);
 
 extern void CheckAttributeType(const char *attname, Oid atttypid,
+<<<<<<< HEAD
 							   List *containing_rowtypes);
 extern void SetRelationNumChecks(Relation rel, int numchecks);
 
@@ -162,5 +171,8 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_VIEW)) 
 
 extern bool should_have_valid_relfrozenxid(Oid oid, char relkind, char relstorage);
+=======
+				   bool allow_system_table_mods);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* HEAP_H */

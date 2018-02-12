@@ -4,13 +4,17 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Software Inc
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.5 2009/06/11 14:48:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.8 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,7 +373,11 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
  * If any placeholder can be computed at a base rel and is needed above it,
  * add it to that rel's targetlist.  We have to do this separately from
  * fix_placeholder_eval_levels() because join removal happens in between,
+<<<<<<< HEAD
  * and can change the ph_eval_at sets.  There is essentially the same logic
+=======
+ * and can change the ph_eval_at sets.	There is essentially the same logic
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * in add_placeholders_to_joinrel, but we can't do that part until joinrels
  * are formed.
  */

@@ -91,6 +91,7 @@ new_9_0_populate_pg_largeobject_metadata(migratorContext *ctx, bool check_mode,
 	else
 		check_ok(ctx);
 }
+<<<<<<< HEAD
 
 
 /*
@@ -182,3 +183,5 @@ new_gpdb_invalidate_bitmap_indexes(migratorContext *ctx, bool check_mode,
 
 	check_ok(ctx);
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

@@ -3,10 +3,10 @@
  *
  * PostgreSQL subtransaction-log manager
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/subtrans.h,v 1.12 2009/01/01 17:23:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/subtrans.h,v 1.14 2010/01/02 16:58:00 momjian Exp $
  */
 #ifndef SUBTRANS_H
 #define SUBTRANS_H
@@ -14,6 +14,7 @@
 /* Number of SLRU buffers to use for subtrans */
 #define NUM_SUBTRANS_BUFFERS	32
 
+<<<<<<< HEAD
 typedef struct SubTransData
 {
 	TransactionId parent;
@@ -21,6 +22,9 @@ typedef struct SubTransData
 } SubTransData;
 
 extern void SubTransSetParent(TransactionId xid, TransactionId parent);
+=======
+extern void SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern TransactionId SubTransGetParent(TransactionId xid);
 extern TransactionId SubTransGetTopmostTransaction(TransactionId xid);
 

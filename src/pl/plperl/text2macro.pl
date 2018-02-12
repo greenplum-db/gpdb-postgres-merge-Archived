@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 # src/pl/plperl/text2macro.pl
+=======
+
+# $PostgreSQL: pgsql/src/pl/plperl/text2macro.pl,v 1.2 2010/01/20 01:08:21 adunstan Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 =head1 NAME
 
@@ -88,7 +93,11 @@ sub selftest {
 	print $fh "int main() { puts(X); return 0; }\n";
 	close $fh;
 	system("cat -n $tmp.c");
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	system("make $tmp") == 0 or die;
 	open $fh, "./$tmp |" or die;
 	my $result = <$fh>;

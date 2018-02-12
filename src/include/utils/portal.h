@@ -36,10 +36,10 @@
  * to look like NO SCROLL cursors.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.81 2009/01/01 17:24:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.83 2010/07/05 09:27:17 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,10 @@ typedef struct PortalData
 
 	/* Status data */
 	PortalStatus status;		/* see above */
+<<<<<<< HEAD
 	bool		releaseResLock;	/* true => resscheduler lock must be released */
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	bool		portalPinned;	/* a pinned portal can't be dropped */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */

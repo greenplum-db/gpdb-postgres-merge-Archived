@@ -4,12 +4,16 @@
  *	  Definitions for tagged nodes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.231 2009/10/26 02:26:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.234 2010/03/28 22:59:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,6 +458,7 @@ typedef enum NodeTag
 	T_CreateUserMappingStmt,
 	T_AlterUserMappingStmt,
 	T_DropUserMappingStmt,
+<<<<<<< HEAD
 	T_PartitionBy,
 	T_PartitionElem,
 	T_PartitionRangeItem,
@@ -474,6 +479,9 @@ typedef enum NodeTag
 	T_AlterExtensionStmt,
 	T_AlterExtensionContentsStmt,
 	T_SetDistributionCmd,
+=======
+	T_AlterTableSpaceOptionsStmt,
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

@@ -4,10 +4,10 @@
  *	  header file for postgres vacuum cleaner and statistics analyzer
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.86 2009/11/10 18:00:06 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.89 2010/02/09 21:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,6 @@ extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
 					  TransactionId *freezeLimit,
 					  TransactionId *freezeTableLimit);
 extern void vac_update_datfrozenxid(void);
-extern bool vac_is_partial_index(Relation indrel);
 extern void vacuum_delay_point(void);
 
 extern bool vacuumStatement_IsTemporary(Relation onerel);
@@ -177,6 +176,7 @@ extern bool vacuumStatement_IsInAppendOnlyCompactionPhase(VacuumStmt* vacstmt);
 extern bool vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(VacuumStmt* vacstmt);
 
 /* in commands/vacuumlazy.c */
+<<<<<<< HEAD
 extern bool lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy, List *updated_stats);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
@@ -185,6 +185,10 @@ extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt, List* updated_stats);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
+=======
+extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
+				BufferAccessStrategy bstrategy, bool *scanned_all);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,

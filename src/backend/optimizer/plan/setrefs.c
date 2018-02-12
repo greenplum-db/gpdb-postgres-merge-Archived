@@ -4,14 +4,18 @@
  *	  Post-processing of a completed plan tree: fix references to subplan
  *	  vars, compute regproc values for operators, etc
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.155 2009/11/16 18:04:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.160 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,8 +831,8 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
 				/*
 				 * Like the plan types above, LockRows doesn't evaluate its
-				 * tlist or quals.  But we have to fix up the RT indexes
-				 * in its rowmarks.
+				 * tlist or quals.	But we have to fix up the RT indexes in
+				 * its rowmarks.
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
@@ -862,6 +866,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
+<<<<<<< HEAD
 			set_upper_references(glob, plan, rtoffset);
 			break;
 		case T_WindowAgg:
@@ -892,6 +897,27 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 									   subplan_itlist, rtoffset);
 					pfree(subplan_itlist);
 				}
+			}
+=======
+		case T_Group:
+			set_upper_references(glob, plan, rtoffset);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+			break;
+		case T_WindowAgg:
+			{
+				WindowAgg  *wplan = (WindowAgg *) plan;
+
+				set_upper_references(glob, plan, rtoffset);
+
+				/*
+				 * Like Limit node limit/offset expressions, WindowAgg has
+				 * frame offset expressions, which cannot contain subplan
+				 * variable refs, so fix_scan_expr works for them.
+				 */
+				wplan->startOffset =
+					fix_scan_expr(glob, wplan->startOffset, rtoffset);
+				wplan->endOffset =
+					fix_scan_expr(glob, wplan->endOffset, rtoffset);
 			}
 			break;
 		case T_Result:
@@ -2041,7 +2067,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 							 exprType((Node *) tle->expr),
 							 exprTypmod((Node *) tle->expr),
 							 0);
-			newvar->varnoold = 0;	/* wasn't ever a plain Var */
+			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
 			return newvar;
 		}
@@ -2544,9 +2570,7 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 		HeapTuple	func_tuple;
 		PlanInvalItem *inval_item;
 
-		func_tuple = SearchSysCache(PROCOID,
-									ObjectIdGetDatum(funcid),
-									0, 0, 0);
+		func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(func_tuple))
 			elog(ERROR, "cache lookup failed for function %u", funcid);
 
@@ -2567,14 +2591,15 @@ record_plan_function_dependency(PlannerGlobal *glob, Oid funcid)
 
 /*
  * extract_query_dependencies
- *		Given a list of not-yet-planned queries (i.e. Query nodes),
- *		extract their dependencies just as set_plan_references would do.
+ *		Given a not-yet-planned query or queries (i.e. a Query node or list
+ *		of Query nodes), extract dependencies just as set_plan_references
+ *		would do.
  *
  * This is needed by plancache.c to handle invalidation of cached unplanned
  * queries.
  */
 void
-extract_query_dependencies(List *queries,
+extract_query_dependencies(Node *query,
 						   List **relationOids,
 						   List **invalItems)
 {
@@ -2586,7 +2611,7 @@ extract_query_dependencies(List *queries,
 	glob.relationOids = NIL;
 	glob.invalItems = NIL;
 
-	(void) extract_query_dependencies_walker((Node *) queries, &glob);
+	(void) extract_query_dependencies_walker(query, &glob);
 
 	*relationOids = glob.relationOids;
 	*invalItems = glob.invalItems;
@@ -2604,6 +2629,19 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 	{
 		Query	   *query = (Query *) node;
 		ListCell   *lc;
+
+		if (query->commandType == CMD_UTILITY)
+		{
+			/* Ignore utility statements, except EXPLAIN */
+			if (IsA(query->utilityStmt, ExplainStmt))
+			{
+				query = (Query *) ((ExplainStmt *) query->utilityStmt)->query;
+				Assert(IsA(query, Query));
+				Assert(query->commandType != CMD_UTILITY);
+			}
+			else
+				return false;
+		}
 
 		/* Collect relation OIDs in this Query's rtable */
 		foreach(lc, query->rtable)

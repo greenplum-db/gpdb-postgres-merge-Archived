@@ -175,7 +175,17 @@ SELECT 'nan'::float8 / 'nan'::float8;
       NaN
 (1 row)
 
+<<<<<<< HEAD
 SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
+=======
+SELECT 'nan'::numeric::float8;
+ float8 
+--------
+    NaN
+(1 row)
+
+SELECT '' AS five, * FROM FLOAT8_TBL;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  five |          f1          
 ------+----------------------
       |               -34.84

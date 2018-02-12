@@ -3,9 +3,13 @@
 #################################################################
 # version_stamp.pl -- update version stamps throughout the source tree
 #
-# Copyright (c) 2008-2009, PostgreSQL Global Development Group
+# Copyright (c) 2008-2010, PostgreSQL Global Development Group
 #
+<<<<<<< HEAD
 # src/tools/version_stamp.pl
+=======
+# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.6 2010/02/17 04:19:41 tgl Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #################################################################
 
 #
@@ -22,8 +26,8 @@
 
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
-$major1 = 8;
-$major2 = 5;
+$major1 = 9;
+$major2 = 0;
 
 # Validate argument and compute derived variables
 $minor = shift;

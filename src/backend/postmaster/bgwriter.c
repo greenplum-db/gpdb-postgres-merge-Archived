@@ -26,11 +26,11 @@
  * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.64 2009/12/16 22:55:33 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.68 2010/04/28 16:54:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,6 +227,12 @@ BackgroundWriterMain(void)
 	PG_SETMASK(&UnBlockSig);
 
 	/*
+	 * Use the recovery target timeline ID during recovery
+	 */
+	if (RecoveryInProgress())
+		ThisTimeLineID = GetRecoveryTargetTLI();
+
+	/*
 	 * Loop forever
 	 */
 	for (;;)
@@ -281,6 +287,64 @@ BackgroundWriterMain(void)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * CheckArchiveTimeout -- check for archive_timeout and switch xlog files
+ *
+ * This will switch to a new WAL file and force an archive file write
+ * if any activity is recorded in the current WAL file, including just
+ * a single checkpoint record.
+ */
+static void
+CheckArchiveTimeout(void)
+{
+	pg_time_t	now;
+	pg_time_t	last_time;
+
+	if (XLogArchiveTimeout <= 0 || RecoveryInProgress())
+		return;
+
+	now = (pg_time_t) time(NULL);
+
+	/* First we do a quick check using possibly-stale local state. */
+	if ((int) (now - last_xlog_switch_time) < XLogArchiveTimeout)
+		return;
+
+	/*
+	 * Update local state ... note that last_xlog_switch_time is the last time
+	 * a switch was performed *or requested*.
+	 */
+	last_time = GetLastSegSwitchTime();
+
+	last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
+
+	/* Now we can do the real check */
+	if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
+	{
+		XLogRecPtr	switchpoint;
+
+		/* OK, it's time to switch */
+		switchpoint = RequestXLogSwitch();
+
+		/*
+		 * If the returned pointer points exactly to a segment boundary,
+		 * assume nothing happened.
+		 */
+		if ((switchpoint.xrecoff % XLogSegSize) != 0)
+			ereport(DEBUG1,
+				(errmsg("transaction log switch forced (archive_timeout=%d)",
+						XLogArchiveTimeout)));
+
+		/*
+		 * Update state in any case, so we don't retry constantly when the
+		 * system is idle.
+		 */
+		last_xlog_switch_time = now;
+	}
+}
+
+/*
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * BgWriterNap -- Nap for the configured time or until a signal is received.
  */
 static void
@@ -332,3 +396,311 @@ ReqShutdownHandler(SIGNAL_ARGS)
 {
 	shutdown_requested = true;
 }
+<<<<<<< HEAD
+=======
+
+
+/* --------------------------------
+ *		communication with backends
+ * --------------------------------
+ */
+
+/*
+ * BgWriterShmemSize
+ *		Compute space needed for bgwriter-related shared memory
+ */
+Size
+BgWriterShmemSize(void)
+{
+	Size		size;
+
+	/*
+	 * Currently, the size of the requests[] array is arbitrarily set equal to
+	 * NBuffers.  This may prove too large or small ...
+	 */
+	size = offsetof(BgWriterShmemStruct, requests);
+	size = add_size(size, mul_size(NBuffers, sizeof(BgWriterRequest)));
+
+	return size;
+}
+
+/*
+ * BgWriterShmemInit
+ *		Allocate and initialize bgwriter-related shared memory
+ */
+void
+BgWriterShmemInit(void)
+{
+	bool		found;
+
+	BgWriterShmem = (BgWriterShmemStruct *)
+		ShmemInitStruct("Background Writer Data",
+						BgWriterShmemSize(),
+						&found);
+
+	if (!found)
+	{
+		/* First time through, so initialize */
+		MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
+		SpinLockInit(&BgWriterShmem->ckpt_lck);
+		BgWriterShmem->max_requests = NBuffers;
+	}
+}
+
+/*
+ * RequestCheckpoint
+ *		Called in backend processes to request a checkpoint
+ *
+ * flags is a bitwise OR of the following:
+ *	CHECKPOINT_IS_SHUTDOWN: checkpoint is for database shutdown.
+ *	CHECKPOINT_END_OF_RECOVERY: checkpoint is for end of WAL recovery.
+ *	CHECKPOINT_IMMEDIATE: finish the checkpoint ASAP,
+ *		ignoring checkpoint_completion_target parameter.
+ *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
+ *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN or
+ *		CHECKPOINT_END_OF_RECOVERY).
+ *	CHECKPOINT_WAIT: wait for completion before returning (otherwise,
+ *		just signal bgwriter to do it, and return).
+ *	CHECKPOINT_CAUSE_XLOG: checkpoint is requested due to xlog filling.
+ *		(This affects logging, and in particular enables CheckPointWarning.)
+ */
+void
+RequestCheckpoint(int flags)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+	int			ntries;
+	int			old_failed,
+				old_started;
+
+	/*
+	 * If in a standalone backend, just do it ourselves.
+	 */
+	if (!IsPostmasterEnvironment)
+	{
+		/*
+		 * There's no point in doing slow checkpoints in a standalone backend,
+		 * because there's no other backends the checkpoint could disrupt.
+		 */
+		CreateCheckPoint(flags | CHECKPOINT_IMMEDIATE);
+
+		/*
+		 * After any checkpoint, close all smgr files.	This is so we won't
+		 * hang onto smgr references to deleted files indefinitely.
+		 */
+		smgrcloseall();
+
+		return;
+	}
+
+	/*
+	 * Atomically set the request flags, and take a snapshot of the counters.
+	 * When we see ckpt_started > old_started, we know the flags we set here
+	 * have been seen by bgwriter.
+	 *
+	 * Note that we OR the flags with any existing flags, to avoid overriding
+	 * a "stronger" request by another backend.  The flag senses must be
+	 * chosen to make this work!
+	 */
+	SpinLockAcquire(&bgs->ckpt_lck);
+
+	old_failed = bgs->ckpt_failed;
+	old_started = bgs->ckpt_started;
+	bgs->ckpt_flags |= flags;
+
+	SpinLockRelease(&bgs->ckpt_lck);
+
+	/*
+	 * Send signal to request checkpoint.  It's possible that the bgwriter
+	 * hasn't started yet, or is in process of restarting, so we will retry a
+	 * few times if needed.  Also, if not told to wait for the checkpoint to
+	 * occur, we consider failure to send the signal to be nonfatal and merely
+	 * LOG it.
+	 */
+	for (ntries = 0;; ntries++)
+	{
+		if (BgWriterShmem->bgwriter_pid == 0)
+		{
+			if (ntries >= 20)	/* max wait 2.0 sec */
+			{
+				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
+				"could not request checkpoint because bgwriter not running");
+				break;
+			}
+		}
+		else if (kill(BgWriterShmem->bgwriter_pid, SIGINT) != 0)
+		{
+			if (ntries >= 20)	/* max wait 2.0 sec */
+			{
+				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
+					 "could not signal for checkpoint: %m");
+				break;
+			}
+		}
+		else
+			break;				/* signal sent successfully */
+
+		CHECK_FOR_INTERRUPTS();
+		pg_usleep(100000L);		/* wait 0.1 sec, then retry */
+	}
+
+	/*
+	 * If requested, wait for completion.  We detect completion according to
+	 * the algorithm given above.
+	 */
+	if (flags & CHECKPOINT_WAIT)
+	{
+		int			new_started,
+					new_failed;
+
+		/* Wait for a new checkpoint to start. */
+		for (;;)
+		{
+			SpinLockAcquire(&bgs->ckpt_lck);
+			new_started = bgs->ckpt_started;
+			SpinLockRelease(&bgs->ckpt_lck);
+
+			if (new_started != old_started)
+				break;
+
+			CHECK_FOR_INTERRUPTS();
+			pg_usleep(100000L);
+		}
+
+		/*
+		 * We are waiting for ckpt_done >= new_started, in a modulo sense.
+		 */
+		for (;;)
+		{
+			int			new_done;
+
+			SpinLockAcquire(&bgs->ckpt_lck);
+			new_done = bgs->ckpt_done;
+			new_failed = bgs->ckpt_failed;
+			SpinLockRelease(&bgs->ckpt_lck);
+
+			if (new_done - new_started >= 0)
+				break;
+
+			CHECK_FOR_INTERRUPTS();
+			pg_usleep(100000L);
+		}
+
+		if (new_failed != old_failed)
+			ereport(ERROR,
+					(errmsg("checkpoint request failed"),
+					 errhint("Consult recent messages in the server log for details.")));
+	}
+}
+
+/*
+ * ForwardFsyncRequest
+ *		Forward a file-fsync request from a backend to the bgwriter
+ *
+ * Whenever a backend is compelled to write directly to a relation
+ * (which should be seldom, if the bgwriter is getting its job done),
+ * the backend calls this routine to pass over knowledge that the relation
+ * is dirty and must be fsync'd before next checkpoint.  We also use this
+ * opportunity to count such writes for statistical purposes.
+ *
+ * segno specifies which segment (not block!) of the relation needs to be
+ * fsync'd.  (Since the valid range is much less than BlockNumber, we can
+ * use high values for special flags; that's all internal to md.c, which
+ * see for details.)
+ *
+ * If we are unable to pass over the request (at present, this can happen
+ * if the shared memory queue is full), we return false.  That forces
+ * the backend to do its own fsync.  We hope that will be even more seldom.
+ *
+ * Note: we presently make no attempt to eliminate duplicate requests
+ * in the requests[] queue.  The bgwriter will have to eliminate dups
+ * internally anyway, so we may as well avoid holding the lock longer
+ * than we have to here.
+ */
+bool
+ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
+{
+	BgWriterRequest *request;
+
+	if (!IsUnderPostmaster)
+		return false;			/* probably shouldn't even get here */
+
+	if (am_bg_writer)
+		elog(ERROR, "ForwardFsyncRequest must not be called in bgwriter");
+
+	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+
+	/* we count non-bgwriter writes even when the request queue overflows */
+	BgWriterShmem->num_backend_writes++;
+
+	if (BgWriterShmem->bgwriter_pid == 0 ||
+		BgWriterShmem->num_requests >= BgWriterShmem->max_requests)
+	{
+		LWLockRelease(BgWriterCommLock);
+		return false;
+	}
+	request = &BgWriterShmem->requests[BgWriterShmem->num_requests++];
+	request->rnode = rnode;
+	request->forknum = forknum;
+	request->segno = segno;
+	LWLockRelease(BgWriterCommLock);
+	return true;
+}
+
+/*
+ * AbsorbFsyncRequests
+ *		Retrieve queued fsync requests and pass them to local smgr.
+ *
+ * This is exported because it must be called during CreateCheckPoint;
+ * we have to be sure we have accepted all pending requests just before
+ * we start fsync'ing.  Since CreateCheckPoint sometimes runs in
+ * non-bgwriter processes, do nothing if not bgwriter.
+ */
+void
+AbsorbFsyncRequests(void)
+{
+	BgWriterRequest *requests = NULL;
+	BgWriterRequest *request;
+	int			n;
+
+	if (!am_bg_writer)
+		return;
+
+	/*
+	 * We have to PANIC if we fail to absorb all the pending requests (eg,
+	 * because our hashtable runs out of memory).  This is because the system
+	 * cannot run safely if we are unable to fsync what we have been told to
+	 * fsync.  Fortunately, the hashtable is so small that the problem is
+	 * quite unlikely to arise in practice.
+	 */
+	START_CRIT_SECTION();
+
+	/*
+	 * We try to avoid holding the lock for a long time by copying the request
+	 * array.
+	 */
+	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+
+	/* Transfer write count into pending pgstats message */
+	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
+	BgWriterShmem->num_backend_writes = 0;
+
+	n = BgWriterShmem->num_requests;
+	if (n > 0)
+	{
+		requests = (BgWriterRequest *) palloc(n * sizeof(BgWriterRequest));
+		memcpy(requests, BgWriterShmem->requests, n * sizeof(BgWriterRequest));
+	}
+	BgWriterShmem->num_requests = 0;
+
+	LWLockRelease(BgWriterCommLock);
+
+	for (request = requests; n > 0; request++, n--)
+		RememberFsyncRequest(request->rnode, request->forknum, request->segno);
+
+	if (requests)
+		pfree(requests);
+
+	END_CRIT_SECTION();
+}
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

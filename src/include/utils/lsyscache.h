@@ -3,10 +3,10 @@
  * lsyscache.h
  *	  Convenience routines for common queries in the system catalog cache.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.129 2009/08/10 05:46:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.133 2010/04/24 16:20:32 sriggs Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,10 +182,22 @@ extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
+<<<<<<< HEAD
 extern HeapTuple get_att_stats(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 				 int reqkind, Oid reqop, int flags);
 extern void free_attstatsslot(AttStatsSlot *sslot);
+=======
+extern bool get_attstatsslot(HeapTuple statstuple,
+				 Oid atttype, int32 atttypmod,
+				 int reqkind, Oid reqop,
+				 Oid *actualop,
+				 Datum **values, int *nvalues,
+				 float4 **numbers, int *nnumbers);
+extern void free_attstatsslot(Oid atttype,
+				  Datum *values, int nvalues,
+				  float4 *numbers, int nnumbers);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern char *get_namespace_name(Oid nspid);
 extern Oid	get_roleid(const char *rolname);
 extern Oid	get_roleid_checked(const char *rolname);

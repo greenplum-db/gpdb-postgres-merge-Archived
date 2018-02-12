@@ -10,6 +10,7 @@
 #include "pg_upgrade.h"
 
 #include <signal.h>
+<<<<<<< HEAD
 #include <time.h>
 
 static FILE			   *progress_file = NULL;
@@ -20,6 +21,9 @@ static unsigned long	progress_prev = 0;
 /* Number of operations per progress report file */
 #define OP_PER_PROGRESS	25
 #define TS_PER_PROGRESS (5 * 1000000)
+=======
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * report_status()
@@ -194,8 +198,11 @@ get_user_info(migratorContext *ctx, char **user_name)
 void
 exit_nicely(migratorContext *ctx, bool need_cleanup)
 {
+<<<<<<< HEAD
 	close_progress(ctx);
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	stop_postmaster(ctx, true, true);
 
 	pg_free(ctx->logfile);
@@ -270,6 +277,7 @@ getErrorText(int errNum)
 #endif
 	return strdup(strerror(errNum));
 }
+<<<<<<< HEAD
 
 
 /*
@@ -390,3 +398,5 @@ close_progress(migratorContext *ctx)
 	progress_counter = 0;
 	progress_prev = epoch_us();
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

@@ -3,14 +3,18 @@
  * copy.c
  *		Implements the COPY utility command
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.319 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.327 2010/04/28 16:10:41 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,7 +1133,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 
 		if (strcmp(defel->defname, "format") == 0)
 		{
-			char   *fmt = defGetString(defel);
+			char	   *fmt = defGetString(defel);
 
 			if (format_specified)
 				ereport(ERROR,
@@ -1137,7 +1141,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 						 errmsg("conflicting or redundant options")));
 			format_specified = true;
 			if (strcmp(fmt, "text") == 0)
-				/* default format */ ;
+				 /* default format */ ;
 			else if (strcmp(fmt, "csv") == 0)
 				cstate->csv_mode = true;
 			else if (strcmp(fmt, "binary") == 0)
@@ -1216,9 +1220,9 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 				force_quote = (List *) defel->arg;
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument to option \"%s\" must be a list of column names",
-							defel->defname)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
 		}
 		else if (strcmp(defel->defname, "force_not_null") == 0)
 		{
@@ -1230,9 +1234,9 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 				force_notnull = (List *) defel->arg;
 			else
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument to option \"%s\" must be a list of column names",
-							defel->defname)));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
 		}
 		else if (strcmp(defel->defname, "fill_missing_fields") == 0)
 		{
@@ -1564,9 +1568,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 
 		/* check read-only transaction */
 		if (XactReadOnly && is_from && !cstate->rel->rd_islocaltemp)
-			ereport(ERROR,
-					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-					 errmsg("transaction is read-only")));
+			PreventCommandIfReadOnly("COPY FROM");
 
 		/* Don't allow COPY w/ OIDs to or from a table without them */
 		if (cstate->oids && !cstate->rel->rd_rel->relhasoids)
@@ -1677,7 +1679,7 @@ DoCopyInternal(const CopyStmt *stmt, const char *queryString, CopyState cstate)
 	cstate->force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
 	if (force_quote_all)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < num_phys_attrs; i++)
 			cstate->force_quote_flags[i] = true;
@@ -5099,6 +5101,7 @@ PROCESS_SEGMENT_DATA:
 		}
 		else
 		{
+<<<<<<< HEAD
 			struct stat st;
 			char *filename = cstate->filename;
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_R);
@@ -5108,6 +5111,9 @@ PROCESS_SEGMENT_DATA:
 						(errcode_for_file_access(),
 						errmsg("could not open file \"%s\" for reading: %m",
 								filename)));
+=======
+			List	   *recheckIndexes = NIL;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			// Increase buffer size to improve performance  (cmcdevitt)
 			setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
@@ -5121,13 +5127,31 @@ PROCESS_SEGMENT_DATA:
 
 		cstate->copy_dest = COPY_FILE;
 
+<<<<<<< HEAD
 		is_segment_data_processed = true;
+=======
+			if (resultRelInfo->ri_NumIndices > 0)
+				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+													   estate);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
 		CopyInitDataParser(cstate);
 		no_more_data = false;
 
+<<<<<<< HEAD
 		goto PROCESS_SEGMENT_DATA;
+=======
+			list_free(recheckIndexes);
+
+			/*
+			 * We count only tuples not suppressed by a BEFORE INSERT trigger;
+			 * this is the same definition used by execMain.c for counting
+			 * tuples inserted by an INSERT command.
+			 */
+			cstate->processed++;
+		}
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, cstate->processed);

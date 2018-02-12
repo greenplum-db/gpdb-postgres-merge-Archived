@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.120 2009/12/07 05:22:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.128 2010/06/07 02:59:02 itagaki Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETABLE">
  <refmeta>
-  <refentrytitle id="sql-createtable-title">CREATE TABLE</refentrytitle>
+  <refentrytitle>CREATE TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 CREATE [[GLOBAL | LOCAL] {TEMPORARY | TEMP}] TABLE table_name ( 
 [ { column_name data_type [ DEFAULT default_expr ]     [column_constraint [ ... ]
 [ ENCODING ( storage_directive [,...] ) ]
@@ -114,6 +115,64 @@ where storage_directive is:
 Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
+=======
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable>
+    | LIKE <replaceable>parent_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
+    [, ... ]
+] )
+[ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable>
+    OF <replaceable class="PARAMETER">type_name</replaceable> [ (
+  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ DEFAULT <replaceable>default_expr</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable> }
+    [, ... ]
+) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+<phrase>where <replaceable class="PARAMETER">column_constraint</replaceable> is:</phrase>
+
+[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+{ NOT NULL |
+  NULL |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
+  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
+    [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+<phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
+
+[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+{ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
+  FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
+    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+<phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
+
+{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL }
+
+<phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
+
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+[ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+
+<phrase><replaceable class="PARAMETER">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
+
+{ <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 </synopsis>
 
  </refsynopsisdiv>
@@ -189,6 +248,15 @@ Where column_reference_storage_directive is:
      </para>
 
      <para>
+      The <link linkend="autovacuum">autovacuum daemon</link> cannot
+      access and therefore cannot vacuum or analyze temporary tables.
+      For this reason, appropriate vacuum and analyze operations should be
+      performed via session SQL commands.  For example, if a temporary
+      table is going to be used in complex queries, it is wise to run
+      <command>ANALYZE</> on the temporary table after it is populated.
+     </para>
+
+     <para>
       Optionally, <literal>GLOBAL</literal> or <literal>LOCAL</literal>
       can be written before <literal>TEMPORARY</> or <literal>TEMP</>.
       This makes no difference in <productname>PostgreSQL</>, but see
@@ -203,6 +271,27 @@ Where column_reference_storage_directive is:
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OF <replaceable class="PARAMETER">type_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      Creates a <firstterm>typed table</firstterm>, which takes its
+      structure from the specified composite type (name optionally
+      schema-qualified).  A typed table is tied to its type; for
+      example the table will be dropped if the type is dropped
+      (with <literal>DROP TYPE ... CASCADE</literal>).
+     </para>
+
+     <para>
+      When a typed table is created, then the data types of the
+      columns are determined by the underlying composite type and are
+      not specified by the <literal>CREATE TABLE</literal> command.
+      But the <literal>CREATE TABLE</literal> command can add defaults
+      and constraints to the table and can specify storage parameters.
      </para>
     </listitem>
    </varlistentry>
@@ -297,19 +386,6 @@ Where column_reference_storage_directive is:
       Column <literal>STORAGE</> settings are also copied from parent tables.
      </para>
 
-<!--
-     <para>
-      <productname>PostgreSQL</> automatically allows the
-     created table to inherit
-      functions on tables above it in the inheritance hierarchy; that
-      is, if we create table <literal>foo</literal> inheriting from
-      <literal>bar</literal>, then functions that accept the tuple
-      type <literal>bar</literal> can also be applied to instances of
-      <literal>foo</literal>.  (Currently, this works reliably for
-      functions on the first or only parent table, but not so well for
-      functions on additional parents.)
-     </para>
--->
     </listitem>
    </varlistentry>
 
@@ -500,7 +576,7 @@ Where column_reference_storage_directive is:
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="SQL-CREATETABLE-EXCLUDE">
     <term><literal>EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ]</literal></term>
     <listitem>
      <para>
@@ -516,7 +592,7 @@ Where column_reference_storage_directive is:
       For example, you can specify a constraint that
       no two rows in the table contain overlapping circles
       (see <xref linkend="datatype-geometric">) by using the
-      <literal>&&</> operator.
+      <literal>&amp;&amp;</> operator.
      </para>
 
      <para>
@@ -529,7 +605,7 @@ Where column_reference_storage_directive is:
       Each <replaceable class="parameter">exclude_element</replaceable>
       can optionally specify an operator class and/or ordering options;
       these are described fully under
-      <xref linkend="sql-createindex" endterm="sql-createindex-title">.
+      <xref linkend="sql-createindex">.
      </para>
 
      <para>
@@ -675,7 +751,7 @@ Where column_reference_storage_directive is:
       constraint that is not deferrable will be checked immediately
       after every command.  Checking of constraints that are
       deferrable can be postponed until the end of the transaction
-      (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
+      (using the <xref linkend="sql-set-constraints"> command).
       <literal>NOT DEFERRABLE</literal> is the default.
       Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>,
       <literal>EXCLUDE</>, and
@@ -697,7 +773,7 @@ Where column_reference_storage_directive is:
       statement. This is the default.  If the constraint is
       <literal>INITIALLY DEFERRED</literal>, it is checked only at the
       end of the transaction.  The constraint check time can be
-      altered with the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command.
+      altered with the <xref linkend="sql-set-constraints"> command.
      </para>
     </listitem>
    </varlistentry>
@@ -735,7 +811,7 @@ Where column_reference_storage_directive is:
 
      <para>
       To remove OIDs from a table after it has been created, use <xref
-      linkend="sql-altertable" endterm="sql-altertable-title">.
+      linkend="sql-altertable">.
      </para>
     </listitem>
    </varlistentry>
@@ -778,7 +854,7 @@ Where column_reference_storage_directive is:
          <para>
           All rows in the temporary table will be deleted at the end
           of each transaction block.  Essentially, an automatic <xref
-          linkend="sql-truncate" endterm="sql-truncate-title"> is done
+          linkend="sql-truncate"> is done
           at each commit.
          </para>
         </listitem>
@@ -839,14 +915,15 @@ Where column_reference_storage_directive is:
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
     <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</> constraint.
     Storage parameters for
-    indexes are documented in <xref linkend="SQL-CREATEINDEX"
-    endterm="sql-createindex-title">.  The storage parameters currently
+    indexes are documented in <xref linkend="SQL-CREATEINDEX">.
+    The storage parameters currently
     available for tables are listed below.  For each parameter, unless noted,
-    there is an additional, identically named parameter, prefixed with
-    <literal>toast.</literal> which can be used to control the behavior of the
-    supplementary storage table, if any; see <xref linkend="storage-toast">.
-    Note that the supplementary storage table inherits the
-    <literal>autovacuum</literal> values from its parent table, if there are
+    there is an additional parameter with the same name prefixed with
+    <literal>toast.</literal>, which can be used to control the behavior of the
+    table's secondary <acronym>TOAST</> table, if any
+    (see <xref linkend="storage-toast"> for more information about TOAST).
+    Note that the TOAST table inherits the
+    <literal>autovacuum_*</literal> values from its parent table, if there are
     no <literal>toast.autovacuum_*</literal> settings set.
    </para>
 
@@ -865,8 +942,7 @@ Where column_reference_storage_directive is:
       original, which is more efficient than placing it on a different page.
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
-      appropriate.  This parameter cannot be set for the supplementary
-      storage table.
+      appropriate.  This parameter cannot be set for TOAST tables.
      </para>
     </listitem>
    </varlistentry>
@@ -916,7 +992,7 @@ Where column_reference_storage_directive is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_threshold</>, <literal>toast.autovacuum_analyze_threshold</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_analyze_threshold</> (<type>integer</>)</term>
     <listitem>
      <para>
      Minimum number of inserted, updated, or deleted tuples before initiate an
@@ -926,7 +1002,7 @@ Where column_reference_storage_directive is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</>, <literal>toast.autovacuum_analyze_scale_factor</literal> (<type>float4</>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</> (<type>float4</>)</term>
     <listitem>
      <para>
      Multiplier for <structfield>reltuples</> to add to
@@ -1023,7 +1099,7 @@ Where column_reference_storage_directive is:
      index for each unique constraint and primary key constraint to
      enforce uniqueness.  Thus, it is not necessary to create an
      index explicitly for primary key columns.  (See <xref
-     linkend="sql-createindex" endterm="sql-createindex-title"> for more information.)
+     linkend="sql-createindex"> for more information.)
     </para>
 
     <para>
@@ -1228,7 +1304,7 @@ WITH (fillfactor=70);
 <programlisting>
 CREATE TABLE circles (
     c circle,
-    EXCLUDE USING gist (c WITH &&)
+    EXCLUDE USING gist (c WITH &amp;&amp;)
 );
 </programlisting>
   </para>
@@ -1245,6 +1321,17 @@ CREATE TABLE cinemas (
 </programlisting>
   </para>
 
+  <para>
+   Create a composite type and a typed table:
+<programlisting>
+CREATE TYPE employee_type AS (name text, salary numeric);
+
+CREATE TABLE employees OF employee_type (
+    PRIMARY KEY (name),
+    salary WITH OPTIONS DEFAULT 1000
+);
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-compatibility">
@@ -1394,6 +1481,19 @@ CREATE TABLE cinemas (
     and <literal>USING INDEX TABLESPACE</literal> are extensions.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title>Typed Tables</title>
+
+   <para>
+    Typed tables implement a subset of the SQL standard.  According to
+    the standard, a typed table has columns corresponding to the
+    underlying composite type as well as one other column that is
+    the <quote>self-referencing column</quote>.  PostgreSQL does not
+    support these self-referencing columns explicitly, but the same
+    effect can be had using the OID feature.
+   </para>
+  </refsect2>
  </refsect1>
 
 
@@ -1401,9 +1501,10 @@ CREATE TABLE cinemas (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
-   <member><xref linkend="sql-droptable" endterm="sql-droptable-title"></member>
-   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+   <member><xref linkend="sql-altertable"></member>
+   <member><xref linkend="sql-droptable"></member>
+   <member><xref linkend="sql-createtablespace"></member>
+   <member><xref linkend="sql-createtype"></member>
   </simplelist>
  </refsect1>
 </refentry>

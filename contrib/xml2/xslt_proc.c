@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.16 2009/07/10 00:32:00 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/xml2/xslt_proc.c,v 1.21 2010/07/06 19:18:55 momjian Exp $
  *
  * XSLT processing functions (requiring libxslt)
  *
@@ -29,6 +29,7 @@
 #include <libxslt/security.h>
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
+#endif   /* USE_LIBXSLT */
 
 #endif /* USE_LIBXSLT */
 
@@ -39,15 +40,26 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 
 #ifdef USE_LIBXSLT
 
+/* externally accessible functions */
+
+Datum		xslt_process(PG_FUNCTION_ARGS);
+
+#ifdef USE_LIBXSLT
+
 /* declarations to come from xpath.c */
+<<<<<<< HEAD
 extern void elog_error(int level, char *explain, int force);
 extern void pgxml_parser_init(void);
 extern xmlChar *pgxml_texttoxmlchar(text *textstring);
+=======
+extern void pgxml_parser_init(void);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* local defs */
 static void parse_params(const char **params, text *paramstr);
 
 #define MAXPARAMS 20			/* must be even, see parse_params() */
+#endif   /* USE_LIBXSLT */
 
 #define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
@@ -103,9 +115,22 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	if (ssdoc == NULL)
 	{
+<<<<<<< HEAD
 		xmlFreeDoc(doctree);
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"error parsing stylesheet as XML document");
+=======
+		ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
+							   VARSIZE(ssheet) - VARHDRSZ);
+		if (ssdoc == NULL)
+		{
+			xmlFreeDoc(doctree);
+			xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+						"error parsing stylesheet as XML document");
+		}
+
+		stylesheet = xsltParseStylesheetDoc(ssdoc);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/* After this call we need not free ssdoc separately */
@@ -117,6 +142,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		xsltCleanupGlobals();
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"failed to parse stylesheet");
+<<<<<<< HEAD
 	}
 
 	xslt_ctxt = xsltNewTransformContext(stylesheet, doctree);
@@ -166,6 +192,8 @@ xslt_process(PG_FUNCTION_ARGS)
 		xsltCleanupGlobals();
 		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 					"failed to apply stylesheet");
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
@@ -182,6 +210,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	result = cstring_to_text_with_len((char *) resstr, reslen);
 
 	if (resstr)
@@ -190,13 +219,21 @@ xslt_process(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 
 #else /* !USE_LIBXSLT */
+=======
+	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
+#else							/* !USE_LIBXSLT */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("xslt_process() is not available without libxslt")));
 	PG_RETURN_NULL();
+<<<<<<< HEAD
 
 #endif /* USE_LIBXSLT */
+=======
+#endif   /* USE_LIBXSLT */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 #ifdef USE_LIBXSLT
@@ -249,4 +286,8 @@ parse_params(const char **params, text *paramstr)
 	params[i] = NULL;
 }
 
+<<<<<<< HEAD
 #endif /* USE_LIBXSLT */
+=======
+#endif   /* USE_LIBXSLT */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

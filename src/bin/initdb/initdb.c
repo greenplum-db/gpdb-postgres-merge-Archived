@@ -38,11 +38,11 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.180 2009/12/18 21:28:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.186 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,10 +132,10 @@ static int	n_buffers = 0;
  * Warning messages for authentication methods
  */
 #define AUTHTRUST_WARNING \
-"# CAUTION: Configuring the system for local \"trust\" authentication allows\n" \
-"# any local user to connect as any PostgreSQL user, including the database\n" \
-"# superuser. If you do not trust all your local users, use another\n" \
-"# authentication method.\n"
+"# CAUTION: Configuring the system for local \"trust\" authentication\n" \
+"# allows any local user to connect as any PostgreSQL user, including\n" \
+"# the database superuser.  If you do not trust all your local users,\n" \
+"# use another authentication method.\n"
 static char *authwarning = NULL;
 
 /*
@@ -176,7 +176,11 @@ static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void write_version_file(char *extrapath);
+<<<<<<< HEAD
 static void set_null_conf(const char *conf_name);
+=======
+static void set_null_conf(void);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
@@ -1367,6 +1371,7 @@ setup_config(void)
 		if (err != 0 ||
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
+<<<<<<< HEAD
 									  "host    all         all         ::1",
 									  "#host    all         all         ::1");
 		if (err != 0 ||
@@ -1374,12 +1379,16 @@ setup_config(void)
 			conflines = replace_token(conflines,
 									  "host    all         all         fe80::1",
 									  "#host    all         all         fe80::1");
+=======
+							   "host    all             all             ::1",
+							 "#host    all             all             ::1");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 #else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
 	conflines = replace_token(conflines,
-							  "host    all         all         ::1",
-							  "#host    all         all         ::1");
+							  "host    all             all             ::1",
+							  "#host    all             all             ::1");
 #endif   /* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
@@ -2731,7 +2740,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	}
 
 #ifndef __CYGWIN__
-    AddUserToTokenDacl(restrictedToken);
+	AddUserToTokenDacl(restrictedToken);
 #endif
 
 	if (!CreateProcessAsUser(restrictedToken,
@@ -2840,7 +2849,11 @@ main(int argc, char *argv[])
 	int			c,
 				i,
 				ret;
+<<<<<<< HEAD
 	int			option_index = -1;
+=======
+	int			option_index;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	char	   *effective_user;
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
@@ -2857,6 +2870,7 @@ main(int argc, char *argv[])
 		"pg_xlog",
 		"pg_xlog/archive_status",
 		"pg_clog",
+		"pg_notify",
 		"pg_subtrans",
 		"pg_twophase",
 		"pg_multixact/members",
@@ -3540,6 +3554,7 @@ main(int argc, char *argv[])
 	/* Now create all the text config files */
 	setup_config();
 
+<<<<<<< HEAD
 	if ( ! forMirrorOnly)
 	{
 		/* Bootstrap template1 */
@@ -3549,6 +3564,15 @@ main(int argc, char *argv[])
 		 * Make the per-database PG_VERSION for template1 only after init'ing it
 		 */
 		write_version_file("base/1");
+=======
+	/* Bootstrap template1 */
+	bootstrap_template1();
+
+	/*
+	 * Make the per-database PG_VERSION for template1 only after init'ing it
+	 */
+	write_version_file("base/1");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Create the stuff we don't need to use bootstrap mode for */
 

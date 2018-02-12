@@ -4,12 +4,12 @@
  *	  implementation for PostgreSQL generic linked list package
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.72 2009/06/11 14:48:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.74 2010/02/13 02:34:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1239,12 +1239,10 @@ list_copy_tail(List *oldlist, int nskip)
 }
 
 /*
- * When using non-GCC compilers, we can't define these as inline
- * functions in pg_list.h, so they are defined here.
- *
- * TODO: investigate supporting inlining for some non-GCC compilers.
+ * pg_list.h defines inline versions of these functions if allowed by the
+ * compiler; in which case the definitions below are skipped.
  */
-#ifndef __GNUC__
+#ifndef USE_INLINE
 
 ListCell *
 list_head(List *l)
@@ -1263,7 +1261,7 @@ list_length(List *l)
 {
 	return l ? l->length : 0;
 }
-#endif   /* ! __GNUC__ */
+#endif   /* ! USE_INLINE */
 
 /*
  * Temporary compatibility functions

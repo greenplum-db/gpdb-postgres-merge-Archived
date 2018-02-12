@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.128 2010/07/06 19:19:00 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #include "postgres_fe.h"
 
@@ -970,11 +974,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				 * If left-aligned, pad out remaining space if needed (not
 				 * last column, and/or wrap marks required).
 				 */
-				if (cont->aligns[j] != 'r') /* Left aligned cell */
+				if (cont->aligns[j] != 'r')		/* Left aligned cell */
 				{
 					if (finalspaces ||
 						wrap[j] == PRINT_LINE_WRAP_WRAP ||
-					    wrap[j] == PRINT_LINE_WRAP_NEWLINE)
+						wrap[j] == PRINT_LINE_WRAP_NEWLINE)
 						fprintf(fout, "%*s",
 								width_wrap[j] - chars_to_output, "");
 				}
@@ -1061,6 +1065,10 @@ print_aligned_vertical_line(const printTextFormat *format,
 							FILE *fout)
 {
 	const printTextLineFormat *lformat = &format->lrule[pos];
+<<<<<<< HEAD
+=======
+	unsigned short opt_border = cont->opt->border;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	unsigned int i;
 	int			reclen = 0;
 

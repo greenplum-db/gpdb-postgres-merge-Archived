@@ -3,7 +3,11 @@
  * 1996-06-05 by Arthur David Olson.
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/timezone/localtime.c
+=======
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.22 2010/03/11 18:43:24 tgl Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 /*
@@ -234,6 +238,12 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			return EINVAL;
 	}
 
+<<<<<<< HEAD
+=======
+	sp->goback = sp->goahead = FALSE;
+	if (name == NULL && (name = TZDEFAULT) == NULL)
+		return -1;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (name[0] == ':')
 		++name;
 
@@ -497,7 +507,11 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			if (typesequiv(sp, sp->types[i], sp->types[0]) &&
 				differ_by_repeat(sp->ats[i], sp->ats[0]))
 			{
+<<<<<<< HEAD
 				sp->goback = true;
+=======
+				sp->goback = TRUE;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				break;
 			}
 		for (i = sp->timecnt - 2; i >= 0; --i)
@@ -506,6 +520,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 				differ_by_repeat(sp->ats[sp->timecnt - 1],
 								 sp->ats[i]))
 			{
+<<<<<<< HEAD
 				sp->goahead = true;
 				break;
 			}
@@ -548,6 +563,12 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			}
 	}
 	sp->defaulttype = i;
+=======
+				sp->goahead = TRUE;
+				break;
+			}
+	}
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	return 0;
 }
 

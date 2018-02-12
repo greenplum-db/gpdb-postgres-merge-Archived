@@ -5,10 +5,10 @@
  *	  However, we define it here so that the format is documented.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.44 2009/08/31 02:23:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.57 2010/06/03 20:37:13 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "port/pg_crc32c.h"
 
 
+<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
@@ -27,10 +28,15 @@
  * four digits indicates the GPDB version.
  */
 #define PG_CONTROL_VERSION	8510600
+=======
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	903
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
  * a copy of the latest one in pg_control for possible disaster recovery.
+ * Changing this struct requires a PG_CONTROL_VERSION bump.
  */
 typedef struct CheckPoint
 {
@@ -47,8 +53,18 @@ typedef struct CheckPoint
 	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 	pg_time_t	time;			/* time stamp of checkpoint */
 
+<<<<<<< HEAD
 	/* IN XLOG RECORD, MORE DATA FOLLOWS AT END OF STRUCT FOR DTM CHECKPOINT */
 
+=======
+	/*
+	 * Oldest XID still running. This is only needed to initialize hot standby
+	 * mode from an online checkpoint, so we only bother calculating this for
+	 * online checkpoints and only when archiving is enabled. Otherwise it's
+	 * set to InvalidTransactionId.
+	 */
+	TransactionId oldestActiveXid;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } CheckPoint;
 
 /* XLOG info values for XLOG rmgr */
@@ -58,15 +74,23 @@ typedef struct CheckPoint
 #define XLOG_NEXTOID					0x30
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
+<<<<<<< HEAD
 #define XLOG_NEXTRELFILENODE			0x60
 #define XLOG_HINT						0x70
+=======
+#define XLOG_PARAMETER_CHANGE			0x60
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
-/* System status indicator */
+/*
+ * System status indicator.  Note this is stored in pg_control; if you change
+ * it, you must bump PG_CONTROL_VERSION
+ */
 typedef enum DBState
 {
 	DB_STARTUP = 0,
 	DB_SHUTDOWNED,
+	DB_SHUTDOWNED_IN_RECOVERY,
 	DB_SHUTDOWNING,
 	DB_IN_CRASH_RECOVERY,
 	DB_IN_ARCHIVE_RECOVERY,
@@ -118,6 +142,7 @@ typedef struct ControlFileData
 	CheckPoint	checkPointCopy; /* copy of last check point record */
 
 	/*
+<<<<<<< HEAD
 	 * These values determine the minimum point we must recover up to
 	 * before starting up:
 	 *
@@ -126,6 +151,17 @@ typedef struct ControlFileData
 	 * That guards against starting standby, aborting it, and restarting with
 	 * an earlier stop location. We can't get promoted unless we've at-least
 	 * replayed upto minRecoveryPoint
+=======
+	 * These two values determine the minimum point we must recover up to
+	 * before starting up:
+	 *
+	 * minRecoveryPoint is updated to the latest replayed LSN whenever we
+	 * flush a data change during archive recovery. That guards against
+	 * starting archive recovery, aborting it, and restarting with an earlier
+	 * stop location. If we've already flushed data changes from WAL record X
+	 * to disk, we mustn't start up until we reach X again. Zero when not
+	 * doing archive recovery.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 *
 	 * backupStartPoint is the redo pointer of the backup start checkpoint, if
 	 * we are recovering from an online backup and haven't reached the end of
@@ -134,6 +170,7 @@ typedef struct ControlFileData
 	 * we use the redo pointer as a cross-check when we see an end-of-backup
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
+<<<<<<< HEAD
 	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
@@ -144,6 +181,20 @@ typedef struct ControlFileData
 	XLogRecPtr	minRecoveryPoint;		/* must replay xlog to here */
 	XLogRecPtr		backupStartPoint;
 	bool		backupEndRequired;
+=======
+	 */
+	XLogRecPtr	minRecoveryPoint;
+	XLogRecPtr	backupStartPoint;
+
+	/*
+	 * Parameter settings that determine if the WAL can be used for archival
+	 * or hot standby.
+	 */
+	int			wal_level;
+	int			MaxConnections;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * This data is used to check for hardware-architecture compatibility of

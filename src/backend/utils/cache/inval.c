@@ -53,14 +53,14 @@
  *
  *	Also, whenever we see an operation on a pg_class or pg_attribute tuple,
  *	we register a relcache flush operation for the relation described by that
- *	tuple.	pg_class updates trigger an smgr flush operation as well.
+ *	tuple.
  *
- *	We keep the relcache and smgr flush requests in lists separate from the
- *	catcache tuple flush requests.	This allows us to issue all the pending
- *	catcache flushes before we issue relcache flushes, which saves us from
- *	loading a catcache tuple during relcache load only to flush it again
- *	right away.  Also, we avoid queuing multiple relcache flush requests for
- *	the same relation, since a relcache flush is relatively expensive to do.
+ *	We keep the relcache flush requests in lists separate from the catcache
+ *	tuple flush requests.  This allows us to issue all the pending catcache
+ *	flushes before we issue relcache flushes, which saves us from loading
+ *	a catcache tuple during relcache load only to flush it again right away.
+ *	Also, we avoid queuing multiple relcache flush requests for the same
+ *	relation, since a relcache flush is relatively expensive to do.
  *	(XXX is it worth testing likewise for duplicate catcache flush entries?
  *	Probably not.)
  *
@@ -76,11 +76,11 @@
  *	simplicity we keep the controlling list-of-lists in TopTransactionContext.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.89 2009/06/11 14:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.98 2010/02/26 02:01:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,15 +89,23 @@
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+<<<<<<< HEAD
 #include "catalog/gp_policy.h"
 #include "cdb/cdbvars.h"
+=======
+#include "catalog/pg_tablespace.h"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+<<<<<<< HEAD
 #include "utils/relcache.h"
+=======
+#include "utils/relmapper.h"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/syscache.h"
 
 
@@ -118,7 +126,7 @@ typedef struct InvalidationChunk
 typedef struct InvalidationListHeader
 {
 	InvalidationChunk *cclist;	/* list of chunks holding catcache msgs */
-	InvalidationChunk *rclist;	/* list of chunks holding relcache/smgr msgs */
+	InvalidationChunk *rclist;	/* list of chunks holding relcache msgs */
 } InvalidationListHeader;
 
 /*----------------
@@ -158,6 +166,11 @@ typedef struct TransInvalidationInfo
 
 static TransInvalidationInfo *transInvalInfo = NULL;
 
+static SharedInvalidationMessage *SharedInvalidMessagesArray;
+static int	numSharedInvalidMessagesArray;
+static int	maxSharedInvalidMessagesArray;
+
+
 /*
  * Dynamically-registered callback functions.  Current implementation
  * assumes there won't be very many of these at once; could improve if needed.
@@ -185,14 +198,6 @@ static struct RELCACHECALLBACK
 }	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
 static int	relcache_callback_count = 0;
-
-/* info values for 2PC callback */
-#define TWOPHASE_INFO_MSG			0	/* SharedInvalidationMessage */
-#define TWOPHASE_INFO_FILE_BEFORE	1	/* relcache file inval */
-#define TWOPHASE_INFO_FILE_AFTER	2	/* relcache file inval */
-
-static void PersistInvalidationMessage(SharedInvalidationMessage *msg);
-
 
 /* ----------------------------------------------------------------
  *				Invalidation list support functions
@@ -312,7 +317,7 @@ AppendInvalidationMessageList(InvalidationChunk **destHdr,
  *				Invalidation set support functions
  *
  * These routines understand about the division of a logical invalidation
- * list into separate physical lists for catcache and relcache/smgr entries.
+ * list into separate physical lists for catcache and relcache entries.
  * ----------------------------------------------------------------
  */
 
@@ -330,6 +335,21 @@ AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.cc.tuplePtr = *tuplePtr;
 	msg.cc.dbId = dbId;
 	msg.cc.hashValue = hashValue;
+	AddInvalidationMessage(&hdr->cclist, &msg);
+}
+
+/*
+ * Add a whole-catalog inval entry
+ */
+static void
+AddCatalogInvalidationMessage(InvalidationListHeader *hdr,
+							  Oid dbId, Oid catId)
+{
+	SharedInvalidationMessage msg;
+
+	msg.cat.id = SHAREDINVALCATALOG_ID;
+	msg.cat.dbId = dbId;
+	msg.cat.catId = catId;
 	AddInvalidationMessage(&hdr->cclist, &msg);
 }
 
@@ -353,27 +373,6 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.rc.id = SHAREDINVALRELCACHE_ID;
 	msg.rc.dbId = dbId;
 	msg.rc.relId = relId;
-	AddInvalidationMessage(&hdr->rclist, &msg);
-}
-
-/*
- * Add an smgr inval entry
- */
-static void
-AddSmgrInvalidationMessage(InvalidationListHeader *hdr,
-						   RelFileNode rnode)
-{
-	SharedInvalidationMessage msg;
-
-	/* Don't add a duplicate item */
-	ProcessMessageList(hdr->rclist,
-					   if (msg->sm.id == SHAREDINVALSMGR_ID &&
-						   RelFileNodeEquals(msg->sm.rnode, rnode))
-					   return);
-
-	/* OK, add the item */
-	msg.sm.id = SHAREDINVALSMGR_ID;
-	msg.sm.rnode = rnode;
 	AddInvalidationMessage(&hdr->rclist, &msg);
 }
 
@@ -436,6 +435,18 @@ RegisterCatcacheInvalidation(int cacheId,
 }
 
 /*
+ * RegisterCatalogInvalidation
+ *
+ * Register an invalidation event for all catcache entries from a catalog.
+ */
+static void
+RegisterCatalogInvalidation(Oid dbId, Oid catId)
+{
+	AddCatalogInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
+								  dbId, catId);
+}
+
+/*
  * RegisterRelcacheInvalidation
  *
  * As above, but register a relcache invalidation event.
@@ -463,6 +474,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 }
 
 /*
+<<<<<<< HEAD
  * RegisterSmgrInvalidation
  *
  * As above, but register an smgr invalidation event.
@@ -512,6 +524,8 @@ si_to_str(SharedInvalidationMessage *msg)
 #endif
 
 /*
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * LocalExecuteInvalidationMessage
  *
  * Process a single invalidation message (which could be of any type).
@@ -521,30 +535,32 @@ si_to_str(SharedInvalidationMessage *msg)
 static void
 LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 {
-	int			i;
-
 	if (msg->id >= 0)
 	{
-		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == 0)
+		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == InvalidOid)
 		{
 			CatalogCacheIdInvalidate(msg->cc.id,
 									 msg->cc.hashValue,
 									 &msg->cc.tuplePtr);
 
-			for (i = 0; i < syscache_callback_count; i++)
-			{
-				struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
+			CallSyscacheCallbacks(msg->cc.id, &msg->cc.tuplePtr);
+		}
+	}
+	else if (msg->id == SHAREDINVALCATALOG_ID)
+	{
+		if (msg->cat.dbId == MyDatabaseId || msg->cat.dbId == InvalidOid)
+		{
+			CatalogCacheFlushCatalog(msg->cat.catId);
 
-				if (ccitem->id == msg->cc.id)
-					(*ccitem->function) (ccitem->arg,
-										 msg->cc.id, &msg->cc.tuplePtr);
-			}
+			/* CatalogCacheFlushCatalog calls CallSyscacheCallbacks as needed */
 		}
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
 		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == InvalidOid)
 		{
+			int			i;
+
 			RelationCacheInvalidateEntry(msg->rc.relId);
 
 			for (i = 0; i < relcache_callback_count; i++)
@@ -562,6 +578,14 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		 * short-circuit test is possible here.
 		 */
 		smgrclosenode(msg->sm.rnode);
+	}
+	else if (msg->id == SHAREDINVALRELMAP_ID)
+	{
+		/* We only care about our own database and shared catalogs */
+		if (msg->rm.dbId == InvalidOid)
+			RelationMapInvalidate(true);
+		else if (msg->rm.dbId == MyDatabaseId)
+			RelationMapInvalidate(false);
 	}
 	else
 	{
@@ -589,7 +613,7 @@ InvalidateSystemCaches(void)
 	int			i;
 
 	ResetCatalogCaches();
-	RelationCacheInvalidate();	/* gets smgr cache too */
+	RelationCacheInvalidate();	/* gets smgr and relmap too */
 
 	for (i = 0; i < syscache_callback_count; i++)
 	{
@@ -651,35 +675,12 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 	if (tupleRelId == RelationRelationId)
 	{
 		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
-		RelFileNode rnode;
 
 		relationId = HeapTupleGetOid(tuple);
 		if (classtup->relisshared)
 			databaseId = InvalidOid;
 		else
 			databaseId = MyDatabaseId;
-
-		/*
-		 * We need to send out an smgr inval as well as a relcache inval. This
-		 * is needed because other backends might possibly possess smgr cache
-		 * but not relcache entries for the target relation.
-		 *
-		 * Note: during a pg_class row update that assigns a new relfilenode
-		 * or reltablespace value, we will be called on both the old and new
-		 * tuples, and thus will broadcast invalidation messages showing both
-		 * the old and new RelFileNode values.	This ensures that other
-		 * backends will close smgr references to the old file.
-		 *
-		 * XXX possible future cleanup: it might be better to trigger smgr
-		 * flushes explicitly, rather than indirectly from pg_class updates.
-		 */
-		if (classtup->reltablespace)
-			rnode.spcNode = classtup->reltablespace;
-		else
-			rnode.spcNode = MyDatabaseTableSpace;
-		rnode.dbNode = databaseId;
-		rnode.relNode = classtup->relfilenode;
-		RegisterSmgrInvalidation(rnode);
 	}
 	else if (tupleRelId == AttributeRelationId)
 	{
@@ -791,38 +792,8 @@ AtStart_Inval(void)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransInvalidationInfo));
 	transInvalInfo->my_level = GetCurrentTransactionNestLevel();
-}
-
-/*
- * AtPrepare_Inval
- *		Save the inval lists state at 2PC transaction prepare.
- *
- * In this phase we just generate 2PC records for all the pending invalidation
- * work.
- */
-void
-AtPrepare_Inval(void)
-{
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
-	/*
-	 * Relcache init file invalidation requires processing both before and
-	 * after we send the SI messages.
-	 */
-	if (transInvalInfo->RelcacheInitFileInval)
-		RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_FILE_BEFORE,
-							   NULL, 0);
-
-	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
-							   &transInvalInfo->CurrentCmdInvalidMsgs);
-
-	ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
-								PersistInvalidationMessage);
-
-	if (transInvalInfo->RelcacheInitFileInval)
-		RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_FILE_AFTER,
-							   NULL, 0);
+	SharedInvalidMessagesArray = NULL;
+	numSharedInvalidMessagesArray = 0;
 }
 
 /*
@@ -862,26 +833,126 @@ AtSubStart_Inval(void)
 }
 
 /*
- * PersistInvalidationMessage
- *		Write an invalidation message to the 2PC state file.
+ * Collect invalidation messages into SharedInvalidMessagesArray array.
  */
 static void
-PersistInvalidationMessage(SharedInvalidationMessage *msg)
+MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 {
-	RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_MSG,
-						   msg, sizeof(SharedInvalidationMessage));
+	/*
+	 * Initialise array first time through in each commit
+	 */
+	if (SharedInvalidMessagesArray == NULL)
+	{
+		maxSharedInvalidMessagesArray = FIRSTCHUNKSIZE;
+		numSharedInvalidMessagesArray = 0;
+
+		/*
+		 * Although this is being palloc'd we don't actually free it directly.
+		 * We're so close to EOXact that we now we're going to lose it anyhow.
+		 */
+		SharedInvalidMessagesArray = palloc(maxSharedInvalidMessagesArray
+										* sizeof(SharedInvalidationMessage));
+	}
+
+	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
+	{
+		while ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
+			maxSharedInvalidMessagesArray *= 2;
+
+		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
+											  maxSharedInvalidMessagesArray
+										* sizeof(SharedInvalidationMessage));
+	}
+
+	/*
+	 * Append the next chunk onto the array
+	 */
+	memcpy(SharedInvalidMessagesArray + numSharedInvalidMessagesArray,
+		   msgs, n * sizeof(SharedInvalidationMessage));
+	numSharedInvalidMessagesArray += n;
 }
 
 /*
- * inval_twophase_postcommit
- *		Process an invalidation message from the 2PC state file.
+ * xactGetCommittedInvalidationMessages() is executed by
+ * RecordTransactionCommit() to add invalidation messages onto the
+ * commit record. This applies only to commit message types, never to
+ * abort records. Must always run before AtEOXact_Inval(), since that
+ * removes the data we need to see.
+ *
+ * Remember that this runs before we have officially committed, so we
+ * must not do anything here to change what might occur *if* we should
+ * fail between here and the actual commit.
+ *
+ * see also xact_redo_commit() and xact_desc_commit()
+ */
+int
+xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
+									 bool *RelcacheInitFileInval)
+{
+	MemoryContext oldcontext;
+
+	/* Must be at top of stack */
+	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
+	/*
+	 * Relcache init file invalidation requires processing both before and
+	 * after we send the SI messages.  However, we need not do anything unless
+	 * we committed.
+	 */
+	*RelcacheInitFileInval = transInvalInfo->RelcacheInitFileInval;
+
+	/*
+	 * Walk through TransInvalidationInfo to collect all the messages into a
+	 * single contiguous array of invalidation messages. It must be contiguous
+	 * so we can copy directly into WAL message. Maintain the order that they
+	 * would be processed in by AtEOXact_Inval(), to ensure emulated behaviour
+	 * in redo is as similar as possible to original. We want the same bugs,
+	 * if any, not new ones.
+	 */
+	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
+
+	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
+									 MakeSharedInvalidMessagesArray);
+	ProcessInvalidationMessagesMulti(&transInvalInfo->PriorCmdInvalidMsgs,
+									 MakeSharedInvalidMessagesArray);
+	MemoryContextSwitchTo(oldcontext);
+
+	Assert(!(numSharedInvalidMessagesArray > 0 &&
+			 SharedInvalidMessagesArray == NULL));
+
+	*msgs = SharedInvalidMessagesArray;
+
+	return numSharedInvalidMessagesArray;
+}
+
+#define RecoveryRelationCacheInitFileInvalidate(dbo, tbo, tf) \
+{ \
+	DatabasePath = GetDatabasePath(dbo, tbo); \
+	elog(trace_recovery(DEBUG4), "removing relcache init file in %s", DatabasePath); \
+	RelationCacheInitFileInvalidate(tf); \
+	pfree(DatabasePath); \
+}
+
+/*
+ * ProcessCommittedInvalidationMessages is executed by xact_redo_commit()
+ * to process invalidation messages added to commit records.
+ *
+ * Relcache init file invalidation requires processing both
+ * before and after we send the SI messages. See AtEOXact_Inval()
+ *
+ * We deliberately avoid SetDatabasePath() since it is intended to be used
+ * only once by normal backends, so we set DatabasePath directly then
+ * pfree after use. See RecoveryRelationCacheInitFileInvalidate() macro.
  */
 void
-inval_twophase_postcommit(TransactionId xid, uint16 info,
-						  void *recdata, uint32 len)
+ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
+									 int nmsgs, bool RelcacheInitFileInval,
+									 Oid dbid, Oid tsid)
 {
-	SharedInvalidationMessage *msg;
+	if (nmsgs <= 0)
+		return;
 
+<<<<<<< HEAD
 	switch (info)
 	{
 		case TWOPHASE_INFO_MSG:
@@ -899,8 +970,19 @@ inval_twophase_postcommit(TransactionId xid, uint16 info,
 			Assert(false);
 			break;
 	}
-}
+=======
+	elog(trace_recovery(DEBUG4), "replaying commit with %d messages%s", nmsgs,
+		 (RelcacheInitFileInval ? " and relcache file invalidation" : ""));
 
+	if (RelcacheInitFileInval)
+		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, true);
+
+	SendSharedInvalidMessages(msgs, nmsgs);
+
+	if (RelcacheInitFileInval)
+		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, false);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+}
 
 /*
  * AtEOXact_Inval
@@ -1061,6 +1143,7 @@ CommandEndInvalidationMessages(void)
 
 
 /*
+<<<<<<< HEAD
  * BeginNonTransactionalInvalidation
  *		Prepare for invalidation messages for nontransactional updates.
  *
@@ -1168,6 +1251,8 @@ EndNonTransactionalInvalidation(void)
 
 
 /*
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * CacheInvalidateHeapTuple
  *		Register the given tuple for invalidation at end of command
  *		(ie, current command is creating or outdating this tuple).
@@ -1179,6 +1264,30 @@ CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 }
 
 /*
+ * CacheInvalidateCatalog
+ *		Register invalidation of the whole content of a system catalog.
+ *
+ * This is normally used in VACUUM FULL/CLUSTER, where we haven't so much
+ * changed any tuples as moved them around.  Some uses of catcache entries
+ * expect their TIDs to be correct, so we have to blow away the entries.
+ *
+ * Note: we expect caller to verify that the rel actually is a system
+ * catalog.  If it isn't, no great harm is done, just a wasted sinval message.
+ */
+void
+CacheInvalidateCatalog(Oid catalogId)
+{
+	Oid			databaseId;
+
+	if (IsSharedRelation(catalogId))
+		databaseId = InvalidOid;
+	else
+		databaseId = MyDatabaseId;
+
+	RegisterCatalogInvalidation(databaseId, catalogId);
+}
+
+/*
  * CacheInvalidateRelcache
  *		Register invalidation of the specified relation's relcache entry
  *		at end of command.
@@ -1186,10 +1295,6 @@ CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
  * This is used in places that need to force relcache rebuild but aren't
  * changing any of the tuples recognized as contributors to the relcache
  * entry by PrepareForTupleInvalidation.  (An example is dropping an index.)
- * We assume in particular that relfilenode/reltablespace aren't changing
- * (so the rd_node value is still good).
- *
- * XXX most callers of this probably don't need to force an smgr flush.
  */
 void
 CacheInvalidateRelcache(Relation relation)
@@ -1204,7 +1309,6 @@ CacheInvalidateRelcache(Relation relation)
 		databaseId = MyDatabaseId;
 
 	RegisterRelcacheInvalidation(databaseId, relationId);
-	RegisterSmgrInvalidation(relation->rd_node);
 }
 
 /*
@@ -1217,22 +1321,13 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 	Form_pg_class classtup = (Form_pg_class) GETSTRUCT(classTuple);
 	Oid			databaseId;
 	Oid			relationId;
-	RelFileNode rnode;
 
 	relationId = HeapTupleGetOid(classTuple);
 	if (classtup->relisshared)
 		databaseId = InvalidOid;
 	else
 		databaseId = MyDatabaseId;
-	if (classtup->reltablespace)
-		rnode.spcNode = classtup->reltablespace;
-	else
-		rnode.spcNode = MyDatabaseTableSpace;
-	rnode.dbNode = databaseId;
-	rnode.relNode = classtup->relfilenode;
-
 	RegisterRelcacheInvalidation(databaseId, relationId);
-	RegisterSmgrInvalidation(rnode);
 }
 
 /*
@@ -1246,14 +1341,70 @@ CacheInvalidateRelcacheByRelid(Oid relid)
 {
 	HeapTuple	tup;
 
-	tup = SearchSysCache(RELOID,
-						 ObjectIdGetDatum(relid),
-						 0, 0, 0);
+	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
 	CacheInvalidateRelcacheByTuple(tup);
 	ReleaseSysCache(tup);
 }
+
+
+/*
+ * CacheInvalidateSmgr
+ *		Register invalidation of smgr references to a physical relation.
+ *
+ * Sending this type of invalidation msg forces other backends to close open
+ * smgr entries for the rel.  This should be done to flush dangling open-file
+ * references when the physical rel is being dropped or truncated.	Because
+ * these are nontransactional (i.e., not-rollback-able) operations, we just
+ * send the inval message immediately without any queuing.
+ *
+ * Note: in most cases there will have been a relcache flush issued against
+ * the rel at the logical level.  We need a separate smgr-level flush because
+ * it is possible for backends to have open smgr entries for rels they don't
+ * have a relcache entry for, e.g. because the only thing they ever did with
+ * the rel is write out dirty shared buffers.
+ *
+ * Note: because these messages are nontransactional, they won't be captured
+ * in commit/abort WAL entries.  Instead, calls to CacheInvalidateSmgr()
+ * should happen in low-level smgr.c routines, which are executed while
+ * replaying WAL as well as when creating it.
+ */
+void
+CacheInvalidateSmgr(RelFileNode rnode)
+{
+	SharedInvalidationMessage msg;
+
+	msg.sm.id = SHAREDINVALSMGR_ID;
+	msg.sm.rnode = rnode;
+	SendSharedInvalidMessages(&msg, 1);
+}
+
+/*
+ * CacheInvalidateRelmap
+ *		Register invalidation of the relation mapping for a database,
+ *		or for the shared catalogs if databaseId is zero.
+ *
+ * Sending this type of invalidation msg forces other backends to re-read
+ * the indicated relation mapping file.  It is also necessary to send a
+ * relcache inval for the specific relations whose mapping has been altered,
+ * else the relcache won't get updated with the new filenode data.
+ *
+ * Note: because these messages are nontransactional, they won't be captured
+ * in commit/abort WAL entries.  Instead, calls to CacheInvalidateRelmap()
+ * should happen in low-level relmapper.c routines, which are executed while
+ * replaying WAL as well as when creating it.
+ */
+void
+CacheInvalidateRelmap(Oid databaseId)
+{
+	SharedInvalidationMessage msg;
+
+	msg.rm.id = SHAREDINVALRELMAP_ID;
+	msg.rm.dbId = databaseId;
+	SendSharedInvalidMessages(&msg, 1);
+}
+
 
 /*
  * CacheRegisterSyscacheCallback
@@ -1299,4 +1450,24 @@ CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
 	relcache_callback_list[relcache_callback_count].arg = arg;
 
 	++relcache_callback_count;
+}
+
+/*
+ * CallSyscacheCallbacks
+ *
+ * This is exported so that CatalogCacheFlushCatalog can call it, saving
+ * this module from knowing which catcache IDs correspond to which catalogs.
+ */
+void
+CallSyscacheCallbacks(int cacheid, ItemPointer tuplePtr)
+{
+	int			i;
+
+	for (i = 0; i < syscache_callback_count; i++)
+	{
+		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
+
+		if (ccitem->id == cacheid)
+			(*ccitem->function) (ccitem->arg, cacheid, tuplePtr);
+	}
 }

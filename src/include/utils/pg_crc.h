@@ -18,6 +18,7 @@
  * COMP_<variant>(crc, data, len)
  *		Accumulate some (more) bytes into a CRC
  *
+<<<<<<< HEAD
  * FIN_<variant>(crc)
  *		Finish a CRC calculation
  *
@@ -30,6 +31,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc.h
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.24 2010/02/26 02:01:29 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -98,10 +105,106 @@ do {															  \
 	} \
 } while (0)
 
+<<<<<<< HEAD
+=======
+/* Check for equality of two CRCs */
+#define EQ_CRC32(c1,c2)  ((c1) == (c2))
+
+/* Constant table for CRC calculation */
+extern CRCDLLIMPORT const uint32 pg_crc32_table[];
+
+
+#ifdef PROVIDE_64BIT_CRC
+
+/*
+ * If we use a 64-bit integer type, then a 64-bit CRC looks just like the
+ * usual sort of implementation.  However, we can also fake it with two
+ * 32-bit registers.  Experience has shown that the two-32-bit-registers code
+ * is as fast as, or even much faster than, the 64-bit code on all but true
+ * 64-bit machines.  We use SIZEOF_VOID_P to check the native word width.
+ */
+
+#if SIZEOF_VOID_P < 8
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * Constant table for the CRC-32 polynomials. The same table is used by both
  * the normal and traditional variants.
  */
+<<<<<<< HEAD
 extern PGDLLIMPORT const uint32 pg_crc32_table[256];
+=======
+typedef struct pg_crc64
+{
+	uint32		crc0;
+	uint32		crc1;
+}	pg_crc64;
+
+/* Initialize a CRC accumulator */
+#define INIT_CRC64(crc) ((crc).crc0 = 0xffffffff, (crc).crc1 = 0xffffffff)
+
+/* Finish a CRC calculation */
+#define FIN_CRC64(crc)	((crc).crc0 ^= 0xffffffff, (crc).crc1 ^= 0xffffffff)
+
+/* Accumulate some (more) bytes into a CRC */
+#define COMP_CRC64(crc, data, len)	\
+do { \
+	uint32		__crc0 = (crc).crc0; \
+	uint32		__crc1 = (crc).crc1; \
+	unsigned char *__data = (unsigned char *) (data); \
+	uint32		__len = (len); \
+\
+	while (__len-- > 0) \
+	{ \
+		int		__tab_index = ((int) (__crc1 >> 24) ^ *__data++) & 0xFF; \
+		__crc1 = pg_crc64_table1[__tab_index] ^ ((__crc1 << 8) | (__crc0 >> 24)); \
+		__crc0 = pg_crc64_table0[__tab_index] ^ (__crc0 << 8); \
+	} \
+	(crc).crc0 = __crc0; \
+	(crc).crc1 = __crc1; \
+} while (0)
+
+/* Check for equality of two CRCs */
+#define EQ_CRC64(c1,c2)  ((c1).crc0 == (c2).crc0 && (c1).crc1 == (c2).crc1)
+
+/* Constant table for CRC calculation */
+extern CRCDLLIMPORT const uint32 pg_crc64_table0[];
+extern CRCDLLIMPORT const uint32 pg_crc64_table1[];
+#else							/* use int64 implementation */
+
+typedef struct pg_crc64
+{
+	uint64		crc0;
+}	pg_crc64;
+
+/* Initialize a CRC accumulator */
+#define INIT_CRC64(crc) ((crc).crc0 = UINT64CONST(0xffffffffffffffff))
+
+/* Finish a CRC calculation */
+#define FIN_CRC64(crc)	((crc).crc0 ^= UINT64CONST(0xffffffffffffffff))
+
+/* Accumulate some (more) bytes into a CRC */
+#define COMP_CRC64(crc, data, len)	\
+do { \
+	uint64		__crc0 = (crc).crc0; \
+	unsigned char *__data = (unsigned char *) (data); \
+	uint32		__len = (len); \
+\
+	while (__len-- > 0) \
+	{ \
+		int		__tab_index = ((int) (__crc0 >> 56) ^ *__data++) & 0xFF; \
+		__crc0 = pg_crc64_table[__tab_index] ^ (__crc0 << 8); \
+	} \
+	(crc).crc0 = __crc0; \
+} while (0)
+
+/* Check for equality of two CRCs */
+#define EQ_CRC64(c1,c2)  ((c1).crc0 == (c2).crc0)
+
+/* Constant table for CRC calculation */
+extern CRCDLLIMPORT const uint64 pg_crc64_table[];
+#endif   /* SIZEOF_VOID_P < 8 */
+#endif   /* PROVIDE_64BIT_CRC */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* PG_CRC_H */

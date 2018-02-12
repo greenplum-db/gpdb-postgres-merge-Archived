@@ -7,15 +7,19 @@
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.10 2009/10/07 22:14:25 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.13 2010/04/20 23:48:47 tgl Exp $
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
@@ -44,7 +48,11 @@
 #define AuthIdRelationId	1260
 #define AuthIdRelation_Rowtype_Id	2842
 
+<<<<<<< HEAD
 CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842)
+=======
+CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MACRO
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	NameData	rolname;		/* name of role */
 	bool		rolsuper;		/* read this field via superuser() only! */
@@ -87,6 +95,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
+<<<<<<< HEAD
 #define Natts_pg_authid						17
 #define Anum_pg_authid_rolname				1
 #define Anum_pg_authid_rolsuper				2
@@ -105,6 +114,19 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolcreaterexthdfs	15
 #define Anum_pg_authid_rolcreatewexthdfs	16
 #define Anum_pg_authid_rolresgroup			17
+=======
+#define Natts_pg_authid					10
+#define Anum_pg_authid_rolname			1
+#define Anum_pg_authid_rolsuper			2
+#define Anum_pg_authid_rolinherit		3
+#define Anum_pg_authid_rolcreaterole	4
+#define Anum_pg_authid_rolcreatedb		5
+#define Anum_pg_authid_rolcatupdate		6
+#define Anum_pg_authid_rolcanlogin		7
+#define Anum_pg_authid_rolconnlimit		8
+#define Anum_pg_authid_rolpassword		9
+#define Anum_pg_authid_rolvaliduntil	10
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* ----------------
  *		initial contents of pg_authid

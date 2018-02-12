@@ -5,13 +5,13 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.34 2009/12/07 05:22:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.39 2010/03/11 03:36:22 tgl Exp $
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
@@ -40,7 +40,7 @@ CATALOG(pg_constraint,2606)
 	 * Postgres practice, and partly because we don't want to have to obtain a
 	 * global lock to generate a globally unique name for a nameless
 	 * constraint.	We associate a namespace with constraint names only for
-	 * SQL92 compatibility.
+	 * SQL-spec compatibility.
 	 */
 	NameData	conname;		/* name of this constraint */
 	Oid			connamespace;	/* OID of namespace containing constraint */
@@ -66,11 +66,11 @@ CATALOG(pg_constraint,2606)
 
 	/*
 	 * conindid links to the index supporting the constraint, if any;
-	 * otherwise it's 0.  This is used for unique and primary-key constraints,
-	 * and less obviously for foreign-key constraints (where the index is
-	 * a unique index on the referenced relation's referenced columns).
-	 * Notice that the index is on conrelid in the first case but confrelid
-	 * in the second.
+	 * otherwise it's 0.  This is used for unique, primary-key, and exclusion
+	 * constraints, and less obviously for foreign-key constraints (where the
+	 * index is a unique index on the referenced relation's referenced
+	 * columns).  Notice that the index is on conrelid in the first case but
+	 * confrelid in the second.
 	 */
 	Oid			conindid;		/* index supporting this constraint */
 
@@ -94,7 +94,8 @@ CATALOG(pg_constraint,2606)
 	 */
 
 	/*
-	 * Columns of conrelid that the constraint applies to
+	 * Columns of conrelid that the constraint applies to, if known (this is
+	 * NULL for trigger constraints)
 	 */
 	int2		conkey[1];
 
@@ -185,6 +186,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define CONSTRAINT_FOREIGN			'f'
 #define CONSTRAINT_PRIMARY			'p'
 #define CONSTRAINT_UNIQUE			'u'
+#define CONSTRAINT_TRIGGER			't'
 #define CONSTRAINT_EXCLUSION		'x'
 
 /*
@@ -244,6 +246,7 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern char * GetConstraintNameByOid(Oid constraintId);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
+<<<<<<< HEAD
 						  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
 extern Oid  get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 
@@ -252,5 +255,9 @@ extern Oid  get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
  */
 extern bool ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, 
 					Oid *pkrelid, AttrNumber *pkattno);
+=======
+						  Oid newNspId, bool isType);
+extern Oid	GetConstraintByName(Oid relid, const char *conname);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* PG_CONSTRAINT_H */

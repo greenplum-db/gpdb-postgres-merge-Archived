@@ -1,4 +1,5 @@
 -- test plperl.on_plperl_init errors are fatal
+<<<<<<< HEAD
 -- Must load plperl before we can set on_plperl_init
 LOAD 'plperl';
 SET SESSION plperl.on_plperl_init = ' system("/nonesuch"); ';
@@ -10,5 +11,18 @@ SHOW plperl.on_plperl_init;
 
 DO $$ warn 42 $$ language plperl;
 ERROR:  'system' trapped by operation mask at line 1.
+=======
+-- Avoid need for custom_variable_classes = 'plperl'
+LOAD 'plperl';
+SET SESSION plperl.on_plperl_init = ' system("/nonesuch") ';
+SHOW plperl.on_plperl_init;
+ plperl.on_plperl_init 
+-----------------------
+  system("/nonesuch") 
+(1 row)
+
+DO $$ warn 42 $$ language plperl;
+ERROR:  'system' trapped by operation mask at line 2.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CONTEXT:  while executing plperl.on_plperl_init
 PL/Perl anonymous code block

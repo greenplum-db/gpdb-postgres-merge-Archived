@@ -4,14 +4,21 @@
  *	controldata functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9.2.1 2010/09/07 14:10:38 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9 2010/07/06 19:18:55 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
 
 #include <ctype.h>
 
+<<<<<<< HEAD
 static void putenv2(migratorContext *ctx, const char *var, const char *val);
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * get_control_data()
@@ -27,7 +34,11 @@ static void putenv2(migratorContext *ctx, const char *var, const char *val);
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the migration, but it provides enough for
+<<<<<<< HEAD
  * check mode.  We do not implement pg_resetxlog -n because it is hard to
+=======
+ * check mode.	We do not implement pg_resetxlog -n because it is hard to
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * return valid xid data for a running server.
  */
 void
@@ -52,6 +63,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	bool		got_toast = false;
 	bool		got_date_is_int = false;
 	bool		got_float8_pass_by_value = false;
+<<<<<<< HEAD
 	bool		got_data_checksums = false;
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
@@ -102,6 +114,21 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	putenv2(ctx, "LC_ALL", NULL);
 	putenv2(ctx, "LC_MESSAGES", "C");
 
+=======
+	char	   *lang = NULL;
+
+	/*
+	 * Because we test the pg_resetxlog output strings, it has to be in
+	 * English.
+	 */
+	if (getenv("LANG"))
+		lang = pg_strdup(ctx, getenv("LANG"));
+#ifndef WIN32
+	putenv(pg_strdup(ctx, "LANG=C"));
+#else
+	SetEnvironmentVariableA("LANG", "C");
+#endif
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
 			 cluster->bindir,
 			 live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
@@ -124,6 +151,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 		got_float8_pass_by_value = true;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * In PostgreSQL, checksums were introduced in 9.3 so the test for checksum
 	 * version applies to <= 9.2. Greenplum backported checksums into 5.x which
@@ -135,6 +163,8 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 		got_data_checksums = true;
 	}
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* we have the result of cmd in "output". so parse it line by line now */
 	while (fgets(bufin, sizeof(bufin), output))
 	{
@@ -167,7 +197,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: pg_resetxlog problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.ctrl_ver = str2uint(p);
+=======
+			cluster->controldata.ctrl_ver = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else if ((p = strstr(bufin, "Catalog version number:")) != NULL)
 		{
@@ -177,7 +211,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.cat_ver = str2uint(p);
+=======
+			cluster->controldata.cat_ver = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
@@ -187,7 +225,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.logid = str2uint(p);
+=======
+			cluster->controldata.logid = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "First log file segment after reset:")) != NULL)
@@ -198,6 +240,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.nxtlogseg = str2uint(p);
 			got_log_seg = true;
 		}
@@ -225,6 +268,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 			got_log_seg = true;
 		}
 		/*---*/
+=======
+			cluster->controldata.nxtlogseg = (uint32) atol(p);
+			got_log_seg = true;
+		}
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		else if ((p = strstr(bufin, "Latest checkpoint's TimeLineID:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -233,7 +281,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.chkpnt_tli = str2uint(p);
+=======
+			cluster->controldata.chkpnt_tli = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
@@ -247,7 +299,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			op++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.chkpnt_nxtxid = str2uint(op);
+=======
+			cluster->controldata.chkpnt_nxtxid = (uint32) atol(op);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_xid = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextOID:")) != NULL)
@@ -258,7 +314,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.chkpnt_nxtoid = str2uint(p);
+=======
+			cluster->controldata.chkpnt_nxtoid = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_oid = true;
 		}
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
@@ -269,7 +329,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.align = str2uint(p);
+=======
+			cluster->controldata.align = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_align = true;
 		}
 		else if ((p = strstr(bufin, "Database block size:")) != NULL)
@@ -280,7 +344,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.blocksz = str2uint(p);
+=======
+			cluster->controldata.blocksz = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_blocksz = true;
 		}
 		else if ((p = strstr(bufin, "Blocks per segment of large relation:")) != NULL)
@@ -291,7 +359,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.largesz = str2uint(p);
+=======
+			cluster->controldata.largesz = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_largesz = true;
 		}
 		else if ((p = strstr(bufin, "WAL block size:")) != NULL)
@@ -302,7 +374,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.walsz = str2uint(p);
+=======
+			cluster->controldata.walsz = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_walsz = true;
 		}
 		else if ((p = strstr(bufin, "Bytes per WAL segment:")) != NULL)
@@ -313,7 +389,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.walseg = str2uint(p);
+=======
+			cluster->controldata.walseg = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_walseg = true;
 		}
 		else if ((p = strstr(bufin, "Maximum length of identifiers:")) != NULL)
@@ -324,7 +404,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.ident = str2uint(p);
+=======
+			cluster->controldata.ident = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_ident = true;
 		}
 		else if ((p = strstr(bufin, "Maximum columns in an index:")) != NULL)
@@ -335,7 +419,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.index = str2uint(p);
+=======
+			cluster->controldata.index = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_index = true;
 		}
 		else if ((p = strstr(bufin, "Maximum size of a TOAST chunk:")) != NULL)
@@ -346,7 +434,11 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
+<<<<<<< HEAD
 			cluster->controldata.toast = str2uint(p);
+=======
+			cluster->controldata.toast = (uint32) atol(p);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			got_toast = true;
 		}
 		else if ((p = strstr(bufin, "Date/time type storage:")) != NULL)
@@ -372,6 +464,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 			cluster->controldata.float8_pass_by_value = strstr(p, "by value") != NULL;
 			got_float8_pass_by_value = true;
 		}
+<<<<<<< HEAD
 		else if ((p = strstr(bufin, "checksum")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -384,6 +477,8 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 			cluster->controldata.data_checksum_version = str2uint(p);
 			got_data_checksums = true;
 		}
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/* In pre-8.4 only */
 		else if ((p = strstr(bufin, "LC_COLLATE:")) != NULL)
 		{
@@ -419,6 +514,7 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	if (output)
 		pclose(output);
 
+<<<<<<< HEAD
 	/*
 	 *	Restore environment variables
 	 */
@@ -442,14 +538,43 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 	pg_free(lc_all);
 	pg_free(lc_messages);
  
+=======
+	/* restore LANG */
+	if (lang)
+	{
+#ifndef WIN32
+		char	   *envstr = (char *) pg_malloc(ctx, strlen(lang) + 6);
+
+		sprintf(envstr, "LANG=%s", lang);
+		putenv(envstr);
+#else
+		SetEnvironmentVariableA("LANG", lang);
+#endif
+		pg_free(lang);
+	}
+	else
+	{
+#ifndef WIN32
+		unsetenv("LANG");
+#else
+		SetEnvironmentVariableA("LANG", "");
+#endif
+	}
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
 		(!live_check && !got_log_id) ||
 		(!live_check && !got_log_seg) ||
 		!got_tli ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
+<<<<<<< HEAD
 		!got_walseg || !got_ident || !got_index || /* !got_toast || */
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksums)
+=======
+		!got_walseg || !got_ident || !got_index || !got_toast ||
+		!got_date_is_int || !got_float8_pass_by_value)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		pg_log(ctx, PG_REPORT,
 			"Some required control information is missing;  cannot find:\n");
@@ -490,10 +615,15 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 		if (!got_index)
 			pg_log(ctx, PG_REPORT, "  maximum number of indexed columns\n");
 
+<<<<<<< HEAD
 #if 0	/* not mandatory in GPDB, see above */
 		if (!got_toast)
 			pg_log(ctx, PG_REPORT, "  maximum TOAST chunk size\n");
 #endif
+=======
+		if (!got_toast)
+			pg_log(ctx, PG_REPORT, "  maximum TOAST chunk size\n");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (!got_date_is_int)
 			pg_log(ctx, PG_REPORT, "  dates/times are integers?\n");
@@ -502,12 +632,17 @@ get_control_data(migratorContext *ctx, ClusterInfo *cluster, bool live_check)
 		if (!got_float8_pass_by_value)
 			pg_log(ctx, PG_REPORT, "  float8 argument passing method\n");
 
+<<<<<<< HEAD
 		/* value added in Postgres 9.3 */
 		if (!got_data_checksums)
 			pg_log(ctx, PG_REPORT, "  data checksums\n");
 
 		pg_log(ctx, PG_FATAL,
 			   "Cannot continue without required control information, terminating\n");
+=======
+		pg_log(ctx, PG_FATAL,
+			   "Unable to continue without required control information, terminating\n");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }
 
@@ -549,6 +684,7 @@ check_control_data(migratorContext *ctx, ControlData *oldctrl,
 		pg_log(ctx, PG_FATAL,
 			   "old and new pg_controldata maximum indexed columns are invalid or do not match\n");
 
+<<<<<<< HEAD
 	/*
 	 * PostgreSQL's pg_upgrade checks for the maximum TOAST chunk size, because
 	 * the tuptoaster code assumes all chunks to have the same size. GPDB's
@@ -559,6 +695,10 @@ check_control_data(migratorContext *ctx, ControlData *oldctrl,
 	 */
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
 		pg_log(ctx, PG_WARNING,
+=======
+	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
+		pg_log(ctx, PG_FATAL,
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
@@ -575,6 +715,7 @@ check_control_data(migratorContext *ctx, ControlData *oldctrl,
 			   "--disable-integer-datetimes or get server binaries built\n"
 			   "with those options.\n");
 	}
+<<<<<<< HEAD
 
 	/*
 	 * Check for allowed combinations of data checksums
@@ -596,6 +737,8 @@ check_control_data(migratorContext *ctx, ControlData *oldctrl,
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version
 			 && ctx->checksum_mode == CHECKSUM_NONE)
 		pg_log(ctx, PG_FATAL, "old and new cluster pg_controldata checksum versions do not match\n");
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -613,6 +756,7 @@ rename_old_pg_control(migratorContext *ctx)
 		pg_log(ctx, PG_FATAL, "Unable to rename %s to %s.\n", old_path, new_path);
 	check_ok(ctx);
 }
+<<<<<<< HEAD
 
 
 /*
@@ -649,3 +793,5 @@ putenv2(migratorContext *ctx, const char *var, const char *val)
 #endif
 	}
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

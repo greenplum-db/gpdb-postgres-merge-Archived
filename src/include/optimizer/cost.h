@@ -4,12 +4,16 @@
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.99 2009/11/15 02:45:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.101 2010/04/19 00:55:26 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +80,7 @@ extern bool enable_sort;
 extern bool enable_hashagg;
 extern bool enable_groupagg;
 extern bool enable_nestloop;
+extern bool enable_material;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
 extern int	constraint_exclusion;

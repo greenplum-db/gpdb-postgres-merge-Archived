@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/input.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.69 2010/02/26 02:01:18 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #include "postgres_fe.h"
 
@@ -367,8 +371,8 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 #if defined(HAVE_HISTORY_TRUNCATE_FILE) && defined(HAVE_APPEND_HISTORY)
 		if (appendFlag)
 		{
-			int		nlines;
-			int		fd;
+			int			nlines;
+			int			fd;
 
 			/* truncate previous entries if needed */
 			if (max_lines >= 0)
@@ -396,7 +400,7 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 			/* truncate what we have ... */
 			if (max_lines >= 0)
 				stifle_history(max_lines);
-			/* ... and overwrite file.  Tough luck for concurrent sessions. */
+			/* ... and overwrite file.	Tough luck for concurrent sessions. */
 			errno = 0;
 			(void) write_history(fname);
 			if (errno == 0)

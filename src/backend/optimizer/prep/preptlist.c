@@ -13,13 +13,17 @@
  * and row ID information needed for EvalPlanQual checking.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.98 2009/10/26 02:26:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.100 2010/02/26 02:00:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,11 +153,10 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		tlist = supplement_simply_updatable_targetlist(range_table, tlist);
 
 	/*
-	 * Add necessary junk columns for rowmarked rels.  These values are
-	 * needed for locking of rels selected FOR UPDATE/SHARE, and to do
-	 * EvalPlanQual rechecking.  While we are at it, store these junk attnos
-	 * in the PlanRowMark list so that we don't have to redetermine them
-	 * at runtime.
+	 * Add necessary junk columns for rowmarked rels.  These values are needed
+	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
+	 * rechecking.	While we are at it, store these junk attnos in the
+	 * PlanRowMark list so that we don't have to redetermine them at runtime.
 	 */
 	foreach(lc, root->rowMarks)
 	{

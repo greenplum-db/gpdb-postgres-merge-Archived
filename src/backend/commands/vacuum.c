@@ -3,29 +3,37 @@
  * vacuum.c
  *	  The postgres vacuum cleaner.
  *
- * This file includes the "full" version of VACUUM, as well as control code
- * used by all three of full VACUUM, lazy VACUUM, and ANALYZE.	See
- * vacuumlazy.c and analyze.c for the rest of the code for the latter two.
+ * This file now includes only control and dispatch code for VACUUM and
+ * ANALYZE commands.  Regular VACUUM is implemented in vacuumlazy.c,
+ * ANALYZE in analyze.c, and VACUUM FULL is a variant of CLUSTER, handled
+ * in cluster.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.398 2009/12/09 21:57:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.410 2010/02/26 02:00:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include <sys/time.h>
 #include <unistd.h>
 
 #include <math.h>
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "access/clog.h"
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -33,19 +41,22 @@
 #include "access/appendonlytid.h"
 #include "catalog/heap.h"
 #include "access/transam.h"
-#include "access/visibilitymap.h"
 #include "access/xact.h"
+<<<<<<< HEAD
 #include "access/xlog.h"
 #include "access/appendonly_compaction.h"
 #include "access/appendonly_visimap.h"
 #include "access/aocs_compaction.h"
 #include "catalog/catalog.h"
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
+<<<<<<< HEAD
 #include "catalog/storage.h"
 #include "commands/dbcommands.h"
 #include "commands/tablecmds.h"
@@ -59,24 +70,26 @@
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"             /* pq_beginmessage() etc. */
+=======
+#include "commands/cluster.h"
+#include "commands/vacuum.h"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "storage/bufmgr.h"
-#include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
+<<<<<<< HEAD
 #include "utils/builtins.h"
 #include "utils/faultinjector.h"
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
-#include "utils/inval.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/pg_rusage.h"
-#include "utils/relcache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -95,6 +108,7 @@
 int			vacuum_freeze_min_age;
 int			vacuum_freeze_table_age;
 
+<<<<<<< HEAD
 /*
  * VacPage structures keep track of each page on which we find useful
  * amounts of free space.
@@ -268,12 +282,18 @@ static TransactionId FreezeLimit;
 static VPgClassStats VacFullInitialStats[MaxVacFullInitialStatsSize];
 static int VacFullInitialStatsSize = 0;
 
+=======
+
+/* A few variables that don't seem worth passing around as parameters */
+static MemoryContext vac_context = NULL;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
 static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt,
 			 const char *stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
+<<<<<<< HEAD
 static void vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_stats,
 		   bool for_wraparound);
 static bool full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats);
@@ -339,6 +359,10 @@ static void vacuum_appendonly_index(Relation indexRelation,
  *																			*
  ****************************************************************************
  */
+=======
+static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
+		   bool for_wraparound, bool *scanned_all);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
@@ -367,7 +391,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype;
-	volatile MemoryContext anl_context = NULL;
 	volatile bool all_rels,
 				in_outer_xact,
 				use_own_xacts;
@@ -388,6 +411,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 	stmttype = (vacstmt->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
+<<<<<<< HEAD
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
@@ -396,17 +420,13 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	if (Gp_role == GP_ROLE_DISPATCH)
 		elevel = DEBUG2; /* vacuum messages aren't interesting from the QD */
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
 	 * a transaction, then our commit- and start-transaction-command calls
-	 * would not have the intended effect! Furthermore, the forced commit that
-	 * occurs before truncating the relation's file would have the effect of
-	 * committing the rest of the user's transaction too, which would
-	 * certainly not be the desired behavior.  (This only applies to VACUUM
-	 * FULL, though.  We could in theory run lazy VACUUM inside a transaction
-	 * block, but we choose to disallow that case because we'd rather commit
-	 * as soon as possible after finishing the vacuum.	This is mainly so that
-	 * we can let go the AccessExclusiveLock that we may be holding.)
+	 * would not have the intended effect!	There are numerous other subtle
+	 * dependencies on this, too.
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
 	 */
@@ -502,17 +522,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	}
 
 	/*
-	 * If we are running ANALYZE without per-table transactions, we'll need a
-	 * memory context with table lifetime.
-	 */
-	if (!use_own_xacts)
-		anl_context = AllocSetContextCreate(PortalContext,
-											"Analyze",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-
-	/*
 	 * vacuum_rel expects to be entered with no transaction active; it will
 	 * start and commit its own transaction.  But we are called by an SQL
 	 * command, and so we are executing inside a transaction already. We
@@ -579,15 +588,15 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 			 */
 			foreach(cur, analyze_relations)
 			{
+<<<<<<< HEAD
 				Oid			relid = lfirst_oid(cur);
 				MemoryContext old_context = NULL;
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				/*
 				 * If using separate xacts, start one for analyze. Otherwise,
-				 * we can use the outer transaction, but we still need to call
-				 * analyze_rel in a memory context that will be cleaned up on
-				 * return (else we leak memory while processing multiple
-				 * tables).
+				 * we can use the outer transaction.
 				 */
 				if (use_own_xacts)
 				{
@@ -595,8 +604,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 					/* functions in indexes may want a snapshot set */
 					PushActiveSnapshot(GetTransactionSnapshot());
 				}
-				else
-					old_context = MemoryContextSwitchTo(anl_context);
 
 				analyze_rel(relid, vacstmt, vac_strategy);
 
@@ -604,11 +611,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 				{
 					PopActiveSnapshot();
 					CommitTransactionCommand();
-				}
-				else
-				{
-					MemoryContextSwitchTo(old_context);
-					MemoryContextResetAndDeleteChildren(anl_context);
 				}
 			}
 		}
@@ -650,9 +652,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 */
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
-
-	if (anl_context)
-		MemoryContextDelete(anl_context);
 }
 
 /*
@@ -1624,7 +1623,7 @@ vacuum_set_xid_limits(int freeze_min_age,
 	 * We can always ignore processes running lazy vacuum.	This is because we
 	 * use these values only for deciding which tuples we must keep in the
 	 * tables.	Since lazy vacuum doesn't write its XID anywhere, it's safe to
-	 * ignore it.  In theory it could be problematic to ignore lazy vacuums on
+	 * ignore it.  In theory it could be problematic to ignore lazy vacuums in
 	 * a full vacuum, but keep in mind that only one vacuum process can be
 	 * working on a particular table at any time, and that each vacuum is
 	 * always an independent transaction.
@@ -1832,8 +1831,17 @@ vac_update_relstats_from_list(Relation rel,
  *		schema alteration such as adding an index, rule, or trigger.  Otherwise
  *		our updates of relhasindex etc might overwrite uncommitted updates.
  *
+<<<<<<< HEAD
  *		This routine is shared by full VACUUM, lazy VACUUM, and stand-alone
  *		ANALYZE.
+=======
+ *		Another reason for doing it this way is that when we are in a lazy
+ *		VACUUM and have PROC_IN_VACUUM set, we mustn't do any updates ---
+ *		somebody vacuuming pg_class might think they could delete a tuple
+ *		marked with xmin = our xid.
+ *
+ *		This routine is shared by VACUUM and stand-alone ANALYZE.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 void
 vac_update_relstats(Relation relation,
@@ -1887,9 +1895,7 @@ vac_update_relstats(Relation relation,
 	rd = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/* Fetch a copy of the tuple to scribble on */
-	ctup = SearchSysCacheCopy(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0);
+	ctup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(ctup))
 		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
 			 relid);
@@ -1979,8 +1985,6 @@ vac_update_relstats(Relation relation,
  *		safe since the new value is correct whether or not this transaction
  *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
  *		behind after a VACUUM.
- *
- *		This routine is shared by full and lazy VACUUM.
  */
 void
 vac_update_datfrozenxid(void)
@@ -2038,9 +2042,7 @@ vac_update_datfrozenxid(void)
 	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	/* Fetch a copy of the tuple to scribble on */
-	tuple = SearchSysCacheCopy(DATABASEOID,
-							   ObjectIdGetDatum(MyDatabaseId),
-							   0, 0, 0);
+	tuple = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
@@ -2062,9 +2064,9 @@ vac_update_datfrozenxid(void)
 	heap_close(relation, RowExclusiveLock);
 
 	/*
-	 * If we were able to advance datfrozenxid, see if we can truncate pg_clog.
-	 * Also do it if the shared XID-wrap-limit info is stale, since this
-	 * action will update that too.
+	 * If we were able to advance datfrozenxid, see if we can truncate
+	 * pg_clog. Also do it if the shared XID-wrap-limit info is stale, since
+	 * this action will update that too.
 	 */
 	if (dirty || ForceTransactionIdLimitUpdate())
 		vac_truncate_clog(newFrozenXid);
@@ -2081,9 +2083,15 @@ vac_update_datfrozenxid(void)
  *		The passed XID is simply the one I just wrote into my pg_database
  *		entry.	It's used to initialize the "min" calculation.
  *
+<<<<<<< HEAD
  *		This routine is shared by full and lazy VACUUM.  Note that it's
  *		only invoked when we've managed to change our DB's datfrozenxid
  *		entry.
+=======
+ *		This routine is only invoked when we've managed to change our
+ *		DB's datfrozenxid entry, or we found that the shared XID-wrap-limit
+ *		info is stale.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static void
 vac_truncate_clog(TransactionId frozenXID)
@@ -2166,14 +2174,6 @@ vac_truncate_clog(TransactionId frozenXID)
 }
 
 
-/****************************************************************************
- *																			*
- *			Code common to both flavors of VACUUM							*
- *																			*
- ****************************************************************************
- */
-
-
 /*
  *	vacuum_rel() -- vacuum one heap relation
  *
@@ -2194,8 +2194,51 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-	bool		heldoff;
 
+<<<<<<< HEAD
+=======
+	if (scanned_all)
+		*scanned_all = false;
+
+	/* Begin a transaction for vacuuming this relation */
+	StartTransactionCommand();
+
+	/*
+	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
+	 * ensures that RecentGlobalXmin is kept truly recent.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	if (!(vacstmt->options & VACOPT_FULL))
+	{
+		/*
+		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
+		 * other concurrent VACUUMs know that they can ignore this one while
+		 * determining their OldestXmin.  (The reason we don't set it during a
+		 * full VACUUM is exactly that we may have to run user-defined
+		 * functions for functional indexes, and we want to make sure that if
+		 * they use the snapshot set above, any tuples it requires can't get
+		 * removed from other tables.  An index function that depends on the
+		 * contents of other tables is arguably broken, but we won't break it
+		 * here by violating transaction semantics.)
+		 *
+		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
+		 * autovacuum; it's used to avoid cancelling a vacuum that was invoked
+		 * in an emergency.
+		 *
+		 * Note: these flags remain set until CommitTransaction or
+		 * AbortTransaction.  We don't want to clear them until we reset
+		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+		 * which is probably Not Good.
+		 */
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyProc->vacuumFlags |= PROC_IN_VACUUM;
+		if (for_wraparound)
+			MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+		LWLockRelease(ProcArrayLock);
+	}
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
@@ -2216,12 +2259,52 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 				AppendOnlyCompaction_IsRelationEmpty(onerel);
 	}
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Silently ignore tables that are temp tables of other backends ---
+	 * trying to vacuum these will lead to great unhappiness, since their
+	 * contents are probably not up-to-date on disk.  (We don't throw a
+	 * warning here; it would just lead to chatter during a database-wide
+	 * VACUUM.)
+	 */
+	if (RELATION_IS_OTHER_TEMP(onerel))
+	{
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Get a session-level lock too. This will protect our access to the
+	 * relation across multiple transactions, so that we can vacuum the
+	 * relation's TOAST table (if any) secure in the knowledge that no one is
+	 * deleting the parent relation.
+	 *
+	 * NOTE: this cannot block, even if someone else is waiting for access,
+	 * because the lock manager knows that both lock requests are from the
+	 * same process.
+	 */
+	onerelid = onerel->rd_lockInfo.lockRelId;
+	LockRelationIdForSession(&onerelid, lmode);
+
+	/*
+	 * Remember the relation's TOAST relation for later, if the caller asked
+	 * us to process it.  In VACUUM FULL, though, the toast table is
+	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it.
+	 */
+	if (do_toast && !(vacstmt->options & VACOPT_FULL))
+		toast_relid = onerel->rd_rel->reltoastrelid;
+	else
+		toast_relid = InvalidOid;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.
-	 * (This is unnecessary, but harmless, for lazy VACUUM.)
+	 * arrange to make GUC variable changes local to this command. (This is
+	 * unnecessary, but harmless, for lazy VACUUM.)
 	 */
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
@@ -2232,9 +2315,24 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->options & VACOPT_FULL)
+<<<<<<< HEAD
 		heldoff = full_vacuum_rel(onerel, vacstmt, updated_stats);
 	else
 		heldoff = lazy_vacuum_rel(onerel, vacstmt, vac_strategy, updated_stats);
+=======
+	{
+		/* close relation before vacuuming, but hold lock until commit */
+		relation_close(onerel, NoLock);
+		onerel = NULL;
+
+		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
+		cluster_rel(relid, InvalidOid, false,
+					(vacstmt->options & VACOPT_VERBOSE) != 0,
+					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
+	}
+	else
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, scanned_all);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);
@@ -2242,6 +2340,13 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
+<<<<<<< HEAD
+=======
+	/* all done with this class, but hold lock until commit */
+	if (onerel)
+		relation_close(onerel, NoLock);
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 * NOT in GPDB, though! The caller still needs to have the relation open.
@@ -2251,10 +2356,6 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 		PopActiveSnapshot();
 	CommitTransactionCommand();
 #endif
-
-	/* now we can allow interrupts again, if disabled */
-	if (heldoff)
-		RESUME_INTERRUPTS();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
@@ -2336,6 +2437,7 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 }
 
 
+<<<<<<< HEAD
 /****************************************************************************
  *																			*
  *			Code for VACUUM FULL (only)										*
@@ -5262,6 +5364,8 @@ vac_cmp_vtlinks(const void *left, const void *right)
 }
 
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * Open all the vacuumable indexes of the given relation, obtaining the
  * specified kind of lock on each.	Return an array of Relation pointers for
@@ -5330,72 +5434,6 @@ vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode)
 		index_close(ind, lockmode);
 	}
 	pfree(Irel);
-}
-
-
-/*
- * Is an index partial (ie, could it contain fewer tuples than the heap?)
- */
-bool
-vac_is_partial_index(Relation indrel)
-{
-	/*
-	 * If the index's AM doesn't support nulls, it's partial for our purposes
-	 */
-	if (!indrel->rd_am->amindexnulls)
-		return true;
-
-	/* Otherwise, look to see if there's a partial-index predicate */
-	if (!heap_attisnull(indrel->rd_indextuple, Anum_pg_index_indpred))
-		return true;
-
-	return false;
-}
-
-
-static bool
-enough_space(VacPage vacpage, Size len)
-{
-	len = MAXALIGN(len);
-
-	if (len > vacpage->free)
-		return false;
-
-	/* if there are free itemid(s) and len <= free_space... */
-	if (vacpage->offsets_used < vacpage->offsets_free)
-		return true;
-
-	/* noff_used >= noff_free and so we'll have to allocate new itemid */
-	if (len + sizeof(ItemIdData) <= vacpage->free)
-		return true;
-
-	return false;
-}
-
-static Size
-PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
-{
-	/*
-	 * It is correct to use PageGetExactFreeSpace() here, *not*
-	 * PageGetHeapFreeSpace().	This is because (a) we do our own, exact
-	 * accounting for whether line pointers must be added, and (b) we will
-	 * recycle any LP_DEAD line pointers before starting to add rows to a
-	 * page, but that may not have happened yet at the time this function is
-	 * applied to a page, which means PageGetHeapFreeSpace()'s protection
-	 * against too many line pointers on a page could fire incorrectly.  We do
-	 * not need that protection here: since VACUUM FULL always recycles all
-	 * dead line pointers first, it'd be physically impossible to insert more
-	 * than MaxHeapTuplesPerPage tuples anyway.
-	 */
-	Size		freespace = PageGetExactFreeSpace(page);
-	Size		targetfree;
-
-	targetfree = RelationGetTargetPageFreeSpace(relation,
-												HEAP_DEFAULT_FILLFACTOR);
-	if (freespace > targetfree)
-		return freespace - targetfree;
-	else
-		return 0;
 }
 
 /*

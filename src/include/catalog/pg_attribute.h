@@ -5,21 +5,20 @@
  *	  along with the relation's initial contents.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.155 2009/12/07 05:22:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.158 2010/01/22 16:40:19 rhaas Exp $
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
- *
- *	  utils/cache/relcache.c requires hard-coded tuple descriptors
- *	  for some of the system catalogs.	So if the schema for any of
- *	  these changes, be sure and change the appropriate Schema_xxx
- *	  macros!  -cim 2/5/91
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +33,13 @@
  *
  *		If you change the following, make sure you change the structs for
  *		system attributes in catalog/heap.c also.
+ *		You may need to change catalog/genbki.pl as well.
  * ----------------
  */
 #define AttributeRelationId  1249
 #define AttributeRelation_Rowtype_Id  75
 
-CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75)
+CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BKI_SCHEMA_MACRO
 {
 	Oid			attrelid;		/* OID of relation containing this attribute */
 	NameData	attname;		/* name of attribute */
@@ -61,13 +61,6 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75)
 	 * should use the default setting.
 	 */
 	int4		attstattarget;
-
-	/*
-	 * attdistinct, if nonzero, is a user-specified ndistinct value to be used
-	 * instead of estimating the number of distinct values during ANALYZE.
-	 * Nonzero values have the same meanings as for pg_statistic.stadistinct.
-	 */
-	float4		attdistinct;
 
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this attribute.
@@ -163,6 +156,9 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75)
 
 	/* Column-level access permissions */
 	aclitem		attacl[1];
+
+	/* Column-level options */
+	text		attoptions[1];
 } FormData_pg_attribute;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -195,33 +191,32 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
 #define Anum_pg_attribute_attstattarget 4
-#define Anum_pg_attribute_attdistinct	5
-#define Anum_pg_attribute_attlen		6
-#define Anum_pg_attribute_attnum		7
-#define Anum_pg_attribute_attndims		8
-#define Anum_pg_attribute_attcacheoff	9
-#define Anum_pg_attribute_atttypmod		10
-#define Anum_pg_attribute_attbyval		11
-#define Anum_pg_attribute_attstorage	12
-#define Anum_pg_attribute_attalign		13
-#define Anum_pg_attribute_attnotnull	14
-#define Anum_pg_attribute_atthasdef		15
-#define Anum_pg_attribute_attisdropped	16
-#define Anum_pg_attribute_attislocal	17
-#define Anum_pg_attribute_attinhcount	18
-#define Anum_pg_attribute_attacl		19
+#define Anum_pg_attribute_attlen		5
+#define Anum_pg_attribute_attnum		6
+#define Anum_pg_attribute_attndims		7
+#define Anum_pg_attribute_attcacheoff	8
+#define Anum_pg_attribute_atttypmod		9
+#define Anum_pg_attribute_attbyval		10
+#define Anum_pg_attribute_attstorage	11
+#define Anum_pg_attribute_attalign		12
+#define Anum_pg_attribute_attnotnull	13
+#define Anum_pg_attribute_atthasdef		14
+#define Anum_pg_attribute_attisdropped	15
+#define Anum_pg_attribute_attislocal	16
+#define Anum_pg_attribute_attinhcount	17
+#define Anum_pg_attribute_attacl		18
+#define Anum_pg_attribute_attoptions	19
 
 
 /* ----------------
  *		initial contents of pg_attribute
  *
- * NOTE: only "bootstrapped" relations need to be declared here.
- *
- * NOTE: if changing pg_attribute column set, also see the hard-coded
- * entries for system attributes in catalog/heap.c.
+ * The initial contents of pg_attribute are generated at compile time by
+ * genbki.pl.  Only "bootstrapped" relations need be included.
  * ----------------
  */
 
+<<<<<<< HEAD
 /* ----------------
  *		pg_type
  * ----------------
@@ -531,4 +526,6 @@ DATA(insert ( 1259 gp_segment_id    23 0 0  4  -8 0 -1 -1 t p i t f f t 0 _null_
 { 0, {"indexprs"},			25, -1, 0, -1, 14, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }, \
 { 0, {"indpred"},			25, -1, 0, -1, 15, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0, { 0 } }
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #endif   /* PG_ATTRIBUTE_H */

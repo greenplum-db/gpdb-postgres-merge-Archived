@@ -4,12 +4,16 @@
  *	 functions for instrumentation of plan execution
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2009, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2001-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.23 2009/12/15 04:57:47 rhaas Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.25 2010/02/26 02:00:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +26,10 @@
 #include "executor/instrument.h"
 #include "utils/memutils.h"
 
-BufferUsage			pgBufferUsage;
+BufferUsage pgBufferUsage;
 
 static void BufferUsageAccumDiff(BufferUsage *dst,
-		const BufferUsage *add, const BufferUsage *sub);
+					 const BufferUsage *add, const BufferUsage *sub);
 
 static bool shouldPickInstrInShmem(NodeTag tag);
 static Instrumentation *pickInstrFromShmem(const Plan *plan, int instrument_options);
@@ -49,9 +53,12 @@ InstrAlloc(int n, int instrument_options)
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_CDB))
 	{
+<<<<<<< HEAD
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
 		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		int			i;
 
 		for (i = 0; i < n; i++)
@@ -112,7 +119,7 @@ InstrStopNode(Instrumentation *instr, uint64 nTuples)
 	/* Adds delta of buffer usage to node's count. */
 	if (instr->needs_bufusage)
 		BufferUsageAccumDiff(&instr->bufusage,
-			&pgBufferUsage, &instr->bufusage_start);
+							 &pgBufferUsage, &instr->bufusage_start);
 
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)

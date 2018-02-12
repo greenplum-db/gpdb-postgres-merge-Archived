@@ -9,14 +9,18 @@
  * context's MemoryContextMethods struct.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.67 2009/07/16 06:33:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.69 2010/02/13 02:34:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1253,7 +1257,22 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 				"invalid memory alloc request size %lu",
 				(unsigned long)size);
 
+<<<<<<< HEAD
 	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
+=======
+	return (*header->context->methods->realloc) (header->context,
+												 pointer, size);
+}
+
+/*
+ * MemoryContextSwitchTo
+ *		Returns the current context; installs the given context.
+ *
+ * palloc.h defines an inline version of this function if allowed by the
+ * compiler; in which case the definition below is skipped.
+ */
+#ifndef USE_INLINE
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #ifdef PGTRACE_ENABLED
 	header = (StandardChunkHeader *)
@@ -1263,7 +1282,11 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 
 	return ret;
 }
+<<<<<<< HEAD
 
+=======
+#endif   /* ! USE_INLINE */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * MemoryContextStrdup

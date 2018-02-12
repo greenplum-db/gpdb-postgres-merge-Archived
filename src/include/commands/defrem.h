@@ -4,10 +4,10 @@
  *	  POSTGRES define and remove utility definitions.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.98 2009/12/07 05:22:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.102 2010/07/03 13:53:13 rhaas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,16 @@ extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid);
+<<<<<<< HEAD
 extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
 								const char *label, Oid namespaceid, 
 								struct HTAB *cache);
+=======
+extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
+				List *colnames, List *exclusionOpNames,
+				bool primary, bool isconstraint);
+extern List *ChooseIndexColumnNames(List *indexElems);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
@@ -113,6 +120,7 @@ extern void RenameOpClass(List *name, const char *access_method, const char *new
 extern void RenameOpFamily(List *name, const char *access_method, const char *newname);
 extern void AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId);
 extern void AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId);
+<<<<<<< HEAD
 extern void AlterOpClassNamespace(List *name, char *access_method, const char *newschema);
 extern Oid	AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid);
 extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId);
@@ -122,6 +130,10 @@ extern Oid	AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid);
 extern Oid  get_am_oid(const char *amname, bool missing_ok);
 extern Oid  get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
 extern Oid  get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
+=======
+extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId);
+extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);

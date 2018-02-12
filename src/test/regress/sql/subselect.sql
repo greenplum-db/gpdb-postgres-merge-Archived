@@ -335,6 +335,7 @@ select (select (select view_a)) from view_a;
 select (select (a.*)::text) from view_a a;
 
 --
+<<<<<<< HEAD
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
 --
@@ -345,6 +346,8 @@ with q as (select max(f1) from int4_tbl group by f1 order by f1)
   select q from q;
 
 --
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 
@@ -355,6 +358,7 @@ from
    from int8_tbl) sq0
   join
   int4_tbl i4 on dummy = i4.f1;
+<<<<<<< HEAD
 
 --
 -- Test case for cross-type partial matching in hashed subplan (bug #7597)
@@ -403,3 +407,5 @@ select (select q from
           select 4,5,6.0 where f1 <= 0
          ) q )
 from int4_tbl;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

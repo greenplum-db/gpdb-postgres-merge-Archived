@@ -405,7 +405,11 @@ DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
 DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
 
 -- check that eval is allowed and eval'd restricted ops are caught
+<<<<<<< HEAD
 DO $$ eval q{chdir '.';}; warn "Caught: $@"; $$ LANGUAGE plperl;
+=======
+DO $$ eval q{chdir '.'}; warn "Caught: $@"; $$ LANGUAGE plperl;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 -- check that compiling do (dofile opcode) is allowed
 -- but that executing it for a file not already loaded (via require) dies
@@ -423,6 +427,7 @@ DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 -- yields "ERROR:  Useless use of sort in scalar context."
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
 
+<<<<<<< HEAD
 -- make sure functions marked as VOID without an explicit return work
 CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
    $_SHARED{myquote} = sub {
@@ -472,3 +477,5 @@ $$ LANGUAGE plperl;
 
 SELECT self_modify(42);
 SELECT self_modify(42);
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

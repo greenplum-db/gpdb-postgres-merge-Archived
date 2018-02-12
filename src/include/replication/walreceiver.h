@@ -3,15 +3,22 @@
  * walreceiver.h
  *	  Exports from replication/walreceiverfuncs.c.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *
  * src/include/replication/walreceiver.h
+=======
+ * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/replication/walreceiver.h,v 1.11 2010/07/06 19:19:00 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _WALRECEIVER_H
 #define _WALRECEIVER_H
 
+<<<<<<< HEAD
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "storage/spin.h"
@@ -20,6 +27,13 @@
 
 extern int	wal_receiver_status_interval;
 extern bool hot_standby_feedback;
+=======
+#include "access/xlogdefs.h"
+#include "storage/spin.h"
+#include "pgtime.h"
+
+extern bool am_walreceiver;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * MAXCONNINFO: maximum size of a connection string.
@@ -53,6 +67,7 @@ typedef struct
 	pg_time_t	startTime;
 
 	/*
+<<<<<<< HEAD
 	 * receiveStart is the first byte position that will be received. When
 	 * startup process starts the walreceiver, it sets receiveStart to the
 	 * point where it wants the streaming to begin.
@@ -64,6 +79,13 @@ typedef struct
 	 * received.  At the first startup of walreceiver, receivedUpto is set to
 	 * receiveStart. After that, walreceiver updates this whenever it flushes
 	 * the received WAL to disk.
+=======
+	 * receivedUpto-1 is the last byte position that has already been
+	 * received.  When startup process starts the walreceiver, it sets
+	 * receivedUpto to the point where it wants the streaming to begin. After
+	 * that, walreceiver updates this whenever it flushes the received WAL to
+	 * disk.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	XLogRecPtr	receivedUpto;
 
@@ -76,6 +98,7 @@ typedef struct
 	XLogRecPtr	latestChunkStart;
 
 	/*
+<<<<<<< HEAD
 	 * Time of send and receive of any message received.
 	 */
 	TimestampTz lastMsgSendTime;
@@ -88,6 +111,8 @@ typedef struct
 	TimestampTz latestWalEndTime;
 
 	/*
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * connection string; is used for walreceiver to connect with the primary.
 	 */
 	char		conninfo[MAXCONNINFO];
@@ -98,6 +123,7 @@ typedef struct
 extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
+<<<<<<< HEAD
 bool walrcv_connect(char *conninfo, XLogRecPtr startpoint);
 bool walrcv_receive(int timeout, unsigned char *type,
 					char **buffer, int *len);
@@ -108,14 +134,33 @@ void walrcv_disconnect(void);
 extern void WalReceiverMain(void);
 
 /* prototypes for functions in walreceiverfuncs.c */
+=======
+typedef bool (*walrcv_connect_type) (char *conninfo, XLogRecPtr startpoint);
+extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
+
+typedef bool (*walrcv_receive_type) (int timeout, unsigned char *type,
+												 char **buffer, int *len);
+extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
+
+typedef void (*walrcv_disconnect_type) (void);
+extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
+
+extern void WalReceiverMain(void);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern Size WalRcvShmemSize(void);
 extern void WalRcvShmemInit(void);
 extern void ShutdownWalRcv(void);
 extern bool WalRcvInProgress(void);
+<<<<<<< HEAD
 extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
 extern const char *WalRcvGetStateString(WalRcvState state);
+=======
+extern XLogRecPtr WaitNextXLogAvailable(XLogRecPtr recptr, bool *finished);
+extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
+extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* _WALRECEIVER_H */

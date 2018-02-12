@@ -754,7 +754,10 @@ FROM tenk1 WHERE unique1 < 10;
   10 |       7 |    3
 (10 rows)
 
+<<<<<<< HEAD
 set search_path=singleseg, public;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT sum(unique1) over (rows between current row and unbounded following),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10;
@@ -857,6 +860,7 @@ FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
   10 |       7 |    3
 (10 rows)
 
+<<<<<<< HEAD
 -- fails on PostgreSQL: not implemented yet
 -- Has been implemented in GPDB.
 SELECT sum(unique1) over (order by four range between 2::int8 preceding and 1::int2 preceding),
@@ -876,6 +880,15 @@ FROM tenk1 WHERE unique1 < 10;
   23 |       3 |    3
 (10 rows)
 
+=======
+-- fail: not implemented yet
+SELECT sum(unique1) over (order by four range between 2::int8 preceding and 1::int2 preceding),
+	unique1, four
+FROM tenk1 WHERE unique1 < 10;
+ERROR:  RANGE PRECEDING is only supported with UNBOUNDED
+LINE 1: SELECT sum(unique1) over (order by four range between 2::int...
+                                                ^
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT first_value(unique1) over w,
 	nth_value(unique1, 2) over w AS nth_2,
 	last_value(unique1) over w, unique1, four
@@ -883,6 +896,7 @@ FROM tenk1 WHERE unique1 < 10
 WINDOW w AS (order by four range between current row and unbounded following);
  first_value | nth_2 | last_value | unique1 | four 
 -------------+-------+------------+---------+------
+<<<<<<< HEAD
            0 |     8 |          3 |       0 |    0
            0 |     8 |          3 |       8 |    0
            0 |     8 |          3 |       4 |    0
@@ -898,10 +912,27 @@ WINDOW w AS (order by four range between current row and unbounded following);
 SELECT sum(unique1) over
 	(order by unique1
 	 rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
+=======
+           0 |     8 |          7 |       0 |    0
+           0 |     8 |          7 |       8 |    0
+           0 |     8 |          7 |       4 |    0
+           5 |     9 |          7 |       5 |    1
+           5 |     9 |          7 |       9 |    1
+           5 |     9 |          7 |       1 |    1
+           6 |     2 |          7 |       6 |    2
+           6 |     2 |          7 |       2 |    2
+           3 |     7 |          7 |       3 |    3
+           3 |     7 |          7 |       7 |    3
+(10 rows)
+
+SELECT sum(unique1) over
+	(rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	unique1
 FROM tenk1 WHERE unique1 < 10;
  sum | unique1 
 -----+---------
+<<<<<<< HEAD
    0 |       0
    1 |       1
    3 |       2
@@ -912,6 +943,18 @@ FROM tenk1 WHERE unique1 < 10;
   13 |       7
   15 |       8
   17 |       9
+=======
+   4 |       4
+   6 |       2
+   3 |       1
+   7 |       6
+  15 |       9
+  17 |       8
+  13 |       5
+   8 |       3
+  10 |       7
+   7 |       0
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 (10 rows)
 
 CREATE TEMP VIEW v_window AS
@@ -938,7 +981,10 @@ SELECT pg_get_viewdef('v_window');
  SELECT i.i, sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows FROM generate_series(1, 10) i(i);
 (1 row)
 
+<<<<<<< HEAD
 reset search_path;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
  count 

@@ -169,6 +169,7 @@ select perl_looks_like_number();
  '': not number
 (11 rows)
 
+<<<<<<< HEAD
 -- test encode_typed_literal
 create type perl_foo as (a integer, b text[]);
 create type perl_bar as (c perl_foo[]);
@@ -187,3 +188,5 @@ select perl_encode_typed_literal();
  ("{""(9,{PostgreSQL})"",""(1,{Postgres})""}")
 (4 rows)
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

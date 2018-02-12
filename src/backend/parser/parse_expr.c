@@ -3,19 +3,25 @@
  * parse_expr.c
  *	  handle expressions in parser
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.251 2009/12/15 17:57:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.256 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "catalog/namespace.h"
+=======
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_constraint.h"
+#include "catalog/pg_proc.h"
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -35,6 +41,7 @@
 #include "parser/parse_type.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/xml.h"
 
@@ -68,7 +75,7 @@ static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
 static Node *transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte,
-								  int location);
+					 int location);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 static Node *transformGroupingFunc(ParseState *pstate, GroupingFunc *gf);
@@ -203,6 +210,10 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						 */
 						targetType = getBaseTypeAndTypmod(targetType,
 														  &targetTypmod);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 						tc = copyObject(tc);
 						tc->arg = transformArrayExpr(pstate,
 													 (A_ArrayExpr *) tc->arg,
@@ -311,6 +322,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 				n->arg = (Expr *) transformExprRecurse(pstate, (Node *) n->arg);
 				/* the argument can be any type, so don't coerce it */
+				n->argisrow = type_is_rowtype(exprType((Node *) n->arg));
 				result = expr;
 				break;
 			}
@@ -574,7 +586,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	char	   *colname = NULL;
 	RangeTblEntry *rte;
 	int			levels_up;
-	enum {
+	enum
+	{
 		CRERR_NO_COLUMN,
 		CRERR_NO_RTE,
 		CRERR_WRONG_DB,
@@ -582,7 +595,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	}			crerr = CRERR_NO_COLUMN;
 
 	/*
-	 * Give the PreParseColumnRefHook, if any, first shot.  If it returns
+	 * Give the PreParseColumnRefHook, if any, first shot.	If it returns
 	 * non-null then that's all, folks.
 	 */
 	if (pstate->p_pre_columnref_hook != NULL)
@@ -816,22 +829,22 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				break;
 			}
 		default:
-			crerr = CRERR_TOO_MANY;			/* too many dotted names */
+			crerr = CRERR_TOO_MANY;		/* too many dotted names */
 			break;
 	}
 
 	/*
 	 * Now give the PostParseColumnRefHook, if any, a chance.  We pass the
 	 * translation-so-far so that it can throw an error if it wishes in the
-	 * case that it has a conflicting interpretation of the ColumnRef.
-	 * (If it just translates anyway, we'll throw an error, because we can't
-	 * undo whatever effects the preceding steps may have had on the pstate.)
-	 * If it returns NULL, use the standard translation, or throw a suitable
-	 * error if there is none.
+	 * case that it has a conflicting interpretation of the ColumnRef. (If it
+	 * just translates anyway, we'll throw an error, because we can't undo
+	 * whatever effects the preceding steps may have had on the pstate.) If it
+	 * returns NULL, use the standard translation, or throw a suitable error
+	 * if there is none.
 	 */
 	if (pstate->p_post_columnref_hook != NULL)
 	{
-		Node   *hookresult;
+		Node	   *hookresult;
 
 		hookresult = (*pstate->p_post_columnref_hook) (pstate, cref, node);
 		if (node == NULL)
@@ -873,15 +886,15 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			case CRERR_WRONG_DB:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cross-database references are not implemented: %s",
-								NameListToString(cref->fields)),
+				  errmsg("cross-database references are not implemented: %s",
+						 NameListToString(cref->fields)),
 						 parser_errposition(pstate, cref->location)));
 				break;
 			case CRERR_TOO_MANY:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("improper qualified name (too many dotted names): %s",
-								NameListToString(cref->fields)),
+				errmsg("improper qualified name (too many dotted names): %s",
+					   NameListToString(cref->fields)),
 						 parser_errposition(pstate, cref->location)));
 				break;
 		}
@@ -896,7 +909,7 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	Node	   *result;
 
 	/*
-	 * The core parser knows nothing about Params.  If a hook is supplied,
+	 * The core parser knows nothing about Params.	If a hook is supplied,
 	 * call it.  If not, or if the hook returns NULL, throw a generic error.
 	 */
 	if (pstate->p_paramref_hook != NULL)
@@ -1320,6 +1333,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 {
 	List	   *targs;
 	ListCell   *args;
+	Node	   *result;
 
 	/* Transform the list of arguments ... */
 	targs = NIL;
@@ -1350,11 +1364,105 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	}
 
 	/* ... and hand off to ParseFuncOrColumn */
+<<<<<<< HEAD
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
 							 fn,
 							 fn->location);
+=======
+	result = ParseFuncOrColumn(pstate,
+							   fn->funcname,
+							   targs,
+							   fn->agg_order,
+							   fn->agg_star,
+							   fn->agg_distinct,
+							   fn->func_variadic,
+							   fn->over,
+							   false,
+							   fn->location);
+
+	/*
+	 * pg_get_expr() is a system function that exposes the expression
+	 * deparsing functionality in ruleutils.c to users. Very handy, but it was
+	 * later realized that the functions in ruleutils.c don't check the input
+	 * rigorously, assuming it to come from system catalogs and to therefore
+	 * be valid. That makes it easy for a user to crash the backend by passing
+	 * a maliciously crafted string representation of an expression to
+	 * pg_get_expr().
+	 *
+	 * There's a lot of code in ruleutils.c, so it's not feasible to add
+	 * water-proof input checking after the fact. Even if we did it once, it
+	 * would need to be taken into account in any future patches too.
+	 *
+	 * Instead, we restrict pg_rule_expr() to only allow input from system
+	 * catalogs instead. This is a hack, but it's the most robust and easiest
+	 * to backpatch way of plugging the vulnerability.
+	 *
+	 * This is transparent to the typical usage pattern of
+	 * "pg_get_expr(systemcolumn, ...)", but will break "pg_get_expr('foo',
+	 * ...)", even if 'foo' is a valid expression fetched earlier from a
+	 * system catalog. Hopefully there's isn't many clients doing that out
+	 * there.
+	 */
+	if (result && IsA(result, FuncExpr) &&!superuser())
+	{
+		FuncExpr   *fe = (FuncExpr *) result;
+
+		if (fe->funcid == F_PG_GET_EXPR || fe->funcid == F_PG_GET_EXPR_EXT)
+		{
+			Expr	   *arg = linitial(fe->args);
+			bool		allowed = false;
+
+			/*
+			 * Check that the argument came directly from one of the allowed
+			 * system catalog columns
+			 */
+			if (IsA(arg, Var))
+			{
+				Var		   *var = (Var *) arg;
+				RangeTblEntry *rte;
+
+				rte = GetRTEByRangeTablePosn(pstate,
+											 var->varno, var->varlevelsup);
+
+				switch (rte->relid)
+				{
+					case IndexRelationId:
+						if (var->varattno == Anum_pg_index_indexprs ||
+							var->varattno == Anum_pg_index_indpred)
+							allowed = true;
+						break;
+
+					case AttrDefaultRelationId:
+						if (var->varattno == Anum_pg_attrdef_adbin)
+							allowed = true;
+						break;
+
+					case ProcedureRelationId:
+						if (var->varattno == Anum_pg_proc_proargdefaults)
+							allowed = true;
+						break;
+
+					case ConstraintRelationId:
+						if (var->varattno == Anum_pg_constraint_conbin)
+							allowed = true;
+						break;
+
+					case TypeRelationId:
+						if (var->varattno == Anum_pg_type_typdefaultbin)
+							allowed = true;
+						break;
+				}
+			}
+			if (!allowed)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("argument to pg_get_expr() must come from system catalogs")));
+		}
+	}
+	return result;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -2305,10 +2413,10 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 
 	/*
 	 * Check to see if the cursor name matches a parameter of type REFCURSOR.
-	 * If so, replace the raw name reference with a parameter reference.
-	 * (This is a hack for the convenience of plpgsql.)
+	 * If so, replace the raw name reference with a parameter reference. (This
+	 * is a hack for the convenience of plpgsql.)
 	 */
-	if (cexpr->cursor_name != NULL)			/* in case already transformed */
+	if (cexpr->cursor_name != NULL)		/* in case already transformed */
 	{
 		ColumnRef  *cref = makeNode(ColumnRef);
 		Node	   *node = NULL;
@@ -2324,13 +2432,13 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 			node = (*pstate->p_post_columnref_hook) (pstate, cref, NULL);
 
 		/*
-		 * XXX Should we throw an error if we get a translation that isn't
-		 * a refcursor Param?  For now it seems best to silently ignore
-		 * false matches.
+		 * XXX Should we throw an error if we get a translation that isn't a
+		 * refcursor Param?  For now it seems best to silently ignore false
+		 * matches.
 		 */
 		if (node != NULL && IsA(node, Param))
 		{
-			Param  *p = (Param *) node;
+			Param	   *p = (Param *) node;
 
 			if (p->paramkind == PARAM_EXTERN &&
 				p->paramtype == REFCURSOROID)

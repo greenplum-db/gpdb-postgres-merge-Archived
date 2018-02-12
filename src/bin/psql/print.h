@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/print.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.46 2010/07/06 19:19:00 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -52,13 +56,13 @@ typedef enum printTextLineWrap
 typedef struct printTextFormat
 {
 	/* A complete line style */
-	const char *name;				/* for display purposes */
-	printTextLineFormat lrule[4];	/* indexed by enum printTextRule */
+	const char *name;			/* for display purposes */
+	printTextLineFormat lrule[4];		/* indexed by enum printTextRule */
 	const char *midvrule_nl;	/* vertical line for continue after newline */
 	const char *midvrule_wrap;	/* vertical line for wrapped data */
-	const char *midvrule_blank;	/* vertical line for blank data */
-	const char *header_nl_left;	/* left mark after newline */
-	const char *header_nl_right; /* right mark for newline */
+	const char *midvrule_blank; /* vertical line for blank data */
+	const char *header_nl_left; /* left mark after newline */
+	const char *header_nl_right;	/* right mark for newline */
 	const char *nl_left;		/* left mark after newline */
 	const char *nl_right;		/* right mark for newline */
 	const char *wrap_left;		/* left mark after wrapped data */

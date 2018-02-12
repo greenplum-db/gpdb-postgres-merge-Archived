@@ -7,10 +7,10 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.92 2009/01/01 17:23:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.94 2010/01/02 16:58:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,16 +266,18 @@ typedef struct
 
 /*
  * Port Notes:
+<<<<<<< HEAD
  *     Postgres makes the following assumption about machines:
  *
  *     sizeof(Datum) == sizeof(long) >= sizeof(void *) >= 4
  *
  *     Postgres also assumes that
+=======
+ *	Postgres makes the following assumptions about datatype sizes:
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
+ *	sizeof(Datum) == sizeof(void *) == 4 or 8
  *	sizeof(char) == 1
- *
- *	and that
- *
  *	sizeof(short) == 2
  *
  *  Greenplum CDB:
@@ -290,6 +292,7 @@ typedef struct
  * or short may contain garbage when called as if it returned Datum.
  */
 
+<<<<<<< HEAD
 typedef int64 Datum;
 typedef union Datum_U
 {
@@ -302,6 +305,11 @@ typedef union Datum_U
 } Datum_U;
 
 #define SIZEOF_DATUM 8
+=======
+typedef uintptr_t Datum;
+
+#define SIZEOF_DATUM SIZEOF_VOID_P
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef Datum *DatumPtr;
 

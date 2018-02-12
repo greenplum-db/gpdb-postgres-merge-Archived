@@ -3,13 +3,17 @@
  * fd.c
  *	  Virtual file descriptor code.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.151 2009/12/03 11:03:28 heikki Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.157 2010/07/06 22:55:26 rhaas Exp $
  *
  * NOTES:
  *
@@ -322,6 +326,7 @@ pg_fsync_writethrough(int fd)
 #elif defined(F_FULLFSYNC)
 		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
+		errno = ENOSYS;
 		return -1;
 #endif
 	}
@@ -350,6 +355,7 @@ pg_fdatasync(int fd)
 }
 
 /*
+<<<<<<< HEAD
  * Retrying close in case it gets interrupted. If that happens, it will cause
  * unlink to fail later.
  */
@@ -363,6 +369,23 @@ gp_retry_close(int fd) {
 	return err;
 }
 
+=======
+ * pg_flush_data --- advise OS that the data described won't be needed soon
+ *
+ * Not all platforms have posix_fadvise; treat as noop if not available.
+ */
+int
+pg_flush_data(int fd, off_t offset, off_t amount)
+{
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
+#else
+	return 0;
+#endif
+}
+
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * InitFileAccess --- initialize this module during backend startup
  *
@@ -422,7 +445,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 #ifdef HAVE_GETRLIMIT
 #ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
-#else	/* but BSD doesn't ... */
+#else							/* but BSD doesn't ... */
 	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
 #endif   /* RLIMIT_NOFILE */
 	if (getrlimit_status != 0)
@@ -1103,8 +1126,8 @@ GetTempFilePath(const char *filename, bool createdir)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		snprintf(tempdirpath, sizeof(tempdirpath), "pg_tblspc/%u/%s",
-				 tblspcOid, PG_TEMP_FILES_DIR);
+		snprintf(tempdirpath, sizeof(tempdirpath), "pg_tblspc/%u/%s/%s",
+				 tblspcOid, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
 	}
 
 	/*
@@ -1273,7 +1296,7 @@ FileClose(File file)
 			/* and last report the stat results */
 			if (stat_errno == 0)
 			{
-				if (filestats.st_size >= log_temp_files)
+				if ((filestats.st_size / 1024) >= log_temp_files)
 					ereport(LOG,
 							(errmsg("temporary file: path \"%s\", size %lu",
 									vfdP->fileName,
@@ -2180,9 +2203,9 @@ CleanupTempFiles(bool isProcExit)
 				/*
 				 * If we're in the process of exiting a backend process, close
 				 * all temporary files. Otherwise, only close temporary files
-				 * local to the current transaction. They should be closed
-				 * by the ResourceOwner mechanism already, so this is just
-				 * a debugging cross-check.
+				 * local to the current transaction. They should be closed by
+				 * the ResourceOwner mechanism already, so this is just a
+				 * debugging cross-check.
 				 */
 				if (isProcExit)
 					FileClose(i);
@@ -2244,7 +2267,11 @@ RemovePgTempFiles(void)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s/%s",
+<<<<<<< HEAD
 				 spc_de->d_name, tablespace_version_directory(), PG_TEMP_FILES_DIR);
+=======
+			spc_de->d_name, TABLESPACE_VERSION_DIRECTORY, PG_TEMP_FILES_DIR);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		RemovePgTempFilesInDir(temp_path);
 	}
 

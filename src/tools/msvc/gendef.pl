@@ -1,16 +1,20 @@
 my @def;
+
 #
 # Script that generates a .DEF file for all objects in a directory
-# 
-# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.8 2008/01/31 16:30:24 adunstan Exp $
+#
+# $PostgreSQL: pgsql/src/tools/msvc/gendef.pl,v 1.10 2010/04/09 13:05:58 mha Exp $
 #
 
+<<<<<<< HEAD
 #
 # Script that generates a .DEF file for all objects in a directory
 #
 # src/tools/msvc/gendef.pl
 #
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 die "Usage: gendef.pl <modulepath> <platform>\n"
   unless(($ARGV[0] =~ /\\([^\\]+$)/) && ($ARGV[1] == 'Win32' || $ARGV[1] == 'x64'));
 my $defname = uc $1;

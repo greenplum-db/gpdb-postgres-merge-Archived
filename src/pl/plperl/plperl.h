@@ -5,10 +5,17 @@
  *
  * This should be included _AFTER_ postgres.h and system include files
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/pl/plperl/plperl.h
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1995, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.11 2010/01/20 01:08:21 adunstan Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #ifndef PL_PERL_H
@@ -50,6 +57,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
+<<<<<<< HEAD
 /* put back our snprintf and vsnprintf */
 #ifdef USE_REPL_SNPRINTF
 #ifdef snprintf
@@ -67,6 +75,8 @@
 #endif   /* __GNUC__ */
 #endif   /* USE_REPL_SNPRINTF */
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /* perl version and platform portability */
 #define NEED_eval_pv
 #define NEED_newRV_noinc
@@ -78,6 +88,7 @@
 #undef bool
 #endif
 
+<<<<<<< HEAD
 /* supply HeUTF8 if it's missing - ppport.h doesn't supply it, unfortunately */
 #ifndef HeUTF8
 #define HeUTF8(he)			   ((HeKLEN(he) == HEf_SVKEY) ?			   \
@@ -90,6 +101,8 @@
 #define GvCV_set(gv, cv)		(GvCV(gv) = cv)
 #endif
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /* declare routines from plperl.c for access by .xs files */
 HV		   *plperl_spi_exec(char *, int);
 void		plperl_return_next(SV *);

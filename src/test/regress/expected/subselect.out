@@ -554,6 +554,7 @@ select (select (a.*)::text) from view_a a;
 (1 row)
 
 --
+<<<<<<< HEAD
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
 --
@@ -580,6 +581,8 @@ with q as (select max(f1) from int4_tbl group by f1 order by f1)
 (5 rows)
 
 --
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 select
@@ -589,6 +592,7 @@ from
    from int8_tbl) sq0
   join
   int4_tbl i4 on dummy = i4.f1;
+<<<<<<< HEAD
 ERROR:  correlated subquery with skip-level correlations is not supported
 --
 -- Test case for cross-type partial matching in hashed subplan (bug #7597)
@@ -672,4 +676,9 @@ from int4_tbl;
  (1,2,3)
  (4,5,6.0)
 (5 rows)
+=======
+ qq1 
+-----
+(0 rows)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 

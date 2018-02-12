@@ -8,9 +8,10 @@ our $config = {
     # float4byval=>1,         # --disable-float4-byval, on by default
     # float8byval=>1,         # --disable-float8-byval, on by default
     # blocksize => 32,        # --with-blocksize, 8kB by default
-    # wal_blocksize => 8,     # --with-wal-blocksize, 8kB by default
-    # wal_segsize => 16,      # --with-wal-segsize, 16MB by default
     # ldap=>1,				# --with-ldap
+    # wal_blocksize => 8,     # --with-wal-blocksize, 8kb by default
+    # wal_segsize => 16,      # --with-wal-segsize, 16MB by default
+    ldap=>1,				# --with-ldap
     nls=>undef,				# --enable-nls=<path>
     tcl=>undef,				# --with-tls=<path>
     perl=>undef, 			# --with-perl
@@ -21,11 +22,15 @@ our $config = {
     xml=>undef,				# --with-libxml=<path>
     xslt=>undef,			# --with-libxslt=<path>
     iconv=>undef,			# (not in configure, path to iconv)
-    zlib=>'c:\zlib',			# --with-zlib=<path>  (GPDB needs zlib)
+<<<<<<< HEAD:src/tools/msvc/config.pl
+    zlib=>'c:\zlib64',			# --with-zlib=<path>  (GPDB needs zlib)
     pthread=>'c:\pthreads',  		# gpdb needs pthreads 
     curl=>'c:\zlib', 			# gpdb needs libcurl
     bz2=>'c:\pgbuild\bzlib'
     #readline=>'c:\progra~1\GnuWin32' 	# readline for windows?
+=======
+    zlib=>undef				# --with-zlib=<path>
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2:src/tools/msvc/config_default.pl
 };
 
 1;

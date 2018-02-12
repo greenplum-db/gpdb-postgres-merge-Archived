@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.17 2009/08/26 22:24:43 petere Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.22 2010/07/05 23:40:13 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -17,6 +17,7 @@
 #
 # Set one of these three variables to specify what is built:
 #
+<<<<<<< HEAD
 #   MODULES -- list of shared-library objects to be built from source files
 #     with same stem (do not include library suffixes in this list)
 #   MODULE_big -- a shared library to build from multiple source files
@@ -29,6 +30,18 @@
 #   MODULEDIR -- subdirectory of $PREFIX/share into which DATA and DOCS files
 #     should be installed (if not set, default is "extension" if EXTENSION
 #     is set, or "contrib" if not)
+=======
+#   MODULES -- list of shared objects to be built from source files with
+#     same stem (do not include suffix in this list)
+#   MODULE_big -- a shared object to build from multiple source files
+#     (list object files in OBJS)
+#   PROGRAM -- a binary program to build (list object files in OBJS)
+#
+# The following variables can also be set:
+#
+#   MODULEDIR -- subdirectory into which DATA and DOCS files should be
+#     installed (if not set, default is "contrib")
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #   DATA -- random files to install into $PREFIX/share/$MODULEDIR
 #   DATA_built -- random files to install into $PREFIX/share/$MODULEDIR,
 #     which need to be built first
@@ -70,7 +83,14 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 ifdef MODULES
 override CFLAGS += $(CFLAGS_SL)
-SHLIB_LINK += $(BE_DLLLIBS)
+endif
+
+ifdef MODULEDIR
+datamoduledir = $(MODULEDIR)
+docmoduledir = $(MODULEDIR)
+else
+datamoduledir = contrib
+docmoduledir = contrib
 endif
 
 ifdef MODULEDIR
@@ -107,7 +127,14 @@ ifneq (,$(EXTENSION))
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))) '$(DESTDIR)$(datadir)/extension/'
 endif # EXTENSION
 ifneq (,$(DATA)$(DATA_built))
+<<<<<<< HEAD
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) $(DATA_built) '$(DESTDIR)$(datadir)/$(datamoduledir)/'
+=======
+	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/$(datamoduledir)'; \
+	done
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 endif # DATA
 ifneq (,$(DATA_TSEARCH))
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA_TSEARCH)) '$(DESTDIR)$(datadir)/tsearch_data/'
@@ -117,7 +144,14 @@ ifdef MODULES
 endif # MODULES
 ifdef DOCS
 ifdef docdir
+<<<<<<< HEAD
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DOCS)) '$(DESTDIR)$(docdir)/$(docmoduledir)/'
+=======
+	@for file in $(addprefix $(srcdir)/, $(DOCS)); do \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/$(docmoduledir)'; \
+	done
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 endif # docdir
 endif # DOCS
 ifdef PROGRAM
@@ -285,5 +319,9 @@ endif
 
 ifdef PROGRAM
 $(PROGRAM): $(OBJS)
+<<<<<<< HEAD
 	$(CC) $(CFLAGS) $(OBJS) $(PG_LIBS) $(LDFLAGS) $(LIBS) -o $@$(X)
+=======
+	$(CC) $(CFLAGS) $(OBJS) $(PG_LIBS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 endif

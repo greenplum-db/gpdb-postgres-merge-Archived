@@ -630,9 +630,15 @@ SELECT trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea);
 SELECT btrim(''::bytea, E'\\000'::bytea);
 SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
+<<<<<<< HEAD
 
 
 -- Clean up GPDB-added tables
 DROP TABLE char_strings_tbl;
 DROP TABLE varchar_strings_tbl;
 DROP TABLE text_strings_tbl;
+=======
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'Th\\001omas'::bytea from 2),'escape');
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 8),'escape');
+SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 for 3),'escape');
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

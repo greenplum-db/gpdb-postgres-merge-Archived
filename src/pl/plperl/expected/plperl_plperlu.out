@@ -5,10 +5,18 @@ CREATE OR REPLACE FUNCTION bar() RETURNS integer AS $$
     # alternative - causes server process to exit(255)
     spi_exec_query("invalid sql statement");
 $$ language plperl; -- compile plperl code
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CREATE OR REPLACE FUNCTION foo() RETURNS integer AS $$
     spi_exec_query("SELECT * FROM bar()");
     return 1;
 $$ LANGUAGE plperlu; -- compile plperlu code
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT * FROM bar(); -- throws exception normally (running plperl)
 ERROR:  syntax error at or near "invalid" at line 4.
 CONTEXT:  PL/Perl function "bar"
@@ -73,7 +81,11 @@ AS $$
 use Errno;
 $$;
 ERROR:  Unable to load Errno.pm into plperl at line 2.
+<<<<<<< HEAD
 DETAIL:  BEGIN failed--compilation aborted at line 2.
+=======
+BEGIN failed--compilation aborted at line 2.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CONTEXT:  compilation of PL/Perl function "use_plperl"
 -- make sure our overloaded require op gets restored/set correctly
 select use_plperlu();
@@ -87,5 +99,9 @@ AS $$
 use Errno;
 $$;
 ERROR:  Unable to load Errno.pm into plperl at line 2.
+<<<<<<< HEAD
 DETAIL:  BEGIN failed--compilation aborted at line 2.
+=======
+BEGIN failed--compilation aborted at line 2.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CONTEXT:  compilation of PL/Perl function "use_plperl"

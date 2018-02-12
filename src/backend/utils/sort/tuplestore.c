@@ -43,13 +43,17 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.48 2009/06/11 14:49:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.51 2010/02/26 02:01:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,7 +324,11 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
  * tuple store are allowed.
  *
  * interXact: if true, the files used for on-disk storage persist beyond the
+<<<<<<< HEAD
  * end of the current transaction.  NOTE: It's the caller's responsibility to
+=======
+ * end of the current transaction.	NOTE: It's the caller's responsibility to
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * create such a tuplestore in a memory context and resource owner that will
  * also survive transaction boundaries, and to ensure the tuplestore is closed
  * when it's no longer wanted.
@@ -605,7 +613,11 @@ void
 tuplestore_puttupleslot(Tuplestorestate *state,
 						TupleTableSlot *slot)
 {
+<<<<<<< HEAD
 	MemTuple tuple;
+=======
+	MinimalTuple tuple;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	/*
@@ -647,6 +659,10 @@ void
 tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 					 Datum *values, bool *isnull)
 {
+<<<<<<< HEAD
+=======
+	MinimalTuple tuple;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	if (!state->mt_bind)
@@ -733,9 +749,15 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			oldowner = CurrentResourceOwner;
 			CurrentResourceOwner = state->resowner;
 
+<<<<<<< HEAD
 			char tmpprefix[50];
 			snprintf(tmpprefix, 50, "slice%d_tuplestore", currentSliceId);
 			state->myfile = BufFileCreateTemp(tmpprefix, state->interXact);
+
+			CurrentResourceOwner = oldowner;
+=======
+			state->myfile = BufFileCreateTemp(state->interXact);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			CurrentResourceOwner = oldowner;
 

@@ -3,14 +3,18 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.228 2009/12/15 17:57:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.232 2010/02/16 22:34:43 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not need to have any readfuncs support, because we
@@ -411,6 +415,7 @@ _readNotifyStmt(void)
 	READ_LOCALS(NotifyStmt);
 
 	READ_STRING_FIELD(conditionname);
+	READ_STRING_FIELD(payload);
 
 	READ_DONE();
 }
@@ -1866,6 +1871,7 @@ _readNullTest(void)
 
 	READ_NODE_FIELD(arg);
 	READ_ENUM_FIELD(nulltesttype, NullTestType);
+	READ_BOOL_FIELD(argisrow);
 
 	READ_DONE();
 }

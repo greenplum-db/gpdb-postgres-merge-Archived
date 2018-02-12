@@ -8,6 +8,7 @@ RESET client_min_messages;
 select query_to_xml('select 1 as x',true,false,'');
                          query_to_xml                          
 ---------------------------------------------------------------
+<<<<<<< HEAD
  <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
  
  <row>
@@ -15,6 +16,15 @@ select query_to_xml('select 1 as x',true,false,'');
  </row>
  
  </table>
+=======
+ <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <x>1</x>                                                   +
+ </row>                                                       +
+                                                              +
+ </table>                                                     +
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  
 (1 row)
 
@@ -36,6 +46,7 @@ $$<xsl:stylesheet version="1.0"
 $$::text);
                          xslt_process                          
 ---------------------------------------------------------------
+<<<<<<< HEAD
  <?xml version="1.0"?>
  <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
  
@@ -60,6 +71,32 @@ $$::text);
  </row>
  
  </table>
+=======
+ <?xml version="1.0"?>                                        +
+ <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <x>1</x>                                                   +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <x>2</x>                                                   +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <x>3</x>                                                   +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <x>4</x>                                                   +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <x>5</x>                                                   +
+ </row>                                                       +
+                                                              +
+ </table>                                                     +
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  
 (1 row)
 
@@ -120,7 +157,11 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:stylesheet>$$)::xml;
  xslt_process 
 --------------
+<<<<<<< HEAD
  <aaa/>
+=======
+ <aaa/>      +
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  
 (1 row)
 
@@ -134,7 +175,11 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </xsl:stylesheet>$$)::xml;
  xslt_process 
 --------------
+<<<<<<< HEAD
  <aaa/>
+=======
+ <aaa/>      +
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  
 (1 row)
 
@@ -145,6 +190,7 @@ values
 Value</attribute></attributes>');
 create index idx_xpath on t1 ( xpath_string
 ('/attributes/attribute[@name="attr_1"]/text()', xml_data::text));
+<<<<<<< HEAD
 -- possible security exploit
 SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
 $$<xsl:stylesheet version="1.0"
@@ -160,3 +206,5 @@ $$<xsl:stylesheet version="1.0"
   </xsl:template>
 </xsl:stylesheet>$$);
 ERROR:  failed to apply stylesheet
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

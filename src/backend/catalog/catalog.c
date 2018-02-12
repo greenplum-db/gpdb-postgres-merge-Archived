@@ -5,12 +5,12 @@
  *		bits of hard-wired knowledge
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.84 2009/10/07 22:14:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.90 2010/04/20 23:48:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@
 
 #include "cdb/cdbvars.h"
 
-#define OIDCHARS		10		/* max chars printed by %u */
 #define FORKNAMECHARS	4		/* max chars for a fork name */
 
 /*
@@ -149,6 +148,7 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
+<<<<<<< HEAD
 		if (forknum != MAIN_FORKNUM)
 			path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
 					 rnode.spcNode, tablespace_version_directory(),
@@ -156,6 +156,18 @@ relpath(RelFileNode rnode, ForkNumber forknum)
 		else
 			path = psprintf("pg_tblspc/%u/%s/%u/%u",
 					 rnode.spcNode, tablespace_version_directory(),
+=======
+		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
+			1 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
+		path = (char *) palloc(pathlen);
+		if (forknum != MAIN_FORKNUM)
+			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
+					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
+		else
+			snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
+					 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					 rnode.dbNode, rnode.relNode);
 	}
 	return path;
@@ -224,8 +236,16 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
+<<<<<<< HEAD
 		path = psprintf("pg_tblspc/%u/%s/%u",
 						spcNode, tablespace_version_directory(), dbNode);
+=======
+		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
+			1 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "pg_tblspc/%u/%s/%u",
+				 spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	return path;
 }
@@ -760,16 +780,20 @@ GetNewSequenceRelationOid(Relation relation)
  * created by bootstrap have preassigned OIDs, so there's no need.
  */
 Oid
+<<<<<<< HEAD
 GetNewRelFileNode(Oid reltablespace, bool relisshared)
+=======
+GetNewRelFileNode(Oid reltablespace, Relation pg_class)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	RelFileNode rnode;
 	char	   *rpath;
 	int			fd;
 	bool		collides = true;
 
-	/* This should match RelationInitPhysicalAddr */
+	/* This logic should match RelationInitPhysicalAddr */
 	rnode.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
-	rnode.dbNode = relisshared ? InvalidOid : MyDatabaseId;
+	rnode.dbNode = (rnode.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
 
 	do
 	{

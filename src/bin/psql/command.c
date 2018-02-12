@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/command.c
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.221 2010/07/06 19:18:59 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -443,7 +447,7 @@ exec_command(const char *cmd,
 
 					if (pattern)
 						pattern2 = psql_scan_slash_option(scan_state,
-														  OT_NORMAL, NULL, true);
+													  OT_NORMAL, NULL, true);
 					success = listDbRoleSettings(pattern, pattern2);
 				}
 				else
@@ -1800,10 +1804,14 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("BEGIN", false)) == NULL)
 		{
 			if (pset.on_error_stop)
+<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
+=======
+				return EXIT_USER;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else
 			PQclear(res);
@@ -1816,10 +1824,14 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("COMMIT", false)) == NULL)
 		{
 			if (pset.on_error_stop)
+<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
+=======
+				return EXIT_USER;
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else
 			PQclear(res);

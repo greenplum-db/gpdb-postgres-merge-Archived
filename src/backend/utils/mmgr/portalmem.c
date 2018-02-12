@@ -8,13 +8,17 @@
  * doesn't actually run the executor for them.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.113 2009/01/01 17:23:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.120 2010/07/06 19:18:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,9 +354,15 @@ PortalReleaseCachedPlan(Portal portal)
 		portal->cplan = NULL;
 
 		/*
+<<<<<<< HEAD
 		 * We must also clear portal->stmts which is now a dangling
 		 * reference to the cached plan's plan list.  This protects any
 		 * code that might try to examine the Portal later.
+=======
+		 * We must also clear portal->stmts which is now a dangling reference
+		 * to the cached plan's plan list.  This protects any code that might
+		 * try to examine the Portal later.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		portal->stmts = NIL;
 	}
@@ -399,9 +409,12 @@ PortalCreateHoldStore(Portal portal)
 /*
  * PinPortal
  *		Protect a portal from dropping.
+<<<<<<< HEAD
  *
  * A pinned portal is still unpinned and dropped at transaction or
  * subtransaction abort.
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 void
 PinPortal(Portal portal)
@@ -440,8 +453,11 @@ PortalDrop(Portal portal, bool isTopCommit)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cannot drop active portal \"%s\"", portal->name)));
+<<<<<<< HEAD
 
 	TeardownSequenceServer();
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will not
@@ -735,6 +751,7 @@ AtAbort_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
+		/* Any portal that was actually running has to be considered broken */
 		if (portal->status == PORTAL_ACTIVE)
 			portal->status = PORTAL_FAILED;
 
@@ -749,6 +766,15 @@ AtAbort_Portals(void)
 		 */
 		if (portal->createSubid == InvalidSubTransactionId)
 			continue;
+
+		/*
+		 * If it was created in the current transaction, we can't do normal
+		 * shutdown on a READY portal either; it might refer to objects
+		 * created in the failed transaction.  See comments in
+		 * AtSubAbort_Portals.
+		 */
+		if (portal->status == PORTAL_READY)
+			portal->status = PORTAL_FAILED;
 
 		/* let portalcmds.c clean up the state it knows about */
 		if (portal->cleanup)
@@ -802,9 +828,15 @@ AtCleanup_Portals(void)
 		}
 
 		/*
+<<<<<<< HEAD
 		 * If a portal is still pinned, forcibly unpin it. PortalDrop will
 		 * not let us drop the portal otherwise. Whoever pinned the portal
 		 * was interrupted by the abort too and won't try to use it anymore.
+=======
+		 * If a portal is still pinned, forcibly unpin it. PortalDrop will not
+		 * let us drop the portal otherwise. Whoever pinned the portal was
+		 * interrupted by the abort too and won't try to use it anymore.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		if (portal->portalPinned)
 			portal->portalPinned = false;
@@ -870,33 +902,24 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 			continue;
 
 		/*
-		 * Force any active portals of my own transaction into FAILED state.
-		 * This is mostly to ensure that a portal running a FETCH will go
-		 * FAILED if the underlying cursor fails.  (Note we do NOT want to do
-		 * this to upper-level portals, since they may be able to continue.)
-		 *
-		 * This is only needed to dodge the sanity check in PortalDrop.
+		 * Force any live portals of my own subtransaction into FAILED state.
+		 * We have to do this because they might refer to objects created or
+		 * changed in the failed subtransaction, leading to crashes if
+		 * execution is resumed, or even if we just try to run ExecutorEnd.
+		 * (Note we do NOT do this to upper-level portals, since they cannot
+		 * have such references and hence may be able to continue.)
 		 */
-		if (portal->status == PORTAL_ACTIVE)
+		if (portal->status == PORTAL_READY ||
+			portal->status == PORTAL_ACTIVE)
 			portal->status = PORTAL_FAILED;
 
-		/*
-		 * If the portal is READY then allow it to survive into the parent
-		 * transaction; otherwise shut it down.
-		 *
-		 * Currently, we can't actually support that because the portal's
-		 * query might refer to objects created or changed in the failed
-		 * subtransaction, leading to crashes if execution is resumed. So,
-		 * even READY portals are deleted.	It would be nice to detect whether
-		 * the query actually depends on any such object, instead.
-		 */
-#ifdef NOT_USED
-		if (portal->status == PORTAL_READY)
+		/* let portalcmds.c clean up the state it knows about */
+		if (PointerIsValid(portal->cleanup))
 		{
-			portal->createSubid = parentSubid;
-			if (portal->resowner)
-				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
+			(*portal->cleanup) (portal);
+			portal->cleanup = NULL;
 		}
+<<<<<<< HEAD
 		else
 #endif
 		{
@@ -909,22 +932,26 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 
 			/* drop cached plan reference, if any */
 			PortalReleaseCachedPlan(portal);
+=======
 
-			/*
-			 * Any resources belonging to the portal will be released in the
-			 * upcoming transaction-wide cleanup; they will be gone before we
-			 * run PortalDrop.
-			 */
-			portal->resowner = NULL;
+		/* drop cached plan reference, if any */
+		PortalReleaseCachedPlan(portal);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
-			/*
-			 * Although we can't delete the portal data structure proper, we
-			 * can release any memory in subsidiary contexts, such as executor
-			 * state.  The cleanup hook was the last thing that might have
-			 * needed data there.
-			 */
-			MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
-		}
+		/*
+		 * Any resources belonging to the portal will be released in the
+		 * upcoming transaction-wide cleanup; they will be gone before we run
+		 * PortalDrop.
+		 */
+		portal->resowner = NULL;
+
+		/*
+		 * Although we can't delete the portal data structure proper, we can
+		 * release any memory in subsidiary contexts, such as executor state.
+		 * The cleanup hook was the last thing that might have needed data
+		 * there.
+		 */
+		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 

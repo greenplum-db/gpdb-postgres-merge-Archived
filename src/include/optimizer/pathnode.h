@@ -4,12 +4,16 @@
  *	  prototypes for pathnode.c, relnode.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.81 2009/09/17 20:49:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.84 2010/03/28 22:59:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +76,7 @@ extern ResultPath *create_result_path(List *quals);
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
+<<<<<<< HEAD
 extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
 						 RelOptInfo *rel,
                          Path        *subpath,
@@ -82,6 +87,13 @@ extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Range
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus);
+=======
+extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
+extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 extern bool path_contains_inner_index(Path *path);
 extern NestPath *create_nestloop_path(PlannerInfo *root,

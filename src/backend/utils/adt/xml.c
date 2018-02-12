@@ -4,10 +4,17 @@
  *	  XML data type support.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/utils/adt/xml.c
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.98 2010/07/06 19:18:58 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +94,11 @@ int xmloption;
 
 static StringInfo xml_err_buf = NULL;
 
+<<<<<<< HEAD
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 				  xmlParserCtxtPtr ctxt);
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -848,7 +858,11 @@ xml_is_document(xmltype *arg)
  * pg_xml_init --- set up for use of libxml
  *
  * This should be called by each function that is about to use libxml
+<<<<<<< HEAD
  * facilities.  It has two responsibilities: verify compatibility with the
+=======
+ * facilities.	It has two responsibilities: verify compatibility with the
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * loaded libxml version (done on first call in a session) and establish
  * or re-establish our libxml error handler.  The latter needs to be done
  * anytime we might have passed control to add-on modules (eg libperl) which
@@ -1332,6 +1346,7 @@ xml_pstrdup(const char *string)
 
 
 /*
+<<<<<<< HEAD
  * xmlPgEntityLoader --- entity loader callback function
  *
  * Silently prevent any external entity URL from being loaded.  We don't want
@@ -1360,6 +1375,17 @@ xmlPgEntityLoader(const char *URL, const char *ID,
  * This is exported for modules that want to share the core libxml error
  * handler.  Note that pg_xml_init() *must* have been called previously.
  */
+=======
+ * xml_ereport --- report an XML-related error
+ *
+ * The "msg" is the SQL-level message; some can be adopted from the SQL/XML
+ * standard.  This function adds libxml's native error message, if any, as
+ * detail.
+ *
+ * This is exported for modules that want to share the core libxml error
+ * handler.  Note that pg_xml_init() *must* have been called previously.
+ */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 void
 xml_ereport(int level, int sqlcode, const char *msg)
 {

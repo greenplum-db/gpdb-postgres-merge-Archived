@@ -4,10 +4,10 @@
  *		parse analysis for optimizable statements
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.43 2009/10/28 14:55:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/analyze.h,v 1.45 2010/02/26 02:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,16 @@ extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 						Oid **paramTypes, int *numParams);
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
+<<<<<<< HEAD
 								CommonTableExpr *parentCTE,
 								LockingClause *lockclause_from_parent);
 
 extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
 
+=======
+				  CommonTableExpr *parentCTE,
+				  bool locked_from_parent);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool analyze_requires_snapshot(Node *parseTree);

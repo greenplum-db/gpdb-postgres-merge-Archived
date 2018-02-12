@@ -1227,6 +1227,7 @@ select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
  6
 (9 rows)
 
+<<<<<<< HEAD
 -- Suppress NOTICE messages when users/groups don't exist
 SET client_min_messages TO 'error';
 -- create a non-superuser
@@ -1329,3 +1330,21 @@ NOTICE:  removing built-in function "int_agg_state"
 RESET SESSION AUTHORIZATION;
 DROP USER IF EXISTS user_internal_stype;
 -- end_ignore
+=======
+-- Insert/update on a column that is array of composite
+create temp table t1 (f1 int8_tbl[]);
+insert into t1 (f1[5].q1) values(42);
+select * from t1;
+       f1        
+-----------------
+ [5:5]={"(42,)"}
+(1 row)
+
+update t1 set f1[5].q2 = 43;
+select * from t1;
+        f1         
+-------------------
+ [5:5]={"(42,43)"}
+(1 row)
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

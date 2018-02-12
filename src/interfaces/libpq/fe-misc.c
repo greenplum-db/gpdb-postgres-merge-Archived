@@ -19,12 +19,20 @@
  * routines.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/interfaces/libpq/fe-misc.c
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.144 2010/07/06 19:19:01 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +86,20 @@ PQlibVersion(void)
 {
 	return PG_VERSION_NUM;
 }
+
+/*
+ * fputnbytes: print exactly N bytes to a file
+ *
+ * We avoid using %.*s here because it can misbehave if the data
+ * is not valid in what libc thinks is the prevailing encoding.
+ */
+static void
+fputnbytes(FILE *f, const char *str, size_t n)
+{
+	while (n-- > 0)
+		fputc(*str++, f);
+}
+
 
 /*
  * fputnbytes: print exactly N bytes to a file
@@ -218,6 +240,7 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 		fputnbytes(conn->Pfdebug, s, len);
 		fprintf(conn->Pfdebug, "\n");
 	}
+<<<<<<< HEAD
 
 	return 0;
 }
@@ -244,6 +267,8 @@ pqSkipnchar(size_t len, PGconn *conn)
 	}
 
 	conn->inCursor += len;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return 0;
 }
@@ -1230,8 +1255,8 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 		FD_SET(sock, &input_mask);
 
 	if (forWrite)
-		FD_SET		(sock, &output_mask);
-	FD_SET		(sock, &except_mask);
+		FD_SET(sock, &output_mask);
+	FD_SET(sock, &except_mask);
 
 	/* Compute appropriate timeout interval */
 	if (end_time == ((time_t) -1))

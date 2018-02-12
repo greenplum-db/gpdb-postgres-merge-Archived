@@ -5,14 +5,18 @@
  *	  Planning is complete, we just need to convert the selected
  *	  Path into a Plan.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.267 2009/11/15 02:45:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.275 2010/05/25 17:44:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +109,6 @@ static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
 static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static List *fix_indexqual_references(List *indexquals, IndexPath *index_path);
-static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(PlannerInfo *root, Plan *dest, Path *src);
@@ -159,8 +162,38 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
+<<<<<<< HEAD
 static List *flatten_grouping_list(List *groupcls);
 static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node);
+=======
+static NestLoop *make_nestloop(List *tlist,
+			  List *joinclauses, List *otherclauses,
+			  Plan *lefttree, Plan *righttree,
+			  JoinType jointype);
+static HashJoin *make_hashjoin(List *tlist,
+			  List *joinclauses, List *otherclauses,
+			  List *hashclauses,
+			  Plan *lefttree, Plan *righttree,
+			  JoinType jointype);
+static Hash *make_hash(Plan *lefttree,
+		  Oid skewTable,
+		  AttrNumber skewColumn,
+		  bool skewInherit,
+		  Oid skewColType,
+		  int32 skewColTypmod);
+static MergeJoin *make_mergejoin(List *tlist,
+			   List *joinclauses, List *otherclauses,
+			   List *mergeclauses,
+			   Oid *mergefamilies,
+			   int *mergestrategies,
+			   bool *mergenullsfirst,
+			   Plan *lefttree, Plan *righttree,
+			   JoinType jointype);
+static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
+		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
+		  double limit_tuples);
+static Material *make_material(Plan *lefttree);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /*
@@ -987,6 +1020,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		{
 			Oid			in_oper = lfirst_oid(l);
 			Oid			sortop;
+			Oid			eqop;
 			TargetEntry *tle;
 			SortGroupClause *sortcl;
 
@@ -994,13 +1028,26 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			if (!OidIsValid(sortop))	/* shouldn't happen */
 				elog(ERROR, "could not find ordering operator for equality operator %u",
 					 in_oper);
+
+			/*
+			 * The Unique node will need equality operators.  Normally these
+			 * are the same as the IN clause operators, but if those are
+			 * cross-type operators then the equality operators are the ones
+			 * for the IN clause operators' RHS datatype.
+			 */
+			eqop = get_equality_op_for_ordering_op(sortop, NULL);
+			if (!OidIsValid(eqop))		/* shouldn't happen */
+				elog(ERROR, "could not find equality operator for ordering operator %u",
+					 sortop);
+
 			tle = get_tle_by_resno(subplan->targetlist,
 								   groupColIdx[groupColPos]);
 			Assert(tle != NULL);
+
 			sortcl = makeNode(SortGroupClause);
 			sortcl->tleSortGroupRef = assignSortGroupRef(tle,
 														 subplan->targetlist);
-			sortcl->eqop = in_oper;
+			sortcl->eqop = eqop;
 			sortcl->sortop = sortop;
 			sortcl->nulls_first = false;
 			sortList = lappend(sortList, sortcl);
@@ -2987,6 +3034,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
 
 	/*
+<<<<<<< HEAD
 	 * MPP-3300: very similar to the nested-loop join motion deadlock cases. But we may have already
 	 * put some slackening operators below (e.g. a sort).
 	 *
@@ -3020,6 +3068,10 @@ create_mergejoin_plan(PlannerInfo *root,
 	/*
 	 * If specified, add a materialize node to shield the inner plan from
 	 * the need to handle mark/restore.
+=======
+	 * If specified, add a materialize node to shield the inner plan from the
+	 * need to handle mark/restore.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (best_path->materialize_inner)
 	{
@@ -3027,11 +3079,11 @@ create_mergejoin_plan(PlannerInfo *root,
 
 		/*
 		 * We assume the materialize will not spill to disk, and therefore
-		 * charge just cpu_tuple_cost per tuple.  (Keep this estimate in sync
-		 * with cost_mergejoin.)
+		 * charge just cpu_operator_cost per tuple.  (Keep this estimate in
+		 * sync with cost_mergejoin.)
 		 */
 		copy_plan_costsize(matplan, inner_plan);
-		matplan->total_cost += cpu_tuple_cost * matplan->plan_rows;
+		matplan->total_cost += cpu_operator_cost * matplan->plan_rows;
 
 		inner_plan = matplan;
 	}
@@ -3078,9 +3130,9 @@ create_mergejoin_plan(PlannerInfo *root,
 		Assert(ieclass != NULL);
 
 		/*
-		 * For debugging purposes, we check that the eclasses match the
-		 * paths' pathkeys.  In typical cases the merge clauses are one-to-one
-		 * with the pathkeys, but when dealing with partially redundant query
+		 * For debugging purposes, we check that the eclasses match the paths'
+		 * pathkeys.  In typical cases the merge clauses are one-to-one with
+		 * the pathkeys, but when dealing with partially redundant query
 		 * conditions, we might have clauses that re-reference earlier path
 		 * keys.  The case that we need to reject is where a pathkey is
 		 * entirely skipped over.
@@ -3185,9 +3237,9 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * Note: it is not an error if we have additional pathkey elements
-	 * (i.e., lop or lip isn't NULL here).  The input paths might be
-	 * better-sorted than we need for the current mergejoin.
+	 * Note: it is not an error if we have additional pathkey elements (i.e.,
+	 * lop or lip isn't NULL here).  The input paths might be better-sorted
+	 * than we need for the current mergejoin.
 	 */
 
 	/*
@@ -3224,6 +3276,7 @@ create_hashjoin_plan(PlannerInfo *root,
 	List	   *hashclauses;
 	Oid			skewTable = InvalidOid;
 	AttrNumber	skewColumn = InvalidAttrNumber;
+	bool		skewInherit = false;
 	Oid			skewColType = InvalidOid;
 	int32		skewColTypmod = -1;
 	HashJoin   *join_plan;
@@ -3300,6 +3353,7 @@ create_hashjoin_plan(PlannerInfo *root,
 			{
 				skewTable = rte->relid;
 				skewColumn = var->varattno;
+				skewInherit = rte->inh;
 				skewColType = var->vartype;
 				skewColTypmod = var->vartypmod;
 			}
@@ -3312,6 +3366,7 @@ create_hashjoin_plan(PlannerInfo *root,
 	hash_plan = make_hash(inner_plan,
 						  skewTable,
 						  skewColumn,
+						  skewInherit,
 						  skewColType,
 						  skewColTypmod);
 	join_plan = make_hashjoin(tlist,
@@ -3466,7 +3521,6 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path)
 		{
 			NullTest   *nt = (NullTest *) clause;
 
-			Assert(nt->nulltesttype == IS_NULL);
 			nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
 													 index);
 		}
@@ -3480,7 +3534,13 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path)
 	return fixed_indexquals;
 }
 
-static Node *
+/*
+ * fix_indexqual_operand
+ *	  Convert an indexqual expression to a Var referencing the index column.
+ *
+ * This is exported because planagg.c needs it.
+ */
+Node *
 fix_indexqual_operand(Node *node, IndexOptInfo *index)
 {
 	/*
@@ -4277,6 +4337,7 @@ Hash *
 make_hash(Plan *lefttree,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
+		  bool skewInherit,
 		  Oid skewColType,
 		  int32 skewColTypmod)
 {
@@ -4297,6 +4358,7 @@ make_hash(Plan *lefttree,
 
 	node->skewTable = skewTable;
 	node->skewColumn = skewColumn;
+	node->skewInherit = skewInherit;
 	node->skewColType = skewColType;
 	node->skewColTypmod = skewColTypmod;
 
@@ -5127,7 +5189,10 @@ make_windowagg(PlannerInfo *root, List *tlist,
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
+<<<<<<< HEAD
 			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Plan *lefttree)
 {
@@ -5531,7 +5596,7 @@ make_repeat(List *tlist,
  *	  Build a ModifyTable plan node
  *
  * Currently, we don't charge anything extra for the actual table modification
- * work, nor for the RETURNING expressions if any.  It would only be window
+ * work, nor for the RETURNING expressions if any.	It would only be window
  * dressing, since these are always top-level nodes and there is no way for
  * the costs to change any higher-level planning choices.  But we might want
  * to make it look better sometime.
@@ -5561,7 +5626,7 @@ make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
 	{
 		Plan	   *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == list_head(subplans))	/* first node? */
+		if (subnode == list_head(subplans))		/* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
@@ -5578,8 +5643,8 @@ make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
 
 	/*
 	 * Set up the visible plan targetlist as being the same as the first
-	 * RETURNING list.  This is for the use of EXPLAIN; the executor won't
-	 * pay any attention to the targetlist.
+	 * RETURNING list.	This is for the use of EXPLAIN; the executor won't pay
+	 * any attention to the targetlist.
 	 */
 	if (returningLists)
 		node->plan.targetlist = copyObject(linitial(returningLists));

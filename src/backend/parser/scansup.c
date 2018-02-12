@@ -4,12 +4,12 @@
  *	  support routines for the lex/flex scanner, used by both the normal
  * backend as well as the bootstrap backend
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.38 2009/11/12 00:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.42 2010/07/06 19:18:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,10 +178,17 @@ truncate_identifier(char *ident, int len, bool warn)
 		if (warn)
 		{
 			/*
+<<<<<<< HEAD
 			 * Cannot use %.*s here because some machines interpret %s's
 			 * precision in characters, others in bytes.
 			 */
 			char	buf[NAMEDATALEN];
+=======
+			 * We avoid using %.*s here because it can misbehave if the data
+			 * is not valid in what libc thinks is the prevailing encoding.
+			 */
+			char		buf[NAMEDATALEN];
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			memcpy(buf, ident, len);
 			buf[len] = '\0';

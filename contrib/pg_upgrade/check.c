@@ -4,7 +4,11 @@
  *	server checks and output routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11.2.3 2010/07/25 03:47:33 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/check.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
@@ -14,6 +18,7 @@ static void set_locale_and_encoding(migratorContext *ctx, Cluster whichCluster);
 static void check_new_db_is_empty(migratorContext *ctx);
 static void check_locale_and_encoding(migratorContext *ctx, ControlData *oldctrl,
 						  ControlData *newctrl);
+<<<<<<< HEAD
 static void check_proper_datallowconn(migratorContext *ctx, Cluster whichCluster);
 static void check_for_isn_and_int8_passing_mismatch(migratorContext *ctx,
 												Cluster whichCluster);
@@ -53,6 +58,10 @@ fix_path_separator(migratorContext *ctx, char *path)
 #endif
 }
 
+=======
+
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 void
 output_check_banner(migratorContext *ctx, bool *live_check)
 {
@@ -62,7 +71,11 @@ output_check_banner(migratorContext *ctx, bool *live_check)
 		if (ctx->old.port == ctx->new.port)
 			pg_log(ctx, PG_FATAL, "When checking a live server, "
 				   "the old and new port numbers must be different.\n");
+<<<<<<< HEAD
 		pg_log(ctx, PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
+=======
+		pg_log(ctx, PG_REPORT, "PerForming Consistency Checks on Old Live Server\n");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		pg_log(ctx, PG_REPORT, "------------------------------------------------\n");
 	}
 	else
@@ -98,6 +111,7 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 	 * Check for various failure cases
 	 */
 
+<<<<<<< HEAD
 	report_progress(ctx, CLUSTER_OLD, CHECK, "Failure checks");
 	check_proper_datallowconn(ctx, CLUSTER_OLD);
 	check_for_reg_data_type_usage(ctx, CLUSTER_OLD);
@@ -129,6 +143,15 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 		old_8_3_check_for_name_data_type_usage(ctx, CLUSTER_OLD);
 		old_8_3_check_for_tsquery_usage(ctx, CLUSTER_OLD);
 		old_8_3_check_ltree_usage(ctx, CLUSTER_OLD);
+=======
+	old_8_3_check_for_isn_and_int8_passing_mismatch(ctx, CLUSTER_OLD);
+
+	/* old = PG 8.3 checks? */
+	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 803)
+	{
+		old_8_3_check_for_name_data_type_usage(ctx, CLUSTER_OLD);
+		old_8_3_check_for_tsquery_usage(ctx, CLUSTER_OLD);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		if (ctx->check)
 		{
 			old_8_3_rebuild_tsvector_tables(ctx, true, CLUSTER_OLD);
@@ -146,11 +169,17 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 				old_8_3_create_sequence_script(ctx, CLUSTER_OLD);
 	}
 
+<<<<<<< HEAD
 #ifdef GPDB_90_MERGE_FIXME
 	/* Pre-PG 9.0 had no large object permissions */
 	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(ctx, true, CLUSTER_OLD);
 #endif
+=======
+	/* Pre-PG 9.0 had no large object permissions */
+	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 804)
+		new_9_0_populate_pg_largeobject_metadata(ctx, true, CLUSTER_OLD);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * While not a check option, we do this now because this is the only time
@@ -158,10 +187,13 @@ check_old_cluster(migratorContext *ctx, bool live_check,
 	 */
 	if (!ctx->check)
 	{
+<<<<<<< HEAD
 		if (ctx->dispatcher_mode)
 			get_old_oids(ctx);
 
 		report_progress(ctx, CLUSTER_OLD, SCHEMA_DUMP, "Creating catalog dump");
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		generate_old_dump(ctx);
 		split_old_dump(ctx);
 	}
@@ -209,6 +241,7 @@ report_clusters_compatible(migratorContext *ctx)
 void
 issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 {
+<<<<<<< HEAD
 	start_postmaster(ctx, CLUSTER_NEW, true);
 
 	/* old == GPDB4 warnings */
@@ -221,14 +254,27 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 803 &&
 		GET_MAJOR_VERSION(ctx->new.major_version) >= 804)
 	{
+=======
+	/* old = PG 8.3 warnings? */
+	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 803)
+	{
+		start_postmaster(ctx, CLUSTER_NEW, true);
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
 		{
 			prep_status(ctx, "Adjusting sequences");
 			exec_prog(ctx, true,
+<<<<<<< HEAD
 					  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
 					  "--no-psqlrc --port %d --username \"%s\" "
 					  "-f \"%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
+=======
+				  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on --port %d "
+				   "--username \"%s\" -f \"%s\" --dbname template1 >> \"%s\""
+					  SYSTEMQUOTE,
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					  ctx->new.bindir, ctx->new.port, ctx->user,
 					  sequence_script_file_name, ctx->logfile);
 			unlink(sequence_script_file_name);
@@ -238,6 +284,7 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 		old_8_3_rebuild_tsvector_tables(ctx, false, CLUSTER_NEW);
 		old_8_3_invalidate_hash_gin_indexes(ctx, false, CLUSTER_NEW);
 		old_8_3_invalidate_bpchar_pattern_ops_indexes(ctx, false, CLUSTER_NEW);
+<<<<<<< HEAD
 	}
 
 #ifdef GPDB_90_MERGE_FIXME
@@ -249,6 +296,18 @@ issue_warnings(migratorContext *ctx, char *sequence_script_file_name)
 #endif
 
 	stop_postmaster(ctx, false, true);
+=======
+		stop_postmaster(ctx, false, true);
+	}
+
+	/* Create dummy large object permissions for old < PG 9.0? */
+	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 804)
+	{
+		start_postmaster(ctx, CLUSTER_NEW, true);
+		new_9_0_populate_pg_largeobject_metadata(ctx, false, CLUSTER_NEW);
+		stop_postmaster(ctx, false, true);
+	}
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -286,8 +345,13 @@ check_cluster_versions(migratorContext *ctx)
 
 	/* We allow migration from/to the same major version for beta upgrades */
 
+<<<<<<< HEAD
 	if (GET_MAJOR_VERSION(ctx->old.major_version) < 802)
 		pg_log(ctx, PG_FATAL, "This utility can only upgrade from Greenplum version 4.3.XX and later.\n");
+=======
+	if (GET_MAJOR_VERSION(ctx->old.major_version) < 803)
+		pg_log(ctx, PG_FATAL, "This utility can only upgrade from PostgreSQL version 8.3 and later.\n");
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Only current PG version is supported as a target */
 	if (GET_MAJOR_VERSION(ctx->new.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))
@@ -310,7 +374,11 @@ check_cluster_compatibility(migratorContext *ctx, bool live_check)
 	FILE	   *lib_test;
 
 	/*
+<<<<<<< HEAD
 	 * Test pg_upgrade_support.so is in the proper place.    We cannot copy it
+=======
+	 * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * ourselves because install directories are typically root-owned.
 	 */
 	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", ctx->new.libpath,
@@ -329,7 +397,11 @@ check_cluster_compatibility(migratorContext *ctx, bool live_check)
 
 	/* Is it 9.0 but without tablespace directories? */
 	if (GET_MAJOR_VERSION(ctx->new.major_version) == 900 &&
+<<<<<<< HEAD
 		ctx->new.controldata.cat_ver < TABLE_SPACE_SUBDIRS_CAT_VER)
+=======
+		ctx->new.controldata.cat_ver < TABLE_SPACE_SUBDIRS)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		pg_log(ctx, PG_FATAL, "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
 			   "because of backend API changes made during development.\n");
 }
@@ -460,7 +532,11 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 	prep_status(ctx, "Creating script to delete old cluster");
 
 	snprintf(*deletion_script_file_name, MAXPGPATH, "%s/delete_old_cluster.%s",
+<<<<<<< HEAD
 			 ctx->cwd, SHELL_EXT);
+=======
+			 ctx->cwd, EXEC_EXT);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if ((script = fopen(*deletion_script_file_name, "w")) == NULL)
 		pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n",
@@ -472,7 +548,11 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 #endif
 
 	/* delete old cluster's default tablespace */
+<<<<<<< HEAD
 	fprintf(script, RMDIR_CMD " \"%s\"\n", fix_path_separator(ctx, ctx->old.pgdata));
+=======
+	fprintf(script, RMDIR_CMD " %s\n", ctx->old.pgdata);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < ctx->num_tablespaces; tblnum++)
@@ -487,6 +567,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			int			dbnum;
 
 			fprintf(script, "\n");
+<<<<<<< HEAD
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(ctx->old.major_version) <= 804)
 				fprintf(script, RM_CMD " %s%s%cPG_VERSION\n",
@@ -500,6 +581,13 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 						fix_path_separator(ctx, ctx->tablespaces[tblnum]),
 						fix_path_separator(ctx, ctx->old.tablespace_suffix),
 						PATH_SEPARATOR, ctx->old.dbarr.dbs[dbnum].db_oid);
+=======
+			for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
+			{
+				fprintf(script, RMDIR_CMD " %s%s/%d\n",
+						ctx->tablespaces[tblnum], ctx->old.tablespace_suffix,
+						ctx->old.dbarr.dbs[dbnum].db_oid);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 		}
 		else
@@ -508,9 +596,14 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			 * Simply delete the tablespace directory, which might be ".old"
 			 * or a version-specific subdirectory.
 			 */
+<<<<<<< HEAD
 			fprintf(script, RMDIR_CMD " \"%s%s\"\n",
 					fix_path_separator(ctx, ctx->tablespaces[tblnum]),
 					fix_path_separator(ctx, ctx->old.tablespace_suffix));
+=======
+			fprintf(script, RMDIR_CMD " %s%s\n",
+					ctx->tablespaces[tblnum], ctx->old.tablespace_suffix);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	fclose(script);
@@ -523,6 +616,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 
 	check_ok(ctx);
 }
+<<<<<<< HEAD
 
 
 static void
@@ -1068,3 +1162,5 @@ check_hash_partition_usage(migratorContext *ctx, Cluster whichCluster)
 	else
 		check_ok(ctx);
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

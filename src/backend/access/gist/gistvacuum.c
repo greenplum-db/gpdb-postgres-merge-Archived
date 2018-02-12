@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * gistvacuum.c
- *	  interface routines for the postgres GiST index access method.
+ *	  vacuuming routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.45 2009/06/11 14:48:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.48 2010/02/08 05:17:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,9 +29,10 @@
 typedef struct GistBulkDeleteResult
 {
 	IndexBulkDeleteResult std;	/* common state */
-	bool		needFullVacuum;
+	bool		needReindex;
 } GistBulkDeleteResult;
 
+<<<<<<< HEAD
 typedef struct
 {
 	GISTSTATE	giststate;
@@ -491,14 +492,12 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	return res;
 }
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
- * For usual vacuum just update FSM, for full vacuum
- * reforms parent tuples if some of childs was deleted or changed,
- * update invalid tuples (they can exist from last crash recovery only),
- * tries to get smaller index
+ * VACUUM cleanup: update FSM
  */
-
 Datum
 gistvacuumcleanup(PG_FUNCTION_ARGS)
 {
@@ -530,47 +529,15 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		 */
 	}
 
-	/* gistVacuumUpdate may cause hard work */
-	if (info->vacuum_full)
-	{
-		GistVacuum	gv;
-		ArrayTuple	res;
-
-		/* note: vacuum.c already acquired AccessExclusiveLock on index */
-
-		gv.index = rel;
-		initGISTstate(&(gv.giststate), rel);
-		gv.opCtx = createTempGistContext();
-		gv.result = stats;
-		gv.strategy = info->strategy;
-
-		/* walk through the entire index for update tuples */
-		res = gistVacuumUpdate(&gv, GIST_ROOT_BLKNO, false);
-		/* cleanup */
-		if (res.itup)
-		{
-			int			i;
-
-			for (i = 0; i < res.ituplen; i++)
-				pfree(res.itup[i]);
-			pfree(res.itup);
-		}
-		freeGISTstate(&(gv.giststate));
-		MemoryContextDelete(gv.opCtx);
-	}
-	else if (stats->needFullVacuum)
+	if (stats->needReindex)
 		ereport(NOTICE,
 				(errmsg("index \"%s\" needs VACUUM FULL or REINDEX to finish crash recovery",
 						RelationGetRelationName(rel))));
 
 	/*
-	 * If vacuum full, we already have exclusive lock on the index. Otherwise,
-	 * need lock unless it's local to this backend.
+	 * Need lock unless it's local to this backend.
 	 */
-	if (info->vacuum_full)
-		needLock = false;
-	else
-		needLock = !RELATION_IS_LOCAL(rel);
+	needLock = !RELATION_IS_LOCAL(rel);
 
 	/* try to find deleted pages */
 	if (needLock)
@@ -602,14 +569,6 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		UnlockReleaseBuffer(buffer);
 	}
 	lastBlock = npages - 1;
-
-	if (info->vacuum_full && lastFilledBlock < lastBlock)
-	{							/* try to truncate index */
-		RelationTruncate(rel, lastFilledBlock + 1);
-
-		stats->std.pages_removed = lastBlock - lastFilledBlock;
-		totFreePages = totFreePages - stats->std.pages_removed;
-	}
 
 	/* Finally, vacuum the FSM */
 	IndexFreeSpaceMapVacuum(info->index);
@@ -795,7 +754,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				stack->next = ptr;
 
 				if (GistTupleIsInvalid(idxtuple))
-					stats->needFullVacuum = true;
+					stats->needReindex = true;
 			}
 		}
 

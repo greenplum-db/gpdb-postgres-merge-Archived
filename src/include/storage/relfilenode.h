@@ -4,10 +4,10 @@
  *	  Physical access information for relations.
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.23 2009/06/11 14:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/relfilenode.h,v 1.25 2010/02/07 20:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,15 @@ typedef enum ForkNumber
  * is NOT allowed in RelFileNode structs --- the real tablespace ID
  * must be supplied when setting spcNode.
  *
+<<<<<<< HEAD
  * Note: various places use RelFileNode in hashtable keys.  Therefore,
  * there *must not* be any unused padding bytes in this struct.  That
  * should be safe as long as all the fields are of type Oid.
+=======
+ * Note: in pg_class, relfilenode can be zero to denote that the relation
+ * is a "mapped" relation, whose current true filenode number is available
+ * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 typedef struct RelFileNode
 {

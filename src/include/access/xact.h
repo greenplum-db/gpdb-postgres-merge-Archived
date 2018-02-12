@@ -4,10 +4,10 @@
  *	  postgres transaction system definitions
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.98 2009/06/11 14:49:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.103 2010/02/26 02:01:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,22 +85,61 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_ABORT				0x20
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
+<<<<<<< HEAD
 #define XLOG_XACT_DISTRIBUTED_COMMIT 0x50
 #define XLOG_XACT_DISTRIBUTED_FORGET 0x60
+=======
+#define XLOG_XACT_ASSIGNMENT		0x50
+
+typedef struct xl_xact_assignment
+{
+	TransactionId xtop;			/* assigned XID's top-level XID */
+	int			nsubxacts;		/* number of subtransaction XIDs */
+	TransactionId xsub[1];		/* assigned subxids */
+} xl_xact_assignment;
+
+#define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef struct xl_xact_commit
 {
 	TimestampTz xact_time;		/* time of commit */
+<<<<<<< HEAD
 	time_t		xtime;
+=======
+	uint32		xinfo;			/* info flags */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
+	int			nmsgs;			/* number of shared inval msgs */
+	Oid			dbId;			/* MyDatabaseId */
+	Oid			tsId;			/* MyDatabaseTableSpace */
 	/* Array of RelFileNode(s) to drop at commit */
 	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
+<<<<<<< HEAD
 	/* DISTRIBUTED XACT STUFF FOLLOWS */
+=======
+	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } xl_xact_commit;
 
 #define MinSizeOfXactCommit offsetof(xl_xact_commit, xnodes)
+
+/*
+ * These flags are set in the xinfo fields of WAL commit records,
+ * indicating a variety of additional actions that need to occur
+ * when emulating transaction effects during recovery.
+ * They are named XactCompletion... to differentiate them from
+ * EOXact... routines which run at the end of the original
+ * transaction completion.
+ */
+#define XACT_COMPLETION_UPDATE_RELCACHE_FILE	0x01
+#define XACT_COMPLETION_FORCE_SYNC_COMMIT		0x02
+
+/* Access macros for above flags */
+#define XactCompletionRelcacheInitFileInval(xlrec)	((xlrec)->xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
+#define XactCompletionForceSyncCommit(xlrec)		((xlrec)->xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
 
 typedef struct xl_xact_abort
 {
@@ -112,6 +151,8 @@ typedef struct xl_xact_abort
 	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
+
+/* Note the intentional lack of an invalidation message array c.f. commit */
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)
 
@@ -213,8 +254,11 @@ extern void UnregisterXactCallbackOnce(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
 extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
+<<<<<<< HEAD
 extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void xact_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);

@@ -4,7 +4,11 @@
  *	database server functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
+<<<<<<< HEAD
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.8.2.1 2010/07/13 20:15:51 momjian Exp $
+=======
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/server.c,v 1.8 2010/07/06 19:18:55 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
@@ -36,7 +40,11 @@ connectToServer(migratorContext *ctx, const char *db_name,
 	PGconn	   *conn;
 
 	snprintf(connectString, sizeof(connectString),
+<<<<<<< HEAD
 			 "dbname = '%s' user = '%s' port = %d options='-c gp_session_role=utility'", db_name, ctx->user, port);
+=======
+			 "dbname = '%s' user = '%s' port = %d", db_name, ctx->user, port);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	conn = PQconnectdb(connectString);
 
@@ -166,6 +174,7 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	const char *bindir;
 	const char *datadir;
 	unsigned short port;
+<<<<<<< HEAD
 	ClusterInfo *cluster;
 #ifndef WIN32
 	char		*output_filename = ctx->logfile;
@@ -173,19 +182,25 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	char		*output_filename = DEVNULL;
 #endif
 	char		*gpdb_options;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (whichCluster == CLUSTER_OLD)
 	{
 		bindir = ctx->old.bindir;
 		datadir = ctx->old.pgdata;
 		port = ctx->old.port;
+<<<<<<< HEAD
 		cluster = &ctx->old;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
 		bindir = ctx->new.bindir;
 		datadir = ctx->new.pgdata;
 		port = ctx->new.port;
+<<<<<<< HEAD
 		cluster = &ctx->new;
 	}
 
@@ -198,10 +213,19 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
 	 * same file because we get the error: "The process cannot access the file
 	 * because it is being used by another process." so we have to send all other
+=======
+	}
+
+	/*
+	 * On Win32, we can't send both server output and pg_ctl output to the
+	 * same file because we get the error: "The process cannot access the file
+	 * because it is being used by another process." so we have to send pg_ctl
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * output to 'nul'.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
+<<<<<<< HEAD
 			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir, output_filename, datadir, port,
 			 gpdb_options,
@@ -209,6 +233,17 @@ start_postmaster(migratorContext *ctx, Cluster whichCluster, bool quiet)
 				BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 output_filename);
+=======
+			 "-o \"-p %d -c autovacuum=off "
+			 "-c autovacuum_freeze_max_age=2000000000\" "
+			 "start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 bindir, ctx->logfile, datadir, port,
+#ifndef WIN32
+			 ctx->logfile);
+#else
+			 DEVNULL);
+#endif
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	exec_prog(ctx, true, "%s", cmd);
 
 	/* wait for the server to start properly */
@@ -247,11 +282,19 @@ stop_postmaster(migratorContext *ctx, bool fast, bool quiet)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
+<<<<<<< HEAD
 			 bindir,
 #ifndef WIN32
 			 ctx->logfile, datadir, fast ? "-m fast" : "", ctx->logfile);
 #else
 			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
+=======
+			 bindir, ctx->logfile, datadir, fast ? "-m fast" : "",
+#ifndef WIN32
+			 ctx->logfile);
+#else
+			 DEVNULL);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #endif
 	exec_prog(ctx, fast ? false : true, "%s", cmd);
 
@@ -280,7 +323,11 @@ test_server_conn(migratorContext *ctx, int timeout, Cluster whichCluster)
 	bool		ret = false;
 
 	snprintf(con_opts, sizeof(con_opts),
+<<<<<<< HEAD
 			 "dbname = 'template1' user = '%s' port = %d options='-c gp_session_role=utility'", ctx->user, port);
+=======
+			 "dbname = 'template1' user = '%s' port = %d ", ctx->user, port);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	for (tries = 0; tries < timeout; tries++)
 	{

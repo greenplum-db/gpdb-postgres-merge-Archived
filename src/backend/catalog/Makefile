@@ -2,7 +2,11 @@
 #
 # Makefile for backend/catalog
 #
+<<<<<<< HEAD
 # src/backend/catalog/Makefile
+=======
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.78 2010/05/13 11:49:48 petere Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +35,11 @@ CATALOG_JSON:= $(addprefix $(top_srcdir)/gpMgmt/bin/gppylib/data/, $(addsuffix .
 
 include $(top_srcdir)/src/backend/common.mk
 
+<<<<<<< HEAD
 all: $(BKIFILES) $(CATALOG_JSON)
+=======
+all: $(BKIFILES) schemapg.h
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,
@@ -44,7 +52,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject_metadata.h pg_largeobject.h pg_aggregate.h \
-	pg_statistic.h pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h \
+	pg_statistic.h pg_rewrite.h pg_trigger.h pg_description.h \
 	pg_cast.h pg_enum.h pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_db_role_setting.h pg_tablespace.h pg_pltemplate.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h pg_resqueue.h pg_resgroup.h\
@@ -66,13 +74,18 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, \
 	toasting.h indexing.h \
     )
 
-pg_includes = $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
+# location of Catalog.pm
+catalogdir = $(top_srcdir)/src/backend/catalog
+
+# locations of headers that genbki.pl needs to read
+pg_includes = -I$(top_srcdir)/src/include/catalog -I$(top_builddir)/src/include/catalog
 
 # see explanation in ../parser/Makefile
 postgres.description: postgres.bki ;
 
 postgres.shdescription: postgres.bki ;
 
+<<<<<<< HEAD
 # In Greenplum, we have added extra columns to some catalog tables. To avoid
 # having to change every single DATA row in those header files, which would
 # create massive merge conflicts when merging with upstream, the extra
@@ -92,6 +105,12 @@ $(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/
 
 postgres.bki: genbki.sh postgres_bki_srcs $(top_srcdir)/src/include/pg_config_manual.h
 	AWK='$(AWK)' $(SHELL) $< $(pg_includes) --set-version=$(PG_VERSION) -o postgres postgres_bki_srcs
+=======
+schemapg.h: postgres.bki ;
+
+postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
+	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs
@@ -112,8 +131,15 @@ installdirs:
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, $(BKIFILES) system_views.sql information_schema.sql cdb_init.d/cdb_schema.sql sql_features.txt)
 
+<<<<<<< HEAD
 # postgres_bki_srcs is in the distribution tarball, so it is not cleaned here.
+=======
+# postgres.bki, postgres.description, postgres.shdescription, and schemapg.h
+# are in the distribution tarball, so they are not cleaned here.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 clean:
+
+maintainer-clean: clean
 	rm -f $(BKIFILES)
 
 maintainer-clean: clean

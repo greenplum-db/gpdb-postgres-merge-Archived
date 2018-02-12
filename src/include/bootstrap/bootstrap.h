@@ -4,10 +4,10 @@
  *	  include file for the bootstrapping code
  *
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.53 2009/09/27 01:32:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.55 2010/01/15 09:19:06 heikki Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,21 @@
 #include "catalog/index.h"
 #include "nodes/execnodes.h"
 
+<<<<<<< HEAD
+=======
+typedef enum
+{
+	CheckerProcess,
+	BootstrapProcess,
+	StartupProcess,
+	BgWriterProcess,
+	WalWriterProcess,
+	WalReceiverProcess,
+
+	NUM_AUXPROCTYPES			/* Must be last! */
+} AuxProcType;
+
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).

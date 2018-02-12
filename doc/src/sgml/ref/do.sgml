@@ -1,5 +1,9 @@
 <!--
+<<<<<<< HEAD
 doc/src/sgml/ref/do.sgml
+=======
+$PostgreSQL: pgsql/doc/src/sgml/ref/do.sgml,v 1.6 2010/04/03 07:23:00 petere Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 PostgreSQL documentation
 -->
 
@@ -107,7 +111,12 @@ BEGIN
         EXECUTE 'GRANT ALL ON ' || quote_ident(r.table_schema) || '.' || quote_ident(r.table_name) || ' TO webuser';
     END LOOP;
 END$$;
+<<<<<<< HEAD
 </programlisting></para>
+=======
+</programlisting>
+  </para>
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  </refsect1>
 
  <refsect1>

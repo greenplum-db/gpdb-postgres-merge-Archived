@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.21 2009/11/12 00:13:00 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.26 2010/04/09 13:05:58 mha Exp $
 #
 use Carp;
 use strict;
@@ -31,7 +31,11 @@ sub new
         prefixincludes  => '',
         defines         => ';',
         solution        => $solution,
+<<<<<<< HEAD
         disablewarnings => '4003;4018;4244;4273;4102;4090;4267;',
+=======
+        disablewarnings => '4018;4244;4273;4102;4090;4267',
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
         disablelinkerwarnings => '',
         vcver           => $solution->{vcver},
         platform        => $solution->{platform},

@@ -80,6 +80,7 @@ Value</attribute></attributes>');
 
 create index idx_xpath on t1 ( xpath_string
 ('/attributes/attribute[@name="attr_1"]/text()', xml_data::text));
+<<<<<<< HEAD
 
 -- possible security exploit
 SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
@@ -95,3 +96,5 @@ $$<xsl:stylesheet version="1.0"
     </sax:output>
   </xsl:template>
 </xsl:stylesheet>$$);
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

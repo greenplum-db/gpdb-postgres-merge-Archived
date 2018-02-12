@@ -9,14 +9,18 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.116 2009/11/28 00:46:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.119 2010/07/06 19:18:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +202,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	add_base_rels_to_query(root, (Node *) parse->jointree);
 
 	/*
+<<<<<<< HEAD
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
 	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
@@ -206,6 +211,13 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * The SpecialJoinInfo list is also built to hold information about join
 	 * order restrictions.  Finally, we form a target joinlist for
 	 * make_one_rel() to work from.
+=======
+	 * Examine the targetlist and qualifications, adding entries to baserel
+	 * targetlists for all referenced Vars.  Restrict and join clauses are
+	 * added to appropriate lists belonging to the mentioned relations.  We
+	 * also build EquivalenceClasses for provably equivalent expressions, and
+	 * form a target joinlist for make_one_rel() to work from.
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	build_base_rel_tlists(root, tlist);
 
@@ -254,6 +266,49 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * Remove any useless outer joins.  Ideally this would be done during
+	 * jointree preprocessing, but the necessary information isn't available
+	 * until we've built baserel data structures and classified qual clauses.
+	 */
+	joinlist = remove_useless_joins(root, joinlist);
+
+	/*
+	 * Now distribute "placeholders" to base rels as needed.  This has to be
+	 * done after join removal because removal could change whether a
+	 * placeholder is evaluatable at a base rel.
+	 */
+	add_placeholders_to_base_rels(root);
+
+	/*
+	 * We should now have size estimates for every actual table involved in
+	 * the query, and we also know which if any have been deleted from the
+	 * query by join removal; so we can compute total_table_pages.
+	 *
+	 * Note that appendrels are not double-counted here, even though we don't
+	 * bother to distinguish RelOptInfos for appendrel parents, because the
+	 * parents will still have size zero.
+	 *
+	 * XXX if a table is self-joined, we will count it once per appearance,
+	 * which perhaps is the wrong thing ... but that's not completely clear,
+	 * and detecting self-joins here is difficult, so ignore it for now.
+	 */
+	total_pages = 0;
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	{
+		RelOptInfo *brel = root->simple_rel_array[rti];
+
+		if (brel == NULL)
+			continue;
+
+		Assert(brel->relid == rti);		/* sanity check on array */
+
+		if (brel->reloptkind == RELOPT_BASEREL ||
+			brel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+			total_pages += (double) brel->pages;
+	}
+	root->total_table_pages = total_pages;
+
+	/*
+	 * Remove any useless outer joins.	Ideally this would be done during
 	 * jointree preprocessing, but the necessary information isn't available
 	 * until we've built baserel data structures and classified qual clauses.
 	 */

@@ -3,12 +3,16 @@
  * sinvaladt.c
  *	  POSTGRES shared cache invalidation data manager.
  *
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/backend/storage/ipc/sinvaladt.c
+=======
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.82 2010/02/26 02:01:00 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +150,14 @@ typedef struct ProcState
 	bool		resetState;		/* backend needs to reset its state */
 	bool		signaled;		/* backend has been sent catchup signal */
 	bool		hasMessages;	/* backend has unread messages */
+
+	/*
+	 * Backend only sends invalidations, never receives them. This only makes
+	 * sense for Startup process during recovery because it doesn't maintain a
+	 * relcache, yet it fires inval messages to allow query backends to see
+	 * schema changes.
+	 */
+	bool		sendOnly;		/* backend only sends, never receives */
 
 	/*
 	 * Backend only sends invalidations, never receives them. This only makes
@@ -318,7 +330,10 @@ SharedInvalBackendInit(bool sendOnly)
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
 	stateP->signaled = false;
+<<<<<<< HEAD
 	stateP->hasMessages = false;
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	stateP->sendOnly = sendOnly;
 
 	LWLockRelease(SInvalWriteLock);

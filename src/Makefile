@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.47 2009/08/26 22:24:42 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.50 2010/01/20 09:16:23 heikki Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,7 @@ all install installdirs uninstall distprep:
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/libpqwalreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -52,6 +53,7 @@ clean:
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/libpqwalreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -67,6 +69,7 @@ distclean maintainer-clean:
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/libpqwalreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
@@ -82,6 +85,7 @@ coverage:
 	$(MAKE) -C backend/utils/mb/conversion_procs $@
 	$(MAKE) -C backend/snowball $@
 	$(MAKE) -C interfaces $@
+	$(MAKE) -C backend/replication/libpqwalreceiver $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 

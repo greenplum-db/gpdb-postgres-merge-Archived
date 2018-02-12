@@ -3,7 +3,11 @@
  *
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
  *
+<<<<<<< HEAD
  * src/bin/psql/input.h
+=======
+ * $PostgreSQL: pgsql/src/bin/psql/input.h,v 1.35 2010/02/26 02:01:19 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 #ifndef INPUT_H
 #define INPUT_H

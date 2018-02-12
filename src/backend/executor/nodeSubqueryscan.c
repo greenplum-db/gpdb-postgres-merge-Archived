@@ -7,14 +7,18 @@
  * we need two sets of code.  Ought to look at trying to unify the cases.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.43 2009/10/26 02:26:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.45 2010/02/26 02:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +62,9 @@ SubqueryNext(SubqueryScanState *node)
 	slot = ExecProcNode(node->subplan);
 
 	/*
-	 * We just return the subplan's result slot, rather than expending
-	 * extra cycles for ExecCopySlot().  (Our own ScanTupleSlot is used
-	 * only for EvalPlanQual rechecks.)
+	 * We just return the subplan's result slot, rather than expending extra
+	 * cycles for ExecCopySlot().  (Our own ScanTupleSlot is used only for
+	 * EvalPlanQual rechecks.)
 	 */
 
     /*

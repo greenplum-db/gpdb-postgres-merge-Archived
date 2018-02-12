@@ -2,9 +2,15 @@
 #
 # win32tzlist.pl -- compare Windows timezone information
 #
+<<<<<<< HEAD
 # Copyright (c) 2008-2011, PostgreSQL Global Development Group
 #
 # src/tools/win32tzlist.pl
+=======
+# Copyright (c) 2008-2010, PostgreSQL Global Development Group
+#
+# $PostgreSQL: pgsql/src/tools/win32tzlist.pl,v 1.1 2010/04/15 11:00:45 mha Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #################################################################
 
 #

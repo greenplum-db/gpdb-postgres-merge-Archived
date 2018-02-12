@@ -834,6 +834,7 @@ select string_agg(a,',') from (values(null),(null)) g(a);
  
 (1 row)
 
+<<<<<<< HEAD
 -- FILTER tests
 select min(unique1) filter (where unique1 > 100) from tenk1;
  min 
@@ -1179,3 +1180,5 @@ select least_agg(variadic array[q1,q2]) from int8_tbl;
  -4567890123456789
 (1 row)
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

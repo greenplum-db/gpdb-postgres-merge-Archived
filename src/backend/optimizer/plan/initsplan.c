@@ -3,14 +3,18 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.156 2009/10/26 02:26:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.158 2010/02/26 02:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -676,8 +680,8 @@ make_outerjoininfo(PlannerInfo *root,
 	 * FOR UPDATE applied to a view.  Only after rewriting and flattening do
 	 * we know whether the view contains an outer join.
 	 *
-	 * We use the original RowMarkClause list here; the PlanRowMark list
-	 * would list everything.
+	 * We use the original RowMarkClause list here; the PlanRowMark list would
+	 * list everything.
 	 */
 	foreach(l, root->parse->rowMarks)
 	{

@@ -3,13 +3,21 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
+<<<<<<< HEAD
  *	  src/interfaces/libpq/fe-exec.c
+=======
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.211 2010/02/26 02:01:32 momjian Exp $
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -3596,8 +3604,8 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 		p = buffer;
 		while (*s)
 		{
-			char	v1,
-					v2;
+			char		v1,
+						v2;
 
 			/*
 			 * Bad input is silently ignored.  Note that this includes
@@ -3637,11 +3645,19 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 							(ISOCTDIGIT(strtext[i + 1])) &&
 							(ISOCTDIGIT(strtext[i + 2])))
 						{
+<<<<<<< HEAD
 							int			byte;
 
 							byte = OCTVAL(strtext[i++]);
 							byte = (byte << 3) + OCTVAL(strtext[i++]);
 							byte = (byte << 3) + OCTVAL(strtext[i++]);
+=======
+							int byte;
+
+							byte = OCTVAL(strtext[i++]);
+							byte = (byte <<3) +OCTVAL(strtext[i++]);
+							byte = (byte <<3) +OCTVAL(strtext[i++]);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 							buffer[j++] = byte;
 						}
 					}

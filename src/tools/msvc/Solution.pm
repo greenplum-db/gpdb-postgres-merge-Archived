@@ -3,13 +3,11 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.48 2009/09/19 05:56:50 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.57 2010/04/09 13:05:58 mha Exp $
 #
 use Carp;
 use strict;
 use warnings;
-
-use Genbki;
 
 sub new
 {
@@ -28,6 +26,7 @@ sub new
     };
     bless $self;
 
+<<<<<<< HEAD
 	# integer_datetimes is now the default
 	$options->{integer_datetimes} = 1 
 		unless exists $options->{integer_datetimes};
@@ -37,6 +36,13 @@ sub new
         unless exists $options->{float8byval};
 
 
+=======
+    # integer_datetimes is now the default
+    $options->{integer_datetimes} = 1
+      unless exists $options->{integer_datetimes};
+    $options->{float4byval} = 1
+      unless exists $options->{float4byval};
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     if ($options->{xml})
     {
         if (!($options->{xslt} && $options->{iconv}))
@@ -44,6 +50,7 @@ sub new
             die "XML requires both XSLT and ICONV\n";
         }
     }
+<<<<<<< HEAD
 	$options->{blocksize} = 8
 		unless $options->{blocksize}; # undef or 0 means default
 	die "Bad blocksize $options->{blocksize}"
@@ -61,6 +68,25 @@ sub new
 		unless $options->{wal_segsize}; # undef or 0 means default
 	die "Bad wal_segsize $options->{wal_segsize}"
 		unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
+=======
+    $options->{blocksize} = 8
+      unless $options->{blocksize}; # undef or 0 means default
+    die "Bad blocksize $options->{blocksize}"
+      unless grep {$_ == $options->{blocksize}} (1,2,4,8,16,32);
+    $options->{segsize} = 1
+      unless $options->{segsize}; # undef or 0 means default
+    # only allow segsize 1 for now, as we can't do large files yet in windows
+    die "Bad segsize $options->{segsize}"
+      unless $options->{segsize} == 1;
+    $options->{wal_blocksize} = 8
+      unless $options->{wal_blocksize}; # undef or 0 means default
+    die "Bad wal_blocksize $options->{wal_blocksize}"
+      unless grep {$_ == $options->{wal_blocksize}} (1,2,4,8,16,32,64);
+    $options->{wal_segsize} = 16
+      unless $options->{wal_segsize}; # undef or 0 means default
+    die "Bad wal_segsize $options->{wal_segsize}"
+      unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
     $self->DetermineToolVersions();
 
@@ -100,7 +126,10 @@ sub DetermineToolVersions
     print "Detected hardware platform: $self->{platform}\n";
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 # Return 1 if $oldfile is newer than $newfile, or if $newfile doesn't exist.
 # Special case - if config.pl has changed, always return 1
 sub IsNewer
@@ -177,7 +206,10 @@ sub GenerateFiles
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER) ", $bits-bit"};
             print O;
         }
+<<<<<<< HEAD
         print O "#define GP_VERSION \"unknown\"\n";
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
         print O "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
         print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
 	if ($self->{options}->{xml}) {
@@ -192,18 +224,15 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define HAVE_LIBBZ2 1\n" if ($self->{options}->{bz2});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
-		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+        print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 
-		print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
-		print O "#define RELSEG_SIZE ",
-			(1024 / $self->{options}->{blocksize}) * 
-				$self->{options}->{segsize} * 1024, "\n";
-		print O "#define XLOG_BLCKSZ ",
-			1024 * $self->{options}->{wal_blocksize},"\n";
-		print O "#define XLOG_SEG_SIZE (",
-			$self->{options}->{wal_segsize}," * 1024 * 1024)\n";
-        
-        if ($self->{options}->{float4byval}) 
+        print O "#define BLCKSZ ",1024 * $self->{options}->{blocksize},"\n";
+        print O "#define RELSEG_SIZE ",
+          (1024 / $self->{options}->{blocksize}) *$self->{options}->{segsize} * 1024, "\n";
+        print O "#define XLOG_BLCKSZ ",1024 * $self->{options}->{wal_blocksize},"\n";
+        print O "#define XLOG_SEG_SIZE (",$self->{options}->{wal_segsize}," * 1024 * 1024)\n";
+
+        if ($self->{options}->{float4byval})
         {
             print O "#define USE_FLOAT4_BYVAL 1\n";
             print O "#define FLOAT4PASSBYVAL true\n";
@@ -314,11 +343,19 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 
     if (IsNewer('src\include\utils\probes.h','src\backend\utils\probes.d'))
     {
+<<<<<<< HEAD
 		print "Generating probes.h...\n";
         system(
 'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'
         );
         }
+=======
+        print "Generating probes.h...\n";
+        system(
+'psed -f src\backend\utils\Gen_dummy_probes.sed src\backend\utils\probes.d > src\include\utils\probes.h'
+        );
+    }
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
     if (IsNewer('src\interfaces\libpq\libpq.rc','src\interfaces\libpq\libpq.rc.in'))
     {
@@ -344,6 +381,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         chdir('..\..\..');
     }
 
+<<<<<<< HEAD
     if (IsNewer('src\include\catalog\gp_version.h','src\include\catalog\gp_version.in'))
     {
         print "Generating gp_versions.h...\n";
@@ -371,6 +409,9 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             'src\backend\parser\gram.y'
         )
       )
+=======
+    if (IsNewer('src\interfaces\ecpg\preproc\preproc.y','src\backend\parser\gram.y'))
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     {
         print "Generating preproc.y...\n";
         chdir('src\interfaces\ecpg\preproc');
@@ -393,8 +434,8 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 #define HAVE_LONG_LONG_INT_64
 #define ENABLE_THREAD_SAFETY 1
 EOF
-	print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
-	print O "#endif\n";
+        print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
+        print O "#endif\n";
         close(O);
     }
 
@@ -429,12 +470,14 @@ EOF
         next if $bki eq "";
         if (IsNewer('src/backend/catalog/postgres.bki', "src/include/catalog/$bki"))
         {
-            print "Generating postgres.bki...\n";
-            Genbki::genbki(
-                $self->{majorver},
-                "src/backend/catalog/postgres",
-                split(/ /,join(' src/include/catalog/',@allbki))
+            print "Generating postgres.bki and schemapg.h...\n";
+            chdir('src\backend\catalog');
+            my $bki_srcs = join(' ../../../src/include/catalog/', @allbki);
+            system(
+"perl genbki.pl -I../../../src/include/catalog --set-version=$self->{majorver} $bki_srcs"
             );
+            chdir('..\..\..');
+            copyFile('src\backend\catalog\schemapg.h', 'src\include\catalog\schemapg.h');
             last;
         }
     }
@@ -506,12 +549,15 @@ sub AddProject
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\comerr32.lib');
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\gssapi32.lib');
     }
+<<<<<<< HEAD
     if ($self->{options}->{xml}) {
 	$proj->AddIncludeDir($self->{options}->{xml} . '\include');
 	$proj->AddIncludeDir($self->{options}->{iconv} . '\include');
 	$proj->AddLibrary($self->{options}->{xml} . '\lib\libxml2.lib');
     }
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     if ($self->{options}->{iconv})
     {
         $proj->AddIncludeDir($self->{options}->{iconv} . '\include');

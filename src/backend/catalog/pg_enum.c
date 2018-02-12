@@ -3,11 +3,11 @@
  * pg_enum.c
  *	  routines to support manipulation of the pg_enum relation
  *
- * Copyright (c) 2006-2009, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2010, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.10 2009/12/19 00:47:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_enum.c,v 1.14 2010/02/26 02:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,14 +63,11 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 	tupDesc = pg_enum->rd_att;
 
 	/*
-	 * Allocate oids.  While this method does not absolutely guarantee that we
-	 * generate no duplicate oids (since we haven't entered each oid into the
-	 * table before allocating the next), trouble could only occur if the oid
-	 * counter wraps all the way around before we finish. Which seems
-	 * unlikely.
+	 * Allocate oids
 	 */
 	oids = (Oid *) palloc(num_elems * sizeof(Oid));
 	if (OidIsValid(binary_upgrade_next_pg_enum_oid))
+<<<<<<< HEAD
 	{
 		if (num_elems != 1)
 			ereport(ERROR,
@@ -78,6 +75,35 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 					 errmsg("EnumValuesCreate() can only set a single OID")));
 		oids[0] = binary_upgrade_next_pg_enum_oid;
 		binary_upgrade_next_pg_enum_oid = InvalidOid;
+=======
+	{
+		if (num_elems != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("EnumValuesCreate() can only set a single OID")));
+		oids[0] = binary_upgrade_next_pg_enum_oid;
+		binary_upgrade_next_pg_enum_oid = InvalidOid;
+	}
+	else
+	{
+		/*
+		 * While this method does not absolutely guarantee that we generate no
+		 * duplicate oids (since we haven't entered each oid into the table
+		 * before allocating the next), trouble could only occur if the oid
+		 * counter wraps all the way around before we finish. Which seems
+		 * unlikely.
+		 */
+		for (elemno = 0; elemno < num_elems; elemno++)
+		{
+			/*
+			 * The pg_enum.oid is stored in user tables.  This oid must be
+			 * preserved by binary upgrades.
+			 */
+			oids[elemno] = GetNewOid(pg_enum);
+		}
+		/* sort them, just in case counter wrapped from high to low */
+		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -93,10 +119,13 @@ EnumValuesCreate(Oid enumTypeOid, List *vals,
 				oids[elemno] = GetNewOid(pg_enum);
 		}
 
+<<<<<<< HEAD
 		/* sort them, just in case counter wrapped from high to low */
 		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
 	}
 
+=======
+>>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* and make the entries */
 	memset(nulls, false, sizeof(nulls));
 
