@@ -48,10 +48,6 @@ typedef struct CheckPoint
 	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
 	pg_time_t	time;			/* time stamp of checkpoint */
 
-<<<<<<< HEAD
-	/* IN XLOG RECORD, MORE DATA FOLLOWS AT END OF STRUCT FOR DTM CHECKPOINT */
-
-=======
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby
 	 * mode from an online checkpoint, so we only bother calculating this for
@@ -59,7 +55,8 @@ typedef struct CheckPoint
 	 * set to InvalidTransactionId.
 	 */
 	TransactionId oldestActiveXid;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+	/* IN XLOG RECORD, MORE DATA FOLLOWS AT END OF STRUCT FOR DTM CHECKPOINT */
 } CheckPoint;
 
 /* XLOG info values for XLOG rmgr */
@@ -69,12 +66,9 @@ typedef struct CheckPoint
 #define XLOG_NEXTOID					0x30
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
-<<<<<<< HEAD
-#define XLOG_NEXTRELFILENODE			0x60
-#define XLOG_HINT						0x70
-=======
 #define XLOG_PARAMETER_CHANGE			0x60
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#define XLOG_NEXTRELFILENODE			0x70
+#define XLOG_HINT						0x80
 
 
 /*
@@ -165,7 +159,6 @@ typedef struct ControlFileData
 	 * we use the redo pointer as a cross-check when we see an end-of-backup
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
-<<<<<<< HEAD
 	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
@@ -173,13 +166,9 @@ typedef struct ControlFileData
 	 * file was found at startup but it may have been a leftover from a stray
 	 * pg_start_backup() call, not accompanied by pg_stop_backup().
 	 */
-	XLogRecPtr	minRecoveryPoint;		/* must replay xlog to here */
-	XLogRecPtr		backupStartPoint;
-	bool		backupEndRequired;
-=======
-	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
+	bool		backupEndRequired;
 
 	/*
 	 * Parameter settings that determine if the WAL can be used for archival
@@ -189,7 +178,6 @@ typedef struct ControlFileData
 	int			MaxConnections;
 	int			max_prepared_xacts;
 	int			max_locks_per_xact;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * This data is used to check for hardware-architecture compatibility of

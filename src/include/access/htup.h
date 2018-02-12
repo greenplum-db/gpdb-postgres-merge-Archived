@@ -818,40 +818,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
     Assert(attnum > 0);
 
-<<<<<<< HEAD
-    if (isnull)
-        *isnull = false;
-=======
-#define fastgetattr(tup, attnum, tupleDesc, isnull)					\
-(																	\
-	AssertMacro((attnum) > 0),										\
-	(*(isnull) = false),											\
-	HeapTupleNoNulls(tup) ?											\
-	(																\
-		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ?			\
-		(															\
-			fetchatt((tupleDesc)->attrs[(attnum)-1],				\
-				(char *) (tup)->t_data + (tup)->t_data->t_hoff +	\
-					(tupleDesc)->attrs[(attnum)-1]->attcacheoff)	\
-		)															\
-		:															\
-			nocachegetattr((tup), (attnum), (tupleDesc))			\
-	)																\
-	:																\
-	(																\
-		att_isnull((attnum)-1, (tup)->t_data->t_bits) ?				\
-		(															\
-			(*(isnull) = true),										\
-			(Datum)NULL												\
-		)															\
-		:															\
-		(															\
-			nocachegetattr((tup), (attnum), (tupleDesc))			\
-		)															\
-	)																\
-)
-#else							/* defined(DISABLE_COMPLEX_MACRO) */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	*isnull = false;
 
     if (HeapTupleNoNulls(tup))
     {
@@ -865,8 +832,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     else if (att_isnull(attnum-1, tup->t_data->t_bits))
     {
         result = Int32GetDatum(0);
-        if (isnull)
-            *isnull = true;
+		*isnull = true;
     }
     else
         result = nocachegetattr(tup, attnum, tupleDesc);
@@ -892,7 +858,6 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
  *      CDB:  Implemented as inline function instead of macro.
  * ----------------
  */
-<<<<<<< HEAD
 static inline Datum
 heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
@@ -903,8 +868,7 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     if (attnum > (int)HeapTupleHeaderGetNatts(tup->t_data))
     {
         result = DatumGetInt32(0);
-        if (isnull)
-            *isnull = true;
+		*isnull = true;
     }
     else if (attnum > 0)
         result = fastgetattr(tup, attnum, tupleDesc, isnull);
@@ -913,26 +877,6 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
     return result;
 }                               /* heap_getattr */
-=======
-#define heap_getattr(tup, attnum, tupleDesc, isnull) \
-( \
-	AssertMacro((tup) != NULL), \
-	( \
-		((attnum) > 0) ? \
-		( \
-			((attnum) > (int) HeapTupleHeaderGetNatts((tup)->t_data)) ? \
-			( \
-				(*(isnull) = true), \
-				(Datum)NULL \
-			) \
-			: \
-				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-		: \
-			heap_getsysattr((tup), (attnum), (tupleDesc), (isnull)) \
-	) \
-)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* prototypes for functions in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
@@ -944,7 +888,6 @@ extern Size heap_fill_tuple(TupleDesc tupleDesc,
 extern Datum nocachegetattr(HeapTuple tup, int attnum, TupleDesc att);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
 extern bool heap_attisnull(HeapTuple tup, int attnum);
-<<<<<<< HEAD
 extern bool heap_attisnull_normalattr(HeapTuple tup, int attnum);
 
 extern HeapTuple heaptuple_copy_to(HeapTuple tup, HeapTuple result, uint32 *len);
@@ -954,13 +897,6 @@ static inline HeapTuple heap_copytuple(HeapTuple tuple)
 	return heaptuple_copy_to(tuple, NULL, NULL);
 }
 
-=======
-extern Datum nocachegetattr(HeapTuple tup, int attnum,
-			   TupleDesc att);
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-				bool *isnull);
-extern HeapTuple heap_copytuple(HeapTuple tuple);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 
 extern HeapTuple heaptuple_form_to(TupleDesc tupdesc, Datum* values,

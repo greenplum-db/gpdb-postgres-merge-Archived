@@ -10,13 +10,9 @@
  * the location.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.432 2010/02/26 02:01:25 momjian Exp $
@@ -314,11 +310,8 @@ typedef struct FuncCall
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
-<<<<<<< HEAD
 	Node	   *agg_filter;		/* FILTER clause, if any */
 	bool		agg_within_group;		/* ORDER BY appeared in WITHIN GROUP */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
@@ -516,11 +509,8 @@ typedef struct ColumnDef
 	int			inhcount;		/* number of times column is inherited */
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
-<<<<<<< HEAD
-	AttrNumber	attnum;			/* attribute number */
-=======
 	bool		is_from_type;	/* column definition came from table type */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	AttrNumber	attnum;			/* attribute number */
 	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
@@ -934,11 +924,7 @@ typedef struct WindowClause
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
 	List	   *orderClause;	/* ORDER BY list */
-<<<<<<< HEAD
-	int			frameOptions;	/* frame_clause options, copied from WindowDef */
-=======
 	int			frameOptions;	/* frame_clause options, see WindowDef */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
 	Index		winref;			/* ID referenced by window functions */
@@ -1648,12 +1634,9 @@ typedef struct CreateStmt
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
-<<<<<<< HEAD
 	List	   *inhOids;		/* list relations Oids to inherit from */
 	int			parentOidCount; /* count of parent with OIDs */
-=======
 	TypeName   *ofTypename;		/* OF typename */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
@@ -2451,12 +2434,8 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-<<<<<<< HEAD
-	List	   *excludeOpNames;	/* exclusion operator names, or NIL if none */
-	bool		is_part_child;	/* in service of a part of a partition? */
-=======
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	bool		is_part_child;	/* in service of a part of a partition? */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -2811,20 +2790,12 @@ typedef struct ClusterStmt
  */
 typedef enum VacuumOption
 {
-<<<<<<< HEAD
-	VACOPT_VACUUM		= 1 << 0,	/* do VACUUM */
-	VACOPT_ANALYZE		= 1 << 1,	/* do ANALYZE */
-	VACOPT_VERBOSE		= 1 << 2,	/* print progress info */
-	VACOPT_FREEZE		= 1 << 3,	/* FREEZE option */
-	VACOPT_FULL			= 1 << 4,	/* FULL (non-concurrent) vacuum */
-	VACOPT_ROOTONLY		= 1 << 5	/* only ANALYZE root partition tables */
-=======
 	VACOPT_VACUUM = 1 << 0,		/* do VACUUM */
 	VACOPT_ANALYZE = 1 << 1,	/* do ANALYZE */
 	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
-	VACOPT_FULL = 1 << 4		/* FULL (non-concurrent) vacuum */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
+	VACOPT_ROOTONLY = 1 << 5	/* only ANALYZE root partition tables */
 } VacuumOption;
 
 typedef struct VacuumStmt

@@ -287,10 +287,6 @@ DATA(insert ( 2901  n 0 xmlconcat2	             - - - - 				  f 0	142  _null_));
 /* array */
 DATA(insert ( 2335	n 0 array_agg_transfn        - - - array_agg_finalfn  t 0 2281 _null_));
 
-/* text */
-DATA(insert ( 3537	n 0 string_agg_transfn       - - - string_agg_finalfn f 0 2281 _null_));
-DATA(insert ( 3538	n 0 string_agg_delim_transfn - - - string_agg_finalfn f 0 2281 _null_));
-
 /* ordered-set and hypothetical-set aggregates */
 DATA(insert ( 3972	o 1 ordered_set_transition	- - - 		percentile_disc_final					t 0	2281	_null_ ));
 DATA(insert ( 3974	o 1 ordered_set_transition	- - -		percentile_cont_float8_final			f 0	2281	_null_ ));
@@ -317,8 +313,8 @@ DATA(insert ( 6129	o 1 ordered_set_transition	- - -		percentile_cont_timestamp_f
 DATA(insert ( 6130	o 1 ordered_set_transition	- - -		percentile_cont_timestamptz_final		f 0	2281	_null_ ));
 
 /* text */
-DATA(insert (3537	string_agg_transfn			string_agg_finalfn	0	2281	_null_ ));
-DATA(insert (3538	string_agg_delim_transfn	string_agg_finalfn	0	2281	_null_ ));
+DATA(insert ( 3537	n 0 string_agg_transfn       - - - string_agg_finalfn f 0 2281 _null_));
+DATA(insert ( 3538	n 0 string_agg_delim_transfn - - - string_agg_finalfn f 0 2281 _null_));
 
 /*
  * prototypes for functions in pg_aggregate.c

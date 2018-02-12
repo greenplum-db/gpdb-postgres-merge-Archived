@@ -143,11 +143,8 @@ typedef struct PortalData
 
 	/* Status data */
 	PortalStatus status;		/* see above */
-<<<<<<< HEAD
-	bool		releaseResLock;	/* true => resscheduler lock must be released */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	bool		portalPinned;	/* a pinned portal can't be dropped */
+	bool		releaseResLock;	/* true => resscheduler lock must be released */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */

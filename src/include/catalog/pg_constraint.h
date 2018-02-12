@@ -246,7 +246,6 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern char * GetConstraintNameByOid(Oid constraintId);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
-<<<<<<< HEAD
 						  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
 extern Oid  get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 
@@ -255,9 +254,5 @@ extern Oid  get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
  */
 extern bool ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, 
 					Oid *pkrelid, AttrNumber *pkattno);
-=======
-						  Oid newNspId, bool isType);
-extern Oid	GetConstraintByName(Oid relid, const char *conname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #endif   /* PG_CONSTRAINT_H */

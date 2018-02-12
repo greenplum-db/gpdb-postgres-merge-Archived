@@ -87,7 +87,6 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
-<<<<<<< HEAD
 #define Natts_pg_authid						17
 #define Anum_pg_authid_rolname				1
 #define Anum_pg_authid_rolsuper				2
@@ -106,19 +105,6 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolcreaterexthdfs	15
 #define Anum_pg_authid_rolcreatewexthdfs	16
 #define Anum_pg_authid_rolresgroup			17
-=======
-#define Natts_pg_authid					10
-#define Anum_pg_authid_rolname			1
-#define Anum_pg_authid_rolsuper			2
-#define Anum_pg_authid_rolinherit		3
-#define Anum_pg_authid_rolcreaterole	4
-#define Anum_pg_authid_rolcreatedb		5
-#define Anum_pg_authid_rolcatupdate		6
-#define Anum_pg_authid_rolcanlogin		7
-#define Anum_pg_authid_rolconnlimit		8
-#define Anum_pg_authid_rolpassword		9
-#define Anum_pg_authid_rolvaliduntil	10
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* ----------------
  *		initial contents of pg_authid

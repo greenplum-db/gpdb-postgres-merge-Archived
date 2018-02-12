@@ -74,10 +74,7 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   TupleDesc tupDesc,
 						   Oid relid,
 						   Oid reltablespace,
-<<<<<<< HEAD
 			               char relkind,            /*CDB*/
-						   bool shared_relation);
-=======
 						   bool shared_relation,
 						   bool mapped_relation);
 
@@ -86,7 +83,6 @@ extern Relation RelationBuildLocalRelation(const char *relname,
  */
 extern void RelationSetNewRelfilenode(Relation relation,
 						  TransactionId freezeXid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Routines for flushing/rebuilding relcache entries in various scenarios
