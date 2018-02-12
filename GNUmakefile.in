@@ -10,10 +10,6 @@ include $(top_builddir)/src/Makefile.global
 
 
 all:
-<<<<<<< HEAD
-#	$(MAKE) -C doc all
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	$(MAKE) -C src all
 	$(MAKE) -C config all
 	$(MAKE) -C contrib/xlogdump all
@@ -51,10 +47,6 @@ html man:
 	$(MAKE) -C doc $@
 
 install:
-<<<<<<< HEAD
-#	$(MAKE) -C doc $@
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
 	$(MAKE) -C contrib/xlogdump $@

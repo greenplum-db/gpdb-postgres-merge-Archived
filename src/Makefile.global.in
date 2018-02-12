@@ -18,11 +18,7 @@
 #
 # Meta configuration
 
-<<<<<<< HEAD
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-good
-=======
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-parallel world install-world installcheck-world
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-parallel world install-world installcheck-world installcheck-good
 
 # make `all' the default target
 all:
@@ -287,11 +283,6 @@ LDFLAGS += @LDFLAGS@
 LDFLAGS_EX = @LDFLAGS_EX@
 # LDFLAGS_SL might have already been assigned by calling makefile
 LDFLAGS_SL += @LDFLAGS_SL@
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 LDREL = -r
 LDOUT = -o
 RANLIB = @RANLIB@

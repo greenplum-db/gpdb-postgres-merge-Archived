@@ -19,7 +19,6 @@ fi])# PGAC_C_SIGNED
 
 # PGAC_C_INLINE
 # -------------
-<<<<<<< HEAD
 # Check if the C compiler understands inline functions without being
 # noisy about unused static inline functions. Some older compilers
 # understand inline functions (as tested by AC_C_INLINE) but warn about
@@ -33,10 +32,6 @@ fi])# PGAC_C_SIGNED
 # Not pretty, but it works.
 #
 # Defines: inline, PG_USE_INLINE
-=======
-# Check if the C compiler understands inline functions.
-# Defines: inline, USE_INLINE
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 AC_DEFUN([PGAC_C_INLINE],
 [AC_C_INLINE
 AC_CACHE_CHECK([for quiet inline (no complaint if unreferenced)], pgac_cv_c_inline_quietly,
@@ -44,27 +39,18 @@ AC_CACHE_CHECK([for quiet inline (no complaint if unreferenced)], pgac_cv_c_inli
   if test "$ac_cv_c_inline" != no; then
     pgac_c_inline_save_werror=$ac_c_werror_flag
     ac_c_werror_flag=yes
-<<<<<<< HEAD
     AC_LINK_IFELSE([AC_LANG_PROGRAM([#include "$srcdir/config/test_quiet_include.h"],[])],
-=======
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([static inline int fun () {return 0;}],[])],
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
                    [pgac_cv_c_inline_quietly=yes])
     ac_c_werror_flag=$pgac_c_inline_save_werror
   fi])
 if test "$pgac_cv_c_inline_quietly" != no; then
-<<<<<<< HEAD
   AC_DEFINE_UNQUOTED([PG_USE_INLINE], 1,
-=======
-  AC_DEFINE_UNQUOTED([USE_INLINE], 1,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     [Define to 1 if "static inline" works without unwanted warnings from ]
     [compilations where static inline functions are defined but not called.])
 fi
 ])# PGAC_C_INLINE
 
 
-<<<<<<< HEAD
 # PGAC_C_PRINTF_ARCHETYPE
 # -----------------------
 # Set the format archetype used by gcc to check printf type functions.  We
@@ -86,8 +72,6 @@ AC_DEFINE_UNQUOTED([PG_PRINTF_ATTRIBUTE], [$pgac_cv_printf_archetype],
                    [Define to gnu_printf if compiler supports it, else printf.])
 ])# PGAC_PRINTF_ARCHETYPE
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # PGAC_TYPE_64BIT_INT(TYPE)
 # -------------------------
@@ -329,7 +313,6 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([extern void $2 (); void (*fptr) () = $2;],[])],
                AC_MSG_RESULT(assuming no)])
 ])# PGAC_PROG_CC_LDFLAGS_OPT
 
-<<<<<<< HEAD
 
 
 # PGAC_SSE42_CRC32_INTRINSICS
@@ -464,5 +447,3 @@ AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
 if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
   AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
 fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

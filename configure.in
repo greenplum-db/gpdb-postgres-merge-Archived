@@ -17,26 +17,17 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=8.5devel]
+[PG_PACKAGE_VERSION=9.0beta3]
 AC_SUBST(PG_PACKAGE_VERSION)
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-=======
-AC_INIT([PostgreSQL], [9.0beta3], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 AC_COPYRIGHT([Copyright (c) 1996-2010, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
@@ -1132,12 +1123,9 @@ LDFLAGS="$LDFLAGS $LIBDIRS"
 
 AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
-<<<<<<< HEAD
 
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 PGAC_PROG_LD
 AC_SUBST(LD)
@@ -1575,10 +1563,6 @@ AC_C_BIGENDIAN
 PGAC_C_INLINE
 PGAC_PRINTF_ARCHETYPE
 AC_C_CONST
-<<<<<<< HEAD
-=======
-PGAC_C_INLINE
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 AC_C_STRINGIZE
 PGAC_C_SIGNED
 AC_C_VOLATILE
@@ -1664,7 +1648,6 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-<<<<<<< HEAD
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending
 # acquisition of a clue by those developers, ignore libedit (including its
@@ -1675,8 +1658,6 @@ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
-=======
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
 
 AC_REPLACE_FUNCS(fseeko)
@@ -1689,7 +1670,6 @@ case $host_os in
 	*)
 		AC_FUNC_FSEEKO;;
 esac
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
@@ -1792,7 +1772,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt erand48 fseeko getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt erand48 getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
 
@@ -1895,17 +1875,6 @@ AC_CHECK_FUNCS(atexit, [],
                [AC_CHECK_FUNCS(on_exit, [],
                [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
 
-<<<<<<< HEAD
-AC_REPLACE_FUNCS(fseeko)
-case $host_os in
-	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
-	# Mingw uses macros to access Win32 API calls
-	bsdi*|netbsd*|mingw*)
-		AC_DEFINE(HAVE_FSEEKO, 1, [Define to 1 because replacement version used.])
-		ac_cv_func_fseeko=yes;;
-	*)
-		AC_FUNC_FSEEKO;;
-esac
 
 AC_CACHE_CHECK([for builtin locking functions], pgac_cv_gcc_int_atomics,
 [AC_TRY_LINK([],
@@ -1927,8 +1896,6 @@ if test "$with_readline" = yes; then
   AC_CHECK_FUNCS([append_history history_truncate_file])
 fi
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #
 # Pthreads
@@ -2062,13 +2029,9 @@ if test x"$HAVE_LONG_INT_64" = x"yes" ; then
   pg_int64_type="long int"
 else
   PGAC_TYPE_64BIT_INT([long long int])
-<<<<<<< HEAD
   if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
     pg_int64_type="long long int"
   else
-=======
-  if test x"$HAVE_LONG_LONG_INT_64" = x"no" ; then
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     AC_MSG_ERROR([Cannot find a working 64-bit integer type.])
   fi
 fi
@@ -2141,32 +2104,9 @@ AC_DEFINE([USE_FLOAT4_BYVAL], 1, [Define to 1 if you want float4 values to be pa
 AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false' (always true in GPDB)])
 
 # Note: this setting also controls int8 and related types such as timestamp.
-<<<<<<< HEAD
 float8passbyval=true
 AC_DEFINE([USE_FLOAT8_BYVAL], 1, [Define to 1 if you want float8, int8, etc values to be passed by value. (Always defined in GPDB)])
 AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false' (always true in GPDB)])
-=======
-# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
-# If not, trying to select it is an error.
-AC_MSG_CHECKING([whether to build with float8 passed by value])
-if test $ac_cv_sizeof_void_p -ge 8 ; then
-  PGAC_ARG_BOOL(enable, float8-byval, yes, [disable float8 passed by value])
-else
-  PGAC_ARG_BOOL(enable, float8-byval, no, [disable float8 passed by value])
-  if test "$enable_float8_byval" = yes ; then
-    AC_MSG_ERROR([--enable-float8-byval is not supported on 32-bit platforms.])
-  fi
-fi
-if test "$enable_float8_byval" = yes ; then
-  AC_DEFINE([USE_FLOAT8_BYVAL], 1,
-            [Define to 1 if you want float8, int8, etc values to be passed by value. (--enable-float8-byval)])
-  float8passbyval=true
-else
-  float8passbyval=false
-fi
-AC_MSG_RESULT([$enable_float8_byval])
-AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false'])
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # Determine memory alignment requirements for the basic C data types.
 
@@ -2224,7 +2164,6 @@ operating system;  use --disable-thread-safety to disable thread safety.])
 fi
 fi
 
-<<<<<<< HEAD
 if test $ac_cv_func_fseeko = yes; then
 AC_SYS_LARGEFILE
 enable_largefile=yes
@@ -2243,8 +2182,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
 fi
 fi
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 # SunOS doesn't handle negative byte comparisons properly with +/- return
 AC_FUNC_MEMCMP
 

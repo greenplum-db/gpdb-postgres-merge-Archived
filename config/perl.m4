@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # config/perl.m4
-=======
-# $PostgreSQL: pgsql/config/perl.m4,v 1.9 2010/02/23 18:35:06 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 # PGAC_PATH_PERL
@@ -17,30 +13,18 @@ if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`
   AC_MSG_NOTICE([using perl $pgac_perl_version])
   if echo "$pgac_perl_version" | sed ['s/[.a-z_]/ /g'] | \
-<<<<<<< HEAD
-    $AWK '{ if ([$]1 == 5 && [$]2 >= 6) exit 1; else exit 0;}'
-  then
-    AC_MSG_WARN([
-*** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
-*** Perl version 5.6 or later is required, but this is $pgac_perl_version.])
-=======
     $AWK '{ if ([$]1 = 5 && [$]2 >= 8) exit 1; else exit 0;}'
   then
     AC_MSG_WARN([
 *** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
 *** Perl version 5.8 or later is required, but this is $pgac_perl_version.])
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     PERL=""
   fi
 fi
 
 if test -z "$PERL"; then
   AC_MSG_WARN([
-<<<<<<< HEAD
 *** Without Perl you will not be able to build PostgreSQL from Git.
-=======
-*** Without Perl you will not be able to build PostgreSQL from CVS.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 *** You can obtain Perl from any CPAN mirror site.
 *** (If you are using the official distribution of PostgreSQL then you do not
 *** need to worry about this, because the Perl output is pre-generated.)])
