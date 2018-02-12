@@ -4,18 +4,11 @@
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend postgres applications.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-fe.h
-=======
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.152 2010/02/26 02:01:33 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -268,24 +261,14 @@ struct HTAB;
 /* make a new client connection to the backend */
 /* Asynchronous (non-blocking) */
 extern PGconn *PQconnectStart(const char *conninfo);
-<<<<<<< HEAD
 extern PGconn *PQconnectStartParams(const char *const * keywords,
 					 const char *const * values, int expand_dbname);
-=======
-extern PGconn *PQconnectStartParams(const char **keywords,
-					 const char **values, int expand_dbname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
 /* Synchronous (blocking) */
 extern PGconn *PQconnectdb(const char *conninfo);
-<<<<<<< HEAD
 extern PGconn *PQconnectdbParams(const char *const * keywords,
 				  const char *const * values, int expand_dbname);
-=======
-extern PGconn *PQconnectdbParams(const char **keywords,
-				  const char **values, int expand_dbname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 			 const char *pgoptions, const char *pgtty,
 			 const char *dbName,

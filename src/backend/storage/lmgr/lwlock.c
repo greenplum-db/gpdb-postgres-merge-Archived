@@ -25,11 +25,8 @@
 #include "access/multixact.h"
 #include "access/distributedlog.h"
 #include "access/subtrans.h"
-<<<<<<< HEAD
 #include "access/twophase.h"
-=======
 #include "commands/async.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "storage/barrier.h"
@@ -200,18 +197,15 @@ NumLWLocks(void)
 	/* multixact.c needs two SLRU areas */
 	numLocks += NUM_MXACTOFFSET_BUFFERS + NUM_MXACTMEMBER_BUFFERS;
 
-<<<<<<< HEAD
+	/* async.c needs one per Async buffer */
+	numLocks += NUM_ASYNC_BUFFERS;
+
 	/* cdbdistributedlog.c needs one per DistributedLog buffer */
 	numLocks += NUM_DISTRIBUTEDLOG_BUFFERS;
 
 	/* sharedsnapshot.c needs one per shared snapshot slot */
 	numLocks += NUM_SHARED_SNAPSHOT_SLOTS;
-    
-=======
-	/* async.c needs one per Async buffer */
-	numLocks += NUM_ASYNC_BUFFERS;
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility
 	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even if

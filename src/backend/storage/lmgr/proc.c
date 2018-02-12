@@ -53,16 +53,11 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
-#include "storage/pmsignal.h"
+#include "storage/procsignal.h"
 #include "executor/execdesc.h"
 #include "utils/resscheduler.h"
 #include "utils/timestamp.h"
 #include "utils/portal.h"
-=======
-#include "storage/procsignal.h"
-#include "storage/spin.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #include "utils/sharedsnapshot.h"  /*SharedLocalSnapshotSlot*/
 
@@ -121,12 +116,9 @@ static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
 static bool CheckStatementTimeout(void);
-<<<<<<< HEAD
+static bool CheckStandbyTimeout(void);
 static void ClientWaitTimeoutInterruptHandler(void);
 static void ProcessClientWaitTimeout(void);
-=======
-static bool CheckStandbyTimeout(void);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /*
@@ -374,19 +366,9 @@ InitProcess(void)
 	 * for ftsProber, SeqServer etc who call InitProcess().
 	 * But MyPMChildSlot helps to get away with it.
 	 */
-<<<<<<< HEAD
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
 		&& !IsAutoVacuumWorkerProcess() && MyPMChildSlot > 0)
 		MarkPostmasterChildActive();
-=======
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
-	{
-		if (am_walsender)
-			MarkPostmasterChildWalSender();
-		else
-			MarkPostmasterChildActive();
-	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Initialize all fields of MyProc, except for the semaphore which was
@@ -2029,7 +2011,6 @@ ClientWaitTimeoutInterruptHandler(void)
 	errno = save_errno;
 }
 
-<<<<<<< HEAD
 void
 EnableClientWaitTimeoutInterrupt(void)
 {
@@ -2205,7 +2186,38 @@ bool ProcCanSetMppSessionId(void)
 {
 	if (ProcGlobal == NULL || MyProc == NULL)
 		return false;
-=======
+
+	return true;
+}
+
+
+void ProcNewMppSessionId(int *newSessionId)
+{
+	Assert(newSessionId != NULL);
+
+    *newSessionId = MyProc->mppSessionId =
+		pg_atomic_add_fetch_u32((pg_atomic_uint32 *)&ProcGlobal->mppLocalProcessCounter, 1);
+
+    /*
+     * Make sure that our SessionState entry correctly records our
+     * new session id.
+     */
+    if (NULL != MySessionState)
+    {
+    	/* This should not happen outside of dispatcher on the master */
+    	Assert(GpIdentity.segindex == MASTER_CONTENT_ID && Gp_role == GP_ROLE_DISPATCH);
+
+    	ereport(gp_sessionstate_loglevel, (errmsg("ProcNewMppSessionId: changing session id (old: %d, new: %d), pinCount: %d, activeProcessCount: %d",
+    			MySessionState->sessionId, *newSessionId, MySessionState->pinCount, MySessionState->activeProcessCount), errprintstack(true)));
+
+#ifdef USE_ASSERT_CHECKING
+    	MySessionState->isModifiedSessionId = true;
+#endif
+
+    	MySessionState->sessionId = *newSessionId;
+    }
+}
+
 /*
  * Signal handler for SIGALRM in Startup process
  *
@@ -2368,38 +2380,10 @@ CheckStandbyTimeout(void)
 			return false;
 		standby_timeout_active = true;
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return true;
 }
 
-<<<<<<< HEAD
-void ProcNewMppSessionId(int *newSessionId)
-{
-	Assert(newSessionId != NULL);
-
-    *newSessionId = MyProc->mppSessionId =
-		pg_atomic_add_fetch_u32((pg_atomic_uint32 *)&ProcGlobal->mppLocalProcessCounter, 1);
-
-    /*
-     * Make sure that our SessionState entry correctly records our
-     * new session id.
-     */
-    if (NULL != MySessionState)
-    {
-    	/* This should not happen outside of dispatcher on the master */
-    	Assert(GpIdentity.segindex == MASTER_CONTENT_ID && Gp_role == GP_ROLE_DISPATCH);
-
-    	ereport(gp_sessionstate_loglevel, (errmsg("ProcNewMppSessionId: changing session id (old: %d, new: %d), pinCount: %d, activeProcessCount: %d",
-    			MySessionState->sessionId, *newSessionId, MySessionState->pinCount, MySessionState->activeProcessCount), errprintstack(true)));
-
-#ifdef USE_ASSERT_CHECKING
-    	MySessionState->isModifiedSessionId = true;
-#endif
-
-    	MySessionState->sessionId = *newSessionId;
-    }
-=======
 void
 handle_standby_sig_alarm(SIGNAL_ARGS)
 {
@@ -2409,5 +2393,4 @@ handle_standby_sig_alarm(SIGNAL_ARGS)
 		(void) CheckStandbyTimeout();
 
 	errno = save_errno;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
