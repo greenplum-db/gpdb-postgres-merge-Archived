@@ -266,14 +266,10 @@ snapshots and registered snapshots as of the deletion are gone; which is
 overly strong, but is simple to implement within Postgres.  When marked
 dead, a deleted page is labeled with the next-transaction counter value.
 VACUUM can reclaim the page for re-use when this transaction number is
-<<<<<<< HEAD
 older than RecentGlobalXmin.  As collateral damage, this implementation
 also waits for running XIDs with no snapshots and for snapshots taken
 until the next transaction to allocate an XID commits.
 (NOTE: VACUUM FULL can reclaim such pages immediately.)
-=======
-older than the oldest open transaction.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 Reclaiming a page doesn't actually change its state on disk --- we simply
 record it in the shared-memory free space map, from which it will be
