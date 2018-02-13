@@ -132,14 +132,10 @@ int			fillfactor = 100;
 #define naccounts	100000
 
 bool		use_log;			/* log transaction latencies to a file */
-<<<<<<< HEAD
-
-int			is_connect;			/* establish connection for each transaction */
-int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-unique indexes */
-=======
 bool		is_connect;			/* establish connection for each transaction */
 int			main_pid;			/* main process id used in log filename */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-unique indexes */
 
 char	   *pghost = "";
 char	   *pgport = "";
