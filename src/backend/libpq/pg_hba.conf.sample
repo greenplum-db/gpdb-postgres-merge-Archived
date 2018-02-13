@@ -21,11 +21,7 @@
 # "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
 # plain TCP/IP socket.
 #
-<<<<<<< HEAD
-# DATABASE can be "all", "sameuser", "samerole", a
-=======
 # DATABASE can be "all", "sameuser", "samerole", "replication", a
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 # database name, or a comma-separated list thereof.
 #
 # USER can be "all", a user name, a group name prefixed with "+", or a
@@ -79,10 +75,6 @@
 @remove-line-for-nolocal@# "local" is for Unix domain socket connections only
 @remove-line-for-nolocal@local   all             all                                     @authmethod@
 # IPv4 local connections:
-<<<<<<< HEAD
-host    all         all         127.0.0.1/24          @authmethod@
-=======
-host    all             all             127.0.0.1/32            @authmethod@
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+host    all             all             127.0.0.1/24            @authmethod@
 # IPv6 local connections:
 host    all             all             ::1/128                 @authmethod@

@@ -782,15 +782,12 @@ initialize_SSL(void)
 							SSLerrmessage())));
 
 		/*
-<<<<<<< HEAD
 		 * Disable OpenSSL's moving-write-buffer sanity check, because it
 		 * causes unnecessary failures in nonblocking send cases.
 		 */
 		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 		/*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 * Load and verify server's certificate and private key
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context,
@@ -878,11 +875,7 @@ initialize_SSL(void)
 	{
 		/*----------
 		 * Load the Certificate Revocation List (CRL) if file exists.
-<<<<<<< HEAD
-		 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,
-=======
 		 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 *----------
 		 */
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(SSL_context);
@@ -892,11 +885,7 @@ initialize_SSL(void)
 			/* Set the flags to check against the complete CRL chain */
 			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) == 1)
 			{
-<<<<<<< HEAD
-/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-=======
 				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
 						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);

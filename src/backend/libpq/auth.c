@@ -40,10 +40,8 @@
 #include "libpq/pqformat.h"
 #include "libpq/md5.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "pgtime.h"
 #include "postmaster/postmaster.h"
-#include "replication/walsender.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/fmgroids.h"
@@ -52,10 +50,7 @@
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
-/*#include "replication/walsender.h"*/
-=======
 #include "replication/walsender.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "storage/ipc.h"
 
 extern bool gp_reject_internal_tcp_conn;
@@ -220,24 +215,6 @@ static int	pg_SSPI_recvauth(Port *port);
 #endif
 static int	CheckRADIUSAuth(Port *port);
 
-<<<<<<< HEAD
-
-/*
- * Maximum accepted size of GSS and SSPI authentication tokens.
- *
- * Kerberos tickets are usually quite small, but the TGTs issued by Windows
- * domain controllers include an authorization field known as the Privilege
- * Attribute Certificate (PAC), which contains the user's Windows permissions
- * (group memberships etc.). The PAC is copied into all tickets obtained on
- * the basis of this TGT (even those issued by Unix realms which the Windows
- * realm trusts), and can be several kB in size. The maximum token size
- * accepted by Windows systems is determined by the MaxAuthToken Windows
- * registry setting. Microsoft recommends that it is not set higher than
- * 65535 bytes, so that seems like a reasonable limit for us as well.
- */
-#define PG_MAX_AUTH_TOKEN_LENGTH	65535
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Maximum accepted size of GSS and SSPI authentication tokens.
@@ -294,7 +271,6 @@ auth_failed(Port *port, int status)
 	/* internal communication failure */
 	if (!port->hba)
 	{
-<<<<<<< HEAD
 		errstr = gettext_noop("authentication failed for user \"%s\": "
 							  "invalid authentication method");
 	}
@@ -343,48 +319,6 @@ auth_failed(Port *port, int status)
 				errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 				break;
 		}
-=======
-		case uaReject:
-		case uaImplicitReject:
-			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
-			break;
-		case uaKrb5:
-			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
-			break;
-		case uaTrust:
-			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
-			break;
-		case uaIdent:
-			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
-			break;
-		case uaPassword:
-		case uaMD5:
-			errstr = gettext_noop("password authentication failed for user \"%s\"");
-			/* We use it to indicate if a .pgpass password failed. */
-			errcode_return = ERRCODE_INVALID_PASSWORD;
-			break;
-		case uaGSS:
-			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
-			break;
-		case uaSSPI:
-			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
-			break;
-		case uaPAM:
-			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
-			break;
-		case uaLDAP:
-			errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
-			break;
-		case uaCert:
-			errstr = gettext_noop("certificate authentication failed for user \"%s\"");
-			break;
-		case uaRADIUS:
-			errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
-			break;
-		default:
-			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
-			break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	ereport(FATAL,
@@ -595,93 +529,6 @@ ClientAuthentication(Port *port)
 
 				if (am_walsender)
 				{
-<<<<<<< HEAD
-#ifdef USE_SSL
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\", %s",
-							   hostinfo, port->user_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
-#else
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("pg_hba.conf rejects replication connection for host \"%s\", user \"%s\"",
-							   hostinfo, port->user_name)));
-#endif
-				}
-				else
-                {
-#ifdef USE_SSL
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
-								hostinfo, port->user_name,
-                                port->database_name,
-								port->ssl ? _("SSL on") : _("SSL off")),
-						 errSendAlert(false)));
-#else
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
-								hostinfo, port->user_name,
-								port->database_name),
-						 errSendAlert(false)));
-#endif
-				}
-				break;
-			}
-
-		case uaImplicitReject:
-
-			/*
-			 * No matching entry, so tell the user we fell through.
-			 *
-			 * NOTE: the extra info reported here is not a security breach,
-			 * because all that info is known at the frontend and must be
-			 * assumed known to bad guys.  We're merely helping out the less
-			 * clueful good guys.
-			 */
-			{
-				char		hostinfo[NI_MAXHOST];
-
-				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-								   hostinfo, sizeof(hostinfo),
-								   NULL, 0,
-								   NI_NUMERICHOST);
-
-				if (am_walsender)
-				{
-#ifdef USE_SSL
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\", %s",
-							   hostinfo, port->user_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
-#else
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("no pg_hba.conf entry for replication connection from host \"%s\", user \"%s\"",
-							   hostinfo, port->user_name)));
-#endif
-				}
-				else
-				{
-#ifdef USE_SSL
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-							   hostinfo, port->user_name,
-							   port->database_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
-#else
-					ereport(FATAL,
-					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-							   hostinfo, port->user_name,
-							   port->database_name)));
-#endif
-				}
-=======
 #ifdef USE_SSL
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
@@ -703,13 +550,15 @@ ClientAuthentication(Port *port)
 						errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
 							   hostinfo, port->user_name,
 							   port->database_name,
-							   port->ssl ? _("SSL on") : _("SSL off"))));
+							   port->ssl ? _("SSL on") : _("SSL off")),
+						errSendAlert(false)));
 #else
 					ereport(FATAL,
 					   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
 							   hostinfo, port->user_name,
-							   port->database_name)));
+							   port->database_name),
+						errSendAlert(false)));
 #endif
 				}
 				break;
@@ -765,7 +614,6 @@ ClientAuthentication(Port *port)
 							   port->database_name)));
 #endif
 				}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				break;
 			}
 
@@ -1968,14 +1816,8 @@ ident_inet(const SockAddr remote_addr,
 		   const SockAddr local_addr,
 		   char *ident_user)
 {
-<<<<<<< HEAD
 	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
 	int			rc;				/* Return code from a locally called function */
-=======
-	pgsocket	sock_fd,		/* File descriptor for socket on which we talk
-								 * to Ident */
-				rc;				/* Return code from a locally called function */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
@@ -2768,13 +2610,8 @@ CheckLDAPAuth(Port *port)
 		if (r != LDAP_SUCCESS)
 		{
 			ereport(LOG,
-<<<<<<< HEAD
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
 						  port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
-=======
-					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": error code %d",
-						  port->hba->ldapbinddn, port->hba->ldapserver, r)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			return STATUS_ERROR;
 		}
 
@@ -3163,249 +3000,6 @@ CheckRADIUSAuth(Port *port)
 	localaddr.sin_addr.s_addr = INADDR_ANY;
 	addrsize = sizeof(struct sockaddr_in);
 #endif
-<<<<<<< HEAD
-
-
-/*----------------------------------------------------------------
- * RADIUS authentication
- *----------------------------------------------------------------
- */
-
-/*
- * RADIUS authentication is described in RFC2865 (and several
- * others).
- */
-
-#define RADIUS_VECTOR_LENGTH 16
-#define RADIUS_HEADER_LENGTH 20
-
-typedef struct
-{
-	uint8		attribute;
-	uint8		length;
-	uint8		data[1];
-} radius_attribute;
-
-typedef struct
-{
-	uint8		code;
-	uint8		id;
-	uint16		length;
-	uint8		vector[RADIUS_VECTOR_LENGTH];
-} radius_packet;
-
-/* RADIUS packet types */
-#define RADIUS_ACCESS_REQUEST	1
-#define RADIUS_ACCESS_ACCEPT	2
-#define RADIUS_ACCESS_REJECT	3
-
-/* RAIDUS attributes */
-#define RADIUS_USER_NAME		1
-#define RADIUS_PASSWORD			2
-#define RADIUS_SERVICE_TYPE		6
-#define RADIUS_NAS_IDENTIFIER	32
-
-/* RADIUS service types */
-#define RADIUS_AUTHENTICATE_ONLY	8
-
-/* Maximum size of a RADIUS packet we will create or accept */
-#define RADIUS_BUFFER_SIZE 1024
-
-/* Seconds to wait - XXX: should be in a config variable! */
-#define RADIUS_TIMEOUT 3
-
-static void
-radius_add_attribute(radius_packet *packet, uint8 type, const unsigned char *data, int len)
-{
-	radius_attribute *attr;
-
-	if (packet->length + len > RADIUS_BUFFER_SIZE)
-	{
-		/*
-		 * With remotely realistic data, this can never happen. But catch it
-		 * just to make sure we don't overrun a buffer. We'll just skip adding
-		 * the broken attribute, which will in the end cause authentication to
-		 * fail.
-		 */
-		elog(WARNING,
-			 "Adding attribute code %i with length %i to radius packet would create oversize packet, ignoring",
-			 type, len);
-		return;
-
-	}
-
-	attr = (radius_attribute *) ((unsigned char *) packet + packet->length);
-	attr->attribute = type;
-	attr->length = len + 2;		/* total size includes type and length */
-	memcpy(attr->data, data, len);
-	packet->length += attr->length;
-}
-
-static int
-CheckRADIUSAuth(Port *port)
-{
-	char	   *passwd;
-	char	   *identifier = "postgresql";
-	char		radius_buffer[RADIUS_BUFFER_SIZE];
-	char		receive_buffer[RADIUS_BUFFER_SIZE];
-	radius_packet *packet = (radius_packet *) radius_buffer;
-	radius_packet *receivepacket = (radius_packet *) receive_buffer;
-	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
-	uint8	   *cryptvector;
-	uint8		encryptedpassword[RADIUS_VECTOR_LENGTH];
-	int			packetlength;
-	pgsocket	sock;
-
-#ifdef HAVE_IPV6
-	struct sockaddr_in6 localaddr;
-	struct sockaddr_in6 remoteaddr;
-#else
-	struct sockaddr_in localaddr;
-	struct sockaddr_in remoteaddr;
-#endif
-	struct addrinfo hint;
-	struct addrinfo *serveraddrs;
-	char		portstr[128];
-	socklen_t   addrsize;
-	fd_set		fdset;
-	struct timeval timeout;
-	int			i,
-				r;
-
-	/* Make sure struct alignment is correct */
-	Assert(offsetof(radius_packet, vector) == 4);
-
-	/* Verify parameters */
-	if (!port->hba->radiusserver || port->hba->radiusserver[0] == '\0')
-	{
-		ereport(LOG,
-				(errmsg("RADIUS server not specified")));
-		return STATUS_ERROR;
-	}
-
-	if (!port->hba->radiussecret || port->hba->radiussecret[0] == '\0')
-	{
-		ereport(LOG,
-				(errmsg("RADIUS secret not specified")));
-		return STATUS_ERROR;
-	}
-
-	if (port->hba->radiusport == 0)
-		port->hba->radiusport = 1812;
-
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_DGRAM;
-	hint.ai_family = AF_UNSPEC;
-	snprintf(portstr, sizeof(portstr), "%d", port->hba->radiusport);
-
-	r = pg_getaddrinfo_all(port->hba->radiusserver, portstr, &hint, &serveraddrs);
-	if (r || !serveraddrs)
-	{
-		ereport(LOG,
-				(errmsg("could not translate RADIUS server name \"%s\" to address: %s",
-						port->hba->radiusserver, gai_strerror(r))));
-		if (serveraddrs)
-			pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
-		return STATUS_ERROR;
-	}
-	/* XXX: add support for multiple returned addresses? */
-
-	if (port->hba->radiusidentifier && port->hba->radiusidentifier[0])
-		identifier = port->hba->radiusidentifier;
-
-	/* Send regular password request to client, and get the response */
-	sendAuthRequest(port, AUTH_REQ_PASSWORD);
-
-	passwd = recv_password_packet(port);
-	if (passwd == NULL)
-		return STATUS_EOF;		/* client wouldn't send password */
-
-	if (strlen(passwd) == 0)
-	{
-		ereport(LOG,
-				(errmsg("empty password returned by client")));
-		return STATUS_ERROR;
-	}
-
-	if (strlen(passwd) > RADIUS_VECTOR_LENGTH)
-	{
-		ereport(LOG,
-				(errmsg("RADIUS authentication does not support passwords longer than 16 characters")));
-		return STATUS_ERROR;
-	}
-
-	/* Construct RADIUS packet */
-	packet->code = RADIUS_ACCESS_REQUEST;
-	packet->length = RADIUS_HEADER_LENGTH;
-#ifdef USE_SSL
-	if (RAND_bytes(packet->vector, RADIUS_VECTOR_LENGTH) != 1)
-	{
-		ereport(LOG,
-				(errmsg("could not generate random encryption vector")));
-		return STATUS_ERROR;
-	}
-#else
-	for (i = 0; i < RADIUS_VECTOR_LENGTH; i++)
-		/* Use a lower strengh random number of OpenSSL is not available */
-		packet->vector[i] = random() % 255;
-#endif
-	packet->id = packet->vector[0];
-	radius_add_attribute(packet, RADIUS_SERVICE_TYPE, (unsigned char *) &service, sizeof(service));
-	radius_add_attribute(packet, RADIUS_USER_NAME, (unsigned char *) port->user_name, strlen(port->user_name));
-	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
-
-	/*
-	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
-	 * MD5(secret + vector)
-	 */
-	cryptvector = palloc(RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret));
-	memcpy(cryptvector, port->hba->radiussecret, strlen(port->hba->radiussecret));
-	memcpy(cryptvector + strlen(port->hba->radiussecret), packet->vector, RADIUS_VECTOR_LENGTH);
-	if (!pg_md5_binary(cryptvector, RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret), encryptedpassword))
-	{
-		ereport(LOG,
-				(errmsg("could not perform MD5 encryption of password")));
-		pfree(cryptvector);
-		return STATUS_ERROR;
-	}
-	pfree(cryptvector);
-	for (i = 0; i < RADIUS_VECTOR_LENGTH; i++)
-	{
-		if (i < strlen(passwd))
-			encryptedpassword[i] = passwd[i] ^ encryptedpassword[i];
-		else
-			encryptedpassword[i] = '\0' ^ encryptedpassword[i];
-	}
-	radius_add_attribute(packet, RADIUS_PASSWORD, encryptedpassword, RADIUS_VECTOR_LENGTH);
-
-	/* Length need to be in network order on the wire */
-	packetlength = packet->length;
-	packet->length = htons(packet->length);
-
-	sock = socket(serveraddrs[0].ai_family, SOCK_DGRAM, 0);
-	if (sock < 0)
-	{
-		ereport(LOG,
-				(errmsg("could not create RADIUS socket: %m")));
-		pg_freeaddrinfo_all(hint.ai_family, serveraddrs);
-		return STATUS_ERROR;
-	}
-
-	memset(&localaddr, 0, sizeof(localaddr));
-#ifdef HAVE_IPV6
-	localaddr.sin6_family = serveraddrs[0].ai_family;
-	localaddr.sin6_addr = in6addr_any;
-	if (localaddr.sin6_family == AF_INET6)
-		addrsize = sizeof(struct sockaddr_in6);
-	else
-		addrsize = sizeof(struct sockaddr_in);
-#else
-	localaddr.sin_family = serveraddrs[0].ai_family;
-	localaddr.sin_addr.s_addr = INADDR_ANY;
-	addrsize = sizeof(struct sockaddr_in);
-#endif
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (bind(sock, (struct sockaddr *) & localaddr, addrsize))
 	{
 		ereport(LOG,
@@ -3560,7 +3154,6 @@ CheckRADIUSAuth(Port *port)
 		return STATUS_ERROR;
 	}
 }
-<<<<<<< HEAD
 
 /*----------------------------------------------------------------
  * Time-based authentication
@@ -3756,5 +3349,3 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	
 	return status;
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

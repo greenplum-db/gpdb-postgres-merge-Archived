@@ -231,7 +231,6 @@ pq_close(int code, Datum arg)
 		 * though.
 		 */
 		MyProcPort->sock = PGINVALID_SOCKET;
-<<<<<<< HEAD
 	}
 }
 
@@ -251,8 +250,6 @@ pq_comm_close_fatal(void)
             closesocket(MyProcPort->sock);
         
 		MyProcPort->sock = -1;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }                               /* pq_comm_close_fatal */
 
@@ -996,96 +993,6 @@ pq_peekbyte(void)
 	return (unsigned char) PqRecvBuffer[PqRecvPointer];
 }
 
-
-/* --------------------------------
- *		pq_getbyte_if_available - get a single byte from connection,
- *			if available
- *
- * The received byte is stored in *c. Returns 1 if a byte was read,
- * 0 if no data was available, or EOF if trouble.
- * --------------------------------
- */
-int
-pq_getbyte_if_available(unsigned char *c)
-{
-	int			r;
-
-	if (PqRecvPointer < PqRecvLength)
-	{
-		*c = PqRecvBuffer[PqRecvPointer++];
-		return 1;
-	}
-
-	/* Temporarily put the socket into non-blocking mode */
-#ifdef WIN32
-	pgwin32_noblock = 1;
-#else
-	if (!pg_set_noblock(MyProcPort->sock))
-		ereport(ERROR,
-				(errmsg("could not set socket to non-blocking mode: %m")));
-#endif
-	MyProcPort->noblock = true;
-	PG_TRY();
-	{
-		r = secure_read(MyProcPort, c, 1);
-		if (r < 0)
-		{
-			/*
-			 * Ok if no data available without blocking or interrupted (though
-			 * EINTR really shouldn't happen with a non-blocking socket).
-			 * Report other errors.
-			 */
-			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
-				r = 0;
-			else
-			{
-				/*
-				 * Careful: an ereport() that tries to write to the client
-				 * would cause recursion to here, leading to stack overflow
-				 * and core dump!  This message must go *only* to the
-				 * postmaster log.
-				 */
-				ereport(COMMERROR,
-						(errcode_for_socket_access(),
-						 errmsg("could not receive data from client: %m")));
-				r = EOF;
-			}
-		}
-		else if (r == 0)
-		{
-			/* EOF detected */
-			r = EOF;
-		}
-	}
-	PG_CATCH();
-	{
-		/*
-		 * The rest of the backend code assumes the socket is in blocking
-		 * mode, so treat failure as FATAL.
-		 */
-#ifdef WIN32
-		pgwin32_noblock = 0;
-#else
-		if (!pg_set_block(MyProcPort->sock))
-			ereport(FATAL,
-					(errmsg("could not set socket to blocking mode: %m")));
-#endif
-		MyProcPort->noblock = false;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-#ifdef WIN32
-	pgwin32_noblock = 0;
-#else
-	if (!pg_set_block(MyProcPort->sock))
-		ereport(FATAL,
-				(errmsg("could not set socket to blocking mode: %m")));
-#endif
-	MyProcPort->noblock = false;
-
-	return r;
-}
-
 /* --------------------------------
  *		pq_getbyte_if_available - get a single byte from connection,
  *			if available
@@ -1809,11 +1716,7 @@ pq_getkeepalivesidle(Port *port)
 	if (port->default_keepalives_idle == 0)
 	{
 #ifndef WIN32
-<<<<<<< HEAD
-		socklen_t size = sizeof(port->default_keepalives_idle);
-=======
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_idle);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #ifdef TCP_KEEPIDLE
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
@@ -1912,11 +1815,7 @@ pq_getkeepalivesinterval(Port *port)
 	if (port->default_keepalives_interval == 0)
 	{
 #ifndef WIN32
-<<<<<<< HEAD
-		socklen_t size = sizeof(port->default_keepalives_interval);
-=======
 		ACCEPT_TYPE_ARG3 size = sizeof(port->default_keepalives_interval);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 					   (char *) &port->default_keepalives_interval,
