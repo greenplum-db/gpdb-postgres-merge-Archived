@@ -212,22 +212,11 @@ SysLoggerMain(int argc, char *argv[])
 
     am_syslogger = true;
 
-    if (Gp_entry_postmaster && Gp_role == GP_ROLE_DISPATCH)
-    	init_ps_display("master logger process", "", "", "");
-    else
-    	init_ps_display("logger process", "", "", "");
+	if (Gp_entry_postmaster && Gp_role == GP_ROLE_DISPATCH)
+		init_ps_display("master logger process", "", "", "");
+	else
+		init_ps_display("logger process", "", "", "");
 
-<<<<<<< HEAD
-    /*
-     * If we restarted, our stderr is already redirected into our own input
-     * pipe.  This is of course pretty useless, not to mention that it
-     * interferes with detecting pipe EOF.	Point stderr to /dev/null. This
-     * assumes that all interesting messages generated in the syslogger will
-     * come through elog.c and will be sent to write_syslogger_file.
-     */
-    {
-        int			fd = open(DEVNULL, O_WRONLY, 0);
-=======
 	/*
 	 * If we restarted, our stderr is already redirected into our own input
 	 * pipe.  This is of course pretty useless, not to mention that it
@@ -235,7 +224,6 @@ SysLoggerMain(int argc, char *argv[])
 	 * assumes that all interesting messages generated in the syslogger will
 	 * come through elog.c and will be sent to write_syslogger_file.
 	 */
-	if (redirection_done)
 	{
 		int			fd = open(DEVNULL, O_WRONLY, 0);
 
@@ -254,23 +242,6 @@ SysLoggerMain(int argc, char *argv[])
 			close(fd);
 		}
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-
-        /*
-         * The closes might look redundant, but they are not: we want to be
-         * darn sure the pipe gets closed even if the open failed.	We can
-         * survive running with stderr pointing nowhere, but we can't afford
-         * to have extra pipe input descriptors hanging around.
-         */
-        close(fileno(stdout));
-        close(fileno(stderr));
-		if (fd != -1)
-		{
-			dup2(fd, fileno(stdout));
-			dup2(fd, fileno(stderr));
-			close(fd);
-		}
-    }
 	/*
 	 * Syslogger's own stderr can't be the syslogPipe, so set it back to text
 	 * mode if we didn't just close it. (It was set to binary in
@@ -687,15 +658,9 @@ SysLoggerMain(int argc, char *argv[])
 		 * detect pipe EOF.  The main thread just wakes up once a second to
 		 * check for SIGHUP and rotation conditions.
 		 *
-<<<<<<< HEAD
-		 * Server code isn't generally thread-safe, so we ensure that only
-		 * one of the threads is active at a time by entering the critical
-		 * section whenever we're not sleeping.
-=======
 		 * Server code isn't generally thread-safe, so we ensure that only one
 		 * of the threads is active at a time by entering the critical section
 		 * whenever we're not sleeping.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		LeaveCriticalSection(&sysloggerSection);
 
@@ -890,28 +855,16 @@ SysLogger_Start(void)
 #else
                     int			fd;
 
-<<<<<<< HEAD
                     /*
 				 	 * open the pipe in binary mode and make sure stderr is binary
 					 * after it's been dup'ed into, to avoid disturbing the pipe
 					 * chunking protocol.
                      */
                     fflush(stderr);
-                    fd = _open_osfhandle((long) syslogPipe[1],
+					fd = _open_osfhandle((intptr_t) syslogPipe[1],
                             _O_APPEND | _O_BINARY);
                     if (dup2(fd, _fileno(stderr)) < 0)
-=======
-				/*
-				 * open the pipe in binary mode and make sure stderr is binary
-				 * after it's been dup'ed into, to avoid disturbing the pipe
-				 * chunking protocol.
-				 */
-				fflush(stderr);
-				fd = _open_osfhandle((intptr_t) syslogPipe[1],
-									 _O_APPEND | _O_BINARY);
-				if (dup2(fd, _fileno(stderr)) < 0)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-					ereport(FATAL,
+						ereport(FATAL,
 							(errcode_for_file_access(),
 							 errmsg("could not redirect stderr: %m")));
                     close(fd);
@@ -1954,22 +1907,7 @@ void write_syslogger_file_binary(const char *buffer, int count, int destination)
  */
 void write_syslogger_file(const char *buffer, int count, int destination)
 {
-<<<<<<< HEAD
     write_syslogger_file_binary(buffer,count, destination);
-=======
-	int			rc;
-	FILE	   *logfile;
-
-	if (destination == LOG_DESTINATION_CSVLOG && csvlogFile == NULL)
-		open_csvlogfile();
-
-	logfile = destination == LOG_DESTINATION_CSVLOG ? csvlogFile : syslogFile;
-	rc = fwrite(buffer, 1, count, logfile);
-
-	/* can't use ereport here because of possible recursion */
-	if (rc != count)
-		write_stderr("could not write to log file: %s\n", strerror(errno));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 #ifdef WIN32
 
@@ -1995,10 +1933,7 @@ pipeThread(void *arg)
 						  logbuffer + bytes_in_logbuffer,
 						  sizeof(logbuffer) - bytes_in_logbuffer,
 						  &bytesRead, 0);
-<<<<<<< HEAD
-=======
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/*
 		 * Enter critical section before doing anything that might touch
 		 * global state shared by the main thread. Anything that uses
@@ -2006,7 +1941,6 @@ pipeThread(void *arg)
 		 * section.
 		 */
 		EnterCriticalSection(&sysloggerSection);
-<<<<<<< HEAD
 		if (result)
         {
             DWORD		error = GetLastError();
@@ -2026,27 +1960,6 @@ pipeThread(void *arg)
         }
 		LeaveCriticalSection(&sysloggerSection);
      }
-=======
-		if (!result)
-		{
-			DWORD		error = GetLastError();
-
-			if (error == ERROR_HANDLE_EOF ||
-				error == ERROR_BROKEN_PIPE)
-				break;
-			_dosmaperr(error);
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not read from logger pipe: %m")));
-		}
-		else if (bytesRead > 0)
-		{
-			bytes_in_logbuffer += bytesRead;
-			process_pipe_input(logbuffer, &bytes_in_logbuffer);
-		}
-		LeaveCriticalSection(&sysloggerSection);
-	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
     /* We exit the above loop only upon detecting pipe EOF */
     pipe_eof_seen = true;
@@ -2146,23 +2059,9 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
 #endif
 
-<<<<<<< HEAD
 		if (*fh_p)
-		{
-			/* On Windows, need to interlock against data-transfer thread */
-#ifdef WIN32
-			EnterCriticalSection(&fileSection);
-#endif
 			fclose(*fh_p);
-#ifdef WIN32
-			LeaveCriticalSection(&fileSection);
-#endif
-		}
 		*fh_p = fh;
-=======
-		fclose(syslogFile);
-		syslogFile = fh;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* instead of pfree'ing filename, remember it for next time */
 		if ((*last_log_file_name) != NULL)
@@ -2171,67 +2070,6 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
-<<<<<<< HEAD
-=======
-	/* Same as above, but for csv file. */
-
-	if (csvlogFile != NULL &&
-		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
-	{
-		if (Log_truncate_on_rotation && time_based_rotation &&
-			last_csv_file_name != NULL &&
-			strcmp(csvfilename, last_csv_file_name) != 0)
-			fh = fopen(csvfilename, "w");
-		else
-			fh = fopen(csvfilename, "a");
-
-		if (!fh)
-		{
-			int			saveerrno = errno;
-
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open new log file \"%s\": %m",
-							csvfilename)));
-
-			/*
-			 * ENFILE/EMFILE are not too surprising on a busy system; just
-			 * keep using the old file till we manage to get a new one.
-			 * Otherwise, assume something's wrong with Log_directory and stop
-			 * trying to create files.
-			 */
-			if (saveerrno != ENFILE && saveerrno != EMFILE)
-			{
-				ereport(LOG,
-						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
-				Log_RotationAge = 0;
-				Log_RotationSize = 0;
-			}
-
-			if (filename)
-				pfree(filename);
-			if (csvfilename)
-				pfree(csvfilename);
-			return;
-		}
-
-		setvbuf(fh, NULL, LBF_MODE, 0);
-
-#ifdef WIN32
-		_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
-#endif
-
-		fclose(csvlogFile);
-		csvlogFile = fh;
-
-		/* instead of pfree'ing filename, remember it for next time */
-		if (last_csv_file_name != NULL)
-			pfree(last_csv_file_name);
-		last_csv_file_name = csvfilename;
-		csvfilename = NULL;
-	}
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (filename)
 		pfree(filename);
 

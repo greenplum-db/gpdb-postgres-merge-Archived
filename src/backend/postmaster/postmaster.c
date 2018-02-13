@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -124,11 +120,8 @@
 #include "postmaster/fts.h"
 #include "postmaster/perfmon.h"
 #include "postmaster/syslogger.h"
-<<<<<<< HEAD
 #include "postmaster/backoff.h"
 #include "postmaster/perfmon_segmentinfo.h"
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -326,13 +319,9 @@ typedef enum
 	PM_HOT_STANDBY,				/* in hot standby mode */
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
-<<<<<<< HEAD
+	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
 	PM_WAIT_REGULAR_BACKENDS,	/* waiting for live backends to exit, but not seqserver (GPDB-specific) */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit (including seqserver) */
-=======
-	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
-	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
 	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
 								 * finish */
@@ -342,7 +331,6 @@ typedef enum
 
 static PMState pmState = PM_INIT;
 
-<<<<<<< HEAD
 /* CDB */
 
 typedef enum PMSUBPROC_FLAGS
@@ -385,9 +373,8 @@ static PMSubProc PMSubProcList[MaxPMSubType] =
 	(PMSubStartCallback*)&perfmon_segmentinfo_start,
 	"stats sender process", PMSUBPROC_FLAG_QD_AND_QE, true},
 };
-=======
+
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
@@ -467,17 +454,10 @@ static enum CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *md5Salt);
 static void signal_child(pid_t pid, int signal);
-<<<<<<< HEAD
-static bool SignalSomeChildren(int signal, int target);
-
-#define SignalChildren(sig)			SignalSomeChildren(sig, BACKEND_TYPE_ALL)
-#define SignalAutovacWorkers(sig)	SignalSomeChildren(sig, BACKEND_TYPE_AUTOVAC)
-=======
 static bool SignalSomeChildren(int signal, int targets);
 
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
 #define SignalAutovacWorkers(sig)  SignalSomeChildren(sig, BACKEND_TYPE_AUTOVAC)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Possible types of a backend. These are OR-able request flag bits
@@ -1778,21 +1758,14 @@ ServerLoop(void)
 		 * state that prevents it, start one.  It doesn't matter if this
 		 * fails, we'll just try again later.  Likewise for the checkpointer.
 		 */
-<<<<<<< HEAD
 		if (pmState == PM_RUN || pmState == PM_RECOVERY ||
-			pmState == PM_RECOVERY_CONSISTENT)
+			pmState == PM_HOT_STANDBY)
 		{
 			if (CheckpointerPID == 0)
 				CheckpointerPID = StartCheckpointer();
 			if (BgWriterPID == 0)
 				BgWriterPID = StartBackgroundWriter();
 		}
-=======
-		if (BgWriterPID == 0 &&
-			(pmState == PM_RUN || pmState == PM_RECOVERY ||
-			 pmState == PM_HOT_STANDBY))
-			BgWriterPID = StartBackgroundWriter();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * Likewise, if we have lost the walwriter process, try to start a new
@@ -2077,18 +2050,14 @@ retry1:
 				port->user_name = pstrdup(valptr);
 			else if (strcmp(nameptr, "options") == 0)
 				port->cmdline_options = pstrdup(valptr);
-<<<<<<< HEAD
 			else if (strcmp(nameptr, "gpqeid") == 0)
 				gpqeid = valptr;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			else if (strcmp(nameptr, "replication") == 0)
 			{
 				if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-<<<<<<< HEAD
-							 errmsg("option not supported: \"replication\"")));
+							 errmsg("invalid value for boolean option \"replication\"")));
 			}
 			else if (strcmp(nameptr, GPCONN_TYPE) == 0)
 			{
@@ -2105,9 +2074,6 @@ retry1:
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for option: \"%s\"", GPCONN_TYPE)));
-=======
-							 errmsg("invalid value for boolean option \"replication\"")));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 			else
 			{
@@ -2196,7 +2162,6 @@ retry1:
 		port->user_name[NAMEDATALEN - 1] = '\0';
 
 	/* Walsender is not related to a particular database */
-<<<<<<< HEAD
 	if (am_walsender || am_ftshandler)
 		port->database_name[0] = '\0';
 
@@ -2206,11 +2171,6 @@ retry1:
 	if (gpqeid)
 		cdbgang_parse_gpqeid_params(port, gpqeid);
 
-=======
-	if (am_walsender)
-		port->database_name[0] = '\0';
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Done putting stuff in TopMemoryContext.
 	 */
@@ -2355,9 +2315,6 @@ processCancelRequest(Port *port, void *pkt, MsgType code)
 static enum CAC_state
 canAcceptConnections(void)
 {
-<<<<<<< HEAD
-	/* Can't start backends when in startup/shutdown/recovery state. */
-=======
 	/*
 	 * Can't start backends when in startup/shutdown/inconsistent recovery
 	 * state.
@@ -2366,7 +2323,6 @@ canAcceptConnections(void)
 	 * allowed so that a superuser can end online backup mode); we return
 	 * CAC_WAITBACKUP code to indicate that this must be checked later.
 	 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (pmState != PM_RUN)
 	{
 		if (Shutdown > NoShutdown)
@@ -2383,15 +2339,10 @@ canAcceptConnections(void)
 			(pmState == PM_STARTUP ||
 			 pmState == PM_RECOVERY))
 			return CAC_STARTUP; /* normal startup */
-<<<<<<< HEAD
-		else
-			return CAC_RECOVERY;	/* else must be crash recovery */
-=======
 		if (!FatalError &&
 			pmState == PM_HOT_STANDBY)
 			return CAC_OK;		/* connection OK during hot standby */
 		return CAC_RECOVERY;	/* else must be crash recovery */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -2673,14 +2624,11 @@ pmdie(SIGNAL_ARGS)
 				/* and the walwriter too */
 				if (WalWriterPID != 0)
 					signal_child(WalWriterPID, SIGTERM);
-<<<<<<< HEAD
 				/*
 				 * Note: We don't kill the seqserver yet. It might be needed
 				 * by running backends. We will kill that after all the live
 				 * backends have exited.
 				 */
-				pmState = PM_WAIT_BACKUP;
-=======
 
 				/*
 				 * If we're in recovery, we can't kill the startup process
@@ -2693,7 +2641,6 @@ pmdie(SIGNAL_ARGS)
 				 */
 				pmState = (pmState == PM_RUN) ?
 					PM_WAIT_BACKUP : PM_WAIT_READONLY;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 
 			/*
@@ -2721,7 +2668,6 @@ pmdie(SIGNAL_ARGS)
 
 			if (StartupPID != 0)
 				signal_child(StartupPID, SIGTERM);
-<<<<<<< HEAD
 			if (BgWriterPID != 0)
 				signal_child(BgWriterPID, SIGTERM);
 			if (WalReceiverPID != 0)
@@ -2729,10 +2675,6 @@ pmdie(SIGNAL_ARGS)
 			/* The GPDB-specific service processes use SIGUSR2 for shutdown. */
 			/* WALREP_FIXME: should switch to using SIGTERM for consistency */
 			StopServices(0, SIGUSR2);
-=======
-			if (WalReceiverPID != 0)
-				signal_child(WalReceiverPID, SIGTERM);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			if (pmState == PM_RECOVERY)
 			{
 				/*
@@ -2743,19 +2685,12 @@ pmdie(SIGNAL_ARGS)
 				 */
 				pmState = PM_WAIT_BACKENDS;
 			}
-<<<<<<< HEAD
-			if (pmState == PM_RUN ||
-				pmState == PM_WAIT_BACKUP ||
-				pmState == PM_WAIT_REGULAR_BACKENDS ||
-				pmState == PM_WAIT_BACKENDS ||
-				pmState == PM_RECOVERY_CONSISTENT)
-=======
 			else if (pmState == PM_RUN ||
 					 pmState == PM_WAIT_BACKUP ||
 					 pmState == PM_WAIT_READONLY ||
+					 pmState == PM_WAIT_REGULAR_BACKENDS ||
 					 pmState == PM_WAIT_BACKENDS ||
 					 pmState == PM_HOT_STANDBY)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			{
 				ereport(LOG,
 						(errmsg("aborting any active transactions")));
@@ -3137,11 +3072,8 @@ reaper(SIGNAL_ARGS)
 			if (XLogArchivingActive() && pmState == PM_RUN)
 			{
 				PgArchPID = pgarch_start();
-<<<<<<< HEAD
 				didServiceProcessWork &= (PgArchPID > 0);
 			}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			continue;
 		}
 
@@ -3435,11 +3367,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		signal_child(WalReceiverPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
-<<<<<<< HEAD
-	/* Take care of the autovacuum daemon too */
-=======
 	/* Take care of the autovacuum launcher too */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (pid == AutoVacPID)
 		AutoVacPID = 0;
 	else if (AutoVacPID != 0 && !FatalError)
@@ -3510,11 +3438,8 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		pmState == PM_HOT_STANDBY ||
 		pmState == PM_RUN ||
 		pmState == PM_WAIT_BACKUP ||
-<<<<<<< HEAD
-		pmState == PM_WAIT_REGULAR_BACKENDS ||
-=======
 		pmState == PM_WAIT_READONLY ||
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		pmState == PM_WAIT_REGULAR_BACKENDS ||
 		pmState == PM_SHUTDOWN)
 		pmState = PM_WAIT_BACKENDS;
 }
@@ -3649,7 +3574,6 @@ PostmasterStateMachine(void)
 	{
 		/*
 		 * PM_WAIT_BACKENDS state ends when we have no regular backends
-<<<<<<< HEAD
 		 * (including autovac workers) and no walwriter, autovac launcher or
 		 * bgwriter.  If we are doing crash recovery then we expect the
 		 * checkpointer to exit as well, otherwise not. The archiver, stats,
@@ -3660,24 +3584,10 @@ PostmasterStateMachine(void)
 		 * process.
 		 */
 		if (CountChildren(BACKEND_TYPE_NORMAL | BACKEND_TYPE_AUTOVAC) == 0 &&
-			WalReceiverPID == 0 &&
 			StartupPID == 0 &&
+			WalReceiverPID == 0 &&
 			BgWriterPID == 0 &&
 			(CheckpointerPID == 0 || !FatalError) &&
-=======
-		 * (including autovac workers) and no walwriter or autovac launcher.
-		 * If we are doing crash recovery then we expect the bgwriter to exit
-		 * too, otherwise not.	The archiver, stats, and syslogger processes
-		 * are disregarded since they are not connected to shared memory; we
-		 * also disregard dead_end children here. Walsenders are also
-		 * disregarded, they will be terminated later after writing the
-		 * checkpoint record, like the archiver process.
-		 */
-		if (CountChildren(BACKEND_TYPE_NORMAL | BACKEND_TYPE_AUTOVAC) == 0 &&
-			StartupPID == 0 &&
-			WalReceiverPID == 0 &&
-			(BgWriterPID == 0 || !FatalError) &&
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			WalWriterPID == 0 &&
 			AutoVacPID == 0 &&
 			!ServiceProcessesExist(0))
@@ -3901,7 +3811,6 @@ SignalSomeChildren(int signal, int target)
 
 		if (bp->dead_end)
 			continue;
-<<<<<<< HEAD
 
 		/*
 		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
@@ -3920,15 +3829,6 @@ SignalSomeChildren(int signal, int target)
 			if (!(target & child))
 				continue;
 		}
-=======
-		if (!(target & BACKEND_TYPE_NORMAL) && !bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_AUTOVAC) && bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_WALSND) &&
-			IsPostmasterChildWalSender(bp->child_slot))
-			continue;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ereport(DEBUG4,
 				(errmsg_internal("sending signal %d to process %d",
@@ -4247,18 +4147,12 @@ BackendInitialize(Port *port)
 	if (am_walsender)
 		init_ps_display("wal sender process", port->user_name, remote_ps_data,
 						update_process_title ? "authentication" : "");
-<<<<<<< HEAD
 	else if (am_ftshandler)
 		init_ps_display("fts handler process", port->user_name, remote_ps_data,
 						update_process_title ? "authentication" : "");
     else
-	    init_ps_display(port->user_name, port->database_name, remote_ps_data,
-					update_process_title ? "authentication" : "");
-=======
-	else
 		init_ps_display(port->user_name, port->database_name, remote_ps_data,
 						update_process_title ? "authentication" : "");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
@@ -5066,8 +4960,8 @@ sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
 		WalReceiverPID == 0 &&
-		(pmState == PM_STARTUP || pmState == PM_RECOVERY /*||
-		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY*/) &&
+		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
+		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY) &&
 		Shutdown == NoShutdown)
 	{
 		/* Startup Process wants us to start the walreceiver process. */
@@ -5097,7 +4991,6 @@ sigusr1_handler(SIGNAL_ARGS)
 		StartAutovacuumWorker();
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Check if we are being promoted.  Don't check and delete promote file
 	 * until we start the recovery.  This allows users to indicate promote
@@ -5110,15 +5003,6 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* Tell startup process to finish recovery */
 		signal_child(StartupPID, SIGUSR2);
-=======
-	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
-		WalReceiverPID == 0 &&
-		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
-		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY))
-	{
-		/* Startup Process wants us to start the walreceiver process. */
-		WalReceiverPID = StartWalReceiver();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	PG_SETMASK(&UnBlockSig);
@@ -5243,7 +5127,6 @@ CountChildren(int target)
 
 		if (bp->dead_end)
 			continue;
-<<<<<<< HEAD
 
 		/*
 		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
@@ -5262,15 +5145,6 @@ CountChildren(int target)
 			if (!(target & child))
 				continue;
 		}
-=======
-		if (!(target & BACKEND_TYPE_NORMAL) && !bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_AUTOVAC) && bp->is_autovacuum)
-			continue;
-		if (!(target & BACKEND_TYPE_WALSND) &&
-			IsPostmasterChildWalSender(bp->child_slot))
-			continue;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		cnt++;
 	}
@@ -5527,12 +5401,8 @@ extern LWLock *LWLockArray;
 extern PROC_HDR *ProcGlobal;
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
-<<<<<<< HEAD
-extern int	pgStatSock;
-extern pg_time_t first_syslogger_file_time;
-=======
 extern pgsocket pgStatSock;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+extern pg_time_t first_syslogger_file_time;
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)

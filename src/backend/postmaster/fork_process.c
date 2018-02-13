@@ -66,13 +66,6 @@ fork_process(void)
 #endif
 
 		/*
-<<<<<<< HEAD
-		 * Make sure processes do not share OpenSSL randomness state.
-		 */
-#ifdef USE_SSL
-		RAND_cleanup();
-#endif
-=======
 		 * By default, Linux tends to kill the postmaster in out-of-memory
 		 * situations, because it blames the postmaster for the sum of child
 		 * process sizes *including shared memory*.  (This is unbelievably
@@ -104,7 +97,13 @@ fork_process(void)
 			}
 		}
 #endif   /* LINUX_OOM_ADJ */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+		/*
+		 * Make sure processes do not share OpenSSL randomness state.
+		 */
+#ifdef USE_SSL
+		RAND_cleanup();
+#endif
 	}
 
 	return result;
