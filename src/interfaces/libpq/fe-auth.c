@@ -3,19 +3,11 @@
  * fe-auth.c
  *	   The front-end (client) authorization routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
  *	  src/interfaces/libpq/fe-auth.c
-=======
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.144 2010/03/08 10:01:12 mha Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
@@ -438,16 +430,10 @@ pg_GSS_startup(PGconn *conn)
 	int			maxlen;
 	gss_buffer_desc temp_gbuf;
 
-<<<<<<< HEAD
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified\n"));
-=======
-	if (!conn->pghost)
-	{
-		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		return STATUS_ERROR;
 	}
 

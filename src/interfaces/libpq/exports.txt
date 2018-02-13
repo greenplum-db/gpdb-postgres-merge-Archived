@@ -157,11 +157,8 @@ PQescapeLiteral           154
 PQescapeIdentifier        155
 PQconnectdbParams         156
 PQconnectStartParams      157
-<<<<<<< HEAD
 PQping                    158
 PQpingParams              159
 PQlibVersion              160
 PQsetSingleRowMode        161
 PQconninfo                162
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
