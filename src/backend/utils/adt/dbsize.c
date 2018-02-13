@@ -35,15 +35,13 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
-=======
 #include "utils/relmapper.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/syscache.h"
 
 #include "cdb/cdbvars.h"
 
+static int64 calculate_total_relation_size(Oid Relid);
 
 static int64
 get_size_from_segDBs(const char * cmd)
@@ -200,11 +198,7 @@ calculate_database_size(Oid dbOid)
 			continue;
 
 		snprintf(pathname, MAXPGPATH, "pg_tblspc/%s/%s/%u",
-<<<<<<< HEAD
 				 direntry->d_name, tablespace_version_directory(), dbOid);
-=======
-				 direntry->d_name, TABLESPACE_VERSION_DIRECTORY, dbOid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		totalsize += db_dir_size(pathname);
 	}
 
@@ -296,11 +290,7 @@ calculate_tablespace_size(Oid tblspcOid)
 		snprintf(tblspcPath, MAXPGPATH, "global");
 	else
 		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u/%s", tblspcOid,
-<<<<<<< HEAD
 				 tablespace_version_directory());
-=======
-				 TABLESPACE_VERSION_DIRECTORY);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	dirdesc = AllocateDir(tblspcPath);
 
@@ -389,16 +379,12 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
- * calculate size of a relation
+ * calculate size of (one fork of) a relation
  *
  * Iterator over all files belong to the relation and do stat.
  * The obviously better way is to use glob.  For whatever reason,
  * glob is extremely slow if there are lots of relations in the
  * database.  So we handle all cases, instead. 
-=======
- * calculate size of (one fork of) a relation
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static int64
 calculate_relation_size(Relation rel, ForkNumber forknum)
@@ -516,12 +502,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(size);
 }
 
-<<<<<<< HEAD
-/*
- *	Compute the on-disk size of files for the relation according to the
- *	stat function, including heap data, index data, toast data, aoseg data,
- *  aoblkdir data, and aovisimap data.
-=======
 /*
  * Calculate total on-disk size of a TOAST relation, including its index.
  * Must not be applied to non-TOAST relations.
@@ -538,12 +518,12 @@ calculate_toast_table_size(Oid toastrelid)
 
 	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(toastRel->rd_node), forkNum);
+		size += calculate_relation_size(toastRel, forkNum);
 
 	/* toast index size, including FSM and VM size */
 	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(toastIdxRel->rd_node), forkNum);
+		size += calculate_relation_size(toastIdxRel, forkNum);
 
 	relation_close(toastIdxRel, AccessShareLock);
 	relation_close(toastRel, AccessShareLock);
@@ -555,10 +535,10 @@ calculate_toast_table_size(Oid toastrelid)
  * Calculate total on-disk size of a given table,
  * including FSM and VM, plus TOAST table if any.
  * Indexes other than the TOAST table's index are not included.
+ * GPDB: Also includes aoseg, aoblkdir, and aovisimap tables
  *
  * Note that this also behaves sanely if applied to an index or toast table;
  * those won't have attached toast tables, but they can have multiple forks.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static int64
 calculate_table_size(Oid relOid)
@@ -567,31 +547,22 @@ calculate_table_size(Oid relOid)
 	Relation	rel;
 	ForkNumber	forkNum;
 
-<<<<<<< HEAD
-	heapRel = try_relation_open(Relid, AccessShareLock, false);
+	rel = try_relation_open(relOid, AccessShareLock, false);
 
-	if (!RelationIsValid(heapRel))
+	if (!RelationIsValid(rel))
 		return 0;
 
-	toastOid = heapRel->rd_rel->reltoastrelid;
-
-	/* Get the heap size */
-	if (Relid == 0 || heapRel->rd_node.relNode == 0)
+	/*
+	 * heap size, including FSM and VM
+	 */
+	if (rel->rd_node.relNode == 0)
 		size = 0;
 	else
 	{
 		size = 0;
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			size += calculate_relation_size(heapRel, forkNum);
+			size += calculate_relation_size(rel, forkNum);
 	}
-=======
-	rel = relation_open(relOid, AccessShareLock);
-
-	/*
-	 * heap size, including FSM and VM
-	 */
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(rel->rd_node), forkNum);
 
 	/*
 	 * Size of toast relation
@@ -600,6 +571,22 @@ calculate_table_size(Oid relOid)
 		size += calculate_toast_table_size(rel->rd_rel->reltoastrelid);
 
 	relation_close(rel, AccessShareLock);
+
+	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
+	{
+		Assert(OidIsValid(rel->rd_appendonly->segrelid));
+		size += calculate_total_relation_size(rel->rd_appendonly->segrelid);
+
+        /* block directory may not exist, post upgrade or new table that never has indexes */
+   		if (OidIsValid(rel->rd_appendonly->blkdirrelid))
+        {
+     		size += calculate_total_relation_size(rel->rd_appendonly->blkdirrelid);
+        }
+		if (OidIsValid(rel->rd_appendonly->visimaprelid))
+		{
+			size += calculate_total_relation_size(rel->rd_appendonly->visimaprelid);
+		}
+	}
 
 	return size;
 }
@@ -616,7 +603,6 @@ calculate_indexes_size(Oid relOid)
 	Relation	rel;
 
 	rel = relation_open(relOid, AccessShareLock);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Aggregate all indexes on the given relation
@@ -632,24 +618,15 @@ calculate_indexes_size(Oid relOid)
 			Relation	idxRel;
 			ForkNumber	forkNum;
 
-<<<<<<< HEAD
-			iRel = try_relation_open(idxOid, AccessShareLock, false);
+			idxRel = try_relation_open(idxOid, AccessShareLock, false);
 
-			if (RelationIsValid(iRel))
+			if (RelationIsValid(idxRel))
 			{
 				for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-					size += calculate_relation_size(iRel, forkNum);
+					size += calculate_relation_size(idxRel, forkNum);
 
-				relation_close(iRel, AccessShareLock);
+				relation_close(idxRel, AccessShareLock);
 			}
-=======
-			idxRel = relation_open(idxOid, AccessShareLock);
-
-			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-				size += calculate_relation_size(&(idxRel->rd_node), forkNum);
-
-			relation_close(idxRel, AccessShareLock);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 
 		list_free(index_oids);
@@ -657,25 +634,6 @@ calculate_indexes_size(Oid relOid)
 
 	relation_close(rel, AccessShareLock);
 
-<<<<<<< HEAD
-	if (RelationIsAoRows(heapRel) || RelationIsAoCols(heapRel))
-	{
-		Assert(OidIsValid(heapRel->rd_appendonly->segrelid));
-		size += calculate_total_relation_size(heapRel->rd_appendonly->segrelid);
-
-        /* block directory may not exist, post upgrade or new table that never has indexes */
-   		if (OidIsValid(heapRel->rd_appendonly->blkdirrelid))
-        {
-     		size += calculate_total_relation_size(heapRel->rd_appendonly->blkdirrelid);
-        }
-		if (OidIsValid(heapRel->rd_appendonly->visimaprelid))
-		{
-			size += calculate_total_relation_size(heapRel->rd_appendonly->visimaprelid);
-		}
-	}
-
-	relation_close(heapRel, AccessShareLock);
-=======
 	return size;
 }
 
@@ -714,7 +672,6 @@ calculate_total_relation_size(Oid Relid)
 	 * Add size of all attached indexes as well
 	 */
 	size += calculate_indexes_size(Relid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return size;
 }

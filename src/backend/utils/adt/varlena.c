@@ -3636,10 +3636,6 @@ pg_column_size(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * string_agg - Concatenates values and returns string.
  *

@@ -237,14 +237,9 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
-<<<<<<< HEAD
 static char *generate_function_name(Oid funcid, int nargs,
 					   List *argnames, Oid *argtypes,
 					   bool has_variadic, bool *use_variadic_p);
-=======
-static char *generate_function_name(Oid funcid, int nargs, List *argnames,
-					   Oid *argtypes, bool *is_variadic);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -1867,34 +1862,6 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * pg_get_function_result
- *		Get a nicely-formatted version of the result type of a function.
- *		This is what would appear after RETURNS in CREATE FUNCTION.
- */
-Datum
-pg_get_function_result(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	StringInfoData buf;
-	HeapTuple	proctup;
-
-	initStringInfo(&buf);
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	print_function_rettype(&buf, proctup);
-
-	ReleaseSysCache(proctup);
-
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
-}
-
-/*
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Guts of pg_get_function_result: append the function's return type
  * to the specified buffer.
  */
@@ -2089,36 +2056,14 @@ pg_get_function_result(PG_FUNCTION_ARGS)
 	Oid			funcid = PG_GETARG_OID(0);
 	StringInfoData buf;
 	HeapTuple	proctup;
-	Form_pg_proc procform;
-	int			ntabargs = 0;
 
 	initStringInfo(&buf);
 
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcid),
-							 0, 0, 0);
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
-	if (procform->proretset)
-	{
-		/* It might be a table function; try to print the arguments */
-		appendStringInfoString(&buf, "TABLE(");
-		ntabargs = print_function_arguments(&buf, proctup, true, false);
-		if (ntabargs > 0)
-			appendStringInfoString(&buf, ")");
-		else
-			resetStringInfo(&buf);
-	}
-
-	if (ntabargs == 0)
-	{
-		/* Not a table function, so do the normal thing */
-		if (procform->proretset)
-			appendStringInfoString(&buf, "SETOF ");
-		appendStringInfoString(&buf, format_type_be(procform->prorettype));
-	}
+	print_function_rettype(&buf, proctup);
 
 	ReleaseSysCache(proctup);
 
@@ -5945,10 +5890,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
-<<<<<<< HEAD
-=======
-	List	   *arglist;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	int			nargs;
 	bool		use_variadic;
 	Oid fnoid;
@@ -5970,7 +5911,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	fnoid = aggref->aggfnoid;
 	switch(aggref->aggstage)
 	{
-<<<<<<< HEAD
 		case AGGSTAGE_FINAL:
 		{
 			if (aggref->aggfnoid == COUNT_STAR_OID)
@@ -5982,21 +5922,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 		case AGGSTAGE_NORMAL:
 		default:
 			break;
-=======
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node	   *arg = (Node *) tle->expr;
-
-		Assert(!IsA(arg, NamedArgExpr));
-		if (tle->resjunk)
-			continue;
-		if (nargs >= FUNC_MAX_ARGS)		/* paranoia */
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("too many arguments")));
-		argtypes[nargs] = exprType(arg);
-		arglist = lappend(arglist, arg);
-		nargs++;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/* Extract the argument types as seen by the parser */
@@ -7316,12 +7241,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
 	 * resolve the correct function given the unqualified func name with the
-<<<<<<< HEAD
 	 * specified argtypes and VARIADIC flag.
-=======
-	 * specified argtypes.	If the function is variadic, we should presume
-	 * that VARIADIC will be included in the call.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
 							   NIL, argnames, nargs, argtypes,

@@ -484,15 +484,7 @@ array_agg_transfn(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-<<<<<<< HEAD
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-		aggcontext = ((AggState *) fcinfo->context)->aggcontext;
-	else if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
-		aggcontext = ((WindowAggState *) fcinfo->context)->aggcontext;
-	else
-=======
 	if (!AggCheckCallContext(fcinfo, &aggcontext))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		/* cannot be called directly because of internal-type argument */
 		elog(ERROR, "array_agg_transfn called in non-aggregate context");

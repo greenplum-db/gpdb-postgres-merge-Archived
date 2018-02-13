@@ -1001,26 +1001,18 @@ bitsubstring(VarBit *arg, int32 s, int32 l, bool length_not_specified)
 	bitlen = VARBITLEN(arg);
 	s1 = Max(s, 1);
 	/* If we do not have an upper bound, use end of string */
-<<<<<<< HEAD
-	if (l < 0)
-=======
 	if (length_not_specified)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		e1 = bitlen + 1;
 	}
 	else
 	{
 		e = s + l;
-<<<<<<< HEAD
-		/* guard against overflow, even though we don't allow L<0 here */
-=======
 
 		/*
 		 * A negative value for L is the only way for the end position to be
 		 * before the start. SQL99 says to throw an error.
 		 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		if (e < s)
 			ereport(ERROR,
 					(errcode(ERRCODE_SUBSTRING_ERROR),

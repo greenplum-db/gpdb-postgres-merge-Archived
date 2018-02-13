@@ -165,13 +165,9 @@ MatchText(char *t, int tlen, char *p, int plen)
 			if (*p == '\\')
 			{
 				if (plen < 2)
-<<<<<<< HEAD
-					return LIKE_FALSE; /* XXX should throw error */
-=======
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 							 errmsg("LIKE pattern must not end with escape character")));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				firstpat = GETCHAR(p[1]);
 			}
 			else

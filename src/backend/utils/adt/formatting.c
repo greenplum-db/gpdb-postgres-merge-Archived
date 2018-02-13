@@ -1061,18 +1061,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("\"EEEE\" must be the last pattern used")));
 
-<<<<<<< HEAD
-	switch (n->key->id)
-	{
-		case NUM_9:
-			if (IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"9\" must be ahead of \"PR\" for function \"%s\"", func)));
-			if (IS_MULTI(num))
-			{
-				++num->multi;
-=======
 		switch (n->key->id)
 		{
 			case NUM_9:
@@ -1089,25 +1077,8 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					++num->post;
 				else
 					++num->pre;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				break;
 
-<<<<<<< HEAD
-		case NUM_0:
-			if (IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"0\" must be ahead of \"PR\" for function \"%s\"", func)));
-			if (!IS_ZERO(num) && !IS_DECIMAL(num))
-			{
-				num->flag |= NUM_F_ZERO;
-				num->zero_start = num->pre + 1;
-			}
-			if (!IS_DECIMAL(num))
-				++num->pre;
-			else
-				++num->post;
-=======
 			case NUM_0:
 				if (IS_BRACKET(num))
 					ereport(ERROR,
@@ -1122,7 +1093,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					++num->pre;
 				else
 					++num->post;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 				num->zero_end = num->pre + num->post;
 				break;
@@ -1132,22 +1102,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					num->flag |= NUM_F_BLANK;
 				break;
 
-<<<<<<< HEAD
-		case NUM_D:
-			num->flag |= NUM_F_LDECIMAL;
-			num->need_locale = TRUE;
-		case NUM_DEC:
-			if (IS_DECIMAL(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("multiple decimal points for function \"%s\"", func)));
-			if (IS_MULTI(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use \"V\" and decimal point together for function \"%s\"", func)));
-			num->flag |= NUM_F_DECIMAL;
-			break;
-=======
 			case NUM_D:
 				num->flag |= NUM_F_LDECIMAL;
 				num->need_locale = TRUE;
@@ -1162,74 +1116,11 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					 errmsg("cannot use \"V\" and decimal point together")));
 				num->flag |= NUM_F_DECIMAL;
 				break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			case NUM_FM:
 				num->flag |= NUM_F_FILLMODE;
 				break;
 
-<<<<<<< HEAD
-		case NUM_S:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" twice for function \"%s\"", func)));
-			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together for function \"%s\"", func)));
-			if (!IS_DECIMAL(num))
-			{
-				num->lsign = NUM_LSIGN_PRE;
-				num->pre_lsign_num = num->pre;
-				num->need_locale = TRUE;
-				num->flag |= NUM_F_LSIGN;
-			}
-			else if (num->lsign == NUM_LSIGN_NONE)
-			{
-				num->lsign = NUM_LSIGN_POST;
-				num->need_locale = TRUE;
-				num->flag |= NUM_F_LSIGN;
-			}
-			break;
-
-		case NUM_MI:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"MI\" together for function \"%s\"", func)));
-			num->flag |= NUM_F_MINUS;
-			if (IS_DECIMAL(num))
-				num->flag |= NUM_F_MINUS_POST;
-			break;
-
-		case NUM_PL:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"PL\" together for function \"%s\"", func)));
-			num->flag |= NUM_F_PLUS;
-			if (IS_DECIMAL(num))
-				num->flag |= NUM_F_PLUS_POST;
-			break;
-
-		case NUM_SG:
-			if (IS_LSIGN(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"S\" and \"SG\" together for function \"%s\"", func)));
-			num->flag |= NUM_F_MINUS;
-			num->flag |= NUM_F_PLUS;
-			break;
-
-		case NUM_PR:
-			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together for function \"%s\"", func)));
-			num->flag |= NUM_F_BRACKET;
-			break;
-=======
 			case NUM_S:
 				if (IS_LSIGN(num))
 					ereport(ERROR,
@@ -1290,7 +1181,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 							 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
 				num->flag |= NUM_F_BRACKET;
 				break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			case NUM_rn:
 			case NUM_RN:
@@ -1302,15 +1192,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 				num->need_locale = TRUE;
 				break;
 
-<<<<<<< HEAD
-		case NUM_V:
-			if (IS_DECIMAL(num))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use \"V\" and decimal point together for function \"%s\"", func)));
-			num->flag |= NUM_F_MULTI;
-			break;
-=======
 			case NUM_V:
 				if (IS_DECIMAL(num))
 					ereport(ERROR,
@@ -1318,7 +1199,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
 					 errmsg("cannot use \"V\" and decimal point together")));
 				num->flag |= NUM_F_MULTI;
 				break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			case NUM_E:
 				if (IS_EEEE(num))

@@ -10,13 +10,9 @@
  *	  Index cost functions are registered in the pg_am catalog
  *	  in the "amcostestimate" attribute.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -102,11 +98,8 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "catalog/pg_constraint.h"
-=======
 #include "executor/executor.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -277,13 +270,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		 */
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
-=======
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			FmgrInfo	eqproc;
 
@@ -416,13 +403,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 */
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 							 ATTSTATSSLOT_NUMBERS))
-=======
-							 NULL,
-							 NULL, NULL,
-							 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			if (sslot.nnumbers > 0 && selec > sslot.numbers[0])
 				selec = sslot.numbers[0];
@@ -593,13 +574,7 @@ mcv_selectivity(VariableStatData   *vardata,
 	if (HeapTupleIsValid(tp) &&
 		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
-=======
-						 NULL,
-						 &values, &nvalues,
-						 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		for (i = 0; i < sslot.nvalues; i++)
 		{
@@ -669,13 +644,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 	if (HeapTupleIsValid(tp) &&
 		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES))
-=======
-						 NULL,
-						 &values, &nvalues,
-						 NULL, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		*hist_size = sslot.nvalues;
 		if (sslot.nvalues >= min_hist_size)
@@ -728,14 +697,8 @@ ineq_histogram_selectivity(PlannerInfo *root,
 						   Datum constval, Oid consttype)
 {
 	double		hist_selec;
-<<<<<<< HEAD
 	HeapTuple	tp = getStatsTuple(vardata);
 	AttStatsSlot sslot;
-=======
-	Oid			hist_op;
-	Datum	   *values;
-	int			nvalues;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	hist_selec = -1.0;
 
@@ -752,13 +715,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	if (HeapTupleIsValid(tp) &&
 		get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES))
-=======
-						 &hist_op,
-						 &values, &nvalues,
-						 NULL, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		if (sslot.nvalues > 1)
 		{
@@ -779,10 +736,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 */
 			double		histfrac;
 			int			lobound = 0;	/* first possible slot to search */
-<<<<<<< HEAD
 			int			hibound = sslot.nvalues;		/* last+1 slot to search */
-=======
-			int			hibound = nvalues;		/* last+1 slot to search */
 			bool		have_end = false;
 
 			/*
@@ -791,13 +745,12 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 * one of them to be updated, so we deal with that within the
 			 * loop.)
 			 */
-			if (nvalues == 2)
+			if (sslot.nvalues == 2)
 				have_end = get_actual_variable_range(root,
 													 vardata,
-													 hist_op,
-													 &values[0],
-													 &values[1]);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+													 sslot.staop,
+													 &sslot.values[0],
+													 &sslot.values[1]);
 
 			while (lobound < hibound)
 			{
@@ -809,18 +762,18 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 * histogram entry, first try to replace it with the actual
 				 * current min or max (unless we already did so above).
 				 */
-				if (probe == 0 && nvalues > 2)
+				if (probe == 0 && sslot.nvalues > 2)
 					have_end = get_actual_variable_range(root,
 														 vardata,
-														 hist_op,
-														 &values[0],
+														 sslot.staop,
+														 &sslot.values[0],
 														 NULL);
-				else if (probe == nvalues - 1 && nvalues > 2)
+				else if (probe == sslot.nvalues - 1 && sslot.nvalues > 2)
 					have_end = get_actual_variable_range(root,
 														 vardata,
-														 hist_op,
+														 sslot.staop,
 														 NULL,
-														 &values[probe]);
+														 &sslot.values[probe]);
 
 				ltcmp = DatumGetBool(FunctionCall2(opproc,
 												   sslot.values[probe],
@@ -1456,15 +1409,8 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 
 		if (get_attstatsslot(&sslot, tp,
 							 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS)
 			&& sslot.nnumbers > 0)
-=======
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers)
-			&& nnumbers > 0)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			double		freq_true;
 			double		freq_false;
@@ -2108,45 +2054,21 @@ eqjoinsel_inner(Oid operator,
 
 	if (HeapTupleIsValid(getStatsTuple(vardata1)))
 	{
-<<<<<<< HEAD
 		HeapTuple tp = getStatsTuple(vardata1);
 		stats1 = (Form_pg_statistic) GETSTRUCT(tp);
 		have_mcvs1 = get_attstatsslot(&sslot1, tp,
 									  STATISTIC_KIND_MCV, InvalidOid,
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
 
-=======
-		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype,
-									  vardata1->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values1, &nvalues1,
-									  &numbers1, &nnumbers1);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (HeapTupleIsValid(getStatsTuple(vardata2)))
 	{
-<<<<<<< HEAD
 		HeapTuple tp = getStatsTuple(vardata2);
 		stats2 = (Form_pg_statistic) GETSTRUCT(tp);
 		have_mcvs2 = get_attstatsslot(&sslot2, tp,
 									  STATISTIC_KIND_MCV, InvalidOid,
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-=======
-		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
-		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype,
-									  vardata2->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values2, &nvalues2,
-									  &numbers2, &nnumbers2);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (have_mcvs1 && have_mcvs2)
@@ -2354,40 +2276,18 @@ eqjoinsel_semi(Oid operator,
 	if (HeapTupleIsValid(vardata1->statsTuple))
 	{
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1->statsTuple);
-<<<<<<< HEAD
 		have_mcvs1 = get_attstatsslot(&sslot1, vardata1->statsTuple,
 									  STATISTIC_KIND_MCV, InvalidOid,
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
-=======
-		have_mcvs1 = get_attstatsslot(vardata1->statsTuple,
-									  vardata1->atttype,
-									  vardata1->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values1, &nvalues1,
-									  &numbers1, &nnumbers1);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
 	{
 		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
-<<<<<<< HEAD
 		have_mcvs2 = get_attstatsslot(&sslot2, vardata2->statsTuple,
 									  STATISTIC_KIND_MCV, InvalidOid,
 									  ATTSTATSSLOT_VALUES);
 		/* note: currently don't need stanumbers from RHS */
-=======
-		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype,
-									  vardata2->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values2, &nvalues2,
-									  &numbers2, &nnumbers2);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (have_mcvs1 && have_mcvs2 && OidIsValid(operator))
@@ -3377,13 +3277,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 		HeapTuple tp = getStatsTuple(&vardata);
 		if (get_attstatsslot(&sslot, tp,
 							 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 							 ATTSTATSSLOT_NUMBERS))
-=======
-							 NULL,
-							 NULL, NULL,
-							 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			/*
 			 * The first MCV stat is for the most common value.
@@ -4334,7 +4228,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				!vardata->freefunc)
 				elog(ERROR, "no function provided to release variable stats with");
 		}
-<<<<<<< HEAD
 		else if (rte->inh)
 		{
 			/*
@@ -4358,10 +4251,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					/*
 					 * Get statistics from the child partition.
 					 */
-					vardata->statsTuple = SearchSysCache(STATRELATT,
-														 ObjectIdGetDatum(child_rte->relid),
-														 Int16GetDatum(var->varattno),
-														 0, 0);
+					vardata->statsTuple = SearchSysCache3(STATRELATTINH,
+														  ObjectIdGetDatum(child_rte->relid),
+														  Int16GetDatum(var->varattno),
+														  BoolGetDatum(rte->inh));
 
 					if (vardata->statsTuple != NULL)
 					{
@@ -4371,8 +4264,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				}
 			}
 		}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		else if (rte->rtekind == RTE_RELATION)
 		{
 			vardata->statsTuple = SearchSysCache3(STATRELATTINH,
@@ -4677,9 +4568,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	int			i;
 	HeapTuple	tp = getStatsTuple(vardata);
 
-<<<<<<< HEAD
-	if (!HeapTupleIsValid(tp))
-=======
 	/*
 	 * XXX It's very tempting to try to use the actual column min and max, if
 	 * we can get them relatively-cheaply with an index probe.	However, since
@@ -4692,8 +4580,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		return true;
 #endif
 
-	if (!HeapTupleIsValid(vardata->statsTuple))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	if (!HeapTupleIsValid(tp))
 	{
 		/* no stats available, so default result */
 		return false;
@@ -4711,13 +4598,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 */
 	if (get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES))
-=======
-						 NULL,
-						 &values, &nvalues,
-						 NULL, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		if (sslot.nvalues > 0)
 		{
@@ -4729,13 +4610,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	}
 	else if (get_attstatsslot(&sslot, tp,
 							  STATISTIC_KIND_HISTOGRAM, InvalidOid,
-<<<<<<< HEAD
 							  0))
-=======
-							  NULL,
-							  &values, &nvalues,
-							  NULL, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		free_attstatsslot(&sslot);
 		return false;
@@ -4749,13 +4624,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 */
 	if (get_attstatsslot(&sslot, tp,
 						 STATISTIC_KIND_MCV, InvalidOid,
-<<<<<<< HEAD
 						 ATTSTATSSLOT_VALUES))
-=======
-						 NULL,
-						 &values, &nvalues,
-						 NULL, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		bool		tmin_is_mcv = false;
 		bool		tmax_is_mcv = false;
@@ -4936,7 +4805,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 										 indexscandir)) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
-					ExecStoreTuple(tup, slot, InvalidBuffer, false);
+					ExecStoreHeapTuple(tup, slot, InvalidBuffer, false);
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -4967,7 +4836,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 										 -indexscandir)) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
-					ExecStoreTuple(tup, slot, InvalidBuffer, false);
+					ExecStoreHeapTuple(tup, slot, InvalidBuffer, false);
 					FormIndexDatum(indexInfo, slot, estate,
 								   values, isnull);
 
@@ -5156,21 +5025,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 								 case_insensitive,
 								 &exact);
 
-<<<<<<< HEAD
 	if (prefix == NULL)
-=======
-	/*
-	 * Check for ARE director prefix.  It's worth our trouble to recognize
-	 * this because similar_escape() used to use it, and some other code might
-	 * still use it, to force ARE mode.
-	 */
-	pos = 0;
-	if (strncmp(patt, "***:", 4) == 0)
-		pos = 4;
-
-	/* Pattern must be anchored left */
-	if (patt[pos] != '^')
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		*prefix_const = NULL;
 
@@ -6159,20 +6014,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 			}
 		}
 		/* check for equality operator */
-<<<<<<< HEAD
-		if (is_null_op)
-		{
-			/* IS NULL is like = for purposes of selectivity determination */
-			eqQualHere = true;
-
-            /* CDB: Count leading indexcols having '=' quals. */
-            if (!IsA(clause, ScalarArrayOpExpr))
-                index->num_leading_eq = indexcol + 1;
-		}
-		else
-=======
 		if (OidIsValid(clause_op))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			op_strategy = get_op_opfamily_strategy(clause_op,
 												   index->opfamily[indexcol]);
@@ -6190,6 +6032,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 		{
 			/* IS NULL is like = for purposes of selectivity determination */
 			eqQualHere = true;
+
+            /* CDB: Count leading indexcols having '=' quals. */
+            if (!IsA(clause, ScalarArrayOpExpr))
+                index->num_leading_eq = indexcol + 1;
 		}
 		/* count up number of SA scans induced by indexBoundQuals only */
 		if (IsA(clause, ScalarArrayOpExpr))
@@ -6316,18 +6162,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 	{
 		AttStatsSlot sslot;
 
-<<<<<<< HEAD
 		if (get_attstatsslot(&sslot, vardata.statsTuple,
 							 STATISTIC_KIND_CORRELATION, index->fwdsortop[0],
 							 ATTSTATSSLOT_NUMBERS))
-=======
-		if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
-							 STATISTIC_KIND_CORRELATION,
-							 index->fwdsortop[0],
-							 NULL,
-							 NULL, NULL,
-							 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			double		varCorrelation;
 
@@ -6341,18 +6178,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(&sslot);
 		}
-<<<<<<< HEAD
 		else if (get_attstatsslot(&sslot, vardata.statsTuple,
 							      STATISTIC_KIND_CORRELATION, index->revsortop[0],
 							      ATTSTATSSLOT_NUMBERS))
-=======
-		else if (get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
-								  STATISTIC_KIND_CORRELATION,
-								  index->revsortop[0],
-								  NULL,
-								  NULL, NULL,
-								  &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			double		varCorrelation;
 

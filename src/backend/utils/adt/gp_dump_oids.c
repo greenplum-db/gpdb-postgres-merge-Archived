@@ -35,7 +35,7 @@ appendChildrenRelids(StringInfoData *relbuf, Oid relid)
 	List	   *relids;
 	ListCell   *lc;
 
-	relids = find_all_inheritors(relid, NoLock);
+	relids = find_all_inheritors(relid, NoLock, NULL);
 	if (list_length(relids) <= 1)
 		return;
 

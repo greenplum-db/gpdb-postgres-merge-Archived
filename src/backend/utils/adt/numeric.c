@@ -2887,11 +2887,7 @@ int2_sum(PG_FUNCTION_ARGS)
 	 * out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-<<<<<<< HEAD
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-=======
 	if (AggCheckCallContext(fcinfo, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -2940,11 +2936,7 @@ int4_sum(PG_FUNCTION_ARGS)
 	 * out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-<<<<<<< HEAD
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-=======
 	if (AggCheckCallContext(fcinfo, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
@@ -3116,7 +3108,6 @@ int8_invsum(PG_FUNCTION_ARGS)
 
 typedef struct IntFloatAvgTransdata
 {
-<<<<<<< HEAD
 	int32   _len; /* len for varattrib, do not touch directly */
 #if 1
 	int32   pad;  /* pad so int64 and float64 will be 8 bytes aligned */
@@ -3186,11 +3177,6 @@ intfloat_avg_amalg_demalg(IntFloatAvgTransdata* tr0,
 
 	return PointerGetDatum(tr0);
 }
-=======
-	int64		count;
-	int64		sum;
-} Int8TransTypeData;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 Datum
 int2_avg_accum(PG_FUNCTION_ARGS)
@@ -3198,30 +3184,8 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 	IntFloatAvgTransdata *tr = (IntFloatAvgTransdata *) PG_GETARG_BYTEA_P(0);
 	int16		newval = PG_GETARG_INT16(1);
 
-<<<<<<< HEAD
 	Assert(fcinfo->context && IS_AGG_EXECUTION_NODE(fcinfo->context));
 	return intfloat_avg_accum_decum(tr, newval, true);
-=======
-	/*
-	 * If we're invoked as an aggregate, we can cheat and modify our first
-	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
-	 * a copy of it before scribbling on it.
-	 */
-	if (AggCheckCallContext(fcinfo, NULL))
-		transarray = PG_GETARG_ARRAYTYPE_P(0);
-	else
-		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
-
-	if (ARR_HASNULL(transarray) ||
-		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
-		elog(ERROR, "expected 2-element int8 array");
-
-	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
-	transdata->count++;
-	transdata->sum += newval;
-
-	PG_RETURN_ARRAYTYPE_P(transarray);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 		
 Datum
@@ -3229,7 +3193,6 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 {
 	IntFloatAvgTransdata *tr = (IntFloatAvgTransdata *) PG_GETARG_BYTEA_P(0);
 	int32		newval = PG_GETARG_INT32(1);
-<<<<<<< HEAD
 
 	Assert(fcinfo->context && IS_AGG_EXECUTION_NODE(fcinfo->context));
 	return intfloat_avg_accum_decum(tr, newval, true);
@@ -3352,29 +3315,6 @@ float8_avg_demalg(PG_FUNCTION_ARGS)
 	IntFloatAvgTransdata* d1 = (IntFloatAvgTransdata *) PG_GETARG_BYTEA_P(1);
 	Assert(fcinfo->context && IS_AGG_EXECUTION_NODE(fcinfo->context));
 	return intfloat_avg_amalg_demalg(d0, d1, false);
-=======
-	Int8TransTypeData *transdata;
-
-	/*
-	 * If we're invoked as an aggregate, we can cheat and modify our first
-	 * parameter in-place to reduce palloc overhead. Otherwise we need to make
-	 * a copy of it before scribbling on it.
-	 */
-	if (AggCheckCallContext(fcinfo, NULL))
-		transarray = PG_GETARG_ARRAYTYPE_P(0);
-	else
-		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
-
-	if (ARR_HASNULL(transarray) ||
-		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
-		elog(ERROR, "expected 2-element int8 array");
-
-	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
-	transdata->count++;
-	transdata->sum += newval;
-
-	PG_RETURN_ARRAYTYPE_P(transarray);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 Datum

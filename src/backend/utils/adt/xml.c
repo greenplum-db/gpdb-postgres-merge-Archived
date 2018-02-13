@@ -87,11 +87,8 @@ int xmloption;
 
 static StringInfo xml_err_buf = NULL;
 
-<<<<<<< HEAD
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 				  xmlParserCtxtPtr ctxt);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -1335,7 +1332,6 @@ xml_pstrdup(const char *string)
 
 
 /*
-<<<<<<< HEAD
  * xmlPgEntityLoader --- entity loader callback function
  *
  * Silently prevent any external entity URL from being loaded.  We don't want
@@ -1364,17 +1360,6 @@ xmlPgEntityLoader(const char *URL, const char *ID,
  * This is exported for modules that want to share the core libxml error
  * handler.  Note that pg_xml_init() *must* have been called previously.
  */
-=======
- * xml_ereport --- report an XML-related error
- *
- * The "msg" is the SQL-level message; some can be adopted from the SQL/XML
- * standard.  This function adds libxml's native error message, if any, as
- * detail.
- *
- * This is exported for modules that want to share the core libxml error
- * handler.  Note that pg_xml_init() *must* have been called previously.
- */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 void
 xml_ereport(int level, int sqlcode, const char *msg)
 {
