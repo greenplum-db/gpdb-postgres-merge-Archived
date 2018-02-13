@@ -110,17 +110,10 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-<<<<<<< HEAD
 		htup = SearchSysCache3(OPFAMILYAMNAMENSP,
 							  ObjectIdGetDatum(amID),
 							  PointerGetDatum(opfname),
 							  ObjectIdGetDatum(namespaceId));
-=======
-		return SearchSysCache3(OPFAMILYAMNAMENSP,
-							   ObjectIdGetDatum(amID),
-							   PointerGetDatum(opfname),
-							   ObjectIdGetDatum(namespaceId));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -128,14 +121,9 @@ OpFamilyCacheLookup(Oid amID, List *opfamilyname, bool missing_ok)
 		Oid			opfID = OpfamilynameGetOpfid(amID, opfname);
 
 		if (!OidIsValid(opfID))
-<<<<<<< HEAD
 			htup = NULL;
 		else
 			htup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
-=======
-			return NULL;
-		return SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfID));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (!HeapTupleIsValid(htup) && !missing_ok) {
@@ -197,17 +185,10 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
-<<<<<<< HEAD
 		htup = SearchSysCache3(CLAAMNAMENSP,
 							  ObjectIdGetDatum(amID),
 							  PointerGetDatum(opcname),
 							  ObjectIdGetDatum(namespaceId));
-=======
-		return SearchSysCache3(CLAAMNAMENSP,
-							   ObjectIdGetDatum(amID),
-							   PointerGetDatum(opcname),
-							   ObjectIdGetDatum(namespaceId));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -215,14 +196,9 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 		Oid			opcID = OpclassnameGetOpcid(amID, opcname);
 
 		if (!OidIsValid(opcID))
-<<<<<<< HEAD
 			htup = NULL;
 		else
 			htup = SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
-=======
-			return NULL;
-		return SearchSysCache1(CLAOID, ObjectIdGetDatum(opcID));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	if (!HeapTupleIsValid(htup) && !missing_ok) {
@@ -1615,16 +1591,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	/*
 	 * Get the access method's OID.
 	 */
-<<<<<<< HEAD
 	amID = get_am_oid(stmt->amname, false);
-=======
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(stmt->amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						stmt->amname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Look up the opclass.
@@ -1684,16 +1651,7 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 	/*
 	 * Get the access method's OID.
 	 */
-<<<<<<< HEAD
 	amID = get_am_oid(stmt->amname, false);
-=======
-	amID = GetSysCacheOid1(AMNAME, CStringGetDatum(stmt->amname));
-	if (!OidIsValid(amID))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						stmt->amname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Look up the opfamily.
@@ -2094,21 +2052,12 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 void
 AlterOpClassOwner_oid(Oid opclassOid, Oid newOwnerId)
 {
-<<<<<<< HEAD
-	HeapTuple       tup;
-	Relation        rel;
-
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
-
-	tup = SearchSysCacheCopy(CLAOID, ObjectIdGetDatum(opclassOid), 0, 0, 0);
-=======
 	HeapTuple	tup;
 	Relation	rel;
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(CLAOID, ObjectIdGetDatum(opclassOid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for opclass %u", opclassOid);
 
@@ -2298,22 +2247,12 @@ AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwnerId)
 void
 AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId)
 {
-<<<<<<< HEAD
-	HeapTuple       tup;
-	Relation        rel;
-
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
-
-	tup = SearchSysCacheCopy(OPFAMILYOID, ObjectIdGetDatum(opfamilyOid),
-							 0, 0, 0);
-=======
 	HeapTuple	tup;
 	Relation	rel;
 
 	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy1(OPFAMILYOID, ObjectIdGetDatum(opfamilyOid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for opfamily %u", opfamilyOid);
 

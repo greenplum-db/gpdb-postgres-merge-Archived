@@ -188,21 +188,13 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 
 					/*
 					 * Parent directories are missing during WAL replay, so
-<<<<<<< HEAD
-					 * continue by creating simple parent directories
-					 * rather than a symlink.
-=======
 					 * continue by creating simple parent directories rather
 					 * than a symlink.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					 */
 
 					/* create two parents up if not exist */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
-<<<<<<< HEAD
-=======
-					get_parent_directory(parentdir);
 					/* Can't create parent and it doesn't already exist? */
 					if (mkdir(parentdir, S_IRWXU) < 0 && errno != EEXIST)
 						ereport(ERROR,
@@ -214,7 +206,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 					/* create one parent up if not exist */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					/* Can't create parent and it doesn't already exist? */
 					if (mkdir(parentdir, S_IRWXU) < 0 && errno != EEXIST)
 						ereport(ERROR,
@@ -223,20 +214,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 									 parentdir)));
 					pfree(parentdir);
 
-<<<<<<< HEAD
-					/* create one parent up if not exist */
-					parentdir = pstrdup(dir);
-					get_parent_directory(parentdir);
-					/* Can't create parent and it doesn't already exist? */
-					if (mkdir(parentdir, S_IRWXU) < 0 && errno != EEXIST)
-						ereport(ERROR,
-								(errcode_for_file_access(),
-							  errmsg("could not create directory \"%s\": %m",
-									 parentdir)));
-					pfree(parentdir);
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					/* Create database directory */
 					if (mkdir(dir, S_IRWXU) < 0)
 						ereport(ERROR,
@@ -323,17 +300,10 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/*
 	 * Check that location isn't too long. Remember that we're going to append
-<<<<<<< HEAD
-	 * 'PG_XXX/<dboid>/<relid>.<nnn>'.  FYI, we never actually reference the
-	 * whole path, but mkdir() uses the first two parts.
-	 */
-	if (strlen(location) + 1 + strlen(tablespace_version_directory()) + 1 +
-=======
 	 * 'PG_XXX/<dboid>/<relid>.<nnn>'.	FYI, we never actually reference the
 	 * whole path, but mkdir() uses the first two parts.
 	 */
-	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	if (strlen(location) + 1 + strlen(tablespace_version_directory()) + 1 +
 		OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS > MAXPGPATH)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -629,23 +599,13 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 static void
 create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
-<<<<<<< HEAD
-	char *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
-	char *location_with_version_dir = palloc(strlen(location) + 1 +
+	char	   *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
+	char	   *location_with_version_dir = palloc(strlen(location) + 1 +
 										strlen(tablespace_version_directory()) + 1);
 
 	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
 	sprintf(location_with_version_dir, "%s/%s", location,
 										tablespace_version_directory());
-=======
-	char	   *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
-	char	   *location_with_version_dir = palloc(strlen(location) + 1 +
-								   strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
-
-	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
-	sprintf(location_with_version_dir, "%s/%s", location,
-			TABLESPACE_VERSION_DIRECTORY);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.	If this fails,
@@ -656,7 +616,6 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 		if (errno == ENOENT)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FILE),
-<<<<<<< HEAD
 					 errmsg("directory \"%s\" does not exist",
 							location)));
 		else
@@ -686,23 +645,8 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 	}
 
 	/*
-	 * The creation of the version directory prevents more than one
-	 * 	tablespace in a single location.
-=======
-					 errmsg("directory \"%s\" does not exist", location),
-					 InRecovery ? errhint("Create directory \"%s\" for this tablespace before "
-								   "restarting the server.", location) : 0));
-		else
-			ereport(ERROR,
-					(errcode_for_file_access(),
-				  errmsg("could not set permissions on directory \"%s\": %m",
-						 location)));
-	}
-
-	/*
 	 * The creation of the version directory prevents more than one tablespace
 	 * in a single location.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (mkdir(location_with_version_dir, S_IRWXU) < 0)
 	{
@@ -714,7 +658,6 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
-<<<<<<< HEAD
 				  errmsg("could not create directory \"%s\": %m",
 						 location_with_version_dir)));
 	}
@@ -728,13 +671,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
 	}
-	
-=======
-					 errmsg("could not create directory \"%s\": %m",
-							location_with_version_dir)));
-	}
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Create the symlink under PGDATA
 	 */
@@ -769,15 +706,9 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	struct stat st;
 
 	linkloc_with_version_dir = palloc(9 + 1 + OIDCHARS + 1 +
-<<<<<<< HEAD
 									strlen(tablespace_version_directory()));
 	sprintf(linkloc_with_version_dir, "pg_tblspc/%u/%s", tablespaceoid,
 									tablespace_version_directory());
-=======
-									  strlen(TABLESPACE_VERSION_DIRECTORY));
-	sprintf(linkloc_with_version_dir, "pg_tblspc/%u/%s", tablespaceoid,
-			TABLESPACE_VERSION_DIRECTORY);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir each
@@ -852,21 +783,12 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 				(errcode_for_file_access(),
 				 errmsg("could not remove directory \"%s\": %m",
 						linkloc_with_version_dir)));
-<<<<<<< HEAD
- 
-	/*
-	 * Try to remove the symlink.  We must however deal with the
-	 * possibility that it's a directory instead of a symlink --- this could
-	 * happen during WAL replay (see TablespaceCreateDbspace), and it is also
-	 * the case on Windows where junction points lstat() as directories.
-=======
 
 	/*
 	 * Try to remove the symlink.  We must however deal with the possibility
 	 * that it's a directory instead of a symlink --- this could happen during
 	 * WAL replay (see TablespaceCreateDbspace), and it is also the case on
 	 * Windows where junction points lstat() as directories.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
@@ -1671,13 +1593,6 @@ tblspc_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
 
-<<<<<<< HEAD
-		if (!destroy_tablespace_directories(xlrec->ts_id, true))
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("tablespace %u is not empty",
-							xlrec->ts_id)));
-=======
 		/*
 		 * If we issued a WAL record for a drop tablespace it is because there
 		 * were no files in it at all. That means that no permanent objects
@@ -1704,7 +1619,6 @@ tblspc_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 						 errmsg("tablespace %u is not empty",
 								xlrec->ts_id)));
 		}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 		elog(PANIC, "tblspc_redo: unknown op code %u", info);

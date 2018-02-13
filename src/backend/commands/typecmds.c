@@ -153,12 +153,8 @@ DefineType(List *names, List *parameters)
 	Oid			array_oid;
 	Oid			typoid;
 	Oid			resulttype;
-<<<<<<< HEAD
 	Datum		typoptions = 0;
 	List	   *encoding = NIL;
-	Relation	pg_type;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	ListCell   *pl;
 
 	/*
@@ -570,9 +566,7 @@ DefineType(List *names, List *parameters)
 					   NameListToString(analyzeName));
 #endif
 
-<<<<<<< HEAD
 	array_type = makeArrayTypeName(typeName, typeNamespace);
-	pg_type = heap_open(TypeRelationId, AccessShareLock);
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
@@ -580,37 +574,22 @@ DefineType(List *names, List *parameters)
 		array_oid = GetPreassignedOidForType(typeNamespace, array_type);
 
 		if (array_oid == InvalidOid && IsBinaryUpgrade)
-			array_oid = GetNewOid(pg_type);
+			array_oid = AssignTypeArrayOid();
 	}
 	else
-		array_oid = GetNewOid(pg_type);
-
-	heap_close(pg_type, AccessShareLock);
-=======
-	array_oid = AssignTypeArrayOid();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		array_oid = AssignTypeArrayOid();
 
 	/*
 	 * now have TypeCreate do all the real work.
 	 */
 	typoid =
-<<<<<<< HEAD
-		/*
-		 *	The pg_type.oid is stored in user tables as array elements
-		 *	(base types) in ArrayType and in composite types in
-		 *	DatumTupleFields.  This oid must be preserved by binary
-		 *	upgrades.
-		 */
-		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
-=======
 
 	/*
 	 * The pg_type.oid is stored in user tables as array elements (base types)
 	 * in ArrayType and in composite types in DatumTupleFields.  This oid must
 	 * be preserved by binary upgrades.
 	 */
-		TypeCreate(InvalidOid,	/* no predetermined type OID */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -1240,26 +1219,19 @@ DefineEnum(CreateEnumStmt *stmt)
 					 errmsg("type \"%s\" already exists", enumName)));
 	}
 
-<<<<<<< HEAD
 	enumArrayName = makeArrayTypeName(enumName, enumNamespace);
 
 	/* Preassign array type OID so we can insert it in pg_type.typarray */
-	pg_type = heap_open(TypeRelationId, AccessShareLock);
-
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
 		enumTypeOid = GetPreassignedOidForType(enumNamespace, enumName);
-		enumArrayOid = GetPreassignedOidForType(enumNamespace, enumArrayName);
+		enumArrayOid = AssignTypeArrayOid();
 	}
 	else
 	{
 		enumTypeOid = InvalidOid;
-		enumArrayOid = GetNewOid(pg_type);
+		enumArrayOid = AssignTypeArrayOid();
 	}
-	heap_close(pg_type, AccessShareLock);
-=======
-	enumArrayOid = AssignTypeArrayOid();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Create the pg_type entry */
 	enumTypeOid =

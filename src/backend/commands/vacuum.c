@@ -1973,10 +1973,9 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 		onerel = NULL;
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, false,
+		cluster_rel(relid, InvalidOid, false, true /* printError */,
 					(vacstmt->options & VACOPT_VERBOSE) != 0,
 					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
-		// FIXME: heldoff = full_vacuum_rel(onerel, vacstmt, updated_stats);
 	}
 	else
 		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, updated_stats);
