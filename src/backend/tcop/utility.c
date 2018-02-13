@@ -286,8 +286,6 @@ check_xact_readonly(Node *parsetree)
 	}
 }
 
-<<<<<<< HEAD
-=======
 /*
  * PreventCommandIfReadOnly: throw error if XactReadOnly
  *
@@ -324,7 +322,6 @@ PreventCommandDuringRecovery(const char *cmdname)
 						cmdname)));
 }
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * CheckRestrictedOperation: throw error for hazardous command if we're
  * inside a security restriction context.
@@ -451,7 +448,6 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_PREPARE:
-<<<<<<< HEAD
 						if (Gp_role == GP_ROLE_DISPATCH)
 						{
 							ereport(ERROR, (
@@ -460,9 +456,7 @@ standard_ProcessUtility(Node *parsetree,
 											));
 
 						}
-=======
 						PreventCommandDuringRecovery("PREPARE TRANSACTION");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 						if (!PrepareTransactionBlock(stmt->gid))
 						{
 							/* report unsuccessful commit in completionTag */
@@ -481,12 +475,8 @@ standard_ProcessUtility(Node *parsetree,
 
 						}
 						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
-<<<<<<< HEAD
-						FinishPreparedTransaction(stmt->gid, /* isCommit */ true, /* raiseErrorIfNotFound */ true);
-=======
 						PreventCommandDuringRecovery("COMMIT PREPARED");
-						FinishPreparedTransaction(stmt->gid, true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+						FinishPreparedTransaction(stmt->gid, /* isCommit */ true, /* raiseErrorIfNotFound */ true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
@@ -499,12 +489,8 @@ standard_ProcessUtility(Node *parsetree,
 
 						}
 						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
-<<<<<<< HEAD
-						FinishPreparedTransaction(stmt->gid, /* isCommit */ false, /* raiseErrorIfNotFound */ true);
-=======
 						PreventCommandDuringRecovery("ROLLBACK PREPARED");
-						FinishPreparedTransaction(stmt->gid, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+						FinishPreparedTransaction(stmt->gid, /* isCommit */ false, /* raiseErrorIfNotFound */ true);
 						break;
 
 					case TRANS_STMT_ROLLBACK:
@@ -680,7 +666,6 @@ standard_ProcessUtility(Node *parsetree,
 						 */
 						CommandCounterIncrement();
 
-<<<<<<< HEAD
 						DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
 
 						if (relKind != RELKIND_COMPOSITE_TYPE)
@@ -696,9 +681,7 @@ standard_ProcessUtility(Node *parsetree,
 												   true);
 
 							AlterTableCreateToastTable(relOid,
-													   InvalidOid,
 													   toast_options,
-													   false,
 													   cstmt->is_part_child);
 							AlterTableCreateAoSegTable(relOid,
 													   cstmt->is_part_child);
@@ -726,18 +709,6 @@ standard_ProcessUtility(Node *parsetree,
 						 * in the deferred statements cannot see the relfile.
 						 */
 						EvaluateDeferredStatements(cstmt->deferredStmts);
-=======
-						/* parse and validate reloptions for the toast table */
-						toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-															"toast",
-															validnsps,
-															true, false);
-						(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options,
-											   true);
-
-						AlterTableCreateToastTable(relOid, toast_options);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					}
 					else
 					{
@@ -1329,18 +1300,14 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (
 								errcode(ERRCODE_GP_COMMAND_ERROR),
 						 errmsg("Notify command cannot run in a function running on a segDB.")
 								));
 
-				Async_Notify(stmt->conditionname);
-=======
 				PreventCommandDuringRecovery("NOTIFY");
 				Async_Notify(stmt->conditionname, stmt->payload);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 			break;
 
@@ -1348,14 +1315,11 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR,(errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Listen command cannot run in a function running on a segDB.")));
 
-=======
 				PreventCommandDuringRecovery("LISTEN");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				CheckRestrictedOperation("LISTEN");
 				Async_Listen(stmt->conditionname);
 			}
@@ -1365,14 +1329,11 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-<<<<<<< HEAD
 				if (Gp_role == GP_ROLE_EXECUTE)
 					ereport(ERROR, (errcode(ERRCODE_GP_COMMAND_ERROR),
 							errmsg("Unlisten command cannot run in a function running on a segDB.")));
 
-=======
 				PreventCommandDuringRecovery("UNLISTEN");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				CheckRestrictedOperation("UNLISTEN");
 				if (stmt->conditionname)
 					Async_Unlisten(stmt->conditionname);
@@ -1441,12 +1402,11 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTrigStmt:
-<<<<<<< HEAD
 			{
 				Oid			trigOid;
 
 				trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-										InvalidOid, InvalidOid, NULL, true);
+										InvalidOid, InvalidOid, false);
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
 					((CreateTrigStmt *) parsetree)->trigOid = trigOid;
@@ -1458,10 +1418,6 @@ standard_ProcessUtility(Node *parsetree,
 												NULL);
 				}
 			}
-=======
-			(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-								 InvalidOid, InvalidOid, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			break;
 
 		case T_DropPropertyStmt:
@@ -1611,13 +1567,6 @@ standard_ProcessUtility(Node *parsetree,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser to do CHECKPOINT")));
 
-<<<<<<< HEAD
-			if (Gp_role == GP_ROLE_DISPATCH)
-			{
-				CdbDispatchCommand("CHECKPOINT", 0, NULL);
-			}
-			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
-=======
 			/*
 			 * You might think we should have a PreventCommandDuringRecovery()
 			 * here, but we interpret a CHECKPOINT command during recovery as
@@ -1625,9 +1574,12 @@ standard_ProcessUtility(Node *parsetree,
 			 * can be a useful way of reducing switchover time when using
 			 * various forms of replication.
 			 */
+			if (Gp_role == GP_ROLE_DISPATCH)
+			{
+				CdbDispatchCommand("CHECKPOINT", 0, NULL);
+			}
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
 							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			break;
 
 		case T_ReindexStmt:

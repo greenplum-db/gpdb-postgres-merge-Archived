@@ -44,10 +44,7 @@
 #include "postmaster/fts.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
-<<<<<<< HEAD
 #include "storage/backendid.h"
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -269,7 +266,6 @@ PerformAuthentication(Port *port)
 	if (!disable_sig_alarm(true))
 		elog(FATAL, "could not disable timer for authorization timeout");
 
-<<<<<<< HEAD
 	if (Log_connections)
 	{
 		if (am_walsender)
@@ -281,30 +277,6 @@ PerformAuthentication(Port *port)
 					(errmsg("connection authorized: user=%s database=%s",
 							port->user_name, port->database_name)));
 	}
-=======
-	/*
-	 * Log connection for streaming replication even if Log_connections
-	 * disabled.
-	 */
-	if (am_walsender)
-	{
-		if (port->remote_port[0])
-			ereport(LOG,
-					(errmsg("replication connection authorized: user=%s host=%s port=%s",
-							port->user_name,
-							port->remote_host,
-							port->remote_port)));
-		else
-			ereport(LOG,
-				(errmsg("replication connection authorized: user=%s host=%s",
-						port->user_name,
-						port->remote_host)));
-	}
-	else if (Log_connections)
-		ereport(LOG,
-				(errmsg("connection authorized: user=%s database=%s",
-						port->user_name, port->database_name)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	set_ps_display("startup", false);
 
@@ -459,15 +431,9 @@ InitCommunication(void)
 /*
  * pg_split_opts -- split a string of options and append it to an argv array
  *
-<<<<<<< HEAD
- * The caller is responsible for ensuring the argv array is large enough.  The
- * maximum possible number of arguments added by this routine is
- * (strlen(optstr) + 1) / 2.
-=======
  * NB: the input string is destructively modified!	Also, caller is responsible
  * for ensuring the argv array is large enough.  The maximum possible number
  * of arguments added by this routine is (strlen(optstr) + 1) / 2.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * Because some option values can contain spaces we allow escaping using
  * backslashes, with \\ representing a literal backslash.
@@ -633,18 +599,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	InitBufferPoolBackend();
 
 	/*
-<<<<<<< HEAD
-	 * Initialize local process's access to XLOG.  In bootstrap case we may
-	 * skip this since StartupXLOG() was run instead.
-	 *
-	 * Skip this step if we are responding to a FTS message on mirror. Mirror
-	 * operates in standby mode and doesn't need xlog access, as its only
-	 * invoked to check if we are acting as mirror and if yes send promote
-	 * signal.
-	 */
-	if (!bootstrap && !(am_ftshandler && am_mirror))
-		InitXLOGAccess();
-=======
 	 * Initialize local process's access to XLOG.
 	 */
 	if (IsUnderPostmaster)
@@ -667,7 +621,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		StartupXLOG();
 		on_shmem_exit(ShutdownXLOG, 0);
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Initialize the relation cache and the system catalog caches.  Note that
@@ -710,22 +663,15 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/*
 	 * Start a new transaction here before first access to db, and get a
 	 * snapshot.  We don't have a use for the snapshot itself, but we're
-<<<<<<< HEAD
-	 * interested in the secondary effect that it sets RecentGlobalXmin.
-	 * (This is critical for anything that reads heap pages, because HOT
-	 * may decide to prune them even if the process doesn't attempt to
-	 * modify any tuples.)
+	 * interested in the secondary effect that it sets RecentGlobalXmin. (This
+	 * is critical for anything that reads heap pages, because HOT may decide
+	 * to prune them even if the process doesn't attempt to modify any
+	 * tuples.)
 	 *
 	 * Skip these steps if we are responding to a FTS message on mirror.
 	 * Mirror operates in standby mode and is not ready to start a
 	 * transaction or create a snapshot.  Neither are they required to
 	 * respond to a FTS message.
-=======
-	 * interested in the secondary effect that it sets RecentGlobalXmin. (This
-	 * is critical for anything that reads heap pages, because HOT may decide
-	 * to prune them even if the process doesn't attempt to modify any
-	 * tuples.)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (!bootstrap && !(am_ftshandler && am_mirror))
 	{
@@ -734,18 +680,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Figure out our postgres user id, and see if we are a superuser.
-	 *
-	 * In standalone mode and in the autovacuum process, we use a fixed id,
-	 * otherwise we figure it out from the authenticated user name.
-=======
 	 * Perform client authentication if necessary, then figure out our
 	 * postgres user ID, and see if we are a superuser.
 	 *
 	 * In standalone mode and in autovacuum worker processes, we use a fixed
 	 * ID, otherwise we figure it out from the authenticated user name.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (bootstrap || IsAutoVacuumWorkerProcess())
 	{
@@ -760,8 +699,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("no roles are defined in this database system"),
-<<<<<<< HEAD
-					 errhint("You should immediately run CREATE USER \"%s\" CREATEUSER;.",
+					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username)));
 	}
 	else if (am_ftshandler && am_mirror)
@@ -775,11 +713,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		InitializeSessionUserIdStandalone();
 		am_superuser = true;
 	}
-=======
-					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
-							 username)));
-	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	else
 	{
 		/* normal multiuser case */
@@ -787,35 +720,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		PerformAuthentication(MyProcPort);
 		InitializeSessionUserId(username);
 		am_superuser = superuser();
-<<<<<<< HEAD
 		BackendCancelInit(MyBackendId);
-	}
-
-	/*
-	 * Binary upgrades only allowed super-user connections
-	 */
-	if (IsBinaryUpgrade && !am_superuser)
-	{
-		ereport(FATAL,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to connect in binary upgrade mode")));
-	}
-
-	/*
-	 * If we're trying to shut down, only superusers can connect.
-	 */
-	if (!am_superuser &&
-		MyProcPort != NULL &&
-		MyProcPort->canAcceptConnections == CAC_WAITBACKUP)
-		ereport(FATAL,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to connect during database shutdown")));
-
-	/*
-	 * Check a normal user hasn't connected to a superuser reserved slot.
-	 */
-	if (!am_superuser &&
-=======
 	}
 
 	/*
@@ -837,19 +742,27 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
+	 * Binary upgrades only allowed super-user connections
+	 */
+	if (IsBinaryUpgrade && !am_superuser)
+	{
+		ereport(FATAL,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to connect in binary upgrade mode")));
+	}
+
+	/*
 	 * The last few connections slots are reserved for superusers. Although
 	 * replication connections currently require superuser privileges, we
 	 * don't allow them to consume the reserved slots, which are intended for
 	 * interactive use.
 	 */
 	if ((!am_superuser || am_walsender) &&
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		ReservedBackends > 0 &&
 		!HaveNFreeProcs(ReservedBackends))
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-<<<<<<< HEAD
-				 errmsg("connection limit exceeded for non-superusers"),
+				 errmsg("remaining connection slots are reserved for non-replication superuser connections"),
 				 errSendAlert(true)));
 
 	if (am_superuser)
@@ -890,26 +803,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		if (!(am_ftshandler && am_mirror))
 			CommitTransactionCommand();
 
-=======
-				 errmsg("remaining connection slots are reserved for non-replication superuser connections")));
-
-	/*
-	 * If walsender, we're done here --- we don't want to connect to any
-	 * particular database.
-	 */
-	if (am_walsender)
-	{
-		Assert(!bootstrap);
-		/* must have authenticated as a superuser */
-		if (!am_superuser)
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to start walsender")));
-		/* report this backend in the PgBackendStatus array */
-		pgstat_bestart();
-		/* close the transaction we started above */
-		CommitTransactionCommand();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		return;
 	}
 
@@ -1056,13 +949,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		CheckMyDatabase(dbname, am_superuser);
 
 	/*
-<<<<<<< HEAD
-	 * Now process any command-line switches and any additional GUC variable
-	 * settings passed in the startup packet.	We couldn't do this before
-=======
 	 * Now process any command-line switches that were included in the startup
 	 * packet, if we are in a regular backend.	We couldn't do this before
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * because we didn't know if client is a superuser.
 	 */
 	if (MyProcPort != NULL)

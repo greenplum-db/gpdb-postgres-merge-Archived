@@ -23,24 +23,8 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
 #include "utils/tqual.h"
 #include "access/transam.h"
-=======
-
-
-/*
- * Is there a rule by the given name?
- */
-bool
-IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
-{
-	return SearchSysCacheExists2(RULERELNAME,
-								 ObjectIdGetDatum(owningRel),
-								 PointerGetDatum(ruleName));
-}
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * SetRelationRuleStatus

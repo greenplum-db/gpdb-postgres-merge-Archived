@@ -637,11 +637,6 @@ prepare_for_client_read(void)
 		ImmediateInterruptOK = true;
 
 		/* And don't forget to detect one that already arrived */
-<<<<<<< HEAD
-		QueryCancelPending = false;
-		QueryFinishPending = false;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		CHECK_FOR_INTERRUPTS();
 	}
 	else
@@ -667,11 +662,6 @@ client_read_ended(void)
 	if (DoingCommandRead)
 	{
 		ImmediateInterruptOK = false;
-<<<<<<< HEAD
-		QueryCancelPending = false;		/* forget any CANCEL signal */
-		QueryFinishPending = false;		/* forget any FINISH signal too */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
@@ -3435,7 +3425,6 @@ drop_unnamed_stmt(void)
 void
 quickdie(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
 	SIMPLE_FAULT_INJECTOR(QuickDie);
 	quickdie_impl();
 }
@@ -3446,8 +3435,6 @@ quickdie(SIGNAL_ARGS)
 void
 quickdie_impl()
 {
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	sigaddset(&BlockSig, SIGQUIT);		/* prevent nested calls */
 	PG_SETMASK(&BlockSig);
 
@@ -3785,7 +3772,7 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			InterruptHoldoffCount--;
-			ProcessInterrupts();
+			ProcessInterrupts(__FILE__, __LINE__);
 		}
 	}
 
@@ -3825,11 +3812,8 @@ ProcessInterrupts(const char* filename, int lineno)
 		if (IsAutoVacuumWorkerProcess())
 			ereport(FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
-<<<<<<< HEAD
 					 errmsg("terminating autovacuum process due to administrator command"),
 					 errSendAlert(false)));
-=======
-					 errmsg("terminating autovacuum process due to administrator command")));
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
 			ereport(FATAL,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
@@ -3840,7 +3824,6 @@ ProcessInterrupts(const char* filename, int lineno)
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 			  errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict()));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		else
 		{
 			if (HasCancelMessage())
@@ -3879,8 +3862,6 @@ ProcessInterrupts(const char* filename, int lineno)
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
 
 		QueryCancelPending = false;
-<<<<<<< HEAD
-=======
 		if (ClientAuthInProgress)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
@@ -3930,7 +3911,6 @@ ProcessInterrupts(const char* filename, int lineno)
 				 errmsg("canceling statement due to conflict with recovery"),
 						 errdetail_recovery_conflict()));
 		}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * If we are reading a command from the client, just ignore the cancel
@@ -3939,29 +3919,14 @@ ProcessInterrupts(const char* filename, int lineno)
 		 */
 		if (!DoingCommandRead)
 		{
-<<<<<<< HEAD
-			ImmediateInterruptOK = false;	/* not idle anymore */
+			ImmediateInterruptOK = false;		/* not idle anymore */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
+
 			if (Gp_role == GP_ROLE_EXECUTE)
 				ereport(ERROR,
 						(errcode(ERRCODE_GP_OPERATION_CANCELED),
 						 errmsg("canceling MPP operation")));
-			/* As in quickdie, don't risk sending to client during auth */
-			if (ClientAuthInProgress && whereToSendOutput == DestRemote)
-				whereToSendOutput = DestNone;
-			if (ClientAuthInProgress)
-				ereport(ERROR,
-						(errcode(ERRCODE_QUERY_CANCELED),
-						 errmsg("canceling authentication due to timeout")));
-			else if (cancel_from_timeout)
-				ereport(ERROR,
-						(errcode(ERRCODE_QUERY_CANCELED),
-						 errmsg("canceling statement due to statement timeout")));
-			else if (IsAutoVacuumWorkerProcess())
-				ereport(ERROR,
-						(errcode(ERRCODE_QUERY_CANCELED),
-						 errmsg("canceling autovacuum task")));
 			else if (HasCancelMessage())
 			{
 				char   *buffer = palloc0(MAX_CANCEL_MSG);
@@ -3976,14 +3941,6 @@ ProcessInterrupts(const char* filename, int lineno)
 				ereport(ERROR,
 						(errcode(ERRCODE_QUERY_CANCELED),
 						 errmsg("canceling statement due to user request")));
-=======
-			ImmediateInterruptOK = false;		/* not idle anymore */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
-					 errmsg("canceling statement due to user request")));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
@@ -4572,22 +4529,13 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 		if (IsUnderPostmaster)
 		ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 					 errmsg("invalid command-line argument for server process: %s", argv[optind]),
-=======
-				 errmsg("invalid command-line arguments for server process"),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			  errhint("Try \"%s --help\" for more information.", progname)));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-<<<<<<< HEAD
 					 errmsg("%s: invalid command-line argument: %s",
 							progname, argv[optind]),
-=======
-					 errmsg("%s: invalid command-line arguments",
-							progname),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			  errhint("Try \"%s --help\" for more information.", progname)));
 	}
 
@@ -4772,28 +4720,13 @@ PostgresMain(int argc, char *argv[],
 		WalSndSignals();
 	else
 	{
-<<<<<<< HEAD
-		pqsignal(SIGHUP, SigHupHandler); /* set flag to read config file */
-		pqsignal(SIGINT, StatementCancelHandler); /* cancel current query */
-=======
 		pqsignal(SIGHUP, SigHupHandler);		/* set flag to read config
 												 * file */
 		pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		pqsignal(SIGTERM, die); /* cancel current query and exit */
 
 		/*
 		 * In a standalone backend, SIGQUIT can be generated from the keyboard
-<<<<<<< HEAD
-		 * easily, while SIGTERM cannot, so we make both signals do die() rather
-		 * than quickdie().
-		 */
-		if (IsUnderPostmaster)
-			pqsignal(SIGQUIT, quickdie); /* hard crash time */
-		else
-			pqsignal(SIGQUIT, die); /* cancel current query and exit */
-		pqsignal(SIGALRM, handle_sig_alarm); /* timeout conditions */
-=======
 		 * easily, while SIGTERM cannot, so we make both signals do die()
 		 * rather than quickdie().
 		 */
@@ -4802,18 +4735,12 @@ PostgresMain(int argc, char *argv[],
 		else
 			pqsignal(SIGQUIT, die);		/* cancel current query and exit */
 		pqsignal(SIGALRM, handle_sig_alarm);	/* timeout conditions */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * Ignore failure to write to frontend. Note: if frontend closes
 		 * connection, we will notice it and exit cleanly when control next
-<<<<<<< HEAD
-		 * returns to outer loop.  This seems safer than forcing exit in the midst
-		 * of output during who-knows-what operation...
-=======
 		 * returns to outer loop.  This seems safer than forcing exit in the
 		 * midst of output during who-knows-what operation...
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		pqsignal(SIGPIPE, SIG_IGN);
 		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
@@ -4821,11 +4748,11 @@ PostgresMain(int argc, char *argv[],
 		pqsignal(SIGFPE, FloatExceptionHandler);
 
 		/*
-<<<<<<< HEAD
-		 * Reset some signals that are accepted by postmaster but not by backend
+		 * Reset some signals that are accepted by postmaster but not by
+		 * backend
 		 */
-		pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some platforms */
-
+		pqsignal(SIGCHLD, SIG_DFL);		/* system() requires this on some
+										 * platforms */
 #ifndef _WIN32
 #ifdef SIGILL
 		pqsignal(SIGILL, CdbProgramErrorHandler);
@@ -4837,13 +4764,6 @@ PostgresMain(int argc, char *argv[],
 		pqsignal(SIGBUS, CdbProgramErrorHandler);
 #endif
 #endif
-=======
-		 * Reset some signals that are accepted by postmaster but not by
-		 * backend
-		 */
-		pqsignal(SIGCHLD, SIG_DFL);		/* system() requires this on some
-										 * platforms */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	pqinitmask();
@@ -4856,13 +4776,7 @@ PostgresMain(int argc, char *argv[],
 
 	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
 
-<<<<<<< HEAD
-	if (IsUnderPostmaster)
-		BaseInit();
-	else
-=======
 	if (!IsUnderPostmaster)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		/*
 		 * Validate we have been given a reasonable-looking DataDir (if under
@@ -4952,12 +4866,8 @@ PostgresMain(int argc, char *argv[],
 
 	/* If this is a WAL sender process, we're done with initialization. */
 	if (am_walsender)
-<<<<<<< HEAD
 		InitWalSender();
-=======
-		proc_exit(WalSenderMain());
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * process any libraries that should be preloaded at backend start (this
 	 * likewise can't be done until GUC settings are complete)

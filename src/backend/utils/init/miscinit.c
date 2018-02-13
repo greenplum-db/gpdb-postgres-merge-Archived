@@ -513,17 +513,12 @@ InitializeSessionUserId(const char *rolename)
 void
 InitializeSessionUserIdStandalone(void)
 {
-<<<<<<< HEAD
-	/* This function should only be called in a single-user backend. */
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || am_startup
-				|| (am_ftshandler && am_mirror));
-=======
 	/*
 	 * This function should only be called in single-user mode and in
 	 * autovacuum workers.
 	 */
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess());
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || am_startup
+				|| (am_ftshandler && am_mirror));
 
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));

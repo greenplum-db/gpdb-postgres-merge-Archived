@@ -166,13 +166,7 @@ tsquerysel(VariableStatData *vardata, Datum constval)
 		/* MCELEM will be an array of TEXT elements for a tsvector column */
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_MCELEM, InvalidOid,
-<<<<<<< HEAD
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
-=======
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{
 			/*
 			 * There is a most-common-elements slot for the tsvector Var, so

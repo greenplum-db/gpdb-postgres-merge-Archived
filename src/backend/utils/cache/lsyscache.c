@@ -3,13 +3,9 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -907,7 +903,6 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
 	HeapTuple	tp;
 	Form_pg_attribute att_tup;
 
-<<<<<<< HEAD
     /* CDB: Get type for sysattr even if relid is no good (e.g. SubqueryScan) */
     if (attnum < 0 &&
         attnum > FirstLowInvalidHeapAttributeNumber)
@@ -918,15 +913,9 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
         return;
     }
 
-	tp = SearchSysCache(ATTNUM,
-						ObjectIdGetDatum(relid),
-						Int16GetDatum(attnum),
-						0, 0);
-=======
 	tp = SearchSysCache2(ATTNUM,
 						 ObjectIdGetDatum(relid),
 						 Int16GetDatum(attnum));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
@@ -2835,15 +2824,8 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typIOParam)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
-<<<<<<< HEAD
-		
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-=======
 
 	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
@@ -2875,15 +2857,8 @@ getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
-<<<<<<< HEAD
-		
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-=======
 
 	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
@@ -3081,13 +3056,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * statstuple: pg_statistic tuple to be examined.
  * reqkind: STAKIND code for desired statistics slot kind.
  * reqop: STAOP value wanted, or InvalidOid if don't care.
-<<<<<<< HEAD
  * flags: bitmask of ATTSTATSSLOT_VALUES and/or ATTSTATSSLOT_NUMBERS.
-=======
- * actualop: if not NULL, *actualop receives the actual STAOP value.
- * values, nvalues: if not NULL, the slot's stavalues are extracted.
- * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * If a matching slot is found, TRUE is returned, and *sslot is filled thus:
  * staop: receives the actual STAOP value.
@@ -3111,17 +3080,8 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * not have been called, memset'ing sslot to zeroes will allow that.
  */
 bool
-<<<<<<< HEAD
 get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 				 int reqkind, Oid reqop, int flags)
-=======
-get_attstatsslot(HeapTuple statstuple,
-				 Oid atttype, int32 atttypmod,
-				 int reqkind, Oid reqop,
-				 Oid *actualop,
-				 Datum **values, int *nvalues,
-				 float4 **numbers, int *nnumbers)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	Form_pg_statistic stats = (Form_pg_statistic) GETSTRUCT(statstuple);
 	int			i;
@@ -3145,40 +3105,15 @@ get_attstatsslot(HeapTuple statstuple,
 	if (i >= STATISTIC_NUM_SLOTS)
 		return false;			/* not there */
 
-<<<<<<< HEAD
 	sslot->staop = (&stats->staop1)[i];
 
 	if (flags & ATTSTATSSLOT_VALUES)
-=======
-	if (actualop)
-		*actualop = (&stats->staop1)[i];
-
-	if (values)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		val = SysCacheGetAttr(STATRELATTINH, statstuple,
 							  Anum_pg_statistic_stavalues1 + i,
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "stavalues is null");
-<<<<<<< HEAD
-=======
-		statarray = DatumGetArrayTypeP(val);
-
-		/* Need to get info about the array element type */
-		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(atttype));
-		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "cache lookup failed for type %u", atttype);
-		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
-
-		/* Deconstruct array into Datum elements; NULLs not expected */
-		deconstruct_array(statarray,
-						  atttype,
-						  typeForm->typlen,
-						  typeForm->typbyval,
-						  typeForm->typalign,
-						  values, NULL, nvalues);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * Detoast the array if needed, and in any case make a copy that's
@@ -3300,9 +3235,10 @@ free_attstatsslot(AttStatsSlot *sslot)
 HeapTuple
 get_att_stats(Oid relid, AttrNumber attrnum)
 {
-	return SearchSysCacheCopy2(STATRELATT,
+	return SearchSysCacheCopy3(STATRELATTINH,
 							   ObjectIdGetDatum(relid),
-							   Int16GetDatum(attrnum));
+							   Int16GetDatum(attrnum),
+							   BoolGetDatum(false));
 }
 
 /*				---------- PG_NAMESPACE CACHE ----------				 */
@@ -4048,8 +3984,8 @@ bool
 has_parquet_children(Oid relationId)
 {
 	Assert(InvalidOid != relationId);
-	List *child_oids = find_all_inheritors(relationId, NoLock);
-	ListCell *lc = NULL;
+	List *child_oids = find_all_inheritors(relationId, NoLock, NULL);
+	ListCell *lc;
 	
 	foreach (lc, child_oids)
 	{
@@ -4108,8 +4044,8 @@ child_distribution_mismatch(Relation rel)
 		return false;
 	}
 
-	List *child_oids = find_all_inheritors(rel->rd_id, NoLock);
-	ListCell *lc = NULL;
+	List *child_oids = find_all_inheritors(rel->rd_id, NoLock, NULL);
+	ListCell *lc;
 
 	foreach (lc, child_oids)
 	{
@@ -4149,8 +4085,8 @@ child_triggers(Oid relationId, int32 triggerType)
 		return false;
 	}
 
-	List *childOids = find_all_inheritors(relationId, NoLock);
-	ListCell *lc = NULL;
+	List *childOids = find_all_inheritors(relationId, NoLock, NULL);
+	ListCell *lc;
 
 	bool found = false;
 	foreach (lc, childOids)

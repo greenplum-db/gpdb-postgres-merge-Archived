@@ -269,7 +269,6 @@ VACUUM can reclaim the page for re-use when this transaction number is
 older than RecentGlobalXmin.  As collateral damage, this implementation
 also waits for running XIDs with no snapshots and for snapshots taken
 until the next transaction to allocate an XID commits.
-(NOTE: VACUUM FULL can reclaim such pages immediately.)
 
 Reclaiming a page doesn't actually change its state on disk --- we simply
 record it in the shared-memory free space map, from which it will be

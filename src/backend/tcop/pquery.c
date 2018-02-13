@@ -3,13 +3,9 @@
  * pquery.c
  *	  POSTGRES process query command code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -324,11 +320,7 @@ ProcessQuery(Portal portal,
 		{
 			case CMD_SELECT:
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-<<<<<<< HEAD
 						 "SELECT " UINT64_FORMAT "", queryDesc->es_processed);
-=======
-						 "SELECT %u", queryDesc->estate->es_processed);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				break;
 			case CMD_INSERT:
 				if (queryDesc->es_processed == 1)
@@ -911,12 +903,8 @@ PortalRun(Portal portal, int64 count, bool isTopLevel,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
-<<<<<<< HEAD
 	bool		result = false;
-=======
-	bool		result;
 	uint32		nprocessed;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	ResourceOwner saveTopTransactionResourceOwner;
 	MemoryContext saveTopTransactionContext;
 	Portal		saveActivePortal;
