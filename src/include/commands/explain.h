@@ -37,17 +37,13 @@ typedef struct ExplainState
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
 	int			indent;			/* current indentation level */
-<<<<<<< HEAD
-	List	   *grouping_stack;	/* format-specific grouping state */
+	List	   *grouping_stack; /* format-specific grouping state */
 
     /* CDB */
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
 
 	Plan	   *parentPlan;
-=======
-	List	   *grouping_stack; /* format-specific grouping state */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */

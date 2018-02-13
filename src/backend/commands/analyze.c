@@ -44,11 +44,8 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
-<<<<<<< HEAD
-#include "utils/builtins.h"
-=======
 #include "utils/attoptcache.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -131,9 +128,11 @@ static double random_fract(void);
 static double init_selection_state(int n);
 static double get_next_S(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
+#if 0
 static int acquire_inherited_sample_rows(Relation onerel,
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows);
+#endif
 static void update_attstats(Oid relid, bool inh,
 				int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
@@ -185,30 +184,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
-<<<<<<< HEAD
-	int			attr_cnt,
-				tcnt,
-				i,
-				ind;
-	Relation   *Irel;
-	int			nindexes;
-	bool		hasindex;
-	VacAttrStats **vacattrstats;
-	AnlIndexData *indexdata;
-	int			targrows,
-				numrows;
-	double		totalrows,
-				totaldeadrows;
-	BlockNumber	totalpages;
-	HeapTuple  *rows;
-	PGRUsage	ru0;
-	TimestampTz starttime = 0;
-	Oid			save_userid;
-	int			save_sec_context;
-	int			save_nestlevel;
-	RowIndexes	**colLargeRowIndexes;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Set up static variables */
 	if (vacstmt->options & VACOPT_VERBOSE)
@@ -306,7 +281,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, update_reltuples, false);
+	do_analyze_rel(onerel, vacstmt, false, false);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -345,13 +320,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	Relation   *Irel;
 	int			nindexes;
 	bool		hasindex;
-	bool		analyzableindex;
 	VacAttrStats **vacattrstats;
 	AnlIndexData *indexdata;
 	int			targrows,
 				numrows;
 	double		totalrows,
 				totaldeadrows;
+	BlockNumber	totalpages;
 	HeapTuple  *rows;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
@@ -359,6 +334,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	RowIndexes	**colLargeRowIndexes;
 
 	if (inh)
 		ereport(elevel,
@@ -544,20 +520,17 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	/*
 	 * Acquire the sample rows
 	 */
-<<<<<<< HEAD
-	numrows = acquire_sample_rows_by_query(onerel, attr_cnt, vacattrstats, &rows, targrows,
-										   &totalrows, &totaldeadrows, &totalpages,
-										   (vacstmt->options & VACOPT_ROOTONLY) != 0,
-										   colLargeRowIndexes);
-=======
-	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
+	// GPDB_90_MERGE_FIXME: Need to implement 'acuire_inherited_sample_rows_by_query'
+#if 0
 	if (inh)
 		numrows = acquire_inherited_sample_rows(onerel, rows, targrows,
 												&totalrows, &totaldeadrows);
 	else
-		numrows = acquire_sample_rows(onerel, rows, targrows,
-									  &totalrows, &totaldeadrows);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#endif
+		numrows = acquire_sample_rows_by_query(onerel, attr_cnt, vacattrstats, &rows, targrows,
+											   &totalrows, &totaldeadrows, &totalpages,
+											   (vacstmt->options & VACOPT_ROOTONLY) != 0,
+											   colLargeRowIndexes);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations for
@@ -581,7 +554,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
-<<<<<<< HEAD
 			RowIndexes *rowIndexes = colLargeRowIndexes[i];
 			int validRowsLength = numrows - rowIndexes->toowide_cnt;
 
@@ -606,10 +578,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 				stats->rows = rows;
 				validRowsLength = numrows;
 			}
-=======
 			AttributeOpts *aopt =
 			get_attribute_options(onerel->rd_id, stats->attr->attnum);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			stats->tupDesc = onerel->rd_att;
 
@@ -680,21 +650,15 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Update pages/tuples stats in pg_class, but not if we're inside a VACUUM
-	 * that got a more precise number.
+	 * Update pages/tuples stats in pg_class ... but not if we're doing
+	 * inherited stats.
 	 */
-<<<<<<< HEAD
-	vac_update_relstats(onerel,
-						totalpages,
-						totalrows, hasindex, InvalidTransactionId);
-	/* report results to the stats collector, too */
-	pgstat_report_analyze(onerel, totalrows, totaldeadrows);
-=======
-	if (update_reltuples)
+	if (!inh)
 		vac_update_relstats(onerel,
-							RelationGetNumberOfBlocks(onerel),
-							totalrows, hasindex, InvalidTransactionId);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+							totalpages,
+							totalrows,
+							hasindex,
+							InvalidTransactionId);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -739,7 +703,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		}
 	}
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
 	{
@@ -749,25 +712,20 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			asubtype = "AUTO";
 
 		MetaTrackUpdObject(RelationRelationId,
-						   relid,
+						   RelationGetRelid(onerel),
 						   GetUserId(),
 						   "ANALYZE",
 						   asubtype
 			);
 	}
-=======
+
 	/*
-	 * Report ANALYZE to the stats collector, too; likewise, tell it to adopt
-	 * these numbers only if we're not inside a VACUUM that got a better
-	 * number.	However, a call with inh = true shouldn't reset the stats.
+	 * Report ANALYZE to the stats collector, too.  However, if doing
+	 * inherited stats we shouldn't report, because the stats collector only
+	 * tracks per-table stats.
 	 */
 	if (!inh)
-		pgstat_report_analyze(onerel, update_reltuples,
-							  totalrows, totaldeadrows);
-
-	/* We skip to here if there were no analyzable columns */
-cleanup:
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!(vacstmt->options & VACOPT_VACUUM))
@@ -1027,13 +985,7 @@ examine_attribute(Relation onerel, int attnum)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-<<<<<<< HEAD
-	typtuple = SearchSysCacheCopy(TYPEOID,
-							  ObjectIdGetDatum(attr->atttypid),
-							  0, 0, 0);
-=======
 	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
@@ -1195,15 +1147,12 @@ BlockSampler_Next(BlockSampler bs)
  * unbiased estimates of the average numbers of live and dead rows per
  * block.  The previous sampling method put too much credence in the row
  * density near the start of the table.
-<<<<<<< HEAD
  *
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
  *
  * GPDB: Not used in Greenplum currently. Instead, we acquire the sample
  * rows by issuing an SPI query, see acquire_sample_rows_by_query
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static int pg_attribute_unused()
 acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
@@ -1579,7 +1528,6 @@ compare_rows(const void *a, const void *b)
 }
 
 
-
 /*
  * This performs the same job as acquire_sample_rows() in PostgreSQL, but
  * uses an SQL query to get the rows instead of a low-level block sampler.
@@ -1831,7 +1779,6 @@ acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrsta
 	return sampleTuples;
 }
 
-
 /**
  * This method estimates reltuples/relpages for a relation. To do this, it employs
  * the built-in function 'gp_statistics_estimate_reltuples_relpages'. If the table to be
@@ -1989,6 +1936,11 @@ analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPa
 }
 
 /*
+ * GPDB: Not used in Greenplum currently. Instead, we acquire the sample
+ * rows by issuing an SPI query, see acquire_sample_rows_by_query
+ */
+#if 0
+/*
  * acquire_inherited_sample_rows -- acquire sample rows from inheritance tree
  *
  * This has the same API as acquire_sample_rows, except that rows are
@@ -2136,7 +2088,7 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 
 	return numrows;
 }
-
+#endif
 
 /*
  *	update_attstats() -- update attribute statistics for one relation

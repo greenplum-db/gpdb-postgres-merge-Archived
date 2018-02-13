@@ -125,11 +125,8 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
-<<<<<<< HEAD
-#include "storage/proc.h"
-=======
 #include "storage/lmgr.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+#include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
@@ -1879,8 +1876,7 @@ asyncQueueReadAllNotifications(void)
 			 * possibly transmitting them to our frontend.	Copy only the part
 			 * of the page we will actually inspect.
 			 */
-			slotno = SimpleLruReadPage_ReadOnly(AsyncCtl, curpage,
-												InvalidTransactionId);
+			slotno = SimpleLruReadPage_ReadOnly(AsyncCtl, curpage, true, InvalidTransactionId);
 			if (curpage == QUEUE_POS_PAGE(head))
 			{
 				/* we only want to read as far as head */

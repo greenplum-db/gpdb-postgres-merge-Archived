@@ -229,7 +229,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (RelationIsAoRows(onerel) || RelationIsAoCols(onerel))
 	{
 		lazy_vacuum_aorel(onerel, vacstmt, updated_stats);
-		return false;
+		return;
 	}
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
@@ -282,8 +282,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
-<<<<<<< HEAD
-						 (vacstmt->options & VACOPT_ANALYZE) != 0,
 						 vacrelstats->new_rel_tuples);
 
 	if (gp_indexcheck_vacuum == INDEX_CHECK_ALL ||
@@ -298,10 +296,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				_bt_validate_vacuum(Irel[i], onerel, OldestXmin);
 		}
 	}
-=======
-						 vacrelstats->scanned_all,
-						 vacrelstats->rel_tuples);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -324,9 +318,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							vacrelstats->new_rel_tuples,
 							pg_rusage_show(&ru0))));
 	}
-
-<<<<<<< HEAD
-	return heldoff;
 }
 
 /*
@@ -416,12 +407,8 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 		/* report results to the stats collector, too */
 		pgstat_report_vacuum(RelationGetRelid(onerel),
 							 onerel->rd_rel->relisshared,
-							 (vacstmt->options & VACOPT_ANALYZE),
 							 vacrelstats->new_rel_tuples);
 	}
-=======
-	if (scanned_all)
-		*scanned_all = vacrelstats->scanned_all;
 }
 
 /*
@@ -455,7 +442,6 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 	 */
 	if (TransactionIdIsValid(vacrelstats->latestRemovedXid))
 		(void) log_heap_cleanup_info(rel->rd_node, vacrelstats->latestRemovedXid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -884,18 +870,13 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			/* Remove tuples from heap */
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
-<<<<<<< HEAD
 			has_dead_tuples = false;
-
-			/* Forget the now-vacuumed tuples, and press on */
-=======
 
 			/*
 			 * Forget the now-vacuumed tuples, and press on, but be careful
 			 * not to reset latestRemovedXid since we want that value to be
 			 * valid.
 			 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			vacrelstats->num_dead_tuples = 0;
 			vacuumed_pages++;
 		}

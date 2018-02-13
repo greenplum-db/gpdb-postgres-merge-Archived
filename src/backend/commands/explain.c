@@ -3,13 +3,9 @@
  * explain.c
  *	  Explain query execution plans
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
@@ -26,12 +22,9 @@
 #include "commands/explain.h"
 #include "commands/prepare.h"
 #include "commands/trigger.h"
-<<<<<<< HEAD
 #include "commands/queue.h"
 #include "executor/execUtils.h"
-=======
 #include "executor/hashjoin.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "executor/instrument.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planner.h"

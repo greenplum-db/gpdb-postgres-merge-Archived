@@ -5045,7 +5045,7 @@ PROCESS_SEGMENT_DATA:
 					}
 
 					if (resultRelInfo->ri_NumIndices > 0)
-						recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid, estate, false);
+						recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid, estate);
 
 					/* AFTER ROW INSERT Triggers */
 					if (resultRelInfo->ri_TrigDesc &&
@@ -5057,6 +5057,8 @@ PROCESS_SEGMENT_DATA:
 						ExecARInsertTriggers(estate, resultRelInfo, tuple,
 											 recheckIndexes);
 					}
+
+					list_free(recheckIndexes);
 
 					/*
 					 * We count only tuples not suppressed by a BEFORE INSERT trigger;
@@ -5101,7 +5103,6 @@ PROCESS_SEGMENT_DATA:
 		}
 		else
 		{
-<<<<<<< HEAD
 			struct stat st;
 			char *filename = cstate->filename;
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_R);
@@ -5111,9 +5112,6 @@ PROCESS_SEGMENT_DATA:
 						(errcode_for_file_access(),
 						errmsg("could not open file \"%s\" for reading: %m",
 								filename)));
-=======
-			List	   *recheckIndexes = NIL;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			// Increase buffer size to improve performance  (cmcdevitt)
 			setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
@@ -5127,31 +5125,13 @@ PROCESS_SEGMENT_DATA:
 
 		cstate->copy_dest = COPY_FILE;
 
-<<<<<<< HEAD
 		is_segment_data_processed = true;
-=======
-			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
-													   estate);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
 		CopyInitDataParser(cstate);
 		no_more_data = false;
 
-<<<<<<< HEAD
 		goto PROCESS_SEGMENT_DATA;
-=======
-			list_free(recheckIndexes);
-
-			/*
-			 * We count only tuples not suppressed by a BEFORE INSERT trigger;
-			 * this is the same definition used by execMain.c for counting
-			 * tuples inserted by an INSERT command.
-			 */
-			cstate->processed++;
-		}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, cstate->processed);

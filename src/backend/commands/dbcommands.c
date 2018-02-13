@@ -8,13 +8,9 @@
  * stepping on each others' toes.  Formerly we used table-level locks
  * on pg_database, but that's too coarse-grained.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,11 +28,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "access/transam.h"				/* InvalidTransactionId */
-=======
 #include "access/transam.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
@@ -1563,11 +1555,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
-<<<<<<< HEAD
 	Oid			datid = get_database_oid(stmt->dbname, false);
-=======
-	Oid			datid = get_database_oid(stmt->dbname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (!OidIsValid(datid))
 		ereport(ERROR,
