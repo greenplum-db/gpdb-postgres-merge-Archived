@@ -21,20 +21,14 @@ all: fmgroids.h probes.h
 
 $(SUBDIRS:%=%-recursive): fmgroids.h
 
-<<<<<<< HEAD
-
-# Like when creating postgres.bki, we need to inject missing columns before
-# feeding pg_proc.h to Gen_fmgrtab.sh. See also src/backend/catalog/Makefile.
-fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h $(top_builddir)/src/include/catalog/pg_proc_gp.h $(top_srcdir)/src/backend/catalog/process_col_defaults.pl
-	cat $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h | $(top_srcdir)/src/backend/catalog/process_col_defaults.pl > pg_proc_combined.h.tmp
-	AWK='$(AWK)' $(SHELL) $< pg_proc_combined.h.tmp
-=======
 # see explanation in ../parser/Makefile
 fmgroids.h: fmgrtab.c ;
 
-fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
-	$(PERL) -I $(catalogdir) $< $(top_srcdir)/src/include/catalog/pg_proc.h
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+pg_proc_combined.h: $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
+	cat $^ > $@
+
+fmgrtab.c: Gen_fmgrtab.pl pg_proc_combined.h
+	$(PERL) -I $(catalogdir) $< pg_proc_combined.h
 
 ifneq ($(enable_dtrace), yes)
 probes.h: Gen_dummy_probes.sed
@@ -54,6 +48,7 @@ endif
 # are not cleaned here.
 clean:
 	rm -f probes.h
+	rm -f pg_proc_combied.h
 
 maintainer-clean: clean
 	rm -f fmgroids.h fmgrtab.c

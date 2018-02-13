@@ -36,9 +36,8 @@ all: $(BKIFILES) schemapg.h $(CATALOG_JSON)
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,
 # indexing.h had better be last, and toasting.h just before it.
-# And pg_proc_gp.h must be immediately after pg_proc.h
 
-POSTGRES_PLAIN_BKI_HEADERS := \
+POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_type.h pg_attribute.h pg_class.h \
 	pg_attrdef.h pg_constraint.h pg_inherits.h pg_index.h pg_operator.h \
 	pg_opfamily.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
@@ -65,13 +64,11 @@ POSTGRES_PLAIN_BKI_HEADERS := \
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
 	pg_stat_last_operation.h pg_stat_last_shoperation.h \
-	toasting.h indexing.h
+	toasting.h indexing.h \
+    )
 
-POSTGRES_PROCESSED_BKI_HEADERS := \
-	pg_proc.h pg_am.h
+POSTGRES_BKI_SRCS += pg_proc_combined.h
 
-POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/, $(POSTGRES_PLAIN_BKI_HEADERS)) \
-	 $(addsuffix .processed, $(addprefix $(top_builddir)/src/include/catalog/, $(POSTGRES_PROCESSED_BKI_HEADERS)))
 
 # location of Catalog.pm
 catalogdir = $(top_srcdir)/src/backend/catalog
@@ -86,24 +83,11 @@ postgres.shdescription: postgres.bki ;
 
 schemapg.h: postgres.bki ;
 
-# In Greenplum, we have added extra columns to some catalog tables. To avoid
-# having to change every single DATA row in those header files, which would
-# create massive merge conflicts when merging with upstream, the extra
-# columns are marked with GPDB_COLUMN_DEFAULT() lines in the header files,
-# which provides a default for every data row that's missing the column. That
-# way, new rows can have all the columns, but there's no need to modify rows
-# inherited from upstream.
-#
-# process_col_defaults.pl reads the catalog headers, and creates a modified
-# source file (postgres_bki_srcs) that has all the defaults injected into
-# the DATA rows. That is fed to genbki.sh, instead of the original headers.
-
-$(top_builddir)/src/include/catalog/pg_proc.h.processed: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
-	cat $^ | $(PERL) process_col_defaults.pl > $@
-
-$(top_builddir)/src/include/catalog/pg_am.h.processed: $(top_srcdir)/src/include/catalog/pg_am.h
-	cat $^ | $(PERL) process_col_defaults.pl > $@
-
+# In Greenplum, contents of the pg_proc catalog is in two files, pg_proc.h
+# and pg_proc_gp.h. Combine them into a single file, so that genbki.pl can
+# process it.
+pg_proc_combined.h: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/src/include/catalog/pg_proc_gp.h
+	cat $^ > $@
 
 $(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
 	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
@@ -133,9 +117,7 @@ uninstall-data:
 # postgres.bki, postgres.description, postgres.shdescription, and schemapg.h
 # are in the distribution tarball, so they are not cleaned here.
 clean:
+	rm -f pg_proc_combined.h
 
 maintainer-clean: clean
 	rm -f $(BKIFILES)
-
-maintainer-clean: clean
-	rm -f postgres_bki_srcs
