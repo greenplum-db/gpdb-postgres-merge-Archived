@@ -6,19 +6,11 @@
  * with the walreceiver process. Functions implementing walreceiver itself
  * are in walreceiver.c.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
  *	  src/backend/replication/walreceiverfuncs.c
-=======
- * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
- *
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walreceiverfuncs.c,v 1.7 2010/07/06 19:18:57 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
