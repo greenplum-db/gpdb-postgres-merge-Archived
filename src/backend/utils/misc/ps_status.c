@@ -316,16 +316,12 @@ init_ps_display(const char *username, const char *dbname,
 #define PROGRAM_NAME_PREFIX "postgres: "
 #endif
 
-<<<<<<< HEAD
 	snprintf(ps_buffer, ps_buffer_size,
 			 PROGRAM_NAME_PREFIX "%5d, %s %s %s ",
 			 PostPortNumber, username, dbname, host_info);
 
 	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
 	real_act_prefix_size = ps_buffer_fixed_size;
-=======
-	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	set_ps_display(initial_str, true);
 #endif   /* not PS_USE_NONE */
@@ -342,12 +338,9 @@ set_ps_display(const char *activity, bool force)
 {
 #ifndef PS_USE_NONE
 	/* update_process_title=off disables updates, unless force = true */
-<<<<<<< HEAD
 	char	   *cp = ps_buffer + ps_buffer_fixed_size;
 	char	   *ep = ps_buffer + ps_buffer_size;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!force && !update_process_title)
 		return;
 
@@ -361,7 +354,6 @@ set_ps_display(const char *activity, bool force)
 		return;
 #endif
 
-<<<<<<< HEAD
 	Assert(cp >= ps_buffer);
 
 	/* Add client session's global id. */
@@ -395,13 +387,8 @@ set_ps_display(const char *activity, bool force)
 
 	/* Append caller's activity string. */
 	strlcpy(ps_buffer + real_act_prefix_size, activity,
-		ps_buffer_size - real_act_prefix_size);
+			ps_buffer_size - real_act_prefix_size);
 
-=======
-	/* Update ps_buffer to contain both fixed part and activity */
-	strlcpy(ps_buffer + ps_buffer_fixed_size, activity,
-			ps_buffer_size - ps_buffer_fixed_size);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	ps_buffer_cur_len = strlen(ps_buffer);
 
 	/* Transmit new setting to kernel, if necessary */
@@ -485,7 +472,6 @@ get_ps_display_from_position(size_t pos, int *displen)
 const char *
 get_ps_display(int *displen)
 {
-<<<<<<< HEAD
 	return get_ps_display_from_position(ps_buffer_fixed_size, displen);
 }
 
@@ -507,18 +493,4 @@ const char *
 get_real_act_ps_display(int *displen)
 {
 	return get_ps_display_from_position(real_act_prefix_size, displen);
-=======
-#ifdef PS_USE_CLOBBER_ARGV
-	/* If ps_buffer is a pointer, it might still be null */
-	if (!ps_buffer)
-	{
-		*displen = 0;
-		return "";
-	}
-#endif
-
-	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
-
-	return ps_buffer + ps_buffer_fixed_size;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }

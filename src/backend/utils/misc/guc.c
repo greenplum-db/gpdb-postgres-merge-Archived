@@ -6,13 +6,9 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2009, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -100,17 +96,6 @@
 #define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
 #endif
 
-<<<<<<< HEAD
-=======
-/* upper limit for GUC variables measured in kilobytes of memory */
-/* note that various places assume the byte size fits in a "long" variable */
-#if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
-#define MAX_KILOBYTES	INT_MAX
-#else
-#define MAX_KILOBYTES	(INT_MAX / 1024)
-#endif
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
 
@@ -523,34 +508,26 @@ const char *const config_group_names[] =
 	gettext_noop("Resource Usage / Memory"),
 	/* RESOURCES_KERNEL */
 	gettext_noop("Resource Usage / Kernel Resources"),
-<<<<<<< HEAD
-	/* RESOURCES_MGM */
-	gettext_noop("Resource Usage / Resources Management"),
-=======
 	/* RESOURCES_VACUUM_DELAY */
 	gettext_noop("Resource Usage / Cost-Based Vacuum Delay"),
 	/* RESOURCES_BGWRITER */
 	gettext_noop("Resource Usage / Background Writer"),
 	/* RESOURCES_ASYNCHRONOUS */
 	gettext_noop("Resource Usage / Asynchronous Behavior"),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	/* RESOURCES_MGM */
+	gettext_noop("Resource Usage / Resources Management"),
 	/* WAL */
 	gettext_noop("Write-Ahead Log"),
 	/* WAL_SETTINGS */
 	gettext_noop("Write-Ahead Log / Settings"),
 	/* WAL_CHECKPOINTS */
 	gettext_noop("Write-Ahead Log / Checkpoints"),
-<<<<<<< HEAD
-	/* WAL based REPLICATION */
-	gettext_noop("WAL Replication"),
-=======
 	/* WAL_ARCHIVING */
 	gettext_noop("Write-Ahead Log / Archiving"),
 	/* WAL_REPLICATION */
 	gettext_noop("Write-Ahead Log / Streaming Replication"),
 	/* WAL_STANDBY_SERVERS */
 	gettext_noop("Write-Ahead Log / Standby Servers"),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
@@ -1337,8 +1314,6 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
 		{"hot_standby", PGC_POSTMASTER, WAL_STANDBY_SERVERS,
 			gettext_noop("Allows connections and queries during recovery."),
 			NULL
@@ -1348,17 +1323,6 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
-			gettext_noop("Allows modifications of the structure of system tables."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&allowSystemTableMods,
-		false, NULL, NULL
-	},
-
-	{
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
 			gettext_noop("Disables reading from system indexes."),
 			gettext_noop("It does not prevent updating the indexes, so it is safe "
@@ -1873,16 +1837,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_sender_delay", PGC_SIGHUP, WAL_REPLICATION,
-			gettext_noop("WAL sender sleep time between WAL replications."),
-			NULL,
-			GUC_UNIT_MS
-		},
-		&WalSndDelay,
-		200, 1, 10000, NULL, NULL
-	},
-
-	{
 		{"commit_delay", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
@@ -2390,7 +2344,6 @@ static struct config_real ConfigureNamesReal[] =
 static struct config_string ConfigureNamesString[] =
 {
 	{
-<<<<<<< HEAD
 		{"allow_system_table_mods", PGC_USERSET, CUSTOM_OPTIONS,
 			gettext_noop("Allows ddl/dml modifications of system tables."),
 			gettext_noop("Valid values are \"NONE\", \"DDL\", \"DML\", \"ALL\". " ),
@@ -2401,10 +2354,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"archive_command", PGC_SIGHUP, WAL_SETTINGS,
-=======
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
@@ -2942,7 +2892,6 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-<<<<<<< HEAD
 		{"IntervalStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the display format for interval values."),
 			NULL,
@@ -2953,10 +2902,7 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
-=======
 		{"log_error_verbosity", PGC_SUSET, LOGGING_WHAT,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			gettext_noop("Sets the verbosity of logged messages."),
 			NULL,
 			GUC_GPDB_ADDOPT
@@ -8024,7 +7970,6 @@ GUCArrayReset(ArrayType *array)
 		char	   *val;
 		char	   *eqsgn;
 		bool		isnull;
-		struct config_generic *gconf;
 
 		d = array_ref(array, 1, &i,
 					  -1 /* varlenarray */ ,
@@ -8033,82 +7978,6 @@ GUCArrayReset(ArrayType *array)
 					  'i' /* TEXT's typalign */ ,
 					  &isnull);
 
-		if (isnull)
-			continue;
-		val = TextDatumGetCString(d);
-
-		eqsgn = strchr(val, '=');
-		*eqsgn = '\0';
-
-		gconf = find_option(val, false, WARNING);
-		if (!gconf)
-			continue;
-
-		/* note: superuser-ness was already checked above */
-		/* skip entry if OK to delete */
-		if (gconf->context == PGC_USERSET)
-			continue;
-
-		/* XXX do we need to worry about database owner? */
-
-		/* else add it to the output array */
-		if (newarray)
-			newarray = array_set(newarray, 1, &index,
-								 d,
-								 false,
-								 -1 /* varlenarray */ ,
-								 -1 /* TEXT's typlen */ ,
-								 false /* TEXT's typbyval */ ,
-								 'i' /* TEXT's typalign */ );
-		else
-			newarray = construct_array(&d, 1,
-									   TEXTOID,
-									   -1, false, 'i');
-
-		index++;
-		pfree(val);
-	}
-
-	return newarray;
-}
-
-
-/*
- * Given a GUC array, delete all settings from it that our permission
- * level allows: if superuser, delete them all; if regular user, only
- * those that are PGC_USERSET
- */
-ArrayType *
-GUCArrayReset(ArrayType *array)
-{
-	ArrayType  *newarray;
-	int			i;
-	int			index;
-
-	/* if array is currently null, nothing to do */
-	if (!array)
-		return NULL;
-
-	/* if we're superuser, we can delete everything, so just do it */
-	if (superuser())
-		return NULL;
-
-	newarray = NULL;
-	index = 1;
-
-	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
-	{
-		Datum		d;
-		char	   *val;
-		char	   *eqsgn;
-		bool		isnull;
-
-		d = array_ref(array, 1, &i,
-					  -1 /* varlenarray */ ,
-					  -1 /* TEXT's typlen */ ,
-					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ ,
-					  &isnull);
 		if (isnull)
 			continue;
 		val = TextDatumGetCString(d);

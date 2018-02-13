@@ -122,12 +122,8 @@ extern bool contain_group_id(Node *node);
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-<<<<<<< HEAD
-extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
-=======
 extern Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
-extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan,
 				  List *subrtable, List *subrowmark);
 extern Append *make_append(List *appendplans, List *tlist);
@@ -183,21 +179,11 @@ extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-<<<<<<< HEAD
 			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Plan *lefttree);
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(PlannerInfo *root, Plan *subplan);
-=======
-			   int frameOptions, Node *startOffset, Node *endOffset,
-			   Plan *lefttree);
-extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
-		   int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		   double numGroups,
-		   Plan *lefttree);
-extern Plan *materialize_finished_plan(Plan *subplan);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
 extern LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
 extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
@@ -207,20 +193,14 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
-<<<<<<< HEAD
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
 extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
-									 List *subplans, List *returningLists,
-									 List *rowMarks, int epqParam);
-=======
-extern ModifyTable *make_modifytable(CmdType operation, List *resultRelations,
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 
 						   int numCols, 
@@ -289,9 +269,6 @@ extern List *set_returning_clause_references(PlannerGlobal *glob,
 								Plan *topplan,
 								Index resultRelation);
 
-extern void extract_query_dependencies(List *queries,
-						   List **relationOids,
-						   List **invalItems);
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
