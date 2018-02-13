@@ -8,13 +8,9 @@
  * doesn't actually run the executor for them.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -354,15 +350,9 @@ PortalReleaseCachedPlan(Portal portal)
 		portal->cplan = NULL;
 
 		/*
-<<<<<<< HEAD
-		 * We must also clear portal->stmts which is now a dangling
-		 * reference to the cached plan's plan list.  This protects any
-		 * code that might try to examine the Portal later.
-=======
 		 * We must also clear portal->stmts which is now a dangling reference
 		 * to the cached plan's plan list.  This protects any code that might
 		 * try to examine the Portal later.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		portal->stmts = NIL;
 	}
@@ -409,12 +399,9 @@ PortalCreateHoldStore(Portal portal)
 /*
  * PinPortal
  *		Protect a portal from dropping.
-<<<<<<< HEAD
  *
  * A pinned portal is still unpinned and dropped at transaction or
  * subtransaction abort.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 void
 PinPortal(Portal portal)
@@ -453,11 +440,8 @@ PortalDrop(Portal portal, bool isTopCommit)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("cannot drop active portal \"%s\"", portal->name)));
-<<<<<<< HEAD
 
 	TeardownSequenceServer();
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will not
@@ -828,15 +812,9 @@ AtCleanup_Portals(void)
 		}
 
 		/*
-<<<<<<< HEAD
-		 * If a portal is still pinned, forcibly unpin it. PortalDrop will
-		 * not let us drop the portal otherwise. Whoever pinned the portal
-		 * was interrupted by the abort too and won't try to use it anymore.
-=======
 		 * If a portal is still pinned, forcibly unpin it. PortalDrop will not
 		 * let us drop the portal otherwise. Whoever pinned the portal was
 		 * interrupted by the abort too and won't try to use it anymore.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		if (portal->portalPinned)
 			portal->portalPinned = false;
@@ -919,24 +897,9 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 			(*portal->cleanup) (portal);
 			portal->cleanup = NULL;
 		}
-<<<<<<< HEAD
-		else
-#endif
-		{
-			/* let portalcmds.c clean up the state it knows about */
-			if (portal->cleanup)
-			{
-				(*portal->cleanup) (portal);
-				portal->cleanup = NULL;
-			}
-
-			/* drop cached plan reference, if any */
-			PortalReleaseCachedPlan(portal);
-=======
 
 		/* drop cached plan reference, if any */
 		PortalReleaseCachedPlan(portal);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * Any resources belonging to the portal will be released in the

@@ -37,13 +37,9 @@
  * overflow.)
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -4385,7 +4381,24 @@ is_log_level_output(int elevel, int log_min_level)
 }
 
 /*
-<<<<<<< HEAD
+ * If trace_recovery_messages is set to make this visible, then show as LOG,
+ * else display as whatever level is set. It may still be shown, but only
+ * if log_min_messages is set lower than trace_recovery_messages.
+ *
+ * Intention is to keep this for at least the whole of the 9.0 production
+ * release, so we can more easily diagnose production problems in the field.
+ */
+int
+trace_recovery(int trace_level)
+{
+	if (trace_level < LOG &&
+		trace_level >= trace_recovery_messages)
+		return LOG;
+
+	return trace_level;
+}
+
+/*
  * elog_debug_linger
  */
 void
@@ -4716,21 +4729,4 @@ StandardHandlerForSigillSigsegvSigbus_OnMainThread(char *processName, SIGNAL_ARG
 
 	/* re-raise the signal to OS */
 	raise(postgres_signal_arg);
-=======
- * If trace_recovery_messages is set to make this visible, then show as LOG,
- * else display as whatever level is set. It may still be shown, but only
- * if log_min_messages is set lower than trace_recovery_messages.
- *
- * Intention is to keep this for at least the whole of the 9.0 production
- * release, so we can more easily diagnose production problems in the field.
- */
-int
-trace_recovery(int trace_level)
-{
-	if (trace_level < LOG &&
-		trace_level >= trace_recovery_messages)
-		return LOG;
-
-	return trace_level;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }

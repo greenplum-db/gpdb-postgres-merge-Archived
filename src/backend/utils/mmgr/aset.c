@@ -7,13 +7,9 @@
  * type.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1182,19 +1178,11 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 				 * freelist than the one we need to put this chunk on.	The
 				 * exception is when availchunk is exactly a power of 2.
 				 */
-<<<<<<< HEAD
-				if (availchunk != ((Size)1 << (a_fidx + ALLOC_MINBITS)))
-				{
-					a_fidx--;
-					Assert(a_fidx >= 0);
-					availchunk = ((Size)1 << (a_fidx + ALLOC_MINBITS));
-=======
 				if (availchunk != ((Size) 1 << (a_fidx + ALLOC_MINBITS)))
 				{
 					a_fidx--;
 					Assert(a_fidx >= 0);
 					availchunk = ((Size) 1 << (a_fidx + ALLOC_MINBITS));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				}
 
 				chunk = (AllocChunk) (block->freeptr);
