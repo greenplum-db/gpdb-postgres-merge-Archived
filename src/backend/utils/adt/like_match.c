@@ -116,17 +116,10 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 * If there are wildcards immediately following the %, we can skip
 			 * over them first, using the idea that any sequence of N _'s and
 			 * one or more %'s is equivalent to N _'s and one % (ie, it will
-<<<<<<< HEAD
-			 * match any sequence of at least N text characters).  In this
-			 * way we will always run the recursive search loop using a
-			 * pattern fragment that begins with a literal character-to-match,
-			 * thereby not recursing more than we have to.
-=======
 			 * match any sequence of at least N text characters).  In this way
 			 * we will always run the recursive search loop using a pattern
 			 * fragment that begins with a literal character-to-match, thereby
 			 * not recursing more than we have to.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 */
 			NextByte(p, plen);
 

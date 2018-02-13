@@ -120,14 +120,12 @@ lookup_type_cache(Oid type_id, int flags)
 		TypeCacheHash = hash_create("Type information cache", 64,
 									&ctl, HASH_ELEM | HASH_FUNCTION);
 
-<<<<<<< HEAD
 		/* Also set up a callback for relcache SI invalidations */
 		CacheRegisterRelcacheCallback(TypeCacheRelCallback, (Datum) 0);
-=======
+
 		/* Also make sure CacheMemoryContext exists */
 		if (!CacheMemoryContext)
 			CreateCacheMemoryContext();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/* Try to look up an existing entry */

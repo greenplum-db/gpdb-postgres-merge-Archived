@@ -759,11 +759,21 @@ GetNewSequenceRelationOid(Relation relation)
  *		Generate a new relfilenode number that is unique within the given
  *		tablespace.
  *
+ * If the relfilenode will also be used as the relation's OID, pass the
+ * opened pg_class catalog, and this routine will guarantee that the result
+ * is also an unused OID within pg_class.  If the result is to be used only
+ * as a relfilenode for an existing relation, pass NULL for pg_class.
+ * (in GPDB, 'pg_class' is unused, there is a different mechanism to avoid
+ * clashes, across the whole cluster.)
+ *
+ * As with GetNewOid, there is some theoretical risk of a race condition,
+ * but it doesn't seem worth worrying about.
+ *
  * Note: we don't support using this in bootstrap mode.  All relations
  * created by bootstrap have preassigned OIDs, so there's no need.
  */
 Oid
-GetNewRelFileNode(Oid reltablespace)
+GetNewRelFileNode(Oid reltablespace, Relation pg_class)
 {
 	RelFileNode rnode;
 	char	   *rpath;

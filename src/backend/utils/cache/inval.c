@@ -89,24 +89,18 @@
 #include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-<<<<<<< HEAD
-#include "catalog/gp_policy.h"
-#include "cdb/cdbvars.h"
-=======
 #include "catalog/pg_tablespace.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
-#include "utils/relcache.h"
-=======
 #include "utils/relmapper.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/syscache.h"
+
+#include "catalog/gp_policy.h"
+#include "cdb/cdbvars.h"
 
 
 /*
@@ -473,24 +467,6 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 		transInvalInfo->RelcacheInitFileInval = true;
 }
 
-/*
-<<<<<<< HEAD
- * RegisterSmgrInvalidation
- *
- * As above, but register an smgr invalidation event.
- */
-static void
-RegisterSmgrInvalidation(RelFileNode rnode)
-{
-	AddSmgrInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
-							   rnode);
-
-	/*
-	 * As above, just in case there is not an associated catalog change.
-	 */
-	(void) GetCurrentCommandId(true);
-}
-
 #ifdef USE_ASSERT_CHECKING
 static char *
 si_to_str(SharedInvalidationMessage *msg)
@@ -524,8 +500,6 @@ si_to_str(SharedInvalidationMessage *msg)
 #endif
 
 /*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * LocalExecuteInvalidationMessage
  *
  * Process a single invalidation message (which could be of any type).
@@ -1143,116 +1117,6 @@ CommandEndInvalidationMessages(void)
 
 
 /*
-<<<<<<< HEAD
- * BeginNonTransactionalInvalidation
- *		Prepare for invalidation messages for nontransactional updates.
- *
- * A nontransactional invalidation is one that must be sent whether or not
- * the current transaction eventually commits.	We arrange for all invals
- * queued between this call and EndNonTransactionalInvalidation() to be sent
- * immediately when the latter is called.
- *
- * Currently, this is only used by heap_page_prune(), and only when it is
- * invoked during VACUUM FULL's first pass over a table.  We expect therefore
- * that we are not inside a subtransaction and there are no already-pending
- * invalidations.  This could be relaxed by setting up a new nesting level of
- * invalidation data, but for now there's no need.  Note that heap_page_prune
- * knows that this function does not change any state, and therefore there's
- * no need to worry about cleaning up if there's an elog(ERROR) before
- * reaching EndNonTransactionalInvalidation (the invals will just be thrown
- * away if that happens).
- *
- * GPDB: In GPDB, however, the way we use transactions during VACUUM FULL is
- * different from PostgreSQL, and can already be pending invalidations in
- * the queue. So we do what the above suggested, and create a new nesting level.
- */
-void
-BeginNonTransactionalInvalidation(void)
-{
-	TransInvalidationInfo *myInfo;
-
-	/* Must be at top of stack */
-	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
-
-	/* GPDB: create a new nesting level, as in AtSubStart_Inval() */
-	myInfo = (TransInvalidationInfo *)
-		MemoryContextAllocZero(TopTransactionContext,
-							   sizeof(TransInvalidationInfo));
-	myInfo->parent = transInvalInfo;
-	myInfo->my_level = GetCurrentTransactionNestLevel();
-	transInvalInfo = myInfo;
-}
-
-/*
- * EndNonTransactionalInvalidation
- *		Process queued-up invalidation messages for nontransactional updates.
- *
- * We expect to find messages in CurrentCmdInvalidMsgs only (else there
- * was a CommandCounterIncrement within the "nontransactional" update).
- * We must process them locally and send them out to the shared invalidation
- * message queue.
- *
- * We must also reset the lists to empty and explicitly free memory (we can't
- * rely on end-of-transaction cleanup for that).
- */
-void
-EndNonTransactionalInvalidation(void)
-{
-	InvalidationChunk *chunk;
-	InvalidationChunk *next;
-
-	/* Must be at one nesting level below top of stack */
-	Assert(transInvalInfo != NULL);
-	Assert(transInvalInfo->parent != NULL);
-	Assert(transInvalInfo->parent->parent == NULL);
-
-	/* Must not have any prior-command messages */
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.cclist == NULL);
-	Assert(transInvalInfo->PriorCmdInvalidMsgs.rclist == NULL);
-
-	/*
-	 * At present, this function is only used for CTID-changing updates; since
-	 * the relcache init file doesn't store any tuple CTIDs, we don't have to
-	 * invalidate it.  That might not be true forever though, in which case
-	 * we'd need code similar to AtEOXact_Inval.
-	 */
-
-	/* Send out the invals */
-	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
-								LocalExecuteInvalidationMessage);
-	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
-									 SendSharedInvalidMessages);
-
-	/* Clean up and release memory */
-	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.cclist;
-		 chunk != NULL;
-		 chunk = next)
-	{
-		next = chunk->next;
-		pfree(chunk);
-	}
-	for (chunk = transInvalInfo->CurrentCmdInvalidMsgs.rclist;
-		 chunk != NULL;
-		 chunk = next)
-	{
-		next = chunk->next;
-		pfree(chunk);
-	}
-
-	/* Pop the transaction state stack */
-	{
-		TransInvalidationInfo *myInfo = transInvalInfo;
-
-		transInvalInfo = myInfo->parent;
-
-		pfree(myInfo);
-	}
-}
-
-
-/*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * CacheInvalidateHeapTuple
  *		Register the given tuple for invalidation at end of command
  *		(ie, current command is creating or outdating this tuple).

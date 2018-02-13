@@ -685,11 +685,7 @@ int8inc(PG_FUNCTION_ARGS)
 	 * incorrect, so just ifdef it out.)
 	 */
 #ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-<<<<<<< HEAD
-	if (fcinfo->context && IsA(fcinfo->context, AggState))
-=======
 	if (AggCheckCallContext(fcinfo, NULL))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
 		int64		result;

@@ -688,8 +688,6 @@ ResetCatalogCaches(void)
 }
 
 /*
-<<<<<<< HEAD
-=======
  *		CatalogCacheFlushCatalog
  *
  *	Flush all catcache entries that came from the specified system catalog.
@@ -730,7 +728,6 @@ CatalogCacheFlushCatalog(Oid catId)
 }
 
 /*
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *		InitCatCache
  *
  *	This allocates and initializes a cache for a system catalog relation.
