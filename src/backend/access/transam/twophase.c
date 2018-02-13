@@ -1445,7 +1445,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
     /* get the two phase information from the xlog */
 	XLogCloseReadRecord();
-	tfRecord = XLogReadRecord(&tfXLogRecPtr, false, LOG);
+	tfRecord = XLogReadRecord(&tfXLogRecPtr, LOG, false);
 	if (tfRecord == NULL)
 	{
 		/*
@@ -1751,7 +1751,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 
 	while (tfXLogRecPtr != NULL)
 	{
-		tfRecord = XLogReadRecord(tfXLogRecPtr, false, LOG);
+		tfRecord = XLogReadRecord(tfXLogRecPtr, LOG, false);
 		hdr = (TwoPhaseFileHeader *) XLogRecGetData(tfRecord);
 		xid = hdr->xid;
 
@@ -2097,7 +2097,7 @@ RecoverPreparedTransactions(void)
 		DistributedTransactionId distribXid;
 		int			i;
 
-		tfRecord = XLogReadRecord(tfXLogRecPtr, false, LOG);
+		tfRecord = XLogReadRecord(tfXLogRecPtr, LOG, false);
 
 		buf = XLogRecGetData(tfRecord);
 

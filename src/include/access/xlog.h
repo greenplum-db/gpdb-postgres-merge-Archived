@@ -298,6 +298,7 @@ extern int XLogFileInit(uint32 log, uint32 seg,
 extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
+extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
 
 extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
@@ -355,7 +356,7 @@ extern void xlog_print_redo_lsn_application(
 		XLogRecPtr		lsn,
 		const char		*funcName);
 
-extern XLogRecord *XLogReadRecord(XLogRecPtr *RecPtr, bool fetching_ckpt, int emode);
+extern XLogRecord *XLogReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt);
 
 extern void XLogCloseReadRecord(void);
 
