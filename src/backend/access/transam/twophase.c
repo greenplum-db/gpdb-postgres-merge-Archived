@@ -1106,17 +1106,14 @@ StartPrepare(GlobalTransaction gxact)
 		save_state_data(abortrels, hdr.nabortrels * sizeof(RelFileNode));
 		pfree(abortrels);
 	}
-<<<<<<< HEAD
-
-	SIMPLE_FAULT_INJECTOR(StartPrepareTx);
-=======
 	if (hdr.ninvalmsgs > 0)
 	{
 		save_state_data(invalmsgs,
 						hdr.ninvalmsgs * sizeof(SharedInvalidationMessage));
 		pfree(invalmsgs);
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+	SIMPLE_FAULT_INJECTOR(StartPrepareTx);
 }
 
 /*
@@ -1255,114 +1252,6 @@ RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,
 		save_state_data(data, len);
 }
 
-<<<<<<< HEAD
-=======
-
-/*
- * Read and validate the state file for xid.
- *
- * If it looks OK (has a valid magic number and CRC), return the palloc'd
- * contents of the file.  Otherwise return NULL.
- */
-static char *
-ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
-{
-	char		path[MAXPGPATH];
-	char	   *buf;
-	TwoPhaseFileHeader *hdr;
-	int			fd;
-	struct stat stat;
-	uint32		crc_offset;
-	pg_crc32	calc_crc,
-				file_crc;
-
-	TwoPhaseFilePath(path, xid);
-
-	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
-	if (fd < 0)
-	{
-		if (give_warnings)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not open two-phase state file \"%s\": %m",
-							path)));
-		return NULL;
-	}
-
-	/*
-	 * Check file length.  We can determine a lower bound pretty easily. We
-	 * set an upper bound to avoid palloc() failure on a corrupt file, though
-	 * we can't guarantee that we won't get an out of memory error anyway,
-	 * even on a valid file.
-	 */
-	if (fstat(fd, &stat))
-	{
-		close(fd);
-		if (give_warnings)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not stat two-phase state file \"%s\": %m",
-							path)));
-		return NULL;
-	}
-
-	if (stat.st_size < (MAXALIGN(sizeof(TwoPhaseFileHeader)) +
-						MAXALIGN(sizeof(TwoPhaseRecordOnDisk)) +
-						sizeof(pg_crc32)) ||
-		stat.st_size > MaxAllocSize)
-	{
-		close(fd);
-		return NULL;
-	}
-
-	crc_offset = stat.st_size - sizeof(pg_crc32);
-	if (crc_offset != MAXALIGN(crc_offset))
-	{
-		close(fd);
-		return NULL;
-	}
-
-	/*
-	 * OK, slurp in the file.
-	 */
-	buf = (char *) palloc(stat.st_size);
-
-	if (read(fd, buf, stat.st_size) != stat.st_size)
-	{
-		close(fd);
-		if (give_warnings)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not read two-phase state file \"%s\": %m",
-							path)));
-		pfree(buf);
-		return NULL;
-	}
-
-	close(fd);
-
-	hdr = (TwoPhaseFileHeader *) buf;
-	if (hdr->magic != TWOPHASE_MAGIC || hdr->total_len != stat.st_size)
-	{
-		pfree(buf);
-		return NULL;
-	}
-
-	INIT_CRC32(calc_crc);
-	COMP_CRC32(calc_crc, buf, crc_offset);
-	FIN_CRC32(calc_crc);
-
-	file_crc = *((pg_crc32 *) (buf + crc_offset));
-
-	if (!EQ_CRC32(calc_crc, file_crc))
-	{
-		pfree(buf);
-		return NULL;
-	}
-
-	return buf;
-}
-
 /*
  * Confirms an xid is prepared, during recovery
  */
@@ -1391,7 +1280,6 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 	return result;
 }
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * FinishPreparedTransaction: execute COMMIT PREPARED or ROLLBACK PREPARED
  */
@@ -1466,13 +1354,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 	buf = XLogRecGetData(tfRecord);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Read and validate the state file
-	 */
-	buf = ReadTwoPhaseFile(xid, true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (buf == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -1724,20 +1605,12 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	prpt_map	*entry = NULL;
 	TransactionId origNextXid = ShmemVariableCache->nextXid;
 	TransactionId result = origNextXid;
-<<<<<<< HEAD
 	XLogRecPtr *tfXLogRecPtr = NULL;
 	XLogRecord *tfRecord = NULL;
 	HASH_SEQ_STATUS hsStatus;
-	TwoPhaseFileHeader *hdr = NULL;
-	TransactionId xid;
-	TransactionId *subxids;
-=======
-	DIR		   *cldir;
-	struct dirent *clde;
 	TransactionId *xids = NULL;
 	int			nxids = 0;
 	int			allocsize = 0;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (crashRecoverPostCheckpointPreparedTransactions_map_ht != NULL)
 	{
@@ -1751,49 +1624,20 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 
 	while (tfXLogRecPtr != NULL)
 	{
+		TwoPhaseFileHeader *hdr;
+		TransactionId xid;
+
 		tfRecord = XLogReadRecord(tfXLogRecPtr, LOG, false);
 		hdr = (TwoPhaseFileHeader *) XLogRecGetData(tfRecord);
 		xid = hdr->xid;
 
 		if (TransactionIdDidCommit(xid) == false && TransactionIdDidAbort(xid) == false)
 		{
+			TransactionId *subxids;
 			int			i;
 
 			/*
-<<<<<<< HEAD
 			 * Incorporate xid into the running-minimum result.
-=======
-			 * Note: we can't check if already processed because clog
-			 * subsystem isn't up yet.
-			 */
-
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			if (!TransactionIdEquals(hdr->xid, xid))
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				pfree(buf);
-				continue;
-			}
-
-			/*
-			 * OK, we think this file is valid.  Incorporate xid into the
-			 * running-minimum result.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 */
 			if (TransactionIdPrecedes(xid, result))
 				result = xid;
@@ -1816,8 +1660,6 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 					TransactionIdAdvance(ShmemVariableCache->nextXid);
 				}
 			}
-<<<<<<< HEAD
-=======
 
 
 			if (xids_p)
@@ -1837,9 +1679,6 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 				}
 				xids[nxids++] = xid;
 			}
-
-			pfree(buf);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 
 		/* Get the next entry */
@@ -1861,7 +1700,6 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 }
 
 /*
-<<<<<<< HEAD
  * Retrieve all the prepared transactions on the checkpoint, and add them to
  * our local list.
  */
@@ -1882,88 +1720,6 @@ SetupCheckpointPreparedTransactionList(prepared_transaction_agg_state *ptas)
 		tfXLogRecPtr = &(m[iPrep]).xlogrecptr;
 		add_recover_post_checkpoint_prepared_transactions_map_entry(xid, tfXLogRecPtr, "SetupCheckpointPreparedTransactionList: add entry to hash list");
 	}
-=======
- * StandbyRecoverPreparedTransactions
- *
- * Scan the pg_twophase directory and setup all the required information to
- * allow standby queries to treat prepared transactions as still active.
- * This is never called at the end of recovery - we use
- * RecoverPreparedTransactions() at that point.
- *
- * Currently we simply call SubTransSetParent() for any subxids of prepared
- * transactions. If overwriteOK is true, it's OK if some XIDs have already
- * been marked in pg_subtrans.
- */
-void
-StandbyRecoverPreparedTransactions(bool overwriteOK)
-{
-	DIR		   *cldir;
-	struct dirent *clde;
-
-	cldir = AllocateDir(TWOPHASE_DIR);
-	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
-	{
-		if (strlen(clde->d_name) == 8 &&
-			strspn(clde->d_name, "0123456789ABCDEF") == 8)
-		{
-			TransactionId xid;
-			char	   *buf;
-			TwoPhaseFileHeader *hdr;
-			TransactionId *subxids;
-			int			i;
-
-			xid = (TransactionId) strtoul(clde->d_name, NULL, 16);
-
-			/* Already processed? */
-			if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
-			{
-				ereport(WARNING,
-						(errmsg("removing stale two-phase state file \"%s\"",
-								clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			if (!TransactionIdEquals(hdr->xid, xid))
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				pfree(buf);
-				continue;
-			}
-
-			/*
-			 * Examine subtransaction XIDs ... they should all follow main
-			 * XID.
-			 */
-			subxids = (TransactionId *)
-				(buf + MAXALIGN(sizeof(TwoPhaseFileHeader)));
-			for (i = 0; i < hdr->nsubxacts; i++)
-			{
-				TransactionId subxid = subxids[i];
-
-				Assert(TransactionIdFollows(subxid, xid));
-				SubTransSetParent(xid, subxid, overwriteOK);
-			}
-		}
-	}
-	FreeDir(cldir);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -1976,18 +1732,12 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 void
 RecoverPreparedTransactions(void)
 {
-<<<<<<< HEAD
 	prpt_map   *entry        = NULL;
 	XLogRecPtr *tfXLogRecPtr = NULL;
 	XLogRecord *tfRecord     = NULL;
 	LocalDistribXactData localDistribXactData;
 	HASH_SEQ_STATUS hsStatus;
-=======
-	char		dir[MAXPGPATH];
-	DIR		   *cldir;
-	struct dirent *clde;
 	bool		overwriteOK = false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (crashRecoverPostCheckpointPreparedTransactions_map_ht != NULL)
 	{
@@ -1995,94 +1745,8 @@ RecoverPreparedTransactions(void)
 
 		entry = (prpt_map *)hash_seq_search(&hsStatus);
 
-<<<<<<< HEAD
 		if (entry != NULL)
 			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
-=======
-			/* Already processed? */
-			if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
-			{
-				ereport(WARNING,
-						(errmsg("removing stale two-phase state file \"%s\"",
-								clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			/* Read and validate file */
-			buf = ReadTwoPhaseFile(xid, true);
-			if (buf == NULL)
-			{
-				ereport(WARNING,
-					  (errmsg("removing corrupt two-phase state file \"%s\"",
-							  clde->d_name)));
-				RemoveTwoPhaseFile(xid, true);
-				continue;
-			}
-
-			ereport(LOG,
-					(errmsg("recovering prepared transaction %u", xid)));
-
-			/* Deconstruct header */
-			hdr = (TwoPhaseFileHeader *) buf;
-			Assert(TransactionIdEquals(hdr->xid, xid));
-			bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
-			subxids = (TransactionId *) bufptr;
-			bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
-			bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
-			bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
-			bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
-
-			/*
-			 * It's possible that SubTransSetParent has been set before, if
-			 * the prepared transaction generated xid assignment records. Test
-			 * here must match one used in AssignTransactionId().
-			 */
-			if (InHotStandby && hdr->nsubxacts >= PGPROC_MAX_CACHED_SUBXIDS)
-				overwriteOK = true;
-
-			/*
-			 * Reconstruct subtrans state for the transaction --- needed
-			 * because pg_subtrans is not preserved over a restart.  Note that
-			 * we are linking all the subtransactions directly to the
-			 * top-level XID; there may originally have been a more complex
-			 * hierarchy, but there's no need to restore that exactly.
-			 */
-			for (i = 0; i < hdr->nsubxacts; i++)
-				SubTransSetParent(subxids[i], xid, overwriteOK);
-
-			/*
-			 * Recreate its GXACT and dummy PGPROC
-			 *
-			 * Note: since we don't have the PREPARE record's WAL location at
-			 * hand, we leave prepare_lsn zeroes.  This means the GXACT will
-			 * be fsync'd on every future checkpoint.  We assume this
-			 * situation is infrequent enough that the performance cost is
-			 * negligible (especially since we know the state file has already
-			 * been fsynced).
-			 */
-			gxact = MarkAsPreparing(xid, hdr->gid,
-									hdr->prepared_at,
-									hdr->owner, hdr->database);
-			GXactLoadSubxactData(gxact, hdr->nsubxacts, subxids);
-			MarkAsPrepared(gxact);
-
-			/*
-			 * Recover other state (notably locks) using resource managers
-			 */
-			ProcessRecords(bufptr, xid, twophase_recover_callbacks);
-
-			/*
-			 * Release locks held by the standby process after we process each
-			 * prepared transaction. As a result, we don't need too many
-			 * additional locks at any one time.
-			 */
-			if (InHotStandby)
-				StandbyReleaseLockTree(xid, hdr->nsubxacts, subxids);
-
-			pfree(buf);
-		}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	while (tfXLogRecPtr != NULL)
@@ -2104,13 +1768,24 @@ RecoverPreparedTransactions(void)
 		/* Deconstruct header */
 		hdr = (TwoPhaseFileHeader *) buf;
 		xid = hdr->xid;
+
 		ereport(LOG,
 				(errmsg("recovering prepared transaction %u", xid)));
+
 		bufptr = buf + MAXALIGN(sizeof(TwoPhaseFileHeader));
 		subxids = (TransactionId *) bufptr;
 		bufptr += MAXALIGN(hdr->nsubxacts * sizeof(TransactionId));
 		bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
 		bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
+		bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));
+
+		/*
+		 * It's possible that SubTransSetParent has been set before, if
+		 * the prepared transaction generated xid assignment records. Test
+		 * here must match one used in AssignTransactionId().
+		 */
+		if (InHotStandby && hdr->nsubxacts >= PGPROC_MAX_CACHED_SUBXIDS)
+			overwriteOK = true;
 
 		/*
 		 * Reconstruct subtrans state for the transaction --- needed
@@ -2120,7 +1795,7 @@ RecoverPreparedTransactions(void)
 		 * hierarchy, but there's no need to restore that exactly.
 		 */
 		for (i = 0; i < hdr->nsubxacts; i++)
-			SubTransSetParent(subxids[i], xid);
+			SubTransSetParent(subxids[i], xid, overwriteOK);
 
 		/*
 		 * Crack open the gid to get the DTM start time and distributed
@@ -2208,15 +1883,9 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
-<<<<<<< HEAD
 	xlrec.distribTimeStamp = distribTimeStamp;
 	xlrec.distribXid = distribXid;
 	xlrec.crec.xtime = time(NULL);
-=======
-	xlrec.crec.xact_time = GetCurrentTimestamp();
-	xlrec.crec.xinfo = initfileinval ? XACT_COMPLETION_UPDATE_RELCACHE_FILE : 0;
-	xlrec.crec.nmsgs = 0;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	xlrec.crec.nrels = nrels;
 	xlrec.crec.nsubxacts = nchildren;
 	xlrec.crec.nmsgs = ninvalmsgs;

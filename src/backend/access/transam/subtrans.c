@@ -140,13 +140,10 @@ SubTransSetParent(TransactionId xid, TransactionId parent, bool overwriteOK)
 	ptr += entryno;
 
 	/* Current state should be 0 */
-<<<<<<< HEAD
-	Assert(ptr->parent == InvalidTransactionId);
-	Assert(ptr->topMostParent == InvalidTransactionId);
-=======
-	Assert(*ptr == InvalidTransactionId ||
-		   (*ptr == parent && overwriteOK));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	Assert(ptr->parent == InvalidTransactionId ||
+		   (ptr->parent == parent && overwriteOK));
+	Assert(ptr->topMostParent == InvalidTransactionId ||
+		   (ptr->topMostParent == subData.topMostParent && overwriteOK));
 
 	ptr->parent = parent;
 	ptr->topMostParent = subData.topMostParent;
