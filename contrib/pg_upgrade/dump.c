@@ -23,16 +23,11 @@ generate_old_dump(migratorContext *ctx)
 	 */
 	exec_prog(ctx, true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
-<<<<<<< HEAD
 			  "--schema-only --binary-upgrade -f \"%s/" ALL_DUMP_FILE "\""
-=======
-			  "--schema-only --binary-upgrade > \"%s/" ALL_DUMP_FILE "\""
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		   SYSTEMQUOTE, ctx->new.bindir, ctx->old.port, ctx->user, ctx->cwd);
 	check_ok(ctx);
 }
 
-<<<<<<< HEAD
 static char *
 get_preassigned_oids_for_db(migratorContext *ctx, char *line)
 {
@@ -64,14 +59,12 @@ get_preassigned_oids_for_db(migratorContext *ctx, char *line)
 	}
 	return NULL;
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  *	split_old_dump
  *
  *	This function splits pg_dumpall output into global values and
- *	database creation, and per-db schemas.	This allows us to create
+ *	database creation, and per-db schemas.  This allows us to create
  *	the toast place holders between restoring these two parts of the
  *	dump.  We split on the first "\connect " after a CREATE ROLE
  *	username match;  this is where the per-db restore starts.
@@ -93,7 +86,6 @@ split_old_dump(migratorContext *ctx)
 	char		filename[MAXPGPATH];
 	bool		suppressed_username = false;
 
-<<<<<<< HEAD
 	/* If this is a QE node, read the pre-assigned OIDs into memory. */
 	if (!ctx->dispatcher_mode)
 		slurp_oid_files(ctx);
@@ -110,16 +102,6 @@ split_old_dump(migratorContext *ctx)
 		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
 	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
 	if ((db_dump = fopen(filename, PG_BINARY_W)) == NULL)
-=======
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, ALL_DUMP_FILE);
-	if ((all_dump = fopen(filename, "r")) == NULL)
-		pg_log(ctx, PG_FATAL, "Cannot open dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, GLOBALS_DUMP_FILE);
-	if ((globals_dump = fopen(filename, "w")) == NULL)
-		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
-	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
-	if ((db_dump = fopen(filename, "w")) == NULL)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		pg_log(ctx, PG_FATAL, "Cannot write to dump file %s\n", filename);
 	current_output = globals_dump;
 
@@ -135,13 +117,9 @@ split_old_dump(migratorContext *ctx)
 		if (current_output == globals_dump && start_of_line &&
 			suppressed_username &&
 			strncmp(line, "\\connect ", strlen("\\connect ")) == 0)
-<<<<<<< HEAD
 		{
 			current_output = db_dump;
 		}
-=======
-			current_output = db_dump;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* output unless we are recreating our own username */
 		if (current_output != globals_dump || !start_of_line ||
@@ -155,7 +133,6 @@ split_old_dump(migratorContext *ctx)
 			start_of_line = true;
 		else
 			start_of_line = false;
-<<<<<<< HEAD
 
 		/*
 		 * Inject binary_upgrade.preassign_* calls to the correct locations.
@@ -176,8 +153,6 @@ split_old_dump(migratorContext *ctx)
 			if (preassigned_oids)
 				fputs(preassigned_oids, current_output);
 		}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	fclose(all_dump);

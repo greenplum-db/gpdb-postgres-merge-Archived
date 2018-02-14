@@ -1,14 +1,9 @@
 /*
  *	pg_upgrade.h
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
  *	Portions Copyright (c) 2010, PostgreSQL Global Development Group
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.15.2.1 2010/07/25 03:47:33 momjian Exp $
-=======
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.15 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "postgres.h"
@@ -28,11 +23,8 @@
 #define LINE_ALLOC			4096
 #define QUERY_ALLOC			8192
 
-<<<<<<< HEAD
 #define NUMERIC_ALLOC 100
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #define MIGRATOR_API_VERSION	1
 
 #define MESSAGE_WIDTH		"60"
@@ -45,7 +37,6 @@
 #define GLOBALS_DUMP_FILE	"pg_upgrade_dump_globals.sql"
 #define DB_DUMP_FILE		"pg_upgrade_dump_db.sql"
 
-<<<<<<< HEAD
 #define GLOBAL_OIDS_DUMP_FILE "pg_upgrade_dump_global_oids.sql"
 #define DB_OIDS_DUMP_FILE_MASK	"pg_upgrade_dump_%u_oids.sql"
 
@@ -53,27 +44,19 @@
 /* needs to be kept in sync with pg_class.h */
 #define RELSTORAGE_EXTERNAL	'x'
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #ifndef WIN32
 #define pg_copy_file		copy_file
 #define pg_mv_file			rename
 #define pg_link_file		link
-<<<<<<< HEAD
 #define PATH_SEPARATOR      '/'
 #define RM_CMD				"rm -f"
 #define RMDIR_CMD			"rm -rf"
 #define SHELL_EXT			"sh"
-=======
-#define RMDIR_CMD			"rm -rf"
-#define EXEC_EXT			"sh"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #else
 #define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
 #define sleep(x)			Sleep(x * 1000)
-<<<<<<< HEAD
 #define PATH_SEPARATOR      '\\'
 #define RM_CMD				"DEL /q"
 #define RMDIR_CMD			"RMDIR /s/q"
@@ -155,17 +138,6 @@ typedef struct
 	char		attalign;
 	bool		is_numeric;
 } AttInfo;
-=======
-#define RMDIR_CMD			"RMDIR /s/q"
-#define EXEC_EXT			"bat"
-#define EXE_EXT				".exe"
-#endif
-
-#define CLUSTERNAME(cluster)	((cluster) == CLUSTER_OLD ? "old" : "new")
-
-/* OID system catalog preservation added during PG 9.0 development */
-#define TABLE_SPACE_SUBDIRS 201001111
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Each relation is represented by a relinfo structure.
@@ -175,7 +147,6 @@ typedef struct
 	char		nspname[NAMEDATALEN];	/* namespace name */
 	char		relname[NAMEDATALEN];	/* relation name */
 	Oid			reloid;			/* relation oid				 */
-<<<<<<< HEAD
 	char		relstorage;
 	Oid			relfilenode;	/* relation relfile node	 */
 	Oid			toastrelid;		/* oid of the toast relation */
@@ -196,11 +167,6 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
-=======
-	Oid			relfilenode;	/* relation relfile node	 */
-	Oid			toastrelid;		/* oid of the toast relation */
-	char		tablespace[MAXPGPATH];	/* relations tablespace path */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } RelInfo;
 
 typedef struct
@@ -209,7 +175,6 @@ typedef struct
 	int			nrels;
 } RelInfoArr;
 
-<<<<<<< HEAD
 typedef enum
 {
 	HEAP,
@@ -218,8 +183,6 @@ typedef enum
 	FSM
 } RelType;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * The following structure represents a relation mapping.
  */
@@ -233,7 +196,6 @@ typedef struct
 	char		old_relname[NAMEDATALEN];		/* old name of the relation */
 	char		new_nspname[NAMEDATALEN];		/* new name of the namespace */
 	char		new_relname[NAMEDATALEN];		/* new name of the relation */
-<<<<<<< HEAD
 	bool		missing_seg0_ok;
 
 	RelType		type;			/* Type of relation */
@@ -243,8 +205,6 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } FileNameMap;
 
 /*
@@ -256,11 +216,8 @@ typedef struct
 	char		db_name[NAMEDATALEN];	/* database name */
 	char		db_tblspace[MAXPGPATH]; /* database default tablespace path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
-<<<<<<< HEAD
 
 	char	   *reserved_oids;	/* as a string */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } DbInfo;
 
 typedef struct
@@ -293,10 +250,7 @@ typedef struct
 	uint32		toast;
 	bool		date_is_int;
 	bool		float8_pass_by_value;
-<<<<<<< HEAD
 	bool		data_checksum_version;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	char	   *lc_collate;
 	char	   *lc_ctype;
 	char	   *encoding;
@@ -312,7 +266,6 @@ typedef enum
 } transferMode;
 
 /*
-<<<<<<< HEAD
  * Enumeration to denote checksum modes
  */
 typedef enum
@@ -323,8 +276,6 @@ typedef enum
 } checksumMode;
 
 /*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Enumeration to denote pg_log modes
  */
 typedef enum
@@ -348,7 +299,6 @@ typedef enum
 
 typedef long pgpid_t;
 
-<<<<<<< HEAD
 /*
  * Enumeration for operations in the progress report
  */
@@ -363,8 +313,6 @@ typedef enum
 	ABORT,
 	DONE
 } progress_type;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * cluster
@@ -383,11 +331,8 @@ typedef struct
 	Oid			pg_database_oid;	/* OID of pg_database relation */
 	char	   *libpath;		/* pathname for cluster's pkglibdir */
 	char	   *tablespace_suffix;		/* directory specification */
-<<<<<<< HEAD
 
 	char	   *global_reserved_oids; /* OID preassign calls for shared objects */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } ClusterInfo;
 
 
@@ -418,17 +363,12 @@ typedef struct
 	bool		check;			/* TRUE -> ask user for permission to make
 								 * changes */
 	bool		verbose;		/* TRUE -> be verbose in messages */
-<<<<<<< HEAD
 	bool		progress;		/* TRUE -> file based progress queue */
 	bool		debug;			/* TRUE -> log more information */
 	transferMode transfer_mode; /* copy files or link them? */
 	bool		dispatcher_mode;	/* TRUE -> upgrading QD node */
 	checksumMode checksum_mode;	/* true -> calculate and add checksums to
 								 * data pages */
-=======
-	bool		debug;			/* TRUE -> log more information */
-	transferMode transfer_mode; /* copy files or link them? */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } migratorContext;
 
 
@@ -520,20 +460,14 @@ const char *linkAndUpdateFile(migratorContext *ctx,
 				pageCnvCtx *pageConverter, const char *src, const char *dst);
 
 void		check_hard_link(migratorContext *ctx);
-<<<<<<< HEAD
 void rewriteHeapPageChecksum(migratorContext *ctx,
 					 const char *fromfile, const char *tofile,
 					 const char *schemaName, const char *relName);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* function.c */
 
 void		install_support_functions(migratorContext *ctx);
-<<<<<<< HEAD
 void		install_system_support_functions(migratorContext *ctx);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 void		uninstall_support_functions(migratorContext *ctx);
 void		get_loadable_libraries(migratorContext *ctx);
 void		check_loadable_libraries(migratorContext *ctx);
@@ -560,7 +494,6 @@ void		get_pg_database_relfilenode(migratorContext *ctx, Cluster whichCluster);
 const char *transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 				   DbInfoArr *newdb_arr, char *old_pgdata, char *new_pgdata);
 
-<<<<<<< HEAD
 /* aotable.c */
 void		restore_aosegment_tables(migratorContext *ctx);
 
@@ -569,8 +502,6 @@ const char *convert_gpdb4_heap_file(migratorContext *ctx,
 									const char *src, const char *dst,
 									bool has_numerics, AttInfo *atts, int natts);
 void		finish_gpdb4_page_converter(migratorContext *ctx);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* tablespace.c */
 
@@ -608,25 +539,19 @@ char	   *pg_strdup(migratorContext *ctx, const char *s);
 void	   *pg_malloc(migratorContext *ctx, int size);
 void		pg_free(void *ptr);
 const char *getErrorText(int errNum);
-<<<<<<< HEAD
 unsigned int str2uint(const char *str);
 void 		report_progress(migratorContext *ctx, Cluster cluster, progress_type op, char *fmt,...);
 void		close_progress(migratorContext *ctx);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* version.c */
 
 void new_9_0_populate_pg_largeobject_metadata(migratorContext *ctx,
 									  bool check_mode, Cluster whichCluster);
-<<<<<<< HEAD
 void new_gpdb5_0_invalidate_indexes(migratorContext *ctx, bool check_mode,
 									Cluster whichCluster);
 void new_gpdb_invalidate_bitmap_indexes(migratorContext *ctx, bool check_mode,
 										Cluster whichCluster);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* version_old_8_3.c */
 
@@ -634,13 +559,8 @@ void old_8_3_check_for_name_data_type_usage(migratorContext *ctx,
 									   Cluster whichCluster);
 void old_8_3_check_for_tsquery_usage(migratorContext *ctx,
 								Cluster whichCluster);
-<<<<<<< HEAD
 void old_8_3_check_ltree_usage(migratorContext *ctx,
 								Cluster whichCluster);
-=======
-void old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx,
-												Cluster whichCluster);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 void old_8_3_rebuild_tsvector_tables(migratorContext *ctx,
 								bool check_mode, Cluster whichCluster);
 void old_8_3_invalidate_hash_gin_indexes(migratorContext *ctx,
@@ -649,7 +569,6 @@ void old_8_3_invalidate_bpchar_pattern_ops_indexes(migratorContext *ctx,
 									  bool check_mode, Cluster whichCluster);
 char *old_8_3_create_sequence_script(migratorContext *ctx,
 							   Cluster whichCluster);
-<<<<<<< HEAD
 
 /* version_old_gpdb4.c */
 void old_GPDB4_check_for_money_data_type_usage(migratorContext *ctx, Cluster whichCluster);
@@ -671,5 +590,3 @@ void slurp_oid_files(migratorContext *ctx);
 #undef Assert
 #endif
 #define Assert(condition) ((void) (true || (condition)))
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

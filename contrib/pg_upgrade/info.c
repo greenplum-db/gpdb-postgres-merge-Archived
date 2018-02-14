@@ -3,23 +3,15 @@
  *
  *	information support functions
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
  *	Portions Copyright (c) 2010, PostgreSQL Global Development Group
-=======
- *	Copyright (c) 2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
  */
 
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
-<<<<<<< HEAD
 #include "catalog/pg_class.h"
-=======
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static void get_db_infos(migratorContext *ctx, DbInfoArr *dbinfos,
 			 Cluster whichCluster);
@@ -32,7 +24,6 @@ static void relarr_free(RelInfoArr *rel_arr);
 static void map_rel(migratorContext *ctx, const RelInfo *oldrel,
 		const RelInfo *newrel, const DbInfo *old_db,
 		const DbInfo *new_db, const char *olddata,
-<<<<<<< HEAD
 		const char *newdata, FileNameMap *map, RelType reltype);
 static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
@@ -40,21 +31,6 @@ static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map);
-=======
-		const char *newdata, FileNameMap *map);
-static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
-			  const char *old_nspname, const char *old_relname,
-			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const DbInfo *old_db,
-			  const DbInfo *new_db, const char *olddata,
-			  const char *newdata, FileNameMap *map);
-static RelInfo *relarr_lookup_reloid(migratorContext *ctx,
-					 RelInfoArr *rel_arr, Oid oid, Cluster whichCluster);
-static RelInfo *relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
-				  const char *nspname, const char *relname,
-				  Cluster whichCluster);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * gen_db_file_maps()
@@ -70,7 +46,6 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 				 int *nmaps, const char *old_pgdata, const char *new_pgdata)
 {
 	FileNameMap *maps;
-<<<<<<< HEAD
 	int			num_maps = 0;
 	int			new_relnum;
 	int			old_relnum;
@@ -92,15 +67,10 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 			pg_log(ctx, PG_WARNING, "old: %s\n",
 				   (old_db->rel_arr.rels[old_relnum]).relname);
 	}
-=======
-	int			relnum;
-	int			num_maps = 0;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	maps = (FileNameMap *) pg_malloc(ctx, sizeof(FileNameMap) *
 									 new_db->rel_arr.nrels);
 
-<<<<<<< HEAD
 	old_relnum = new_relnum = 0;
 	while (old_relnum < old_db->rel_arr.nrels ||
 		   new_relnum < new_db->rel_arr.nrels)
@@ -183,80 +153,6 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 		pg_log(ctx, PG_FATAL, "Failed to match up old and new tables in database \"%s\"\n",
 				 old_db->db_name);
 
-=======
-	for (relnum = 0; relnum < new_db->rel_arr.nrels; relnum++)
-	{
-		RelInfo    *newrel = &new_db->rel_arr.rels[relnum];
-		RelInfo    *oldrel;
-
-		/* toast tables are handled by their parent */
-		if (strcmp(newrel->nspname, "pg_toast") == 0)
-			continue;
-
-		oldrel = relarr_lookup_rel(ctx, &(old_db->rel_arr), newrel->nspname,
-								   newrel->relname, CLUSTER_OLD);
-
-		map_rel(ctx, oldrel, newrel, old_db, new_db, old_pgdata, new_pgdata,
-				maps + num_maps);
-		num_maps++;
-
-		/*
-		 * so much for the mapping of this relation. Now we need a mapping for
-		 * its corresponding toast relation if any.
-		 */
-		if (oldrel->toastrelid > 0)
-		{
-			RelInfo    *new_toast;
-			RelInfo    *old_toast;
-			char		new_name[MAXPGPATH];
-			char		old_name[MAXPGPATH];
-
-			/* construct the new and old relnames for the toast relation */
-			snprintf(old_name, sizeof(old_name), "pg_toast_%u",
-					 oldrel->reloid);
-			snprintf(new_name, sizeof(new_name), "pg_toast_%u",
-					 newrel->reloid);
-
-			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_reloid(ctx, &old_db->rel_arr,
-											 oldrel->toastrelid, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(ctx, &new_db->rel_arr,
-										  "pg_toast", new_name, CLUSTER_NEW);
-
-			/* finally create a mapping for them */
-			map_rel(ctx, old_toast, new_toast, old_db, new_db, old_pgdata, new_pgdata,
-					maps + num_maps);
-			num_maps++;
-
-			/*
-			 * also need to provide a mapping for the index of this toast
-			 * relation. The procedure is similar to what we did above for
-			 * toast relation itself, the only difference being that the
-			 * relnames need to be appended with _index.
-			 */
-
-			/*
-			 * construct the new and old relnames for the toast index
-			 * relations
-			 */
-			snprintf(old_name, sizeof(old_name), "%s_index", old_toast->relname);
-			snprintf(new_name, sizeof(new_name), "pg_toast_%u_index",
-					 newrel->reloid);
-
-			/* look them up in their respective arrays */
-			old_toast = relarr_lookup_rel(ctx, &old_db->rel_arr,
-										  "pg_toast", old_name, CLUSTER_OLD);
-			new_toast = relarr_lookup_rel(ctx, &new_db->rel_arr,
-										  "pg_toast", new_name, CLUSTER_NEW);
-
-			/* finally create a mapping for them */
-			map_rel(ctx, old_toast, new_toast, old_db, new_db, old_pgdata,
-					new_pgdata, maps + num_maps);
-			num_maps++;
-		}
-	}
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	*nmaps = num_maps;
 	return maps;
 }
@@ -265,7 +161,6 @@ gen_db_file_maps(migratorContext *ctx, DbInfo *old_db, DbInfo *new_db,
 static void
 map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
 		const DbInfo *old_db, const DbInfo *new_db, const char *olddata,
-<<<<<<< HEAD
 		const char *newdata, FileNameMap *map, RelType reltype)
 {
 	map_rel_by_id(ctx, oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
@@ -280,13 +175,6 @@ map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
 
 	/* An AO table doesn't necessarily have segment 0 at all. */
 	map->missing_seg0_ok = relstorage_is_ao(oldrel->relstorage);
-=======
-		const char *newdata, FileNameMap *map)
-{
-	map_rel_by_id(ctx, oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
-				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, old_db,
-				  new_db, olddata, newdata, map);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -299,11 +187,7 @@ static void
 map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 			  const char *old_nspname, const char *old_relname,
 			  const char *new_nspname, const char *new_relname,
-<<<<<<< HEAD
 			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
-=======
-			  const char *old_tablespace, const DbInfo *old_db,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			  const DbInfo *new_db, const char *olddata,
 			  const char *newdata, FileNameMap *map)
 {
@@ -315,10 +199,7 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_nspname);
 	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_relname);
 
-<<<<<<< HEAD
 	/* In case old/new tablespaces don't match, do them separately. */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (strlen(old_tablespace) == 0)
 	{
 		/*
@@ -326,10 +207,6 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 		 * exist in the data directories.
 		 */
 		snprintf(map->old_file, sizeof(map->old_file), "%s/base/%u", olddata, old_db->db_oid);
-<<<<<<< HEAD
-=======
-		snprintf(map->new_file, sizeof(map->new_file), "%s/base/%u", newdata, new_db->db_oid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -339,7 +216,6 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 		 */
 		snprintf(map->old_file, sizeof(map->old_file), "%s%s/%u", old_tablespace,
 				 ctx->old.tablespace_suffix, old_db->db_oid);
-<<<<<<< HEAD
 	}
 
 	/* Do the same for new tablespaces */
@@ -362,11 +238,6 @@ map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
 	}
 
 	report_progress(ctx, NONE, FILE_MAP, "Map \"%s\" to \"%s\"", map->old_file, map->new_file);
-=======
-		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", old_tablespace,
-				 ctx->new.tablespace_suffix, new_db->db_oid);
-	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -412,13 +283,9 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 							"FROM pg_catalog.pg_database d "
 							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 							" ON d.dattablespace = t.oid "
-<<<<<<< HEAD
 							"WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
 							"ORDER BY 2");
-=======
-							"WHERE d.datallowconn = true");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	i_datname = PQfnumber(res, "datname");
 	i_oid = PQfnumber(res, "oid");
@@ -429,11 +296,7 @@ get_db_infos(migratorContext *ctx, DbInfoArr *dbinfs_arr, Cluster whichCluster)
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
-<<<<<<< HEAD
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
-=======
-		dbinfos[tupnum].db_oid = atol(PQgetvalue(res, tupnum, i_oid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		snprintf(dbinfos[tupnum].db_name, sizeof(dbinfos[tupnum].db_name), "%s",
 				 PQgetvalue(res, tupnum, i_datname));
@@ -470,7 +333,6 @@ get_db_and_rel_infos(migratorContext *ctx, DbInfoArr *db_arr, Cluster whichClust
 		dbarr_print(ctx, db_arr, whichCluster);
 }
 
-<<<<<<< HEAD
 /*
  * get_numeric_types()
  *
@@ -533,8 +395,6 @@ get_numeric_types(migratorContext *ctx, PGconn *conn)
 
 	return result;
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * get_rel_infos()
@@ -557,7 +417,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	int			num_rels = 0;
 	char	   *nspname = NULL;
 	char	   *relname = NULL;
-<<<<<<< HEAD
 	char		relstorage;
 	char		relkind;
 	int			i_spclocation = -1;
@@ -624,15 +483,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	}
 
 	PQclear(res);
-=======
-	int			i_spclocation = -1;
-	int			i_nspname = -1;
-	int			i_relname = -1;
-	int			i_oid = -1;
-	int			i_relfilenode = -1;
-	int			i_reltoastrelid = -1;
-	char		query[QUERY_ALLOC];
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * pg_largeobject contains user data that does not appear the pg_dumpall
@@ -644,7 +494,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	 */
 
 	snprintf(query, sizeof(query),
-<<<<<<< HEAD
 			 "SELECT DISTINCT c.oid, n.nspname, c.relname, c.relstorage, c.relkind, "
 			 "	c.relfilenode, c.reltoastrelid, c.reltablespace, t.spclocation "
 			 "FROM pg_catalog.pg_class c JOIN "
@@ -688,30 +537,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 802) ?
 			 "" : " AND i.indisvalid IS DISTINCT FROM false AND i.indisready IS DISTINCT FROM false "
 		);
-=======
-			 "SELECT DISTINCT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, c.reltoastrelid, t.spclocation "
-			 "FROM pg_catalog.pg_class c JOIN "
-			 "		pg_catalog.pg_namespace n "
-			 "	ON c.relnamespace = n.oid "
-			 "   LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			 "	ON c.reltablespace = t.oid "
-			 "WHERE (( n.nspname NOT IN ('pg_catalog', 'information_schema') "
-			 "	AND c.oid >= %u "
-			 "	) OR ( "
-			 "	n.nspname = 'pg_catalog' "
-			 "	AND relname IN "
-			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index') )) "
-			 "	AND relkind IN ('r','t', 'i'%s)"
-			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
-			 "			c.reltoastrelid, t.spclocation, "
-			 "			n.nspname "
-			 "ORDER BY n.nspname, c.relname;",
-			 FirstNormalObjectId,
-	/* see the comment at the top of old_8_3_create_sequence_script() */
-			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803) ?
-			 "" : ", 'S'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	res = executeQueryOrDie(ctx, conn, query);
 
@@ -722,7 +547,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	i_oid = PQfnumber(res, "oid");
 	i_nspname = PQfnumber(res, "nspname");
 	i_relname = PQfnumber(res, "relname");
-<<<<<<< HEAD
 	i_relstorage = PQfnumber(res, "relstorage");
 	i_relkind = PQfnumber(res, "relkind");
 	i_relfilenode = PQfnumber(res, "relfilenode");
@@ -730,23 +554,14 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_spclocation = PQfnumber(res, "spclocation");
 	i_segrelid = PQfnumber(res, "segrelid");
-=======
-	i_relfilenode = PQfnumber(res, "relfilenode");
-	i_reltoastrelid = PQfnumber(res, "reltoastrelid");
-	i_spclocation = PQfnumber(res, "spclocation");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	for (relnum = 0; relnum < ntups; relnum++)
 	{
 		RelInfo    *curr = &relinfos[num_rels++];
 		const char *tblspace;
 
-<<<<<<< HEAD
 		curr->gpdb4_heap_conversion_needed = false;
 		curr->reloid = atooid(PQgetvalue(res, relnum, i_oid));
-=======
-		curr->reloid = atol(PQgetvalue(res, relnum, i_oid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
 		strlcpy(curr->nspname, nspname, sizeof(curr->nspname));
@@ -754,7 +569,6 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		relname = PQgetvalue(res, relnum, i_relname);
 		strlcpy(curr->relname, relname, sizeof(curr->relname));
 
-<<<<<<< HEAD
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
 		curr->toastrelid = atooid(PQgetvalue(res, relnum, i_reltoastrelid));
 
@@ -1129,26 +943,13 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		}
 		else
 			curr->gpdb4_heap_conversion_needed = false;
-=======
-		curr->relfilenode = atol(PQgetvalue(res, relnum, i_relfilenode));
-		curr->toastrelid = atol(PQgetvalue(res, relnum, i_reltoastrelid));
-
-		tblspace = PQgetvalue(res, relnum, i_spclocation);
-		/* if no table tablespace, use the database tablespace */
-		if (strlen(tblspace) == 0)
-			tblspace = dbinfo->db_tblspace;
-		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	PQclear(res);
 
 	PQfinish(conn);
 
-<<<<<<< HEAD
 	pg_free(numeric_rels);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	relarr->rels = relinfos;
 	relarr->nrels = num_rels;
 }
@@ -1177,64 +978,6 @@ dbarr_lookup_db(DbInfoArr *db_arr, const char *db_name)
 }
 
 
-<<<<<<< HEAD
-=======
-/*
- * relarr_lookup_rel()
- *
- * Searches "relname" in rel_arr. Returns the *real* pointer to the
- * RelInfo structure.
- */
-static RelInfo *
-relarr_lookup_rel(migratorContext *ctx, RelInfoArr *rel_arr,
-				  const char *nspname, const char *relname,
-				  Cluster whichCluster)
-{
-	int			relnum;
-
-	if (!rel_arr || !relname)
-		return NULL;
-
-	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-	{
-		if (strcmp(rel_arr->rels[relnum].nspname, nspname) == 0 &&
-			strcmp(rel_arr->rels[relnum].relname, relname) == 0)
-			return &rel_arr->rels[relnum];
-	}
-	pg_log(ctx, PG_FATAL, "Could not find %s.%s in %s cluster\n",
-		   nspname, relname, CLUSTERNAME(whichCluster));
-	return NULL;
-}
-
-
-/*
- * relarr_lookup_reloid()
- *
- *	Returns a pointer to the RelInfo structure for the
- *	given oid or NULL if the desired entry cannot be
- *	found.
- */
-static RelInfo *
-relarr_lookup_reloid(migratorContext *ctx, RelInfoArr *rel_arr, Oid oid,
-					 Cluster whichCluster)
-{
-	int			relnum;
-
-	if (!rel_arr || !oid)
-		return NULL;
-
-	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-	{
-		if (rel_arr->rels[relnum].reloid == oid)
-			return &rel_arr->rels[relnum];
-	}
-	pg_log(ctx, PG_FATAL, "Could not find %d in %s cluster\n",
-		   oid, CLUSTERNAME(whichCluster));
-	return NULL;
-}
-
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void
 relarr_free(RelInfoArr *rel_arr)
 {

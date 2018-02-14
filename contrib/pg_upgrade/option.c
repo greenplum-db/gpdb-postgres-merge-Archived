@@ -4,7 +4,7 @@
  *	options functions
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.12 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.12.2.1 2010/07/13 20:15:51 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -47,15 +47,12 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 		{"link", no_argument, NULL, 'k'},
 		{"logfile", required_argument, NULL, 'l'},
 		{"verbose", no_argument, NULL, 'v'},
-<<<<<<< HEAD
 		{"progress", no_argument, NULL, 'X'},
 		{"add-checksum", no_argument, NULL, 'J'},
 		{"remove-checksum", no_argument, NULL, 'j'},
 
 		{"dispatcher-mode", no_argument, NULL, 1},
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		{NULL, 0, NULL, 0}
 	};
 	int			option;			/* Command line option */
@@ -98,11 +95,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 
 	getcwd(ctx->cwd, MAXPGPATH);
 
-<<<<<<< HEAD
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:jJkl:p:P:u:v",
-=======
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:p:P:u:v",
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -140,7 +133,6 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 				}
 				break;
 
-<<<<<<< HEAD
 			case 'j':
 				ctx->checksum_mode = CHECKSUM_REMOVE;
 				break;
@@ -149,8 +141,6 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 				ctx->checksum_mode = CHECKSUM_ADD;
 				break;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			case 'k':
 				ctx->transfer_mode = TRANSFER_MODE_LINK;
 				break;
@@ -185,7 +175,6 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 				ctx->verbose = true;
 				break;
 
-<<<<<<< HEAD
 			case 'X':
 				pg_log(ctx, PG_REPORT, "Running in progress report mode\n");
 				ctx->progress = true;
@@ -206,8 +195,6 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 				ctx->dispatcher_mode = true;
 				break;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			default:
 				pg_log(ctx, PG_FATAL,
 					   "Try \"%s --help\" for more information.\n",
@@ -231,11 +218,7 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
 	}
 	else
-<<<<<<< HEAD
 		ctx->logfile = pg_strdup(ctx, DEVNULL);
-=======
-		ctx->logfile = strdup(DEVNULL);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* if no debug file name, output to the terminal */
 	if (ctx->debug && !ctx->debug_fd)
@@ -245,14 +228,11 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 			pg_log(ctx, PG_FATAL, "Cannot write to terminal\n");
 	}
 
-<<<<<<< HEAD
 	/* Ensure we are only adding checksums in copy mode */
 	if (ctx->transfer_mode != TRANSFER_MODE_COPY &&
 		ctx->checksum_mode != CHECKSUM_NONE)
 		pg_log(ctx, PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* Get values from env if not already set */
 	validateDirectoryOption(ctx, &ctx->old.pgdata, "OLDDATADIR", "-d",
 							"old cluster data resides");
@@ -280,21 +260,15 @@ Options:\n\
  -D, --new-datadir=new_datadir    new cluster data directory\n\
  -g, --debug                      enable debugging\n\
  -G, --debugfile=debug_filename   output debugging activity to file\n\
-<<<<<<< HEAD
  -j, --remove-checksum            remove data checksums when creating new cluster\n\
  -J, --add-checksum               add data checksumming to the new cluster\n\
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  -k, --link                       link instead of copying files to new cluster\n\
  -l, --logfile=log_filename       log session activity to file\n\
  -p, --old-port=old_portnum       old cluster port number (default %d)\n\
  -P, --new-port=new_portnum       new cluster port number (default %d)\n\
  -u, --user=username              clusters superuser (default \"%s\")\n\
  -v, --verbose                    enable verbose output\n\
-<<<<<<< HEAD
  -X, --progress                   enable progress reporting\n\
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  -V, --version                    display version information, then exit\n\
  -h, --help                       show this help, then exit\n\
 \n\
@@ -327,13 +301,6 @@ or\n"), ctx->old.port, ctx->new.port, ctx->user);
   C:\\> set NEWBINDIR=newCluster/bin\n\
   C:\\> pg_upgrade\n"));
 #endif
-<<<<<<< HEAD
-=======
-	printf(_("\n\
-You may find it useful to save the preceding 5 commands in a shell script\n\
-\n\
-Report bugs to <pg-migrator-general@lists.pgfoundry.org>\n"));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 
@@ -383,15 +350,11 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 static void
 get_pkglibdirs(migratorContext *ctx)
 {
-<<<<<<< HEAD
 	/*
 	 * we do not need to know the libpath in the old cluster, and might not
 	 * have a working pg_config to ask for it anyway.
 	 */
 	ctx->old.libpath = NULL;
-=======
-	ctx->old.libpath = get_pkglibdir(ctx, ctx->old.bindir);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	ctx->new.libpath = get_pkglibdir(ctx, ctx->new.bindir);
 }
 

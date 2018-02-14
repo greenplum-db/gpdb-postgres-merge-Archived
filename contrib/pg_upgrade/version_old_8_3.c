@@ -4,7 +4,7 @@
  *	Postgres-version-specific routines
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6 2010/07/03 16:33:14 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6.2.2 2010/07/25 03:47:33 momjian Exp $
  */
 
 #include "pg_upgrade.h"
@@ -56,26 +56,17 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
 								"		pg_catalog.pg_attribute a "
-<<<<<<< HEAD
 								"WHERE	c.relkind='r' AND "
 								"		c.oid = a.attrelid AND "
-=======
-								"WHERE	c.oid = a.attrelid AND "
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 								"		a.attnum > 1 AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.name'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
 								/* exclude possibly orphaned temp tables */
 							 	"		n.nspname != 'pg_catalog' AND "
 								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname != 'information_schema' ");
-=======
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -107,11 +98,7 @@ old_8_3_check_for_name_data_type_usage(migratorContext *ctx, Cluster whichCluste
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-<<<<<<< HEAD
 			   "| Your installation contains the \"name\" data type in\n"
-=======
-			   "| Your installation uses the \"name\" data type in\n"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   "| user tables.  This data type changed its internal\n"
 			   "| alignment between your old and new clusters so this\n"
 			   "| cluster cannot currently be upgraded.  You can\n"
@@ -168,16 +155,11 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsquery'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
 								/* exclude possibly orphaned temp tables */
 							 	"		n.nspname != 'pg_catalog' AND "
 								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname != 'information_schema' ");
-=======
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -209,11 +191,7 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-<<<<<<< HEAD
 			   "| Your installation contains the \"tsquery\" data type.\n"
-=======
-			   "| Your installation uses the \"tsquery\" data type.\n"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   "| This data type added a new internal field between\n"
 			   "| your old and new clusters so this cluster cannot\n"
 			   "| currently be upgraded.  You can remove the problem\n"
@@ -227,23 +205,12 @@ old_8_3_check_for_tsquery_usage(migratorContext *ctx, Cluster whichCluster)
 
 
 /*
-<<<<<<< HEAD
  *	old_8_3_check_ltree_usage()
  *	8.3 -> 8.4
  *	The internal ltree structure was changed in 8.4 so upgrading is impossible.
  */
 void
 old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
-=======
- * old_8_3_check_for_isn_and_int8_passing_mismatch()
- *	8.3 -> 8.4
- *	/contrib/isn relies on data type int8, and in 8.4 int8 is now passed
- *	by value.  The schema dumps the CREATE TYPE PASSEDBYVALUE setting so
- *	it must match for the old and new servers.
- */
-void
-old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster whichCluster)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
 	&ctx->old : &ctx->new;
@@ -252,23 +219,9 @@ old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster wh
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-<<<<<<< HEAD
 	prep_status(ctx, "Checking for /contrib/ltree");
 
 	snprintf(output_path, sizeof(output_path), "%s/contrib_ltree.txt",
-=======
-	prep_status(ctx, "Checking for /contrib/isn with bigint-passing mismatch");
-
-	if (ctx->old.controldata.float8_pass_by_value ==
-		ctx->new.controldata.float8_pass_by_value)
-	{
-		/* no mismatch */
-		check_ok(ctx);
-		return;
-	}
-
-	snprintf(output_path, sizeof(output_path), "%s/contrib_isn_and_int8_pass_by_value.txt",
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 ctx->cwd);
 
 	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
@@ -282,21 +235,13 @@ old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster wh
 		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
 		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
 
-<<<<<<< HEAD
 		/* Find any functions coming from contrib/ltree */
-=======
-		/* Find any functions coming from contrib/isn */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		res = executeQueryOrDie(ctx, conn,
 								"SELECT n.nspname, p.proname "
 								"FROM	pg_catalog.pg_proc p, "
 								"		pg_catalog.pg_namespace n "
 								"WHERE	p.pronamespace = n.oid AND "
-<<<<<<< HEAD
 								"		p.probin = '$libdir/ltree'");
-=======
-								"		p.probin = '$libdir/isn'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -326,23 +271,12 @@ old_8_3_check_for_isn_and_int8_passing_mismatch(migratorContext *ctx, Cluster wh
 		fclose(script);
 		pg_log(ctx, PG_REPORT, "fatal\n");
 		pg_log(ctx, PG_FATAL,
-<<<<<<< HEAD
 			   "| Your installation contains the \"ltree\" data type.  This data type\n"
 			   "| changed its internal storage format between your old and new clusters so this\n"
 			   "| cluster cannot currently be upgraded.  You can manually upgrade databases\n"
 			   "| that use \"contrib/ltree\" facilities and remove \"contrib/ltree\" from the old\n"
 			   "| cluster and restart the upgrade.  A list of the problem functions is in the\n"
 			   "| file:\n"
-=======
-			   "| Your installation uses \"/contrib/isn\" functions\n"
-			   "| which rely on the bigint data type.  Your old and\n"
-			   "| new clusters pass bigint values differently so this\n"
-			   "| cluster cannot currently be upgraded.  You can\n"
-			   "| manually migrate data that use \"/contrib/isn\"\n"
-			   "| facilities and remove \"/contrib/isn\" from the\n"
-			   "| old cluster and restart the migration.  A list\n"
-			   "| of the problem functions is in the file:\n"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   "| \t%s\n\n", output_path);
 	}
 	else
@@ -403,16 +337,11 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
 								/* exclude possibly orphaned temp tables */
 							 	"		n.nspname != 'pg_catalog' AND "
 								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname != 'information_schema' ");
-=======
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  *	This macro is used below to avoid reindexing indexes already rebuilt
@@ -429,15 +358,10 @@ old_8_3_rebuild_tsvector_tables(migratorContext *ctx, bool check_mode,
 								"		NOT a.attisdropped AND "		\
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND " \
 								"		c.relnamespace = n.oid AND "	\
-<<<<<<< HEAD
 							 	"		n.nspname != 'pg_catalog' AND " \
 								"		n.nspname !~ '^pg_temp_' AND " \
 								"		n.nspname !~ '^pg_toast_temp_' AND " \
 								"		n.nspname != 'information_schema')"
-=======
-								"		n.nspname != 'pg_catalog' AND " \
-								"		n.nspname != 'information_schema') "
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -806,17 +730,12 @@ old_8_3_create_sequence_script(migratorContext *ctx, Cluster whichCluster)
 								"		pg_catalog.pg_namespace n "
 								"WHERE	c.relkind = 'S' AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
 								/* exclude possibly orphaned temp tables */
 							 	"		n.nspname != 'pg_catalog' AND "
 								"		n.nspname !~ '^pg_temp_' AND "
 								"		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname != 'information_schema' ");
 
-=======
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");

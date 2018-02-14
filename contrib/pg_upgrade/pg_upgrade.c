@@ -3,23 +3,15 @@
  *
  *	main source file
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
  *	Portions Copyright (c) 2010, PostgreSQL Global Development Group
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.10.2.1 2010/07/13 20:15:51 momjian Exp $
-=======
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.c,v 1.10 2010/07/06 19:18:55 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 
 #include "pg_upgrade.h"
 
-<<<<<<< HEAD
 #include "catalog/pg_magic_oid.h"
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif
@@ -29,7 +21,6 @@ static void prepare_new_cluster(migratorContext *ctx);
 static void prepare_new_databases(migratorContext *ctx);
 static void create_new_objects(migratorContext *ctx);
 static void copy_clog_xlog_xid(migratorContext *ctx);
-<<<<<<< HEAD
 static void copy_distributedlog(migratorContext *ctx);
 static void set_frozenxids(migratorContext *ctx);
 static void setup(migratorContext *ctx, char *argv0, bool live_check);
@@ -44,12 +35,6 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 #ifdef WIN32
 static char *restrict_env;
 #endif
-=======
-static void set_frozenxids(migratorContext *ctx);
-static void setup(migratorContext *ctx, char *argv0, bool live_check);
-static void cleanup(migratorContext *ctx);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 int
 main(int argc, char **argv)
@@ -63,19 +48,13 @@ main(int argc, char **argv)
 
 	parseCommandLine(&ctx, argc, argv);
 
-<<<<<<< HEAD
 	get_restricted_token(ctx.progname);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	output_check_banner(&ctx, &live_check);
 
 	setup(&ctx, argv[0], live_check);
 
-<<<<<<< HEAD
 	report_progress(&ctx, NONE, CHECK, "Checking cluster compatability");
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	check_cluster_versions(&ctx);
 	check_cluster_compatibility(&ctx, live_check);
 
@@ -101,10 +80,7 @@ main(int argc, char **argv)
 	 */
 
 	copy_clog_xlog_xid(&ctx);
-<<<<<<< HEAD
 	copy_distributedlog(&ctx);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* New now using xids of the old system */
 
@@ -122,11 +98,7 @@ main(int argc, char **argv)
 	 * because there is no need to have the schema load use new oids.
 	 */
 	prep_status(&ctx, "Setting next oid for new cluster");
-<<<<<<< HEAD
 	exec_prog(&ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -o %u \"%s\" > "
-=======
-	exec_prog(&ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			  DEVNULL SYSTEMQUOTE,
 		  ctx.new.bindir, ctx.old.controldata.chkpnt_nxtoid, ctx.new.pgdata);
 	check_ok(&ctx);
@@ -138,12 +110,9 @@ main(int argc, char **argv)
 	pg_log(&ctx, PG_REPORT, "\nUpgrade complete\n");
 	pg_log(&ctx, PG_REPORT, "----------------\n");
 
-<<<<<<< HEAD
 	report_progress(&ctx, NONE, DONE, "Upgrade complete");
 	close_progress(&ctx);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	output_completion_banner(&ctx, deletion_script_file_name);
 
 	pg_free(deletion_script_file_name);
@@ -154,7 +123,6 @@ main(int argc, char **argv)
 	return 0;
 }
 
-<<<<<<< HEAD
 #ifdef WIN32
 typedef BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 
@@ -311,8 +279,6 @@ get_restricted_token(const char *progname)
 	}
 #endif
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static void
 setup(migratorContext *ctx, char *argv0, bool live_check)
@@ -370,7 +336,6 @@ prepare_new_cluster(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Analyzing all rows in the new cluster");
 	exec_prog(ctx, true,
-<<<<<<< HEAD
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user,
@@ -380,11 +345,6 @@ prepare_new_cluster(migratorContext *ctx)
 			  DEVNULL
 #endif
 			  );
-=======
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --analyze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	check_ok(ctx);
 
 	/*
@@ -395,7 +355,6 @@ prepare_new_cluster(migratorContext *ctx)
 	 */
 	prep_status(ctx, "Freezing all rows on the new cluster");
 	exec_prog(ctx, true,
-<<<<<<< HEAD
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  ctx->new.bindir, ctx->new.port, ctx->user,
@@ -405,11 +364,6 @@ prepare_new_cluster(migratorContext *ctx)
 			  DEVNULL
 #endif
 			  );
-=======
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --freeze >> %s 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->logfile);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	check_ok(ctx);
 
 	get_pg_database_relfilenode(ctx, CLUSTER_NEW);
@@ -434,7 +388,6 @@ prepare_new_databases(migratorContext *ctx)
 	 * We have to create the databases first so we can create the toast table
 	 * placeholder relfiles.
 	 */
-<<<<<<< HEAD
 	install_system_support_functions(ctx);
 	prep_status(ctx, "Creating databases in the new cluster");
 	exec_prog(ctx, true,
@@ -450,15 +403,6 @@ prepare_new_databases(migratorContext *ctx)
 			  DEVNULL
 #endif
 			  );
-=======
-	prep_status(ctx, "Creating databases in the new cluster");
-	exec_prog(ctx, true,
-			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
-			  SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
-			  GLOBALS_DUMP_FILE, ctx->logfile);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	check_ok(ctx);
 
 	get_db_and_rel_infos(ctx, &ctx->new.dbarr, CLUSTER_NEW);
@@ -466,10 +410,6 @@ prepare_new_databases(migratorContext *ctx)
 	stop_postmaster(ctx, false, false);
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void
 create_new_objects(migratorContext *ctx)
 {
@@ -480,7 +420,6 @@ create_new_objects(migratorContext *ctx)
 
 	prep_status(ctx, "Restoring database schema to new cluster");
 	exec_prog(ctx, true,
-<<<<<<< HEAD
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/psql\" --set ON_ERROR_STOP=on "
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
@@ -497,22 +436,12 @@ create_new_objects(migratorContext *ctx)
 	/* Restore contents of AO auxiliary tables */
 	restore_aosegment_tables(ctx);
 
-=======
-			  SYSTEMQUOTE "\"%s/psql\" --port %d --username \"%s\" "
-		   "--set ON_ERROR_STOP=on -f \"%s/%s\" --dbname template1 >> \"%s\""
-			  SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->new.port, ctx->user, ctx->cwd,
-			  DB_DUMP_FILE, ctx->logfile);
-	check_ok(ctx);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* regenerate now that we have db schemas */
 	dbarr_free(&ctx->new.dbarr);
 	get_db_and_rel_infos(ctx, &ctx->new.dbarr, CLUSTER_NEW);
 
 	uninstall_support_functions(ctx);
 
-<<<<<<< HEAD
 	/*
 	 * If we're upgrading from GPDB4, mark all indexes as invalid.
 	 * The page format is incompatible, and while convert heap
@@ -567,11 +496,6 @@ copy_distributedlog(migratorContext *ctx)
 			  old_dlog_path, new_dlog_path);
 	check_ok(ctx);
 }
-=======
-	stop_postmaster(ctx, false, false);
-}
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static void
 copy_clog_xlog_xid(migratorContext *ctx)
@@ -603,17 +527,12 @@ copy_clog_xlog_xid(migratorContext *ctx)
 
 	/* set the next transaction id of the new cluster */
 	prep_status(ctx, "Setting next transaction id for new cluster");
-<<<<<<< HEAD
 	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
-=======
-	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	   ctx->new.bindir, ctx->old.controldata.chkpnt_nxtxid, ctx->new.pgdata);
 	check_ok(ctx);
 
 	/* now reset the wal archives in the new cluster */
 	prep_status(ctx, "Resetting WAL archives");
-<<<<<<< HEAD
 	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -l 1,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  ctx->new.bindir,
 			  ctx->old.controldata.logid, ctx->old.controldata.nxtlogseg,
@@ -624,12 +543,6 @@ copy_clog_xlog_xid(migratorContext *ctx)
 			  DEVNULL
 #endif
 			  );
-=======
-	exec_prog(ctx, true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  ctx->new.bindir, ctx->old.controldata.chkpnt_tli,
-			  ctx->old.controldata.logid, ctx->old.controldata.nxtlogseg,
-			  ctx->new.pgdata, ctx->logfile);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	check_ok(ctx);
 }
 
@@ -659,7 +572,6 @@ set_frozenxids(migratorContext *ctx)
 
 	conn_template1 = connectToServer(ctx, "template1", CLUSTER_NEW);
 
-<<<<<<< HEAD
 	/*
 	 * GPDB doesn't allow hacking the catalogs without setting
 	 * allow_system_table_mods first.
@@ -668,8 +580,6 @@ set_frozenxids(migratorContext *ctx)
 							  "set allow_system_table_mods='dml'"));
 
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* set pg_database.datfrozenxid */
 	PQclear(executeQueryOrDie(ctx, conn_template1,
 							  "UPDATE pg_catalog.pg_database "
@@ -705,7 +615,6 @@ set_frozenxids(migratorContext *ctx)
 
 		conn = connectToServer(ctx, datname, CLUSTER_NEW);
 
-<<<<<<< HEAD
 		/*
 		 * GPDB doesn't allow hacking the catalogs without setting
 		 * allow_system_table_mods first.
@@ -713,8 +622,6 @@ set_frozenxids(migratorContext *ctx)
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "set allow_system_table_mods='dml'"));
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/* set pg_class.relfrozenxid */
 		PQclear(executeQueryOrDie(ctx, conn,
 								  "UPDATE	pg_catalog.pg_class "
@@ -774,12 +681,9 @@ cleanup(migratorContext *ctx)
 	if (ctx->debug_fd)
 		fclose(ctx->debug_fd);
 
-<<<<<<< HEAD
 	if (ctx->debug)
 		return;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, ALL_DUMP_FILE);
 	unlink(filename);
 	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, GLOBALS_DUMP_FILE);
@@ -787,7 +691,6 @@ cleanup(migratorContext *ctx)
 	snprintf(filename, sizeof(filename), "%s/%s", ctx->cwd, DB_DUMP_FILE);
 	unlink(filename);
 }
-<<<<<<< HEAD
 
 #ifdef WIN32
 static char *
@@ -803,5 +706,3 @@ pg_strdupn(const char *str)
        return result;
 }
 #endif
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

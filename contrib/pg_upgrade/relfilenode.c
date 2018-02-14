@@ -18,13 +18,9 @@ static void transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConvert
 static void transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter,
 				 const char *fromfile, const char *tofile,
 				 const char *oldnspname, const char *oldrelname,
-<<<<<<< HEAD
 				 const char *newnspname, const char *newrelname,
 				 bool gpdb4_heap_conversion_needed,
 				 bool has_numerics, AttInfo *atts, int natts, RelType reltype);
-=======
-				 const char *newnspname, const char *newrelname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* used by scandir(), must be global */
 char		scandir_file_pattern[MAXPGPATH];
@@ -42,11 +38,7 @@ transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 	int			dbnum;
 	const char *msg = NULL;
 
-<<<<<<< HEAD
 	prep_status(ctx, "Restoring user relation files");
-=======
-	prep_status(ctx, "Restoring user relation files\n");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	for (dbnum = 0; dbnum < newdb_arr->ndbs; dbnum++)
 	{
@@ -56,13 +48,10 @@ transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 		int			n_maps;
 		pageCnvCtx *pageConverter = NULL;
 
-<<<<<<< HEAD
 		if (!old_db)
 			pg_log(ctx, PG_FATAL,
 			   "the new cluster database %s was not found in the old cluster\n", new_db->db_name);
 		
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		n_maps = 0;
 		mappings = gen_db_file_maps(ctx, old_db, new_db, &n_maps, old_pgdata,
 									new_pgdata);
@@ -90,7 +79,7 @@ transfer_all_new_dbs(migratorContext *ctx, DbInfoArr *olddb_arr,
 /*
  * get_pg_database_relfilenode()
  *
- *	Retrieves the relfilenode for a few system-catalog tables.	We need these
+ *	Retrieves the relfilenode for a few system-catalog tables.  We need these
  *	relfilenodes later in the upgrade process.
  */
 void
@@ -111,15 +100,9 @@ get_pg_database_relfilenode(migratorContext *ctx, Cluster whichCluster)
 
 	i_relfile = PQfnumber(res, "relfilenode");
 	if (whichCluster == CLUSTER_OLD)
-<<<<<<< HEAD
 		ctx->old.pg_database_oid = atooid(PQgetvalue(res, 0, i_relfile));
 	else
 		ctx->new.pg_database_oid = atooid(PQgetvalue(res, 0, i_relfile));
-=======
-		ctx->old.pg_database_oid = atol(PQgetvalue(res, 0, i_relfile));
-	else
-		ctx->new.pg_database_oid = atol(PQgetvalue(res, 0, i_relfile));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	PQclear(res);
 	PQfinish(conn);
@@ -143,11 +126,8 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 		char		new_file[MAXPGPATH];
 		struct dirent **namelist = NULL;
 		int			numFiles;
-<<<<<<< HEAD
 		bool		seg0_missing;
 		struct stat st;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Copying files might take some time, so give feedback. */
 
@@ -159,7 +139,6 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 		 * Copy/link the relation file to the new cluster
 		 */
 		unlink(new_file);
-<<<<<<< HEAD
 
 		if (!maps[mapnum].missing_seg0_ok || stat(old_file, &st) == 0)
 		{
@@ -173,11 +152,6 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 		}
 		else
 			seg0_missing = true;
-=======
-		transfer_relfile(ctx, pageConverter, old_file, new_file,
-						 maps[mapnum].old_nspname, maps[mapnum].old_relname,
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* fsm/vm files added in PG 8.4 */
 		if (GET_MAJOR_VERSION(ctx->old.major_version) >= 804)
@@ -198,12 +172,8 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 				unlink(new_file);
 				transfer_relfile(ctx, pageConverter, old_file, new_file,
 						  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-<<<<<<< HEAD
 								 maps[mapnum].new_nspname, maps[mapnum].new_relname,
 								 false, false, NULL, 0, FSM);
-=======
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 				pg_free(namelist[numFiles]);
 			}
@@ -231,14 +201,10 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 			unlink(new_file);
 			transfer_relfile(ctx, pageConverter, old_file, new_file,
 						  maps[mapnum].old_nspname, maps[mapnum].old_relname,
-<<<<<<< HEAD
 							 maps[mapnum].new_nspname, maps[mapnum].new_relname,
 							 maps[mapnum].gpdb4_heap_conversion_needed,
 							 maps[mapnum].has_numerics, maps[mapnum].atts,
 							 maps[mapnum].natts, maps[mapnum].type);
-=======
-						 maps[mapnum].new_nspname, maps[mapnum].new_relname);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			pg_free(namelist[numFiles]);
 		}
@@ -256,7 +222,6 @@ transfer_single_new_db(migratorContext *ctx, pageCnvCtx *pageConverter,
 static void
 transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter, const char *oldfile,
 		 const char *newfile, const char *oldnspname, const char *oldrelname,
-<<<<<<< HEAD
 				 const char *newnspname, const char *newrelname,
 				 bool gpdb4_heap_conversion_needed,
 				 bool has_numerics, AttInfo *atts, int natts, RelType type)
@@ -275,19 +240,12 @@ transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter, const char *ol
 		return;
 	}
 
-=======
-				 const char *newnspname, const char *newrelname)
-{
-	const char *msg;
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if ((ctx->transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
 		pg_log(ctx, PG_FATAL, "this migration requires page-by-page conversion, "
 			   "you must use copy-mode instead of link-mode\n");
 
 	if (ctx->transfer_mode == TRANSFER_MODE_COPY)
 	{
-<<<<<<< HEAD
 		if (ctx->checksum_mode != CHECKSUM_NONE && type == HEAP)
 		{
 			pg_log(ctx, PG_INFO, "rewriting \"%s\" to \"%s\"\n",
@@ -306,17 +264,6 @@ transfer_relfile(migratorContext *ctx, pageCnvCtx *pageConverter, const char *ol
 	else
 	{
 		pg_log(ctx, PG_INFO, "linking %s to %s\n", oldfile, newfile);
-=======
-		pg_log(ctx, PG_INFO, "copying %s to %s\n", oldfile, newfile);
-
-		if ((msg = copyAndUpdateFile(ctx, pageConverter, oldfile, newfile, true)) != NULL)
-			pg_log(ctx, PG_FATAL, "error while copying %s.%s(%s) to %s.%s(%s): %s\n",
-				   oldnspname, oldrelname, oldfile, newnspname, newrelname, newfile, msg);
-	}
-	else
-	{
-		pg_log(ctx, PG_INFO, "linking %s to %s\n", newfile, oldfile);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if ((msg = linkAndUpdateFile(ctx, pageConverter, oldfile, newfile)) != NULL)
 			pg_log(ctx, PG_FATAL,

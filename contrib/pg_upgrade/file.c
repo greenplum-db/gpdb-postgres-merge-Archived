@@ -4,19 +4,16 @@
  *	file system operations
  *
  *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13 2010/07/06 19:18:55 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13.2.2 2010/07/13 20:15:51 momjian Exp $
  */
 
 #include "pg_upgrade.h"
 
 #include <fcntl.h>
 
-<<<<<<< HEAD
 #include "storage/bufpage.h"
 #include "storage/checksum.h"
 #include "storage/checksum_impl.h"
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static int	copy_file(const char *fromfile, const char *tofile, bool force);
 
@@ -44,11 +41,8 @@ const char *
 copyAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
 				  const char *src, const char *dst, bool force)
 {
-<<<<<<< HEAD
 	report_progress(ctx, NONE, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (pageConverter == NULL)
 	{
 		if (pg_copy_file(src, dst, force) == -1)
@@ -85,14 +79,10 @@ copyAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
 				return "can't open source file";
 
 			if ((dstfd = open(dst, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
-<<<<<<< HEAD
 			{
 				close(src_fd);
 				return "can't create destination file";
 			}
-=======
-				return "can't create destination file";
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			while ((bytesRead = read(src_fd, buf, BLCKSZ)) == BLCKSZ)
 			{
@@ -120,7 +110,6 @@ copyAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
 	}
 }
 
-<<<<<<< HEAD
 /*
  * rewriteHeapPageWithChecksum
  *
@@ -209,8 +198,6 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
 	close(dst_fd);
 	close(src_fd);
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * linkAndUpdateFile()
@@ -279,11 +266,8 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (nbytes < 0)
 		{
-<<<<<<< HEAD
 			int save_errno = errno;
 			
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			if (buffer != NULL)
 				free(buffer);
 
@@ -293,10 +277,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 			if (dest_fd != 0)
 				close(dest_fd);
 
-<<<<<<< HEAD
 			errno = save_errno;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			return -1;
 		}
 
@@ -308,12 +289,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 		if (write(dest_fd, buffer, nbytes) != nbytes)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
-<<<<<<< HEAD
 			int save_errno = errno ? errno : ENOSPC;
-=======
-			if (errno == 0)
-				errno = ENOSPC;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			if (buffer != NULL)
 				free(buffer);
@@ -324,10 +300,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 			if (dest_fd != 0)
 				close(dest_fd);
 
-<<<<<<< HEAD
 			errno = save_errno;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			return -1;
 		}
 	}
@@ -407,19 +380,11 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
-<<<<<<< HEAD
 		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	*namelist = NULL;
 
 	while (errno = 0, (direntry = readdir(dirdesc)) != NULL)
-=======
-		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %m\n", dirname);
-
-	*namelist = NULL;
-
-	while ((direntry = readdir(dirdesc)) != NULL)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		/* Invoke the selector function to see if the direntry matches */
 		if ((*selector) (direntry))
@@ -446,7 +411,6 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 		}
 	}
 
-<<<<<<< HEAD
 #ifdef WIN32
 	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -458,9 +422,6 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 
 	if (closedir(dirdesc))
 		pg_log(ctx, PG_FATAL, "Could not close directory \"%s\": %s\n", dirname, getErrorText(errno));
-=======
-	closedir(dirdesc);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return count;
 }
@@ -523,7 +484,7 @@ win32_pghardlink(const char *src, const char *dst)
 /*
  * copy_dir()
  *
- *	Copies either a directory or a single file within a directory.	If the
+ *	Copies either a directory or a single file within a directory.  If the
  *	source argument names a directory, we recursively copy that directory,
  *	otherwise we copy a single file.
  */
@@ -557,11 +518,7 @@ copy_dir(const char *src, const char *dst, bool force)
 			return -1;
 	}
 
-<<<<<<< HEAD
 	while (errno = 0, (de = readdir(srcdir)) != NULL)
-=======
-	while ((de = readdir(srcdir)) != NULL)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		char		src_file[MAXPGPATH];
 		char		dest_file[MAXPGPATH];
@@ -606,7 +563,6 @@ copy_dir(const char *src, const char *dst, bool force)
 		}
 	}
 
-<<<<<<< HEAD
 #ifdef WIN32
 	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -620,11 +576,6 @@ copy_dir(const char *src, const char *dst, bool force)
 	{
 		if (closedir(srcdir))
 			return -1;
-=======
-	if (srcdir != NULL)
-	{
-		closedir(srcdir);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		srcdir = NULL;
 	}
 	return 1;

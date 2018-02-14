@@ -12,7 +12,6 @@
 
 #include "fmgr.h"
 #include "catalog/dependency.h"
-<<<<<<< HEAD
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
@@ -40,6 +39,7 @@
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_resqueue.h"
+#include "catalog/pg_resqueuecapability.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_ts_config.h"
@@ -48,24 +48,11 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_user_mapping.h"
 #include "cdb/cdbvars.h"
-=======
-#include "catalog/pg_class.h"
-
-/* THIS IS USED ONLY FOR PG >= 9.0 */
-
-/*
- * Cannot include "catalog/pg_enum.h" here because we might
- * not be compiling against PG 9.0.
- */
-extern void EnumValuesCreate(Oid enumTypeOid, List *vals,
-				 Oid binary_upgrade_next_pg_enum_oid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
 
-<<<<<<< HEAD
 Datum		add_pg_enum_label(PG_FUNCTION_ARGS);
 
 Datum		create_empty_extension(PG_FUNCTION_ARGS);
@@ -73,90 +60,6 @@ Datum		create_empty_extension(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(add_pg_enum_label);
 
 PG_FUNCTION_INFO_V1(create_empty_extension);
-=======
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_array_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_toast_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_heap_relfilenode;
-extern PGDLLIMPORT Oid binary_upgrade_next_toast_relfilenode;
-extern PGDLLIMPORT Oid binary_upgrade_next_index_relfilenode;
-
-Datum		set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		set_next_pg_type_array_oid(PG_FUNCTION_ARGS);
-Datum		set_next_pg_type_toast_oid(PG_FUNCTION_ARGS);
-Datum		set_next_heap_relfilenode(PG_FUNCTION_ARGS);
-Datum		set_next_toast_relfilenode(PG_FUNCTION_ARGS);
-Datum		set_next_index_relfilenode(PG_FUNCTION_ARGS);
-Datum		add_pg_enum_label(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(set_next_pg_type_oid);
-PG_FUNCTION_INFO_V1(set_next_pg_type_array_oid);
-PG_FUNCTION_INFO_V1(set_next_pg_type_toast_oid);
-PG_FUNCTION_INFO_V1(set_next_heap_relfilenode);
-PG_FUNCTION_INFO_V1(set_next_toast_relfilenode);
-PG_FUNCTION_INFO_V1(set_next_index_relfilenode);
-PG_FUNCTION_INFO_V1(add_pg_enum_label);
-
-Datum
-set_next_pg_type_oid(PG_FUNCTION_ARGS)
-{
-	Oid			typoid = PG_GETARG_OID(0);
-
-	binary_upgrade_next_pg_type_oid = typoid;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-set_next_pg_type_array_oid(PG_FUNCTION_ARGS)
-{
-	Oid			typoid = PG_GETARG_OID(0);
-
-	binary_upgrade_next_pg_type_array_oid = typoid;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-set_next_pg_type_toast_oid(PG_FUNCTION_ARGS)
-{
-	Oid			typoid = PG_GETARG_OID(0);
-
-	binary_upgrade_next_pg_type_toast_oid = typoid;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-set_next_heap_relfilenode(PG_FUNCTION_ARGS)
-{
-	Oid			relfilenode = PG_GETARG_OID(0);
-
-	binary_upgrade_next_heap_relfilenode = relfilenode;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-set_next_toast_relfilenode(PG_FUNCTION_ARGS)
-{
-	Oid			relfilenode = PG_GETARG_OID(0);
-
-	binary_upgrade_next_toast_relfilenode = relfilenode;
-
-	PG_RETURN_VOID();
-}
-
-Datum
-set_next_index_relfilenode(PG_FUNCTION_ARGS)
-{
-	Oid			relfilenode = PG_GETARG_OID(0);
-
-	binary_upgrade_next_index_relfilenode = relfilenode;
-
-	PG_RETURN_VOID();
-}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 Datum
 add_pg_enum_label(PG_FUNCTION_ARGS)
@@ -170,7 +73,6 @@ add_pg_enum_label(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
-<<<<<<< HEAD
 
 Datum
 create_empty_extension(PG_FUNCTION_ARGS)
@@ -795,5 +697,3 @@ preassign_user_mapping_oid(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
