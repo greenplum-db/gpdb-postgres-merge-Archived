@@ -179,6 +179,12 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 	stmttype = (vacstmt->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
+	if (vacstmt->options & VACOPT_FULL)
+	{
+		elog(WARNING, "GPDB_90_MERGE_FIXME: VACUUM FULL is broken");
+		return;
+	}
+	
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
 	 * a transaction, then our commit- and start-transaction-command calls
