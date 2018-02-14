@@ -92,11 +92,7 @@ typedef z_stream *z_streamp;
 																 * entries */
 
 /* Newest format we can read */
-<<<<<<< HEAD
-#define K_VERS_MAX (( (1 * 256 + 11) * 256 + 255) * 256 + 0)
-=======
 #define K_VERS_MAX (( (1 * 256 + 12) * 256 + 255) * 256 + 0)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /* Flags to indicate disposition of offsets stored in files */

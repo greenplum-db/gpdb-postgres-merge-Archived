@@ -834,7 +834,6 @@ do_start(void)
 
 		switch (test_postmaster_connection(false))
 		{
-<<<<<<< HEAD
 			case PQPING_OK:
 				print_msg(_(" done\n"));
 				print_msg(_("server started\n"));
@@ -859,17 +858,6 @@ do_start(void)
 				write_stderr(_("%s: could not wait for server because of misconfiguration\n"),
 							 progname);
 				exit(1);
-=======
-			write_stderr(_("%s: could not start server\n"
-						   "Examine the log output.\n"),
-						 progname);
-			exit(1);
-		}
-		else
-		{
-			print_msg(_(" done\n"));
-			print_msg(_("server started\n"));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 	}
 	else

@@ -124,15 +124,10 @@ typedef enum
 	DO_FDW,
 	DO_FOREIGN_SERVER,
 	DO_DEFAULT_ACL,
-<<<<<<< HEAD
-	DO_BLOBS,
-	DO_BLOB_COMMENTS,
+	DO_BLOB,
+	DO_BLOB_DATA,
 	DO_EXTPROTOCOL,
 	DO_TYPE_STORAGE_OPTIONS
-=======
-	DO_BLOB,
-	DO_BLOB_DATA
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -318,21 +313,8 @@ typedef struct _tableInfo
 	int		   *attlen;			/* attribute length, used by binary_upgrade */
 	char	   *attalign;		/* attribute align, used by binary_upgrade */
 	bool	   *attislocal;		/* true if attr has local definition */
-<<<<<<< HEAD
-	bool	   *notnull;		/* NOT NULL constraints on attributes */
-=======
 	char	  **attoptions;		/* per-attribute options */
-
-	/*
-	 * Note: we need to store per-attribute notnull, default, and constraint
-	 * stuff for all interesting tables so that we can tell which constraints
-	 * were inherited.
-	 */
-	bool	   *notnull;		/* Not null constraints on attributes */
-	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
-	bool	   *inhAttrs;		/* true if each attribute is inherited */
-	bool	   *inhAttrDef;		/* true if attr's default is inherited */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
 	char	  **attencoding;	/* the attribute encoding values */
 	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
@@ -518,7 +500,13 @@ typedef struct _defaultACLInfo
 	char	   *defaclacl;
 } DefaultACLInfo;
 
-<<<<<<< HEAD
+typedef struct _blobInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	char	   *blobacl;
+} BlobInfo;
+
 /*
  * We build an array of these with an entry for each object that is an
  * extension member according to pg_depend.
@@ -528,14 +516,6 @@ typedef struct _extensionMemberId
 	CatalogId	catId;			/* tableoid+oid of some member object */
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
-=======
-typedef struct _blobInfo
-{
-	DumpableObject dobj;
-	char	   *rolname;
-	char	   *blobacl;
-} BlobInfo;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */

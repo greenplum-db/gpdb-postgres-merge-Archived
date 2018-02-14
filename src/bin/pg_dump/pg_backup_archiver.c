@@ -2301,10 +2301,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	if ((!include_acls || ropt->aclsSkip) && _tocEntryIsACL(te))
 		return 0;
 
-<<<<<<< HEAD
-=======
 	/* Ignore DATABASE entry unless we should create it */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
 		return 0;
 

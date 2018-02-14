@@ -151,11 +151,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
-=======
-#define PARAMS_ARRAY_SIZE	7
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
@@ -263,11 +259,7 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
-=======
-#define PARAMS_ARRAY_SIZE	7
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
@@ -286,7 +278,6 @@ ConnectDatabase(Archive *AHX,
 		values[4] = dbname;
 		keywords[5] = "fallback_application_name";
 		values[5] = progname;
-<<<<<<< HEAD
 		if (binary_upgrade)
 		{
 			keywords[6] = "options";
@@ -299,10 +290,6 @@ ConnectDatabase(Archive *AHX,
 			keywords[6] = NULL;
 			values[6] = NULL;
 		}
-=======
-		keywords[6] = NULL;
-		values[6] = NULL;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		new_pass = false;
 		AH->connection = PQconnectdbParams(keywords, values, true);

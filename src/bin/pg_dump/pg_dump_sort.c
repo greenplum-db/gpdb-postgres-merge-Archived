@@ -56,15 +56,10 @@ static const int oldObjectTypePriority[] =
 	3,							/* DO_FDW */
 	4,							/* DO_FOREIGN_SERVER */
 	17,							/* DO_DEFAULT_ACL */
-<<<<<<< HEAD
-	10,							/* DO_BLOBS */
-	11,							/* DO_BLOB_COMMENTS */
+	9,							/* DO_BLOB */
+	11,							/* DO_BLOB_DATA */
 	3,							/* DO_EXTPROTOCOL */
 	/* GPDB_84_MERGE_FIXME: missing DO_TYPE_STORAGE_OPTIONS? */
-=======
-	9,							/* DO_BLOB */
-	11							/* DO_BLOB_DATA */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 };
 
 /*
@@ -101,16 +96,11 @@ static const int newObjectTypePriority[] =
 	14,							/* DO_FDW */
 	15,							/* DO_FOREIGN_SERVER */
 	27,							/* DO_DEFAULT_ACL */
-<<<<<<< HEAD
-	20,							/* DO_BLOBS */
-	21,							/* DO_BLOB_COMMENTS */
+	19,							/* DO_BLOB */
+	21,							/* DO_BLOB_DATA */
 	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
 	8,							/* DO_EXTPROTOCOL */
 	22							/* DO_TYPE_STORAGE_OPTIONS */
-=======
-	19,							/* DO_BLOB */
-	21							/* DO_BLOB_DATA */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 };
 
 

@@ -2,11 +2,8 @@
  *
  * pg_dumpall.c
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -1358,13 +1355,12 @@ dumpTablespaces(PGconn *conn)
 	 * Greenplum, and the dump format should vary depending on if the dump is
 	 * --gp-syntax or --no-gp-syntax.
 	 */
-<<<<<<< HEAD
 	if (server_version < 80214)
 	{							
 		/* Filespaces were introduced in GP 4.0 (server_version 8.2.14) */
 		return;
 	}
-=======
+
 	if (server_version >= 90000)
 		res = executeQuery(conn, "SELECT spcname, "
 						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
@@ -1382,26 +1378,10 @@ dumpTablespaces(PGconn *conn)
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	else
 	{
-		res = executeQuery(conn, "SELECT spcname, "
-<<<<<<< HEAD
-						"pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						"spclocation, spcacl, "
-						"pg_catalog.shobj_description(t.oid, 'pg_tablespace') "
-						"FROM pg_catalog.pg_tablespace t "
-						"WHERE spcname !~ '^pg_' "
-						"ORDER BY 1");
+		error_unsupported_server_version(conn);
 	}
-=======
-						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-						   "spclocation, spcacl, "
-						   "null, null "
-						   "FROM pg_catalog.pg_tablespace "
-						   "WHERE spcname !~ '^pg_' "
-						   "ORDER BY 1");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Tablespaces\n--\n\n");
@@ -1427,14 +1407,10 @@ dumpTablespaces(PGconn *conn)
 		appendStringLiteralConn(buf, spclocation, conn);
 		appendPQExpBuffer(buf, ";\n");
 
-<<<<<<< HEAD
-		/* Build Acls */
-=======
 		if (spcoptions && spcoptions[0] != '\0')
 			appendPQExpBuffer(buf, "ALTER TABLESPACE %s SET (%s);\n",
 							  fspcname, spcoptions);
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		if (!skip_acls &&
 			!buildACLCommands(fspcname, NULL, "TABLESPACE", spcacl, spcowner,
 							  "", server_version, buf))
@@ -1993,11 +1969,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
-=======
-#define PARAMS_ARRAY_SIZE	7
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
@@ -2019,15 +1991,10 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		values[4] = dbname;
 		keywords[5] = "fallback_application_name";
 		values[5] = progname;
-<<<<<<< HEAD
 		keywords[6] = "options";
 		values[6] = "-c gp_session_role=utility";
 		keywords[7] = NULL;
 		values[7] = NULL;
-=======
-		keywords[6] = NULL;
-		values[6] = NULL;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);
