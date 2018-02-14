@@ -1359,7 +1359,7 @@ RecordTransactionCommit(void)
 		{
 			getDtxLogInfo(&gxact_log);
 
-			rdata[lastrdata].next = &(rdata[3]);
+			rdata[lastrdata].next = &(rdata[4]);
 			rdata[4].data = (char *) &gxact_log;
 			rdata[4].len = sizeof(gxact_log);
 			rdata[4].buffer = InvalidBuffer;
