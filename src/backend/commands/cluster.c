@@ -1189,7 +1189,7 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
  *
  * GPDB: also swap aoseg, aoblkdir links.
  */
-static void
+void
 swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 					bool swap_toast_by_content,
 					bool swap_stats,

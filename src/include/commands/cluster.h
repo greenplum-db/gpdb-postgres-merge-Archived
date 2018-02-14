@@ -32,4 +32,10 @@ extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool swap_stats,
 				 TransactionId frozenXid);
 
+extern void swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
+					bool swap_toast_by_content,
+					bool swap_stats,
+					TransactionId frozenXid,
+					Oid *mapped_tables);
+
 #endif   /* CLUSTER_H */

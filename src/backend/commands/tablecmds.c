@@ -1358,7 +1358,7 @@ TruncateRelfiles(Relation rel, SubTransactionId mySubid)
 		 * as the relfilenode value. The old storage file is scheduled for
 		 * deletion at commit.
 		 */
-		setNewRelfilenode(rel, RecentXmin);
+		RelationSetNewRelfilenode(rel, RecentXmin);
 
 		toast_relid = rel->rd_rel->reltoastrelid;
 
@@ -1368,7 +1368,7 @@ TruncateRelfiles(Relation rel, SubTransactionId mySubid)
 		if (OidIsValid(toast_relid))
 		{
 			rel = relation_open(toast_relid, AccessExclusiveLock);
-			setNewRelfilenode(rel, RecentXmin);
+			RelationSetNewRelfilenode(rel, RecentXmin);
 			heap_close(rel, NoLock);
 		}
 	}
@@ -1379,21 +1379,21 @@ TruncateRelfiles(Relation rel, SubTransactionId mySubid)
 	if (OidIsValid(aoseg_relid))
 	{
 		rel = relation_open(aoseg_relid, AccessExclusiveLock);
-		setNewRelfilenode(rel, RecentXmin);
+		RelationSetNewRelfilenode(rel, RecentXmin);
 		heap_close(rel, NoLock);
 	}
 
 	if (OidIsValid(aoblkdir_relid))
 	{
 		rel = relation_open(aoblkdir_relid, AccessExclusiveLock);
-		setNewRelfilenode(rel, RecentXmin);
+		RelationSetNewRelfilenode(rel, RecentXmin);
 		heap_close(rel, NoLock);
 	}
 
 	if (OidIsValid(aovisimap_relid))
 	{
 		rel = relation_open(aovisimap_relid, AccessExclusiveLock);
-		setNewRelfilenode(rel, RecentXmin);
+		RelationSetNewRelfilenode(rel, RecentXmin);
 		heap_close(rel, NoLock);
 	}
 }
@@ -1644,7 +1644,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 		/*
 		 * Reconstruct the indexes to match, and we're done.
 		 */
-		reindex_relation(RelationGetRelid(rel), true);
+		reindex_relation(RelationGetRelid(rel), true, false);
 	}
 
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -4877,7 +4877,6 @@ ATRewriteTables(List **wqueue)
 		if (tab->newvals != NIL || tab->new_changeoids)
 		{
 			/* Build a temporary relation and copy data */
-			Relation	OldHeap;
 			Oid         OIDNewHeap;
 
 			/* Create transient table that will receive the modified data */
@@ -4891,51 +4890,22 @@ ATRewriteTables(List **wqueue)
 			ATRewriteTable(tab, OIDNewHeap);
 
 			/*
-<<<<<<< HEAD
-			 * Swap the physical files of the old and new heaps.  Since we are
-			 * generating a new heap, we can use RecentXmin for the table's
-			 * new relfrozenxid because we rewrote all the tuples on
-			 * ATRewriteTable, so no older Xid remains on the table.
-			 *
-			 * MPP-17516 - The fourth argument to swap_relation_files is 
-			 * "swap_stats", and it dictates whether the relpages and 
-			 * reltuples of the fake relfile should be copied over to our 
-			 * original pg_class tuple. We do not want to do this in the case 
-			 * of ALTER TABLE rewrites as the temp relfile will not have correct 
-			 * stats.
-			 */
-			swap_relation_files(tab->relid, OIDNewHeap, RecentXmin, false);
-
-			CommandCounterIncrement();
-
-			/* Destroy new heap with old filenode */
-			object.classId = RelationRelationId;
-			object.objectId = OIDNewHeap;
-			object.objectSubId = 0;
-
-			/*
-			 * The new relation is local to our transaction and we know
-			 * nothing depends on it, so DROP_RESTRICT should be OK.
-			 */
-			performDeletion(&object, DROP_RESTRICT);
-			/* performDeletion does CommandCounterIncrement at end */
-
-			/*
-			 * Rebuild each index on the relation (but not the toast table,
-			 * which is all-new anyway).  We do not need
-			 * CommandCounterIncrement() because reindex_relation does it.
-			 */
-			reindex_relation(tab->relid, false);
-=======
 			 * Swap the physical files of the old and new heaps, then rebuild
 			 * indexes and discard the new heap.  We can use RecentXmin for
 			 * the table's new relfrozenxid because we rewrote all the tuples
 			 * in ATRewriteTable, so no older Xid remains in the table.  Also,
 			 * we never try to swap toast tables by content, since we have no
 			 * interest in letting this code work on system catalogs.
+			 *
+			 * MPP-17516 - The 'swap_stats' argument dictates whether the
+			 * relpages and reltuples of the fake relfile should be copied
+			 * over to our original pg_class tuple. We do not want to do this
+			 * in the case of ALTER TABLE rewrites as the temp relfile will
+			 * not have correct stats.
 			 */
-			finish_heap_swap(tab->relid, OIDNewHeap, false, false, RecentXmin);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+			finish_heap_swap(tab->relid, OIDNewHeap, false, false,
+							 false /* swap_stats */,
+							 RecentXmin);
 		}
 		else
 		{
@@ -7615,7 +7585,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	if (Gp_role == GP_ROLE_DISPATCH &&
 		rel_is_partitioned(RelationGetRelid(rel)))
 	{
-		List *children = find_all_inheritors(RelationGetRelid(rel), NoLock);
+		List *children = find_all_inheritors(RelationGetRelid(rel), NoLock, NULL);
 		ListCell *lc;
 		bool prefix_match = false;
 		char *pname = RelationGetRelationName(rel);
@@ -8602,12 +8572,7 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 	fk_trigger->constrrel = fkconstraint->pktable;
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
-	trigobj = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	trigobj = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 
 	if (on_insert)
 		fkconstraint->trig1Oid = trigobj;
@@ -8708,12 +8673,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	fk_trigger->args = NIL;
 	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-<<<<<<< HEAD
-	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -8786,14 +8746,9 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
 	fk_trigger->trigOid = fkconstraint->trig4Oid;
 
-	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid,
-						 "RI_ConstraintTrigger", false);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
 }
 
 /*
@@ -9052,12 +9007,9 @@ ATPrepAlterColumnType(List **wqueue,
 	targettype = typenameTypeId(NULL, typeName, &targettypmod);
 
 	/* make sure datatype is legal for a column */
-<<<<<<< HEAD
 	CheckAttributeType(colName, targettype,
-					   list_make1_oid(rel->rd_rel->reltype));
-=======
-	CheckAttributeType(colName, targettype, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+					   list_make1_oid(rel->rd_rel->reltype),
+					   false);
 
 	/*
 	 * Set up an expression to transform the old data value to the new type.
@@ -10530,12 +10482,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	 * Relfilenodes are not unique across tablespaces, so we need to allocate
 	 * a new one in the new tablespace.
 	 */
-<<<<<<< HEAD
-	newrelfilenode = GetNewRelFileNode(newTableSpace,
-									   rel->rd_rel->relisshared);
-=======
 	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Open old and new relation */
 	newrnode = rel->rd_node;
@@ -10648,7 +10595,6 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	BlockNumber blkno;
 
 	/*
-<<<<<<< HEAD
 	 * palloc the buffer so that it's MAXALIGN'd.  If it were just a local
 	 * char[] array, the compiler might align it on any byte boundary, which
 	 * can seriously hurt transfer speed to and from the kernel; not to
@@ -10661,11 +10607,6 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
 	 * enabled AND it's not a temp rel.
 	 */
-=======
-	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's not a temp rel.
-	 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	use_wal = XLogIsNeeded() && !istemp;
 
 	nblocks = smgrnblocks(src, forkNum);
@@ -12679,7 +12620,12 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	heap_close(rel, NoLock);
 	rel = NULL;
 	tmprelid = RangeVarGetRelid(tmprv, false);
-	swap_relation_files(tarrelid, tmprelid, RecentXmin, false);
+	swap_relation_files(tarrelid, tmprelid,
+						false, /* target_is_pg_class */
+						false, /* swap_toast_by_content */
+						false, /* swap_stats */
+						RecentXmin,
+						NULL);
 
 	if (DatumGetPointer(newOptions))
 	{
@@ -12738,7 +12684,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	}
 
 	/* now, reindex */
-	reindex_relation(tarrelid, false);
+	reindex_relation(tarrelid, false, false);
 
 	/* Step (g) */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -14485,7 +14431,7 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		if (targetRelInfo->ri_NumIndices > 0)
 		{
 			estate->es_result_relation_info = targetRelInfo;
-			ExecInsertIndexTuples(targetSlot, tid, estate, false);
+			ExecInsertIndexTuples(targetSlot, tid, estate);
 			estate->es_result_relation_info = NULL;
 		}
 
@@ -16427,7 +16373,8 @@ char *alterTableCmdString(AlterTableType subtype)
 			break;
 			
 		case AT_SetStatistics: /* alter column set statistics */
-		case AT_SetDistinct: /* alter column set statistics distinct */
+		case AT_SetOptions: /* alter column set (<reloptions>) */
+		case AT_ResetOptions: /* alter column reset (<reloptions>) */
 		case AT_SetStorage: /* alter column set storage */
 			break;
 			
