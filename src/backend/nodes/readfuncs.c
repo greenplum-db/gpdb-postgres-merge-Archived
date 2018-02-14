@@ -835,6 +835,7 @@ _readIndexElem(void)
 
 	READ_STRING_FIELD(name);
 	READ_NODE_FIELD(expr);
+	READ_STRING_FIELD(indexcolname);
 	READ_NODE_FIELD(opclass);
 	READ_ENUM_FIELD(ordering, SortByDir);
 	READ_ENUM_FIELD(nulls_ordering, SortByNulls);
@@ -2173,6 +2174,7 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(inhRelations);
 	READ_NODE_FIELD(inhOids);
 	READ_INT_FIELD(parentOidCount);
+	READ_NODE_FIELD(ofTypename);
 	READ_NODE_FIELD(constraints);
 
 	READ_NODE_FIELD(options);
