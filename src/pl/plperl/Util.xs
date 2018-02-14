@@ -1,11 +1,7 @@
 /**********************************************************************
  * PostgreSQL::InServer::Util
  *
-<<<<<<< HEAD
  * src/pl/plperl/Util.xs
-=======
- * $PostgreSQL: pgsql/src/pl/plperl/Util.xs,v 1.1 2010/01/20 01:08:21 adunstan Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * Defines plperl interfaces for general-purpose utilities.
  * This module is bootstrapped as soon as an interpreter is initialized.
@@ -25,11 +21,7 @@
 
 /* perl stuff */
 #include "plperl.h"
-<<<<<<< HEAD
 #include "plperl_helpers.h"
-=======
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Implementation of plperl's elog() function
@@ -42,7 +34,6 @@
  * This is out-of-line to suppress "might be clobbered by longjmp" warnings.
  */
 static void
-<<<<<<< HEAD
 do_util_elog(int level, SV *msg)
 {
 	MemoryContext oldcontext = CurrentMemoryContext;
@@ -70,63 +61,17 @@ do_util_elog(int level, SV *msg)
 		croak_cstr(edata->message);
 	}
 	PG_END_TRY();
-=======
-do_util_elog(int level, char *message)
-{
-    MemoryContext oldcontext = CurrentMemoryContext;
-
-    PG_TRY();
-    {
-        elog(level, "%s", message);
-    }
-    PG_CATCH();
-    {
-        ErrorData  *edata;
-
-        /* Must reset elog.c's state */
-        MemoryContextSwitchTo(oldcontext);
-        edata = CopyErrorData();
-        FlushErrorState();
-
-        /* Punt the error to Perl */
-        croak("%s", edata->message);
-    }
-    PG_END_TRY();
-}
-
-static SV  *
-newSVstring_len(const char *str, STRLEN len)
-{
-    SV         *sv;
-
-    sv = newSVpvn(str, len);
-#if PERL_BCDVERSION >= 0x5006000L
-    if (GetDatabaseEncoding() == PG_UTF8)
-        SvUTF8_on(sv);
-#endif
-    return sv;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 static text *
 sv2text(SV *sv)
 {
-<<<<<<< HEAD
 	char	   *str = sv2cstr(sv);
 	text	   *text;
 
 	text = cstring_to_text(str);
 	pfree(str);
 	return text;
-=======
-    STRLEN    sv_len;
-    char     *sv_pv;
-
-    if (!sv)
-        sv = &PL_sv_undef;
-    sv_pv = SvPV(sv, sv_len);
-    return cstring_to_text_with_len(sv_pv, sv_len);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 MODULE = PostgreSQL::InServer::Util PREFIX = util_
@@ -152,25 +97,15 @@ _aliased_constants()
 
 
 void
-<<<<<<< HEAD
 util_elog(level, msg)
     int level
     SV *msg
-=======
-util_elog(level, message)
-    int level
-    char* message
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     CODE:
         if (level > ERROR)      /* no PANIC allowed thanks */
             level = ERROR;
         if (level < DEBUG5)
             level = DEBUG5;
-<<<<<<< HEAD
         do_util_elog(level, msg);
-=======
-        do_util_elog(level, message);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 SV *
 util_quote_literal(sv)
@@ -181,7 +116,6 @@ util_quote_literal(sv)
     }
     else {
         text *arg = sv2text(sv);
-<<<<<<< HEAD
 		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
 		char *str;
 
@@ -189,10 +123,6 @@ util_quote_literal(sv)
 		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
-=======
-        text *ret = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     }
     OUTPUT:
     RETVAL
@@ -201,7 +131,6 @@ SV *
 util_quote_nullable(sv)
     SV *sv
     CODE:
-<<<<<<< HEAD
     if (!sv || !SvOK(sv))
 	{
         RETVAL = cstr2sv("NULL");
@@ -216,17 +145,6 @@ util_quote_nullable(sv)
 		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
-=======
-    if (!sv || !SvOK(sv)) 
-	{
-        RETVAL = newSVstring_len("NULL", 4);
-    }
-    else 
-	{
-        text *arg = sv2text(sv);
-        text *ret = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     }
     OUTPUT:
     RETVAL
@@ -236,7 +154,6 @@ util_quote_ident(sv)
     SV *sv
     PREINIT:
         text *arg;
-<<<<<<< HEAD
 		text *quoted;
 		char *str;
     CODE:
@@ -247,13 +164,6 @@ util_quote_ident(sv)
 		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
-=======
-        text *ret;
-    CODE:
-        arg = sv2text(sv);
-        ret = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     OUTPUT:
     RETVAL
 
@@ -264,15 +174,9 @@ util_decode_bytea(sv)
         char *arg;
         text *ret;
     CODE:
-<<<<<<< HEAD
         arg = SvPVbyte_nolen(sv);
         ret = DatumGetTextP(DirectFunctionCall1(byteain, PointerGetDatum(arg)));
         /* not cstr2sv because this is raw bytes not utf8'able */
-=======
-        arg = SvPV_nolen(sv);
-        ret = DatumGetTextP(DirectFunctionCall1(byteain, PointerGetDatum(arg)));
-        /* not newSVstring_len because this is raw bytes not utf8'able */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
         RETVAL = newSVpvn(VARDATA(ret), (VARSIZE(ret) - VARHDRSZ));
     OUTPUT:
     RETVAL
@@ -283,7 +187,6 @@ util_encode_bytea(sv)
     PREINIT:
         text *arg;
         char *ret;
-<<<<<<< HEAD
 		STRLEN len;
     CODE:
         /* not sv2text because this is raw bytes not utf8'able */
@@ -291,12 +194,6 @@ util_encode_bytea(sv)
 		arg = cstring_to_text_with_len(ret, len);
         ret = DatumGetCString(DirectFunctionCall1(byteaout, PointerGetDatum(arg)));
         RETVAL = cstr2sv(ret);
-=======
-    CODE:
-        arg = sv2text(sv);
-        ret = DatumGetCString(DirectFunctionCall1(byteaout, PointerGetDatum(arg)));
-        RETVAL = newSVstring_len(ret, strlen(ret));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     OUTPUT:
     RETVAL
 
@@ -313,7 +210,6 @@ looks_like_number(sv)
     OUTPUT:
     RETVAL
 
-<<<<<<< HEAD
 SV *
 encode_typed_literal(sv, typname)
 	SV 	   *sv
@@ -328,8 +224,6 @@ encode_typed_literal(sv, typname)
 			RETVAL = cstr2sv(outstr);
 	OUTPUT:
 	RETVAL
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 BOOT:
     items = 0;  /* avoid 'unused variable' warning */

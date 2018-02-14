@@ -1,15 +1,9 @@
 /**********************************************************************
  * PostgreSQL::InServer::SPI
  *
-<<<<<<< HEAD
  * SPI interface for plperl.
  *
  *    src/pl/plperl/SPI.xs
-=======
- * SPI interface for plperl.  
- *
- *    $PostgreSQL: pgsql/src/pl/plperl/SPI.xs,v 1.21 2010/01/20 01:08:21 adunstan Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  **********************************************************************/
 
