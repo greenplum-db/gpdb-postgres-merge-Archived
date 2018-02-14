@@ -1132,7 +1132,6 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		 */
 		relation_close(onerel, NoLock);
 
-
 		if (list_length(relations) > 1)
 		{
 			pfree(vacstmt->relation->schemaname);
@@ -1986,17 +1985,16 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
+	/* Don't close the relation in GPDB yet! The caller still needs it. */
+#if 0
 	/* all done with this class, but hold lock until commit */
 	if (onerel)
 		relation_close(onerel, NoLock);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
-	 * NOT in GPDB, though! The caller still needs to have the relation open.
 	 */
-#if 0
-	if (vacstmt->full)
-		PopActiveSnapshot();
+	PopActiveSnapshot();
 	CommitTransactionCommand();
 #endif
 
