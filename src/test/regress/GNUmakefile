@@ -192,15 +192,13 @@ installcheck-good: all twophase_pqexecparams hooktest query_info_hook_test
 	PGUSER="gpadmin/kerberos-test" $(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao --host=`hostname`; \
 	fi
 
-<<<<<<< HEAD
 testbouncer: all
 	bash -c "bouncer/setup.sh"
 	$(pg_regress_call)  --port=65432 --psqldir=$(PSQLDIR) --schedule=./minimal_schedule --host=`hostname`;
 	bash -c "bouncer/stop.sh"
-=======
+
 standbycheck: all
 	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # old interfaces follow...
 

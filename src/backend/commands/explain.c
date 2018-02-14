@@ -84,24 +84,17 @@ static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				ExplainState *es);
 static void show_sort_keys(SortState *sortstate, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
-<<<<<<< HEAD
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
 					 ExplainState *es);
 static void show_windowagg_keys(WindowAggState *waggstate, ExplainState *es);
-=======
 static void show_hash_info(HashState *hashstate, ExplainState *es);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstate,
 				   Plan *outer_plan, ExplainState *es);
 static void ExplainSubPlans(List *plans, const char *relationship,
-<<<<<<< HEAD
-							ExplainState *es, SliceTable *sliceTable);
-=======
-				ExplainState *es);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				ExplainState *es, SliceTable *sliceTable);
 static void ExplainPropertyList(const char *qlabel, List *data,
 					ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
@@ -1614,7 +1607,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 							"One-Time Filter", plan, es);
 			show_upper_qual(plan->qual, "Filter", plan, es);
 			break;
-<<<<<<< HEAD
 		case T_Repeat:
 			show_upper_qual(plan->qual, "Filter", plan, es);
 			break;
@@ -1636,10 +1628,8 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 		case T_PartitionSelector:
 			explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
-=======
 		case T_Hash:
 			show_hash_info((HashState *) planstate, es);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			break;
 		default:
 			break;
@@ -2092,43 +2082,7 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 		result = lappend(result, exprstr);
 	}
 
-<<<<<<< HEAD
 	ExplainPropertyList(qlabel, result, es);
-=======
-	ExplainPropertyList("Sort Key", result, es);
-}
-
-/*
- * If it's EXPLAIN ANALYZE, show tuplesort stats for a sort node
- */
-static void
-show_sort_info(SortState *sortstate, ExplainState *es)
-{
-	Assert(IsA(sortstate, SortState));
-	if (es->analyze && sortstate->sort_Done &&
-		sortstate->tuplesortstate != NULL)
-	{
-		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
-		const char *sortMethod;
-		const char *spaceType;
-		long		spaceUsed;
-
-		tuplesort_get_stats(state, &sortMethod, &spaceType, &spaceUsed);
-
-		if (es->format == EXPLAIN_FORMAT_TEXT)
-		{
-			appendStringInfoSpaces(es->str, es->indent * 2);
-			appendStringInfo(es->str, "Sort Method:  %s  %s: %ldkB\n",
-							 sortMethod, spaceType, spaceUsed);
-		}
-		else
-		{
-			ExplainPropertyText("Sort Method", sortMethod, es);
-			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
-			ExplainPropertyText("Sort Space Type", spaceType, es);
-		}
-	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*

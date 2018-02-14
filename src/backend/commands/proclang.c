@@ -17,11 +17,8 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_authid.h"
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_pltemplate.h"
@@ -84,7 +81,6 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
-<<<<<<< HEAD
 	if (SearchSysCacheExists(LANGNAME,
 							 PointerGetDatum(languageName),
 							 0, 0, 0))
@@ -115,8 +111,6 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		}
 	}
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * If we have template information for the language, ignore the supplied
 	 * parameters (if any) and use the template information.
@@ -215,17 +209,13 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 											InvalidOid, /* describeFuncOid */
 											pltemplate->tmplinline,
 											pltemplate->tmpllibrary,
-<<<<<<< HEAD
-											false, /* isAgg */
-											false, /* isWin */
-											false, /* security_definer */
-											true, /* isStrict */
-											PROVOLATILE_IMMUTABLE,
-=======
 											false,		/* isAgg */
 											false,		/* isWindowFunc */
 											false,		/* security_definer */
 											true,		/* isStrict */
+<<<<<<< HEAD
+											PROVOLATILE_IMMUTABLE,
+=======
 											PROVOLATILE_VOLATILE,
 >>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 											buildoidvector(funcargtypes, 1),

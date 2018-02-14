@@ -484,7 +484,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 												  CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-<<<<<<< HEAD
 	
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now
@@ -498,13 +497,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	}
 	else
 		values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_FIRES_ON_ORIGIN);
-	values[Anum_pg_trigger_tgisconstraint - 1] = BoolGetDatum(stmt->isconstraint);
-	values[Anum_pg_trigger_tgconstrname - 1] = DirectFunctionCall1(namein,
-												CStringGetDatum(constrname));
-=======
-	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_FIRES_ON_ORIGIN);
 	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
 	values[Anum_pg_trigger_tgconstraint - 1] = ObjectIdGetDatum(constraintOid);
