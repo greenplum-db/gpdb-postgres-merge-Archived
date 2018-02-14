@@ -3571,10 +3571,10 @@ main(int argc, char *argv[])
 
 		setup_schema();
 
+		load_plpgsql();
+
 		/* sets up the Greenplum Database admin schema */
 		setup_cdb_schema();
-
-		load_plpgsql();
 
 		vacuum_db();
 
