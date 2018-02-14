@@ -2571,6 +2571,7 @@ transformWindowDefinitions(ParseState *pstate,
 		 */
 
 		wc->frameOptions = windef->frameOptions;
+		wc->winref = winref;
 		/* Process frame offset expressions */
 		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,
 											   windef->startOffset, wc->orderClause,
