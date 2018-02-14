@@ -4160,7 +4160,6 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 	WRITE_NODE_FIELD(appendonly_compaction_insert_segno);
 	WRITE_BOOL_FIELD(appendonly_compaction_vacuum_cleanup);
 	WRITE_BOOL_FIELD(appendonly_compaction_vacuum_prepare);
-	WRITE_BOOL_FIELD(heap_truncate);
 }
 
 static void

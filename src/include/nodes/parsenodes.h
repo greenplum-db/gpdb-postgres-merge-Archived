@@ -2847,8 +2847,6 @@ typedef struct VacuumStmt
 	 * auxiliary heap relations never gets updated.
 	 */
 	bool appendonly_relation_empty;
-
-	bool heap_truncate;			/* true in the 2nd pass for heap vacuum full */
 } VacuumStmt;
 
 /* ----------------------

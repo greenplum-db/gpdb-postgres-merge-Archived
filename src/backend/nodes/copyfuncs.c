@@ -3981,7 +3981,6 @@ _copyVacuumStmt(VacuumStmt *from)
 	COPY_SCALAR_FIELD(appendonly_compaction_vacuum_cleanup);
 	COPY_SCALAR_FIELD(appendonly_compaction_vacuum_prepare);
 	COPY_SCALAR_FIELD(appendonly_relation_empty);
-	COPY_SCALAR_FIELD(heap_truncate);
 
 	return newnode;
 }
