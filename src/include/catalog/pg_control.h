@@ -131,7 +131,6 @@ typedef struct ControlFileData
 	CheckPoint	checkPointCopy; /* copy of last check point record */
 
 	/*
-<<<<<<< HEAD
 	 * These values determine the minimum point we must recover up to
 	 * before starting up:
 	 *
@@ -140,17 +139,6 @@ typedef struct ControlFileData
 	 * That guards against starting standby, aborting it, and restarting with
 	 * an earlier stop location. We can't get promoted unless we've at-least
 	 * replayed upto minRecoveryPoint
-=======
-	 * These two values determine the minimum point we must recover up to
-	 * before starting up:
-	 *
-	 * minRecoveryPoint is updated to the latest replayed LSN whenever we
-	 * flush a data change during archive recovery. That guards against
-	 * starting archive recovery, aborting it, and restarting with an earlier
-	 * stop location. If we've already flushed data changes from WAL record X
-	 * to disk, we mustn't start up until we reach X again. Zero when not
-	 * doing archive recovery.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 *
 	 * backupStartPoint is the redo pointer of the backup start checkpoint, if
 	 * we are recovering from an online backup and haven't reached the end of

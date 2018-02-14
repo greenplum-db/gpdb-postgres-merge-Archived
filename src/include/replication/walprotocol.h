@@ -3,15 +3,9 @@
  * walprotocol.h
  *	  Definitions relevant to the streaming WAL transmission protocol.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *
  * src/include/replication/walprotocol.h
-=======
- * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
- *
- * $PostgreSQL: pgsql/src/include/replication/walprotocol.h,v 1.2 2010/07/06 19:19:00 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
