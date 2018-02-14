@@ -1258,6 +1258,13 @@ RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,
 bool
 StandbyTransactionIdIsPrepared(TransactionId xid)
 {
+	/*
+	 * XXX: Not implemented in GPDB. We don't use the two-phase state
+	 * files, so we cannot use ReadTwoPhaseFile() here. Fortunately, this
+	 * isn't needed until we try to use Hot Standby.
+	 */
+	elog(ERROR, "Hot Standby not supported");
+#if 0
 	char	   *buf;
 	TwoPhaseFileHeader *hdr;
 	bool		result;
@@ -1278,6 +1285,7 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 	pfree(buf);
 
 	return result;
+#endif
 }
 
 /*
@@ -1697,6 +1705,24 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	}
 
 	return result;
+}
+
+/*
+ * StandbyRecoverPreparedTransactions
+ *
+ * Scan the pg_twophase directory and setup all the required information to
+ * allow standby queries to treat prepared transactions as still active.
+ * This is never called at the end of recovery - we use
+ * RecoverPreparedTransactions() at that point.
+ *
+ * Currently we simply call SubTransSetParent() for any subxids of prepared
+ * transactions. If overwriteOK is true, it's OK if some XIDs have already
+ * been marked in pg_subtrans.
+ */
+void
+StandbyRecoverPreparedTransactions(bool overwriteOK)
+{
+	elog(ERROR, "Hot Standby not supported");
 }
 
 /*
