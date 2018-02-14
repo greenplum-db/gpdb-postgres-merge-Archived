@@ -741,9 +741,7 @@ RewriteControlFile(void)
 	ControlFile.minRecoveryPoint.xrecoff = 0;
 	ControlFile.backupStartPoint.xlogid = 0;
 	ControlFile.backupStartPoint.xrecoff = 0;
-<<<<<<< HEAD
 	ControlFile.backupEndRequired = false;
-=======
 
 	/*
 	 * Force the defaults for max_* settings. The values don't really matter
@@ -754,7 +752,6 @@ RewriteControlFile(void)
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_prepared_xacts = 0;
 	ControlFile.max_locks_per_xact = 64;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Now we can force the recorded xlog seg size to the right thing. */
 	ControlFile.xlog_seg_size = XLogSegSize;
