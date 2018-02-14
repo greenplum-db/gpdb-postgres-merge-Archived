@@ -17,7 +17,6 @@
 
 
 /*
-<<<<<<< HEAD
  * All messages from WalSender must contain these fields to allow us to
  * correctly calculate the replication delay.
  */
@@ -32,8 +31,6 @@ typedef struct
 
 
 /*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Header for a WAL data message (message type 'w').  This is wrapped within
  * a CopyData message at the FE/BE protocol level.
  *
@@ -57,7 +54,6 @@ typedef struct
 } WalDataMessageHeader;
 
 /*
-<<<<<<< HEAD
  * Keepalive message from primary (message type 'k'). (lowercase k)
  * This is wrapped within a CopyData message at the FE/BE protocol level.
  *
@@ -87,8 +83,6 @@ typedef struct
 } StandbyReplyMessage;
 
 /*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some
