@@ -4190,7 +4190,12 @@ transformAttributeEncoding(List *stenc, CreateStmt *stmt, CreateStmtContext *cxt
 					c->encoding = copyObject(deflt->encoding);
 				else
 				{
-					List *te = TypeNameGetStorageDirective(d->typeName);
+					List	   *te;
+
+					if (d->typeName)
+						te = TypeNameGetStorageDirective(d->typeName);
+					else
+						te = NIL;
 
 					if (te)
 						c->encoding = copyObject(te);
