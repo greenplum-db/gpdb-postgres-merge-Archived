@@ -1842,12 +1842,6 @@ SELECT btrim(E'\\000trim\\000'::bytea, ''::bytea);
  \000trim\000
 (1 row)
 
-<<<<<<< HEAD
--- Clean up GPDB-added tables
-DROP TABLE char_strings_tbl;
-DROP TABLE varchar_strings_tbl;
-DROP TABLE text_strings_tbl;
-=======
 SELECT encode(overlay(E'Th\\000omas'::bytea placing E'Th\\001omas'::bytea from 2),'escape');
    encode    
 -------------
@@ -1866,4 +1860,7 @@ SELECT encode(overlay(E'Th\\000omas'::bytea placing E'\\002\\003'::bytea from 5 
  Th\000o\x02\x03
 (1 row)
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+-- Clean up GPDB-added tables
+DROP TABLE char_strings_tbl;
+DROP TABLE varchar_strings_tbl;
+DROP TABLE text_strings_tbl;
