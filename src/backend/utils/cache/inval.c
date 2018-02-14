@@ -899,14 +899,6 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	return numSharedInvalidMessagesArray;
 }
 
-#define RecoveryRelationCacheInitFileInvalidate(dbo, tbo, tf) \
-{ \
-	DatabasePath = GetDatabasePath(dbo, tbo); \
-	elog(trace_recovery(DEBUG4), "removing relcache init file in %s", DatabasePath); \
-	RelationCacheInitFileInvalidate(tf); \
-	pfree(DatabasePath); \
-}
-
 /*
  * ProcessCommittedInvalidationMessages is executed by xact_redo_commit()
  * to process invalidation messages added to commit records.
@@ -926,36 +918,29 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 	if (nmsgs <= 0)
 		return;
 
-<<<<<<< HEAD
-	switch (info)
-	{
-		case TWOPHASE_INFO_MSG:
-			msg = (SharedInvalidationMessage *) recdata;
-			Assert(len == sizeof(SharedInvalidationMessage));
-			SendSharedInvalidMessages(msg, 1);
-			break;
-		case TWOPHASE_INFO_FILE_BEFORE:
-			RelationCacheInitFilePreInvalidate();
-			break;
-		case TWOPHASE_INFO_FILE_AFTER:
-			RelationCacheInitFilePostInvalidate();
-			break;
-		default:
-			Assert(false);
-			break;
-	}
-=======
 	elog(trace_recovery(DEBUG4), "replaying commit with %d messages%s", nmsgs,
 		 (RelcacheInitFileInval ? " and relcache file invalidation" : ""));
 
 	if (RelcacheInitFileInval)
-		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, true);
+	{
+		/*
+		 * RelationCacheInitFilePreInvalidate requires DatabasePath to be set,
+		 * but we should not use SetDatabasePath during recovery, since it is
+		 * intended to be used only once by normal backends.  Hence, a quick
+		 * hack: set DatabasePath directly then unset after use.
+		 */
+		DatabasePath = GetDatabasePath(dbid, tsid);
+		elog(trace_recovery(DEBUG4), "removing relcache init file in \"%s\"",
+			 DatabasePath);
+		RelationCacheInitFilePreInvalidate();
+		pfree(DatabasePath);
+		DatabasePath = NULL;
+	}
 
 	SendSharedInvalidMessages(msgs, nmsgs);
 
 	if (RelcacheInitFileInval)
-		RecoveryRelationCacheInitFileInvalidate(dbid, tsid, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+		RelationCacheInitFilePostInvalidate();
 }
 
 /*
