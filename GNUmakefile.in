@@ -209,13 +209,6 @@ unittest-check:
 	$(MAKE) -C src/bin unittest-check
 	$(MAKE) -C gpAux/extensions unittest-check
 
-
-installcheck-world:
-	$(MAKE) -C src/test installcheck
-	$(MAKE) -C src/pl installcheck
-	$(MAKE) -C src/interfaces/ecpg installcheck
-	$(MAKE) -C contrib installcheck
-
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
 
