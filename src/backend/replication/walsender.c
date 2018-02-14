@@ -18,16 +18,12 @@
  * abort and exit on SIGQUIT. A close of the connection and a FATAL error
  * are treated as not a crash but approximately normal termination;
  * the walsender will exit quickly without sending any more XLOG records.
-<<<<<<< HEAD
  * On normal terminations, the walsender will wake up any backends waiting
  * in the synrep queue so that they do not wait indefinitely.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * If the server is shut down, postmaster sends us SIGUSR2 after all
  * regular backends have exited and the shutdown checkpoint has been written.
  * This instruct walsender to send any outstanding WAL, including the
-<<<<<<< HEAD
  * shutdown checkpoint record, wait for it to be replicated to the standby,
  * and then exit.
  *
@@ -37,21 +33,11 @@
  *
  * IDENTIFICATION
  *	  src/backend/replication/walsender.c
-=======
- * shutdown checkpoint record, and then exit.
- *
- *
- * Portions Copyright (c) 2010-2010, PostgreSQL Global Development Group
- *
- * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/replication/walsender.c,v 1.28 2010/07/06 19:18:57 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include <signal.h>
 #include <unistd.h>
 
@@ -59,17 +45,10 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
-=======
-#include <unistd.h>
-
-#include "access/xlog_internal.h"
-#include "catalog/pg_type.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "nodes/replnodes.h"
 #include "replication/basebackup.h"
 #include "replication/syncrep.h"
@@ -90,24 +69,11 @@
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
 #include "cdb/cdbvars.h"
-=======
-#include "replication/walprotocol.h"
-#include "replication/walsender.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/pmsignal.h"
-#include "tcop/tcopprot.h"
-#include "utils/guc.h"
-#include "utils/memutils.h"
-#include "utils/ps_status.h"
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* Array of WalSnds in shared memory */
 WalSndCtlData *WalSndCtl = NULL;
 
 /* My slot in the shared memory array */
-<<<<<<< HEAD
 WalSnd	   *MyWalSnd = NULL;
 
 /* Global state */
@@ -122,19 +88,6 @@ int			repl_catchup_within_range = XLogSegsPerFile;
 static bool replication_started = false; 	/* Started streaming yet? */
 
 const XLogRecPtr InvalidXLogRecPtr = {0, 0};
-=======
-static WalSnd *MyWalSnd = NULL;
-
-/* Global state */
-bool		am_walsender = false;		/* Am I a walsender process ? */
-
-/* User-settable parameters for walsender */
-int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
-int			WalSndDelay = 200;	/* max sleep time between some actions */
-
-#define NAPTIME_PER_CYCLE 100000L		/* max sleep time between cycles
-										 * (100ms) */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
@@ -151,7 +104,6 @@ static uint32 sendOff = 0;
  */
 static XLogRecPtr sentPtr = {0, 0};
 
-<<<<<<< HEAD
 /*
  * Buffer for processing reply messages.
  */
@@ -453,120 +405,11 @@ ProcessRepliesIfAny(void)
 		{
 			/* no data available without blocking */
 			break;
-=======
-/* Flags set by signal handlers for later service in main loop */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t shutdown_requested = false;
-static volatile sig_atomic_t ready_to_stop = false;
-
-/* Signal handlers */
-static void WalSndSigHupHandler(SIGNAL_ARGS);
-static void WalSndShutdownHandler(SIGNAL_ARGS);
-static void WalSndQuickDieHandler(SIGNAL_ARGS);
-
-/* Prototypes for private functions */
-static int	WalSndLoop(void);
-static void InitWalSnd(void);
-static void WalSndHandshake(void);
-static void WalSndKill(int code, Datum arg);
-static void XLogRead(char *buf, XLogRecPtr recptr, Size nbytes);
-static bool XLogSend(char *msgbuf, bool *caughtup);
-static void CheckClosedConnection(void);
-
-
-/* Main entry point for walsender process */
-int
-WalSenderMain(void)
-{
-	MemoryContext walsnd_context;
-
-	if (RecoveryInProgress())
-		ereport(FATAL,
-				(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-				 errmsg("recovery is still in progress, can't accept WAL streaming connections")));
-
-	/* Create a per-walsender data structure in shared memory */
-	InitWalSnd();
-
-	/*
-	 * Create a memory context that we will do all our work in.  We do this so
-	 * that we can reset the context during error recovery and thereby avoid
-	 * possible memory leaks.  Formerly this code just ran in
-	 * TopMemoryContext, but resetting that would be a really bad idea.
-	 *
-	 * XXX: we don't actually attempt error recovery in walsender, we just
-	 * close the connection and exit.
-	 */
-	walsnd_context = AllocSetContextCreate(TopMemoryContext,
-										   "Wal Sender",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
-	MemoryContextSwitchTo(walsnd_context);
-
-	/* Unblock signals (they were blocked when the postmaster forked us) */
-	PG_SETMASK(&UnBlockSig);
-
-	/* Tell the standby that walsender is ready for receiving commands */
-	ReadyForQuery(DestRemote);
-
-	/* Handle handshake messages before streaming */
-	WalSndHandshake();
-
-	/* Main loop of walsender */
-	return WalSndLoop();
-}
-
-/*
- * Execute commands from walreceiver, until we enter streaming mode.
- */
-static void
-WalSndHandshake(void)
-{
-	StringInfoData input_message;
-	bool		replication_started = false;
-
-	initStringInfo(&input_message);
-
-	while (!replication_started)
-	{
-		int			firstchar;
-
-		/* Wait for a command to arrive */
-		firstchar = pq_getbyte();
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive(true))
-			exit(1);
-
-		/*
-		 * Check for any other interesting events that happened while we
-		 * slept.
-		 */
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
-
-		if (firstchar != EOF)
-		{
-			/*
-			 * Read the message contents. This is expected to be done without
-			 * blocking because we've been able to get message type code.
-			 */
-			if (pq_getmessage(&input_message, 0))
-				firstchar = EOF;	/* suitable message already logged */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 
 		/* Handle the very limited subset of commands expected in this phase */
 		switch (firstchar)
 		{
-<<<<<<< HEAD
 				/*
 				 * 'd' means a standby reply wrapped in a CopyData packet.
 				 */
@@ -583,130 +426,11 @@ WalSndHandshake(void)
 						"walsnd processreply -- "
 						"Received 'X' as first character in reply from standby. "
 						"Standby is closing down the socket, hence exiting.");
-=======
-			case 'Q':			/* Query message */
-				{
-					const char *query_string;
-					XLogRecPtr	recptr;
-
-					query_string = pq_getmsgstring(&input_message);
-					pq_getmsgend(&input_message);
-
-					if (strcmp(query_string, "IDENTIFY_SYSTEM") == 0)
-					{
-						StringInfoData buf;
-						char		sysid[32];
-						char		tli[11];
-
-						/*
-						 * Reply with a result set with one row, two columns.
-						 * First col is system ID, and second is timeline ID
-						 */
-
-						snprintf(sysid, sizeof(sysid), UINT64_FORMAT,
-								 GetSystemIdentifier());
-						snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
-
-						/* Send a RowDescription message */
-						pq_beginmessage(&buf, 'T');
-						pq_sendint(&buf, 2, 2); /* 2 fields */
-
-						/* first field */
-						pq_sendstring(&buf, "systemid");		/* col name */
-						pq_sendint(&buf, 0, 4); /* table oid */
-						pq_sendint(&buf, 0, 2); /* attnum */
-						pq_sendint(&buf, TEXTOID, 4);	/* type oid */
-						pq_sendint(&buf, -1, 2);		/* typlen */
-						pq_sendint(&buf, 0, 4); /* typmod */
-						pq_sendint(&buf, 0, 2); /* format code */
-
-						/* second field */
-						pq_sendstring(&buf, "timeline");		/* col name */
-						pq_sendint(&buf, 0, 4); /* table oid */
-						pq_sendint(&buf, 0, 2); /* attnum */
-						pq_sendint(&buf, INT4OID, 4);	/* type oid */
-						pq_sendint(&buf, 4, 2); /* typlen */
-						pq_sendint(&buf, 0, 4); /* typmod */
-						pq_sendint(&buf, 0, 2); /* format code */
-						pq_endmessage(&buf);
-
-						/* Send a DataRow message */
-						pq_beginmessage(&buf, 'D');
-						pq_sendint(&buf, 2, 2); /* # of columns */
-						pq_sendint(&buf, strlen(sysid), 4);		/* col1 len */
-						pq_sendbytes(&buf, (char *) &sysid, strlen(sysid));
-						pq_sendint(&buf, strlen(tli), 4);		/* col2 len */
-						pq_sendbytes(&buf, (char *) tli, strlen(tli));
-						pq_endmessage(&buf);
-
-						/* Send CommandComplete and ReadyForQuery messages */
-						EndCommand("SELECT", DestRemote);
-						ReadyForQuery(DestRemote);
-						/* ReadyForQuery did pq_flush for us */
-					}
-					else if (sscanf(query_string, "START_REPLICATION %X/%X",
-									&recptr.xlogid, &recptr.xrecoff) == 2)
-					{
-						StringInfoData buf;
-
-						/*
-						 * Check that we're logging enough information in the
-						 * WAL for log-shipping.
-						 *
-						 * NOTE: This only checks the current value of
-						 * wal_level. Even if the current setting is not
-						 * 'minimal', there can be old WAL in the pg_xlog
-						 * directory that was created with 'minimal'. So this
-						 * is not bulletproof, the purpose is just to give a
-						 * user-friendly error message that hints how to
-						 * configure the system correctly.
-						 */
-						if (wal_level == WAL_LEVEL_MINIMAL)
-							ereport(FATAL,
-									(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-									 errmsg("standby connections not allowed because wal_level=minimal")));
-
-						/* Send a CopyOutResponse message, and start streaming */
-						pq_beginmessage(&buf, 'H');
-						pq_sendbyte(&buf, 0);
-						pq_sendint(&buf, 0, 2);
-						pq_endmessage(&buf);
-						pq_flush();
-
-						/*
-						 * Initialize position to the received one, then the
-						 * xlog records begin to be shipped from that position
-						 */
-						sentPtr = recptr;
-
-						/* break out of the loop */
-						replication_started = true;
-					}
-					else
-					{
-						ereport(FATAL,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("invalid standby query string: %s", query_string)));
-					}
-					break;
-				}
-
-			case 'X':
-				/* standby is closing the connection */
-				proc_exit(0);
-
-			case EOF:
-				/* standby disconnected unexpectedly */
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unexpected EOF on standby connection")));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				proc_exit(0);
 
 			default:
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-<<<<<<< HEAD
 						 errmsg("invalid standby message type \"%c\"",
 								firstchar),
 						 errSendAlert(true)));
@@ -805,64 +529,12 @@ ProcessStandbyReplyMessage(void)
 }
 
 /* Main loop of walsender process that streams the WAL over Copy messages. */
-=======
-						 errmsg("invalid standby handshake message type %d", firstchar)));
-		}
-	}
-}
-
-/*
- * Check if the remote end has closed the connection.
- */
-static void
-CheckClosedConnection(void)
-{
-	unsigned char firstchar;
-	int			r;
-
-	r = pq_getbyte_if_available(&firstchar);
-	if (r < 0)
-	{
-		/* unexpected error or EOF */
-		ereport(COMMERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("unexpected EOF on standby connection")));
-		proc_exit(0);
-	}
-	if (r == 0)
-	{
-		/* no data available without blocking */
-		return;
-	}
-
-	/* Handle the very limited subset of commands expected in this phase */
-	switch (firstchar)
-	{
-			/*
-			 * 'X' means that the standby is closing down the socket.
-			 */
-		case 'X':
-			proc_exit(0);
-
-		default:
-			ereport(FATAL,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid standby closing message type %d",
-							firstchar)));
-	}
-}
-
-/* Main loop of walsender process */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static int
 WalSndLoop(void)
 {
 	char	   *output_message;
 	bool		caughtup = false;
-<<<<<<< HEAD
 	bool		caughtup_within_range = false;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Allocate buffer that will be used for each output message.  We do this
@@ -871,7 +543,6 @@ WalSndLoop(void)
 	 */
 	output_message = palloc(1 + sizeof(WalDataMessageHeader) + MAX_SEND_SIZE);
 
-<<<<<<< HEAD
 	/*
 	 * Allocate buffer that will be used for processing reply messages.  As
 	 * above, do this just once to reduce palloc overhead.
@@ -886,12 +557,6 @@ WalSndLoop(void)
 	{
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyWalSnd->latch);
-=======
-	/* Loop forever, unless we get an error */
-	for (;;)
-	{
-		long		remain;		/* remaining time (us) */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -905,7 +570,6 @@ WalSndLoop(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-<<<<<<< HEAD
 			SyncRepInitConfig();
 		}
 
@@ -1043,61 +707,6 @@ WalSndLoop(void)
 				break;
 			}
 		}
-=======
-		}
-
-		/*
-		 * When SIGUSR2 arrives, we send all outstanding logs up to the
-		 * shutdown checkpoint record (i.e., the latest record) and exit.
-		 */
-		if (ready_to_stop)
-		{
-			if (!XLogSend(output_message, &caughtup))
-				break;
-			if (caughtup)
-				shutdown_requested = true;
-		}
-
-		/* Normal exit from the walsender is here */
-		if (shutdown_requested)
-		{
-			/* Inform the standby that XLOG streaming was done */
-			pq_puttextmessage('C', "COPY 0");
-			pq_flush();
-
-			proc_exit(0);
-		}
-
-		/*
-		 * If we had sent all accumulated WAL in last round, nap for the
-		 * configured time before retrying.
-		 *
-		 * On some platforms, signals won't interrupt the sleep.  To ensure we
-		 * respond reasonably promptly when someone signals us, break down the
-		 * sleep into NAPTIME_PER_CYCLE increments, and check for interrupts
-		 * after each nap.
-		 */
-		if (caughtup)
-		{
-			remain = WalSndDelay * 1000L;
-			while (remain > 0)
-			{
-				/* Check for interrupts */
-				if (got_SIGHUP || shutdown_requested || ready_to_stop)
-					break;
-
-				/* Sleep and check that the connection is still alive */
-				pg_usleep(remain > NAPTIME_PER_CYCLE ? NAPTIME_PER_CYCLE : remain);
-				CheckClosedConnection();
-
-				remain -= NAPTIME_PER_CYCLE;
-			}
-		}
-
-		/* Attempt to send the log once every loop */
-		if (!XLogSend(output_message, &caughtup))
-			break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -1115,11 +724,7 @@ WalSndLoop(void)
 
 /* Initialize a per-walsender data structure for this walsender process */
 static void
-<<<<<<< HEAD
 InitWalSenderSlot(void)
-=======
-InitWalSnd(void)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	int			i;
 
@@ -1148,7 +753,6 @@ InitWalSnd(void)
 		}
 		else
 		{
-<<<<<<< HEAD
 			/*
 			 * Found a free slot. Reserve it for us.
 			 */
@@ -1165,13 +769,6 @@ InitWalSnd(void)
 			OwnLatch((Latch *) &walsnd->latch);
 			MyWalSnd = (WalSnd *) walsnd;
 
-=======
-			/* found */
-			MyWalSnd = (WalSnd *) walsnd;
-			walsnd->pid = MyProcPid;
-			MemSet(&MyWalSnd->sentPtr, 0, sizeof(XLogRecPtr));
-			SpinLockRelease(&walsnd->mutex);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			break;
 		}
 	}
@@ -1190,7 +787,6 @@ InitWalSnd(void)
 static void
 WalSndKill(int code, Datum arg)
 {
-<<<<<<< HEAD
 	WalSnd	   *walsnd = MyWalSnd;
 
 	Assert(walsnd != NULL);
@@ -1238,15 +834,11 @@ WalSndKill(int code, Datum arg)
 	MyWalSnd = NULL;
 
 	DisownLatch(&walsnd->latch);
-=======
-	Assert(MyWalSnd != NULL);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Mark WalSnd struct no longer in use. Assume that no lock is required
 	 * for this.
 	 */
-<<<<<<< HEAD
 	walsnd->marked_pid_zero_at_time = (pg_time_t) time(NULL);
 	walsnd->pid = 0;
 }
@@ -1268,37 +860,15 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 	char	   *p;
 	XLogRecPtr	recptr;
 	Size		nbytes;
-=======
-	MyWalSnd->pid = 0;
-
-	/* WalSnd struct isn't mine anymore */
-	MyWalSnd = NULL;
-}
-
-/*
- * Read 'nbytes' bytes from WAL into 'buf', starting at location 'recptr'
- *
- * XXX probably this should be improved to suck data directly from the
- * WAL buffers when possible.
- */
-static void
-XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
-{
-	XLogRecPtr	startRecPtr = recptr;
-	char		path[MAXPGPATH];
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	uint32		lastRemovedLog;
 	uint32		lastRemovedSeg;
 	uint32		log;
 	uint32		seg;
 
-<<<<<<< HEAD
 	p = buf;
 	recptr = startptr;
 	nbytes = count;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	while (nbytes > 0)
 	{
 		uint32		startoff;
@@ -1309,11 +879,8 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 
 		if (sendFile < 0 || !XLByteInSeg(recptr, sendId, sendSeg))
 		{
-<<<<<<< HEAD
 			char		path[MAXPGPATH];
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			/* Switch to another logfile segment */
 			if (sendFile >= 0)
 				close(sendFile);
@@ -1324,10 +891,7 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
 			if (sendFile < 0)
 			{
-<<<<<<< HEAD
 				WalSndCtl->error = WALSNDERROR_WALREAD;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				/*
 				 * If the file is not found, assume it's because the standby
 				 * asked for a too old WAL segment that has already been
@@ -1356,21 +920,15 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 		if (sendOff != startoff)
 		{
 			if (lseek(sendFile, (off_t) startoff, SEEK_SET) < 0)
-<<<<<<< HEAD
 			{
 				WalSndCtl->error = WALSNDERROR_WALREAD;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not seek in log file %u, segment %u to offset %u: %m",
 								sendId, sendSeg, startoff)));
-<<<<<<< HEAD
 			}
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			sendOff = startoff;
 		}
 
@@ -1380,35 +938,23 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 		else
 			segbytes = nbytes;
 
-<<<<<<< HEAD
 		readbytes = read(sendFile, p, segbytes);
 		if (readbytes <= 0)
 		{
 			WalSndCtl->error = WALSNDERROR_WALREAD;
-=======
-		readbytes = read(sendFile, buf, segbytes);
-		if (readbytes <= 0)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			ereport(ERROR,
 					(errcode_for_file_access(),
 			errmsg("could not read from log file %u, segment %u, offset %u, "
 				   "length %lu: %m",
 				   sendId, sendSeg, sendOff, (unsigned long) segbytes)));
-<<<<<<< HEAD
 		}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Update state for read */
 		XLByteAdvance(recptr, readbytes);
 
 		sendOff += readbytes;
 		nbytes -= readbytes;
-<<<<<<< HEAD
 		p += readbytes;
-=======
-		buf += readbytes;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -1419,42 +965,28 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
 	 * already have been overwritten with new WAL records.
 	 */
 	XLogGetLastRemoved(&lastRemovedLog, &lastRemovedSeg);
-<<<<<<< HEAD
 	XLByteToSeg(startptr, log, seg);
-=======
-	XLByteToSeg(startRecPtr, log, seg);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (log < lastRemovedLog ||
 		(log == lastRemovedLog && seg <= lastRemovedSeg))
 	{
 		char		filename[MAXFNAMELEN];
 
-<<<<<<< HEAD
 		WalSndCtl->error = WALSNDERROR_WALREAD;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		XLogFileName(filename, ThisTimeLineID, log, seg);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("requested WAL segment %s has already been removed",
 						filename)));
 	}
-<<<<<<< HEAD
 
 	WalSndCtl->error = WALSNDERROR_NONE;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
  * Read up to MAX_SEND_SIZE bytes of WAL that's been flushed to disk,
-<<<<<<< HEAD
  * but not yet sent to the client, and buffer it in the libpq output
  * buffer.
-=======
- * but not yet sent to the client, and send it.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * msgbuf is a work area in which the output message is constructed.  It's
  * passed in just so we can avoid re-palloc'ing the buffer on each cycle.
@@ -1463,18 +995,11 @@ XLogRead(char *buf, XLogRecPtr recptr, Size nbytes)
  * If there is no unsent WAL remaining, *caughtup is set to true, otherwise
  * *caughtup is set to false.
  *
-<<<<<<< HEAD
  * If we've sent enough WAL (although we may not have completely caughtup)
  * we set caughtup_within_range to true.
  */
 static void
 XLogSend(char *msgbuf, bool *caughtup, bool *caughtup_within_range)
-=======
- * Returns true if OK, false if trouble.
- */
-static bool
-XLogSend(char *msgbuf, bool *caughtup)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 {
 	XLogRecPtr	SendRqstPtr;
 	XLogRecPtr	startptr;
@@ -1482,24 +1007,12 @@ XLogSend(char *msgbuf, bool *caughtup)
 	Size		nbytes;
 	WalDataMessageHeader msghdr;
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Attempt to send all data that's already been written out and fsync'd to
-	 * disk.  We cannot go further than what's been written out given the
-	 * current implementation of XLogRead().  And in any case it's unsafe to
-	 * send WAL that is not securely down to disk on the master: if the master
-	 * subsequently crashes and restarts, slaves must not have applied any WAL
-	 * that gets lost on the master.
-	 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	SendRqstPtr = GetFlushRecPtr();
 
 	/* Quick exit if nothing to do */
 	if (XLByteLE(SendRqstPtr, sentPtr))
 	{
 		*caughtup = true;
-<<<<<<< HEAD
 		*caughtup_within_range = true;
 
 		elogif(debug_walrepl_snd, LOG,
@@ -1509,9 +1022,6 @@ XLogSend(char *msgbuf, bool *caughtup)
 				sentPtr.xlogid, sentPtr.xrecoff);
 
 		return;
-=======
-		return true;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -1583,7 +1093,6 @@ XLogSend(char *msgbuf, bool *caughtup)
 
 	memcpy(msgbuf + 1, &msghdr, sizeof(WalDataMessageHeader));
 
-<<<<<<< HEAD
 	pq_putmessage_noblock('d', msgbuf, 1 + sizeof(WalDataMessageHeader) + nbytes);
 
 	sentPtr = endptr;
@@ -1592,16 +1101,6 @@ XLogSend(char *msgbuf, bool *caughtup)
 	if (!(*caughtup_within_range))
 		*caughtup_within_range = WalSndIsCatchupWithinRange(sentPtr, SendRqstPtr);
 
-=======
-	pq_putmessage('d', msgbuf, 1 + sizeof(WalDataMessageHeader) + nbytes);
-
-	/* Flush pending output to the client */
-	if (pq_flush())
-		return false;
-
-	sentPtr = endptr;
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* Update shared memory status */
 	{
 		/* use volatile pointer to prevent code rearrangement */
@@ -1622,7 +1121,6 @@ XLogSend(char *msgbuf, bool *caughtup)
 		set_ps_display(activitymsg, false);
 	}
 
-<<<<<<< HEAD
 	elogif(debug_walrepl_snd, LOG,
 			"walsnd xlogsend -- "
 			"Latest xlog flush location on master (SendRqstPtr) = %X/%X, "
@@ -1661,16 +1159,12 @@ WalSndRqstFileReload(void)
 		walsnd->needreload = true;
 		SpinLockRelease(&walsnd->mutex);
 	}
-=======
-	return true;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 WalSndSigHupHandler(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
@@ -1689,55 +1183,12 @@ WalSndXLogSendHandler(SIGNAL_ARGS)
 	latch_sigusr1_handler();
 
 	errno = save_errno;
-=======
-	got_SIGHUP = true;
-}
-
-/* SIGTERM: set flag to shut down */
-static void
-WalSndShutdownHandler(SIGNAL_ARGS)
-{
-	shutdown_requested = true;
-}
-
-/*
- * WalSndQuickDieHandler() occurs when signalled SIGQUIT by the postmaster.
- *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
- */
-static void
-WalSndQuickDieHandler(SIGNAL_ARGS)
-{
-	PG_SETMASK(&BlockSig);
-
-	/*
-	 * We DO NOT want to run proc_exit() callbacks -- we're here because
-	 * shared memory may be corrupted, so we don't want to try to clean up our
-	 * transaction.  Just nail the windows shut and get out of town.  Now that
-	 * there's an atexit callback to prevent third-party code from breaking
-	 * things by calling exit() directly, we have to reset the callbacks
-	 * explicitly to make this work as intended.
-	 */
-	on_exit_reset();
-
-	/*
-	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
-	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	exit(2);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /* SIGUSR2: set flag to do a last cycle and shut down afterwards */
 static void
 WalSndLastCycleHandler(SIGNAL_ARGS)
 {
-<<<<<<< HEAD
 	int			save_errno = errno;
 
 	walsender_ready_to_stop = true;
@@ -1752,9 +1203,6 @@ WalSndCrashHandler(SIGNAL_ARGS)
 {
 	StandardHandlerForSigillSigsegvSigbus_OnMainThread("walsender",
 														PASS_SIGNAL_ARGS);
-=======
-	ready_to_stop = true;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /* Set up signal handlers */
@@ -1765,19 +1213,11 @@ WalSndSignals(void)
 	pqsignal(SIGHUP, WalSndSigHupHandler);		/* set flag to read config
 												 * file */
 	pqsignal(SIGINT, SIG_IGN);	/* not used */
-<<<<<<< HEAD
 	pqsignal(SIGTERM, die);	/* request shutdown */
 	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, handle_sig_alarm);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, WalSndXLogSendHandler);	/* request WAL sending */
-=======
-	pqsignal(SIGTERM, WalSndShutdownHandler);	/* request shutdown */
-	pqsignal(SIGQUIT, WalSndQuickDieHandler);	/* hard crash time */
-	pqsignal(SIGALRM, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* not used */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	pqsignal(SIGUSR2, WalSndLastCycleHandler);	/* request a last cycle and
 												 * shutdown */
 
@@ -1787,7 +1227,6 @@ WalSndSignals(void)
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
 	pqsignal(SIGWINCH, SIG_DFL);
-<<<<<<< HEAD
 
 #ifdef SIGILL
 	pqsignal(SIGILL, WalSndCrashHandler);
@@ -1799,8 +1238,6 @@ WalSndSignals(void)
 	pqsignal(SIGBUS, WalSndCrashHandler);
 #endif
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /* Report shared-memory space needed by WalSndShmemInit */
@@ -1830,27 +1267,20 @@ WalSndShmemInit(void)
 		/* First time through, so initialize */
 		MemSet(WalSndCtl, 0, WalSndShmemSize());
 
-<<<<<<< HEAD
 		for (i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
 			SHMQueueInit(&(WalSndCtl->SyncRepQueue[i]));
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		for (i = 0; i < max_wal_senders; i++)
 		{
 			WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
 
 			SpinLockInit(&walsnd->mutex);
-<<<<<<< HEAD
 			InitSharedLatch(&walsnd->latch);
 			walsnd->marked_pid_zero_at_time = (pg_time_t) time(NULL);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 	}
 }
 
-<<<<<<< HEAD
 /* Wake up all walsenders */
 void
 WalSndWakeup(void)
@@ -2252,8 +1682,6 @@ WalSndKeepalive(char *msgbuf)
 	pq_putmessage_noblock('d', msgbuf, sizeof(PrimaryKeepaliveMessage) + 1);
 }
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * This isn't currently used for anything. Monitoring tools might be
  * interested in the future, and we'll need something like this in the

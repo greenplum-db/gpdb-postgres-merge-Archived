@@ -25,15 +25,9 @@
 
 #include "access/xlog_internal.h"
 #include "replication/walreceiver.h"
-<<<<<<< HEAD
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
-=======
-#include "storage/fd.h"
-#include "storage/pmsignal.h"
-#include "storage/shmem.h"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #include "utils/guc.h"
 
 WalRcvData *WalRcv = NULL;
@@ -104,7 +98,6 @@ WalRcvInProgress(void)
 			SpinLockAcquire(&walrcv->mutex);
 
 			if (walrcv->walRcvState == WALRCV_STARTING)
-<<<<<<< HEAD
 			{
 				state = walrcv->walRcvState = WALRCV_STOPPED;
 
@@ -114,10 +107,6 @@ WalRcvInProgress(void)
 					   WalRcvGetStateString(walrcv->walRcvState));
 			}
 
-=======
-				state = walrcv->walRcvState = WALRCV_STOPPED;
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			SpinLockRelease(&walrcv->mutex);
 		}
 	}
@@ -130,10 +119,7 @@ WalRcvInProgress(void)
 
 /*
  * Stop walreceiver (if running) and wait for it to die.
-<<<<<<< HEAD
  * Executed by the Startup process.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 void
 ShutdownWalRcv(void)
@@ -142,13 +128,10 @@ ShutdownWalRcv(void)
 	volatile WalRcvData *walrcv = WalRcv;
 	pid_t		walrcvpid = 0;
 
-<<<<<<< HEAD
 	elogif(debug_xlog_record_read, LOG,
 		   "walrcv shutdown -- Shutdown request with current walrcv state %s",
 		   WalRcvGetStateString(walrcv->walRcvState));
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Request walreceiver to stop. Walreceiver will switch to WALRCV_STOPPED
 	 * mode once it's finished, and will also request postmaster to not
@@ -192,13 +175,10 @@ ShutdownWalRcv(void)
 
 		pg_usleep(100000);		/* 100ms */
 	}
-<<<<<<< HEAD
 
 	elogif(debug_xlog_record_read, LOG,
 		   "walrcv shutdown -- Shutdown performed with current walrcv state %s",
 		   WalRcvGetStateString(walrcv->walRcvState));
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -215,7 +195,6 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	pg_time_t	now = (pg_time_t) time(NULL);
 
 	/*
-<<<<<<< HEAD
 	 * If it's not stopped, nothing to do.
 	 */
 	if (walrcv->walRcvState != WALRCV_STOPPED)
@@ -228,8 +207,6 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	}
 
 	/*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * We always start at the beginning of the segment. That prevents a broken
 	 * segment (i.e., with no records in the first half of a segment) from
 	 * being created by XLOG streaming, which might cause trouble later on if
@@ -250,7 +227,6 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 	walrcv->walRcvState = WALRCV_STARTING;
 	walrcv->startTime = now;
 
-<<<<<<< HEAD
 	/*
 	 * If this is the first startup of walreceiver, we initialize receivedUpto
 	 * and latestChunkStart to receiveStart.
@@ -262,23 +238,16 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
 		walrcv->latestChunkStart = recptr;
 	}
 	walrcv->receiveStart = recptr;
-=======
-	walrcv->receivedUpto = recptr;
-	walrcv->latestChunkStart = recptr;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	SpinLockRelease(&walrcv->mutex);
 
 	SendPostmasterSignal(PMSIGNAL_START_WALRECEIVER);
-<<<<<<< HEAD
 
 	elogif(debug_xlog_record_read, LOG,
 		   "request streaming -- spawning walreceiver requested with "
 		   "receivestart = %X/%X",
 		   walrcv->receiveStart.xlogid, walrcv->receiveStart.xrecoff);
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -303,7 +272,6 @@ GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart)
 
 	return recptr;
 }
-<<<<<<< HEAD
 
 /*
  * Returns the replication apply delay in ms
@@ -344,5 +312,3 @@ GetReplicationTransferLatency(void)
 
 	return ms;
 }
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
