@@ -1096,6 +1096,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 			{
 				char *vsubtype = ""; /* NOFULL */
 
+				StartTransactionCommand();
+
 				if (IsAutoVacuumWorkerProcess())
 					vsubtype = "AUTO";
 				else
@@ -1113,6 +1115,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 								   GetUserId(),
 								   "VACUUM",
 								   vsubtype);
+				CommitTransactionCommand();
 			}
 		}
 
