@@ -87,14 +87,6 @@ static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
 static void preprocess_groupclause(PlannerInfo *root);
-<<<<<<< HEAD
-=======
-static bool choose_hashed_grouping(PlannerInfo *root,
-					   double tuple_fraction, double limit_tuples,
-					   double path_rows, int path_width,
-					   Path *cheapest_path, Path *sorted_path,
-					   double dNumGroups, AggClauseCounts *agg_counts);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static bool choose_hashed_distinct(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
 					   double path_rows, int path_width,
@@ -695,7 +687,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	parse->havingQual = preprocess_expression(root, parse->havingQual,
 											  EXPRKIND_QUAL);
 
-<<<<<<< HEAD
 	parse->scatterClause = (List *)
 		preprocess_expression(root, (Node *) parse->scatterClause,
 							  EXPRKIND_TARGET);
@@ -703,23 +694,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Do expression preprocessing on other expressions.
 	 */
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	foreach(l, parse->windowClause)
 	{
 		WindowClause *wc = (WindowClause *) lfirst(l);
 
 		/* partitionClause/orderClause are sort/group expressions */
 		wc->startOffset = preprocess_expression(root, wc->startOffset,
-<<<<<<< HEAD
 												EXPRKIND_WINDOW_BOUND);
 		wc->endOffset = preprocess_expression(root, wc->endOffset,
 											  EXPRKIND_WINDOW_BOUND);
-=======
-												EXPRKIND_LIMIT);
-		wc->endOffset = preprocess_expression(root, wc->endOffset,
-											  EXPRKIND_LIMIT);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	parse->limitOffset = preprocess_expression(root, parse->limitOffset,
@@ -854,13 +837,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			else
 				rowMarks = root->rowMarks;
 
-<<<<<<< HEAD
 			plan = (Plan *) make_modifytable(root, parse->commandType,
-											 copyObject(root->resultRelations),
-=======
-			plan = (Plan *) make_modifytable(parse->commandType,
 										   copyObject(root->resultRelations),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 											 list_make1(plan),
 											 returningLists,
 											 rowMarks,
@@ -1217,28 +1195,9 @@ inheritance_planner(PlannerInfo *root)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
-	 * have dealt with fetching non-locked marked rows, else we need
-	 * to have ModifyTable do that.
-=======
-	 * Planning might have modified the rangetable, due to changes of the
-	 * Query structures inside subquery RTEs.  We have to ensure that this
-	 * gets propagated back to the master copy.  But can't do this until we
-	 * are done planning, because all the calls to grouping_planner need
-	 * virgin sub-Queries to work from.  (We are effectively assuming that
-	 * sub-Queries will get planned identically each time, or at least that
-	 * the impacts on their rangetables will be the same each time.)
-	 *
-	 * XXX should clean this up someday
-	 */
-	parse->rtable = rtable;
-
-	/*
 	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will have
 	 * dealt with fetching non-locked marked rows, else we need to have
 	 * ModifyTable do that.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (parse->rowMarks)
 		rowMarks = NIL;
@@ -1366,7 +1325,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	CdbPathLocus current_locus;
 	Path	   *best_path = NULL;
 	double		dNumGroups = 0;
-<<<<<<< HEAD
+	bool		use_hashed_distinct = false;
+	bool		tested_hashed_distinct = false;
 	double		numDistinct = 1;
 	List	   *distinctExprs = NIL;
 	bool		must_gather;
@@ -1377,10 +1337,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	2.0 * cpu_tuple_cost;
 
 	CdbPathLocus_MakeNull(&current_locus);
-=======
-	bool		use_hashed_distinct = false;
-	bool		tested_hashed_distinct = false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
 	if (parse->limitCount || parse->limitOffset)
@@ -1672,38 +1628,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			/*
 			 * If grouping, decide whether to use sorted or hashed grouping.
 			 */
-<<<<<<< HEAD
-			can_hash = (agg_counts.numOrderedAggs == 0 &&
-						grouping_is_hashable(parse->groupClause));
-			can_sort = grouping_is_sortable(parse->groupClause);
-			if (can_hash && can_sort)
-			{
-				/* we have a meaningful choice to make ... */
-				use_hashed_grouping =
-					choose_hashed_grouping(root,
-										   tuple_fraction, limit_tuples,
-										   cheapest_path, sorted_path,
-										   numGroupCols,
-										   dNumGroups, &agg_counts);
-			}
-			else if (can_hash)
-				use_hashed_grouping = true;
-			else if (can_sort)
-				use_hashed_grouping = false;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not implement GROUP BY"),
-						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-
-=======
 			use_hashed_grouping =
 				choose_hashed_grouping(root,
 									   tuple_fraction, limit_tuples,
 									   path_rows, path_width,
 									   cheapest_path, sorted_path,
+									   numGroupCols,
 									   dNumGroups, &agg_counts);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 		}
@@ -2466,38 +2397,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* Choose implementation method if we didn't already */
 		if (!tested_hashed_distinct)
 		{
-<<<<<<< HEAD
-			can_hash = grouping_is_hashable(parse->distinctClause);
-
-			/* GPDB_84_MERGE_FIXME: The hash Agg we build for DISTINCT currently
-			 * loses the GROUP_ID() information, so don't use it if there's a
-			 * GROUP_ID().
-			 */
-			if (can_hash && contain_group_id((Node *) result_plan->targetlist))
-				can_hash = false;
-
-			if (can_hash && can_sort)
-			{
-				/* we have a meaningful choice to make ... */
-				use_hashed_distinct =
-					choose_hashed_distinct(root,
-										   result_plan, current_pathkeys,
-										   tuple_fraction, limit_tuples,
-										   dNumDistinctRows);
-			}
-			else if (can_hash)
-				use_hashed_distinct = true;
-			else if (can_sort)
-				use_hashed_distinct = false;
-			else
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not implement DISTINCT"),
-						 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-				use_hashed_distinct = false;	/* keep compiler quiet */
-			}
-=======
 			/*
 			 * At this point, either hashed or sorted grouping will have to
 			 * work from result_plan, so we pass that as both "cheapest" and
@@ -2514,7 +2413,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 									   result_plan->total_cost,
 									   current_pathkeys,
 									   dNumDistinctRows);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+
+			/* GPDB_84_MERGE_FIXME: The hash Agg we build for DISTINCT currently
+			 * loses the GROUP_ID() information, so don't use it if there's a
+			 * GROUP_ID().
+			 */
+			if (use_hashed_distinct && contain_group_id((Node *) result_plan->targetlist))
+				use_hashed_distinct = false;
 		}
 
 		/*
@@ -2750,14 +2655,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if (parse->rowMarks)
 	{
-<<<<<<< HEAD
 		ListCell   *lc;
 		List	   *newmarks = NIL;
-=======
-		result_plan = (Plan *) make_lockrows(result_plan,
-											 root->rowMarks,
-											 SS_assign_special_param(root));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/*
 		 * In case of FOR UPDATE, upgrade the rowmarks so that we will grab an
@@ -2798,6 +2697,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												 newmarks,
 												 SS_assign_special_param(root));
 			result_plan->flow = pull_up_Flow(result_plan, result_plan->lefttree);
+
 			/*
 			 * The result can no longer be assumed sorted, since locking might
 			 * cause the sort key columns to be replaced with new values.
@@ -3524,26 +3424,17 @@ choose_hashed_grouping(PlannerInfo *root,
 					   int numGroupOps,
 					   double dNumGroups, AggClauseCounts *agg_counts)
 {
-<<<<<<< HEAD
-	int			numGroupCols;
-	double		cheapest_path_rows;
-	int			cheapest_path_width;
-	double		hashentrysize;
-=======
 	Query	   *parse = root->parse;
-	int			numGroupCols = list_length(parse->groupClause);
+	int			numGroupCols;
 	bool		can_hash;
 	bool		can_sort;
 	Size		hashentrysize;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	List	   *target_pathkeys;
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
-
-<<<<<<< HEAD
 	HashAggTableSizes hash_info;
-=======
+
 	/*
 	 * Executor doesn't support hashed aggregation with DISTINCT or ORDER BY
 	 * aggregates.	(Doing so would imply storing *all* the input values in
@@ -3567,7 +3458,6 @@ choose_hashed_grouping(PlannerInfo *root,
 					 errmsg("could not implement GROUP BY"),
 					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
 	}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* Prefer sorting when enable_hashagg is off */
 	if (!root->config->enable_hashagg)
@@ -3592,31 +3482,11 @@ choose_hashed_grouping(PlannerInfo *root,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
-<<<<<<< HEAD
-	if (cheapest_path->parent)
-	{
-		cheapest_path_rows = cdbpath_rows(root, cheapest_path);
-		cheapest_path_width = cheapest_path->parent->width;
-	}
-	else
-	{
-		cheapest_path_rows = 1; /* assume non-set result */
-		cheapest_path_width = 100;		/* arbitrary */
-	}
 
 	/* Estimate per-hash-entry space at tuple width... */
 	hashentrysize = agg_hash_entrywidth(agg_counts->numAggs,
-							   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + cheapest_path_width,
+							   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + path_width,
 							   agg_counts->transitionSpace);
-=======
-
-	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
-	/* plus space for pass-by-ref transition values... */
-	hashentrysize += agg_counts->transitionSpace;
-	/* plus the per-hash-entry overhead */
-	hashentrysize += hash_agg_entry_size(agg_counts->numAggs);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (!calcHashAggTableSizes(global_work_mem(root),
 							   dNumGroups,
@@ -3660,12 +3530,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	cost_agg(&hashed_p, root, AGG_HASHED, agg_counts->numAggs,
 			 numGroupCols, dNumGroups,
 			 cheapest_path->startup_cost, cheapest_path->total_cost,
-<<<<<<< HEAD
-			 cheapest_path_rows, hash_info.workmem_per_entry,
+			 path_rows, hash_info.workmem_per_entry,
 			 hash_info.nbatches, hash_info.hashentry_width, false);
-=======
-			 path_rows);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* Result of hashed agg is always unsorted */
 	if (target_pathkeys)
 		cost_sort(&hashed_p, root, target_pathkeys, hashed_p.total_cost,
@@ -3694,11 +3560,7 @@ choose_hashed_grouping(PlannerInfo *root,
 		cost_agg(&sorted_p, root, AGG_SORTED, agg_counts->numAggs,
 				 numGroupCols, dNumGroups,
 				 sorted_p.startup_cost, sorted_p.total_cost,
-<<<<<<< HEAD
-				 cheapest_path_rows, 0.0, 0.0, 0.0, false);
-=======
-				 path_rows);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+				 path_rows, 0.0, 0.0, 0.0, false);
 	else
 		cost_group(&sorted_p, root, numGroupCols, dNumGroups,
 				   sorted_p.startup_cost, sorted_p.total_cost,
@@ -3818,19 +3680,14 @@ choose_hashed_distinct(PlannerInfo *root,
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, 0,
 			 numDistinctCols, dNumDistinctRows,
-<<<<<<< HEAD
-			 input_plan->startup_cost, input_plan->total_cost,
-			 input_plan->plan_rows,
+			 cheapest_startup_cost, cheapest_total_cost,
+			 path_rows,
 			 /* GPDB_84_MERGE_FIXME: What would be appropriate values for these extra
 			  * arguments? */
 			 0, /* input_width */
 			 0, /* hash_batches */
 			 0, /* hashentry_width */
 			 false /* hash_streaming */);
-=======
-			 cheapest_startup_cost, cheapest_total_cost,
-			 path_rows);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Result of hashed agg is always unsorted, so if ORDER BY is present we
@@ -3931,12 +3788,7 @@ choose_hashed_distinct(PlannerInfo *root,
  * 'need_tlist_eval' is set true if we really need to evaluate the
  *			returned tlist as-is.
  *
-<<<<<<< HEAD
  * The result is the targetlist to be passed to query_planner.
- *---------------
-=======
- * The result is the targetlist to be passed to the subplan.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  */
 static List *
 make_subplanTargetList(PlannerInfo *root,

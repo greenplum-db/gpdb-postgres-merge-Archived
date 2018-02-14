@@ -158,38 +158,8 @@ static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
-<<<<<<< HEAD
 static List *flatten_grouping_list(List *groupcls);
 static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node);
-=======
-static NestLoop *make_nestloop(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static HashJoin *make_hashjoin(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  List *hashclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static Hash *make_hash(Plan *lefttree,
-		  Oid skewTable,
-		  AttrNumber skewColumn,
-		  bool skewInherit,
-		  Oid skewColType,
-		  int32 skewColTypmod);
-static MergeJoin *make_mergejoin(List *tlist,
-			   List *joinclauses, List *otherclauses,
-			   List *mergeclauses,
-			   Oid *mergefamilies,
-			   int *mergestrategies,
-			   bool *mergenullsfirst,
-			   Plan *lefttree, Plan *righttree,
-			   JoinType jointype);
-static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
-		  double limit_tuples);
-static Material *make_material(Plan *lefttree);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 
 /*
@@ -3030,7 +3000,6 @@ create_mergejoin_plan(PlannerInfo *root,
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
 
 	/*
-<<<<<<< HEAD
 	 * MPP-3300: very similar to the nested-loop join motion deadlock cases. But we may have already
 	 * put some slackening operators below (e.g. a sort).
 	 *
@@ -3062,12 +3031,8 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 
 	/*
-	 * If specified, add a materialize node to shield the inner plan from
-	 * the need to handle mark/restore.
-=======
 	 * If specified, add a materialize node to shield the inner plan from the
 	 * need to handle mark/restore.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (best_path->materialize_inner)
 	{
@@ -5185,10 +5150,7 @@ make_windowagg(PlannerInfo *root, List *tlist,
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators,
-<<<<<<< HEAD
 			   AttrNumber firstOrderCol, Oid firstOrderCmpOperator, bool firstOrderNullsFirst,
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			   int frameOptions, Node *startOffset, Node *endOffset,
 			   Plan *lefttree)
 {

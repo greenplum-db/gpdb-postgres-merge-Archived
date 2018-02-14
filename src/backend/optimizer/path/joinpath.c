@@ -83,7 +83,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 {
 	List	   *mergeclause_list = NIL;
 
-<<<<<<< HEAD
     Assert(outerrel->pathlist &&
            outerrel->cheapest_startup_path &&
            outerrel->cheapest_total_path);
@@ -96,18 +95,13 @@ add_paths_to_joinrel(PlannerInfo *root,
 		cdbpath_contains_wts(innerrel->cheapest_total_path))
 		return;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
 	 * interested in doing a mergejoin.  However, mergejoin is currently our
 	 * only way of implementing full outer joins, so override mergejoin
 	 * disable if it's a full join.
-<<<<<<< HEAD
 	 *
 	 * CDB: Always build mergeclause_list.  We need it for motion planning.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	mergeclause_list = select_mergejoin_clauses(root,
 												joinrel,

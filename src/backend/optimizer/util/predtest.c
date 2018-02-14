@@ -688,17 +688,10 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			/*
 			 * If A is a strong NOT-clause, A R=> B if B equals A's arg
 			 *
-<<<<<<< HEAD
-			 * We cannot make the stronger conclusion that B is refuted if
-			 * B implies A's arg; that would only prove that B is not-TRUE,
-			 * not that it's not NULL either.  Hence use equal() rather than
-			 * predicate_implied_by_recurse().  We could do the latter if we
-=======
 			 * We cannot make the stronger conclusion that B is refuted if B
 			 * implies A's arg; that would only prove that B is not-TRUE, not
 			 * that it's not NULL either.  Hence use equal() rather than
 			 * predicate_implied_by_recurse().	We could do the latter if we
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 * ever had a need for the weak form of refutation.
 			 */
 			not_arg = extract_strong_not_arg(clause);

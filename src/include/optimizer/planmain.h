@@ -161,6 +161,7 @@ extern HashJoin *make_hashjoin(List *tlist,
 extern Hash *make_hash(Plan *lefttree,
 		  Oid skewTable,
 		  AttrNumber skewColumn,
+		  bool skewInherit,
 		  Oid skewColType,
 		  int32 skewColTypmod);
 extern NestLoop *make_nestloop(List *tlist,

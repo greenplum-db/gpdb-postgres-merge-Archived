@@ -116,15 +116,10 @@ bool		force_bitmap_table_scan = false;
 bool		enable_tidscan = true;
 bool		enable_sort = true;
 bool		enable_hashagg = true;
-<<<<<<< HEAD
 bool		enable_groupagg = true;
 bool		enable_nestloop = false;
-bool		enable_mergejoin = false;
-=======
-bool		enable_nestloop = true;
 bool		enable_material = true;
-bool		enable_mergejoin = true;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+bool		enable_mergejoin = false;
 bool		enable_hashjoin = true;
 
 typedef struct
@@ -174,8 +169,6 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-<<<<<<< HEAD
-=======
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
 
@@ -184,7 +177,6 @@ cost_seqscan(Path *path, PlannerInfo *root,
 							  NULL,
 							  &spc_seq_page_cost);
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * disk costs
 	 */
@@ -707,6 +699,11 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 	startup_cost += indexTotalCost;
 
+	/* Fetch estimated page costs for tablespace containing table. */
+	get_tablespace_page_costs(baserel->reltablespace,
+							  &spc_random_page_cost,
+							  &spc_seq_page_cost);
+
 	/*
 	 * Estimate number of main-table pages fetched.
 	 */
@@ -793,6 +790,8 @@ cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	Cost		cost_per_page;
 	double		tuples_fetched;
 	double		pages_fetched;
+	double		spc_seq_page_cost,
+				spc_random_page_cost;
 	double		T;
 
 	/* Should only be applied to base relations */

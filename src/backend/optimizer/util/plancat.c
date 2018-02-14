@@ -807,20 +807,15 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	List	   *constraint_pred;
 	List	   *safe_constraints;
 	ListCell   *lc;
+	int			constraint_exclusion = root->config->constraint_exclusion;
 
 	/* Skip the test if constraint exclusion is disabled for the rel */
-<<<<<<< HEAD
-	if (root->config->constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
-		(root->config->constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
-		 rel->reloptkind != RELOPT_OTHER_MEMBER_REL))
-=======
 	if (constraint_exclusion == CONSTRAINT_EXCLUSION_OFF ||
 		(constraint_exclusion == CONSTRAINT_EXCLUSION_PARTITION &&
 		 !(rel->reloptkind == RELOPT_OTHER_MEMBER_REL ||
 		   (root->hasInheritedTarget &&
 			rel->reloptkind == RELOPT_BASEREL &&
 			rel->relid == root->parse->resultRelation))))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		return false;
 
 	/*

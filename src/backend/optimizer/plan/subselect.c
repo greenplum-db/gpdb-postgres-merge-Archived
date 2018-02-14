@@ -800,17 +800,13 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 		 * is false, then the user does not want us to materialize anything
 		 * unnecessarily, so we don't.
 		 */
-<<<<<<< HEAD
 #if 0
 		/*
 		 * In GPDB, don't add a MATERIAL node here. We'll most likely add one
 		 * later anyway, when the SubPlan reference is "parallelized" in
 		 * ParallelizeCorrelatedSubPlan.
 		 */
-		else if (splan->parParam == NIL &&
-=======
 		else if (splan->parParam == NIL && enable_material &&
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				 !ExecMaterializesOutput(nodeTag(plan)))
 			plan = materialize_finished_plan(plan);
 #endif
@@ -1525,16 +1521,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * call.)  Note that convert_ANY_sublink_to_join doesn't have to reject
 	 * this case, since it just produces a subquery RTE that doesn't have to
 	 * get flattened into the parent query.
-<<<<<<< HEAD
-=======
-	 */
-	if (subselect->cteList)
-		return NULL;
-
-	/*
-	 * Copy the subquery so we can modify it safely (see comments in
-	 * make_subplan).
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	if (subselect->cteList)
 		return NULL;
@@ -2571,13 +2557,6 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 							  &context);
 			break;
 
-		case T_WindowAgg:
-			finalize_primnode(((WindowAgg *) plan)->startOffset,
-							  &context);
-			finalize_primnode(((WindowAgg *) plan)->endOffset,
-							  &context);
-			break;
-
 		case T_PartitionSelector:
 			finalize_primnode((Node *) ((PartitionSelector *) plan)->levelEqExpressions,
 							  &context);
@@ -2619,12 +2598,9 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 
 		case T_Hash:
 		case T_Agg:
-<<<<<<< HEAD
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
 		case T_ExternalScan:
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		case T_Material:
 		case T_Sort:
 		case T_ShareInputScan:

@@ -862,7 +862,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
-<<<<<<< HEAD
 			set_upper_references(glob, plan, rtoffset);
 			break;
 		case T_WindowAgg:
@@ -893,27 +892,6 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 									   subplan_itlist, rtoffset);
 					pfree(subplan_itlist);
 				}
-			}
-=======
-		case T_Group:
-			set_upper_references(glob, plan, rtoffset);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-			break;
-		case T_WindowAgg:
-			{
-				WindowAgg  *wplan = (WindowAgg *) plan;
-
-				set_upper_references(glob, plan, rtoffset);
-
-				/*
-				 * Like Limit node limit/offset expressions, WindowAgg has
-				 * frame offset expressions, which cannot contain subplan
-				 * variable refs, so fix_scan_expr works for them.
-				 */
-				wplan->startOffset =
-					fix_scan_expr(glob, wplan->startOffset, rtoffset);
-				wplan->endOffset =
-					fix_scan_expr(glob, wplan->endOffset, rtoffset);
 			}
 			break;
 		case T_Result:
