@@ -2990,7 +2990,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			NULL
 		},
 		&wal_level,
-		WAL_LEVEL_MINIMAL, wal_level_options, NULL
+		WAL_LEVEL_ARCHIVE, wal_level_options, NULL
 	},
 
 	{
