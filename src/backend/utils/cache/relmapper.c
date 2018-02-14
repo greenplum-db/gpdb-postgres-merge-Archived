@@ -855,7 +855,7 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
  * RELMAP resource manager's routines
  */
 void
-relmap_redo(XLogRecPtr lsn, XLogRecord *record)
+relmap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
@@ -896,9 +896,10 @@ relmap_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-relmap_desc(StringInfo buf, uint8 xl_info, char *rec)
+relmap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	char		*rec = XLogRecGetData(record);
 
 	if (info == XLOG_RELMAP_UPDATE)
 	{

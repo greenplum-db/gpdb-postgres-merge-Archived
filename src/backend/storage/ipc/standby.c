@@ -696,7 +696,7 @@ StandbyReleaseOldLocks(TransactionId removeXid)
  */
 
 void
-standby_redo(XLogRecPtr lsn, XLogRecord *record)
+standby_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
@@ -753,9 +753,10 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 }
 
 void
-standby_desc(StringInfo buf, uint8 xl_info, char *rec)
+standby_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	char		*rec = XLogRecGetData(record);
 
 	if (info == XLOG_STANDBY_LOCK)
 	{
