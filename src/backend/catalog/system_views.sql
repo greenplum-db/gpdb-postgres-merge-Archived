@@ -364,7 +364,7 @@ CREATE VIEW pg_stat_activity AS
             S.xact_start,
             S.query_start,
             S.waiting,
-            S.current_query
+            S.current_query,
 
             S.waiting_reason,
             S.rsgid,
