@@ -97,11 +97,7 @@ static int	get_attnum_pk_pos(int *pkattnums, int pknumatts, int key);
 static HeapTuple get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals);
 static Relation get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode);
 static char *generate_relation_name(Relation rel);
-<<<<<<< HEAD
 static char *dblink_connstr_check(const char *connstr);
-=======
-static void dblink_connstr_check(const char *connstr);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(const char *conname, PGresult *res, const char *dblink_context_msg, bool fail);
 static char *get_connect_string(const char *servername);
@@ -1031,12 +1027,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 	{
 	char	   *msg;
 	PGresult   *res = NULL;
-<<<<<<< HEAD
-	TupleDesc	tupdesc = NULL;
-=======
 	text	   *sql_cmd_status = NULL;
 	PGconn	   *conn = NULL;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
@@ -1998,13 +1990,8 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	 * Build sql statement to look up tuple of interest, ie, the one matching
 	 * src_pkattvals.  We used to use "SELECT *" here, but it's simpler to
 	 * generate a result tuple that matches the table's physical structure,
-<<<<<<< HEAD
-	 * with NULLs for any dropped columns.  Otherwise we have to deal with
-	 * two different tupdescs and everything's very confusing.
-=======
 	 * with NULLs for any dropped columns.	Otherwise we have to deal with two
 	 * different tupdescs and everything's very confusing.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	appendStringInfoString(&buf, "SELECT ");
 
@@ -2136,11 +2123,7 @@ getConnectionByName(const char *name)
 		remoteConnHash = createConnHash();
 
 	key = pstrdup(name);
-<<<<<<< HEAD
 	truncate_identifier(key, strlen(key), false);
-=======
-	truncate_identifier(key, strlen(key), true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_FIND, NULL);
 
@@ -2201,11 +2184,7 @@ deleteConnection(const char *name)
 		remoteConnHash = createConnHash();
 
 	key = pstrdup(name);
-<<<<<<< HEAD
 	truncate_identifier(key, strlen(key), false);
-=======
-	truncate_identifier(key, strlen(key), true);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash,
 											   key, HASH_REMOVE, &found);
 
@@ -2457,20 +2436,13 @@ escape_param_str(const char *str)
  * Validate the PK-attnums argument for dblink_build_sql_insert() and related
  * functions, and translate to the internal representation.
  *
-<<<<<<< HEAD
- * The user supplies an int2vector of 1-based physical attnums, plus a count
-=======
  * The user supplies an int2vector of 1-based logical attnums, plus a count
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * argument (the need for the separate count argument is historical, but we
  * still check it).  We check that each attnum corresponds to a valid,
  * non-dropped attribute of the rel.  We do *not* prevent attnums from being
  * listed twice, though the actual use-case for such things is dubious.
-<<<<<<< HEAD
-=======
  * Note that before Postgres 9.0, the user's attnums were interpreted as
  * physical not logical column numbers; this was changed for future-proofing.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * The internal representation is a palloc'd int array of 0-based physical
  * attnums.
@@ -2500,16 +2472,6 @@ validate_pkattnums(Relation rel,
 	/* Validate attnums and convert to internal form */
 	for (i = 0; i < pknumatts_arg; i++)
 	{
-<<<<<<< HEAD
-		int		pkattnum = pkattnums_arg->values[i];
-
-		if (pkattnum <= 0 || pkattnum > natts ||
-			tupdesc->attrs[pkattnum - 1]->attisdropped)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid attribute number %d", pkattnum)));
-		(*pkattnums)[i] = pkattnum - 1;
-=======
 		int			pkattnum = pkattnums_arg->values[i];
 		int			lnum;
 		int			j;
@@ -2538,6 +2500,5 @@ validate_pkattnums(Relation rel,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid attribute number %d", pkattnum)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }
