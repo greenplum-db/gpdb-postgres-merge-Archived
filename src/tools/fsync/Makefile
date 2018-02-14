@@ -19,12 +19,3 @@ include $(top_srcdir)/contrib/contrib-global.mk
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 all: submake-libpq submake-libpgport test_fsync
-<<<<<<< HEAD
-=======
-
-test_fsync: test_fsync.o $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) test_fsync.o $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
-
-clean distclean maintainer-clean:
-	rm -f test_fsync$(X) $(OBJS)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
