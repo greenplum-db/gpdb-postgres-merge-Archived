@@ -4378,6 +4378,32 @@ log_heap_newpage(Relation rel,
 }
 
 /*
+ * Perform XLogInsert to register a heap cleanup info message. These
+ * messages are sent once per VACUUM and are required because
+ * of the phasing of removal operations during a lazy VACUUM.
+ * see comments for vacuum_log_cleanup_info().
+ */
+XLogRecPtr
+log_heap_cleanup_info(RelFileNode rnode, TransactionId latestRemovedXid)
+{
+	xl_heap_cleanup_info xlrec;
+	XLogRecPtr	recptr;
+	XLogRecData rdata;
+
+	xlrec.node = rnode;
+	xlrec.latestRemovedXid = latestRemovedXid;
+
+	rdata.data = (char *) &xlrec;
+	rdata.len = SizeOfHeapCleanupInfo;
+	rdata.buffer = InvalidBuffer;
+	rdata.next = NULL;
+
+	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_CLEANUP_INFO, &rdata);
+
+	return recptr;
+}
+
+/*
  * Perform XLogInsert for a heap-clean operation.  Caller must already
  * have modified the buffer and marked it dirty.
  *

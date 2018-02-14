@@ -1462,10 +1462,10 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * after we send the SI messages. See AtEOXact_Inval()
 	 */
 	if (hdr->initfileinval)
-		RelationCacheInitFileInvalidate(true);
+		RelationCacheInitFilePreInvalidate();
 	SendSharedInvalidMessages(invalmsgs, hdr->ninvalmsgs);
 	if (hdr->initfileinval)
-		RelationCacheInitFileInvalidate(false);
+		RelationCacheInitFilePostInvalidate();
 
 	/* And now do the callbacks */
 	if (isCommit)
