@@ -16,16 +16,12 @@ SUBDIRS = \
 		intarray	\
 		pageinspect	\
 		passwordcheck	\
-<<<<<<< HEAD
-		pg_stat_statements \
-=======
 		pg_archivecleanup \
 		pg_buffercache	\
 		pg_freespacemap \
 		pg_standby	\
 		pg_stat_statements \
 		pg_trgm		\
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		pg_upgrade	\
 		pg_upgrade_support \
 		pgbench		\
