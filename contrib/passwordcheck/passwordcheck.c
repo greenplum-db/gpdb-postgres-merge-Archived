@@ -3,20 +3,12 @@
  * passwordcheck.c
  *
  *
-<<<<<<< HEAD
  * Copyright (c) 2009-2016, PostgreSQL Global Development Group
-=======
- * Copyright (c) 2009-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  * Author: Laurenz Albe <laurenz.albe@wien.gv.at>
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  contrib/passwordcheck/passwordcheck.c
-=======
- *	  $PostgreSQL: pgsql/contrib/passwordcheck/passwordcheck.c,v 1.3 2010/02/26 02:00:32 momjian Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
