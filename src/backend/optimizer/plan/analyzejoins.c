@@ -22,7 +22,6 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -33,15 +32,6 @@
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
 								  Relids joinrelids);
-=======
-#include "optimizer/pathnode.h"
-#include "optimizer/paths.h"
-#include "optimizer/planmain.h"
-
-/* local functions */
-static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
-static void remove_rel_from_query(PlannerInfo *root, int relid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 
 
@@ -80,13 +70,9 @@ restart:
 		 */
 		innerrelid = bms_singleton_member(sjinfo->min_righthand);
 
-<<<<<<< HEAD
 		remove_rel_from_query(root, innerrelid,
 							  bms_union(sjinfo->min_lefthand,
 										sjinfo->min_righthand));
-=======
-		remove_rel_from_query(root, innerrelid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* We verify that exactly one reference gets removed from joinlist */
 		nremoved = 0;
@@ -212,22 +198,16 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Similarly check that the inner rel isn't needed by any PlaceHolderVars
 	 * that will be used above the join.  We only need to fail if such a PHV
 	 * actually references some inner-rel attributes; but the correct check
 	 * for that is relatively expensive, so we first check against ph_eval_at,
 	 * which must mention the inner rel if the PHV uses any inner-rel attrs.
-=======
-	 * Similarly check that the inner rel doesn't produce any PlaceHolderVars
-	 * that will be used above the join.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	foreach(l, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
-<<<<<<< HEAD
 		if (bms_is_subset(phinfo->ph_needed, joinrelids))
 			continue;			/* PHV is not used above the join */
 		if (!bms_overlap(phinfo->ph_eval_at, innerrel->relids))
@@ -235,11 +215,6 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		if (bms_overlap(pull_varnos((Node *) phinfo->ph_var),
 						innerrel->relids))
 			return false;		/* it does reference innerrel */
-=======
-		if (bms_is_subset(phinfo->ph_eval_at, innerrel->relids) &&
-			!bms_is_subset(phinfo->ph_needed, joinrelids))
-			return false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	/*
@@ -253,7 +228,6 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
-<<<<<<< HEAD
 		/*
 		 * If it's not a join clause for this outer join, we can't use it.
 		 * Note that if the clause is pushed-down, then it is logically from
@@ -273,21 +247,6 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 				return false;
 			continue;			/* else, ignore; not useful here */
 		}
-=======
-		/* Ignore clauses not pertinent to this join */
-		if (!bms_is_subset(restrictinfo->required_relids, joinrelids))
-			continue;
-
-		/*
-		 * If we find a pushed-down clause, it must have come from above the
-		 * outer join and it must contain references to the inner rel.	(If it
-		 * had only outer-rel variables, it'd have been pushed down into the
-		 * outer rel.)	Therefore, we can conclude that join removal is unsafe
-		 * without any examination of the clause contents.
-		 */
-		if (restrictinfo->is_pushed_down)
-			return false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Ignore if it's not a mergejoinable clause */
 		if (!restrictinfo->can_join ||
@@ -358,7 +317,6 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
  * We are not terribly thorough here.  We must make sure that the rel is
  * no longer treated as a baserel, and that attributes of other baserels
  * are no longer marked as being needed at joins involving this rel.
-<<<<<<< HEAD
  * Also, join quals involving the rel have to be removed from the joininfo
  * lists, but only if they belong to the outer join identified by joinrelids.
  */
@@ -367,16 +325,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 {
 	RelOptInfo *rel = find_base_rel(root, relid);
 	List	   *joininfos;
-=======
- * In particular, we don't bother removing join quals involving the rel from
- * the joininfo lists; they'll just get ignored, since we will never form a
- * join relation at which they could be evaluated.
- */
-static void
-remove_rel_from_query(PlannerInfo *root, int relid)
-{
-	RelOptInfo *rel = find_base_rel(root, relid);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	Index		rti;
 	ListCell   *l;
 
@@ -448,7 +396,6 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 			phinfo->ph_eval_at = bms_add_member(phinfo->ph_eval_at, relid);
 
 		phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
-<<<<<<< HEAD
 		/* ph_may_need probably isn't used after this, but fix it anyway */
 		phinfo->ph_may_need = bms_del_member(phinfo->ph_may_need, relid);
 	}
@@ -525,8 +472,6 @@ remove_rel_from_query(PlannerInfo *root, int relid)
 													relid);
 			distribute_restrictinfo_to_rels(root, rinfo);
 		}
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }
 

@@ -717,11 +717,7 @@ cdissect(struct vars * v,
 		case '|':				/* alternation */
 			assert(t->left != NULL);
 			return caltdissect(v, t, begin, end);
-<<<<<<< HEAD
 		case 'b':				/* back reference */
-=======
-		case 'b':				/* back ref -- shouldn't be calling us! */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			assert(t->left == NULL && t->right == NULL);
 			return cbrdissect(v, t, begin, end);
 		case '.':				/* concatenation */
