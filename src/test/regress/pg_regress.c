@@ -1897,18 +1897,7 @@ run_schedule(const char *schedule, test_function tfunc)
 		gettimeofday(&start_time, NULL);
 		if (num_tests == 1)
 		{
-<<<<<<< HEAD
-#ifdef TEST_EACH_SCRIPT_IN_ITS_OWN_DB
-		    _stringlist *strList;
-            for (strList = dblist; strList; strList = strList->next)
-        	    drop_database_if_exists(strList->str);
-            for (strList = dblist; strList; strList = strList->next)
-        		create_database(strList->str);
-#endif
-			status(_("test %-20s ... "), tests[0]);
-=======
 			status(_("test %-24s ... "), tests[0]);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			wait_for_tests(pids, statuses, NULL, end_times, 1);
 			/* status line is finished below */
@@ -2385,14 +2374,11 @@ help(void)
 	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
 	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
-<<<<<<< HEAD
+	printf(_("  --use-existing            use an existing installation\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
 	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
 	printf(_("                            UAO row and column tests\n"));
 	printf(_("  --resgroup-dir=DIR        directory name prefix containing resgroup tests\n"));
-=======
-	printf(_("  --use-existing            use an existing installation\n"));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
@@ -2443,14 +2429,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"dlpath", required_argument, NULL, 17},
 		{"create-role", required_argument, NULL, 18},
 		{"temp-config", required_argument, NULL, 19},
-<<<<<<< HEAD
-        {"init-file", required_argument, NULL, 20},
-        {"ao-dir", required_argument, NULL, 21},
-        {"resgroup-dir", required_argument, NULL, 22},
-        {"exclude-tests", required_argument, NULL, 23},
-=======
 		{"use-existing", no_argument, NULL, 20},
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+        {"init-file", required_argument, NULL, 25},
+        {"ao-dir", required_argument, NULL, 26},
+        {"resgroup-dir", required_argument, NULL, 27},
+        {"exclude-tests", required_argument, NULL, 28},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2541,24 +2524,21 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 19:
 				temp_config = strdup(optarg);
 				break;
-<<<<<<< HEAD
-            case 20:
-                initfile = strdup(optarg);
-                break;
-            case 21:
-                aodir = strdup(optarg);
-                break;
-            case 22:
-                resgroupdir = strdup(optarg);
-                break;
-            case 23:
-                split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
-                break;
-=======
 			case 20:
 				use_existing = true;
 				break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+            case 25:
+                initfile = strdup(optarg);
+                break;
+            case 26:
+                aodir = strdup(optarg);
+                break;
+            case 27:
+                resgroupdir = strdup(optarg);
+                break;
+            case 28:
+                split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
+                break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -2827,15 +2807,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Create the test database(s) and role(s)
-	 */
-	for (sl = dblist; sl; sl = sl->next)
-		create_database(sl->str);
-	for (sl = extraroles; sl; sl = sl->next)
-		create_role(sl->str, dblist);
-
-	/*
 	 * Find out if optimizer is on or off
 	 */
 	optimizer_enabled = check_feature_status("optimizer", "on",
@@ -2850,8 +2821,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			"Resource group disabled. Using default answer files");
 
 	/*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 * Ready to run the tests
 	 */
 	header(_("running regression test queries"));
