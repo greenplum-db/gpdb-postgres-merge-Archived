@@ -140,10 +140,6 @@ static bool var_is_current_source(PsqlScanState state, const char *varname);
 static YY_BUFFER_STATE prepare_buffer(const char *txt, int len,
 									  char **txtcopy);
 static void emit(const char *txt, int len);
-<<<<<<< HEAD
-=======
-static bool is_utf16_surrogate_first(uint32 c);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void escape_variable(bool as_ident);
 
 #ifdef ECHO
@@ -1847,54 +1843,6 @@ emit(const char *txt, int len)
 			appendPQExpBufferChar(output_buf, ch);
 		}
 	}
-}
-
-static void
-escape_variable(bool as_ident)
-{
-	char		saved_char;
-	const char *value;
-
-	/* Variable lookup. */
-	saved_char = yytext[yyleng - 1];
-	yytext[yyleng - 1] = '\0';
-	value = GetVariable(pset.vars, yytext + 2);
-
-	/* Escaping. */
-	if (value)
-	{
-		if (!pset.db)
-			psql_error("can't escape without active connection\n");
-		else
-		{
-			char   *escaped_value;
-
-			if (as_ident)
-				escaped_value =
-					PQescapeIdentifier(pset.db, value, strlen(value));
-			else
-				escaped_value =
-					PQescapeLiteral(pset.db, value, strlen(value));
-			if (escaped_value == NULL)
-			{
-				const char *error = PQerrorMessage(pset.db);
-				psql_error("%s", error);
-			}
-			else
-			{
-				appendPQExpBufferStr(output_buf, escaped_value);
-				PQfreemem(escaped_value);
-				return;
-			}
-		}
-	}
-
-	/*
-	 * If we reach this point, some kind of error has occurred.  Emit the
-	 * original text into the output buffer.
-	 */
-	yytext[yyleng - 1] = saved_char;
-	emit(yytext, yyleng);
 }
 
 static void

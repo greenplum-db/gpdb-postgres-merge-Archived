@@ -1061,10 +1061,6 @@ print_aligned_vertical_line(const printTextFormat *format,
 							FILE *fout)
 {
 	const printTextLineFormat *lformat = &format->lrule[pos];
-<<<<<<< HEAD
-=======
-	unsigned short opt_border = cont->opt->border;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	unsigned int i;
 	int			reclen = 0;
 

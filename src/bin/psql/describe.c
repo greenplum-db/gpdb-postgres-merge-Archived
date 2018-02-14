@@ -1290,13 +1290,10 @@ describeOneTableDetails(const char *schemaname,
 		Oid			tablespace;
 		char	   *reloptions;
 		char	   *reloftype;
-<<<<<<< HEAD
 		char	   *compressionType;
 		char	   *compressionLevel;
 		char	   *blockSize;
 		char	   *checksum;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1321,11 +1318,7 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
 						  "c.relhastriggers, c.relhasoids, "
-<<<<<<< HEAD
 						  "%s, c.reltablespace, %s, "
-=======
-						  "%s, c.reltablespace, "
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END\n"
 						  "FROM pg_catalog.pg_class c\n "
 		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
@@ -1412,11 +1405,8 @@ describeOneTableDetails(const char *schemaname,
 		atooid(PQgetvalue(res, 0, 7)) : 0;
 	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 8)) : 0;
-<<<<<<< HEAD
 	/* GPDB Only:  relstorage  */
 	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, 8)) : 'h';
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	PQclear(res);
 	res = NULL;
 
@@ -1649,10 +1639,7 @@ describeOneTableDetails(const char *schemaname,
 		if (verbose)
 		{
 			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
-<<<<<<< HEAD
 			int			firstvcol_offset = 0;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* Storage */
@@ -1663,7 +1650,6 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-<<<<<<< HEAD
 			firstvcol_offset = firstvcol_offset + 1;
 
 			if (tableinfo.relstorage == 'c')
@@ -1723,9 +1709,6 @@ describeOneTableDetails(const char *schemaname,
 
 			/* Description */
 			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + firstvcol_offset),
-=======
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 							  false, false);
 		}
 	}
@@ -3062,11 +3045,7 @@ describeRoles(const char *pattern, bool verbose)
 		printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
 
 		if (verbose && pset.sversion >= 80200)
-<<<<<<< HEAD
 			printTableAddCell(&cont, PQgetvalue(res, i, 8 + 5 /* Greenplum specific attributes */), false, false);
-=======
-			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	termPQExpBuffer(&buf);
 
@@ -3102,31 +3081,16 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	initPQExpBuffer(&buf);
 
-<<<<<<< HEAD
-	// GPDB_90_MERGE_FIXME: change this to '90000' once we bump the version
-	// number
-	if (pset.sversion >= 80500)
-	{
-		/* ACHOI: havewhere is false */
-		bool		havewhere = false;
-=======
 	if (pset.sversion >= 90000)
 	{
 		bool		havewhere;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		printfPQExpBuffer(&buf, "SELECT rolname AS role, datname AS database,\n"
 				"pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
 						  "FROM pg_db_role_setting AS s\n"
 				   "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
 						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n");
-<<<<<<< HEAD
-
-		/* ACHOI: psql 9.0 assing the havewhere here */
-		processSQLNamePattern(pset.db, &buf, pattern, false, false,
-=======
 		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 									   NULL, "pg_roles.rolname", NULL, NULL);
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 							  NULL, "pg_database.datname", NULL, NULL);

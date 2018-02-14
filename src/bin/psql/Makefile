@@ -43,11 +43,7 @@ LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 all: submake-libpq submake-libpgport psql
 
 psql: $(OBJS) $(libpq_builddir)/libpq.a
-<<<<<<< HEAD
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(OBJS) $(libpq_pgport) $(LIBS) -o $@$(X)
-=======
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 help.o: sql_help.h
 

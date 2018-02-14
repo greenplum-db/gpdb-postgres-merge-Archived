@@ -1800,14 +1800,10 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("BEGIN", false)) == NULL)
 		{
 			if (pset.on_error_stop)
-<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
-=======
-				return EXIT_USER;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else
 			PQclear(res);
@@ -1820,14 +1816,10 @@ process_file(char *filename, bool single_txn)
 		if ((res = PSQLexec("COMMIT", false)) == NULL)
 		{
 			if (pset.on_error_stop)
-<<<<<<< HEAD
 			{
 				result = EXIT_USER;
 				goto error;
 			}
-=======
-				return EXIT_USER;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 		else
 			PQclear(res);

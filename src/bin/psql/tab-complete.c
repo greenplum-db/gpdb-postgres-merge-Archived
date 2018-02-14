@@ -522,7 +522,6 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_proc "\
 "  WHERE proname='%s'"
 
-<<<<<<< HEAD
 #define Query_for_list_of_extensions \
 " SELECT pg_catalog.quote_ident(extname) "\
 "   FROM pg_catalog.pg_extension "\
@@ -533,8 +532,6 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_available_extensions "\
 "  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed_version IS NULL"
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -608,11 +605,7 @@ static PGresult *exec_query(const char *query);
 
 static char *previous_word(int point, int skip);
 
-<<<<<<< HEAD
-#ifdef NOT_USED
-=======
 #if 0
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static char *quote_file_name(char *text, int match_type, char *quote_pointer);
 static char *dequote_file_name(char *text, char quote_char);
 #endif
@@ -734,13 +727,8 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TABLE") != 0)
 	{
 		static const char *const list_ALTER[] =
-<<<<<<< HEAD
 		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "EXTENSION", "FOREIGN DATA WRAPPER", "FUNCTION",
-		"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
-=======
-		{"AGGREGATE", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN", "FOREIGN DATA WRAPPER", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR", "ROLE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE", "USER", "USER MAPPING FOR", "VIEW", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -2054,12 +2042,9 @@ psql_completion(char *text, int start, int end)
 		static const char *const list_privilege_foreign[] =
 		{"DATA WRAPPER", "SERVER", NULL};
 
-<<<<<<< HEAD
-=======
 		COMPLETE_WITH_LIST(list_privilege_foreign);
 	}
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* Complete "GRANT/REVOKE * ON * " with "TO/FROM" */
 	else if ((pg_strcasecmp(prev4_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev4_wd, "REVOKE") == 0) &&
@@ -2186,18 +2171,10 @@ psql_completion(char *text, int start, int end)
 
 /* NOTIFY */
 	else if (pg_strcasecmp(prev_wd, "NOTIFY") == 0)
-<<<<<<< HEAD
 	   if (pset.sversion >= 80210 && pset.sversion < 80220)
 		   COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
 	   else
 	       COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s'");
-		
-/* OPTIONS */
-	else if (pg_strcasecmp(prev_wd, "OPTIONS") == 0)
-		COMPLETE_WITH_CONST("(");
-=======
-		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s'");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* OPTIONS */
 	else if (pg_strcasecmp(prev_wd, "OPTIONS") == 0)
@@ -2440,15 +2417,11 @@ psql_completion(char *text, int start, int end)
 
 /* UNLISTEN */
 	else if (pg_strcasecmp(prev_wd, "UNLISTEN") == 0)
-<<<<<<< HEAD
 	    if (pset.sversion >= 80210 && pset.sversion < 80220)
-		   COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
+			COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
 		else
-		   COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s' UNION SELECT '*'");
-=======
-		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s' UNION SELECT '*'");
+			COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(channel) FROM pg_catalog.pg_listening_channels() AS channel WHERE substring(pg_catalog.quote_ident(channel),1,%d)='%s' UNION SELECT '*'");
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
 	else if (pg_strcasecmp(prev_wd, "UPDATE") == 0)
@@ -3190,11 +3163,7 @@ previous_word(int point, int skip)
 	return s;
 }
 
-<<<<<<< HEAD
-#ifdef NOT_USED
-=======
 #if 0
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /*
  * Surround a string with single quotes. This works for both SQL and
