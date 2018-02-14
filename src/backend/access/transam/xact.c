@@ -1227,6 +1227,7 @@ RecordTransactionCommit(void)
 			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nrels = 0;
 			xlrec.nsubxacts = 0;
+			xlrec.nmsgs = 0;
 			rdata[0].data = (char *) (&xlrec);
 			rdata[0].len = MinSizeOfXactCommit;
 			rdata[0].buffer = InvalidBuffer;
@@ -5658,14 +5659,16 @@ xactGetCommittedChildren(TransactionId **ptr)
 /*
  *	XLOG support routines
  */
-static TMGXACT_LOG*
+static TMGXACT_LOG *
 xact_get_distributed_info_from_commit(xl_xact_commit *xlrec)
 {
-	TransactionId *sub_xids;
+	TransactionId *xacts;
+	SharedInvalidationMessage *msgs;
 
-	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels]; 
+	xacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
+	msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
 
-	return (TMGXACT_LOG*) &sub_xids[xlrec->nsubxacts];
+	return (TMGXACT_LOG *) &msgs[xlrec->nmsgs];
 }
 
 /*
