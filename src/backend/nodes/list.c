@@ -1239,31 +1239,6 @@ list_copy_tail(List *oldlist, int nskip)
 }
 
 /*
- * pg_list.h defines inline versions of these functions if allowed by the
- * compiler; in which case the definitions below are skipped.
- */
-#ifndef USE_INLINE
-
-ListCell *
-list_head(List *l)
-{
-	return l ? l->head : NULL;
-}
-
-ListCell *
-list_tail(List *l)
-{
-	return l ? l->tail : NULL;
-}
-
-int
-list_length(List *l)
-{
-	return l ? l->length : 0;
-}
-#endif   /* ! USE_INLINE */
-
-/*
  * Temporary compatibility functions
  *
  * In order to avoid warnings for these function definitions, we need

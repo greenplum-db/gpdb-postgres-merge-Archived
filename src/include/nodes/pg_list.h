@@ -74,8 +74,6 @@ struct ListCell
  * arguments. Therefore, we implement them using static inline functions
  * if supported by the compiler, or as regular functions otherwise.
  */
-#ifdef USE_INLINE
-
 static inline ListCell *
 list_head(List *l)
 {
@@ -93,12 +91,6 @@ list_length(List *l)
 {
 	return l ? l->length : 0;
 }
-#else
-
-extern ListCell *list_head(List *l);
-extern ListCell *list_tail(List *l);
-extern int	list_length(List *l);
-#endif   /* USE_INLINE */
 
 /*
  * NB: There is an unfortunate legacy from a previous incarnation of
