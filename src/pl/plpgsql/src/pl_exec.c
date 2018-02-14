@@ -2293,11 +2293,6 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 		tuplestore_putvalues(estate->tuple_store, tupdesc,
 							 &retval, &isNull);
-<<<<<<< HEAD
-=======
-
-		exec_eval_cleanup(estate);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	else
 	{
@@ -2411,19 +2406,11 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 				 errmsg("set-valued function called in context that cannot accept a set")));
 
 	/*
-<<<<<<< HEAD
-	 * Switch to the right memory context and resource owner for storing
-	 * the tuplestore for return set. If we're within a subtransaction opened
-	 * for an exception-block, for example, we must still create the
-	 * tuplestore in the resource owner that was active when this function was
-	 * entered, and not in the subtransaction resource owner.
-=======
 	 * Switch to the right memory context and resource owner for storing the
 	 * tuplestore for return set. If we're within a subtransaction opened for
 	 * an exception-block, for example, we must still create the tuplestore in
 	 * the resource owner that was active when this function was entered, and
 	 * not in the subtransaction resource owner.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 */
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 	oldowner = CurrentResourceOwner;
@@ -3253,54 +3240,11 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * This is an OPEN refcursor FOR EXECUTE ...
 		 * ----------
 		 */
-<<<<<<< HEAD
-		Datum		queryD;
-		Oid			restype;
-		char	   *querystr;
-		SPIPlanPtr	curplan;
-
-		/* ----------
-		 * We evaluate the string expression after the
-		 * EXECUTE keyword. It's result is the querystring we have
-		 * to execute.
-		 * ----------
-		 */
-		queryD = exec_eval_expr(estate, stmt->dynquery, &isnull, &restype);
-		if (isnull)
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("query string argument of EXECUTE is null")));
-
-		/* Get the C-String representation */
-		querystr = convert_value_to_string(estate, queryD, restype);
-
-		/* copy it out of the temporary context before we clean up */
-		querystr = pstrdup(querystr);
-
-		exec_eval_cleanup(estate);
-
-		/* ----------
-		 * Now we prepare a query plan for it and open a cursor
-		 * ----------
-		 */
-		curplan = SPI_prepare_cursor(querystr, 0, NULL, stmt->cursor_options | CURSOR_OPT_UPDATABLE);
-		if (curplan == NULL)
-			elog(ERROR, "SPI_prepare_cursor failed for \"%s\": %s",
-				 querystr, SPI_result_code_string(SPI_result));
-		portal = SPI_cursor_open(curname, curplan, NULL, NULL,
-								 estate->readonly_func);
-		if (portal == NULL)
-			elog(ERROR, "could not open cursor for query \"%s\": %s",
-				 querystr, SPI_result_code_string(SPI_result));
-		pfree(querystr);
-		SPI_freeplan(curplan);
-=======
 		portal = exec_dynquery_with_params(estate,
 										   stmt->dynquery,
 										   stmt->params,
 										   curname,
-										   stmt->cursor_options);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+										   stmt->cursor_options | CURSOR_OPT_UPDATABLE);
 
 		/*
 		 * If cursor variable was NULL, store the generated portal name in it
@@ -4929,10 +4873,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 			{
 				value = (Datum) 0;
 				isnull = true;
-<<<<<<< HEAD
-=======
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				/*
 				 * InvalidOid is OK because exec_assign_value doesn't care
 				 * about the type of a source NULL
