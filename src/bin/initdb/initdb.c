@@ -176,11 +176,7 @@ static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void write_version_file(char *extrapath);
-<<<<<<< HEAD
 static void set_null_conf(const char *conf_name);
-=======
-static void set_null_conf(void);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(void);
@@ -1371,18 +1367,13 @@ setup_config(void)
 		if (err != 0 ||
 			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
-<<<<<<< HEAD
-									  "host    all         all         ::1",
-									  "#host    all         all         ::1");
+							   "host    all             all             ::1",
+							 "#host    all             all             ::1");
 		if (err != 0 ||
 			getaddrinfo("fe80::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
-									  "host    all         all         fe80::1",
-									  "#host    all         all         fe80::1");
-=======
-							   "host    all             all             ::1",
-							 "#host    all             all             ::1");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+							   "host    all             all             fe80::1",
+							 "#host    all             all             fe80::1");
 	}
 #else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
@@ -2849,11 +2840,7 @@ main(int argc, char *argv[])
 	int			c,
 				i,
 				ret;
-<<<<<<< HEAD
 	int			option_index = -1;
-=======
-	int			option_index;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	char	   *effective_user;
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
@@ -3554,7 +3541,6 @@ main(int argc, char *argv[])
 	/* Now create all the text config files */
 	setup_config();
 
-<<<<<<< HEAD
 	if ( ! forMirrorOnly)
 	{
 		/* Bootstrap template1 */
@@ -3564,15 +3550,6 @@ main(int argc, char *argv[])
 		 * Make the per-database PG_VERSION for template1 only after init'ing it
 		 */
 		write_version_file("base/1");
-=======
-	/* Bootstrap template1 */
-	bootstrap_template1();
-
-	/*
-	 * Make the per-database PG_VERSION for template1 only after init'ing it
-	 */
-	write_version_file("base/1");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/* Create the stuff we don't need to use bootstrap mode for */
 
