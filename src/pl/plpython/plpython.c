@@ -1,11 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
-<<<<<<< HEAD
  *	src/pl/plpython/plpython.c
-=======
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.148 2010/07/08 19:00:11 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *********************************************************************
  */
@@ -170,15 +166,8 @@ typedef union PLyTypeInput
  */
 
 struct PLyObToDatum;
-<<<<<<< HEAD
 typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *, int32 typmod,
 											   PyObject *, bool inarray);
-=======
-struct PLyTypeInfo;
-typedef Datum (*PLyObToDatumFunc) (struct PLyTypeInfo *,
-											   struct PLyObToDatum *,
-											   PyObject *);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 typedef struct PLyObToDatum
 {
@@ -313,20 +302,13 @@ typedef struct PLyExceptionEntry
 
 #if PY_MAJOR_VERSION >= 3
 /* Use separate names to avoid clash in pg_pltemplate */
-<<<<<<< HEAD
 #define plpython_validator plpython3_validator
-#define plpython_call_handler plpython3_call_handler
-#endif
-
-/* exported functions */
-Datum		plpython_validator(PG_FUNCTION_ARGS);
-=======
 #define plpython_call_handler plpython3_call_handler
 #define plpython_inline_handler plpython3_inline_handler
 #endif
 
 /* exported functions */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+Datum		plpython_validator(PG_FUNCTION_ARGS);
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
 Datum		plpython_inline_handler(PG_FUNCTION_ARGS);
 void		_PG_init(void);
@@ -429,7 +411,6 @@ static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndi
 
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
 
-<<<<<<< HEAD
 static Datum PLyObject_ToBool(PLyObToDatum *, int32, PyObject *, bool inarray);
 static Datum PLyObject_ToBytea(PLyObToDatum *, int32, PyObject *, bool inarray);
 static Datum PLyObject_ToComposite(PLyObToDatum *, int32, PyObject *, bool inarray);
@@ -438,16 +419,6 @@ static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv
 static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 							int *dims, int ndim, int dim,
 							Datum *elems, bool *nulls, int *currelem);
-=======
-static Datum PLyObject_ToBool(PLyTypeInfo *, PLyObToDatum *,
-				 PyObject *);
-static Datum PLyObject_ToBytea(PLyTypeInfo *, PLyObToDatum *,
-				  PyObject *);
-static Datum PLyObject_ToDatum(PLyTypeInfo *, PLyObToDatum *,
-				  PyObject *);
-static Datum PLySequence_ToArray(PLyTypeInfo *, PLyObToDatum *,
-					PyObject *);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 static HeapTuple PLyObject_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *, bool inarray);
 static HeapTuple PLyMapping_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *);
@@ -519,12 +490,6 @@ plpython_error_callback(void *arg)
 static void
 plpython_inline_error_callback(void *arg)
 {
-		errcontext("PL/Python anonymous code block");
-}
-
-static void
-plpython_inline_error_callback(void *arg)
-{
 	errcontext("PL/Python anonymous code block");
 }
 
@@ -549,61 +514,6 @@ PLy_procedure_is_trigger(Form_pg_proc procStruct)
 			(procStruct->prorettype == OPAQUEOID &&
 			 procStruct->pronargs == 0));
 }
-
-Datum
-plpython_inline_handler(PG_FUNCTION_ARGS)
-{
-	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
-	FunctionCallInfoData fake_fcinfo;
-	FmgrInfo	flinfo;
-	PLyProcedure *save_curr_proc;
-	PLyProcedure *volatile proc = NULL;
-	ErrorContextCallback plerrcontext;
-
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
-
-	save_curr_proc = PLy_curr_procedure;
-
-	/*
-	 * Setup error traceback support for ereport()
-	 */
-	plerrcontext.callback = plpython_inline_error_callback;
-	plerrcontext.previous = error_context_stack;
-	error_context_stack = &plerrcontext;
-
-	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
-	MemSet(&flinfo, 0, sizeof(flinfo));
-	fake_fcinfo.flinfo = &flinfo;
-	flinfo.fn_oid = InvalidOid;
-	flinfo.fn_mcxt = CurrentMemoryContext;
-
-	proc = PLy_malloc0(sizeof(PLyProcedure));
-	proc->pyname = PLy_strdup("__plpython_inline_block");
-	proc->result.out.d.typoid = VOIDOID;
-
-	PG_TRY();
-	{
-		PLy_procedure_compile(proc, codeblock->source_text);
-		PLy_curr_procedure = proc;
-		PLy_function_handler(&fake_fcinfo, proc);
-	}
-	PG_CATCH();
-	{
-		PLy_curr_procedure = save_curr_proc;
-		PyErr_Clear();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	/* Pop the error context stack */
-	error_context_stack = plerrcontext.previous;
-
-	PLy_curr_procedure = save_curr_proc;
-
-	PG_RETURN_VOID();
-}
-
 
 Datum
 plpython_validator(PG_FUNCTION_ARGS)
@@ -696,8 +606,6 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	return retval;
 }
 
-<<<<<<< HEAD
-=======
 Datum
 plpython_inline_handler(PG_FUNCTION_ARGS)
 {
@@ -754,7 +662,6 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 /* trigger and function sub handlers
  *
@@ -949,13 +856,9 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			{
 				PLyObToDatum *att = &proc->result.out.r.atts[atti];
 
-<<<<<<< HEAD
 				modvalues[i] = (att->func) (att,
 											tupdesc->attrs[atti]->atttypmod,
 											plval, false );
-=======
-				modvalues[i] = (att->func) (&proc->result, att, plval);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				modnulls[i] = ' ';
 			}
 			else
@@ -1511,13 +1414,8 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	}
 	PG_CATCH();
 	{
-<<<<<<< HEAD
 		PLy_abort_open_subtransactions(save_subxact_level);
 		PG_RE_THROW();
-=======
-		Py_XDECREF(rv);
-		PLy_elog(ERROR, NULL);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 	PG_END_TRY();
 
@@ -1720,10 +1618,6 @@ PLy_procedure_get(Oid fn_oid, bool is_trigger)
 	PLyProcedureEntry *volatile entry;
 	bool		found;
 
-<<<<<<< HEAD
-=======
-	fn_oid = fcinfo->flinfo->fn_oid;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
@@ -2556,10 +2450,7 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 		arg->elm->func = arg->func;
 		arg->func = PLyList_FromArray;
 		arg->elm->typoid = element_type;
-<<<<<<< HEAD
 		arg->elm->typmod = -1;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		get_type_io_data(element_type, IOFunc_output,
 						 &arg->elm->typlen, &arg->elm->typbyval, &arg->elm->typalign, &dummy_delim,
 						 &arg->elm->typioparam, &funcid);
@@ -2677,34 +2568,19 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 {
 	ArrayType  *array = DatumGetArrayTypeP(d);
 	PLyDatumToOb *elm = arg->elm;
-<<<<<<< HEAD
 	int			ndim;
 	int		   *dims;
 	char	   *dataptr;
 	bits8	   *bitmap;
 	int			bitmask;
-=======
-	PyObject   *list;
-	int			length;
-	int			lbound;
-	int			i;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (ARR_NDIM(array) == 0)
 		return PyList_New(0);
 
-<<<<<<< HEAD
 	/* Array dimensions and left bounds */
 	ndim = ARR_NDIM(array);
 	dims = ARR_DIMS(array);
 	Assert(ndim < MAXDIM);
-=======
-	if (ARR_NDIM(array) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("cannot convert multidimensional array to Python list"),
-			  errdetail("PL/Python only supports one-dimensional arrays.")));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * We iterate the SQL array in the physical order it's stored in the
@@ -2749,7 +2625,6 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 	}
 	else
 	{
-<<<<<<< HEAD
 		/*
 		 * Innermost dimension. Fill the list with the values from the array
 		 * for this slice.
@@ -2791,20 +2666,6 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 		*dataptr_p = dataptr;
 		*bitmap_p = bitmap;
 		*bitmask_p = bitmask;
-=======
-		Datum		elem;
-		bool		isnull;
-		int			offset;
-
-		offset = lbound + i;
-		elem = array_ref(array, 1, &offset, arg->typlen,
-						 elm->typlen, elm->typbyval, elm->typalign,
-						 &isnull);
-		if (isnull)
-			PyList_SET_ITEM(list, i, Py_None);
-		else
-			PyList_SET_ITEM(list, i, elm->func(elm, elem));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 
 	return list;
@@ -2861,7 +2722,6 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 }
 
 /*
-<<<<<<< HEAD
  *	Convert a Python object to a PostgreSQL tuple, using all supported
  *	conversion methods: tuple as a sequence, as a mapping or as an object that
  *	has __getattr__ support.
@@ -2885,8 +2745,6 @@ PLyObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool innarr
 }
 
 /*
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Convert a Python object to a PostgreSQL bool datum.	This can't go
  * through the generic conversion function, because Python attaches a
  * Boolean value to everything, more things than the PostgreSQL bool
@@ -2958,15 +2816,10 @@ PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool innarray
 static Datum
 PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarray)
 {
-<<<<<<< HEAD
 	HeapTuple	tuple = NULL;
 	Datum		rv;
 	PLyTypeInfo info;
 	TupleDesc	desc;
-=======
-	PyObject   *volatile plrv_bo = NULL;
-	Datum		rv;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (typmod != -1)
 		elog(ERROR, "received unnamed record type as input");
@@ -3036,33 +2889,9 @@ PLyObject_AsString(PyObject *plrv)
 	if (!plrv_bo)
 		PLy_elog(ERROR, "could not create string representation of Python object");
 
-<<<<<<< HEAD
 	plrv_sc = pstrdup(PyBytes_AsString(plrv_bo));
 	plen = PyBytes_Size(plrv_bo);
 	slen = strlen(plrv_sc);
-=======
-	PG_TRY();
-	{
-		char	   *plrv_sc = PyBytes_AsString(plrv_bo);
-		size_t		plen = PyBytes_Size(plrv_bo);
-		size_t		slen = strlen(plrv_sc);
-
-		if (slen < plen)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not convert Python object into cstring: Python string representation appears to contain null bytes")));
-		else if (slen > plen)
-			elog(ERROR, "could not convert Python object into cstring: Python string longer than reported length");
-		pg_verifymbstr(plrv_sc, slen, false);
-		rv = InputFunctionCall(&arg->typfunc, plrv_sc, arg->typioparam, -1);
-	}
-	PG_CATCH();
-	{
-		Py_XDECREF(plrv_bo);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	Py_XDECREF(plrv_bo);
 
@@ -3146,7 +2975,6 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 	int			i;
 	Datum	   *elems;
 	bool	   *nulls;
-<<<<<<< HEAD
 	int64		len;
 	int			ndim;
 	int			dims[MAXDIM];
@@ -3155,10 +2983,6 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 	Datum		rv;
 	PyObject   *pyptr = plrv;
 	PyObject   *next;
-=======
-	int			len;
-	int			lbs;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	Assert(plrv != Py_None);
 
@@ -3172,7 +2996,6 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 
 	for (;;)
 	{
-<<<<<<< HEAD
 		if (!PyList_Check(pyptr))
 			break;
 
@@ -3189,24 +3012,11 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 		len *= dims[ndim];
 		if (len > MaxAllocSize)
 			PLy_elog(ERROR, "array size exceeds the maximum allowed");
-=======
-		PyObject   *obj = PySequence_GetItem(plrv, i);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		if (dims[ndim] == 0)
 		{
-<<<<<<< HEAD
 			/* empty sequence */
 			break;
-=======
-			nulls[i] = false;
-
-			/*
-			 * We don't support arrays of row types yet, so the first argument
-			 * can be NULL.
-			 */
-			elems[i] = arg->elm->func(NULL, arg->elm, obj);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 
 		ndim++;
@@ -3949,10 +3759,7 @@ PLy_spi_prepare(PyObject *self __attribute__((unused)), PyObject *args)
 	char	   *query;
 	void	   *tmpplan;
 	volatile MemoryContext oldcontext;
-<<<<<<< HEAD
 	volatile ResourceOwner oldowner;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	volatile int nargs;
 
@@ -4011,74 +3818,9 @@ PLy_spi_prepare(PyObject *self __attribute__((unused)), PyObject *args)
 				sptr = PLyUnicode_AsString(optr);
 			else
 			{
-<<<<<<< HEAD
 				ereport(ERROR,
 						(errmsg("plpy.prepare: type name at ordinal position %d is not a string", i)));
 				sptr = NULL;	/* keep compiler quiet */
-=======
-				plan->nargs = nargs;
-				plan->types = PLy_malloc(sizeof(Oid) * nargs);
-				plan->values = PLy_malloc(sizeof(Datum) * nargs);
-				plan->args = PLy_malloc(sizeof(PLyTypeInfo) * nargs);
-
-				/*
-				 * the other loop might throw an exception, if PLyTypeInfo
-				 * member isn't properly initialized the Py_DECREF(plan) will
-				 * go boom
-				 */
-				for (i = 0; i < nargs; i++)
-				{
-					PLy_typeinfo_init(&plan->args[i]);
-					plan->values[i] = PointerGetDatum(NULL);
-				}
-
-				for (i = 0; i < nargs; i++)
-				{
-					char	   *sptr;
-					HeapTuple	typeTup;
-					Oid			typeId;
-					int32		typmod;
-					Form_pg_type typeStruct;
-
-					optr = PySequence_GetItem(list, i);
-					if (PyString_Check(optr))
-						sptr = PyString_AsString(optr);
-					else if (PyUnicode_Check(optr))
-						sptr = PLyUnicode_AsString(optr);
-					else
-					{
-						ereport(ERROR,
-								(errmsg("plpy.prepare: type name at ordinal position %d is not a string", i)));
-						sptr = NULL;	/* keep compiler quiet */
-					}
-
-					/********************************************************
-					 * Resolve argument type names and then look them up by
-					 * oid in the system cache, and remember the required
-					 *information for input conversion.
-					 ********************************************************/
-
-					parseTypeString(sptr, &typeId, &typmod);
-
-					typeTup = SearchSysCache1(TYPEOID,
-											  ObjectIdGetDatum(typeId));
-					if (!HeapTupleIsValid(typeTup))
-						elog(ERROR, "cache lookup failed for type %u", typeId);
-
-					Py_DECREF(optr);
-					optr = NULL;	/* this is important */
-
-					plan->types[i] = typeId;
-					typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-					if (typeStruct->typtype != TYPTYPE_COMPOSITE)
-						PLy_output_datum_func(&plan->args[i], typeTup);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("plpy.prepare does not support composite types")));
-					ReleaseSysCache(typeTup);
-				}
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			}
 
 			/********************************************************
@@ -4211,11 +3953,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 				rv;
 	PLyPlanObject *plan;
 	volatile MemoryContext oldcontext;
-<<<<<<< HEAD
 	volatile ResourceOwner oldowner;
 	PyObject   *ret;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (list != NULL)
 	{
@@ -4276,13 +4015,9 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 				PG_TRY();
 				{
 					plan->values[j] =
-<<<<<<< HEAD
 						plan->args[j].out.d.func(&(plan->args[j].out.d),
 												 -1,
 												 elem, false);
-=======
-						plan->args[j].out.d.func(NULL, &(plan->args[j].out.d), elem);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				}
 				PG_CATCH();
 				{
@@ -4399,11 +4134,8 @@ PLy_spi_execute_query(char *query, long limit)
 {
 	int			rv;
 	volatile MemoryContext oldcontext;
-<<<<<<< HEAD
 	volatile ResourceOwner oldowner;
 	PyObject   *ret;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -4797,10 +4529,7 @@ _PG_init(void)
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
 	const int **version_ptr;
-<<<<<<< HEAD
 	HASHCTL		hash_ctl;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	if (inited)
 		return;
@@ -4996,11 +4725,6 @@ PLy_output(volatile int level, PyObject *self __attribute__((unused)), PyObject 
 		edata = CopyErrorData();
 		FlushErrorState();
 
-<<<<<<< HEAD
-=======
-		PyErr_SetString(PLy_exc_error, sv);
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		/*
 		 * Note: If sv came from PyString_AsString(), it points into storage
 		 * owned by so.  So free so after using sv.
@@ -5368,13 +5092,10 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 
 	PyErr_NormalizeException(&e, &v, &tb);
 
-<<<<<<< HEAD
 	/*
 	 * Format the exception and its value and put it in xmsg.
 	 */
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	e_type_o = PyObject_GetAttrString(e, "__name__");
 	e_module_o = PyObject_GetAttrString(e, "__module__");
 	if (e_type_o)
@@ -5406,7 +5127,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
 	appendStringInfo(&xstr, ": %s", vstr);
 
-<<<<<<< HEAD
 	*xmsg = xstr.data;
 
 	/*
@@ -5531,8 +5251,6 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 	/* Return the traceback. */
 	*tbmsg = tbstr.data;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	Py_XDECREF(e_type_o);
 	Py_XDECREF(e_module_o);
 	Py_XDECREF(vob);
@@ -5576,11 +5294,7 @@ PLy_strdup(const char *str)
 static void
 PLy_free(void *ptr)
 {
-<<<<<<< HEAD
 	pfree(ptr);
-=======
-	free(ptr);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -5652,7 +5366,6 @@ PLyUnicode_FromString(const char *s)
 
 	return o;
 }
-<<<<<<< HEAD
 #endif   /* PY_MAJOR_VERSION >= 3 */
 
 #if PY_MAJOR_VERSION < 3
@@ -5678,7 +5391,3 @@ plpython2_validator(PG_FUNCTION_ARGS)
 }
 
 #endif   /* PY_MAJOR_VERSION < 3 */
-=======
-
-#endif   /* PY_MAJOR_VERSION >= 3 */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
