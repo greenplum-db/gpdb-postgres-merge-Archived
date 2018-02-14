@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.50 2008/03/27 07:56:00 meskes Exp $ */
-=======
 /* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.56 2010/07/06 19:19:00 momjian Exp $ */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"

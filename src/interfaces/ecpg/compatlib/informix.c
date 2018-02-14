@@ -1007,45 +1007,7 @@ rtypwidth(int sqltype, int sqllen)
 void
 ECPG_informix_set_var(int number, void *pointer, int lineno)
 {
-<<<<<<< HEAD
-	struct var_list *ptr;
-
-	for (ptr = ivlist; ptr != NULL; ptr = ptr->next)
-	{
-		if (ptr->number == number)
-		{
-			/* already known => just change pointer value */
-			ptr->pointer = pointer;
-			return;
-		}
-	}
-
-	/* a new one has to be added */
-	ptr = (struct var_list *) calloc(1L, sizeof(struct var_list));
-	if (!ptr)
-	{
-		struct sqlca_t *sqlca = ECPGget_sqlca();
-
-		/* replace constant for strncpy() below to avoid bogus warning from gcc-4.1.1 on kite12 */
-		char my_msg[5] = { 'Y', 'E', '0', '0', '1' };
-
-		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
-		strncpy(sqlca->sqlstate, my_msg, sizeof(my_msg));
-		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "Out of memory in line %d.", lineno);
-		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
-		/* free all memory we have allocated for the user */
-		ECPGfree_auto_mem();
-	}
-	else
-	{
-		ptr->number = number;
-		ptr->pointer = pointer;
-		ptr->next = ivlist;
-		ivlist = ptr;
-	}
-=======
 	ECPGset_var(number, pointer, lineno);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 void *

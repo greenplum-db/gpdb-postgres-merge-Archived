@@ -20,11 +20,7 @@ all: pg_config.h pg_config_os.h check_oids
 SUBDIRS = access bootstrap catalog commands executor foreign lib libpq mb \
 	nodes optimizer parser postmaster regex replication rewrite storage \
 	tcop snowball snowball/libstemmer tsearch tsearch/dicts utils \
-<<<<<<< HEAD
 	port port/atomics port/win32 port/win32_msvc port/win32_msvc/sys \
-=======
-	port port/win32 port/win32_msvc port/win32_msvc/sys \
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	port/win32/arpa port/win32/netinet port/win32/sys \
 	portability
 
