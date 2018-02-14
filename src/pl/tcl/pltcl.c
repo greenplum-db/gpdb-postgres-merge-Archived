@@ -167,11 +167,6 @@ typedef struct pltcl_proc_ptr
  * Global data
  **********************************************************************/
 static bool pltcl_pm_init_done = false;
-<<<<<<< HEAD
-=======
-static bool pltcl_be_norm_init_done = false;
-static bool pltcl_be_safe_init_done = false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static Tcl_Interp *pltcl_hold_interp = NULL;
 static HTAB *pltcl_interp_htab = NULL;
 static HTAB *pltcl_proc_htab = NULL;
@@ -187,13 +182,8 @@ Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
-<<<<<<< HEAD
 static void pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted);
 static pltcl_interp_desc *pltcl_fetch_interp(bool pltrusted);
-=======
-static void pltcl_init_interp(Tcl_Interp *interp);
-static Tcl_Interp *pltcl_fetch_interp(bool pltrusted);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
@@ -364,22 +354,12 @@ _PG_init(void)
 	 * stdout and stderr on DeleteInterp
 	 ************************************************************/
 	if ((pltcl_hold_interp = Tcl_CreateInterp()) == NULL)
-<<<<<<< HEAD
 		elog(ERROR, "could not create master Tcl interpreter");
 	if (Tcl_Init(pltcl_hold_interp) == TCL_ERROR)
 		elog(ERROR, "could not initialize master Tcl interpreter");
 
 	/************************************************************
 	 * Create the hash table for working interpreters
-=======
-		elog(ERROR, "could not create \"hold\" interpreter");
-	if (Tcl_Init(pltcl_hold_interp) == TCL_ERROR)
-		elog(ERROR, "could not initialize \"hold\" interpreter");
-
-	/************************************************************
-	 * Create the two slave interpreters.  Note: Tcl automatically does
-	 * Tcl_Init on the normal slave, and it's not wanted for the safe slave.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	 ************************************************************/
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
@@ -406,7 +386,6 @@ _PG_init(void)
 }
 
 /**********************************************************************
-<<<<<<< HEAD
  * pltcl_init_interp() - initialize a new Tcl interpreter
  **********************************************************************/
 static void
@@ -431,17 +410,6 @@ pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted)
 	 ************************************************************/
 	Tcl_InitHashTable(&interp_desc->query_hash, TCL_STRING_KEYS);
 
-=======
- * pltcl_init_interp() - initialize a Tcl interpreter
- *
- * The work done here must be safe to do in the postmaster process,
- * in case the pltcl library is preloaded in the postmaster.  Note
- * that this is applied separately to the "normal" and "safe" interpreters.
- **********************************************************************/
-static void
-pltcl_init_interp(Tcl_Interp *interp)
-{
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/************************************************************
 	 * Install the commands for SPI support in the interpreter
 	 ************************************************************/
@@ -473,7 +441,6 @@ pltcl_init_interp(Tcl_Interp *interp)
  * pltcl_fetch_interp() - fetch the Tcl interpreter to use for a function
  *
  * This also takes care of any on-first-use initialization required.
-<<<<<<< HEAD
  * Note: we assume caller has already connected to SPI.
  **********************************************************************/
 static pltcl_interp_desc *
@@ -496,39 +463,6 @@ pltcl_fetch_interp(bool pltrusted)
 		pltcl_init_interp(interp_desc, pltrusted);
 
 	return interp_desc;
-=======
- * The initialization work done here can't be done in the postmaster, and
- * hence is not safe to do at library load time, because it may invoke
- * arbitrary user-defined code.
- * Note: we assume caller has already connected to SPI.
- **********************************************************************/
-static Tcl_Interp *
-pltcl_fetch_interp(bool pltrusted)
-{
-	Tcl_Interp *interp;
-
-	/* On first use, we try to load the unknown procedure from pltcl_modules */
-	if (pltrusted)
-	{
-		interp = pltcl_safe_interp;
-		if (!pltcl_be_safe_init_done)
-		{
-			pltcl_init_load_unknown(interp);
-			pltcl_be_safe_init_done = true;
-		}
-	}
-	else
-	{
-		interp = pltcl_norm_interp;
-		if (!pltcl_be_norm_init_done)
-		{
-			pltcl_init_load_unknown(interp);
-			pltcl_be_norm_init_done = true;
-		}
-	}
-
-	return interp;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /**********************************************************************
@@ -538,10 +472,7 @@ pltcl_fetch_interp(bool pltrusted)
 static void
 pltcl_init_load_unknown(Tcl_Interp *interp)
 {
-<<<<<<< HEAD
 	Oid			relOid;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	Relation	pmrel;
 	char	   *pmrelname,
 			   *nspname;
@@ -560,7 +491,6 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 * We allow the table to be found anywhere in the search_path.
 	 * This is for backwards compatibility.  To ensure that the table
 	 * is trustworthy, we require it to be owned by a superuser.
-<<<<<<< HEAD
 	 *
 	 * this next bit of code is the same as try_relation_openrv(),
 	 * which only exists in 8.4 and up.
@@ -574,33 +504,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 
 	/* Drop out on not-found */
 	if (!OidIsValid(relOid))
-=======
-	 ************************************************************/
-	pmrel = try_relation_openrv(makeRangeVar(NULL, "pltcl_modules", -1),
-								AccessShareLock);
-	if (pmrel == NULL)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		return;
-	/* must be table or view, else ignore */
-	if (!(pmrel->rd_rel->relkind == RELKIND_RELATION ||
-		  pmrel->rd_rel->relkind == RELKIND_VIEW))
-	{
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-	/* must be owned by superuser, else ignore */
-	if (!superuser_arg(pmrel->rd_rel->relowner))
-	{
-		relation_close(pmrel, AccessShareLock);
-		return;
-	}
-	/* get fully qualified table name for use in select command */
-	nspname = get_namespace_name(RelationGetNamespace(pmrel));
-	if (!nspname)
-		elog(ERROR, "cache lookup failed for namespace %u",
-			 RelationGetNamespace(pmrel));
-	pmrelname = quote_qualified_identifier(nspname,
-										   RelationGetRelationName(pmrel));
 
 	/* Let relation_open do the rest */
 	pmrel = relation_open(relOid, AccessShareLock);
@@ -635,11 +539,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	buflen = strlen(pmrelname) + 100;
 	buf = (char *) palloc(buflen);
 	snprintf(buf, buflen,
-<<<<<<< HEAD
-			 "select modsrc from %s where modname = 'unknown' order by modseq",
-=======
 		   "select modsrc from %s where modname = 'unknown' order by modseq",
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 			 pmrelname);
 
 	spi_rc = SPI_execute(buf, false, 0);
@@ -795,11 +695,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 	pltcl_current_prodesc = prodesc;
 
-<<<<<<< HEAD
 	interp = prodesc->interp_desc->interp;
-=======
-	interp = pltcl_fetch_interp(prodesc->lanpltrusted);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/************************************************************
 	 * Create the tcl command to call the internal
@@ -958,11 +854,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 	pltcl_current_prodesc = prodesc;
 
-<<<<<<< HEAD
 	interp = prodesc->interp_desc->interp;
-=======
-	interp = pltcl_fetch_interp(prodesc->lanpltrusted);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	tupdesc = trigdata->tg_relation->rd_att;
 
@@ -1389,26 +1281,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		/************************************************************
 		 * Identify the interpreter to use for the function
 		 ************************************************************/
-<<<<<<< HEAD
 		prodesc->interp_desc = pltcl_fetch_interp(prodesc->lanpltrusted);
 		interp = prodesc->interp_desc->interp;
-=======
-		langTup = SearchSysCache1(LANGOID,
-								  ObjectIdGetDatum(procStruct->prolang));
-		if (!HeapTupleIsValid(langTup))
-		{
-			free(prodesc->user_proname);
-			free(prodesc->internal_proname);
-			free(prodesc);
-			elog(ERROR, "cache lookup failed for language %u",
-				 procStruct->prolang);
-		}
-		langStruct = (Form_pg_language) GETSTRUCT(langTup);
-		prodesc->lanpltrusted = langStruct->lanpltrusted;
-		ReleaseSysCache(langTup);
-
-		interp = pltcl_fetch_interp(prodesc->lanpltrusted);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		/************************************************************
 		 * Get the required information for input conversion of the
