@@ -591,16 +591,11 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
 									 true, false);
 
-<<<<<<< HEAD
-=======
-	(void) heap_reloptions(relkind, reloptions, true);
-
 	if (stmt->ofTypename)
 		ofTypeId = typenameTypeId(NULL, stmt->ofTypename, NULL);
 	else
 		ofTypeId = InvalidOid;
 
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/*
 	 * Look up inheritance ancestors and generate relation schema, including
 	 * inherited attributes. Update the offsets of the distribution attributes
@@ -753,23 +748,15 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 										  tablespaceId,
 										  InvalidOid,
 										  InvalidOid,
-<<<<<<< HEAD
-										  stmt->ownerid,
-=======
 										  ofTypeId,
-										  GetUserId(),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+										  stmt->ownerid,
 										  descriptor,
 										  cooked_constraints,
 										  /* relam */ InvalidOid,
 										  relkind,
-<<<<<<< HEAD
 										  relstorage,
 										  tablespaceId==GLOBALTABLESPACE_OID,
-=======
 										  false,
-										  false,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 										  localHasOids,
 										  stmt->parentOidCount,
 										  stmt->oncommit,
@@ -1154,16 +1141,7 @@ RemoveRelations(DropStmt *drop)
 			}
 		}
 
-<<<<<<< HEAD
-		tuple = SearchSysCache(RELOID,
-							   ObjectIdGetDatum(relOid),
-							   0, 0, 0);
-=======
-		/* Get the lock before trying to fetch the syscache entry */
-		LockRelationOid(relOid, AccessExclusiveLock);
-
 		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		if (!HeapTupleIsValid(tuple))
 		{
 			if (Gp_role == GP_ROLE_DISPATCH)
@@ -1357,12 +1335,11 @@ TruncateRelfiles(Relation rel, SubTransactionId mySubid)
 								  &aovisimap_relid, NULL);
 
 	/*
-	 * Normally, we need a transaction-safe truncation here.  However,
-	 * if the table was either created in the current (sub)transaction
-	 * or has a new relfilenode in the current (sub)transaction, then
-	 * we can just truncate it in-place, because a rollback would
-	 * cause the whole table or the current physical file to be
-	 * thrown away anyway.
+	 * Normally, we need a transaction-safe truncation here.  However, if
+	 * the table was either created in the current (sub)transaction or has
+	 * a new relfilenode in the current (sub)transaction, then we can just
+	 * truncate it in-place, because a rollback would cause the whole
+	 * table or the current physical file to be thrown away anyway.
 	 */
 	if (rel->rd_createSubid == mySubid ||
 		rel->rd_newRelfilenodeSubid == mySubid)
@@ -1665,33 +1642,14 @@ ExecuteTruncate(TruncateStmt *stmt)
 		TruncateRelfiles(rel, mySubid);
 
 		/*
-<<<<<<< HEAD
 		 * Reconstruct the indexes to match, and we're done.
-=======
-		 * Normally, we need a transaction-safe truncation here.  However, if
-		 * the table was either created in the current (sub)transaction or has
-		 * a new relfilenode in the current (sub)transaction, then we can just
-		 * truncate it in-place, because a rollback would cause the whole
-		 * table or the current physical file to be thrown away anyway.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		reindex_relation(RelationGetRelid(rel), true);
 	}
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		ListCell	*lc;
-=======
-			/*
-			 * Need the full transaction-safe pushups.
-			 *
-			 * Create a new empty storage file for the relation, and assign it
-			 * as the relfilenode value. The old storage file is scheduled for
-			 * deletion at commit.
-			 */
-			RelationSetNewRelfilenode(rel, RecentXmin);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -1705,7 +1663,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 		{
 			Oid			a_relid = lfirst_oid(lc);
 
-<<<<<<< HEAD
 			MetaTrackUpdObject(RelationRelationId,
 							   a_relid,
 							   GetUserId(),
@@ -1715,22 +1672,6 @@ ExecuteTruncate(TruncateStmt *stmt)
 							   a_relid,
 							   GetUserId(),
 							   "TRUNCATE", "");
-=======
-			/*
-			 * The same for the toast table, if any.
-			 */
-			if (OidIsValid(toast_relid))
-			{
-				rel = relation_open(toast_relid, AccessExclusiveLock);
-				RelationSetNewRelfilenode(rel, RecentXmin);
-				heap_close(rel, NoLock);
-			}
-
-			/*
-			 * Reconstruct the indexes to match, and we're done.
-			 */
-			reindex_relation(heap_relid, true, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		}
 	}
 
@@ -4620,16 +4561,11 @@ ATAddToastIfNeeded(List **wqueue)
 			(tab->subcmds[AT_PASS_ADD_COL] ||
 			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
 			 tab->subcmds[AT_PASS_COL_ATTRS]))
-<<<<<<< HEAD
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
-			AlterTableCreateToastTable(tab->relid, InvalidOid,
-									   (Datum) 0, false, is_part);
+			AlterTableCreateToastTable(tab->relid, (Datum) 0, is_part);
 		}
-=======
-			AlterTableCreateToastTable(tab->relid, (Datum) 0);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	}
 }
 
@@ -4884,14 +4820,7 @@ ATRewriteTables(List **wqueue)
 		newTableSpace = tab->newTableSpace ? tab->newTableSpace : oldTableSpace;
 		relstorage    = OldHeap->rd_rel->relstorage;
 		{
-<<<<<<< HEAD
 			List	   *indexIds;
-=======
-			/* Build a temporary relation and copy data */
-			Relation	OldHeap;
-			Oid			OIDNewHeap;
-			Oid			NewTableSpace;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 			indexIds = RelationGetIndexList(OldHeap);
 			hasIndexes = (indexIds != NIL);
@@ -4948,28 +4877,11 @@ ATRewriteTables(List **wqueue)
 		if (tab->newvals != NIL || tab->new_changeoids)
 		{
 			/* Build a temporary relation and copy data */
-			char		NewHeapName[NAMEDATALEN];
+			Relation	OldHeap;
 			Oid         OIDNewHeap;
-			ObjectAddress object;
 
-<<<<<<< HEAD
-			/*
-			 * Create the new heap, using a temporary name in the same
-			 * namespace as the existing table.  NOTE: there is some risk of
-			 * collision with user relnames.  Working around this seems more
-			 * trouble than it's worth; in particular, we can't create the new
-			 * heap in a different namespace from the old, or we will have
-			 * problems with the TEMP status of temp tables.
-			 */
-			snprintf(NewHeapName, sizeof(NewHeapName),
-					 "pg_temp_%u", tab->relid);
-
-            OIDNewHeap = make_new_heap(tab->relid, NewHeapName, newTableSpace,
-									   hasIndexes);
-=======
 			/* Create transient table that will receive the modified data */
-			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+            OIDNewHeap = make_new_heap(tab->relid, newTableSpace, hasIndexes);
 
 			/*
 			 * Copy the heap data into the new table with the desired
@@ -6556,22 +6468,13 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * this test is deliberately not attisdropped-aware, since if one tries to
 	 * add a column matching a dropped column name, it's gonna fail anyway.
 	 */
-<<<<<<< HEAD
-	if (SearchSysCacheExists(ATTNAME,
-							 ObjectIdGetDatum(myrelid),
-							 PointerGetDatum(colDef->colname),
-							 0, 0))
-	{
-=======
 	if (SearchSysCacheExists2(ATTNAME,
 							  ObjectIdGetDatum(myrelid),
 							  PointerGetDatum(colDef->colname)))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
 				 errmsg("column \"%s\" of relation \"%s\" already exists",
 						colDef->colname, RelationGetRelationName(rel))));
-	}
 
 	/* Determine the new attribute's number */
 	if (isOid)
@@ -6591,12 +6494,9 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	typeOid = HeapTupleGetOid(typeTuple);
 
 	/* make sure datatype is legal for a column */
-<<<<<<< HEAD
 	CheckAttributeType(colDef->colname, typeOid,
-					   list_make1_oid(rel->rd_rel->reltype));
-=======
-	CheckAttributeType(colDef->colname, typeOid, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+					   list_make1_oid(rel->rd_rel->reltype),
+					   false);
 
 	/* construct new attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;

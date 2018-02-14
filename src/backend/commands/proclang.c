@@ -81,36 +81,6 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
-	if (SearchSysCacheExists(LANGNAME,
-							 PointerGetDatum(languageName),
-							 0, 0, 0))
-	{
-		/*
-		 * MPP-7563: special case plpgsql to omit a notice if it already exists
-		 * rather than an error.  This allows us to install plpgsql by default
-		 * while allowing it to be dropped and not create issues for 
-		 * dump/restore.  This should be phased out in a later releases if/when
-		 * plpgsql becomes a true internal language that can not be dropped.
-		 *
-		 * Note: hardcoding this on the name is semi-safe since we would ignore 
-		 * any handler functions anyways since plpgsql exists in pg_pltemplate.
-		 * Alternatively this logic could be extended to apply to all languages
-		 * in pg_pltemplate.
-		 */
-		if (strcmp(languageName, "plpgsql") == 0) 
-		{
-			ereport(NOTICE,
-					(errmsg("language \"plpgsql\" already exists, skipping")));
-			return;
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("language \"%s\" already exists", languageName)));
-		}
-	}
-
 	/*
 	 * If we have template information for the language, ignore the supplied
 	 * parameters (if any) and use the template information.
@@ -213,11 +183,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 											false,		/* isWindowFunc */
 											false,		/* security_definer */
 											true,		/* isStrict */
-<<<<<<< HEAD
-											PROVOLATILE_IMMUTABLE,
-=======
-											PROVOLATILE_VOLATILE,
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+											PROVOLATILE_IMMUTABLE, // GPDB_90_MERGE_FIXME: why is this is IMMUTABLE in GPDB, when it's VOLATILE in the upstream?
 											buildoidvector(funcargtypes, 1),
 											PointerGetDatum(NULL),
 											PointerGetDatum(NULL),
@@ -456,7 +422,7 @@ create_proc_lang(const char *languageName, bool replace,
 	myself.objectSubId = 0;
 
 	if (is_update)
-		deleteDependencyRecordsFor(myself.classId, myself.objectId);
+		deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
 
 	/* dependency on owner of language */
 	if (!is_update)

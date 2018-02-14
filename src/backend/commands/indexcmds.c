@@ -3,13 +3,9 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -162,9 +158,7 @@ cdb_sync_indcheckxmin_with_segments(Oid indexRelationId)
 
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
-		indexTuple = SearchSysCacheCopy(INDEXRELID,
-										ObjectIdGetDatum(indexRelationId),
-										0, 0, 0);
+		indexTuple = SearchSysCacheCopy1(INDEXRELID, ObjectIdGetDatum(indexRelationId));
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "cache lookup failed for index %u", indexRelationId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -392,43 +386,12 @@ DefineIndex(RangeVar *heapRelation,
 	 * Select name for index if caller didn't specify
 	 */
 	if (indexRelationName == NULL)
-<<<<<<< HEAD
-	{
-		if (primary)
-		{
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   NULL,
-												   "pkey",
-												   namespaceId);
-		}
-		else if (exclusionOpNames != NIL)
-		{
-			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
-
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   iparam->name,
-												   "exclusion",
-												   namespaceId);
-		}
-		else
-		{
-			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
-
-			indexRelationName = ChooseRelationName(RelationGetRelationName(rel),
-												   iparam->name,
-												   "key",
-												   namespaceId);
-		}
-		stmt->idxname = indexRelationName;
-	}
-=======
 		indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
 											namespaceId,
 											indexColNames,
 											exclusionOpNames,
 											primary,
 											isconstraint);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * look up the access method, verify it can handle the requested features
@@ -695,16 +658,23 @@ DefineIndex(RangeVar *heapRelation,
 		 */
 	}
 
-<<<<<<< HEAD
+	/*
+	 * Make the catalog entries for the index, including constraints. Then, if
+	 * not skip_build || concurrent, actually build the index.
+	 */
+	indexRelationId =
+		index_create(relationId, indexRelationName, indexRelationId,
+					 indexInfo, indexColNames,
+					 accessMethodId, tablespaceId, classObjectId,
+					 coloptions, reloptions, primary,
+					 isconstraint, deferrable, initdeferred,
+					 allowSystemTableModsDDL,
+					 skip_build || concurrent,
+					 concurrent,
+					 altconname);
+
 	if (!concurrent)
 	{
-		indexRelationId =
-			index_create(relationId, indexRelationName, indexRelationId,
-					  indexInfo, accessMethodId, tablespaceId, classObjectId,
-						 coloptions, reloptions, primary,
-						 isconstraint, deferrable, initdeferred,
-						 allowSystemTableModsDDL, skip_build, concurrent, altconname);
-
 		/*
 		 * Dispatch the command to all primary and mirror segment dbs.
 		 * Start a global transaction and reconfigure cluster if needed.
@@ -724,32 +694,8 @@ DefineIndex(RangeVar *heapRelation,
 			if (!indexInfo->ii_BrokenHotChain)
 				cdb_sync_indcheckxmin_with_segments(indexRelationId);
 		}
-
 		return;					/* We're done, in the standard case */
 	}
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-	/*
-	 * Make the catalog entries for the index, including constraints. Then, if
-	 * not skip_build || concurrent, actually build the index.
-	 */
-	indexRelationId =
-		index_create(relationId, indexRelationName, indexRelationId,
-					 indexInfo, indexColNames,
-					 accessMethodId, tablespaceId, classObjectId,
-					 coloptions, reloptions, primary,
-					 isconstraint, deferrable, initdeferred,
-<<<<<<< HEAD
-					 allowSystemTableModsDDL, true, concurrent, altconname);
-=======
-					 allowSystemTableMods,
-					 skip_build || concurrent,
-					 concurrent);
-
-	if (!concurrent)
-		return;					/* We're done, in the standard case */
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
@@ -893,27 +839,7 @@ DefineIndex(RangeVar *heapRelation,
 	 * commit this transaction, any new transactions that open the table must
 	 * insert new entries into the index for insertions and non-HOT updates.
 	 */
-<<<<<<< HEAD
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
-=======
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(!indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisready = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/* we can do away with our snapshot */
 	PopActiveSnapshot();
@@ -1037,27 +963,7 @@ DefineIndex(RangeVar *heapRelation,
 	/*
 	 * Index can now be marked valid -- update its pg_index entry
 	 */
-<<<<<<< HEAD
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_VALID);
-=======
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisvalid = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * The pg_index update will cause backends (including this one) to update
@@ -1909,9 +1815,7 @@ relationHasUniqueIndex(Relation rel)
 		Oid			indexoid = lfirst_oid(indexoidscan);
 		HeapTuple	indexTuple;
 
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexoid),
-									0, 0, 0);
+		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
 		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisunique;
@@ -1935,15 +1839,8 @@ ReindexIndex(ReindexStmt *stmt)
 	Oid			indOid;
 	HeapTuple	tuple;
 
-<<<<<<< HEAD
 	indOid = RangeVarGetRelid(stmt->relation, false);
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(indOid),
-						   0, 0, 0);
-=======
-	indOid = RangeVarGetRelid(indexRelation, false);
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(indOid));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", indOid);
 
@@ -1960,8 +1857,7 @@ ReindexIndex(ReindexStmt *stmt)
 
 	ReleaseSysCache(tuple);
 
-<<<<<<< HEAD
-	reindex_index(indOid);
+	reindex_index(indOid, false);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -2022,7 +1918,7 @@ ReindexRelationList(List *relids)
 			stmt->kind = OBJECT_TABLE;
 
 			/* perform reindex locally */
-			if (!reindex_relation(relid, true))
+			if (!reindex_relation(relid, true, false))
 				ereport(NOTICE,
 					(errmsg("table \"%s\" has no indexes",
 							RelationGetRelationName(rel))));
@@ -2048,9 +1944,6 @@ ReindexRelationList(List *relids)
 	 * returning.
 	 */
 	StartTransactionCommand();
-=======
-	reindex_index(indOid, false);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -2060,7 +1953,6 @@ ReindexRelationList(List *relids)
 void
 ReindexTable(ReindexStmt *stmt)
 {
-<<<<<<< HEAD
 	Oid			relid;
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
@@ -2071,7 +1963,7 @@ ReindexTable(ReindexStmt *stmt)
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
-		reindex_relation(stmt->relid, true);
+		reindex_relation(stmt->relid, true, false);
 		return;
 	}
 
@@ -2089,7 +1981,7 @@ ReindexTable(ReindexStmt *stmt)
 		prels = all_partition_relids(pn);
 	}
 	else if (rel_is_child_partition(relid))
-		prels = find_all_inheritors(relid, NoLock);
+		prels = find_all_inheritors(relid, NoLock, NULL);
 
 	/*
 	 * Create a memory context that will survive forced transaction commits we
@@ -2114,8 +2006,7 @@ ReindexTable(ReindexStmt *stmt)
 		HeapTuple	tuple;
 		Form_pg_class pg_class_tuple;
 
-		tuple = SearchSysCache1(RELOID,
-								ObjectIdGetDatum(heapOid));
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(heapOid));
 		if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 			elog(ERROR, "cache lookup failed for relation %u", heapOid);
 
@@ -2134,47 +2025,12 @@ ReindexTable(ReindexStmt *stmt)
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   NameStr(pg_class_tuple->relname));
 
-		/* Can't reindex shared tables except in standalone mode */
-		if (((Form_pg_class) GETSTRUCT(tuple))->relisshared && IsUnderPostmaster)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("shared table \"%s\" can only be reindexed in stand-alone mode",
-							NameStr(pg_class_tuple->relname))));
-
 		ReleaseSysCache(tuple);
 	}
 
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
-=======
-	Oid			heapOid;
-	HeapTuple	tuple;
-
-	heapOid = RangeVarGetRelid(relation, false);
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(heapOid));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "cache lookup failed for relation %u", heapOid);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION &&
-		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						relation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(heapOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   relation->relname);
-
-	ReleaseSysCache(tuple);
-
-	if (!reindex_relation(heapOid, true, false))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 /*
@@ -2277,29 +2133,7 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-<<<<<<< HEAD
 	ReindexRelationList(relids);
-=======
-	/* Now reindex each rel in a separate transaction */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
-	foreach(l, relids)
-	{
-		Oid			relid = lfirst_oid(l);
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, true, false))
-			ereport(NOTICE,
-					(errmsg("table \"%s.%s\" was reindexed",
-							get_namespace_name(get_rel_namespace(relid)),
-							get_rel_name(relid))));
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-	StartTransactionCommand();
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	MemoryContextDelete(private_context);
 }

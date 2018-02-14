@@ -685,7 +685,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/*
-<<<<<<< HEAD
 		 * We might want to support named arguments later, but disallow it for
 		 * now.  We'd need to figure out the parsed representation (should the
 		 * NamedArgExprs go above or below the TargetEntry nodes?) and then
@@ -693,12 +692,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * make transformAggregateCall do that?  However, if you'd also like
 		 * to allow default arguments for aggregates, we'd need to do it in
 		 * planning to avoid semantic problems.
-=======
-		 * Currently it's not possible to define an aggregate with named
-		 * arguments, so this case should be impossible.  Check anyway because
-		 * the planner and executor wouldn't cope with NamedArgExprs in an
-		 * Aggref node.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		if (argnames != NIL)
 			ereport(ERROR,
@@ -755,13 +748,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/*
-<<<<<<< HEAD
 		 * FILTER is not yet supported with true window functions
-=======
-		 * We might want to support this later, but for now reject it because
-		 * the planner and executor wouldn't cope with NamedArgExprs in a
-		 * WindowFunc node.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		 */
 		if (!wfunc->winagg && agg_filter)
 			ereport(ERROR,

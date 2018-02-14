@@ -268,19 +268,8 @@ DefineSequence(CreateSeqStmt *seq)
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
-<<<<<<< HEAD
 	/* Now insert sequence tuple */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-=======
-	/* hack: ensure heap_insert will insert on the just-created page */
-	RelationSetTargetBlock(rel, 0);
-
-	/* Now form & insert sequence tuple */
-	tuple = heap_form_tuple(tupDesc, value, null);
-	simple_heap_insert(rel, tuple);
-
-	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	/*
 	 * Since VACUUM does not process sequences, we have to force the tuple
@@ -557,6 +546,10 @@ nextval_internal(Oid relid)
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
 
+	/* read-only transactions may only modify temp sequences */
+	if (!seqrel->rd_islocaltemp)
+		PreventCommandIfReadOnly("nextval()");
+
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
 		Assert(elm->last_valid);
@@ -632,33 +625,6 @@ cdb_sequence_nextval(SeqTable elm,
 	bool 		have_overflow = false;
 	bool		logit = false;
 
-<<<<<<< HEAD
-=======
-	/* open and AccessShareLock sequence */
-	init_sequence(relid, &elm, &seqrel);
-
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK &&
-		pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for sequence %s",
-						RelationGetRelationName(seqrel))));
-
-	/* read-only transactions may only modify temp sequences */
-	if (!seqrel->rd_islocaltemp)
-		PreventCommandIfReadOnly("nextval()");
-
-	if (elm->last != elm->cached)		/* some numbers were cached */
-	{
-		Assert(elm->last_valid);
-		Assert(elm->increment != 0);
-		elm->last += elm->increment;
-		relation_close(seqrel, NoLock);
-		last_used_seq = elm;
-		return elm->last;
-	}
-
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
 	page = BufferGetPage(buf);

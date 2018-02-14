@@ -2361,7 +2361,6 @@ AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 	else
 		procOid = LookupFuncNameTypeNames(name, argtypes, false);
 
-<<<<<<< HEAD
 	/* get schema OID and check its permission */
 	nspOid = LookupCreationNamespace(newschema);
 
@@ -2377,12 +2376,6 @@ AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
 	Form_pg_proc proc;
 
 	procRel = heap_open(ProcedureRelationId, RowExclusiveLock);
-=======
-	/* check permissions on function */
-	if (!pg_proc_ownercheck(procOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-					   NameListToString(name));
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(procOid));
 	if (!HeapTupleIsValid(tup))

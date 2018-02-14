@@ -1824,16 +1824,9 @@ CREATE VIEW tables AS
                   ELSE null END
              AS character_data) AS commit_action
 
-<<<<<<< HEAD
-    FROM pg_class c 
-    		LEFT OUTER JOIN 
-    	 pg_exttable x 
-    	 	ON c.oid = x.reloid, 
-    	 pg_namespace nc
-=======
     FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
            LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+           LEFT JOIN pg_exttable x ON c.oid = x.reloid
 
     WHERE c.relkind IN ('r', 'v')
           AND (NOT pg_is_other_temp_schema(nc.oid))

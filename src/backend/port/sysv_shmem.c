@@ -102,8 +102,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 * make a second try with size = 0.  These kernels do not test size
 		 * against SHMMIN in the preexisting-segment case, so we will not get
 		 * EINVAL a second time if there is such a segment.
-<<<<<<< HEAD
-=======
 		 */
 		if (errno == EINVAL)
 		{
@@ -136,39 +134,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 			}
 
 			errno = save_errno;
-		}
-
-		/*
-		 * Else complain and abort
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
-		 */
-		if (shmget_errno == EINVAL)
-		{
-			shmid = shmget(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
-
-			if (shmid < 0)
-			{
-				/* As above, fail quietly if we verify a collision */
-				if (errno == EEXIST || errno == EACCES
-#ifdef EIDRM
-					|| errno == EIDRM
-#endif
-					)
-					return NULL;
-				/* Otherwise, fall through to report the original error */
-			}
-			else
-			{
-				/*
-				 * On most platforms we cannot get here because SHMMIN is
-				 * greater than zero.  However, if we do succeed in creating a
-				 * zero-size segment, free it and then fall through to report
-				 * the original error.
-				 */
-				if (shmctl(shmid, IPC_RMID, NULL) < 0)
-					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
-						 (int) shmid, IPC_RMID);
-			}
 		}
 
 		/*

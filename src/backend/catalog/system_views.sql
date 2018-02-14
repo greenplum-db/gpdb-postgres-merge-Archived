@@ -1,11 +1,8 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Copyright (c) 1996-2010, PostgreSQL Global Development Group
  *
  * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.66 2010/04/26 14:22:37 momjian Exp $
@@ -366,19 +363,13 @@ CREATE VIEW pg_stat_activity AS
             S.backend_start,
             S.xact_start,
             S.query_start,
-<<<<<<< HEAD
-            S.backend_start,
-            S.client_addr,
-            S.client_port,
+            S.waiting,
+            S.current_query
 
             S.waiting_reason,
             S.rsgid,
             S.rsgname,
             S.rsgqueueduration
-=======
-            S.waiting,
-            S.current_query
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND 
             S.usesysid = U.oid;
