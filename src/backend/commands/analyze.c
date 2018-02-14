@@ -985,7 +985,8 @@ examine_attribute(Relation onerel, int attnum)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
+	typtuple = SearchSysCacheCopy1(TYPEOID,
+								   ObjectIdGetDatum(attr->atttypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
