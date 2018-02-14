@@ -1225,7 +1225,7 @@ DefineEnum(CreateEnumStmt *stmt)
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
 		enumTypeOid = GetPreassignedOidForType(enumNamespace, enumName);
-		enumArrayOid = AssignTypeArrayOid();
+		enumArrayOid = GetPreassignedOidForType(enumNamespace, enumArrayName);
 	}
 	else
 	{
