@@ -1347,23 +1347,6 @@ expression_tree_walker(Node *node,
 		case T_Query:
 			/* Do nothing with a sub-Query, per discussion above */
 			break;
-<<<<<<< HEAD
-=======
-		case T_WindowClause:
-			{
-				WindowClause *wc = (WindowClause *) node;
-
-				if (walker(wc->partitionClause, context))
-					return true;
-				if (walker(wc->orderClause, context))
-					return true;
-				if (walker(wc->startOffset, context))
-					return true;
-				if (walker(wc->endOffset, context))
-					return true;
-			}
-			break;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 		case T_CommonTableExpr:
 			{
 				CommonTableExpr *cte = (CommonTableExpr *) node;
@@ -2159,10 +2142,6 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->orderClause, wc->orderClause, List *);
 				MUTATE(newnode->startOffset, wc->startOffset, Node *);
 				MUTATE(newnode->endOffset, wc->endOffset, Node *);
-<<<<<<< HEAD
-
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 				return (Node *) newnode;
 
 			}
@@ -2766,15 +2745,9 @@ bool
 					return true;
 				if (walker(wd->orderClause, context))
 					return true;
-<<<<<<< HEAD
-				if (walker((Node *) wd->startOffset, context))
-					return true;
-				if (walker((Node *) wd->endOffset, context))
-=======
 				if (walker(wd->startOffset, context))
 					return true;
 				if (walker(wd->endOffset, context))
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 					return true;
 			}
 			break;

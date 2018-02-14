@@ -1255,12 +1255,9 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
 	COMPARE_NODE_FIELD(inhOids);
 	COMPARE_SCALAR_FIELD(parentOidCount);
-=======
 	COMPARE_NODE_FIELD(ofTypename);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(oncommit);

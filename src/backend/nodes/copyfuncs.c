@@ -11,13 +11,9 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2009, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1055,7 +1051,6 @@ _copyWindowAgg(WindowAgg *from)
 	COPY_SCALAR_FIELD(frameOptions);
 	COPY_NODE_FIELD(startOffset);
 	COPY_NODE_FIELD(endOffset);
-<<<<<<< HEAD
 
 	return newnode;
 }
@@ -1069,8 +1064,6 @@ _copyTableFunctionScan(TableFunctionScan *from)
 	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
 
 	CopyScanFields((Scan *) from, (Scan *) newnode);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 	return newnode;
 }
@@ -3294,12 +3287,9 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(tableElts);
 	COPY_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
 	COPY_NODE_FIELD(inhOids);
 	COPY_SCALAR_FIELD(parentOidCount);
-=======
 	COPY_NODE_FIELD(ofTypename);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(oncommit);

@@ -297,11 +297,7 @@ nodeRead(char *token, int tok_len)
 
 	type = nodeTokenType(token, tok_len);
 
-<<<<<<< HEAD
-	switch ((int)type)
-=======
 	switch ((int) type)
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	{
 		case LEFT_BRACE:
 			result = parseNodeString();

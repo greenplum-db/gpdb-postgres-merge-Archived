@@ -1094,6 +1094,7 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(inhRelations);
 	READ_NODE_FIELD(inhOids);
 	READ_INT_FIELD(parentOidCount);
+	READ_NODE_FIELD(ofTypename);
 	READ_NODE_FIELD(constraints);
 
 	READ_NODE_FIELD(options);
@@ -2183,6 +2184,7 @@ _readHash(void)
 
 	READ_OID_FIELD(skewTable);
 	READ_INT_FIELD(skewColumn);
+	READ_BOOL_FIELD(skewInherit);
 	READ_OID_FIELD(skewColType);
 	READ_INT_FIELD(skewColTypmod);
 

@@ -1996,13 +1996,10 @@ _outUniquePath(StringInfo str, UniquePath *node)
 	WRITE_NODE_FIELD(in_operators);
 	WRITE_NODE_FIELD(uniq_exprs);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
-<<<<<<< HEAD
     WRITE_BOOL_FIELD(must_repartition);                 /*CDB*/
     WRITE_BITMAPSET_FIELD(distinct_on_rowid_relids);    /*CDB*/
 
 	WRITE_NODE_FIELD(subpath);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 }
 
 static void
@@ -2371,12 +2368,9 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(tableElts);
 	WRITE_NODE_FIELD(inhRelations);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(inhOids);
 	WRITE_INT_FIELD(parentOidCount);
-=======
 	WRITE_NODE_FIELD(ofTypename);
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	WRITE_NODE_FIELD(constraints);
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
