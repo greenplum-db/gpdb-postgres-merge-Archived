@@ -567,7 +567,6 @@ from int8_tbl t1 left join
 group by t1.q2 order by 1;
 
 --
-<<<<<<< HEAD
 -- test case where a PlaceHolderVar is propagated into a subquery
 --
 select * from
@@ -577,6 +576,12 @@ select * from
 where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
+
+--
+-- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
+--
+select * from int4_tbl a full join int4_tbl b on true;
+select * from int4_tbl a full join int4_tbl b on false;
 
 --
 -- test handling of potential equivalence clauses above outer joins
@@ -589,12 +594,6 @@ select q1, unique2, thousand, hundred
 select f1, unique2, case when unique2 is null then f1 else 0 end
   from int4_tbl a left join tenk1 b on f1 = unique2
   where (case when unique2 is null then f1 else 0 end) = 0;
-=======
--- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
---
-select * from int4_tbl a full join int4_tbl b on true;
-select * from int4_tbl a full join int4_tbl b on false;
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 --
 -- test join removal
@@ -643,7 +642,6 @@ explain (costs off)
     left join (select c.*, true as linked from child c) as ss
     on (p.k = ss.k);
 
-<<<<<<< HEAD
 -- check for a 9.0rc1 bug: join removal breaks pseudoconstant qual handling
 select p.* from
   parent p left join child c on (p.k = c.k)
@@ -661,8 +659,6 @@ select p.* from
   (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
   where p.k = 1 and p.k = 2;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 -- bug 5255: this is not optimizable by join removal
 begin;
 
@@ -675,7 +671,6 @@ SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
 SELECT b.* FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
 
 rollback;
-<<<<<<< HEAD
 
 -- another join removal bug: this is not optimizable, either
 begin;
@@ -691,5 +686,3 @@ SELECT * FROM
   ON true;
 
 rollback;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
