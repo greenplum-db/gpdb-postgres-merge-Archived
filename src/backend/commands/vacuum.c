@@ -1055,38 +1055,6 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
-			list_free_deep(stats_context.updated_stats);
-			stats_context.updated_stats = NIL;
-
-			/*
-			 * Update ao master tupcount the hard way after the compaction and
-			 * after the drop.
-			 */
-			if (vacstmt->appendonly_compaction_segno)
-			{
-				/*
-				 * We should be able to open the relation again, because we're
-				 * still holding the session lock on it.
-				 */
-				onerel = relation_open(relid, NoLock);
-
-				Assert(RelationIsAoRows(onerel) || RelationIsAoCols(onerel));
-
-				if (vacuumStatement_IsInAppendOnlyCompactionPhase(vacstmt) &&
-						!vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(vacstmt))
-				{
-					/* In the compact phase, we need to update the information of the segment file we inserted into */
-					UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_insert_segno, 0);
-				}
-				else if (vacuumStatement_IsInAppendOnlyDropPhase(vacstmt))
-				{
-					/* In the drop phase, we need to update the information of the compacted segment file(s) */
-					UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_segno, 0);
-				}
-
-				relation_close(onerel, NoLock);
-			}
-
 			/*
 			 * We need some transaction to update the catalog.  We could do
 			 * it on the outer vacuumStatement, but it is useful to track
@@ -1959,6 +1927,26 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
+	/*
+	 * Update ao master tupcount the hard way after the compaction and
+	 * after the drop.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && vacstmt->appendonly_compaction_segno &&
+		(RelationIsAoRows(onerel) || RelationIsAoCols(onerel)))
+	{
+		if (vacuumStatement_IsInAppendOnlyCompactionPhase(vacstmt) &&
+			!vacuumStatement_IsInAppendOnlyPseudoCompactionPhase(vacstmt))
+		{
+			/* In the compact phase, we need to update the information of the segment file we inserted into */
+			UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_insert_segno, 0);
+		}
+		else if (vacuumStatement_IsInAppendOnlyDropPhase(vacstmt))
+		{
+			/* In the drop phase, we need to update the information of the compacted segment file(s) */
+			UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_segno, 0);
+		}
+	}
+
 	/* all done with this class, but hold lock until commit */
 	if (onerel)
 		relation_close(onerel, NoLock);
@@ -1982,15 +1970,18 @@ vacuum_rel(Relation onerel, VacuumStmt *vacstmt, LOCKMODE lmode, List *updated_s
 	int auxlmode;
 	auxlmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
-	if ((is_heap && toast_relid != InvalidOid) ||
+	if (is_heap ||
 		(!is_heap && (vacstmt->appendonly_compaction_vacuum_cleanup ||
 					  vacstmt->appendonly_relation_empty)))
 	{
-		StartTransactionCommand();
-		PushActiveSnapshot(GetTransactionSnapshot());
-		Relation toast_rel = relation_open(toast_relid, auxlmode);
+		if (toast_relid != InvalidOid)
+		{
+			StartTransactionCommand();
+			PushActiveSnapshot(GetTransactionSnapshot());
+			Relation toast_rel = relation_open(toast_relid, auxlmode);
 
-		vacuum_rel(toast_rel, vacstmt, lmode, updated_stats, for_wraparound);
+			vacuum_rel(toast_rel, vacstmt, lmode, updated_stats, for_wraparound);
+		}
 	}
 
 	/*
