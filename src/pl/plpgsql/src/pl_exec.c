@@ -1877,7 +1877,6 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 	 * Open the implicit cursor for the statement using exec_run_select
 	 */
 	exec_run_select(estate, stmt->query, 0, &portal);
-	PinPortal(portal);
 
 	/*
 	 * Execute the loop
@@ -1887,7 +1886,6 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 	/*
 	 * Close the implicit cursor
 	 */
-	UnpinPortal(portal);
 	SPI_cursor_close(portal);
 
 	return rc;
