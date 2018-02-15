@@ -971,7 +971,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 											   cstate);
 				checkWellFormedRecursionWalker((Node *) stmt->lockingClause,
 											   cstate);
-				break;
+				/* stmt->withClause is intentionally ignored here */
 				break;
 			case SETOP_EXCEPT:
 				if (stmt->all)
@@ -990,6 +990,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 											   cstate);
 				checkWellFormedRecursionWalker((Node *) stmt->lockingClause,
 											   cstate);
+				/* stmt->withClause is intentionally ignored here */
 				break;
 			default:
 				elog(ERROR, "unrecognized set op: %d",
