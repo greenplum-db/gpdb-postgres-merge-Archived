@@ -1607,6 +1607,9 @@ ExplainNode(Plan *plan, PlanState *planstate,
 							"One-Time Filter", plan, es);
 			show_upper_qual(plan->qual, "Filter", plan, es);
 			break;
+		case T_Hash:
+			show_hash_info((HashState *) planstate, es);
+			break;
 		case T_Repeat:
 			show_upper_qual(plan->qual, "Filter", plan, es);
 			break;
@@ -1628,8 +1631,6 @@ ExplainNode(Plan *plan, PlanState *planstate,
 			break;
 		case T_PartitionSelector:
 			explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
-		case T_Hash:
-			show_hash_info((HashState *) planstate, es);
 			break;
 		default:
 			break;
