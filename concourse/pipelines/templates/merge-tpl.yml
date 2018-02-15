@@ -621,6 +621,7 @@ anchors:
 - &ccp_default_vars
   instance_type: n1-standard-1
   PLATFORM: centos6
+  ccp_reap_minutes: 180  # we fail a lot in this pipeline
 
 - &ccp_destroy
   put: terraform
