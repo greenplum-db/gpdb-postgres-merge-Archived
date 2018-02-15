@@ -384,13 +384,8 @@ SELECT '' AS five, * FROM UNIQUE_TBL;
 
 DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
-<<<<<<< HEAD
 	UNIQUE(i,t)) DISTRIBUTED BY (i);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
-=======
-	UNIQUE(i,t));
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_t_key" for table "unique_tbl"
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
@@ -575,36 +570,41 @@ CREATE TABLE circles (
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "circles_c1_c2_excl" for table "circles"
 -- these should succeed because they don't match the index predicate
 INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
-INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 4>');
+-- In the original version of the postgres test, they create a different set of
+-- tuples for this. In Greenplum, we cannot support unique constraints on
+-- non-distribution keys, and the version of the tuples from postgres end up on a
+-- different segment, so we have to modify the original query here in order to
+-- test these constraints. Alternatively, we could have set the distribution key
+-- to be (c1, c2), but we don't support using CIRCLE type as a distribution key. 
+INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
 -- succeed
 INSERT INTO circles VALUES('<(10,10), 10>', '<(0,0), 5>');
 -- fail, overlaps
-INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 4>');
+INSERT INTO circles VALUES('<(20,20), 10>', '<(0,0), 5>');
 ERROR:  conflicting key value violates exclusion constraint "circles_c1_c2_excl"
-DETAIL:  Key (c1, (c2::circle))=(<(20,20),10>, <(0,0),4>) conflicts with existing key (c1, (c2::circle))=(<(10,10),10>, <(0,0),5>).
+DETAIL:  Key (c1, (c2::circle))=(<(20,20),10>, <(0,0),5>) conflicts with existing key (c1, (c2::circle))=(<(10,10),10>, <(0,0),5>).
 -- succeed because c1 doesn't overlap
 INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
--- succeed because c2 doesn't overlap
-INSERT INTO circles VALUES('<(20,20), 10>', '<(10,10), 5>');
+-- succeed because c2 is not the same
+INSERT INTO circles VALUES('<(20,20), 10>', '<(1,1), 5>');
 -- should fail on existing data without the WHERE clause
 ALTER TABLE circles ADD EXCLUDE USING gist
-  (c1 WITH &&, (c2::circle) WITH &&);
+  (c1 WITH &&, (c2::circle) WITH ~=);
 NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "circles_c1_c2_excl1" for table "circles"
 ERROR:  could not create exclusion constraint "circles_c1_c2_excl1"
-DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),4>).
+DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>).
 DROP TABLE circles;
 -- Check deferred exclusion constraint
 CREATE TABLE deferred_excl (
   f1 int,
   CONSTRAINT deferred_excl_con EXCLUDE (f1 WITH =) INITIALLY DEFERRED
 );
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "deferred_excl_f1_exclusion" for table "deferred_excl"
+NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "deferred_excl_f1_excl" for table "deferred_excl"
 INSERT INTO deferred_excl VALUES(1);
 INSERT INTO deferred_excl VALUES(2);
 INSERT INTO deferred_excl VALUES(1); -- fail
-WARNING:  the distributed transaction 'Abort [Prepared]' broadcast failed to one or more segments for gid = 1517942707-0000002484.  Retrying ... try 0
-NOTICE:  Releasing segworker groups to retry broadcast.
-ERROR:  The distributed transaction 'Prepare' broadcast failed to one or more segments for gid = 1517942707-0000002484. (cdbtm.c:692)
+ERROR:  conflicting key value violates exclusion constraint "deferred_excl_f1_excl"
+DETAIL:  Key (f1)=(1) conflicts with existing key (f1)=(1).
 BEGIN;
 INSERT INTO deferred_excl VALUES(2); -- no fail here
 COMMIT; -- should fail here
@@ -622,14 +622,15 @@ ALTER TABLE deferred_excl DROP CONSTRAINT deferred_excl_con;
 -- This should fail, but worth testing because of HOT updates
 UPDATE deferred_excl SET f1 = 3;
 ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
+-- In the original postgres test, both the tuples in this table would
+-- have been updated in the previous statement, and would now be equal.
+-- We need to add in another tuple manually in order to confirm that
+-- we cannot add a new constraint that conflicts with the existing data.
+INSERT INTO deferred_excl VALUES(1);
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
-<<<<<<< HEAD
-NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "deferred_excl_f1_exclusion" for table "deferred_excl"
-=======
 NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "deferred_excl_f1_excl" for table "deferred_excl"
 ERROR:  could not create exclusion constraint "deferred_excl_f1_excl"
-DETAIL:  Key (f1)=(3) conflicts with key (f1)=(3).
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+DETAIL:  Key (f1)=(1) conflicts with key (f1)=(1).
 DROP TABLE deferred_excl;
 --
 -- Test foreign key constraints
