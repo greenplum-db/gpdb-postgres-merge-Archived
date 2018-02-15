@@ -752,6 +752,16 @@ AtAbort_Portals(void)
 			continue;
 
 		/*
+		 * GPDB_90_MERGE_FIXME: This was added in commit 7981c342, to prevent
+		 * ExecutorEnd from running in failed transactions. That's fine and dandy,
+		 * but unfortunately GPDB relies on ExecutorEnd to for some cleanup
+		 * work, like terminating the Gang. So we in GPDB, we must run ExecutorEnd.
+		 * We really should refactor the resource management in dispatcher and
+		 * gangs, e.g. to use ResourceOwners instead. But until that's done,
+		 * we cannot skip ExecutorEnd.
+		 */
+#if 0
+		/*
 		 * If it was created in the current transaction, we can't do normal
 		 * shutdown on a READY portal either; it might refer to objects
 		 * created in the failed transaction.  See comments in
@@ -759,6 +769,7 @@ AtAbort_Portals(void)
 		 */
 		if (portal->status == PORTAL_READY)
 			portal->status = PORTAL_FAILED;
+#endif
 
 		/* let portalcmds.c clean up the state it knows about */
 		if (portal->cleanup)
@@ -887,7 +898,8 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * (Note we do NOT do this to upper-level portals, since they cannot
 		 * have such references and hence may be able to continue.)
 		 */
-		if (portal->status == PORTAL_READY ||
+		// GPDB_90_MERGE_FIXME: Not in READY portals. See comment in AtAbort_Portals.
+		if (//portal->status == PORTAL_READY ||
 			portal->status == PORTAL_ACTIVE)
 			portal->status = PORTAL_FAILED;
 
