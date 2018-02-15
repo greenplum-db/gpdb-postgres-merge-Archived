@@ -38,6 +38,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -2889,7 +2890,15 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	/* These changes are safe even for a mapped relation */
 	classform->relpages = 0;	/* it's empty until further notice */
 	classform->reltuples = 0;
-	classform->relfrozenxid = freezeXid;
+	if (should_have_valid_relfrozenxid(relation->rd_rel->relkind,
+									   relation->rd_rel->relstorage))
+	{
+		classform->relfrozenxid = freezeXid;
+	}
+	else
+	{
+		classform->relfrozenxid = InvalidTransactionId;
+	}
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);

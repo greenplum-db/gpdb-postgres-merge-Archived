@@ -1154,7 +1154,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	}
 
 	/* Initialize relfrozenxid */
-	if (should_have_valid_relfrozenxid(new_rel_oid, relkind, relstorage))
+	if (should_have_valid_relfrozenxid(relkind, relstorage))
 	{
 		/*
 		 * Initialize to the minimum XID that could put tuples in the table.
@@ -3376,7 +3376,7 @@ insert_ordered_unique_oid(List *list, Oid datum)
 }
 
 bool
-should_have_valid_relfrozenxid(Oid oid, char relkind, char relstorage)
+should_have_valid_relfrozenxid(char relkind, char relstorage)
 {
 	switch (relkind)
 	{

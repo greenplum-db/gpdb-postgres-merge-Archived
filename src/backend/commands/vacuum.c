@@ -1730,8 +1730,7 @@ vac_update_datfrozenxid(void)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(classTup);
 
-		if (!should_have_valid_relfrozenxid(HeapTupleGetOid(classTup),
-											classForm->relkind,
+		if (!should_have_valid_relfrozenxid(classForm->relkind,
 											classForm->relstorage))
 		{
 			Assert(!TransactionIdIsValid(classForm->relfrozenxid));

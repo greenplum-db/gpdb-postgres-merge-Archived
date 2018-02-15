@@ -1359,7 +1359,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * This needs to be performed after the relkind and relstorage has been
 	 * swapped to correctly reflect the relfrozenxid.
 	 */
-	if (should_have_valid_relfrozenxid(r1, relform1->relkind, relform1->relstorage))
+	if (should_have_valid_relfrozenxid(relform1->relkind, relform1->relstorage))
 	{
 		/* set rel1's frozen Xid */
 		Assert(TransactionIdIsNormal(frozenXid));

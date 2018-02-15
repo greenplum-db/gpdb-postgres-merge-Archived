@@ -166,6 +166,6 @@ extern void MetaTrackDropObject(Oid		classid,
 		|| ((relkind) == RELKIND_SEQUENCE) \
 		|| ((relkind) == RELKIND_VIEW)) 
 
-extern bool should_have_valid_relfrozenxid(Oid oid, char relkind, char relstorage);
+extern bool should_have_valid_relfrozenxid(char relkind, char relstorage);
 
 #endif   /* HEAP_H */
