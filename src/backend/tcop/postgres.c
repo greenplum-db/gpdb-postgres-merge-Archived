@@ -5141,6 +5141,11 @@ PostgresMain(int argc, char *argv[],
 			CheckForResetSession();
 
 		/*
+		 * (2c) Reset QueryFinishPending flag.
+		 */
+		QueryFinishPending = false;
+
+		/*
 		 * (3) read a command (loop blocks here)
 		 */
 		if (Gp_role == GP_ROLE_DISPATCH)
