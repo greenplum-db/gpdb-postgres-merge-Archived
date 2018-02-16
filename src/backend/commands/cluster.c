@@ -1449,8 +1449,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		}
 	}
 
-	CommandCounterIncrement();
-
 	/*
 	 * If we're swapping two toast tables by content, do the same for their
 	 * indexes.

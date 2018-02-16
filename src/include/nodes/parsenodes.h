@@ -2798,6 +2798,15 @@ typedef enum VacuumOption
 	VACOPT_ROOTONLY = 1 << 5	/* only ANALYZE root partition tables */
 } VacuumOption;
 
+typedef enum AOVacuumPhase
+{
+	AOVAC_NONE = 0,
+	AOVAC_PREPARE,
+	AOVAC_COMPACT,
+	AOVAC_DROP,
+	AOVAC_CLEANUP
+} AOVacuumPhase;
+
 typedef struct VacuumStmt
 {
 	NodeTag		type;
@@ -2827,26 +2836,13 @@ typedef struct VacuumStmt
 	List *appendonly_compaction_insert_segno;
 
 	/*
-	 * Iff true, the vacuum run is the cleanup phase of an append-only compaction.
-	 * In the cleanup phase, the following operations are performed
-	 * - Vacuum of append-only auxility relations
-	 * - Update of pg_class statistics of append-only relation
-	 */
-	bool appendonly_compaction_vacuum_cleanup;
-
-	/*
-	 * Iff true, the vacuum runs the prepare phase of an append-only compaction.
-	 * In the prepare phase, the following operations are performed
-	 * - Vacuum of indexes on append-only relation based on visimap.
-	 */
-	bool appendonly_compaction_vacuum_prepare;
-
-	/*
 	 * MPP-24168: If the appendonly table is empty, we should vacuum
 	 * auxiliary tables in prepare phase itself.  Othewise, age of
 	 * auxiliary heap relations never gets updated.
 	 */
 	bool appendonly_relation_empty;
+
+	AOVacuumPhase appendonly_phase;
 } VacuumStmt;
 
 /* ----------------------

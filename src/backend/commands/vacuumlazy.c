@@ -191,7 +191,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		elevel = DEBUG2; /* vacuum and analyze messages aren't interesting from the QD */
 
 #ifdef FAULT_INJECTOR
-	if (vacuumStatement_IsInAppendOnlyDropPhase(vacstmt))
+	if (vacstmt->appendonly_phase == AOVAC_DROP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeSegmentFileDropPhase,
@@ -199,7 +199,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				"",	// databaseName
 				RelationGetRelationName(onerel)); // tableName
 	}
-	if (vacummStatement_IsInAppendOnlyCleanupPhase(vacstmt))
+	if (vacstmt->appendonly_phase == AOVAC_CLEANUP)
 	{
 			FaultInjector_InjectFaultIfSet(
 				CompactionBeforeCleanupPhase,
@@ -331,67 +331,73 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-	if (vacuumStatement_IsInAppendOnlyPreparePhase(vacstmt))
+	switch (vacstmt->appendonly_phase)
 	{
-		elogif(Debug_appendonly_print_compaction, LOG,
-			   "Vacuum prepare phase %s", RelationGetRelationName(onerel));
+		case AOVAC_PREPARE:
+			elogif(Debug_appendonly_print_compaction, LOG,
+				   "Vacuum prepare phase %s", RelationGetRelationName(onerel));
 
-		vacuum_appendonly_indexes(onerel, vacstmt, updated_stats);
-		if (RelationIsAoRows(onerel))
-			AppendOnlyTruncateToEOF(onerel);
-		else
-			AOCSTruncateToEOF(onerel);
+			vacuum_appendonly_indexes(onerel, vacstmt, updated_stats);
+			if (RelationIsAoRows(onerel))
+				AppendOnlyTruncateToEOF(onerel);
+			else
+				AOCSTruncateToEOF(onerel);
 
-		/*
-		 * MPP-23647.  For empty tables, we skip compaction phase
-		 * and cleanup phase.  Therefore, we update the stats
-		 * (specifically, relfrozenxid) in prepare phase if the
-		 * table is empty.  Otherwise, the stats will be updated in
-		 * the cleanup phase, when we would have computed the
-		 * correct values for stats.
-		 */
-		if (vacstmt->appendonly_relation_empty)
-		{
-			update_relstats = true;
 			/*
-			 * For an empty relation, the only stats we care about
-			 * is relfrozenxid and relhasindex.  We need to be
-			 * mindful of correctly setting relhasindex here.
-			 * relfrozenxid is already taken care of above by
-			 * calling vacuum_set_xid_limits().
+			 * MPP-23647.  For empty tables, we skip compaction phase
+			 * and cleanup phase.  Therefore, we update the stats
+			 * (specifically, relfrozenxid) in prepare phase if the
+			 * table is empty.  Otherwise, the stats will be updated in
+			 * the cleanup phase, when we would have computed the
+			 * correct values for stats.
 			 */
-			vacrelstats->hasindex = onerel->rd_rel->relhasindex;
-		}
-		else
-		{
-			/*
-			 * For a non-empty relation, follow the usual
-			 * compaction phases and do not update stats in
-			 * prepare phase.
-			 */
+			if (vacstmt->appendonly_relation_empty)
+			{
+				update_relstats = true;
+				/*
+				 * For an empty relation, the only stats we care about
+				 * is relfrozenxid and relhasindex.  We need to be
+				 * mindful of correctly setting relhasindex here.
+				 * relfrozenxid is already taken care of above by
+				 * calling vacuum_set_xid_limits().
+				 */
+				vacrelstats->hasindex = onerel->rd_rel->relhasindex;
+			}
+			else
+			{
+				/*
+				 * For a non-empty relation, follow the usual
+				 * compaction phases and do not update stats in
+				 * prepare phase.
+				 */
+				update_relstats = false;
+			}
+			break;
+
+		case AOVAC_COMPACT:
+		case AOVAC_DROP:
+			vacuum_appendonly_rel(onerel, vacstmt);
 			update_relstats = false;
-	}
-	}
-	else if (!vacummStatement_IsInAppendOnlyCleanupPhase(vacstmt))
-	{
-		vacuum_appendonly_rel(onerel, vacstmt);
-		update_relstats = false;
-	}
-	else
-	{
-		elogif(Debug_appendonly_print_compaction, LOG,
-			   "Vacuum cleanup phase %s", RelationGetRelationName(onerel));
+			break;
 
-		vacuum_appendonly_fill_stats(onerel, GetActiveSnapshot(),
-									 &vacrelstats->rel_pages,
-									 &vacrelstats->new_rel_tuples,
-									 &vacrelstats->hasindex);
-		/* reset the remaining LVRelStats values */
-		vacrelstats->nonempty_pages = 0;
-		vacrelstats->num_dead_tuples = 0;
-		vacrelstats->max_dead_tuples = 0;
-		vacrelstats->tuples_deleted = 0;
-		vacrelstats->pages_removed = 0;
+		case AOVAC_CLEANUP:
+			elogif(Debug_appendonly_print_compaction, LOG,
+				   "Vacuum cleanup phase %s", RelationGetRelationName(onerel));
+
+			vacuum_appendonly_fill_stats(onerel, GetActiveSnapshot(),
+										 &vacrelstats->rel_pages,
+										 &vacrelstats->new_rel_tuples,
+										 &vacrelstats->hasindex);
+			/* reset the remaining LVRelStats values */
+			vacrelstats->nonempty_pages = 0;
+			vacrelstats->num_dead_tuples = 0;
+			vacrelstats->max_dead_tuples = 0;
+			vacrelstats->tuples_deleted = 0;
+			vacrelstats->pages_removed = 0;
+			break;
+
+		default:
+			elog(ERROR, "invalid AO vacuum phase %d", vacstmt->appendonly_phase);
 	}
 
 	if (update_relstats)
@@ -1376,12 +1382,9 @@ void
 vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 {
 	char	   *relname;
-	PGRUsage	ru0;
 
 	Assert(RelationIsAoRows(aorel) || RelationIsAoCols(aorel));
-	Assert(!vacummStatement_IsInAppendOnlyCleanupPhase(vacstmt));
 
-	pg_rusage_init(&ru0);
 	relname = RelationGetRelationName(aorel);
 	ereport(elevel,
 			(errmsg("vacuuming \"%s.%s\"",
@@ -1392,9 +1395,11 @@ vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 	{
 		return;
 	}
-	Assert(list_length(vacstmt->appendonly_compaction_insert_segno) <= 1);
-	if (vacstmt->appendonly_compaction_insert_segno == NULL)
+
+	if (vacstmt->appendonly_phase == AOVAC_DROP)
 	{
+		Assert(!vacstmt->appendonly_compaction_insert_segno);
+
 		elogif(Debug_appendonly_print_compaction, LOG,
 			"Vacuum drop phase %s", RelationGetRelationName(aorel));
 
@@ -1410,7 +1415,11 @@ vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt)
 	}
 	else
 	{
+		Assert(vacstmt->appendonly_phase == AOVAC_COMPACT);
+		Assert(list_length(vacstmt->appendonly_compaction_insert_segno) == 1);
+
 		int insert_segno = linitial_int(vacstmt->appendonly_compaction_insert_segno);
+
 		if (insert_segno == APPENDONLY_COMPACTION_SEGNO_INVALID)
 		{
 			elogif(Debug_appendonly_print_compaction, LOG,
