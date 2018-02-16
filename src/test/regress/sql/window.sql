@@ -171,10 +171,7 @@ SELECT sum(unique1) over (order by four range between current row and unbounded 
 	unique1, four
 FROM tenk1 WHERE unique1 < 10;
 
-<<<<<<< HEAD
 set search_path=singleseg, public;
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT sum(unique1) over (rows between current row and unbounded following),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10;
@@ -199,12 +196,8 @@ SELECT sum(unique1) over (w range between current row and unbounded following),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10 WINDOW w AS (order by four);
 
-<<<<<<< HEAD
 -- fails on PostgreSQL: not implemented yet
 -- Has been implemented in GPDB.
-=======
--- fail: not implemented yet
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT sum(unique1) over (order by four range between 2::int8 preceding and 1::int2 preceding),
 	unique1, four
 FROM tenk1 WHERE unique1 < 10;
@@ -216,12 +209,8 @@ FROM tenk1 WHERE unique1 < 10
 WINDOW w AS (order by four range between current row and unbounded following);
 
 SELECT sum(unique1) over
-<<<<<<< HEAD
 	(order by unique1
 	 rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
-=======
-	(rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 	unique1
 FROM tenk1 WHERE unique1 < 10;
 
@@ -233,11 +222,8 @@ SELECT * FROM v_window;
 
 SELECT pg_get_viewdef('v_window');
 
-<<<<<<< HEAD
 reset search_path;
 
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 -- with UNION
 SELECT count(*) OVER (PARTITION BY four) FROM (SELECT * FROM tenk1 UNION ALL SELECT * FROM tenk2)s LIMIT 0;
 
