@@ -129,7 +129,6 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 				 errdetail("Query has too few columns.")));
 }
 
-#if 0 /* RETURNING not implemented in GPDB */
 /*
  * ExecProcessReturning --- evaluate a RETURNING list
  *
@@ -159,7 +158,6 @@ ExecProcessReturning(ProjectionInfo *projectReturning,
 	/* Compute the RETURNING expressions */
 	return ExecProject(projectReturning, NULL);
 }
-#endif
 
 /* ----------------------------------------------------------------
  *		ExecInsert
@@ -242,8 +240,6 @@ ExecInsert(TupleTableSlot *slot,
 	{
 		resultRelInfo = estate->es_result_relation_info;
 	}
-
-	Assert (!resultRelInfo->ri_projectReturning);
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
@@ -503,12 +499,10 @@ ExecInsert(TupleTableSlot *slot,
 
 	list_free(recheckIndexes);
 
-#if 0 /* RETURNING not implemented in GPDB */
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
 									slot, planSlot);
-#endif
 
 	return NULL;
 }
@@ -565,8 +559,6 @@ ExecDelete(ItemPointer tupleid,
 		resultRelInfo = estate->es_result_relation_info;
 	}
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
-
-	Assert (!resultRelInfo->ri_projectReturning);
 
 	if (planGen == PLANGEN_PLANNER)
 	{
@@ -753,7 +745,6 @@ ldelete:;
 		ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
 	}
 
-#if 0 /* RETURNING not implemented in GPDB */
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 	{
@@ -766,6 +757,8 @@ ldelete:;
 		HeapTupleData deltuple;
 		Buffer		delbuffer;
 
+		// FIXME: What if it's an AO table?
+
 		deltuple.t_self = *tupleid;
 		if (!heap_fetch(resultRelationDesc, SnapshotAny,
 						&deltuple, &delbuffer, false, NULL))
@@ -773,7 +766,7 @@ ldelete:;
 
 		if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
 			ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
-		ExecStoreTuple(&deltuple, slot, InvalidBuffer, false);
+		ExecStoreHeapTuple(&deltuple, slot, InvalidBuffer, false);
 
 		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning,
 									 slot, planSlot);
@@ -783,7 +776,6 @@ ldelete:;
 
 		return rslot;
 	}
-#endif
 
 	return NULL;
 }
@@ -1212,12 +1204,10 @@ lreplace:;
 
 	list_free(recheckIndexes);
 
-#if 0 /* RETURNING not implemented in GPDB */
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
 									slot, planSlot);
-#endif
 
 	return NULL;
 }
