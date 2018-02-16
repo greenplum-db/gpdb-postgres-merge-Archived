@@ -19,12 +19,29 @@ ALTER TABLE persons RENAME COLUMN id TO num;
 
 CREATE TABLE personsx OF person_type (myname WITH OPTIONS NOT NULL); -- error
 
+-- This test comes from postgres, and we expect it to fail on Greenplum
+-- because Greenplum does not support both primary keys and unique constraints
+-- at the same time.
 CREATE TABLE persons2 OF person_type (
     id WITH OPTIONS PRIMARY KEY,
     UNIQUE (name)
 );
 
 \d persons2
+
+-- These are added for Greenplum, as the previous table creation statement
+-- should have failed.
+CREATE TABLE gppersons1 OF person_type (
+    id WITH OPTIONS PRIMARY KEY
+);
+
+\d gppersons1
+
+CREATE TABLE gppersons2 OF person_type (
+    UNIQUE (name)
+);
+
+\d gppersons2
 
 CREATE TABLE persons3 OF person_type (
     PRIMARY KEY (id),
