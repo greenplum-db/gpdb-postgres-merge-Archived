@@ -1335,26 +1335,14 @@ heap_create_with_catalog(const char *relname,
 	else
 		appendOnlyRel = false;
 
-	/* MPP-8058: disallow OIDS on column-oriented tables */
-	if (tupdesc->tdhasoid && 
-		IsNormalProcessingMode() &&
-        (Gp_role == GP_ROLE_DISPATCH))
-	{
-		if (relstorage == RELSTORAGE_AOCOLS)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg(
-							 "OIDS=TRUE is not allowed on tables that "
-							 "use column-oriented storage. Use OIDS=FALSE"
-							 )));
-		else
-			ereport(NOTICE,
-					(errmsg(
-							 "OIDS=TRUE is not recommended for user-created "
-							 "tables. Use OIDS=FALSE to prevent wrap-around "
-							 "of the OID counter"
-							 )));
-	}
+	/*
+	 * MPP-8058: disallow OIDS on column-oriented tables. This should've been checked earlier
+	 * already, but better safe than sorry.
+	 */
+	if (tupdesc->tdhasoid && relstorage == RELSTORAGE_AOCOLS)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
 
 	CheckAttributeNamesTypes(tupdesc, relkind, allow_system_table_mods);
 

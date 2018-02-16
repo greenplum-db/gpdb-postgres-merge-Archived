@@ -729,12 +729,22 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 	}
 
 	/* MPP-8405: disallow OIDS on partitioned tables */
-	if ((stmt->partitionBy || stmt->is_part_child) &&
-		descriptor->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
+	if (descriptor->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
+	{
+		if (stmt->partitionBy || stmt->is_part_child)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("OIDS=TRUE is not allowed on partitioned tables"),
 					 errhint("Use OIDS=FALSE.")));
+
+		if (relstorage == RELSTORAGE_AOCOLS)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
+		else
+			ereport(NOTICE,
+					(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+	}
 
 	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
 

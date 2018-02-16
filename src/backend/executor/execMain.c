@@ -3614,6 +3614,18 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/* Copy the tupdesc because heap_create_with_catalog modifies it */
 	tupdesc = CreateTupleDescCopy(queryDesc->tupDesc);
 
+	/* MPP-8405: disallow OIDS on partitioned tables */
+	if (tupdesc->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
+	{
+		if (relstorage == RELSTORAGE_AOCOLS)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
+		else
+			ereport(NOTICE,
+					(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+	}
+
 	/*
 	 * We can skip WAL-logging the insertions for FileRep on segments, but not on
 	 * master since we are using the WAL based physical replication.
