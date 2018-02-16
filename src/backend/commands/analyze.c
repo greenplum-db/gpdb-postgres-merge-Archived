@@ -289,6 +289,22 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	if (onerel->rd_rel->relhassubclass)
 		do_analyze_rel(onerel, vacstmt, false, true);
 
+	/* MPP-6929: metadata tracking */
+	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
+	{
+		char *asubtype = "";
+
+		if (IsAutoVacuumWorkerProcess())
+			asubtype = "AUTO";
+
+		MetaTrackUpdObject(RelationRelationId,
+						   RelationGetRelid(onerel),
+						   GetUserId(),
+						   "ANALYZE",
+						   asubtype
+			);
+	}
+
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
 	 * before we commit.  (If someone did, they'd fail to clean up the entries
@@ -701,22 +717,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								estimatedIndexPages,
 								totalindexrows, false, InvalidTransactionId);
 		}
-	}
-
-	/* MPP-6929: metadata tracking */
-	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
-	{
-		char *asubtype = "";
-
-		if (IsAutoVacuumWorkerProcess())
-			asubtype = "AUTO";
-
-		MetaTrackUpdObject(RelationRelationId,
-						   RelationGetRelid(onerel),
-						   GetUserId(),
-						   "ANALYZE",
-						   asubtype
-			);
 	}
 
 	/*
