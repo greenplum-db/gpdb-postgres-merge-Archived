@@ -1981,8 +1981,9 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		onerel = NULL;
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-		cluster_rel(relid, InvalidOid, false, true /* printError */,
+		cluster_rel(relid, InvalidOid, false,
 					(vacstmt->options & VACOPT_VERBOSE) != 0,
+					true /* printError */,
 					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
