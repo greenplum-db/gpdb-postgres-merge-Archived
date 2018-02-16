@@ -324,6 +324,10 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/*
 	 * If the transaction is read-only, we need to check if any writes are
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
+	 *
+	 * In GPDB, we must call ExecCheckXactReadOnly() in the QD even if the
+	 * transaction is not read-only, because ExecCheckXactReadOnly() also
+	 * determines if two-phase commit is needed.
 	 */
 	if ((XactReadOnly || Gp_role == GP_ROLE_DISPATCH) && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
 		ExecCheckXactReadOnly(queryDesc->plannedstmt);
@@ -1435,13 +1439,16 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
  * Note: in a Hot Standby slave this would need to reject writes to temp
  * tables as well; but an HS slave can't have created any temp tables
  * in the first place, so no need to check that.
+ *
+ * In GPDB, an important side-effect of this is to call
+ * ExecutorMarkTransactionDoesWrites(), if the query is not read-only. That
+ * ensures that we use two-phase commit for this transaction.
  */
 static void
 ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 {
 	ListCell   *l;
     int         rti;
-    bool		changesTempTables = false;
 
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
@@ -1453,7 +1460,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	{
 		Assert(plannedstmt->intoClause->rel);
 		if (plannedstmt->intoClause->rel->istemp)
-			changesTempTables = true;
+			ExecutorMarkTransactionDoesWrites();
 		else
 			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
@@ -1473,10 +1480,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 			continue;
 
 		if (isTempNamespace(get_rel_namespace(rte->relid)))
-		{
-			changesTempTables = true;
-			continue;
-		}
+			ExecutorMarkTransactionDoesWrites();
 
         /* CDB: Allow SELECT FOR SHARE/UPDATE *
          *
@@ -1502,9 +1506,6 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 
 		PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
-	if (changesTempTables)
-		ExecutorMarkTransactionDoesWrites();
-	return;
 }
 
 

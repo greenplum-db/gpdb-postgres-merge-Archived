@@ -301,6 +301,12 @@ PreventCommandIfReadOnly(const char *cmdname)
 		/* translator: %s is name of a SQL command, eg CREATE */
 				 errmsg("cannot execute %s in a read-only transaction",
 						cmdname)));
+
+	/*
+	 * This is also a convenient place to make note that this transaction
+	 * needs two-phase commit.
+	 */
+	ExecutorMarkTransactionDoesWrites();
 }
 
 /*
@@ -320,6 +326,8 @@ PreventCommandDuringRecovery(const char *cmdname)
 		/* translator: %s is name of a SQL command, eg CREATE */
 				 errmsg("cannot execute %s during recovery",
 						cmdname)));
+
+	ExecutorMarkTransactionDoesWrites();
 }
 
 /*
