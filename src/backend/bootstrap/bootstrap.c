@@ -432,7 +432,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 		case CheckpointerProcess:
 			/* don't set signals, checkpointer is similar to bgwriter and has its own agenda */
-			InitXLOGAccess();
 			CheckpointerMain();
 			proc_exit(1);		/* should never return */
 
