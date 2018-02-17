@@ -556,6 +556,10 @@ select (select (a.*)::text) from view_a a;
 --
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
+-- Greenplum note: This query will only work with ORCA. This type of query
+-- was not supported in postgres versions prior to 8.4, and thus was never
+-- supported in the planner. After 8.4 versions, the planner works, but
+-- the plan it creates is not currently parallel safe.
 select
   (select sq1) as qq1
 from
@@ -563,10 +567,7 @@ from
    from int8_tbl) sq0
   join
   int4_tbl i4 on dummy = i4.f1;
- qq1 
------
-(0 rows)
-
+ERROR:  correlated subquery with skip-level correlations is not supported
 --
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
