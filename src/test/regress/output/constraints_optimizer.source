@@ -622,7 +622,6 @@ ERROR:  The distributed transaction 'Prepare' broadcast failed to one or more se
 ALTER TABLE deferred_excl DROP CONSTRAINT deferred_excl_con;
 -- This should fail, but worth testing because of HOT updates
 UPDATE deferred_excl SET f1 = 3;
-ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 -- In the original postgres test, both the tuples in this table will be updated
 -- (probably by HOT update) in the previous statement, and would now be equal. In
 -- greenplum, the planner does not support updating distribution keys, so we need
