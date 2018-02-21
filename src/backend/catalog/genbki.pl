@@ -218,7 +218,8 @@ foreach my $catname ( @{ $catalogs->{names} } )
                     {cmin      => 'cid'},
                     {xmax      => 'xid'},
                     {cmax      => 'cid'},
-                    {tableoid  => 'oid'}
+                    {tableoid  => 'oid'},
+                    {gp_segment_id => 'int4'}
                 );
                 foreach my $attr (@SYS_ATTRS)
                 {
