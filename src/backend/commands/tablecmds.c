@@ -12637,6 +12637,12 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						RecentXmin,
 						NULL);
 
+	/*
+	 * Make changes from swapping relation files visible before updating
+	 * options below or else we get an already updated tuple error.
+	 */
+	CommandCounterIncrement();
+
 	if (DatumGetPointer(newOptions))
 	{
 		Datum		repl_val[Natts_pg_class];
