@@ -1290,7 +1290,6 @@ select * from altinhoid;
 
 alter table altwithoid set with oids;
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
-NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 select oid > 0, * from altwithoid;
  ?column? | col 
 ----------+-----
@@ -1321,8 +1320,8 @@ select oid > 0, * from altinhoid;
 (1 row)
 
 alter table altwithoid set with oids;
-NOTICE:  merging definition of column "oid" for child "altinhoid"
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
+NOTICE:  merging definition of column "oid" for child "altinhoid"
 select oid > 0, * from altwithoid;
  ?column? | col 
 ----------+-----

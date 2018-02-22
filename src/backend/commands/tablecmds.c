@@ -3365,6 +3365,16 @@ ATController(Relation rel, List *cmds, bool recurse)
 
 		if (cmd->subtype == AT_PartAddInternal)
 			is_partition = true;
+		else if (cmd->subtype == AT_AddOids && Gp_role == GP_ROLE_DISPATCH)
+		{
+			if (RelationIsAoCols(rel))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
+			else
+				ereport(NOTICE,
+						(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+		}
 
 		ATPrepCmd(&wqueue, rel, cmd, recurse, false);
 	}
