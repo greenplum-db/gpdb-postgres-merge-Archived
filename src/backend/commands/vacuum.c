@@ -744,7 +744,9 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	onerelid = onerel->rd_lockInfo.lockRelId;
 	LockRelationIdForSession(&onerelid, lmode);
 
+	oldcontext = MemoryContextSwitchTo(vac_context);
 	vacuumStatement_AssignRelation(vacstmt, relid, relations);
+	MemoryContextSwitchTo(oldcontext);
 
 	if (RelationIsHeap(onerel))
 	{

@@ -1228,6 +1228,7 @@ _outRangeVar(StringInfo str, RangeVar *node)
 	 * we deliberately ignore catalogname here, since it is presently not
 	 * semantically meaningful
 	 */
+	WRITE_STRING_FIELD(catalogname);
 	WRITE_STRING_FIELD(schemaname);
 	WRITE_STRING_FIELD(relname);
 	WRITE_ENUM_FIELD(inhOpt, InhOption);

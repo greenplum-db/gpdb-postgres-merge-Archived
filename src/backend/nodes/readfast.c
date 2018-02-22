@@ -371,6 +371,7 @@ _readRangeVar(void)
 	local_node->catalogname = NULL;		/* not currently saved in output
 										 * format */
 
+	READ_STRING_FIELD(catalogname);
 	READ_STRING_FIELD(schemaname);
 	READ_STRING_FIELD(relname);
 	READ_ENUM_FIELD(inhOpt, InhOption); Assert(local_node->inhOpt <= INH_DEFAULT);
