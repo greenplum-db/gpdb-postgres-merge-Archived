@@ -705,7 +705,11 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	 * Check that it's a plain table; we used to do this in get_rel_oids() but
 	 * seems safer to check after we've locked the relation.
 	 */
-	if (onerel->rd_rel->relkind != RELKIND_RELATION || RelationIsExternal(onerel))
+	if ((onerel->rd_rel->relkind != RELKIND_RELATION &&
+		 onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
+		 onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
+		 onerel->rd_rel->relkind != RELKIND_AOVISIMAP) ||
+		RelationIsExternal(onerel))
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views or external tables",
@@ -1756,10 +1760,14 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	Oid			aoseg_relid = InvalidOid;
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
+	RangeVar	*aoseg_rangevar;
+	RangeVar	*aoblkdir_rangevar;
+	RangeVar	*aovisimap_rangevar;
 	bool		is_heap;
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	MemoryContext oldcontext;
 
 	if (!onerel)
 	{
@@ -1916,6 +1924,17 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
 								  &aovisimap_relid, NULL);
+		oldcontext = MemoryContextSwitchTo(vac_context);
+		aoseg_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoseg_relid)),
+									  get_rel_name(aoseg_relid),
+									  -1);
+		aoblkdir_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aoblkdir_relid)),
+										 get_rel_name(aoblkdir_relid),
+										 -1);
+		aovisimap_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(aovisimap_relid)),
+										  get_rel_name(aovisimap_relid),
+										  -1);
+		MemoryContextSwitchTo(oldcontext);
 		vacstmt->appendonly_relation_empty =
 				AppendOnlyCompaction_IsRelationEmpty(onerel);
 	}
@@ -2002,10 +2021,10 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 
 		stats_context.updated_stats = NIL;
 
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, stats_context.updated_stats);
+
 		if (Gp_role == GP_ROLE_DISPATCH)
 			dispatchVacuum(vacstmt, &stats_context);
-
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, stats_context.updated_stats);
 	}
 
 	/* Roll back any GUC changes executed by index functions */
@@ -2078,25 +2097,37 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 * the user saying that transaction is already in progress. Hence we want
 	 * to vacuum the auxliary relations only in cleanup phase or if we are in
 	 * the prepare phase and the AO/CO table is empty.
+	 *
+	 * We alter the vacuum statement here since the AO auxiliary tables
+	 * vacuuming will be dispatched to the primaries.
 	 */
-	if (vacstmt->appendonly_phase == AOVAC_CLEANUP ||
-		(vacstmt->appendonly_relation_empty && vacstmt->appendonly_phase == AOVAC_PREPARE))
+	if (Gp_role == GP_ROLE_DISPATCH &&
+		(vacstmt->appendonly_phase == AOVAC_CLEANUP ||
+		 (vacstmt->appendonly_relation_empty &&
+		  vacstmt->appendonly_phase == AOVAC_PREPARE)))
 	{
+		vacstmt->appendonly_compaction_segno = NULL;
+		vacstmt->appendonly_compaction_insert_segno = NULL;
+		vacstmt->appendonly_phase = AOVAC_NONE;
+
 		/* do the same for an AO segments table, if any */
 		if (aoseg_relid != InvalidOid)
 		{
+			vacstmt->relation = aoseg_rangevar;
 			vacuum_rel(NULL, aoseg_relid, vacstmt, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO block directory table, if any */
 		if (aoblkdir_relid != InvalidOid)
 		{
+			vacstmt->relation = aoblkdir_rangevar;
 			vacuum_rel(NULL, aoblkdir_relid, vacstmt, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO visimap, if any */
 		if (aovisimap_relid != InvalidOid)
 		{
+			vacstmt->relation = aovisimap_rangevar;
 			vacuum_rel(NULL, aovisimap_relid, vacstmt, lmode, for_wraparound);
 		}
 	}
