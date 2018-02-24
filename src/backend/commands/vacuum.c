@@ -1760,9 +1760,9 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	Oid			aoseg_relid = InvalidOid;
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
-	RangeVar	*aoseg_rangevar;
-	RangeVar	*aoblkdir_rangevar;
-	RangeVar	*aovisimap_rangevar;
+	RangeVar	*aoseg_rangevar = NULL;
+	RangeVar	*aoblkdir_rangevar = NULL;
+	RangeVar	*aovisimap_rangevar = NULL;
 	bool		is_heap;
 	Oid			save_userid;
 	int			save_sec_context;
@@ -2111,21 +2111,21 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		vacstmt->appendonly_phase = AOVAC_NONE;
 
 		/* do the same for an AO segments table, if any */
-		if (aoseg_relid != InvalidOid)
+		if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
 		{
 			vacstmt->relation = aoseg_rangevar;
 			vacuum_rel(NULL, aoseg_relid, vacstmt, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO block directory table, if any */
-		if (aoblkdir_relid != InvalidOid)
+		if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
 		{
 			vacstmt->relation = aoblkdir_rangevar;
 			vacuum_rel(NULL, aoblkdir_relid, vacstmt, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO visimap, if any */
-		if (aovisimap_relid != InvalidOid)
+		if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
 		{
 			vacstmt->relation = aovisimap_rangevar;
 			vacuum_rel(NULL, aovisimap_relid, vacstmt, lmode, for_wraparound);
