@@ -707,6 +707,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	 */
 	if ((onerel->rd_rel->relkind != RELKIND_RELATION &&
 		 onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
+		 onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
 		 onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
 		 onerel->rd_rel->relkind != RELKIND_AOVISIMAP) ||
 		RelationIsExternal(onerel))
@@ -1760,6 +1761,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	Oid			aoseg_relid = InvalidOid;
 	Oid         aoblkdir_relid = InvalidOid;
 	Oid         aovisimap_relid = InvalidOid;
+	RangeVar	*toast_rangevar = NULL;
 	RangeVar	*aoseg_rangevar = NULL;
 	RangeVar	*aoblkdir_rangevar = NULL;
 	RangeVar	*aovisimap_rangevar = NULL;
@@ -1917,6 +1919,13 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 */
 	toast_relid = onerel->rd_rel->reltoastrelid;
 	is_heap = RelationIsHeap(onerel);
+	oldcontext = MemoryContextSwitchTo(vac_context);
+	toast_rangevar = makeRangeVar(get_namespace_name(get_rel_namespace(toast_relid)),
+								  get_rel_name(toast_relid),
+								  -1);
+	MemoryContextSwitchTo(oldcontext);
+
+
 	if (!is_heap)
 	{
 		Assert(RelationIsAoRows(onerel) || RelationIsAoCols(onerel));
@@ -2078,12 +2087,16 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 * cleanup phase when it's AO table or in prepare phase if it's an
 	 * empty AO table.
 	 */
-	if (is_heap ||
+	if (Gp_role == GP_ROLE_DISPATCH && (is_heap ||
 		(!is_heap && (vacstmt->appendonly_phase == AOVAC_CLEANUP ||
-					  vacstmt->appendonly_relation_empty)))
+					  vacstmt->appendonly_relation_empty))))
 	{
-		if (toast_relid != InvalidOid)
+		if (toast_relid != InvalidOid && toast_rangevar != NULL)
 		{
+			vacstmt->appendonly_compaction_segno = NULL;
+			vacstmt->appendonly_compaction_insert_segno = NULL;
+			vacstmt->appendonly_phase = AOVAC_NONE;
+			vacstmt->relation = toast_rangevar;
 			vacuum_rel(NULL, toast_relid, vacstmt, lmode, for_wraparound);
 		}
 	}
