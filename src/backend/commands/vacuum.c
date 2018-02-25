@@ -251,10 +251,11 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	/*
 	 * Decide whether we need to start/commit our own transactions.
 	 *
-	 * For VACUUM (with or without ANALYZE): always do so, so that we can
-	 * release locks as soon as possible.  (We could possibly use the outer
-	 * transaction for a one-table VACUUM, but handling TOAST tables would be
-	 * problematic.)
+	 * For VACUUM (with or without ANALYZE): always do so on the query
+	 * dispatcher, so that we can release locks as soon as possible.  On the
+	 * query executor we skip this and use the outer transaction when skipping
+	 * two phase commit, as the expectation is that it will be a separate
+	 * dispatch for every table to be vacuumed.
 	 *
 	 * For ANALYZE (no VACUUM): if inside a transaction block, we cannot
 	 * start/commit our own transactions.  Also, there's no need to do so if
@@ -263,7 +264,10 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * transactions so we can release locks sooner.
 	 */
 	if (vacstmt->options & VACOPT_VACUUM)
-		use_own_xacts = true;
+		if (Gp_role == GP_ROLE_EXECUTE && vacstmt->skip_twophase)
+			use_own_xacts = false;
+		else
+			use_own_xacts = true;
 	else
 	{
 		Assert(vacstmt->options & VACOPT_ANALYZE);
@@ -551,15 +555,11 @@ vacuumStatement_AssignRelation(VacuumStmt *vacstmt, Oid relid, List *relations)
  * and QD makes some decision what kind of stage we perform, and tells it
  * to QE with vacstmt fields through dispatch.
  *
- * For heap VACUUM FULL, we need two transactions.  One is to move tuples
- * from a page to another, to empty out last pages, which typically goes
- * into repair_frag.  We used to perform truncate operation there, but
- * it required to record transaction commit locally, which is not pleasant
- * if QD decides to cancel the whoe distributed transaction.  So the truncate
- * step is separated to a second transaction.  This two step operation is
- * performed on both base relation and toast relation at the same time.
- *
- * Lazy vacuum to heap is one step operation.
+ * For heap VACUUM we disable two-phase commit, because we do not actually make
+ * any logical changes to the tables. Even if a VACUUM transaction fails on one
+ * of the QE segments, it should not matter, because the data has not logically
+ * changed on disk. VACUUM FULL and lazy vacuum are both completed in one
+ * transaction.
  *
  * AO compaction is rather complicated.  There are four phases.
  *   - prepare phase
@@ -622,9 +622,12 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	 * For each iteration we start/commit our own transactions,
 	 * so that we can release resources such as locks and memories,
 	 * and we can also safely perform non-transactional work
-	 * along with transactional work.
+	 * along with transactional work. If we are a query executor and skipping
+	 * a two phase commit, the expectation is that we will vacuum one relation
+	 * per dispatch, so we can use the outer transaction for this instead.
 	 */
-	StartTransactionCommand();
+	if (Gp_role != GP_ROLE_EXECUTE || !vacstmt->skip_twophase)
+		StartTransactionCommand();
 
 	/*
 	 * Functions in indexes may want a snapshot set. Also, setting
@@ -751,6 +754,9 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 
 	if (RelationIsHeap(onerel) || Gp_role == GP_ROLE_EXECUTE)
 	{
+		/* skip two-phase commit on heap table VACUUM */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			vacstmt->skip_twophase = true;
 		vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
 		onerel = NULL;
 	}
@@ -762,6 +768,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		vacstmt->appendonly_compaction_segno = NIL;
 		vacstmt->appendonly_compaction_insert_segno = NIL;
 		vacstmt->appendonly_relation_empty = false;
+		vacstmt->skip_twophase = false;
 
 		/*
 		 * 1. Prepare phase
@@ -2090,6 +2097,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 			vacstmt_toast->options = vacstmt->options;
 			vacstmt_toast->freeze_min_age = vacstmt->freeze_min_age;
 			vacstmt_toast->freeze_table_age = vacstmt->freeze_table_age;
+			vacstmt_toast->skip_twophase = vacstmt->skip_twophase;
 
 			vacstmt_toast->relation = toast_rangevar;
 			vacuum_rel(NULL, toast_relid, vacstmt_toast, lmode, for_wraparound);
@@ -2629,6 +2637,8 @@ dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx)
 {
 	CdbPgResults cdb_pgresults;
 
+	int flags = DF_CANCEL_ON_ERROR | DF_WITH_SNAPSHOT;
+
 	/* should these be marked volatile ? */
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
@@ -2636,11 +2646,11 @@ dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx)
 	Assert(vacstmt->options & VACOPT_VACUUM);
 	Assert(!(vacstmt->options & VACOPT_ANALYZE));
 
+	if (!vacstmt->skip_twophase)
+		flags |= DF_NEED_TWO_PHASE;
+
 	/* XXX: Some kinds of VACUUM assign a new relfilenode. bitmap indexes maybe? */
-	CdbDispatchUtilityStatement((Node *) vacstmt,
-								DF_CANCEL_ON_ERROR|
-								DF_WITH_SNAPSHOT|
-								DF_NEED_TWO_PHASE,
+	CdbDispatchUtilityStatement((Node *) vacstmt, flags,
 								GetAssignedOidsForDispatch(),
 								&cdb_pgresults);
 

@@ -2744,6 +2744,7 @@ _readVacuumStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(va_cols);
 
+	READ_BOOL_FIELD(skip_twophase);
 	READ_NODE_FIELD(expanded_relids);
 	READ_NODE_FIELD(appendonly_compaction_segno);
 	READ_NODE_FIELD(appendonly_compaction_insert_segno);

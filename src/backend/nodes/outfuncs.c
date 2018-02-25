@@ -4156,6 +4156,7 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(va_cols);
 
+	WRITE_BOOL_FIELD(skip_twophase);
 	WRITE_NODE_FIELD(expanded_relids);
 	WRITE_NODE_FIELD(appendonly_compaction_segno);
 	WRITE_NODE_FIELD(appendonly_compaction_insert_segno);
