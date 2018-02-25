@@ -3975,6 +3975,7 @@ _copyVacuumStmt(VacuumStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(va_cols);
 
+	COPY_SCALAR_FIELD(skip_twophase);
 	COPY_NODE_FIELD(expanded_relids);
 	COPY_NODE_FIELD(appendonly_compaction_segno);
 	COPY_NODE_FIELD(appendonly_compaction_insert_segno);

@@ -2819,6 +2819,7 @@ typedef struct VacuumStmt
 	/* Object IDs for relations which expand from partition definitions */
 	List	   *expanded_relids;
 
+	bool skip_twophase;
 	/*
 	 * AO segment file num to compact (integer).
 	 */
