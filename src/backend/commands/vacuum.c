@@ -162,9 +162,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	   BufferAccessStrategy bstrategy, bool for_wraparound, bool isTopLevel)
 {
 	const char *stmttype;
-	volatile bool all_rels,
-				in_outer_xact,
-				use_own_xacts;
+	volatile bool in_outer_xact,
+	              use_own_xacts;
 	List	   *vacuum_relations;
 	List	   *analyze_relations;
 
@@ -230,9 +229,6 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 		MemoryContextSwitchTo(old_context);
 	}
 	vac_strategy = bstrategy;
-
-	/* Remember whether we are processing everything in the DB */
-	all_rels = (!OidIsValid(relid) && vacstmt->relation == NULL);
 
 	/*
 	 * Build list of relations to process, unless caller gave us one. (If we
@@ -753,12 +749,7 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 	vacuumStatement_AssignRelation(vacstmt, relid, relations);
 	MemoryContextSwitchTo(oldcontext);
 
-	if (RelationIsHeap(onerel))
-	{
-		vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
-		onerel = NULL;
-	}
-	else if (Gp_role == GP_ROLE_EXECUTE)
+	if (RelationIsHeap(onerel) || Gp_role == GP_ROLE_EXECUTE)
 	{
 		vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
 		onerel = NULL;
@@ -821,6 +812,8 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 					list_union_int(compactedSegmentFileList, compactNowList);
 				insertedSegmentFileList =
 					lappend_int(insertedSegmentFileList, insertSegNo);
+
+				MemoryContextSwitchTo(oldcontext);
 
 				vacuum_rel_ao_phase(onerel, relid, vacstmt, lmode, for_wraparound,
 									list_make1_int(insertSegNo),
