@@ -44,7 +44,7 @@ VACUUM (ANALYZE, FULL) vactst;
 
 CREATE TABLE vaccluster (i INT PRIMARY KEY);
 ALTER TABLE vaccluster CLUSTER ON vaccluster_pkey;
-INSERT INTO vaccluster SELECT * FROM vactst;
+INSERT INTO vaccluster SELECT i FROM vactst;
 CLUSTER vaccluster;
 
 VACUUM FULL pg_am;
