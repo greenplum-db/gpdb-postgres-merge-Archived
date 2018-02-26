@@ -2086,11 +2086,13 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	{
 		if (toast_relid != InvalidOid && toast_rangevar != NULL)
 		{
-			vacstmt->appendonly_compaction_segno = NULL;
-			vacstmt->appendonly_compaction_insert_segno = NULL;
-			vacstmt->appendonly_phase = AOVAC_NONE;
-			vacstmt->relation = toast_rangevar;
-			vacuum_rel(NULL, toast_relid, vacstmt, lmode, for_wraparound);
+			VacuumStmt *vacstmt_toast = makeNode(VacuumStmt);
+			vacstmt_toast->options = vacstmt->options;
+			vacstmt_toast->freeze_min_age = vacstmt->freeze_min_age;
+			vacstmt_toast->freeze_table_age = vacstmt->freeze_table_age;
+
+			vacstmt_toast->relation = toast_rangevar;
+			vacuum_rel(NULL, toast_relid, vacstmt_toast, lmode, for_wraparound);
 		}
 	}
 
@@ -2112,29 +2114,30 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		 (vacstmt->appendonly_relation_empty &&
 		  vacstmt->appendonly_phase == AOVAC_PREPARE)))
 	{
-		vacstmt->appendonly_compaction_segno = NULL;
-		vacstmt->appendonly_compaction_insert_segno = NULL;
-		vacstmt->appendonly_phase = AOVAC_NONE;
+		VacuumStmt *vacstmt_ao_aux = makeNode(VacuumStmt);
+		vacstmt_ao_aux->options = vacstmt->options;
+		vacstmt_ao_aux->freeze_min_age = vacstmt->freeze_min_age;
+		vacstmt_ao_aux->freeze_table_age = vacstmt->freeze_table_age;
 
 		/* do the same for an AO segments table, if any */
 		if (aoseg_relid != InvalidOid && aoseg_rangevar != NULL)
 		{
-			vacstmt->relation = aoseg_rangevar;
-			vacuum_rel(NULL, aoseg_relid, vacstmt, lmode, for_wraparound);
+			vacstmt_ao_aux->relation = aoseg_rangevar;
+			vacuum_rel(NULL, aoseg_relid, vacstmt_ao_aux, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO block directory table, if any */
 		if (aoblkdir_relid != InvalidOid && aoblkdir_rangevar != NULL)
 		{
-			vacstmt->relation = aoblkdir_rangevar;
-			vacuum_rel(NULL, aoblkdir_relid, vacstmt, lmode, for_wraparound);
+			vacstmt_ao_aux->relation = aoblkdir_rangevar;
+			vacuum_rel(NULL, aoblkdir_relid, vacstmt_ao_aux, lmode, for_wraparound);
 		}
 
 		/* do the same for an AO visimap, if any */
 		if (aovisimap_relid != InvalidOid && aovisimap_rangevar != NULL)
 		{
-			vacstmt->relation = aovisimap_rangevar;
-			vacuum_rel(NULL, aovisimap_relid, vacstmt, lmode, for_wraparound);
+			vacstmt_ao_aux->relation = aovisimap_rangevar;
+			vacuum_rel(NULL, aovisimap_relid, vacstmt_ao_aux, lmode, for_wraparound);
 		}
 	}
 }
