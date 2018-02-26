@@ -129,7 +129,6 @@ typedef struct VPgClassStats
 	Oid			relid;
 	BlockNumber rel_pages;
 	double		rel_tuples;
-	BlockNumber empty_end_pages;
 } VPgClassStats;
 
 /* GUC parameters */
@@ -154,11 +153,8 @@ extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
 					bool hasindex,
-					TransactionId frozenxid);
-extern void vac_update_relstats_from_list(Relation rel,
-							  BlockNumber num_pages, double num_tuples,
-							  bool hasindex, TransactionId frozenxid,
-										  List *updated_stats);
+					TransactionId frozenxid,
+					bool isvacuum);
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,
@@ -171,12 +167,12 @@ extern bool vacuumStatement_IsTemporary(Relation onerel);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy, List *updated_stats);
+				BufferAccessStrategy bstrategy);
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
 										 bool *relhasindex);
-extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt, List* updated_stats);
+extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
 
 /* in commands/analyze.c */

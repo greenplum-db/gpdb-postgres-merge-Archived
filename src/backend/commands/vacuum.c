@@ -111,7 +111,7 @@ static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt,
 static void vac_truncate_clog(TransactionId frozenXID);
 static void vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		   bool for_wraparound);
-static void scan_index(Relation indrel, double num_tuples, List *updated_stats,
+static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
 static bool appendonly_tid_reaped(ItemPointer itemptr, void *state);
 static void dispatchVacuum(VacuumStmt *vacstmt, VacuumStatsContext *ctx);
@@ -132,8 +132,8 @@ vacuum_combine_stats(VacuumStatsContext *stats_context,
 					CdbPgResults* cdb_pgresults);
 
 static void vacuum_appendonly_index(Relation indexRelation,
-		AppendOnlyIndexVacuumState *vacuumIndexState,
-									List* updated_stats, double rel_tuple_count, bool isfull, int elevel);
+						AppendOnlyIndexVacuumState *vacuumIndexState,
+						double rel_tuple_count, int elevel);
 
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
@@ -1338,38 +1338,31 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 }
 
 
-void
-vac_update_relstats_from_list(Relation rel,
-							  BlockNumber num_pages, double num_tuples,
-							  bool hasindex, TransactionId frozenxid,
-							  List *updated_stats)
+/*
+ * Update relpages/reltuples of all the relations in the list.
+ */
+static void
+vac_update_relstats_from_list(List *updated_stats)
 {
-	/*
-	 * If this is QD, use the stats collected in updated_stats instead of
-	 * the one provided through 'num_pages' and 'num_tuples'.  It doesn't
-	 * seem worth doing so for system tables, though (it'd better say
-	 * "non-distributed" tables than system relations here, but for now
-	 * it's effectively the same.)
-	 */
-	if (Gp_role == GP_ROLE_DISPATCH && !IsSystemRelation(rel))
-	{
-		ListCell *lc;
-		num_pages = 0;
-		num_tuples = 0.0;
-		foreach (lc, updated_stats)
-		{
-			VPgClassStats *stats = (VPgClassStats *) lfirst(lc);
-			if (stats->relid == RelationGetRelid(rel))
-			{
-				num_pages += stats->rel_pages;
-				num_tuples += stats->rel_tuples;
-				break;
-			}
-		}
-	}
+	ListCell *lc;
 
-	vac_update_relstats(rel, num_pages, num_tuples,
-						hasindex, frozenxid);
+	foreach (lc, updated_stats)
+	{
+		VPgClassStats *stats = (VPgClassStats *) lfirst(lc);
+		Relation	rel;
+
+		rel = relation_open(stats->relid, AccessShareLock);
+
+		/*
+		 * Pass 'false' for isvacuum, so that the stats are
+		 * actually updated.
+		 */
+		vac_update_relstats(rel,
+							stats->rel_pages, stats->rel_tuples,
+							rel->rd_rel->relhasindex, InvalidTransactionId,
+							false /* isvacuum */);
+		relation_close(rel, AccessShareLock);
+	}
 }
 
 /*
@@ -1404,7 +1397,7 @@ vac_update_relstats_from_list(Relation rel,
 void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
-					bool hasindex, TransactionId frozenxid)
+					bool hasindex, TransactionId frozenxid, bool isvacuum)
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
@@ -1415,24 +1408,43 @@ vac_update_relstats(Relation relation,
 	Assert(relid != InvalidOid);
 
 	/*
-	 * CDB: send the number of tuples and the number of pages in pg_class located
-	 * at QEs through the dispatcher.
+	 * In GPDB, all the data is stored in the segments, and the
+	 * relpages/reltuples in the master reflect the sum of the values in
+	 * all the segments. In VACUUM, don't overwrite relpages/reltuples with
+	 * the values we counted in the QD node itself. We will dispatch the
+	 * VACUUM to the segments after processing the QD node, and we will
+	 * update relpages/reltuples then.
+	 *
+	 * Update stats for system tables normally, though (it'd better say
+	 * "non-distributed" tables than system relations here, but for now
+	 * it's effectively the same.)
 	 */
-	if (Gp_role == GP_ROLE_EXECUTE)
+	if (!IsSystemRelation(relation) && isvacuum)
 	{
-		/* cdbanalyze_get_relstats(rel, &num_pages, &num_tuples);*/
-		StringInfoData buf;
-		VPgClassStats stats;
+		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			num_pages = relation->rd_rel->relpages;
+			num_tuples = relation->rd_rel->reltuples;
+		}
+		else if (Gp_role == GP_ROLE_EXECUTE)
+		{
+			/*
+			 * CDB: Build a special message, to send the number of tuples
+			 * and the number of pages in pg_class located at QEs through
+			 * the dispatcher.
+			 */
+			StringInfoData buf;
+			VPgClassStats stats;
 
-		pq_beginmessage(&buf, 'y');
-		pq_sendstring(&buf, "VACUUM");
-		stats.relid = relid;
-		stats.rel_pages = num_pages;
-		stats.rel_tuples = num_tuples;
-		stats.empty_end_pages = 0;
-		pq_sendint(&buf, sizeof(VPgClassStats), sizeof(int));
-		pq_sendbytes(&buf, (char *) &stats, sizeof(VPgClassStats));
-		pq_endmessage(&buf);
+			pq_beginmessage(&buf, 'y');
+			pq_sendstring(&buf, "VACUUM");
+			stats.relid = RelationGetRelid(relation);
+			stats.rel_pages = num_pages;
+			stats.rel_tuples = num_tuples;
+			pq_sendint(&buf, sizeof(VPgClassStats), sizeof(int));
+			pq_sendbytes(&buf, (char *) &stats, sizeof(VPgClassStats));
+			pq_endmessage(&buf);
+		}
 	}
 
 	/*
@@ -2026,14 +2038,17 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	}
 	else
 	{
-		VacuumStatsContext stats_context;
-
-		stats_context.updated_stats = NIL;
-
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy, stats_context.updated_stats);
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
+		{
+			VacuumStatsContext stats_context;
+
+			stats_context.updated_stats = NIL;
 			dispatchVacuum(vacstmt, &stats_context);
+
+			vac_update_relstats_from_list(stats_context.updated_stats);
+		}
 	}
 
 	/* Roll back any GUC changes executed by index functions */
@@ -2213,9 +2228,7 @@ static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
  * It returns the number of indexes on the relation.
  */
 int
-vacuum_appendonly_indexes(Relation aoRelation,
-		VacuumStmt *vacstmt,
-		List* updated_stats)
+vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 {
 	int reindex_count = 1;
 	int i;
@@ -2285,16 +2298,16 @@ vacuum_appendonly_indexes(Relation aoRelation,
 
 			for (i = 0; i < nindexes; i++)
 			{
-				vacuum_appendonly_index(Irel[i], &vacuumIndexState, updated_stats,
-										rel_tuple_count, (vacstmt->options & VACOPT_FULL),
-					elevel);
+				vacuum_appendonly_index(Irel[i], &vacuumIndexState,
+										rel_tuple_count,
+										elevel);
 			}
 			reindex_count++;
 		}
 		else
 		{
 			for (i = 0; i < nindexes; i++)
-				scan_index(Irel[i], rel_tuple_count, updated_stats, true, elevel);
+				scan_index(Irel[i], rel_tuple_count, true, elevel);
 		}
 	}
 
@@ -2344,7 +2357,7 @@ vac_is_partial_index(Relation indrel)
  * We use this when we have no deletions to do.
  */
 static void
-scan_index(Relation indrel, double num_tuples, List *updated_stats, bool check_stats, int elevel)
+scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumInfo ivinfo;
@@ -2369,9 +2382,10 @@ scan_index(Relation indrel, double num_tuples, List *updated_stats, bool check_s
 	 * is accurate.
 	 */
 	if (!stats->estimated_count)
-		vac_update_relstats_from_list(indrel,
+		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
-							false, InvalidTransactionId, updated_stats);
+							false, InvalidTransactionId,
+							true /* isvacuum */);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -2412,11 +2426,9 @@ scan_index(Relation indrel, double num_tuples, List *updated_stats, bool check_s
  */
 static void
 vacuum_appendonly_index(Relation indexRelation,
-		AppendOnlyIndexVacuumState* vacuumIndexState,
-		List *updated_stats,
-		double rel_tuple_count,
-						bool isfull,
-	int elevel)
+						AppendOnlyIndexVacuumState *vacuumIndexState,
+						double rel_tuple_count,
+						int elevel)
 {
 	Assert(RelationIsValid(indexRelation));
 	Assert(vacuumIndexState);
@@ -2442,10 +2454,15 @@ vacuum_appendonly_index(Relation indexRelation,
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
-	vac_update_relstats_from_list(indexRelation,
-						stats->num_pages, stats->num_index_tuples,
-						false, InvalidTransactionId, updated_stats);
+	/*
+	 * Now update statistics in pg_class, but only if the index says the count
+	 * is accurate.
+	 */
+	if (!stats->estimated_count)
+		vac_update_relstats(indexRelation,
+							stats->num_pages, stats->num_index_tuples,
+							false, InvalidTransactionId,
+							true /* isvacuum */);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",

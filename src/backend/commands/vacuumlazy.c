@@ -130,18 +130,16 @@ static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
-static void lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt,
-				  List *updated_stats);
+static void lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt);
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes, bool scan_all, List *updated_stats);
+			   Relation *Irel, int nindexes, bool scan_all);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static void lazy_vacuum_index(Relation indrel,
 				  IndexBulkDeleteResult **stats,
 				  LVRelStats *vacrelstats);
 static void lazy_cleanup_index(Relation indrel,
 				   IndexBulkDeleteResult *stats,
-				   LVRelStats *vacrelstats,
-				   List *updated_stats);
+				   LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
@@ -165,7 +163,7 @@ static int	vac_cmp_itemptr(const void *left, const void *right);
  */
 void
 lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
-				BufferAccessStrategy bstrategy, List *updated_stats)
+				BufferAccessStrategy bstrategy)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -228,7 +226,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 */
 	if (RelationIsAoRows(onerel) || RelationIsAoCols(onerel))
 	{
-		lazy_vacuum_aorel(onerel, vacstmt, updated_stats);
+		lazy_vacuum_aorel(onerel, vacstmt);
 		return;
 	}
 
@@ -243,7 +241,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vacrelstats->hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all, updated_stats);
+	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, scan_all);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
@@ -271,13 +269,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * in the planner, it's better to not update relpages either if we can't
 	 * update reltuples.
 	 */
-	vac_update_relstats_from_list(onerel,
-								  vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
-								  vacrelstats->hasindex,
-								  (vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
-								  InvalidTransactionId :
-								  FreezeLimit,
-								  updated_stats);
+	if (vacrelstats->scanned_all)
+		vac_update_relstats(onerel,
+							vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
+							vacrelstats->hasindex,
+							(vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
+							InvalidTransactionId :
+							FreezeLimit,
+							true /* isvacuum */);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -324,7 +323,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
  * lazy_vacuum_aorel -- perform LAZY VACUUM for one Append-only relation.
  */
 static void
-lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
+lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 {
 	LVRelStats *vacrelstats;
 	bool		update_relstats = true;
@@ -337,7 +336,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 			elogif(Debug_appendonly_print_compaction, LOG,
 				   "Vacuum prepare phase %s", RelationGetRelationName(onerel));
 
-			vacuum_appendonly_indexes(onerel, vacstmt, updated_stats);
+			vacuum_appendonly_indexes(onerel, vacstmt);
 			if (RelationIsAoRows(onerel))
 				AppendOnlyTruncateToEOF(onerel);
 			else
@@ -403,12 +402,12 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt, List *updated_stats)
 	if (update_relstats)
 	{
 		/* Update statistics in pg_class */
-		vac_update_relstats_from_list(onerel,
+		vac_update_relstats(onerel,
 							vacrelstats->rel_pages,
 							vacrelstats->new_rel_tuples,
 							vacrelstats->hasindex,
 							FreezeLimit,
-							updated_stats);
+							true /* isvacuum */);
 
 		/* report results to the stats collector, too */
 		pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -463,7 +462,7 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
  */
 static void
 lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes, bool scan_all, List *updated_stats)
+			   Relation *Irel, int nindexes, bool scan_all)
 {
 	BlockNumber nblocks,
 				blkno;
@@ -989,7 +988,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	/* Do post-vacuum cleanup and statistics update for each index */
 	for (i = 0; i < nindexes; i++)
-		lazy_cleanup_index(Irel[i], indstats[i], vacrelstats, updated_stats);
+		lazy_cleanup_index(Irel[i], indstats[i], vacrelstats);
 
 	/* If no indexes, make log report that lazy_vacuum_heap would've made */
 	if (vacuumed_pages)
@@ -1167,8 +1166,7 @@ lazy_vacuum_index(Relation indrel,
 static void
 lazy_cleanup_index(Relation indrel,
 				   IndexBulkDeleteResult *stats,
-				   LVRelStats *vacrelstats,
-				   List *updated_stats)
+				   LVRelStats *vacrelstats)
 {
 	IndexVacuumInfo ivinfo;
 	PGRUsage	ru0;
@@ -1192,10 +1190,10 @@ lazy_cleanup_index(Relation indrel,
 	 * is accurate.
 	 */
 	if (!stats->estimated_count)
-		vac_update_relstats_from_list(indrel,
+		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
 							false, InvalidTransactionId,
-							updated_stats);
+							true /* isvacuum */);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",

@@ -674,7 +674,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							totalpages,
 							totalrows,
 							hasindex,
-							InvalidTransactionId);
+							InvalidTransactionId,
+							false /* isvacuum */);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -715,7 +716,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
 								estimatedIndexPages,
-								totalindexrows, false, InvalidTransactionId);
+								totalindexrows, false, InvalidTransactionId,
+								false /* isvacuum */);
 		}
 	}
 
