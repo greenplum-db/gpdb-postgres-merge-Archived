@@ -1,18 +1,18 @@
 -- gp_dump_query_oids() doesn't list built-in functions, so we need a UDF to test with.
-CREATE FUNCTION myfunc(t text) RETURNS integer AS $$ SELECT 123 $$ LANGUAGE SQL;
-CREATE FUNCTION myfunc2(t text) RETURNS integer AS $$ SELECT 123 $$ LANGUAGE SQL;
+CREATE FUNCTION dumptestfunc(t text) RETURNS integer AS $$ SELECT 123 $$ LANGUAGE SQL;
+CREATE FUNCTION dumptestfunc2(t text) RETURNS integer AS $$ SELECT 123 $$ LANGUAGE SQL;
 
 -- The function returns OIDs. We need to replace them with something reproducable.
 CREATE FUNCTION sanitize_output(t text) RETURNS text AS $$
 declare
-  myfunc_oid oid;
-  myfunc2_oid oid;
+  dumptestfunc_oid oid;
+  dumptestfunc2_oid oid;
 begin
-    myfunc_oid = 'myfunc'::regproc::oid;
-    myfunc2_oid = 'myfunc2'::regproc::oid;
+    dumptestfunc_oid = 'dumptestfunc'::regproc::oid;
+    dumptestfunc2_oid = 'dumptestfunc2'::regproc::oid;
 
-    t := replace(t, myfunc_oid::text, '<myfunc>');
-    t := replace(t, myfunc2_oid::text, '<myfunc2>');
+    t := replace(t, dumptestfunc_oid::text, '<dumptestfunc>');
+    t := replace(t, dumptestfunc2_oid::text, '<dumptestfunc2>');
 
     RETURN t;
 end;
@@ -22,13 +22,13 @@ $$ LANGUAGE plpgsql;
 SELECT sanitize_output(gp_dump_query_oids('SELECT 123'));
 SELECT sanitize_output(gp_dump_query_oids('SELECT * FROM pg_proc'));
 SELECT sanitize_output(gp_dump_query_oids('SELECT length(proname) FROM pg_proc'));
-SELECT sanitize_output(gp_dump_query_oids('SELECT myfunc(proname) FROM pg_proc'));
+SELECT sanitize_output(gp_dump_query_oids('SELECT dumptestfunc(proname) FROM pg_proc'));
 
 -- with EXPLAIN
-SELECT sanitize_output(gp_dump_query_oids('explain SELECT myfunc(proname) FROM pg_proc'));
+SELECT sanitize_output(gp_dump_query_oids('explain SELECT dumptestfunc(proname) FROM pg_proc'));
 
 -- with a multi-query statement
-SELECT sanitize_output(gp_dump_query_oids('SELECT myfunc(proname) FROM pg_proc; SELECT myfunc2(relname) FROM pg_class'));
+SELECT sanitize_output(gp_dump_query_oids('SELECT dumptestfunc(proname) FROM pg_proc; SELECT dumptestfunc2(relname) FROM pg_class'));
 
 -- Test error reporting on an invalid query.
 SELECT gp_dump_query_oids('SELECT * FROM nonexistent_table');
@@ -79,3 +79,5 @@ DROP TABLE cctable;
 DROP TABLE ctable;
 DROP TABLE ptable;
 DROP TABLE minirepro_partition_test;
+DROP FUNCTION dumptestfunc(text);
+DROP FUNCTION dumptestfunc2(text);
