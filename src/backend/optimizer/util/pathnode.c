@@ -2500,29 +2500,29 @@ create_mergejoin_path(PlannerInfo *root,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
-    MergePath      *pathnode;
-    CdbPathLocus    join_locus;
-    List           *outermotionkeys;
-    List           *innermotionkeys;
+    MergePath  *pathnode;
+    CdbPathLocus join_locus;
+    List	   *outermotionkeys;
+    List	   *innermotionkeys;
 	bool		preserve_outer_ordering;
 	bool		preserve_inner_ordering;
 
-    /*
-     * Do subpaths have useful ordering?
-     */
-    if (outersortkeys == NIL)           /* must preserve existing ordering */
-        outermotionkeys = outer_path->pathkeys;
-    else if (pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
-        outermotionkeys = outersortkeys;/* lucky coincidence, already ordered */
-    else                                /* existing order useless; must sort */
-        outermotionkeys = NIL;
+	/*
+	 * Do subpaths have useful ordering?
+	 */
+	if (outersortkeys == NIL)           /* must preserve existing ordering */
+		outermotionkeys = outer_path->pathkeys;
+	else if (pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
+		outermotionkeys = outersortkeys;/* lucky coincidence, already ordered */
+	else                                /* existing order useless; must sort */
+		outermotionkeys = NIL;
 
-    if (innersortkeys == NIL)
-        innermotionkeys = inner_path->pathkeys;
-    else if (pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
-        innermotionkeys = innersortkeys;
-    else
-        innermotionkeys = NIL;
+	if (innersortkeys == NIL)
+		innermotionkeys = inner_path->pathkeys;
+	else if (pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
+		innermotionkeys = innersortkeys;
+	else
+		innermotionkeys = NIL;
 
 	/*
 	 * Add motion nodes above subpaths and decide where to join.
