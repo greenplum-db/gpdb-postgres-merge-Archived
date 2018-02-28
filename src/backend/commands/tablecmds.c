@@ -736,14 +736,6 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("OIDS=TRUE is not allowed on partitioned tables"),
 					 errhint("Use OIDS=FALSE.")));
-
-		if (relstorage == RELSTORAGE_AOCOLS)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
-		else
-			ereport(NOTICE,
-					(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
 	}
 
 	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
@@ -775,6 +767,18 @@ DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
 										  true,
 										  allowSystemTableModsDDL,
 										  valid_opts);
+
+	/*
+	 * Give a warning if you use OIDS=TRUE on user tables. We do this after calling
+	 * heap_create_with_catalog, because heap_create_with_catalog performs some extra
+	 * checks, and e.g. if you try to use OIDS=TRUE on an AOCS table, you will get
+	 * an error. We don't want to emit the NOTICE first, in that case.
+	 */
+	if (descriptor->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
+	{
+		ereport(NOTICE,
+				(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
+	}
 
 	StoreCatalogInheritance(relationId, stmt->inhOids);
 

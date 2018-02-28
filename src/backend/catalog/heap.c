@@ -1336,8 +1336,7 @@ heap_create_with_catalog(const char *relname,
 		appendOnlyRel = false;
 
 	/*
-	 * MPP-8058: disallow OIDS on column-oriented tables. This should've been checked earlier
-	 * already, but better safe than sorry.
+	 * MPP-8058: disallow OIDS on column-oriented tables.
 	 */
 	if (tupdesc->tdhasoid && relstorage == RELSTORAGE_AOCOLS)
 		ereport(ERROR,
