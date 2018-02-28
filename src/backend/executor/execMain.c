@@ -1480,7 +1480,10 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 			continue;
 
 		if (isTempNamespace(get_rel_namespace(rte->relid)))
+		{
 			ExecutorMarkTransactionDoesWrites();
+			continue;
+		}
 
         /* CDB: Allow SELECT FOR SHARE/UPDATE *
          *
