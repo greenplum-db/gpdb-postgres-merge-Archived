@@ -94,14 +94,14 @@
  * Before we consider skipping a page that's marked as clean in
  * visibility map, we must've seen at least this many clean pages.
  */
-#define SKIP_PAGES_THRESHOLD	32
+#define SKIP_PAGES_THRESHOLD	((BlockNumber) 32)
 
 typedef struct LVRelStats
 {
 	/* hasindex = true means two-pass strategy; false means one-pass */
 	bool		hasindex;
-	bool		scanned_all;	/* have we scanned all pages (this far)? */
 	/* Overall statistics about rel */
+	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	double		scanned_tuples;	/* counts only tuples on scanned pages */
@@ -172,7 +172,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	bool		scan_all;		/* should we scan all pages? */
+	bool		scanned_all;	/* did we actually scan all pages? */
 	TransactionId freezeTableLimit;
+	BlockNumber new_rel_pages;
+	double		new_rel_tuples;
+	TransactionId new_frozen_xid;
 
 	pg_rusage_init(&ru0);
 
@@ -230,11 +234,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		return;
 	}
 
-	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
-
 	/* heap relation */
 
+	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
+
+	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
+	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
 	vacrelstats->num_index_scans = 0;
+	vacrelstats->pages_removed = 0;
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
@@ -245,6 +252,21 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
+
+	/*
+	 * Compute whether we actually scanned the whole relation. If we did, we
+	 * can adjust relfrozenxid.
+	 *
+	 * NB: We need to check this before truncating the relation, because that
+	 * will change ->rel_pages.
+	 */
+	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
+	{
+		Assert(!scan_all);
+		scanned_all = false;
+	}
+	else
+		scanned_all = true;
 
 	/*
 	 * Optionally truncate the relation.
@@ -262,21 +284,33 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	FreeSpaceMapVacuum(onerel);
 
 	/*
-	 * Update statistics in pg_class.  But only if we didn't skip any pages;
-	 * the tuple count only includes tuples from the pages we've visited, and
-	 * we haven't frozen tuples in unvisited pages either.  The page count is
-	 * accurate in any case, but because we use the reltuples / relpages ratio
-	 * in the planner, it's better to not update relpages either if we can't
-	 * update reltuples.
+	 * Update statistics in pg_class.
+	 *
+	 * A corner case here is that if we scanned no pages at all because every
+	 * page is all-visible, we should not update relpages/reltuples, because
+	 * we have no new information to contribute.  In particular this keeps
+	 * us from replacing relpages=reltuples=0 (which means "unknown tuple
+	 * density") with nonzero relpages and reltuples=0 (which means "zero
+	 * tuple density") unless there's some actual evidence for the latter.
+	 *
+	 * Also, don't change relfrozenxid if we skipped any pages, since then
+	 * we don't know for certain that all tuples have a newer xmin.
 	 */
-	if (vacrelstats->scanned_all)
-		vac_update_relstats(onerel,
-							vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
-							vacrelstats->hasindex,
-							(vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
-							InvalidTransactionId :
-							FreezeLimit,
-							true /* isvacuum */);
+	new_rel_pages = vacrelstats->rel_pages;
+	new_rel_tuples = vacrelstats->new_rel_tuples;
+	if (vacrelstats->scanned_pages == 0 && new_rel_pages > 0)
+	{
+		new_rel_pages = vacrelstats->old_rel_pages;
+		new_rel_tuples = vacrelstats->old_rel_tuples;
+	}
+
+	new_frozen_xid = scanned_all ? FreezeLimit : InvalidTransactionId;
+
+	vac_update_relstats(onerel,
+						new_rel_pages, new_rel_tuples,
+						vacrelstats->hasindex,
+						new_frozen_xid,
+						true /* isvacuum */);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -479,7 +513,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	int reindex_count = 1;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
-	BlockNumber all_visible_streak;
+	BlockNumber next_not_all_visible_block;
+	bool		skipping_all_visible_blocks;
 
 	pg_rusage_init(&ru0);
 
@@ -503,7 +538,41 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	lazy_space_alloc(vacrelstats, nblocks);
 
-	all_visible_streak = 0;
+	/*
+	 * We want to skip pages that don't require vacuuming according to the
+	 * visibility map, but only when we can skip at least SKIP_PAGES_THRESHOLD
+	 * consecutive pages.  Since we're reading sequentially, the OS should be
+	 * doing readahead for us, so there's no gain in skipping a page now and
+	 * then; that's likely to disable readahead and so be counterproductive.
+	 * Also, skipping even a single page means that we can't update
+	 * relfrozenxid, so we only want to do it if we can skip a goodly number
+	 * of pages.
+	 *
+	 * Before entering the main loop, establish the invariant that
+	 * next_not_all_visible_block is the next block number >= blkno that's
+	 * not all-visible according to the visibility map, or nblocks if there's
+	 * no such block.  Also, we set up the skipping_all_visible_blocks flag,
+	 * which is needed because we need hysteresis in the decision: once we've
+	 * started skipping blocks, we may as well skip everything up to the next
+	 * not-all-visible block.
+	 *
+	 * Note: if scan_all is true, we won't actually skip any pages; but we
+	 * maintain next_not_all_visible_block anyway, so as to set up the
+	 * all_visible_according_to_vm flag correctly for each page.
+	 */
+	for (next_not_all_visible_block = 0;
+		 next_not_all_visible_block < nblocks;
+		 next_not_all_visible_block++)
+	{
+		if (!visibilitymap_test(onerel, next_not_all_visible_block, &vmbuffer))
+			break;
+		vacuum_delay_point();
+	}
+	if (next_not_all_visible_block >= SKIP_PAGES_THRESHOLD)
+		skipping_all_visible_blocks = true;
+	else
+		skipping_all_visible_blocks = false;
+
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		Buffer		buf;
@@ -516,36 +585,40 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		OffsetNumber frozen[MaxOffsetNumber];
 		int			nfrozen;
 		Size		freespace;
-		bool		all_visible_according_to_vm = false;
+		bool		all_visible_according_to_vm;
 		bool		all_visible;
 		bool		has_dead_tuples;
 
-		/*
-		 * Skip pages that don't require vacuuming according to the visibility
-		 * map. But only if we've seen a streak of at least
-		 * SKIP_PAGES_THRESHOLD pages marked as clean. Since we're reading
-		 * sequentially, the OS should be doing readahead for us and there's
-		 * no gain in skipping a page now and then. You need a longer run of
-		 * consecutive skipped pages before it's worthwhile. Also, skipping
-		 * even a single page means that we can't update relfrozenxid or
-		 * reltuples, so we only want to do it if there's a good chance to
-		 * skip a goodly number of pages.
-		 */
-		if (!scan_all)
+		if (blkno == next_not_all_visible_block)
 		{
-			all_visible_according_to_vm =
-				visibilitymap_test(onerel, blkno, &vmbuffer);
-			if (all_visible_according_to_vm)
+			/* Time to advance next_not_all_visible_block */
+			for (next_not_all_visible_block++;
+				 next_not_all_visible_block < nblocks;
+				 next_not_all_visible_block++)
 			{
-				all_visible_streak++;
-				if (all_visible_streak >= SKIP_PAGES_THRESHOLD)
-				{
-					vacrelstats->scanned_all = false;
-					continue;
-				}
+				if (!visibilitymap_test(onerel, next_not_all_visible_block,
+										&vmbuffer))
+					break;
+				vacuum_delay_point();
 			}
+
+			/*
+			 * We know we can't skip the current block.  But set up
+			 * skipping_all_visible_blocks to do the right thing at the
+			 * following blocks.
+			 */
+			if (next_not_all_visible_block - blkno > SKIP_PAGES_THRESHOLD)
+				skipping_all_visible_blocks = true;
 			else
-				all_visible_streak = 0;
+				skipping_all_visible_blocks = false;
+			all_visible_according_to_vm = false;
+		}
+		else
+		{
+			/* Current block is all-visible */
+			if (skipping_all_visible_blocks && !scan_all)
+				continue;
+			all_visible_according_to_vm = true;
 		}
 
 		vacuum_delay_point();
@@ -1175,7 +1248,7 @@ lazy_cleanup_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
-	ivinfo.estimated_count = !vacrelstats->scanned_all;
+	ivinfo.estimated_count = (vacrelstats->scanned_pages < vacrelstats->rel_pages);
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->new_rel_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -1239,8 +1312,13 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	new_rel_pages = RelationGetNumberOfBlocks(onerel);
 	if (new_rel_pages != old_rel_pages)
 	{
-		/* might as well use the latest news when we update pg_class stats */
-		vacrelstats->rel_pages = new_rel_pages;
+		/*
+		 * Note: we intentionally don't update vacrelstats->rel_pages with
+		 * the new rel size here.  If we did, it would amount to assuming that
+		 * the new pages are empty, which is unlikely. Leaving the numbers
+		 * alone amounts to assuming that the new pages have the same tuple
+		 * density as existing ones, which is less unlikely.
+		 */
 		UnlockRelation(onerel, AccessExclusiveLock);
 		return;
 	}
@@ -1274,7 +1352,11 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	UnlockRelation(onerel, AccessExclusiveLock);
 
-	/* update statistics */
+	/*
+	 * Update statistics.  Here, it *is* correct to adjust rel_pages without
+	 * also touching reltuples, since the tuple count wasn't changed by the
+	 * truncation.
+	 */
 	vacrelstats->rel_pages = new_rel_pages;
 	vacrelstats->pages_removed = old_rel_pages - new_rel_pages;
 
