@@ -326,8 +326,6 @@ PreventCommandDuringRecovery(const char *cmdname)
 		/* translator: %s is name of a SQL command, eg CREATE */
 				 errmsg("cannot execute %s during recovery",
 						cmdname)));
-
-	ExecutorMarkTransactionDoesWrites();
 }
 
 /*
