@@ -4711,20 +4711,20 @@ NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_99" for table "mpp542
 NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_100" for table "mpp5427"
 insert into mpp5427 select i from generate_series(1, 100) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 insert into mpp5427 select i from generate_series(1, 100000) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 insert into mpp5427 select i from generate_series(1, 1000000) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 truncate table mpp5427;
@@ -4732,26 +4732,26 @@ alter table mpp5427 add default partition default_part;
 NOTICE:  CREATE TABLE will create partition "mpp5427_1_prt_default_part" for table "mpp5427"
 insert into mpp5427 select i from generate_series(1, 100) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 insert into mpp5427 select i from generate_series(1, 100000) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 insert into mpp5427 select i from generate_series(1, 1000000) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 insert into mpp5427 select i from generate_series(10000000, 15000000) i;
 select * from pg_stats where tablename like 'mpp5427%';
- schemaname | tablename | attname | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
-------------+-----------+---------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
+ schemaname | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation 
+------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------
 (0 rows)
 
 drop table mpp5427;
