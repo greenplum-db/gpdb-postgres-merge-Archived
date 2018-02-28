@@ -280,8 +280,11 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 
 	/*
 	 * Do the normal non-recursive ANALYZE.
+	 * Just skip this for partitioned tables, which don't contain any rows.
 	 */
-	do_analyze_rel(onerel, vacstmt, false, false);
+	PartStatus ps = rel_part_status(relid);
+	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
+		do_analyze_rel(onerel, vacstmt, false, false);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
