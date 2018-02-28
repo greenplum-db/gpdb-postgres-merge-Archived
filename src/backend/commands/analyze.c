@@ -280,8 +280,13 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 
 	/*
 	 * Do the normal non-recursive ANALYZE.
+	 *
+	 * Skip this for partitioned tables. A partitioned table, i.e. the
+	 * "root partition", doesn't contain any rows.
 	 */
-	do_analyze_rel(onerel, vacstmt, false, false);
+	if (!(rel_is_partitioned(relid) ||
+		 (rel_is_child_partition(relid) && !rel_is_leaf_partition(relid))))
+		do_analyze_rel(onerel, vacstmt, false, false);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -666,10 +671,15 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Update pages/tuples stats in pg_class ... but not if we're doing
-	 * inherited stats.
+	 * Update pages/tuples stats in pg_class. In PostgreSQL, we don't do this
+	 * when we're building inherited stats, but in GPDB, we do. The reason is
+	 * mostly historical; the planner, or at least ORCA, expects the
+	 * relpages/reltuples on a partitioned table to represent the total across
+	 * all partitions.
 	 */
+#if 0
 	if (!inh)
+#endif
 		vac_update_relstats(onerel,
 							totalpages,
 							totalrows,
