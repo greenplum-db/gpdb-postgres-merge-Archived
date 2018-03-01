@@ -96,8 +96,10 @@ DefineOperator(List *names, List *parameters)
 	 * The SQL standard committee has decided that => should be used for named
 	 * parameters; therefore, a future release of PostgreSQL may disallow it
 	 * as the name of a user-defined operator.
+	 *
+	 * Only complain in the QD node, to avoid being too noisy.
 	 */
-	if (strcmp(oprName, "=>") == 0)
+	if (Gp_role != GP_ROLE_EXECUTE && strcmp(oprName, "=>") == 0)
 		ereport(WARNING,
 				(errmsg("=> is deprecated as an operator name"),
 				 errdetail("This name may be disallowed altogether in future versions of PostgreSQL.")));
