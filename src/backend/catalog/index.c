@@ -2973,6 +2973,16 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 			   errmsg("cannot reindex temporary tables of other sessions")));
 
 	/*
+	 * Two-phase commit is not supported for transactions that change
+	 * relfilenode mappings. We can get away without two-phase commit, if
+	 * we're not already running in a transaction block, but if we are,
+	 * we won't be able to commit. To get a more descriptive error message,
+	 * check for that now, rather than let the COMMIT fail.
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH && RelationIsMapped(heapRelation))
+		PreventTransactionChain(true, "REINDEX of a catalog table");
+
+	/*
 	 * Also check for active uses of the index in the current transaction; we
 	 * don't want to reindex underneath an open indexscan.
 	 */

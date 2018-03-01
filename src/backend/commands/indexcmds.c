@@ -1863,8 +1863,7 @@ ReindexIndex(ReindexStmt *stmt)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
-									DF_WITH_SNAPSHOT |
-									DF_NEED_TWO_PHASE,
+									DF_WITH_SNAPSHOT,
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
@@ -1926,8 +1925,7 @@ ReindexRelationList(List *relids)
 			else if (Gp_role == GP_ROLE_DISPATCH)
 				CdbDispatchUtilityStatement((Node *) stmt,
 											DF_CANCEL_ON_ERROR |
-											DF_WITH_SNAPSHOT |
-											DF_NEED_TWO_PHASE,
+											DF_WITH_SNAPSHOT,
 											GetAssignedOidsForDispatch(), /* FIXME */
 											NULL);
 
