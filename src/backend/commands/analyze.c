@@ -284,8 +284,8 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
-	if (!(rel_is_partitioned(relid) ||
-		 (rel_is_child_partition(relid) && !rel_is_leaf_partition(relid))))
+	PartStatus ps = rel_part_status(relid);
+	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
 		do_analyze_rel(onerel, vacstmt, false, false);
 
 	/*
