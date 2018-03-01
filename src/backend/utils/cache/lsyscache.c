@@ -3235,10 +3235,24 @@ free_attstatsslot(AttStatsSlot *sslot)
 HeapTuple
 get_att_stats(Oid relid, AttrNumber attrnum)
 {
-	return SearchSysCacheCopy3(STATRELATTINH,
-							   ObjectIdGetDatum(relid),
-							   Int16GetDatum(attrnum),
-							   BoolGetDatum(false));
+	HeapTuple result;
+
+	/*
+	 * This is used by ORCA, and ORCA doesn't know that there are two different kinds of stats,
+	 * the inherited stats and the non-inherited. Use the inherited stats, i.e. stats that
+	 * cover all the child tables, too, if available.
+	 */
+	result = SearchSysCacheCopy3(STATRELATTINH,
+								 ObjectIdGetDatum(relid),
+								 Int16GetDatum(attrnum),
+								 BoolGetDatum(true));
+	if (!result)
+		result = SearchSysCacheCopy3(STATRELATTINH,
+									 ObjectIdGetDatum(relid),
+									 Int16GetDatum(attrnum),
+									 BoolGetDatum(false));
+
+	return result;
 }
 
 /*				---------- PG_NAMESPACE CACHE ----------				 */
