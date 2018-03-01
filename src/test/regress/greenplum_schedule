@@ -72,6 +72,11 @@ test: sreh
 #test: olap_window
 #test: tpch500GB
 
+# gp_toolkit performs a vacuum and checks that it truncated the relation. That
+# might not happen if other backends are holding transactions open, preventing
+# vacuum from removing dead tuples.
+test: gp_toolkit
+
 # FIXME: These tests no longer work, because they try to set
 # gp_interconnect_type, which doesn't work:
 # ERROR:  parameter "gp_interconnect_type" cannot be set after connection start
@@ -79,22 +84,17 @@ test: sreh
 ignore: gp_portal_error
 test: external_table external_table_create_privs column_compression compression_zstd eagerfree alter_table_aocs alter_table_aocs2 alter_distribution_policy aoco_privileges aocs
 test: alter_table_set alter_table_gp alter_table_ao ao_create_alter_valid_table subtransaction_visibility oid_consistency udf_exception_blocks
-test: udf_exception_blocks_panic_scenarios
 test: ic
 ignore: icudp_full
 
 test: resource_queue
 test: resource_queue_function
+test: resource_queue_stat
 test: resource_group
 test: wrkloadadmin
 
-# gp_toolkit performs a vacuum and checks that it truncated the relation. That
-# might not happen if other backends are holding transactions open, preventing
-# vacuum from removing dead tuples.
-test: gp_toolkit
-
 test: gp_toolkit_ao_funcs trig auth_constraint role portals_updatable plpgsql_cache timeseries pg_stat_last_operation gp_numeric_agg partindex_test partition_pruning runtime_stats
-test: rle rle_delta dsp
+test: rle rle_delta dsp not_out_of_shmem_exit_slots
 
 # direct dispatch tests
 test: direct_dispatch bfv_dd bfv_dd_multicolumn bfv_dd_types
@@ -197,7 +197,7 @@ test: vacuum_full_freeze_heap
 test: vacuum_full_heap
 test: vacuum_full_heap_bitmapindex
 
-test: ao_checksum_corruption AOCO_Compression2 table_statistics
+test: ao_checksum_corruption AOCO_Compression2 table_statistics fts_error
 test: metadata_track
 test: workfile_mgr_test
 

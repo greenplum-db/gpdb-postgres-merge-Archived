@@ -6137,7 +6137,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 			else
 				appendStringInfo(&buffer, "RESET %s", stmt->name);
 
-			CdbDispatchCommand(buffer.data, 0, NULL);
+			CdbDispatchSetCommand(buffer.data, false);
 		}
 	}
 }
