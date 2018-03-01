@@ -164,8 +164,8 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	const char *stmttype;
 	volatile bool in_outer_xact,
 	              use_own_xacts;
-	List	   *vacuum_relations;
-	List	   *analyze_relations;
+	List	   *vacuum_relations = NIL;
+	List	   *analyze_relations = NIL;
 
 	if ((vacstmt->options & VACOPT_VACUUM) &&
 		(vacstmt->options & VACOPT_ROOTONLY))
