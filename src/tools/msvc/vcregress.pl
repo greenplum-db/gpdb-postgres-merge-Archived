@@ -1,10 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-<<<<<<< HEAD
 # src/tools/msvc/vcregress.pl
-=======
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.15 2010/04/09 13:05:58 mha Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 use strict;
 
@@ -17,12 +13,8 @@ my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
 
-<<<<<<< HEAD
 require 'src/tools/msvc/config_default.pl';
 require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
-=======
-require 'src/tools/msvc/config.pl';
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 # buildenv.pl is for specifying the build environment settings
 # it should contian lines like:
@@ -194,18 +186,11 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
-<<<<<<< HEAD
-		next if ($module eq 'xml2' && ! $config->{xml});
-        next unless -d "$module/sql" && 
-			-d "$module/expected" && 
-			(-f "$module/GNUmakefile" || -f "$module/Makefile");
-=======
         next if ($module eq 'xml2' && !$config->{xml});
         next
           unless -d "$module/sql"
               &&-d "$module/expected"
               &&(-f "$module/GNUmakefile" || -f "$module/Makefile");
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
         chdir $module;
         print "============================================================\n";
         print "Checking $module\n";

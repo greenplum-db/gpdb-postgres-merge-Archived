@@ -27,13 +27,8 @@ sub lcopy
         unlink $target || confess "Could not delete $target\n";
     }
 
-<<<<<<< HEAD
-	copy($src,$target)
-          || carp "Could not copy $src to $target\n";
-=======
     copy($src,$target)
       || confess "Could not copy $src to $target\n";
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 }
 
@@ -448,13 +443,8 @@ sub CopyIncludeFiles
         next if ($d eq 'CVS');
         next unless (-d "src/include/$d");
 
-<<<<<<< HEAD
         EnsureDirectories("$target/include/server/$d");
         system(qq{xcopy /s /i /q /r /y src\\include\\$d\\*.h "$ctarget\\include\\server\\$d\\"})
-=======
-        EnsureDirectories($target . '/include/server', $d);
-        system("xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\server\\$d\\\"")
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
           && croak("Failed to copy include directory $d\n");
     }
     closedir($D);

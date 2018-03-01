@@ -1,9 +1,5 @@
 @echo off
-<<<<<<< HEAD
 REM src/tools/msvc/clean.bat
-=======
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.18 2010/01/05 01:06:57 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 set DIST=0
 if "%1"=="dist" set DIST=1

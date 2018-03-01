@@ -2,11 +2,7 @@
 # Script that parses Unix style build environment and generates build files
 # for building with Visual Studio.
 #
-<<<<<<< HEAD
 # src/tools/msvc/mkvcbuild.pl
-=======
-# $PostgreSQL: pgsql/src/tools/msvc/mkvcbuild.pl,v 1.19 2010/01/05 13:31:58 mha Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #
 use strict;
 use warnings;

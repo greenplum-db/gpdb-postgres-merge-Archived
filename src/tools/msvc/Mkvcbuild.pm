@@ -13,11 +13,8 @@ use Project;
 use Solution;
 use Cwd;
 use File::Copy;
-<<<<<<< HEAD
 use Config;
 use List::Util qw(first);
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 use Exporter;
 our (@ISA, @EXPORT_OK);
@@ -30,16 +27,11 @@ my $postgres;
 my $libpq;
 
 my $contrib_defines = {'refint' => 'REFINT_VERBOSE'};
-<<<<<<< HEAD
 # for GPDB, I've added xlogdump
-my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'vacuumlo', 'xlogdump');
-my @contrib_uselibpgport = ('oid2name', 'pgbench', 'pg_standby', 'vacuumlo', 'xlogdump');
-=======
 my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 
-						'vacuumlo');
+						'vacuumlo', 'xlogdump');
 my @contrib_uselibpgport = ('oid2name', 'pgbench', 'pg_standby', 
-							'pg_archivecleanup', 'pg_upgrade', 'vacuumlo');
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
+							'pg_archivecleanup', 'pg_upgrade', 'vacuumlo', 'xlogdump');
 my $contrib_extralibs = {'pgbench' => ['wsock32.lib']};
 my $contrib_extraincludes = {'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend']};
 my $contrib_extrasource = {
@@ -121,41 +113,6 @@ sub mkvcbuild
             if (Solution::IsNewer("$plperlsrc$xsc","$plperlsrc$xs"))
             {
                 print "Building $plperlsrc$xsc...\n";
-<<<<<<< HEAD
-            system( $solution->{options}->{perl}
-                  . '/bin/perl '
-                  . $solution->{options}->{perl}
-                  . '/lib/ExtUtils/xsubpp -typemap '
-                  . $solution->{options}->{perl}
-                      . '/lib/ExtUtils/typemap '
-                      . "$plperlsrc$xs "
-                      . ">$plperlsrc$xsc");
-                if ((!(-f "$plperlsrc$xsc")) || -z "$plperlsrc$xsc")
-            {
-                    unlink("$plperlsrc$xsc"); # if zero size
-                    die "Failed to create $xsc.\n";
-                }
-            }
-        }
-        if (  Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_perlboot.pl')
-            ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_bad.pl')
-            ||Solution::IsNewer('src\pl\plperl\perlchunks.h','src\pl\plperl\plc_safe_ok.pl'))
-        {
-            print 'Building src\pl\plperl\perlchunks.h ...' . "\n";
-            my $basedir = getcwd;
-            chdir 'src\pl\plperl';
-            system( $solution->{options}->{perl}
-                  . '/bin/perl '
-                  . 'text2macro.pl '
-                  . '--strip="^(\#.*|\s*)$$" '
-                  . 'plc_perlboot.pl plc_safe_bad.pl plc_safe_ok.pl '
-                  .	'>perlchunks.h');
-            chdir $basedir;
-            if ((!(-f 'src\pl\plperl\perlchunks.h')) || -z 'src\pl\plperl\perlchunks.h')
-            {
-                unlink('src\pl\plperl\perlchunks.h'); # if zero size
-                die 'Failed to create perlchunks.h' . "\n";
-=======
                 system( $solution->{options}->{perl}
                       . '/bin/perl '
                       . $solution->{options}->{perl}
@@ -204,7 +161,6 @@ sub mkvcbuild
             {
                 unlink('src\pl\plperl\plperl_opmask.h'); # if zero size
                 die 'Failed to create plperl_opmask.h' . "\n";
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
             }
         }
         $plperl->AddReference($postgres);
@@ -234,12 +190,7 @@ sub mkvcbuild
         chomp($pyver);
         close(P);
 
-<<<<<<< HEAD
-        # Sometimes (always?) if python is not present, the execution
-        # appears to work, but gives no data...
-=======
   # Sometimes (always?) if python is not present, the execution actually works, but gives no data...
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
         die "Failed to query python for version information\n"
           if (!(defined($pyprefix) && defined($pyver)));
 

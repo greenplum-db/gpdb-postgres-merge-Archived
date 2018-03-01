@@ -1,10 +1,6 @@
 # -*-perl-*- hey - emacs - this is a perl file
 
-<<<<<<< HEAD
 # src/tools/msvc/build.pl
-=======
-# $PostgreSQL: pgsql/src/tools/msvc/build.pl,v 1.3 2010/04/09 13:05:58 mha Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 
 BEGIN
 {
@@ -32,10 +28,7 @@ elsif (-e "./buildenv.pl" )
     require "./buildenv.pl";
 }
 
-<<<<<<< HEAD
-=======
 # set up the project
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 our $config;
 require "config_default.pl";
 require "config.pl" if (-f "src/tools/msvc/config.pl");
