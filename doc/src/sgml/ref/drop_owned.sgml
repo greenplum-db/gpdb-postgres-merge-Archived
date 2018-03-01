@@ -94,11 +94,7 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
   </para>
 
   <para>
-<<<<<<< HEAD
    Databases and tablespaces owned by the role(s) will not be removed.
-=======
-   Databases owned by the role(s) will not be removed.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
   </para>
  </refsect1>
 

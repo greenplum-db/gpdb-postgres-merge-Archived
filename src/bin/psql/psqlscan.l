@@ -33,11 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
-<<<<<<< HEAD
  *	  src/bin/psql/psqlscan.l
-=======
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.34 2010/05/30 18:10:41 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  *
  *-------------------------------------------------------------------------
  */
