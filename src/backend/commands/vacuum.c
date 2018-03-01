@@ -757,6 +757,12 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
 		/* skip two-phase commit on heap table VACUUM */
 		if (Gp_role == GP_ROLE_DISPATCH)
 			vacstmt->skip_twophase = true;
+
+		if (vacstmt->appendonly_phase == AOVAC_DROP)
+		{
+			SIMPLE_FAULT_INJECTOR(VacuumRelationOpenRelationDuringDropPhase);
+		}
+
 		vacuum_rel(onerel, relid, vacstmt, lmode, for_wraparound);
 		onerel = NULL;
 	}

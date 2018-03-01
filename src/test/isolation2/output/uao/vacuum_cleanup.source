@@ -17,7 +17,15 @@ CREATE
 -- The age of the table is 2 after the following statement
 2: insert into ao_@orientation@_vacuum_cleanup2 select 1, i from generate_series(1, 100) i;
 INSERT 100
--- The age of the table is 3 after the following statement
+-- The age of the table is 7 after the following statements
+2: update ao_@orientation@_vacuum_cleanup2 set b = b + 1;
+UPDATE 100
+2: update ao_@orientation@_vacuum_cleanup2 set b = b + 1;
+UPDATE 100
+2: update ao_@orientation@_vacuum_cleanup2 set b = b + 1;
+UPDATE 100
+2: update ao_@orientation@_vacuum_cleanup2 set b = b + 1;
+UPDATE 100
 2: update ao_@orientation@_vacuum_cleanup2 set b = b + 1;
 UPDATE 100
 
@@ -42,20 +50,20 @@ SET
 1: select age(relfrozenxid), regexp_replace(replace(relname, 'ao_@orientation@_vacuum_cleanup2'::regclass::oid::text, '<oid>'), 'ao.*seg', '<seg>') from gp_dist_random('pg_class') where relkind in ('r','t','o','b','m') and relstorage not in ('x','f','v') and (relname like '%' || 'ao_@orientation@_vacuum_cleanup2'::regclass::oid || '%') and gp_segment_id = 0;
 age|regexp_replace    
 ---+------------------
-5  |pg_<seg>_<oid>    
-5  |pg_aovisimap_<oid>
+9  |pg_<seg>_<oid>    
+9  |pg_aovisimap_<oid>
 (2 rows)
 1: vacuum ao_@orientation@_vacuum_cleanup2;
 VACUUM
 
--- We expect the age to be 3. This is because all the xids before the first
+-- We expect the age to be 5. This is because all the xids before the first
 -- vacuum will be frozen. The relfrozenxid will be the xid of the last
 -- transaction before the vacuum (in this case it is the update statement)
 1: select age(relfrozenxid), regexp_replace(replace(relname, 'ao_@orientation@_vacuum_cleanup2'::regclass::oid::text, '<oid>'), 'ao.*seg', '<seg>') from gp_dist_random('pg_class') where relkind in ('r','t','o','b','m') and relstorage not in ('x','f','v') and (relname like '%' || 'ao_@orientation@_vacuum_cleanup2'::regclass::oid || '%') and gp_segment_id = 0;
 age|regexp_replace    
 ---+------------------
-3  |pg_<seg>_<oid>    
-3  |pg_aovisimap_<oid>
+5  |pg_<seg>_<oid>    
+5  |pg_aovisimap_<oid>
 (2 rows)
 
 1: select gp_inject_fault('vacuum_relation_open_relation_during_drop_phase', 'reset', 2);
@@ -116,7 +124,7 @@ VACUUM
 1: select age(relfrozenxid), regexp_replace(replace(relname, 'ao_@orientation@_vacuum_cleanup3'::regclass::oid::text, '<oid>'), 'ao.*seg', '<seg>') from gp_dist_random('pg_class') where relkind in ('r','t','o','b','m') and relstorage not in ('x','f','v') and (relname like '%' || 'ao_@orientation@_vacuum_cleanup3'::regclass::oid || '%') and gp_segment_id = 0;
 age|regexp_replace    
 ---+------------------
-1  |pg_<seg>_<oid>    
+2  |pg_<seg>_<oid>    
 1  |pg_aovisimap_<oid>
 (2 rows)
 
