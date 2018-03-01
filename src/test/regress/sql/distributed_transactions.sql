@@ -533,6 +533,8 @@ select count(*) = 5 as passed from subt_reindex_co;
 
 -- GPDB has a limitation on REINDEX of catalog tables: you cannot do it in
 -- a transaction block. Check for that.
+\c postgres
 begin;
 reindex table pg_class;
 commit;
+\c regression
