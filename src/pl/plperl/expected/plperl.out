@@ -618,40 +618,6 @@ CONTEXT:  PL/Perl anonymous code block
 -- check that restricted operations are rejected in a plperl DO block
 DO $$ system("/nonesuch"); $$ LANGUAGE plperl;
 ERROR:  'system' trapped by operation mask at line 1.
-<<<<<<< HEAD
-=======
-CONTEXT:  PL/Perl anonymous code block
-DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
-ERROR:  'quoted execution (``, qx)' trapped by operation mask at line 1.
-CONTEXT:  PL/Perl anonymous code block
-DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
-ERROR:  'open' trapped by operation mask at line 1.
-CONTEXT:  PL/Perl anonymous code block
--- check that eval is allowed and eval'd restricted ops are caught
-DO $$ eval q{chdir '.'}; warn "Caught: $@"; $$ LANGUAGE plperl;
-WARNING:  Caught: 'chdir' trapped by operation mask at line 2.
-CONTEXT:  PL/Perl anonymous code block
--- check that compiling do (dofile opcode) is allowed
--- but that executing it for a file not already loaded (via require) dies
-DO $$ warn do "/dev/null"; $$ LANGUAGE plperl;
-ERROR:  Unable to load /dev/null into plperl at line 1.
-CONTEXT:  PL/Perl anonymous code block
--- check that we can't "use" a module that's not been loaded already
--- compile-time error: "Unable to load blib.pm into plperl"
-DO $$ use blib; $$ LANGUAGE plperl;
-ERROR:  Unable to load blib.pm into plperl at line 1.
-BEGIN failed--compilation aborted at line 1.
-CONTEXT:  PL/Perl anonymous code block
--- check that we can "use" a module that has already been loaded
--- runtime error: "Can't use string ("foo") as a SCALAR ref while "strict refs" in use
-DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
-ERROR:  Can't use string ("foo") as a SCALAR ref while "strict refs" in use at line 1.
-CONTEXT:  PL/Perl anonymous code block
--- check that we can "use warnings" (in this case to turn a warn into an error)
--- yields "ERROR:  Useless use of sort in scalar context."
-DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
-ERROR:  Useless use of sort in scalar context at line 1.
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CONTEXT:  PL/Perl anonymous code block
 DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
 ERROR:  'quoted execution (``, qx)' trapped by operation mask at line 1.

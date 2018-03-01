@@ -98,7 +98,6 @@ create or replace function perl_looks_like_number() returns setof text language 
 $$;
 
 select perl_looks_like_number();
-<<<<<<< HEAD
 
 -- test encode_typed_literal
 create type perl_foo as (a integer, b text[]);
@@ -111,5 +110,3 @@ create or replace function perl_encode_typed_literal() returns setof text langua
 $$;
 
 select perl_encode_typed_literal();
-=======
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2

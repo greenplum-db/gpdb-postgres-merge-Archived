@@ -7,20 +7,12 @@ CREATE OR REPLACE FUNCTION bar() RETURNS integer AS $$
     # alternative - causes server process to exit(255)
     spi_exec_query("invalid sql statement");
 $$ language plperl; -- compile plperl code
-<<<<<<< HEAD
 
-=======
-   
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 CREATE OR REPLACE FUNCTION foo() RETURNS integer AS $$
     spi_exec_query("SELECT * FROM bar()");
     return 1;
 $$ LANGUAGE plperlu; -- compile plperlu code
-<<<<<<< HEAD
 
-=======
-   
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 SELECT * FROM bar(); -- throws exception normally (running plperl)
 SELECT * FROM foo(); -- used to cause backend crash (after switching to plperlu)
 
