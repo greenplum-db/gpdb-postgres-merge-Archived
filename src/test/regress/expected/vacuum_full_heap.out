@@ -61,11 +61,11 @@ select pg_relation_size('ivfheap') from gp_dist_random('gp_id') where gp_segment
             32768
 (1 row)
 
--- check relpages and reltuples (relpages is 1 though empty, intentionally)
+-- check relpages and reltuples (VACUUM FULL clears them)
 select relname, relpages, reltuples from gp_dist_random('pg_class') where (oid = 'vfheap'::regclass or oid = 'ivfheap'::regclass) and gp_segment_id = 0;
  relname | relpages | reltuples 
 ---------+----------+-----------
- vfheap  |        1 |         0
+ vfheap  |        0 |         0
  ivfheap |        1 |         0
 (2 rows)
 
@@ -143,11 +143,11 @@ select pg_relation_size((select reltoastrelid from pg_class where oid = 'vfheapt
                 0
 (1 row)
 
--- check relpages and reltuples (relpages is 1 though empty, intentionally)
+-- check relpages and reltuples (VACUUM FULL clears them)
 select relpages, reltuples from gp_dist_random('pg_class')
   where oid = (select reltoastrelid from pg_class where oid = 'vfheaptoast'::regclass) and gp_segment_id = 0;
  relpages | reltuples 
 ----------+-----------
-        1 |         0
+        0 |         0
 (1 row)
 
