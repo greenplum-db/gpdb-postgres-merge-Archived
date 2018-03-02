@@ -520,6 +520,7 @@ GetResGroupIdForRole(Oid roleid)
 {
 	HeapTuple	tuple;
 	Oid			groupId;
+	bool		isnull;
 	Relation	rel;
 	ScanKeyData	key;
 	SysScanDesc	 sscan;
@@ -551,7 +552,7 @@ GetResGroupIdForRole(Oid roleid)
 
 	/* must access tuple before systable_endscan */
 	groupId = DatumGetObjectId(heap_getattr(tuple, Anum_pg_authid_rolresgroup,
-							   rel->rd_att, NULL));
+							   rel->rd_att, &isNull));
 
 	systable_endscan(sscan);
 

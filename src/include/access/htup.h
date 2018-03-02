@@ -818,8 +818,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
     Assert(attnum > 0);
 
-	if (isnull)
-		*isnull = false;
+	*isnull = false;
 
     if (HeapTupleNoNulls(tup))
     {
@@ -833,8 +832,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     else if (att_isnull(attnum-1, tup->t_data->t_bits))
     {
         result = Int32GetDatum(0);
-		if (isnull)
-			*isnull = true;
+		*isnull = true;
     }
     else
         result = nocachegetattr(tup, attnum, tupleDesc);
