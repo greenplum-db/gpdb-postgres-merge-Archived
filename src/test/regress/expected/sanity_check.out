@@ -130,12 +130,7 @@ SELECT relname, relhasindex
  pg_ts_template          | t
  pg_type                 | t
  pg_user_mapping         | t
-<<<<<<< HEAD
- pg_window               | t
- point_tbl               | f
-=======
  point_tbl               | t
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
  polygon_tbl             | t
  ramp                    | f
  real_city               | f
