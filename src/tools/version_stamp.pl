@@ -5,11 +5,7 @@
 #
 # Copyright (c) 2008-2010, PostgreSQL Global Development Group
 #
-<<<<<<< HEAD
 # src/tools/version_stamp.pl
-=======
-# $PostgreSQL: pgsql/src/tools/version_stamp.pl,v 1.6 2010/02/17 04:19:41 tgl Exp $
->>>>>>> 1084f317702e1a039696ab8a37caf900e55ec8f2
 #################################################################
 
 #
