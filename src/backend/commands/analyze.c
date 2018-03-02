@@ -677,15 +677,22 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * relpages/reltuples on a partitioned table to represent the total across
 	 * all partitions.
 	 */
-#if 0
 	if (!inh)
-#endif
 		vac_update_relstats(onerel,
 							totalpages,
 							totalrows,
 							hasindex,
 							InvalidTransactionId,
 							false /* isvacuum */);
+	else
+	{
+		vac_update_relstats(onerel,
+							totalpages,
+							totalrows,
+							onerel->rd_rel->relhasindex,
+							InvalidTransactionId,
+							false /* isvacuum */);
+	}
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
