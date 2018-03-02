@@ -520,7 +520,7 @@ GetResGroupIdForRole(Oid roleid)
 {
 	HeapTuple	tuple;
 	Oid			groupId;
-	bool		isnull;
+	bool		isNull;
 	Relation	rel;
 	ScanKeyData	key;
 	SysScanDesc	 sscan;
