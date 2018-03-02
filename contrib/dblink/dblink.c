@@ -1027,8 +1027,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 	{
 	char	   *msg;
 	PGresult   *res = NULL;
-	text	   *sql_cmd_status = NULL;
-	PGconn	   *conn = NULL;
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
