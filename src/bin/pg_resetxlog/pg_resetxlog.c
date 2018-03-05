@@ -590,7 +590,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.nextXidEpoch = 0;
 	ControlFile.checkPointCopy.nextXid = FirstNormalTransactionId;
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
-	ControlFile.checkPointCopy.nextRelfilenode = FirstNormalObjectId;
+	ControlFile.checkPointCopy.nextRelfilenode = FirstBootstrapObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
 	ControlFile.checkPointCopy.nextMultiOffset = 0;
 	ControlFile.checkPointCopy.oldestXid = FirstNormalTransactionId;
