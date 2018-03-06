@@ -1090,7 +1090,7 @@ PostmasterMain(int argc, char *argv[])
 		}
 
 		/* If there are more than one listen address, backend bind on all addresses*/
-		if (list_length(elemlist) > 1)
+		if (list_length(elemlist) > 1 || strcmp(ListenAddresses, "*") == 0)
 			BackendListenAddress = NULL;
 		else
 			BackendListenAddress = ListenAddresses;
