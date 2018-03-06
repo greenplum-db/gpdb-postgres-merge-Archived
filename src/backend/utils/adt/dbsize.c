@@ -570,8 +570,6 @@ calculate_table_size(Oid relOid)
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
 		size += calculate_toast_table_size(rel->rd_rel->reltoastrelid);
 
-	relation_close(rel, AccessShareLock);
-
 	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 	{
 		Assert(OidIsValid(rel->rd_appendonly->segrelid));
@@ -587,6 +585,8 @@ calculate_table_size(Oid relOid)
 			size += calculate_total_relation_size(rel->rd_appendonly->visimaprelid);
 		}
 	}
+
+	relation_close(rel, AccessShareLock);
 
 	return size;
 }
