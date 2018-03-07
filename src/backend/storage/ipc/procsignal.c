@@ -28,6 +28,8 @@
 #include "storage/standby.h"
 #include "tcop/tcopprot.h"
 
+#include "storage/barrier.h"
+
 
 /*
  * The SIGUSR1 signal is multiplexed to support signalling multiple event
@@ -51,6 +53,8 @@ typedef struct
 {
 	pid_t		pss_pid;
 	sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
+
+	uint32		queryFinishCommandId;
 } ProcSignalSlot;
 
 /*
@@ -170,8 +174,8 @@ CleanupProcSignalState(int status, Datum arg)
  *
  * Not to be confused with ProcSendSignal
  */
-int
-SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
+static int
+SendProcSignalEx(pid_t pid, ProcSignalReason reason, BackendId backendId, uint32 queryFinishCommandId)
 {
 	volatile ProcSignalSlot *slot;
 
@@ -190,6 +194,11 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 		if (slot->pss_pid == pid)
 		{
 			/* Atomically set the proper flag */
+			if (reason == PROCSIG_QUERY_FINISH)
+			{
+				slot->queryFinishCommandId = queryFinishCommandId;
+				pg_write_barrier();
+			}
 			slot->pss_signalFlags[reason] = true;
 			/* Send signal */
 			return kill(pid, SIGUSR1);
@@ -214,6 +223,11 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 				/* the above note about race conditions applies here too */
 
 				/* Atomically set the proper flag */
+				if (reason == PROCSIG_QUERY_FINISH)
+				{
+					slot->queryFinishCommandId = queryFinishCommandId;
+					pg_write_barrier();
+				}
 				slot->pss_signalFlags[reason] = true;
 				/* Send signal */
 				return kill(pid, SIGUSR1);
@@ -223,6 +237,19 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 
 	errno = ESRCH;
 	return -1;
+}
+
+int
+SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
+{
+	Assert(reason != PROCSIG_QUERY_FINISH);
+	return SendProcSignalEx(pid, reason, backendId, 0);
+}
+
+int
+SendProcQueryFinish(pid_t pid, BackendId backendId, uint32 commandId)
+{
+	return SendProcSignalEx(pid, PROCSIG_QUERY_FINISH, backendId, commandId);
 }
 
 /*
@@ -241,6 +268,23 @@ CheckProcSignal(ProcSignalReason reason)
 		if (slot->pss_signalFlags[reason])
 		{
 			slot->pss_signalFlags[reason] = false;
+			if (reason == PROCSIG_QUERY_FINISH)
+			{
+				pg_read_barrier();
+				uint32 signaledCommandId = slot->queryFinishCommandId;
+
+				if (signaledCommandId != gp_command_count)
+				{
+					elog(LOG, "received query finish signal, but command count didn't match (ours %d, signaled %d)",
+						 gp_command_count, signaledCommandId);
+					return false;
+				}
+				else
+				{
+					elog(LOG, "received query finish signal with matching command id %d",
+						 signaledCommandId);
+				}
+			}
 			return true;
 		}
 	}

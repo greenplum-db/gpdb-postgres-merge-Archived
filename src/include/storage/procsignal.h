@@ -54,6 +54,8 @@ extern void ProcSignalShmemInit(void);
 extern void ProcSignalInit(int pss_idx);
 extern int SendProcSignal(pid_t pid, ProcSignalReason reason,
 			   BackendId backendId);
+extern int SendProcQueryFinish(pid_t pid, BackendId backendId,
+					uint32 commandId);
 
 extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 extern bool AmIInSIGUSR1Handler(void);

@@ -2282,16 +2282,16 @@ processCancelRequest(Port *port, void *pkt, MsgType code)
 #endif
 		if (bp->pid == backendPID)
 		{
-			if (bp->cancel_key == cancelAuthCode)
+			if (bp->cancel_key == cancelAuthCode || code == FINISH_REQUEST_CODE)
 			{
 				/* Found a match; signal that backend to cancel current op */
 				if (code == FINISH_REQUEST_CODE)
 				{
 					ereport(LOG,
-							(errmsg_internal("query finish request to process %d",
-											 backendPID)));
-					SendProcSignal(bp->pid, PROCSIG_QUERY_FINISH,
-								   InvalidBackendId);
+							(errmsg_internal("query finish request to process %d, command %ld",
+											 backendPID, cancelAuthCode)));
+					pg_usleep(200000);
+					SendProcQueryFinish(bp->pid, InvalidBackendId, cancelAuthCode);
 				}
 				else
 				{
