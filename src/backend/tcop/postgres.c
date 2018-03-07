@@ -5141,11 +5141,6 @@ PostgresMain(int argc, char *argv[],
 			CheckForResetSession();
 
 		/*
-		 * (2c) Reset QueryFinishPending flag.
-		 */
-		QueryFinishPending = false;
-
-		/*
 		 * (3) read a command (loop blocks here)
 		 */
 		if (Gp_role == GP_ROLE_DISPATCH)
@@ -5173,6 +5168,15 @@ PostgresMain(int argc, char *argv[],
 		}
 
 		firstchar = ReadCommand(&input_message);
+
+		/*
+		 * Reset QueryFinishPending flag, so that if we received a delayed
+		 * query finish requested after we had already finished processing
+		 * the previous command, we don't prematurely finish the next
+		 * command.
+		 */
+		QueryFinishPending = false;
+
 		IdleTracker_ActivateProcess();
 
 		/*
