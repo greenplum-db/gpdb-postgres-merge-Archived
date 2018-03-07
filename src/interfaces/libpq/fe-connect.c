@@ -3432,7 +3432,7 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
  * Same as PQcancel, except it sends a finish request.
  */
 int
-PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize, int commandId)
+PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize)
 {
 	if (!cancel)
 	{
@@ -3441,7 +3441,7 @@ PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize, int commandId)
 		return FALSE;
 	}
 
-	return internal_cancel(&cancel->raddr, cancel->be_pid, commandId,
+	return internal_cancel(&cancel->raddr, cancel->be_pid, cancel->be_key,
 						   errbuf, errbufsize, true);
 }
 

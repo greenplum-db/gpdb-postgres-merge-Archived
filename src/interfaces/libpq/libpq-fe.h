@@ -313,7 +313,7 @@ extern void PQfreeCancel(PGcancel *cancel);
 extern int	PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
 
 /* issue a finsh request */
-extern int	PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize, int commandId);
+extern int	PQrequestFinish(PGcancel *cancel, char *errbuf, int errbufsize);
 
 /* backwards compatible version of PQcancel; not thread-safe */
 extern int	PQrequestCancel(PGconn *conn);

@@ -674,12 +674,10 @@ cdbconn_signalQE(SegmentDatabaseDescriptor *segdbDesc,
 	if (cn == NULL)
 		return false;
 
-	elog(LOG, "sending query finish with command id %d", gp_command_count);
-
 	if (isCancel)
 		ret = PQcancel(cn, errbuf, 256);
 	else
-		ret = PQrequestFinish(cn, errbuf, 256, gp_command_count);
+		ret = PQrequestFinish(cn, errbuf, 256);
 
 	PQfreeCancel(cn);
 	return ret;
