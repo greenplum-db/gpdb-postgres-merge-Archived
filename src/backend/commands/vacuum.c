@@ -1578,8 +1578,14 @@ vac_update_datfrozenxid(void)
 	 * reasonable approximation to the minimum relfrozenxid for not-yet-
 	 * committed pg_class entries for new tables; see AddNewRelationTuple().
 	 * Se we cannot produce a wrong minimum by starting with this.
+	 *
+	 * GPDB: Use GetLocalOldestXmin here, rather than GetOldestXmin. We don't
+	 * want to include effects of distributed transactions in this. If a
+	 * database's datfrozenxid is past the oldest XID as determined by
+	 * distributed transactions, we will nevertheless never encounter such
+	 * XIDs on disk.
 	 */
-	newFrozenXid = GetOldestXmin(true, true);
+	newFrozenXid = GetLocalOldestXmin(true, true);
 
 	/*
 	 * We must seqscan pg_class to find the minimum Xid, because there is no
@@ -1697,19 +1703,12 @@ vac_truncate_clog(TransactionId frozenXID)
 
 		Assert(TransactionIdIsNormal(dbform->datfrozenxid));
 
-		/*
-		 * MPP-20053: Skip databases that cannot be connected to in computing
-		 * the oldest database.
-		 */
-		if (dbform->datallowconn)
+		if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
+			frozenAlreadyWrapped = true;
+		else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
 		{
-			if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
-				frozenAlreadyWrapped = true;
-			else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
-			{
-				frozenXID = dbform->datfrozenxid;
-				oldest_datoid = HeapTupleGetOid(tuple);
-			}
+			frozenXID = dbform->datfrozenxid;
+			oldest_datoid = HeapTupleGetOid(tuple);
 		}
 	}
 
@@ -1733,7 +1732,6 @@ vac_truncate_clog(TransactionId frozenXID)
 
 	/* Truncate CLOG to the oldest frozenxid */
 	TruncateCLOG(frozenXID);
-	DistributedLog_Truncate(frozenXID);
 
 	/*
 	 * Update the wrap limit for GetNewTransactionId.  Note: this function

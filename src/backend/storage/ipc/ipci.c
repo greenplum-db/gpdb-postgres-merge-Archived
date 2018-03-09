@@ -152,7 +152,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
-		//size = add_size(size, AutoVacuumShmemSize());
+		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, WalSndShmemSize());
 		size = add_size(size, WalRcvShmemSize());
 		size = add_size(size, BTreeShmemSize());
@@ -305,7 +305,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	CheckpointerShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
-	//AutoVacuumShmemInit();
+	AutoVacuumShmemInit();
 	SeqServerShmemInit();
 
 #ifdef FAULT_INJECTOR

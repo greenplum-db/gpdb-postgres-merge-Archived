@@ -104,14 +104,9 @@ GetNewTransactionId(bool isSubXact)
 		 * request only once per 64K transaction starts.  This still gives
 		 * plenty of chances before we get into real trouble.
 		 */
-		/* MPP-19652: autovacuum disabled */
-#if 0
 		if (IsUnderPostmaster && (xid % 65536) == 0)
-		{
-			elog(LOG, "GetNewTransactionId: requesting autovac (xid %u xidVacLimit %u)", xid, ShmemVariableCache->xidVacLimit);
-			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC);
-		}
-#endif
+			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
+
 		if (IsUnderPostmaster &&
 			TransactionIdFollowsOrEquals(xid, xidStopLimit))
 		{
@@ -193,6 +188,28 @@ GetNewTransactionId(bool isSubXact)
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
+	 * To aid testing, you can set the debug_burn_xids GUC, to consume XIDs
+	 * faster. If set, we bump the XID counter to the next value divisible by
+	 * 1024, minus one. The idea is to skip over "boring" XID ranges, but
+	 * still step through XID wraparound, CLOG page boundaries etc. one XID
+	 * at a time.
+	 */
+	if (Debug_burn_xids)
+	{
+		TransactionId xx;
+		uint32		r;
+
+		xx = ShmemVariableCache->nextXid;
+
+		r = xx % 1024;
+		if (r > 1 && r < 1023)
+		{
+			xx += 1024 - r - 1;
+			ShmemVariableCache->nextXid = xx;
+		}
+	}
+
+	/*
 	 * We must store the new XID into the shared ProcArray before releasing
 	 * XidGenLock.	This ensures that every active XID older than
 	 * latestCompletedXid is present in the ProcArray, which is essential for
@@ -270,6 +287,32 @@ ReadNewTransactionId(void)
 }
 
 /*
+ * Get the last safe XID, i.e. the oldest XID that might exist in any
+ * database of our cluster.
+ */
+TransactionId
+GetTransactionIdLimit(void)
+{
+	TransactionId xid;
+
+	LWLockAcquire(XidGenLock, LW_SHARED);
+	xid = ShmemVariableCache->oldestXid;
+	LWLockRelease(XidGenLock);
+
+	if (!TransactionIdIsNormal(xid))
+	{
+		/*
+		 * shouldn't happen, but since this value is used in the computation
+		 * of oldest xmin, which determines which tuples be safely vacuumed
+		 * away, let's be paranoid.
+		 */
+		elog(ERROR, "invalid oldestXid limit: %u", xid);
+	}
+
+	return xid;
+}
+
+/*
  * Determine the last safe XID to allocate given the currently oldest
  * datfrozenxid (ie, the oldest XID that might exist in any database
  * of our cluster), and the OID of the (or a) database with that value.
@@ -336,14 +379,9 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * resulting in race conditions as well as crashes of those not connected
 	 * to shared memory).  Perhaps this can be improved someday.
 	 */
-	/* MPP-19652: autovacuum disabled */
-#if 0
 	xidVacLimit = oldest_datfrozenxid + autovacuum_freeze_max_age;
 	if (xidVacLimit < FirstNormalTransactionId)
 		xidVacLimit += FirstNormalTransactionId;
-#else
-	xidVacLimit = xidWarnLimit;
-#endif
 
 	/* Grab lock for just long enough to set the new limit values */
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
@@ -368,12 +406,9 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 	 * database, it'll call here, and we'll signal the postmaster to start
 	 * another iteration immediately if there are still any old databases.
 	 */
-	/* MPP-19652: autovacuum disabled */
-#if 0
 	if (TransactionIdFollowsOrEquals(curXid, xidVacLimit) &&
 		IsUnderPostmaster && !InRecovery)
 		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
-#endif
 
 	/* Give an immediate warning if past the wrap warn point */
 	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit) && !InRecovery)
