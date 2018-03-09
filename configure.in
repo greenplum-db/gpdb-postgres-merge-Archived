@@ -17,28 +17,18 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=9.0beta3]
+[PG_PACKAGE_VERSION=9.1beta2]
 AC_SUBST(PG_PACKAGE_VERSION)
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2010, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [9.1beta2], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2011, PostgreSQL Global Development Group])
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
@@ -1407,11 +1397,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
-=======
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
 
 # On BSD, cpp test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1681,7 +1667,6 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-<<<<<<< HEAD
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending
 # acquisition of a clue by those developers, ignore libedit (including its
@@ -1692,10 +1677,7 @@ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeereid getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs])
-=======
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs wcstombs_l])
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -1809,14 +1791,6 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-<<<<<<< HEAD
-=======
-# Some versions of libedit contain strlcpy(); so disregard that library while
-# checking for these standard libc functions.
-pgac_save_LIBS="$LIBS"
-LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 AC_REPLACE_FUNCS([crypt erand48 getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
 
 case $host_os in
@@ -2153,24 +2127,12 @@ AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([long])
 
-<<<<<<< HEAD
 # In GPDB, float4 and float8 are always passed by value. There is
 # GPDB-specific code that assumes that in various places, so it's not
 # configurable.
 float4passbyval=true
 AC_DEFINE([USE_FLOAT4_BYVAL], 1, [Define to 1 if you want float4 values to be passed by value. (Always defined in GPDB)])
 AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false' (always true in GPDB)])
-=======
-# Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])
-PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
-              [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
-                         [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
-               float4passbyval=true],
-              [float4passbyval=false])
-AC_MSG_RESULT([$enable_float4_byval])
-AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false'])
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # Note: this setting also controls int8 and related types such as timestamp.
 float8passbyval=true
@@ -2288,12 +2250,7 @@ fi
 if test "$PORTNAME" != "win32"; then
   LATCH_IMPLEMENTATION="src/backend/port/unix_latch.c"
 else
-<<<<<<< HEAD
-#  LATCH_IMPLEMENTATION="src/backend/port/win32_latch.c"
-  LATCH_IMPLEMENTATION=""
-=======
   LATCH_IMPLEMENTATION="src/backend/port/win32_latch.c"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 fi
 
 # If not set in template file, set bytes to use libc memset()
@@ -2470,14 +2427,10 @@ AC_DEFINE_UNQUOTED(GP_MAJORVERSION, "$GP_MAJORVERSION", [Greenplum major version
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
-<<<<<<< HEAD
-  cc_string="GCC `${CC} --version | sed q`"
-=======
   cc_string=`${CC} --version | sed q`
   case $cc_string in [[A-Za-z]]*) ;; *) cc_string="GCC $cc_string";; esac
 elif test x"$SUN_STUDIO_CC" = x"yes" ; then
   cc_string=`${CC} -V 2>&1 | sed q`
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 else
   cc_string=$CC
 fi

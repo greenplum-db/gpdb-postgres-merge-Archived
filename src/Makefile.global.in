@@ -18,13 +18,9 @@
 #
 # Meta configuration
 
-<<<<<<< HEAD
-.PHONY: all install install-strip installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check coverage html man installcheck-parallel world install-world installcheck-world installcheck-good
-=======
 standard_targets = all install installdirs uninstall distprep clean distclean maintainer-clean coverage check installcheck maintainer-check
 
-.PHONY: $(standard_targets) install-strip html man installcheck-parallel
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+.PHONY: $(standard_targets) install-strip html man installcheck-parallel installcheck-good
 
 # make `all' the default target
 all:
@@ -335,10 +331,6 @@ XGETTEXT = @XGETTEXT@
 GZIP	= gzip
 BZIP2	= bzip2
 
-<<<<<<< HEAD
-PL_TESTDB = pl_regression
-CONTRIB_TESTDB = contrib_regression
-
 # Testing
 
 abs_top_builddir = @abs_top_builddir@
@@ -369,8 +361,6 @@ prove_installcheck = @echo "TAP tests not enabled"
 prove_check = $(prove_installcheck)
 endif
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # Installation.
 
 INSTALL	= $(SHELL) $(top_srcdir)/config/install-sh -c

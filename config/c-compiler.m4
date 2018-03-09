@@ -262,11 +262,14 @@ CFLAGS="$pgac_save_CFLAGS $1"
 ac_save_c_werror_flag=$ac_c_werror_flag
 ac_c_werror_flag=yes
 _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
-<<<<<<< HEAD
-                   AC_MSG_RESULT(yes),
-                   [CFLAGS="$pgac_save_CFLAGS"
-                    AC_MSG_RESULT(no)])
+                   [Ac_cachevar=yes],
+                   [Ac_cachevar=no])
 ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  CFLAGS="$CFLAGS $1"
+fi
+undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_CFLAGS_OPT
 
 
@@ -284,18 +287,12 @@ CFLAGS="$pgac_save_CFLAGS $2"
 ac_save_c_werror_flag=$ac_c_werror_flag
 ac_c_werror_flag=yes
 _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
                    [Ac_cachevar=yes],
                    [Ac_cachevar=no])
 ac_c_werror_flag=$ac_save_c_werror_flag
 CFLAGS="$pgac_save_CFLAGS"])
 if test x"$Ac_cachevar" = x"yes"; then
-<<<<<<< HEAD
   $1="${$1} $2"
-=======
-  CFLAGS="$CFLAGS $1"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_CFLAGS_OPT
@@ -324,7 +321,6 @@ if test x"$Ac_cachevar" = x"yes"; then
 fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_PROG_CC_LDFLAGS_OPT
-<<<<<<< HEAD
 
 
 
@@ -460,5 +456,3 @@ AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
 if test x"$pgac_cv_gcc_atomic_int64_cas" = x"yes"; then
   AC_DEFINE(HAVE_GCC__ATOMIC_INT64_CAS, 1, [Define to 1 if you have __atomic_compare_exchange_n(int64 *, int *, int64).])
 fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
