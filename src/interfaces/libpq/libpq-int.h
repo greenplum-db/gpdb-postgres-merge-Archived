@@ -9,8 +9,12 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-int.h
@@ -568,7 +572,12 @@ extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void
 pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
+<<<<<<< HEAD
 __attribute__((format(printf, 2, 3)));
+=======
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,

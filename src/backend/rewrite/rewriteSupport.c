@@ -3,12 +3,12 @@
  * rewriteSupport.c
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteSupport.c,v 1.69 2010/02/14 18:42:15 rhaas Exp $
+ *	  src/backend/rewrite/rewriteSupport.c
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,28 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
+<<<<<<< HEAD
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "access/transam.h"
+=======
+#include "utils/rel.h"
+#include "utils/syscache.h"
+#include "utils/tqual.h"
+
+
+/*
+ * Is there a rule by the given name?
+ */
+bool
+IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
+{
+	return SearchSysCacheExists2(RULERELNAME,
+								 ObjectIdGetDatum(owningRel),
+								 PointerGetDatum(ruleName));
+}
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * SetRelationRuleStatus
@@ -118,7 +137,11 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
  * Find rule oid, given only a rule name but no rel OID.
  *
  * If there's more than one, it's an error.  If there aren't any, that's an
+<<<<<<< HEAD
  * error, too.  In general, this should be avoided - it is provided to support
+=======
+ * error, too.	In general, this should be avoided - it is provided to support
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * syntax that is compatible with pre-7.3 versions of PG, where rule names
  * were unique across the entire database.
  */

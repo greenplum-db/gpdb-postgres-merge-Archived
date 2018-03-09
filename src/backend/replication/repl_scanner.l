@@ -4,7 +4,11 @@
  * repl_scanner.l
  *	  a lexical scanner for the replication commands
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -17,6 +21,7 @@
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
+<<<<<<< HEAD
 #define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
 
 static void
@@ -24,6 +29,9 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 {
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
+=======
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Handle to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
@@ -67,11 +75,17 @@ FAST			{ return K_FAST; }
 IDENTIFY_SYSTEM		{ return K_IDENTIFY_SYSTEM; }
 LABEL			{ return K_LABEL; }
 NOWAIT			{ return K_NOWAIT; }
+<<<<<<< HEAD
 EXCLUDE			{ return K_EXCLUDE; }
 PROGRESS			{ return K_PROGRESS; }
 WAL			{ return K_WAL; }
 START_REPLICATION	{ return K_START_REPLICATION; }
 SYNC			{ return K_SYNC; }
+=======
+PROGRESS			{ return K_PROGRESS; }
+WAL			{ return K_WAL; }
+START_REPLICATION	{ return K_START_REPLICATION; }
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 ","				{ return ','; }
 ";"				{ return ';'; }
 
@@ -120,13 +134,21 @@ SYNC			{ return K_SYNC; }
 static void
 startlit(void)
 {
+<<<<<<< HEAD
 	initStringInfo(&litbuf);
+=======
+  initStringInfo(&litbuf);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static char *
 litbufdup(void)
 {
+<<<<<<< HEAD
 	return litbuf.data;
+=======
+  return litbuf.data;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static void
@@ -138,13 +160,21 @@ addlit(char *ytext, int yleng)
 static void
 addlitchar(unsigned char ychar)
 {
+<<<<<<< HEAD
 	appendStringInfoChar(&litbuf, ychar);
+=======
+    appendStringInfoChar(&litbuf, ychar);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 void
 yyerror(const char *message)
 {
+<<<<<<< HEAD
 	ereport(ERROR,
+=======
+    ereport(ERROR,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg_internal("%s", message)));
 }

@@ -3,8 +3,12 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -2196,10 +2200,13 @@ build_startup_packet(const PGconn *conn, char *packet,
 	if (conn->client_encoding_initial && conn->client_encoding_initial[0])
 		ADD_STARTUP_OPTION("client_encoding", conn->client_encoding_initial);
 
+<<<<<<< HEAD
 	/* CDB: Add qExec startup data */
 	if (conn->gpqeid && conn->gpqeid[0])
 		ADD_STARTUP_OPTION("gpqeid", conn->gpqeid);
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Add any environment-driven GUC settings needed */
 	for (next_eo = options; next_eo->envName; next_eo++)
 	{

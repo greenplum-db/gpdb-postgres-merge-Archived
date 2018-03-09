@@ -4,10 +4,10 @@
  *	  prototypes for clauses.c.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.101 2010/02/26 02:01:26 momjian Exp $
+ * src/include/optimizer/clauses.h
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 typedef struct
 {
+<<<<<<< HEAD
 	int			numAggs;		/* total number of aggregate calls */
 	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
 	Size		transitionSpace;	/* for pass-by-ref transition data */
@@ -39,6 +40,8 @@ typedef struct
 
 typedef struct
 {
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */
@@ -59,7 +62,8 @@ typedef struct CanonicalGroupingSets
 } CanonicalGroupingSets;
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop);
+			  Expr *leftop, Expr *rightop,
+			  Oid opcollid, Oid inputcollid);
 extern Node *get_leftop(Expr *clause);
 extern Node *get_rightop(Expr *clause);
 
@@ -77,7 +81,13 @@ extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
+<<<<<<< HEAD
 extern void count_agg_clauses(Node *clause, AggClauseCounts *counts);
+=======
+extern List *pull_agg_clause(Node *clause);
+extern void count_agg_clauses(PlannerInfo *root, Node *clause,
+				  AggClauseCosts *costs);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);

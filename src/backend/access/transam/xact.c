@@ -5,12 +5,12 @@
  *
  * See src/backend/access/transam/README for more information.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.293 2010/07/06 19:18:55 momjian Exp $
+ *	  src/backend/access/transam/xact.c
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
@@ -82,7 +83,10 @@ int			XactIsoLevel;
 bool		DefaultXactReadOnly = false;
 bool		XactReadOnly;
 
-bool		XactSyncCommit = true;
+bool		DefaultXactDeferrable = false;
+bool		XactDeferrable;
+
+int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
@@ -509,11 +513,19 @@ AssignTransactionId(TransactionState s)
 	 */
 	if (isSubXact && !TransactionIdIsValid(s->parent->transactionId))
 	{
+<<<<<<< HEAD
 		TransactionState	p = s->parent;
 		TransactionState   *parents;
 		size_t	parentOffset = 0;
 
 		parents = palloc(sizeof(TransactionState) *  s->nestingLevel);
+=======
+		TransactionState p = s->parent;
+		TransactionState *parents;
+		size_t		parentOffset = 0;
+
+		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		while (p != NULL && !TransactionIdIsValid(p->transactionId))
 		{
 			parents[parentOffset++] = p;
@@ -521,8 +533,13 @@ AssignTransactionId(TransactionState s)
 		}
 
 		/*
+<<<<<<< HEAD
 		 * This is technically a recursive call, but the recursion will
 		 * never be more than one layer deep.
+=======
+		 * This is technically a recursive call, but the recursion will never
+		 * be more than one layer deep.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		while (parentOffset != 0)
 			AssignTransactionId(parents[--parentOffset]);
@@ -547,6 +564,13 @@ AssignTransactionId(TransactionState s)
 		Assert(TransactionIdPrecedes(s->parent->transactionId, s->transactionId));
 		SubTransSetParent(s->transactionId, s->parent->transactionId, false);
 	}
+
+	/*
+	 * If it's a top-level transaction, the predicate locking system needs to
+	 * be told about it too.
+	 */
+	if (!isSubXact)
+		RegisterPredicateLockingXid(s->transactionId);
 
 	/*
 	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
@@ -960,17 +984,6 @@ CommandCounterIncrement(void)
 		 */
 		AtCCI_LocalCache();
 	}
-
-	/*
-	 * Make any other backends' catalog changes visible to me.
-	 *
-	 * XXX this is probably in the wrong place: CommandCounterIncrement should
-	 * be purely a local operation, most likely.  However fooling with this
-	 * will affect asynchronous cross-backend interactions, which doesn't seem
-	 * like a wise thing to do in late beta, so save improving this for
-	 * another day - tgl 2007-11-30
-	 */
-	AtStart_Cache();
 }
 
 /*
@@ -1146,11 +1159,11 @@ RecordTransactionCommit(void)
 	bool save_inCommit = MyProc->inCommit;
 	int			nrels;
 	RelFileNode *rels;
-	bool		haveNonTemp;
 	int			nchildren;
 	TransactionId *children;
-	int			nmsgs;
+	int			nmsgs = 0;
 	SharedInvalidationMessage *invalMessages = NULL;
+<<<<<<< HEAD
 	bool		RelcacheInitFileInval;
 	bool		isDtxPrepared = 0;
 	bool		omitCommitRecordForDirtyQEReader;
@@ -1166,12 +1179,18 @@ RecordTransactionCommit(void)
 	else
 		xid = GetTopTransactionIdIfAny();
 	markXidCommitted = TransactionIdIsValid(xid);
+=======
+	bool		RelcacheInitFileInval = false;
+	bool		wrote_xlog;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Get data needed for commit record */
-	nrels = smgrGetPendingDeletes(true, &rels, &haveNonTemp);
+	nrels = smgrGetPendingDeletes(true, &rels);
 	nchildren = xactGetCommittedChildren(&children);
-	nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
-												 &RelcacheInitFileInval);
+	if (XLogStandbyInfoActive())
+		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
+													 &RelcacheInitFileInval);
+	wrote_xlog = (XactLastRecEnd.xrecoff != 0);
 
 	isDtxPrepared = isPreparedDtxTransaction();
 	omitCommitRecordForDirtyQEReader = false;
@@ -1272,7 +1291,11 @@ RecordTransactionCommit(void)
 		 * assigned is a sequence advance record due to nextval() --- we want
 		 * to flush that to disk before reporting commit.)
 		 */
+<<<<<<< HEAD
 		if (!isDtxPrepared && XactLastRecEnd.xrecoff == 0)
+=======
+		if (!wrote_xlog)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			goto cleanup;
 	}
 	else
@@ -1409,6 +1432,7 @@ RecordTransactionCommit(void)
 
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	/*
+<<<<<<< HEAD
 	 * In PostgreSQL, we can defer flushing XLOG, if the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit.
@@ -1419,6 +1443,32 @@ RecordTransactionCommit(void)
 	 */
 	if (XactSyncCommit || forceSyncCommit || haveNonTemp)
 #endif
+=======
+	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
+	 * to happen asynchronously if synchronous_commit=off, or if the current
+	 * transaction has not performed any WAL-logged operation.	The latter
+	 * case can arise if the current transaction wrote only to temporary
+	 * and/or unlogged tables.	In case of a crash, the loss of such a
+	 * transaction will be irrelevant since temp tables will be lost anyway,
+	 * and unlogged tables will be truncated.  (Given the foregoing, you might
+	 * think that it would be unnecessary to emit the XLOG record at all in
+	 * this case, but we don't currently try to do that.  It would certainly
+	 * cause problems at least in Hot Standby mode, where the
+	 * KnownAssignedXids machinery requires tracking every XID assignment.	It
+	 * might be OK to skip it only when wal_level < hot_standby, but for now
+	 * we don't.)
+	 *
+	 * However, if we're doing cleanup of any non-temp rels or committing any
+	 * command that wanted to force sync commit, then we must flush XLOG
+	 * immediately.  (We must not allow asynchronous commit if there are any
+	 * non-temp tables to be deleted, because we might delete the files before
+	 * the COMMIT record is flushed to disk.  We do allow asynchronous commit
+	 * if all to-be-deleted tables are temporary though, since they are lost
+	 * anyway if we crash.)
+	 */
+	if ((wrote_xlog && synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
+		forceSyncCommit || nrels > 0)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		/*
 		 * Synchronous commit case:
@@ -1433,7 +1483,7 @@ RecordTransactionCommit(void)
 		 * fewer than CommitSiblings other backends with active transactions.
 		 */
 		if (CommitDelay > 0 && enableFsync &&
-			CountActiveBackends() >= CommitSiblings)
+			MinimumActiveBackends(CommitSiblings))
 			pg_usleep(CommitDelay);
 
 		XLogFlush(recptr);
@@ -1457,6 +1507,13 @@ RecordTransactionCommit(void)
 
 		if (isDtxPrepared)
 			forcedDistributedCommitted(&recptr);
+
+		/*
+		 * Wake up all walsenders to send WAL up to the COMMIT record
+		 * immediately if replication is enabled
+		 */
+		if (max_wal_senders > 0)
+			WalSndWakeup();
 
 		/*
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
@@ -1493,7 +1550,7 @@ RecordTransactionCommit(void)
 		 * Report the latest async commit LSN, so that the WAL writer knows to
 		 * flush this commit.
 		 */
-		XLogSetAsyncCommitLSN(XactLastRecEnd);
+		XLogSetAsyncXactLSN(XactLastRecEnd);
 
 		/*
 		 * We must not immediately update the CLOG, since we didn't flush the
@@ -1539,6 +1596,14 @@ RecordTransactionCommit(void)
 
 	/* Compute latestXid while we have the child XIDs handy */
 	latestXid = TransactionIdLatest(xid, nchildren, children);
+
+	/*
+	 * Wait for synchronous replication, if required.
+	 *
+	 * Note that at this stage we have marked clog, but still show as running
+	 * in the procarray and continue to hold locks.
+	 */
+	SyncRepWaitForLSN(XactLastRecEnd);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	XactLastRecEnd.xrecoff = 0;
@@ -1794,8 +1859,13 @@ RecordTransactionAbort(bool isSubXact)
 		elog(PANIC, "cannot abort transaction %u, it was already committed",
 			 xid);
 
+<<<<<<< HEAD
 	/* Get data needed for abort record */
 	nrels = smgrGetPendingDeletes(false, &rels, NULL);
+=======
+	/* Fetch the data we need for the abort record */
+	nrels = smgrGetPendingDeletes(false, &rels);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	nchildren = xactGetCommittedChildren(&children);
 
 	/* XXX do we really need a critical section here? */
@@ -1846,7 +1916,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * problems occur at that point.
 	 */
 	if (!isSubXact)
-		XLogSetAsyncCommitLSN(XactLastRecEnd);
+		XLogSetAsyncXactLSN(XactLastRecEnd);
 
 	/*
 	 * Mark the transaction aborted in clog.  This is not absolutely necessary
@@ -2143,6 +2213,7 @@ StartTransaction(void)
 		s->startedInRecovery = false;
 		XactReadOnly = DefaultXactReadOnly;
 	}
+	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
 	forceSyncCommit = false;
 	MyXactAccessedTempRel = false;
@@ -2446,12 +2517,10 @@ CommitTransaction(void)
 		elog(DEBUG1,"CommitTransaction: called as segment Reader");
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database access,
-	 * and in fact could still cause an error...)
-	 *
-	 * It is possible for CommitHoldablePortals to invoke functions that queue
-	 * deferred triggers, and it's also possible that triggers create holdable
-	 * cursors.  So we have to loop until there's nothing left to do.
+	 * Do pre-commit processing that involves calling user-defined code, such
+	 * as triggers.  Since closing cursors could queue trigger actions,
+	 * triggers could open cursors, etc, we have to keep looping until there's
+	 * nothing left to do.
 	 */
 	for (;;)
 	{
@@ -2461,17 +2530,25 @@ CommitTransaction(void)
 		AfterTriggerFireDeferred();
 
 		/*
-		 * Convert any open holdable cursors into static portals.  If there
-		 * weren't any, we are done ... otherwise loop back to check if they
-		 * queued deferred triggers.  Lather, rinse, repeat.
+		 * Close open portals (converting holdable ones into static portals).
+		 * If there weren't any, we are done ... otherwise loop back to check
+		 * if they queued deferred triggers.  Lather, rinse, repeat.
 		 */
-		if (!CommitHoldablePortals())
+		if (!PreCommit_Portals(false))
 			break;
 	}
 
-	/* Now we can shut down the deferred-trigger manager */
+	/*
+	 * The remaining actions cannot call any user-defined code, so it's safe
+	 * to start shutting down within-transaction services.	But note that most
+	 * of this stuff could still throw an error, which would switch us into
+	 * the transaction-abort path.
+	 */
+
+	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
 
+<<<<<<< HEAD
 	/* Close any open regular cursors */
 	AtCommit_Portals();
 
@@ -2484,6 +2561,8 @@ CommitTransaction(void)
 	/* Perform any AO table commit processing */
 	AtCommit_AppendOnly();
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
 	 * cursors, to avoid dangling-reference problems)
@@ -2495,6 +2574,13 @@ CommitTransaction(void)
 
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
+
+	/*
+	 * Mark serializable transaction as complete for predicate locking
+	 * purposes.  This should be done as late as we can put it and still allow
+	 * errors to be raised for failure patterns found at commit.
+	 */
+	PreCommit_CheckForSerializationFailure();
 
 	/*
 	 * Insert notifications sent by NOTIFY commands into the queue.  This
@@ -2740,12 +2826,10 @@ PrepareTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database access,
-	 * and in fact could still cause an error...)
-	 *
-	 * It is possible for PrepareHoldablePortals to invoke functions that
-	 * queue deferred triggers, and it's also possible that triggers create
-	 * holdable cursors.  So we have to loop until there's nothing left to do.
+	 * Do pre-commit processing that involves calling user-defined code, such
+	 * as triggers.  Since closing cursors could queue trigger actions,
+	 * triggers could open cursors, etc, we have to keep looping until there's
+	 * nothing left to do.
 	 */
 	for (;;)
 	{
@@ -2755,22 +2839,32 @@ PrepareTransaction(void)
 		AfterTriggerFireDeferred();
 
 		/*
-		 * Convert any open holdable cursors into static portals.  If there
-		 * weren't any, we are done ... otherwise loop back to check if they
-		 * queued deferred triggers.  Lather, rinse, repeat.
+		 * Close open portals (converting holdable ones into static portals).
+		 * If there weren't any, we are done ... otherwise loop back to check
+		 * if they queued deferred triggers.  Lather, rinse, repeat.
 		 */
-		if (!PrepareHoldablePortals())
+		if (!PreCommit_Portals(true))
 			break;
 	}
 
-	/* Now we can shut down the deferred-trigger manager */
+	/*
+	 * The remaining actions cannot call any user-defined code, so it's safe
+	 * to start shutting down within-transaction services.	But note that most
+	 * of this stuff could still throw an error, which would switch us into
+	 * the transaction-abort path.
+	 */
+
+	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
 
+<<<<<<< HEAD
 	/* Close any open regular cursors */
 	AtCommit_Portals();
 
 	AtEOXact_SharedSnapshot();
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
 	 * cursors, to avoid dangling-reference problems)
@@ -2781,6 +2875,13 @@ PrepareTransaction(void)
 
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
+
+	/*
+	 * Mark serializable transaction as complete for predicate locking
+	 * purposes.  This should be done as late as we can put it and still allow
+	 * errors to be raised for failure patterns found at commit.
+	 */
+	PreCommit_CheckForSerializationFailure();
 
 	/* NOTIFY will be handled below */
 
@@ -2871,6 +2972,7 @@ PrepareTransaction(void)
 
 	AtPrepare_Notify();
 	AtPrepare_Locks();
+	AtPrepare_PredicateLocks();
 	AtPrepare_PgStat();
 	AtPrepare_MultiXact();
 	AtPrepare_RelationMap();
@@ -2937,6 +3039,7 @@ PrepareTransaction(void)
 	PostPrepare_MultiXact(xid);
 
 	PostPrepare_Locks(xid);
+	PostPrepare_PredicateLocks(xid);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
@@ -5772,7 +5875,14 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn,
 	/* Make sure files supposed to be dropped are dropped */
 	if (xlrec->nrels > 0)
 	{
+<<<<<<< HEAD
 		for (i = 0; i < xlrec->nrels; i++)
+=======
+		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
+		ForkNumber	fork;
+
+		for (fork = 0; fork <= MAX_FORKNUM; fork++)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			SMgrRelation srel = smgropen(xlrec->xnodes[i]);
 			ForkNumber	fork;
@@ -5780,7 +5890,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn,
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
 			{
 				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, false, true);
+				smgrdounlink(srel, fork, true);
 			}
 			smgrclose(srel);
 		}
@@ -5929,9 +6039,9 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	sub_xids = (TransactionId *) &(xlrec->xnodes[xlrec->nrels]);
 	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
 
-	/* Make sure nextXid is beyond any XID mentioned in the record */
-
 	/*
+	 * Make sure nextXid is beyond any XID mentioned in the record.
+	 *
 	 * We don't expect anyone else to modify nextXid, hence we don't need to
 	 * hold a lock while checking this. We still acquire the lock to modify
 	 * it, though.
@@ -5985,13 +6095,21 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
+<<<<<<< HEAD
 			XLogDropRelation(xlrec->xnodes[i], fork);
 			smgrdounlink(srel, fork, false, true);
+=======
+			if (smgrexists(srel, fork))
+			{
+				XLogDropRelation(xlrec->xnodes[i], fork);
+				smgrdounlink(srel, fork, true);
+			}
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		smgrclose(srel);
 	}
@@ -6085,7 +6203,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -6162,7 +6280,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpath(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);

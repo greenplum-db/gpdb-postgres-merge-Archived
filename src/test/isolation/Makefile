@@ -18,6 +18,7 @@ override LDLIBS := $(libpq_pgport) $(LDLIBS)
 
 OBJS =  specparse.o isolationtester.o
 
+<<<<<<< HEAD
 all: isolationtester$(X) pg_isolation_regress$(X)
 
 pg_regress.o:
@@ -44,6 +45,21 @@ pg_isolation_regress$(X): isolation_main.o pg_regress.o
 
 isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+=======
+submake-regress:
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
+
+pg_regress.o: | submake-regress
+	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
+
+pg_isolation_regress: isolation_main.o pg_regress.o
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+all: isolationtester pg_isolation_regress
+
+isolationtester: $(OBJS) | submake-libpq submake-libpgport
+	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 distprep: specparse.c specscanner.c
 
@@ -54,6 +70,11 @@ distprep: specparse.c specscanner.c
 # important, otherwise make will choose the built-in rule for
 # gram.y=>gram.c.
 
+<<<<<<< HEAD
+=======
+all: isolationtester$(X) pg_isolation_regress$(X)
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 specparse.h: specparse.c ;
 
 # specscanner is compiled as part of specparse
@@ -78,12 +99,16 @@ endif
 clean distclean:
 	rm -f isolationtester$(X) pg_isolation_regress$(X) $(OBJS) isolation_main.o
 	rm -f pg_regress.o
+<<<<<<< HEAD
 	rm -f gpstringsubs.pl gpdiff.pl atmsort.pm explain.pm GPTest.pm
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	rm -rf $(pg_regress_clean_files)
 
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
+<<<<<<< HEAD
 installcheck: all gpdiff.pl gpstringsubs.pl
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
@@ -93,6 +118,10 @@ installcheck: all gpdiff.pl gpstringsubs.pl
 installcheck-prepared-txns: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
 
+=======
+installcheck: all
+	./pg_isolation_regress --psqldir=$(PSQLDIR) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # We can't support "make check" because isolationtester requires libpq, and
 # in fact (on typical platforms using shared libraries) requires libpq to

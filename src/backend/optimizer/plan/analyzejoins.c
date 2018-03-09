@@ -11,12 +11,12 @@
  * is that we have to work harder to clean up after ourselves when we modify
  * the query, since the derived data structures have to be updated too.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/analyzejoins.c,v 1.3 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/optimizer/plan/analyzejoins.c
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,11 @@
 /* local functions */
 static bool join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo);
 static void remove_rel_from_query(PlannerInfo *root, int relid,
+<<<<<<< HEAD
 								  Relids joinrelids);
+=======
+					  Relids joinrelids);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 
 
@@ -238,10 +242,17 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 			!bms_equal(restrictinfo->required_relids, joinrelids))
 		{
 			/*
+<<<<<<< HEAD
 			 * If such a clause actually references the inner rel then
 			 * join removal has to be disallowed.  We have to check this
 			 * despite the previous attr_needed checks because of the
 			 * possibility of pushed-down clauses referencing the rel.
+=======
+			 * If such a clause actually references the inner rel then join
+			 * removal has to be disallowed.  We have to check this despite
+			 * the previous attr_needed checks because of the possibility of
+			 * pushed-down clauses referencing the rel.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			 */
 			if (bms_is_member(innerrelid, restrictinfo->clause_relids))
 				return false;
@@ -365,8 +376,8 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * Likewise remove references from SpecialJoinInfo data structures.
 	 *
 	 * This is relevant in case the outer join we're deleting is nested inside
-	 * other outer joins: the upper joins' relid sets have to be adjusted.
-	 * The RHS of the target outer join will be made empty here, but that's OK
+	 * other outer joins: the upper joins' relid sets have to be adjusted. The
+	 * RHS of the target outer join will be made empty here, but that's OK
 	 * since caller will delete that SpecialJoinInfo entirely.
 	 */
 	foreach(l, root->join_info_list)
@@ -426,6 +437,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		{
 			/* Recheck that qual doesn't actually reference the target rel */
 			Assert(!bms_is_member(relid, rinfo->clause_relids));
+<<<<<<< HEAD
 			/*
 			 * The required_relids probably aren't shared with anything else,
 			 * but let's copy them just to be sure.
@@ -463,6 +475,9 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		{
 			/* Recheck that qual doesn't actually reference the target rel */
 			Assert(!bms_is_member(relid, rinfo->clause_relids));
+=======
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			/*
 			 * The required_relids probably aren't shared with anything else,
 			 * but let's copy them just to be sure.

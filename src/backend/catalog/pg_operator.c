@@ -3,12 +3,12 @@
  * pg_operator.c
  *	  routines to support manipulation of the pg_operator relation
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.111 2010/02/14 18:42:13 rhaas Exp $
+ *	  src/backend/catalog/pg_operator.c
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -22,6 +22,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -273,6 +274,10 @@ OperatorShellMake(const char *operatorName,
 	makeOperatorDependencies(tup);
 
 	heap_freetuple(tup);
+
+	/* Post creation hook for new shell operator */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   OperatorRelationId, operatorObjectId, 0);
 
 	/*
 	 * Make sure the tuple is visible for subsequent lookups/updates.
@@ -540,6 +545,10 @@ OperatorCreate(const char *operatorName,
 	/* Add dependencies for the entry */
 	makeOperatorDependencies(tup);
 
+	/* Post creation hook for new operator */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   OperatorRelationId, operatorObjectId, 0);
+
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
 	/*
@@ -768,10 +777,14 @@ makeOperatorDependencies(HeapTuple tuple)
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
+<<<<<<< HEAD
 	/*
 	 * In case we are updating a shell, delete any existing entries, except
 	 * for extension membership which should remain the same.
 	 */
+=======
+	/* In case we are updating a shell, delete any existing entries */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	deleteDependencyRecordsFor(myself.classId, myself.objectId, false);
 	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 
@@ -850,6 +863,12 @@ makeOperatorDependencies(HeapTuple tuple)
 	/* Dependency on owner */
 	recordDependencyOnOwner(OperatorRelationId, HeapTupleGetOid(tuple),
 							oper->oprowner);
+<<<<<<< HEAD
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
+=======
+
+	/* Dependency on extension */
+	recordDependencyOnCurrentExtension(&myself);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

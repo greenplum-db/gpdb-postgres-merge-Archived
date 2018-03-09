@@ -2450,6 +2450,7 @@ group by t1.q2 order by 1;
 (4 rows)
 
 --
+<<<<<<< HEAD
 -- test case where a PlaceHolderVar is propagated into a subquery
 --
 select * from
@@ -2471,6 +2472,52 @@ order by 1,2;
  4567890123456789 | 4567890123456789 | 4567890123456789 | 42
 (8 rows)
 
+=======
+-- test incorrect failure to NULL pulled-up subexpressions
+--
+begin;
+create temp table a (
+     code char not null,
+     constraint a_pk primary key (code)
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pk" for table "a"
+create temp table b (
+     a char not null,
+     num integer not null,
+     constraint b_pk primary key (a, num)
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pk" for table "b"
+create temp table c (
+     name char not null,
+     a char,
+     constraint c_pk primary key (name)
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pk" for table "c"
+insert into a (code) values ('p');
+insert into a (code) values ('q');
+insert into b (a, num) values ('p', 1);
+insert into b (a, num) values ('p', 2);
+insert into c (name, a) values ('A', 'p');
+insert into c (name, a) values ('B', 'q');
+insert into c (name, a) values ('C', null);
+select c.name, ss.code, ss.b_cnt, ss.const
+from c left join
+  (select a.code, coalesce(b_grp.cnt, 0) as b_cnt, -1 as const
+   from a left join
+     (select count(1) as cnt, b.a from b group by b.a) as b_grp
+     on a.code = b_grp.a
+  ) as ss
+  on (c.a = ss.code)
+order by c.name;
+ name | code | b_cnt | const 
+------+------+-------+-------
+ A    | p    |     2 |    -1
+ B    | q    |     0 |    -1
+ C    |      |       |      
+(3 rows)
+
+rollback;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 --
 -- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
 --
@@ -2680,6 +2727,43 @@ select p.* from
    One-Time Filter: false
  Optimizer: legacy query optimizer
 (3 rows)
+
+-- check for a 9.0rc1 bug: join removal breaks pseudoconstant qual handling
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+ k | pd 
+---+----
+(0 rows)
+
+explain (costs off)
+select p.* from
+  parent p left join child c on (p.k = c.k)
+  where p.k = 1 and p.k = 2;
+                   QUERY PLAN                   
+------------------------------------------------
+ Result
+   One-Time Filter: false
+   ->  Index Scan using parent_pkey on parent p
+         Index Cond: (k = 1)
+(4 rows)
+
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+ k | pd 
+---+----
+(0 rows)
+
+explain (costs off)
+select p.* from
+  (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
+  where p.k = 1 and p.k = 2;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
 
 -- bug 5255: this is not optimizable by join removal
 begin;

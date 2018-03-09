@@ -3,12 +3,12 @@
  * int.c
  *	  Functions for the built-in integer types (except int8).
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.89 2010/02/26 02:01:08 momjian Exp $
+ *	  src/backend/utils/adt/int.c
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,8 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 	 * fcinfo->flinfo->fn_extra.  So we need to pass it our own flinfo
 	 * parameter.
 	 */
-	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3, NULL, NULL);
+	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3,
+							 InvalidOid, NULL, NULL);
 
 	locfcinfo.arg[0] = PointerGetDatum(buf);
 	locfcinfo.arg[1] = ObjectIdGetDatum(INT2OID);
@@ -717,6 +718,11 @@ int4div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+#ifdef WIN32
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT_MIN / -1 is problematic, since the result can't be represented on a
@@ -859,6 +865,11 @@ int2div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+	result = arg1 / arg2;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * SHRT_MIN / -1 is problematic, since the result can't be represented on
@@ -1056,6 +1067,11 @@ int42div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+	result = arg1 / arg2;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT_MIN / -1 is problematic, since the result can't be represented on a
@@ -1124,6 +1140,7 @@ int2mod(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Some machines throw a floating-point exception for INT_MIN % -1, which
 	 * is a bit silly since the correct answer is perfectly well-defined,
@@ -1133,6 +1150,8 @@ int2mod(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 		PG_RETURN_INT16(0);
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* No overflow is possible */
 
 	PG_RETURN_INT16(arg1 % arg2);

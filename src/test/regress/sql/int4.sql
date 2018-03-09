@@ -1,7 +1,5 @@
 --
 -- INT4
--- WARNING: int4 operators never check for over/underflow!
--- Some of these answers are consequently numerically incorrect.
 --
 
 CREATE TABLE INT4_TBL(f1 int4);
@@ -126,6 +124,7 @@ SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
 
+<<<<<<< HEAD
 -- check sane handling of INT_MIN overflow cases
 SELECT (-2147483648)::int4 * (-1)::int4;
 SELECT (-2147483648)::int4 / (-1)::int4;
@@ -133,3 +132,8 @@ SELECT (-2147483648)::int4 % (-1)::int4;
 SELECT (-2147483648)::int4 * (-1)::int2;
 SELECT (-2147483648)::int4 / (-1)::int2;
 SELECT (-2147483648)::int4 % (-1)::int2;
+=======
+-- corner case
+SELECT (-1::int4<<31)::text;
+SELECT ((-1::int4<<31)+1)::text;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

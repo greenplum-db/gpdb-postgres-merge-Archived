@@ -3,8 +3,13 @@
  *
  *	file system operations
  *
+<<<<<<< HEAD
  *	Copyright (c) 2010, PostgreSQL Global Development Group
  *	$PostgreSQL: pgsql/contrib/pg_upgrade/file.c,v 1.13.2.2 2010/07/13 20:15:51 momjian Exp $
+=======
+ *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
+ *	contrib/pg_upgrade/file.c
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "pg_upgrade.h"
@@ -15,17 +20,15 @@
 #include "storage/checksum.h"
 #include "storage/checksum_impl.h"
 
-static int	copy_file(const char *fromfile, const char *tofile, bool force);
 
-#ifdef WIN32
+#ifndef WIN32
+static int	copy_file(const char *fromfile, const char *tofile, bool force);
+#else
 static int	win32_pghardlink(const char *src, const char *dst);
-#endif
-#ifdef NOT_USED
-static int	copy_dir(const char *from, const char *to, bool force);
 #endif
 
 #ifndef HAVE_SCANDIR
-static int pg_scandir_internal(migratorContext *ctx, const char *dirname,
+static int pg_scandir_internal(const char *dirname,
 					struct dirent *** namelist,
 					int (*selector) (const struct dirent *));
 #endif
@@ -38,7 +41,7 @@ static int pg_scandir_internal(migratorContext *ctx, const char *dirname,
  *	uses that pageConverter to do a page-by-page conversion.
  */
 const char *
-copyAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
+copyAndUpdateFile(pageCnvCtx *pageConverter,
 				  const char *src, const char *dst, bool force)
 {
 	report_progress(ctx, NONE, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
@@ -209,7 +212,7 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
  * instead of copying the data from the old cluster to the new cluster.
  */
 const char *
-linkAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
+linkAndUpdateFile(pageCnvCtx *pageConverter,
 				  const char *src, const char *dst)
 {
 	if (pageConverter != NULL)
@@ -222,6 +225,7 @@ linkAndUpdateFile(migratorContext *ctx, pageCnvCtx *pageConverter,
 }
 
 
+#ifndef WIN32
 static int
 copy_file(const char *srcfile, const char *dstfile, bool force)
 {
@@ -266,8 +270,13 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (nbytes < 0)
 		{
+<<<<<<< HEAD
 			int save_errno = errno;
 			
+=======
+			int			save_errno = errno;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			if (buffer != NULL)
 				free(buffer);
 
@@ -289,7 +298,11 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 		if (write(dest_fd, buffer, nbytes) != nbytes)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
+<<<<<<< HEAD
 			int save_errno = errno ? errno : ENOSPC;
+=======
+			int			save_errno = errno ? errno : ENOSPC;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			if (buffer != NULL)
 				free(buffer);
@@ -316,6 +329,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 	return 1;
 }
+#endif
 
 
 /*
@@ -324,12 +338,12 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  * Wrapper for portable scandir functionality
  */
 int
-pg_scandir(migratorContext *ctx, const char *dirname,
+pg_scandir(const char *dirname,
 		   struct dirent *** namelist,
 		   int (*selector) (const struct dirent *))
 {
 #ifndef HAVE_SCANDIR
-	return pg_scandir_internal(ctx, dirname, namelist, selector);
+	return pg_scandir_internal(dirname, namelist, selector);
 
 	/*
 	 * scandir() is originally from BSD 4.3, which had the third argument as
@@ -370,7 +384,7 @@ pg_scandir(migratorContext *ctx, const char *dirname,
  * .2, etc.) and should therefore be invoked a small number of times.
  */
 static int
-pg_scandir_internal(migratorContext *ctx, const char *dirname,
+pg_scandir_internal(const char *dirname,
 		 struct dirent *** namelist, int (*selector) (const struct dirent *))
 {
 	DIR		   *dirdesc;
@@ -380,7 +394,11 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
+<<<<<<< HEAD
 		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %s\n", dirname, getErrorText(errno));
+=======
+		pg_log(PG_FATAL, "could not open directory \"%s\": %m\n", dirname);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	*namelist = NULL;
 
@@ -395,7 +413,10 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 						(size_t) ((name_num + 1) * sizeof(struct dirent *)));
 
 			if (*namelist == NULL)
+			{
+				closedir(dirdesc);
 				return -1;
+			}
 
 			entrysize = sizeof(struct dirent) - sizeof(direntry->d_name) +
 				strlen(direntry->d_name) + 1;
@@ -403,7 +424,10 @@ pg_scandir_internal(migratorContext *ctx, const char *dirname,
 			(*namelist)[name_num] = (struct dirent *) malloc(entrysize);
 
 			if ((*namelist)[name_num] == NULL)
+			{
+				closedir(dirdesc);
 				return -1;
+			}
 
 			memcpy((*namelist)[name_num], direntry, entrysize);
 
@@ -445,18 +469,18 @@ dir_matching_filenames(const struct dirent * scan_ent)
 
 
 void
-check_hard_link(migratorContext *ctx)
+check_hard_link(void)
 {
 	char		existing_file[MAXPGPATH];
 	char		new_link_file[MAXPGPATH];
 
-	snprintf(existing_file, sizeof(existing_file), "%s/PG_VERSION", ctx->old.pgdata);
-	snprintf(new_link_file, sizeof(new_link_file), "%s/PG_VERSION.linktest", ctx->new.pgdata);
+	snprintf(existing_file, sizeof(existing_file), "%s/PG_VERSION", old_cluster.pgdata);
+	snprintf(new_link_file, sizeof(new_link_file), "%s/PG_VERSION.linktest", new_cluster.pgdata);
 	unlink(new_link_file);		/* might fail */
 
 	if (pg_link_file(existing_file, new_link_file) == -1)
 	{
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "Could not create hard link between old and new data directories:  %s\n"
 			   "In link mode the old and new data directories must be on the same file system volume.\n",
 			   getErrorText(errno));
@@ -477,6 +501,7 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
+<<<<<<< HEAD
 #endif
 
 
@@ -580,5 +605,7 @@ copy_dir(const char *src, const char *dst, bool force)
 	}
 	return 1;
 }
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif

@@ -4,12 +4,16 @@
  *	  prototypes for functions in backend/catalog/heap.c
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.98 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/heap.h
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +63,11 @@ extern Relation heap_create(const char *relname,
 			TupleDesc tupDesc,
 			Oid relam,
 			char relkind,
+<<<<<<< HEAD
 			char relstorage,
+=======
+			char relpersistence,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			bool shared_relation,
 			bool mapped_relation,
 			bool allow_system_table_mods);
@@ -75,7 +83,11 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 List *cooked_constraints,
 						 Oid relam,
 						 char relkind,
+<<<<<<< HEAD
 						 char relstorage,
+=======
+						 char relpersistence,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						 bool shared_relation,
 						 bool mapped_relation,
 						 bool oidislocal,
@@ -141,7 +153,12 @@ extern Form_pg_attribute SystemAttributeByName(const char *attname,
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 						 bool allow_system_table_mods);
 
+<<<<<<< HEAD
 extern void CheckAttributeType(const char *attname, Oid atttypid,
+=======
+extern void CheckAttributeType(const char *attname,
+				   Oid atttypid, Oid attcollation,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				   List *containing_rowtypes,
 				   bool allow_system_table_mods);
 extern void SetRelationNumChecks(Relation rel, int numchecks);

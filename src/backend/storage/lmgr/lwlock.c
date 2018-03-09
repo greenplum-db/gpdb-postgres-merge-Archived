@@ -11,11 +11,11 @@
  * LWLocks to protect its shared state.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.56 2010/02/16 22:34:50 tgl Exp $
+ *	  src/backend/storage/lmgr/lwlock.c
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "pg_trace.h"
 #include "storage/barrier.h"
 #include "storage/ipc.h"
+#include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "utils/sharedsnapshot.h"
@@ -200,11 +201,16 @@ NumLWLocks(void)
 	/* async.c needs one per Async buffer */
 	numLocks += NUM_ASYNC_BUFFERS;
 
+<<<<<<< HEAD
 	/* cdbdistributedlog.c needs one per DistributedLog buffer */
 	numLocks += NUM_DISTRIBUTEDLOG_BUFFERS;
 
 	/* sharedsnapshot.c needs one per shared snapshot slot */
 	numLocks += NUM_SHARED_SNAPSHOT_SLOTS;
+=======
+	/* predicate.c needs one per old serializable xid buffer */
+	numLocks += NUM_OLDSERXID_BUFFERS;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility

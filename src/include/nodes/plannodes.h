@@ -5,12 +5,16 @@
  *	  definitions for query plan nodes
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.117 2010/02/26 02:01:25 momjian Exp $
+ * src/include/nodes/plannodes.h
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +73,8 @@ typedef struct PlannedStmt
 	PlanGenerator	planGen;		/* optimizer generation */
 
 	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
+
+	bool		hasModifyingCTE;	/* has insert|update|delete in WITH? */
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -276,7 +282,7 @@ typedef struct Plan
 } Plan;
 
 /* ----------------
- *	these are are defined to avoid confusion problems with "left"
+ *	these are defined to avoid confusion problems with "left"
  *	and "right" and "inner" and "outer".  The convention is that
  *	the "left" plan is the "outer" plan and the "right" plan is
  *	the inner plan, but these make the code more readable.
@@ -339,13 +345,18 @@ typedef struct Repeat
  *	 ModifyTable node -
  *		Apply rows produced by subplan(s) to result table(s),
  *		by inserting, updating, or deleting.
+ *
+ * Note that rowMarks and epqParam are presumed to be valid for all the
+ * subplan(s); they can't contain any info that varies across subplans.
  * ----------------
  */
 typedef struct ModifyTable
 {
 	Plan		plan;
 	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
+	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	List	   *resultRelations;	/* integer list of RT indexes */
+	int			resultRelIndex; /* index of first resultRel in plan's list */
 	List	   *plans;			/* plan(s) producing source data */
 	List	   *returningLists; /* per-target-table RETURNING tlists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
@@ -373,6 +384,23 @@ typedef struct Sequence
 	Plan plan;
 	List *subplans;
 } Sequence;
+
+/* ----------------
+ *	 MergeAppend node -
+ *		Merge the results of pre-sorted sub-plans to preserve the ordering.
+ * ----------------
+ */
+typedef struct MergeAppend
+{
+	Plan		plan;
+	List	   *mergeplans;
+	/* remaining fields are just like the sort-key info in struct Sort */
+	int			numCols;		/* number of sort-key columns */
+	AttrNumber *sortColIdx;		/* their indexes in the target list */
+	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
+	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
+} MergeAppend;
 
 /* ----------------
  *	RecursiveUnion node -
@@ -488,7 +516,10 @@ typedef struct LogicalIndexInfo
  * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
  * The indexkey is a Var or expression referencing column(s) of the index's
  * base table.	The comparisonval might be any expression, but it won't use
- * any columns of the base table.
+ * any columns of the base table.  The expressions are ordered by index
+ * column position (but items referencing the same index column can appear
+ * in any order).  indexqualorig is used at runtime only if we have to recheck
+ * a lossy indexqual.
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
@@ -497,14 +528,26 @@ typedef struct LogicalIndexInfo
  * table).	This is a bit hokey ... would be cleaner to use a special-purpose
  * node type that could not be mistaken for a regular Var.	But it will do
  * for now.
+ *
+ * indexorderbyorig is similarly the original form of any ORDER BY expressions
+ * that are being implemented by the index, while indexorderby is modified to
+ * have index column Vars on the left-hand side.  Here, multiple expressions
+ * must appear in exactly the ORDER BY order, and this is not necessarily the
+ * index column order.	Only the expressions are provided, not the auxiliary
+ * sort-order information from the ORDER BY SortGroupClauses; it's assumed
+ * that the sort ordering is fully determinable from the top-level operators.
+ * indexorderbyorig is unused at run time, but is needed for EXPLAIN.
+ * (Note these fields are used for amcanorderbyop cases, not amcanorder cases.)
  * ----------------
  */
 typedef struct IndexScan
 {
 	Scan		scan;
 	Oid			indexid;		/* OID of index to scan */
-	List	   *indexqual;		/* list of index quals (OpExprs) */
+	List	   *indexqual;		/* list of index quals (usually OpExprs) */
 	List	   *indexqualorig;	/* the same in original form */
+	List	   *indexorderby;	/* list of index ORDER BY exprs */
+	List	   *indexorderbyorig;		/* the same in original form */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
 } IndexScan;
 
@@ -660,6 +703,7 @@ typedef struct FunctionScan
 	List	   *funccolnames;	/* output column names (string Value nodes) */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
+	List	   *funccolcollations;		/* OID list of column collation OIDs */
 } FunctionScan;
 
 /* ----------------
@@ -704,6 +748,7 @@ typedef struct WorkTableScan
 } WorkTableScan;
 
 /* ----------------
+<<<<<<< HEAD
 * External Scan node
 *
 * Field scan.scanrelid is the index of the external relation for
@@ -749,6 +794,19 @@ typedef struct AOCSScan
 	Scan		scan;
 	/* nothing for now... */
 } AOCSScan;
+=======
+ *		ForeignScan node
+ * ----------------
+ */
+typedef struct ForeignScan
+{
+	Scan		scan;
+	bool		fsSystemCol;	/* true if any "system column" is needed */
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwPlan *fdwplan;
+} ForeignScan;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * ==========
@@ -783,25 +841,49 @@ typedef struct Join
 
 /* ----------------
  *		nest loop join node
+ *
+ * The nestParams list identifies any executor Params that must be passed
+ * into execution of the inner subplan carrying values from the current row
+ * of the outer subplan.  Currently we restrict these values to be simple
+ * Vars, but perhaps someday that'd be worth relaxing.
  * ----------------
  */
 typedef struct NestLoop
 {
 	Join		join;
+<<<<<<< HEAD
 
 	bool		shared_outer;
 	bool		singleton_outer; /*CDB-OLAP true => outer is plain Agg */
+=======
+	List	   *nestParams;		/* list of NestLoopParam nodes */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } NestLoop;
+
+typedef struct NestLoopParam
+{
+	NodeTag		type;
+	int			paramno;		/* number of the PARAM_EXEC Param to set */
+	Var		   *paramval;		/* outer-relation Var to assign to Param */
+} NestLoopParam;
 
 /* ----------------
  *		merge join node
  *
  * The expected ordering of each mergeable column is described by a btree
+<<<<<<< HEAD
  * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
  * and a nulls-first flag.  Note that the two sides of each mergeclause may
  * be of different datatypes, but they are ordered the same way according to
  * the common opfamily.  The operator in each mergeclause must be an equality
  * operator of the indicated opfamily.
+=======
+ * opfamily OID, a collation OID, a direction (BTLessStrategyNumber or
+ * BTGreaterStrategyNumber) and a nulls-first flag.  Note that the two sides
+ * of each mergeclause may be of different datatypes, but they are ordered the
+ * same way according to the common opfamily and collation.  The operator in
+ * each mergeclause must be an equality operator of the indicated opfamily.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * ----------------
  */
 typedef struct MergeJoin
@@ -810,6 +892,7 @@ typedef struct MergeJoin
 	List	   *mergeclauses;	/* mergeclauses as expression trees */
 	/* these are arrays, but have the same length as the mergeclauses list: */
 	Oid		   *mergeFamilies;	/* per-clause OIDs of btree opfamilies */
+	Oid		   *mergeCollations;	/* per-clause OIDs of collations */
 	int		   *mergeStrategies;	/* per-clause ordering (ASC or DESC) */
 	bool	   *mergeNullsFirst;	/* per-clause nulls ordering */
 	bool		unique_outer; /*CDB-OLAP true => outer is unique in merge key */
@@ -898,6 +981,7 @@ typedef struct Sort
 	int			numCols;		/* number of sort-key columns */
 	AttrNumber *sortColIdx;		/* their indexes in the target list */
 	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
 	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
     /* CDB */
 	bool		noduplicates;   /* TRUE if sort should discard duplicates */
@@ -1289,21 +1373,32 @@ typedef enum RowMarkType
  * prti == parent's RT index, and can therefore be recognized as children by
  * the fact that prti != rti.
  *
- * The AttrNumbers are filled in during preprocess_targetlist.	We use
- * different subsets of them for plain relations, inheritance children,
- * and non-table relations.
+ * The planner also adds resjunk output columns to the plan that carry
+ * information sufficient to identify the locked or fetched rows.  For
+ * tables (markType != ROW_MARK_COPY), these columns are named
+ *		tableoid%u			OID of table
+ *		ctid%u				TID of row
+ * The tableoid column is only present for an inheritance hierarchy.
+ * When markType == ROW_MARK_COPY, there is instead a single column named
+ *		wholerow%u			whole-row value of relation
+ * In all three cases, %u represents the rowmark ID number (rowmarkId).
+ * This number is unique within a plan tree, except that child relation
+ * entries copy their parent's rowmarkId.  (Assigning unique numbers
+ * means we needn't renumber rowmarkIds when flattening subqueries, which
+ * would require finding and renaming the resjunk columns as well.)
+ * Note this means that all tables in an inheritance hierarchy share the
+ * same resjunk column names.  However, in an inherited UPDATE/DELETE the
+ * columns could have different physical column numbers in each subplan.
  */
 typedef struct PlanRowMark
 {
 	NodeTag		type;
 	Index		rti;			/* range table index of markable relation */
 	Index		prti;			/* range table index of parent relation */
+	Index		rowmarkId;		/* unique identifier for resjunk columns */
 	RowMarkType markType;		/* see enum above */
 	bool		noWait;			/* NOWAIT option */
 	bool		isParent;		/* true if this is a "dummy" parent entry */
-	AttrNumber	ctidAttNo;		/* resno of ctid junk attribute, if any */
-	AttrNumber	toidAttNo;		/* resno of tableoid junk attribute, if any */
-	AttrNumber	wholeAttNo;		/* resno of whole-row junk attribute, if any */
 } PlanRowMark;
 
 

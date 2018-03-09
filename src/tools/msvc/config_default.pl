@@ -6,10 +6,16 @@ our $config = {
     asserts=>1,			# --enable-cassert
     # integer_datetimes=>1,   # --enable-integer-datetimes - on is now default
     # float4byval=>1,         # --disable-float4-byval, on by default
+<<<<<<< HEAD
     # float8byval=>1,         # --disable-float8-byval, on by default
     # blocksize => 32,        # --with-blocksize, 8kB by default
     # ldap=>1,				# --with-ldap
     # wal_blocksize => 8,     # --with-wal-blocksize, 8kb by default
+=======
+    # float8byval=>0,         # --disable-float8-byval, off by default
+    # blocksize => 8,         # --with-blocksize, 8kB by default
+    # wal_blocksize => 8,     # --with-wal-blocksize, 8kB by default
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
     # wal_segsize => 16,      # --with-wal-segsize, 16MB by default
     ldap=>1,				# --with-ldap
     nls=>undef,				# --enable-nls=<path>

@@ -4,8 +4,12 @@
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend postgres applications.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-fe.h
@@ -91,8 +95,12 @@ typedef enum
 								 * backend */
 	PGRES_NONFATAL_ERROR,		/* notice or warning message */
 	PGRES_FATAL_ERROR,			/* query failed */
+<<<<<<< HEAD
 	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
 	PGRES_SINGLE_TUPLE			/* single tuple from larger resultset */
+=======
+	PGRES_COPY_BOTH				/* Copy In/Out data transfer in progress */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } ExecStatusType;
 
 typedef enum
@@ -116,8 +124,12 @@ typedef enum
 	PQPING_OK,					/* server is accepting connections */
 	PQPING_REJECT,				/* server is alive but rejecting connections */
 	PQPING_NO_RESPONSE,			/* could not establish connection */
+<<<<<<< HEAD
 	PQPING_NO_ATTEMPT,			/* connection not attempted (bad params) */
 	PQPING_MIRROR_READY         /* mirror completed startup sequence */
+=======
+	PQPING_NO_ATTEMPT			/* connection not attempted (bad params) */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } PGPing;
 
 /* PGconn encapsulates a connection to the backend.
@@ -446,8 +458,13 @@ extern int	PQsetnonblocking(PGconn *conn, int arg);
 extern int	PQisnonblocking(const PGconn *conn);
 extern int	PQisthreadsafe(void);
 extern PGPing PQping(const char *conninfo);
+<<<<<<< HEAD
 extern PGPing PQpingParams(const char *const * keywords,
 			 const char *const * values, int expand_dbname);
+=======
+extern PGPing PQpingParams(const char **keywords,
+			 const char **values, int expand_dbname);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Force the write buffer to be written (or at least try) */
 extern int	PQflush(PGconn *conn);

@@ -15,8 +15,12 @@
  * a usable vsnprintf(), then a copy of our own implementation of it will
  * be linked into libpq.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/pqexpbuffer.h
@@ -150,7 +154,7 @@ extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);
 extern void
 printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
  * appendPQExpBuffer
@@ -162,7 +166,7 @@ __attribute__((format(printf, 2, 3)));
 extern void
 appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
  * appendPQExpBufferVA

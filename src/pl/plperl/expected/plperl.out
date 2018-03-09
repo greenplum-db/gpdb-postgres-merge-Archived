@@ -99,6 +99,7 @@ SELECT * FROM perl_row();
  f1 |  f2   |  f3   |   f4    
 ----+-------+-------+---------
   1 | hello | world | ({{1}})
+<<<<<<< HEAD
 (1 row)
 
 -- test returning a composite literal
@@ -109,6 +110,8 @@ SELECT perl_row_lit();
        perl_row_lit        
 ---------------------------
  (1,hello,world,"({{1}})")
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 (1 row)
 
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$

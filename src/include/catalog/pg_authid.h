@@ -7,12 +7,16 @@
  *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.13 2010/04/20 23:48:47 tgl Exp $
+ * src/include/catalog/pg_authid.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -53,6 +57,7 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION BKI_ROWTYPE_OID(2842) BKI_SCHEMA_MAC
 	bool		rolcreatedb;	/* allowed to create databases? */
 	bool		rolcatupdate;	/* allowed to alter catalogs manually? */
 	bool		rolcanlogin;	/* allowed to log in as session user? */
+	bool		rolreplication; /* role used for streaming replication */
 	int4		rolconnlimit;	/* max connections allowed (-1=no limit) */
 
 	/* remaining fields may be null; use heap_getattr to read them! */
@@ -87,6 +92,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
+<<<<<<< HEAD
 #define Natts_pg_authid						17
 #define Anum_pg_authid_rolname				1
 #define Anum_pg_authid_rolsuper				2
@@ -105,6 +111,20 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolcreaterexthdfs	15
 #define Anum_pg_authid_rolcreatewexthdfs	16
 #define Anum_pg_authid_rolresgroup			17
+=======
+#define Natts_pg_authid					11
+#define Anum_pg_authid_rolname			1
+#define Anum_pg_authid_rolsuper			2
+#define Anum_pg_authid_rolinherit		3
+#define Anum_pg_authid_rolcreaterole	4
+#define Anum_pg_authid_rolcreatedb		5
+#define Anum_pg_authid_rolcatupdate		6
+#define Anum_pg_authid_rolcanlogin		7
+#define Anum_pg_authid_rolreplication	8
+#define Anum_pg_authid_rolconnlimit		9
+#define Anum_pg_authid_rolpassword		10
+#define Anum_pg_authid_rolvaliduntil	11
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------
  *		initial contents of pg_authid
@@ -116,7 +136,11 @@ typedef FormData_pg_authid *Form_pg_authid;
  * add default group ADMINRESGROUP_OID 6438
  * ----------------
  */
+<<<<<<< HEAD
 DATA(insert OID = 10 ( "POSTGRES" t t t t t t -1 _null_ _null_ 6055 t t t t t 6438 ));
+=======
+DATA(insert OID = 10 ( "POSTGRES" t t t t t t t -1 _null_ _null_ ));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #define BOOTSTRAP_SUPERUSERID 10
 

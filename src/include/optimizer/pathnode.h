@@ -4,12 +4,16 @@
  *	  prototypes for pathnode.c, relnode.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.84 2010/03/28 22:59:33 tgl Exp $
+ * src/include/optimizer/pathnode.h
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +47,7 @@ extern AOCSPath *create_aocs_path(PlannerInfo *root, RelOptInfo *rel);
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *clause_groups,
+				  List *indexorderbys,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  RelOptInfo *outer_rel);
@@ -67,11 +72,20 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals);
+<<<<<<< HEAD
 extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths);
+=======
+extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
+extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
+						 RelOptInfo *rel,
+						 List *subpaths,
+						 List *pathkeys);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern ResultPath *create_result_path(List *quals);
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
+<<<<<<< HEAD
 extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
 						 RelOptInfo *rel,
                          Path        *subpath,
@@ -82,6 +96,14 @@ extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, Range
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus);
+=======
+extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
+extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern bool path_contains_inner_index(Path *path);
 extern NestPath *create_nestloop_path(PlannerInfo *root,

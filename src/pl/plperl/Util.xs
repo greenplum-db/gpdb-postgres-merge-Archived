@@ -58,7 +58,11 @@ do_util_elog(int level, SV *msg)
 			pfree(cmsg);
 
 		/* Punt the error to Perl */
+<<<<<<< HEAD
 		croak_cstr(edata->message);
+=======
+		croak("%s", edata->message);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	PG_END_TRY();
 }
@@ -67,11 +71,16 @@ static text *
 sv2text(SV *sv)
 {
 	char	   *str = sv2cstr(sv);
+<<<<<<< HEAD
 	text	   *text;
 
 	text = cstring_to_text(str);
 	pfree(str);
 	return text;
+=======
+
+	return cstring_to_text(str);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 MODULE = PostgreSQL::InServer::Util PREFIX = util_
@@ -116,11 +125,16 @@ util_quote_literal(sv)
     }
     else {
         text *arg = sv2text(sv);
+<<<<<<< HEAD
 		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
 		char *str;
 
 		pfree(arg);
 		str = text_to_cstring(quoted);
+=======
+        text *ret = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
+		char *str = text_to_cstring(ret);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		RETVAL = cstr2sv(str);
 		pfree(str);
     }
@@ -138,11 +152,16 @@ util_quote_nullable(sv)
     else
 	{
         text *arg = sv2text(sv);
+<<<<<<< HEAD
 		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
 		char *str;
 
 		pfree(arg);
 		str = text_to_cstring(quoted);
+=======
+        text *ret = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
+		char *str = text_to_cstring(ret);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		RETVAL = cstr2sv(str);
 		pfree(str);
     }
@@ -154,6 +173,7 @@ util_quote_ident(sv)
     SV *sv
     PREINIT:
         text *arg;
+<<<<<<< HEAD
 		text *quoted;
 		char *str;
     CODE:
@@ -162,6 +182,14 @@ util_quote_ident(sv)
 
 		pfree(arg);
 		str = text_to_cstring(quoted);
+=======
+        text *ret;
+		char *str;
+    CODE:
+        arg = sv2text(sv);
+        ret = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
+		str = text_to_cstring(ret);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		RETVAL = cstr2sv(str);
 		pfree(str);
     OUTPUT:

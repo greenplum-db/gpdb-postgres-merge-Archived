@@ -278,6 +278,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 		if (testspec->sessions[i]->setupsql)
 		{
 			res = PQexec(conns[i], testspec->sessions[i]->setupsql);
+<<<<<<< HEAD
 			if (PQresultStatus(res) == PGRES_TUPLES_OK)
 			{
 				printResultSet(res);
@@ -287,6 +288,13 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 				fprintf(stderr, "setup of session %s failed: %s",
 						testspec->sessions[i]->name,
 						PQerrorMessage(conns[i]));
+=======
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			{
+				fprintf(stderr, "setup of session %s failed: %s",
+						testspec->sessions[i]->name,
+						PQerrorMessage(conns[0]));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				exit_nicely();
 			}
 			PQclear(res);
@@ -311,6 +319,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 				break;
 
 			case PGRES_FATAL_ERROR:
+<<<<<<< HEAD
 				/*
 				 * Detail may contain XID values, so we want to just show
 				 * primary.  Beware however that libpq-generated error results
@@ -327,6 +336,11 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 					else
 						printf("%s", PQresultErrorMessage(res));
 				}
+=======
+				/* Detail may contain xid values, so just show primary. */
+				printf("%s:  %s\n", PQresultErrorField(res, PG_DIAG_SEVERITY),
+					   PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 
 			default:
@@ -346,7 +360,11 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			{
 				fprintf(stderr, "teardown of session %s failed: %s",
 						testspec->sessions[i]->name,
+<<<<<<< HEAD
 						PQerrorMessage(conns[i]));
+=======
+						PQerrorMessage(conns[0]));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				/* don't exit on teardown failure */
 			}
 			PQclear(res);
@@ -357,11 +375,15 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	if (testspec->teardownsql)
 	{
 		res = PQexec(conns[0], testspec->teardownsql);
+<<<<<<< HEAD
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			printResultSet(res);
 		}
 		else if (PQresultStatus(res) != PGRES_COMMAND_OK)
+=======
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			fprintf(stderr, "teardown failed: %s",
 					PQerrorMessage(conns[0]));

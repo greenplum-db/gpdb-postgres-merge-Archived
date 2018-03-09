@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # GPDB-specific tests
 test: heap-serializable-vacuum-freeze
@@ -6,3 +7,16 @@ test: ao-serializable-read
 test: ao-serializable-vacuum
 
 test: ao-insert-eof create_index_hot udf-insert-deadlock heap-repeatable-read ao-repeatable-read
+=======
+test: simple-write-skew
+test: receipt-report
+test: temporal-range-integrity
+test: project-manager
+test: classroom-scheduling
+test: total-cash
+test: referential-integrity
+test: ri-trigger
+test: partial-index
+test: two-ids
+test: multiple-row-versions
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

@@ -3,8 +3,12 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -47,8 +51,12 @@ char	   *const pgresStatus[] = {
 	"PGRES_BAD_RESPONSE",
 	"PGRES_NONFATAL_ERROR",
 	"PGRES_FATAL_ERROR",
+<<<<<<< HEAD
 	"PGRES_COPY_BOTH",
 	"PGRES_SINGLE_TUPLE"
+=======
+	"PGRES_COPY_BOTH"
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 };
 
 /*
@@ -195,7 +203,10 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 			case PGRES_COPY_OUT:
 			case PGRES_COPY_IN:
 			case PGRES_COPY_BOTH:
+<<<<<<< HEAD
 			case PGRES_SINGLE_TUPLE:
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				/* non-error cases */
 				break;
 			default:

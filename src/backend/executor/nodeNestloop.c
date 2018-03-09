@@ -3,14 +3,18 @@
  * nodeNestloop.c
  *	  routines to support nest-loop joins
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.55 2010/01/02 16:57:44 momjian Exp $
+ *	  src/backend/executor/nodeNestloop.c
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +67,7 @@ static void extractFuncExprArgs(FuncExprState *fstate, List **lclauses, List **r
 TupleTableSlot *
 ExecNestLoop(NestLoopState *node)
 {
+	NestLoop   *nl;
 	PlanState  *innerPlan;
 	PlanState  *outerPlan;
 	TupleTableSlot *outerTupleSlot;
@@ -70,12 +75,14 @@ ExecNestLoop(NestLoopState *node)
 	List	   *joinqual;
 	List	   *otherqual;
 	ExprContext *econtext;
+	ListCell   *lc;
 
 	/*
 	 * get information from the node
 	 */
 	ENL1_printf("getting info from node");
 
+	nl = (NestLoop *) node->js.ps.plan;
 	joinqual = node->js.joinqual;
 	otherqual = node->js.ps.qual;
 	outerPlan = outerPlanState(node);
@@ -197,9 +204,32 @@ ExecNestLoop(NestLoopState *node)
 			node->nl_MatchedOuter = false;
 
 			/*
+			 * fetch the values of any outer Vars that must be passed to the
+			 * inner scan, and store them in the appropriate PARAM_EXEC slots.
+			 */
+			foreach(lc, nl->nestParams)
+			{
+				NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
+				int			paramno = nlp->paramno;
+				ParamExecData *prm;
+
+				prm = &(econtext->ecxt_param_exec_vals[paramno]);
+				/* Param value should be an OUTER var */
+				Assert(nlp->paramval->varno == OUTER);
+				Assert(nlp->paramval->varattno > 0);
+				prm->value = slot_getattr(outerTupleSlot,
+										  nlp->paramval->varattno,
+										  &(prm->isnull));
+				/* Flag parameter value as changed */
+				innerPlan->chgParam = bms_add_member(innerPlan->chgParam,
+													 paramno);
+			}
+
+			/*
 			 * now rescan the inner plan
 			 */
 			ENL1_printf("rescanning inner plan");
+<<<<<<< HEAD
 
 			/*
 			 * The scan key of the inner plan might depend on the current
@@ -211,6 +241,9 @@ ExecNestLoop(NestLoopState *node)
 				ExecReScan(innerPlan, econtext);
 				node->reset_inner = false;
 			}
+=======
+			ExecReScan(innerPlan);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		/*
@@ -401,12 +434,13 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	/*
 	 * initialize child nodes
 	 *
-	 * Tell the inner child that cheap rescans would be good.  (This is
-	 * unnecessary if we are doing nestloop with inner indexscan, because the
-	 * rescan will always be with a fresh parameter --- but since
-	 * nodeIndexscan doesn't actually care about REWIND, there's no point in
-	 * dealing with that refinement.)
+	 * If we have no parameters to pass into the inner rel from the outer,
+	 * tell the inner child that cheap rescans would be good.  If we do have
+	 * such parameters, then there is no point in REWIND support at all in the
+	 * inner child, because it will always be rescanned with fresh parameter
+	 * values.
 	 */
+<<<<<<< HEAD
 	/*
 	 * XXX ftian: Because share input need to make the whole thing into a tree,
 	 * we can put the underlying share only under one shareinputscan.  During execution,
@@ -434,6 +468,14 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 		innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate,
 				eflags | EXEC_FLAG_REWIND);
 	}
+=======
+	outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
+	if (node->nestParams == NIL)
+		eflags |= EXEC_FLAG_REWIND;
+	else
+		eflags &= ~EXEC_FLAG_REWIND;
+	innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate, eflags);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * tuple table initialization
@@ -532,18 +574,22 @@ ExecEndNestLoop(NestLoopState *node)
  * ----------------------------------------------------------------
  */
 void
-ExecReScanNestLoop(NestLoopState *node, ExprContext *exprCtxt)
+ExecReScanNestLoop(NestLoopState *node)
 {
 	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
 	 * If outerPlan->chgParam is not null then plan will be automatically
-	 * re-scanned by first ExecProcNode. innerPlan is re-scanned for each new
-	 * outer tuple and MUST NOT be re-scanned from here or you'll get troubles
-	 * from inner index scans when outer Vars are used as run-time keys...
+	 * re-scanned by first ExecProcNode.
 	 */
 	if (outerPlan->chgParam == NULL)
-		ExecReScan(outerPlan, exprCtxt);
+		ExecReScan(outerPlan);
+
+	/*
+	 * innerPlan is re-scanned for each new outer tuple and MUST NOT be
+	 * re-scanned from here or you'll get troubles from inner index scans when
+	 * outer Vars are used as run-time keys...
+	 */
 
 	node->nl_NeedNewOuter = true;
 	node->nl_MatchedOuter = false;

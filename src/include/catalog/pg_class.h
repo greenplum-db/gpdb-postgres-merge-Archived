@@ -5,10 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.122 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/pg_class.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -50,7 +50,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
 	bool		relhasindex;	/* T if has (or has had) any indexes */
 	bool		relisshared;	/* T if shared across databases */
-	bool		relistemp;		/* T if temporary relation */
+	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
 	char		relkind;		/* see RELKIND_xxx constants below */
 	char		relstorage;		/* see RELSTORAGE_xxx constants below */
 	int2		relnatts;		/* number of user attributes */
@@ -63,7 +63,6 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	int2		relchecks;		/* # of CHECK constraints for class */
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
-	bool		relhasexclusion;	/* has (or has had) exclusion constraint */
 	bool		relhasrules;	/* has (or has had) any rules */
 	bool		relhastriggers; /* has (or has had) any TRIGGERs */
 	bool		relhassubclass; /* has (or has had) derived classes */
@@ -104,7 +103,11 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
+<<<<<<< HEAD
 #define Natts_pg_class					28
+=======
+#define Natts_pg_class					26
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -119,8 +122,9 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_reltoastidxid		12
 #define Anum_pg_class_relhasindex		13
 #define Anum_pg_class_relisshared		14
-#define Anum_pg_class_relistemp			15
+#define Anum_pg_class_relpersistence	15
 #define Anum_pg_class_relkind			16
+<<<<<<< HEAD
 #define Anum_pg_class_relstorage		17
 #define Anum_pg_class_relnatts			18
 #define Anum_pg_class_relchecks			19
@@ -133,6 +137,18 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relfrozenxid		26
 #define Anum_pg_class_relacl			27
 #define Anum_pg_class_reloptions		28
+=======
+#define Anum_pg_class_relnatts			17
+#define Anum_pg_class_relchecks			18
+#define Anum_pg_class_relhasoids		19
+#define Anum_pg_class_relhaspkey		20
+#define Anum_pg_class_relhasrules		21
+#define Anum_pg_class_relhastriggers	22
+#define Anum_pg_class_relhassubclass	23
+#define Anum_pg_class_relfrozenxid		24
+#define Anum_pg_class_relacl			25
+#define Anum_pg_class_reloptions		26
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------
  *		initial contents of pg_class
@@ -144,6 +160,7 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
+<<<<<<< HEAD
 DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f f r h 28 0 t f f f f f 3 _null_ _null_ ));
 DESCR("");
 DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f f r h 19 0 f f f f f f 3 _null_ _null_ ));
@@ -162,8 +179,30 @@ DESCR("");
 #define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
 #define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
 #define		  RELKIND_AOVISIMAP		  'm'		/* AO visibility map */
+=======
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 29 0 t f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 20 0 f f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 25 0 t f f f f 3 _null_ _null_ ));
+DESCR("");
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 26 0 t f f f f 3 _null_ _null_ ));
+DESCR("");
+
+
+#define		  RELKIND_RELATION		  'r'		/* ordinary table */
+#define		  RELKIND_INDEX			  'i'		/* secondary index */
+#define		  RELKIND_SEQUENCE		  'S'		/* sequence object */
+#define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
+#define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
+#define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
+
+#define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
+#define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */
+#define		  RELPERSISTENCE_TEMP		't'		/* temporary table */
 
 /*
  * relstorage describes how a relkind is physically stored in the database.

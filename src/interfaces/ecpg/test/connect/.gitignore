@@ -1,6 +1,9 @@
 /test1
 /test1.c
+<<<<<<< HEAD
 /test1.pgc
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /test2
 /test2.c
 /test3

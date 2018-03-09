@@ -3,14 +3,18 @@
  * lmgr.c
  *	  POSTGRES lock manager code
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.100 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/lmgr.c
  *
  *-------------------------------------------------------------------------
  */
@@ -669,6 +673,9 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objsubid);
 
 	(void) LockAcquire(&tag, lockmode, false, false);
+
+	/* Make sure syscaches are up-to-date with any changes we waited for */
+	AcceptInvalidationMessages();
 }
 
 /*

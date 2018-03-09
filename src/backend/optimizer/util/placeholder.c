@@ -4,13 +4,17 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Software Inc
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/placeholder.c,v 1.8 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/optimizer/util/placeholder.c
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +32,11 @@
 static Relids find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
 static void find_placeholders_in_qual(PlannerInfo *root, Node *expr,
 									  Relids relids);
+
+/* Local functions */
+static Relids find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
+static void find_placeholders_in_qual(PlannerInfo *root, Node *qual,
+						  Relids relids);
 
 
 /*
@@ -165,7 +174,11 @@ find_placeholders_recurse(PlannerInfo *root, Node *jtnode)
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		Relids		leftids,
+<<<<<<< HEAD
 		rightids;
+=======
+					rightids;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * First, recurse to handle child joins, and form their relid set.
@@ -181,7 +194,11 @@ find_placeholders_recurse(PlannerInfo *root, Node *jtnode)
 	{
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
+<<<<<<< HEAD
 		jtrelids = NULL;			/* keep compiler quiet */
+=======
+		jtrelids = NULL;		/* keep compiler quiet */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return jtrelids;
 }
@@ -203,9 +220,13 @@ find_placeholders_in_qual(PlannerInfo *root, Node *qual, Relids relids)
 	 * pull_var_clause does more than we need here, but it'll do and it's
 	 * convenient to use.
 	 */
+<<<<<<< HEAD
 	vars = pull_var_clause(qual,
 						   PVC_RECURSE_AGGREGATES,
 						   PVC_INCLUDE_PLACEHOLDERS);
+=======
+	vars = pull_var_clause(qual, PVC_INCLUDE_PLACEHOLDERS);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	foreach(vl, vars)
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) lfirst(vl);
@@ -325,6 +346,7 @@ update_placeholder_eval_levels(PlannerInfo *root, SpecialJoinInfo *new_sjinfo)
 		phinfo->ph_eval_at = eval_at;
 	}
 }
+<<<<<<< HEAD
 /*
  * fix_placeholder_input_needed_levels
  *		Adjust the "needed at" levels for placeholder inputs
@@ -344,6 +366,26 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 	 * other PlaceHolderInfos; that's okay because we don't examine ph_needed
 	 * here, so there are no ordering issues to worry about.
 	 */
+=======
+
+/*
+ * fix_placeholder_input_needed_levels
+ *		Adjust the "needed at" levels for placeholder inputs
+ *
+ * This is called after we've finished determining the eval_at levels for
+ * all placeholders.  We need to make sure that all vars and placeholders
+ * needed to evaluate each placeholder will be available at the join level
+ * where the evaluation will be done.  Note that this loop can have
+ * side-effects on the ph_needed sets of other PlaceHolderInfos; that's okay
+ * because we don't examine ph_needed here, so there are no ordering issues
+ * to worry about.
+ */
+void
+fix_placeholder_input_needed_levels(PlannerInfo *root)
+{
+	ListCell   *lc;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	foreach(lc, root->placeholder_list)
 	{
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
@@ -367,11 +409,11 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
  *		Add any required PlaceHolderVars to base rels' targetlists.
  *
  * If any placeholder can be computed at a base rel and is needed above it,
- * add it to that rel's targetlist.  We have to do this separately from
- * fix_placeholder_eval_levels() because join removal happens in between,
- * and can change the ph_eval_at sets.	There is essentially the same logic
- * in add_placeholders_to_joinrel, but we can't do that part until joinrels
- * are formed.
+ * add it to that rel's targetlist.  This might look like it could be merged
+ * with fix_placeholder_input_needed_levels, but it must be separate because
+ * join removal happens in between, and can change the ph_eval_at sets.  There
+ * is essentially the same logic in add_placeholders_to_joinrel, but we can't
+ * do that part until joinrels are formed.
  */
 void
 add_placeholders_to_base_rels(PlannerInfo *root)

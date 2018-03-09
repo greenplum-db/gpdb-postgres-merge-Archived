@@ -14,12 +14,12 @@
 #	libpgport_srv.a - contains object files without FRONTEND defined,
 #		for use only by the backend binaries
 #
-# LIBOBJS is set by configure (via Makefile.global) to be the list of
-# object files that are conditionally needed as determined by configure's probing.
+# LIBOBJS is set by configure (via Makefile.global) to be the list of object
+# files that are conditionally needed as determined by configure's probing.
 # OBJS adds additional object files that are always compiled.
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.39 2010/07/02 17:03:30 rhaas Exp $
+#    src/port/Makefile
 #
 #-------------------------------------------------------------------------
 
@@ -30,6 +30,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
+<<<<<<< HEAD
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o dirmod.o exec.o \
 	inet_net_ntop.o noblock.o path.o \
 	pgcheckdir.o pgmkdirp.o pgsleep.o pgstrcasecmp.o quotes.o qsort.o \
@@ -37,6 +38,11 @@ OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o dirmod.o exec.o \
 ifneq (,$(filter $(PORTNAME),cygwin win32))
 OBJS += pipe.o
 endif
+=======
+OBJS = $(LIBOBJS) chklocale.o dirmod.o exec.o inet_net_ntop.o noblock.o \
+	path.o pgcheckdir.o pgmkdirp.o pgsleep.o pgstrcasecmp.o \
+	qsort.o qsort_arg.o sprompt.o thread.o
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
 OBJS_SRV = $(OBJS:%.o=%_srv.o)
@@ -73,6 +79,13 @@ libpgport_srv.a: $(OBJS_SRV)
 
 %_srv.o: %.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
+
+$(OBJS_SRV): | submake-errcodes
+
+.PHONY: submake-errcodes
+
+submake-errcodes:
+	$(MAKE) -C ../backend submake-errcodes
 
 # Dependency is to ensure that path changes propagate
 

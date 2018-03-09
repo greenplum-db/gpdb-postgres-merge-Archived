@@ -4,10 +4,10 @@
  *
  * PostgreSQL object comments utility code.
  *
- * Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2011, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.115 2010/06/13 17:43:12 rhaas Exp $
+ *	  src/backend/commands/comment.c
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,9 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_authid.h"
-#include "catalog/pg_cast.h"
-#include "catalog/pg_constraint.h"
-#include "catalog/pg_conversion.h"
-#include "catalog/pg_database.h"
+#include "catalog/objectaddress.h"
 #include "catalog/pg_description.h"
+<<<<<<< HEAD
 #include "catalog/pg_extension.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
@@ -34,30 +31,20 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_resqueue.h"
 #include "catalog/pg_rewrite.h"
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_shdescription.h"
-#include "catalog/pg_tablespace.h"
-#include "catalog/pg_trigger.h"
-#include "catalog/pg_ts_config.h"
-#include "catalog/pg_ts_dict.h"
-#include "catalog/pg_ts_parser.h"
-#include "catalog/pg_ts_template.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+<<<<<<< HEAD
 #include "commands/extension.h"
 #include "commands/tablespace.h"
 #include "libpq/be-fsstubs.h"
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
-#include "parser/parse_func.h"
-#include "parser/parse_oper.h"
-#include "parser/parse_type.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/lsyscache.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 #include "cdb/cdbvars.h"
@@ -65,6 +52,7 @@
 
 
 /*
+<<<<<<< HEAD
  * Static Function Prototypes --
  *
  * The following prototypes are declared static so as not to conflict
@@ -101,6 +89,8 @@ static void CommentExtension(List *qualname, char *comment);
 
 
 /*
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * CommentObject --
  *
  * This routine is used to add the associated comment into
@@ -109,15 +99,49 @@ static void CommentExtension(List *qualname, char *comment);
 void
 CommentObject(CommentStmt *stmt)
 {
+	ObjectAddress address;
+	Relation	relation;
+
+	/*
+	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
+	 * of the database.  Erroring out would prevent pg_restore from completing
+	 * (which is really pg_restore's fault, but for now we will work around
+	 * the problem here).  Consensus is that the best fix is to treat wrong
+	 * database name as a WARNING not an ERROR; hence, the following special
+	 * case.  (If the length of stmt->objname is not 1, get_object_address
+	 * will throw an error below; that's OK.)
+	 */
+	if (stmt->objtype == OBJECT_DATABASE && list_length(stmt->objname) == 1)
+	{
+		char	   *database = strVal(linitial(stmt->objname));
+
+		if (!OidIsValid(get_database_oid(database, true)))
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("database \"%s\" does not exist", database)));
+			return;
+		}
+	}
+
+	/*
+	 * Translate the parser representation that identifies this object into an
+	 * ObjectAddress.  get_object_address() will throw an error if the object
+	 * does not exist, and will also acquire a lock on the target to guard
+	 * against concurrent DROP operations.
+	 */
+	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
+								 &relation, ShareUpdateExclusiveLock);
+
+	/* Require ownership of the target object. */
+	check_object_ownership(GetUserId(), stmt->objtype, address,
+						   stmt->objname, stmt->objargs, relation);
+
+	/* Perform other integrity checks as needed. */
 	switch (stmt->objtype)
 	{
-		case OBJECT_INDEX:
-		case OBJECT_SEQUENCE:
-		case OBJECT_TABLE:
-		case OBJECT_VIEW:
-			CommentRelation(stmt->objtype, stmt->objname, stmt->comment);
-			break;
 		case OBJECT_COLUMN:
+<<<<<<< HEAD
 			CommentAttribute(stmt->objname, stmt->comment);
 			break;
 		case OBJECT_DATABASE:
@@ -185,14 +209,33 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case OBJECT_TSCONFIGURATION:
 			CommentTSConfiguration(stmt->objname, stmt->comment);
+=======
+
+			/*
+			 * Allow comments only on columns of tables, views, composite
+			 * types, and foreign tables (which are the only relkinds for
+			 * which pg_dump will dump per-column comments).  In particular we
+			 * wish to disallow comments on index columns, because the naming
+			 * of an index's columns may change across PG versions, so dumping
+			 * per-column comments could create reload failures.
+			 */
+			if (relation->rd_rel->relkind != RELKIND_RELATION &&
+				relation->rd_rel->relkind != RELKIND_VIEW &&
+				relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
+				relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
+								RelationGetRelationName(relation))));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			break;
 		case OBJECT_EXTENSION:
 			CommentExtension(stmt->objname, stmt->comment);
 			break;
 		default:
-			elog(ERROR, "unrecognized object type: %d",
-				 (int) stmt->objtype);
+			break;
 	}
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -202,6 +245,29 @@ CommentObject(CommentStmt *stmt)
 									NIL,
 									NULL);
 	}
+=======
+
+	/*
+	 * Databases, tablespaces, and roles are cluster-wide objects, so any
+	 * comments on those objects are recorded in the shared pg_shdescription
+	 * catalog.  Comments on all other objects are recorded in pg_description.
+	 */
+	if (stmt->objtype == OBJECT_DATABASE || stmt->objtype == OBJECT_TABLESPACE
+		|| stmt->objtype == OBJECT_ROLE)
+		CreateSharedComments(address.objectId, address.classId, stmt->comment);
+	else
+		CreateComments(address.objectId, address.classId, address.objectSubId,
+					   stmt->comment);
+
+	/*
+	 * If get_object_address() opened the relation for us, we close it to keep
+	 * the reference count correct - but we retain any locks acquired by
+	 * get_object_address() until commit time, to guard against concurrent
+	 * activity.
+	 */
+	if (relation != NULL)
+		relation_close(relation, NoLock);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -541,6 +607,7 @@ GetComment(Oid oid, Oid classoid, int32 subid)
 
 	return comment;
 }
+<<<<<<< HEAD
 
 /*
  * CommentRelation --
@@ -1628,3 +1695,5 @@ CommentExtension(List *qualname, char *comment)
 
 	CreateComments(oid, ExtensionRelationId, 0, comment);
 }
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

@@ -3,14 +3,18 @@
  * parse_clause.c
  *	  handle clauses in parser
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.198 2010/02/26 02:00:50 momjian Exp $
+ *	  src/backend/parser/parse_clause.c
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +29,7 @@
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -32,6 +37,7 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
@@ -665,7 +671,7 @@ transformCTEReference(ParseState *pstate, RangeVar *r,
 {
 	RangeTblEntry *rte;
 
-	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r->alias, true);
+	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r, true);
 
 	return rte;
 }
@@ -833,6 +839,11 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	funcexpr = transformExpr(pstate, r->funccallnode, EXPR_KIND_FROM_FUNCTION);
 
 	/*
+	 * We must assign collations now so that we can fill funccolcollations.
+	 */
+	assign_expr_collations(pstate, funcexpr);
+
+	/*
 	 * The function parameters cannot make use of any variables from other
 	 * FROM items.	(Compare to transformRangeSubselect(); the coding is
 	 * different though because we didn't parse as a sub-select with its own
@@ -869,7 +880,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 		tupdesc = BuildDescFromLists(rte->eref->colnames,
 									 rte->funccoltypes,
-									 rte->funccoltypmods);
+									 rte->funccoltypmods,
+									 rte->funccolcollations);
 		CheckAttributeNamesTypes(tupdesc, RELKIND_COMPOSITE_TYPE, false);
 	}
 
@@ -1333,6 +1345,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (l_colvar->vartypmod != outcoltypmod)
 		l_node = (Node *) makeRelabelType((Expr *) l_colvar,
 										  outcoltype, outcoltypmod,
+										  InvalidOid,	/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		l_node = (Node *) l_colvar;
@@ -1344,6 +1357,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	else if (r_colvar->vartypmod != outcoltypmod)
 		r_node = (Node *) makeRelabelType((Expr *) r_colvar,
 										  outcoltype, outcoltypmod,
+										  InvalidOid,	/* fixed below */
 										  COERCE_IMPLICIT_CAST);
 	else
 		r_node = (Node *) r_colvar;
@@ -1382,6 +1396,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				CoalesceExpr *c = makeNode(CoalesceExpr);
 
 				c->coalescetype = outcoltype;
+				/* coalescecollid will get set below */
 				c->args = list_make2(l_node, r_node);
 				c->location = -1;
 				res_node = (Node *) c;
@@ -1392,6 +1407,13 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 			res_node = NULL;	/* keep compiler quiet */
 			break;
 	}
+
+	/*
+	 * Apply assign_expr_collations to fix up the collation info in the
+	 * coercion and CoalesceExpr nodes, if we made any.  This must be done now
+	 * so that the join node's alias vars show correct collation info.
+	 */
+	assign_expr_collations(pstate, res_node);
 
 	return res_node;
 }
@@ -1844,8 +1866,20 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
 	foreach(tl, *tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		Node	   *texpr;
 
-		if (equal(expr, tle->expr))
+		/*
+		 * Ignore any implicit cast on the existing tlist expression.
+		 *
+		 * This essentially allows the ORDER/GROUP/etc item to adopt the same
+		 * datatype previously selected for a textually-equivalent tlist item.
+		 * There can't be any implicit cast at top level in an ordinary SELECT
+		 * tlist at this stage, but the case does arise with ORDER BY in an
+		 * aggregate function.
+		 */
+		texpr = strip_implicit_coercions((Node *) tle->expr);
+
+		if (equal(expr, texpr))
 			return tle;
 	}
 
@@ -2931,6 +2965,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	Oid			restype = exprType((Node *) tle->expr);
 	Oid			sortop;
 	Oid			eqop;
+	bool		hashable;
 	bool		reverse;
 	int			location;
 	ParseCallbackState pcbstate;
@@ -2966,13 +3001,15 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 		case SORTBY_ASC:
 			get_sort_group_operators(restype,
 									 true, true, false,
-									 &sortop, &eqop, NULL);
+									 &sortop, &eqop, NULL,
+									 &hashable);
 			reverse = false;
 			break;
 		case SORTBY_DESC:
 			get_sort_group_operators(restype,
 									 false, true, true,
-									 NULL, &eqop, &sortop);
+									 NULL, &eqop, &sortop,
+									 &hashable);
 			reverse = true;
 			break;
 		case SORTBY_USING:
@@ -2994,11 +3031,17 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					   errmsg("operator %s is not a valid ordering operator",
 							  strVal(llast(sortby->useOp))),
 						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
+
+			/*
+			 * Also see if the equality operator is hashable.
+			 */
+			hashable = op_hashjoinable(eqop, restype);
 			break;
 		default:
 			elog(ERROR, "unrecognized sortby_dir: %d", sortby->sortby_dir);
 			sortop = InvalidOid;	/* keep compiler quiet */
 			eqop = InvalidOid;
+			hashable = false;
 			reverse = false;
 			break;
 	}
@@ -3014,6 +3057,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 
 		sortcl->eqop = eqop;
 		sortcl->sortop = sortop;
+		sortcl->hashable = hashable;
 
 		switch (sortby->sortby_nulls)
 		{
@@ -3068,8 +3112,6 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 bool resolveUnknown)
 {
 	Oid			restype = exprType((Node *) tle->expr);
-	Oid			sortop;
-	Oid			eqop;
 
 	/* if tlist item is an UNKNOWN literal, change it to TEXT */
 	if (restype == UNKNOWNOID && resolveUnknown)
@@ -3086,6 +3128,9 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 	if (!targetIsInSortList(tle, InvalidOid, grouplist))
 	{
 		SortGroupClause *grpcl = makeNode(SortGroupClause);
+		Oid			sortop;
+		Oid			eqop;
+		bool		hashable;
 		ParseCallbackState pcbstate;
 
 		setup_parser_errposition_callback(&pcbstate, pstate, location);
@@ -3093,7 +3138,8 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 		/* determine the eqop and optional sortop */
 		get_sort_group_operators(restype,
 								 false, true, false,
-								 &sortop, &eqop, NULL);
+								 &sortop, &eqop, NULL,
+								 &hashable);
 
 		cancel_parser_errposition_callback(&pcbstate);
 
@@ -3101,6 +3147,7 @@ addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 		grpcl->eqop = eqop;
 		grpcl->sortop = sortop;
 		grpcl->nulls_first = false;		/* OK with or without sortop */
+		grpcl->hashable = hashable;
 
 		grouplist = lappend(grouplist, grpcl);
 	}

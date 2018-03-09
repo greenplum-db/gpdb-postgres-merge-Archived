@@ -3,6 +3,7 @@
  * latch.h
  *	  Routines for interprocess latches
  *
+<<<<<<< HEAD
  * A latch is a boolean variable, with operations that let processes sleep
  * until it is set. A latch can be set from another process, or a signal
  * handler within the same process.
@@ -76,6 +77,10 @@
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ *
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/latch.h
@@ -102,6 +107,7 @@ typedef struct
 #endif
 } Latch;
 
+<<<<<<< HEAD
 /* Bitmasks for events that may wake-up WaitLatch() clients */
 #define WL_LATCH_SET		 (1 << 0)
 #define WL_SOCKET_READABLE	 (1 << 1)
@@ -113,10 +119,16 @@ typedef struct
  * prototypes for functions in latch.c
  */
 extern void InitializeLatchSupport(void);
+=======
+/*
+ * prototypes for functions in latch.c
+ */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void InitLatch(volatile Latch *latch);
 extern void InitSharedLatch(volatile Latch *latch);
 extern void OwnLatch(volatile Latch *latch);
 extern void DisownLatch(volatile Latch *latch);
+<<<<<<< HEAD
 extern int	WaitLatch(volatile Latch *latch, int wakeEvents, long timeout);
 extern int WaitLatchOrSocket(volatile Latch *latch, int wakeEvents,
 				  pgsocket sock, long timeout);
@@ -129,11 +141,28 @@ extern void ResetLatch(volatile Latch *latch);
 /*
  * Unix implementation uses SIGUSR1 for inter-process signaling.
  * Win32 doesn't need this.
+=======
+extern bool WaitLatch(volatile Latch *latch, long timeout);
+extern int WaitLatchOrSocket(volatile Latch *latch, pgsocket sock,
+				  bool forRead, bool forWrite, long timeout);
+extern void SetLatch(volatile Latch *latch);
+extern void ResetLatch(volatile Latch *latch);
+
+#define TestLatch(latch) (((volatile Latch *) latch)->is_set)
+
+/*
+ * Unix implementation uses SIGUSR1 for inter-process signaling, Win32 doesn't
+ * need this.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 #ifndef WIN32
 extern void latch_sigusr1_handler(void);
 #else
+<<<<<<< HEAD
 #define latch_sigusr1_handler()  ((void) 0)
+=======
+#define latch_sigusr1_handler()
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif
 
 #endif   /* LATCH_H */

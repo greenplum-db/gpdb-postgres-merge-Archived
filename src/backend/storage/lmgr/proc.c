@@ -3,14 +3,18 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.221 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/storage/lmgr/proc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +47,13 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+<<<<<<< HEAD
 #include "postmaster/fts.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
+=======
+#include "replication/syncrep.h"
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "storage/sinval.h"
@@ -227,6 +235,7 @@ InitProcGlobal(void)
 
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 		ProcGlobal->freeProcs = &procs[i];
+		InitSharedLatch(&procs[i].waitLatch);
 	}
 	ProcGlobal->procs = procs;
 	ProcGlobal->numFreeProcs = MaxConnections;
@@ -248,6 +257,7 @@ InitProcGlobal(void)
 		InitSharedLatch(&(procs[i].procLatch));
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 		ProcGlobal->autovacFreeProcs = &procs[i];
+		InitSharedLatch(&procs[i].waitLatch);
 	}
 
 	/*
@@ -258,7 +268,11 @@ InitProcGlobal(void)
 	{
 		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
 		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
+<<<<<<< HEAD
 		InitSharedLatch(&(AuxiliaryProcs[i].procLatch));
+=======
+		InitSharedLatch(&procs[i].waitLatch);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* Create ProcStructLock spinlock, too */
@@ -366,8 +380,12 @@ InitProcess(void)
 	 * for ftsProber, SeqServer etc who call InitProcess().
 	 * But MyPMChildSlot helps to get away with it.
 	 */
+<<<<<<< HEAD
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
 		&& MyPMChildSlot > 0)
+=======
+	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		MarkPostmasterChildActive();
 
 	/*
@@ -402,6 +420,7 @@ InitProcess(void)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 	MyProc->recoveryConflictPending = false;
 
+<<<<<<< HEAD
     /* 
      * mppLocalProcessSerial uniquely identifies this backend process among
      * all those that our parent postmaster process creates over its lifetime. 
@@ -431,16 +450,23 @@ InitProcess(void)
 	}
     
 	/* Initialize fields for sync rep */
+=======
+	/* Initialise for sync rep */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	MyProc->waitLSN.xlogid = 0;
 	MyProc->waitLSN.xrecoff = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
+<<<<<<< HEAD
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
 	 * Note that there's no particular need to do ResetLatch here.
 	 */
 	OwnLatch(&MyProc->procLatch);
+=======
+	OwnLatch((Latch *) &MyProc->waitLatch);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
@@ -489,6 +515,7 @@ InitProcessPhase2(void)
 	/*
 	 * Arrange to clean that up at backend exit.
 	 */
+	on_shmem_exit(SyncRepCleanupAtProcExit, 0);
 	on_shmem_exit(RemoveProcFromArray, 0);
 }
 
@@ -769,8 +796,6 @@ LockWaitCancel(void)
  * At subtransaction abort, we release all locks held by the subtransaction;
  * this is implemented by retail releasing of the locks under control of
  * the ResourceOwner mechanism.
- *
- * Note that user locks are not released in any case.
  */
 void
 ProcReleaseLocks(bool isCommit)
@@ -781,6 +806,9 @@ ProcReleaseLocks(bool isCommit)
 	LockWaitCancel();
 	/* Release locks */
 	LockReleaseAll(DEFAULT_LOCKMETHOD, !isCommit);
+
+	/* Release transaction level advisory locks */
+	LockReleaseAll(USER_LOCKMETHOD, false);
 }
 
 

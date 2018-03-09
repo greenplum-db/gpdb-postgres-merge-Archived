@@ -213,9 +213,12 @@ SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</p
 
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
+<<<<<<< HEAD
 
 -- External entity references should not leak filesystem information.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
 -- This might or might not load the requested DTD, but it mustn't throw error.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

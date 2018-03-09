@@ -184,7 +184,7 @@ SELECT *,
 				ELSE 'Approved'
 			END)
 		ELSE 'PO'
-	END) 
+	END)
 END) AS "Status",
 (CASE
  WHEN ord.ordercancelled
@@ -199,7 +199,7 @@ END) AS "Status",
 				ELSE 'Approved'
 			END)
 		ELSE 'PO'
-	END) 
+	END)
 END) AS "Status_OK"
 FROM orderstest ord;
 
@@ -351,6 +351,7 @@ from
   int4_tbl i4 on dummy = i4.f1;
 
 --
+<<<<<<< HEAD
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
 --
@@ -376,10 +377,13 @@ insert into inner_7597 values(0, null);
 select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 
 --
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- Test case for premature memory release during hashing of subplan output
 --
 
 select '1'::text in (select '1'::name union all select '1'::name);
+<<<<<<< HEAD
 
 --
 -- Check sane behavior with nested IN SubLinks
@@ -407,3 +411,5 @@ select (select q from
           select 4,5,6.0 where f1 <= 0
          ) q )
 from int4_tbl;
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

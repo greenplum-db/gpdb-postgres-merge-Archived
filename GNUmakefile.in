@@ -1,13 +1,14 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.58 2010/03/30 00:10:46 petere Exp $
+# GNUmakefile.in
 #
 
 subdir =
 top_builddir = .
 include $(top_builddir)/src/Makefile.global
 
+<<<<<<< HEAD
 
 all:
 	$(MAKE) -C src all
@@ -32,21 +33,25 @@ all:
 	$(MAKE) -C gpAux/gpperfmon all
 	$(MAKE) -C gpAux/platform all
 	@echo "All of Greenplum Database successfully made. Ready to install."
+=======
+$(call recurse,all install,src config)
+
+all:
+	+@echo "All of PostgreSQL successfully made. Ready to install."
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 docs:
 	$(MAKE) -C doc all
 
+$(call recurse,world,doc src config contrib,all)
 world:
-	$(MAKE) -C doc all
-	$(MAKE) -C src all
-	$(MAKE) -C config all
-	$(MAKE) -C contrib all
-	@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
+	+@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
 
 html man:
 	$(MAKE) -C doc $@
 
 install:
+<<<<<<< HEAD
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
 	$(MAKE) -C contrib/xlogdump $@
@@ -70,17 +75,18 @@ install:
 	$(MAKE) -C gpAux/gpperfmon $@
 	$(MAKE) -C gpAux/platform $@
 	@echo "Greenplum Database installation complete."
+=======
+	+@echo "PostgreSQL installation complete."
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 install-docs:
 	$(MAKE) -C doc install
 
+$(call recurse,install-world,doc src config contrib,install)
 install-world:
-	$(MAKE) -C doc install
-	$(MAKE) -C src install
-	$(MAKE) -C config install
-	$(MAKE) -C contrib install
-	@echo "PostgreSQL, contrib, and documentation installation complete."
+	+@echo "PostgreSQL, contrib, and documentation installation complete."
 
+<<<<<<< HEAD
 installdirs uninstall coverage:
 #	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
@@ -107,10 +113,17 @@ distprep:
 	$(MAKE) -C src $@
 	$(MAKE) -C config $@
 	$(MAKE) -C contrib $@
+=======
+$(call recurse,installdirs uninstall coverage,doc src config)
+
+$(call recurse,distprep,doc src config contrib)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default
+$(call recurse,clean,doc contrib src config)
 clean:
+<<<<<<< HEAD
 #	$(MAKE) -C doc $@
 	$(MAKE) -C contrib $@
 	$(MAKE) -C src $@
@@ -138,6 +151,8 @@ clean:
 	$(MAKE) -C gpAux/gpperfmon $@
 	$(MAKE) -C gpAux/platform $@
 	$(MAKE) -C gpMgmt $@
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -156,6 +171,7 @@ distclean maintainer-clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
+<<<<<<< HEAD
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
 installcheck-world:
@@ -208,6 +224,18 @@ unittest-check:
 	$(MAKE) -C src/backend unittest-check
 	$(MAKE) -C src/bin unittest-check
 	$(MAKE) -C gpAux/extensions unittest-check
+=======
+check: all
+
+check installcheck installcheck-parallel:
+	$(MAKE) -C src/test $@
+
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
+
+$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
+
+$(call recurse,maintainer-check,doc src config contrib)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
@@ -247,7 +275,11 @@ distdir:
 	#cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
 	#cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
 	$(MAKE) -C $(distdir) distclean
+<<<<<<< HEAD
 	#rm -f $(distdir)/README.git
+=======
+	rm -f $(distdir)/README.git
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 distcheck: dist
 	rm -rf $(dummy)
@@ -268,4 +300,4 @@ distcheck: dist
 	rm -rf $(distdir) $(dummy)
 	@echo "Distribution integrity checks out."
 
-.PHONY: dist distdir distcheck docs install-docs
+.PHONY: dist distdir distcheck docs install-docs world check-world install-world installcheck-world

@@ -1,6 +1,6 @@
 @echo off
-REM Adjust path for your docbook installation in buildenv.pl
 
+<<<<<<< HEAD
 REM $PostgreSQL: pgsql/src/tools/msvc/builddoc.bat,v 1.6 2007/12/19 12:29:36 mha Exp $
 
 SETLOCAL
@@ -63,3 +63,10 @@ goto :eof
 echo Could not find version.sgml. Please run mkvcbuild.pl first!
 cd %STARTDIR%
 goto :eof
+=======
+REM src/tools/msvc/builddoc.bat
+REM all the logic for this now belongs in builddoc.pl. This file really
+REM only exists so you don't have to type "perl builddoc.pl"
+REM Resist any temptation to add any logic here.
+@perl builddoc.pl %*
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

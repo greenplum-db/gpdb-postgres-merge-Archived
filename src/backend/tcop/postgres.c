@@ -3,12 +3,12 @@
  * postgres.c
  *	  POSTGRES C Backend Interface
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.595 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/tcop/postgres.c
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -20,10 +20,11 @@
 #include "postgres.h"
 #include "gpmon/gpmon.h"
 
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -708,47 +709,6 @@ client_write_ended(void)
 	{
 		ImmediateDieOK = false;
 	}
-}
-
-/*
- * Parse a query string and pass it through the rewriter.
- *
- * A list of Query nodes is returned, since the string might contain
- * multiple queries and/or the rewriter might expand one query to several.
- *
- * NOTE: this routine is no longer used for processing interactive queries,
- * but it is still needed for parsing of SQL function bodies.
- */
-List *
-pg_parse_and_rewrite(const char *query_string,	/* string to execute */
-					 Oid *paramTypes,	/* parameter types */
-					 int numParams)		/* number of parameters */
-{
-	List	   *raw_parsetree_list;
-	List	   *querytree_list;
-	ListCell   *list_item;
-
-	/*
-	 * (1) parse the request string into a list of raw parse trees.
-	 */
-	raw_parsetree_list = pg_parse_query(query_string);
-
-	/*
-	 * (2) Do parse analysis and rule rewrite.
-	 */
-	querytree_list = NIL;
-	foreach(list_item, raw_parsetree_list)
-	{
-		Node	   *parsetree = (Node *) lfirst(list_item);
-
-		querytree_list = list_concat(querytree_list,
-									 pg_analyze_and_rewrite(parsetree,
-															query_string,
-															paramTypes,
-															numParams));
-	}
-
-	return querytree_list;
 }
 
 /*
@@ -2353,7 +2313,7 @@ exec_bind_message(StringInfo input_message)
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-								   (numParams - 1) *sizeof(ParamExternData));
+								  (numParams - 1) * sizeof(ParamExternData));
 		/* we have static list of params, so no hooks needed */
 		params->paramFetch = NULL;
 		params->paramFetchArg = NULL;
@@ -3524,6 +3484,9 @@ die(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
+
+		/* Interrupt any sync rep wait which is currently in progress. */
+		SetLatch(&(MyProc->waitLatch));
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3567,6 +3530,9 @@ StatementCancelHandler(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
+
+		/* Interrupt any sync rep wait which is currently in progress. */
+		SetLatch(&(MyProc->waitLatch));
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3653,7 +3619,7 @@ SigHupHandler(SIGNAL_ARGS)
 
 /*
  * RecoveryConflictInterrupt: out-of-line portion of recovery conflict
- * handling ollowing receipt of SIGUSR1. Designed to be similar to die()
+ * handling following receipt of SIGUSR1. Designed to be similar to die()
  * and StatementCancelHandler(). Called only by a normal user backend
  * that begins a transaction during recovery.
  */
@@ -3714,7 +3680,7 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 				 *
 				 * PROCSIG_RECOVERY_CONFLICT_SNAPSHOT if no snapshots are held
 				 * by parent transactions and the transaction is not
-				 * serializable
+				 * transaction-snapshot mode
 				 *
 				 * PROCSIG_RECOVERY_CONFLICT_TABLESPACE if no temp files or
 				 * cursors open in parent transactions
@@ -3744,7 +3710,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 				break;
 
 			default:
-				elog(FATAL, "Unknown conflict mode");
+				elog(FATAL, "unrecognized conflict mode: %d",
+					 (int) reason);
 		}
 
 		Assert(RecoveryConflictPending && (QueryCancelPending || ProcDiePending));
@@ -3815,15 +3782,23 @@ ProcessInterrupts(const char* filename, int lineno)
 					 errmsg("terminating autovacuum process due to administrator command"),
 					 errSendAlert(false)));
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
+		{
+			pgstat_report_recovery_conflict(RecoveryConflictReason);
 			ereport(FATAL,
 					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 			  errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict()));
+		}
 		else if (RecoveryConflictPending)
+		{
+			/* Currently there is only one non-retryable recovery conflict */
+			Assert(RecoveryConflictReason == PROCSIG_RECOVERY_CONFLICT_DATABASE);
+			pgstat_report_recovery_conflict(RecoveryConflictReason);
 			ereport(FATAL,
-					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					(errcode(ERRCODE_DATABASE_DROPPED),
 			  errmsg("terminating connection due to conflict with recovery"),
 					 errdetail_recovery_conflict()));
+		}
 		else
 		{
 			if (HasCancelMessage())
@@ -3898,6 +3873,7 @@ ProcessInterrupts(const char* filename, int lineno)
 			RecoveryConflictPending = false;
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
+			pgstat_report_recovery_conflict(RecoveryConflictReason);
 			if (DoingCommandRead)
 				ereport(FATAL,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
@@ -4063,6 +4039,42 @@ restore_stack_base(pg_stack_base_t base)
 }
 
 /*
+ * IA64-specific code to fetch the AR.BSP register for stack depth checks.
+ *
+ * We currently support gcc, icc, and HP-UX inline assembly here.
+ */
+#if defined(__ia64__) || defined(__ia64)
+
+#if defined(__hpux) && !defined(__GNUC__) && !defined __INTEL_COMPILER
+#include <ia64/sys/inline.h>
+#define ia64_get_bsp() ((char *) (_Asm_mov_from_ar(_AREG_BSP, _NO_FENCE)))
+#else
+
+#ifdef __INTEL_COMPILER
+#include <asm/ia64regs.h>
+#endif
+
+static __inline__ char *
+ia64_get_bsp(void)
+{
+	char	   *ret;
+
+#ifndef __INTEL_COMPILER
+	/* the ;; is a "stop", seems to be required before fetching BSP */
+	__asm__		__volatile__(
+										 ";;\n"
+										 "	mov	%0=ar.bsp	\n"
+							 :			 "=r"(ret));
+#else
+	ret = (char *) __getReg(_IA64_REG_AR_BSP);
+#endif
+	return ret;
+}
+#endif
+#endif   /* IA64 */
+
+
+/*
  * check_stack_depth: check for excessively deep recursion
  *
  * This should be called someplace in any recursive routine that might possibly
@@ -4101,8 +4113,9 @@ check_stack_depth(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
-		 errhint("Increase the configuration parameter \"max_stack_depth\", "
-		   "after ensuring the platform's stack depth limit is adequate.")));
+				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
+			  "after ensuring the platform's stack depth limit is adequate.",
+						 max_stack_depth)));
 	}
 
 	/*
@@ -4122,31 +4135,44 @@ check_stack_depth(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
+<<<<<<< HEAD
 		 errhint("Increase the configuration parameter \"max_stack_depth\", "
 		   "after ensuring the platform's stack depth limit is adequate.")));
 	}
 #endif /* IA64 */
+=======
+				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
+			  "after ensuring the platform's stack depth limit is adequate.",
+						 max_stack_depth)));
+	}
+#endif   /* IA64 */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
-/* GUC assign hook for max_stack_depth */
+/* GUC check hook for max_stack_depth */
 bool
-assign_max_stack_depth(int newval, bool doit, GucSource source)
+check_max_stack_depth(int *newval, void **extra, GucSource source)
 {
-	long		newval_bytes = newval * 1024L;
+	long		newval_bytes = *newval * 1024L;
 	long		stack_rlimit = get_stack_depth_rlimit();
 
 	if (stack_rlimit > 0 && newval_bytes > stack_rlimit - STACK_DEPTH_SLOP)
 	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"max_stack_depth\" must not exceed %ldkB",
-						(stack_rlimit - STACK_DEPTH_SLOP) / 1024L),
-				 errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.")));
+		GUC_check_errdetail("\"max_stack_depth\" must not exceed %ldkB.",
+							(stack_rlimit - STACK_DEPTH_SLOP) / 1024L);
+		GUC_check_errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.");
 		return false;
 	}
-	if (doit)
-		max_stack_depth_bytes = newval_bytes;
 	return true;
+}
+
+/* GUC assign hook for max_stack_depth */
+void
+assign_max_stack_depth(int newval, void *extra)
+{
+	long		newval_bytes = newval * 1024L;
+
+	max_stack_depth_bytes = newval_bytes;
 }
 
 
@@ -4303,7 +4329,11 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
+<<<<<<< HEAD
 	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:m:lN:nOo:Pp:r:S:sTt:Uv:W:y:-:")) != -1)
+=======
+	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		switch (flag)
 		{
@@ -4317,8 +4347,12 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 			case 'b':
 				/* Undocumented flag used for binary upgrades */
+<<<<<<< HEAD
 				if (secure)
 					IsBinaryUpgrade = true;
+=======
+				IsBinaryUpgrade = true;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 
 			case 'D':
@@ -4644,6 +4678,9 @@ PostgresMain(int argc, char *argv[],
 
 	/* Set up reference point for stack depth checking */
 	stack_base_ptr = &stack_base;
+#if defined(__ia64__) || defined(__ia64)
+	register_stack_base_ptr = ia64_get_bsp();
+#endif
 
 	/* Compute paths, if we didn't inherit them from postmaster */
 	if (my_exec_path[0] == '\0')
@@ -5556,8 +5593,9 @@ PostgresMain(int argc, char *argv[],
 				/* Set statement_timestamp() */
 				SetCurrentStatementStartTimestamp();
 
-				/* Tell the collector what we're doing */
+				/* Report query to various monitoring facilities. */
 				pgstat_report_activity("<FASTPATH> function call");
+				set_ps_display("<FASTPATH>", false);
 
 				elog((Debug_print_full_dtm ? LOG : DEBUG5), "Fast path function call.");
 

@@ -4,12 +4,16 @@
  *	  prototypes for files in optimizer/prep/
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.68 2010/01/02 16:58:07 momjian Exp $
+ * src/include/optimizer/prep.h
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +33,7 @@ extern void pull_up_sublinks(PlannerInfo *root);
 extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 				   JoinExpr *lowest_outer_join,
 				   AppendRelInfo *containing_appendrel);
+extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);
 extern Relids get_relids_for_join(PlannerInfo *root, int joinrelid);
@@ -38,6 +43,7 @@ extern List *init_list_cteplaninfo(int numCtes);
 /*
  * prototypes for prepqual.c
  */
+extern Node *negate_clause(Node *node);
 extern Expr *canonicalize_qual(Expr *qual);
 
 /*

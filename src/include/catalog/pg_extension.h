@@ -5,7 +5,11 @@
  *	  along with the relation's initial contents.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_extension.h
@@ -45,10 +49,13 @@ CATALOG(pg_extension,3079)
 	text		extcondition[1];	/* WHERE clauses for config tables */
 } FormData_pg_extension;
 
+<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(extowner REFERENCES pg_authid(oid));
 FOREIGN_KEY(extnamespace REFERENCES pg_namespace(oid));
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /* ----------------
  *		Form_pg_extension corresponds to a pointer to a tuple with
  *		the format of pg_extension relation.

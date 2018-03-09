@@ -1761,9 +1761,23 @@ insert into PField values ('PF1_1', 'should fail due to unique index');
 ERROR:  duplicate key value violates unique constraint "pfield_name"
 DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
+<<<<<<< HEAD
 update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
+=======
+ERROR:  WS.not.there         does not exist
+CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
+update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
+ERROR:  illegal backlink beginning with XX
+CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
+update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
+ERROR:  PS.not.there         does not exist
+CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
+update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
+ERROR:  illegal slotlink beginning with XX
+CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 insert into HSlot values ('HS', 'base.hub1', 1, '');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hub"  (seg2 127.0.0.1:40002 pid=1762)
 CONTEXT:  SQL statement "select             * from Hub where name = new.hubname"
@@ -1783,7 +1797,7 @@ CONTEXT:  SQL statement "select             * from system where name = new.sysna
 PL/pgSQL function "tg_iface_biu" line 5 at SQL statement
 --
 -- The following tests are unrelated to the scenario outlined above;
--- they merely exercise specific parts of PL/PgSQL
+-- they merely exercise specific parts of PL/pgSQL
 --
 --
 -- Test recursion, per bug report 7-Sep-01
@@ -2289,13 +2303,13 @@ end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
 NOTICE:  should see this only if -100 <> 0
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
 CONTEXT:  SQL statement "SELECT trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at PERFORM
+PL/pgSQL function "test_variable_storage" line 8 at PERFORM
  test_variable_storage 
 -----------------------
  123456789012
@@ -2517,7 +2531,7 @@ end;
 $$ language plpgsql;
 select raise_test1(5);
 ERROR:  too many parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test1" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test1" line 3 at RAISE
 create function raise_test2(int) returns int as $$
 begin
     raise notice 'This message has too few parameters: %, %, %', $1, $1;
@@ -2526,7 +2540,36 @@ end;
 $$ language plpgsql;
 select raise_test2(10);
 ERROR:  too few parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test2" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test2" line 3 at RAISE
+-- Test re-RAISE inside a nested exception block.  This case is allowed
+-- by Oracle's PL/SQL but was handled differently by PG before 9.1.
+CREATE FUNCTION reraise_test() RETURNS void AS $$
+BEGIN
+   BEGIN
+       RAISE syntax_error;
+   EXCEPTION
+       WHEN syntax_error THEN
+           BEGIN
+               raise notice 'exception % thrown in inner block, reraising', sqlerrm;
+               RAISE;
+           EXCEPTION
+               WHEN OTHERS THEN
+                   raise notice 'RIGHT - exception % caught in inner block', sqlerrm;
+           END;
+   END;
+EXCEPTION
+   WHEN OTHERS THEN
+       raise notice 'WRONG - exception % caught in outer block', sqlerrm;
+END;
+$$ LANGUAGE plpgsql;
+SELECT reraise_test();
+NOTICE:  exception syntax_error thrown in inner block, reraising
+NOTICE:  RIGHT - exception syntax_error caught in inner block
+ reraise_test 
+--------------
+ 
+(1 row)
+
 --
 -- reject function definitions that contain malformed SQL queries at
 -- compile-time, where possible
@@ -2639,7 +2682,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT sqlstate
                ^
 QUERY:  SELECT sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "excpt_test1" line 3 at RAISE
 create function excpt_test2() returns void as $$
 begin
     begin
@@ -2654,7 +2697,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT sqlstate
                ^
 QUERY:  SELECT sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at RAISE
+CONTEXT:  PL/pgSQL function "excpt_test2" line 5 at RAISE
 create function excpt_test3() returns void as $$
 begin
     begin
@@ -3036,7 +3079,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3099,7 +3142,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3109,7 +3152,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at SQL statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3133,7 +3176,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at EXECUTE statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -3143,7 +3186,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
+CONTEXT:  PL/pgSQL function "footest" line 5 at EXECUTE statement
 drop function footest();
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
@@ -3178,8 +3221,14 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();  -- fails because of NO SCROLL specification
+<<<<<<< HEAD
 ERROR:  backward scan is not supported in this version of Greenplum Database
 CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
+=======
+ERROR:  cursor can only scan forward
+HINT:  Declare it with SCROLL option to enable backward scan.
+CONTEXT:  PL/pgSQL function "sc_test" line 7 at FETCH
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 create or replace function sc_test() returns setof integer as $$
 declare
   c refcursor;
@@ -3379,7 +3428,7 @@ NOTICE:  6
 
 drop function exc_using(int, text);
 create or replace function exc_using(int) returns void as $$
-declare 
+declare
   c refcursor;
   i int;
 begin
@@ -3390,7 +3439,7 @@ begin
     raise notice '%', i;
   end loop;
   close c;
-  return;  
+  return;
 end;
 $$ language plpgsql;
 select exc_using(5);
@@ -3747,7 +3796,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE option already specified: MESSAGE
-CONTEXT:  PL/pgSQL function "raise_test" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- conflict on errcode
 create or replace function raise_test() returns void as $$
 begin
@@ -3756,7 +3805,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE option already specified: ERRCODE
-CONTEXT:  PL/pgSQL function "raise_test" line 2 at RAISE
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- nothing to re-RAISE
 create or replace function raise_test() returns void as $$
 begin
@@ -3765,7 +3814,7 @@ end;
 $$ language plpgsql;
 select raise_test();
 ERROR:  RAISE without parameters cannot be used outside an exception handler
-CONTEXT:  PL/pgSQL function "raise_test"
+CONTEXT:  PL/pgSQL function "raise_test" line 3 at RAISE
 -- check cases where implicit SQLSTATE variable could be confused with
 -- SQLSTATE as a keyword, cf bug #5524
 create or replace function raise_test() returns void as $$
@@ -3827,7 +3876,7 @@ select case_test(4);
 select case_test(5); -- fails
 ERROR:  case not found
 HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function "case_test" line 4 at CASE
+CONTEXT:  PL/pgSQL function "case_test" line 5 at CASE
 select case_test(8);
       case_test       
 ----------------------
@@ -3855,7 +3904,7 @@ select case_test(12);
 select case_test(13); -- fails
 ERROR:  case not found
 HINT:  CASE statement is missing ELSE part.
-CONTEXT:  PL/pgSQL function "case_test" line 4 at CASE
+CONTEXT:  PL/pgSQL function "case_test" line 5 at CASE
 create or replace function catch() returns void as $$
 begin
   raise notice '%', case_test(6);
@@ -4183,8 +4232,12 @@ SAVEPOINT a;
 select error2('nonexistent.stuffs');
 ERROR:  schema "nonexistent" does not exist
 CONTEXT:  SQL function "error1" statement 1
+<<<<<<< HEAD
 SQL statement "SELECT error1(p_name_table)"
 PL/pgSQL function "error2" line 2 at RETURN
+=======
+PL/pgSQL function "error2" line 3 at RETURN
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 ROLLBACK TO a;
 select error2('public.stuffs');
  error2 
@@ -4222,7 +4275,7 @@ LINE 1: SELECT 'foo\\bar\041baz'
                ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
 QUERY:  SELECT 'foo\\bar\041baz'
-CONTEXT:  PL/pgSQL function "strtest" line 3 at RETURN
+CONTEXT:  PL/pgSQL function "strtest" line 4 at RETURN
    strtest   
 -------------
  foo\bar!baz
@@ -4305,6 +4358,7 @@ ERROR:  column "foo" does not exist
 LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
                                         ^
 QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
+<<<<<<< HEAD
 CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
 -- Check handling of errors thrown from/into anonymous code blocks.
 do $outer$
@@ -4335,6 +4389,9 @@ NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
+=======
+CONTEXT:  PL/pgSQL function "inline_code_block" line 4 at FOR over SELECT rows
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 create function scope_test() returns int as $$
@@ -4371,7 +4428,7 @@ LINE 1: select q1,q2 from int8_tbl
                ^
 DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
 QUERY:  select q1,q2 from int8_tbl
-CONTEXT:  PL/pgSQL function "conflict_test" line 4 at FOR over SELECT rows
+CONTEXT:  PL/pgSQL function "conflict_test" line 5 at FOR over SELECT rows
 create or replace function conflict_test() returns setof int8_tbl as $$
 #variable_conflict use_variable
 declare r record;
@@ -4429,3 +4486,197 @@ select unreserved_test();
 (1 row)
 
 drop function unreserved_test();
+--
+-- Test FOREACH over arrays
+--
+create function foreach_test(anyarray)
+returns void as $$
+declare x int;
+begin
+  foreach x in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[1,2,3,4]);
+NOTICE:  1
+NOTICE:  2
+NOTICE:  3
+NOTICE:  4
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  1
+NOTICE:  2
+NOTICE:  3
+NOTICE:  4
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int;
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+-- should fail
+select foreach_test(ARRAY[1,2,3,4]);
+ERROR:  FOREACH ... SLICE loop variable must be of an array type
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+select foreach_test(ARRAY[[1,2],[3,4]]);
+ERROR:  FOREACH ... SLICE loop variable must be of an array type
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int[];
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[1,2,3,4]);
+NOTICE:  {1,2,3,4}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  {1,2}
+NOTICE:  {3,4}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+-- higher level of slicing
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int[];
+begin
+  foreach x slice 2 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+-- should fail
+select foreach_test(ARRAY[1,2,3,4]);
+ERROR:  slice dimension (2) is out of the valid range 0..1
+CONTEXT:  PL/pgSQL function "foreach_test" line 4 at FOREACH over array
+-- ok
+select foreach_test(ARRAY[[1,2],[3,4]]);
+NOTICE:  {{1,2},{3,4}}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[[1,2]],[[3,4]]]);
+NOTICE:  {{1,2}}
+NOTICE:  {{3,4}}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create type xy_tuple AS (x int, y int);
+-- iteration over array of records
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare r record;
+begin
+  foreach r in array $1
+  loop
+    raise notice '%', r;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  (10,20)
+NOTICE:  (40,69)
+NOTICE:  (35,78)
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  (10,20)
+NOTICE:  (40,69)
+NOTICE:  (35,78)
+NOTICE:  (88,76)
+ foreach_test 
+--------------
+ 
+(1 row)
+
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x int; y int;
+begin
+  foreach x, y in array $1
+  loop
+    raise notice 'x = %, y = %', x, y;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  x = 10, y = 20
+NOTICE:  x = 40, y = 69
+NOTICE:  x = 35, y = 78
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  x = 10, y = 20
+NOTICE:  x = 40, y = 69
+NOTICE:  x = 35, y = 78
+NOTICE:  x = 88, y = 76
+ foreach_test 
+--------------
+ 
+(1 row)
+
+-- slicing over array of composite types
+create or replace function foreach_test(anyarray)
+returns void as $$
+declare x xy_tuple[];
+begin
+  foreach x slice 1 in array $1
+  loop
+    raise notice '%', x;
+  end loop;
+  end;
+$$ language plpgsql;
+select foreach_test(ARRAY[(10,20),(40,69),(35,78)]::xy_tuple[]);
+NOTICE:  {"(10,20)","(40,69)","(35,78)"}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+select foreach_test(ARRAY[[(10,20),(40,69)],[(35,78),(88,76)]]::xy_tuple[]);
+NOTICE:  {"(10,20)","(40,69)"}
+NOTICE:  {"(35,78)","(88,76)"}
+ foreach_test 
+--------------
+ 
+(1 row)
+
+drop function foreach_test(anyarray);
+drop type xy_tuple;

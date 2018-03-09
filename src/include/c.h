@@ -9,12 +9,15 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.241 2010/05/27 07:59:48 itagaki Exp $
+ * src/include/c.h
  *
  *-------------------------------------------------------------------------
  */
@@ -936,7 +939,14 @@ typedef NameData *Name;
  */
 
 #if !HAVE_DECL_SNPRINTF
+<<<<<<< HEAD
 extern int	snprintf(char *str, size_t count, const char *fmt,...) pg_attribute_printf(3, 4);
+=======
+extern int
+snprintf(char *str, size_t count, const char *fmt,...)
+/* This extension allows gcc to check the format string */
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif
 
 #if !HAVE_DECL_VSNPRINTF

@@ -5,11 +5,15 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.42 2010/07/06 19:18:59 momjian Exp $
+ * src/backend/utils/misc/ps_status.c
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * various details abducted from various places
  *--------------------------------------------------------------------
  */
@@ -81,7 +85,11 @@ bool		update_process_title = true;
 
 
 /* Different systems want the buffer padded differently */
+<<<<<<< HEAD
 #if defined(_AIX) || defined(__linux__) || defined(__darwin__)
+=======
+#if defined(_AIX) || defined(__linux__) || defined(__svr4__) || defined(__darwin__)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define PS_PADDING '\0'
 #else
 #define PS_PADDING ' '

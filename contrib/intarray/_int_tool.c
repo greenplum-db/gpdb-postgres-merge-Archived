@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_tool.c,v 1.12 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int_tool.c
  */
 #include "postgres.h"
 
@@ -184,7 +184,11 @@ rt__int_size(ArrayType *a, float *size)
 	*size = (float) ARRNELEMS(a);
 }
 
+<<<<<<< HEAD
 /* Sort the given data (len >= 2).  Return true if any duplicates found */
+=======
+/* Sort the given data (len >= 2).	Return true if any duplicates found */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 bool
 isort(int4 *a, int len)
 {
@@ -196,7 +200,11 @@ isort(int4 *a, int len)
 	bool		r = FALSE;
 
 	/*
+<<<<<<< HEAD
 	 * We use a simple insertion sort.  While this is O(N^2) in the worst
+=======
+	 * We use a simple insertion sort.	While this is O(N^2) in the worst
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * case, it's quite fast if the input is already sorted or nearly so.
 	 * Also, for not-too-large inputs it's faster than more complex methods
 	 * anyhow.

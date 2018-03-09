@@ -1637,15 +1637,20 @@ map_xml_name_to_sql_identifier(char *name)
  *
  * When xml_escape_strings is true, then certain characters in string
  * values are replaced by entity references (&lt; etc.), as specified
+<<<<<<< HEAD
  * in SQL/XML:2008 section 9.8 GR 9) a) iii).   This is normally what is
  * wanted.  The false case is mainly useful when the resulting value
+=======
+ * in SQL/XML:2008 section 9.8 GR 9) a) iii).	This is normally what is
+ * wanted.	The false case is mainly useful when the resulting value
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * is used with xmlTextWriterWriteAttribute() to write out an
  * attribute, because that function does the escaping itself.
  */
 char *
 map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 {
-	if (type_is_array(type))
+	if (type_is_array_domain(type))
 	{
 		ArrayType  *array;
 		Oid			elmtype;
@@ -3030,7 +3035,11 @@ map_sql_typecoll_to_xmlschema_types(List *tupdesc_list)
  * SQL/XML:2008 sections 9.5 and 9.6.
  *
  * (The distinction between 9.5 and 9.6 is basically that 9.6 adds
+<<<<<<< HEAD
  * a name attribute, which this function does.  The name-less version
+=======
+ * a name attribute, which this function does.	The name-less version
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * 9.5 doesn't appear to be required anywhere.)
  */
 static const char *
@@ -3208,7 +3217,11 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 /*
  * Map an SQL row to an XML element, taking the row from the active
+<<<<<<< HEAD
  * SPI cursor.  See also SQL/XML:2008 section 9.10.
+=======
+ * SPI cursor.	See also SQL/XML:2008 section 9.10.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static void
 SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result, char *tablename,

@@ -1,4 +1,5 @@
 /exports.list
+<<<<<<< HEAD
 /libpq.rc
 /blibpqdll.def
 /libpqddll.def
@@ -8,10 +9,28 @@
 /pgstrcasecmp.c
 /strlcpy.c
 /thread.c
+=======
+/chklocale.c
+/crypt.c
+/getaddrinfo.c
+/getpeereid.c
+/inet_aton.c
+/inet_net_ntop.c
+/noblock.c
+/open.c
+/pgstrcasecmp.c
+/snprintf.c
+/strerror.c
+/strlcpy.c
+/thread.c
+/win32error.c
+/pgsleep.c
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /md5.c
 /ip.c
 /encnames.c
 /wchar.c
+<<<<<<< HEAD
 
 getpeereid.c
 inet_net_ntop.c
@@ -21,3 +40,7 @@ libpq.so.5
 libpq.so.5.0
 lipq-dist.rc
 libpq.so.5.2
+=======
+/libpqdll.def
+/libpq.rc
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

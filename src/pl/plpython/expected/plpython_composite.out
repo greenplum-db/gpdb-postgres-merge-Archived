@@ -25,16 +25,27 @@ SELECT (multiout_simple()).j + 3;
         5
 (1 row)
 
+<<<<<<< HEAD
 CREATE FUNCTION multiout_simple_setof(n integer, OUT integer, OUT integer) RETURNS SETOF record AS $$
 return [(1, 2)] * n
 $$ LANGUAGE plpythonu;
 SELECT multiout_simple_setof(1);
+=======
+CREATE FUNCTION multiout_simple_setof(n integer = 1, OUT integer, OUT integer) RETURNS SETOF record AS $$
+return [(1, 2)] * n
+$$ LANGUAGE plpythonu;
+SELECT multiout_simple_setof();
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  multiout_simple_setof 
 -----------------------
  (1,2)
 (1 row)
 
+<<<<<<< HEAD
 SELECT * FROM multiout_simple_setof(1);
+=======
+SELECT * FROM multiout_simple_setof();
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  column1 | column2 
 ---------+---------
        1 |       2
@@ -229,8 +240,11 @@ CREATE TABLE changing (
     i integer,
     j integer
 );
+<<<<<<< HEAD
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'i' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 CREATE FUNCTION changing_test(OUT n integer, OUT changing) RETURNS SETOF record AS $$
 return [(1, {'i': 1, 'j': 2}),
         (1, (3, 4))]
@@ -260,6 +274,7 @@ SELECT * FROM changing_test();
 (2 rows)
 
 -- tables of composite types (not yet implemented)
+<<<<<<< HEAD
 -- CREATE FUNCTION composite_types_table(OUT tab table_record[], OUT typ type_record[] ) RETURNS SETOF record AS $$
 -- yield {'tab': [['first', 1], ['second', 2]],
 --        'typ': [{'first': 'third', 'second': 3},
@@ -272,6 +287,23 @@ SELECT * FROM changing_test();
 --               {'first': 'fourth', 'second': 4}]}
 -- $$ LANGUAGE plpythonu;
 -- SELECT * FROM composite_types_table();
+=======
+CREATE FUNCTION composite_types_table(OUT tab table_record[], OUT typ type_record[] ) RETURNS SETOF record AS $$
+yield {'tab': [['first', 1], ['second', 2]],
+      'typ': [{'first': 'third', 'second': 3},
+              {'first': 'fourth', 'second': 4}]}
+yield {'tab': [['first', 1], ['second', 2]],
+      'typ': [{'first': 'third', 'second': 3},
+              {'first': 'fourth', 'second': 4}]}
+yield {'tab': [['first', 1], ['second', 2]],
+      'typ': [{'first': 'third', 'second': 3},
+              {'first': 'fourth', 'second': 4}]}
+$$ LANGUAGE plpythonu;
+SELECT * FROM composite_types_table();
+ERROR:  PL/Python functions cannot return type table_record[]
+DETAIL:  PL/Python does not support conversion to arrays of row types.
+CONTEXT:  PL/Python function "composite_types_table"
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- check what happens if the output record descriptor changes
 CREATE FUNCTION return_record(t text) RETURNS record AS $$
 return {'t': t, 'val': 10}

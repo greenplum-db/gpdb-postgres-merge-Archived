@@ -4,9 +4,15 @@ CREATE TABLE users (
 	fname text not null,
 	lname text not null,
 	username text,
+<<<<<<< HEAD
 	userid serial
 	-- , PRIMARY KEY(lname, fname) 
 	) DISTRIBUTED BY (userid);
+=======
+	userid serial,
+	PRIMARY KEY(lname, fname)
+	) ;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 NOTICE:  CREATE TABLE will create implicit sequence "users_userid_seq" for serial column "users.userid"
 CREATE INDEX users_username_idx ON users(username);
 CREATE INDEX users_fname_idx ON users(fname);

@@ -4,10 +4,10 @@
  *	  Routines to support inter-object dependencies.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.45 2010/04/05 01:09:53 tgl Exp $
+ * src/include/catalog/dependency.h
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,7 @@ typedef enum ObjectClass
 	OCLASS_PROC,				/* pg_proc */
 	OCLASS_TYPE,				/* pg_type */
 	OCLASS_CAST,				/* pg_cast */
+	OCLASS_COLLATION,			/* pg_collation */
 	OCLASS_CONSTRAINT,			/* pg_constraint */
 	OCLASS_CONVERSION,			/* pg_conversion */
 	OCLASS_DEFAULT,				/* pg_attrdef */
@@ -146,8 +147,11 @@ typedef enum ObjectClass
 	OCLASS_USER_MAPPING,		/* pg_user_mapping */
 	OCLASS_DEFACL,				/* pg_default_acl */
 	OCLASS_EXTENSION,			/* pg_extension */
+<<<<<<< HEAD
 	OCLASS_EXTPROTOCOL,			/* pg_extprotocol */
 	OCLASS_COMPRESSION,			/* pg_compression */
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 
@@ -202,15 +206,27 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 						   int nreferenced,
 						   DependencyType behavior);
 
+<<<<<<< HEAD
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
 									   bool skipExtensionDeps);
 
 extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
                                 Oid refclassId, char deptype);
+=======
+extern void recordDependencyOnCurrentExtension(const ObjectAddress *object);
+
+extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
+						   bool skipExtensionDeps);
+
+extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
+								Oid refclassId, char deptype);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern long changeDependencyFor(Oid classId, Oid objectId,
 					Oid refClassId, Oid oldRefObjectId,
 					Oid newRefObjectId);
+
+extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
 extern bool sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId);
 

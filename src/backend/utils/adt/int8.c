@@ -3,11 +3,11 @@
  * int8.c
  *	  Internal 64-bit integer operations
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.79 2010/02/26 02:01:08 momjian Exp $
+ *	  src/backend/utils/adt/int8.c
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/int8.h"
+#include "utils/builtins.h"
 
 
 #define MAXINT8LEN		25
@@ -157,13 +158,10 @@ Datum
 int8out(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
-	char	   *result;
-	int			len;
 	char		buf[MAXINT8LEN + 1];
+	char	   *result;
 
-	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, val)) < 0)
-		elog(ERROR, "could not format int8");
-
+	pg_lltoa(val, buf);
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }
@@ -600,6 +598,11 @@ int8div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+	result = arg1 / arg2;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
@@ -661,6 +664,7 @@ int8mod(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Some machines throw a floating-point exception for INT64_MIN % -1,
 	 * which is a bit silly since the correct answer is perfectly
@@ -669,6 +673,8 @@ int8mod(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 		PG_RETURN_INT64(0);
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* No overflow is possible */
 
 	PG_RETURN_INT64(arg1 % arg2);
@@ -864,6 +870,11 @@ int84div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+	result = arg1 / arg2;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
@@ -1061,6 +1072,11 @@ int82div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+<<<<<<< HEAD
+=======
+
+	result = arg1 / arg2;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on

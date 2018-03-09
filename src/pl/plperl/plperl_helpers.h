@@ -3,6 +3,7 @@
 
 /*
  * convert from utf8 to database encoding
+<<<<<<< HEAD
  *
  * Returns a palloc'ed copy of the original string
  */
@@ -30,20 +31,37 @@ utf_u2e(char *utf8_str, size_t len)
 	if (ret == utf8_str)
 		ret = pstrdup(ret);
 
+=======
+ */
+static inline char *
+utf_u2e(const char *utf8_str, size_t len)
+{
+	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str, len, PG_UTF8, GetDatabaseEncoding());
+
+	if (ret == utf8_str)
+		ret = pstrdup(ret);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return ret;
 }
 
 /*
  * convert from database encoding to utf8
+<<<<<<< HEAD
  *
  * Returns a palloc'ed copy of the original string
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static inline char *
 utf_e2u(const char *str)
 {
+<<<<<<< HEAD
 	char	   *ret =
 		(char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
 										   GetDatabaseEncoding(), PG_UTF8);
+=======
+	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str), GetDatabaseEncoding(), PG_UTF8);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (ret == str)
 		ret = pstrdup(ret);
@@ -53,18 +71,26 @@ utf_e2u(const char *str)
 
 /*
  * Convert an SV to a char * in the current database encoding
+<<<<<<< HEAD
  *
  * Returns a palloc'ed copy of the original string
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static inline char *
 sv2cstr(SV *sv)
 {
+<<<<<<< HEAD
 	char	   *val, *res;
+=======
+	char	   *val;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	STRLEN		len;
 
 	/*
 	 * get a utf8 encoded char * out of perl. *note* it may not be valid utf8!
 	 */
+<<<<<<< HEAD
 
 	/*
 	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
@@ -106,16 +132,30 @@ sv2cstr(SV *sv)
 	SvREFCNT_dec(sv);
 
 	return res;
+=======
+	val = SvPVutf8(sv, len);
+
+	/*
+	 * we use perls length in the event we had an embedded null byte to ensure
+	 * we error out properly
+	 */
+	return utf_u2e(val, len);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
  * Create a new SV from a string assumed to be in the current database's
  * encoding.
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static inline SV *
 cstr2sv(const char *str)
 {
 	SV		   *sv;
+<<<<<<< HEAD
 	char	   *utf8_str;
 
 	/* no conversion when SQL_ASCII */
@@ -126,11 +166,19 @@ cstr2sv(const char *str)
 
 	sv = newSVpv(utf8_str, 0);
 	SvUTF8_on(sv);
+=======
+	char	   *utf8_str = utf_e2u(str);
+
+	sv = newSVpv(utf8_str, 0);
+	SvUTF8_on(sv);
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pfree(utf8_str);
 
 	return sv;
 }
 
+<<<<<<< HEAD
 /*
  * croak() with specified message, which is given in the database encoding.
  *
@@ -169,4 +217,6 @@ croak_cstr(const char *str)
 #endif   /* croak_sv */
 }
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif   /* PL_PERL_HELPERS_H */

@@ -3,10 +3,10 @@
 # GNUmakefile--
 #    Makefile for src/test/regress (the regression tests)
 #
-# Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.83 2010/07/05 18:54:38 tgl Exp $
+# src/test/regress/GNUmakefile
 #
 #-------------------------------------------------------------------------
 
@@ -32,12 +32,6 @@ ifdef MAX_CONNECTIONS
 MAXCONNOPT += --max-connections=$(MAX_CONNECTIONS)
 endif
 
-# locale
-NOLOCALE =
-ifdef NO_LOCALE
-NOLOCALE += --no-locale
-endif
-
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 	'-DMAKEPROG="$(MAKE)"' \
@@ -56,9 +50,9 @@ LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl
 
 # Build regression test driver
 
-all: submake-libpgport pg_regress$(X)
+all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o
+pg_regress$(X): pg_regress.o pg_regress_main.o | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
@@ -133,14 +127,21 @@ installdirs-tests: installdirs
 	$(MKDIR_P)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
 
 
-# Get some extra C modules from contrib/spi...
+# Get some extra C modules from contrib/spi and contrib/dummy_seclabel...
 
+<<<<<<< HEAD
 all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
+=======
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
 
 autoinc$(DLSUFFIX): $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX)
+	cp $< $@
+
+dummy_seclabel$(DLSUFFIX): $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX)
 	cp $< $@
 
 $(top_builddir)/contrib/spi/refint$(DLSUFFIX): $(top_srcdir)/contrib/spi/refint.c
@@ -149,10 +150,10 @@ $(top_builddir)/contrib/spi/refint$(DLSUFFIX): $(top_srcdir)/contrib/spi/refint.
 $(top_builddir)/contrib/spi/autoinc$(DLSUFFIX): $(top_srcdir)/contrib/spi/autoinc.c
 	$(MAKE) -C $(top_builddir)/contrib/spi autoinc$(DLSUFFIX)
 
+$(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX): $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel.c
+	$(MAKE) -C $(top_builddir)/contrib/dummy_seclabel dummy_seclabel$(DLSUFFIX)
 
 # Tablespace setup
-
-all: tablespace-setup
 
 .PHONY: tablespace-setup
 tablespace-setup:
@@ -176,6 +177,7 @@ query_info_hook_test:
 ## Run tests
 ##
 
+<<<<<<< HEAD
 pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
 
 check: all
@@ -196,9 +198,21 @@ testbouncer: all
 	bash -c "bouncer/setup.sh"
 	$(pg_regress_call)  --port=65432 --psqldir=$(PSQLDIR) --schedule=./minimal_schedule --host=`hostname`;
 	bash -c "bouncer/stop.sh"
+=======
+REGRESS_OPTS = --dlpath=.
+
+check: all tablespace-setup
+	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
+
+installcheck: all tablespace-setup
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/serial_schedule $(EXTRA_TESTS)
+
+installcheck-parallel: all tablespace-setup
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 standbycheck: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/standby_schedule --use-existing
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 
@@ -206,11 +220,11 @@ runcheck: check
 runtest: installcheck
 runtest-parallel: installcheck-parallel
 
-bigtest: all
-	$(pg_regress_call) --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule numeric_big 
+bigtest: all tablespace-setup
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/serial_schedule numeric_big
 
-bigcheck: all
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
+bigcheck: all tablespace-setup
+	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) numeric_big
 
 bkuprestore: all
 	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/bkuprestore_schedule
@@ -221,6 +235,7 @@ bkuprestore: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
+<<<<<<< HEAD
 	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
 	$(MAKE) -C query_info_hook_test/ clean
@@ -237,3 +252,11 @@ clean distclean maintainer-clean: clean-lib
 	rm -f data/pg_class32.data
 	rm -f gmon.out
 	rm -f $(srcdir)/sql/cppudf.sql
+=======
+	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
+	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
+# things created by various check targets
+	rm -f $(output_files) $(input_files)
+	rm -rf testtablespace
+	rm -rf $(pg_regress_clean_files)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

@@ -43,8 +43,13 @@ PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 
 SHLIB_LINK = $(perl_embed_ldflags)
 
+<<<<<<< HEAD
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl --load-language=plperlu
 REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
+=======
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=plperl  --load-extension=plperlu
+REGRESS = plperl plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)
@@ -69,7 +74,10 @@ plperl_opmask.h: plperl_opmask.pl
 	$(PERL) $< $@
 
 perlchunks.h: $(PERLCHUNKS)
+<<<<<<< HEAD
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
 
 all: all-lib
@@ -100,10 +108,17 @@ uninstall-data:
 
 
 check: submake
+<<<<<<< HEAD
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress --init-file=init_file $(REGRESS_OPTS) $(REGRESS)
+=======
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
+installcheck: submake
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 .PHONY: submake
 submake:

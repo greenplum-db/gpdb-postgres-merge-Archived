@@ -3,12 +3,16 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.164 2010/02/26 02:01:17 momjian Exp $
+ * src/bin/pg_dump/pg_dump.h
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +126,12 @@ typedef enum
 	DO_DEFAULT_ACL,
 	DO_BLOB,
 	DO_BLOB_DATA,
+<<<<<<< HEAD
 	DO_EXTPROTOCOL,
 	DO_TYPE_STORAGE_OPTIONS
+=======
+	DO_COLLATION
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -150,7 +158,11 @@ typedef struct _namespaceInfo
 typedef struct _extensionInfo
 {
 	DumpableObject dobj;
+<<<<<<< HEAD
 	char 	   *namespace;		/* schema containing extension's objects */
+=======
+	char	   *namespace;		/* schema containing extension's objects */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		relocatable;
 	char	   *extversion;
 	char	   *extconfig;		/* info about configuration tables */
@@ -262,6 +274,12 @@ typedef struct _opfamilyInfo
 	char	   *rolname;
 } OpfamilyInfo;
 
+typedef struct _collInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+} CollInfo;
+
 typedef struct _convInfo
 {
 	DumpableObject dobj;
@@ -277,7 +295,11 @@ typedef struct _tableInfo
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *relacl;
 	char		relkind;
+<<<<<<< HEAD
 	char		relstorage;
+=======
+	char		relpersistence; /* relation persistence */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *toast_reloptions;		/* ditto, for the TOAST table */
@@ -286,6 +308,8 @@ typedef struct _tableInfo
 	bool		hastriggers;	/* does it have any triggers? */
 	bool		hasoids;		/* does it have OIDs? */
 	uint32		frozenxid;		/* for restore frozen xid */
+	Oid			toast_oid;		/* for restore toast frozen xid */
+	uint32		toast_frozenxid;	/* for restore toast frozen xid */
 	int			ncheck;			/* # of CHECK expressions */
 	char	   *reloftype;		/* underlying type for typed table */
 	/* these two are set only if table is a sequence owned by a column: */
@@ -310,7 +334,21 @@ typedef struct _tableInfo
 	char	   *attalign;		/* attribute align, used by binary_upgrade */
 	bool	   *attislocal;		/* true if attr has local definition */
 	char	  **attoptions;		/* per-attribute options */
+<<<<<<< HEAD
 	bool	   *notnull;		/* NOT NULL constraints on attributes */
+=======
+	Oid		   *attcollation;	/* per-attribute collation selection */
+
+	/*
+	 * Note: we need to store per-attribute notnull, default, and constraint
+	 * stuff for all interesting tables so that we can tell which constraints
+	 * were inherited.
+	 */
+	bool	   *notnull;		/* Not null constraints on attributes */
+	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
+	bool	   *inhAttrs;		/* true if each attribute is inherited */
+	bool	   *inhAttrDef;		/* true if attr's default is inherited */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
 	char	  **attencoding;	/* the attribute encoding values */
 	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
@@ -473,6 +511,7 @@ typedef struct _fdwInfo
 {
 	DumpableObject dobj;
 	char	   *rolname;
+	char	   *fdwhandler;
 	char	   *fdwvalidator;
 	char	   *fdwoptions;
 	char	   *fdwacl;
@@ -556,11 +595,15 @@ extern TableInfo *findTableByOid(Oid oid);
 extern TypeInfo *findTypeByOid(Oid oid);
 extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
+<<<<<<< HEAD
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
 extern ExtensionInfo *findExtensionByOid(Oid oid);
 
 extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
+=======
+extern CollInfo *findCollationByOid(Oid oid);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
@@ -598,6 +641,7 @@ extern ExtProtInfo *getExtProtocols(int *numExtProtocols);
 extern OprInfo *getOperators(int *numOperators);
 extern OpclassInfo *getOpclasses(int *numOpclasses);
 extern OpfamilyInfo *getOpfamilies(int *numOpfamilies);
+extern CollInfo *getCollations(int *numCollations);
 extern ConvInfo *getConversions(int *numConversions);
 extern TableInfo *getTables(int *numTables);
 extern void getOwnedSeqs(TableInfo tblinfo[], int numTables);
@@ -618,8 +662,11 @@ extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
 extern ForeignServerInfo *getForeignServers(int *numForeignServers);
 extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
 extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
+<<<<<<< HEAD
 extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
 
 extern bool	testExtProtocolSupport(void);
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* PG_DUMP_H */

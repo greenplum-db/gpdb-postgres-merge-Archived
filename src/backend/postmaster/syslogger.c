@@ -14,11 +14,11 @@
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
- * Copyright (c) 2004-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2011, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.58 2010/07/06 19:18:57 momjian Exp $
+ *	  src/backend/postmaster/syslogger.c
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,11 @@ int			Alert_Log_RotationSize = 1024;
 char	   *Log_directory = NULL;
 char	   *Log_filename = NULL;
 bool		Log_truncate_on_rotation = false;
+<<<<<<< HEAD
 int         gp_log_format = 0; /* Text format */
+=======
+int			Log_file_mode = S_IRUSR | S_IWUSR;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * Globally visible state (used by elog.c)
@@ -176,6 +180,12 @@ static void syslogger_parseArgs(int argc, char *argv[]);
 #ifdef WIN32
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
+<<<<<<< HEAD
+=======
+static void open_csvlogfile(void);
+static FILE *logfile_open(const char *filename, const char *mode,
+			 bool allow_errors);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 static unsigned int __stdcall pipeThread(void *arg);
@@ -770,10 +780,17 @@ SysLogger_Start(void)
     }
 #endif
 
+<<<<<<< HEAD
     /*
      * Create log directory if not present; ignore errors
      */
     mkdir(Log_directory, 0700);
+=======
+	/*
+	 * Create log directory if not present; ignore errors
+	 */
+	mkdir(Log_directory, S_IRWXU);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify that
@@ -790,6 +807,7 @@ SysLogger_Start(void)
 	first_syslogger_file_time = time(NULL);
     filename = logfile_getname(first_syslogger_file_time, NULL, Log_directory, Log_filename);
 
+<<<<<<< HEAD
     syslogFile = fopen(filename, "a");
 
     if (!syslogFile)
@@ -799,6 +817,9 @@ SysLogger_Start(void)
 						 filename))));
 
     open_alert_log_file();
+=======
+	syslogFile = logfile_open(filename, "a", false);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
     setvbuf(syslogFile, NULL, LBF_MODE, 0);
 
@@ -924,7 +945,7 @@ syslogger_forkexec(void)
 #else							/* WIN32 */
 	if (syslogFile != NULL)
 		snprintf(filenobuf, sizeof(filenobuf), "%ld",
-				 _get_osfhandle(_fileno(syslogFile)));
+				 (long) _get_osfhandle(_fileno(syslogFile)));
 	else
 		strcpy(filenobuf, "0");
 #endif   /* WIN32 */
@@ -1996,7 +2017,71 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
                FILE **fh_p,
                char **last_log_file_name)
 {
+<<<<<<< HEAD
     char	   *filename;
+=======
+	char	   *filename;
+
+	filename = logfile_getname(time(NULL), ".csv");
+
+	csvlogFile = logfile_open(filename, "a", false);
+
+	pfree(filename);
+}
+
+/*
+ * Open a new logfile with proper permissions and buffering options.
+ *
+ * If allow_errors is true, we just log any open failure and return NULL
+ * (with errno still correct for the fopen failure).
+ * Otherwise, errors are treated as fatal.
+ */
+static FILE *
+logfile_open(const char *filename, const char *mode, bool allow_errors)
+{
+	FILE	   *fh;
+	mode_t		oumask;
+
+	/*
+	 * Note we do not let Log_file_mode disable IWUSR, since we certainly want
+	 * to be able to write the files ourselves.
+	 */
+	oumask = umask((mode_t) ((~(Log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
+	fh = fopen(filename, mode);
+	umask(oumask);
+
+	if (fh)
+	{
+		setvbuf(fh, NULL, LBF_MODE, 0);
+
+#ifdef WIN32
+		/* use CRLF line endings on Windows */
+		_setmode(_fileno(fh), _O_TEXT);
+#endif
+	}
+	else
+	{
+		int			save_errno = errno;
+
+		ereport(allow_errors ? LOG : FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not open log file \"%s\": %m",
+						filename)));
+		errno = save_errno;
+	}
+
+	return fh;
+}
+
+/*
+ * perform logfile rotation
+ */
+static void
+logfile_rotate(bool time_based_rotation, int size_rotation_for)
+{
+	char	   *filename;
+	char	   *csvfilename = NULL;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pg_time_t	fntime;
 	FILE	   *fh = *fh_p;
 
@@ -2020,28 +2105,27 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 	if (time_based_rotation || size_based_rotation)
 	{
 		if (Log_truncate_on_rotation && time_based_rotation &&
+<<<<<<< HEAD
 			*last_log_file_name != NULL &&
 			strcmp(filename, *last_log_file_name) != 0)
 			fh = fopen(filename, "w");
+=======
+			last_file_name != NULL &&
+			strcmp(filename, last_file_name) != 0)
+			fh = logfile_open(filename, "w", true);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		else
-			fh = fopen(filename, "a");
+			fh = logfile_open(filename, "a", true);
 
 		if (!fh)
 		{
-			int			saveerrno = errno;
-
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open new log file \"%s\": %m",
-							filename)));
-
 			/*
 			 * ENFILE/EMFILE are not too surprising on a busy system; just
 			 * keep using the old file till we manage to get a new one.
 			 * Otherwise, assume something's wrong with Log_directory and stop
 			 * trying to create files.
 			 */
-			if (saveerrno != ENFILE && saveerrno != EMFILE)
+			if (errno != ENFILE && errno != EMFILE)
 			{
 				ereport(LOG,
 						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
@@ -2053,6 +2137,7 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 			return;
 		}
 
+<<<<<<< HEAD
 		setvbuf(fh, NULL, LBF_MODE, 0);
 
 #ifdef WIN32
@@ -2062,6 +2147,10 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		if (*fh_p)
 			fclose(*fh_p);
 		*fh_p = fh;
+=======
+		fclose(syslogFile);
+		syslogFile = fh;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* instead of pfree'ing filename, remember it for next time */
 		if ((*last_log_file_name) != NULL)
@@ -2070,6 +2159,54 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
+<<<<<<< HEAD
+=======
+	/* Same as above, but for csv file. */
+
+	if (csvlogFile != NULL &&
+		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
+	{
+		if (Log_truncate_on_rotation && time_based_rotation &&
+			last_csv_file_name != NULL &&
+			strcmp(csvfilename, last_csv_file_name) != 0)
+			fh = logfile_open(csvfilename, "w", true);
+		else
+			fh = logfile_open(csvfilename, "a", true);
+
+		if (!fh)
+		{
+			/*
+			 * ENFILE/EMFILE are not too surprising on a busy system; just
+			 * keep using the old file till we manage to get a new one.
+			 * Otherwise, assume something's wrong with Log_directory and stop
+			 * trying to create files.
+			 */
+			if (errno != ENFILE && errno != EMFILE)
+			{
+				ereport(LOG,
+						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
+				Log_RotationAge = 0;
+				Log_RotationSize = 0;
+			}
+
+			if (filename)
+				pfree(filename);
+			if (csvfilename)
+				pfree(csvfilename);
+			return;
+		}
+
+		fclose(csvlogFile);
+		csvlogFile = fh;
+
+		/* instead of pfree'ing filename, remember it for next time */
+		if (last_csv_file_name != NULL)
+			pfree(last_csv_file_name);
+		last_csv_file_name = csvfilename;
+		csvfilename = NULL;
+	}
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (filename)
 		pfree(filename);
 

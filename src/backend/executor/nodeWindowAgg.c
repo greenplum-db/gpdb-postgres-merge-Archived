@@ -23,11 +23,11 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeWindowAgg.c,v 1.13 2010/03/21 00:17:58 petere Exp $
+ *	  src/backend/executor/nodeWindowAgg.c
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,8 @@ typedef struct WindowStatePerFuncData
 
 	FmgrInfo	flinfo;			/* fmgr lookup data for window function */
 
+	Oid			winCollation;	/* collation derived for window function */
+
 	/*
 	 * We need the len and byval info for the result of each function in order
 	 * to know how to copy/delete values.
@@ -96,7 +98,7 @@ typedef struct WindowStatePerFuncData
 	int			aggno;			/* if so, index of its PerAggData */
 
 	WindowObject winobj;		/* object used in window function API */
-} WindowStatePerFuncData;
+}	WindowStatePerFuncData;
 
 /*
  * For plain aggregate window functions, we also have one of these.
@@ -197,7 +199,7 @@ static Datum eval_bound_value(WindowAggState *winstate,
 
 /*
  * initialize_windowaggregate
- * parallel to initialize_aggregate in nodeAgg.c
+ * parallel to initialize_aggregates in nodeAgg.c
  */
 static void
 initialize_windowaggregate(WindowAggState *winstate,
@@ -223,7 +225,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 
 /*
  * advance_windowaggregate
- * parallel to advance_aggregate in nodeAgg.c
+ * parallel to advance_aggregates in nodeAgg.c
  */
 static void
 advance_windowaggregate(WindowAggState *winstate,
@@ -319,6 +321,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	 */
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
+							 perfuncstate->winCollation,
 							 (void *) winstate, NULL);
 	fcinfo->arg[0] = peraggstate->transValue;
 	fcinfo->argnull[0] = peraggstate->transValueIsNull;
@@ -372,8 +375,13 @@ finalize_windowaggregate(WindowAggState *winstate,
 		bool		anynull;
 		int			i;
 
+<<<<<<< HEAD
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
+=======
+		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
+								 perfuncstate->winCollation,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								 (void *) winstate, NULL);
 		fcinfo.arg[0] = peraggstate->transValue;
 		fcinfo.argnull[0] = peraggstate->transValueIsNull;
@@ -673,6 +681,7 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	 */
 	InitFunctionCallInfoData(fcinfo, &(perfuncstate->flinfo),
 							 perfuncstate->numArguments,
+							 perfuncstate->winCollation,
 							 (void *) perfuncstate->winobj, NULL);
 	/* Just in case, make all the regular argument slots be null */
 	memset(fcinfo.argnull, true, perfuncstate->numArguments);
@@ -1725,7 +1734,10 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 
 		fmgr_info_cxt(wfunc->winfnoid, &perfuncstate->flinfo,
 					  econtext->ecxt_per_query_memory);
-		perfuncstate->flinfo.fn_expr = (Node *) wfunc;
+		fmgr_info_set_expr((Node *) wfunc, &perfuncstate->flinfo);
+
+		perfuncstate->winCollation = wfunc->inputcollid;
+
 		get_typlenbyval(wfunc->wintype,
 						&perfuncstate->resulttypeLen,
 						&perfuncstate->resulttypeByVal);
@@ -2013,7 +2025,7 @@ ExecEndWindowAgg(WindowAggState *node)
  * -----------------
  */
 void
-ExecReScanWindowAgg(WindowAggState *node, ExprContext *exprCtxt)
+ExecReScanWindowAgg(WindowAggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
@@ -2042,8 +2054,8 @@ ExecReScanWindowAgg(WindowAggState *node, ExprContext *exprCtxt)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 }
 
 void
@@ -2147,6 +2159,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							false,		/* no variadic window functions yet */
 							aggtranstype,
 							wfunc->wintype,
+							wfunc->inputcollid,
 							transfn_oid,
 							finalfn_oid,
 							InvalidOid,             /* prelim */
@@ -2160,12 +2173,12 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	/* set up infrastructure for calling the transfn(s) and finalfn */
 	fmgr_info(transfn_oid, &peraggstate->transfn);
-	peraggstate->transfn.fn_expr = (Node *) transfnexpr;
+	fmgr_info_set_expr((Node *) transfnexpr, &peraggstate->transfn);
 
 	if (OidIsValid(finalfn_oid))
 	{
 		fmgr_info(finalfn_oid, &peraggstate->finalfn);
-		peraggstate->finalfn.fn_expr = (Node *) finalfnexpr;
+		fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 	}
 
 	/* get info about relevant datatypes */

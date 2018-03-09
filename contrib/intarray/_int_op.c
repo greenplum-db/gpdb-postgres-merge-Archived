@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_op.c,v 1.9 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int_op.c
  */
 #include "postgres.h"
 
@@ -39,13 +39,21 @@ Datum
 _int_contains(PG_FUNCTION_ARGS)
 {
 	/* Force copy so we can modify the arrays in-place */
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		res;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
+<<<<<<< HEAD
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	PREPAREARR(a);
 	PREPAREARR(b);
 	res = inner_int_contains(a, b);
@@ -69,8 +77,13 @@ _int_different(PG_FUNCTION_ARGS)
 Datum
 _int_same(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			na,
 				nb;
 	int			n;
@@ -80,7 +93,10 @@ _int_same(PG_FUNCTION_ARGS)
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
+<<<<<<< HEAD
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	na = ARRNELEMS(a);
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
@@ -115,8 +131,13 @@ _int_same(PG_FUNCTION_ARGS)
 Datum
 _int_overlap(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		result;
 
 	CHECKARRVALID(a);
@@ -138,8 +159,13 @@ _int_overlap(PG_FUNCTION_ARGS)
 Datum
 _int_union(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 
 	CHECKARRVALID(a);
@@ -159,8 +185,13 @@ _int_union(PG_FUNCTION_ARGS)
 Datum
 _int_inter(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 
 	CHECKARRVALID(a);
@@ -214,7 +245,11 @@ intset(PG_FUNCTION_ARGS)
 Datum
 icount(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int32		count = ARRNELEMS(a);
 
 	PG_FREE_IF_COPY(a, 0);
@@ -224,7 +259,11 @@ icount(PG_FUNCTION_ARGS)
 Datum
 sort(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	text	   *dirstr = (fcinfo->nargs == 2) ? PG_GETARG_TEXT_P(1) : NULL;
 	int32		dc = (dirstr) ? VARSIZE(dirstr) - VARHDRSZ : 0;
 	char	   *d = (dirstr) ? VARDATA(dirstr) : NULL;
@@ -256,7 +295,11 @@ sort(PG_FUNCTION_ARGS)
 Datum
 sort_asc(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	CHECKARRVALID(a);
 	QSORT(a, 1);
@@ -266,7 +309,11 @@ sort_asc(PG_FUNCTION_ARGS)
 Datum
 sort_desc(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	CHECKARRVALID(a);
 	QSORT(a, 0);
@@ -276,7 +323,11 @@ sort_desc(PG_FUNCTION_ARGS)
 Datum
 uniq(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	CHECKARRVALID(a);
 	if (ARRNELEMS(a) < 2)
@@ -288,7 +339,11 @@ uniq(PG_FUNCTION_ARGS)
 Datum
 idx(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int32		result;
 
 	CHECKARRVALID(a);
@@ -302,7 +357,11 @@ idx(PG_FUNCTION_ARGS)
 Datum
 subarray(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int32		start = PG_GETARG_INT32(1);
 	int32		len = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
 	int32		end = 0;
@@ -352,7 +411,11 @@ subarray(PG_FUNCTION_ARGS)
 Datum
 intarray_push_elem(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 
 	result = intarray_add_elem(a, PG_GETARG_INT32(1));
@@ -363,8 +426,13 @@ intarray_push_elem(PG_FUNCTION_ARGS)
 Datum
 intarray_push_array(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 
 	result = intarray_concat_arrays(a, b);
@@ -376,7 +444,11 @@ intarray_push_array(PG_FUNCTION_ARGS)
 Datum
 intarray_del_elem(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int32		elem = PG_GETARG_INT32(1);
 	int32		c;
 	int32	   *aa;
@@ -406,7 +478,11 @@ intarray_del_elem(PG_FUNCTION_ARGS)
 Datum
 intset_union_elem(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P(0);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P(0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 
 	result = intarray_add_elem(a, PG_GETARG_INT32(1));
@@ -418,8 +494,13 @@ intset_union_elem(PG_FUNCTION_ARGS)
 Datum
 intset_subtract(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	ArrayType  *a = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
 	ArrayType  *b = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+=======
+	ArrayType  *a = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *b = PG_GETARG_ARRAYTYPE_P_COPY(1);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	ArrayType  *result;
 	int32		ca;
 	int32		cb;

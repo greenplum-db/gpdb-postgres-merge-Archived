@@ -422,6 +422,7 @@ DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 -- check that we can "use warnings" (in this case to turn a warn into an error)
 -- yields "ERROR:  Useless use of sort in scalar context."
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
+<<<<<<< HEAD
 
 -- make sure functions marked as VOID without an explicit return work
 CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
@@ -472,3 +473,5 @@ $$ LANGUAGE plperl;
 
 SELECT self_modify(42);
 SELECT self_modify(42);
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

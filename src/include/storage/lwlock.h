@@ -4,10 +4,10 @@
  *	  Lightweight lock manager
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.46 2010/02/26 02:01:27 momjian Exp $
+ * src/include/storage/lwlock.h
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,17 @@
 #define LOG2_NUM_LOCK_PARTITIONS  4
 #define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
 
+<<<<<<< HEAD
 /* Number of partitions of the workfile manager hashtable */
 #define NUM_WORKFILEMGR_PARTITIONS 32
 
 /* Number of partitions of the workfile query diskspace hashtable */
 #define NUM_WORKFILE_QUERYSPACE_PARTITIONS 128
+=======
+/* Number of partitions the shared predicate lock tables are divided into */
+#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
+#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * We have a number of predefined LWLocks, plus a bunch of LWLocks that are
@@ -78,6 +84,7 @@ typedef enum LWLockId
 	RelationMappingLock,
 	AsyncCtlLock,
 	AsyncQueueLock,
+<<<<<<< HEAD
 	SharedSnapshotLock,
 	DistributedLogControlLock,
 	SeqServerControlLock,
@@ -97,6 +104,20 @@ typedef enum LWLockId
 	GpReplicationConfigFileLock,
 	/* must be last except for MaxDynamicLWLock: */
 	NumFixedLWLocks,
+=======
+	SerializableXactHashLock,
+	SerializableFinishedListLock,
+	SerializablePredicateLockListLock,
+	OldSerXidLock,
+	SyncRepLock,
+	/* Individual lock IDs end here */
+	FirstBufMappingLock,
+	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
+	FirstPredicateLockMgrLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+
+	/* must be last except for MaxDynamicLWLock: */
+	NumFixedLWLocks = FirstPredicateLockMgrLock + NUM_PREDICATELOCK_PARTITIONS,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	MaxDynamicLWLock = 1000000000
 } LWLockId;

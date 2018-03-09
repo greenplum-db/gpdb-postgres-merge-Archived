@@ -70,6 +70,23 @@ delete from trigger_test;
 
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 
+<<<<<<< HEAD
+=======
+insert into trigger_test values(1,'insert', '("(1)")');
+CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
+
+CREATE TRIGGER show_trigger_data_trig
+INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
+
+insert into trigger_test_view values(2,'insert', '("(2)")');
+update trigger_test_view set v = 'update', foo = '("(3)")' where i = 1;
+delete from trigger_test_view;
+
+DROP VIEW trigger_test_view;
+delete from trigger_test;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DROP FUNCTION trigger_data();
 
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$

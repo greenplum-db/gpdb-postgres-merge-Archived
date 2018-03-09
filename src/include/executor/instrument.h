@@ -4,11 +4,15 @@
  *	  definitions for run-time statistics collection
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2010, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2001-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.24 2010/02/26 02:01:24 momjian Exp $
+ * src/include/executor/instrument.h
  *
  *-------------------------------------------------------------------------
  */

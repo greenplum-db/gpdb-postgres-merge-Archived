@@ -69,8 +69,13 @@ copy (select t from copyselect_test1 where id = 1) to stdout csv header force qu
 --
 -- This should fail
 --
+<<<<<<< HEAD
 \copy v_copyselect_test1 to stdout
 -- 
+=======
+\copy v_test1 to stdout
+--
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- Test \copy (select ...)
 --
 \copy (select "id",'id','id""'||t,(id + 1)*id,t,"copyselect_test1"."t" from copyselect_test1 where id=3) to stdout

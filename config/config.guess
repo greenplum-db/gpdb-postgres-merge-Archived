@@ -1,8 +1,16 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
+<<<<<<< HEAD
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
 timestamp='2017-01-01'
+=======
+#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+#   2011 Free Software Foundation, Inc.
+
+timestamp='2011-05-11'
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +58,13 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
+<<<<<<< HEAD
 Copyright 1992-2017 Free Software Foundation, Inc.
+=======
+Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free
+Software Foundation, Inc.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -205,6 +219,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 		;;
 	    *)
 		os=netbsd
+<<<<<<< HEAD
 		;;
 	esac
 	# Determine ABI tags.
@@ -212,6 +227,8 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	    earm*)
 		expr='s/^earmv[0-9]/-eabi/;s/eb$//'
 		abi=`echo ${UNAME_MACHINE_ARCH} | sed -e "$expr"`
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		;;
 	esac
 	# The OS release
@@ -310,7 +327,11 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	# A Tn.n version is a released field test version.
 	# A Xn.n version is an unreleased experimental baselevel.
 	# 1.2 uses "1.2" for uname -r.
+<<<<<<< HEAD
 	echo ${UNAME_MACHINE}-dec-osf`echo ${UNAME_RELEASE} | sed -e 's/^[PVTX]//' | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz`
+=======
+	echo ${UNAME_MACHINE}-dec-osf`echo ${UNAME_RELEASE} | sed -e 's/^[PVTX]//' | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	# Reset EXIT trap before exiting to avoid spurious non-zero exit code.
 	exitcode=$?
 	trap '' 0
@@ -642,6 +663,7 @@ EOF
 		    sc_cpu_version=`/usr/bin/getconf SC_CPU_VERSION 2>/dev/null`
 		    sc_kernel_bits=`/usr/bin/getconf SC_KERNEL_BITS 2>/dev/null`
 		    case "${sc_cpu_version}" in
+<<<<<<< HEAD
 		      523) HP_ARCH=hppa1.0 ;; # CPU_PA_RISC1_0
 		      528) HP_ARCH=hppa1.1 ;; # CPU_PA_RISC1_1
 		      532)                      # CPU_PA_RISC2_0
@@ -649,6 +671,15 @@ EOF
 			  32) HP_ARCH=hppa2.0n ;;
 			  64) HP_ARCH=hppa2.0w ;;
 			  '') HP_ARCH=hppa2.0 ;;   # HP-UX 10.20
+=======
+		      523) HP_ARCH="hppa1.0" ;; # CPU_PA_RISC1_0
+		      528) HP_ARCH="hppa1.1" ;; # CPU_PA_RISC1_1
+		      532)                      # CPU_PA_RISC2_0
+			case "${sc_kernel_bits}" in
+			  32) HP_ARCH="hppa2.0n" ;;
+			  64) HP_ARCH="hppa2.0w" ;;
+			  '') HP_ARCH="hppa2.0" ;;   # HP-UX 10.20
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			esac ;;
 		    esac
 		fi
@@ -814,14 +845,24 @@ EOF
 	echo craynv-cray-unicosmp${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
 	exit ;;
     F30[01]:UNIX_System_V:*:* | F700:UNIX_System_V:*:*)
+<<<<<<< HEAD
 	FUJITSU_PROC=`uname -m | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz`
 	FUJITSU_SYS=`uname -p | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz | sed -e 's/\///'`
+=======
+	FUJITSU_PROC=`uname -m | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+	FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	FUJITSU_REL=`echo ${UNAME_RELEASE} | sed -e 's/ /_/'`
 	echo "${FUJITSU_PROC}-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
 	exit ;;
     5000:UNIX_System_V:4.*:*)
+<<<<<<< HEAD
 	FUJITSU_SYS=`uname -p | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz | sed -e 's/\///'`
 	FUJITSU_REL=`echo ${UNAME_RELEASE} | tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz | sed -e 's/ /_/'`
+=======
+	FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
+	FUJITSU_REL=`echo ${UNAME_RELEASE} | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/ /_/'`
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	echo "sparc-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
 	exit ;;
     i*86:BSD/386:*:* | i*86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
@@ -942,9 +983,15 @@ EOF
 	    if echo __ARM_PCS_VFP | $CC_FOR_BUILD -E - 2>/dev/null \
 		| grep -q __ARM_PCS_VFP
 	    then
+<<<<<<< HEAD
 		echo ${UNAME_MACHINE}-unknown-linux-${LIBC}eabi
 	    else
 		echo ${UNAME_MACHINE}-unknown-linux-${LIBC}eabihf
+=======
+		echo ${UNAME_MACHINE}-unknown-linux-gnueabi
+	    else
+		echo ${UNAME_MACHINE}-unknown-linux-gnueabihf
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	    fi
 	fi
 	exit ;;
@@ -961,10 +1008,14 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
     frv:Linux:*:*)
+<<<<<<< HEAD
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
     hexagon:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+=======
+	echo frv-unknown-linux-gnu
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	exit ;;
     i*86:Linux:*:*)
 	echo ${UNAME_MACHINE}-pc-linux-${LIBC}
@@ -1042,7 +1093,11 @@ EOF
 	echo ${UNAME_MACHINE}-ibm-linux-${LIBC}
 	exit ;;
     sh64*:Linux:*:*)
+<<<<<<< HEAD
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+=======
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	exit ;;
     sh*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
@@ -1053,6 +1108,9 @@ EOF
     tile*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
+    tile*:Linux:*:*)
+	echo ${UNAME_MACHINE}-tilera-linux-gnu
+	exit ;;
     vax:Linux:*:*)
 	echo ${UNAME_MACHINE}-dec-linux-${LIBC}
 	exit ;;
@@ -1060,7 +1118,11 @@ EOF
 	echo ${UNAME_MACHINE}-pc-linux-${LIBC}
 	exit ;;
     xtensa*:Linux:*:*)
+<<<<<<< HEAD
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+=======
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	exit ;;
     i*86:DYNIX/ptx:4*:*)
 	# ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.
@@ -1337,7 +1399,11 @@ EOF
     NEO-?:NONSTOP_KERNEL:*:*)
 	echo neo-tandem-nsk${UNAME_RELEASE}
 	exit ;;
+<<<<<<< HEAD
     NSE-*:NONSTOP_KERNEL:*:*)
+=======
+    NSE-?:NONSTOP_KERNEL:*:*)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	echo nse-tandem-nsk${UNAME_RELEASE}
 	exit ;;
     NSR-?:NONSTOP_KERNEL:*:*)
@@ -1414,6 +1480,160 @@ EOF
 	exit ;;
 esac
 
+<<<<<<< HEAD
+=======
+#echo '(No uname command or uname output not recognized.)' 1>&2
+#echo "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" 1>&2
+
+eval $set_cc_for_build
+cat >$dummy.c <<EOF
+#ifdef _SEQUENT_
+# include <sys/types.h>
+# include <sys/utsname.h>
+#endif
+main ()
+{
+#if defined (sony)
+#if defined (MIPSEB)
+  /* BFD wants "bsd" instead of "newsos".  Perhaps BFD should be changed,
+     I don't know....  */
+  printf ("mips-sony-bsd\n"); exit (0);
+#else
+#include <sys/param.h>
+  printf ("m68k-sony-newsos%s\n",
+#ifdef NEWSOS4
+	"4"
+#else
+	""
+#endif
+	); exit (0);
+#endif
+#endif
+
+#if defined (__arm) && defined (__acorn) && defined (__unix)
+  printf ("arm-acorn-riscix\n"); exit (0);
+#endif
+
+#if defined (hp300) && !defined (hpux)
+  printf ("m68k-hp-bsd\n"); exit (0);
+#endif
+
+#if defined (NeXT)
+#if !defined (__ARCHITECTURE__)
+#define __ARCHITECTURE__ "m68k"
+#endif
+  int version;
+  version=`(hostinfo | sed -n 's/.*NeXT Mach \([0-9]*\).*/\1/p') 2>/dev/null`;
+  if (version < 4)
+    printf ("%s-next-nextstep%d\n", __ARCHITECTURE__, version);
+  else
+    printf ("%s-next-openstep%d\n", __ARCHITECTURE__, version);
+  exit (0);
+#endif
+
+#if defined (MULTIMAX) || defined (n16)
+#if defined (UMAXV)
+  printf ("ns32k-encore-sysv\n"); exit (0);
+#else
+#if defined (CMU)
+  printf ("ns32k-encore-mach\n"); exit (0);
+#else
+  printf ("ns32k-encore-bsd\n"); exit (0);
+#endif
+#endif
+#endif
+
+#if defined (__386BSD__)
+  printf ("i386-pc-bsd\n"); exit (0);
+#endif
+
+#if defined (sequent)
+#if defined (i386)
+  printf ("i386-sequent-dynix\n"); exit (0);
+#endif
+#if defined (ns32000)
+  printf ("ns32k-sequent-dynix\n"); exit (0);
+#endif
+#endif
+
+#if defined (_SEQUENT_)
+    struct utsname un;
+
+    uname(&un);
+
+    if (strncmp(un.version, "V2", 2) == 0) {
+	printf ("i386-sequent-ptx2\n"); exit (0);
+    }
+    if (strncmp(un.version, "V1", 2) == 0) { /* XXX is V1 correct? */
+	printf ("i386-sequent-ptx1\n"); exit (0);
+    }
+    printf ("i386-sequent-ptx\n"); exit (0);
+
+#endif
+
+#if defined (vax)
+# if !defined (ultrix)
+#  include <sys/param.h>
+#  if defined (BSD)
+#   if BSD == 43
+      printf ("vax-dec-bsd4.3\n"); exit (0);
+#   else
+#    if BSD == 199006
+      printf ("vax-dec-bsd4.3reno\n"); exit (0);
+#    else
+      printf ("vax-dec-bsd\n"); exit (0);
+#    endif
+#   endif
+#  else
+    printf ("vax-dec-bsd\n"); exit (0);
+#  endif
+# else
+    printf ("vax-dec-ultrix\n"); exit (0);
+# endif
+#endif
+
+#if defined (alliant) && defined (i860)
+  printf ("i860-alliant-bsd\n"); exit (0);
+#endif
+
+  exit (1);
+}
+EOF
+
+$CC_FOR_BUILD -o $dummy $dummy.c 2>/dev/null && SYSTEM_NAME=`$dummy` &&
+	{ echo "$SYSTEM_NAME"; exit; }
+
+# Apollos put the system type in the environment.
+
+test -d /usr/apollo && { echo ${ISP}-apollo-${SYSTYPE}; exit; }
+
+# Convex versions that predate uname can use getsysinfo(1)
+
+if [ -x /usr/convex/getsysinfo ]
+then
+    case `getsysinfo -f cpu_type` in
+    c1*)
+	echo c1-convex-bsd
+	exit ;;
+    c2*)
+	if getsysinfo -f scalar_acc
+	then echo c32-convex-bsd
+	else echo c2-convex-bsd
+	fi
+	exit ;;
+    c34*)
+	echo c34-convex-bsd
+	exit ;;
+    c38*)
+	echo c38-convex-bsd
+	exit ;;
+    c4*)
+	echo c4-convex-bsd
+	exit ;;
+    esac
+fi
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 cat >&2 <<EOF
 $0: unable to guess system type
 

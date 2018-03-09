@@ -4,11 +4,11 @@
  *	  This file contains routines to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.32 2010/02/26 02:00:37 momjian Exp $
+ *	  src/backend/catalog/toasting.c
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-/* Kluges for upgrade-in-place support */
-extern Oid	binary_upgrade_next_toast_relfilenode;
+/* Potentially set by contrib/pg_upgrade_support functions */
+extern Oid	binary_upgrade_next_toast_pg_class_oid;
 
-Oid			binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, bool is_part_child);
@@ -60,14 +60,18 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child)
 	Relation	rel;
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.  (This is probably redundant in all present
-	 * uses...)
+	 * Grab a DDL-exclusive lock on the target table, since we'll update the
+	 * pg_class tuple.	This is redundant for all present users.  Tuple
+	 * toasting behaves safely in the face of a concurrent TOAST table add.
 	 */
+<<<<<<< HEAD
 	if (is_part_child)
 		rel = heap_open(relOid, NoLock);
 	else
 		rel = heap_open(relOid, AccessExclusiveLock);
+=======
+	rel = heap_open(relOid, ShareUpdateExclusiveLock);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, is_part_child);
@@ -107,7 +111,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 /*
  * create_toast_table --- internal workhorse
  *
- * rel is already opened and exclusive-locked
+ * rel is already opened and locked
  * toastOid and toastIndexOid are normally InvalidOid, but during
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
@@ -120,14 +124,15 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	TupleDesc	tupdesc;
 	bool		shared_relation;
 	bool		mapped_relation;
+	Relation	toast_rel;
 	Relation	class_rel;
 	Oid			toast_relid;
-	Oid			toast_idxid;
 	Oid			toast_typid = InvalidOid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
 	char		toast_idxname[NAMEDATALEN];
 	IndexInfo  *indexInfo;
+	Oid			collationObjectId[2];
 	Oid			classObjectId[2];
 	int16		coloptions[2];
 	ObjectAddress baseobject,
@@ -173,7 +178,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	 * creation even if it seems not to need one.
 	 */
 	if (!needs_toast_table(rel) &&
-		!OidIsValid(binary_upgrade_next_toast_relfilenode))
+		(!IsBinaryUpgrade ||
+		 !OidIsValid(binary_upgrade_next_toast_pg_class_oid)))
 		return false;
 
 	/*
@@ -212,15 +218,16 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	 * Toast tables for regular relations go in pg_toast; those for temp
 	 * relations go into the per-backend temp-toast-table namespace.
 	 */
-	if (rel->rd_islocaltemp)
+	if (RelationUsesTempNamespace(rel))
 		namespaceid = GetTempToastNamespace();
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
 
-	if (OidIsValid(binary_upgrade_next_pg_type_toast_oid))
+	/* Use binary-upgrade override for pg_type.oid, if supplied. */
+	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_toast_pg_type_oid))
 	{
-		toast_typid = binary_upgrade_next_pg_type_toast_oid;
-		binary_upgrade_next_pg_type_toast_oid = InvalidOid;
+		toast_typid = binary_upgrade_next_toast_pg_type_oid;
+		binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 	}
 
 	toast_relid = heap_create_with_catalog(toast_relname,
@@ -234,7 +241,11 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   NIL,
 										   /* relam */ InvalidOid,
 										   RELKIND_TOASTVALUE,
+<<<<<<< HEAD
 										   RELSTORAGE_HEAP,
+=======
+										   rel->rd_rel->relpersistence,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 										   shared_relation,
 										   mapped_relation,
 										   true,
@@ -243,11 +254,19 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   NULL, /* CDB POLICY */
 										   reloptions,
 										   false,
+<<<<<<< HEAD
 										   true,
 										   /* valid_opts */ false);
+=======
+										   true);
+	Assert(toast_relid != InvalidOid);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
-	/* make the toast relation visible, else index creation will fail */
+	/* make the toast relation visible, else heap_open will fail */
 	CommandCounterIncrement();
+
+	/* ShareLock is not really needed here, but take it anyway */
+	toast_rel = heap_open(toast_relid, ShareLock);
 
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
@@ -277,12 +296,16 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	indexInfo->ii_Concurrent = false;
 	indexInfo->ii_BrokenHotChain = false;
 
+	collationObjectId[0] = InvalidOid;
+	collationObjectId[1] = InvalidOid;
+
 	classObjectId[0] = OID_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
+<<<<<<< HEAD
 	toast_idxid = index_create(toast_relid, toast_idxname, toastIndexOid,
 							   indexInfo,
 							   list_make2("chunk_id", "chunk_seq"),
@@ -301,6 +324,18 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 		UnlockRelationOid(toast_relid, ShareLock);
 		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
 	}
+=======
+	index_create(toast_rel, toast_idxname, toastIndexOid,
+				 indexInfo,
+				 list_make2("chunk_id", "chunk_seq"),
+				 BTREE_AM_OID,
+				 rel->rd_rel->reltablespace,
+				 collationObjectId, classObjectId, coloptions, (Datum) 0,
+				 true, false, false, false,
+				 true, false, false);
+
+	heap_close(toast_rel, NoLock);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

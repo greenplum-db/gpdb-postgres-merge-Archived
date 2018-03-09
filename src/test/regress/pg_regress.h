@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  * pg_regress.h --- regression test driver
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.h,v 1.6 2010/01/02 16:58:16 momjian Exp $
+ * src/test/regress/pg_regress.h
  *-------------------------------------------------------------------------
  */
 
@@ -41,8 +41,12 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
+<<<<<<< HEAD
 extern bool optimizer_enabled;
 extern bool resgroup_enabled;
+=======
+extern char *launcher;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * This should not be global but every module should be able to read command

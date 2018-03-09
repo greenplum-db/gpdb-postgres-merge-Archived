@@ -43,13 +43,17 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.51 2010/02/26 02:01:15 momjian Exp $
+ *	  src/backend/utils/sort/tuplestore.c
  *
  *-------------------------------------------------------------------------
  */

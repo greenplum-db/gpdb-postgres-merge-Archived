@@ -2,10 +2,10 @@
  * dbsize.c
  *		Database object size functions, and related inquiries
  *
- * Copyright (c) 2002-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2011, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.31 2010/02/26 02:01:07 momjian Exp $
+ *	  src/backend/utils/adt/dbsize.c
  *
  */
 
@@ -240,6 +240,7 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 	int64		size = 0;
 	Name		dbName = PG_GETARG_NAME(0);
 	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
+<<<<<<< HEAD
 						
 	size = calculate_database_size(dbOid);
 	
@@ -250,6 +251,8 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 		initStringInfo(&buffer);
 
 		appendStringInfo(&buffer, "select sum(pg_database_size('%s'))::int8 from gp_dist_random('gp_id');", NameStr(*dbName));
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		size += get_size_from_segDBs(buffer.data);
 	}
@@ -361,6 +364,7 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 	int64		size = 0;
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
+<<<<<<< HEAD
 
 	size = calculate_tablespace_size(tblspcOid);
 	
@@ -369,6 +373,8 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 		StringInfoData buffer;
 		
 		initStringInfo(&buffer);
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		appendStringInfo(&buffer, "select sum(pg_tablespace_size('%s'))::int8 from gp_dist_random('gp_id');", NameStr(*tblspcName));
 
@@ -387,14 +393,22 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * database.  So we handle all cases, instead. 
  */
 static int64
+<<<<<<< HEAD
 calculate_relation_size(Relation rel, ForkNumber forknum)
+=======
+calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
+<<<<<<< HEAD
 	relationpath = relpath(rel->rd_node, forknum);
+=======
+	relationpath = relpathbackend(*rfn, backend, forknum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 if (RelationIsHeap(rel))
 {
@@ -461,6 +475,7 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (Gp_role == GP_ROLE_EXECUTE && Gp_segment == -1)
 		elog(ERROR, "This query is not currently supported by GPDB.");
 
+<<<<<<< HEAD
 	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	/*
@@ -496,6 +511,10 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
+=======
+	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
+							  forkname_to_number(text_to_cstring(forkName)));
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	relation_close(rel, AccessShareLock);
 
@@ -518,12 +537,22 @@ calculate_toast_table_size(Oid toastrelid)
 
 	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+<<<<<<< HEAD
 		size += calculate_relation_size(toastRel, forkNum);
+=======
+		size += calculate_relation_size(&(toastRel->rd_node),
+										toastRel->rd_backend, forkNum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* toast index size, including FSM and VM size */
 	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+<<<<<<< HEAD
 		size += calculate_relation_size(toastIdxRel, forkNum);
+=======
+		size += calculate_relation_size(&(toastIdxRel->rd_node),
+										toastIdxRel->rd_backend, forkNum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	relation_close(toastIdxRel, AccessShareLock);
 	relation_close(toastRel, AccessShareLock);
@@ -555,6 +584,7 @@ calculate_table_size(Oid relOid)
 	/*
 	 * heap size, including FSM and VM
 	 */
+<<<<<<< HEAD
 	if (rel->rd_node.relNode == 0)
 		size = 0;
 	else
@@ -563,6 +593,11 @@ calculate_table_size(Oid relOid)
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 			size += calculate_relation_size(rel, forkNum);
 	}
+=======
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		size += calculate_relation_size(&(rel->rd_node), rel->rd_backend,
+										forkNum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Size of toast relation
@@ -620,10 +655,17 @@ calculate_indexes_size(Oid relOid)
 
 			idxRel = try_relation_open(idxOid, AccessShareLock, false);
 
+<<<<<<< HEAD
 			if (RelationIsValid(idxRel))
 			{
 				for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 					size += calculate_relation_size(idxRel, forkNum);
+=======
+			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+				size += calculate_relation_size(&(idxRel->rd_node),
+												idxRel->rd_backend,
+												forkNum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 				relation_close(idxRel, AccessShareLock);
 			}
@@ -832,6 +874,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_class relform;
 	RelFileNode rnode;
+	BackendId	backend;
 	char	   *path;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
@@ -866,15 +909,44 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 		default:
 			/* no storage, return NULL */
 			rnode.relNode = InvalidOid;
+			/* some compilers generate warnings without these next two lines */
+			rnode.dbNode = InvalidOid;
+			rnode.spcNode = InvalidOid;
+			break;
+	}
+
+	if (!OidIsValid(rnode.relNode))
+	{
+		ReleaseSysCache(tuple);
+		PG_RETURN_NULL();
+	}
+
+	/* Determine owning backend. */
+	switch (relform->relpersistence)
+	{
+		case RELPERSISTENCE_UNLOGGED:
+		case RELPERSISTENCE_PERMANENT:
+			backend = InvalidBackendId;
+			break;
+		case RELPERSISTENCE_TEMP:
+			if (isTempOrToastNamespace(relform->relnamespace))
+				backend = MyBackendId;
+			else
+			{
+				/* Do it the hard way. */
+				backend = GetTempNamespaceBackendId(relform->relnamespace);
+				Assert(backend != InvalidBackendId);
+			}
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relform->relpersistence);
+			backend = InvalidBackendId; /* placate compiler */
 			break;
 	}
 
 	ReleaseSysCache(tuple);
 
-	if (!OidIsValid(rnode.relNode))
-		PG_RETURN_NULL();
-
-	path = relpath(rnode, MAIN_FORKNUM);
+	path = relpathbackend(rnode, backend, MAIN_FORKNUM);
 
 	PG_RETURN_TEXT_P(cstring_to_text(path));
 }

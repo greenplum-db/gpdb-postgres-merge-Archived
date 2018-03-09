@@ -16,9 +16,17 @@ CHAST   45900    # Chatham Standard Time (New Zealand) (obsolete)
 ChST    36000    # Chamorro Standard Time (lower case "h" is as in IANA database)
                  #     (Pacific/Guam)
                  #     (Pacific/Saipan)
+<<<<<<< HEAD
 CHUT    36000    # Chuuk Time (obsolete)
 CKT     Pacific/Rarotonga  # Cook Islands Time (obsolete)
 EASST   Pacific/Easter  # Easter Island Summer Time (obsolete)
+=======
+CHUT    36000    # Chuuk Time
+                 #     (Pacific/Chuuk)
+CKT     43200    # Cook Islands Time (not in zic)
+EASST  -18000 D  # Easter Island Summer Time (Chile)
+                 #     (Pacific/Easter)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # CONFLICT! EAST is not unique
 # Other timezones:
 #  - EAST: East Australian Standard Time (Australia)
@@ -64,6 +72,7 @@ SBT     39600    # Solomon Islands Time (obsolete)
 SST    -39600    # South Sumatran Time
                  #     (Pacific/Midway)
                  #     (Pacific/Pago_Pago)
+<<<<<<< HEAD
 TAHT   -36000    # Tahiti Time (obsolete)
 TKT     Pacific/Fakaofo  # Tokelau Time (obsolete)
 TOT     46800    # Tonga Time (obsolete)
@@ -79,3 +88,25 @@ WSST    46800    # West Samoa Standard Time (obsolete)
 #  - WST: Western Standard Time (Australia)
 WST     46800    # West Samoa Time (caution: this used to mean -39600) (not in IANA database)
 YAPT    36000    # Yap Time (Micronesia) (not in IANA database)
+=======
+TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
+                 #     (Pacific/Tahiti)
+TKT    -36000    # Tokelau Time
+                 #     (Pacific/Fakaofo)
+TOT     46800    # Tonga Time (not in zic)
+TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
+                 #     (Pacific/Truk)
+TVT     43200    # Tuvalu Time
+                 #     (Pacific/Funafuti)
+VUT     39600    # Vanuata Time (not in zic)
+WAKT    43200    # Wake Time
+                 #     (Pacific/Wake)
+WFT     43200    # Wallis and Futuna Time
+                 #     (Pacific/Wallis)
+# CONFLICT! WST is not unique
+# Other timezones:
+#  - WST: Western Standard Time (Australia)
+WST    -39600    # West Samoa Time
+                 #     (Pacific/Apia)
+YAPT    36000    # Yap Time (Micronesia) (not in zic)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

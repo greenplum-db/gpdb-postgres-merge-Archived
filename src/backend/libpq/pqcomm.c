@@ -27,10 +27,10 @@
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
  * All that remains is similarities of names to trap the unwary...
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.212 2010/07/08 16:19:50 mha Exp $
+ *	src/backend/libpq/pqcomm.c
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,12 @@
  *		pq_peekbyte		- peek at next byte from connection
  *		pq_putbytes		- send bytes to connection (not flushed until pq_flush)
  *		pq_flush		- flush pending output
+ *		pq_flush_if_writable - flush pending output if writable without blocking
  *		pq_getbyte_if_available - get a byte if available without blocking
  *
  * message-level I/O (and old-style-COPY-OUT cruft):
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
+ *		pq_putmessage_noblock - buffer a normal message (suppressed in COPY OUT)
  *		pq_startcopyout - inform libpq that a COPY OUT transfer is beginning
  *		pq_endcopyout	- end a COPY OUT transfer
  *
@@ -84,7 +86,7 @@
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
-#ifdef WIN32_ONLY_COMPILER /* mstcpip.h is missing on mingw */
+#ifdef WIN32_ONLY_COMPILER		/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
 
@@ -94,8 +96,11 @@
 #include "storage/ipc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "tcop/tcopprot.h"
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * Configuration options
@@ -139,7 +144,10 @@ static void pq_close(int code, Datum arg);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 static void pq_set_nonblocking(bool nonblocking);
+<<<<<<< HEAD
 static bool pq_send_mutex_lock();
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
@@ -157,6 +165,10 @@ pq_init(void)
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
 	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);
 	PqSendPointer = PqSendStart = PqRecvPointer = PqRecvLength = 0;
+<<<<<<< HEAD
+=======
+	PqCommBusy = false;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	DoingCopyOut = false;
 	on_proc_exit(pq_close, 0);
 }
@@ -1371,6 +1383,7 @@ pq_flush(void)
 {
 	int			res;
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 	{
 		if (!pq_send_mutex_lock())
@@ -1378,6 +1391,12 @@ pq_flush(void)
 			return EOF;
 		}
 	}
+=======
+	/* No-op if reentrant call */
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pq_set_nonblocking(false);
 	res = internal_flush();
 
@@ -1451,8 +1470,11 @@ internal_flush(void)
 			 * the connection.
 			 */
 			PqSendStart = PqSendPointer = 0;
+<<<<<<< HEAD
 			ClientConnectionLost = 1;
 			InterruptPending = 1;
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			return EOF;
 		}
 
@@ -1479,6 +1501,7 @@ pq_flush_if_writable(void)
 	/* Quick exit if nothing to do */
 	if (PqSendPointer == PqSendStart)
 		return 0;
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 	{
 		if (!pq_send_mutex_lock())
@@ -1492,6 +1515,19 @@ pq_flush_if_writable(void)
 	res = internal_flush();
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 		pthread_mutex_unlock(&send_mutex);
+=======
+
+	/* No-op if reentrant call */
+	if (PqCommBusy)
+		return 0;
+
+	/* Temporarily put the socket into non-blocking mode */
+	pq_set_nonblocking(true);
+
+	PqCommBusy = true;
+	res = internal_flush();
+	PqCommBusy = false;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return res;
 }
 
@@ -1591,7 +1627,11 @@ fail:
 void
 pq_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
+<<<<<<< HEAD
 	int res		PG_USED_FOR_ASSERTS_ONLY;
+=======
+	int			res;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			required;
 
 	/*
@@ -1668,13 +1708,13 @@ pq_endcopyout(bool errorAbort)
 static int
 pq_setkeepaliveswin32(Port *port, int idle, int interval)
 {
-	struct tcp_keepalive	ka;
-	DWORD					retsize;
+	struct tcp_keepalive ka;
+	DWORD		retsize;
 
 	if (idle <= 0)
-		idle = 2 * 60 * 60; /* default = 2 hours */
+		idle = 2 * 60 * 60;		/* default = 2 hours */
 	if (interval <= 0)
-		interval = 1;       /* default = 1 second */
+		interval = 1;			/* default = 1 second */
 
 	ka.onoff = 1;
 	ka.keepalivetime = idle * 1000;
@@ -1734,11 +1774,11 @@ pq_getkeepalivesidle(Port *port)
 			elog(LOG, "getsockopt(TCP_KEEPALIVE) failed: %m");
 			port->default_keepalives_idle = -1; /* don't know */
 		}
-#endif /* TCP_KEEPIDLE */
-#else /* WIN32 */
+#endif   /* TCP_KEEPIDLE */
+#else							/* WIN32 */
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_idle = -1;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	}
 
 	return port->default_keepalives_idle;
@@ -1789,10 +1829,10 @@ pq_setkeepalivesidle(int idle, Port *port)
 #endif
 
 	port->keepalives_idle = idle;
-#else /* WIN32 */
+#else							/* WIN32 */
 	return pq_setkeepaliveswin32(port, idle, port->keepalives_interval);
 #endif
-#else /* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
+#else							/* TCP_KEEPIDLE || SIO_KEEPALIVE_VALS */
 	if (idle != 0)
 	{
 		elog(LOG, "setting the keepalive idle time is not supported");
@@ -1827,7 +1867,7 @@ pq_getkeepalivesinterval(Port *port)
 #else
 		/* We can't get the defaults on Windows, so return "don't know" */
 		port->default_keepalives_interval = -1;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	}
 
 	return port->default_keepalives_interval;
@@ -1869,7 +1909,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	}
 
 	port->keepalives_interval = interval;
-#else /* WIN32 */
+#else							/* WIN32 */
 	return pq_setkeepaliveswin32(port, port->keepalives_idle, interval);
 #endif
 #else

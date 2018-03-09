@@ -3,14 +3,18 @@
  * bufmgr.c
  *	  buffer manager interface routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.256 2010/02/26 02:00:59 momjian Exp $
+ *	  src/backend/storage/buffer/bufmgr.c
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +98,7 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 static XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
-static Buffer ReadBuffer_common(SMgrRelation reln, bool isLocalBuf,
+static Buffer ReadBuffer_common(SMgrRelation reln, char relpersistence,
 				  ForkNumber forkNum, BlockNumber blockNum,
 				  ReadBufferMode mode, BufferAccessStrategy strategy,
 				  bool *hit);
@@ -107,8 +111,11 @@ static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
-static void buffer_write_error_callback(void *arg);
-static volatile BufferDesc *BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
+static void shared_buffer_write_error_callback(void *arg);
+static void local_buffer_write_error_callback(void *arg);
+static volatile BufferDesc *BufferAlloc(SMgrRelation smgr,
+			char relpersistence,
+			ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr);
@@ -198,7 +205,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(reln);
 
-	if (reln->rd_istemp)
+	if (RelationUsesLocalBuffers(reln))
 	{
 		/* see comments in ReadBufferExtended */
 		if (reln->rd_isLocalBuf && RELATION_IS_OTHER_TEMP(reln))
@@ -217,7 +224,8 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		int			buf_id;
 
 		/* create a tag so we can lookup the buffer */
-		INIT_BUFFERTAG(newTag, reln->rd_smgr->smgr_rnode, forkNum, blockNum);
+		INIT_BUFFERTAG(newTag, reln->rd_smgr->smgr_rnode.node,
+					   forkNum, blockNum);
 
 		/* determine its hash code and partition lock ID */
 		newHash = BufTableHashCode(&newTag);
@@ -316,8 +324,13 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * miss.
 	 */
 	pgstat_count_buffer_read(reln);
+<<<<<<< HEAD
 	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_isLocalBuf, forkNum, blockNum,
 							mode, strategy, &hit);
+=======
+	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_rel->relpersistence,
+							forkNum, blockNum, mode, strategy, &hit);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
@@ -328,19 +341,22 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  * ReadBufferWithoutRelcache -- like ReadBufferExtended, but doesn't require
  *		a relcache entry for the relation.
  *
- * NB: caller is assumed to know what it's doing if isTemp is true.
+ * NB: At present, this function may only be used on permanent relations, which
+ * is OK, because we only use it during XLOG replay.  If in the future we
+ * want to use it on temporary or unlogged relations, we could pass additional
+ * parameters.
  */
 Buffer
-ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
-						  ForkNumber forkNum, BlockNumber blockNum,
-						  ReadBufferMode mode, BufferAccessStrategy strategy)
+ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
+						  BlockNumber blockNum, ReadBufferMode mode,
+						  BufferAccessStrategy strategy)
 {
 	bool		hit;
 
-	SMgrRelation smgr = smgropen(rnode);
+	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
 
-	return ReadBuffer_common(smgr, isTemp, forkNum, blockNum, mode, strategy,
-							 &hit);
+	return ReadBuffer_common(smgr, RELPERSISTENCE_PERMANENT, forkNum, blockNum,
+							 mode, strategy, &hit);
 }
 
 
@@ -350,7 +366,7 @@ ReadBufferWithoutRelcache(RelFileNode rnode, bool isTemp,
  * *hit is set to true if the request was satisfied from shared buffer cache.
  */
 static Buffer
-ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
+ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				  BlockNumber blockNum, ReadBufferMode mode,
 				  BufferAccessStrategy strategy, bool *hit)
 {
@@ -358,6 +374,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
+	bool		isLocalBuf = SmgrIsTemp(smgr);
 
 	*hit = false;
 
@@ -369,10 +386,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	isExtend = (blockNum == P_NEW);
 
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
-									   smgr->smgr_rnode.spcNode,
-									   smgr->smgr_rnode.dbNode,
-									   smgr->smgr_rnode.relNode,
-									   isLocalBuf,
+									   smgr->smgr_rnode.node.spcNode,
+									   smgr->smgr_rnode.node.dbNode,
+									   smgr->smgr_rnode.node.relNode,
+									   smgr->smgr_rnode.backend,
 									   isExtend);
 
 	/* Substitute proper block number if caller asked for P_NEW */
@@ -395,7 +412,8 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
-		bufHdr = BufferAlloc(smgr, forkNum, blockNum, strategy, &found);
+		bufHdr = BufferAlloc(smgr, relpersistence, forkNum, blockNum,
+							 strategy, &found);
 		if (found)
 			pgBufferUsage.shared_blks_hit++;
 		else
@@ -412,7 +430,23 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 			/* Just need to update stats before we exit */
 //			pgstat_count_buffer_hit(smgr);
 			*hit = true;
+<<<<<<< HEAD
 			goto done;
+=======
+
+			if (VacuumCostActive)
+				VacuumCostBalance += VacuumCostPageHit;
+
+			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
+											  smgr->smgr_rnode.node.spcNode,
+											  smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode,
+											  smgr->smgr_rnode.backend,
+											  isExtend,
+											  found);
+
+			return BufferDescriptorGetBuffer(bufHdr);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		/*
@@ -486,8 +520,12 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
+<<<<<<< HEAD
 		/* don't set checksum for all-zero page */
 		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, isLocalBuf);
+=======
+		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, false);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else
 	{
@@ -541,10 +579,10 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
 		VacuumCostBalance += VacuumCostPageMiss;
 
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-									  smgr->smgr_rnode.spcNode,
-									  smgr->smgr_rnode.dbNode,
-									  smgr->smgr_rnode.relNode,
-									  isLocalBuf,
+									  smgr->smgr_rnode.node.spcNode,
+									  smgr->smgr_rnode.node.dbNode,
+									  smgr->smgr_rnode.node.relNode,
+									  smgr->smgr_rnode.backend,
 									  isExtend,
 									  found);
 
@@ -571,7 +609,7 @@ ReadBuffer_common(SMgrRelation smgr, bool isLocalBuf, ForkNumber forkNum,
  * No locks are held either at entry or exit.
  */
 static volatile BufferDesc *
-BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
+BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			BlockNumber blockNum,
 			BufferAccessStrategy strategy,
 			bool *foundPtr)
@@ -588,7 +626,7 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 	bool		valid;
 
 	/* create a tag so we can lookup the buffer */
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode, forkNum, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
@@ -720,17 +758,17 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-													smgr->smgr_rnode.spcNode,
-													 smgr->smgr_rnode.dbNode,
-												   smgr->smgr_rnode.relNode);
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
 				ReleaseContentLock(buf);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-													smgr->smgr_rnode.spcNode,
-													 smgr->smgr_rnode.dbNode,
-												   smgr->smgr_rnode.relNode);
+											   smgr->smgr_rnode.node.spcNode,
+												smgr->smgr_rnode.node.dbNode,
+											  smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -877,8 +915,11 @@ BufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 	 * 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR);
-	buf->flags |= BM_TAG_VALID;
+	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
+	if (relpersistence == RELPERSISTENCE_PERMANENT)
+		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
+	else
+		buf->flags |= BM_TAG_VALID;
 	buf->usage_count = 1;
 
 	UnlockBufHdr(buf);
@@ -1241,8 +1282,10 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner)
  * BufferSync -- Write out all dirty buffers in the pool.
  *
  * This is called at checkpoint time to write out all dirty shared buffers.
- * The checkpoint request flags should be passed in; currently the only one
- * examined is CHECKPOINT_IMMEDIATE, which disables delays between writes.
+ * The checkpoint request flags should be passed in.  If CHECKPOINT_IMMEDIATE
+ * is set, we disable delays between writes; if CHECKPOINT_IS_SHUTDOWN is
+ * set, we write even unlogged buffers, which are otherwise skipped.  The
+ * remaining flags currently have no effect here.
  */
 static void
 BufferSync(int flags)
@@ -1251,9 +1294,17 @@ BufferSync(int flags)
 	int			num_to_scan;
 	int			num_to_write;
 	int			num_written;
+	int			mask = BM_DIRTY;
 
 	/* Make sure we can handle the pin inside SyncOneBuffer */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+
+	/*
+	 * Unless this is a shutdown checkpoint, we write only permanent, dirty
+	 * buffers.  But at shutdown time, we write all dirty buffers.
+	 */
+	if (!(flags & CHECKPOINT_IS_SHUTDOWN))
+		flags |= BM_PERMANENT;
 
 	/*
 	 * Loop over all buffers, and mark the ones that need to be written with
@@ -1282,7 +1333,7 @@ BufferSync(int flags)
 		 */
 		LockBufHdr(bufHdr);
 
-		if (bufHdr->flags & BM_DIRTY)
+		if ((bufHdr->flags & mask) == mask)
 		{
 			bufHdr->flags |= BM_CHECKPOINT_NEEDED;
 			num_to_write++;
@@ -1779,31 +1830,26 @@ InitBufferPoolBackend(void)
 }
 
 /*
- * Ensure we have released all shared-buffer locks and pins during backend exit
+ * During backend exit, ensure that we released all shared-buffer locks and
+ * assert that we have no remaining pins.
  */
 static void
 AtProcExit_Buffers(int code, Datum arg)
 {
-	int			i;
-
 	AbortBufferIO();
 	UnlockBuffers();
 
-	for (i = 0; i < NBuffers; i++)
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
 	{
-		if (PrivateRefCount[i] != 0)
-		{
-			volatile BufferDesc *buf = &(BufferDescriptors[i]);
+		int			i;
 
-			/*
-			 * We don't worry about updating ResourceOwner; if we even got
-			 * here, it suggests that ResourceOwners are messed up.
-			 */
-			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
-			UnpinBuffer(buf, false);
+		for (i = 0; i < NBuffers; i++)
+		{
 			Assert(PrivateRefCount[i] == 0);
 		}
 	}
+#endif
 
 	/* localbuf.c needs a chance too */
 	AtProcExit_LocalBuffers();
@@ -1818,21 +1864,24 @@ PrintBufferLeakWarning(Buffer buffer)
 	volatile BufferDesc *buf;
 	int32		loccount;
 	char	   *path;
+	BackendId	backend;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
 	{
 		buf = &LocalBufferDescriptors[-buffer - 1];
 		loccount = LocalRefCount[-buffer - 1];
+		backend = MyBackendId;
 	}
 	else
 	{
 		buf = &BufferDescriptors[buffer - 1];
 		loccount = PrivateRefCount[buffer - 1];
+		backend = InvalidBackendId;
 	}
 
 	/* theoretically we should lock the bufhdr here */
-	path = relpath(buf->tag.rnode, buf->tag.forkNum);
+	path = relpathbackend(buf->tag.rnode, backend, buf->tag.forkNum);
 	elog(WARNING,
 		 "buffer refcount leak: [%03d] "
 		 "(rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",
@@ -1939,7 +1988,10 @@ BufferGetTag(Buffer buffer, RelFileNode *rnode, ForkNumber *forknum,
  * written.)
  *
  * If the caller has an smgr reference for the buffer's relation, pass it
- * as the second parameter.  If not, pass NULL.
+ * as the second parameter.  If not, pass NULL.  In the latter case, the
+ * relation will be marked as "transient" so that the corresponding
+ * kernel-level file descriptors are closed when the current transaction ends,
+ * if any.
  */
 static void
 FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
@@ -1959,20 +2011,23 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 		return;
 
 	/* Setup error traceback support for ereport() */
-	errcontext.callback = buffer_write_error_callback;
+	errcontext.callback = shared_buffer_write_error_callback;
 	errcontext.arg = (void *) buf;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
-	/* Find smgr relation for buffer */
+	/* Find smgr relation for buffer, and mark it as transient */
 	if (reln == NULL)
-		reln = smgropen(buf->tag.rnode);
+	{
+		reln = smgropen(buf->tag.rnode, InvalidBackendId);
+		smgrsettransient(reln);
+	}
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
-										reln->smgr_rnode.spcNode,
-										reln->smgr_rnode.dbNode,
-										reln->smgr_rnode.relNode);
+										reln->smgr_rnode.node.spcNode,
+										reln->smgr_rnode.node.dbNode,
+										reln->smgr_rnode.node.relNode);
 
 	LockBufHdr(buf);
 
@@ -2030,9 +2085,9 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(buf->tag.forkNum,
 									   buf->tag.blockNum,
-									   reln->smgr_rnode.spcNode,
-									   reln->smgr_rnode.dbNode,
-									   reln->smgr_rnode.relNode);
+									   reln->smgr_rnode.node.spcNode,
+									   reln->smgr_rnode.node.dbNode,
+									   reln->smgr_rnode.node.relNode);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
@@ -2043,7 +2098,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
  *		Determines the current number of pages in the relation.
  */
 BlockNumber
-RelationGetNumberOfBlocks(Relation relation)
+RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
 	/*
 	 * Based on different storage types of the relation, calculate
@@ -2066,7 +2121,7 @@ RelationGetNumberOfBlocks(Relation relation)
 	/* For non-AO tables, open it at the smgr level if not already done */
 	RelationOpenSmgr(relation);
 
-	return smgrnblocks(relation->rd_smgr, MAIN_FORKNUM);
+	return smgrnblocks(relation->rd_smgr, forkNum);
 }
 
 /*
@@ -2130,14 +2185,15 @@ BufferGetLSNAtomic(Buffer buffer)
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum, bool istemp,
+DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 					   BlockNumber firstDelBlock)
 {
 	int			i;
 
-	if (istemp)
+	if (rnode.backend != InvalidBackendId)
 	{
-		DropRelFileNodeLocalBuffers(rnode, forkNum, firstDelBlock);
+		if (rnode.backend == MyBackendId)
+			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
 		return;
 	}
 
@@ -2146,7 +2202,7 @@ DropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum, bool istemp,
 		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
 
 		LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node) &&
 			bufHdr->tag.forkNum == forkNum &&
 			bufHdr->tag.blockNum >= firstDelBlock)
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
@@ -2209,7 +2265,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-			 relpath(buf->tag.rnode, buf->tag.forkNum),
+		  relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, PrivateRefCount[i]);
 	}
@@ -2268,7 +2324,11 @@ FlushRelationBuffers(Relation rel)
 	/* Open rel at the smgr level if not already done */
 	RelationOpenSmgr(rel);
 
+<<<<<<< HEAD
 	if (rel->rd_isLocalBuf)
+=======
+	if (RelationUsesLocalBuffers(rel))
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
@@ -2282,7 +2342,7 @@ FlushRelationBuffers(Relation rel)
 				localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 				
 				/* Setup error traceback support for ereport() */
-				errcontext.callback = buffer_write_error_callback;
+				errcontext.callback = local_buffer_write_error_callback;
 				errcontext.arg = (void *) bufHdr;
 				errcontext.previous = error_context_stack;
 				error_context_stack = &errcontext;
@@ -2292,8 +2352,13 @@ FlushRelationBuffers(Relation rel)
 				smgrwrite(rel->rd_smgr,
 						  bufHdr->tag.forkNum,
 						  bufHdr->tag.blockNum,
+<<<<<<< HEAD
 						  localpage,
 						  rel->rd_istemp);
+=======
+						  (char *) LocalBufHdrGetBlock(bufHdr),
+						  false);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 
@@ -3000,8 +3065,9 @@ AbortBufferIO(void)
 			if (sv_flags & BM_IO_ERROR)
 			{
 				/* Buffer is pinned, so we can read tag without spinlock */
-				char	   *path = relpath(buf->tag.rnode, buf->tag.forkNum);
+				char	   *path;
 
+				path = relpathperm(buf->tag.rnode, buf->tag.forkNum);
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
 						 errmsg("could not write block %u of %s",
@@ -3015,17 +3081,36 @@ AbortBufferIO(void)
 }
 
 /*
- * Error context callback for errors occurring during buffer writes.
+ * Error context callback for errors occurring during shared buffer writes.
  */
 static void
-buffer_write_error_callback(void *arg)
+shared_buffer_write_error_callback(void *arg)
 {
 	volatile BufferDesc *bufHdr = (volatile BufferDesc *) arg;
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
 	{
-		char	   *path = relpath(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+		char	   *path = relpathperm(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+
+		errcontext("writing block %u of relation %s",
+				   bufHdr->tag.blockNum, path);
+		pfree(path);
+	}
+}
+
+/*
+ * Error context callback for errors occurring during local buffer writes.
+ */
+static void
+local_buffer_write_error_callback(void *arg)
+{
+	volatile BufferDesc *bufHdr = (volatile BufferDesc *) arg;
+
+	if (bufHdr != NULL)
+	{
+		char	   *path = relpathbackend(bufHdr->tag.rnode, MyBackendId,
+										  bufHdr->tag.forkNum);
 
 		errcontext("writing block %u of relation %s",
 				   bufHdr->tag.blockNum, path);

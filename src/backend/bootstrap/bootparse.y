@@ -4,14 +4,18 @@
  * bootparse.y
  *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.105 2010/02/07 20:48:09 tgl Exp $
+ *	  src/backend/bootstrap/bootparse.y
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +238,11 @@ Boot_CreateStmt:
 												   tupdesc,
 												   /* relam */ InvalidOid,
 												   RELKIND_RELATION,
+<<<<<<< HEAD
 												   RELSTORAGE_HEAP,
+=======
+												   RELPERSISTENCE_PERMANENT,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 												   shared_relation,
 												   mapped_relation,
 												   true);
@@ -255,7 +263,11 @@ Boot_CreateStmt:
 													  NIL,
 													  /* relam */ InvalidOid,
 													  RELKIND_RELATION,
+<<<<<<< HEAD
 													  RELSTORAGE_HEAP,
+=======
+													  RELPERSISTENCE_PERMANENT,
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 													  shared_relation,
 													  mapped_relation,
 													  true,
@@ -364,6 +376,7 @@ boot_index_param:
 					n->name = $1;
 					n->expr = NULL;
 					n->indexcolname = NULL;
+					n->collation = NIL;
 					n->opclass = list_make1(makeString($2));
 					n->ordering = SORTBY_DEFAULT;
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;

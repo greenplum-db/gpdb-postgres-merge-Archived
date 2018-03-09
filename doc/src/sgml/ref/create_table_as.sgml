@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.41 2010/04/03 07:23:00 petere Exp $
+doc/src/sgml/ref/create_table_as.sgml
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 CREATE [ [GLOBAL | LOCAL] {TEMPORARY | TEMP} ] TABLE table_name
    [(column_name [, ...] )]
    [ WITH ( storage_parameter=value [, ... ] )
@@ -38,9 +39,18 @@ where storage_parameter is:
    FILLFACTOR={10-100}
    OIDS[=TRUE|FALSE]
 
+=======
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable>table_name</replaceable>
+    [ (<replaceable>column_name</replaceable> [, ...] ) ]
+    [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+    [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+    AS <replaceable>query</replaceable>
+    [ WITH [ NO ] DATA ]
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -86,6 +96,16 @@ where storage_parameter is:
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
+      Refer to <xref linkend="sql-createtable"> for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>UNLOGGED</></term>
+    <listitem>
+     <para>
+      If specified, the table is created as an unlogged table.
       Refer to <xref linkend="sql-createtable"> for details.
      </para>
     </listitem>
@@ -356,5 +376,5 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
    <member><xref linkend="sql-values"></member>
   </simplelist>
  </refsect1>
- 
+
 </refentry>

@@ -16,8 +16,14 @@ goto nobison
 :bisonok
 
 if "%1" == "src\backend\parser\gram.y" call :generate %1 src\backend\parser\gram.c src\backend\parser\gram.h
+<<<<<<< HEAD
 if "%1" == "src\backend\bootstrap\bootparse.y" call :generate %1 src\backend\bootstrap\bootparse.c src\backend\bootstrap\bootparse.h
+=======
+if "%1" == "src\backend\bootstrap\bootparse.y" call :generate %1 src\backend\bootstrap\bootparse.c
+if "%1" == "src\backend\replication\repl_gram.y" call :generate %1 src\backend\replication\repl_gram.c
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 if "%1" == "src\pl\plpgsql\src\gram.y" call :generate %1 src\pl\plpgsql\src\pl_gram.c src\pl\plpgsql\src\pl_gram.h
+if "%1" == "src\test\isolation\specparse.y" call :generate %1 src\test\isolation\specparse.c
 if "%1" == "src\interfaces\ecpg\preproc\preproc.y" call :generate %1 src\interfaces\ecpg\preproc\preproc.c src\interfaces\ecpg\preproc\preproc.h
 if "%1" == "contrib\cube\cubeparse.y" call :generate %1 contrib\cube\cubeparse.c
 if "%1" == "contrib\seg\segparse.y" call :generate %1 contrib\seg\segparse.c

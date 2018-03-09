@@ -4,12 +4,16 @@
  *	  support for the POSTGRES executor module
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.168 2010/02/26 02:01:24 momjian Exp $
+ * src/include/executor/executor.h
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +50,17 @@ struct ChunkTransportState;             /* #include "cdb/cdbinterconnect.h" */
  *
  * MARK indicates that the plan node must support Mark/Restore calls.
  * When this is not passed, no Mark/Restore will occur.
+ *
+ * SKIP_TRIGGERS tells ExecutorStart/ExecutorFinish to skip calling
+ * AfterTriggerBeginQuery/AfterTriggerEndQuery.  This does not necessarily
+ * mean that the plan can't queue any AFTER triggers; just that the caller
+ * is responsible for there being a trigger context for them to be queued in.
  */
 #define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */
 #define EXEC_FLAG_REWIND		0x0002	/* expect rescan */
 #define EXEC_FLAG_BACKWARD		0x0004	/* need backward scan */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
+#define EXEC_FLAG_SKIP_TRIGGERS 0x0010	/* skip AfterTrigger calls */
 
 
 /*
@@ -83,15 +93,23 @@ typedef void (*ExecutorRun_hook_type) (QueryDesc *queryDesc,
 												   long count);
 extern PGDLLIMPORT ExecutorRun_hook_type ExecutorRun_hook;
 
+/* Hook for plugins to get control in ExecutorFinish() */
+typedef void (*ExecutorFinish_hook_type) (QueryDesc *queryDesc);
+extern PGDLLIMPORT ExecutorFinish_hook_type ExecutorFinish_hook;
+
 /* Hook for plugins to get control in ExecutorEnd() */
 typedef void (*ExecutorEnd_hook_type) (QueryDesc *queryDesc);
 extern PGDLLIMPORT ExecutorEnd_hook_type ExecutorEnd_hook;
+
+/* Hook for plugins to get control in ExecCheckRTPerms() */
+typedef bool (*ExecutorCheckPerms_hook_type) (List *, bool);
+extern PGDLLIMPORT ExecutorCheckPerms_hook_type ExecutorCheckPerms_hook;
 
 
 /*
  * prototypes from functions in execAmi.c
  */
-extern void ExecReScan(PlanState *node, ExprContext *exprCtxt);
+extern void ExecReScan(PlanState *node);
 extern void ExecMarkPos(PlanState *node);
 extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
@@ -140,7 +158,7 @@ extern void execTuplesHashPrepare(int numCols,
 extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
-					int nbuckets, Size entrysize,
+					long nbuckets, Size entrysize,
 					MemoryContext tablecxt,
 					MemoryContext tempcxt);
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
@@ -161,11 +179,12 @@ extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 							 TupleTableSlot *slot);
 extern AttrNumber ExecFindJunkAttribute(JunkFilter *junkfilter,
 					  const char *attrName);
+extern AttrNumber ExecFindJunkAttributeInTlist(List *targetlist,
+							 const char *attrName);
 extern Datum ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
 					 bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
 			   TupleTableSlot *slot);
-extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 
 
 /*
@@ -219,27 +238,32 @@ extern void ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, int64 count);
 extern void standard_ExecutorRun(QueryDesc *queryDesc,
 					 ScanDirection direction, long count);
+extern void ExecutorFinish(QueryDesc *queryDesc);
+extern void standard_ExecutorFinish(QueryDesc *queryDesc);
 extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
+extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
+extern void CheckValidResultRel(Relation resultRel, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
-				  CmdType operation,
 				  int instrument_options);
 extern ResultRelInfo *ExecGetTriggerResultRel(EState *estate, Oid relid);
 extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
+extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti);
+extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
 			 Relation relation, Index rti,
 			 ItemPointer tid, TransactionId priorXmax);
 extern HeapTuple EvalPlanQualFetch(EState *estate, Relation relation,
 				  int lockmode, ItemPointer tid, TransactionId priorXmax);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
-				 Plan *subplan, int epqParam);
-extern void EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan);
-extern void EvalPlanQualAddRowMark(EPQState *epqstate, ExecRowMark *erm);
+				 Plan *subplan, List *auxrowmarks, int epqParam);
+extern void EvalPlanQualSetPlan(EPQState *epqstate,
+					Plan *subplan, List *auxrowmarks);
 extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 					 HeapTuple tuple);
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);

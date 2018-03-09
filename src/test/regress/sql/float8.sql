@@ -67,7 +67,7 @@ SELECT '' AS four, f.f1 FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1 ORDER BY 2;
 
 SELECT '' AS four, f.f1 FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3' ORDER BY 2;
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x 
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0' ORDER BY 2;
 
@@ -86,15 +86,21 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x
 SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
    FROM FLOAT8_TBL f where f.f1 = '1004.3';
 
+<<<<<<< HEAD
 -- absolute value 
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
    FROM FLOAT8_TBL f ORDER BY 2;
+=======
+-- absolute value
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1
+   FROM FLOAT8_TBL f;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
--- truncate 
+-- truncate
 SELECT '' AS five, f.f1, trunc(f.f1) AS trunc_f1
    FROM FLOAT8_TBL f ORDER BY 2;
 
--- round 
+-- round
 SELECT '' AS five, f.f1, round(f.f1) AS round_f1
    FROM FLOAT8_TBL f ORDER BY 2;
 
@@ -108,7 +114,7 @@ select floor(f1) as floor_f1 from float8_tbl f ORDER BY 1;
 -- sign
 select sign(f1) as sign_f1 from float8_tbl f ORDER BY 1;
 
--- square root 
+-- square root
 SELECT sqrt(float8 '64') AS eight;
 
 SELECT |/ float8 '64' AS eight;
@@ -120,12 +126,12 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
 -- power
 SELECT power(float8 '144', float8 '0.5');
 
--- take exp of ln(f.f1) 
+-- take exp of ln(f.f1)
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0' ORDER BY 2;
 
--- cube root 
+-- cube root
 SELECT ||/ float8 '27' AS three;
 
 SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f ORDER BY 2;
@@ -153,7 +159,7 @@ SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
 
--- test for over- and underflow 
+-- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
@@ -257,6 +263,7 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 
+<<<<<<< HEAD
 SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
 
 -- test if you can dump/restore subnormal (1e-323) values
@@ -277,3 +284,6 @@ TRUNCATE FLOATS;
 COPY FLOATS FROM '/tmp/floats';
 
 SELECT * FROM FLOATS ORDER BY a;
+=======
+SELECT '' AS five, * FROM FLOAT8_TBL;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

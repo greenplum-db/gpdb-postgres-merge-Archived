@@ -4,7 +4,11 @@
  *		Extension management commands (create/drop extension).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/extension.h
@@ -46,6 +50,9 @@ extern char *get_extension_name(Oid ext_oid);
 
 extern void AlterExtensionNamespace(List *names, const char *newschema);
 
+<<<<<<< HEAD
 extern void AlterExtensionOwner_oid(Oid extensionOid, Oid newOwnerId);
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif   /* EXTENSION_H */

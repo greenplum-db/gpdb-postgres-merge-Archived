@@ -80,15 +80,15 @@ SELECT h.seqno AS i1492, h.random AS i1
    FROM hash_i4_heap h
    WHERE h.random = 1;
 
-UPDATE hash_i4_heap 
-   SET seqno = 20000 
+UPDATE hash_i4_heap
+   SET seqno = 20000
    WHERE hash_i4_heap.random = 1492795354;
 
-SELECT h.seqno AS i20000 
+SELECT h.seqno AS i20000
    FROM hash_i4_heap h
    WHERE h.random = 1492795354;
 
-UPDATE hash_name_heap 
+UPDATE hash_name_heap
    SET random = '0123456789abcdef'::name
    WHERE hash_name_heap.seqno = 6543;
 
@@ -101,13 +101,13 @@ UPDATE hash_name_heap
    WHERE hash_name_heap.random = '76652222'::name;
 
 --
--- this is the row we just replaced; index scan should return zero rows 
+-- this is the row we just replaced; index scan should return zero rows
 --
 SELECT h.seqno AS emptyset
    FROM hash_name_heap h
    WHERE h.random = '76652222'::name;
 
-UPDATE hash_txt_heap 
+UPDATE hash_txt_heap
    SET random = '0123456789abcdefghijklmnop'::text
    WHERE hash_txt_heap.seqno = 4002;
 
@@ -127,11 +127,11 @@ UPDATE hash_f8_heap
    SET random = '-1234.1234'::float8
    WHERE hash_f8_heap.seqno = 8906;
 
-SELECT h.seqno AS i8096, h.random AS f1234_1234 
+SELECT h.seqno AS i8096, h.random AS f1234_1234
    FROM hash_f8_heap h
    WHERE h.random = '-1234.1234'::float8;
 
-UPDATE hash_f8_heap 
+UPDATE hash_f8_heap
    SET seqno = 20000
    WHERE hash_f8_heap.random = '488912369'::float8;
 
@@ -151,6 +151,7 @@ SELECT h.seqno AS f20000
 
 -- SELECT count(*) AS i988 FROM hash_ovfl_heap
 --  WHERE x = 1000;
+<<<<<<< HEAD
 
 
 -- test that we can disable hash index
@@ -158,3 +159,5 @@ create table hash_test(i int);
 create index hash_test_idx on hash_test using hash (i);
 drop table hash_test;
 reset all;
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

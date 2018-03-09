@@ -4,10 +4,10 @@
  *	  Definitions for network authentication routines
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/auth.h,v 1.37 2010/01/02 16:58:04 momjian Exp $
+ * src/include/libpq/auth.h
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ extern char *pg_krb_realm;
 extern void ClientAuthentication(Port *port);
 extern void FakeClientAuthentication(Port *port);  /* GPDB only */
 
+<<<<<<< HEAD
 /*
  * Support for time-based authentication
  *  
@@ -52,4 +53,10 @@ extern bool interval_overlap(const authInterval *a, const authInterval *b);
 extern bool interval_contains(const authInterval *interval, const authPoint *point);
 extern int CheckAuthTimeConstraints(char *rolname);
 extern int check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp);
+=======
+/* Hook for plugins to get control in ClientAuthentication() */
+typedef void (*ClientAuthentication_hook_type) (Port *, int);
+extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif   /* AUTH_H */

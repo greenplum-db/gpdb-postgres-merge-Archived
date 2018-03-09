@@ -148,7 +148,7 @@ INSERT INTO trunc_trigger_test VALUES(1, 'foo', 'bar'), (2, 'baz', 'quux');
 
 CREATE TRIGGER t
 BEFORE TRUNCATE ON trunc_trigger_test
-FOR EACH STATEMENT 
+FOR EACH STATEMENT
 EXECUTE PROCEDURE trunctrigger('before trigger truncate');
 
 SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
@@ -166,7 +166,7 @@ INSERT INTO trunc_trigger_test VALUES(1, 'foo', 'bar'), (2, 'baz', 'quux');
 
 CREATE TRIGGER tt
 AFTER TRUNCATE ON trunc_trigger_test
-FOR EACH STATEMENT 
+FOR EACH STATEMENT
 EXECUTE PROCEDURE trunctrigger('after trigger truncate');
 
 SELECT count(*) as "Row count in test table" FROM trunc_trigger_test;
@@ -198,6 +198,16 @@ SELECT * FROM truncate_a;
 
 TRUNCATE truncate_a RESTART IDENTITY;
 
+INSERT INTO truncate_a DEFAULT VALUES;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+
+-- check rollback of a RESTART IDENTITY operation
+BEGIN;
+TRUNCATE truncate_a RESTART IDENTITY;
+INSERT INTO truncate_a DEFAULT VALUES;
+SELECT * FROM truncate_a;
+ROLLBACK;
 INSERT INTO truncate_a DEFAULT VALUES;
 INSERT INTO truncate_a DEFAULT VALUES;
 SELECT * FROM truncate_a;

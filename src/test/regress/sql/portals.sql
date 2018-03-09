@@ -424,6 +424,7 @@ COMMIT;
 
 -- Make sure snapshot management works okay, per bug report in
 -- 235395b90909301035v7228ce63q392931f15aa74b31@mail.gmail.com
+<<<<<<< HEAD
 
 -- GPDB_90_MERGE_FIXME: This doesn't work correctly. Two issues:
 -- 1. In GPDB, an UPDATE, or FOR UPDATE, locks the whole table. Because of
@@ -448,4 +449,14 @@ DECLARE c1 NO SCROLL CURSOR FOR SELECT * FROM cursor FOR UPDATE;
 UPDATE cursor SET b = 2; 
 FETCH ALL FROM c1; 
 COMMIT; 
+=======
+BEGIN;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+CREATE TABLE cursor (a int);
+INSERT INTO cursor VALUES (1);
+DECLARE c1 NO SCROLL CURSOR FOR SELECT * FROM cursor FOR UPDATE;
+UPDATE cursor SET a = 2;
+FETCH ALL FROM c1;
+COMMIT;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DROP TABLE cursor;

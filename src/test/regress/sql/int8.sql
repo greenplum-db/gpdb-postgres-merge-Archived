@@ -96,16 +96,20 @@ SELECT max(q1), max(q2) FROM INT8_TBL;
 
 -- TO_CHAR()
 --
-SELECT '' AS to_char_1, to_char(q1, '9G999G999G999G999G999'), to_char(q2, '9,999,999,999,999,999') 
+SELECT '' AS to_char_1, to_char(q1, '9G999G999G999G999G999'), to_char(q2, '9,999,999,999,999,999')
 	FROM INT8_TBL;
 
+<<<<<<< HEAD
 SELECT '' AS to_char_2, to_char(q1, '9G999G999G999G999G999D999G999'), to_char(q2, '9,999,999,999,999,999.999,999') 
+=======
+SELECT '' AS to_char_2, to_char(q1, '9G999G999G999G999G999D999G999'), to_char(q2, '9,999,999,999,999,999.999,999')
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	FROM INT8_TBL;
 
-SELECT '' AS to_char_3, to_char( (q1 * -1), '9999999999999999PR'), to_char( (q2 * -1), '9999999999999999.999PR') 
+SELECT '' AS to_char_3, to_char( (q1 * -1), '9999999999999999PR'), to_char( (q2 * -1), '9999999999999999.999PR')
 	FROM INT8_TBL;
 
-SELECT '' AS to_char_4, to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 * -1), 'S9999999999999999') 
+SELECT '' AS to_char_4, to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 * -1), 'S9999999999999999')
 	FROM INT8_TBL;
 
 SELECT '' AS to_char_5,  to_char(q2, 'MI9999999999999999')     FROM INT8_TBL;
@@ -191,6 +195,7 @@ SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::in
 SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::int8, 0);
 SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::int8, 2);
 
+<<<<<<< HEAD
 -- check sane handling of INT64_MIN overflow cases
 SELECT (-9223372036854775808)::int8 * (-1)::int8;
 SELECT (-9223372036854775808)::int8 / (-1)::int8;
@@ -201,3 +206,8 @@ SELECT (-9223372036854775808)::int8 % (-1)::int4;
 SELECT (-9223372036854775808)::int8 * (-1)::int2;
 SELECT (-9223372036854775808)::int8 / (-1)::int2;
 SELECT (-9223372036854775808)::int8 % (-1)::int2;
+=======
+-- corner case
+SELECT (-1::int8<<63)::text;
+SELECT ((-1::int8<<63)+1)::text;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

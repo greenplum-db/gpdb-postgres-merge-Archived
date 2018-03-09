@@ -132,6 +132,87 @@ CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'BEFORE'
 CONTEXT:  PL/Perl function "trigger_data"
 DROP TRIGGER show_trigger_data_trig on trigger_test;
+<<<<<<< HEAD
+=======
+insert into trigger_test values(1,'insert', '("(1)")');
+CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
+CREATE TRIGGER show_trigger_data_trig
+INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
+insert into trigger_test_view values(2,'insert', '("(2)")');
+NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{args} = ['24', 'skidoo view']
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{event} = 'INSERT'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '2'}}, 'i' => '2', 'v' => 'insert'}
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relname} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_name} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{when} = 'INSTEAD OF'
+CONTEXT:  PL/Perl function "trigger_data"
+update trigger_test_view set v = 'update', foo = '("(3)")' where i = 1;
+NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{args} = ['24', 'skidoo view']
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{event} = 'UPDATE'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{new} = {'foo' => {'rfoo' => {'i' => '3'}}, 'i' => '1', 'v' => 'update'}
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relname} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_name} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{when} = 'INSTEAD OF'
+CONTEXT:  PL/Perl function "trigger_data"
+delete from trigger_test_view;
+NOTICE:  $_TD->{argc} = '2'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{args} = ['24', 'skidoo view']
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{event} = 'DELETE'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{level} = 'ROW'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{name} = 'show_trigger_data_trig'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{old} = {'foo' => {'rfoo' => {'i' => '1'}}, 'i' => '1', 'v' => 'insert'}
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relid} = 'bogus:12345'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{relname} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_name} = 'trigger_test_view'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{table_schema} = 'public'
+CONTEXT:  PL/Perl function "trigger_data"
+NOTICE:  $_TD->{when} = 'INSTEAD OF'
+CONTEXT:  PL/Perl function "trigger_data"
+DROP VIEW trigger_test_view;
+delete from trigger_test;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DROP FUNCTION trigger_data();
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
 
@@ -171,6 +252,7 @@ ERROR:  Cannot parallelize an UPDATE statement that updates the distribution col
 UPDATE trigger_test SET i = 100 where i=1;
 ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 SELECT * FROM trigger_test;
+<<<<<<< HEAD
  i |                v                 |   foo   
 ---+----------------------------------+---------
  1 | first line(modified by trigger)  | ("(2)")
@@ -206,7 +288,44 @@ SELECT * FROM trigger_test;
  2 | second line(modified by trigger) | ("(3)")
  3 | third line(modified by trigger)  | ("(4)")
  4 | immortal                         | ("(4)")
+=======
+ i |                          v                           |   foo   
+---+------------------------------------------------------+---------
+ 1 | first line(modified by trigger)                      | ("(2)")
+ 2 | second line(modified by trigger)                     | ("(3)")
+ 4 | immortal                                             | ("(4)")
+ 5 | third line(modified by trigger)(modified by trigger) | ("(5)")
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 (4 rows)
+
+DROP TRIGGER "test_valid_id_trig" ON trigger_test;
+CREATE OR REPLACE FUNCTION trigger_recurse() RETURNS trigger AS $$
+	use strict;
+
+	if ($_TD->{new}{i} == 10000)
+	{
+		spi_exec_query("insert into trigger_test (i, v) values (20000, 'child');");
+
+		if ($_TD->{new}{i} != 10000)
+		{
+			die "recursive trigger modified: ". $_TD->{new}{i};
+		}
+	}
+    return;
+$$ LANGUAGE plperl;
+CREATE TRIGGER "test_trigger_recurse" BEFORE INSERT ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE "trigger_recurse"();
+INSERT INTO trigger_test (i, v) values (10000, 'top');
+SELECT * FROM trigger_test;
+   i   |                          v                           |   foo   
+-------+------------------------------------------------------+---------
+     1 | first line(modified by trigger)                      | ("(2)")
+     2 | second line(modified by trigger)                     | ("(3)")
+     4 | immortal                                             | ("(4)")
+     5 | third line(modified by trigger)(modified by trigger) | ("(5)")
+ 20000 | child                                                | 
+ 10000 | top                                                  | 
+(6 rows)
 
 CREATE OR REPLACE FUNCTION immortal() RETURNS trigger AS $$
     if ($_TD->{old}{v} eq $_TD->{args}[0])

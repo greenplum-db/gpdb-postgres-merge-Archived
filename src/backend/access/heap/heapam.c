@@ -3,12 +3,12 @@
  * heapam.c
  *	  heap access method code
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.292 2010/07/06 19:18:55 momjian Exp $
+ *	  src/backend/access/heap/heapam.c
  *
  *
  * INTERFACE ROUTINES
@@ -58,6 +58,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
+#include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "storage/standby.h"
@@ -128,7 +129,7 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	 *
 	 * During a rescan, don't make a new strategy object if we don't have to.
 	 */
-	if (!scan->rs_rd->rd_istemp &&
+	if (!RelationUsesLocalBuffers(scan->rs_rd) &&
 		scan->rs_nblocks > NBuffers / 4)
 	{
 		allow_strat = scan->rs_allow_strat;
@@ -276,8 +277,13 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	{
 		if (ItemIdIsNormal(lpp))
 		{
+			HeapTupleData loctup;
 			bool		valid;
 			HeapTupleHeader theader = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+
+			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+			loctup.t_len = ItemIdGetLength(lpp);
+			ItemPointerSet(&(loctup.t_self), page, lineoff);
 
 			if (all_visible)
 			{
@@ -292,6 +298,7 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 				valid = true;
 			}
 			else
+<<<<<<< HEAD
 			{
 				HeapTupleData loctup;
 
@@ -307,6 +314,12 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 					t_cid = HeapTupleHeaderGetRawCommandId(loctup.t_data);
 				}
 			}
+=======
+				valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+
+			CheckForSerializableConflictOut(valid, scan->rs_rd, &loctup, buffer);
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			if (valid)
 				scan->rs_vistuples[ntup++] = lineoff;
 		}
@@ -503,12 +516,16 @@ heapgettup(HeapScanDesc scan,
 													 snapshot,
 													 scan->rs_cbuf);
 
+				CheckForSerializableConflictOut(valid, scan->rs_rd, tuple, scan->rs_cbuf);
+
 				if (valid && key != NULL)
 					HeapKeyTest(tuple, RelationGetDescr(scan->rs_rd),
 								nkeys, key, valid);
 
 				if (valid)
 				{
+					if (!scan->rs_relpredicatelocked)
+						PredicateLockTuple(scan->rs_rd, tuple);
 					LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 					return;
 				}
@@ -778,12 +795,16 @@ heapgettup_pagemode(HeapScanDesc scan,
 							nkeys, key, valid);
 				if (valid)
 				{
+					if (!scan->rs_relpredicatelocked)
+						PredicateLockTuple(scan->rs_rd, tuple);
 					scan->rs_cindex = lineindex;
 					return;
 				}
 			}
 			else
 			{
+				if (!scan->rs_relpredicatelocked)
+					PredicateLockTuple(scan->rs_rd, tuple);
 				scan->rs_cindex = lineindex;
 				return;
 			}
@@ -901,7 +922,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	}
 
 	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
+	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
 
 	pgstat_initstats(r);
@@ -967,7 +988,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 	}
 
 	/* Make note that we've accessed a temporary relation */
-	if (r->rd_istemp)
+	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
 
 	pgstat_initstats(r);
@@ -1239,7 +1260,8 @@ relation_close(Relation relation, LOCKMODE lockmode)
  *
  *		This is essentially relation_open plus check that the relation
  *		is not an index nor a composite type.  (The caller should also
- *		check that it's not a view before assuming it has storage.)
+ *		check that it's not a view or foreign table before assuming it has
+ *		storage.)
  * ----------------
  */
 Relation
@@ -1421,6 +1443,7 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	scan->rs_strategy = NULL;	/* set in initscan */
 	scan->rs_allow_strat = allow_strat;
 	scan->rs_allow_sync = allow_sync;
+	scan->rs_relpredicatelocked = false;
 
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
@@ -1757,6 +1780,11 @@ heap_fetch(Relation relation,
 	 */
 	valid = HeapTupleSatisfiesVisibility(relation, tuple, snapshot, buffer);
 
+	if (valid)
+		PredicateLockTuple(relation, tuple);
+
+	CheckForSerializableConflictOut(valid, relation, tuple, buffer);
+
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	if (valid)
@@ -1804,13 +1832,19 @@ heap_fetch(Relation relation,
  * heap_fetch, we do not report any pgstats count; caller may do so if wanted.
  */
 bool
+<<<<<<< HEAD
 heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer, Snapshot snapshot,
 					   bool *all_dead)
+=======
+heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
+					   Snapshot snapshot, bool *all_dead)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId prev_xmax = InvalidTransactionId;
 	OffsetNumber offnum;
 	bool		at_chain_start;
+	bool		valid;
 
 	if (all_dead)
 		*all_dead = true;
@@ -1850,6 +1884,8 @@ heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer, Snapshot sn
 
 		heapTuple.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple.t_len = ItemIdGetLength(lp);
+		heapTuple.t_tableOid = relation->rd_id;
+		heapTuple.t_self = *tid;
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
@@ -1867,9 +1903,16 @@ heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer, Snapshot sn
 			break;
 
 		/* If it's visible per the snapshot, we must return it */
+<<<<<<< HEAD
 		if (HeapTupleSatisfiesVisibility(rel, &heapTuple, snapshot, buffer))
+=======
+		valid = HeapTupleSatisfiesVisibility(&heapTuple, snapshot, buffer);
+		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer);
+		if (valid)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			ItemPointerSetOffsetNumber(tid, offnum);
+			PredicateLockTuple(relation, &heapTuple);
 			if (all_dead)
 				*all_dead = false;
 			return true;
@@ -1920,7 +1963,11 @@ heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+<<<<<<< HEAD
 	result = heap_hot_search_buffer(relation, tid, buffer, snapshot, all_dead);
+=======
+	result = heap_hot_search_buffer(tid, relation, buffer, snapshot, all_dead);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 	return result;
@@ -2026,7 +2073,12 @@ heap_get_latest_tid(Relation relation,
 		 * Check time qualification of tuple; if visible, set it as the new
 		 * result candidate.
 		 */
+<<<<<<< HEAD
 		valid = HeapTupleSatisfiesVisibility(relation, &tp, snapshot, buffer);
+=======
+		valid = HeapTupleSatisfiesVisibility(&tp, snapshot, buffer);
+		CheckForSerializableConflictOut(valid, relation, &tp, buffer);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		if (valid)
 			*tid = ctid;
 
@@ -2213,6 +2265,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
 									   InvalidBuffer, options, bistate);
 
+	/*
+	 * We're about to do the actual insert -- check for conflict at the
+	 * relation or buffer level first, to avoid possibly having to roll back
+	 * work we've just done.
+	 */
+	CheckForSerializableConflictIn(relation, NULL, buffer);
+
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
@@ -2238,7 +2297,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!(options & HEAP_INSERT_SKIP_WAL) && !relation->rd_istemp)
+	if (!(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation))
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -2556,8 +2615,13 @@ l1:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
+<<<<<<< HEAD
 		/* Perform additional check for serializable RI updates */
 		if (!HeapTupleSatisfiesVisibility(relation, &tp, crosscheck, buffer))
+=======
+		/* Perform additional check for transaction-snapshot mode RI updates */
+		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			result = HeapTupleUpdated;
 	}
 
@@ -2574,6 +2638,12 @@ l1:
 			UnlockTuple(relation, &(tp.t_self), ExclusiveLock);
 		return result;
 	}
+
+	/*
+	 * We're about to do the actual delete -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
+	 */
+	CheckForSerializableConflictIn(relation, &tp, buffer);
 
 	/* replace cid with a combo cid if necessary */
 	HeapTupleHeaderAdjustCmax(tp.t_data, &cid, &iscombo);
@@ -2610,7 +2680,7 @@ l1:
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_delete xlrec;
 		XLogRecPtr	recptr;
@@ -2912,8 +2982,13 @@ l2:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
+<<<<<<< HEAD
 		/* Perform additional check for serializable RI updates */
 		if (!HeapTupleSatisfiesVisibility(relation, &oldtup, crosscheck, buffer))
+=======
+		/* Perform additional check for transaction-snapshot mode RI updates */
+		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			result = HeapTupleUpdated;
 	}
 
@@ -2937,6 +3012,12 @@ l2:
 		bms_free(hot_attrs);
 		return result;
 	}
+
+	/*
+	 * We're about to do the actual update -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
+	 */
+	CheckForSerializableConflictIn(relation, &oldtup, buffer);
 
 	/* Fill in OID and transaction status data for newtup */
 	if (relation->rd_rel->relhasoids)
@@ -3130,6 +3211,16 @@ l2:
 	}
 
 	/*
+	 * We're about to create the new tuple -- check for conflict first, to
+	 * avoid possibly having to roll back work we've just done.
+	 *
+	 * NOTE: For a tuple insert, we only need to check for table locks, since
+	 * predicate locking at the index level will cover ranges for anything
+	 * except a table scan.  Therefore, only provide the relation.
+	 */
+	CheckForSerializableConflictIn(relation, NULL, InvalidBuffer);
+
+	/*
 	 * At this point newbuf and buffer are both pinned and locked, and newbuf
 	 * has enough space for the new tuple.	If they are the same buffer, only
 	 * one pin is held.
@@ -3217,7 +3308,7 @@ l2:
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self,
 											 newbuf, heaptup,
@@ -3871,7 +3962,7 @@ l3:
 	 * (Also, in a PITR log-shipping or 2PC environment, we have to have XLOG
 	 * entries for everything anyway.)
 	 */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_lock xlrec;
 		XLogRecPtr	recptr;
@@ -3972,7 +4063,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_inplace xlrec;
 		XLogRecPtr	recptr;
@@ -4260,8 +4351,11 @@ heap_restrpos(HeapScanDesc scan)
 }
 
 /*
- * If 'tuple' contains any XID greater than latestRemovedXid, update
- * latestRemovedXid to the greatest one found.
+ * If 'tuple' contains any visible XID greater than latestRemovedXid,
+ * ratchet forwards latestRemovedXid to the greatest one found.
+ * This is used as the basis for generating Hot Standby conflicts, so
+ * if a tuple was never visible then removing it should not conflict
+ * with queries.
  */
 void
 HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
@@ -4277,13 +4371,25 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 			*latestRemovedXid = xvac;
 	}
 
-	if (TransactionIdPrecedes(*latestRemovedXid, xmax))
-		*latestRemovedXid = xmax;
+	/*
+	 * Ignore tuples inserted by an aborted transaction or if the tuple was
+	 * updated/deleted by the inserting transaction.
+	 *
+	 * Look for a committed hint bit, or if no xmin bit is set, check clog.
+	 * This needs to work on both master and standby, where it is used to
+	 * assess btree delete records.
+	 */
+	if ((tuple->t_infomask & HEAP_XMIN_COMMITTED) ||
+		(!(tuple->t_infomask & HEAP_XMIN_COMMITTED) &&
+		 !(tuple->t_infomask & HEAP_XMIN_INVALID) &&
+		 TransactionIdDidCommit(xmin)))
+	{
+		if (xmax != xmin &&
+			TransactionIdFollows(xmax, *latestRemovedXid))
+			*latestRemovedXid = xmax;
+	}
 
-	if (TransactionIdPrecedes(*latestRemovedXid, xmin))
-		*latestRemovedXid = xmin;
-
-	Assert(TransactionIdIsValid(*latestRemovedXid));
+	/* *latestRemovedXid may still be invalid at end */
 }
 
 /*
@@ -4369,8 +4475,8 @@ log_heap_clean(Relation reln, Buffer buffer,
 	XLogRecPtr	recptr;
 	XLogRecData rdata[4];
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
@@ -4452,8 +4558,8 @@ log_heap_freeze(Relation reln, Buffer buffer,
 	XLogRecPtr	recptr;
 	XLogRecData rdata[2];
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 	/* nor when there are no tuples to freeze */
 	Assert(offcnt > 0);
 
@@ -4498,8 +4604,8 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	XLogRecData rdata[4];
 	Page		page = BufferGetPage(newbuf);
 
-	/* Caller should not call me on a temp relation */
-	Assert(!reln->rd_istemp);
+	/* Caller should not call me on a non-WAL-logged relation */
+	Assert(RelationNeedsWAL(reln));
 
 	if (HeapTupleIsHeapOnly(newtup))
 		info = XLOG_HEAP_HOT_UPDATE;
@@ -4594,12 +4700,21 @@ log_newpage_internal(xl_heap_newpage *xlrec, Page page)
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 	/*
+<<<<<<< HEAD
 	 * The page may be uninitialized. If so, we can't set the LSN
 	 * and TLI because that would corrupt the page.
+=======
+	 * The page may be uninitialized. If so, we can't set the LSN and TLI
+	 * because that would corrupt the page.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, recptr);
+<<<<<<< HEAD
+=======
+		PageSetTLI(page, ThisTimeLineID);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	END_CRIT_SECTION();
@@ -4819,12 +4934,21 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
 	/*
+<<<<<<< HEAD
 	 * The page may be uninitialized. If so, we can't set the LSN because that
 	 * would corrupt the page.
+=======
+	 * The page may be uninitialized. If so, we can't set the LSN and TLI
+	 * because that would corrupt the page.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, lsn);
+<<<<<<< HEAD
+=======
+		PageSetTLI(page, ThisTimeLineID);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	MarkBufferDirty(buffer);
@@ -5599,7 +5723,7 @@ heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
  *	heap_sync		- sync a heap, for use when no WAL has been written
  *
  * This forces the heap contents (including TOAST heap if any) down to disk.
- * If we skipped using WAL, and it's not a temp relation, we must force the
+ * If we skipped using WAL, and WAL is otherwise needed, we must force the
  * relation down to disk before it's safe to commit the transaction.  This
  * requires writing out any dirty buffers and then doing a forced fsync.
  *
@@ -5612,8 +5736,8 @@ heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 void
 heap_sync(Relation rel)
 {
-	/* temp tables never need fsync */
-	if (rel->rd_istemp)
+	/* non-WAL-logged tables never need fsync */
+	if (!RelationNeedsWAL(rel))
 		return;
 
 	/* main heap */

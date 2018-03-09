@@ -1,13 +1,22 @@
-# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.15 2007/11/10 23:59:50 momjian Exp $
+# contrib/dblink/Makefile
 
 MODULE_big = dblink
-PG_CPPFLAGS = -I$(libpq_srcdir)
 OBJS	= dblink.o
+<<<<<<< HEAD
+=======
+PG_CPPFLAGS = -I$(libpq_srcdir)
+SHLIB_LINK = $(libpq)
+SHLIB_PREREQS = submake-libpq
 
-DATA_built = dblink.sql 
-DATA = uninstall_dblink.sql 
+EXTENSION = dblink
+DATA = dblink--1.0.sql dblink--unpackaged--1.0.sql
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
 REGRESS = dblink
+<<<<<<< HEAD
 REGRESS_OPTS = --init-file=$(top_builddir)/src/test/regress/init_file --dbname=contrib_regression
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

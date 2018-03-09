@@ -9,19 +9,24 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.119 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/optimizer/plan/planmain.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -35,6 +40,10 @@
 #include "cdb/cdbvars.h"
 
 static Bitmapset *distcols_in_groupclause(List *gc, Bitmapset *bms);
+
+/* Local functions */
+static void canonicalize_all_pathkeys(PlannerInfo *root);
+
 
 /*
  * query_planner
@@ -74,9 +83,9 @@ static Bitmapset *distcols_in_groupclause(List *gc, Bitmapset *bms);
  * PlannerInfo field and not a passed parameter is that the low-level routines
  * in indxpath.c need to see it.)
  *
- * Note: the PlannerInfo node also includes group_pathkeys, window_pathkeys,
- * distinct_pathkeys, and sort_pathkeys, which like query_pathkeys need to be
- * canonicalized once the info is available.
+ * Note: the PlannerInfo node includes other pathkeys fields besides
+ * query_pathkeys, all of which need to be canonicalized once the info is
+ * available.  See canonicalize_all_pathkeys.
  *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
@@ -103,8 +112,9 @@ query_planner(PlannerInfo *root, List *tlist,
 	ListCell   *lc;
 	double		total_pages;
 
-	/* Make tuple_fraction accessible to lower-level routines */
+	/* Make tuple_fraction, limit_tuples accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
+	root->limit_tuples = limit_tuples;
 
 	*num_groups = 1;			/* default result */
 
@@ -124,6 +134,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * something like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
+<<<<<<< HEAD
 		root->query_pathkeys = canonicalize_pathkeys(root,
 													 root->query_pathkeys);
 		root->group_pathkeys = canonicalize_pathkeys(root,
@@ -145,6 +156,9 @@ query_planner(PlannerInfo *root, List *tlist,
 			else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
 				CdbPathLocus_MakeStrewn(&(*cheapest_path)->locus);
 		}
+=======
+		canonicalize_all_pathkeys(root);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return;
 	}
 
@@ -153,7 +167,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * for "simple" rels.
 	 *
 	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
-	 * here; eq_classes may contain data already, too.
+	 * here; eq_classes and minmax_aggs may contain data already, too.
 	 */
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
@@ -200,12 +214,21 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
+<<<<<<< HEAD
 	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned relations.
 	 * We also build EquivalenceClasses for provably equivalent expressions.
 	 * The SpecialJoinInfo list is also built to hold information about join
 	 * order restrictions.  Finally, we form a target joinlist for
 	 * make_one_rel() to work from.
+=======
+	 * entries for all referenced PlaceHolderVars.	Restrict and join clauses
+	 * are added to appropriate lists belonging to the mentioned relations. We
+	 * also build EquivalenceClasses for provably equivalent expressions. The
+	 * SpecialJoinInfo list is also built to hold information about join order
+	 * restrictions.  Finally, we form a target joinlist for make_one_rel() to
+	 * work from.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	build_base_rel_tlists(root, tlist);
 
@@ -235,20 +258,21 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
-	 * convert the requested query_pathkeys to canonical form.	Also
-	 * canonicalize the groupClause, windowClause, distinctClause and
-	 * sortClause pathkeys for use later.
+	 * convert previously generated pathkeys (in particular, the requested
+	 * query_pathkeys) to canonical form.
 	 */
-	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
-	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
-	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
-	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
-	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
+	canonicalize_all_pathkeys(root);
 
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
 	 * Make sure that the Vars they need are marked as needed at the relevant
+<<<<<<< HEAD
 	 * join level.
+=======
+	 * join level.	This must be done before join removal because it might
+	 * cause Vars or placeholders to be needed above a join when they weren't
+	 * so marked before.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	fix_placeholder_input_needed_levels(root);
 
@@ -348,8 +372,14 @@ query_planner(PlannerInfo *root, List *tlist,
 		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
 			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
+<<<<<<< HEAD
 		/* GPDB_84_MERGE_FIXME: Are we missing the condition on window_pathkeys on
 		 * purpose? */
+=======
+
+		/* In any case, limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else if (parse->hasAggs || root->hasHavingQual)
 	{
@@ -358,6 +388,9 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * it will deliver a single result row (so leave *num_groups 1).
 		 */
 		tuple_fraction = 0.0;
+
+		/* limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
 	}
 	else if (parse->distinctClause)
 	{
@@ -382,6 +415,9 @@ query_planner(PlannerInfo *root, List *tlist,
 		 */
 		if (tuple_fraction >= 1.0)
 			tuple_fraction /= *num_groups;
+
+		/* limit_tuples shouldn't be specified here */
+		Assert(limit_tuples < 0);
 	}
 	else
 	{
@@ -440,8 +476,13 @@ query_planner(PlannerInfo *root, List *tlist,
 			/* Figure cost for sorting */
 			cost_sort(&sort_path, root, root->query_pathkeys,
 					  cheapestpath->total_cost,
+<<<<<<< HEAD
 					  cdbpath_rows(root, cheapestpath), final_rel->width,
 					  limit_tuples);
+=======
+					  final_rel->rows, final_rel->width,
+					  0.0, work_mem, limit_tuples);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,
@@ -458,6 +499,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 
 /*
+<<<<<<< HEAD
  * distcols_in_groupclause -
  *     Return all distinct tleSortGroupRef values in a GROUP BY clause.
  *
@@ -580,4 +622,18 @@ CopyPlannerConfig(const PlannerConfig *c1)
 
 	memcpy(c2, c1, sizeof(PlannerConfig));
 	return c2;
+=======
+ * canonicalize_all_pathkeys
+ *		Canonicalize all pathkeys that were generated before entering
+ *		query_planner and then stashed in PlannerInfo.
+ */
+static void
+canonicalize_all_pathkeys(PlannerInfo *root)
+{
+	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
+	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
+	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
+	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
+	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

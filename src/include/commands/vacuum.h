@@ -4,10 +4,10 @@
  *	  header file for postgres vacuum cleaner and statistics analyzer
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.89 2010/02/09 21:43:30 tgl Exp $
+ * src/include/commands/vacuum.h
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,10 @@
  * the information to be stored in a pg_statistic row for the column.  Be
  * careful to allocate any pointed-to data in anl_context, which will NOT
  * be CurrentMemoryContext when compute_stats is called.
+ *
+ * Note: for the moment, all comparisons done for statistical purposes
+ * should use the database's default collation (DEFAULT_COLLATION_OID).
+ * This might change in some future release.
  *----------
  */
 typedef struct VacAttrStats *VacAttrStatsP;
@@ -63,10 +67,22 @@ typedef struct VacAttrStats
 	/*
 	 * These fields are set up by the main ANALYZE code before invoking the
 	 * type-specific typanalyze function.
+	 *
+	 * Note: do not assume that the data being analyzed has the same datatype
+	 * shown in attr, ie do not trust attr->atttypid, attlen, etc.	This is
+	 * because some index opclasses store a different type than the underlying
+	 * column/expression.  Instead use attrtypid, attrtypmod, and attrtype for
+	 * information about the datatype being fed to the typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
+<<<<<<< HEAD
 	Form_pg_type attrtype;		/* copy of pg_type row for column */
 	char		relstorage;		/* pg_class.relstorage for table */
+=======
+	Oid			attrtypid;		/* type of data being analyzed */
+	int32		attrtypmod;		/* typmod of data being analyzed */
+	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	MemoryContext anl_context;	/* where to save long-lived data */
 
 	/*
@@ -97,10 +113,9 @@ typedef struct VacAttrStats
 
 	/*
 	 * These fields describe the stavalues[n] element types. They will be
-	 * initialized to be the same as the column's that's underlying the slot,
-	 * but a custom typanalyze function might want to store an array of
-	 * something other than the analyzed column's elements. It should then
-	 * overwrite these fields.
+	 * initialized to match attrtypid, but a custom typanalyze function might
+	 * want to store an array of something other than the analyzed column's
+	 * elements. It should then overwrite these fields.
 	 */
 	Oid			statypid[STATISTIC_NUM_SLOTS];
 	int2		statyplen[STATISTIC_NUM_SLOTS];
@@ -168,17 +183,23 @@ extern bool vacuumStatement_IsTemporary(Relation onerel);
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy);
+<<<<<<< HEAD
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
+<<<<<<< HEAD
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* VACUUM_H */

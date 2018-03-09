@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.17 2010/04/21 20:54:19 tgl Exp $
+doc/src/sgml/ref/alter_role.sgml
 PostgreSQL documentation
 -->
 
@@ -38,9 +38,23 @@ where option can be:
            protocol='gpfdist'|'http'|'gphdfs'
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
+<<<<<<< HEAD
     | CONNECTION LIMIT connlimit
     | [ENCRYPTED | UNENCRYPTED] PASSWORD 'password'
     | VALID UNTIL 'timestamp'
+=======
+    | REPLICATION | NOREPLICATION
+    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
+
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 </synopsis>
  </refsynopsisdiv>
 
@@ -63,7 +77,7 @@ where option can be:
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</> privilege can change any of these
-   settings, but only for non-superuser roles.
+   settings, but only for non-superuser and non-replication roles.
    Ordinary roles can only change their own password.
   </para>
 
@@ -86,7 +100,7 @@ where option can be:
    the named database. Whenever the role subsequently
    starts a new session, the specified value becomes the session
    default, overriding whatever setting is present in
-   <filename>postgresql.conf</> or has been received from the postgres
+   <filename>postgresql.conf</> or has been received from the <command>postgres</command>
    command line. This only happens at login time; executing
    <xref linkend="sql-set-role"> or
    <xref linkend="sql-set-session-authorization"> does not cause new
@@ -127,6 +141,8 @@ where option can be:
       <term><literal>NOINHERIT</literal></term>
       <term><literal>LOGIN</literal></term>
       <term><literal>NOLOGIN</literal></term>
+      <term><literal>REPLICATION</literal></term>
+      <term><literal>NOREPLICATION</literal></term>
       <term><literal>CONNECTION LIMIT</literal> <replaceable class="parameter">connlimit</replaceable></term>
       <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
       <term><literal>ENCRYPTED</></term>

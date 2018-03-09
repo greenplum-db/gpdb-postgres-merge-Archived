@@ -2,14 +2,18 @@
  *
  * rewriteManip.c
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.127 2010/02/26 02:00:59 momjian Exp $
+ *	  src/backend/rewrite/rewriteManip.c
  *
  *-------------------------------------------------------------------------
  */
@@ -368,6 +372,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	/* Shouldn't need to handle other planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
+	Assert(!IsA(node, MinMaxAggInfo));
 
 	if (IsA(node, Query))
 	{
@@ -535,6 +540,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	/* Shouldn't need to handle other planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
+	Assert(!IsA(node, MinMaxAggInfo));
 
 	if (IsA(node, Query))
 	{
@@ -849,6 +855,7 @@ rangeTableEntry_used_walker(Node *node,
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, AppendRelInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
+	Assert(!IsA(node, MinMaxAggInfo));
 
 	if (IsA(node, Query))
 	{
@@ -1411,7 +1418,7 @@ ResolveNew_callback(Var *var,
 	/* Normal case referencing one targetlist element */
 	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
 
-	if (tle == NULL)
+	if (tle == NULL || tle->resjunk)
 	{
 		/* Failed to find column in insert/update tlist */
 		if (rcon->event == CMD_UPDATE)
@@ -1427,7 +1434,8 @@ ResolveNew_callback(Var *var,
 			/* Otherwise replace unmatched var with a null */
 			/* need coerce_to_domain in case of NOT NULL domain constraint */
 			return coerce_to_domain((Node *) makeNullConst(var->vartype,
-														   var->vartypmod),
+														   var->vartypmod,
+														   var->varcollid),
 									InvalidOid, -1,
 									var->vartype,
 									COERCE_IMPLICIT_CAST,

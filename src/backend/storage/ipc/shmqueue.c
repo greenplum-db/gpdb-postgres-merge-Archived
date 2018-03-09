@@ -3,12 +3,12 @@
  * shmqueue.c
  *	  shared memory linked lists
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.34 2010/01/02 16:57:51 momjian Exp $
+ *	  src/backend/storage/ipc/shmqueue.c
  *
  * NOTES
  *
@@ -44,7 +44,7 @@ SHMQueueInit(SHM_QUEUE *queue)
  *		in a queue.
  */
 bool
-SHMQueueIsDetached(SHM_QUEUE *queue)
+SHMQueueIsDetached(const SHM_QUEUE *queue)
 {
 	Assert(ShmemAddrIsValid(queue));
 	return (queue->prev == NULL);
@@ -104,7 +104,10 @@ SHMQueueInsertBefore(SHM_QUEUE *queue, SHM_QUEUE *elem)
  *		element.  Inserting "after" the queue head puts the elem
  *		at the head of the queue.
  */
+<<<<<<< HEAD
 //#ifdef NOT_USED
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 void
 SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 {
@@ -118,7 +121,10 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
 	queue->next = elem;
 	nextPtr->prev = elem;
 }
+<<<<<<< HEAD
 //#endif   /* NOT_USED */
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*--------------------
  * SHMQueueNext -- Get the next element from a queue
@@ -144,7 +150,7 @@ SHMQueueInsertAfter(SHM_QUEUE *queue, SHM_QUEUE *elem)
  *--------------------
  */
 Pointer
-SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
+SHMQueueNext(const SHM_QUEUE *queue, const SHM_QUEUE *curElem, Size linkOffset)
 {
 	SHM_QUEUE  *elemPtr = curElem->next;
 
@@ -163,7 +169,11 @@ SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
  * All other comments and usage applies.
  */
 Pointer
+<<<<<<< HEAD
 SHMQueuePrev(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
+=======
+SHMQueuePrev(const SHM_QUEUE *queue, const SHM_QUEUE *curElem, Size linkOffset)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	SHM_QUEUE  *elemPtr = curElem->prev;
 
@@ -179,7 +189,7 @@ SHMQueuePrev(SHM_QUEUE *queue, SHM_QUEUE *curElem, Size linkOffset)
  * SHMQueueEmpty -- TRUE if queue head is only element, FALSE otherwise
  */
 bool
-SHMQueueEmpty(SHM_QUEUE *queue)
+SHMQueueEmpty(const SHM_QUEUE *queue)
 {
 	Assert(ShmemAddrIsValid(queue));
 

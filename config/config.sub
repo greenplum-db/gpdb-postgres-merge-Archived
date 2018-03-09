@@ -1,8 +1,16 @@
 #! /bin/sh
 # Configuration validation subroutine script.
+<<<<<<< HEAD
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
 timestamp='2017-01-01'
+=======
+#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+#   2011 Free Software Foundation, Inc.
+
+timestamp='2011-03-23'
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -67,7 +75,13 @@ Report bugs and patches to <config-patches@gnu.org>."
 version="\
 GNU config.sub ($timestamp)
 
+<<<<<<< HEAD
 Copyright 1992-2017 Free Software Foundation, Inc.
+=======
+Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free
+Software Foundation, Inc.
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -115,9 +129,15 @@ esac
 maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
 case $maybe_os in
   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+<<<<<<< HEAD
   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
   knetbsd*-gnu* | netbsd*-gnu* | netbsd*-eabi* | \
   kopensolaris*-gnu* | cloudabi*-eabi* | \
+=======
+  linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+  knetbsd*-gnu* | netbsd*-gnu* | \
+  kopensolaris*-gnu* | \
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
   storm-chaos* | os2-emx* | rtmk-nova*)
     os=-$maybe_os
     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
@@ -296,12 +316,21 @@ case $basic_machine in
 	| mt \
 	| msp430 \
 	| nds32 | nds32le | nds32be \
+<<<<<<< HEAD
 	| nios | nios2 | nios2eb | nios2el \
 	| ns16k | ns32k \
 	| open8 | or1k | or1knd | or32 \
 	| pdp10 | pdp11 | pj | pjl \
 	| powerpc | powerpc64 | powerpc64le | powerpcle \
 	| pru \
+=======
+	| nios | nios2 \
+	| ns16k | ns32k \
+	| open8 \
+	| or32 \
+	| pdp10 | pdp11 | pj | pjl \
+	| powerpc | powerpc64 | powerpc64le | powerpcle \
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	| pyramid \
 	| riscv32 | riscv64 \
 	| rl78 | rx \
@@ -345,10 +374,14 @@ case $basic_machine in
 	strongarm | thumb | xscale)
 		basic_machine=arm-unknown
 		;;
+<<<<<<< HEAD
 	xgate)
 		basic_machine=$basic_machine-unknown
 		os=-none
 		;;
+=======
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xscaleeb)
 		basic_machine=armeb-unknown
 		;;
@@ -422,6 +455,7 @@ case $basic_machine in
 	| mt-* \
 	| msp430-* \
 	| nds32-* | nds32le-* | nds32be-* \
+<<<<<<< HEAD
 	| nios-* | nios2-* | nios2eb-* | nios2el-* \
 	| none-* | np1-* | ns16k-* | ns32k-* \
 	| open8-* \
@@ -430,6 +464,14 @@ case $basic_machine in
 	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* \
 	| pru-* \
+=======
+	| nios-* | nios2-* \
+	| none-* | np1-* | ns16k-* | ns32k-* \
+	| open8-* \
+	| orion-* \
+	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
+	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* \
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	| pyramid-* \
 	| riscv32-* | riscv64-* \
 	| rl78-* | romp-* | rs6000-* | rx-* \
@@ -437,7 +479,11 @@ case $basic_machine in
 	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
 	| sparc-* | sparc64-* | sparc64b-* | sparc64v-* | sparc86x-* | sparclet-* \
 	| sparclite-* \
+<<<<<<< HEAD
 	| sparcv8-* | sparcv9-* | sparcv9b-* | sparcv9v-* | sv1-* | sx*-* \
+=======
+	| sparcv8-* | sparcv9-* | sparcv9b-* | sparcv9v-* | sv1-* | sx?-* \
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	| tahoe-* \
 	| tic30-* | tic4x-* | tic54x-* | tic55x-* | tic6x-* | tic80-* \
 	| tile*-* \
@@ -816,7 +862,11 @@ case $basic_machine in
 		basic_machine=ns32k-utek
 		os=-sysv
 		;;
+<<<<<<< HEAD
 	microblaze*)
+=======
+	microblaze)
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		basic_machine=microblaze-xilinx
 		;;
 	mingw64)
@@ -1187,6 +1237,14 @@ case $basic_machine in
 		basic_machine=t90-cray
 		os=-unicos
 		;;
+<<<<<<< HEAD
+=======
+	# This must be matched before tile*.
+	tilegx*)
+		basic_machine=tilegx-unknown
+		os=-linux-gnu
+		;;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	tile*)
 		basic_machine=$basic_machine-unknown
 		os=-linux-gnu
@@ -1397,11 +1455,19 @@ case $os in
 	      | -bosx* | -nextstep* | -cxux* | -aout* | -elf* | -oabi* \
 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
 	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
+<<<<<<< HEAD
 	      | -chorusos* | -chorusrdb* | -cegcc* | -glidix* \
 	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
 	      | -midipix* | -mingw32* | -mingw64* | -linux-gnu* | -linux-android* \
 	      | -linux-newlib* | -linux-musl* | -linux-uclibc* \
 	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
+=======
+	      | -chorusos* | -chorusrdb* | -cegcc* \
+	      | -cygwin* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
+	      | -mingw32* | -linux-gnu* | -linux-android* \
+	      | -linux-newlib* | -linux-uclibc* \
+	      | -uxpv* | -beos* | -mpeix* | -udk* \
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
 	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
 	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
@@ -1541,8 +1607,11 @@ case $os in
 		;;
 	-nacl*)
 		;;
+<<<<<<< HEAD
 	-ios)
 		;;
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	-none)
 		;;
 	*)
@@ -1582,12 +1651,15 @@ case $basic_machine in
 		;;
 	c4x-* | tic4x-*)
 		os=-coff
+<<<<<<< HEAD
 		;;
 	c8051-*)
 		os=-elf
 		;;
 	hexagon-*)
 		os=-elf
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		;;
 	tic54x-*)
 		os=-coff

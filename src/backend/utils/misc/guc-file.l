@@ -2,9 +2,9 @@
 /*
  * Scanner for the configuration file
  *
- * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2011, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.64 2010/01/02 16:57:58 momjian Exp $
+ * src/backend/utils/misc/guc-file.l
  */
 
 %{
@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/guc.h"
@@ -66,8 +67,11 @@ static sigjmp_buf *GUC_flex_fatal_jmp;
 /* flex fails to supply a prototype for yylex, so provide one */
 int GUC_yylex(void);
 
+<<<<<<< HEAD
 static int GUC_flex_fatal(const char *msg);
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static char *GUC_scanstr(const char *s);
 
 %}
@@ -136,7 +140,11 @@ ProcessConfigFile(GucContext context)
 				   *head,
 				   *tail;
 	char	   *cvc = NULL;
+<<<<<<< HEAD
 	const char *envvar;
+=======
+	struct config_string *cvc_struct;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			i;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
@@ -155,6 +163,7 @@ ProcessConfigFile(GucContext context)
 	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
+<<<<<<< HEAD
 	if (!ParseConfigFile(ConfigFileName, NULL,
 						 0, elevel,
 						 &head, &tail))
@@ -166,6 +175,45 @@ ProcessConfigFile(GucContext context)
 						 0, elevel,
 						 &head, &tail))
 		goto cleanup_list;
+=======
+	if (!ParseConfigFile(ConfigFileName, NULL, 0, elevel, &head, &tail))
+		goto cleanup_list;
+
+	/*
+	 * We need the proposed new value of custom_variable_classes to check
+	 * custom variables with.  ParseConfigFile ensured that if it's in
+	 * the file, it's first in the list.  But first check to see if we
+	 * have an active value from the command line, which should override
+	 * the file in any case.  (Since there's no relevant env var, the
+	 * only possible nondefault sources are the file and ARGV.)
+	 */
+	cvc_struct = (struct config_string *)
+		find_option("custom_variable_classes", false, elevel);
+	Assert(cvc_struct);
+	if (cvc_struct->gen.reset_source > PGC_S_FILE)
+	{
+		cvc = guc_strdup(elevel, cvc_struct->reset_val);
+		if (cvc == NULL)
+			goto cleanup_list;
+	}
+	else if (head != NULL &&
+			 guc_name_compare(head->name, "custom_variable_classes") == 0)
+	{
+		/*
+		 * Need to canonicalize the value by calling the check hook.
+		 */
+		void   *extra = NULL;
+
+		cvc = guc_strdup(elevel, head->value);
+		if (cvc == NULL)
+			goto cleanup_list;
+		if (!call_string_check_hook(cvc_struct, &cvc, &extra,
+									PGC_S_FILE, elevel))
+			goto cleanup_list;
+		if (extra)
+			free(extra);
+	}
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Mark all extant GUC variables as not present in the config file.
@@ -268,7 +316,7 @@ ProcessConfigFile(GucContext context)
 				stack->source = PGC_S_DEFAULT;
 		}
 
-		/* Now we can re-apply the wired-in default */
+		/* Now we can re-apply the wired-in default (i.e., the boot_val) */
 		set_config_option(gconf->name, NULL, context, PGC_S_DEFAULT,
 						  GUC_ACTION_SET, true);
 		if (context == PGC_SIGHUP)
@@ -278,25 +326,28 @@ ProcessConfigFile(GucContext context)
 	}
 
 	/*
-	 * Restore any variables determined by environment variables.  This
-	 * is a no-op except in the case where one of these had been in the
-	 * config file and is now removed.  PGC_S_ENV_VAR will override the
-	 * wired-in default we just applied, but cannot override any other source.
+	 * Restore any variables determined by environment variables or
+	 * dynamically-computed defaults.  This is a no-op except in the case
+	 * where one of these had been in the config file and is now removed.
 	 *
-	 * Keep this list in sync with InitializeGUCOptions()!
-	 * PGPORT can be ignored, because it cannot be changed without restart.
-	 * We assume rlimit hasn't changed, either.
+	 * In particular, we *must not* do this during the postmaster's
+	 * initial loading of the file, since the timezone functions in
+	 * particular should be run only after initialization is complete.
+	 *
+	 * XXX this is an unmaintainable crock, because we have to know how
+	 * to set (or at least what to call to set) every variable that could
+	 * potentially have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source.
+	 * However, there's no time to redesign it for 9.1.
 	 */
-	envvar = getenv("PGDATESTYLE");
-	if (envvar != NULL)
-		set_config_option("datestyle", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
-
-	envvar = getenv("PGCLIENTENCODING");
-	if (envvar != NULL)
-		set_config_option("client_encoding", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
-
+	if (context == PGC_SIGHUP)
+	{
+		InitializeGUCOptionsFromEnvironment();
+		pg_timezone_initialize();
+		pg_timezone_abbrev_initialize();
+		/* this selects SQL_ASCII in processes not connected to a database */
+		SetConfigOption("client_encoding", GetDatabaseEncodingName(),
+						PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
+	}
 
 	/* If we got here all the options checked out okay, so apply them. */
 	for (item = head; item; item = item->next)
@@ -348,6 +399,7 @@ ProcessConfigFile(GucContext context)
 }
 
 /*
+<<<<<<< HEAD
  * Flex fatal errors bring us here.  Stash the error message and jump back to
  * ParseConfigFp().  Assume all msg arguments point to string constants; this
  * holds for flex 2.5.31 (earliest we support) and flex 2.5.35 (latest as of
@@ -364,6 +416,8 @@ GUC_flex_fatal(const char *msg)
 }
 
 /*
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * See next function for details. This one will just work with a config_file
  * name rather than an already opened File Descriptor
  */
@@ -388,7 +442,10 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("could not open configuration file \"%s\": maximum nesting depth exceeded",
 						config_file)));
+<<<<<<< HEAD
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return false;
 	}
 
@@ -424,7 +481,10 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						config_file)));
+<<<<<<< HEAD
 
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return false;
 	}
 
@@ -465,6 +525,7 @@ bool
 ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p)
 {
+<<<<<<< HEAD
 	volatile bool OK = true;
 	unsigned int save_ConfigFileLineno = ConfigFileLineno;
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
@@ -487,6 +548,12 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		goto cleanup_exit;
 	}
 
+=======
+	bool		OK = true;
+	YY_BUFFER_STATE lex_buffer;
+	int			token;
+
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Parse
 	 */
@@ -498,8 +565,12 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	/* This loop iterates once per logical line */
 	while ((token = yylex()))
 	{
+<<<<<<< HEAD
 		char	   *opt_name = NULL;
 		char	   *opt_value = NULL;
+=======
+		char	   *opt_name, *opt_value;
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		ConfigVariable *item;
 
 		if (token == GUC_EOL)	/* empty or comment line */
@@ -590,15 +661,18 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	else
 		ereport(elevel,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
+				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
 						config_file, ConfigFileLineno, yytext)));
 	OK = false;
 
 cleanup_exit:
 	yy_delete_buffer(lex_buffer);
+<<<<<<< HEAD
 	/* Each recursion level must save and restore these static variables. */
 	ConfigFileLineno = save_ConfigFileLineno;
 	GUC_flex_fatal_jmp = save_GUC_flex_fatal_jmp;
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return OK;
 }
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Generated subdirectories
 /results/
 
@@ -6,3 +7,10 @@ libplpython.so.0.0
 libplpython.so
 libplpython.a
 plpython.so
+=======
+/spiexceptions.h
+# Generated subdirectories
+/log/
+/results/
+/tmp_check/
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

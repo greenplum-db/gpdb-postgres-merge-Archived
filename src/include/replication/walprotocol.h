@@ -3,7 +3,11 @@
  * walprotocol.h
  *	  Definitions relevant to the streaming WAL transmission protocol.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 2010-2011, PostgreSQL Global Development Group
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * src/include/replication/walprotocol.h
  *
@@ -54,6 +58,7 @@ typedef struct
 } WalDataMessageHeader;
 
 /*
+<<<<<<< HEAD
  * Keepalive message from primary (message type 'k'). (lowercase k)
  * This is wrapped within a CopyData message at the FE/BE protocol level.
  *
@@ -62,6 +67,8 @@ typedef struct
 typedef WalSndrMessage PrimaryKeepaliveMessage;
 
 /*
+=======
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Reply message from standby (message type 'r').  This is wrapped within
  * a CopyData message at the FE/BE protocol level.
  *
@@ -83,6 +90,29 @@ typedef struct
 } StandbyReplyMessage;
 
 /*
+<<<<<<< HEAD
+=======
+ * Hot Standby feedback from standby (message type 'h').  This is wrapped within
+ * a CopyData message at the FE/BE protocol level.
+ *
+ * Note that the data length is not specified here.
+ */
+typedef struct
+{
+	/*
+	 * The current xmin and epoch from the standby, for Hot Standby feedback.
+	 * This may be invalid if the standby-side does not support feedback, or
+	 * Hot Standby is not yet available.
+	 */
+	TransactionId xmin;
+	uint32		epoch;
+
+	/* Sender's system clock at the time of transmission */
+	TimestampTz sendTime;
+} StandbyHSFeedbackMessage;
+
+/*
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some
