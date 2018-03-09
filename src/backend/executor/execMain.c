@@ -1014,7 +1014,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		if (FaultInjector_InjectFaultIfSet(ExecutorRunHighProcessed,
 										   DDLNotSpecified,
 										   "" /* databaseName */,
-										   "" /* tableName */))
+										   "" /* tableName */) == FaultInjectorTypeSkip)
 		{
 			/*
 			 * For testing purposes, pretend that we have already processed
@@ -1838,6 +1838,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("cannot lock rows in relation \"%s\"",
 									RelationGetRelationName(relation))));
+					break;
 			}
 		}
 
@@ -2630,7 +2631,7 @@ ExecutePlan(EState *estate,
 				if (FaultInjector_InjectFaultIfSet(ExecutorRunHighProcessed,
 												   DDLNotSpecified,
 												   "" /* databaseName */,
-												   "" /* tableName */))
+												   "" /* tableName */) == FaultInjectorTypeSkip)
 				{
 					/*
 					 * For testing purposes, pretend that we have already processed

@@ -59,6 +59,7 @@ realpath()
 
 restore_cluster()
 {
+	pushd $base_dir
 	# Reset the pg_control files from the old cluster which were renamed
 	# .old by pg_upgrade to avoid booting up an upgraded cluster.
 	find ${OLD_DATADIR} -type f -name 'pg_control.old' |
@@ -72,13 +73,20 @@ restore_cluster()
 		rm -f lalshell
 	fi
 
-	# Remove configuration files created by setting up the new cluster
-	rm -f clusterConfigPostgresAddonsFile
-	rm -f clusterConfigFile
-	rm -f gpdemo-env.sh
-	
-	# Remove the temporary cluster if requested
+	# Remove the temporary cluster, and associated files, if requested
 	if (( !$retain_tempdir )) ; then
+		# If we are asked to blow away the temp root, echo any potential error
+		# files to the output channel to aid debugging
+		find ${temp_root} -type f -name "*.txt" | grep -v share |
+		while read error_file; do
+			cat ${error_file}
+		done
+		# Remove configuration files created by setting up the new cluster
+		rm -f "clusterConfigPostgresAddonsFile"
+		rm -f "clusterConfigFile"
+		rm -f "gpdemo-env.sh"
+		rm -f "hostfile"
+		# Remove temporary cluster
 		rm -rf "$temp_root"
 	fi
 }
@@ -129,12 +137,13 @@ usage()
 	echo " -k           Add checksums to new cluster"
 	echo " -K           Remove checksums during upgrade"
 	echo " -m           Upgrade mirrors"
-	echo " -r           Retain temporary directory after test"
+	echo " -r           Retain temporary installation after test"
 	exit 0
 }
 
 # Main
 temp_root=`pwd`/tmp_check
+base_dir=`pwd`
 
 while getopts ":o:b:sCkKmr" opt; do
 	case ${opt} in
@@ -191,13 +200,22 @@ fi
 trap restore_cluster EXIT
 
 # The cluster should be running by now, but in case it isn't, issue a restart.
-# Worst case we powercycle once for no reason, but it's better than failing
-# due to not having a cluster to work with.
-gpstart -a
+# Since we expect the testcluster to be a stock standard gpdemo, we test for
+# the presence of it. Worst case we powercycle once for no reason, but it's
+# better than failing due to not having a cluster to work with.
+if [ -f "/tmp/.s.PGSQL.15432.lock" ]; then
+	ps aux | grep  `head -1 /tmp/.s.PGSQL.15432.lock` | grep -q postgres
+	if (( $? )) ; then
+		gpstart -a
+	fi
+else
+	gpstart -a
+fi
 
 # Run any pre-upgrade tasks to prep the cluster
 if [ -f "test_gpdb_pre.sql" ]; then
 	psql -f test_gpdb_pre.sql regression
+	psql -f test_gpdb_pre.sql isolation2test
 fi
 
 # Ensure that the catalog is sane before attempting an upgrade. While there is
@@ -205,7 +223,7 @@ fi
 # upgrading a faulty catalog won't work.
 if (( $gpcheckcat )) ; then
 	gpcheckcat
-		if (( $? )) ; then
+	if (( $? )) ; then
 		echo "ERROR: gpcheckcat reported catalog issues, fix before upgrading"
 		exit 1
 	fi

@@ -49,7 +49,6 @@
 #include "utils/snapmgr.h"
 
 extern bool Test_print_direct_dispatch_info;
-extern struct Port *MyProcPort;
 
 #define DTM_DEBUG3 (Debug_print_full_dtm ? LOG : DEBUG3)
 #define DTM_DEBUG5 (Debug_print_full_dtm ? LOG : DEBUG5)
@@ -1651,12 +1650,12 @@ mppTxnOptions(bool needTwoPhase)
 int
 mppTxOptions_IsoLevel(int txnOptions)
 {
-	if (txnOptions & GP_OPT_READ_COMMITTED)
-		return XACT_READ_COMMITTED;
-	else if (txnOptions & GP_OPT_SERIALIZABLE)
+	if ((txnOptions & GP_OPT_SERIALIZABLE) == GP_OPT_SERIALIZABLE)
 		return XACT_SERIALIZABLE;
-	else if (txnOptions & GP_OPT_REPEATABLE_READ)
+	else if ((txnOptions & GP_OPT_REPEATABLE_READ) == GP_OPT_REPEATABLE_READ)
 		return XACT_REPEATABLE_READ;
+	else if ((txnOptions & GP_OPT_READ_COMMITTED) == GP_OPT_READ_COMMITTED)
+		return XACT_READ_COMMITTED;
 	else
 		return XACT_READ_UNCOMMITTED;
 }
