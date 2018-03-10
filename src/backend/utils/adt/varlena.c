@@ -57,7 +57,6 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-<<<<<<< HEAD
 /*
  * Max considered sub-string size is set to MaxAllocSize - 4MB).
  * The 4MB is saved aside for memory allocation overhead such
@@ -74,10 +73,7 @@ typedef struct
 static int	text_position_ptr_len(char* p1, int len1, char *p2, int len2); 
 static void text_position_setup_ptr_len(char* p1, int len1, char* p2, int len2, TextPositionState *state);
 
-static int	text_cmp(text *arg1, text *arg2);
-=======
 static int	text_cmp(text *arg1, text *arg2, Oid collid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static int32 text_length(Datum str);
 static int	text_position_next(int start_pos, TextPositionState *state);
 static void text_position_cleanup(TextPositionState *state);

@@ -1518,7 +1518,6 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	int64		ntids;
 	ItemPointerData iptr;
 	bool		recheck;
-<<<<<<< HEAD
 
 	if (n == NULL)
 		/* XXX should we use less than work_mem for this? */
@@ -1527,8 +1526,6 @@ gingetbitmap(PG_FUNCTION_ARGS)
 		elog(ERROR, "non hash bitmap");
 	else
 		tbm = (TIDBitmap *)n;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Set up the scan keys, and check for unsatisfiable query.

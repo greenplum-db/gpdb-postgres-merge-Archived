@@ -82,10 +82,6 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE, rdata);
 		PageSetLSN(page, recptr);
-<<<<<<< HEAD
-=======
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	UnlockReleaseBuffer(buffer);
@@ -104,15 +100,10 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
  * items[] must be in sorted order with no duplicates.
  */
 static IndexTuple
-<<<<<<< HEAD
-addItemPointersToTuple(Relation index, GinState *ginstate, GinBtreeStack *stack __attribute__((unused)),
-		  IndexTuple old, ItemPointerData *items, uint32 nitem, bool isBuild)
-=======
 addItemPointersToLeafTuple(GinState *ginstate,
 						   IndexTuple old,
 						   ItemPointerData *items, uint32 nitem,
 						   GinStatsData *buildStats)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	OffsetNumber attnum;
 	Datum		key;
@@ -354,16 +345,9 @@ ginBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
 	for (i = 0; i < buildstate->ginstate.origTupdesc->natts; i++)
-<<<<<<< HEAD
-		if (!isnull[i])
-			buildstate->indtuples += ginHeapTupleBulkInsert(buildstate,
-										   (OffsetNumber) (i + 1), values[i],
-															tupleId);
-=======
 		ginHeapTupleBulkInsert(buildstate, (OffsetNumber) (i + 1),
 							   values[i], isnull[i],
-							   &htup->t_self);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+							   tupleId);
 
 	/* If we've maxed out our available memory, dump everything to the index */
 	if (buildstate->accum.allocatedMemory >= maintenance_work_mem * 1024L)

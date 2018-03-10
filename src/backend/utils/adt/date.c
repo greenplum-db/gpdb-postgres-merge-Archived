@@ -472,17 +472,6 @@ date2timestamptz(DateADT dateVal)
 double
 date2timestamp_no_overflow(DateADT dateVal)
 {
-<<<<<<< HEAD
-	double	result;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	/* date is days since 2000, timestamp is microseconds since same... */
-	result = dateVal * (double) USECS_PER_DAY;
-#else
-	/* date is days since 2000, timestamp is seconds since same... */
-	result = dateVal * (double) SECS_PER_DAY;
-#endif
-=======
 	double		result;
 
 	if (DATE_IS_NOBEGIN(dateVal))
@@ -499,7 +488,6 @@ date2timestamp_no_overflow(DateADT dateVal)
 		result = dateVal * (double) SECS_PER_DAY;
 #endif
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return result;
 }

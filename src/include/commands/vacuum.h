@@ -75,14 +75,10 @@ typedef struct VacAttrStats
 	 * information about the datatype being fed to the typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
-<<<<<<< HEAD
-	Form_pg_type attrtype;		/* copy of pg_type row for column */
-	char		relstorage;		/* pg_class.relstorage for table */
-=======
 	Oid			attrtypid;		/* type of data being analyzed */
 	int32		attrtypmod;		/* typmod of data being analyzed */
 	Form_pg_type attrtype;		/* copy of pg_type row for attrtypid */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	char		relstorage;		/* pg_class.relstorage for table */
 	MemoryContext anl_context;	/* where to save long-lived data */
 
 	/*
@@ -183,23 +179,17 @@ extern bool vacuumStatement_IsTemporary(Relation onerel);
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				BufferAccessStrategy bstrategy);
-<<<<<<< HEAD
 extern void vacuum_appendonly_rel(Relation aorel, VacuumStmt *vacstmt);
 extern void vacuum_appendonly_fill_stats(Relation aorel, Snapshot snapshot,
 										 BlockNumber *rel_pages, double *rel_tuples,
 										 bool *relhasindex);
 extern int vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt);
 extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
-<<<<<<< HEAD
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* VACUUM_H */

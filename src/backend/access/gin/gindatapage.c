@@ -586,11 +586,7 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
  * Also called from ginxlog, should not use btree
  */
 void
-<<<<<<< HEAD
-dataFillRoot(GinBtree btree __attribute__((unused)), Buffer root, Buffer lbuf, Buffer rbuf)
-=======
 ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Page		page = BufferGetPage(root),
 				lpage = BufferGetPage(lbuf),

@@ -20,12 +20,7 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-<<<<<<< HEAD
-extern void RelationCreateStorage(RelFileNode rnode, bool isLocalBuf);
-
-=======
 extern void RelationCreateStorage(RelFileNode rnode, char relpersistence);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void RelationDropStorage(Relation rel);
 extern void RelationPreserveStorage(RelFileNode rnode);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
@@ -40,14 +35,9 @@ extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);
 
-<<<<<<< HEAD
-extern void smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
-=======
 extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
 
-extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(StringInfo buf, uint8 xl_info, char *rec);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
+extern void smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 
 #endif   /* STORAGE_H */

@@ -1801,8 +1801,7 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	AclResult	aclresult;
 
-<<<<<<< HEAD
-	roleid = get_roleid_checked(NameStr(*rolename));
+	roleid = get_role_oid_or_public(NameStr(*rolename));
 	tableoid = try_convert_table_name(tablename);
 
 	/*
@@ -1812,10 +1811,6 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 	 */
 	if (!OidIsValid(tableoid))
 		PG_RETURN_NULL();
-=======
-	roleid = get_role_oid_or_public(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	mode = convert_table_priv_string(priv_type_text);
 
 	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
@@ -2278,8 +2273,7 @@ has_any_column_privilege_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	AclResult	aclresult;
 
-<<<<<<< HEAD
-	roleid = get_roleid_checked(NameStr(*rolename));
+	roleid = get_role_oid_or_public(NameStr(*rolename));
 	tableoid = try_convert_table_name(tablename);
 
 	/*
@@ -2290,10 +2284,6 @@ has_any_column_privilege_name_name(PG_FUNCTION_ARGS)
 	if (!OidIsValid(tableoid))
 		PG_RETURN_NULL();
 
-=======
-	roleid = get_role_oid_or_public(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	mode = convert_column_priv_string(priv_type_text);
 
 	/* First check at table level, then examine each column if needed */
@@ -2552,8 +2542,7 @@ has_column_privilege_name_name_name(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	int			privresult;
 
-<<<<<<< HEAD
-	roleid = get_roleid_checked(NameStr(*rolename));
+	roleid = get_role_oid_or_public(NameStr(*rolename));
 	tableoid = try_convert_table_name(tablename);
 
 	/*
@@ -2564,10 +2553,6 @@ has_column_privilege_name_name_name(PG_FUNCTION_ARGS)
 	if (!OidIsValid(tableoid))
 		PG_RETURN_NULL();
 
-=======
-	roleid = get_role_oid_or_public(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	colattnum = convert_column_name(tableoid, column);
 	mode = convert_column_priv_string(priv_type_text);
 
@@ -2594,8 +2579,7 @@ has_column_privilege_name_name_attnum(PG_FUNCTION_ARGS)
 	AclMode		mode;
 	int			privresult;
 
-<<<<<<< HEAD
-	roleid = get_roleid_checked(NameStr(*rolename));
+	roleid = get_role_oid_or_public(NameStr(*rolename));
 	tableoid = try_convert_table_name(tablename);
 
 	/*
@@ -2606,10 +2590,6 @@ has_column_privilege_name_name_attnum(PG_FUNCTION_ARGS)
 	if (!OidIsValid(tableoid))
 		PG_RETURN_NULL();
 
-=======
-	roleid = get_role_oid_or_public(NameStr(*rolename));
-	tableoid = convert_table_name(tablename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	mode = convert_column_priv_string(priv_type_text);
 
 	privresult = column_privilege_check(tableoid, colattnum, roleid, mode);
@@ -5016,8 +4996,6 @@ get_role_oid(const char *rolname, bool missing_ok)
 				 errmsg("role \"%s\" does not exist", rolname)));
 	return oid;
 }
-<<<<<<< HEAD
-=======
 
 /*
  * get_role_oid_or_public - As above, but return ACL_ID_PUBLIC if the
@@ -5031,4 +5009,3 @@ get_role_oid_or_public(const char *rolname)
 
 	return get_role_oid(rolname, false);
 }
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

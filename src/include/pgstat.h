@@ -801,13 +801,11 @@ extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
 
-<<<<<<< HEAD
-extern void pgstat_report_resgroup(TimestampTz queueStart, Oid groupid);
-extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
-=======
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+extern void pgstat_report_resgroup(TimestampTz queueStart, Oid groupid);
+extern TimestampTz pgstat_fetch_resgroup_queue_timestamp(void);
 
 extern void pgstat_initstats(Relation rel);
 

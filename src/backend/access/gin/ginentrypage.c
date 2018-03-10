@@ -680,11 +680,7 @@ ginPageGetLinkItup(Buffer buf)
  * Also called from ginxlog, should not use btree
  */
 void
-<<<<<<< HEAD
-entryFillRoot(GinBtree btree __attribute__((unused)), Buffer root, Buffer lbuf, Buffer rbuf)
-=======
 ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Page		page;
 	IndexTuple	itup;
