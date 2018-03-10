@@ -156,19 +156,7 @@ gistrescan(PG_FUNCTION_ARGS)
 						  scan);
 	MemoryContextSwitchTo(oldCxt);
 
-<<<<<<< HEAD
-	so->nPageData = so->curPageData = 0;
-
-	/*
-	 * Clear all the pointers.
-	 */
-	ItemPointerSetInvalid(&so->curpos);
-	so->nPageData = so->curPageData = 0;
-
-	so->qual_ok = true;
-=======
 	so->firstCall = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Update scan key, if a new one is given */
 	if (key && scan->numberOfKeys > 0)
@@ -253,31 +241,12 @@ gistendscan(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
-<<<<<<< HEAD
-	so = (GISTScanOpaque) scan->opaque;
-
-	if (so != NULL)
-	{
-		gistfreestack(so->stack);
-		if (so->giststate != NULL)
-		{
-			freeGISTstate(so->giststate);
-			pfree(so->giststate);
-		}
-		/* drop pins on buffers -- we aren't holding any locks */
-		if (BufferIsValid(so->curbuf))
-			ReleaseBuffer(so->curbuf);
-		MemoryContextDelete(so->tempCxt);
-		pfree(so);
-	}
-=======
 	freeGISTstate(so->giststate);
 	MemoryContextDelete(so->queueCxt);
 	MemoryContextDelete(so->tempCxt);
 	pfree(so->tmpTreeItem);
 	pfree(so->distances);
 	pfree(so);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PG_RETURN_VOID();
 }

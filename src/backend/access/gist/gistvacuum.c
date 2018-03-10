@@ -239,13 +239,6 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 											todelete, ntodelete,
 											NULL, 0, InvalidBuffer);
 					PageSetLSN(page, recptr);
-<<<<<<< HEAD
-
-					pfree(xlinfo);
-					pfree(rdata);
-=======
-					PageSetTLI(page, ThisTimeLineID);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				}
 				else
 					PageSetLSN(page, GetXLogRecPtrForTemp());

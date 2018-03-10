@@ -300,12 +300,7 @@ extern void gist_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
 extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);
-<<<<<<< HEAD
-extern bool gist_safe_restartpoint(void);
-extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 extern void gist_mask(char *pagedata, BlockNumber blkno);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern XLogRecPtr gistXLogUpdate(RelFileNode node, Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,

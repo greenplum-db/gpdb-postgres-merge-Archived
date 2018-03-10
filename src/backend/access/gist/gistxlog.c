@@ -60,7 +60,6 @@ gistRedoClearFollowRight(RelFileNode node, XLogRecPtr lsn,
 			GistClearFollowRight(page);
 
 			PageSetLSN(page, lsn);
-			PageSetTLI(page, ThisTimeLineID);
 			MarkBufferDirty(buffer);
 		}
 		UnlockReleaseBuffer(buffer);
@@ -82,19 +81,8 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 	if (BlockNumberIsValid(xldata->leftchild))
 		gistRedoClearFollowRight(xldata->node, lsn, xldata->leftchild);
 
-<<<<<<< HEAD
-	if (!isnewroot && xldata->blkno != GIST_ROOT_BLKNO)
-		/* operation with root always finalizes insertion */
-		pushIncompleteInsert(xldata->node, lsn, xldata->key,
-							 &(xldata->blkno), 1,
-							 NULL);
-
 	/* nothing else to do if page was backed up (and no info to do it with) */
 	if (IsBkpBlockApplied(record, 0))
-=======
-	/* nothing more to do if page was backed up (and no info to do it with) */
-	if (record->xl_info & XLR_BKP_BLOCK_1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return;
 
 	buffer = XLogReadBuffer(xldata->node, xldata->blkno, false);
@@ -307,27 +295,6 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	UnlockReleaseBuffer(buffer);
 }
 
-<<<<<<< HEAD
-static void
-gistRedoCompleteInsert(XLogRecPtr lsn __attribute__((unused)), XLogRecord *record)
-{
-	char	   *begin = XLogRecGetData(record),
-			   *ptr;
-	gistxlogInsertComplete *xlrec;
-
-	xlrec = (gistxlogInsertComplete *) begin;
-
-	ptr = begin + sizeof(gistxlogInsertComplete);
-	while (ptr - begin < record->xl_len)
-	{
-		Assert(record->xl_len - (ptr - begin) >= sizeof(ItemPointerData));
-		forgetIncompleteInsert(xlrec->node, *((ItemPointerData *) ptr));
-		ptr += sizeof(ItemPointerData);
-	}
-}
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 void
 gist_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 {
@@ -425,79 +392,6 @@ gist_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 	}
 }
 
-<<<<<<< HEAD
-IndexTuple
-gist_form_invalid_tuple(BlockNumber blkno)
-{
-	/*
-	 * we don't alloc space for null's bitmap, this is invalid tuple, be
-	 * carefull in read and write code
-	 */
-	Size		size = IndexInfoFindDataOffset(0);
-	IndexTuple	tuple = (IndexTuple) palloc0(size);
-
-	tuple->t_info |= size;
-
-	ItemPointerSetBlockNumber(&(tuple->t_tid), blkno);
-	GistTupleSetInvalid(tuple);
-
-	return tuple;
-}
-
-
-static void
-gistxlogFindPath(Relation index, gistIncompleteInsert *insert)
-{
-	GISTInsertStack *top;
-
-	insert->pathlen = 0;
-	insert->path = NULL;
-
-	if ((top = gistFindPath(index, insert->origblkno)) != NULL)
-	{
-		int			i;
-		GISTInsertStack *ptr;
-
-		for (ptr = top; ptr; ptr = ptr->parent)
-			insert->pathlen++;
-
-		insert->path = (BlockNumber *) palloc(sizeof(BlockNumber) * insert->pathlen);
-
-		i = 0;
-		for (ptr = top; ptr; ptr = ptr->parent)
-			insert->path[i++] = ptr->blkno;
-	}
-	else
-		elog(ERROR, "lost parent for block %u", insert->origblkno);
-}
-
-static SplitedPageLayout *
-gistMakePageLayout(Buffer *buffers, int nbuffers)
-{
-	SplitedPageLayout *res = NULL,
-			   *resptr;
-
-	while (nbuffers-- > 0)
-	{
-		Page		page = BufferGetPage(buffers[nbuffers]);
-		IndexTuple *vec;
-		int			veclen;
-
-		resptr = (SplitedPageLayout *) palloc0(sizeof(SplitedPageLayout));
-
-		resptr->block.blkno = BufferGetBlockNumber(buffers[nbuffers]);
-		resptr->block.num = PageGetMaxOffsetNumber(page);
-
-		vec = gistextractpage(page, &veclen);
-		resptr->list = gistfillitupvec(vec, veclen, &(resptr->lenlist));
-
-		resptr->next = res;
-		res = resptr;
-	}
-
-	return res;
-}
-
 /*
  * Mask a Gist page before running consistency checks on it.
  */
@@ -544,233 +438,6 @@ gist_mask(char *pagedata, BlockNumber blkno)
 #endif
 }
 
-/*
- * Continue insert after crash.  In normal situations, there aren't any
- * incomplete inserts, but if a crash occurs partway through an insertion
- * sequence, we'll need to finish making the index valid at the end of WAL
- * replay.
- *
- * Note that we assume the index is now in a valid state, except for the
- * unfinished insertion.  In particular it's safe to invoke gistFindPath();
- * there shouldn't be any garbage pages for it to run into.
- *
- * To complete insert we can't use basic insertion algorithm because
- * during insertion we can't call user-defined support functions of opclass.
- * So, we insert 'invalid' tuples without real key and do it by separate algorithm.
- * 'invalid' tuple should be updated by vacuum full.
- */
-static void
-gistContinueInsert(gistIncompleteInsert *insert)
-{
-	IndexTuple *itup;
-	int			i,
-				lenitup;
-	Relation	index;
-
-	index = CreateFakeRelcacheEntry(insert->node);
-
-	/*
-	 * needed vector itup never will be more than initial lenblkno+2, because
-	 * during this processing Indextuple can be only smaller
-	 */
-	lenitup = insert->lenblk;
-	itup = (IndexTuple *) palloc(sizeof(IndexTuple) * (lenitup + 2 /* guarantee root split */ ));
-
-	for (i = 0; i < insert->lenblk; i++)
-		itup[i] = gist_form_invalid_tuple(insert->blkno[i]);
-
-	/*
-	 * any insertion of itup[] should make LOG message about
-	 */
-
-	if (insert->origblkno == GIST_ROOT_BLKNO)
-	{
-		/*
-		 * it was split root, so we should only make new root. it can't be
-		 * simple insert into root, we should replace all content of root.
-		 */
-		Buffer		buffer = XLogReadBuffer(insert->node, GIST_ROOT_BLKNO, true);
-
-		gistnewroot(index, buffer, itup, lenitup, NULL);
-		UnlockReleaseBuffer(buffer);
-	}
-	else
-	{
-		Buffer	   *buffers;
-		Page	   *pages;
-		int			numbuffer;
-		OffsetNumber *todelete;
-
-		/* construct path */
-		gistxlogFindPath(index, insert);
-
-		Assert(insert->pathlen > 0);
-
-		buffers = (Buffer *) palloc(sizeof(Buffer) * (insert->lenblk + 2 /* guarantee root split */ ));
-		pages = (Page *) palloc(sizeof(Page) * (insert->lenblk + 2 /* guarantee root split */ ));
-		todelete = (OffsetNumber *) palloc(sizeof(OffsetNumber) * (insert->lenblk + 2 /* guarantee root split */ ));
-
-		for (i = 0; i < insert->pathlen; i++)
-		{
-			int			j,
-						k,
-						pituplen = 0;
-			uint8		xlinfo;
-			XLogRecData *rdata;
-			XLogRecPtr	recptr;
-			Buffer		tempbuffer = InvalidBuffer;
-			int			ntodelete = 0;
-
-			numbuffer = 1;
-			buffers[0] = ReadBuffer(index, insert->path[i]);
-			LockBuffer(buffers[0], GIST_EXCLUSIVE);
-
-			/*
-			 * we check buffer, because we restored page earlier
-			 */
-			gistcheckpage(index, buffers[0]);
-
-			pages[0] = BufferGetPage(buffers[0]);
-			Assert(!GistPageIsLeaf(pages[0]));
-
-			pituplen = PageGetMaxOffsetNumber(pages[0]);
-
-			/* find remove old IndexTuples to remove */
-			for (j = 0; j < pituplen && ntodelete < lenitup; j++)
-			{
-				BlockNumber blkno;
-				ItemId		iid = PageGetItemId(pages[0], j + FirstOffsetNumber);
-				IndexTuple	idxtup = (IndexTuple) PageGetItem(pages[0], iid);
-
-				blkno = ItemPointerGetBlockNumber(&(idxtup->t_tid));
-
-				for (k = 0; k < lenitup; k++)
-					if (ItemPointerGetBlockNumber(&(itup[k]->t_tid)) == blkno)
-					{
-						todelete[ntodelete] = j + FirstOffsetNumber - ntodelete;
-						ntodelete++;
-						break;
-					}
-			}
-
-			if (ntodelete == 0)
-				elog(PANIC, "gistContinueInsert: cannot find pointer to page(s)");
-
-			/*
-			 * we check space with subtraction only first tuple to delete,
-			 * hope, that wiil be enough space....
-			 */
-
-			if (gistnospace(pages[0], itup, lenitup, *todelete, 0))
-			{
-
-				/* no space left on page, so we must split */
-				buffers[numbuffer] = ReadBuffer(index, P_NEW);
-				LockBuffer(buffers[numbuffer], GIST_EXCLUSIVE);
-				GISTInitBuffer(buffers[numbuffer], 0);
-				pages[numbuffer] = BufferGetPage(buffers[numbuffer]);
-				gistfillbuffer(pages[numbuffer], itup, lenitup, FirstOffsetNumber);
-				numbuffer++;
-
-				if (BufferGetBlockNumber(buffers[0]) == GIST_ROOT_BLKNO)
-				{
-					Buffer		tmp;
-
-					/*
-					 * we split root, just copy content from root to new page
-					 */
-
-					/* sanity check */
-					if (i + 1 != insert->pathlen)
-						elog(PANIC, "unexpected pathlen in index \"%s\"",
-							 RelationGetRelationName(index));
-
-					/* fill new page, root will be changed later */
-					tempbuffer = ReadBuffer(index, P_NEW);
-					LockBuffer(tempbuffer, GIST_EXCLUSIVE);
-					memcpy(BufferGetPage(tempbuffer), pages[0], BufferGetPageSize(tempbuffer));
-
-					/* swap buffers[0] (was root) and temp buffer */
-					tmp = buffers[0];
-					buffers[0] = tempbuffer;
-					tempbuffer = tmp;	/* now in tempbuffer GIST_ROOT_BLKNO,
-										 * it is still unchanged */
-
-					pages[0] = BufferGetPage(buffers[0]);
-				}
-
-				START_CRIT_SECTION();
-
-				for (j = 0; j < ntodelete; j++)
-					PageIndexTupleDelete(pages[0], todelete[j]);
-
-				xlinfo = XLOG_GIST_PAGE_SPLIT;
-				rdata = formSplitRdata(index->rd_node, insert->path[i],
-									   false, &(insert->key),
-									 gistMakePageLayout(buffers, numbuffer));
-
-			}
-			else
-			{
-				START_CRIT_SECTION();
-
-				for (j = 0; j < ntodelete; j++)
-					PageIndexTupleDelete(pages[0], todelete[j]);
-				gistfillbuffer(pages[0], itup, lenitup, InvalidOffsetNumber);
-
-				xlinfo = XLOG_GIST_PAGE_UPDATE;
-				rdata = formUpdateRdata(index->rd_node, buffers[0],
-										todelete, ntodelete,
-										itup, lenitup, &(insert->key));
-			}
-
-			/*
-			 * use insert->key as mark for completion of insert (form*Rdata()
-			 * above) for following possible replays
-			 */
-
-			/* write pages, we should mark it dirty befor XLogInsert() */
-			for (j = 0; j < numbuffer; j++)
-			{
-				GistPageGetOpaque(pages[j])->rightlink = InvalidBlockNumber;
-				MarkBufferDirty(buffers[j]);
-			}
-			recptr = XLogInsert(RM_GIST_ID, xlinfo, rdata);
-			for (j = 0; j < numbuffer; j++)
-			{
-				PageSetLSN(pages[j], recptr);
-			}
-
-			END_CRIT_SECTION();
-
-			lenitup = numbuffer;
-			for (j = 0; j < numbuffer; j++)
-			{
-				itup[j] = gist_form_invalid_tuple(BufferGetBlockNumber(buffers[j]));
-				UnlockReleaseBuffer(buffers[j]);
-			}
-
-			if (tempbuffer != InvalidBuffer)
-			{
-				/*
-				 * it was a root split, so fill it by new values
-				 */
-				gistnewroot(index, tempbuffer, itup, lenitup, &(insert->key));
-				UnlockReleaseBuffer(tempbuffer);
-			}
-		}
-	}
-
-	FreeFakeRelcacheEntry(index);
-
-	ereport(LOG,
-			(errmsg("index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery",
-			insert->node.spcNode, insert->node.dbNode, insert->node.relNode),
-		   errdetail("Incomplete insertion detected during crash replay.")));
-}
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 void
 gist_xlog_startup(void)
 {

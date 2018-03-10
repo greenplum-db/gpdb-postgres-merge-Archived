@@ -493,47 +493,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		 */
 		for (ptr = dist; ptr; ptr = ptr->next)
 			MarkBufferDirty(ptr->buffer);
-<<<<<<< HEAD
-			GistPageGetOpaque(ptr->page)->rightlink = (ptr->next) ?
-				ptr->next->block.blkno : rrlink;
-		}
-
-		/* restore splitted non-root page */
-		if (state->stack->blkno != GIST_ROOT_BLKNO)
-		{
-			PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer));
-			dist->page = BufferGetPage(dist->buffer);
-		}
-
-		if (!state->r->rd_istemp)
-		{
-			XLogRecPtr	recptr;
-			XLogRecData *rdata;
-
-			rdata = formSplitRdata(state->r->rd_node, state->stack->blkno,
-								   is_leaf, &(state->key), dist);
-
-			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
-
-			for (ptr = dist; ptr; ptr = ptr->next)
-			{
-				PageSetLSN(ptr->page, recptr);
-			}
-		}
-		else
-		{
-			for (ptr = dist; ptr; ptr = ptr->next)
-			{
-				PageSetLSN(ptr->page, GetXLogRecPtrForTemp());
-			}
-		}
-
-		/* set up NSN */
-		oldnsn = GistPageGetOpaque(dist->page)->nsn;
-		if (state->stack->blkno == GIST_ROOT_BLKNO)
-			/* if root split we should put initial value */
-			oldnsn = PageGetLSN(dist->page);
-=======
 		if (BufferIsValid(leftchildbuf))
 			MarkBufferDirty(leftchildbuf);
 
@@ -550,12 +509,10 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 								   dist, oldrlink, oldnsn, leftchildbuf);
 		else
 			recptr = GetXLogRecPtrForTemp();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		for (ptr = dist; ptr; ptr = ptr->next)
 		{
 			PageSetLSN(ptr->page, recptr);
-			PageSetTLI(ptr->page, ThisTimeLineID);
 		}
 
 		/*
@@ -602,38 +559,9 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 									deloffs, ndeloffs, itup, ntup,
 									leftchildbuf);
 
-<<<<<<< HEAD
-			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
-			PageSetLSN(state->stack->page, recptr);
-		}
-		else
-			PageSetLSN(state->stack->page, GetXLogRecPtrForTemp());
-
-		if (state->stack->blkno == GIST_ROOT_BLKNO)
-			state->needInsertComplete = false;
-
-		END_CRIT_SECTION();
-
-		if (state->ituplen > 1)
-		{						/* previous is_splitted==true */
-
-			/*
-			 * child was splited, so we must form union for insertion in
-			 * parent
-			 */
-			IndexTuple	newtup = gistunion(state->r, state->itup, state->ituplen, giststate);
-
-			ItemPointerSetBlockNumber(&(newtup->t_tid), state->stack->blkno);
-			state->itup[0] = newtup;
-			state->ituplen = 1;
-		}
-		else if (is_leaf)
-=======
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 		else
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			recptr = GetXLogRecPtrForTemp();
 			PageSetLSN(page, recptr);
@@ -663,7 +591,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		GistClearFollowRight(leftpg);
 
 		PageSetLSN(leftpg, recptr);
-		PageSetTLI(leftpg, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -717,12 +644,8 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 			gistcheckpage(state.r, stack->buffer);
 		}
 
-<<<<<<< HEAD
-		state->stack->lsn = BufferGetLSNAtomic(state->stack->buffer);
-		Assert(state->r->rd_istemp || !XLogRecPtrIsInvalid(state->stack->lsn));
-=======
 		stack->page = (Page) BufferGetPage(stack->buffer);
-		stack->lsn = PageGetLSN(stack->page);
+		stack->lsn = BufferGetLSNAtomic(stack->buffer);
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
 
 		/*
@@ -748,7 +671,6 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 			state.stack = stack = stack->parent;
 			continue;
 		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		if (stack->blkno != GIST_ROOT_BLKNO &&
 			XLByteLT(stack->parent->lsn,
@@ -1444,42 +1366,6 @@ gistSplit(Relation r,
  * Fill a GISTSTATE with information about the index
  */
 void
-<<<<<<< HEAD
-gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key)
-{
-	Page		page;
-
-	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = BufferGetPage(buffer);
-
-	START_CRIT_SECTION();
-
-	GISTInitBuffer(buffer, 0);
-	gistfillbuffer(page, itup, len, FirstOffsetNumber);
-
-	MarkBufferDirty(buffer);
-
-	if (!r->rd_istemp)
-	{
-		XLogRecPtr	recptr;
-		XLogRecData *rdata;
-
-		rdata = formUpdateRdata(r->rd_node, buffer,
-								NULL, 0,
-								itup, len, key);
-
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_NEW_ROOT, rdata);
-		PageSetLSN(page, recptr);
-	}
-	else
-		PageSetLSN(page, GetXLogRecPtrForTemp());
-
-	END_CRIT_SECTION();
-}
-
-void
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 initGISTstate(GISTSTATE *giststate, Relation index)
 {
 	int			i;

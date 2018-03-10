@@ -415,21 +415,9 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		bool		zero_penalty;
 		int			j;
 
-<<<<<<< HEAD
-		if (!GistPageIsLeaf(p) && GistTupleIsInvalid(itup))
-		{
-			ereport(LOG,
-					(errmsg("index \"%s\" needs VACUUM or REINDEX to finish crash recovery",
-							RelationGetRelationName(r))));
-			continue;
-		}
-
 		zero_penalty = true;
 
 		/* Loop over index attributes. */
-=======
-		sum_grow = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		for (j = 0; j < r->rd_att->natts; j++)
 		{
 			Datum		datum;
@@ -589,18 +577,11 @@ gistpenalty(GISTSTATE *giststate, int attno,
 	if (giststate->penaltyFn[attno].fn_strict == FALSE ||
 		(isNullOrig == FALSE && isNullAdd == FALSE))
 	{
-<<<<<<< HEAD
-		FunctionCall3(&giststate->penaltyFn[attno],
-					  PointerGetDatum(orig),
-					  PointerGetDatum(add),
-					  PointerGetDatum(&penalty));
-=======
 		FunctionCall3Coll(&giststate->penaltyFn[attno],
 						  giststate->supportCollation[attno],
 						  PointerGetDatum(orig),
 						  PointerGetDatum(add),
 						  PointerGetDatum(&penalty));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		/* disallow negative or NaN penalty */
 		if (isnan(penalty) || penalty < 0.0)
 			penalty = 0.0;
