@@ -59,11 +59,8 @@ extern Relation heap_create(const char *relname,
 			TupleDesc tupDesc,
 			Oid relam,
 			char relkind,
-<<<<<<< HEAD
-			char relstorage,
-=======
 			char relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			char relstorage,
 			bool shared_relation,
 			bool mapped_relation,
 			bool allow_system_table_mods);
@@ -79,11 +76,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 List *cooked_constraints,
 						 Oid relam,
 						 char relkind,
-<<<<<<< HEAD
-						 char relstorage,
-=======
 						 char relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+						 char relstorage,
 						 bool shared_relation,
 						 bool mapped_relation,
 						 bool oidislocal,

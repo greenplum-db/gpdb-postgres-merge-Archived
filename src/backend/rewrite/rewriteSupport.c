@@ -22,28 +22,11 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
-#include "utils/syscache.h"
-#include "utils/tqual.h"
-#include "access/transam.h"
-=======
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "access/transam.h"
 
-
-/*
- * Is there a rule by the given name?
- */
-bool
-IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
-{
-	return SearchSysCacheExists2(RULERELNAME,
-								 ObjectIdGetDatum(owningRel),
-								 PointerGetDatum(ruleName));
-}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * SetRelationRuleStatus

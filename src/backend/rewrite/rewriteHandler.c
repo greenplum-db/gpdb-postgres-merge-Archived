@@ -155,7 +155,6 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 				else
 					lockmode = AccessShareLock;
 
-<<<<<<< HEAD
 				/* Target of INSERT/UPDATE/DELETE? */
 				if (rt_index == parsetree->resultRelation)
 				{
@@ -180,17 +179,13 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 					rel = heap_open(rte->relid, lockmode);
 				}
 
-				/* Close the relcache entry without releasing the lock. */
-=======
-				rel = heap_open(rte->relid, lockmode);
-
 				/*
 				 * While we have the relation open, update the RTE's relkind,
 				 * just in case it changed since this rule was made.
 				 */
 				rte->relkind = rel->rd_rel->relkind;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				/* Close the relcache entry without releasing the lock. */
 				heap_close(rel, NoLock);
 				break;
 
