@@ -40,20 +40,14 @@ $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 $(SUBDIRS:%=%-recursive):
 	$(MAKE) -C $(subst -recursive,,$@) all
 
-$(call recurse,clean)
+$(call recurse,clean,unittest-check)
 clean: clean-local
 clean-local:
 	rm -f $(subsysfilename) $(OBJS)
-<<<<<<< HEAD
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
 
 .PHONY : unittest-check
 unittest-check:
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test check; fi
-ifdef SUBDIRS
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir unittest-check || exit; done
-endif
-=======
 
 $(call recurse,coverage)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

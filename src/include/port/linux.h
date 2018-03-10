@@ -19,10 +19,4 @@
  * perform better and (b) causes outright failures on ext4 data=journal
  * filesystems, because those don't support O_DIRECT.
  */
-<<<<<<< HEAD
-#define PLATFORM_DEFAULT_SYNC_METHOD_STR "fdatasync"
 #define PLATFORM_DEFAULT_SYNC_METHOD	SYNC_METHOD_FDATASYNC
-#define PLATFORM_DEFAULT_SYNC_FLAGBIT	0
-=======
-#define PLATFORM_DEFAULT_SYNC_METHOD	SYNC_METHOD_FDATASYNC
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

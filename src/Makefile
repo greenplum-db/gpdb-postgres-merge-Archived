@@ -20,33 +20,17 @@ SUBDIRS = \
 	backend/snowball \
 	include \
 	interfaces \
-	backend/replication/libpqwalreceiver \
 	bin \
 	pl \
 	makefiles \
-	test/regress
+	test/regress \
+	tools/fsync
 
-<<<<<<< HEAD
-all install installdirs uninstall distprep:
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/utils/mb/conversion_procs $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
-	$(MAKE) -C test/regress $@
-	$(MAKE) -C tools/fsync $@
-=======
 # There are too many interdependencies between the subdirectories, so
 # don't attempt parallel make here.
 .NOTPARALLEL:
 
 $(recurse)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 install: install-local
 
@@ -70,18 +54,6 @@ distprep:
 	$(MAKE) -C test/isolation $@
 
 clean:
-<<<<<<< HEAD
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@
@@ -89,18 +61,6 @@ clean:
 	$(MAKE) -C tools/fsync $@
 
 distclean maintainer-clean:
-<<<<<<< HEAD
-	$(MAKE) -C port $@
-	$(MAKE) -C timezone $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C backend/snowball $@
-	$(MAKE) -C include $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-	$(MAKE) -C makefiles $@
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@

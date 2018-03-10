@@ -50,6 +50,7 @@ SUBDIRS += \
 		gp_internal_tools \
 		gp_inject_fault \
 		gp_cancel_query \
+		gp_sparse_vector \
 		indexscan \
 
 ifeq ($(with_openssl),yes)

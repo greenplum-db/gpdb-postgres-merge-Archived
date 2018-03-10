@@ -11,11 +11,7 @@
 # GNUmakefile won't exist yet, so we catch that case as well.
 
 
-<<<<<<< HEAD
-all check install installdirs installcheck installcheck-parallel installcheck-good installcheck-optfunctional uninstall clean distclean maintainer-clean dist distcheck world check-world install-world installcheck-world installcheck-resgroup:
-=======
-all check install installdirs installcheck installcheck-parallel uninstall clean distclean maintainer-clean dist distcheck world check-world install-world installcheck-world:
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+all check install installdirs installcheck installcheck-parallel uninstall clean distclean maintainer-clean dist distcheck world check-world install-world installcheck-world installcheck-resgroup:
 	@if [ ! -f GNUmakefile ] ; then \
 	   echo "You need to run the 'configure' program first. See the file"; \
 	   echo "'INSTALL' for installation instructions." ; \
