@@ -98,7 +98,12 @@ typedef struct RelFileNodeBackend
 	 (node1).dbNode == (node2).dbNode && \
 	 (node1).spcNode == (node2).spcNode)
 
-<<<<<<< HEAD
+#define RelFileNodeBackendEquals(node1, node2) \
+	((node1).node.relNode == (node2).node.relNode && \
+	 (node1).node.dbNode == (node2).node.dbNode && \
+	 (node1).backend == (node2).backend && \
+	 (node1).node.spcNode == (node2).node.spcNode)
+
 inline static bool RelFileNode_IsEmpty(
 	RelFileNode	*relFileNode)
 {
@@ -106,13 +111,5 @@ inline static bool RelFileNode_IsEmpty(
 		    relFileNode->dbNode == 0 &&
 		    relFileNode->relNode == 0);
 }
-
-=======
-#define RelFileNodeBackendEquals(node1, node2) \
-	((node1).node.relNode == (node2).node.relNode && \
-	 (node1).node.dbNode == (node2).node.dbNode && \
-	 (node1).backend == (node2).backend && \
-	 (node1).node.spcNode == (node2).node.spcNode)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* RELFILENODE_H */

@@ -295,15 +295,13 @@ typedef struct PlannerInfo
 	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
 	struct Plan *non_recursive_plan;	/* plan for non-recursive term */
 
-<<<<<<< HEAD
-	PlannerConfig *config;		/* Planner configuration */
-
-	List	   *dynamicScans;	/* DynamicScanInfos */
-=======
 	/* These fields are workspace for createplan.c */
 	Relids		curOuterRels;	/* outer rels above current node */
 	List	   *curOuterParams; /* not-yet-assigned NestLoopParams */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	PlannerConfig *config;		/* Planner configuration */
+
+	List	   *dynamicScans;	/* DynamicScanInfos */
 
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
@@ -1043,7 +1041,6 @@ typedef struct TidPath
 } TidPath;
 
 /*
-<<<<<<< HEAD
  * CdbMotionPath represents transmission of the child Path results
  * from a set of sending processes to a set of receiving processes.
  */
@@ -1052,7 +1049,8 @@ typedef struct CdbMotionPath
 	Path		path;
     Path	   *subpath;
 } CdbMotionPath;
-=======
+
+/*
  * ForeignPath represents a scan of a foreign table
  */
 typedef struct ForeignPath
@@ -1061,7 +1059,6 @@ typedef struct ForeignPath
 	/* use struct pointer to avoid including fdwapi.h here */
 	struct FdwPlan *fdwplan;
 } ForeignPath;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * AppendPath represents an Append plan, ie, successive execution of
@@ -1782,11 +1779,7 @@ typedef struct MinMaxAggInfo
  * for that subplan).  The absolute level shown for such items corresponds
  * to the parent query of the subplan.
  *
-<<<<<<< HEAD
- * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce
- * them into one slot, but we do not do this for Aggref or Param slots.
-=======
- * Note: we detect duplicate Var parameters and coalesce them into one slot,
+ * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce them into one slot,
  * but we do not bother to do this for Aggrefs, and it would be incorrect
  * to do so for Param slots.  Duplicate detection is actually *necessary*
  * in the case of NestLoop parameters since it serves to match up the usage
@@ -1794,7 +1787,6 @@ typedef struct MinMaxAggInfo
  * NestLoop node).	This might result in the same PARAM_EXEC slot being used
  * by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
  * the same value would be assigned anyway.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 typedef struct PlannerParamItem
 {

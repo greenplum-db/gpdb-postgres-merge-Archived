@@ -107,10 +107,8 @@ extern TupleDesc lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 
-<<<<<<< HEAD
-extern List *build_tuple_node_list(int start);
-=======
 extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+extern List *build_tuple_node_list(int start);
 
 #endif   /* TYPCACHE_H */

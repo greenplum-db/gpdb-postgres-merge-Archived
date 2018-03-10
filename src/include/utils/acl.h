@@ -326,12 +326,8 @@ extern bool pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid);
 extern bool pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid);
 extern bool pg_foreign_data_wrapper_ownercheck(Oid srv_oid, Oid roleid);
 extern bool pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid);
-<<<<<<< HEAD
-extern bool has_createrole_privilege(Oid roleid);
-extern bool pg_extprotocol_ownercheck(Oid ptc_oid, Oid roleid);
-=======
 extern bool pg_extension_ownercheck(Oid ext_oid, Oid roleid);
 extern bool has_createrole_privilege(Oid roleid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern bool pg_extprotocol_ownercheck(Oid ptc_oid, Oid roleid);
 
 #endif   /* ACL_H */

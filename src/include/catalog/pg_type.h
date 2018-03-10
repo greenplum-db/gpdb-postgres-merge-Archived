@@ -453,52 +453,18 @@ DESCR("network IP address/netmask, network address");
 /* OIDS 900 - 999 */
 
 /* OIDS 1000 - 1099 */
-<<<<<<< HEAD
-DATA(insert OID = 1000 (  _bool		 PGNSP PGUID -1 f b A f t \054 0	16 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1001 (  _bytea	 PGNSP PGUID -1 f b A f t \054 0	17 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1002 (  _char		 PGNSP PGUID -1 f b A f t \054 0	18 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1003 (  _name		 PGNSP PGUID -1 f b A f t \054 0	19 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1005 (  _int2		 PGNSP PGUID -1 f b A f t \054 0	21 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-#define INT2ARRAYOID 1005
-DATA(insert OID = 1006 (  _int2vector PGNSP PGUID -1 f b A f t \054 0	22 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1007 (  _int4		 PGNSP PGUID -1 f b A f t \054 0	23 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-=======
 DATA(insert OID = 1000 (  _bool		 PGNSP PGUID -1 f b A f t \054 0	16 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1001 (  _bytea	 PGNSP PGUID -1 f b A f t \054 0	17 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1002 (  _char		 PGNSP PGUID -1 f b A f t \054 0	18 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1003 (  _name		 PGNSP PGUID -1 f b A f t \054 0	19 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1005 (  _int2		 PGNSP PGUID -1 f b A f t \054 0	21 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+#define INT2ARRAYOID 1005
 DATA(insert OID = 1006 (  _int2vector PGNSP PGUID -1 f b A f t \054 0	22 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1007 (  _int4		 PGNSP PGUID -1 f b A f t \054 0	23 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define INT4ARRAYOID		1007
 DATA(insert OID = 1008 (  _regproc	 PGNSP PGUID -1 f b A f t \054 0	24 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1009 (  _text		 PGNSP PGUID -1 f b A f t \054 0	25 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 100 _null_ _null_ ));
 #define TEXTARRAYOID		1009
-<<<<<<< HEAD
-DATA(insert OID = 1028 (  _oid		 PGNSP PGUID -1 f b A f t \054 0	26 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1010 (  _tid		 PGNSP PGUID -1 f b A f t \054 0	27 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1011 (  _xid		 PGNSP PGUID -1 f b A f t \054 0	28 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1012 (  _cid		 PGNSP PGUID -1 f b A f t \054 0	29 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1013 (  _oidvector PGNSP PGUID -1 f b A f t \054 0	30 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1014 (  _bpchar	 PGNSP PGUID -1 f b A f t \054 0 1042 0 array_in array_out array_recv array_send bpchartypmodin bpchartypmodout - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1015 (  _varchar	 PGNSP PGUID -1 f b A f t \054 0 1043 0 array_in array_out array_recv array_send varchartypmodin varchartypmodout - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1016 (  _int8		 PGNSP PGUID -1 f b A f t \054 0	20 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define INT8ARRAYOID		1016
-DATA(insert OID = 1017 (  _point	 PGNSP PGUID -1 f b A f t \054 0 600 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1018 (  _lseg		 PGNSP PGUID -1 f b A f t \054 0 601 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1019 (  _path		 PGNSP PGUID -1 f b A f t \054 0 602 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1020 (  _box		 PGNSP PGUID -1 f b A f t \073 0 603 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1021 (  _float4	 PGNSP PGUID -1 f b A f t \054 0 700 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-#define FLOAT4ARRAYOID 1021
-DATA(insert OID = 1022 (  _float8	 PGNSP PGUID -1 f b A f t \054 0 701 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-#define FLOAT8ARRAYOID 1022
-DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b A f t \054 0 702 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b A f t \054 0 703 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1 f b A f t \054 0 704 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1 f b A f t \054 0 604 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID 12 f b U f t \054 0 0 1034 aclitemin aclitemout - - - - - i p f 0 -1 0 _null_ _null_ ));
-=======
 DATA(insert OID = 1028 (  _oid		 PGNSP PGUID -1 f b A f t \054 0	26 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1010 (  _tid		 PGNSP PGUID -1 f b A f t \054 0	27 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1011 (  _xid		 PGNSP PGUID -1 f b A f t \054 0	28 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
@@ -507,6 +473,7 @@ DATA(insert OID = 1013 (  _oidvector PGNSP PGUID -1 f b A f t \054 0	30 0 array_
 DATA(insert OID = 1014 (  _bpchar	 PGNSP PGUID -1 f b A f t \054 0 1042 0 array_in array_out array_recv array_send bpchartypmodin bpchartypmodout - i x f 0 -1 0 100 _null_ _null_ ));
 DATA(insert OID = 1015 (  _varchar	 PGNSP PGUID -1 f b A f t \054 0 1043 0 array_in array_out array_recv array_send varchartypmodin varchartypmodout - i x f 0 -1 0 100 _null_ _null_ ));
 DATA(insert OID = 1016 (  _int8		 PGNSP PGUID -1 f b A f t \054 0	20 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
+#define INT8ARRAYOID		1016
 DATA(insert OID = 1017 (  _point	 PGNSP PGUID -1 f b A f t \054 0 600 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1018 (  _lseg		 PGNSP PGUID -1 f b A f t \054 0 601 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1019 (  _path		 PGNSP PGUID -1 f b A f t \054 0 602 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
@@ -514,12 +481,12 @@ DATA(insert OID = 1020 (  _box		 PGNSP PGUID -1 f b A f t \073 0 603 0 array_in 
 DATA(insert OID = 1021 (  _float4	 PGNSP PGUID -1 f b A f t \054 0 700 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 #define FLOAT4ARRAYOID 1021
 DATA(insert OID = 1022 (  _float8	 PGNSP PGUID -1 f b A f t \054 0 701 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
+#define FLOAT8ARRAYOID 1022
 DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b A f t \054 0 702 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b A f t \054 0 703 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1 f b A f t \054 0 704 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1 f b A f t \054 0 604 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID 12 f b U f t \054 0 0 1034 aclitemin aclitemout - - - - - i p f 0 -1 0 0 _null_ _null_ ));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DESCR("access control list");
 #define ACLITEMOID		1033
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b A f t \054 0 1033 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
@@ -620,12 +587,8 @@ DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b A f t \054 0 2206 0 arra
 /* uuid */
 DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b U f t \054 0 0 2951 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 0 _null_ _null_ ));
 DESCR("UUID datatype");
-<<<<<<< HEAD
 #define UUIDOID		2950
-DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-=======
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* text search */
 DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b U f t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - ts_typanalyze i x f 0 -1 0 0 _null_ _null_ ));

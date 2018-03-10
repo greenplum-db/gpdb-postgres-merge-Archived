@@ -21,11 +21,7 @@ extern TupleTableSlot *ExecMaterial(MaterialState *node);
 extern void ExecEndMaterial(MaterialState *node);
 extern void ExecMaterialMarkPos(MaterialState *node);
 extern void ExecMaterialRestrPos(MaterialState *node);
-<<<<<<< HEAD
-extern void ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt);
-extern void ExecEagerFreeMaterial(MaterialState *node);
-=======
 extern void ExecReScanMaterial(MaterialState *node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void ExecEagerFreeMaterial(MaterialState *node);
 
 #endif   /* NODEMATERIAL_H */

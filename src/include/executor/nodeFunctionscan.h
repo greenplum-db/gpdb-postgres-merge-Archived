@@ -19,11 +19,7 @@
 extern FunctionScanState *ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecFunctionScan(FunctionScanState *node);
 extern void ExecEndFunctionScan(FunctionScanState *node);
-<<<<<<< HEAD
-extern void ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt);
-extern void ExecEagerFreeFunctionScan(FunctionScanState *node);
-=======
 extern void ExecReScanFunctionScan(FunctionScanState *node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void ExecEagerFreeFunctionScan(FunctionScanState *node);
 
 #endif   /* NODEFUNCTIONSCAN_H */

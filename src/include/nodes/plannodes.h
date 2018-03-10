@@ -744,18 +744,29 @@ typedef struct WorkTableScan
 } WorkTableScan;
 
 /* ----------------
-<<<<<<< HEAD
-* External Scan node
-*
-* Field scan.scanrelid is the index of the external relation for
-* this node.
-*
-* Field filenames is a list of N string node pointers (or NULL)
-* where N is number of segments in the array. The pointer in
-* position I is NULL or points to the string node containing the
-* file name for segment I.
-* ----------------
-*/
+ *		ForeignScan node
+ * ----------------
+ */
+typedef struct ForeignScan
+{
+	Scan		scan;
+	bool		fsSystemCol;	/* true if any "system column" is needed */
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwPlan *fdwplan;
+} ForeignScan;
+
+/* ----------------
+ * External Scan node
+ *
+ * Field scan.scanrelid is the index of the external relation for
+ * this node.
+ *
+ * Field filenames is a list of N string node pointers (or NULL)
+ * where N is number of segments in the array. The pointer in
+ * position I is NULL or points to the string node containing the
+ * file name for segment I.
+ * ----------------
+ */
 typedef struct ExternalScan
 {
 	Scan		scan;
@@ -790,19 +801,6 @@ typedef struct AOCSScan
 	Scan		scan;
 	/* nothing for now... */
 } AOCSScan;
-=======
- *		ForeignScan node
- * ----------------
- */
-typedef struct ForeignScan
-{
-	Scan		scan;
-	bool		fsSystemCol;	/* true if any "system column" is needed */
-	/* use struct pointer to avoid including fdwapi.h here */
-	struct FdwPlan *fdwplan;
-} ForeignScan;
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * ==========
@@ -847,13 +845,10 @@ typedef struct Join
 typedef struct NestLoop
 {
 	Join		join;
-<<<<<<< HEAD
+	List	   *nestParams;		/* list of NestLoopParam nodes */
 
 	bool		shared_outer;
 	bool		singleton_outer; /*CDB-OLAP true => outer is plain Agg */
-=======
-	List	   *nestParams;		/* list of NestLoopParam nodes */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } NestLoop;
 
 typedef struct NestLoopParam
@@ -867,19 +862,11 @@ typedef struct NestLoopParam
  *		merge join node
  *
  * The expected ordering of each mergeable column is described by a btree
-<<<<<<< HEAD
- * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.  Note that the two sides of each mergeclause may
- * be of different datatypes, but they are ordered the same way according to
- * the common opfamily.  The operator in each mergeclause must be an equality
- * operator of the indicated opfamily.
-=======
  * opfamily OID, a collation OID, a direction (BTLessStrategyNumber or
  * BTGreaterStrategyNumber) and a nulls-first flag.  Note that the two sides
  * of each mergeclause may be of different datatypes, but they are ordered the
  * same way according to the common opfamily and collation.  The operator in
  * each mergeclause must be an equality operator of the indicated opfamily.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * ----------------
  */
 typedef struct MergeJoin

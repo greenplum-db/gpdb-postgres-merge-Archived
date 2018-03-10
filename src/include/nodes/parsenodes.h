@@ -173,16 +173,15 @@ typedef struct Query
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
 
-<<<<<<< HEAD
+	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
+								 * depends on to be semantically valid */
+
 	/*
 	 * MPP: Used only on QD. Don't serialize. Holds the result distribution
 	 * policy for SELECT ... INTO and set operations.
 	 */
 	struct GpPolicy *intoPolicy;
-=======
-	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
-								 * depends on to be semantically valid */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
 } Query;
 
 
@@ -790,11 +789,8 @@ typedef struct RangeTblEntry
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
-<<<<<<< HEAD
-	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
-=======
 	List	   *funccolcollations;		/* OID list of column collation OIDs */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -1038,14 +1034,9 @@ typedef struct CommonTableExpr
 	List	   *ctecolcollations;		/* OID list of column collation OIDs */
 } CommonTableExpr;
 
-<<<<<<< HEAD
-#define GetCTETargetList(cte) \
-	(AssertMacro((cte)->ctequery != NULL && IsA((cte)->ctequery, Query)), \
-=======
 /* Convenience macro to get the output tlist of a CTE's query */
 #define GetCTETargetList(cte) \
 	(AssertMacro(IsA((cte)->ctequery, Query)), \
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 ((Query *) (cte)->ctequery)->commandType == CMD_SELECT ? \
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
@@ -1304,45 +1295,6 @@ typedef enum DropBehavior
 } DropBehavior;
 
 /* ----------------------
- *		Create/Alter Extension Statements
- * ----------------------
- */
-
-typedef enum CreateExtensionState
-{
-	CREATE_EXTENSION_INIT,		/* not start to create extension */
-	CREATE_EXTENSION_BEGIN,     /* start to create extension */
-	CREATE_EXTENSION_END		/* finish to create extension */
-} CreateExtensionState;
-
-typedef struct CreateExtensionStmt
-{
-	NodeTag		type;
-	char	   *extname;
-	bool		if_not_exists;	/* just do nothing if it already exists? */
-	List	   *options;		/* List of DefElem nodes */
-	CreateExtensionState create_ext_state;		/* create extension state */
-} CreateExtensionStmt;
-
-/* Only used for ALTER EXTENSION UPDATE; later might need an action field */
-typedef struct AlterExtensionStmt
-{
-	NodeTag		type;
-	char	   *extname;
-	List	   *options;		/* List of DefElem nodes */
-} AlterExtensionStmt;
-
-typedef struct AlterExtensionContentsStmt
-{
-	NodeTag		type;
-	char	   *extname;		/* Extension's name */
-	int			action;			/* +1 = add object, -1 = drop object */
-	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
-} AlterExtensionContentsStmt;
-
-/* ----------------------
  *	Alter Table
  * ----------------------
  */
@@ -1384,11 +1336,7 @@ typedef enum AlterTableType
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_AddOids,					/* SET WITH OIDS */
-<<<<<<< HEAD
-	AT_AddOidsRecurse,			/* Like AddColumnRecurse, but for SET WITH OIDS */
-=======
 	AT_AddOidsRecurse,			/* internal to commands/tablecmds.c */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
@@ -1407,7 +1355,9 @@ typedef enum AlterTableType
 	AT_DisableRule,				/* DISABLE RULE name */
 	AT_AddInherit,				/* INHERIT parent */
 	AT_DropInherit,				/* NO INHERIT parent */
-<<<<<<< HEAD
+	AT_AddOf,					/* OF <type_name> */
+	AT_DropOf,					/* NOT OF */
+	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	/* CDB: Partitioned Tables */
 	AT_PartAdd,					/* Add */
@@ -1420,11 +1370,6 @@ typedef enum AlterTableType
 	AT_PartSplit,				/* Split */
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal			/* CREATE TABLE time partition addition */
-=======
-	AT_AddOf,					/* OF <type_name> */
-	AT_DropOf,					/* NOT OF */
-	AT_GenericOptions,			/* OPTIONS (...) */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -1720,7 +1665,8 @@ typedef struct CreateStmt
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
-<<<<<<< HEAD
+	bool		if_not_exists;	/* just do nothing if it already exists? */
+
 	List       *distributedBy;   /* what columns we distribute the data by */
 	Node       *partitionBy;     /* what columns we partition the data by */
 	char	    relKind;         /* CDB: force relkind to this */
@@ -1739,9 +1685,6 @@ typedef struct CreateStmt
 	Oid			ownerid;		/* OID of the role to own this. if InvalidOid, GetUserId() */
 	bool		buildAoBlkdir; /* whether to build the block directory for an AO table */
 	List	   *attr_encodings; /* attribute storage directives */
-=======
-	bool		if_not_exists;	/* just do nothing if it already exists? */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } CreateStmt;
 
 /* ----------------------
@@ -1891,14 +1834,11 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	bool		skip_validation;	/* skip validation of existing rows? */
-<<<<<<< HEAD
+	bool		initially_valid;	/* start the new constraint as valid */
 	Oid			trig1Oid;
 	Oid			trig2Oid;
 	Oid			trig3Oid;
 	Oid			trig4Oid;
-=======
-	bool		initially_valid;	/* start the new constraint as valid */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } Constraint;
 
 /* ----------
@@ -2037,12 +1977,20 @@ typedef struct AlterTableSpaceOptionsStmt
  * ----------------------
  */
 
+typedef enum CreateExtensionState
+{
+	CREATE_EXTENSION_INIT,		/* not start to create extension */
+	CREATE_EXTENSION_BEGIN,     /* start to create extension */
+	CREATE_EXTENSION_END		/* finish to create extension */
+} CreateExtensionState;
+
 typedef struct CreateExtensionStmt
 {
 	NodeTag		type;
 	char	   *extname;
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 	List	   *options;		/* List of DefElem nodes */
+	CreateExtensionState create_ext_state;		/* create extension state */
 } CreateExtensionStmt;
 
 /* Only used for ALTER EXTENSION UPDATE; later might need an action field */
@@ -2589,11 +2537,8 @@ typedef struct IndexStmt
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
-<<<<<<< HEAD
-	bool		is_part_child;	/* in service of a part of a partition? */
-=======
 	Oid			indexOid;		/* OID of an existing index, if any */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	bool		is_part_child;	/* in service of a part of a partition? */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -2722,11 +2667,8 @@ typedef struct RenameStmt
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
-<<<<<<< HEAD
-	bool		bAllowPartn;	/* allow action on a partition */
-=======
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	bool		bAllowPartn;	/* allow action on a partition */
 } RenameStmt;
 
 /* ----------------------

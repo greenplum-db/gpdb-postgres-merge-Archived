@@ -139,14 +139,9 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
 					 Oid collation,
 					 Const **prefix,
-<<<<<<< HEAD
 					 Selectivity *rest_selec);
-extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc);
-=======
-					 Const **rest);
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 					Oid collation);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
 extern Datum neqsel(PG_FUNCTION_ARGS);

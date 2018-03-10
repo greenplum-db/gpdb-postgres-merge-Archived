@@ -19,13 +19,9 @@
 extern BitmapHeapScanState *ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecBitmapHeapScan(BitmapHeapScanState *node);
 extern void ExecEndBitmapHeapScan(BitmapHeapScanState *node);
-<<<<<<< HEAD
-extern void ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt);
+extern void ExecReScanBitmapHeapScan(BitmapHeapScanState *node);
 extern void ExecEagerFreeBitmapHeapScan(BitmapHeapScanState *node);
 
 extern void bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres);
-=======
-extern void ExecReScanBitmapHeapScan(BitmapHeapScanState *node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* NODEBITMAPHEAPSCAN_H */

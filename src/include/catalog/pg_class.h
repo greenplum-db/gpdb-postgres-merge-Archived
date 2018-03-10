@@ -103,11 +103,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-<<<<<<< HEAD
-#define Natts_pg_class					28
-=======
-#define Natts_pg_class					26
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Natts_pg_class					27
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -124,31 +120,17 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relisshared		14
 #define Anum_pg_class_relpersistence	15
 #define Anum_pg_class_relkind			16
-<<<<<<< HEAD
 #define Anum_pg_class_relstorage		17
 #define Anum_pg_class_relnatts			18
 #define Anum_pg_class_relchecks			19
 #define Anum_pg_class_relhasoids		20
 #define Anum_pg_class_relhaspkey		21
-#define Anum_pg_class_relhasexclusion	22
-#define Anum_pg_class_relhasrules		23
-#define Anum_pg_class_relhastriggers	24
-#define Anum_pg_class_relhassubclass	25
-#define Anum_pg_class_relfrozenxid		26
-#define Anum_pg_class_relacl			27
-#define Anum_pg_class_reloptions		28
-=======
-#define Anum_pg_class_relnatts			17
-#define Anum_pg_class_relchecks			18
-#define Anum_pg_class_relhasoids		19
-#define Anum_pg_class_relhaspkey		20
-#define Anum_pg_class_relhasrules		21
-#define Anum_pg_class_relhastriggers	22
-#define Anum_pg_class_relhassubclass	23
-#define Anum_pg_class_relfrozenxid		24
-#define Anum_pg_class_relacl			25
-#define Anum_pg_class_reloptions		26
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Anum_pg_class_relhasrules		22
+#define Anum_pg_class_relhastriggers	23
+#define Anum_pg_class_relhassubclass	24
+#define Anum_pg_class_relfrozenxid		25
+#define Anum_pg_class_relacl			26
+#define Anum_pg_class_reloptions		27
 
 /* ----------------
  *		initial contents of pg_class
@@ -160,33 +142,13 @@ typedef FormData_pg_class *Form_pg_class;
  */
 
 /* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
-<<<<<<< HEAD
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f f r h 28 0 t f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f f r h 28 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f f r h 19 0 f f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f f r h 19 0 f f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f f r h 27 0 t f f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f f r h 27 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f f r h 28 0 t f f f f f 3 _null_ _null_ ));
-DESCR("");
-
-
-#define		  RELKIND_INDEX			  'i'		/* secondary index */
-#define		  RELKIND_RELATION		  'r'		/* ordinary cataloged heap */
-#define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */
-#define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
-#define		  RELKIND_TOASTVALUE	  't'		/* moved off huge values */
-#define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
-#define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
-#define		  RELKIND_AOVISIMAP		  'm'		/* AO visibility map */
-=======
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 29 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 20 0 f f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 25 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 26 0 t f f f f 3 _null_ _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f f r h 28 0 t f f f f 3 _null_ _null_ ));
 DESCR("");
 
 
@@ -194,11 +156,13 @@ DESCR("");
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
 #define		  RELKIND_SEQUENCE		  'S'		/* sequence object */
 #define		  RELKIND_TOASTVALUE	  't'		/* for out-of-line values */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
 #define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
 #define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
+#define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
+#define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
+#define		  RELKIND_AOVISIMAP		  'm'		/* AO visibility map */
 
 #define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
 #define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */

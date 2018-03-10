@@ -21,11 +21,7 @@ extern struct TupleTableSlot *ExecSort(SortState *node);
 extern void ExecEndSort(SortState *node);
 extern void ExecSortMarkPos(SortState *node);
 extern void ExecSortRestrPos(SortState *node);
-<<<<<<< HEAD
-extern void ExecReScanSort(SortState *node, ExprContext *exprCtxt);
-extern void ExecEagerFreeSort(SortState *node);
-=======
 extern void ExecReScanSort(SortState *node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void ExecEagerFreeSort(SortState *node);
 
 #endif   /* NODESORT_H */

@@ -23,12 +23,8 @@ extern TupleTableSlot *ExecIndexScan(IndexScanState *node);
 extern void ExecEndIndexScan(IndexScanState *node);
 extern void ExecIndexMarkPos(IndexScanState *node);
 extern void ExecIndexRestrPos(IndexScanState *node);
-<<<<<<< HEAD
-extern void ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt);
-extern void ExecEagerFreeIndexScan(IndexScanState *node);
-=======
 extern void ExecReScanIndexScan(IndexScanState *node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void ExecEagerFreeIndexScan(IndexScanState *node);
 
 /* routines exported to share code with nodeBitmapIndexscan.c */
 extern void ExecIndexBuildScanKeys(PlanState *planstate, Relation index,

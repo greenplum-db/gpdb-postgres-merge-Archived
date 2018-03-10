@@ -259,14 +259,10 @@ typedef struct Aggref
 	Expr		xpr;
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggtype;		/* type Oid of result of the aggregate */
-<<<<<<< HEAD
-	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
-	List	   *args;			/* aggregated arguments and sort expressions */
-=======
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
-	List	   *args;			/* arguments and sort expressions */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
+	List	   *args;			/* aggregated arguments and sort expressions */
 	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
 	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
 	Expr	   *aggfilter;		/* FILTER expression, if any */
@@ -1084,14 +1080,9 @@ typedef struct MinMaxExpr
  * 'args' carries all other arguments.
  *
  * Note: result type/typmod/collation are not stored, but can be deduced
-<<<<<<< HEAD
  * from the XmlExprOp.  The type/typmod fields are just used for display
  * purposes, and are NOT necessarily the true result type of the node.
  * (We also use type == InvalidOid to mark a not-yet-parse-analyzed XmlExpr.)
-=======
- * from the XmlExprOp.	The type/typmod fields are just used for display
- * purposes, and are NOT the true result type of the node.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 typedef enum XmlExprOp
 {

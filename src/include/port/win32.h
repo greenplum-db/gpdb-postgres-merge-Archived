@@ -4,12 +4,6 @@
 #define WIN32_ONLY_COMPILER
 #endif
 
-<<<<<<< HEAD
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-
-=======
 /*
  * Make sure _WIN32_WINNT has the minumum required value.
  * Leave a higher value in place.
@@ -20,7 +14,6 @@
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 #endif
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * Always build with SSPI support. Keep it as a #define in case
  * we want a switch to disable it sometime in the future.
@@ -40,10 +33,7 @@
  */
 #if !defined(WIN64) || defined(WIN32_ONLY_COMPILER)
 #define _WINSOCKAPI_
-<<<<<<< HEAD
-=======
 #endif
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
