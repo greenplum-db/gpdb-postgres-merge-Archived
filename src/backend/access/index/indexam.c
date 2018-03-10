@@ -600,18 +600,14 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 				break;
 
 			/* If it's visible per the snapshot, we must return it */
-<<<<<<< HEAD
-			if (HeapTupleSatisfiesVisibility(scan->heapRelation, heapTuple,
-											 scan->xs_snapshot, scan->xs_cbuf))
-=======
-			valid = HeapTupleSatisfiesVisibility(heapTuple, scan->xs_snapshot,
+			valid = HeapTupleSatisfiesVisibility(scan->heapRelation,
+												 heapTuple, scan->xs_snapshot,
 												 scan->xs_cbuf);
 
 			CheckForSerializableConflictOut(valid, scan->heapRelation,
 											heapTuple, scan->xs_cbuf);
 
 			if (valid)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			{
 				/*
 				 * If the snapshot is MVCC, we know that it could accept at

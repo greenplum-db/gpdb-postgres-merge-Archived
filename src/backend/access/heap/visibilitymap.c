@@ -372,12 +372,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	}
 
 	/* Truncate the unused VM pages, and send smgr inval message */
-<<<<<<< HEAD
-	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks,
-				 rel->rd_isLocalBuf);
-=======
 	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * We might as well update the local smgr_vm_nblocks setting. smgrtruncate

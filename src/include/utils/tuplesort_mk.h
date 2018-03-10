@@ -28,7 +28,8 @@ typedef struct Tuplesortstate_mk Tuplesortstate_mk;
 extern Tuplesortstate_mk *tuplesort_begin_heap_mk(ScanState * ss,
 					 TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, bool *nullsFirstFlags,
+					 Oid *sortOperators, Oid *sortCollations,
+					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
 
 extern Tuplesortstate_mk *tuplesort_begin_index_mk(Relation indexRel,
@@ -37,7 +38,8 @@ extern Tuplesortstate_mk *tuplesort_begin_index_mk(Relation indexRel,
 
 extern Tuplesortstate_mk *tuplesort_begin_datum_mk(ScanState * ss,
 					  Oid datumType,
-					  Oid sortOperator, bool nullsFirstFlag,
+					  Oid sortOperator, Oid sortCollation,
+					  bool nullsFirstFlag,
 					  int workMem, bool randomAccess);
 
 extern Tuplesortstate_mk *tuplesort_begin_heap_file_readerwriter_mk(

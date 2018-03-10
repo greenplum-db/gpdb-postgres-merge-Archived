@@ -1014,15 +1014,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	/*
 	 * origpage is the original page to be split.  leftpage is a temporary
 	 * buffer that receives the left-sibling data, which will be copied back
-<<<<<<< HEAD
-	 * into origpage on success.  rightpage is the new page that receives
-	 * the right-sibling data.  If we fail before reaching the critical
-	 * section, origpage hasn't been modified and leftpage is only workspace.
-	 * In principle we shouldn't need to worry about rightpage either,
-	 * because it hasn't been linked into the btree page structure; but to
-	 * avoid leaving possibly-confusing junk behind, we are careful to rewrite
-	 * rightpage as zeroes before throwing any error.
-=======
 	 * into origpage on success.  rightpage is the new page that receives the
 	 * right-sibling data.	If we fail before reaching the critical section,
 	 * origpage hasn't been modified and leftpage is only workspace. In
@@ -1030,7 +1021,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * hasn't been linked into the btree page structure; but to avoid leaving
 	 * possibly-confusing junk behind, we are careful to rewrite rightpage as
 	 * zeroes before throwing any error.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	origpage = BufferGetPage(buf);
 	leftpage = PageGetTempPage(origpage);
@@ -1226,11 +1216,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "right sibling's left-link doesn't match: "
-<<<<<<< HEAD
-				 "block %u links to %u instead of expected %u in index \"%s\"",
-=======
 			   "block %u links to %u instead of expected %u in index \"%s\"",
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 oopaque->btpo_next, sopaque->btpo_prev, origpagenumber,
 				 RelationGetRelationName(rel));
 		}
@@ -1278,18 +1264,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 */
 	PageRestoreTempPage(leftpage, origpage);
 	/* leftpage, lopaque must not be used below here */
-<<<<<<< HEAD
-
-	MarkBufferDirty(buf);
-	MarkBufferDirty(rbuf);
-
-	if (!P_RIGHTMOST(ropaque))
-	{
-		sopaque->btpo_prev = rightpagenumber;
-		MarkBufferDirty(sbuf);
-	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	MarkBufferDirty(buf);
 	MarkBufferDirty(rbuf);

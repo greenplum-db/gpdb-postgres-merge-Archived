@@ -212,7 +212,36 @@ btbuildCallback(Relation index,
 }
 
 /*
-<<<<<<< HEAD
+ *	btbuildempty() -- build an empty btree index in the initialization fork
+ */
+Datum
+btbuildempty(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	Page		metapage;
+
+	/* Construct metapage. */
+	metapage = (Page) palloc(BLCKSZ);
+	_bt_initmetapage(metapage, P_NONE, 0);
+
+	/* Write the page.	If archiving/streaming, XLOG it. */
+	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
+			  (char *) metapage, true);
+	if (XLogIsNeeded())
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+					BTREE_METAPAGE, metapage);
+
+	/*
+	 * An immediate sync is require even if we xlog'd the page, because the
+	 * write did not go through shared_buffers and therefore a concurrent
+	 * checkpoint may have move the redo pointer past our xlog record.
+	 */
+	smgrimmedsync(index->rd_smgr, INIT_FORKNUM);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * Post vacuum, iterate over all entries in index, check if the h_tid
  * of each entry exists and is not dead.  For specific system tables,
  * also ensure that the key in index entry matches the corresponding
@@ -425,35 +454,6 @@ _bt_validate_tid(Relation irel, ItemPointer h_tid)
 		}
 		ReleaseBuffer(buf);
 	}
-=======
- *	btbuildempty() -- build an empty btree index in the initialization fork
- */
-Datum
-btbuildempty(PG_FUNCTION_ARGS)
-{
-	Relation	index = (Relation) PG_GETARG_POINTER(0);
-	Page		metapage;
-
-	/* Construct metapage. */
-	metapage = (Page) palloc(BLCKSZ);
-	_bt_initmetapage(metapage, P_NONE, 0);
-
-	/* Write the page.	If archiving/streaming, XLOG it. */
-	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
-			  (char *) metapage, true);
-	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					BTREE_METAPAGE, metapage);
-
-	/*
-	 * An immediate sync is require even if we xlog'd the page, because the
-	 * write did not go through shared_buffers and therefore a concurrent
-	 * checkpoint may have move the redo pointer past our xlog record.
-	 */
-	smgrimmedsync(index->rd_smgr, INIT_FORKNUM);
-
-	PG_RETURN_VOID();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*

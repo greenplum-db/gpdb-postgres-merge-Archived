@@ -260,7 +260,8 @@ typedef struct switcheroo_Tuplesortstate switcheroo_Tuplesortstate;
 static inline switcheroo_Tuplesortstate *
 switcheroo_tuplesort_begin_heap(ScanState *ss, TupleDesc tupDesc,
 					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, bool *nullsFirstFlags,
+					 Oid *sortOperators, Oid *sortCollations,
+					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess)
 {
 	switcheroo_Tuplesortstate *state;
@@ -269,14 +270,16 @@ switcheroo_tuplesort_begin_heap(ScanState *ss, TupleDesc tupDesc,
 	{
 		state = (switcheroo_Tuplesortstate *)
 			tuplesort_begin_heap_mk(ss, tupDesc, nkeys, attNums,
-									sortOperators, nullsFirstFlags,
+									sortOperators, sortCollations,
+									nullsFirstFlags,
 									workMem, randomAccess);
 	}
 	else
 	{
 		state = (switcheroo_Tuplesortstate *)
 			tuplesort_begin_heap_pg(ss, tupDesc, nkeys, attNums,
-									sortOperators, nullsFirstFlags,
+									sortOperators,sortCollations,
+									nullsFirstFlags,
 									workMem, randomAccess);
 	}
 	state->is_mk_tuplesortstate = gp_enable_mk_sort;

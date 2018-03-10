@@ -298,14 +298,7 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 				valid = true;
 			}
 			else
-<<<<<<< HEAD
 			{
-				HeapTupleData loctup;
-
-				loctup.t_data = theader;
-				loctup.t_len = ItemIdGetLength(lpp);
-				ItemPointerSet(&(loctup.t_self), page, lineoff);
-
 				valid = HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer);
 				if (valid)
 				{
@@ -314,12 +307,9 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 					t_cid = HeapTupleHeaderGetRawCommandId(loctup.t_data);
 				}
 			}
-=======
-				valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
 
 			CheckForSerializableConflictOut(valid, scan->rs_rd, &loctup, buffer);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			if (valid)
 				scan->rs_vistuples[ntup++] = lineoff;
 		}
@@ -1879,7 +1869,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 
 		heapTuple.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple.t_len = ItemIdGetLength(lp);
-		heapTuple.t_tableOid = relation->rd_id;
 		heapTuple.t_self = *tid;
 
 		/*
@@ -1898,13 +1887,9 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;
 
 		/* If it's visible per the snapshot, we must return it */
-<<<<<<< HEAD
-		if (HeapTupleSatisfiesVisibility(rel, &heapTuple, snapshot, buffer))
-=======
-		valid = HeapTupleSatisfiesVisibility(&heapTuple, snapshot, buffer);
+		valid = HeapTupleSatisfiesVisibility(relation, &heapTuple, snapshot, buffer);
 		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer);
 		if (valid)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			ItemPointerSetOffsetNumber(tid, offnum);
 			PredicateLockTuple(relation, &heapTuple);
@@ -1919,7 +1904,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * transactions.
 		 */
 		if (all_dead && *all_dead &&
-			HeapTupleSatisfiesVacuum(rel, heapTuple.t_data, RecentGlobalXmin,
+			HeapTupleSatisfiesVacuum(relation, heapTuple.t_data, RecentGlobalXmin,
 									 buffer) != HEAPTUPLE_DEAD)
 			*all_dead = false;
 
@@ -2064,12 +2049,8 @@ heap_get_latest_tid(Relation relation,
 		 * Check time qualification of tuple; if visible, set it as the new
 		 * result candidate.
 		 */
-<<<<<<< HEAD
 		valid = HeapTupleSatisfiesVisibility(relation, &tp, snapshot, buffer);
-=======
-		valid = HeapTupleSatisfiesVisibility(&tp, snapshot, buffer);
 		CheckForSerializableConflictOut(valid, relation, &tp, buffer);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		if (valid)
 			*tid = ctid;
 
@@ -2606,13 +2587,8 @@ l1:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
-<<<<<<< HEAD
-		/* Perform additional check for serializable RI updates */
-		if (!HeapTupleSatisfiesVisibility(relation, &tp, crosscheck, buffer))
-=======
 		/* Perform additional check for transaction-snapshot mode RI updates */
-		if (!HeapTupleSatisfiesVisibility(&tp, crosscheck, buffer))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		if (!HeapTupleSatisfiesVisibility(relation, &tp, crosscheck, buffer))
 			result = HeapTupleUpdated;
 	}
 
@@ -2973,13 +2949,8 @@ l2:
 
 	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
-<<<<<<< HEAD
-		/* Perform additional check for serializable RI updates */
-		if (!HeapTupleSatisfiesVisibility(relation, &oldtup, crosscheck, buffer))
-=======
 		/* Perform additional check for transaction-snapshot mode RI updates */
-		if (!HeapTupleSatisfiesVisibility(&oldtup, crosscheck, buffer))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		if (!HeapTupleSatisfiesVisibility(relation, &oldtup, crosscheck, buffer))
 			result = HeapTupleUpdated;
 	}
 
@@ -3098,7 +3069,7 @@ l2:
 
 		MarkBufferDirty(buffer);
 
-		if (!relation->rd_istemp)
+		if (RelationNeedsWAL(relation))
 		{
 			xl_heap_lock xlrec;
 			XLogRecPtr	recptr;
@@ -4691,21 +4662,12 @@ log_newpage_internal(xl_heap_newpage *xlrec, Page page)
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 	/*
-<<<<<<< HEAD
-	 * The page may be uninitialized. If so, we can't set the LSN
-	 * and TLI because that would corrupt the page.
-=======
-	 * The page may be uninitialized. If so, we can't set the LSN and TLI
-	 * because that would corrupt the page.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	 * The page may be uninitialized. If so, we can't set the LSN because that
+	 * would corrupt the page.
 	 */
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, recptr);
-<<<<<<< HEAD
-=======
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	END_CRIT_SECTION();
@@ -4925,21 +4887,12 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
 	/*
-<<<<<<< HEAD
 	 * The page may be uninitialized. If so, we can't set the LSN because that
 	 * would corrupt the page.
-=======
-	 * The page may be uninitialized. If so, we can't set the LSN and TLI
-	 * because that would corrupt the page.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, lsn);
-<<<<<<< HEAD
-=======
-		PageSetTLI(page, ThisTimeLineID);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	MarkBufferDirty(buffer);

@@ -1182,15 +1182,12 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 			 "block %u links to %u instead of expected %u in index \"%s\"",
 			 rightsib, opaque->btpo_prev, target,
 			 RelationGetRelationName(rel));
-<<<<<<< HEAD
-=======
 
 	/*
 	 * Any insert which would have gone on the target block will now go to the
 	 * right sibling block.
 	 */
 	PredicateLockPageCombine(rel, target, rightsib);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Next find and write-lock the current parent of the target page. This is
@@ -1270,15 +1267,9 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 	/*
 	 * Check that the parent-page index items we're about to delete/overwrite
-<<<<<<< HEAD
-	 * contain what we expect.  This can fail if the index has become
-	 * corrupt for some reason.  We want to throw any error before entering
-	 * the critical section --- otherwise it'd be a PANIC.
-=======
 	 * contain what we expect.	This can fail if the index has become corrupt
 	 * for some reason.  We want to throw any error before entering the
 	 * critical section --- otherwise it'd be a PANIC.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 *
 	 * The test on the target item is just an Assert because _bt_getstackbuf
 	 * should have guaranteed it has the expected contents.  The test on the

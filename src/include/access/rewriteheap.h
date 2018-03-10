@@ -25,11 +25,7 @@ extern RewriteState begin_heap_rewrite(Relation NewHeap,
 extern void end_heap_rewrite(RewriteState state);
 extern void rewrite_heap_tuple(RewriteState state, HeapTuple oldTuple,
 				   HeapTuple newTuple);
-<<<<<<< HEAD
-extern void rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
-extern TransactionId get_rewrite_freeze_xid(RewriteState state);
-=======
 extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern TransactionId get_rewrite_freeze_xid(RewriteState state); // GPDB_91_MERGE_FIXME: I don't think we need this anymore, after the PR to enable autovacuum on template0
 
 #endif   /* REWRITE_HEAP_H */

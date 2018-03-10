@@ -1202,12 +1202,7 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 		default:
-<<<<<<< HEAD
-			/* sequences, composite types and views are not supported */
-			/* Neither are AO aux tables (AO segments, blockdir, visimap) */
-=======
 			/* other relkinds are not supported */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			return NULL;
 	}
 }
