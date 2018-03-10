@@ -3,13 +3,9 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -225,15 +221,6 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
 			
 			phinfo->ph_needed = bms_add_members(phinfo->ph_needed,
 												where_needed);
-<<<<<<< HEAD
-			/*
-			 * Update ph_may_need too.  This is currently only necessary
-			 * when being called from build_base_rel_tlists, but we may as
-			 * well do it always.
-			 */
-			phinfo->ph_may_need = bms_add_members(phinfo->ph_may_need,
-														  where_needed);
-=======
 
 			/*
 			 * Update ph_may_need too.	This is currently only necessary when
@@ -242,7 +229,6 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
 			 */
 			phinfo->ph_may_need = bms_add_members(phinfo->ph_may_need,
 												  where_needed);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		else
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
@@ -825,13 +811,8 @@ make_outerjoininfo(PlannerInfo *root,
 	 * this join's nullable side, and it may get used above this join, then
 	 * ensure that min_righthand contains the full eval_at set of the PHV.
 	 * This ensures that the PHV actually can be evaluated within the RHS.
-<<<<<<< HEAD
-	 * Note that this works only because we should already have determined
-	 * the final eval_at level for any PHV syntactically within this join.
-=======
 	 * Note that this works only because we should already have determined the
 	 * final eval_at level for any PHV syntactically within this join.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	foreach(l, root->placeholder_list)
 	{

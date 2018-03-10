@@ -58,12 +58,9 @@ static const int oldObjectTypePriority[] =
 	17,							/* DO_DEFAULT_ACL */
 	9,							/* DO_BLOB */
 	11,							/* DO_BLOB_DATA */
-<<<<<<< HEAD
+	2,							/* DO_COLLATION */
 	3,							/* DO_EXTPROTOCOL */
 	/* GPDB_84_MERGE_FIXME: missing DO_TYPE_STORAGE_OPTIONS? */
-=======
-	2							/* DO_COLLATION */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 };
 
 /*

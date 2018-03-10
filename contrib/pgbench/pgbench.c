@@ -591,12 +591,7 @@ replaceVariable(char **sql, char *param, int len, char *value)
 
 	if (valueln > len)
 	{
-<<<<<<< HEAD
-		char   *tmp;
-		size_t	offset = param - *sql;
-=======
 		size_t		offset = param - *sql;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		*sql = xrealloc(*sql, strlen(*sql) - len + valueln + 1);
 		param = *sql + offset;

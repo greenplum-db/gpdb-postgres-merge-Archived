@@ -3,14 +3,9 @@
  *
  *	information support functions
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
- *	Portions Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/info.c,v 1.11 2010/07/06 19:18:55 momjian Exp $
-=======
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/info.c
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "pg_upgrade.h"

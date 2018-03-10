@@ -416,15 +416,9 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 		char	   *oldest_datname;
 
 		/*
-<<<<<<< HEAD
-		 * We can be called when not inside a transaction, for example
-		 * during StartupXLOG().  In such a case we cannot do database
-		 * access, so we must just report the oldest DB's OID.
-=======
 		 * We can be called when not inside a transaction, for example during
 		 * StartupXLOG().  In such a case we cannot do database access, so we
 		 * must just report the oldest DB's OID.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 *
 		 * Note: it's also possible that get_database_name fails and returns
 		 * NULL, for example because the database just got dropped.  We'll

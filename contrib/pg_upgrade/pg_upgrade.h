@@ -1,14 +1,9 @@
 /*
  *	pg_upgrade.h
  *
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
- *	Portions Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/pg_upgrade.h,v 1.15.2.1 2010/07/25 03:47:33 momjian Exp $
-=======
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/pg_upgrade.h
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "postgres.h"

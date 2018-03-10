@@ -100,11 +100,7 @@ gettoken(WORKSTATE *state, int4 *val)
 				}
 				else
 				{
-<<<<<<< HEAD
-					long	lval;
-=======
 					long		lval;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 					nnn[innn] = '\0';
 					errno = 0;
@@ -360,17 +356,10 @@ gin_bool_consistent(QUERYTYPE *query, bool *check)
 	if (query->size <= 0)
 		return FALSE;
 
-<<<<<<< HEAD
- 	/*
- 	 * Set up data for checkcondition_gin.  This must agree with the
- 	 * query extraction code in ginint4_queryextract.
- 	 */
-=======
 	/*
 	 * Set up data for checkcondition_gin.	This must agree with the query
 	 * extraction code in ginint4_queryextract.
 	 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	gcv.first = items;
 	gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);
 	for (i = 0; i < query->size; i++)
@@ -443,13 +432,8 @@ rboolop(PG_FUNCTION_ARGS)
 Datum
 boolop(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	ArrayType  *val = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(0);
-	QUERYTYPE  *query = (QUERYTYPE *) PG_GETARG_QUERYTYPE_P(1);
-=======
 	ArrayType  *val = PG_GETARG_ARRAYTYPE_P_COPY(0);
 	QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(1);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	CHKVAL		chkval;
 	bool		result;
 
@@ -658,11 +642,7 @@ infix(INFIX *in, bool first)
 Datum
 bqarr_out(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	QUERYTYPE  *query = (QUERYTYPE *) PG_GETARG_QUERYTYPE_P(0);
-=======
 	QUERYTYPE  *query = PG_GETARG_QUERYTYPE_P(0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	INFIX		nrm;
 
 	if (query->size == 0)

@@ -3,13 +3,9 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h
@@ -126,12 +122,9 @@ typedef enum
 	DO_DEFAULT_ACL,
 	DO_BLOB,
 	DO_BLOB_DATA,
-<<<<<<< HEAD
+	DO_COLLATION,
 	DO_EXTPROTOCOL,
 	DO_TYPE_STORAGE_OPTIONS
-=======
-	DO_COLLATION
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -158,11 +151,7 @@ typedef struct _namespaceInfo
 typedef struct _extensionInfo
 {
 	DumpableObject dobj;
-<<<<<<< HEAD
-	char 	   *namespace;		/* schema containing extension's objects */
-=======
 	char	   *namespace;		/* schema containing extension's objects */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		relocatable;
 	char	   *extversion;
 	char	   *extconfig;		/* info about configuration tables */

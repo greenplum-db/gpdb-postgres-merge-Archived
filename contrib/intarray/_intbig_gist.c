@@ -504,11 +504,7 @@ Datum
 g_intbig_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-<<<<<<< HEAD
-	ArrayType  *query = (ArrayType *) PG_GETARG_ARRAYTYPE_P(1);
-=======
 	ArrayType  *query = PG_GETARG_ARRAYTYPE_P(1);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/* Oid		subtype = PG_GETARG_OID(3); */

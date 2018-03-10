@@ -3,13 +3,8 @@
  *
  *	controldata functions
  *
-<<<<<<< HEAD
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/controldata.c,v 1.9.2.1 2010/09/07 14:10:38 momjian Exp $
-=======
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/controldata.c
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "pg_upgrade.h"

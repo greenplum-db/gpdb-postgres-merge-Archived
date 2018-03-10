@@ -3,13 +3,8 @@
  *
  *	Postgres-version-specific routines
  *
-<<<<<<< HEAD
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/version_old_8_3.c,v 1.6.2.2 2010/07/25 03:47:33 momjian Exp $
-=======
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/version_old_8_3.c
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "pg_upgrade.h"
