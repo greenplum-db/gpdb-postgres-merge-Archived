@@ -1832,13 +1832,8 @@ heap_fetch(Relation relation,
  * heap_fetch, we do not report any pgstats count; caller may do so if wanted.
  */
 bool
-<<<<<<< HEAD
-heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer, Snapshot snapshot,
-					   bool *all_dead)
-=======
 heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 					   Snapshot snapshot, bool *all_dead)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId prev_xmax = InvalidTransactionId;
@@ -1963,11 +1958,7 @@ heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-<<<<<<< HEAD
-	result = heap_hot_search_buffer(relation, tid, buffer, snapshot, all_dead);
-=======
 	result = heap_hot_search_buffer(tid, relation, buffer, snapshot, all_dead);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 	return result;

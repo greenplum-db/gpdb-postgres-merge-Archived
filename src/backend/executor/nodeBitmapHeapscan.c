@@ -424,11 +424,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 			ItemPointerData tid;
 
 			ItemPointerSet(&tid, page, offnum);
-<<<<<<< HEAD
-			if (heap_hot_search_buffer(scan->rs_rd, &tid, buffer, snapshot, NULL))
-=======
 			if (heap_hot_search_buffer(&tid, scan->rs_rd, buffer, snapshot, NULL))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				scan->rs_vistuples[ntup++] = ItemPointerGetOffsetNumber(&tid);
 		}
 	}

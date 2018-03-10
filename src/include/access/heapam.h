@@ -105,13 +105,8 @@ extern void heap_getnextx(HeapScanDesc scan, ScanDirection direction,
 extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 		   Relation stats_relation);
-<<<<<<< HEAD
-extern bool heap_hot_search_buffer(Relation rel, ItemPointer tid, Buffer buffer,
-					   Snapshot snapshot, bool *all_dead);
-=======
 extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
 					   Buffer buffer, Snapshot snapshot, bool *all_dead);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern bool heap_hot_search(ItemPointer tid, Relation relation,
 				Snapshot snapshot, bool *all_dead);
 
