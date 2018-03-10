@@ -118,11 +118,7 @@ extern Oid CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 extern void DropTrigger(Oid relid, const char *trigname,
 			DropBehavior behavior, bool missing_ok);
 extern void RemoveTriggerById(Oid trigOid);
-<<<<<<< HEAD
-extern Oid  get_trigger_oid(Oid relid, const char *name, bool missing_ok);
-=======
 extern Oid	get_trigger_oid(Oid relid, const char *name, bool missing_ok);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern void renametrig(Oid relid, const char *oldname, const char *newname);
 

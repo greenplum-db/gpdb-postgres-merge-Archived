@@ -162,15 +162,10 @@ typedef struct gistxlogPageUpdate
 
 typedef struct gistxlogPageSplit
 {
-<<<<<<< HEAD
-	RelFileNode 	node;
-	BlockNumber  origblkno;		/* splitted page */
-=======
 	RelFileNode node;
 	BlockNumber origblkno;		/* splitted page */
 	BlockNumber origrlink;		/* rightlink of the page before split */
 	GistNSN		orignsn;		/* NSN of the page before split */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		origleaf;		/* was splitted page a leaf page? */
 
 	BlockNumber leftchild;		/* like in gistxlogPageUpdate */

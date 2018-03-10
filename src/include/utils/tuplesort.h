@@ -10,8 +10,7 @@
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
  *
-<<<<<<< HEAD
- * GPDB has two implemntations of sorting. One is inherited from PostgreSQL,
+ * GPDB has two implementations of sorting. One is inherited from PostgreSQL,
  * and lives in tuplesort.c. The other one lives in tuplesort_mk.c. Both
  * provide the same API, and have the same set of functions, just with a
  * different suffix.
@@ -31,10 +30,7 @@
  *
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/tuplesort.h
@@ -142,14 +138,9 @@ extern Tuplesortstate *tuplesort_begin_index_btree(Relation indexRel,
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess);
-<<<<<<< HEAD
-extern Tuplesortstate *tuplesort_begin_datum(ScanState *ss, Oid datumType,
-					  Oid sortOperator, bool nullsFirstFlag,
-=======
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 					  Oid sortOperator, Oid sortCollation,
 					  bool nullsFirstFlag,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					  int workMem, bool randomAccess);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);

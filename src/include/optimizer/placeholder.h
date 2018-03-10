@@ -4,12 +4,8 @@
  *	  prototypes for optimizer/util/placeholder.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/placeholder.h
@@ -28,14 +24,9 @@ extern PlaceHolderInfo *find_placeholder_info(PlannerInfo *root,
 					  PlaceHolderVar *phv);
 extern void find_placeholders_in_jointree(PlannerInfo *root);
 extern void update_placeholder_eval_levels(PlannerInfo *root,
-<<<<<<< HEAD
-											  SpecialJoinInfo *new_sjinfo);
-=======
 							   SpecialJoinInfo *new_sjinfo);
 extern void fix_placeholder_input_needed_levels(PlannerInfo *root);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void add_placeholders_to_base_rels(PlannerInfo *root);
-extern void fix_placeholder_input_needed_levels(PlannerInfo *root);
 extern void add_placeholders_to_joinrel(PlannerInfo *root,
 							RelOptInfo *joinrel);
 

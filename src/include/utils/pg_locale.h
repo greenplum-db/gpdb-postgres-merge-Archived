@@ -53,14 +53,9 @@ extern void assign_locale_time(const char *newval, void *extra);
 extern bool check_locale(int category, const char *locale);
 extern char *pg_perm_setlocale(int category, const char *locale);
 
-<<<<<<< HEAD
-extern bool lc_collate_is_c(void);
-extern bool lc_ctype_is_c(void);
-extern void lc_guess_strxfrm_scaling_factor(int *scaleFactorOut, int *constantFactorOut);
-=======
 extern bool lc_collate_is_c(Oid collation);
 extern bool lc_ctype_is_c(Oid collation);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void lc_guess_strxfrm_scaling_factor(int *scaleFactorOut, int *constantFactorOut);
 
 /*
  * Return the POSIX lconv struct (contains number/money formatting

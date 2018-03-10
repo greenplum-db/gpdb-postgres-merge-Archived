@@ -20,12 +20,7 @@
 extern void SetRelationRuleStatus(Oid relationId, bool relHasRules,
 					  bool relIsBecomingView);
 
-<<<<<<< HEAD
-extern Oid  get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok);
-extern Oid  get_rewrite_oid_without_relid(const char *rulename, Oid *relid);
-=======
 extern Oid	get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok);
 extern Oid	get_rewrite_oid_without_relid(const char *rulename, Oid *relid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* REWRITESUPPORT_H */

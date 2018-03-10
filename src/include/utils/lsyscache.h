@@ -174,11 +174,7 @@ extern void get_type_category_preferred(Oid typid,
 extern Oid	get_typ_typrelid(Oid typid);
 extern Oid	get_element_type(Oid typid);
 extern Oid	get_array_type(Oid typid);
-<<<<<<< HEAD
-extern Oid get_base_element_type(Oid typid);
-=======
 extern Oid	get_base_element_type(Oid typid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void getTypeInputInfo(Oid type, Oid *typInput, Oid *typIOParam);
 extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 extern void getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam);

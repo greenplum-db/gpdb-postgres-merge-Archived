@@ -10,13 +10,9 @@
  * the location.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -1054,10 +1050,7 @@ typedef struct CommonTableExpr
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
 
-<<<<<<< HEAD
-=======
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*****************************************************************************
  *		Optimizable Statements
  *****************************************************************************/
@@ -2977,11 +2970,8 @@ typedef enum VacuumOption
 	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-<<<<<<< HEAD
-	VACOPT_ROOTONLY = 1 << 5	/* only ANALYZE root partition tables */
-=======
-	VACOPT_NOWAIT = 1 << 5
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	VACOPT_NOWAIT = 1 << 5,
+	VACOPT_ROOTONLY = 1 << 6	/* only ANALYZE root partition tables */
 } VacuumOption;
 
 typedef enum AOVacuumPhase

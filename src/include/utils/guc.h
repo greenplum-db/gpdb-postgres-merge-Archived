@@ -4,13 +4,9 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2010, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * src/include/utils/guc.h
@@ -116,17 +112,6 @@ typedef enum
 } GucSource;
 
 /*
-<<<<<<< HEAD
- * Parsing the configuation file will return a list of name-value pairs
- */
-typedef struct ConfigVariable
-{
-	char       *name;
-	char       *value;
-	char	   *filename;
-	int			sourceline;
-	struct ConfigVariable  *next;
-=======
  * Parsing the configuration file will return a list of name-value pairs
  * with source location info.
  */
@@ -137,7 +122,6 @@ typedef struct ConfigVariable
 	char	   *filename;
 	int			sourceline;
 	struct ConfigVariable *next;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } ConfigVariable;
 
 extern bool ParseConfigFile(const char *config_file, const char *calling_file,

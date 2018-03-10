@@ -404,13 +404,8 @@ extern void srand48(long seed);
 extern int	getopt(int nargc, char *const * nargv, const char *ostr);
 #endif
 
-<<<<<<< HEAD
-#if !defined(HAVE_GETPEEREID) || defined(_AIX)
-extern int getpeereid(int sock, uid_t *uid, gid_t *gid);
-=======
 #if !defined(HAVE_GETPEEREID) && !defined(WIN32)
 extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif
 
 #ifndef HAVE_ISINF

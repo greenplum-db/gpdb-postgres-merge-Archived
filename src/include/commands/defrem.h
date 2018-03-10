@@ -124,15 +124,9 @@ extern void AlterOpFamilyOwner(List *name, const char *access_method, Oid newOwn
 extern void AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId);
 extern void AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema);
 extern Oid	AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid);
-<<<<<<< HEAD
-extern Oid  get_am_oid(const char *amname, bool missing_ok);
-extern Oid  get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
-extern Oid  get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
-=======
 extern Oid	get_am_oid(const char *amname, bool missing_ok);
 extern Oid	get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
 extern Oid	get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* commands/tsearchcmds.c */
 extern void DefineTSParser(List *names, List *parameters);

@@ -195,12 +195,8 @@ typedef enum AclObjectKind
 	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
 	ACL_KIND_FDW,				/* pg_foreign_data_wrapper */
 	ACL_KIND_FOREIGN_SERVER,	/* pg_foreign_server */
-<<<<<<< HEAD
-	ACL_KIND_EXTPROTOCOL,		/* pg_extprotocol */
-	ACL_KIND_EXTENSION,         /* pg_extension */
-=======
 	ACL_KIND_EXTENSION,			/* pg_extension */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	ACL_KIND_EXTPROTOCOL,		/* pg_extprotocol */
 	MAX_ACL_KIND				/* MUST BE LAST */
 } AclObjectKind;
 
@@ -231,11 +227,7 @@ extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
 extern void check_is_member_of_role(Oid member, Oid role);
-<<<<<<< HEAD
-extern Oid  get_role_oid(const char *rolname, bool missing_ok);
-=======
 extern Oid	get_role_oid(const char *rolname, bool missing_ok);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern void select_best_grantor(Oid roleId, AclMode privileges,
 					const Acl *acl, Oid ownerId,

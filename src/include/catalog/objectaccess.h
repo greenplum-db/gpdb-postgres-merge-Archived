@@ -12,11 +12,7 @@
 
 /*
  * Object access hooks are intended to be called just before or just after
-<<<<<<< HEAD
- * performing certain actions on a SQL object.  This is intended as
-=======
  * performing certain actions on a SQL object.	This is intended as
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * infrastructure for security or logging pluggins.
  *
  * OAT_POST_CREATE should be invoked just after the the object is created.
@@ -27,11 +23,7 @@
  */
 typedef enum ObjectAccessType
 {
-<<<<<<< HEAD
 	OAT_POST_CREATE
-=======
-	OAT_POST_CREATE,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } ObjectAccessType;
 
 /*

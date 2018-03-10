@@ -103,11 +103,8 @@ typedef FormData_pg_operator *Form_pg_operator;
  */
 
 DATA(insert OID =  15 ( "="		   PGNSP PGUID b t t	23	20	16 416	36 int48eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Int48EqualOperator 15
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int48EqualOperator 15
 DATA(insert OID =  36 ( "<>"	   PGNSP PGUID b f f	23	20	16 417	15 int48ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID =  37 ( "<"		   PGNSP PGUID b f f	23	20	16 419	82 int48lt scalarltsel scalarltjoinsel ));
