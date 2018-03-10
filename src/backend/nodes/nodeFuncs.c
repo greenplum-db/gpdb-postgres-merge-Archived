@@ -1975,9 +1975,11 @@ query_tree_walker(Query *query,
 		if (walker((Node *) query->cteList, context))
 			return true;
 	}
-<<<<<<< HEAD
-	if (range_table_walker(query->rtable, walker, context, flags))
-		return true;
+	if (!(flags & QTW_IGNORE_RANGE_TABLE))
+	{
+		if (range_table_walker(query->rtable, walker, context, flags))
+			return true;
+	}
 	if (query->utilityStmt)
 	{
 		/*
@@ -2009,12 +2011,6 @@ query_tree_walker(Query *query,
 			if (walker(((ViewStmt *) query->utilityStmt)->query, context))
 				return true;
 		}
-=======
-	if (!(flags & QTW_IGNORE_RANGE_TABLE))
-	{
-		if (range_table_walker(query->rtable, walker, context, flags))
-			return true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return false;
 }
@@ -2044,11 +2040,7 @@ range_table_walker(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-			case RTE_SPECIAL:
 			case RTE_VOID:
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			case RTE_CTE:
 				/* nothing to do */
 				break;
@@ -2856,11 +2848,7 @@ range_table_mutator(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-			case RTE_SPECIAL:
 			case RTE_VOID:
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			case RTE_CTE:
 				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;

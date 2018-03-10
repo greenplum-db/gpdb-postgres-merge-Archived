@@ -638,8 +638,10 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 
 	WRITE_OID_ARRAY(opfamily, node->ncolumns);
 	WRITE_INT_ARRAY(indexkeys, node->ncolumns, int);
-	WRITE_OID_ARRAY(fwdsortop, node->ncolumns);
-	WRITE_OID_ARRAY(revsortop, node->ncolumns);
+	WRITE_OID_ARRAY(sortopfamily, node->ncolumns);
+
+	WRITE_BOOL_FIELD(reverse_sort);
+	WRITE_BOOL_FIELD(nulls_first);
 
     WRITE_OID_FIELD(relam);
 	WRITE_OID_FIELD(amcostestimate);
@@ -647,6 +649,8 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 	WRITE_NODE_FIELD(indpred);
 	WRITE_BOOL_FIELD(predOK);
 	WRITE_BOOL_FIELD(unique);
+	WRITE_BOOL_FIELD(hypothetical);
+
 	WRITE_BOOL_FIELD(amoptionalkey);
 	WRITE_BOOL_FIELD(cdb_default_stats_used);
 }
@@ -682,6 +686,8 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
 	WRITE_STRING_FIELD(tablespacename);
+	WRITE_BOOL_FIELD(if_not_exists);
+
 	WRITE_NODE_FIELD(distributedBy);
 	WRITE_CHAR_FIELD(relKind);
 	WRITE_CHAR_FIELD(relStorage);
@@ -803,6 +809,7 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
+	WRITE_BOOL_FIELD(is_from_type);
 	WRITE_INT_FIELD(attnum);
 	WRITE_CHAR_FIELD(storage);
 	WRITE_NODE_FIELD(raw_default);
@@ -862,6 +869,8 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
+	WRITE_NODE_FIELD(constraintDeps);
+
 	/* Don't serialize policy */
 }
 
@@ -878,23 +887,21 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	switch (node->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 			WRITE_OID_FIELD(relid);
+			WRITE_CHAR_FIELD(relkind);
 			break;
 		case RTE_SUBQUERY:
 			WRITE_NODE_FIELD(subquery);
 			break;
-		case RTE_CTE:
-			WRITE_STRING_FIELD(ctename);
-			WRITE_INT_FIELD(ctelevelsup);
-			WRITE_BOOL_FIELD(self_reference);
-			WRITE_NODE_FIELD(ctecoltypes);
-			WRITE_NODE_FIELD(ctecoltypmods);
+		case RTE_JOIN:
+			WRITE_ENUM_FIELD(jointype, JoinType);
+			WRITE_NODE_FIELD(joinaliasvars);
 			break;
 		case RTE_FUNCTION:
 			WRITE_NODE_FIELD(funcexpr);
 			WRITE_NODE_FIELD(funccoltypes);
 			WRITE_NODE_FIELD(funccoltypmods);
+			WRITE_NODE_FIELD(funccolcollations);
 			break;
 		case RTE_TABLEFUNCTION:
 			WRITE_NODE_FIELD(subquery);
@@ -905,10 +912,15 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
+			WRITE_NODE_FIELD(values_collations);
 			break;
-		case RTE_JOIN:
-			WRITE_ENUM_FIELD(jointype, JoinType);
-			WRITE_NODE_FIELD(joinaliasvars);
+		case RTE_CTE:
+			WRITE_STRING_FIELD(ctename);
+			WRITE_INT_FIELD(ctelevelsup);
+			WRITE_BOOL_FIELD(self_reference);
+			WRITE_NODE_FIELD(ctecoltypes);
+			WRITE_NODE_FIELD(ctecoltypmods);
+			WRITE_NODE_FIELD(ctecolcollations);
 			break;
         case RTE_VOID:                                                  /*CDB*/
             break;
@@ -1072,6 +1084,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_CHAR_FIELD(fk_upd_action);
 			WRITE_CHAR_FIELD(fk_del_action);
 			WRITE_BOOL_FIELD(skip_validation);
+			WRITE_BOOL_FIELD(initially_valid);
 			WRITE_OID_FIELD(trig1Oid);
 			WRITE_OID_FIELD(trig2Oid);
 			WRITE_OID_FIELD(trig3Oid);
@@ -1338,11 +1351,14 @@ _outNode(StringInfo str, void *obj)
 			case T_Append:
 				_outAppend(str, obj);
 				break;
-			case T_RecursiveUnion:
-				_outRecursiveUnion(str, obj);
+			case T_MergeAppend:
+				_outMergeAppend(str, obj);
 				break;
 			case T_Sequence:
 				_outSequence(str, obj);
+				break;
+			case T_RecursiveUnion:
+				_outRecursiveUnion(str, obj);
 				break;
 			case T_BitmapAnd:
 				_outBitmapAnd(str, obj);

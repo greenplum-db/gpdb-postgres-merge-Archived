@@ -11,13 +11,9 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -28,14 +24,10 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "catalog/gp_policy.h"
 #include "catalog/heap.h"
 #include "miscadmin.h"
-=======
-#include "miscadmin.h"
 #include "foreign/fdwapi.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 #include "utils/datum.h"
@@ -113,11 +105,8 @@ _copyPlannedStmt(PlannedStmt *from)
 	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_SCALAR_FIELD(transientPlan);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(oneoffPlan);
 	COPY_SCALAR_FIELD(simplyUpdatable);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	COPY_NODE_FIELD(planTree);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(resultRelations);
@@ -592,9 +581,14 @@ CopyIndexScanFields(const IndexScan *from, IndexScan *newnode)
 {
 	CopyScanFields((Scan *) from, (Scan *) newnode);
 
+	/*
+	 * copy remainder of node
+	 */
 	COPY_SCALAR_FIELD(indexid);
 	COPY_NODE_FIELD(indexqual);
 	COPY_NODE_FIELD(indexqualorig);
+	COPY_NODE_FIELD(indexorderby);
+	COPY_NODE_FIELD(indexorderbyorig);
 	COPY_SCALAR_FIELD(indexorderdir);
 }
 
@@ -608,7 +602,6 @@ _copyIndexScan(IndexScan *from)
 
 	CopyIndexScanFields(from, newnode);
 
-<<<<<<< HEAD
 	return newnode;
 }
 
@@ -623,17 +616,6 @@ _copyDynamicIndexScan(const DynamicIndexScan *from)
 	/* DynamicIndexScan has some content from IndexScan */
 	CopyIndexScanFields(&from->indexscan, &newnode->indexscan);
 	newnode->logicalIndexInfo = CopyLogicalIndexInfo(from->logicalIndexInfo);
-=======
-	/*
-	 * copy remainder of node
-	 */
-	COPY_SCALAR_FIELD(indexid);
-	COPY_NODE_FIELD(indexqual);
-	COPY_NODE_FIELD(indexqualorig);
-	COPY_NODE_FIELD(indexorderby);
-	COPY_NODE_FIELD(indexorderbyorig);
-	COPY_SCALAR_FIELD(indexorderdir);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return newnode;
 }
@@ -957,20 +939,15 @@ _copyNestLoop(NestLoop *from)
 	 */
 	CopyJoinFields((Join *) from, (Join *) newnode);
 
-<<<<<<< HEAD
-    COPY_SCALAR_FIELD(shared_outer);
-    COPY_SCALAR_FIELD(singleton_outer); /*CDB-OLAP*/
-=======
 	/*
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(nestParams);
 
-	return newnode;
-}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+    COPY_SCALAR_FIELD(shared_outer);
+    COPY_SCALAR_FIELD(singleton_outer); /*CDB-OLAP*/
 
-    return newnode;
+	return newnode;
 }
 
 /*
@@ -1635,12 +1612,9 @@ _copyAggref(Aggref *from)
 
 	COPY_SCALAR_FIELD(aggfnoid);
 	COPY_SCALAR_FIELD(aggtype);
-<<<<<<< HEAD
-	COPY_NODE_FIELD(aggdirectargs);
-=======
 	COPY_SCALAR_FIELD(aggcollid);
 	COPY_SCALAR_FIELD(inputcollid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COPY_NODE_FIELD(aggdirectargs);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(aggorder);
 	COPY_NODE_FIELD(aggdistinct);
@@ -2927,11 +2901,8 @@ _copyColumnDef(ColumnDef *from)
 	COPY_SCALAR_FIELD(inhcount);
 	COPY_SCALAR_FIELD(is_local);
 	COPY_SCALAR_FIELD(is_not_null);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(attnum);
-=======
 	COPY_SCALAR_FIELD(is_from_type);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COPY_SCALAR_FIELD(attnum);
 	COPY_SCALAR_FIELD(storage);
 	COPY_NODE_FIELD(raw_default);
 	COPY_NODE_FIELD(cooked_default);
@@ -2982,14 +2953,12 @@ _copyConstraint(Constraint *from)
 	COPY_SCALAR_FIELD(fk_upd_action);
 	COPY_SCALAR_FIELD(fk_del_action);
 	COPY_SCALAR_FIELD(skip_validation);
-<<<<<<< HEAD
+	COPY_SCALAR_FIELD(initially_valid);
+
 	COPY_SCALAR_FIELD(trig1Oid);
 	COPY_SCALAR_FIELD(trig2Oid);
 	COPY_SCALAR_FIELD(trig3Oid);
 	COPY_SCALAR_FIELD(trig4Oid);
-=======
-	COPY_SCALAR_FIELD(initially_valid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return newnode;
 }
@@ -3147,16 +3116,14 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
-<<<<<<< HEAD
+	COPY_NODE_FIELD(constraintDeps);
+
 	if (from->intoPolicy)
 	{
 		COPY_POINTER_FIELD(intoPolicy, sizeof(GpPolicy) + from->intoPolicy->nattrs * sizeof(from->intoPolicy->attrs[0]));
 	}
 	else
 		newnode->intoPolicy = NULL;
-=======
-	COPY_NODE_FIELD(constraintDeps);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return newnode;
 }
@@ -3501,7 +3468,8 @@ CopyCreateStmtFields(CreateStmt *from, CreateStmt *newnode)
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(oncommit);
 	COPY_STRING_FIELD(tablespacename);
-<<<<<<< HEAD
+	COPY_SCALAR_FIELD(if_not_exists);
+
 	COPY_NODE_FIELD(distributedBy);
 	COPY_NODE_FIELD(partitionBy);
 	COPY_SCALAR_FIELD(relKind);
@@ -3520,6 +3488,27 @@ CopyCreateStmtFields(CreateStmt *from, CreateStmt *newnode)
 	COPY_SCALAR_FIELD(ownerid);
 	COPY_SCALAR_FIELD(buildAoBlkdir);
 	COPY_NODE_FIELD(attr_encodings);
+
+	return newnode;
+}
+
+static CreateStmt *
+_copyCreateStmt(CreateStmt *from)
+{
+	CreateStmt *newnode = makeNode(CreateStmt);
+
+	CopyCreateStmtFields(from, newnode);
+
+	return newnode;
+}
+
+static InhRelation *
+_copyInhRelation(InhRelation *from)
+{
+	InhRelation *newnode = makeNode(InhRelation);
+
+	COPY_NODE_FIELD(relation);
+	COPY_SCALAR_FIELD(options);
 
 	return newnode;
 }
@@ -3714,28 +3703,6 @@ _copyCreateExternalStmt(CreateExternalStmt *from)
 	}
 	else
 		newnode->policy = NULL;
-=======
-	COPY_SCALAR_FIELD(if_not_exists);
-}
-
-static CreateStmt *
-_copyCreateStmt(CreateStmt *from)
-{
-	CreateStmt *newnode = makeNode(CreateStmt);
-
-	CopyCreateStmtFields(from, newnode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-
-	return newnode;
-}
-
-static InhRelation *
-_copyInhRelation(InhRelation *from)
-{
-	InhRelation *newnode = makeNode(InhRelation);
-
-	COPY_NODE_FIELD(relation);
-	COPY_SCALAR_FIELD(options);
 
 	return newnode;
 }
@@ -3834,11 +3801,8 @@ _copyIndexStmt(IndexStmt *from)
 	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(excludeOpNames);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(is_part_child);
-=======
 	COPY_SCALAR_FIELD(indexOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	COPY_SCALAR_FIELD(unique);
 	COPY_SCALAR_FIELD(primary);
 	COPY_SCALAR_FIELD(isconstraint);
@@ -3952,11 +3916,9 @@ _copyRenameStmt(RenameStmt *from)
 	COPY_NODE_FIELD(objarg);
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(bAllowPartn);
-=======
 	COPY_SCALAR_FIELD(behavior);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	COPY_SCALAR_FIELD(bAllowPartn);
 
 	return newnode;
 }

@@ -3,13 +3,9 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -298,11 +294,8 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_BOOL_FIELD(hasModifyingCTE);
 	WRITE_BOOL_FIELD(canSetTag);
 	WRITE_BOOL_FIELD(transientPlan);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(oneoffPlan);
 	WRITE_BOOL_FIELD(simplyUpdatable);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	WRITE_NODE_FIELD(planTree);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
@@ -476,7 +469,6 @@ _outAppend(StringInfo str, Append *node)
 }
 
 static void
-<<<<<<< HEAD
 _outSequence(StringInfo str, Sequence *node)
 {
 	WRITE_NODE_TYPE("SEQUENCE");
@@ -484,8 +476,6 @@ _outSequence(StringInfo str, Sequence *node)
 	WRITE_NODE_FIELD(subplans);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-=======
 _outMergeAppend(StringInfo str, MergeAppend *node)
 {
 	int			i;
@@ -515,7 +505,7 @@ _outMergeAppend(StringInfo str, MergeAppend *node)
 		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
 }
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outRecursiveUnion(StringInfo str, RecursiveUnion *node)
 {
@@ -654,6 +644,8 @@ outIndexScanFields(StringInfo str, IndexScan *node)
 	WRITE_OID_FIELD(indexid);
 	WRITE_NODE_FIELD(indexqual);
 	WRITE_NODE_FIELD(indexqualorig);
+	WRITE_NODE_FIELD(indexorderby);
+	WRITE_NODE_FIELD(indexorderbyorig);
 	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
@@ -682,12 +674,6 @@ _outBitmapIndexScanFields(StringInfo str, BitmapIndexScan *node)
 	WRITE_OID_FIELD(indexid);
 	WRITE_NODE_FIELD(indexqual);
 	WRITE_NODE_FIELD(indexqualorig);
-<<<<<<< HEAD
-=======
-	WRITE_NODE_FIELD(indexorderby);
-	WRITE_NODE_FIELD(indexorderbyorig);
-	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static void
@@ -844,12 +830,10 @@ _outNestLoop(StringInfo str, NestLoop *node)
 
 	_outJoinPlanInfo(str, (Join *) node);
 
-<<<<<<< HEAD
+	WRITE_NODE_FIELD(nestParams);
+
 	WRITE_BOOL_FIELD(shared_outer);
 	WRITE_BOOL_FIELD(singleton_outer); /*CDB-OLAP*/
-=======
-	WRITE_NODE_FIELD(nestParams);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -1397,13 +1381,12 @@ _outAggref(StringInfo str, Aggref *node)
 
 	WRITE_OID_FIELD(aggfnoid);
 	WRITE_OID_FIELD(aggtype);
-<<<<<<< HEAD
-	WRITE_NODE_FIELD(aggdirectargs);
-=======
 	WRITE_OID_FIELD(aggcollid);
 	WRITE_OID_FIELD(inputcollid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	WRITE_NODE_FIELD(aggdirectargs);
 	WRITE_NODE_FIELD(args);
+	WRITE_OID_FIELD(aggcollid);
+	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(aggorder);
 	WRITE_NODE_FIELD(aggdistinct);
 	WRITE_NODE_FIELD(aggfilter);
@@ -2100,7 +2083,17 @@ _outAppendPath(StringInfo str, AppendPath *node)
 }
 
 static void
-<<<<<<< HEAD
+_outMergeAppendPath(StringInfo str, MergeAppendPath *node)
+{
+	WRITE_NODE_TYPE("MERGEAPPENDPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpaths);
+	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
+}
+
+static void
 _outAppendOnlyPath(StringInfo str, AppendOnlyPath *node)
 {
 	WRITE_NODE_TYPE("APPENDONLYPATH");
@@ -2114,16 +2107,6 @@ _outAOCSPath(StringInfo str, AOCSPath *node)
 	WRITE_NODE_TYPE("APPENDONLYPATH");
 
 	_outPathInfo(str, (Path *) node);
-=======
-_outMergeAppendPath(StringInfo str, MergeAppendPath *node)
-{
-	WRITE_NODE_TYPE("MERGEAPPENDPATH");
-
-	_outPathInfo(str, (Path *) node);
-
-	WRITE_NODE_FIELD(subpaths);
-	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static void
@@ -2322,7 +2305,6 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_INT_FIELD(ncolumns);
-<<<<<<< HEAD
 
 	appendStringInfoLiteral(str, " :opfamily");
 	for (i = 0; i < node->ncolumns; i++)
@@ -2332,31 +2314,23 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 	for (i = 0; i < node->ncolumns; i++)
 		appendStringInfo(str, " %d", node->indexkeys[i]);
 
-	appendStringInfoLiteral(str, " :fwdsortop");
+	appendStringInfoLiteral(str, " :sortopfamily");
 	for (i = 0; i < node->ncolumns; i++)
-		appendStringInfo(str, " %u", node->fwdsortop[i]);
+		appendStringInfo(str, " %u", node->sortopfamily[i]);
 
-	appendStringInfoLiteral(str, " :revsortop");
-	for (i = 0; i < node->ncolumns; i++)
-		appendStringInfo(str, " %u", node->revsortop[i]);
-
+	WRITE_BOOL_FIELD(reverse_sort);
 	WRITE_BOOL_FIELD(nulls_first);
 
-    WRITE_OID_FIELD(relam);
-	WRITE_OID_FIELD(amcostestimate);
-=======
 	WRITE_OID_FIELD(relam);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	WRITE_OID_FIELD(amcostestimate);
 	WRITE_NODE_FIELD(indexprs);
 	WRITE_NODE_FIELD(indpred);
 	WRITE_BOOL_FIELD(predOK);
 	WRITE_BOOL_FIELD(unique);
-<<<<<<< HEAD
+	WRITE_BOOL_FIELD(hypothetical);
+
 	WRITE_BOOL_FIELD(amoptionalkey);
 	WRITE_BOOL_FIELD(cdb_default_stats_used);
-=======
-	WRITE_BOOL_FIELD(hypothetical);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -2564,7 +2538,8 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
 	WRITE_STRING_FIELD(tablespacename);
-<<<<<<< HEAD
+	WRITE_BOOL_FIELD(if_not_exists);
+
 	WRITE_NODE_FIELD(distributedBy);
 	WRITE_NODE_FIELD(partitionBy);
 	WRITE_CHAR_FIELD(relKind);
@@ -2580,6 +2555,17 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_NODE_FIELD(attr_encodings);
 }
 #endif /* COMPILING_BINARY_FUNCS */
+
+static void
+_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEFOREIGNTABLESTMT");
+
+	_outCreateStmt(str, (CreateStmt *) &node->base);
+
+	WRITE_STRING_FIELD(servername);
+	WRITE_NODE_FIELD(options);
+}
 
 static void
 _outColumnReferenceStorageDirective(StringInfo str, ColumnReferenceStorageDirective *node)
@@ -2618,20 +2604,6 @@ _outCreateExternalStmt(StringInfo str, CreateExternalStmt *node)
 	WRITE_NODE_FIELD(extOptions);
 	WRITE_NODE_FIELD(encoding);
 	WRITE_NODE_FIELD(distributedBy);
-=======
-	WRITE_BOOL_FIELD(if_not_exists);
-}
-
-static void
-_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
-{
-	WRITE_NODE_TYPE("CREATEFOREIGNTABLESTMT");
-
-	_outCreateStmt(str, (CreateStmt *) &node->base);
-
-	WRITE_STRING_FIELD(servername);
-	WRITE_NODE_FIELD(options);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static void
@@ -2648,11 +2620,8 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 
 	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(excludeOpNames);
-<<<<<<< HEAD
 	WRITE_BOOL_FIELD(is_part_child);
-=======
 	WRITE_OID_FIELD(indexOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
@@ -2901,6 +2870,8 @@ _outRenameStmt(StringInfo str, RenameStmt *node)
 	WRITE_STRING_FIELD(subname);
 	WRITE_STRING_FIELD(newname);
 	WRITE_ENUM_FIELD(renameType,ObjectType);
+	WRITE_ENUM_FIELD(behavior,DropBehavior);
+
 	WRITE_BOOL_FIELD(bAllowPartn);
 }
 
@@ -3639,13 +3610,9 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
-<<<<<<< HEAD
-	WRITE_INT_FIELD(attnum);
-	WRITE_CHAR_FIELD(storage);
-=======
 	WRITE_BOOL_FIELD(is_from_type);
+	WRITE_INT_FIELD(attnum);
 	WRITE_INT_FIELD(storage);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
 	WRITE_NODE_FIELD(collClause);
@@ -3835,11 +3802,9 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
-<<<<<<< HEAD
-	/* Don't serialize policy */
-=======
 	WRITE_NODE_FIELD(constraintDeps);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	/* Don't serialize policy */
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -4330,14 +4295,11 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_CHAR_FIELD(fk_upd_action);
 			WRITE_CHAR_FIELD(fk_del_action);
 			WRITE_BOOL_FIELD(skip_validation);
-<<<<<<< HEAD
+			WRITE_BOOL_FIELD(initially_valid);
 			WRITE_OID_FIELD(trig1Oid);
 			WRITE_OID_FIELD(trig2Oid);
 			WRITE_OID_FIELD(trig3Oid);
 			WRITE_OID_FIELD(trig4Oid);
-=======
-			WRITE_BOOL_FIELD(initially_valid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -4711,13 +4673,11 @@ _outNode(StringInfo str, void *obj)
 			case T_Append:
 				_outAppend(str, obj);
 				break;
-<<<<<<< HEAD
-			case T_Sequence:
-				_outSequence(str, obj);
-=======
 			case T_MergeAppend:
 				_outMergeAppend(str, obj);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				break;
+			case T_Sequence:
+				_outSequence(str, obj);
 				break;
 			case T_RecursiveUnion:
 				_outRecursiveUnion(str, obj);
@@ -5133,7 +5093,8 @@ _outNode(StringInfo str, void *obj)
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
 				break;
-<<<<<<< HEAD
+			case T_CreateForeignTableStmt:
+				_outCreateForeignTableStmt(str, obj);
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;
@@ -5175,10 +5136,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_PartitionBy:
 				_outPartitionBy(str, obj);
-=======
-			case T_CreateForeignTableStmt:
-				_outCreateForeignTableStmt(str, obj);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);

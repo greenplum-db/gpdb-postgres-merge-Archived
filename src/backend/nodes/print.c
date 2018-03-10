@@ -267,13 +267,8 @@ print_rt(List *rtable)
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-<<<<<<< HEAD
-				printf("%d\t%s\t%u",
-					   i, name, rte->relid);
-=======
 				printf("%d\t%s\t%u\t%c",
-					   i, rte->eref->aliasname, rte->relid, rte->relkind);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					   i, name, rte->relid, rte->relkind);
 				break;
 			case RTE_SUBQUERY:
 				printf("%d\t%s\t[subquery]",
@@ -283,24 +278,17 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[join]",
 					   i, name);
 				break;
-<<<<<<< HEAD
-			case RTE_SPECIAL:
-				printf("%d\t%s\t[special]",
-					   i, name);
-				break;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			case RTE_FUNCTION:
 				printf("%d\t%s\t[rangefunction]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_VALUES:
 				printf("%d\t%s\t[values list]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_CTE:
 				printf("%d\t%s\t[cte]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_TABLEFUNCTION:
 				printf("%d\t%s\t[tablefunction]",

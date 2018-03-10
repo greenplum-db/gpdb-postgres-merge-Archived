@@ -18,13 +18,9 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -212,12 +208,9 @@ _equalAggref(Aggref *a, Aggref *b)
 {
 	COMPARE_SCALAR_FIELD(aggfnoid);
 	COMPARE_SCALAR_FIELD(aggtype);
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(aggdirectargs);
-=======
 	COMPARE_SCALAR_FIELD(aggcollid);
 	COMPARE_SCALAR_FIELD(inputcollid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COMPARE_NODE_FIELD(aggdirectargs);
 	COMPARE_NODE_FIELD(args);
     COMPARE_NODE_FIELD(aggorder);
 	COMPARE_NODE_FIELD(aggdistinct);
@@ -1316,7 +1309,8 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(oncommit);
 	COMPARE_STRING_FIELD(tablespacename);
-<<<<<<< HEAD
+	COMPARE_SCALAR_FIELD(if_not_exists);
+
 	COMPARE_NODE_FIELD(distributedBy);
 	COMPARE_SCALAR_FIELD(relKind);
 	COMPARE_SCALAR_FIELD(relStorage);
@@ -1379,9 +1373,6 @@ _equalCreateExternalStmt(CreateExternalStmt *a, CreateExternalStmt *b)
 	COMPARE_NODE_FIELD(extOptions);
 	COMPARE_NODE_FIELD(encoding);
 	COMPARE_NODE_FIELD(distributedBy);
-=======
-	COMPARE_SCALAR_FIELD(if_not_exists);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return true;
 }
@@ -1474,11 +1465,8 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(excludeOpNames);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(is_part_child);
-=======
 	COMPARE_SCALAR_FIELD(indexOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(primary);
 	COMPARE_SCALAR_FIELD(isconstraint);
@@ -1892,16 +1880,6 @@ _equalAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *a,
 	COMPARE_STRING_FIELD(tablespacename);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(isReset);
-
-	return true;
-}
-
-static bool
-_equalCreateExtensionStmt(CreateExtensionStmt *a, CreateExtensionStmt *b)
-{
-	COMPARE_STRING_FIELD(extname);
-	COMPARE_SCALAR_FIELD(if_not_exists);
-	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -2546,11 +2524,8 @@ _equalColumnDef(ColumnDef *a, ColumnDef *b)
 	COMPARE_SCALAR_FIELD(inhcount);
 	COMPARE_SCALAR_FIELD(is_local);
 	COMPARE_SCALAR_FIELD(is_not_null);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(attnum);
-=======
 	COMPARE_SCALAR_FIELD(is_from_type);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COMPARE_SCALAR_FIELD(attnum);
 	COMPARE_SCALAR_FIELD(storage);
 	COMPARE_NODE_FIELD(raw_default);
 	COMPARE_NODE_FIELD(cooked_default);
@@ -2586,14 +2561,12 @@ _equalConstraint(Constraint *a, Constraint *b)
 	COMPARE_SCALAR_FIELD(fk_upd_action);
 	COMPARE_SCALAR_FIELD(fk_del_action);
 	COMPARE_SCALAR_FIELD(skip_validation);
-<<<<<<< HEAD
+	COMPARE_SCALAR_FIELD(initially_valid);
+
 	COMPARE_SCALAR_FIELD(trig1Oid);
 	COMPARE_SCALAR_FIELD(trig2Oid);
 	COMPARE_SCALAR_FIELD(trig3Oid);
 	COMPARE_SCALAR_FIELD(trig4Oid);
-=======
-	COMPARE_SCALAR_FIELD(initially_valid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return true;
 }

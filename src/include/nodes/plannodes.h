@@ -370,17 +370,6 @@ typedef struct Append
 	List	   *appendplans;
 } Append;
 
-/*
- * Sequence node
- *   Execute a list of subplans in the order of left-to-right, and return
- * the results of the last subplan.
- */
-typedef struct Sequence
-{
-	Plan plan;
-	List *subplans;
-} Sequence;
-
 /* ----------------
  *	 MergeAppend node -
  *		Merge the results of pre-sorted sub-plans to preserve the ordering.
@@ -397,6 +386,17 @@ typedef struct MergeAppend
 	Oid		   *collations;		/* OIDs of collations */
 	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
 } MergeAppend;
+
+/*
+ * Sequence node
+ *   Execute a list of subplans in the order of left-to-right, and return
+ * the results of the last subplan.
+ */
+typedef struct Sequence
+{
+	Plan plan;
+	List *subplans;
+} Sequence;
 
 /* ----------------
  *	RecursiveUnion node -
@@ -744,18 +744,6 @@ typedef struct WorkTableScan
 } WorkTableScan;
 
 /* ----------------
- *		ForeignScan node
- * ----------------
- */
-typedef struct ForeignScan
-{
-	Scan		scan;
-	bool		fsSystemCol;	/* true if any "system column" is needed */
-	/* use struct pointer to avoid including fdwapi.h here */
-	struct FdwPlan *fdwplan;
-} ForeignScan;
-
-/* ----------------
  * External Scan node
  *
  * Field scan.scanrelid is the index of the external relation for
@@ -801,6 +789,19 @@ typedef struct AOCSScan
 	Scan		scan;
 	/* nothing for now... */
 } AOCSScan;
+
+/* ----------------
+ *		ForeignScan node
+ * ----------------
+ */
+typedef struct ForeignScan
+{
+	Scan		scan;
+	bool		fsSystemCol;	/* true if any "system column" is needed */
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwPlan *fdwplan;
+} ForeignScan;
+
 
 /*
  * ==========

@@ -3,13 +3,9 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -780,6 +776,7 @@ _readConstraint(void)
 		READ_CHAR_FIELD(fk_upd_action);
 		READ_CHAR_FIELD(fk_del_action);
 		READ_BOOL_FIELD(skip_validation);
+		READ_BOOL_FIELD(initially_valid);
 		READ_OID_FIELD(trig1Oid);
 		READ_OID_FIELD(trig2Oid);
 		READ_OID_FIELD(trig3Oid);
@@ -828,6 +825,7 @@ _readIndexStmt(void)
 	READ_NODE_FIELD(whereClause);
 	READ_NODE_FIELD(excludeOpNames);
 	READ_BOOL_FIELD(is_part_child);
+	READ_OID_FIELD(indexOid);
 	READ_BOOL_FIELD(unique);
 	READ_BOOL_FIELD(primary);
 	READ_BOOL_FIELD(isconstraint);
@@ -1141,6 +1139,8 @@ _readRenameStmt(void)
 	READ_STRING_FIELD(subname);
 	READ_STRING_FIELD(newname);
 	READ_ENUM_FIELD(renameType,ObjectType);
+	READ_ENUM_FIELD(behavior,DropBehavior);
+
 	READ_BOOL_FIELD(bAllowPartn);
 
 	READ_DONE();
@@ -1346,12 +1346,9 @@ _readAggref(void)
 
 	READ_OID_FIELD(aggfnoid);
 	READ_OID_FIELD(aggtype);
-<<<<<<< HEAD
-	READ_NODE_FIELD(aggdirectargs);
-=======
 	READ_OID_FIELD(aggcollid);
 	READ_OID_FIELD(inputcollid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	READ_NODE_FIELD(aggdirectargs);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);
 	READ_NODE_FIELD(aggdistinct);
@@ -1911,41 +1908,7 @@ _readXmlExpr(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 /*
-<<<<<<< HEAD
- * _readNullIfExpr
- */
-static NullIfExpr *
-_readNullIfExpr(void)
-{
-	READ_LOCALS(NullIfExpr);
-
-	READ_OID_FIELD(opno);
-	READ_OID_FIELD(opfuncid);
-
-	/*
-	 * The opfuncid is stored in the textual format primarily for debugging
-	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
-	 * stored rules don't have hidden dependencies on operators' functions.
-	 * (We don't currently support an ALTER OPERATOR command, but might
-	 * someday.)
-	 */
-	local_node->opfuncid = InvalidOid;
-
-	READ_OID_FIELD(opresulttype);
-	READ_BOOL_FIELD(opretset);
-	READ_NODE_FIELD(args);
-	READ_LOCATION_FIELD(location);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
-/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * _readNullTest
  */
 static NullTest *

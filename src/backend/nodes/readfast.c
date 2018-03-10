@@ -252,6 +252,8 @@ _readQuery(void)
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
+	READ_NODE_FIELD(constraintDeps);
+
 	/* policy not serialized */
 
 	READ_DONE();
@@ -466,6 +468,7 @@ _readConstraint(void)
 			READ_CHAR_FIELD(fk_upd_action);
 			READ_CHAR_FIELD(fk_del_action);
 			READ_BOOL_FIELD(skip_validation);
+			READ_BOOL_FIELD(initially_valid);
 			READ_OID_FIELD(trig1Oid);
 			READ_OID_FIELD(trig2Oid);
 			READ_OID_FIELD(trig3Oid);
@@ -1011,23 +1014,21 @@ _readRangeTblEntry(void)
 	switch (local_node->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 			READ_OID_FIELD(relid);
+			READ_CHAR_FIELD(relkind);
 			break;
 		case RTE_SUBQUERY:
 			READ_NODE_FIELD(subquery);
 			break;
-		case RTE_CTE:
-			READ_STRING_FIELD(ctename);
-			READ_INT_FIELD(ctelevelsup);
-			READ_BOOL_FIELD(self_reference);
-			READ_NODE_FIELD(ctecoltypes);
-			READ_NODE_FIELD(ctecoltypmods);
+		case RTE_JOIN:
+			READ_ENUM_FIELD(jointype, JoinType);
+			READ_NODE_FIELD(joinaliasvars);
 			break;
 		case RTE_FUNCTION:
 			READ_NODE_FIELD(funcexpr);
 			READ_NODE_FIELD(funccoltypes);
 			READ_NODE_FIELD(funccoltypmods);
+			READ_NODE_FIELD(funccolcollations);
 			break;
 		case RTE_TABLEFUNCTION:
 			READ_NODE_FIELD(subquery);
@@ -1038,10 +1039,15 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);
+			READ_NODE_FIELD(values_collations);
 			break;
-		case RTE_JOIN:
-			READ_ENUM_FIELD(jointype, JoinType);
-			READ_NODE_FIELD(joinaliasvars);
+		case RTE_CTE:
+			READ_STRING_FIELD(ctename);
+			READ_INT_FIELD(ctelevelsup);
+			READ_BOOL_FIELD(self_reference);
+			READ_NODE_FIELD(ctecoltypes);
+			READ_NODE_FIELD(ctecoltypmods);
+			READ_NODE_FIELD(ctecolcollations);
 			break;
         case RTE_VOID:                                                  /*CDB*/
             break;
@@ -1101,6 +1107,8 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(options);
 	READ_ENUM_FIELD(oncommit,OnCommitAction);
 	READ_STRING_FIELD(tablespacename);
+	READ_BOOL_STRING(if_not_exists);
+
 	READ_NODE_FIELD(distributedBy);
 	READ_CHAR_FIELD(relKind);
 	READ_CHAR_FIELD(relStorage);
@@ -1548,6 +1556,35 @@ _readAppend(void)
 	READ_DONE();
 }
 
+/*
+ * _readMergeAppend
+ */
+static MergeAppend *
+_readMergeAppend(void)
+{
+	READ_LOCALS(MergeAppend);
+
+	readPlanInfo((Plan *)local_node);
+
+	READ_NODE_FIELD(mergeplans);
+	READ_INT_FIELD(numCols);
+	READ_INT_ARRAY(sortColIdx, local_node->numCols, AttrNumber);
+	READ_OID_ARRAY(sortOperators, local_node->numCols);
+	READ_OID_ARRAY(collations, local_node->numCols);
+	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
+
+	READ_DONE();
+}
+
+static Sequence *
+_readSequence(void)
+{
+	READ_LOCALS(Sequence);
+	readPlanInfo((Plan *)local_node);
+	READ_NODE_FIELD(subplans);
+	READ_DONE();
+}
+
 static RecursiveUnion *
 _readRecursiveUnion(void)
 {
@@ -1561,15 +1598,6 @@ _readRecursiveUnion(void)
 	READ_OID_ARRAY(dupOperators, local_node->numCols);
 	READ_LONG_FIELD(numGroups);
 
-	READ_DONE();
-}
-
-static Sequence *
-_readSequence(void)
-{
-	READ_LOCALS(Sequence);
-	readPlanInfo((Plan *)local_node);
-	READ_NODE_FIELD(subplans);
 	READ_DONE();
 }
 
@@ -1722,6 +1750,8 @@ readIndexScanFields(IndexScan *local_node)
 	READ_OID_FIELD(indexid);
 	READ_NODE_FIELD(indexqual);
 	READ_NODE_FIELD(indexqualorig);
+	READ_NODE_FIELD(indexorderby);
+	READ_NODE_FIELD(indexorderbyorig);
 	READ_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
@@ -1918,6 +1948,8 @@ _readNestLoop(void)
 	READ_LOCALS(NestLoop);
 
 	readJoinInfo((Join *)local_node);
+
+	READ_NODE_FIELD(nestParams);
 
 	READ_BOOL_FIELD(shared_outer);
 	READ_BOOL_FIELD(singleton_outer); /*CDB-OLAP*/
@@ -3001,11 +3033,14 @@ readNodeBinary(void)
 			case T_Append:
 				return_value = _readAppend();
 				break;
-			case T_RecursiveUnion:
-				return_value = _readRecursiveUnion();
+			case T_MergeAppend:
+				return_value = _readMergeAppend();
 				break;
 			case T_Sequence:
 				return_value = _readSequence();
+				break;
+			case T_RecursiveUnion:
+				return_value = _readRecursiveUnion();
 				break;
 			case T_BitmapAnd:
 				return_value = _readBitmapAnd();

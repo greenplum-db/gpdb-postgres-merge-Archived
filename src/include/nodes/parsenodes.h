@@ -172,7 +172,6 @@ typedef struct Query
 
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
-
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
@@ -181,7 +180,6 @@ typedef struct Query
 	 * policy for SELECT ... INTO and set operations.
 	 */
 	struct GpPolicy *intoPolicy;
-
 } Query;
 
 
@@ -2668,6 +2666,7 @@ typedef struct RenameStmt
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+
 	bool		bAllowPartn;	/* allow action on a partition */
 } RenameStmt;
 
