@@ -308,12 +308,8 @@ extern int XLogFileInit(uint32 log, uint32 seg,
 extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
-<<<<<<< HEAD
-extern void XLogSetAsyncCommitLSN(XLogRecPtr record);
-extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
-=======
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
 
 extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
 
@@ -327,7 +323,7 @@ extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
-extern XLogRecPtr GetXLogReplayRecPtr(void);
+extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
@@ -343,11 +339,8 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
-<<<<<<< HEAD
 extern void XLogPutNextRelfilenode(Oid nextRelfilenode);
-=======
 extern XLogRecPtr XLogRestorePoint(const char *rpName);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);
@@ -398,27 +391,12 @@ extern void XLogReadRecoveryCommandFile(int emode);
 extern List *XLogReadTimeLineHistory(TimeLineID targetTLI);
 
 extern XLogRecPtr GetStandbyFlushRecPtr(TimeLineID *targetTLI);
-extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);
 extern TimeLineID GetRecoveryTargetTLI(void);
 
-extern bool CheckPromoteSignal(bool do_unlink);
-extern void WakeupRecovery(void);
 extern bool IsStandbyMode(void);
 extern DBState GetCurrentDBState(void);
 extern bool IsRoleMirror(void);
 
-/*
- * Starting/stopping a base backup
- */
-extern XLogRecPtr do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile);
-extern XLogRecPtr do_pg_stop_backup(char *labelfile);
-extern void do_pg_abort_backup(void);
-
-/* File path names (all relative to $PGDATA) */
-#define BACKUP_LABEL_FILE		"backup_label"
-#define BACKUP_LABEL_OLD		"backup_label.old"
-
-extern bool
-IsBkpBlockApplied(XLogRecord *record, uint8 block_id);
+extern bool IsBkpBlockApplied(XLogRecord *record, uint8 block_id);
 
 #endif   /* XLOG_H */

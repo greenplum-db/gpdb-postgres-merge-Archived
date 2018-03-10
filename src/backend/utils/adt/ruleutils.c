@@ -7471,57 +7471,6 @@ printSubscripts(ArrayRef *aref, deparse_context *context)
 	}
 }
 
-
-/*
- * quote_literal_internal			- Quote a literal as required.
- *
- * NOTE: think not to make this function's behavior change with
- * standard_conforming_strings.  We don't know where the result
- * literal will be used, and so we must generate a result that
- * will work with either setting.  Take a look at what dblink
- * uses this for before thinking you know better.
- */
-const char *
-quote_literal_internal(const char *literal)
-{
-	char	   *result;
-	const char *cp1;
-	char	   *cp2;
-	int			len;
-
-	len = strlen(literal);
-	/* We make a worst-case result area; wasting a little space is OK */
-	result = (char *) palloc(len * 2 + 3 + 1);
-
-	cp1 = literal;
-	cp2 = result;
-
-	for (; len-- > 0; cp1++)
-	{
-		if (*cp1 == '\\')
-		{
-			*cp2++ = ESCAPE_STRING_SYNTAX;
-			break;
-		}
-	}
-
-	len = strlen(literal);
-	cp1 = literal;
-
-	*cp2++ = '\'';
-	while (len-- > 0)
-	{
-		if (SQL_STR_DOUBLE(*cp1, true))
-			*cp2++ = *cp1;
-		*cp2++ = *cp1++;
-	}
-	*cp2++ = '\'';
-
-	result[cp2 - ((char *) result)] = '\0';
-
-	return result;
-}
-
 /*
  * quote_identifier			- Quote an identifier only if needed
  *

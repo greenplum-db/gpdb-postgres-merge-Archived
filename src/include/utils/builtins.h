@@ -568,15 +568,12 @@ extern Datum anyelement_in(PG_FUNCTION_ARGS);
 extern Datum anyelement_out(PG_FUNCTION_ARGS);
 extern Datum shell_in(PG_FUNCTION_ARGS);
 extern Datum shell_out(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
-extern Datum anytable_in(PG_FUNCTION_ARGS);
-extern Datum anytable_out(PG_FUNCTION_ARGS);
-=======
 extern Datum pg_node_tree_in(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_out(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_recv(PG_FUNCTION_ARGS);
 extern Datum pg_node_tree_send(PG_FUNCTION_ARGS);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern Datum anytable_in(PG_FUNCTION_ARGS);
+extern Datum anytable_out(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern Datum nameregexeq(PG_FUNCTION_ARGS);
@@ -682,20 +679,6 @@ extern char *deparse_expression(Node *expr, List *dpcontext,
 extern char *deparse_expr_sweet(Node *expr, List *dpcontext,
 				   bool forceprefix, bool showimplicit);                /*CDB*/
 extern List *deparse_context_for(const char *aliasname, Oid relid);
-<<<<<<< HEAD
-extern const char *quote_literal_internal(const char *literal);
-extern List *deparse_context_for_plan(Node *plan, Node *outer_plan,
-						 List *rtable, List *subplans);
-extern const char *quote_identifier(const char *ident);
-extern char *quote_qualified_identifier(const char *qualifier,
-						   const char *ident);
-extern Datum pg_get_partition_def(PG_FUNCTION_ARGS);
-extern Datum pg_get_partition_def_ext(PG_FUNCTION_ARGS);
-extern Datum pg_get_partition_def_ext2(PG_FUNCTION_ARGS);
-extern Datum pg_get_partition_rule_def(PG_FUNCTION_ARGS);
-extern Datum pg_get_partition_rule_def_ext(PG_FUNCTION_ARGS);
-extern Datum pg_get_partition_template_def(PG_FUNCTION_ARGS);
-=======
 extern List *deparse_context_for_planstate(Node *planstate, List *ancestors,
 							  List *rtable);
 extern const char *quote_identifier(const char *ident);
@@ -703,7 +686,13 @@ extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);
 extern char *generate_collation_name(Oid collid);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern Datum pg_get_partition_def(PG_FUNCTION_ARGS);
+extern Datum pg_get_partition_def_ext(PG_FUNCTION_ARGS);
+extern Datum pg_get_partition_def_ext2(PG_FUNCTION_ARGS);
+extern Datum pg_get_partition_rule_def(PG_FUNCTION_ARGS);
+extern Datum pg_get_partition_rule_def_ext(PG_FUNCTION_ARGS);
+extern Datum pg_get_partition_template_def(PG_FUNCTION_ARGS);
+
 
 /* tid.c */
 extern Datum tidin(PG_FUNCTION_ARGS);

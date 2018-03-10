@@ -286,25 +286,15 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			{
 				/* be careful to apply operator right way 'round */
 				if (varonleft)
-<<<<<<< HEAD
-					match = DatumGetBool(FunctionCall2(&eqproc,
-													   sslot.values[i],
-													   constval));
-				else
-					match = DatumGetBool(FunctionCall2(&eqproc,
-													   constval,
-													   sslot.values[i]));
-=======
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-													   DEFAULT_COLLATION_OID,
-														   values[i],
+														   DEFAULT_COLLATION_OID,
+														   sslot.values[i],
 														   constval));
 				else
 					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-													   DEFAULT_COLLATION_OID,
+														   DEFAULT_COLLATION_OID,
 														   constval,
-														   values[i]));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+														   sslot.values[i]));
 				if (match)
 					break;
 			}

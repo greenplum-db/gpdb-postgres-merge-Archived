@@ -63,18 +63,13 @@ extern int	max_files_per_process;
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-<<<<<<< HEAD
 
 extern File OpenNamedTemporaryFile(const char *fileName,
 								   bool create,
 								   bool delOnClose,
 								   bool interXact);
 extern File OpenTemporaryFile(bool interXact, const char *filePrefix);
-
-=======
-extern File OpenTemporaryFile(bool interXact);
 extern void FileSetTransient(File file);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount);
 extern int	FileRead(File file, char *buffer, int amount);

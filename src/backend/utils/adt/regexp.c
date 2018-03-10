@@ -1177,7 +1177,7 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
  * If it is an exact match, not just a prefix, *exact is returned as TRUE.
  */
 char *
-regexp_fixed_prefix(text *text_re, bool case_insensitive,
+regexp_fixed_prefix(text *text_re, bool case_insensitive, Oid collation,
 					bool *exact)
 {
 	char	   *result;
@@ -1196,7 +1196,7 @@ regexp_fixed_prefix(text *text_re, bool case_insensitive,
 	if (case_insensitive)
 		cflags |= REG_ICASE;
 
-	re = RE_compile_and_cache(text_re, cflags);
+	re = RE_compile_and_cache(text_re, cflags, collation);
 
 	/* Examine it to see if there's a fixed prefix */
 	re_result = pg_regprefix(re, &str, &slen);

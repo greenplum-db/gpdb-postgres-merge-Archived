@@ -203,13 +203,6 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 						   int nreferenced,
 						   DependencyType behavior);
 
-<<<<<<< HEAD
-extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
-									   bool skipExtensionDeps);
-
-extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
-                                Oid refclassId, char deptype);
-=======
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object);
 
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
@@ -217,7 +210,6 @@ extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
 
 extern long deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 								Oid refclassId, char deptype);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern long changeDependencyFor(Oid classId, Oid objectId,
 					Oid refClassId, Oid oldRefObjectId,
@@ -240,11 +232,6 @@ extern Oid	get_index_constraint(Oid indexId);
 extern void recordSharedDependencyOn(ObjectAddress *depender,
 						 ObjectAddress *referenced,
 						 SharedDependencyType deptype);
-
-extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
-
-extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
-								   bool isReplace);
 
 extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId,
 								 int32 objectSubId);

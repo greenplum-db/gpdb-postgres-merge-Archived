@@ -135,13 +135,9 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include smgr.h: */
 	struct SMgrRelationData *rd_smgr;	/* cached file handle, or NULL */
 	int			rd_refcnt;		/* reference count */
-<<<<<<< HEAD
-	bool		rd_istemp;		/* CDB: true => skip locking, logging, fsync */
-	bool		rd_islocaltemp; /* rel is a temp rel of this session */
-	bool		rd_issyscat;	/* GP: true => system catalog table (has "pg_" prefix) */
-=======
 	BackendId	rd_backend;		/* owning backend id, if temporary relation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	// GPDB_91_MERGE_FIXME: is rd_issyscat still needed?
+	bool		rd_issyscat;	/* GP: true => system catalog table (has "pg_" prefix) */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =

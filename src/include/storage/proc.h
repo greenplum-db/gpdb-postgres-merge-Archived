@@ -16,11 +16,8 @@
 #ifndef _PROC_H_
 #define _PROC_H_
 
-<<<<<<< HEAD
-=======
 #include "access/xlog.h"
 #include "replication/syncrep.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/spin.h"
@@ -151,10 +148,7 @@ struct PGPROC
 	 * syncRepState must not be touched except by owning process or WALSender.
 	 * syncRepLinks used only while holding SyncRepLock.
 	 */
-<<<<<<< HEAD
-=======
 	Latch		waitLatch;		/* allow us to wait for sync rep */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	XLogRecPtr	waitLSN;		/* waiting for this LSN or higher */
 	int			syncRepState;	/* wait state for sync rep */
 	SHM_QUEUE	syncRepLinks;	/* list link if process is in syncrep queue */

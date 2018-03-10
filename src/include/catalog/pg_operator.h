@@ -132,32 +132,22 @@ DATA(insert OID = 1695 (  ">="	   PGNSP PGUID b f f	16	16	16 1694 58 boolge scal
 DESCR("greater than or equal");
 
 DATA(insert OID =  92 ( "="		   PGNSP PGUID b t t	18	18	16	92 630 chareq eqsel eqjoinsel ));
-<<<<<<< HEAD
+DESCR("equal");
 #define CharEqualOperator 92
 DATA(insert OID =  93 ( "="		   PGNSP PGUID b t t	19	19	16	93 643 nameeq eqsel eqjoinsel ));
+DESCR("equal");
 #define NameEqualOperator 93
 DATA(insert OID =  94 ( "="		   PGNSP PGUID b t t	21	21	16	94 519 int2eq eqsel eqjoinsel ));
+DESCR("equal");
 #define Int2EqualOperator 94
-=======
-DESCR("equal");
-DATA(insert OID =  93 ( "="		   PGNSP PGUID b t t	19	19	16	93 643 nameeq eqsel eqjoinsel ));
-DESCR("equal");
-DATA(insert OID =  94 ( "="		   PGNSP PGUID b t t	21	21	16	94 519 int2eq eqsel eqjoinsel ));
-DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DATA(insert OID =  95 ( "<"		   PGNSP PGUID b f f	21	21	16 520 524 int2lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
 DATA(insert OID =  96 ( "="		   PGNSP PGUID b t t	23	23	16	96 518 int4eq eqsel eqjoinsel ));
-<<<<<<< HEAD
+DESCR("equal");
 #define Int4EqualOperator 96
 DATA(insert OID =  97 ( "<"		   PGNSP PGUID b f f	23	23	16 521 525 int4lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
 #define Int4LessOperator	97
-=======
-DESCR("equal");
-DATA(insert OID =  97 ( "<"		   PGNSP PGUID b f f	23	23	16 521 525 int4lt scalarltsel scalarltjoinsel ));
-DESCR("less than");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DATA(insert OID =  98 ( "="		   PGNSP PGUID b t t	25	25	16	98 531 texteq eqsel eqjoinsel ));
 DESCR("equal");
 #define TextEqualOperator	98
@@ -170,11 +160,8 @@ DATA(insert OID = 375 (  "||"	   PGNSP PGUID b f f 2277 2277 2277 0 0 array_cat	
 DESCR("concatenate");
 
 DATA(insert OID = 352 (  "="	   PGNSP PGUID b f t	28	28	16 352	 0 xideq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define XidEqualOperator 352
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define XidEqualOperator 352
 DATA(insert OID = 353 (  "="	   PGNSP PGUID b f f	28	23	16	 0	 0 xideqint4 eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f f	20	 0	1700  0  0 numeric_fac - - ));
@@ -182,11 +169,8 @@ DESCR("factorial");
 DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f f	 0	20	1700  0  0 numeric_fac - - ));
 DESCR("deprecated, use ! instead");
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b f t	29	29	16 385	 0 cideq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define CidEqualOperator 385
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define CidEqualOperator 385
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b f t	22	22	16 386	 0 int2vectoreq eqsel eqjoinsel ));
 DESCR("equal");
 
@@ -206,19 +190,13 @@ DATA(insert OID = 2802 (  ">="	   PGNSP PGUID b f f	27	27	16 2801 2799 tidge sca
 DESCR("greater than or equal");
 
 DATA(insert OID = 410 ( "="		   PGNSP PGUID b t t	20	20	16 410 411 int8eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Int8EqualOperator 410
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int8EqualOperator 410
 DATA(insert OID = 411 ( "<>"	   PGNSP PGUID b f f	20	20	16 411 410 int8ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 412 ( "<"		   PGNSP PGUID b f f	20	20	16 413 415 int8lt scalarltsel scalarltjoinsel ));
-<<<<<<< HEAD
-#define Int8LessOperator	412
-=======
 DESCR("less than");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int8LessOperator	412
 DATA(insert OID = 413 ( ">"		   PGNSP PGUID b f f	20	20	16 412 414 int8gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
 DATA(insert OID = 414 ( "<="	   PGNSP PGUID b f f	20	20	16 415 413 int8le scalarltsel scalarltjoinsel ));
@@ -227,11 +205,8 @@ DATA(insert OID = 415 ( ">="	   PGNSP PGUID b f f	20	20	16 414 412 int8ge scalar
 DESCR("greater than or equal");
 
 DATA(insert OID = 416 ( "="		   PGNSP PGUID b t t	20	23	16	15 417 int84eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Int84EqualOperator 416
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int84EqualOperator 416
 DATA(insert OID = 417 ( "<>"	   PGNSP PGUID b f f	20	23	16	36 416 int84ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 418 ( "<"		   PGNSP PGUID b f f	20	23	16	76 430 int84lt scalarltsel scalarltjoinsel ));
@@ -342,15 +317,11 @@ DESCR("modulus");
 DATA(insert OID = 531 (  "<>"	   PGNSP PGUID b f f	25	25	16 531	98 textne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 532 (  "="	   PGNSP PGUID b t t	21	23	16 533 538 int24eq eqsel eqjoinsel ));
-<<<<<<< HEAD
+DESCR("equal");
 #define Int24EqualOperator 532
 DATA(insert OID = 533 (  "="	   PGNSP PGUID b t t	23	21	16 532 539 int42eq eqsel eqjoinsel ));
+DESCR("equal");
 #define Int42EqualOperator 533
-=======
-DESCR("equal");
-DATA(insert OID = 533 (  "="	   PGNSP PGUID b t t	23	21	16 532 539 int42eq eqsel eqjoinsel ));
-DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DATA(insert OID = 534 (  "<"	   PGNSP PGUID b f f	21	23	16 537 542 int24lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
 DATA(insert OID = 535 (  "<"	   PGNSP PGUID b f f	23	21	16 536 543 int42lt scalarltsel scalarltjoinsel ));
@@ -400,11 +371,8 @@ DESCR("negate");
 DATA(insert OID = 559 (  "-"	   PGNSP PGUID l f f	 0	21	21	 0	 0 int2um - - ));
 DESCR("negate");
 DATA(insert OID = 560 (  "="	   PGNSP PGUID b t t 702 702	16 560 561 abstimeeq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define AbsTimeEqualOperator 560
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define AbsTimeEqualOperator 560
 DATA(insert OID = 561 (  "<>"	   PGNSP PGUID b f f 702 702	16 561 560 abstimene neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 562 (  "<"	   PGNSP PGUID b f f 702 702	16 563 565 abstimelt scalarltsel scalarltjoinsel ));
@@ -416,11 +384,8 @@ DESCR("less than or equal");
 DATA(insert OID = 565 (  ">="	   PGNSP PGUID b f f 702 702	16 564 562 abstimege scalargtsel scalargtjoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 566 (  "="	   PGNSP PGUID b t t 703 703	16 566 567 reltimeeq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define RelTimeEqualOperator 566
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define RelTimeEqualOperator 566
 DATA(insert OID = 567 (  "<>"	   PGNSP PGUID b f f 703 703	16 567 566 reltimene neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 568 (  "<"	   PGNSP PGUID b f f 703 703	16 569 571 reltimelt scalarltsel scalarltjoinsel ));
@@ -489,11 +454,8 @@ DATA(insert OID = 606 (  "<#>"	   PGNSP PGUID b f f 702 702 704	 0	 0 mktinterva
 DESCR("convert to tinterval");
 
 DATA(insert OID = 607 (  "="	   PGNSP PGUID b t t	26	26	16 607 608 oideq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define OidEqualOperator 607
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define OidEqualOperator 607
 DATA(insert OID = 608 (  "<>"	   PGNSP PGUID b f f	26	26	16 608 607 oidne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 609 (  "<"	   PGNSP PGUID b f f	26	26	16 610 612 oidlt scalarltsel scalarltjoinsel ));
@@ -532,11 +494,8 @@ DATA(insert OID = 618 (  "<->"	   PGNSP PGUID b f f 600 602 701	 0	 0 dist_ppath
 DESCR("distance between");
 
 DATA(insert OID = 620 (  "="	   PGNSP PGUID b t t	700  700	16 620 621 float4eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Float4EqualOperator 620
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Float4EqualOperator 620
 DATA(insert OID = 621 (  "<>"	   PGNSP PGUID b f f	700  700	16 621 620 float4ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 622 (  "<"	   PGNSP PGUID b f f	700  700	16 623 625 float4lt scalarltsel scalarltjoinsel ));
@@ -592,11 +551,8 @@ DATA(insert OID = 667 (  ">="	   PGNSP PGUID b f f	25	25	16 665 664 text_ge scal
 DESCR("greater than or equal");
 
 DATA(insert OID = 670 (  "="	   PGNSP PGUID b t t	701  701	16 670 671 float8eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Float8EqualOperator 670
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Float8EqualOperator 670
 DATA(insert OID = 671 (  "<>"	   PGNSP PGUID b f f	701  701	16 671 670 float8ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 672 (  "<"	   PGNSP PGUID b f f	701  701	16 674 675 float8lt scalarltsel scalarltjoinsel ));
@@ -739,11 +695,8 @@ DATA(insert OID =  809 (  "?|"	   PGNSP PGUID b f f	600  600	 16  809  0 point_v
 DESCR("vertically aligned");
 
 DATA(insert OID = 811 (  "="	   PGNSP PGUID b t f 704 704	16 811 812 tintervaleq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TIntervalEqualOperator 811
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define TIntervalEqualOperator 811
 DATA(insert OID = 812 (  "<>"	   PGNSP PGUID b f f 704 704	16 812 811 tintervalne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 813 (  "<"	   PGNSP PGUID b f f 704 704	16 814 816 tintervallt scalarltsel scalarltjoinsel ));
@@ -755,24 +708,16 @@ DESCR("less than or equal");
 DATA(insert OID = 816 (  ">="	   PGNSP PGUID b f f 704 704	16 815 813 tintervalge scalargtsel scalargtjoinsel ));
 DESCR("greater than or equal");
 
-<<<<<<< HEAD
 DATA(insert OID = 843 (  "*"	   PGNSP PGUID b f f	790  700	790 845 0 cash_mul_flt4 - - ));
-DATA(insert OID = 844 (  "/"	   PGNSP PGUID b f f	790  700	790   0 0 cash_div_flt4 - - ));
-DATA(insert OID = 845 (  "*"	   PGNSP PGUID b f f	700  790	790 843 0 flt4_mul_cash - - ));
-
-DATA(insert OID = 900 (  "="	   PGNSP PGUID b t f	790  790	16 900 901 cash_eq eqsel eqjoinsel ));
-#define CashEqualOperator 900
-=======
-DATA(insert OID = 843 (  "*"	   PGNSP PGUID b f f	790  700	790 845   0 cash_mul_flt4 - - ));
 DESCR("multiply");
-DATA(insert OID = 844 (  "/"	   PGNSP PGUID b f f	790  700	790   0   0 cash_div_flt4 - - ));
+DATA(insert OID = 844 (  "/"	   PGNSP PGUID b f f	790  700	790   0 0 cash_div_flt4 - - ));
 DESCR("divide");
-DATA(insert OID = 845 (  "*"	   PGNSP PGUID b f f	700  790	790 843   0 flt4_mul_cash - - ));
+DATA(insert OID = 845 (  "*"	   PGNSP PGUID b f f	700  790	790 843 0 flt4_mul_cash - - ));
 DESCR("multiply");
 
 DATA(insert OID = 900 (  "="	   PGNSP PGUID b t f	790  790	16 900 901 cash_eq eqsel eqjoinsel ));
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define CashEqualOperator 900
 DATA(insert OID = 901 (  "<>"	   PGNSP PGUID b f f	790  790	16 901 900 cash_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 902 (  "<"	   PGNSP PGUID b f f	790  790	16 903 905 cash_lt scalarltsel scalarltjoinsel ));
@@ -782,19 +727,6 @@ DESCR("greater than");
 DATA(insert OID = 904 (  "<="	   PGNSP PGUID b f f	790  790	16 905 903 cash_le scalarltsel scalarltjoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 905 (  ">="	   PGNSP PGUID b f f	790  790	16 904 902 cash_ge scalargtsel scalargtjoinsel ));
-<<<<<<< HEAD
-DATA(insert OID = 906 (  "+"	   PGNSP PGUID b f f	790  790	790 906   0  cash_pl - - ));
-DATA(insert OID = 907 (  "-"	   PGNSP PGUID b f f	790  790	790   0   0  cash_mi - - ));
-DATA(insert OID = 908 (  "*"	   PGNSP PGUID b f f	790  701	790 916   0  cash_mul_flt8 - - ));
-DATA(insert OID = 909 (  "/"	   PGNSP PGUID b f f	790  701	790   0   0  cash_div_flt8 - - ));
-DATA(insert OID = 912 (  "*"	   PGNSP PGUID b f f	790  23 790 917   0    cash_mul_int4 - - ));
-DATA(insert OID = 913 (  "/"	   PGNSP PGUID b f f	790  23 790   0   0    cash_div_int4 - - ));
-DATA(insert OID = 914 (  "*"	   PGNSP PGUID b f f	790  21 790 918   0    cash_mul_int2 - - ));
-DATA(insert OID = 915 (  "/"	   PGNSP PGUID b f f	790  21 790   0   0    cash_div_int2 - - ));
-DATA(insert OID = 916 (  "*"	   PGNSP PGUID b f f	701  790	790 908   0  flt8_mul_cash - - ));
-DATA(insert OID = 917 (  "*"	   PGNSP PGUID b f f	23	790 790 912   0   int4_mul_cash - - ));
-DATA(insert OID = 918 (  "*"	   PGNSP PGUID b f f	21	790 790 914   0   int2_mul_cash - - ));
-=======
 DESCR("greater than or equal");
 DATA(insert OID = 906 (  "+"	   PGNSP PGUID b f f	790  790	790 906   0 cash_pl - - ));
 DESCR("add");
@@ -820,7 +752,6 @@ DATA(insert OID = 918 (  "*"	   PGNSP PGUID b f f	21	790		790 914   0 int2_mul_c
 DESCR("multiply");
 DATA(insert OID = 3825 ( "/"	   PGNSP PGUID b f f	790 790		701   0   0 cash_div_cash - - ));
 DESCR("divide");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 DATA(insert OID = 965 (  "^"	   PGNSP PGUID b f f	701  701	701 0 0 dpow - - ));
 DESCR("exponentiation");
@@ -842,12 +773,9 @@ DATA(insert OID =  971 (  "@@"	   PGNSP PGUID l f f	0  604	600    0  0 poly_cent
 DESCR("center of");
 
 DATA(insert OID = 1054 ( "="	   PGNSP PGUID b t t 1042 1042	 16 1054 1057 bpchareq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define BPCharEqualOperator 1054
-=======
 DESCR("equal");
+#define BPCharEqualOperator 1054
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DATA(insert OID = 1055 ( "~"	   PGNSP PGUID b f f 1042 25	 16    0 1056 bpcharregexeq regexeqsel regexeqjoinsel ));
 DESCR("matches regular expression, case-sensitive");
 #define OID_BPCHAR_REGEXEQ_OP		1055
@@ -887,11 +815,8 @@ DESCR("add");
 DATA(insert OID = 1077 ( "-"	   PGNSP PGUID b f f	1082	1186 1114 0 0 date_mi_interval - - ));
 DESCR("subtract");
 DATA(insert OID = 1093 ( "="	   PGNSP PGUID b t t	1082	1082   16 1093 1094 date_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define DateEqualOperator 1093
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define DateEqualOperator 1093
 DATA(insert OID = 1094 ( "<>"	   PGNSP PGUID b f f	1082	1082   16 1094 1093 date_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1095 ( "<"	   PGNSP PGUID b f f	1082	1082   16 1097 1098 date_lt scalarltsel scalarltjoinsel ));
@@ -911,11 +836,8 @@ DESCR("subtract");
 
 /* time operators */
 DATA(insert OID = 1108 ( "="	   PGNSP PGUID b t t	1083	1083  16 1108 1109 time_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TimeEqualOperator 1108
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define TimeEqualOperator 1108
 DATA(insert OID = 1109 ( "<>"	   PGNSP PGUID b f f	1083	1083  16 1109 1108 time_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1110 ( "<"	   PGNSP PGUID b f f	1083	1083  16 1112 1113 time_lt scalarltsel scalarltjoinsel ));
@@ -929,11 +851,8 @@ DESCR("greater than or equal");
 
 /* timetz operators */
 DATA(insert OID = 1550 ( "="	   PGNSP PGUID b t t	1266 1266	16 1550 1551 timetz_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TimeTZEqualOperator 1550
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define TimeTZEqualOperator 1550
 DATA(insert OID = 1551 ( "<>"	   PGNSP PGUID b f f	1266 1266	16 1551 1550 timetz_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1552 ( "<"	   PGNSP PGUID b f f	1266 1266	16 1554 1555 timetz_lt scalarltsel scalarltjoinsel ));
@@ -1026,11 +945,8 @@ DESCR("does not match regular expression, case-insensitive");
 
 /* timestamptz operators */
 DATA(insert OID = 1320 (  "="	   PGNSP PGUID b t t 1184 1184	 16 1320 1321 timestamptz_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TimestampTZEqualOperator 1320
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define TimestampTZEqualOperator 1320
 DATA(insert OID = 1321 (  "<>"	   PGNSP PGUID b f f 1184 1184	 16 1321 1320 timestamptz_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1322 (  "<"	   PGNSP PGUID b f f 1184 1184	 16 1324 1325 timestamptz_lt scalarltsel scalarltjoinsel ));
@@ -1050,11 +966,8 @@ DESCR("subtract");
 
 /* interval operators */
 DATA(insert OID = 1330 (  "="	   PGNSP PGUID b t t 1186 1186	 16 1330 1331 interval_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define IntervalEqualOperator 1330
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define IntervalEqualOperator 1330
 DATA(insert OID = 1331 (  "<>"	   PGNSP PGUID b f f 1186 1186	 16 1331 1330 interval_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1332 (  "<"	   PGNSP PGUID b f f 1186 1186	 16 1334 1335 interval_lt scalarltsel scalarltjoinsel ));
@@ -1229,11 +1142,8 @@ DESCR("intersection point");
 
 /* MAC type */
 DATA(insert OID = 1220 (  "="	   PGNSP PGUID b t t 829 829	 16 1220 1221 macaddr_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define MacAddrEqualOperator 1220
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define MacAddrEqualOperator 1220
 DATA(insert OID = 1221 (  "<>"	   PGNSP PGUID b f f 829 829	 16 1221 1220 macaddr_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1222 (  "<"	   PGNSP PGUID b f f 829 829	 16 1224 1225 macaddr_lt scalarltsel scalarltjoinsel ));
@@ -1247,11 +1157,8 @@ DESCR("greater than or equal");
 
 /* INET type (these also support CIDR via implicit cast) */
 DATA(insert OID = 1201 (  "="	   PGNSP PGUID b t t 869 869	 16 1201 1202 network_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define InetEqualOperator 1201
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define InetEqualOperator 1201
 DATA(insert OID = 1202 (  "<>"	   PGNSP PGUID b f f 869 869	 16 1202 1201 network_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1203 (  "<"	   PGNSP PGUID b f f 869 869	 16 1205 1206 network_lt scalarltsel scalarltjoinsel ));
@@ -1311,11 +1218,8 @@ DESCR("does not match LIKE expression, case-insensitive");
 DATA(insert OID = 1751 (  "-"	   PGNSP PGUID l f f	0 1700 1700    0	0 numeric_uminus - - ));
 DESCR("negate");
 DATA(insert OID = 1752 (  "="	   PGNSP PGUID b t t 1700 1700	 16 1752 1753 numeric_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define NumericEqualOperator 1752
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define NumericEqualOperator 1752
 DATA(insert OID = 1753 (  "<>"	   PGNSP PGUID b f f 1700 1700	 16 1753 1752 numeric_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1754 (  "<"	   PGNSP PGUID b f f 1700 1700	 16 1756 1757 numeric_lt scalarltsel scalarltjoinsel ));
@@ -1342,11 +1246,8 @@ DATA(insert OID = 1763 (  "@"	   PGNSP PGUID l f f	0 1700 1700    0	0 numeric_ab
 DESCR("absolute value");
 
 DATA(insert OID = 1784 (  "="	  PGNSP PGUID b t f 1560 1560 16 1784 1785 biteq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define BitEqualOperator 1784
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define BitEqualOperator 1784
 DATA(insert OID = 1785 (  "<>"	  PGNSP PGUID b f f 1560 1560 16 1785 1784 bitne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1786 (  "<"	  PGNSP PGUID b f f 1560 1560 16 1787 1789 bitlt scalarltsel scalarltjoinsel ));
@@ -1382,11 +1283,8 @@ DATA(insert OID = 1803 (  "-"	   PGNSP PGUID b f f 1266 1186 1266  0	0 timetz_mi
 DESCR("subtract");
 
 DATA(insert OID = 1804 (  "="	  PGNSP PGUID b t f 1562 1562 16 1804 1805 varbiteq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define VarbitEqualOperator 1804
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define VarbitEqualOperator 1804
 DATA(insert OID = 1805 (  "<>"	  PGNSP PGUID b f f 1562 1562 16 1805 1804 varbitne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1806 (  "<"	  PGNSP PGUID b f f 1562 1562 16 1807 1809 varbitlt scalarltsel scalarltjoinsel ));
@@ -1402,11 +1300,8 @@ DATA(insert OID = 1849 (  "+"	   PGNSP PGUID b f f 1186 1083 1083  1800 0 interv
 DESCR("add");
 
 DATA(insert OID = 1862 ( "="	   PGNSP PGUID b t t	21	20	16 1868  1863 int28eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Int28EqualOperator 1862
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int28EqualOperator 1862
 DATA(insert OID = 1863 ( "<>"	   PGNSP PGUID b f f	21	20	16 1869  1862 int28ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1864 ( "<"	   PGNSP PGUID b f f	21	20	16 1871  1867 int28lt scalarltsel scalarltjoinsel ));
@@ -1419,11 +1314,8 @@ DATA(insert OID = 1867 ( ">="	   PGNSP PGUID b f f	21	20	16 1872  1864 int28ge s
 DESCR("greater than or equal");
 
 DATA(insert OID = 1868 ( "="	   PGNSP PGUID b t t	20	21	16	1862 1869 int82eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define Int82EqualOperator 1868
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define Int82EqualOperator 1868
 DATA(insert OID = 1869 ( "<>"	   PGNSP PGUID b f f	20	21	16	1863 1868 int82ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1870 ( "<"	   PGNSP PGUID b f f	20	21	16	1865 1873 int82lt scalarltsel scalarltjoinsel ));
@@ -1489,11 +1381,8 @@ DESCR("unary plus");
 
 /* bytea operators */
 DATA(insert OID = 1955 ( "="	   PGNSP PGUID b t t 17 17	16 1955 1956 byteaeq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define ByteaEqualOperator 1955
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define ByteaEqualOperator 1955
 DATA(insert OID = 1956 ( "<>"	   PGNSP PGUID b f f 17 17	16 1956 1955 byteane neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 1957 ( "<"	   PGNSP PGUID b f f 17 17	16 1959 1960 bytealt scalarltsel scalarltjoinsel ));
@@ -1515,11 +1404,8 @@ DESCR("concatenate");
 
 /* timestamp operators */
 DATA(insert OID = 2060 (  "="	   PGNSP PGUID b t t 1114 1114	 16 2060 2061 timestamp_eq eqsel eqjoinsel ));
-<<<<<<< HEAD
-#define TimestampEqualOperator 2060
-=======
 DESCR("equal");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#define TimestampEqualOperator 2060
 DATA(insert OID = 2061 (  "<>"	   PGNSP PGUID b f f 1114 1114	 16 2061 2060 timestamp_ne neqsel neqjoinsel ));
 DESCR("not equal");
 DATA(insert OID = 2062 (  "<"	   PGNSP PGUID b f f 1114 1114	 16 2064 2065 timestamp_lt scalarltsel scalarltjoinsel ));
@@ -1803,7 +1689,8 @@ DESCR("is contained by");
 DATA(insert OID = 3762 (  "@@"	   PGNSP PGUID b f f 25		 25		 16    0	0	 ts_match_tt	contsel    contjoinsel	 ));
 DESCR("text search match");
 DATA(insert OID = 3763 (  "@@"	   PGNSP PGUID b f f 25		 3615	 16    0	0	 ts_match_tq	contsel    contjoinsel	 ));
-<<<<<<< HEAD
+DESCR("text search match");
+
 DATA(insert OID = 3962 (  "->"	   PGNSP PGUID b f f 114 25 114 0 0 json_object_field - - ));
 DESCR("get json object field");
 DATA(insert OID = 3963 (  "->>"    PGNSP PGUID b f f 114 25 25 0 0 json_object_field_text - - ));
@@ -1816,9 +1703,6 @@ DATA(insert OID = 3966 (  "#>"     PGNSP PGUID b f f 114 1009 114 0 0 json_extra
 DESCR("get value from json with path elements");
 DATA(insert OID = 3967 (  "#>>"    PGNSP PGUID b f f 114 1009 25 0 0 json_extract_path_text_op - - ));
 DESCR("get value from json as text with path elements");
-=======
-DESCR("text search match");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* generic record comparison operators */
 DATA(insert OID = 2988 (  "="	   PGNSP PGUID b t f 2249 2249 16 2988 2989 record_eq eqsel eqjoinsel ));

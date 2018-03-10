@@ -300,19 +300,15 @@ DECLARE_UNIQUE_INDEX(pg_default_acl_oid_index, 828, on pg_default_acl using btre
 DECLARE_UNIQUE_INDEX(pg_db_role_setting_databaseid_rol_index, 2965, on pg_db_role_setting using btree(setdatabase oid_ops, setrole oid_ops));
 #define DbRoleSettingDatidRolidIndexId	2965
 
-<<<<<<< HEAD
-=======
 DECLARE_UNIQUE_INDEX(pg_seclabel_object_index, 3597, on pg_seclabel using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops, provider text_ops));
 #define SecLabelObjectIndexId				3597
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DECLARE_UNIQUE_INDEX(pg_extension_oid_index, 3080, on pg_extension using btree(oid oid_ops));
 #define ExtensionOidIndexId 3080
 
 DECLARE_UNIQUE_INDEX(pg_extension_name_index, 3081, on pg_extension using btree(extname name_ops));
 #define ExtensionNameIndexId 3081
 
-<<<<<<< HEAD
 DECLARE_UNIQUE_INDEX(gp_policy_localoid_index, 6103, on gp_distribution_policy using btree(localoid oid_ops));
 #define GpPolicyLocalOidIndexId  6103
 
@@ -419,8 +415,6 @@ DECLARE_UNIQUE_INDEX(pg_compression_oid_index, 3058, on pg_compression using btr
 DECLARE_UNIQUE_INDEX(pg_compression_compname_index, 3059, on pg_compression using btree(compname name_ops));
 #define CompressionCompnameIndexId	3059
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 

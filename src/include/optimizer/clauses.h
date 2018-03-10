@@ -29,19 +29,10 @@
 
 typedef struct
 {
-<<<<<<< HEAD
-	int			numAggs;		/* total number of aggregate calls */
-	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
-	Size		transitionSpace;	/* for pass-by-ref transition data */
 	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
 	bool		hasOrderedAggs;	/* any ordered aggs? */
 	bool	missing_prelimfunc; /* CDB: any agg func w/o a prelim func? */
-} AggClauseCounts;
 
-typedef struct
-{
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */
@@ -81,13 +72,8 @@ extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
-<<<<<<< HEAD
-extern void count_agg_clauses(Node *clause, AggClauseCounts *counts);
-=======
-extern List *pull_agg_clause(Node *clause);
 extern void count_agg_clauses(PlannerInfo *root, Node *clause,
 				  AggClauseCosts *costs);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);

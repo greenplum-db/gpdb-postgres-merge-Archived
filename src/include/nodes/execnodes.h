@@ -997,16 +997,12 @@ typedef struct FuncExprState
 	 * (by InitFunctionCallInfoData) if func.fn_oid is valid.  It also saves
 	 * argument values between calls, when setArgsValid is true.
 	 */
-<<<<<<< HEAD
-	FunctionCallInfoData setArgs;
+	FunctionCallInfoData fcinfo_data;
 
 	/* Fast Path */
 	ExprState  *fp_arg[2];
 	Datum		fp_datum[2];
 	bool		fp_null[2];
-=======
-	FunctionCallInfoData fcinfo_data;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } FuncExprState;
 
 /* ----------------
@@ -2126,7 +2122,19 @@ typedef struct WorkTableScanState
 	RecursiveUnionState *rustate;
 } WorkTableScanState;
 
-<<<<<<< HEAD
+/* ----------------
+ *	 ForeignScanState information
+ *
+ *		ForeignScan nodes are used to scan foreign-data tables.
+ * ----------------
+ */
+typedef struct ForeignScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	/* use struct pointer to avoid including fdwapi.h here */
+	struct FdwRoutine *fdwroutine;
+	void	   *fdw_state;		/* foreign-data wrapper can keep state here */
+} ForeignScanState;
 
 /* ----------------
  *         ExternalScanState information
@@ -2256,21 +2264,6 @@ typedef struct DynamicTableScanState
 
 
 } DynamicTableScanState;
-=======
-/* ----------------
- *	 ForeignScanState information
- *
- *		ForeignScan nodes are used to scan foreign-data tables.
- * ----------------
- */
-typedef struct ForeignScanState
-{
-	ScanState	ss;				/* its first field is NodeTag */
-	/* use struct pointer to avoid including fdwapi.h here */
-	struct FdwRoutine *fdwroutine;
-	void	   *fdw_state;		/* foreign-data wrapper can keep state here */
-} ForeignScanState;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------------------------------------------------------
  *				 Join State Information
@@ -2399,15 +2392,11 @@ typedef struct HashJoinTableData *HashJoinTable;
 typedef struct HashJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-<<<<<<< HEAD
-	List	   *hashclauses;	/* list of ExprState nodes (hash) */
-	List	   *hashqualclauses;	/* CDB: list of ExprState nodes (match) */
-=======
 	List	   *hashclauses;	/* list of ExprState nodes */
+	List	   *hashqualclauses;	/* CDB: list of ExprState nodes (match) */
 	List	   *hj_OuterHashKeys;		/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;		/* list of ExprState nodes */
 	List	   *hj_HashOperators;		/* list of operator OIDs */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	HashJoinTable hj_HashTable;
 	uint32		hj_CurHashValue;
 	int			hj_CurBucketNo;

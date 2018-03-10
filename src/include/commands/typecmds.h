@@ -42,7 +42,6 @@ extern void AlterTypeOwner(List *names, Oid newOwnerId);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);
 extern void AlterTypeNamespace(List *names, const char *newschema);
-<<<<<<< HEAD
 extern Oid  AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved);
 extern Oid  AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									   bool isImplicitArray,
@@ -50,11 +49,5 @@ extern Oid  AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									   ObjectAddresses *objsMoved);
 extern void AlterType(AlterTypeStmt *stmt);
 extern void AlterType(AlterTypeStmt *stmt);
-=======
-extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid);
-extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
-						   bool isImplicitArray,
-						   bool errorOnTableType);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* TYPECMDS_H */

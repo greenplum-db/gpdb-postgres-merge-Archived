@@ -171,11 +171,8 @@ extern int	Log_RotationSize;
 extern PGDLLIMPORT char *Log_directory;
 extern PGDLLIMPORT char *Log_filename;
 extern bool Log_truncate_on_rotation;
-<<<<<<< HEAD
-extern int gp_log_format;
-=======
 extern int	Log_file_mode;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern int gp_log_format;
 
 extern bool am_syslogger;
 

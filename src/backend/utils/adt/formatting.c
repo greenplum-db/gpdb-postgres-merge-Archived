@@ -2479,12 +2479,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
-<<<<<<< HEAD
 					/* We assume here that timezone names aren't localized */
 					char	   *p = asc_tolower_z(tmtcTzn(in));
-=======
-					char	   *p = str_tolower_z(tmtcTzn(in), collid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 					strcpy(s, p);
 					pfree(p);
