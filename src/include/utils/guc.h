@@ -133,13 +133,9 @@ extern bool ParseConfigFp(FILE *fp, const char *config_file,
 extern void FreeConfigVariables(ConfigVariable *list);
 
 /*
-<<<<<<< HEAD
- * Enum values are made up of an array of name-value pairs
-=======
  * The possible values of an enum variable are specified by an array of
  * name-value pairs.  The "hidden" flag means the value is accepted but
  * won't be displayed when guc.c is asked for a list of acceptable values.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 struct config_enum_entry
 {
@@ -148,13 +144,6 @@ struct config_enum_entry
 	bool		hidden;
 };
 
-<<<<<<< HEAD
-typedef const char *(*GucStringAssignHook) (const char *newval, bool doit, GucSource source);
-typedef bool (*GucBoolAssignHook) (bool newval, bool doit, GucSource source);
-typedef bool (*GucIntAssignHook) (int newval, bool doit, GucSource source);
-typedef bool (*GucRealAssignHook) (double newval, bool doit, GucSource source);
-typedef bool (*GucEnumAssignHook) (int newval, bool doit, GucSource source);
-=======
 /*
  * Signatures for per-variable check/assign/show hook functions
  */
@@ -169,7 +158,6 @@ typedef void (*GucIntAssignHook) (int newval, void *extra);
 typedef void (*GucRealAssignHook) (double newval, void *extra);
 typedef void (*GucStringAssignHook) (const char *newval, void *extra);
 typedef void (*GucEnumAssignHook) (int newval, void *extra);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 typedef const char *(*GucShowHook) (void);
 
@@ -334,7 +322,6 @@ extern int	log_temp_files;
 
 extern int	num_temp_buffers;
 
-<<<<<<< HEAD
 extern bool gp_cancel_query_print_log;
 extern int gp_cancel_query_delay_time;
 extern bool vmem_process_interrupt;
@@ -375,8 +362,6 @@ extern int Debug_dtm_action_protocol;
 extern int Debug_dtm_action_segment;
 extern int Debug_dtm_action_nestinglevel;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern char *data_directory;
 extern char *ConfigFileName;
 extern char *HbaFileName;
@@ -396,7 +381,6 @@ extern int	tcp_keepalives_idle;
 extern int	tcp_keepalives_interval;
 extern int	tcp_keepalives_count;
 
-<<<<<<< HEAD
 extern int	gp_connection_send_timeout;
 
 extern int  WalSendClientTimeout;
@@ -592,11 +576,9 @@ extern IndexCheckType gp_indexcheck_vacuum;
 /* Max number of chars needed to hold value of a storage option. */
 #define MAX_SOPT_VALUE_LEN 15
 
-=======
 /*
  * Functions exported by guc.c
  */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void SetConfigOption(const char *name, const char *value,
 				GucContext context, GucSource source);
 

@@ -4,11 +4,7 @@
  *	  Routines for interprocess signalling
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -26,11 +22,7 @@
 #include "miscadmin.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
-<<<<<<< HEAD
-#include "storage/proc.h"
-=======
 #include "storage/latch.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "storage/standby.h"

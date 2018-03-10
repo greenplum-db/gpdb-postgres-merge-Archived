@@ -28,17 +28,15 @@
 #define LOG2_NUM_LOCK_PARTITIONS  4
 #define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
 
-<<<<<<< HEAD
+/* Number of partitions the shared predicate lock tables are divided into */
+#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
+#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
+
 /* Number of partitions of the workfile manager hashtable */
 #define NUM_WORKFILEMGR_PARTITIONS 32
 
 /* Number of partitions of the workfile query diskspace hashtable */
 #define NUM_WORKFILE_QUERYSPACE_PARTITIONS 128
-=======
-/* Number of partitions the shared predicate lock tables are divided into */
-#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
-#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * We have a number of predefined LWLocks, plus a bunch of LWLocks that are
@@ -84,40 +82,30 @@ typedef enum LWLockId
 	RelationMappingLock,
 	AsyncCtlLock,
 	AsyncQueueLock,
-<<<<<<< HEAD
+	SerializableXactHashLock,
+	SerializableFinishedListLock,
+	SerializablePredicateLockListLock,
+	OldSerXidLock,
+	SyncRepLock,
 	SharedSnapshotLock,
 	DistributedLogControlLock,
 	SeqServerControlLock,
 	AOSegFileLock,
 	ResQueueLock,
 	ResGroupLock,
-	SyncRepLock,
 	ErrorLogLock,
 	FirstWorkfileMgrLock,
 	FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
 	FirstBufMappingLock = FirstWorkfileQuerySpaceLock + NUM_WORKFILE_QUERYSPACE_PARTITIONS,
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
-	SessionStateLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+	FirstPredicateLockMgrLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+	SessionStateLock = FirstPredicateLockMgrLock + NUM_LOCK_PARTITIONS,
 	RelfilenodeGenLock,
 	FilespaceHashLock,
 	TablespaceHashLock,
 	GpReplicationConfigFileLock,
 	/* must be last except for MaxDynamicLWLock: */
 	NumFixedLWLocks,
-=======
-	SerializableXactHashLock,
-	SerializableFinishedListLock,
-	SerializablePredicateLockListLock,
-	OldSerXidLock,
-	SyncRepLock,
-	/* Individual lock IDs end here */
-	FirstBufMappingLock,
-	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
-	FirstPredicateLockMgrLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
-
-	/* must be last except for MaxDynamicLWLock: */
-	NumFixedLWLocks = FirstPredicateLockMgrLock + NUM_PREDICATELOCK_PARTITIONS,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	MaxDynamicLWLock = 1000000000
 } LWLockId;

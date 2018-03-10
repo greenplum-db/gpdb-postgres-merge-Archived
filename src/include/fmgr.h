@@ -687,11 +687,9 @@ extern void **find_rendezvous_variable(const char *varName);
 
 extern int AggCheckCallContext(FunctionCallInfo fcinfo,
 					MemoryContext *aggcontext);
-<<<<<<< HEAD
 extern fmAggrefPtr AggGetAggref(FunctionCallInfo fcinfo);
 extern fmExprContextPtr AggGetPerTupleEContext(FunctionCallInfo fcinfo);
 extern fmExprContextPtr AggGetPerAggEContext(FunctionCallInfo fcinfo);
-=======
 
 /*
  * We allow plugin modules to hook function entry/exit.  This is intended
@@ -719,21 +717,5 @@ extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
 
 #define FmgrHookIsNeeded(fn_oid)							\
 	(!needs_fmgr_hook ? false : (*needs_fmgr_hook)(fn_oid))
-
-/*
- * !!! OLD INTERFACE !!!
- *
- * fmgr() is the only remaining vestige of the old-style caller support
- * functions.  It's no longer used anywhere in the Postgres distribution,
- * but we should leave it around for a release or two to ease the transition
- * for user-supplied C functions.  OidFunctionCallN() replaces it for new
- * code.
- */
-
-/*
- * DEPRECATED, DO NOT USE IN NEW CODE
- */
-extern char *fmgr(Oid procedureId,...);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* FMGR_H */

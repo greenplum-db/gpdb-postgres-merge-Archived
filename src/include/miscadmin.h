@@ -188,12 +188,9 @@ extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBinaryUpgrade;
-<<<<<<< HEAD
 
 /* Are we binary-upgrading a QE node? */
 #define IsBinaryUpgradeQE() (IsBinaryUpgrade && GpIdentity.segindex >= 0)
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern bool ExitOnAnyError;
 

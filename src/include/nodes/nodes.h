@@ -88,12 +88,8 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
-<<<<<<< HEAD
-=======
 	T_ForeignScan,
 	T_FdwPlan,
-	T_Join,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -160,11 +156,7 @@ typedef enum NodeTag
 	T_ValuesScanState,
 	T_CteScanState,
 	T_WorkTableScanState,
-<<<<<<< HEAD
-=======
 	T_ForeignScanState,
-	T_JoinState,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	T_NestLoopState,
 	T_MergeJoinState,
 	T_HashJoinState,
@@ -333,15 +325,12 @@ typedef enum NodeTag
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
-<<<<<<< HEAD
+	T_MinMaxAggInfo,
 	T_Partition,
 	T_PartitionRule,
 	T_PartitionNode,
 	T_PgPartRule,
 	T_SegfileMapNode,
-=======
-	T_MinMaxAggInfo,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	T_PlannerParamItem,
 
     /* Tags for MPP planner nodes (relation.h) */
@@ -477,7 +466,11 @@ typedef enum NodeTag
 	T_AlterUserMappingStmt,
 	T_DropUserMappingStmt,
 	T_AlterTableSpaceOptionsStmt,
-<<<<<<< HEAD
+	T_SecLabelStmt,
+	T_CreateForeignTableStmt,
+	T_CreateExtensionStmt,
+	T_AlterExtensionStmt,
+	T_AlterExtensionContentsStmt,
 	/* GPDB additions */
 	T_PartitionBy,
 	T_PartitionElem,
@@ -495,17 +488,7 @@ typedef enum NodeTag
 	T_DenyLoginInterval,
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
-	T_CreateExtensionStmt,
-	T_AlterExtensionStmt,
-	T_AlterExtensionContentsStmt,
 	T_SetDistributionCmd,
-=======
-	T_SecLabelStmt,
-	T_CreateForeignTableStmt,
-	T_CreateExtensionStmt,
-	T_AlterExtensionStmt,
-	T_AlterExtensionContentsStmt,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -569,7 +552,7 @@ typedef enum NodeTag
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
-<<<<<<< HEAD
+	T_FdwRoutine,				/* in foreign/fdwapi.h */
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
 	T_FormatterData,            /* in access/formatter.h */
 	T_ExtProtocolData,          /* in access/extprotocol.h */
@@ -580,9 +563,6 @@ typedef enum NodeTag
     /* CDB: tags for random other stuff */
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
 
-=======
-	T_FdwRoutine				/* in foreign/fdwapi.h */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } NodeTag;
 
 /*

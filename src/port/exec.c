@@ -370,14 +370,10 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	errno = 0;
 	if (fgets(line, maxsize, pgver) == NULL)
 	{
-<<<<<<< HEAD
 		if (feof(pgver))
 			fprintf(stderr, "no data was returned by command \"%s\"\n", cmd);
 		else
 			perror("fgets failure");
-=======
-		perror("fgets failure");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		pclose(pgver);			/* no error checking */
 		return NULL;
 	}

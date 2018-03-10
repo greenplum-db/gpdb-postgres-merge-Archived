@@ -330,17 +330,10 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 		/* keep newline separate so there's only one translatable string */
 		fputc('\n', stderr);
 #else
-<<<<<<< HEAD
-	ereport(WARNING,
-			(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
-					ctype, sys),
-		   errdetail("Please report this to <bugs@greenplum.org>.")));
-=======
 		ereport(WARNING,
 				(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
 						ctype, sys),
-		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		   errdetail("Please report this to <bugs@greenplum.org>.")));
 #endif
 	}
 

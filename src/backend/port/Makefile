@@ -21,15 +21,11 @@ subdir = src/backend/port
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 OBJS = atomics.o dynloader.o pg_sema.o pg_shmem.o pg_latch.o $(TAS)
-=======
-OBJS = dynloader.o pg_sema.o pg_shmem.o pg_latch.o $(TAS)
 
 ifneq (,$(filter $(PORTNAME),cygwin win32))
 OBJS += pipe.o
 endif
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 ifeq ($(PORTNAME), darwin)
 SUBDIRS += darwin

@@ -436,14 +436,8 @@ extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 
 extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
-<<<<<<< HEAD
 extern char *pg_custom_to_server(const char *s, int len, int src_encoding, void *cep); /* Obsolete? */
 extern char *pg_server_to_custom(const char *s, int len, int dest_encoding, void *cep); /* Obsolete? */
-
-extern char *pg_client_to_server(const char *s, int len);
-extern char *pg_server_to_client(const char *s, int len);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern char *pg_any_to_server(const char *s, int len, int encoding);
 extern char *pg_server_to_any(const char *s, int len, int encoding);
 
