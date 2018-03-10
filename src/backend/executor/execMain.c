@@ -22,17 +22,13 @@
  *	the tuples for a plan.	It is also acceptable to stop short of executing
  *	the whole plan (but only if it is a SELECT).
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2005-2010, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  *	ExecutorFinish must be called after the final ExecutorRun call and
  *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
  *	which should also omit ExecutorRun.
  *
+ * Portions Copyright (c) 2005-2010, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1387,13 +1383,8 @@ ExecutorRewind(QueryDesc *queryDesc)
  * Returns true if permissions are adequate.  Otherwise, throws an appropriate
  * error if ereport_on_violation is true, or simply returns false otherwise.
  */
-<<<<<<< HEAD
-void
-ExecCheckRTPerms(List *rangeTable)
-=======
 bool
 ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	ListCell   *l;
 	bool		result = true;
@@ -1423,11 +1414,7 @@ ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation)
  * ExecCheckRTEPerms
  *		Check access permissions for a single RTE.
  */
-<<<<<<< HEAD
-void
-=======
-static bool
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+bool
 ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
@@ -1479,12 +1466,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 		 * we can fail straight away.
 		 */
 		if (remainingPerms & ~(ACL_SELECT | ACL_INSERT | ACL_UPDATE))
-<<<<<<< HEAD
-			aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-						   get_rel_name_partition(relOid));
-=======
 			return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * Check to see if we have the needed privileges at column level.
@@ -1504,12 +1486,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 			{
 				if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 											  ACLMASK_ANY) != ACLCHECK_OK)
-<<<<<<< HEAD
-					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name_partition(relOid));
-=======
 					return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 
 			tmpset = bms_copy(rte->selectedCols);
@@ -1522,17 +1499,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 					/* Whole-row reference, must have priv on all cols */
 					if (pg_attribute_aclcheck_all(relOid, userid, ACL_SELECT,
 												  ACLMASK_ALL) != ACLCHECK_OK)
-<<<<<<< HEAD
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name_partition(relOid));
-				}
-				else
-				{
-					if (pg_attribute_aclcheck(relOid, col, userid, ACL_SELECT)
-						!= ACLCHECK_OK)
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name_partition(relOid));
-=======
 						return false;
 				}
 				else
@@ -1540,7 +1506,6 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 					if (pg_attribute_aclcheck(relOid, col, userid,
 											  ACL_SELECT) != ACLCHECK_OK)
 						return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				}
 			}
 			bms_free(tmpset);
@@ -1563,12 +1528,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 			{
 				if (pg_attribute_aclcheck_all(relOid, userid, remainingPerms,
 											  ACLMASK_ANY) != ACLCHECK_OK)
-<<<<<<< HEAD
-					aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-								   get_rel_name_partition(relOid));
-=======
 					return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 
 			tmpset = bms_copy(rte->modifiedCols);
@@ -1583,16 +1543,9 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 				}
 				else
 				{
-<<<<<<< HEAD
-					if (pg_attribute_aclcheck(relOid, col, userid, remainingPerms)
-						!= ACLCHECK_OK)
-						aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-									   get_rel_name_partition(relOid));
-=======
 					if (pg_attribute_aclcheck(relOid, col, userid,
 											  remainingPerms) != ACLCHECK_OK)
 						return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				}
 			}
 			bms_free(tmpset);
@@ -1728,12 +1681,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Do permissions checks
 	 */
-<<<<<<< HEAD
 	if (operation != CMD_SELECT ||
 		(Gp_role != GP_ROLE_EXECUTE &&
 		 !(shouldDispatch && cdbpathlocus_querysegmentcatalogs)))
 	{
-		ExecCheckRTPerms(rangeTable);
+		ExecCheckRTPerms(rangeTable, true);
 	}
 	else
 	{
@@ -1768,9 +1720,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			}
 		}
 	}
-=======
-	ExecCheckRTPerms(rangeTable, true);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * initialize the node's execution state
@@ -3935,11 +3884,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Oid			namespaceId;
 	Oid			tablespaceId;
 	Datum		reloptions;
-<<<<<<< HEAD
 	StdRdOptions *stdRdOptions;
-	AclResult	aclresult;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	Oid			intoRelationId;
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
@@ -4009,11 +3954,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 
 	if (intoTableSpaceName)
 	{
-<<<<<<< HEAD
 		tablespaceId = get_tablespace_oid(intoTableSpaceName, false);
-=======
-		tablespaceId = get_tablespace_oid(into->tableSpaceName, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else
 	{

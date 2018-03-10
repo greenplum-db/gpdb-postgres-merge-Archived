@@ -162,13 +162,9 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_SeqScanState:
-<<<<<<< HEAD
 		case T_AppendOnlyScanState:
 		case T_AOCSScanState:
 			insist_log(false, "SeqScan/AppendOnlyScan/AOCSScan are defunct");
-=======
-			ExecReScanSeqScan((SeqScanState *) node);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			break;
 
 		case T_IndexScanState:
@@ -263,13 +259,6 @@ ExecReScan(PlanState *node)
 			ExecReScanSort((SortState *) node);
 			break;
 
-<<<<<<< HEAD
-=======
-		case T_GroupState:
-			ExecReScanGroup((GroupState *) node);
-			break;
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case T_AggState:
 			ExecReScanAgg((AggState *) node);
 			break;

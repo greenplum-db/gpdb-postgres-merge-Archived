@@ -3,13 +3,9 @@
  * nodeMergejoin.c
  *	  routines supporting merge joins
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -188,17 +184,12 @@ typedef enum
  * sort ordering for each merge key.  The mergejoinable operator is an
  * equality operator in the opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
-<<<<<<< HEAD
- * to this opfamily, with nulls at the indicated end of the range.	This
- * allows us to obtain the needed comparison function from the opfamily.
+ * to the opfamily and collation, with nulls at the indicated end of the range.
+ * This allows us to obtain the needed comparison function from the opfamily.
  *
  * CDB: We also recognize the "is not distinct from" predicate which is
  *      interesting for sequential window plans.  The pseudo-Lisp for this
  *      predicate is (BoolExpr_NOT (DistinctExpr_= leftexpr rightexpr)).
-=======
- * to the opfamily and collation, with nulls at the indicated end of the range.
- * This allows us to obtain the needed comparison function from the opfamily.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static MergeJoinClause
 MJExamineQuals(List *mergeclauses,

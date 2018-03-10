@@ -337,13 +337,8 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 		SortState  *sortState = (SortState *) child_node;
 		int64		tuples_needed = node->count + node->offset;
 
-<<<<<<< HEAD
 		/* negative test checks for overflow */
 		if (node->noCount || tuples_needed < 0 || !gp_enable_sort_limit)
-=======
-		/* negative test checks for overflow in sum */
-		if (node->noCount || tuples_needed < 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/* make sure flag gets reset if needed upon rescan */
 			sortState->bounded = false;

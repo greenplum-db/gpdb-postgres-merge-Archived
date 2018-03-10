@@ -316,18 +316,3 @@ ExecFilterJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 */
 	return ExecStoreVirtualTuple(resultSlot);
 }
-<<<<<<< HEAD
-
-/*
- * ExecRemoveJunk
- *
- * Convenience routine to generate a physical clean tuple,
- * rather than just a virtual slot.
- */
-HeapTuple
-ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
-{
-	return ExecCopySlotHeapTuple(ExecFilterJunk(junkfilter, slot));
-}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

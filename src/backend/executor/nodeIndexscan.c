@@ -981,12 +981,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 									   flags,
 									   varattno,		/* attribute number */
 									   op_strategy,		/* op's strategy */
-<<<<<<< HEAD
+									   /* GPDB_91_MERGE_FIXME: why do we use op_lefttype here, when upstream uses op_righttype? */
 									   op_lefttype,		/* strategy subtype */
-=======
-									   op_righttype,	/* strategy subtype */
 									   inputcollation,	/* collation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 									   opfuncid,		/* reg proc to use */
 									   scanvalue);		/* constant */
 				n_sub_key++;

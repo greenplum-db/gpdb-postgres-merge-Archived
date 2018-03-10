@@ -375,13 +375,9 @@ finalize_windowaggregate(WindowAggState *winstate,
 		bool		anynull;
 		int			i;
 
-<<<<<<< HEAD
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
-=======
-		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
 								 perfuncstate->winCollation,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								 (void *) winstate, NULL);
 		fcinfo.arg[0] = peraggstate->transValue;
 		fcinfo.argnull[0] = peraggstate->transValueIsNull;

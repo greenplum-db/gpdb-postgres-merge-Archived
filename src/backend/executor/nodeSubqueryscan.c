@@ -243,11 +243,7 @@ ExecReScanSubqueryScan(SubqueryScanState *node)
 	 * first ExecProcNode.
 	 */
 	if (node->subplan->chgParam == NULL)
-<<<<<<< HEAD
-		ExecReScan(node->subplan, NULL);
+		ExecReScan(node->subplan);
 
 	CheckSendPlanStateGpmonPkt(&node->ss.ps);
-=======
-		ExecReScan(node->subplan);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

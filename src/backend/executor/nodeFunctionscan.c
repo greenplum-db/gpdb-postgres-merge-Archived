@@ -27,12 +27,8 @@
 #include "cdb/cdbvars.h"
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
-<<<<<<< HEAD
-#include "optimizer/var.h"              /* CDB: contain_var_reference() */
-#include "parser/parsetree.h"
-=======
+#include "optimizer/var.h"              /* CDB: contain_ctid_var_reference() */
 #include "nodes/nodeFuncs.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "cdb/memquota.h"
