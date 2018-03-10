@@ -65,18 +65,16 @@ CATALOG(pg_amop,2602)
 	Oid			amopsortfamily; /* ordering opfamily OID, or 0 if search op */
 } FormData_pg_amop;
 
-<<<<<<< HEAD
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(amopfamily REFERENCES pg_opfamily(oid));
 FOREIGN_KEY(amoplefttype REFERENCES pg_type(oid));
 FOREIGN_KEY(amoprighttype REFERENCES pg_type(oid));
 FOREIGN_KEY(amopopr REFERENCES pg_operator(oid));
 FOREIGN_KEY(amopmethod REFERENCES pg_am(oid));
-=======
+
 /* allowed values of amoppurpose: */
 #define AMOP_SEARCH		's'		/* operator is for search */
 #define AMOP_ORDER		'o'		/* operator is for ordering */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------
  *		Form_pg_amop corresponds to a pointer to a tuple with

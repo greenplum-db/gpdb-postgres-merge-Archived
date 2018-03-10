@@ -78,26 +78,18 @@ quote_literal(PG_FUNCTION_ARGS)
 {
 	text	   *t = PG_GETARG_TEXT_P(0);
 	text	   *result;
-	const char *qstr;
-	char	   *str;
+	char	   *cp1;
+	char	   *cp2;
 	int			len;
 
-	/* We have to convert to a C string to use quote_literal_internal */
 	len = VARSIZE(t) - VARHDRSZ;
-	str = (char *) palloc(len + 1);
-	memcpy(str, VARDATA(t), len);
-	str[len] = '\0';
+	/* We make a worst-case result area; wasting a little space is OK */
+	result = (text *) palloc(len * 2 + 3 + VARHDRSZ);
 
-	qstr = quote_literal_internal(str);
+	cp1 = VARDATA(t);
+	cp2 = VARDATA(result);
 
-<<<<<<< HEAD
-	len = strlen(qstr);
-	result = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
-	memcpy(VARDATA(result), qstr, len);
-=======
 	SET_VARSIZE(result, VARHDRSZ + quote_literal_internal(cp2, cp1, len));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PG_RETURN_TEXT_P(result);
 }

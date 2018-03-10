@@ -3,13 +3,9 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2911,10 +2907,6 @@ get_base_element_type(Oid typid)
 		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
 		if (!HeapTupleIsValid(tup))
 			break;
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 		if (typTup->typtype != TYPTYPE_DOMAIN)
 		{
@@ -2926,10 +2918,6 @@ get_base_element_type(Oid typid)
 				result = typTup->typelem;
 			else
 				result = InvalidOid;
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			ReleaseSysCache(tup);
 			return result;
 		}

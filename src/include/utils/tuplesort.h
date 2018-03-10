@@ -53,6 +53,7 @@
 #define Tuplesortstate Tuplesortstate_pg
 
 #define tuplesort_begin_heap tuplesort_begin_heap_pg
+#define tuplesort_begin_cluster tuplesort_begin_cluster_pg
 #define tuplesort_begin_index_btree tuplesort_begin_index_btree_pg
 #define tuplesort_begin_index_hash tuplesort_begin_index_hash_pg
 #define tuplesort_begin_datum tuplesort_begin_datum_pg
@@ -138,7 +139,7 @@ extern Tuplesortstate *tuplesort_begin_index_btree(Relation indexRel,
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess);
-extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
+extern Tuplesortstate *tuplesort_begin_datum(ScanState *ss, Oid datumType,
 					  Oid sortOperator, Oid sortCollation,
 					  bool nullsFirstFlag,
 					  int workMem, bool randomAccess);
@@ -210,6 +211,7 @@ extern int32 ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
 #ifndef COMPILING_TUPLESORT_C
 
 #undef tuplesort_begin_heap
+#undef tuplesort_begin_cluster
 #undef tuplesort_begin_index_btree
 #undef tuplesort_begin_index_hash
 #undef tuplesort_begin_datum
@@ -282,6 +284,29 @@ switcheroo_tuplesort_begin_heap(ScanState *ss, TupleDesc tupDesc,
 }
 
 static inline switcheroo_Tuplesortstate *
+switcheroo_tuplesort_begin_cluster(TupleDesc tupDesc,
+						Relation indexRel,
+						int workMem, bool randomAccess)
+{
+	switcheroo_Tuplesortstate *state;
+
+	if (gp_enable_mk_sort)
+	{
+		state = (switcheroo_Tuplesortstate *)
+			tuplesort_begin_cluster_mk(tupDesc, indexRel,
+									   workMem, randomAccess);
+	}
+	else
+	{
+		state = (switcheroo_Tuplesortstate *)
+			tuplesort_begin_cluster_pg(tupDesc, indexRel,
+									   workMem, randomAccess);
+	}
+	state->is_mk_tuplesortstate = gp_enable_mk_sort;
+	return state;
+}
+
+static inline switcheroo_Tuplesortstate *
 switcheroo_tuplesort_begin_index_btree(Relation indexRel,
 							bool enforceUnique,
 							int workMem, bool randomAccess)
@@ -316,21 +341,24 @@ switcheroo_tuplesort_begin_index_hash(Relation indexRel,
 }
 
 static inline switcheroo_Tuplesortstate *
-switcheroo_tuplesort_begin_datum(ScanState *ss, Oid datumType,
-					  Oid sortOperator, bool nullsFirstFlag,
-					  int workMem, bool randomAccess)
+switcheroo_tuplesort_begin_datum(ScanState *ss,
+								 Oid datumType, Oid sortOperator, Oid sortCollation,
+								 bool nullsFirstFlag,
+								 int workMem, bool randomAccess)
 {
 	switcheroo_Tuplesortstate *state;
 
 	if (gp_enable_mk_sort)
 	{
 		state = (switcheroo_Tuplesortstate *)
-			tuplesort_begin_datum_mk(ss, datumType, sortOperator, nullsFirstFlag, workMem, randomAccess);
+			tuplesort_begin_datum_mk(ss, datumType, sortOperator, sortCollation,
+									 nullsFirstFlag, workMem, randomAccess);
 	}
 	else
 	{
 		state = (switcheroo_Tuplesortstate *)
-			tuplesort_begin_datum_pg(ss, datumType, sortOperator, nullsFirstFlag, workMem, randomAccess);
+			tuplesort_begin_datum_pg(ss, datumType, sortOperator, sortCollation,
+									 nullsFirstFlag, workMem, randomAccess);
 	}
 	state->is_mk_tuplesortstate = gp_enable_mk_sort;
 	return state;

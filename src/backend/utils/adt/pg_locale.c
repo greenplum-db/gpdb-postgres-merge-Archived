@@ -60,11 +60,8 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
-<<<<<<< HEAD
 #include "utils/string_wrapper.h"
-=======
 #include "utils/syscache.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #ifdef WIN32
 /*

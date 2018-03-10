@@ -87,13 +87,9 @@
  * above.  Nonetheless, with large workMem we can have many tapes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -511,9 +507,9 @@ static inline void FREEMEM(Tuplesortstate *state, int amt)
  */
 
 /* When using this macro, beware of double evaluation of len */
-#define LogicalTapeReadExact(tapeset, tapenum, ptr, len) \
+#define LogicalTapeReadExact(tapeset, lt, ptr, len) \
 	do { \
-		if (LogicalTapeRead(tapeset, tapenum, ptr, len) != (size_t) (len)) \
+		if (LogicalTapeRead(tapeset, lt, ptr, len) != (size_t) (len)) \
 			elog(ERROR, "unexpected end of data"); \
 	} while(0)
 
@@ -756,7 +752,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 						Relation indexRel,
 						int workMem, bool randomAccess)
 {
-	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
+	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess, true);
 	MemoryContext oldcontext;
 
 	Assert(indexRel->rd_rel->relam == BTREE_AM_OID);
@@ -887,13 +883,9 @@ tuplesort_begin_index_hash(Relation indexRel,
 }
 
 Tuplesortstate *
-<<<<<<< HEAD
-tuplesort_begin_datum(ScanState *ss, Oid datumType,
-					  Oid sortOperator, bool nullsFirstFlag,
-=======
-tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
+tuplesort_begin_datum(ScanState *ss,
+					  Oid datumType, Oid sortOperator, Oid sortCollation,
 					  bool nullsFirstFlag,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					  int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess, true);
@@ -2930,16 +2922,12 @@ getlen(Tuplesortstate *state, TuplesortPos *pos, LogicalTape *lt, bool eofOK)
 	unsigned int len;
 	size_t readSize;
 
-<<<<<<< HEAD
 	Assert(lt);
-	readSize = LogicalTapeRead(state->tapeset, lt, (void *)&len, sizeof(len));
+	readSize = LogicalTapeRead(state->tapeset, lt,
+							   (void *) &len, sizeof(len));
 
 	if (readSize != sizeof(len))
 	{
-=======
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						&len, sizeof(len)) != sizeof(len))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		elog(ERROR, "unexpected end of tape");
 	}
 
@@ -3151,28 +3139,19 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			 LogicalTape *lt, uint32 len)
 {
 	uint32 tuplen;
-	size_t readSize;
 
-<<<<<<< HEAD
 	stup->tuple = (MemTuple) palloc(memtuple_size_from_uint32(len));
 	USEMEM(state, GetMemoryChunkSpace(stup->tuple));
 	memtuple_set_mtlen(stup->tuple, len);
 
 	Assert(lt);
-	readSize = LogicalTapeRead(state->tapeset, lt,
-				(void *) ((char *)stup->tuple + sizeof(uint32)),
-				memtuple_size_from_uint32(len) - sizeof(uint32));
-
-	if (readSize != (size_t) (memtuple_size_from_uint32(len) - sizeof(uint32))) 
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, lt,
+						 (void *) ((char *)stup->tuple + sizeof(uint32)),
+						 memtuple_size_from_uint32(len) - sizeof(uint32));
 
 	if (state->randomAccess)	/* need trailing length word? */
-	{
-		readSize = LogicalTapeRead(state->tapeset, lt, (void *)&tuplen, sizeof(tuplen));
-
-		if(readSize != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
-	}
+		LogicalTapeReadExact(state->tapeset, lt,
+							 (void *) &tuplen, sizeof(tuplen));
 
 	/* For shareinput on sort, the reader will not set mt_bind.  In this case,
 	 * we will not call compare.
@@ -3180,24 +3159,6 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	AssertImply(!state->mt_bind, state->status == TSS_SORTEDONTAPE);
 	if(state->mt_bind)
 		stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->scanKeys[0].sk_attno, &stup->isnull1);
-=======
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* read in the tuple proper */
-	tuple->t_len = tuplen;
-	LogicalTapeReadExact(state->tapeset, tapenum,
-						 tupbody, tupbodylen);
-	if (state->randomAccess)	/* need trailing length word? */
-		LogicalTapeReadExact(state->tapeset, tapenum,
-							 &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	stup->datum1 = heap_getattr(&htup,
-								state->scanKeys[0].sk_attno,
-								state->tupDesc,
-								&stup->isnull1);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static void
@@ -3376,7 +3337,9 @@ readtup_cluster(Tuplesortstate *state, SortTuple *stup,
 	LogicalTapeReadExact(state->tapeset, tapenum,
 						 &tuple->t_self, sizeof(ItemPointerData));
 	/* We don't currently bother to reconstruct t_tableOid */
+#if 0
 	tuple->t_tableOid = InvalidOid;
+#endif
 	/* Read in the tuple body */
 	LogicalTapeReadExact(state->tapeset, tapenum,
 						 tuple->t_data, tuple->t_len);
@@ -3616,32 +3579,16 @@ readtup_index(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 {
 	unsigned int tuplen = len - sizeof(unsigned int);
 	IndexTuple	tuple = (IndexTuple) palloc(tuplen);
-	size_t readSize;
 
 	Assert(lt); 
 	USEMEM(state, GetMemoryChunkSpace(tuple));
-<<<<<<< HEAD
 
-	readSize = LogicalTapeRead(state->tapeset, lt, (void *)tuple, tuplen);
-
-	if(readSize != tuplen)
-		elog(ERROR, "unexpected end of data");
+	LogicalTapeReadExact(state->tapeset, lt, (void *) tuple, tuplen);
 
 	if (state->randomAccess)	/* need trailing length word? */
-	{
-		readSize = LogicalTapeRead(state->tapeset, lt, (void *)&tuplen, sizeof(tuplen));
+		LogicalTapeReadExact(state->tapeset, lt,
+							 (void *) &tuplen, sizeof(tuplen));
 
-		if (readSize != sizeof(tuplen))
-			elog(ERROR, "unexpected end of data");
-	}
-
-=======
-	LogicalTapeReadExact(state->tapeset, tapenum,
-						 tuple, tuplen);
-	if (state->randomAccess)	/* need trailing length word? */
-		LogicalTapeReadExact(state->tapeset, tapenum,
-							 &tuplen, sizeof(tuplen));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value */
 	stup->datum1 = index_getattr(tuple,
@@ -3739,7 +3686,6 @@ static void
 readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 			  LogicalTape *lt, unsigned int len)
 {
-	size_t readSize;
 	unsigned int tuplen = len - sizeof(unsigned int);
 
 	Assert(lt); 
@@ -3754,15 +3700,8 @@ readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	else if (state->datumTypeByVal)
 	{
 		Assert(tuplen == sizeof(Datum));
-<<<<<<< HEAD
-		readSize = LogicalTapeRead(state->tapeset, lt, (void *)&stup->datum1, tuplen);
-
-		if (readSize != tuplen) 
-			elog(ERROR, "unexpected end of data");
-=======
-		LogicalTapeReadExact(state->tapeset, tapenum,
-							 &stup->datum1, tuplen);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		LogicalTapeReadExact(state->tapeset, lt,
+							 (void *) &stup->datum1, tuplen);
 		stup->isnull1 = false;
 		stup->tuple = NULL;
 	}
@@ -3770,16 +3709,8 @@ readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	{
 		void	   *raddr = palloc(tuplen);
 
-<<<<<<< HEAD
-		readSize = LogicalTapeRead(state->tapeset, lt, raddr, tuplen);
-
-		if(readSize != tuplen)
-			elog(ERROR, "unexpected end of data");
-
-=======
-		LogicalTapeReadExact(state->tapeset, tapenum,
+		LogicalTapeReadExact(state->tapeset, lt,
 							 raddr, tuplen);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		stup->datum1 = PointerGetDatum(raddr);
 		stup->isnull1 = false;
 		stup->tuple = raddr;
@@ -3787,17 +3718,8 @@ readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	}
 
 	if (state->randomAccess)	/* need trailing length word? */
-<<<<<<< HEAD
-	{
-		readSize = LogicalTapeRead(state->tapeset, lt, (void *)&tuplen, sizeof(tuplen));
-
-		if (readSize != sizeof(tuplen)) 
-			elog(ERROR, "unexpected end of data");
-	}
-=======
-		LogicalTapeReadExact(state->tapeset, tapenum,
-							 &tuplen, sizeof(tuplen));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		LogicalTapeReadExact(state->tapeset, lt,
+							 (void *) &tuplen, sizeof(tuplen));
 }
 
 static void

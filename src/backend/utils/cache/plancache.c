@@ -542,13 +542,8 @@ RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
 		TupleDesc	resultDesc;
 
 		/*
-<<<<<<< HEAD
-		 * Restore the search_path that was in use when the plan was made.
-		 * See comments for PushOverrideSearchPath about limitations of this.
-=======
 		 * Restore the search_path that was in use when the plan was made. See
 		 * comments for PushOverrideSearchPath about limitations of this.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 *
 		 * (XXX is there anything else we really need to restore?)
 		 */

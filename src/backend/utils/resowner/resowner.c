@@ -295,13 +295,10 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			if (owner == TopTransactionResourceOwner)
 			{
 				ProcReleaseLocks(isCommit);
-<<<<<<< HEAD
+				ReleasePredicateLocks(isCommit);
 				
 				if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled())
  					ResLockWaitCancel();
-=======
-				ReleasePredicateLocks(isCommit);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 		}
 		else
