@@ -25,11 +25,7 @@
 #include "parser/parse_relation.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
-<<<<<<< HEAD
-#include "utils/hsearch.h"
-=======
 #include "utils/lsyscache.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "utils/syscache.h"
 #include "utils/varbit.h"
 

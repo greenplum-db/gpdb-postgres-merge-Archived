@@ -506,22 +506,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errhint("Could not choose a best candidate function. "
 							 "You might need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
-<<<<<<< HEAD
 		else if (list_length(agg_order) > 1 && !agg_within_group)
-=======
-		else if (list_length(agg_order) > 1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/* It's agg(x, ORDER BY y,z) ... perhaps misplaced ORDER BY */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("function %s does not exist",
-<<<<<<< HEAD
-							func_signature_string(funcname, nargs,
-												  argnames,
-=======
 							func_signature_string(funcname, nargs, argnames,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 												  actual_arg_types)),
 					 errhint("No aggregate function matches the given name and argument types. "
 					  "Perhaps you misplaced ORDER BY; ORDER BY must appear "
@@ -664,14 +655,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-<<<<<<< HEAD
+		/* aggcollid and inputcollid will be set by parse_collate.c */
 		/* aggdirectargs and args will be set by transformAggregateCall */
 		/* aggorder and aggdistinct will be set by transformAggregateCall */
 		aggref->aggfilter = agg_filter;
-=======
-		/* aggcollid and inputcollid will be set by parse_collate.c */
-		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;

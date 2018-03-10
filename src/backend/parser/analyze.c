@@ -14,13 +14,9 @@
  * optimizable statements.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/parser/analyze.c
@@ -100,17 +96,13 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
-<<<<<<< HEAD
-						  bool isTopLevel, List **colInfo);
+									   bool isTopLevel, List **targetlist);
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 												bool isTopLevel, setop_types_ctx *setop_types);
 static void coerceSetOpTypes(ParseState *pstate, Node *sop,
 							 List *coltypes, List *coltypmods,
 							 List **colInfo);
 static void select_setop_types(ParseState *pstate, setop_types_ctx *ctx, SetOperation op, List **selected_types, List **selected_typmods);
-=======
-						  bool isTopLevel, List **targetlist);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void determineRecursiveColTypes(ParseState *pstate,
 						   Node *larg, List *nrtargetlist);
 static void applyColumnNames(List *dst, List *src);
@@ -443,11 +435,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * VALUES list, or general SELECT input.  We special-case VALUES, both for
 	 * efficiency and so we can handle DEFAULT specifications.
 	 *
-<<<<<<< HEAD
-	 * The grammar allows attaching ORDER BY, LIMIT, or FOR UPDATE to a
-=======
 	 * The grammar allows attaching ORDER BY, LIMIT, FOR UPDATE, or WITH to a
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * VALUES clause.  If we have any of those, treat it as a general SELECT;
 	 * so it will work, but you can't use DEFAULT items together with those.
 	 */
@@ -455,12 +443,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 									  selectStmt->sortClause != NIL ||
 									  selectStmt->limitOffset != NULL ||
 									  selectStmt->limitCount != NULL ||
-<<<<<<< HEAD
-									  selectStmt->lockingClause != NIL));
-=======
 									  selectStmt->lockingClause != NIL ||
 									  selectStmt->withClause != NULL));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
@@ -579,31 +563,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * Otherwise this fails:  INSERT INTO foo SELECT 'bar', ... FROM baz
 		 *----------
 		 */
-<<<<<<< HEAD
 		expandRTE(rte, rtr->rtindex, 0, -1, false, NULL, &exprList);
-=======
-		exprList = NIL;
-		foreach(lc, selectQuery->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			Expr	   *expr;
-
-			if (tle->resjunk)
-				continue;
-			if (tle->expr &&
-				(IsA(tle->expr, Const) ||IsA(tle->expr, Param)) &&
-				exprType((Node *) tle->expr) == UNKNOWNOID)
-				expr = tle->expr;
-			else
-			{
-				Var		   *var = makeVarFromTargetEntry(rtr->rtindex, tle);
-
-				var->location = exprLocation((Node *) tle->expr);
-				expr = (Expr *) var;
-			}
-			exprList = lappend(exprList, expr);
-		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* Prepare row for assignment to target table */
 		exprList = transformInsertRow(pstate, exprList,
@@ -888,7 +848,6 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 }
 
 /*
-<<<<<<< HEAD
  * If an input query (Q) mixes window functions with aggregate
  * functions or grouping, then (per SQL:2003) we need to divide
  * it into an outer query, Q', that contains no aggregate calls
@@ -1507,8 +1466,7 @@ generate_alternate_vars(Var *invar, grouped_window_ctx *ctx)
 	return alternates;
 }
 
-
-=======
+/*
  * count_rowexpr_columns -
  *	  get number of columns contained in a ROW() expression;
  *	  return -1 if expression isn't a RowExpr or a Var referencing one.
@@ -1551,7 +1509,6 @@ count_rowexpr_columns(ParseState *pstate, Node *expr)
 	return -1;
 }
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * transformSelectStmt -
@@ -1735,16 +1692,14 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 							   (LockingClause *) lfirst(l), false);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * If the query mixes window functions and aggregates, we need to
 	 * transform it such that the grouped query appears as a subquery
 	 */
 	if (qry->hasWindowFuncs && (qry->groupClause || qry->hasAggs))
 		transformGroupedWindows(qry);
-=======
+
 	assign_query_collations(pstate, qry);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return qry;
 }
@@ -1991,25 +1946,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
-	/* aggregates not allowed (but subselects are okay) */
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in VALUES"),
-				 parser_errposition(pstate,
-							  locate_agg_of_level((Node *) exprsLists, 0))));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in VALUES"),
-				 parser_errposition(pstate,
-									locate_windowfunc((Node *) exprsLists))));
 
 	assign_query_collations(pstate, qry);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return qry;
 }
@@ -2054,17 +1993,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
-<<<<<<< HEAD
-=======
-	/* process the WITH clause independently of all else */
-	if (stmt->withClause)
-	{
-		qry->hasRecursive = stmt->withClause->recursive;
-		qry->cteList = transformWithClause(pstate, stmt->withClause);
-		qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
-	}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Find leftmost leaf SelectStmt; extract the one-time-only items from it
 	 * and from the top-level node.
@@ -2107,11 +2035,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
-	/* process the WITH clause */
-	if (withClause)
+	/* process the WITH clause independently of all else */
+	if (stmt->withClause)
 	{
-		qry->hasRecursive = withClause->recursive;
-		qry->cteList = transformWithClause(pstate, withClause);
+		qry->hasRecursive = stmt->withClause->recursive;
+		qry->cteList = transformWithClause(pstate, stmt->withClause);
+		qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
 	}
 
 	/*

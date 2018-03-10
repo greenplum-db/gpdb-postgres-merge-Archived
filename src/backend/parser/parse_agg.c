@@ -14,13 +14,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
-=======
-#include "catalog/pg_constraint.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
@@ -57,7 +53,6 @@ typedef struct
 	bool		in_agg_direct_args;
 } check_ungrouped_columns_context;
 
-<<<<<<< HEAD
 typedef struct
 {
 	int sublevels_up;
@@ -70,13 +65,9 @@ static int check_agg_arguments(ParseState *pstate,
 static bool check_agg_arguments_walker(Node *node,
 						   check_agg_arguments_context *context);
 
-static void check_ungrouped_columns(Node *node, ParseState *pstate,
-						List *groupClauses, bool have_non_var_grouping);
-=======
 static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
 						List *groupClauses, bool have_non_var_grouping,
 						List **func_grouped_rels);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static bool check_ungrouped_columns_walker(Node *node,
 							   check_ungrouped_columns_context *context);
 static List* get_groupclause_exprs(Node *grpcl, List *targetList);
@@ -1288,21 +1279,14 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		args = lappend(args, argp);
 	}
 
-<<<<<<< HEAD
 	fexpr = makeFuncExpr(transfn_oid,
 						 agg_state_type,
 						 args,
+						 InvalidOid,
+						 agg_input_collation,
 						 COERCE_DONTCARE);
 	fexpr->funcvariadic = agg_variadic;
 	*transfnexpr = (Expr *) fexpr;
-=======
-	*transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
-										 agg_state_type,
-										 args,
-										 InvalidOid,
-										 agg_input_collation,
-										 COERCE_DONTCARE);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* see if we have a final function */
 	if (!OidIsValid(finalfn_oid))
@@ -1337,6 +1321,8 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
 											 agg_result_type,
 											 args,
+											 InvalidOid,
+											 agg_input_collation,
 											 COERCE_DONTCARE);
 	}
 
@@ -1355,8 +1341,12 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		args = list_make1(argp);
 
 		/* XXX: is agg_state_type correct here? */
-		*prelimfnexpr = (Expr *) makeFuncExpr(prelimfn_oid, agg_state_type,
-											  args, COERCE_DONTCARE);
+		*prelimfnexpr = (Expr *) makeFuncExpr(prelimfn_oid,
+											  agg_state_type,
+											  args,
+											  InvalidOid,
+											  agg_input_collation,
+											  COERCE_DONTCARE);
 	}
 
 	/* inverse functions */
@@ -1374,9 +1364,11 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		args = list_make1(argp);
 
 		*invtransfnexpr = (Expr *) makeFuncExpr(invtransfn_oid,
-											 agg_state_type,
-											 args,
-											 COERCE_DONTCARE);
+												agg_state_type,
+												args,
+												InvalidOid,
+												agg_input_collation,
+												COERCE_DONTCARE);
 	}
 
 	if (OidIsValid(invprelimfn_oid))
@@ -1393,9 +1385,11 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 		args = list_make1(argp);
 
 		*invprelimfnexpr = (Expr *) makeFuncExpr(invprelimfn_oid,
-											 agg_state_type,
-											 args,
-											 COERCE_DONTCARE);
+												 agg_state_type,
+												 args,
+												 InvalidOid,
+												 agg_input_collation,
+												 COERCE_DONTCARE);
 	}
 }
 
@@ -1498,25 +1492,7 @@ checkExprHasGroupExtFuncs(Node *node)
 	 * Must be prepared to start with a Query or a bare expression tree; if
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
-<<<<<<< HEAD
 	return query_or_expression_tree_walker(node,
 										   checkExprHasGroupExtFuncs_walker,
 										   (void *) &context, 0);
-=======
-	argp = makeNode(Param);
-	argp->paramkind = PARAM_EXEC;
-	argp->paramid = -1;
-	argp->paramtype = agg_state_type;
-	argp->paramtypmod = -1;
-	argp->paramcollid = agg_input_collation;
-	argp->location = -1;
-	args = list_make1(argp);
-
-	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
-										 agg_result_type,
-										 args,
-										 InvalidOid,
-										 agg_input_collation,
-										 COERCE_DONTCARE);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

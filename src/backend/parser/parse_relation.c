@@ -3,13 +3,9 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -889,6 +885,9 @@ addRangeTableEntry(ParseState *pstate,
 	Relation	rel;
 	ParseCallbackState pcbstate;
 
+	rte->alias = alias;
+	rte->rtekind = RTE_RELATION;
+
 	/*
 	 * CDB: lock promotion around the locking clause is a little different
 	 * from postgres to allow for required lock promotion for distributed
@@ -911,16 +910,11 @@ addRangeTableEntry(ParseState *pstate,
 	rel = parserOpenTable(pstate, relation, lockmode, nowait, NULL);
 	cancel_parser_errposition_callback(&pcbstate);
 	rte->relid = RelationGetRelid(rel);
-<<<<<<< HEAD
-	rte->alias = alias;
-	rte->rtekind = RTE_RELATION;
+	rte->relkind = rel->rd_rel->relkind;
 
 	/* external tables don't allow inheritance */
 	if (RelationIsExternal(rel))
 		inh = false;
-=======
-	rte->relkind = rel->rd_rel->relkind;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases
@@ -1225,7 +1219,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			 */
 			rte->funcuserdata = NULL;
 			fmgr_info(funcDescribe, &flinfo);
-			InitFunctionCallInfoData(fcinfo, &flinfo, 1, (Node *) rte, NULL);
+			InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rte, NULL);
 			fcinfo.arg[0] = PointerGetDatum(funcexpr);
 			fcinfo.argnull[0] = false;
 

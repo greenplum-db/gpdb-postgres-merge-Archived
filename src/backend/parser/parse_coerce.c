@@ -345,7 +345,25 @@ coerce_type(ParseState *pstate, Node *node,
 		if (result)
 			return result;
 	}
-<<<<<<< HEAD
+	if (IsA(node, CollateExpr))
+	{
+		/*
+		 * If we have a COLLATE clause, we have to push the coercion
+		 * underneath the COLLATE.	This is really ugly, but there is little
+		 * choice because the above hacks on Consts and Params wouldn't happen
+		 * otherwise.
+		 */
+		CollateExpr *coll = (CollateExpr *) node;
+		CollateExpr *newcoll = makeNode(CollateExpr);
+
+		newcoll->arg = (Expr *)
+			coerce_type(pstate, (Node *) coll->arg,
+						inputTypeId, targetTypeId, targetTypeMod,
+						ccontext, cformat, location);
+		newcoll->collOid = coll->collOid;
+		newcoll->location = coll->location;
+		return (Node *) newcoll;
+	}
 
 	/*
 	 * CDB:  Var of type UNKNOWN probably comes from an untyped Const
@@ -414,27 +432,6 @@ coerce_type(ParseState *pstate, Node *node,
 		}
 	}
 
-=======
-	if (IsA(node, CollateExpr))
-	{
-		/*
-		 * If we have a COLLATE clause, we have to push the coercion
-		 * underneath the COLLATE.	This is really ugly, but there is little
-		 * choice because the above hacks on Consts and Params wouldn't happen
-		 * otherwise.
-		 */
-		CollateExpr *coll = (CollateExpr *) node;
-		CollateExpr *newcoll = makeNode(CollateExpr);
-
-		newcoll->arg = (Expr *)
-			coerce_type(pstate, (Node *) coll->arg,
-						inputTypeId, targetTypeId, targetTypeMod,
-						ccontext, cformat, location);
-		newcoll->collOid = coll->collOid;
-		newcoll->location = coll->location;
-		return (Node *) newcoll;
-	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 									 &funcId);
 	if (pathtype != COERCION_PATH_NONE)
@@ -2475,15 +2472,8 @@ find_typmod_coercion_function(Oid typeId,
 	targetType = typeidType(typeId);
 	typeForm = (Form_pg_type) GETSTRUCT(targetType);
 
-<<<<<<< HEAD
-	/* Check for a varlena array type (and not a domain) */
-	if (OidIsValid(typeForm->typelem) &&
-		typeForm->typlen == -1 &&
-		typeForm->typtype != TYPTYPE_DOMAIN)
-=======
 	/* Check for a varlena array type */
 	if (typeForm->typelem != InvalidOid && typeForm->typlen == -1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		/* Yes, switch our attention to the element type */
 		typeId = typeForm->typelem;

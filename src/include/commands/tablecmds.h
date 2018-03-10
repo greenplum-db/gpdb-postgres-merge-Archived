@@ -21,13 +21,10 @@
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
-<<<<<<< HEAD
 #include "nodes/relation.h"
 #include "parser/parse_node.h"
-=======
 #include "storage/lock.h"
 #include "utils/relcache.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Struct describing one new constraint to check in ALTER Phase 3 scan.
  *
@@ -47,19 +44,15 @@ typedef struct NewConstraint
 	List	   *qualstate;		/* Execution state for CHECK */
 } NewConstraint;
 
-<<<<<<< HEAD
 extern const char *synthetic_sql;
 
-extern Oid	DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch);
+extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch);
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
 
 extern void	DefinePartitionedRelation(CreateStmt *stmt, Oid reloid);
 
 extern void EvaluateDeferredStatements(List *deferredStmts);
-=======
-extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 extern void RemoveRelations(DropStmt *drop);
 
@@ -109,15 +102,8 @@ extern void find_composite_type_dependencies(Oid typeOid,
 								 Relation origRelation,
 								 const char *origTypeName);
 
-<<<<<<< HEAD
-=======
 extern void check_of_type(HeapTuple typetuple);
 
-extern AttrNumber *varattnos_map(TupleDesc olddesc, TupleDesc newdesc);
-extern AttrNumber *varattnos_map_schema(TupleDesc old, List *schema);
-extern void change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void register_on_commit_action(Oid relid, OnCommitAction action);
 extern void remove_on_commit_action(Oid relid);
 

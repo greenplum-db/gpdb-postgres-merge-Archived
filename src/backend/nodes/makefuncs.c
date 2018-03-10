@@ -146,6 +146,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidOid,
 							 varlevelsup);
 			break;
+		case RTE_TABLEFUNCTION:
 		case RTE_FUNCTION:
 			toid = exprType(rte->funcexpr);
 			if (type_is_rowtype(toid))

@@ -314,11 +314,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 				markTargetListOrigin(pstate, tle, aliasvar, netlevelsup);
 			}
 			break;
-<<<<<<< HEAD
-		case RTE_SPECIAL:
 		case RTE_TABLEFUNCTION:
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case RTE_FUNCTION:
 		case RTE_VALUES:
 		case RTE_VOID:
@@ -388,7 +384,7 @@ transformAssignedExpr(ParseState *pstate,
 	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
-<<<<<<< HEAD
+	Oid			attrcollation;	/* collation of target column */
 	ParseExprKind sv_expr_kind;
 
 	/*
@@ -399,10 +395,6 @@ transformAssignedExpr(ParseState *pstate,
 	Assert(exprKind != EXPR_KIND_NONE);
 	sv_expr_kind = pstate->p_expr_kind;
 	pstate->p_expr_kind = exprKind;
-=======
-	Oid			attrcollation;	/* collation of target column */
-	Relation	rd = pstate->p_target_relation;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	Assert(rd != NULL);
 	if (attrno <= 0)

@@ -15,13 +15,7 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "catalog/namespace.h"
-#include "catalog/pg_attrdef.h"
-#include "catalog/pg_constraint.h"
-#include "catalog/pg_proc.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -32,11 +26,8 @@
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
-<<<<<<< HEAD
 #include "parser/parse_clause.h"
-=======
 #include "parser/parse_collate.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -199,11 +190,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 					Oid			elementType;
 					int32		targetTypmod;
 
-<<<<<<< HEAD
-					targetType = typenameTypeId(pstate, tc->typeName,
-												&targetTypmod);
-
-=======
 					typenameTypeIdAndMod(pstate, tc->typeName,
 										 &targetType, &targetTypmod);
 
@@ -215,7 +201,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 					 */
 					targetType = getBaseTypeAndTypmod(targetType,
 													  &targetTypmod);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					elementType = get_element_type(targetType);
 					if (OidIsValid(elementType))
 					{
@@ -1126,15 +1111,9 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprNullIf(ParseState *pstate, A_Expr *a)
 {
-<<<<<<< HEAD
 	Node	   *lexpr = transformExprRecurse(pstate, a->lexpr);
 	Node	   *rexpr = transformExprRecurse(pstate, a->rexpr);
-	Node	   *result;
-=======
-	Node	   *lexpr = transformExpr(pstate, a->lexpr);
-	Node	   *rexpr = transformExpr(pstate, a->rexpr);
 	OpExpr	   *result;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	result = (OpExpr *) make_op(pstate,
 								a->name,
@@ -1392,7 +1371,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
-<<<<<<< HEAD
 							 fn,
 							 fn->location);
 }
@@ -1416,15 +1394,6 @@ isWhenIsNotDistinctFromExpr(Node *warg)
 		}
 	}
 	return false;
-=======
-							 fn->agg_order,
-							 fn->agg_star,
-							 fn->agg_distinct,
-							 fn->func_variadic,
-							 fn->over,
-							 false,
-							 fn->location);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 static Node *
@@ -2424,77 +2393,7 @@ transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
 	/* Build the appropriate referencing node */
 	result = makeWholeRowVar(rte, vnum, sublevels_up);
 
-<<<<<<< HEAD
-	switch (rte->rtekind)
-	{
-		case RTE_RELATION:
-			/* relation: the rowtype is a named composite type */
-			toid = get_rel_type_id(rte->relid);
-			if (!OidIsValid(toid))
-				elog(ERROR, "could not find type OID for relation %u",
-					 rte->relid);
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 toid,
-							 -1,
-							 sublevels_up);
-			break;
-		case RTE_TABLEFUNCTION:
-		case RTE_FUNCTION:
-			toid = exprType(rte->funcexpr);
-			if (type_is_rowtype(toid))
-			{
-				/* func returns composite; same as relation case */
-				result = makeVar(vnum,
-								 InvalidAttrNumber,
-								 toid,
-								 -1,
-								 sublevels_up);
-			}
-			else
-			{
-				/*
-				 * func returns scalar; instead of making a whole-row Var,
-				 * just reference the function's scalar output.  (XXX this
-				 * seems a tad inconsistent, especially if "f.*" was
-				 * explicitly written ...)
-				 */
-				result = makeVar(vnum,
-								 1,
-								 toid,
-								 -1,
-								 sublevels_up);
-			}
-			break;
-		case RTE_VALUES:
-			toid = RECORDOID;
-			/* returns composite; same as relation case */
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 toid,
-							 -1,
-							 sublevels_up);
-			break;
-		default:
-
-			/*
-			 * RTE is a join or subselect.	We represent this as a whole-row
-			 * Var of RECORD type.	(Note that in most cases the Var will be
-			 * expanded to a RowExpr during planning, but that is not our
-			 * concern here.)
-			 */
-			result = makeVar(vnum,
-							 InvalidAttrNumber,
-							 RECORDOID,
-							 -1,
-							 sublevels_up);
-			break;
-	}
-
-	/* location is not filled in by makeVar */
-=======
 	/* location is not filled in by makeWholeRowVar */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	result->location = location;
 
 	/* mark relation as requiring whole-row SELECT access */
@@ -2584,7 +2483,7 @@ transformCollateClause(ParseState *pstate, CollateClause *c)
 	Oid			argtype;
 
 	newc = makeNode(CollateExpr);
-	newc->arg = (Expr *) transformExpr(pstate, c->arg);
+	newc->arg = (Expr *) transformExprRecurse(pstate, c->arg);
 
 	argtype = exprType((Node *) newc->arg);
 
