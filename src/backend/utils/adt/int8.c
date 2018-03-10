@@ -598,11 +598,6 @@ int8div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
-<<<<<<< HEAD
-=======
-
-	result = arg1 / arg2;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
@@ -664,7 +659,6 @@ int8mod(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Some machines throw a floating-point exception for INT64_MIN % -1,
 	 * which is a bit silly since the correct answer is perfectly
@@ -673,8 +667,6 @@ int8mod(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 		PG_RETURN_INT64(0);
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* No overflow is possible */
 
 	PG_RETURN_INT64(arg1 % arg2);
@@ -870,11 +862,6 @@ int84div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
-<<<<<<< HEAD
-=======
-
-	result = arg1 / arg2;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
@@ -1072,11 +1059,6 @@ int82div(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
-<<<<<<< HEAD
-=======
-
-	result = arg1 / arg2;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * INT64_MIN / -1 is problematic, since the result can't be represented on
