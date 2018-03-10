@@ -34,13 +34,9 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
-<<<<<<< HEAD
 #include "postmaster/fts.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
-=======
-#include "postmaster/postmaster.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -934,14 +930,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * looking to see if there is an associated shmem segment that is
 		 * still in use.
 		 *
-<<<<<<< HEAD
-		 * Note: because postmaster.pid is written in two steps, we might not
-		 * find the shmem ID values in it; we can't treat that as an error.
-=======
 		 * Note: because postmaster.pid is written in multiple steps, we might
 		 * not find the shmem ID values in it; we can't treat that as an
 		 * error.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		if (isDDLock)
 		{

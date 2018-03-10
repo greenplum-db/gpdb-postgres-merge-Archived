@@ -26,7 +26,10 @@ extern char *pg_krb_realm;
 extern void ClientAuthentication(Port *port);
 extern void FakeClientAuthentication(Port *port);  /* GPDB only */
 
-<<<<<<< HEAD
+/* Hook for plugins to get control in ClientAuthentication() */
+typedef void (*ClientAuthentication_hook_type) (Port *, int);
+extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
+
 /*
  * Support for time-based authentication
  *  
@@ -53,10 +56,5 @@ extern bool interval_overlap(const authInterval *a, const authInterval *b);
 extern bool interval_contains(const authInterval *interval, const authPoint *point);
 extern int CheckAuthTimeConstraints(char *rolname);
 extern int check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp);
-=======
-/* Hook for plugins to get control in ClientAuthentication() */
-typedef void (*ClientAuthentication_hook_type) (Port *, int);
-extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #endif   /* AUTH_H */

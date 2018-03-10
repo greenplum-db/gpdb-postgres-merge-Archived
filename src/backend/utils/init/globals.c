@@ -18,11 +18,7 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "pgtime.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -142,7 +138,6 @@ bool		VacuumCostActive = false;
 
 int			GinFuzzySearchLimit = 0;
 
-<<<<<<< HEAD
 /* gpperfmon port number */
 int 	gpperfmon_port = 8888;
 
@@ -163,10 +158,8 @@ int gp_vmem_protect_limit = 8192;
 #endif
 int gp_vmem_protect_gang_cache_limit = 500;
 
-=======
 /*
  * Hook on object accesses.  This is intended as infrastructure for security
  * and logging plugins.
  */
 object_access_hook_type object_access_hook = NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

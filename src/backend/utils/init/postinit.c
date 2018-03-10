@@ -748,11 +748,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-<<<<<<< HEAD
-				 errmsg("must be superuser to connect in binary upgrade mode")));
-=======
 			 errmsg("must be superuser to connect in binary upgrade mode")));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*
@@ -780,35 +776,19 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		check_superuser_connection_limit();
 
 	/*
-<<<<<<< HEAD
-	 * If walsender or fts handler, we don't want to connect to any particular
-	 * database. Just finish the backend startup by processing any options from
-	 * the startup packet, and we're done.
-=======
-	 * If walsender, we don't want to connect to any particular database. Just
+	 * If walsender or fts handler, we don't want to connect to any particular database. Just
 	 * finish the backend startup by processing any options from the startup
 	 * packet, and we're done.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (am_walsender || am_ftshandler)
 	{
 		Assert(!bootstrap);
 
-<<<<<<< HEAD
-		/*
-		 * We don't have replication role, which existed in postgres.
-		 */
-		if (!am_superuser)
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser role to start walsender")));
-=======
 		/* must have authenticated as a replication role */
 		if (!is_authenticated_user_replication_role())
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be replication role to start walsender")));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* process any options passed in the startup packet */
 		if (MyProcPort != NULL)
@@ -825,12 +805,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		pgstat_bestart();
 
 		/* close the transaction we started above */
-<<<<<<< HEAD
 		if (!(am_ftshandler && am_mirror))
 			CommitTransactionCommand();
-=======
-		CommitTransactionCommand();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		return;
 	}
@@ -985,10 +961,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	if (MyProcPort != NULL)
 		process_startup_options(MyProcPort, am_superuser);
 
-	/* Process pg_db_role_setting options */
-	process_settings(MyDatabaseId, GetSessionUserId());
-
-<<<<<<< HEAD
 	/*
 	 * Maintenance Mode: allow superuser to connect when
 	 * gp_maintenance_conn GUC is set.  We cannot check it until
@@ -1019,8 +991,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* Process pg_db_role_setting options */
 	process_settings(MyDatabaseId, GetSessionUserId());
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Apply PostAuthDelay as soon as we've read all options */
 	if (PostAuthDelay > 0)
 		pg_usleep(PostAuthDelay * 1000000L);
@@ -1039,7 +1009,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	/* report this backend in the PgBackendStatus array */
 	if (!bootstrap)
 		pgstat_bestart();
-<<<<<<< HEAD
 		
 	/* 
      * MPP package setup 
@@ -1085,79 +1054,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			lookupSharedSnapshot("Reader qExec", "Writer qExec", gp_session_id);
 		}
 	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand();
-<<<<<<< HEAD
-
-	return;
-}
-
-/*
- * Process any command-line switches and any additional GUC variable
- * settings passed in the startup packet.
- */
-static void
-process_startup_options(Port *port, bool am_superuser)
-{
-	GucContext	gucctx;
-	ListCell   *gucopts;
-
-	gucctx = am_superuser ? PGC_SUSET : PGC_BACKEND;
-	/*
-	 * First process any command-line switches that were included in the
-	 * startup packet, if we are in a regular backend.
-	 */
-	if (port->cmdline_options != NULL)
-	{
-		/*
-		 * The maximum possible number of commandline arguments that could
-		 * come from port->cmdline_options is (strlen + 1) / 2; see
-		 * pg_split_opts().
-		 */
-		char	  **av;
-		int			maxac;
-		int			ac;
-
-		maxac = 2 + (strlen(port->cmdline_options) + 1) / 2;
-
-		av = (char **) palloc(maxac * sizeof(char *));
-		ac = 0;
-
-		av[ac++] = "postgres";
-
-		pg_split_opts(av, &ac, port->cmdline_options);
-
-		av[ac] = NULL;
-
-		Assert(ac < maxac);
-
-		(void) process_postgres_switches(ac, av, gucctx, NULL);
-	}
-
-	/*
-	 * Process any additional GUC variable settings passed in startup packet.
-	 * These are handled exactly like command-line variables.
-	 */
-	gucopts = list_head(port->guc_options);
-	while (gucopts)
-	{
-		char	   *name;
-		char	   *value;
-
-		name = lfirst(gucopts);
-		gucopts = lnext(gucopts);
-
-		value = lfirst(gucopts);
-		gucopts = lnext(gucopts);
-
-		SetConfigOption(name, value, gucctx, PGC_S_CLIENT);
-	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -1201,7 +1101,7 @@ process_startup_options(Port *port, bool am_superuser)
 
 		Assert(ac < maxac);
 
-		(void) process_postgres_switches(ac, av, gucctx);
+		(void) process_postgres_switches(ac, av, gucctx, NULL);
 	}
 
 	/*
