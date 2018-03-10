@@ -20,10 +20,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"

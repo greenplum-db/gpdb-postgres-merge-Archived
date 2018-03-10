@@ -14,10 +14,7 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-=======
 #include "catalog/dependency.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_largeobject.h"
@@ -28,10 +25,7 @@
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
-<<<<<<< HEAD
 #include "commands/extprotocolcmds.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
@@ -46,12 +40,9 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-<<<<<<< HEAD
 
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -226,13 +217,10 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 								   stmt->newschema);
 			break;
 
-<<<<<<< HEAD
-=======
 		case OBJECT_COLLATION:
 			AlterCollationNamespace(stmt->object, stmt->newschema);
 			break;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case OBJECT_CONVERSION:
 			AlterConversionNamespace(stmt->object, stmt->newschema);
 			break;

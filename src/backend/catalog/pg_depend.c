@@ -18,13 +18,9 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_extension.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
-<<<<<<< HEAD
-=======
 #include "catalog/pg_extension.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "commands/extension.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"

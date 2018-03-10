@@ -31,10 +31,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_extension.h"
-<<<<<<< HEAD
 #include "catalog/pg_extprotocol.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
@@ -5365,11 +5362,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-<<<<<<< HEAD
-						errmsg("extension with OID %u does not exist", ext_oid)));
-=======
 				 errmsg("extension with OID %u does not exist", ext_oid)));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	ownerId = ((Form_pg_extension) GETSTRUCT(tuple))->extowner;
 

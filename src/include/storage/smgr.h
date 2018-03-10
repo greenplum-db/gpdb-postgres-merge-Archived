@@ -123,12 +123,8 @@ extern void mdwrite(SMgrRelation reln, ForkNumber forknum,
 		BlockNumber blocknum, char *buffer, bool skipFsync);
 extern BlockNumber mdnblocks(SMgrRelation reln, ForkNumber forknum);
 extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
-<<<<<<< HEAD
-					   BlockNumber nblocks, bool isTemp,
+					   BlockNumber nblocks,
 					   bool allowedNotFound);
-=======
-		   BlockNumber nblocks);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void mdimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void mdpreckpt(void);
 extern void mdsync(void);

@@ -603,13 +603,8 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	if (newec->ec_has_volatile && sortref == 0) /* should not happen */
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
 
-<<<<<<< HEAD
-	newem = add_eq_member(newec, expr, pull_varnos((Node *) expr),
-						  NULL, false, expr_datatype);
-=======
 	newem = add_eq_member(newec, copyObject(expr), pull_varnos((Node *) expr),
-						  false, opcintype);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+						  NULL, false, opcintype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning

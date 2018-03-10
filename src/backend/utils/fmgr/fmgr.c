@@ -31,15 +31,13 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-=======
+
 /*
  * Hooks for function calls
  */
 PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook = NULL;
 PGDLLIMPORT fmgr_hook_type fmgr_hook = NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * Declaration for old-style function pointer type.  This is now used only

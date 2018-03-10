@@ -6,13 +6,9 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -52,10 +48,7 @@
 #include "optimizer/planner.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
-<<<<<<< HEAD
-=======
 #include "storage/predicate.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"

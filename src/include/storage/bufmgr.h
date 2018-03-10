@@ -170,11 +170,7 @@ extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 				   BlockNumber blockNum, ReadBufferMode mode,
 				   BufferAccessStrategy strategy);
-<<<<<<< HEAD
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode, bool isLocalBuf,
-=======
 extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						  ForkNumber forkNum, BlockNumber blockNum,
 						  ReadBufferMode mode, BufferAccessStrategy strategy);
 extern void ReleaseBuffer(Buffer buffer);
