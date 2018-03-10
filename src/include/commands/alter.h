@@ -17,27 +17,16 @@
 #include "catalog/dependency.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
-<<<<<<< HEAD
+#include "utils/relcache.h"
 
 extern void ExecRenameStmt(RenameStmt *stmt);
 extern void ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
 extern Oid  AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
                          ObjectAddresses *objsMoved);
-extern Oid  AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
-                     Oid objid, Oid nspOid,
-                     int Anum_name, int Anum_namespace, int Anum_owner,
-                     AclObjectKind acl_kind);
-=======
-#include "utils/relcache.h"
-
-extern void ExecRenameStmt(RenameStmt *stmt);
-extern void ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
-extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid);
 extern Oid AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 					 Oid objid, Oid nspOid,
 					 int Anum_name, int Anum_namespace, int Anum_owner,
 					 AclObjectKind acl_kind);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern void ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 
 #endif   /* ALTER_H */

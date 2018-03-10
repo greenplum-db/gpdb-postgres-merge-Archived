@@ -90,10 +90,6 @@ extern void RenameRelation(Oid myrelid,
 			   ObjectType reltype,
 			   RenameStmt *stmt /* MPP */);
 
-extern void find_composite_type_dependencies(Oid typeOid,
-											 const char *origTblName,
-											 const char *origTypeName);
-
 extern void RenameRelationInternal(Oid myrelid,
 					   const char *newrelname,
 					   Oid namespaceId);

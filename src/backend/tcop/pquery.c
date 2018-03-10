@@ -3,13 +3,9 @@
  * pquery.c
  *	  POSTGRES process query command code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -301,6 +297,7 @@ ProcessQuery(Portal portal,
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
+	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
 
 	/*
@@ -338,22 +335,12 @@ ProcessQuery(Portal portal,
 		}
 	}
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		/* MPP-4082. Issue automatic ANALYZE if conditions are satisfied. */
 		bool inFunction = false;
 		auto_stats(cmdType, relationOid, queryDesc->es_processed, inFunction);
 	}
-
-	PopActiveSnapshot();
-=======
-	/*
-	 * Now, we close down all the scans and free allocated resources.
-	 */
-	ExecutorFinish(queryDesc);
-	ExecutorEnd(queryDesc);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	FreeQueryDesc(queryDesc);
 

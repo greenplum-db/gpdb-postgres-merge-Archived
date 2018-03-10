@@ -30,11 +30,8 @@ extern Oid	make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
 extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool is_system_catalog,
 				 bool swap_toast_by_content,
-<<<<<<< HEAD
 				 bool swap_stats,
-=======
 				 bool check_constraints,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 TransactionId frozenXid);
 
 extern void swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,

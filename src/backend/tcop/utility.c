@@ -37,10 +37,7 @@
 #include "commands/discard.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
-<<<<<<< HEAD
 #include "commands/extprotocolcmds.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -240,9 +237,6 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateResourceGroupStmt:
 		case T_CreateRoleStmt:
 		case T_IndexStmt:
-		case T_CreateExtensionStmt:
-		case T_AlterExtensionStmt:
-		case T_AlterExtensionContentsStmt:
 		case T_CreatePLangStmt:
 		case T_CreateOpClassStmt:
 		case T_CreateOpFamilyStmt:
@@ -449,16 +443,15 @@ standard_ProcessUtility(Node *parsetree,
 								else if (strcmp(item->defname, "transaction_read_only") == 0)
 									SetPGVariableOptDispatch("transaction_read_only",
 												  list_make1(item->arg),
-<<<<<<< HEAD
 												  true,
 												  /* gp_dispatch */ false);
-=======
-												  true);
 								else if (strcmp(item->defname, "transaction_deferrable") == 0)
-									SetPGVariable("transaction_deferrable",
+									SetPGVariableOptDispatch("transaction_deferrable",
 												  list_make1(item->arg),
-												  true);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												  true,
+												  /* gp_dispatch */ false);
+								// GPDB_91_MERGE_FIXME: I just copied gp_dispatch = false to
+								// the new transaction_deferrable case above. Was that right?
 							}
 
 							sendDtxExplicitBegin();
@@ -686,12 +679,9 @@ standard_ProcessUtility(Node *parsetree,
 						 * created the toast and other auxiliary tables yet.
 						 */
 						relOid = DefineRelation((CreateStmt *) stmt,
-<<<<<<< HEAD
-												relKind, relStorage, false);
-=======
-												RELKIND_RELATION,
-												InvalidOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												relKind,
+												InvalidOid,
+												relStorage, false);
 
 						/*
 						 * Let AlterTableCreateToastTable decide if this one
@@ -944,13 +934,10 @@ standard_ProcessUtility(Node *parsetree,
 						RemoveExtensions(stmt);
 						break;
 
-<<<<<<< HEAD
 					case OBJECT_EXTPROTOCOL:
 						RemoveExtProtocols(stmt);
 						break;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					default:
 						elog(ERROR, "unrecognized drop object type: %d",
 							 (int) stmt->removeType);
@@ -1279,18 +1266,6 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 		}
-
-		case T_CreateExtensionStmt:
-			CreateExtension((CreateExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionStmt:
-			ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
-			break;
 
 		case T_RuleStmt:		/* CREATE RULE */
 			DefineRule((RuleStmt *) parsetree, queryString);
@@ -1857,8 +1832,6 @@ UtilityTupleDescriptor(Node *parsetree)
 
 
 /*
-<<<<<<< HEAD
-=======
  * QueryReturnsTuples
  *		Return "true" if this Query will send output to the destination.
  */
@@ -2005,6 +1978,14 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_VIEW:
 			tag = "ALTER VIEW";
 			break;
+
+		case OBJECT_EXTPROTOCOL:
+			tag = "ALTER PROTOCOL";
+			break;
+		case OBJECT_EXTTABLE:
+			tag = "ALTER EXTERNAL TABLE";
+			break;
+
 		default:
 			tag = "???";
 			break;
@@ -2014,7 +1995,6 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 }
 
 /*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * CreateCommandTag
  *		utility to get a string representation of the command operation,
  *		given either a raw (un-analyzed) parsetree or a planned query.
@@ -2254,12 +2234,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "DROP TEXT SEARCH CONFIGURATION";
 					break;
-<<<<<<< HEAD
-=======
 				case OBJECT_FOREIGN_TABLE:
 					tag = "DROP FOREIGN TABLE";
 					break;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				case OBJECT_EXTENSION:
 					tag = "DROP EXTENSION";
 					break;
@@ -2285,222 +2262,6 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
-<<<<<<< HEAD
-			switch (((RenameStmt *) parsetree)->renameType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_CONVERSION:
-					tag = "ALTER CONVERSION";
-					break;
-				case OBJECT_DATABASE:
-					tag = "ALTER DATABASE";
-					break;
-				case OBJECT_EXTPROTOCOL:
-					tag = "ALTER PROTOCOL";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_INDEX:
-					tag = "ALTER INDEX";
-					break;
-				case OBJECT_LANGUAGE:
-					tag = "ALTER LANGUAGE";
-					break;
-				case OBJECT_OPCLASS:
-					tag = "ALTER OPERATOR CLASS";
-					break;
-				case OBJECT_OPFAMILY:
-					tag = "ALTER OPERATOR FAMILY";
-					break;
-				case OBJECT_ROLE:
-					tag = "ALTER ROLE";
-					break;
-				case OBJECT_SCHEMA:
-					tag = "ALTER SCHEMA";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_COLUMN:
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_TABLESPACE:
-					tag = "ALTER TABLESPACE";
-					break;
-				case OBJECT_TRIGGER:
-					tag = "ALTER TRIGGER";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				case OBJECT_TSPARSER:
-					tag = "ALTER TEXT SEARCH PARSER";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_TSTEMPLATE:
-					tag = "ALTER TEXT SEARCH TEMPLATE";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
-			break;
-
-		case T_AlterObjectSchemaStmt:
-			switch (((AlterObjectSchemaStmt *) parsetree)->objectType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_DOMAIN:
-					tag = "ALTER DOMAIN";
-					break;
-				case OBJECT_EXTENSION:
-					tag = "ALTER EXTENSION";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				case OBJECT_TSPARSER:
-					tag = "ALTER TEXT SEARCH PARSER";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_TSTEMPLATE:
-					tag = "ALTER TEXT SEARCH TEMPLATE";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
-			break;
-
-		case T_AlterOwnerStmt:
-			switch (((AlterOwnerStmt *) parsetree)->objectType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_CONVERSION:
-					tag = "ALTER CONVERSION";
-					break;
-				case OBJECT_DATABASE:
-					tag = "ALTER DATABASE";
-					break;
-				case OBJECT_DOMAIN:
-					tag = "ALTER DOMAIN";
-					break;
-				case OBJECT_EXTENSION:
-					tag = "ALTER EXTENSION";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_LANGUAGE:
-					tag = "ALTER LANGUAGE";
-					break;
-				case OBJECT_LARGEOBJECT:
-					tag = "ALTER LARGE OBJECT";
-					break;
-				case OBJECT_OPERATOR:
-					tag = "ALTER OPERATOR";
-					break;
-				case OBJECT_OPCLASS:
-					tag = "ALTER OPERATOR CLASS";
-					break;
-				case OBJECT_OPFAMILY:
-					tag = "ALTER OPERATOR FAMILY";
-					break;
-				case OBJECT_SCHEMA:
-					tag = "ALTER SCHEMA";
-					break;
-				case OBJECT_TABLESPACE:
-					tag = "ALTER TABLESPACE";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				case OBJECT_EXTPROTOCOL:
-					tag = "ALTER PROTOCOL";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_FDW:
-					tag = "ALTER FOREIGN DATA WRAPPER";
-					break;
-				case OBJECT_FOREIGN_SERVER:
-					tag = "ALTER SERVER";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
-			break;
-
-		case T_AlterTableStmt:
-			switch (((AlterTableStmt *) parsetree)->relkind)
-			{
-				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
-
-				/*
-				 * We might be supporting ALTER INDEX here, so set the
-				 * completion tag appropriately. Catch all other possibilities
-				 * with ALTER TABLE
-				 */
-
-				if (stmt->relkind == OBJECT_INDEX)
-					tag = "ALTER INDEX";
-				else if (stmt->relkind == OBJECT_EXTTABLE)
-					tag = "ALTER EXTERNAL TABLE";
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_INDEX:
-					tag = "ALTER INDEX";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
-=======
 			tag = AlterObjectTypeCommandTag(((RenameStmt *) parsetree)->renameType);
 			break;
 
@@ -2514,7 +2275,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterTableStmt:
 			tag = AlterObjectTypeCommandTag(((AlterTableStmt *) parsetree)->relkind);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			break;
 
 		case T_AlterDomainStmt:
@@ -2602,18 +2362,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_IndexStmt:
 			tag = "CREATE INDEX";
-			break;
-
-		case T_CreateExtensionStmt:
-			tag = "CREATE EXTENSION";
-			break;
-
-		case T_AlterExtensionStmt:
-			tag = "ALTER EXTENSION";
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			tag = "ALTER EXTENSION";
 			break;
 
 		case T_RuleStmt:
@@ -3192,12 +2940,6 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_IndexStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_CreateExtensionStmt:
-		case T_AlterExtensionStmt:
-		case T_AlterExtensionContentsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

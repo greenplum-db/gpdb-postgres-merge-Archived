@@ -14,18 +14,13 @@
 #ifndef COPY_H
 #define COPY_H
 
-<<<<<<< HEAD
-#include "c.h"
-=======
 #include "nodes/execnodes.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"
 #include "executor/executor.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbcopy.h"
 
-<<<<<<< HEAD
 /*
  * Represents the different source/dest cases we need to worry about at
  * the bottom level
@@ -37,10 +32,9 @@ typedef enum CopyDest
 	COPY_NEW_FE,				/* to/from frontend (3.0 protocol) */
 	COPY_EXTERNAL_SOURCE		/* to/from external source (RET/WET) */
 } CopyDest;
-=======
+
 /* CopyStateData is private in commands/copy.c */
 typedef struct CopyStateData *CopyState;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  *	Represents the end-of-line terminator type of the input

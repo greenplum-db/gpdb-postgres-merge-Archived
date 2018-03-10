@@ -4135,18 +4135,11 @@ check_stack_depth(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
-<<<<<<< HEAD
-		 errhint("Increase the configuration parameter \"max_stack_depth\", "
-		   "after ensuring the platform's stack depth limit is adequate.")));
-	}
-#endif /* IA64 */
-=======
 				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
 			  "after ensuring the platform's stack depth limit is adequate.",
 						 max_stack_depth)));
 	}
 #endif   /* IA64 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /* GUC check hook for max_stack_depth */
@@ -4329,11 +4322,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
 	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:m:lN:nOo:Pp:r:S:sTt:Uv:W:y:-:")) != -1)
-=======
-	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		switch (flag)
 		{
@@ -4347,12 +4336,8 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 			case 'b':
 				/* Undocumented flag used for binary upgrades */
-<<<<<<< HEAD
 				if (secure)
 					IsBinaryUpgrade = true;
-=======
-				IsBinaryUpgrade = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 
 			case 'D':
