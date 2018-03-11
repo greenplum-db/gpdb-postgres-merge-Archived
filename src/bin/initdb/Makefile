@@ -22,16 +22,12 @@ OBJS=	initdb.o encnames.o pqsignal.o $(WIN32RES)
 
 all: initdb
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-initdb: $(OBJS)
-=======
 initdb: $(OBJS) | submake-libpgport
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # We used to pull in all of libpq to get encnames and pqsignal, but that

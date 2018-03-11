@@ -245,33 +245,12 @@ do { \
 		output_failed = true, output_errno = errno; \
 } while (0)
 
-<<<<<<< HEAD
-#define PG_CMD_PRINTF3(fmt, arg1, arg2, arg3) \
-		do { \
-			if (fprintf(cmdfd, fmt, arg1, arg2, arg3) < 0 || fflush(cmdfd) < 0) \
-				output_failed = true, output_errno = errno; \
-		} while (0)
-		
-#define PG_CMD_PRINTF4(fmt, arg1, arg2, arg3, arg4) \
-	do { \
-		if (fprintf(cmdfd, fmt, arg1, arg2, arg3, arg4) < 0 || fflush(cmdfd) < 0) \
-			output_failed = true, output_errno = errno; \
-	} while (0)
-	
-#define PG_CMD_PRINTF5(fmt, arg1, arg2, arg3, arg4, arg5) \
-			do { \
-				if (fprintf(cmdfd, fmt, arg1, arg2, arg3, arg4, arg5) < 0 || fflush(cmdfd) < 0) \
-					output_failed = true, output_errno = errno; \
-			} while (0)
-			
-=======
 #define PG_CMD_PRINTF3(fmt, arg1, arg2, arg3)		\
 do { \
 	if (fprintf(cmdfd, fmt, arg1, arg2, arg3) < 0 || fflush(cmdfd) < 0) \
 		output_failed = true, output_errno = errno; \
 } while (0)
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #ifndef WIN32
 #define QUOTE_PATH	""
 #define DIR_SEP "/"
@@ -2333,7 +2312,7 @@ make_postgres(void)
 	const char **line;
 	static const char *postgres_setup[] = {
 		"CREATE DATABASE postgres;\n",
-<<<<<<< HEAD
+		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n",
 		/*
 		 * Make 'postgres' a template database
 		 */
@@ -2344,9 +2323,6 @@ make_postgres(void)
 		 * Clean out dead rows in pg_database
 		 */
 		"VACUUM FULL pg_database;\n",
-=======
-		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n",
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		NULL
 	};
 
@@ -3730,13 +3706,9 @@ main(int argc, char *argv[])
 
 		setup_description();
 
-<<<<<<< HEAD
-		setup_conversion();
-=======
-	setup_collation();
+		setup_collation();
 
-	setup_conversion();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		setup_conversion();
 
 		setup_dictionary();
 
