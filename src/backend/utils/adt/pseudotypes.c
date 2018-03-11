@@ -454,18 +454,7 @@ shell_out(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
-
 /*
-<<<<<<< HEAD
- * anytable_in		- input routine for multiset pseudotype
- */
-Datum
-anytable_in(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a value of type anytable")));
-=======
  * pg_node_tree_in		- input routine for type PG_NODE_TREE.
  *
  * pg_node_tree isn't really a pseudotype --- it's real enough to be a table
@@ -482,25 +471,11 @@ pg_node_tree_in(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot accept a value of type pg_node_tree")));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
 
 /*
-<<<<<<< HEAD
- * shell_out		- output routine for "shell" types.
- */
-Datum
-anytable_out(PG_FUNCTION_ARGS)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type anytable")));
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
-}
-=======
  * pg_node_tree_out		- output routine for type PG_NODE_TREE.
  *
  * The internal representation is the same as TEXT, so just pass it off.
@@ -532,4 +507,29 @@ pg_node_tree_send(PG_FUNCTION_ARGS)
 {
 	return textsend(fcinfo);
 }
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+/*
+ * anytable_in		- input routine for multiset pseudotype
+ */
+Datum
+anytable_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type anytable")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anytable_out		- output routine for multiset pseudotype.
+ */
+Datum
+anytable_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type anytable")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}

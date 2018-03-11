@@ -636,6 +636,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		//values[14] = Int32GetDatum(proc->mppSessionId);
 		//values[15] = BoolGetDatum(proc->mppIsWriter);
 		//values[16] = Int32GetDatum(Gp_segment);
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		result = HeapTupleGetDatum(tuple);
+		SRF_RETURN_NEXT(funcctx, result);
 	}
 
 	/*

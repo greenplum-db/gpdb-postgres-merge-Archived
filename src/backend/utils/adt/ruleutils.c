@@ -24,11 +24,8 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_authid.h"
-<<<<<<< HEAD
 #include "catalog/pg_attribute_encoding.h"
-=======
 #include "catalog/pg_collation.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
@@ -7058,11 +7055,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			gavealias = true;
 		}
 		else if (rte->rtekind == RTE_RELATION &&
-<<<<<<< HEAD
-				 strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
-=======
 			strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/*
 			 * Apparently the rel has been renamed since the rule was made.

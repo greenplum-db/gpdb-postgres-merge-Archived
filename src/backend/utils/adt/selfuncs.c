@@ -587,27 +587,16 @@ mcv_selectivity(VariableStatData   *vardata,
 		for (i = 0; i < sslot.nvalues; i++)
 		{
 			if (varonleft ?
-<<<<<<< HEAD
-				DatumGetBool(FunctionCall2(opproc,
-										   sslot.values[i],
-										   constval)) :
-				DatumGetBool(FunctionCall2(opproc,
-										   constval,
-										   sslot.values[i])))
-				mcv_selec += sslot.numbers[i];
-			sumcommon += sslot.numbers[i];
-=======
 				DatumGetBool(FunctionCall2Coll(opproc,
 											   DEFAULT_COLLATION_OID,
-											   values[i],
+											   sslot.values[i],
 											   constval)) :
 				DatumGetBool(FunctionCall2Coll(opproc,
 											   DEFAULT_COLLATION_OID,
 											   constval,
-											   values[i])))
-				mcv_selec += numbers[i];
-			sumcommon += numbers[i];
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+											   sslot.values[i])))
+				mcv_selec += sslot.numbers[i];
+			sumcommon += sslot.numbers[i];
 		}
 		free_attstatsslot(&sslot);
 	}
@@ -676,23 +665,14 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 			for (i = n_skip; i < sslot.nvalues - n_skip; i++)
 			{
 				if (varonleft ?
-<<<<<<< HEAD
-					DatumGetBool(FunctionCall2(opproc,
-											   sslot.values[i],
-											   constval)) :
-					DatumGetBool(FunctionCall2(opproc,
-											   constval,
-											   sslot.values[i])))
-=======
 					DatumGetBool(FunctionCall2Coll(opproc,
 												   DEFAULT_COLLATION_OID,
-												   values[i],
+												   sslot.values[i],
 												   constval)) :
 					DatumGetBool(FunctionCall2Coll(opproc,
 												   DEFAULT_COLLATION_OID,
 												   constval,
-												   values[i])))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												   sslot.values[i])))
 					nmatch++;
 			}
 			result = ((double) nmatch) / ((double) (sslot.nvalues - 2 * n_skip));
@@ -807,16 +787,10 @@ ineq_histogram_selectivity(PlannerInfo *root,
 														 NULL,
 														 &sslot.values[probe]);
 
-<<<<<<< HEAD
-				ltcmp = DatumGetBool(FunctionCall2(opproc,
-												   sslot.values[probe],
-												   constval));
-=======
 				ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
 													   DEFAULT_COLLATION_OID,
-													   values[probe],
+													   sslot.values[probe],
 													   constval));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				if (isgt)
 					ltcmp = !ltcmp;
 				if (ltcmp)
@@ -1092,15 +1066,10 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
+	Oid			collation = PG_GET_COLLATION();
 	VariableStatData vardata;
-<<<<<<< HEAD
-	Node	   *variable;
 	Node	   *other=NULL;
 	bool		varonleft=false;
-=======
-	Node	   *other;
-	bool		varonleft;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	Datum		constval;
 	Oid			consttype;
 	Oid			vartype;
@@ -1198,21 +1167,17 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Pull out any fixed prefix implied by the pattern, and estimate the
-	 * fractional selectivity of the remainder of the pattern.
+	 * fractional selectivity of the remainder of the pattern.  Unlike many of
+	 * the other functions in this file, we use the pattern operator's actual
+	 * collation for this step.  This is not because we expect the collation
+	 * to make a big difference in the selectivity estimate (it seldom would),
+	 * but because we want to be sure we cache compiled regexps under the
+	 * right cache key, so that they can be re-used at runtime.
 	 */
 	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest_selec);
-=======
-	 * Divide pattern into fixed prefix and remainder.	XXX we have to assume
-	 * default collation here, because we don't have access to the actual
-	 * input collation for the operator.  FIXME ...
-	 */
-	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, DEFAULT_COLLATION_OID,
-								   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	pstatus = pattern_fixed_prefix(patt, ptype, collation,
+								   &prefix, &rest_selec);
 
 	/*
 	 * If necessary, coerce the prefix constant to the right type.
@@ -2180,16 +2145,10 @@ eqjoinsel_inner(Oid operator,
 			{
 				if (hasmatch2[j])
 					continue;
-<<<<<<< HEAD
-				if (DatumGetBool(FunctionCall2(&eqproc,
-											   sslot1.values[i],
-											   sslot2.values[j])))
-=======
 				if (DatumGetBool(FunctionCall2Coll(&eqproc,
 												   DEFAULT_COLLATION_OID,
-												   values1[i],
-												   values2[j])))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												   sslot1.values[i],
+												   sslot2.values[j])))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					matchprodfreq += sslot1.numbers[i] * sslot2.numbers[j];
@@ -2347,22 +2306,10 @@ eqjoinsel_semi(Oid operator,
 
 	if (HeapTupleIsValid(vardata2->statsTuple))
 	{
-<<<<<<< HEAD
-		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2->statsTuple);
 		have_mcvs2 = get_attstatsslot(&sslot2, vardata2->statsTuple,
 									  STATISTIC_KIND_MCV, InvalidOid,
 									  ATTSTATSSLOT_VALUES);
 		/* note: currently don't need stanumbers from RHS */
-=======
-		have_mcvs2 = get_attstatsslot(vardata2->statsTuple,
-									  vardata2->atttype,
-									  vardata2->atttypmod,
-									  STATISTIC_KIND_MCV,
-									  InvalidOid,
-									  NULL,
-									  &values2, &nvalues2,
-									  &numbers2, &nnumbers2);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	if (have_mcvs1 && have_mcvs2 && OidIsValid(operator))
@@ -2404,16 +2351,10 @@ eqjoinsel_semi(Oid operator,
 			{
 				if (hasmatch2[j])
 					continue;
-<<<<<<< HEAD
-				if (DatumGetBool(FunctionCall2(&eqproc,
-											   sslot1.values[i],
-											   sslot2.values[j])))
-=======
 				if (DatumGetBool(FunctionCall2Coll(&eqproc,
 												   DEFAULT_COLLATION_OID,
-												   values1[i],
-												   values2[j])))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												   sslot1.values[i],
+												   sslot2.values[j])))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					nmatches++;
@@ -4681,10 +4622,6 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		/* no stats available, so default result */
 		return false;
 	}
-<<<<<<< HEAD
-	stats = (Form_pg_statistic) GETSTRUCT(tp);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
@@ -4750,24 +4687,16 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 				tmin_is_mcv = tmax_is_mcv = have_data = true;
 				continue;
 			}
-<<<<<<< HEAD
-			if (DatumGetBool(FunctionCall2(&opproc, sslot.values[i], tmin)))
-=======
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
 											   DEFAULT_COLLATION_OID,
-											   values[i], tmin)))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+											   sslot.values[i], tmin)))
 			{
 				tmin = sslot.values[i];
 				tmin_is_mcv = true;
 			}
-<<<<<<< HEAD
-			if (DatumGetBool(FunctionCall2(&opproc, tmax, sslot.values[i])))
-=======
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
 											   DEFAULT_COLLATION_OID,
-											   tmax, values[i])))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+											   tmax, sslot.values[i])))
 			{
 				tmax = sslot.values[i];
 				tmax_is_mcv = true;
@@ -5055,13 +4984,8 @@ pattern_char_isalpha(char c, bool is_multibyte,
  */
 
 static Pattern_Prefix_Status
-<<<<<<< HEAD
-like_fixed_prefix(Const *patt_const, bool case_insensitive,
-				  Const **prefix_const, Selectivity *rest_selec)
-=======
 like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				  Const **prefix_const, Const **rest_const)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				  Const **prefix_const, Selectivity *rest_selec)
 {
 	char	   *match;
 	char	   *patt;
@@ -5169,23 +5093,12 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 }
 
 static Pattern_Prefix_Status
-<<<<<<< HEAD
-regex_fixed_prefix(Const *patt_const, bool case_insensitive,
-				   Const **prefix_const, Selectivity *rest_selec)
-=======
 regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				   Const **prefix_const, Const **rest_const)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				   Const **prefix_const, Selectivity *rest_selec)
 {
 	Oid			typeid = patt_const->consttype;
-<<<<<<< HEAD
 	char	   *prefix;
 	bool		exact;
-=======
-	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
-	pg_locale_t locale = 0;
-	bool		locale_is_c = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Should be unnecessary, there are no bytea regex operators defined. As
@@ -5197,37 +5110,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("regular-expression matching not supported on type bytea")));
 
-<<<<<<< HEAD
 	/* Use the regexp machinery to extract the prefix, if any */
 	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
-								 case_insensitive,
+								 case_insensitive, collation,
 								 &exact);
-=======
-	if (case_insensitive)
-	{
-		/* If case-insensitive, we need locale info */
-		if (lc_ctype_is_c(collation))
-			locale_is_c = true;
-		else if (collation != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collation))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for regular expression"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			locale = pg_newlocale_from_collation(collation);
-		}
-	}
-
-	/* the right-hand const is type text for all of these */
-	patt = TextDatumGetCString(patt_const->constvalue);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (prefix == NULL)
 	{
@@ -5235,7 +5121,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 		if (rest_selec != NULL)
 		{
-			char   *patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+			char	   *patt = TextDatumGetCString(patt_const->constvalue);
 
 			*rest_selec = regex_selectivity(patt, strlen(patt),
 											case_insensitive,
@@ -5250,65 +5136,19 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 	if (rest_selec != NULL)
 	{
-<<<<<<< HEAD
 		if (exact)
-=======
-		int			len;
-
-		/*
-		 * Check for characters that indicate multiple possible matches here.
-		 * Also, drop out at ')' or '$' so the termination test works right.
-		 */
-		if (patt[pos] == '.' ||
-			patt[pos] == '(' ||
-			patt[pos] == ')' ||
-			patt[pos] == '[' ||
-			patt[pos] == '^' ||
-			patt[pos] == '$')
-			break;
-
-		/* Stop if case-varying character (it's sort of a wildcard) */
-		if (case_insensitive &&
-		  pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
-			break;
-
-		/*
-		 * Check for quantifiers.  Except for +, this means the preceding
-		 * character is optional, so we must remove it from the prefix too!
-		 */
-		if (patt[pos] == '*' ||
-			patt[pos] == '?' ||
-			patt[pos] == '{')
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/* Exact match, so there's no additional selectivity */
 			*rest_selec = 1.0;
 		}
 		else
 		{
-			char   *patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+			char	   *patt = TextDatumGetCString(patt_const->constvalue);
 
-<<<<<<< HEAD
 			*rest_selec = regex_selectivity(patt, strlen(patt),
 											case_insensitive,
 											strlen(prefix));
 			pfree(patt);
-=======
-		/*
-		 * Normally, backslash quotes the next character.  But in AREs,
-		 * backslash followed by alphanumeric is an escape, not a quoted
-		 * character.  Must treat it as having multiple possible matches.
-		 * Note: since only ASCII alphanumerics are escapes, we don't have to
-		 * be paranoid about multibyte or collations here.
-		 */
-		if (patt[pos] == '\\')
-		{
-			if (isalnum((unsigned char) patt[pos + 1]))
-				break;
-			pos++;
-			if (patt[pos] == '\0')
-				break;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 	}
 
@@ -5321,42 +5161,28 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 }
 
 Pattern_Prefix_Status
-<<<<<<< HEAD
-pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
-					 Const **prefix, Selectivity *rest_selec)
-=======
 pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
-					 Const **prefix, Const **rest)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					 Const **prefix, Selectivity *rest_selec)
 {
 	Pattern_Prefix_Status result;
 
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-<<<<<<< HEAD
-			result = like_fixed_prefix(patt, false, prefix, rest_selec);
+			result = like_fixed_prefix(patt, false, collation,
+									   prefix, rest_selec);
 			break;
 		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, prefix, rest_selec);
+			result = like_fixed_prefix(patt, true, collation,
+									   prefix, rest_selec);
 			break;
 		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, prefix, rest_selec);
+			result = regex_fixed_prefix(patt, false, collation,
+										prefix, rest_selec);
 			break;
 		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, prefix, rest_selec);
-=======
-			result = like_fixed_prefix(patt, false, collation, prefix, rest);
-			break;
-		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, collation, prefix, rest);
-			break;
-		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, collation, prefix, rest);
-			break;
-		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, collation, prefix, rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			result = regex_fixed_prefix(patt, true, collation,
+										prefix, rest_selec);
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
@@ -6470,29 +6296,17 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
-<<<<<<< HEAD
-		AttStatsSlot sslot;
-
-		if (get_attstatsslot(&sslot, vardata.statsTuple,
-							 STATISTIC_KIND_CORRELATION, index->fwdsortop[0],
-							 ATTSTATSSLOT_NUMBERS))
-=======
 		Oid			sortop;
-		float4	   *numbers;
-		int			nnumbers;
+		AttStatsSlot sslot;
 
 		sortop = get_opfamily_member(index->opfamily[0],
 									 index->opcintype[0],
 									 index->opcintype[0],
 									 BTLessStrategyNumber);
 		if (OidIsValid(sortop) &&
-			get_attstatsslot(vardata.statsTuple, InvalidOid, 0,
-							 STATISTIC_KIND_CORRELATION,
-							 sortop,
-							 NULL,
-							 NULL, NULL,
-							 &numbers, &nnumbers))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			get_attstatsslot(&sslot, vardata.statsTuple,
+							 STATISTIC_KIND_CORRELATION, sortop,
+							 ATTSTATSSLOT_NUMBERS))
 		{
 			double		varCorrelation;
 
@@ -6509,25 +6323,6 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 			free_attstatsslot(&sslot);
 		}
-<<<<<<< HEAD
-		else if (get_attstatsslot(&sslot, vardata.statsTuple,
-							      STATISTIC_KIND_CORRELATION, index->revsortop[0],
-							      ATTSTATSSLOT_NUMBERS))
-		{
-			double		varCorrelation;
-
-			Assert(sslot.nnumbers == 1);
-			varCorrelation = sslot.numbers[0];
-
-			if (index->ncolumns > 1)
-				*indexCorrelation = -varCorrelation * 0.75;
-			else
-				*indexCorrelation = -varCorrelation;
-
-			free_attstatsslot(&sslot);
-		}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	ReleaseVariableStats(vardata);
@@ -6694,7 +6489,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											   index->rel->relid,
 											   JOIN_INNER,
-											   NULL);
+											   NULL,
+											   false);
 
 	/* fetch estimated page cost for schema containing index */
 	get_tablespace_page_costs(index->reltablespace,
@@ -6965,11 +6761,12 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
 
 	List *selectivityQuals;
 	double numIndexTuples;
@@ -7029,7 +6826,8 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	numIndexTuples = *indexSelectivity * index->rel->tuples;
 	numIndexTuples = rint(numIndexTuples / numDistinctValues);
 
-	genericcostestimate(root, index, indexQuals, outer_rel, numIndexTuples,
+	genericcostestimate(root, index, indexQuals, indexOrderBys,
+						outer_rel, numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
