@@ -62,10 +62,7 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
-=======
 #include "utils/fmgroids.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -820,12 +817,8 @@ assign_record_type_typmod(TupleDesc tupDesc)
  *		Relcache inval callback function
  *
  * Delete the cached tuple descriptor (if any) for the given rel's composite
-<<<<<<< HEAD
- * type, or for all composite types if relid == InvalidOid.
-=======
  * type, or for all composite types if relid == InvalidOid.  Also reset
  * whatever info we have cached about the composite type's comparability.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * This is called when a relcache invalidation event occurs for the given
  * relid.  We must scan the whole typcache hash since we don't know the
@@ -851,13 +844,6 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 	hash_seq_init(&status, TypeCacheHash);
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
-<<<<<<< HEAD
-		if (typentry->tupDesc == NULL)
-			continue;	/* not composite, or tupdesc hasn't been requested */
-
-		/* Delete if match, or if we're zapping all composite types */
-		if (relid == typentry->typrelid || relid == InvalidOid)
-=======
 		if (typentry->typtype != TYPTYPE_COMPOSITE)
 			continue;			/* skip non-composites */
 
@@ -867,7 +853,6 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 
 		/* Delete tupdesc if we have it */
 		if (typentry->tupDesc != NULL)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/*
 			 * Release our refcount, and free the tupdesc if none remain.
@@ -879,8 +864,6 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 				FreeTupleDesc(typentry->tupDesc);
 			typentry->tupDesc = NULL;
 		}
-<<<<<<< HEAD
-=======
 
 		/* Reset equality/comparison/hashing information */
 		typentry->eq_opr = InvalidOid;
@@ -892,13 +875,11 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 		typentry->cmp_proc_finfo.fn_oid = InvalidOid;
 		typentry->hash_proc_finfo.fn_oid = InvalidOid;
 		typentry->flags = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }
 
 
 /*
-<<<<<<< HEAD
  * build_tuple_node_list
  *
  * Wrap TupleDesc with TupleDescNode. Return all record type in record cache.
@@ -924,7 +905,9 @@ build_tuple_node_list(int start)
 	}
 
 	return transientTypeList;
-=======
+}
+
+/*
  * Check if given OID is part of the subset that's sortable by comparisons
  */
 static inline bool
@@ -1218,5 +1201,4 @@ enum_oid_cmp(const void *left, const void *right)
 		return 1;
 	else
 		return 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

@@ -391,7 +391,6 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2, bool strict)
 			return false;
 		if (attr1->attalign != attr2->attalign)
 			return false;
-<<<<<<< HEAD
 
 		if (strict)
 		{
@@ -405,23 +404,10 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2, bool strict)
 				return false;
 			if (attr1->attinhcount != attr2->attinhcount)
 				return false;
+			if (attr1->attcollation != attr2->attcollation)
+				return false;
 			/* attacl and attoptions are not even present... */
 		}
-=======
-		if (attr1->attnotnull != attr2->attnotnull)
-			return false;
-		if (attr1->atthasdef != attr2->atthasdef)
-			return false;
-		if (attr1->attisdropped != attr2->attisdropped)
-			return false;
-		if (attr1->attislocal != attr2->attislocal)
-			return false;
-		if (attr1->attinhcount != attr2->attinhcount)
-			return false;
-		if (attr1->attcollation != attr2->attcollation)
-			return false;
-		/* attacl and attoptions are not even present... */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	if (!strict)
@@ -492,17 +478,15 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2, bool strict)
  *		This function initializes a single attribute structure in
  *		a previously allocated tuple descriptor.
  *
-<<<<<<< HEAD
  * If attributeName is NULL, the attname field is set to an empty string
  * (this is for cases where we don't know or need a name for the field).
  * Also, some callers use this function to change the datatype-related fields
  * in an existing tupdesc; they pass attributeName = NameStr(att->attname)
  * to indicate that the attname field shouldn't be modified.
-=======
+ *
  * Note that attcollation is set to the default for the specified datatype.
  * If a nondefault collation is needed, insert it afterwards using
  * TupleDescInitEntryCollation.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 void
 TupleDescInitEntry(TupleDesc desc,

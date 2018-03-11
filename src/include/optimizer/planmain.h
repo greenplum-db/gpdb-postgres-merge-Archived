@@ -123,12 +123,7 @@ extern bool contain_group_id(Node *node);
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-<<<<<<< HEAD
-extern Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
 extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
-=======
-extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				  Index scanrelid, Plan *subplan,
 				  List *subrtable, List *subrowmark);
 extern Append *make_append(List *appendplans, List *tlist);
@@ -151,14 +146,14 @@ extern Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 		  double limit_tuples);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
-<<<<<<< HEAD
-					 AggStrategy aggstrategy, bool streaming,
-					 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-					 long numGroups, int numNullCols,
-					 uint64 inputGrouping, uint64 grouping,
-					 int rollupGSTimes,
-					 int numAggs, int transSpace,
-					 Plan *lefttree);
+		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
+		 bool streaming,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
+		 long numGroups, int numNullCols,
+		 uint64 inputGrouping, uint64 grouping,
+		 int rollupGSTimes,
+		 int transSpace,
+		 Plan *lefttree);
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  List *hashclauses, List *hashqualclauses,
@@ -182,12 +177,6 @@ extern MergeJoin *make_mergejoin(List *tlist,
 			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
-=======
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups,
-		 Plan *lefttree);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern WindowAgg *make_windowagg(PlannerInfo *root, List *tlist,
 			   List *windowFuncs, Index winref,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators,
@@ -206,18 +195,13 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
-<<<<<<< HEAD
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
-extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
-				 List *subplans, List *returningLists,
-=======
-extern ModifyTable *make_modifytable(CmdType operation, bool canSetTag,
+extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
 				 List *resultRelations, List *subplans, List *returningLists,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
 extern Plan *add_sort_cost(PlannerInfo *root, Plan *input, 

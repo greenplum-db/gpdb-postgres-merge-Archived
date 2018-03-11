@@ -42,11 +42,7 @@
 /*
  * Special values for the segno arg to RememberFsyncRequest.
  *
-<<<<<<< HEAD
  * Note that CompactCheckpointerRequestQueue assumes that it's OK to remove an
-=======
- * Note that CompactBgwriterRequestQueue assumes that it's OK to remove an
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * fsync request from the queue if an identical, subsequent request is found.
  * See comments there before making changes here.
  */
@@ -957,12 +953,8 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
  *	mdtruncate() -- Truncate relation to specified number of blocks.
  */
 void
-<<<<<<< HEAD
 mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
-		   bool isTemp, bool allowNotFound)
-=======
-mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		   bool allowNotFound)
 {
 	MdfdVec    *v;
 	BlockNumber curnblk;
@@ -1185,13 +1177,13 @@ mdsync(void)
 		{
 			if (MyAuxProcType == CheckpointerProcess)
 				elog(LOG, "checkpoint performing fsync for %d/%d/%d",
-					 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
-					 entry->tag.rnode.relNode);
+					 entry->tag.rnode.node.spcNode, entry->tag.rnode.node.dbNode,
+					 entry->tag.rnode.node.relNode);
 			else
 				elog(ERROR, "non checkpoint process trying to fsync "
 					 "%d/%d/%d when fsync_counter fault is set",
-					 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
-					 entry->tag.rnode.relNode);
+					 entry->tag.rnode.node.spcNode, entry->tag.rnode.node.dbNode,
+					 entry->tag.rnode.node.relNode);
 		}
 #endif
 
@@ -1542,12 +1534,8 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		hash_seq_init(&hstat, pendingOpsTable);
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-<<<<<<< HEAD
-			if ((!OidIsValid(rnode.spcNode) || entry->tag.rnode.spcNode == rnode.spcNode) && 
-				entry->tag.rnode.dbNode == rnode.dbNode)
-=======
-			if (entry->tag.rnode.node.dbNode == rnode.node.dbNode)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			if ((!OidIsValid(rnode.node.spcNode) || entry->tag.rnode.node.spcNode == rnode.node.spcNode) && 
+				entry->tag.rnode.node.dbNode == rnode.node.dbNode)
 			{
 				/* Okay, cancel this entry */
 				entry->canceled = true;

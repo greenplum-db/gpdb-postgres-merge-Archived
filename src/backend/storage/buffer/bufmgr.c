@@ -320,13 +320,8 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * miss.
 	 */
 	pgstat_count_buffer_read(reln);
-<<<<<<< HEAD
-	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_isLocalBuf, forkNum, blockNum,
-							mode, strategy, &hit);
-=======
 	buf = ReadBuffer_common(reln->rd_smgr, reln->rd_rel->relpersistence,
 							forkNum, blockNum, mode, strategy, &hit);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (hit)
 		pgstat_count_buffer_hit(reln);
 	return buf;
@@ -2320,11 +2315,7 @@ FlushRelationBuffers(Relation rel)
 	/* Open rel at the smgr level if not already done */
 	RelationOpenSmgr(rel);
 
-<<<<<<< HEAD
-	if (rel->rd_isLocalBuf)
-=======
 	if (RelationUsesLocalBuffers(rel))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
@@ -2348,13 +2339,8 @@ FlushRelationBuffers(Relation rel)
 				smgrwrite(rel->rd_smgr,
 						  bufHdr->tag.forkNum,
 						  bufHdr->tag.blockNum,
-<<<<<<< HEAD
 						  localpage,
-						  rel->rd_istemp);
-=======
-						  (char *) LocalBufHdrGetBlock(bufHdr),
 						  false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 

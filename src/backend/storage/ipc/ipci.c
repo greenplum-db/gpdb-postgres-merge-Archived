@@ -128,7 +128,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 												 sizeof(ShmemIndexEnt)));
 		size = add_size(size, BufferShmemSize());
 		size = add_size(size, LockShmemSize());
-<<<<<<< HEAD
+		size = add_size(size, PredicateLockShmemSize());
 		size = add_size(size, workfile_mgr_shmem_size());
 		if (Gp_role == GP_ROLE_DISPATCH)
 			size = add_size(size, AppendOnlyWriterShmemSize());
@@ -141,9 +141,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		else if (IsResGroupEnabled())
 			size = add_size(size, ResGroupShmemSize());
 
-=======
-		size = add_size(size, PredicateLockShmemSize());
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		size = add_size(size, ProcGlobalShmemSize());
 		size = add_size(size, XLOGShmemSize());
 		size = add_size(size, DistributedLog_ShmemSize());
@@ -263,7 +260,11 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	InitLocks();
 
 	/*
-<<<<<<< HEAD
+	 * Set up predicate lock manager
+	 */
+	InitPredicateLocks();
+
+	/*
 	 * Set up append only writer
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -273,11 +274,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up resource manager 
 	 */
 	ResManagerShmemInit();
-=======
-	 * Set up predicate lock manager
-	 */
-	InitPredicateLocks();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Set up process table

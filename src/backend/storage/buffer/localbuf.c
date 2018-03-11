@@ -209,13 +209,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		smgrwrite(oreln,
 				  bufHdr->tag.forkNum,
 				  bufHdr->tag.blockNum,
-<<<<<<< HEAD
 				  localpage,
-				  true);
-=======
-				  (char *) LocalBufHdrGetBlock(bufHdr),
 				  false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* Mark not-dirty now in case we error out below */
 		bufHdr->flags &= ~BM_DIRTY;

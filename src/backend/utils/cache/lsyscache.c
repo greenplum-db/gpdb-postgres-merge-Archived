@@ -47,19 +47,14 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
-<<<<<<< HEAD
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 #include "utils/fmgroids.h"
 #include "utils/tqual.h"
 #include "funcapi.h"
-=======
-#include "utils/fmgroids.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
-#include "utils/typcache.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Hook for plugins to get control in get_attavgwidth() */
 get_attavgwidth_hook_type get_attavgwidth_hook = NULL;

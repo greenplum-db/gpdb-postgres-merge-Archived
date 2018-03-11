@@ -119,30 +119,20 @@ extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width,
 		  Cost comparison_cost, int sort_mem,
 		  double limit_tuples);
-<<<<<<< HEAD
-extern void cost_material(Path *path, PlannerInfo *root,
-			  Cost input_startup_cost, Cost input_total_cost,
-			  double tuples, int width);
-extern void cost_agg(Path *path, PlannerInfo *root,
-					 AggStrategy aggstrategy, int numAggs,
-					 int numGroupCols, double numGroups,
-					 Cost input_startup_cost, Cost input_total_cost,
-					 double input_tuples, double input_width, double hash_batches,
-					 double hashentry_width, bool hash_streaming);
-=======
 extern void cost_merge_append(Path *path, PlannerInfo *root,
 				  List *pathkeys, int n_streams,
 				  Cost input_startup_cost, Cost input_total_cost,
 				  double tuples);
-extern void cost_material(Path *path,
+extern void cost_material(Path *path, PlannerInfo *root,
 			  Cost input_startup_cost, Cost input_total_cost,
 			  double tuples, int width);
 extern void cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
-		 double input_tuples);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		 double input_tuples,
+		 double input_width, double hash_batches,
+		 double hashentry_width, bool hash_streaming);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 			   List *windowFuncs, int numPartCols, int numOrderCols,
 			   Cost input_startup_cost, Cost input_total_cost,
