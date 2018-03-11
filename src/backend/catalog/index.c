@@ -3,13 +3,9 @@
  * index.c
  *	  code to create and destroy POSTGRES index relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -43,11 +39,8 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_appendonly_fn.h"
-=======
 #include "catalog/pg_collation.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
@@ -446,12 +439,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 * whether a table column is of a safe type (which is why we
 			 * needn't check for the non-expression case).
 			 */
-<<<<<<< HEAD
-			CheckAttributeType(NameStr(to->attname), to->atttypid,
-=======
 			CheckAttributeType(NameStr(to->attname),
 							   to->atttypid, to->attcollation,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 							   NIL, false);
 		}
 
@@ -1163,11 +1152,7 @@ index_create(Relation heapRelation,
 
 			/*
 			 * If there are no simply-referenced columns, give the index an
-<<<<<<< HEAD
-			 * auto dependency on the whole table.  In most cases, this will
-=======
 			 * auto dependency on the whole table.	In most cases, this will
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			 * be redundant, but it might not be if the index expressions and
 			 * predicate contain no Vars or only whole-row Vars.
 			 */
@@ -1543,26 +1528,18 @@ index_drop(Oid indexId)
 	userIndexRelation = index_open(indexId, AccessExclusiveLock);
 
 	/*
-<<<<<<< HEAD
-	 * There can no longer be anyone *else* touching the index, but we
-	 * might still have open queries using it in our own session.
-=======
 	 * There can no longer be anyone *else* touching the index, but we might
 	 * still have open queries using it in our own session.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	CheckTableNotInUse(userIndexRelation, "DROP INDEX");
 
 	/*
-<<<<<<< HEAD
-=======
 	 * All predicate locks on the index are about to be made invalid. Promote
 	 * them to relation locks on the heap.
 	 */
 	TransferPredicateLocksToHeapRelation(userIndexRelation);
 
 	/*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * Schedule physical removal of the files
 	 */
 	RelationDropStorage(userIndexRelation);
@@ -2515,13 +2492,8 @@ IndexBuildHeapScan(Relation heapRelation,
 						/*
 						 * It's a HOT-updated tuple deleted by our own xact.
 						 * We can assume the deletion will commit (else the
-<<<<<<< HEAD
-						 * index contents don't matter), so treat the same
-						 * as RECENTLY_DEAD HOT-updated tuples.
-=======
 						 * index contents don't matter), so treat the same as
 						 * RECENTLY_DEAD HOT-updated tuples.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						 */
 						indexIt = false;
 						/* mark the index as unsafe for old snapshots */
@@ -2530,15 +2502,9 @@ IndexBuildHeapScan(Relation heapRelation,
 					else
 					{
 						/*
-<<<<<<< HEAD
-						 * It's a regular tuple deleted by our own xact.
-						 * Index it but don't check for uniqueness, the same
-						 * as a RECENTLY_DEAD tuple.
-=======
 						 * It's a regular tuple deleted by our own xact. Index
 						 * it but don't check for uniqueness, the same as a
 						 * RECENTLY_DEAD tuple.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						 */
 						indexIt = true;
 					}
@@ -3084,14 +3050,9 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.num_heap_tuples = heapRelation->rd_rel->reltuples;
 	ivinfo.strategy = NULL;
 
-<<<<<<< HEAD
 	state.tuplesort = tuplesort_begin_datum(NULL,
-											TIDOID,
-											TIDLessOperator, false,
-=======
-	state.tuplesort = tuplesort_begin_datum(TIDOID, TIDLessOperator,
+											TIDOID, TIDLessOperator,
 											InvalidOid, false,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 											maintenance_work_mem,
 											false);
 	state.htups = state.itups = state.tups_inserted = 0;

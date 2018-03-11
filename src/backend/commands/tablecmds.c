@@ -32,14 +32,11 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
+#include "catalog/objectaccess.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
-#include "catalog/pg_compression.h"
-=======
-#include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#include "catalog/pg_compression.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_foreign_table.h"

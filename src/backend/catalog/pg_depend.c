@@ -126,7 +126,6 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 /*
  * If we are executing a CREATE EXTENSION operation, mark the given object
-<<<<<<< HEAD
  * as being a member of the extension.  Otherwise, do nothing.
  *
  * This must be called during creation of any user-definable object type
@@ -144,21 +143,10 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object,
 	/* Only whole objects can be extension members */
 	Assert(object->objectSubId == 0);
 
-=======
- * as being a member of the extension.	Otherwise, do nothing.
- *
- * This must be called during creation of any user-definable object type
- * that could be a member of an extension.
- */
-void
-recordDependencyOnCurrentExtension(const ObjectAddress *object)
-{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (creating_extension)
 	{
 		ObjectAddress extension;
 
-<<<<<<< HEAD
 		/* Only need to check for existing membership if isReplace */
 		if (isReplace)
 		{
@@ -180,8 +168,6 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object)
 		}
 
 		/* OK, record it as a member of CurrentExtensionObject */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		extension.classId = ExtensionRelationId;
 		extension.objectId = CurrentExtensionObject;
 		extension.objectSubId = 0;
@@ -199,11 +185,7 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object)
  * (possibly with some differences from before).
  *
  * If skipExtensionDeps is true, we do not delete any dependencies that
-<<<<<<< HEAD
- * show that the given object is a member of an extension.  This avoids
-=======
  * show that the given object is a member of an extension.	This avoids
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * needing a lot of extra logic to fetch and recreate that dependency.
  */
 long
@@ -233,11 +215,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		if (skipExtensionDeps &&
-<<<<<<< HEAD
-			((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
-=======
 		  ((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			continue;
 
 		simple_heap_delete(depRel, &tup->t_self);

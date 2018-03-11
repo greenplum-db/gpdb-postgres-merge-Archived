@@ -309,17 +309,13 @@ PortalCleanup(Portal portal)
 			PG_TRY();
 			{
 				CurrentResourceOwner = portal->resowner;
-<<<<<<< HEAD
 
 				/*
 				 * If we still have an estate -- then we need to cancel unfinished work.
 				 */
 				queryDesc->estate->cancelUnfinished = true;
 
-				/* we do not need AfterTriggerEndQuery() here */
-=======
 				ExecutorFinish(queryDesc);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);
 			}

@@ -40,11 +40,8 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/pg_compression.h"
-=======
 #include "catalog/pg_collation.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#include "catalog/pg_compression.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_enum.h"

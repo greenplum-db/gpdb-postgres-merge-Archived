@@ -245,26 +245,10 @@ RemoveSchemas(DropStmt *drop)
 
 		if (!OidIsValid(namespaceId))
 		{
-<<<<<<< HEAD
-			if (!drop->missing_ok)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist",
-								namespaceName)));
-			}
-			else
-			{
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport(NOTICE,
-							(errmsg("schema \"%s\" does not exist, skipping",
-								namespaceName)));
-			}
-=======
-			ereport(NOTICE,
+			if (Gp_role != GP_ROLE_EXECUTE)
+				ereport(NOTICE,
 					(errmsg("schema \"%s\" does not exist, skipping",
 							namespaceName)));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			continue;
 		}
 

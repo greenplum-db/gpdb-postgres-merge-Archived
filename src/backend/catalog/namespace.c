@@ -2704,15 +2704,12 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move objects into or out of TOAST schema")));
-<<<<<<< HEAD
 
 	/* same for AO SEGMENT schema */
 	if (nspOid == PG_AOSEGMENT_NAMESPACE || oldNspOid == PG_AOSEGMENT_NAMESPACE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot move objects into or out of AO SEGMENT schema")));
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2773,11 +2770,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 /*
  * get_namespace_oid - given a namespace name, look up the OID
  *
-<<<<<<< HEAD
- * If missing_ok is false, throw an error if namespace name not found.  If
-=======
  * If missing_ok is false, throw an error if namespace name not found.	If
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * true, just return InvalidOid.
  */
 Oid
@@ -3067,13 +3060,8 @@ GetOverrideSearchPath(MemoryContext context)
  *
  * It's possible that newpath->useTemp is set but there is no longer any
  * active temp namespace, if the path was saved during a transaction that
-<<<<<<< HEAD
- * created a temp namespace and was later rolled back.  In that case we just
- * ignore useTemp.  A plausible alternative would be to create a new temp
-=======
  * created a temp namespace and was later rolled back.	In that case we just
  * ignore useTemp.	A plausible alternative would be to create a new temp
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * namespace, but for existing callers that's not necessary because an empty
  * temp namespace wouldn't affect their results anyway.
  *
