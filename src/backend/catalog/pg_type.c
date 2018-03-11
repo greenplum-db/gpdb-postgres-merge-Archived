@@ -18,12 +18,9 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/objectaccess.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_collation.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -658,15 +655,8 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
-<<<<<<< HEAD
 		/* dependency on extension */
 		recordDependencyOnCurrentExtension(&myself, rebuild);
-=======
-
-		/* dependency on extension */
-		if (!rebuild)
-			recordDependencyOnCurrentExtension(&myself);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* Normal dependencies on the I/O functions */

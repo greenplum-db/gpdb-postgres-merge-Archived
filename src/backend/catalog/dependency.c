@@ -29,22 +29,14 @@
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
-<<<<<<< HEAD
-#include "catalog/pg_compression.h"
-=======
 #include "catalog/pg_collation.h"
 #include "catalog/pg_collation_fn.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_depend.h"
-<<<<<<< HEAD
-#include "catalog/pg_extprotocol.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -72,10 +64,6 @@
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
-<<<<<<< HEAD
-#include "commands/extprotocolcmds.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
@@ -96,7 +84,10 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+#include "catalog/pg_compression.h"
+#include "catalog/pg_extprotocol.h"
 #include "cdb/cdbvars.h"
+#include "commands/extprotocolcmds.h"
 #include "commands/tablecmds.h"
 
 
@@ -179,13 +170,9 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
-<<<<<<< HEAD
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
 	CompressionRelationId		/* OCLASS_COMPRESSION */
-=======
-	ExtensionRelationId			/* OCLASS_EXTENSION */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 };
 
 
@@ -1228,7 +1215,6 @@ doDeletion(const ObjectAddress *object)
 			RemoveExtensionById(object->objectId);
 			break;
 
-<<<<<<< HEAD
 		case OCLASS_EXTPROTOCOL:
 			RemoveExtProtocolById(object->objectId);
 			break;
@@ -1242,8 +1228,6 @@ doDeletion(const ObjectAddress *object)
 			 * not handled here
 			 */
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -1357,11 +1341,7 @@ recordDependencyOnExpr(const ObjectAddress *depender,
  * whereas 'behavior' is used for everything else.
  *
  * NOTE: the caller should ensure that a whole-table dependency on the
-<<<<<<< HEAD
- * specified relation is created separately, if one is needed.  In particular,
-=======
  * specified relation is created separately, if one is needed.	In particular,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * a whole-row Var "relation.*" will not cause this routine to emit any
  * dependency item.  This is appropriate behavior for subexpressions of an
  * ordinary query, so other cases need to cope as necessary.
@@ -1481,11 +1461,7 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * A whole-row Var references no specific columns, so adds no new
-<<<<<<< HEAD
-		 * dependency.  (We assume that there is a whole-table dependency
-=======
 		 * dependency.	(We assume that there is a whole-table dependency
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 * arising from each underlying rangetable entry.  While we could
 		 * record such a dependency when finding a whole-row Var that
 		 * references a relation directly, it's quite unclear how to extend
@@ -2251,8 +2227,6 @@ getObjectClass(const ObjectAddress *object)
 			return OCLASS_DEFACL;
 
 		case ExtensionRelationId:
-<<<<<<< HEAD
-			Assert(object->objectSubId == 0);
 			return OCLASS_EXTENSION;
 
 		case ExtprotocolRelationId:
@@ -2262,9 +2236,6 @@ getObjectClass(const ObjectAddress *object)
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
-=======
-			return OCLASS_EXTENSION;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* shouldn't get here */
@@ -2891,11 +2862,7 @@ getObjectDescription(const ObjectAddress *object)
 
 		case OCLASS_EXTENSION:
 			{
-<<<<<<< HEAD
-				char       *extname;
-=======
 				char	   *extname;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 				extname = get_extension_name(object->objectId);
 				if (!extname)
@@ -2905,7 +2872,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-<<<<<<< HEAD
 		case OCLASS_EXTPROTOCOL:
 			{
 				appendStringInfo(&buffer, _("protocol %s"),
@@ -2918,8 +2884,6 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",
 							 object->classId,

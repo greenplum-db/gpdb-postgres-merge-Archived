@@ -777,15 +777,11 @@ makeOperatorDependencies(HeapTuple tuple)
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
-<<<<<<< HEAD
 	/*
 	 * In case we are updating a shell, delete any existing entries, except
 	 * for extension membership which should remain the same.
 	 */
-=======
-	/* In case we are updating a shell, delete any existing entries */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-	deleteDependencyRecordsFor(myself.classId, myself.objectId, false);
+	deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
 	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 
 	/* Dependency on namespace */
@@ -863,12 +859,7 @@ makeOperatorDependencies(HeapTuple tuple)
 	/* Dependency on owner */
 	recordDependencyOnOwner(OperatorRelationId, HeapTupleGetOid(tuple),
 							oper->oprowner);
-<<<<<<< HEAD
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, false);
-=======
 
-	/* Dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself, true);
 }

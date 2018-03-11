@@ -47,12 +47,9 @@
 #include "catalog/pg_ts_config.h"
 #include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
-<<<<<<< HEAD
-#include "commands/tablecmds.h"
-=======
 #include "commands/proclang.h"
+#include "commands/tablecmds.h"
 #include "commands/tablespace.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -2012,13 +2009,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 			this_privileges =
 				restrict_and_check_grant(istmt->is_grant, avail_goptions,
 										 istmt->all_privs, this_privileges,
-<<<<<<< HEAD
-										 relOid, grantorId,
- 								  pg_class_tuple->relkind == RELKIND_SEQUENCE
-										 ? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
-=======
 										 relOid, grantorId, aclkind,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 										 NameStr(pg_class_tuple->relname),
 										 0, NULL);
 
@@ -3654,13 +3645,10 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
 	gettext_noop("permission denied for foreign server %s"),
-<<<<<<< HEAD
-	/* ACL_KIND_EXTPROTOCOL */
-	gettext_noop("permission denied for external protocol %s")	
-=======
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("permission denied for extension %s"),
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	/* ACL_KIND_EXTPROTOCOL */
+	gettext_noop("permission denied for external protocol %s")	
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -3703,13 +3691,10 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
 	gettext_noop("must be owner of foreign server %s"),
-<<<<<<< HEAD
-	/* ACL_KIND_EXTPROTOCOL */
-	gettext_noop("must be owner of external protocol %s")
-=======
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("must be owner of extension %s"),
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	/* ACL_KIND_EXTPROTOCOL */
+	gettext_noop("must be owner of external protocol %s")
 };
 
 
@@ -5327,11 +5312,7 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 }
 
 /*
-<<<<<<< HEAD
- * Ownership check for a extension (specified by OID).
-=======
  * Ownership check for an extension (specified by OID).
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 bool
 pg_extension_ownercheck(Oid ext_oid, Oid roleid)
@@ -5373,7 +5354,6 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 }
 
 /*
-<<<<<<< HEAD
  * Ownership check for an external protocol (specified by OID).
  */
 bool
@@ -5414,8 +5394,6 @@ pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
 }
 
 /*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Check whether specified role has CREATEROLE privilege (or is a superuser)
  *
  * Note: roles do not have owners per se; instead we use this test in

@@ -18,11 +18,8 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"

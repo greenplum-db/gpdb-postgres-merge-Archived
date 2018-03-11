@@ -1,9 +1,5 @@
 /postgres.bki
 /postgres.description
 /postgres.shdescription
-<<<<<<< HEAD
 /cdb_init.sql
-/postgres_bki_srcs
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /schemapg.h

@@ -19,12 +19,9 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
+#include "catalog/objectaccess.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_depend.h"
-=======
-#include "catalog/objectaccess.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
@@ -637,14 +634,10 @@ ProcedureCreate(const char *procedureName,
 	 * We also don't change any pre-existing extension-membership dependency.)
 	 */
 	if (is_update)
-<<<<<<< HEAD
 	{
 		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
 		deleteProcCallbacks(retval);
 	}
-=======
-		deleteDependencyRecordsFor(ProcedureRelationId, retval, true);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;
@@ -710,12 +703,7 @@ ProcedureCreate(const char *procedureName,
 	}
 
 	/* dependency on extension */
-<<<<<<< HEAD
 	recordDependencyOnCurrentExtension(&myself, is_update);
-=======
-	if (!is_update)
-		recordDependencyOnCurrentExtension(&myself);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	heap_freetuple(tup);
 
