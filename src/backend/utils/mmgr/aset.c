@@ -7,13 +7,9 @@
  * type.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -82,7 +78,6 @@
 /* Define this to detail debug alloc information */
 /* #define HAVE_ALLOCINFO */
 
-<<<<<<< HEAD
 #ifdef CDB_PALLOC_CALLER_ID
 #define CDB_MCXT_WHERE(context) (context)->callerFile, (context)->callerLine
 #else
@@ -92,7 +87,7 @@
 #if defined(CDB_PALLOC_TAGS) && !defined(CDB_PALLOC_CALLER_ID)
 #error "If CDB_PALLOC_TAGS is defined, CDB_PALLOC_CALLER_ID must be defined too"
 #endif
-=======
+
 /*--------------------
  * Chunk freelist k holds chunks of size 1 << (k + ALLOC_MINBITS),
  * for k = 0 .. ALLOCSET_NUM_FREELISTS-1.
@@ -125,7 +120,6 @@
 /* Size of largest chunk that we use a fixed size for */
 #define ALLOC_CHUNK_FRACTION	4
 /* We allow chunks to be at most 1/4 of maxBlockSize (less overhead) */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*--------------------
  * The first block allocated for an allocset has size initBlockSize.
@@ -148,34 +142,6 @@
 typedef void *AllocPointer;
 
 /*
-<<<<<<< HEAD
-=======
- * AllocSetContext is our standard implementation of MemoryContext.
- *
- * Note: header.isReset means there is nothing for AllocSetReset to do.
- * This is different from the aset being physically empty (empty blocks list)
- * because we may still have a keeper block.  It's also different from the set
- * being logically empty, because we don't attempt to detect pfree'ing the
- * last active chunk.
- */
-typedef struct AllocSetContext
-{
-	MemoryContextData header;	/* Standard memory-context fields */
-	/* Info about storage allocated in this context: */
-	AllocBlock	blocks;			/* head of list of blocks in this set */
-	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
-	/* Allocation parameters for this context: */
-	Size		initBlockSize;	/* initial block size */
-	Size		maxBlockSize;	/* maximum block size */
-	Size		nextBlockSize;	/* next block size to allocate */
-	Size		allocChunkLimit;	/* effective chunk size limit */
-	AllocBlock	keeper;			/* if not NULL, keep this block over resets */
-} AllocSetContext;
-
-typedef AllocSetContext *AllocSet;
-
-/*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * AllocBlock
  *		An AllocBlock is the unit of memory that is obtained by aset.c
  *		from malloc().	It contains one or more AllocChunks, which are
@@ -192,12 +158,7 @@ typedef struct AllocBlockData
 	AllocSet	aset;			/* aset that owns this block */
 	AllocBlock	next;			/* next block in aset's blocks list */
 	char	   *freeptr;		/* start of free space in this block */
-<<<<<<< HEAD
-} AllocBlockData;
-=======
-	char	   *endptr;			/* end of space in this block */
 }	AllocBlockData;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * AllocChunk
@@ -229,17 +190,13 @@ typedef struct AllocChunkData
 	/* this is zero in a free chunk */
 	Size		requested_size;
 #endif
-<<<<<<< HEAD
 #ifdef CDB_PALLOC_TAGS
 	const char  *alloc_tag;
 	int 		alloc_n;
 	void *prev_chunk;
 	void *next_chunk;
 #endif
-} AllocChunkData;
-=======
 }	AllocChunkData;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * AllocPointerIsValid
@@ -380,9 +337,9 @@ static void dump_mc_for(FILE *file, MemoryContext mc)
 		return;
 
 	AllocSet set = (AllocSet) mc;
-	fprintf(file, "%p|%p|%d|%s|"UINT64_FORMAT"|"UINT64_FORMAT"|%zu|%zu|%zu|%zu|%d", mc, mc->parent, mc->type, mc->name,
+	fprintf(file, "%p|%p|%d|%s|"UINT64_FORMAT"|"UINT64_FORMAT"|%zu|%zu|%zu|%zu", mc, mc->parent, mc->type, mc->name,
 			mc->allBytesAlloc, mc->allBytesFreed, mc->maxBytesHeld,
-			set->initBlockSize, set->maxBlockSize, set->nextBlockSize, set->isReset);
+			set->initBlockSize, set->maxBlockSize, set->nextBlockSize);
 
 #ifdef CDB_PALLOC_CALLER_ID
 	fprintf(file, "|%s|%d", (mc->callerFile == NULL ? "NA" : mc->callerFile), mc->callerLine);
@@ -872,13 +829,8 @@ AllocSetContextCreate(MemoryContext parent,
          */
 	}
 
-<<<<<<< HEAD
-	context->isReset = true;
-
 	context->nullAccountHeader = NULL;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return (MemoryContext) context;
 }
 
@@ -1028,13 +980,8 @@ AllocSetReset(MemoryContext context)
 
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
-<<<<<<< HEAD
-
-	set->isReset = true;
 
 	set->nullAccountHeader = NULL;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -1170,14 +1117,9 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 			set->blocks = block;
 		}
 
-<<<<<<< HEAD
-		set->isReset = false;
         MemoryContextNoteAlloc(&set->header, blksize);              /*CDB*/
 
 		AllocAllocInfo(set, chunk, isHeader);
-=======
-		AllocAllocInfo(set, chunk);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -1220,14 +1162,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 
-<<<<<<< HEAD
-		/* isReset must be false already */
-		Assert(!set->isReset);
-
 		AllocAllocInfo(set, chunk, isHeader);
-=======
-		AllocAllocInfo(set, chunk);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -1386,14 +1321,8 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 	randomize_mem((char *) AllocChunkGetPointer(chunk), size);
 #endif
 
-<<<<<<< HEAD
-	set->isReset = false;
-
 	AllocAllocInfo(set, chunk, isHeader);
 
-=======
-	AllocAllocInfo(set, chunk);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return AllocChunkGetPointer(chunk);
 }
 

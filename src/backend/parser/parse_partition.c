@@ -178,7 +178,7 @@ static bool range_partition_walker(Node *node, void *context);
  *----------
  */
 void
-transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
+transformPartitionBy(CreateStmtContext *cxt,
 					 CreateStmt *stmt, Node *partitionBy, GpPolicy *policy)
 {
 	Oid			snamespaceid;
@@ -255,7 +255,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 				 errmsg("too many columns for RANGE partition%s -- "
 						"only one column is allowed.",
 						at_depth),
-				 parser_errposition(pstate, pBy->location)));
+				 parser_errposition(cxt->pstate, pBy->location)));
 	}
 
 	/* validate keys */
@@ -286,7 +286,7 @@ transformPartitionBy(ParseState *pstate, CreateStmtContext *cxt,
 							 errmsg("column \"%s\" specified more than once "
 									"in partitioning key",
 									colname),
-							 parser_errposition(pstate, pBy->location)));
+							 parser_errposition(cxt->pstate, pBy->location)));
 
 
 				key_attnums = lappend_int(key_attnums, i);

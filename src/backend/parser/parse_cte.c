@@ -19,7 +19,6 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_cte.h"
-//#include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
@@ -263,9 +262,6 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 				 parser_errposition(pstate,
 								 exprLocation((Node *) query->intoClause))));
 
-<<<<<<< HEAD
-	/* CTE queries are always marked as not canSetTag */
-=======
 	/*
 	 * We disallow data-modifying WITH except at the top level of a query,
 	 * because it's not clear when such a modification should be executed.
@@ -282,7 +278,6 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	 * matters for data-modifying statements, for which the flag will be
 	 * propagated to the ModifyTable plan node.)
 	 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	query->canSetTag = false;
 
 	if (!cte->cterecursive)

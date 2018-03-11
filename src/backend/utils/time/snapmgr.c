@@ -154,8 +154,7 @@ GetTransactionSnapshot(void)
 		return CurrentSnapshot;
 	}
 
-<<<<<<< HEAD
-	if (IsXactIsoLevelSerializable)
+	if (IsolationUsesXactSnapshot())
 	{
 		elog((Debug_print_snapshot_dtm ? LOG : DEBUG5),
 			 "[Distributed Snapshot #%u] *Serializable* (gxid = %u, '%s')",
@@ -163,11 +162,12 @@ GetTransactionSnapshot(void)
 			 getDistributedTransactionId(),
 			 DtxContextToString(DistributedTransactionContext));
 
+		// GPDB_91_MERGE_FIXME: the name of UpdateSerializableCommandId is a bit
+		// wrong, now that SERIALIZABLE and REPEATABLE READ are not the same.
+		// From comparison, the if-check above was changed from checking
+		// IsXactIsoLevelSerializable to IsolationUsesXactSnapshot()
 		UpdateSerializableCommandId(CurrentSnapshot->curcid);
 
-=======
-	if (IsolationUsesXactSnapshot())
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return CurrentSnapshot;
 	}
 

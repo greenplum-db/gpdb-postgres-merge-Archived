@@ -28,7 +28,7 @@ extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				  List **actions, Node **whereClause);
 extern List *transformCreateSchemaStmt(CreateSchemaStmt *stmt);
 
-extern void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
+extern void transformInhRelation(CreateStmtContext *cxt,
 								 InhRelation *inhRelation, bool forceBareCol);
 
 #endif   /* PARSE_UTILCMD_H */

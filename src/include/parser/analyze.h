@@ -39,7 +39,8 @@ extern void applyLockingClause(Query *qry, Index rtindex,
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
 {
-	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
+	ParseState *pstate;			/* overall parser state */
+	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
 	RangeVar   *relation;		/* relation to create */
 	Relation	rel;			/* opened/locked rel, if ALTER */
 	List	   *inhRelations;	/* relations to inherit from */

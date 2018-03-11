@@ -76,30 +76,6 @@
 #include "cdb/cdbvars.h"
 #include "utils/tqual.h"
 
-<<<<<<< HEAD
-=======
-/* State shared by transformCreateStmt and its subroutines */
-typedef struct
-{
-	ParseState *pstate;			/* overall parser state */
-	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
-	RangeVar   *relation;		/* relation to create */
-	Relation	rel;			/* opened/locked rel, if ALTER */
-	List	   *inhRelations;	/* relations to inherit from */
-	bool		isalter;		/* true if altering existing table */
-	bool		hasoids;		/* does relation have an OID column? */
-	List	   *columns;		/* ColumnDef items */
-	List	   *ckconstraints;	/* CHECK constraints */
-	List	   *fkconstraints;	/* FOREIGN KEY constraints */
-	List	   *ixconstraints;	/* index-creating constraints */
-	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
-	List	   *blist;			/* "before list" of things to do before
-								 * creating the table */
-	List	   *alist;			/* "after list" of things to do after creating
-								 * the table */
-	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
-} CreateStmtContext;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
 typedef struct
@@ -120,28 +96,15 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 						  ColumnDef *column);
 static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
-<<<<<<< HEAD
-static void transformOfType(ParseState *pstate, CreateStmtContext *cxt,
+static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation source_idx,
 						const AttrNumber *attmap, int attmap_length);
-static List *get_opclass(Oid opclass, Oid actual_datatype);
-static void transformIndexConstraints(ParseState *pstate,
-						  CreateStmtContext *cxt, bool mayDefer);
-=======
-static void transformInhRelation(CreateStmtContext *cxt,
-					 InhRelation *inhrelation);
-static void transformOfType(CreateStmtContext *cxt,
-				TypeName *ofTypename);
-static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
-static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
-						Relation parent_index, AttrNumber *attmap);
 static List *get_collation(Oid collation, Oid actual_datatype);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
-static void transformIndexConstraints(CreateStmtContext *cxt);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+static void transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer);
 static IndexStmt *transformIndexConstraint(Constraint *constraint,
 						 CreateStmtContext *cxt);
 static void transformFKConstraints(CreateStmtContext *cxt,
@@ -154,7 +117,7 @@ static void setSchemaName(char *context_schema, char **stmt_schema_name);
 
 static List *getLikeDistributionPolicy(InhRelation *e);
 static bool co_explicitly_disabled(List *opts);
-static void transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
+static void transformDistributedBy(CreateStmtContext *cxt,
 					   List *distributedBy, GpPolicy **policyp,
 					   List *likeDistributedBy,
 					   bool bQuiet);
@@ -191,7 +154,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	List	   *result;
 	List	   *save_alist;
 	ListCell   *elements;
-<<<<<<< HEAD
+	Oid			namespaceid;
 	List	   *likeDistributedBy = NIL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
 	List	   *stenc = NIL;		/* column reference storage encoding clauses */
@@ -212,9 +175,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
-=======
-	Oid			namespaceid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -328,12 +288,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				break;
 
 			case T_InhRelation:
-<<<<<<< HEAD
 			{
 				bool            isBeginning = (cxt.columns == NIL);
 
-				transformInhRelation(pstate, &cxt,
-									 (InhRelation *) element, false);
+				transformInhRelation(&cxt, (InhRelation *) element, false);
 
 				if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
 					stmt->distributedBy == NIL &&
@@ -348,9 +306,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 			case T_ColumnReferenceStorageDirective:
 				/* processed below in transformAttributeEncoding() */
 				stenc = lappend(stenc, element);
-=======
-				transformInhRelation(&cxt, (InhRelation *) element);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 
 			default:
@@ -372,8 +327,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	/*
 	 * Postprocess constraints that give rise to index definitions.
 	 */
-<<<<<<< HEAD
-	transformIndexConstraints(pstate, &cxt, stmt->is_add_part || stmt->is_split_part);
+	transformIndexConstraints(&cxt, stmt->is_add_part || stmt->is_split_part);
 
 	/*
 	 * Carry any deferred analysis statements forward.  Added for MPP-13750
@@ -384,17 +338,13 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 		stmt->deferredStmts = list_concat(stmt->deferredStmts, cxt.dlist);
 		cxt.dlist = NIL;
 	}
-=======
-	transformIndexConstraints(&cxt);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Postprocess foreign-key constraints.
 	 * But don't cascade FK constraints to parts, yet.
 	 */
-<<<<<<< HEAD
 	if (!stmt->is_part_child)
-		transformFKConstraints(pstate, &cxt, true, false);
+		transformFKConstraints(&cxt, true, false);
 
 	/*-----------
 	 * Analyze attribute encoding clauses.
@@ -444,16 +394,13 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				 partitionBy->partQuiet != PART_VERBO_NORMAL)
 			bQuiet = true;
 	}
-	transformDistributedBy(pstate, &cxt, stmt->distributedBy, &stmt->policy,
+	transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
 						   likeDistributedBy, bQuiet);
 
 	/*
 	 * Process table partitioning clause
 	 */
-	transformPartitionBy(pstate, &cxt, stmt, stmt->partitionBy, stmt->policy);
-=======
-	transformFKConstraints(&cxt, true, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	transformPartitionBy(&cxt, stmt, stmt->partitionBy, stmt->policy);
 
 	/*
 	 * Output results.
@@ -787,14 +734,9 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  *
  * if forceBareCol is true we disallow inheriting any indexes/constr/defaults.
  */
-<<<<<<< HEAD
 void
-transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
-					 InhRelation *inhRelation, bool forceBareCol)
-=======
-static void
-transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation,
+					 bool forceBareCol)
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -804,13 +746,9 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 	AclResult	aclresult;
 	char	   *comment;
 
-<<<<<<< HEAD
-	relation = parserOpenTable(pstate, inhRelation->relation, AccessShareLock,
-							   false, NULL);
-=======
 	relation = parserOpenTable(cxt->pstate, inhRelation->relation,
-							   AccessShareLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+							   AccessShareLock,
+							   false, NULL);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -870,13 +808,9 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 											attribute->atttypmod);
 		def->inhcount = 0;
 		def->is_local = true;
-<<<<<<< HEAD
 		def->is_not_null = (forceBareCol ? false : attribute->attnotnull);
-=======
-		def->is_not_null = attribute->attnotnull;
 		def->is_from_type = false;
 		def->storage = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		def->raw_default = NULL;
 		def->cooked_default = NULL;
 		def->collClause = NULL;
@@ -992,11 +926,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 			/* Copy comment on constraint */
 			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
 				(comment = GetComment(get_constraint_oid(RelationGetRelid(relation),
-<<<<<<< HEAD
-														 n->conname,  false),
-=======
 														 n->conname, false),
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 									  ConstraintRelationId,
 									  0)) != NULL)
 			{
@@ -2466,11 +2396,7 @@ fillin_encoding(List *list)
  *		LIKE ... INCLUDING INDEXES.
  */
 static void
-<<<<<<< HEAD
-transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt, bool mayDefer)
-=======
-transformIndexConstraints(CreateStmtContext *cxt)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+transformIndexConstraints(CreateStmtContext *cxt, bool mayDefer)
 {
 	IndexStmt  *index;
 	List	   *indexlist = NIL;
@@ -3655,18 +3581,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
 	/*
-<<<<<<< HEAD
-	 * Acquire exclusive lock on the target relation, which will be held until
-	 * end of transaction.	This ensures any decisions we make here based on
-	 * the state of the relation will still be good at execution. We must get
-	 * exclusive lock now because execution will; taking a lower grade lock
-	 * now and trying to upgrade later risks deadlock.
-	 *
-	 * In GPDB, we release the lock early if this command is part of a
-	 * partitioned CREATE TABLE.
-=======
 	 * Determine the appropriate lock level for this list of subcommands.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	lockmode = AlterTableGetLockLevel(stmt->cmds);
 
@@ -3678,6 +3593,9 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 * lower grade lock now and trying to upgrade later risks deadlock.  Any
 	 * new commands we add after this must not upgrade the lock level
 	 * requested here.
+	 *
+	 * In GPDB, we release the lock early if this command is part of a
+	 * partitioned CREATE TABLE.
 	 */
 	rel = relation_openrv(stmt->relation, lockmode);
 
@@ -3721,7 +3639,6 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 					ColumnDef  *def = (ColumnDef *) cmd->def;
 
 					Assert(IsA(def, ColumnDef));
-<<<<<<< HEAD
 
 					/*
 					 * Adding a column with a primary key or unique constraint
@@ -3743,10 +3660,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 										 errmsg("cannot add column with unique constraint")));
 						}
 					}
-					transformColumnDefinition(pstate, &cxt, def);
-=======
 					transformColumnDefinition(&cxt, def);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 					/*
 					 * If the column has a non-null default, we can't skip
@@ -3831,11 +3745,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	cxt.alist = NIL;
 
 	/* Postprocess index and FK constraints */
-<<<<<<< HEAD
-	transformIndexConstraints(pstate, &cxt, false);
-=======
-	transformIndexConstraints(&cxt);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	transformIndexConstraints(&cxt, false);
 
 	transformFKConstraints(&cxt, skipValidation, true);
 
@@ -3847,31 +3757,21 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 */
 	foreach(l, cxt.alist)
 	{
-<<<<<<< HEAD
 		Node	   *idxstmt = (Node *) lfirst(l);
 		List	   *idxstmts;
 		ListCell   *li;
 
 		idxstmts = transformIndexStmt((IndexStmt *) idxstmt,
 									  queryString);
+		/* GPDB_91_MERGE_FIXME: Why is this a loop in GPDB? */
 		foreach(li, idxstmts)
 		{
 			Assert(IsA(idxstmt, IndexStmt));
 			newcmd = makeNode(AlterTableCmd);
-			newcmd->subtype = AT_AddIndex;
+			newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
 			newcmd->def = lfirst(li);
 			newcmds = lappend(newcmds, newcmd);
 		}
-=======
-		IndexStmt  *idxstmt = (IndexStmt *) lfirst(l);
-
-		Assert(IsA(idxstmt, IndexStmt));
-		idxstmt = transformIndexStmt(idxstmt, queryString);
-		newcmd = makeNode(AlterTableCmd);
-		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
-		newcmd->def = (Node *) idxstmt;
-		newcmds = lappend(newcmds, newcmd);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	cxt.alist = NIL;
 

@@ -3795,8 +3795,8 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $12;
 					n->tablespacename = $13;
 					n->if_not_exists = true;
-					n->distributedBy = $11;
-					n->partitionBy = $12;
+					n->distributedBy = $14;
+					n->partitionBy = $15;
 					n->relKind = RELKIND_RELATION;
 					n->policy = 0;
                     n->postCreate = NULL;

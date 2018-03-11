@@ -160,16 +160,12 @@ MemoryContextReset(MemoryContext context)
 	if (context->firstchild != NULL)
 		MemoryContextResetChildren(context);
 
-<<<<<<< HEAD
-	(*context->methods.reset) (context);
-=======
 	/* Nothing to do if no pallocs since startup or last reset */
 	if (!context->isReset)
 	{
-		(*context->methods->reset) (context);
+		(*context->methods.reset) (context);
 		context->isReset = true;
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -276,11 +272,7 @@ MemoryContextResetAndDeleteChildren(MemoryContext context)
 	AssertArg(MemoryContextIsValid(context));
 
 	MemoryContextDeleteChildren(context);
-<<<<<<< HEAD
-	(*context->methods.reset) (context);
-=======
 	MemoryContextReset(context);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -1083,7 +1075,8 @@ MemoryContextAllocImpl(MemoryContext context, Size size, const char* sfile, cons
 				"invalid memory alloc request size %lu",
 				(unsigned long)size);
 
-<<<<<<< HEAD
+	context->isReset = false;
+
 	ret = (*context->methods.alloc) (context, size);
 #ifdef PGTRACE_ENABLED
 	header = (StandardChunkHeader *)
@@ -1092,11 +1085,6 @@ MemoryContextAllocImpl(MemoryContext context, Size size, const char* sfile, cons
 #endif
 
 	return ret;
-=======
-	context->isReset = false;
-
-	return (*context->methods->alloc) (context, size);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -1127,13 +1115,9 @@ MemoryContextAllocZeroImpl(MemoryContext context, Size size, const char* sfile, 
 				"invalid memory alloc request size %lu",
 				(unsigned long)size);
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-=======
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	ret = (*context->methods.alloc) (context, size);
 
 	MemSetAligned(ret, 0, size);
 
@@ -1175,13 +1159,9 @@ MemoryContextAllocZeroAlignedImpl(MemoryContext context, Size size, const char* 
 				"invalid memory alloc request size %lu",
 				(unsigned long)size);
 
-<<<<<<< HEAD
-	ret = (*context->methods.alloc) (context, size);
-=======
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	ret = (*context->methods.alloc) (context, size);
 
 	MemSetLoop(ret, 0, size);
 
@@ -1289,25 +1269,10 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 				"invalid memory alloc request size %lu",
 				(unsigned long)size);
 
-<<<<<<< HEAD
-	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
-=======
 	/* isReset must be false already */
-	Assert(!header->context->isReset);
+	Assert(!header->sharedHeader->context->isReset);
 
-	return (*header->context->methods->realloc) (header->context,
-												 pointer, size);
-}
-
-/*
- * MemoryContextSwitchTo
- *		Returns the current context; installs the given context.
- *
- * palloc.h defines an inline version of this function if allowed by the
- * compiler; in which case the definition below is skipped.
- */
-#ifndef USE_INLINE
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
 
 #ifdef PGTRACE_ENABLED
 	header = (StandardChunkHeader *)

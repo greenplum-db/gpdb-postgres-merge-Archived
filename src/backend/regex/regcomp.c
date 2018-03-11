@@ -234,14 +234,8 @@ struct vars
 #define EAT(t)	(SEE(t) && next(v))		/* if next is this, swallow it */
 #define VISERR(vv)	((vv)->err != 0)	/* have we seen an error yet? */
 #define ISERR() VISERR(v)
-<<<<<<< HEAD
-#define VERR(vv,e)	((vv)->nexttype = EOS, ((vv)->err) ? (vv)->err :\
-							((vv)->err = (e)))
-#undef ERR
-=======
 #define VERR(vv,e)	((vv)->nexttype = EOS, \
 					 (vv)->err = ((vv)->err ? (vv)->err : (e)))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define ERR(e)	VERR(v, e)		/* record an error */
 #define NOERR() {if (ISERR()) return;}	/* if error seen, return */
 #define NOERRN()	{if (ISERR()) return NULL;} /* NOERR with retval */

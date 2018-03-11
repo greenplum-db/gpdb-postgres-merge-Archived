@@ -491,19 +491,12 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 */
 	PortalHashTableDelete(portal);
 
-<<<<<<< HEAD
 	if (portal->releaseResLock)
 	{
 		portal->releaseResLock = false;
 		ResUnLockPortal(portal);
 	}
 
-	/* let portalcmds.c clean up the state it knows about */
-	if (portal->cleanup)
-		(*portal->cleanup) (portal);
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* drop cached plan reference, if any */
 	PortalReleaseCachedPlan(portal);
 
@@ -972,12 +965,9 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 		if (portal->portalPinned)
 			portal->portalPinned = false;
 
-<<<<<<< HEAD
-=======
 		/* We had better not be calling any user-defined code here */
 		Assert(portal->cleanup == NULL);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		/* Zap it. */
 		PortalDrop(portal, false);
 	}

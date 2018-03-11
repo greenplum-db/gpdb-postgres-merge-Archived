@@ -134,11 +134,11 @@ typedef struct AllocChunkData *AllocChunk;
 /*
  * AllocSetContext is our standard implementation of MemoryContext.
  *
- * Note: isReset means there is nothing for AllocSetReset to do.  This is
- * different from the aset being physically empty (empty blocks list) because
- * we may still have a keeper block.  It's also different from the set being
- * logically empty, because we don't attempt to detect pfree'ing the last
- * active chunk.
+ * Note: header.isReset means there is nothing for AllocSetReset to do.
+ * This is different from the aset being physically empty (empty blocks list)
+ * because we may still have a keeper block.  It's also different from the set
+ * being logically empty, because we don't attempt to detect pfree'ing the
+ * last active chunk.
  */
 typedef struct AllocSetContext
 {
@@ -146,7 +146,6 @@ typedef struct AllocSetContext
 	/* Info about storage allocated in this context: */
 	AllocBlock	blocks;			/* head of list of blocks in this set */
 	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
-	bool		isReset;		/* T = no space alloced since last reset */
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
