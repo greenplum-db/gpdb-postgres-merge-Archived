@@ -31,11 +31,8 @@
 #include "executor/execHHashagg.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-<<<<<<< HEAD
 #include "optimizer/pathnode.h"
-=======
 #include "optimizer/paths.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planpartition.h"
@@ -59,12 +56,9 @@
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
 
-<<<<<<< HEAD
 
 static Plan *create_subplan(PlannerInfo *root, Path *best_path);		/* CDB */
-=======
 static Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
 static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
@@ -1192,25 +1186,18 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		plan = (Plan *) make_agg(root,
 								 build_relation_tlist(best_path->path.parent),
 								 NIL,
-<<<<<<< HEAD
-								 AGG_HASHED, false,
-=======
 								 AGG_HASHED,
 								 NULL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+								 false, /* streaming */
 								 numGroupCols,
 								 groupColIdx,
 								 groupOperators,
 								 numGroups,
-<<<<<<< HEAD
 								 0, /* num_nullcols */
 								 0, /* input_grouping */
 								 0, /* grouping */
 								 0, /* rollup_gs_times */
 								 0,
-								 0,
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								 subplan);
 	}
 	else
@@ -3002,7 +2989,56 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 	return scan_plan;
 }
 
-<<<<<<< HEAD
+/*
+ * create_foreignscan_plan
+ *	 Returns a foreignscan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static ForeignScan *
+create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
+						List *tlist, List *scan_clauses)
+{
+	ForeignScan *scan_plan;
+	RelOptInfo *rel = best_path->path.parent;
+	Index		scan_relid = rel->relid;
+	RangeTblEntry *rte;
+	bool		fsSystemCol;
+	int			i;
+
+	/* it should be a base rel... */
+	Assert(scan_relid > 0);
+	Assert(rel->rtekind == RTE_RELATION);
+	rte = planner_rt_fetch(scan_relid, root);
+	Assert(rte->rtekind == RTE_RELATION);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Detect whether any system columns are requested from rel */
+	fsSystemCol = false;
+	for (i = rel->min_attr; i < 0; i++)
+	{
+		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
+		{
+			fsSystemCol = true;
+			break;
+		}
+	}
+
+	scan_plan = make_foreignscan(tlist,
+								 scan_clauses,
+								 scan_relid,
+								 fsSystemCol,
+								 best_path->fdwplan);
+
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+
+	return scan_plan;
+}
+
 static Expr *
 remove_isnotfalse_expr(Expr *expr)
 {
@@ -3055,58 +3091,7 @@ remove_isnotfalse(List *clauses)
 	}
 	return t_list;
 }
-=======
-/*
- * create_foreignscan_plan
- *	 Returns a foreignscan plan for the base relation scanned by 'best_path'
- *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
- */
-static ForeignScan *
-create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
-						List *tlist, List *scan_clauses)
-{
-	ForeignScan *scan_plan;
-	RelOptInfo *rel = best_path->path.parent;
-	Index		scan_relid = rel->relid;
-	RangeTblEntry *rte;
-	bool		fsSystemCol;
-	int			i;
 
-	/* it should be a base rel... */
-	Assert(scan_relid > 0);
-	Assert(rel->rtekind == RTE_RELATION);
-	rte = planner_rt_fetch(scan_relid, root);
-	Assert(rte->rtekind == RTE_RELATION);
-
-	/* Sort clauses into best execution order */
-	scan_clauses = order_qual_clauses(root, scan_clauses);
-
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	scan_clauses = extract_actual_clauses(scan_clauses, false);
-
-	/* Detect whether any system columns are requested from rel */
-	fsSystemCol = false;
-	for (i = rel->min_attr; i < 0; i++)
-	{
-		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
-		{
-			fsSystemCol = true;
-			break;
-		}
-	}
-
-	scan_plan = make_foreignscan(tlist,
-								 scan_clauses,
-								 scan_relid,
-								 fsSystemCol,
-								 best_path->fdwplan);
-
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
-
-	return scan_plan;
-}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*****************************************************************************
  *
@@ -5414,8 +5399,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
 
-		grpno++;
-
 		/*
 		 * Check for the possibility of duplicate group-by clauses --- the
 		 * parser should have removed 'em, but no point in sorting
@@ -5425,13 +5408,9 @@ make_sort_from_groupcols(PlannerInfo *root,
 									  exprCollation((Node *) tle->expr),
 									  grpcl->nulls_first,
 									  numsortkeys,
-<<<<<<< HEAD
-									  sortColIdx, sortOperators, nullsFirst);
-=======
 									  sortColIdx, sortOperators,
 									  collations, nullsFirst);
 		grpno++;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	if (appendGrouping)
@@ -5631,19 +5610,13 @@ materialize_finished_plan(PlannerInfo *root, Plan *subplan)
 
 Agg *
 make_agg(PlannerInfo *root, List *tlist, List *qual,
-<<<<<<< HEAD
-		 AggStrategy aggstrategy,
+		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 bool streaming,
 		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 		 long numGroups, int num_nullcols,
 		 uint64 input_grouping, uint64 grouping,
 		 int rollupGSTimes,
-		 int numAggs, int transSpace,
-=======
-		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
-		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
-		 long numGroups,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		 int transSpace,
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
@@ -5827,11 +5800,7 @@ make_windowagg(PlannerInfo *root, List *tlist,
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_windowagg(&windowagg_path, root,
-<<<<<<< HEAD
-				   list_length(windowFuncs), partNumCols, ordNumCols,
-=======
 				   windowFuncs, partNumCols, ordNumCols,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				   lefttree->startup_cost,
 				   lefttree->total_cost,
 				   lefttree->plan_rows);
@@ -6216,12 +6185,8 @@ make_repeat(List *tlist,
  * to make it look better sometime.
  */
 ModifyTable *
-<<<<<<< HEAD
-make_modifytable(PlannerInfo *root, CmdType operation, List *resultRelations,
-=======
-make_modifytable(CmdType operation, bool canSetTag,
+make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
 				 List *resultRelations,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam)
 {

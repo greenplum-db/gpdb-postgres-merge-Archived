@@ -38,11 +38,8 @@
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-<<<<<<< HEAD
 #include "utils/guc.h"
-=======
 #include "utils/lsyscache.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #include "cdb/cdbmutate.h"		/* cdbmutate_warn_ctid_without_segid */
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
@@ -62,13 +59,9 @@ static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
-<<<<<<< HEAD
 static bool has_multiple_baserels(PlannerInfo *root);
-static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
-=======
 static List *accumulate_append_subpath(List *subpaths, Path *path);
-static void set_dummy_rel_pathlist(RelOptInfo *rel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -227,37 +220,6 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/* It's an "append relation", process accordingly */
 		set_append_rel_pathlist(root, rel, rti, rte);
 	}
-<<<<<<< HEAD
-	else if (rel->rtekind == RTE_SUBQUERY)
-	{
-		/* Subquery --- generate a separate plan for it */
-		set_subquery_pathlist(root, rel, rti, rte);
-	}
-	else if (rel->rtekind == RTE_FUNCTION)
-	{
-		/* RangeFunction --- generate a suitable path for it */
-		set_function_pathlist(root, rel, rte);
-	}
-	else if (rel->rtekind == RTE_TABLEFUNCTION)
-	{
-		/* RangeFunction --- generate a separate plan for it */
-		set_tablefunction_pathlist(root, rel, rte);
-	}
-	else if (rel->rtekind == RTE_VALUES)
-	{
-		/* Values list --- generate a suitable path for it */
-		set_values_pathlist(root, rel, rte);
-	}
-	else if (rel->rtekind == RTE_CTE)
-	{
-		/* CTE reference --- generate a suitable path for it */
-		if (rte->self_reference)
-			set_worktable_pathlist(root, rel, rte);
-		else
-			set_cte_pathlist(root, rel, rte);
-	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	else
 	{
 		switch (rel->rtekind)
@@ -281,6 +243,10 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_FUNCTION:
 				/* RangeFunction --- generate a suitable path for it */
 				set_function_pathlist(root, rel, rte);
+				break;
+			case RTE_TABLEFUNCTION:
+				/* RangeFunction --- generate a suitable path for it */
+				set_tablefunction_pathlist(root, rel, rte);
 				break;
 			case RTE_VALUES:
 				/* Values list --- generate a suitable path for it */
@@ -620,14 +586,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		set_rel_pathlist(root, childrel, childRTindex, childRTE);
 
-<<<<<<< HEAD
-		childpath = childrel->cheapest_total_path;
-		if (IsA(childpath, AppendPath))
-			subpaths = list_concat(subpaths,
-							list_copy(((AppendPath *) childpath)->subpaths));
-		else
-			subpaths = lappend(subpaths, childpath);
-=======
 		subpaths = accumulate_append_subpath(subpaths,
 											 childrel->cheapest_total_path);
 
@@ -665,7 +623,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				all_child_pathkeys = lappend(all_child_pathkeys, childkeys);
 			}
 		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * Accumulate size information from each child.
@@ -738,10 +695,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	add_path(root, rel, (Path *) create_append_path(root, rel, subpaths));
 
-<<<<<<< HEAD
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(root, rel);
-=======
 	/*
 	 * Next, build MergeAppend paths based on the collected list of child
 	 * pathkeys.  We consider both cheapest-startup and cheapest-total cases,
@@ -798,20 +751,19 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/* ... and build the MergeAppend paths */
-		add_path(rel, (Path *) create_merge_append_path(root,
+		add_path(root, rel, (Path *) create_merge_append_path(root,
 														rel,
 														startup_subpaths,
 														pathkeys));
 		if (startup_neq_total)
-			add_path(rel, (Path *) create_merge_append_path(root,
+			add_path(root, rel, (Path *) create_merge_append_path(root,
 															rel,
 															total_subpaths,
 															pathkeys));
 	}
 
 	/* Select cheapest path */
-	set_cheapest(rel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	set_cheapest(root, rel);
 }
 
 /*
@@ -977,15 +929,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/* XXX rel->onerow = ??? */
 	}
 
-<<<<<<< HEAD
-	/* Copy number of output rows from subplan */
-	if (rel->onerow)
-		rel->tuples = 1;
-	else
-		rel->tuples = rel->subplan->plan_rows;
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Mark rel with estimated output rows, width, etc */
 	set_subquery_size_estimates(root, rel, subroot);
 
@@ -1353,10 +1296,10 @@ set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	set_foreign_size_estimates(root, rel);
 
 	/* Generate appropriate path */
-	add_path(rel, (Path *) create_foreignscan_path(root, rel));
+	add_path(root, rel, (Path *) create_foreignscan_path(root, rel));
 
 	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(rel);
+	set_cheapest(root, rel);
 }
 
 /*

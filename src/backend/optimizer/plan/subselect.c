@@ -1461,106 +1461,6 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 }
 
 /*
- * simplify_EXISTS_query: remove any useless stuff in an EXISTS's subquery
- *
- * The only thing that matters about an EXISTS query is whether it returns
- * zero or more than zero rows.  Therefore, we can remove certain SQL features
- * that won't affect that.  The only part that is really likely to matter in
- * typical usage is simplifying the targetlist: it's a common habit to write
- * "SELECT * FROM" even though there is no need to evaluate any columns.
- *
- * Note: by suppressing the targetlist we could cause an observable behavioral
- * change, namely that any errors that might occur in evaluating the tlist
- * won't occur, nor will other side-effects of volatile functions.  This seems
- * unlikely to bother anyone in practice.
- *
- * Returns TRUE if was able to discard the targetlist, else FALSE.
- */
-static bool
-simplify_EXISTS_query(PlannerInfo *root, Query *query)
-{
-	/*
-	 * PostgreSQL:
-	 *
-	 * We don't try to simplify at all if the query uses set operations,
-	 * aggregates, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE; none of these
-	 * seem likely in normal usage and their possible effects are complex.
-	 *
-	 * In GPDB, we try a bit harder: Try to demote HAVING to WHERE, in case
-	 * there are no aggregates. If that fails, only then give up. Also, just
-	 * discard any window functions; they shouldn't affect the number of
-	 * rows returned.
-	 *
-	 * GPDB_84_MERGE_FIXME: What about "LIMIT 0"? We can't just ignore it.
-	 * Furthermore, the rule used here, for when it's safe to demote a HAVING
-	 * to WHERE, is different from the one in subquery_planner(). Notably,
-	 * what if there are volatile functions or subplans?
-	 */
-	if (query->commandType != CMD_SELECT ||
-		query->intoClause ||
-		query->setOperations ||
-#if 0
-		query->hasAggs ||
-		query->hasWindowFuncs ||
-		query->havingQual ||
-#endif
-		query->limitOffset ||
-#if 0
-		query->limitCount ||
-#endif
-		query->rowMarks)
-		return false;
-
-	/*
-	 * Mustn't throw away the targetlist if it contains set-returning
-	 * functions; those could affect whether zero rows are returned!
-	 */
-	if (expression_returns_set((Node *) query->targetList))
-		return false;
-
-	if (query->havingQual)
-	{
-		/* If HAVING has no aggregates, demote it to WHERE. */
-		if (!query->hasAggs)
-		{
-			query->jointree->quals = make_and_qual(query->jointree->quals,
-												   query->havingQual);
-			query->havingQual = NULL;
-			query->hasAggs = false;
-		}
-		else
-			return false;
-	}
-
-	/*
-	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
-	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
-	 * change a nonzero-rows result to zero rows or vice versa.  (Furthermore,
-	 * since our parsetree representation of these clauses depends on the
-	 * targetlist, we'd better throw them away if we drop the targetlist.)
-	 */
-	query->targetList = NIL;
-	/*
-	 * Delete GROUP BY if no aggregates.
-	 *
-	 * Note: It's important that we don't clear hasAggs, even though we
-	 * removed any possible aggregates from the targetList! If you have a
-	 * subquery like "SELECT SUM(foo) ...", we don't need to compute the sum,
-	 * but we must still aggregate all the rows, and return a single row,
-	 * regardless of how many input rows there are. (In particular, even
-	 * if there are no input rows).
-	 */
-	if (!query->hasAggs)
-		query->groupClause = NIL;
-	query->windowClause = NIL;
-	query->distinctClause = NIL;
-	query->sortClause = NIL;
-	query->hasDistinctOn = false;
-
-	return true;
-}
-
-/*
  * convert_EXISTS_sublink_to_join: try to convert an EXISTS SubLink to a join
  *
  * The API of this function is identical to convert_ANY_sublink_to_join's,
@@ -1789,9 +1689,6 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->alias = NULL;
 	result->rtindex = 0;
 
-<<<<<<< HEAD
-	return (Node *) result;
-=======
 	return result;
 }
 
@@ -1812,23 +1709,37 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * Returns TRUE if was able to discard the targetlist, else FALSE.
  */
 static bool
-simplify_EXISTS_query(Query *query)
+simplify_EXISTS_query(PlannerInfo *root, Query *query)
 {
 	/*
+	 * PostgreSQL:
+	 *
 	 * We don't try to simplify at all if the query uses set operations,
-	 * aggregates, modifying CTEs, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE;
-	 * none of these seem likely in normal usage and their possible effects
-	 * are complex.
+	 * aggregates, HAVING, LIMIT/OFFSET, or FOR UPDATE/SHARE; none of these
+	 * seem likely in normal usage and their possible effects are complex.
+	 *
+	 * In GPDB, we try a bit harder: Try to demote HAVING to WHERE, in case
+	 * there are no aggregates. If that fails, only then give up. Also, just
+	 * discard any window functions; they shouldn't affect the number of
+	 * rows returned.
+	 *
+	 * GPDB_84_MERGE_FIXME: What about "LIMIT 0"? We can't just ignore it.
+	 * Furthermore, the rule used here, for when it's safe to demote a HAVING
+	 * to WHERE, is different from the one in subquery_planner(). Notably,
+	 * what if there are volatile functions or subplans?
 	 */
 	if (query->commandType != CMD_SELECT ||
 		query->intoClause ||
 		query->setOperations ||
+#if 0
 		query->hasAggs ||
 		query->hasWindowFuncs ||
-		query->hasModifyingCTE ||
 		query->havingQual ||
+#endif
 		query->limitOffset ||
+#if 0
 		query->limitCount ||
+#endif
 		query->rowMarks)
 		return false;
 
@@ -1839,6 +1750,20 @@ simplify_EXISTS_query(Query *query)
 	if (expression_returns_set((Node *) query->targetList))
 		return false;
 
+	if (query->havingQual)
+	{
+		/* If HAVING has no aggregates, demote it to WHERE. */
+		if (!query->hasAggs)
+		{
+			query->jointree->quals = make_and_qual(query->jointree->quals,
+												   query->havingQual);
+			query->havingQual = NULL;
+			query->hasAggs = false;
+		}
+		else
+			return false;
+	}
+
 	/*
 	 * Otherwise, we can throw away the targetlist, as well as any GROUP,
 	 * WINDOW, DISTINCT, and ORDER BY clauses; none of those clauses will
@@ -1847,14 +1772,24 @@ simplify_EXISTS_query(Query *query)
 	 * targetlist, we'd better throw them away if we drop the targetlist.)
 	 */
 	query->targetList = NIL;
-	query->groupClause = NIL;
+	/*
+	 * Delete GROUP BY if no aggregates.
+	 *
+	 * Note: It's important that we don't clear hasAggs, even though we
+	 * removed any possible aggregates from the targetList! If you have a
+	 * subquery like "SELECT SUM(foo) ...", we don't need to compute the sum,
+	 * but we must still aggregate all the rows, and return a single row,
+	 * regardless of how many input rows there are. (In particular, even
+	 * if there are no input rows).
+	 */
+	if (!query->hasAggs)
+		query->groupClause = NIL;
 	query->windowClause = NIL;
 	query->distinctClause = NIL;
 	query->sortClause = NIL;
 	query->hasDistinctOn = false;
 
 	return true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*

@@ -1238,14 +1238,9 @@ inheritance_planner(PlannerInfo *root)
 		rowMarks = root->rowMarks;
 
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
-<<<<<<< HEAD
 	return (Plan *) make_modifytable(root, parse->commandType,
-									 copyObject(root->resultRelations),
-=======
-	return (Plan *) make_modifytable(parse->commandType,
 									 parse->canSetTag,
-									 resultRelations,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+									 copyObject(root->resultRelations),
 									 subplans,
 									 returningLists,
 									 rowMarks,
@@ -1980,17 +1975,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *) make_agg(root,
 												tlist,
 												(List *) parse->havingQual,
-<<<<<<< HEAD
-												AGG_HASHED, false,
-=======
 												AGG_HASHED,
 												&agg_costs,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												false, /* streaming */
 												numGroupCols,
 												groupColIdx,
 												groupOperators,
 												numGroups,
-<<<<<<< HEAD
 												/* GPDB_84_MERGE_FIXME: What would be
 												 * appropriate values for these extra
 												 * arguments? */
@@ -1998,10 +1989,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												0, /* input_grouping */
 												0, /* grouping */
 												0, /* rollup_gs_times */
-												agg_counts.numAggs,
 												agg_counts.transitionSpace,
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 												result_plan);
 
 				if (canonical_grpsets != NULL &&
@@ -2058,25 +2046,18 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				result_plan = (Plan *) make_agg(root,
 												tlist,
 												(List *) parse->havingQual,
-<<<<<<< HEAD
-												aggstrategy, false,
-=======
 												aggstrategy,
 												&agg_costs,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												false, /* streaming */
 												numGroupCols,
 												groupColIdx,
 												groupOperators,
 												numGroups,
-<<<<<<< HEAD
 												0, /* num_nullcols */
 												0, /* input_grouping */
 												0, /* grouping */
 												0, /* rollup_gs_times */
-												agg_counts.numAggs,
 												agg_counts.transitionSpace,
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 												result_plan);
 
 				if (canonical_grpsets != NULL &&
@@ -2645,25 +2626,18 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											result_plan->targetlist,
 											NIL,
 											AGG_HASHED,
-<<<<<<< HEAD
-											false, /* streaming */
-=======
 											NULL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+											false, /* streaming */
 										  list_length(parse->distinctClause),
 								 extract_grouping_cols(parse->distinctClause,
 													result_plan->targetlist),
 								 extract_grouping_ops(parse->distinctClause),
 											numDistinctRows,
-<<<<<<< HEAD
 											0, /* num_nullcols */
 											0, /* input_grouping */
 											0, /* grouping */
 											0, /* rollupGSTimes */
-											0,
 											0, /* transSpace */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 											result_plan);
 			/* Hashed aggregation produces randomly-ordered results */
 			current_pathkeys = NIL;

@@ -210,21 +210,12 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
-<<<<<<< HEAD
-	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
-	 * are added to appropriate lists belonging to the mentioned relations.
-	 * We also build EquivalenceClasses for provably equivalent expressions.
-	 * The SpecialJoinInfo list is also built to hold information about join
-	 * order restrictions.  Finally, we form a target joinlist for
-	 * make_one_rel() to work from.
-=======
 	 * entries for all referenced PlaceHolderVars.	Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned relations. We
 	 * also build EquivalenceClasses for provably equivalent expressions. The
 	 * SpecialJoinInfo list is also built to hold information about join order
 	 * restrictions.  Finally, we form a target joinlist for make_one_rel() to
 	 * work from.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	build_base_rel_tlists(root, tlist);
 

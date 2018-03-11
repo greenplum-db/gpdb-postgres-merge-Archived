@@ -19,13 +19,10 @@
 #include <math.h>
 
 #include "catalog/pg_operator.h"
-<<<<<<< HEAD
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
-=======
 #include "foreign/fdwapi.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -580,16 +577,7 @@ add_path(PlannerInfo *root, RelOptInfo *parent_rel, Path *new_path)
 			 */
 			if (!IsA(old_path, IndexPath))
 				pfree(old_path);
-<<<<<<< HEAD
-
-			/* Advance list pointer */
-			if (p1_prev)
-				p1 = lnext(p1_prev);
-			else
-				p1 = list_head(parent_rel->pathlist);
-=======
 			/* p1_prev does not advance */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		else
 		{
@@ -864,17 +852,13 @@ create_index_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-<<<<<<< HEAD
 	/* Distribution is same as the base table. */
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->path.motionHazard = false;
 	pathnode->path.rescannable = true;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_index(pathnode, root, index, indexquals, outer_rel);
-=======
 	cost_index(pathnode, root, index, indexquals, indexorderbys, outer_rel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return pathnode;
 }

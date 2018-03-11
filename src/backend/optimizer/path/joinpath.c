@@ -99,50 +99,27 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * Find potential mergejoin clauses.  We can skip this if we are not
-<<<<<<< HEAD
-	 * interested in doing a mergejoin.  However, mergejoin is currently our
-	 * only way of implementing full outer joins, so override mergejoin
-	 * disable if it's a full join.
+	 * interested in doing a mergejoin.  However, mergejoin may be our only
+	 * way of implementing a full outer join, so override enable_mergejoin if
+	 * it's a full join.
 	 *
 	 * CDB: Always build mergeclause_list.  We need it for motion planning.
 	 */
 	mergeclause_list = select_mergejoin_clauses(root,
-												joinrel,
-												outerrel,
-												innerrel,
-												restrictlist,
-												jointype);
-=======
-	 * interested in doing a mergejoin.  However, mergejoin may be our only
-	 * way of implementing a full outer join, so override enable_mergejoin if
-	 * it's a full join.
-	 */
-	if (enable_mergejoin || jointype == JOIN_FULL)
-		mergeclause_list = select_mergejoin_clauses(root,
 													joinrel,
 													outerrel,
 													innerrel,
 													restrictlist,
 													jointype,
 													&mergejoin_allowed);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
 	 * sorted.	Skip this if we can't mergejoin.
 	 */
-<<<<<<< HEAD
-	if ((root->config->enable_mergejoin ||
-        root->config->mpp_trying_fallback_plan ||
-		jointype == JOIN_FULL) &&
-		jointype != JOIN_LASJ_NOTIN)
-	    sort_inner_and_outer(root, joinrel, outerrel, innerrel,
-						     restrictlist, mergeclause_list, jointype, sjinfo);
-=======
 	if (mergejoin_allowed)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
 						   restrictlist, mergeclause_list, jointype, sjinfo);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * 2. Consider paths where the outer relation need not be explicitly
@@ -175,22 +152,17 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 4. Consider paths where both outer and inner relations must be hashed
-<<<<<<< HEAD
-	 * before being joined.
+	 * before being joined.  As above, disregard enable_hashjoin for full
+	 * joins, because there may be no other alternative.
      *
 	 * We consider both the cheapest-total-cost and cheapest-startup-cost
 	 * outer paths.  There's no need to consider any but the
 	 * cheapest-total-cost inner path, however.
 	 */
-	if (root->config->enable_hashjoin
-			|| root->config->mpp_trying_fallback_plan)
+	if (root->config->enable_hashjoin ||
+		jointype == JOIN_FULL ||
+		root->config->mpp_trying_fallback_plan)
 	{
-=======
-	 * before being joined.  As above, disregard enable_hashjoin for full
-	 * joins, because there may be no other alternative.
-	 */
-	if (enable_hashjoin || jointype == JOIN_FULL)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, jointype, sjinfo,
 							 mergeclause_list);
@@ -263,35 +235,6 @@ sort_inner_and_outer(PlannerInfo *root,
 		jointype = JOIN_INNER;
 
 	/*
-<<<<<<< HEAD
-	 * If we are doing a right or full join, we must use *all* the
-	 * mergeclauses as join clauses, else we will not have a valid plan.
-	 */
-	switch (jointype)
-	{
-		case JOIN_INNER:
-		case JOIN_LEFT:
-		case JOIN_SEMI:
-		case JOIN_ANTI:
-		case JOIN_LASJ_NOTIN:
-		case JOIN_UNIQUE_OUTER:
-		case JOIN_UNIQUE_INNER:
-			useallclauses = false;
-			break;
-		case JOIN_RIGHT:
-		case JOIN_FULL:
-			useallclauses = true;
-			break;
-		default:
-			elog(ERROR, "unrecognized join type: %d",
-				 (int) jointype);
-			useallclauses = false;		/* keep compiler quiet */
-			break;
-	}
-
-	/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * We only consider the cheapest-total-cost input paths, since we are
 	 * assuming here that a sort is required.  We will consider
 	 * cheapest-startup-cost input paths later, and only if they don't need a
@@ -891,29 +834,6 @@ hash_inner_and_outer(PlannerInfo *root,
 		jointype = JOIN_INNER;
 
 	/*
-<<<<<<< HEAD
-	 * Hash only supports inner and left joins.
-	 */
-	switch (jointype)
-	{
-		case JOIN_INNER:
-		case JOIN_SEMI:
-		case JOIN_UNIQUE_OUTER:
-		case JOIN_UNIQUE_INNER:
-			isouterjoin = false;
-			break;
-		case JOIN_LEFT:
-		case JOIN_ANTI:
-		case JOIN_LASJ_NOTIN:
-			isouterjoin = true;
-			break;
-		default:
-			return;
-	}
-
-	/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * We need to build only one hashpath for any given pair of outer and
 	 * inner relations; all of the hashable clauses will be used as keys.
 	 *

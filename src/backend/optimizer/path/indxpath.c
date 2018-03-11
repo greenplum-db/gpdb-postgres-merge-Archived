@@ -4,13 +4,9 @@
  *	  Routines to determine which indexes are usable for scanning a
  *	  given relation, and create Paths accordingly.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -261,14 +257,9 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			*pindexpathlist = lappend(*pindexpathlist, ipath);
 
 		if (ipath->indexinfo->amhasgetbitmap &&
-<<<<<<< HEAD
 			(!root->config->enable_seqscan ||
-			 (ipath->indexselectivity < 1.0 &&
-			  !ScanDirectionIsBackward(ipath->indexscandir))))
-=======
-			(ipath->path.pathkeys == NIL ||
+			 ipath->path.pathkeys == NIL ||
 			 ipath->indexselectivity < 1.0))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			bitindexpaths = lappend(bitindexpaths, ipath);
 	}
 
@@ -2594,24 +2585,14 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_BPCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, NULL);
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-										   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_BYTEA_LIKE_OP:
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, NULL);
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-										   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2619,13 +2600,8 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-										   &prefix, NULL);
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC, expr_coll,
-										   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2633,13 +2609,8 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-										   &prefix, NULL);
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex, expr_coll,
-										   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2647,13 +2618,8 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-										   &prefix, NULL);
-=======
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC, expr_coll,
-										   &prefix, &rest);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2936,15 +2902,9 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 		case OID_BYTEA_LIKE_OP:
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
-<<<<<<< HEAD
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, NULL);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			break;
 
@@ -2954,15 +2914,9 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-											   &prefix, NULL);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			break;
 
@@ -2972,15 +2926,9 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-											   &prefix, NULL);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			break;
 
@@ -2990,15 +2938,9 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				/* the right-hand const is type text for all of these */
-<<<<<<< HEAD
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-											   &prefix, NULL);
-				return prefix_quals(leftop, opfamily, prefix, pstatus);
-=======
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			break;
 

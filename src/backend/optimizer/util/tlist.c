@@ -21,6 +21,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "utils/lsyscache.h"
 
 typedef struct maxSortGroupRef_context
 {
@@ -661,7 +662,6 @@ grouping_is_hashable(List *groupClause)
 	{
 		Node	   *node = lfirst(glitem);
 
-<<<<<<< HEAD
 		if (node == NULL)
 			continue;
 
@@ -679,13 +679,9 @@ grouping_is_hashable(List *groupClause)
 		{
 			SortGroupClause *groupcl = (SortGroupClause *) node;
 
-			if (!op_hashjoinable(groupcl->eqop))
+			if (!groupcl->hashable)
 				return false;
 		}
-=======
-		if (!groupcl->hashable)
-			return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return true;
 }

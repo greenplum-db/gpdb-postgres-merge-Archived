@@ -17,13 +17,9 @@
  * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -272,14 +268,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * Add a SubqueryScan with the caller-requested targetlist
 		 */
 		plan = (Plan *)
-<<<<<<< HEAD
-			make_subqueryscan(root, generate_setop_tlist(colTypes, flag,
-												   1,
-=======
-			make_subqueryscan(generate_setop_tlist(colTypes, colCollations,
+			make_subqueryscan(root, generate_setop_tlist(colTypes, colCollations,
 												   flag,
 												   rtr->rtindex,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 												   true,
 												   subplan->targetlist,
 												   refnames_tlist),
@@ -333,14 +324,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		{
 			plan = (Plan *)
 				make_result(root,
-<<<<<<< HEAD
-							generate_setop_tlist(colTypes, flag,
-												 OUTER,
-=======
 							generate_setop_tlist(colTypes, colCollations,
 												 flag,
-												 0,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+												 OUTER,
 												 false,
 												 plan->targetlist,
 												 refnames_tlist),
@@ -840,17 +826,13 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 plan->targetlist,
 								 NIL,
 								 AGG_HASHED,
-<<<<<<< HEAD
-								 false, /* streaming */
-=======
 								 NULL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+								 false, /* streaming */
 								 list_length(groupList),
 								 extract_grouping_cols(groupList,
 													   plan->targetlist),
 								 extract_grouping_ops(groupList),
 								 numGroups,
-<<<<<<< HEAD
 								 /* GPDB_84_MERGE_FIXME: What would be
 								  * appropriate values for these extra
 								  * arguments? */
@@ -858,10 +840,7 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 0, /* input_grouping */
 								 0, /* grouping */
 								 0, /* rollupGSTimes */
-								 0,
 								 0, /* transSpace */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								 plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		*sortClauses = NIL;
@@ -1122,14 +1101,9 @@ generate_setop_tlist(List *colTypes, List *colCollations,
  * refnames_tlist: targetlist to take column names from
  *
  * The entries in the Append's targetlist should always be simple Vars;
-<<<<<<< HEAD
- * we just have to make sure they have the right datatypes and typmods.
+ * we just have to make sure they have the right datatypes/typmods/collations.
  * The Vars are always generated with varno OUTER (CDB/MPP change for
  * EXPLAIN; varno 0 was used in PostgreSQL).
-=======
- * we just have to make sure they have the right datatypes/typmods/collations.
- * The Vars are always generated with varno 0.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static List *
 generate_append_tlist(List *colTypes, List *colCollations,

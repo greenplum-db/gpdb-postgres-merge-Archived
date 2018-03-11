@@ -75,6 +75,11 @@ static Node *pull_up_simple_subquery(PlannerInfo *root, Node *jtnode,
 						RangeTblEntry *rte,
 						JoinExpr *lowest_outer_join,
 						AppendRelInfo *containing_appendrel);
+static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
+						   int parentRTindex, Query *setOpQuery,
+						   int childRToffset);
+static void make_setop_translation_list(Query *query, Index newvarno,
+							List **translated_vars);
 bool is_simple_subquery(PlannerInfo *root, Query *subquery);
 static bool is_safe_append_member(Query *subquery);
 static void replace_vars_in_jointree(Node *jtnode,
@@ -332,13 +337,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
-<<<<<<< HEAD
 				/* Any inserted joins get stacked onto j->rarg */
-=======
-				/* Pulled-up ANY/EXISTS quals can use those rels too */
-				child_rels = bms_add_members(child_rels, available_rels);
-				/* ... and any inserted joins get stacked onto j->rarg */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				j->quals = pull_up_sublinks_qual_recurse(root,
 														 j->quals,
 														 child_rels,
@@ -357,30 +356,16 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 												   available_rels);
 			if (subst && IsA(subst, JoinExpr))
 			{
-<<<<<<< HEAD
-				j = (JoinExpr *) subst;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				/* Yes; recursively process what we pulled up */
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
-<<<<<<< HEAD
 				/* Any inserted joins get stacked onto j->rarg */
-=======
-				/* Pulled-up ANY/EXISTS quals can use those rels too */
-				child_rels = bms_add_members(child_rels, available_rels);
-				/* ... and any inserted joins get stacked onto j->rarg */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				j->quals = pull_up_sublinks_qual_recurse(root,
 														 j->quals,
 														 child_rels,
 														 &j->rarg);
-<<<<<<< HEAD
-				/* Yes, insert the new join node into the join tree */
-=======
 				/* Now insert the new join node into the join tree */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				j->larg = *jtlink;
 				*jtlink = (Node *) j;
 				/* and return NULL representing constant TRUE */
@@ -430,21 +415,12 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 													   available_rels);
 				if (subst && IsA(subst, JoinExpr))
 				{
-<<<<<<< HEAD
 					j = (JoinExpr *) subst;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					/* Yes; recursively process what we pulled up */
 					j->rarg = pull_up_sublinks_jointree_recurse(root,
 																j->rarg,
 																&child_rels);
-<<<<<<< HEAD
 					/* Any inserted joins get stacked onto j->rarg */
-=======
-					/* Pulled-up ANY/EXISTS quals can use those rels too */
-					child_rels = bms_add_members(child_rels, available_rels);
-					/* ... and any inserted joins get stacked onto j->rarg */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					j->quals = pull_up_sublinks_qual_recurse(root,
 															 j->quals,
 															 child_rels,
@@ -1082,8 +1058,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	return (Node *) subquery->jointree;
 }
 
-<<<<<<< HEAD
-=======
+#if 0
 /*
  * pull_up_simple_union_all
  *		Pull up a single simple UNION ALL subquery.
@@ -1130,6 +1105,7 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 
 	return jtnode;
 }
+#endif
 
 /*
  * pull_up_union_leaf_queries -- recursive guts of pull_up_simple_union_all
@@ -1231,7 +1207,6 @@ make_setop_translation_list(Query *query, Index newvarno,
 
 	*translated_vars = vars;
 }
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * is_simple_subquery

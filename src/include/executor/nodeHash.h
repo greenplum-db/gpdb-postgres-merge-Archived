@@ -26,18 +26,12 @@ extern Node *MultiExecHash(HashState *node);
 extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
-<<<<<<< HEAD
-extern HashJoinTable ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOperators, uint64 operatorMemKB);
+extern HashJoinTable ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate,
+					bool keepNulls,
+					List *hashOperators, uint64 operatorMemKB);
 extern void ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable);
 extern bool ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 					struct TupleTableSlot *slot,
-=======
-extern HashJoinTable ExecHashTableCreate(Hash *node, List *hashOperators,
-					bool keepNulls);
-extern void ExecHashTableDestroy(HashJoinTable hashtable);
-extern void ExecHashTableInsert(HashJoinTable hashtable,
-					TupleTableSlot *slot,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					uint32 hashvalue);
 extern bool ExecHashGetHashValue(HashState *hashState, HashJoinTable hashtable,
 					 ExprContext *econtext,
@@ -50,18 +44,13 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 						  uint32 hashvalue,
 						  int *bucketno,
 						  int *batchno);
-<<<<<<< HEAD
-extern HashJoinTuple ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
+extern bool ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 				   ExprContext *econtext);
-extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
-=======
-extern bool ExecScanHashBucket(HashJoinState *hjstate, ExprContext *econtext);
-extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
-extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
+extern void ExecPrepHashTableForUnmatched(HashState *hashState, HashJoinState *hjstate);
+extern bool ExecScanHashTableForUnmatched(HashState *hashState, HashJoinState *hjstate,
 							  ExprContext *econtext);
-extern void ExecHashTableReset(HashJoinTable hashtable);
-extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
+extern void ExecHashTableResetMatchFlags(HashState *hashState, HashJoinTable hashtable);
 extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 						uint64 operatorMemKB,
 						int *numbuckets,

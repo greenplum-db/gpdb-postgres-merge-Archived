@@ -17,17 +17,13 @@
 #define HASHJOIN_H
 
 #include "fmgr.h"
-<<<<<<< HEAD
+#include "nodes/execnodes.h"
 #include "executor/execWorkfile.h"
 #include "cdb/cdbpublic.h"                 /* CdbExplain_Agg */
 #include "utils/workfile_mgr.h"
 
 struct StringInfoData;                  /* #include "lib/stringinfo.h" */
 
-=======
-#include "nodes/execnodes.h"
-#include "storage/buffile.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------------------------------------------------------
  *				hash-join hash table structures
@@ -206,7 +202,6 @@ typedef struct HashJoinTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
-<<<<<<< HEAD
 	MemoryContext bfCxt;		/* CDB */ /* context for temp buf file */
 
     HashJoinTableStats *stats;  /* statistics workarea for EXPLAIN ANALYZE */
@@ -214,9 +209,6 @@ typedef struct HashJoinTableData
 
     HashJoinState * hjstate; /* reference to the enclosing HashJoinState */
     bool first_pass; /* Is this the first pass (pre-rescan) */
-} HashJoinTableData;
-=======
 }	HashJoinTableData;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* HASHJOIN_H */

@@ -764,12 +764,7 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 		item_width = get_attavgwidth(RelationGetRelid(rel), i);
 		if (item_width <= 0)
 		{
-<<<<<<< HEAD
-			item_width = get_typavgwidth(att->atttypid,
-										 att->atttypmod);
-=======
 			item_width = get_typavgwidth(att->atttypid, att->atttypmod);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			Assert(item_width > 0);
 		}
 		if (attr_widths != NULL)

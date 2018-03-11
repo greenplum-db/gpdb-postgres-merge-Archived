@@ -1617,14 +1617,12 @@ process_implied_equality(PlannerInfo *root,
  * This overlaps the functionality of process_implied_equality(), but we
  * must return the RestrictInfo, not push it into the joininfo tree.
  *
-<<<<<<< HEAD
  * Note: this function will copy item1 and item2, but it is caller's
  * responsibility to make sure that the Relids parameters are fresh copies
  * not shared with other uses.
-=======
+ *
  * Note: we do not do initialize_mergeclause_eclasses() here.  It is
  * caller's responsibility that left_ec/right_ec be set as necessary.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 RestrictInfo *
 build_implied_join_equality(Oid opno,

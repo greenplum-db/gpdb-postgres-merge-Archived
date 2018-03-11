@@ -87,7 +87,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 								  result_relation, range_table);
 
 	/*
-<<<<<<< HEAD
 	 * for "update" and "delete" queries, add ctid of the result relation into
 	 * the target list so that the ctid will propagate through execution and
 	 * ExecutePlan() will be able to identify the right tuple to replace or
@@ -103,7 +102,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		Var 		*varSegid = NULL;
 		
 		varCtid = makeVar(result_relation, SelfItemPointerAttributeNumber,
-					  TIDOID, -1, 0);
+						  TIDOID, -1, InvalidOid, 0);
 
 		tleCtid = makeTargetEntry((Expr *) varCtid,
 							  list_length(tlist) + 1, 	/* resno */
@@ -113,19 +112,19 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		Oid			reloid,
 					vartypeid;
 		int32		type_mod;
+		Oid			type_coll;
 		
 		reloid = getrelid(result_relation, parse->rtable);
 		
-		get_atttypetypmod(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod);
+		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
 
-		varSegid = makeVar
-					(
-					result_relation,
-					GpSegmentIdAttributeNumber,
-					vartypeid,
-					type_mod,
-					0
-					);
+		varSegid = makeVar(result_relation,
+						   GpSegmentIdAttributeNumber,
+						   vartypeid,
+						   type_mod,
+						   type_coll,
+						   0
+			);
 
 		tleSegid = makeTargetEntry((Expr *) varSegid,
 							  list_length(tlist) + 2,	/* resno */
@@ -150,8 +149,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		tlist = supplement_simply_updatable_targetlist(range_table, tlist);
 
 	/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
 	 * rechecking.	See comments for PlanRowMark in plannodes.h.
@@ -495,6 +492,7 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 								   SelfItemPointerAttributeNumber,
 								   TIDOID,
 								   -1,
+								   InvalidOid,
 								   0);
 	TargetEntry *tleCtid = makeTargetEntry((Expr *) varCtid,
 										   list_length(tlist) + 1,   /* resno */
@@ -506,12 +504,15 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 	Oid         reloid 		= InvalidOid,
 				vartypeid 	= InvalidOid;
 	int32       type_mod 	= -1;
+	Oid			type_coll	= InvalidOid;
 	reloid = getrelid(varno, range_table);
-	get_atttypetypmod(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod);
+	get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber,
+						  &vartypeid, &type_mod, &type_coll);
 	Var         *varSegid = makeVar(varno,
 									GpSegmentIdAttributeNumber,
 									vartypeid,
 									type_mod,
+									type_coll,
 									0);
 	TargetEntry *tleSegid = makeTargetEntry((Expr *) varSegid,
 											list_length(tlist) + 1,   /* resno */
@@ -531,6 +532,7 @@ supplement_simply_updatable_targetlist(List *range_table, List *tlist)
 										   TableOidAttributeNumber,
 										   OIDOID,
 										   -1,
+										   InvalidOid,
 										   0);
 		TargetEntry *tleTableoid = makeTargetEntry((Expr *) varTableoid,
 												   list_length(tlist) + 1,  /* resno */

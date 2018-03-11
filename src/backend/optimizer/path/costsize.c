@@ -344,12 +344,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * the fraction of main-table tuples we will have to retrieve) and its
 	 * correlation to the main-table tuple order.
 	 */
-<<<<<<< HEAD
     index->num_leading_eq = 0;
-	OidFunctionCall8(index->amcostestimate,
-=======
 	OidFunctionCall9(index->amcostestimate,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					 PointerGetDatum(root),
 					 PointerGetDatum(index),
 					 PointerGetDatum(indexQuals),
@@ -1380,11 +1376,7 @@ cost_sort(Path *path, PlannerInfo *root,
 	double		input_bytes = relation_byte_size(tuples, width);
 	double		output_bytes;
 	double		output_tuples;
-<<<<<<< HEAD
-	long		work_mem_bytes = (long) global_work_mem(root);
-=======
-	long		sort_mem_bytes = sort_mem * 1024L;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	long		sort_mem_bytes = (long) global_work_mem(root);
 
 	if (!enable_sort)
 		startup_cost += disable_cost;
@@ -1669,9 +1661,9 @@ cost_agg(Path *path, PlannerInfo *root,
 
 		/* must be AGG_HASHED */
 		startup_cost = input_total_cost;
-<<<<<<< HEAD
-		startup_cost += cpu_operator_cost * input_tuples * numGroupCols;
-		startup_cost += cpu_operator_cost * input_tuples * numAggs;
+		startup_cost += aggcosts->transCost.startup;
+		startup_cost += aggcosts->transCost.per_tuple * input_tuples;
+		startup_cost += (cpu_operator_cost * numGroupCols) * input_tuples;
 
 		/* account for some disk I/O if we expect to spill */
 		if (hash_batches > 0)
@@ -1703,13 +1695,13 @@ cost_agg(Path *path, PlannerInfo *root,
 		if (!hash_streaming)
 		{
 			total_cost = startup_cost;
-			total_cost += cpu_operator_cost * numGroups * numAggs;
+			total_cost += aggcosts->finalCost * numGroups;
 			total_cost += cpu_tuple_cost * numGroups;
 		}
 		else
 		{
 			total_cost = startup_cost;
-			total_cost += cpu_operator_cost * spilled_groups * numAggs;
+			total_cost += aggcosts->finalCost * spilled_groups;
 			total_cost += cpu_tuple_cost * spilled_groups;
 		}
 
@@ -1718,14 +1710,6 @@ cost_agg(Path *path, PlannerInfo *root,
 			/* total gets charged the read-cost */
 			total_cost += seq_page_cost * (spilled_bytes / BLCKSZ);
 		}
-=======
-		startup_cost += aggcosts->transCost.startup;
-		startup_cost += aggcosts->transCost.per_tuple * input_tuples;
-		startup_cost += (cpu_operator_cost * numGroupCols) * input_tuples;
-		total_cost = startup_cost;
-		total_cost += aggcosts->finalCost * numGroups;
-		total_cost += cpu_tuple_cost * numGroups;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	path->startup_cost = startup_cost;
@@ -1885,7 +1869,7 @@ nestloop_inner_path_rows(PlannerInfo *root, Path *path)
 		result = 0;
 		foreach(l, ((MergeAppendPath *) path)->subpaths)
 		{
-			result += nestloop_inner_path_rows((Path *) lfirst(l));
+			result += nestloop_inner_path_rows(root, (Path *) lfirst(l));
 		}
 	}
 	else
@@ -3715,7 +3699,10 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	Assert(rte->rtekind == RTE_SUBQUERY);
 
 	/* Copy raw number of output rows from subplan */
-	rel->tuples = rel->subplan->plan_rows;
+	if (rel->onerow)
+		rel->tuples = 1;
+	else
+		rel->tuples = rel->subplan->plan_rows;
 
 	/*
 	 * Compute per-output-column width estimates by examining the subquery's

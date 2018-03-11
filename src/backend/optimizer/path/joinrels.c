@@ -32,15 +32,9 @@ static void make_rels_by_clauseless_joins(PlannerInfo *root,
 static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 static bool has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel);
 static bool is_dummy_rel(RelOptInfo *rel);
-<<<<<<< HEAD
 static void mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel);
 static bool restriction_is_constant_false(List *restrictlist,
-										  bool only_pushed_down);
-=======
-static void mark_dummy_rel(RelOptInfo *rel);
-static bool restriction_is_constant_false(List *restrictlist,
 							  bool only_pushed_down);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -632,17 +626,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	 *
 	 * Also, a provably constant-false join restriction typically means that
 	 * we can skip evaluating one or both sides of the join.  We do this by
-<<<<<<< HEAD
-	 * marking the appropriate rel as dummy.  For outer joins, a constant-false
-	 * restriction that is pushed down still means the whole join is dummy,
-	 * while a non-pushed-down one means that no inner rows will join so we
-	 * can treat the inner rel as dummy.
-=======
 	 * marking the appropriate rel as dummy.  For outer joins, a
 	 * constant-false restriction that is pushed down still means the whole
 	 * join is dummy, while a non-pushed-down one means that no inner rows
 	 * will join so we can treat the inner rel as dummy.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 *
 	 * We need only consider the jointypes that appear in join_info_list, plus
 	 * JOIN_INNER.
@@ -754,11 +741,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 				if (is_dummy_rel(rel1) || is_dummy_rel(rel2) ||
 					restriction_is_constant_false(restrictlist, false))
 				{
-<<<<<<< HEAD
 					mark_dummy_rel(root, joinrel);
-=======
-					mark_dummy_rel(joinrel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					break;
 				}
 				add_paths_to_joinrel(root, joinrel, rel1, rel2,
@@ -770,10 +753,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			}
 			break;
 		case JOIN_ANTI:
-<<<<<<< HEAD
 		case JOIN_LASJ_NOTIN:
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			if (is_dummy_rel(rel1) ||
 				restriction_is_constant_false(restrictlist, true))
 			{
@@ -1034,13 +1014,9 @@ mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
 	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
 	/* Set or update cheapest_total_path */
-<<<<<<< HEAD
 	set_cheapest(root, rel);
-=======
-	set_cheapest(rel);
 
 	MemoryContextSwitchTo(oldcontext);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
