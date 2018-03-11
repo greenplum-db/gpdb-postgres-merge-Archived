@@ -240,7 +240,6 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 	int64		size = 0;
 	Name		dbName = PG_GETARG_NAME(0);
 	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
-<<<<<<< HEAD
 						
 	size = calculate_database_size(dbOid);
 	
@@ -251,8 +250,6 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 		initStringInfo(&buffer);
 
 		appendStringInfo(&buffer, "select sum(pg_database_size('%s'))::int8 from gp_dist_random('gp_id');", NameStr(*dbName));
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		size += get_size_from_segDBs(buffer.data);
 	}
@@ -364,7 +361,6 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 	int64		size = 0;
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
-<<<<<<< HEAD
 
 	size = calculate_tablespace_size(tblspcOid);
 	
@@ -373,8 +369,6 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 		StringInfoData buffer;
 		
 		initStringInfo(&buffer);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		appendStringInfo(&buffer, "select sum(pg_tablespace_size('%s'))::int8 from gp_dist_random('gp_id');", NameStr(*tblspcName));
 

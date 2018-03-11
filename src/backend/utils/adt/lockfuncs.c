@@ -51,15 +51,12 @@ typedef struct
 {
 	LockData   *lockData;		/* state data from lmgr */
 	int			currIdx;		/* current PROCLOCK index */
-<<<<<<< HEAD
+	PredicateLockData *predLockData;	/* state data for pred locks */
+	int			predLockIdx;	/* current index for pred lock */
+
 	int			numSegLocks;	/* Total number of locks being reported back to client */
 	int			numsegresults;	/* If we dispatch to segDBs, the number of segresults */
 	struct pg_result **segresults;	/* pg_result for each segDB */
-
-=======
-	PredicateLockData *predLockData;	/* state data for pred locks */
-	int			predLockIdx;	/* current index for pred lock */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } PG_Lock_Status;
 
 
@@ -159,7 +156,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		mystatus->lockData = GetLockStatusData();
 		mystatus->currIdx = 0;
-<<<<<<< HEAD
+		mystatus->predLockData = GetPredicateLockStatusData();
+		mystatus->predLockIdx = 0;
+
 		mystatus->numSegLocks = 0;
 		mystatus->numsegresults = 0;
 		mystatus->segresults = NULL;
@@ -262,10 +261,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			 */
 			mystatus->segresults = cdb_pgresults.pg_results;
 		}
-=======
-		mystatus->predLockData = GetPredicateLockStatusData();
-		mystatus->predLockIdx = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -476,7 +471,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * This loop only executes on the masterDB and only in dispatch mode, because that
 	 * is the only time we dispatched to the segDBs.
 	 */
@@ -521,32 +515,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/*
 		 * Form tuple with appropriate data we got from the segDBs
-=======
-	 * Have returned all regular locks. Now start on the SIREAD predicate
-	 * locks.
-	 */
-	predLockData = mystatus->predLockData;
-	if (mystatus->predLockIdx < predLockData->nelements)
-	{
-		PredicateLockTargetType lockType;
-
-		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
-		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
-		Datum		values[14];
-		bool		nulls[14];
-		HeapTuple	tuple;
-		Datum		result;
-
-		mystatus->predLockIdx++;
-
-		/*
-		 * Form tuple with appropriate data.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 
-<<<<<<< HEAD
 		/*
 		 * For each column, extract out the value (which comes out in text).
 		 * Convert it to the appropriate datatype to match our tupledesc,
@@ -586,7 +558,36 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		{
 			nulls[i] = PQgetisnull(mystatus->segresults[whichresultset], whichrow, i);
 		}
-=======
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		result = HeapTupleGetDatum(tuple);
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+
+	/*
+	 * Have returned all regular locks. Now start on the SIREAD predicate
+	 * locks.
+	 */
+	predLockData = mystatus->predLockData;
+	if (mystatus->predLockIdx < predLockData->nelements)
+	{
+		PredicateLockTargetType lockType;
+
+		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
+		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
+		Datum		values[17];
+		bool		nulls[17];
+		HeapTuple	tuple;
+		Datum		result;
+
+		mystatus->predLockIdx++;
+
+		/*
+		 * Form tuple with appropriate data.
+		 */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+
 		/* lock type */
 		lockType = GET_PREDICATELOCKTARGETTAG_TYPE(*predTag);
 
@@ -626,14 +627,17 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 */
 		values[12] = CStringGetTextDatum("SIReadLock");
 		values[13] = BoolGetDatum(true);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
-		SRF_RETURN_NEXT(funcctx, result);
+		/*
+		 * GPDB_91_MERGE_FIXME: what to set these GPDB-specific fields to?
+		 * These commented-out values are copy-pasted from the code above
+		 * for normal locks.
+		 */
+		//values[14] = Int32GetDatum(proc->mppSessionId);
+		//values[15] = BoolGetDatum(proc->mppIsWriter);
+		//values[16] = Int32GetDatum(Gp_segment);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * if we dispatched to the segDBs, free up the memory holding the result sets.
 	 * Otherwise we might leak this memory each time we got called (does it automatically
@@ -648,8 +652,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		free(mystatus->segresults);
 	}
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	SRF_RETURN_DONE(funcctx);
 }
 

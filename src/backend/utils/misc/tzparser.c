@@ -125,16 +125,6 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 						 filename, lineno);
 		return false;
 	}
-<<<<<<< HEAD
-=======
-	tzentry->offset = strtol(offset, &offset_endptr, 10);
-	if (offset_endptr == offset || *offset_endptr != '\0')
-	{
-		GUC_check_errmsg("invalid number for time zone offset in time zone file \"%s\", line %d",
-						 filename, lineno);
-		return false;
-	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* We assume zone names don't begin with a digit or sign */
 	if (isdigit((unsigned char) *offset) || *offset == '+' || *offset == '-')
@@ -143,10 +133,8 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 		tzentry->offset = strtol(offset, &offset_endptr, 10);
 		if (offset_endptr == offset || *offset_endptr != '\0')
 		{
-			ereport(tz_elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid number for time zone offset in time zone file \"%s\", line %d",
-							filename, lineno)));
+			GUC_check_errmsg("invalid number for time zone offset in time zone file \"%s\", line %d",
+							 filename, lineno);
 			return false;
 		}
 
