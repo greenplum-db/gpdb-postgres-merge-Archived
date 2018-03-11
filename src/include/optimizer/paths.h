@@ -42,20 +42,9 @@ extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
  * indxpath.c
  *	  routines to generate index paths
  */
-<<<<<<< HEAD
-typedef enum
-{
-	/* Whether to use ScalarArrayOpExpr to build index qualifications */
-	SAOP_FORBID,				/* Do not use ScalarArrayOpExpr */
-	SAOP_ALLOW,					/* OK to use ScalarArrayOpExpr */
-	SAOP_REQUIRE				/* Require ScalarArrayOpExpr */
-} SaOpControl;
 
 extern void create_index_paths(PlannerInfo *root, RelOptInfo *rel,
                                List **pindexpathlist, List **pbitmappathlist);
-=======
-extern void create_index_paths(PlannerInfo *root, RelOptInfo *rel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
 						 RelOptInfo *outer_rel);

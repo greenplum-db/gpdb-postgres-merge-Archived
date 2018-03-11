@@ -99,8 +99,6 @@
 #define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
 #endif
 
-<<<<<<< HEAD
-=======
 /* upper limit for GUC variables measured in kilobytes of memory */
 /* note that various places assume the byte size fits in a "long" variable */
 #if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
@@ -119,7 +117,6 @@
  */
 #define MAX_BACKENDS	0x7fffff
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
 
@@ -188,25 +185,6 @@ static int	syslog_facility = LOG_LOCAL0;
 static int	syslog_facility = 0;
 #endif
 
-<<<<<<< HEAD
-static bool assign_session_replication_role(int newval, bool doit,
-								GucSource source);
-static const char *show_num_temp_buffers(void);
-static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
-static bool assign_debug_assertions(bool newval, bool doit, GucSource source);
-static bool assign_bonjour(bool newval, bool doit, GucSource source);
-static bool assign_ssl(bool newval, bool doit, GucSource source);
-static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
-static bool assign_log_stats(bool newval, bool doit, GucSource source);
-static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
-static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
-static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
-static const char *show_archive_command(void);
-static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
-static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
-static bool assign_tcp_keepalives_count(int newval, bool doit, GucSource source);
-static const char *assign_pgstat_temp_directory(const char *newval, bool doit, GucSource source);
-=======
 static void assign_syslog_facility(int newval, void *extra);
 static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
@@ -225,7 +203,6 @@ static const char *show_archive_command(void);
 static void assign_tcp_keepalives_idle(int newval, void *extra);
 static void assign_tcp_keepalives_interval(int newval, void *extra);
 static void assign_tcp_keepalives_count(int newval, void *extra);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
@@ -501,11 +478,7 @@ static char *timezone_string;
 static char *log_timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
-<<<<<<< HEAD
-=======
 static char *session_authorization_string;
-static char *custom_variable_classes;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -655,9 +628,10 @@ const char *const config_group_names[] =
 	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
 	/* COMPAT_OPTIONS_CLIENT */
 	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
-<<<<<<< HEAD
     /* COMPAT_OPTIONS_IGNORED */
     gettext_noop("Version and Platform Compatibility / Ignored"),
+	/* ERROR_HANDLING */
+	gettext_noop("Error Handling"),
     /* GP_ARRAY_CONFIGURATION */
     gettext_noop(PACKAGE_NAME " / Array Configuration"),
     /* GP_ARRAY_TUNING */
@@ -666,10 +640,6 @@ const char *const config_group_names[] =
     gettext_noop(PACKAGE_NAME " / Worker Process Identity"),
 	/* GP_ERROR_HANDLING */
 	gettext_noop("GPDB Error Handling"),
-=======
-	/* ERROR_HANDLING */
-	gettext_noop("Error Handling"),
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* PRESET_OPTIONS */
 	gettext_noop("Preset Options"),
 	/* CUSTOM_OPTIONS */
@@ -802,12 +772,8 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&enable_nestloop,
-<<<<<<< HEAD
-		false, NULL, NULL
-=======
-		true,
+		false,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"enable_mergejoin", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -815,12 +781,8 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&enable_mergejoin,
-<<<<<<< HEAD
-		false, NULL, NULL
-=======
-		true,
+		false,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"enable_hashjoin", PGC_USERSET, QUERY_TUNING_METHOD,
@@ -837,14 +799,9 @@ static struct config_bool ConfigureNamesBool[] =
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_bool,
-		false, NULL, NULL
-=======
-		&enable_geqo,
-		true,
+		false,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -886,8 +843,8 @@ static struct config_bool ConfigureNamesBool[] =
 		  GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&enableFsync,
-<<<<<<< HEAD
-		true, NULL, NULL
+		true,
+		NULL, NULL, NULL
 	},
 	{
 		{"synchronous_commit", PGC_USERSET, DEFUNCT_OPTIONS,
@@ -895,11 +852,8 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&XactSyncCommit,
-		true, NULL, NULL
-=======
 		true,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"ignore_checksum_failure", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1159,7 +1113,6 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&autovacuum_start_daemon,
-<<<<<<< HEAD
 		/*
 		 * GPDB: The default for autovacuum is intentionally 'off', even though it's 'on'
 		 * in PostgreSQL. We may want to revisit this later, but people had bad experience
@@ -1174,11 +1127,8 @@ static struct config_bool ConfigureNamesBool[] =
 		 * you're doing (e.g. it might be ok to let autovacuum handle small fact tables and
 		 * catalog tables, and schedule manual vacuums for all the big tables).
 		 */
-		false, NULL, NULL
-=======
-		true,
+		false,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1385,12 +1335,8 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&Logging_collector,
-<<<<<<< HEAD
-		true, NULL, NULL
-=======
-		false,
+		true,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"log_truncate_on_rotation", PGC_SIGHUP, LOGGING_WHERE,
@@ -1497,12 +1443,8 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_REPORT
 		},
 		&standard_conforming_strings,
-<<<<<<< HEAD
-		true, NULL, NULL
-=======
 		true,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1546,20 +1488,6 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
-		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
-			gettext_noop("Allows modifications of the structure of system tables."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&allowSystemTableMods,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
 			gettext_noop("Disables reading from system indexes."),
 			gettext_noop("It does not prevent updating the indexes, so it is safe "
@@ -1619,12 +1547,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_S | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&XLogArchiveTimeout,
-<<<<<<< HEAD
-		0, 0, INT_MAX / 2, NULL, NULL
-=======
-		0, 0, INT_MAX,
+		0, 0, INT_MAX / 2,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"post_auth_delay", PGC_BACKEND, DEVELOPER_OPTIONS,
@@ -1633,12 +1557,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_UNIT_S
 		},
 		&PostAuthDelay,
-<<<<<<< HEAD
-		0, 0, INT_MAX / 1000000, NULL, NULL
-=======
-		0, 0, INT_MAX,
+		0, 0, INT_MAX / 1000000,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"default_statistics_target", PGC_USERSET, STATS_ANALYZE,
@@ -1659,12 +1579,8 @@ static struct config_int ConfigureNamesInt[] =
 						 "this many items.")
 		},
 		&from_collapse_limit,
-<<<<<<< HEAD
-		20, 1, INT_MAX, NULL, NULL
-=======
-		8, 1, INT_MAX,
+		20, 1, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"join_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
@@ -1675,12 +1591,8 @@ static struct config_int ConfigureNamesInt[] =
 						 "list of no more than this many items would result.")
 		},
 		&join_collapse_limit,
-<<<<<<< HEAD
-		20, 1, INT_MAX, NULL, NULL
-=======
-		8, 1, INT_MAX,
+		20, 1, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"geqo_threshold", PGC_USERSET, DEFUNCT_OPTIONS,
@@ -1688,14 +1600,9 @@ static struct config_int ConfigureNamesInt[] =
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_int,
-		12, 2, INT_MAX, NULL, NULL
-=======
-		&geqo_threshold,
 		12, 2, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"geqo_effort", PGC_USERSET, DEFUNCT_OPTIONS,
@@ -1703,15 +1610,10 @@ static struct config_int ConfigureNamesInt[] =
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_int,
-		//DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT, NULL, NULL
-		0, 0, INT_MAX, NULL, NULL
-=======
-		&Geqo_effort,
-		DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT,
+		//DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT,
+		0, 0, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"geqo_pool_size", PGC_USERSET, DEFUNCT_OPTIONS,
@@ -1719,14 +1621,9 @@ static struct config_int ConfigureNamesInt[] =
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_int,
-		0, 0, INT_MAX, NULL, NULL
-=======
-		&Geqo_pool_size,
 		0, 0, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 	{
 		{"geqo_generations", PGC_USERSET, DEFUNCT_OPTIONS,
@@ -1734,14 +1631,9 @@ static struct config_int ConfigureNamesInt[] =
             NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_int,
-		0, 0, INT_MAX, NULL, NULL
-=======
-		&Geqo_generations,
 		0, 0, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1795,12 +1687,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxConnections,
-<<<<<<< HEAD
-		200, 10, MAX_MAX_BACKENDS, assign_maxconnections, NULL
-=======
-		100, 1, MAX_BACKENDS,
+		200, 10, MAX_BACKENDS,
 		check_maxconnections, assign_maxconnections, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1810,12 +1698,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-<<<<<<< HEAD
-		3, RESERVED_FTS_CONNECTIONS, INT_MAX / 4, NULL, NULL
-=======
-		3, 0, MAX_BACKENDS,
+		3, RESERVED_FTS_CONNECTIONS, MAX_BACKENDS,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	/*
@@ -1829,12 +1713,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&NBuffers,
-<<<<<<< HEAD
-		4096, 16, INT_MAX / 2, NULL, NULL
-=======
-		1024, 16, INT_MAX / 2,
+		4096, 16, INT_MAX / 2,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1896,12 +1776,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB | GUC_GPDB_ADDOPT
 		},
 		&work_mem,
-<<<<<<< HEAD
-        32768, 64, MAX_KILOBYTES, NULL, NULL
-=======
-		1024, 64, MAX_KILOBYTES,
+        32768, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -1911,12 +1787,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB | GUC_GPDB_ADDOPT
 		},
 		&maintenance_work_mem,
-<<<<<<< HEAD
-		65536, 1024, MAX_KILOBYTES, NULL, NULL
-=======
-		16384, 1024, MAX_KILOBYTES,
-		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		65536, 1024, MAX_KILOBYTES,
 	},
 
 	/*
@@ -2027,12 +1898,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_prepared_xacts,
-<<<<<<< HEAD
-		50, 1, 1000, NULL, NULL
-=======
-		0, 0, MAX_BACKENDS,
+		50, 1, MAX_BACKENDS,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 #ifdef LOCK_DEBUG
@@ -2110,10 +1977,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "objects will need to be locked at any one time.")
 		},
 		&max_locks_per_xact,
-<<<<<<< HEAD
-		128, 10, INT_MAX, NULL, NULL
-=======
-		64, 10, INT_MAX,
+		128, 10, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -2127,7 +1991,6 @@ static struct config_int ConfigureNamesInt[] =
 		&max_predicate_locks_per_xact,
 		64, 10, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -2137,12 +2000,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_S
 		},
 		&AuthenticationTimeout,
-<<<<<<< HEAD
-		60, 1, MAX_AUTHENTICATION_TIMEOUT, NULL, NULL
-=======
-		60, 1, 600,
-		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		60, 1, MAX_AUTHENTICATION_TIMEOUT,
 	},
 
 	{
@@ -2153,12 +2011,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_UNIT_S
 		},
 		&PreAuthDelay,
-<<<<<<< HEAD
-		0, 0, MAX_PRE_AUTH_DELAY, NULL, NULL
-=======
-		0, 0, 60,
+		0, 0, MAX_PRE_AUTH_DELAY,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -2178,12 +2032,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&CheckPointSegments,
-<<<<<<< HEAD
-		8, 1, INT_MAX, NULL, NULL
-=======
-		3, 1, INT_MAX,
+		8, 1, INT_MAX,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -2245,8 +2095,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
 		{"wal_sender_delay", PGC_SIGHUP, WAL_REPLICATION,
 			gettext_noop("WAL sender sleep time between WAL replications."),
 			NULL,
@@ -2258,10 +2106,10 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"replication_timeout", PGC_SIGHUP, WAL_REPLICATION,
-			gettext_noop("Sets the maximum time to wait for WAL replication."),
+		{"replication_timeout", PGC_SUSET, WAL_REPLICATION,
+			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
 			NULL,
-			GUC_UNIT_MS
+			GUC_UNIT_MS | GUC_SUPERUSER_ONLY
 		},
 		&replication_timeout,
 		60 * 1000, 0, INT_MAX,
@@ -2269,7 +2117,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{"commit_delay", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
@@ -2389,12 +2236,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB
 		},
 		&Log_RotationSize,
-<<<<<<< HEAD
-		0, 0, INT_MAX / 1024, NULL, NULL
-=======
-		10 * 1024, 0, INT_MAX / 1024,
+		0, 0, INT_MAX / 1024,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -2641,9 +2484,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&pgstat_track_activity_query_size,
-<<<<<<< HEAD
 		1024, 100, INT_MAX,
-		NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -2653,7 +2495,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&keep_wal_segments,
-		5, 0, INT_MAX, NULL, NULL
+		5, 0, INT_MAX,
+		NULL, NULL, NULL
 	},
 
 	{
@@ -2664,21 +2507,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_S
 		},
 		&wal_receiver_status_interval,
-		10, 0, INT_MAX / 1000, NULL, NULL
-	},
-
-	{
-		{"replication_timeout", PGC_SUSET, WAL_REPLICATION,
-			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
-			NULL,
-			GUC_UNIT_MS | GUC_SUPERUSER_ONLY
-		},
-		&replication_timeout,
-		60 * 1000, 0, INT_MAX, NULL, NULL
-=======
-		1024, 100, 102400,
+		10, 0, INT_MAX / 1000,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	/* End-of-list marker */
@@ -2758,24 +2588,19 @@ static struct config_real ConfigureNamesReal[] =
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-<<<<<<< HEAD
 		&defunct_double,
-		1.0, 0.0, 100.0, NULL, NULL
-=======
-		&Geqo_selection_bias,
 		DEFAULT_GEQO_SELECTION_BIAS,
 		MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS,
 		NULL, NULL, NULL
 	},
 	{
-		{"geqo_seed", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("GEQO: seed for random path selection."),
+		{"geqo_seed", PGC_USERSET, DEFUNCT_OPTIONS,
+			gettext_noop("Unused. Syntax check only for PostgreSQL compatibility."),
 			NULL
 		},
-		&Geqo_seed,
+		&defunct_double,
 		0.0, 0.0, 1.0,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -2879,12 +2704,8 @@ static struct config_string ConfigureNamesString[] =
 			GUC_NO_SHOW_ALL
 		},
 		&Log_line_prefix,
-<<<<<<< HEAD
-		"%m|%u|%d|%p|%I|%X|:-", NULL, NULL
-=======
-		"",
+		"%m|%u|%d|%p|%I|%X|:-",
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -3152,12 +2973,8 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&Log_filename,
-<<<<<<< HEAD
-		"gpdb-%Y-%m-%d_%H%M%S.csv", NULL, NULL
-=======
-		"postgresql-%Y-%m-%d_%H%M%S.log",
+		"gpdb-%Y-%m-%d_%H%M%S.csv",
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -3237,20 +3054,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-<<<<<<< HEAD
-=======
-		{"custom_variable_classes", PGC_SIGHUP, CUSTOM_OPTIONS,
-			gettext_noop("Sets the list of known custom variable classes."),
-			NULL,
-			GUC_LIST_INPUT | GUC_LIST_QUOTE
-		},
-		&custom_variable_classes,
-		NULL,
-		check_custom_variable_classes, NULL, NULL
-	},
-
-	{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's data directory."),
 			NULL,
@@ -3444,13 +3247,8 @@ static struct config_enum ConfigureNamesEnum[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&constraint_exclusion,
-<<<<<<< HEAD
 		CONSTRAINT_EXCLUSION_ON, constraint_exclusion_options,
-		NULL, NULL
-=======
-		CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -3598,12 +3396,8 @@ static struct config_enum ConfigureNamesEnum[] =
 			NULL
 		},
 		&wal_level,
-<<<<<<< HEAD
-		WAL_LEVEL_ARCHIVE, wal_level_options, NULL
-=======
-		WAL_LEVEL_MINIMAL, wal_level_options,
+		WAL_LEVEL_ARCHIVE, wal_level_options,
 		NULL, NULL, NULL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	},
 
 	{
@@ -5576,36 +5370,6 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
 	return retstr.data;
 }
 
-<<<<<<< HEAD
-/*
- * Call a GucStringAssignHook function, being careful to free the
- * "newval" string if the hook ereports.
- *
- * This is split out of set_config_option just to avoid the "volatile"
- * qualifiers that would otherwise have to be plastered all over.
- */
-static const char *
-call_string_assign_hook(GucStringAssignHook assign_hook,
-						char *newval, bool doit, GucSource source)
-{
-	const char *result = NULL;
-
-	PG_TRY();
-	{
-		result = (*assign_hook) (newval, doit, source);
-	}
-	PG_CATCH();
-	{
-		free(newval);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	return result;
-}
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * Sets option `name' to given value. The value should be a string
@@ -9055,7 +8819,6 @@ assign_session_replication_role(int newval, void *extra)
 		ResetPlanCache();
 }
 
-<<<<<<< HEAD
 /*
  * assign_hook and show_hook subroutines
  */
@@ -9146,12 +8909,8 @@ assign_wal_consistency_checking(const char *newval, bool doit, GucSource source)
 	return newval;
 }
 
-static const char *
-show_num_temp_buffers(void)
-=======
 static bool
 check_temp_buffers(int *newval, void **extra, GucSource source)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	/*
 	 * Once local buffers have been initialized, it's too late to change this.
@@ -9176,72 +8935,6 @@ check_phony_autocommit(bool *newval, void **extra, GucSource source)
 	return true;
 }
 
-<<<<<<< HEAD
-=======
-static bool
-check_custom_variable_classes(char **newval, void **extra, GucSource source)
-{
-	/*
-	 * Check syntax. newval must be a comma separated list of identifiers.
-	 * Whitespace is allowed but removed from the result.
-	 */
-	bool		hasSpaceAfterToken = false;
-	const char *cp = *newval;
-	int			symLen = 0;
-	char		c;
-	StringInfoData buf;
-
-	/* Default NULL is OK */
-	if (cp == NULL)
-		return true;
-
-	initStringInfo(&buf);
-	while ((c = *cp++) != '\0')
-	{
-		if (isspace((unsigned char) c))
-		{
-			if (symLen > 0)
-				hasSpaceAfterToken = true;
-			continue;
-		}
-
-		if (c == ',')
-		{
-			if (symLen > 0)		/* terminate identifier */
-			{
-				appendStringInfoChar(&buf, ',');
-				symLen = 0;
-			}
-			hasSpaceAfterToken = false;
-			continue;
-		}
-
-		if (hasSpaceAfterToken || !(isalnum((unsigned char) c) || c == '_'))
-		{
-			/*
-			 * Syntax error due to token following space after token or
-			 * non-identifier character
-			 */
-			pfree(buf.data);
-			return false;
-		}
-		appendStringInfoChar(&buf, c);
-		symLen++;
-	}
-
-	/* Remove stray ',' at end */
-	if (symLen == 0 && buf.len > 0)
-		buf.data[--buf.len] = '\0';
-
-	/* GUC wants the result malloc'd */
-	free(*newval);
-	*newval = guc_strdup(LOG, buf.data);
-
-	pfree(buf.data);
-	return true;
-}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static bool
 check_debug_assertions(bool *newval, void **extra, GucSource source)
 {
@@ -9295,28 +8988,14 @@ check_stage_log_stats(bool *newval, void **extra, GucSource source)
 static bool
 check_log_stats(bool *newval, void **extra, GucSource source)
 {
-<<<<<<< HEAD
-	if (newval &&
-		(log_parser_stats || log_planner_stats || log_executor_stats || log_dispatch_stats))
-	{
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot enable \"log_statement_stats\" when "
-						"\"log_parser_stats\", \"log_planner_stats\", "
-						"\"log_dispatch_stats\", "
-						"or \"log_executor_stats\" is true")));
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-			return false;
-=======
 	if (*newval &&
-		(log_parser_stats || log_planner_stats || log_executor_stats))
+		(log_parser_stats || log_planner_stats || log_executor_stats || log_dispatch_stats))
 	{
 		GUC_check_errdetail("Cannot enable \"log_statement_stats\" when "
 							"\"log_parser_stats\", \"log_planner_stats\", "
+							"\"log_dispatch_stats\", "
 							"or \"log_executor_stats\" is true.");
 		return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return true;
 }
