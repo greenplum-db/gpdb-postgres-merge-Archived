@@ -365,15 +365,14 @@ DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node
 DESCR("string representing an internal node tree");
 #define PGNODETREEOID	194
 
-DATA(insert OID = 114 (	json	   PGNSP PGUID -1 f b U f t \054 0 0 199 json_in json_out json_recv json_send - - - i x f 0 -1 0 _null_ _null_ ));
-DESCR("JSON content");
+DATA(insert OID = 114 ( json		   PGNSP PGUID -1 f b U f t \054 0 0 199 json_in json_out json_recv json_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 #define JSONOID 114
-DATA(insert OID = 199 (	_json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 199 ( _json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ ));
 
-DATA(insert OID = 195 (	complex	   PGNSP PGUID 16 f b N f t \054 0 0	196 complex_in complex_out complex_recv complex_send - - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 195 (	complex	   PGNSP PGUID 16 f b N f t \054 0 0	196 complex_in complex_out complex_recv complex_send - - - d p f 0 -1 0 0 _null_ _null_ ));
 DESCR("double-precision floating point complex number, 16-byte storage");
 #define COMPLEXOID 195
-DATA(insert OID = 196 (	_complex	   PGNSP PGUID -1 f b A f t \054 0 195 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 196 (	_complex	   PGNSP PGUID -1 f b A f t \054 0 195 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 
 /* OIDS 200 - 299 */
 
@@ -617,15 +616,15 @@ DATA(insert OID = 2970 ( txid_snapshot	PGNSP PGUID -1 f b U f t \054 0 0 2949 tx
 DESCR("txid snapshot");
 DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b A f t \054 0 2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 
-DATA(insert OID = 3300 (	gpaotid	   PGNSP PGUID 6 f b N f t \054 0	0 3301 gpaotidin gpaotidout gpaotidrecv gpaotidsend - - - s p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3300 (	gpaotid	   PGNSP PGUID 6 f b N f t \054 0	0 3301 gpaotidin gpaotidout gpaotidrecv gpaotidsend - - - s p f 0 -1 0 0 _null_ _null_ ));
 DESCR("(segment file num, row number), logical location of append-only tuple");
 #define AOTIDOID	3300
-DATA(insert OID = 3301 (	_gpaotid	   PGNSP PGUID -1 f b A f t \054 0	3300 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3301 (	_gpaotid	   PGNSP PGUID -1 f b A f t \054 0	3300 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 
-DATA(insert OID = 3310 (	gpxlogloc	   PGNSP PGUID 8 f b N f t \054 0	0 3311 gpxloglocin gpxloglocout gpxloglocrecv gpxloglocsend - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3310 (	gpxlogloc	   PGNSP PGUID 8 f b N f t \054 0	0 3311 gpxloglocin gpxloglocout gpxloglocrecv gpxloglocsend - - - i p f 0 -1 0 0 _null_ _null_ ));
 DESCR("(h/h) -- the hexadecimal xlogid and xrecoff of an XLOG location");
 #define XLOGLOCOID	3310
-DATA(insert OID = 3311 (	_gpxlogloc	   PGNSP PGUID -1 f b A f t \054 0	3310 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3311 (	_gpxlogloc	   PGNSP PGUID -1 f b A f t \054 0	3310 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
 
 /*
  * pseudo-types
@@ -669,7 +668,7 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p P f t \054 0 0 0 anyenum_in
 DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_handler_in fdw_handler_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
 #define FDW_HANDLEROID		3115
 
-DATA(insert OID = 3053 ( anytable		PGNSP PGUID -1 f p P f t \054 0	0 0 anytable_in anytable_out - - - - - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3053 ( anytable		PGNSP PGUID -1 f p P f t \054 0	0 0 anytable_in anytable_out - - - - - d x f 0 -1 0 0 _null_ _null_ ));
 DESCR("Represents a generic TABLE value expression");
 #define ANYTABLEOID     3053
 
