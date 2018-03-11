@@ -108,15 +108,6 @@ extern void RelationCacheInitFilePreInvalidate(void);
 extern void RelationCacheInitFilePostInvalidate(void);
 extern void RelationCacheInitFileRemove(void);
 
-extern void IndexSupportInitialize(oidvector *indclass,
-					   Oid *indexOperator,
-					   RegProcedure *indexSupport,
-					   Oid *opFamily,
-					   Oid *opcInType,
-					   StrategyNumber maxStrategyNumber,
-					   StrategyNumber maxSupportNumber,
-					   AttrNumber maxAttributeNumber);
-
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;
 

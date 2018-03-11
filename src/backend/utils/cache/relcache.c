@@ -866,26 +866,8 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-<<<<<<< HEAD
-	relation->rd_istemp = relation->rd_rel->relistemp;
-	if (relation->rd_istemp)
-		relation->rd_islocaltemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
-	else
-		relation->rd_islocaltemp = false;
 	relation->rd_issyscat = (strncmp(relation->rd_rel->relname.data, "pg_", 3) == 0);
 
-	/*
-	 * CDB: On QEs, temp relations must use shared buffer cache so data
-	 * will be visible to all segmates.  On QD, sequence objects must
-	 * use shared buffer cache so data will be visible to sequence server.
-	 */
-	if (relation->rd_istemp &&
-		relation->rd_rel->relkind != RELKIND_SEQUENCE &&
-		Gp_role != GP_ROLE_EXECUTE)
-		relation->rd_isLocalBuf = true;
-	else
-		relation->rd_isLocalBuf = false;
-=======
 	switch (relation->rd_rel->relpersistence)
 	{
 		case RELPERSISTENCE_UNLOGGED:
@@ -912,7 +894,6 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 				 relation->rd_rel->relpersistence);
 			break;
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -1444,14 +1425,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_isnailed = true;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-<<<<<<< HEAD
-	relation->rd_istemp = false;
-	relation->rd_islocaltemp = false;
-	relation->rd_issyscat = (strncmp(relationName, "pg_", 3) == 0);	/* GP */
-    relation->rd_isLocalBuf = false;    /*CDB*/
-=======
 	relation->rd_backend = InvalidBackendId;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	relation->rd_issyscat = (strncmp(relationName, "pg_", 3) == 0);	/* GP */
 
 	/*
 	 * initialize relation tuple form
@@ -1476,16 +1451,11 @@ formrdesc(const char *relationName, Oid relationReltype,
 	if (isshared)
 		relation->rd_rel->reltablespace = GLOBALTABLESPACE_OID;
 
-<<<<<<< HEAD
-	relation->rd_rel->relpages = 0;
-	relation->rd_rel->reltuples = 0;
-=======
 	/* formrdesc is used only for permanent relations */
 	relation->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
-	relation->rd_rel->relpages = 1;
-	relation->rd_rel->reltuples = 1;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	relation->rd_rel->relpages = 0;
+	relation->rd_rel->reltuples = 0;
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relstorage = RELSTORAGE_HEAP;
 	relation->rd_rel->relhasoids = hasoids;
@@ -2678,28 +2648,9 @@ RelationBuildLocalRelation(const char *relname,
 	/* must flag that we have rels created in this transaction */
 	need_eoxact_work = true;
 
-<<<<<<< HEAD
-	/* it is temporary if and only if it is in my temp-table namespace */
-	rel->rd_istemp = isTempOrToastNamespace(relnamespace);
-	rel->rd_islocaltemp = rel->rd_istemp;
-
 	/* is it a system catalog? */
 	rel->rd_issyscat = (strncmp(relname, "pg_", 3) == 0);
 
-	/*
-	 * CDB: On QEs, temp relations must use shared buffer cache so data
-	 * will be visible to all segmates.  On QD, sequence objects must
-	 * use shared buffer cache so data will be visible to sequence server.
-	 */
-	if (rel->rd_istemp &&
-		relkind != RELKIND_SEQUENCE &&
-		Gp_role != GP_ROLE_EXECUTE)
-		rel->rd_isLocalBuf = true;
-	else
-		rel->rd_isLocalBuf = false;
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
 	 * partly to copy it into the cache context, and partly because the new
@@ -2792,7 +2743,7 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_rel->relfilenode = relid;
 		else
 		{
-			rel->rd_rel->relfilenode = GetNewRelFileNode(reltablespace, NULL);
+			rel->rd_rel->relfilenode = GetNewRelFileNode(reltablespace, NULL, relpersistence);
 			if (Gp_role == GP_ROLE_EXECUTE)
 				AdvanceObjectId(relid);
 		}
@@ -2903,9 +2854,11 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 		classform->relfilenode = newrelfilenode;
 
 	/* These changes are safe even for a mapped relation */
-<<<<<<< HEAD
-	classform->relpages = 0;	/* it's empty until further notice */
-	classform->reltuples = 0;
+	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
+	{
+		classform->relpages = 0;	/* it's empty until further notice */
+		classform->reltuples = 0;
+	}
 	if (should_have_valid_relfrozenxid(relation->rd_rel->relkind,
 									   relation->rd_rel->relstorage))
 	{
@@ -2915,14 +2868,6 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	{
 		classform->relfrozenxid = InvalidTransactionId;
 	}
-=======
-	if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-	{
-		classform->relpages = 0;	/* it's empty until further notice */
-		classform->reltuples = 0;
-	}
-	classform->relfrozenxid = freezeXid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);

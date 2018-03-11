@@ -204,7 +204,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 	if (RelationUsesLocalBuffers(reln))
 	{
 		/* see comments in ReadBufferExtended */
-		if (reln->rd_isLocalBuf && RELATION_IS_OTHER_TEMP(reln))
+		if (RELATION_IS_OTHER_TEMP(reln))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("cannot access temporary tables of other sessions")));
@@ -309,7 +309,7 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 	 * likely to get wrong data since we have no visibility into the owning
 	 * session's local buffers.
 	 */
-	if (reln->rd_isLocalBuf && RELATION_IS_OTHER_TEMP(reln))
+	if (RelationUsesLocalBuffers(reln) && RELATION_IS_OTHER_TEMP(reln))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary tables of other sessions")));

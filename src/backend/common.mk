@@ -40,14 +40,15 @@ $(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 $(SUBDIRS:%=%-recursive):
 	$(MAKE) -C $(subst -recursive,,$@) all
 
-$(call recurse,clean,unittest-check)
+$(call recurse,clean)
 clean: clean-local
 clean-local:
 	rm -f $(subsysfilename) $(OBJS)
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test clean; fi
 
-.PHONY : unittest-check
-unittest-check:
+$(call recurse,unittest-check)
+unittest-check: unittest-check-local
+unittest-check-local:
 	@if [ -d $(CURDIR)/test ]; then $(MAKE) -C $(CURDIR)/test check; fi
 
 $(call recurse,coverage)
