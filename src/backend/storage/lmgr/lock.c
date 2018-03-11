@@ -279,12 +279,8 @@ static uint32 proclock_hash(const void *key, Size keysize);
 void RemoveLocalLock(LOCALLOCK *locallock);
 static void GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner);
 static void WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner);
-<<<<<<< HEAD
 static void ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock);
 static void LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent);
-=======
-static void ReleaseLockForOwner(LOCALLOCK *locallock, ResourceOwner owner);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 			PROCLOCK *proclock, LockMethod lockMethodTable);
 static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
@@ -1726,31 +1722,6 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 }
 
 /*
- * LockReleaseSession -- Release all session locks of the specified lock method
- *		that are held by the current process.
- */
-void
-LockReleaseSession(LOCKMETHODID lockmethodid)
-{
-	HASH_SEQ_STATUS status;
-	LOCALLOCK  *locallock;
-
-	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
-		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
-
-	hash_seq_init(&status, LockMethodLocalHash);
-
-	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
-	{
-		/* Ignore items that are not of the specified lock method */
-		if (LOCALLOCK_LOCKMETHOD(*locallock) != lockmethodid)
-			continue;
-
-		ReleaseLockForOwner(locallock, NULL);
-	}
-}
-
-/*
  * LockReleaseAll -- Release all locks of the specified lock method that
  *		are held by the current process.
  *
@@ -1939,6 +1910,31 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 }
 
 /*
+ * LockReleaseSession -- Release all session locks of the specified lock method
+ *		that are held by the current process.
+ */
+void
+LockReleaseSession(LOCKMETHODID lockmethodid)
+{
+	HASH_SEQ_STATUS status;
+	LOCALLOCK  *locallock;
+
+	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
+
+	hash_seq_init(&status, LockMethodLocalHash);
+
+	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
+	{
+		/* Ignore items that are not of the specified lock method */
+		if (LOCALLOCK_LOCKMETHOD(*locallock) != lockmethodid)
+			continue;
+
+		ReleaseLockIfHeld(locallock, true);
+	}
+}
+
+/*
  * LockReleaseCurrentOwner
  *		Release all locks belonging to CurrentResourceOwner
  *
@@ -1950,7 +1946,6 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 void
 LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 {
-<<<<<<< HEAD
 	if (locallocks == NULL)
 	{
 		HASH_SEQ_STATUS status;
@@ -1989,10 +1984,6 @@ ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock)
 	ResourceOwner owner;
 	LOCALLOCKOWNER *lockOwners;
 	int			i;
-=======
-	HASH_SEQ_STATUS status;
-	LOCALLOCK  *locallock;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Identify owner for lock (must match LockRelease!) */
 	if (sessionLock)
@@ -2004,31 +1995,6 @@ ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock)
 	lockOwners = locallock->lockOwners;
 	for (i = locallock->numLockOwners - 1; i >= 0; i--)
 	{
-<<<<<<< HEAD
-=======
-		/* Ignore items that must be nontransactional */
-		if (!LockMethods[LOCALLOCK_LOCKMETHOD(*locallock)]->transactional)
-			continue;
-
-		ReleaseLockForOwner(locallock, CurrentResourceOwner);
-	}
-}
-
-/*
- * Subroutine to release a lock belonging to the 'owner' if found.
- * 'owner' can be NULL to release a session lock.
- */
-static void
-ReleaseLockForOwner(LOCALLOCK *locallock, ResourceOwner owner)
-{
-	int			i;
-	LOCALLOCKOWNER *lockOwners;
-
-	/* Scan to see if there are any locks belonging to the owner */
-	lockOwners = locallock->lockOwners;
-	for (i = locallock->numLockOwners - 1; i >= 0; i--)
-	{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		if (lockOwners[i].owner == owner)
 		{
 			Assert(lockOwners[i].nLocks > 0);
@@ -2041,11 +2007,8 @@ ReleaseLockForOwner(LOCALLOCK *locallock, ResourceOwner owner)
 				locallock->nLocks -= lockOwners[i].nLocks;
 				/* compact out unused slot */
 				locallock->numLockOwners--;
-<<<<<<< HEAD
 				if (owner != NULL)
 					ResourceOwnerForgetLock(owner, locallock);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				if (i < locallock->numLockOwners)
 					lockOwners[i] = lockOwners[locallock->numLockOwners];
 			}
@@ -2057,13 +2020,8 @@ ReleaseLockForOwner(LOCALLOCK *locallock, ResourceOwner owner)
 				locallock->nLocks = 1;
 				if (!LockRelease(&locallock->tag.lock,
 								 locallock->tag.mode,
-<<<<<<< HEAD
 								 sessionLock))
 					elog(WARNING, "ReleaseLockIfHeld: failed??");
-=======
-								 owner == NULL))
-					elog(WARNING, "ReleaseLockForOwner: failed??");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			break;
 		}

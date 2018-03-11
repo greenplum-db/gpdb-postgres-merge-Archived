@@ -1294,24 +1294,15 @@ FileClose(File file)
 		 * If we get an error, as could happen within the ereport/elog calls,
 		 * we'll come right back here during transaction abort.  Reset the
 		 * flag to ensure that we can't get into an infinite loop.  This code
-<<<<<<< HEAD
-		 * is arranged to ensure that the worst-case consequence is failing
-		 * to emit log message(s), not failing to attempt the unlink.
-=======
 		 * is arranged to ensure that the worst-case consequence is failing to
 		 * emit log message(s), not failing to attempt the unlink.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		vfdP->fdstate &= ~FD_TEMPORARY;
 
 		if (log_temp_files >= 0)
 		{
 			struct stat filestats;
-<<<<<<< HEAD
-			int		stat_errno;
-=======
 			int			stat_errno;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			/* first try the stat() */
 			if (stat(vfdP->fileName, &filestats))

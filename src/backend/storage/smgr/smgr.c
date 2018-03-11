@@ -283,7 +283,6 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  *		already because we are in a WAL replay sequence.
  */
 void
-<<<<<<< HEAD
 smgrcreate_ao(RelFileNode rnode, int32 segmentFileNum, bool isRedo)
 {
 	mdcreate_ao(rnode, segmentFileNum, isRedo);
@@ -291,28 +290,18 @@ smgrcreate_ao(RelFileNode rnode, int32 segmentFileNum, bool isRedo)
 
 
 void
-smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isTemp, bool isRedo)
-{
-	RelFileNode rnode = reln->smgr_rnode;
-=======
 smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
-	int			which = reln->smgr_which;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Close the fork */
 	mdclose(reln, forknum);
 
-<<<<<<< HEAD
-	DropRelFileNodeBuffers(rnode, forknum, isTemp, 0);
-=======
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
 	DropRelFileNodeBuffers(rnode, forknum, 0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -355,12 +344,7 @@ void
 smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   char *buffer, bool skipFsync)
 {
-<<<<<<< HEAD
-	mdextend(reln, forknum, blocknum, buffer, isTemp);
-=======
-	(*(smgrsw[reln->smgr_which].smgr_extend)) (reln, forknum, blocknum,
-											   buffer, skipFsync);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	mdextend(reln, forknum, blocknum, buffer, skipFsync);
 }
 
 /*
@@ -406,12 +390,7 @@ void
 smgrwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  char *buffer, bool skipFsync)
 {
-<<<<<<< HEAD
-		mdwrite(reln, forknum, blocknum, buffer, isTemp);
-=======
-	(*(smgrsw[reln->smgr_which].smgr_write)) (reln, forknum, blocknum,
-											  buffer, skipFsync);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	mdwrite(reln, forknum, blocknum, buffer, skipFsync);
 }
 
 /*
@@ -431,22 +410,13 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
  * The truncation is done immediately, so this can't be rolled back.
  */
 void
-<<<<<<< HEAD
-smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
-			 bool isLocalBuf)
-=======
 smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	/*
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
 	 */
-<<<<<<< HEAD
-	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, isLocalBuf, nblocks);
-=======
 	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, nblocks);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
@@ -463,12 +433,8 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	/*
 	 * Do the truncation.
 	 */
-<<<<<<< HEAD
 	// GPDB_84_MERGE_FIXME: is allowedNotFound = false correct here?
-	mdtruncate(reln, forknum, nblocks, isLocalBuf, false /* allowedNotFound */);
-=======
-	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, forknum, nblocks);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	mdtruncate(reln, forknum, nblocks, false /* allowedNotFound */);
 }
 
 /*

@@ -3,11 +3,7 @@
  * walreceiver.h
  *	  Exports from replication/walreceiverfuncs.c.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 2010-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * src/include/replication/walreceiver.h
  *
@@ -22,10 +18,7 @@
 #include "utils/builtins.h"
 #include "pgtime.h"
 
-<<<<<<< HEAD
-=======
 extern bool am_walreceiver;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 extern int	wal_receiver_status_interval;
 extern bool hot_standby_feedback;
 
@@ -106,26 +99,11 @@ typedef struct
 extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
-<<<<<<< HEAD
 bool walrcv_connect(char *conninfo, XLogRecPtr startpoint);
 bool walrcv_receive(int timeout, unsigned char *type,
 					char **buffer, int *len);
 void walrcv_send(const char *buffer, int nbytes);
 void walrcv_disconnect(void);
-=======
-typedef bool (*walrcv_connect_type) (char *conninfo, XLogRecPtr startpoint);
-extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
-
-typedef bool (*walrcv_receive_type) (int timeout, unsigned char *type,
-												 char **buffer, int *len);
-extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
-
-typedef void (*walrcv_send_type) (const char *buffer, int nbytes);
-extern PGDLLIMPORT walrcv_send_type walrcv_send;
-
-typedef void (*walrcv_disconnect_type) (void);
-extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void);

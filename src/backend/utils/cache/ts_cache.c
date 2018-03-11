@@ -612,22 +612,17 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 		 * present in the current database.  We issue a NOTICE instead.
 		 */
 		if (!OidIsValid(cfgId))
-<<<<<<< HEAD
 		{
-			if (source == PGC_S_TEST && !doit)
+			if (source == PGC_S_TEST)
 			{
 				ereport(NOTICE,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("text search configuration \"%s\" does not exist",
-								newval)));
-				return newval;
+						 errmsg("text search configuration \"%s\" does not exist", *newval)));
+				return true;
 			}
 			else
-				return NULL;
+				return false;
 		}
-=======
-			return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * Modify the actually stored value to be fully qualified, to ensure

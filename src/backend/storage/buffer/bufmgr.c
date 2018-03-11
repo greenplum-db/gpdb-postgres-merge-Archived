@@ -303,7 +303,6 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
 
 	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(reln);
-	Assert(RelFileNodeEquals(reln->rd_node, reln->rd_smgr->smgr_rnode));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -421,9 +420,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			/* Just need to update stats before we exit */
 //			pgstat_count_buffer_hit(smgr);
 			*hit = true;
-<<<<<<< HEAD
-			goto done;
-=======
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
@@ -437,7 +433,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  found);
 
 			return BufferDescriptorGetBuffer(bufHdr);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		/*
@@ -511,12 +506,8 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
-<<<<<<< HEAD
 		/* don't set checksum for all-zero page */
-		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, isLocalBuf);
-=======
 		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else
 	{
@@ -565,7 +556,6 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		TerminateBufferIO(bufHdr, false, BM_VALID);
 	}
 
-	done:
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
 
@@ -2541,7 +2531,7 @@ MarkBufferDirtyHint(Buffer buffer, Relation relation)
 		 * included when we call XLogInsert() since the value changes
 		 * dynamically.
 		 */
-		if (DataChecksumsEnabled())
+		if (DataChecksumsEnabled() && (bufHdr->flags & BM_PERMANENT))
 		{
 			/*
 			 * If we're in recovery we cannot dirty a page because of a hint.
@@ -2579,10 +2569,7 @@ MarkBufferDirtyHint(Buffer buffer, Relation relation)
 			Assert(MyProc);
 			saved_inCommit = MyProc->inCommit;
 			MyProc->inCommit = true;
-			if (!relation->rd_istemp)
-			{
-				lsn = XLogSaveBufferForHint(buffer, relation);
-			}
+			lsn = XLogSaveBufferForHint(buffer, relation);
 		}
 
 		LockBufHdr(bufHdr);

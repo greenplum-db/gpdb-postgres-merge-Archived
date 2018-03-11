@@ -294,32 +294,6 @@ PostmasterIsAlive(bool amDirectChild)
 		 * init.  This can occur on BSD and MacOS systems if a debugger has
 		 * been attached.  We fall through to the less-reliable kill() method.
 		 */
-<<<<<<< HEAD
-#ifdef __darwin__
-		/*
-		 * When attached w/gdb on OSX, gdb becomes parent of debugged process!
-		 * If we are direct child of postmaster and end up as child of
-		 * init, the postmaster musta died. This, of course, fails to detect
-		 * death of postmaster while this process is attached to gdb - but
-		 * that's easier to deal w/than being difficult to use gdb in the
-		 * normal case.
-		 */
-		return(getppid() != 1 /* init's pid */);
-#else  /* __darwin__ */
-		return (getppid() == PostmasterPid);
-#endif /* __darwin__ */
-	}
-	else
-	{
-		/*
-		 * Use kill() to see if the postmaster is still alive.	This can
-		 * sometimes give a false positive result, since the postmaster's PID
-		 * may get recycled, but it is good enough for existing uses by
-		 * indirect children.
-		 */
-		return (kill(PostmasterPid, 0) == 0);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*

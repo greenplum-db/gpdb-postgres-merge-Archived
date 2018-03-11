@@ -201,16 +201,14 @@ NumLWLocks(void)
 	/* async.c needs one per Async buffer */
 	numLocks += NUM_ASYNC_BUFFERS;
 
-<<<<<<< HEAD
+	/* predicate.c needs one per old serializable xid buffer */
+	numLocks += NUM_OLDSERXID_BUFFERS;
+
 	/* cdbdistributedlog.c needs one per DistributedLog buffer */
 	numLocks += NUM_DISTRIBUTEDLOG_BUFFERS;
 
 	/* sharedsnapshot.c needs one per shared snapshot slot */
 	numLocks += NUM_SHARED_SNAPSHOT_SLOTS;
-=======
-	/* predicate.c needs one per old serializable xid buffer */
-	numLocks += NUM_OLDSERXID_BUFFERS;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility

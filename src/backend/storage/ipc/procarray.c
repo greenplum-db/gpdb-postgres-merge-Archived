@@ -1266,16 +1266,14 @@ GetLocalOldestXmin(bool allDbs, bool ignoreVacuum)
 	{
 		volatile PGPROC *proc = arrayP->procs[index];
 
-<<<<<<< HEAD
-		if (allDbs || proc->databaseId == MyDatabaseId)
-=======
+#if 0
 		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
 			continue;
+#endif
 
 		if (allDbs ||
 			proc->databaseId == MyDatabaseId ||
 			proc->databaseId == 0)		/* include WalSender */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
@@ -2383,7 +2381,7 @@ GetSnapshotData(Snapshot snapshot)
 		 * each of these assignments is itself assumed to be atomic. */
 		MyProc->xmin = TransactionXmin = xmin;
 	}
-	if (IsXactIsoLevelSerializable)
+	if (IsolationUsesXactSnapshot())
 	{
 		MyProc->serializableIsoLevel = true;
 

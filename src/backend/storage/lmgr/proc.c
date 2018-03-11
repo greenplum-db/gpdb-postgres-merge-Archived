@@ -43,13 +43,9 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
-<<<<<<< HEAD
 #include "postmaster/fts.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
-=======
-#include "replication/syncrep.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "storage/sinval.h"
@@ -228,10 +224,8 @@ InitProcGlobal(void)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
 		InitSharedLatch(&(procs[i].procLatch));
-
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 		ProcGlobal->freeProcs = &procs[i];
-		InitSharedLatch(&procs[i].waitLatch);
 	}
 	ProcGlobal->procs = procs;
 	ProcGlobal->numFreeProcs = MaxConnections;
@@ -253,7 +247,6 @@ InitProcGlobal(void)
 		InitSharedLatch(&(procs[i].procLatch));
 		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 		ProcGlobal->autovacFreeProcs = &procs[i];
-		InitSharedLatch(&procs[i].waitLatch);
 	}
 
 	/*
@@ -264,11 +257,7 @@ InitProcGlobal(void)
 	{
 		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
 		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
-<<<<<<< HEAD
 		InitSharedLatch(&(AuxiliaryProcs[i].procLatch));
-=======
-		InitSharedLatch(&procs[i].waitLatch);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* Create ProcStructLock spinlock, too */
@@ -376,12 +365,8 @@ InitProcess(void)
 	 * for ftsProber, SeqServer etc who call InitProcess().
 	 * But MyPMChildSlot helps to get away with it.
 	 */
-<<<<<<< HEAD
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
 		&& MyPMChildSlot > 0)
-=======
-	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess())
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		MarkPostmasterChildActive();
 
 	/*
@@ -416,7 +401,6 @@ InitProcess(void)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 	MyProc->recoveryConflictPending = false;
 
-<<<<<<< HEAD
     /* 
      * mppLocalProcessSerial uniquely identifies this backend process among
      * all those that our parent postmaster process creates over its lifetime. 
@@ -445,24 +429,17 @@ InitProcess(void)
 		MyProc->mppIsWriter = true;
 	}
     
-	/* Initialize fields for sync rep */
-=======
 	/* Initialise for sync rep */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	MyProc->waitLSN.xlogid = 0;
 	MyProc->waitLSN.xrecoff = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
-<<<<<<< HEAD
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
 	 * Note that there's no particular need to do ResetLatch here.
 	 */
 	OwnLatch(&MyProc->procLatch);
-=======
-	OwnLatch((Latch *) &MyProc->waitLatch);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
