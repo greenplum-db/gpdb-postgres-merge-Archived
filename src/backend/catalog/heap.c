@@ -1440,38 +1440,12 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (!OidIsValid(relid) && Gp_role != GP_ROLE_EXECUTE)
 	{
-<<<<<<< HEAD
 		if (IsBootstrapProcessingMode())
 			relid = GetNewOid(pg_class_desc);
 		else if (relkind == RELKIND_SEQUENCE)
 			relid = GetNewSequenceRelationOid(pg_class_desc);
 		else
 			relid = GetNewOid(pg_class_desc);
-=======
-		/*
-		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
-		 * supplied.
-		 */
-		if (IsBinaryUpgrade &&
-			OidIsValid(binary_upgrade_next_heap_pg_class_oid) &&
-			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE ||
-			 relkind == RELKIND_FOREIGN_TABLE))
-		{
-			relid = binary_upgrade_next_heap_pg_class_oid;
-			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
-		}
-		else if (IsBinaryUpgrade &&
-				 OidIsValid(binary_upgrade_next_toast_pg_class_oid) &&
-				 relkind == RELKIND_TOASTVALUE)
-		{
-			relid = binary_upgrade_next_toast_pg_class_oid;
-			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
-		}
-		else
-			relid = GetNewRelFileNode(reltablespace, pg_class_desc,
-									  relpersistence);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*
@@ -1695,8 +1669,6 @@ heap_create_with_catalog(const char *relname,
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 		recordDependencyOnCurrentExtension(&myself, false);
-
-		recordDependencyOnCurrentExtension(&myself);
 
 		if (reloftypeid)
 		{
@@ -3272,7 +3244,9 @@ heap_truncate(List *relids)
 			 * assumptions in the above comment?
 			 */
 			TruncateRelfiles(rel, InvalidSubTransactionId);
-			reindex_relation(RelationGetRelid(rel), true, true);
+			reindex_relation(RelationGetRelid(rel),
+							 REINDEX_REL_PROCESS_TOAST |
+							 REINDEX_REL_SUPPRESS_INDEX_USE);
 		}
 		else
 		{

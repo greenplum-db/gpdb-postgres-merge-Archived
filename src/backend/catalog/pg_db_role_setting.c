@@ -263,7 +263,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 						appendStringInfoString(&buffer, strVal(&arg->val));
 						break;
 					case T_String:
-						appendStringInfoString(&buffer, quote_literal_internal(strVal(&arg->val)));
+						appendStringInfoString(&buffer, quote_literal_cstr(strVal(&arg->val)));
 						break;
 					default:
 						elog(ERROR, "unexpected constant type: %d", nodeTag(&arg->val));

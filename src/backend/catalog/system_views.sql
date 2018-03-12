@@ -1,13 +1,9 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * src/backend/catalog/system_views.sql
  */
@@ -532,10 +528,7 @@ CREATE VIEW pg_stat_replication AS
             U.rolname AS usename,
             S.application_name,
             S.client_addr,
-<<<<<<< HEAD
-=======
             S.client_hostname,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
             S.client_port,
             S.backend_start,
             W.state,
@@ -548,7 +541,6 @@ CREATE VIEW pg_stat_replication AS
     FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
             pg_stat_get_wal_senders() AS W
     WHERE S.usesysid = U.oid AND
-<<<<<<< HEAD
             S.procpid = W.pid;
 
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
@@ -603,18 +595,6 @@ CREATE VIEW gp_stat_replication AS
          ON G.gp_segment_id = R.gp_segment_id
     );
 
-CREATE VIEW pg_stat_database AS 
-    SELECT 
-            D.oid AS datid, 
-            D.datname AS datname, 
-            pg_stat_get_db_numbackends(D.oid) AS numbackends, 
-            pg_stat_get_db_xact_commit(D.oid) AS xact_commit, 
-            pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback, 
-            pg_stat_get_db_blocks_fetched(D.oid) - 
-                    pg_stat_get_db_blocks_hit(D.oid) AS blks_read, 
-=======
-            S.procpid = W.procpid;
-
 CREATE VIEW pg_stat_database AS
     SELECT
             D.oid AS datid,
@@ -624,7 +604,6 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback,
             pg_stat_get_db_blocks_fetched(D.oid) -
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
             pg_stat_get_db_blocks_hit(D.oid) AS blks_hit,
             pg_stat_get_db_tuples_returned(D.oid) AS tup_returned,
             pg_stat_get_db_tuples_fetched(D.oid) AS tup_fetched,
@@ -635,7 +614,6 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_stat_reset_time(D.oid) AS stats_reset
     FROM pg_database D;
 
-<<<<<<< HEAD
 CREATE VIEW pg_stat_resqueues AS
 	SELECT
 		Q.oid AS queueid,
@@ -1064,10 +1042,7 @@ rq.oid=rc.resqueueid AND rc.restypid = rt.restypid
 ORDER BY rsqname, restypid
 ;
 
-CREATE VIEW pg_stat_user_functions AS 
-=======
 CREATE VIEW pg_stat_database_conflicts AS
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
     SELECT
             D.oid AS datid,
             D.datname AS datname,

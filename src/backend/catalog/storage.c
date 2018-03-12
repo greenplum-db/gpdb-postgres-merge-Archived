@@ -52,11 +52,7 @@
 typedef struct PendingRelDelete
 {
 	RelFileNode relnode;		/* relation that may need to be deleted */
-<<<<<<< HEAD
-	bool		isLocalBuf;		/* is it a temporary relation, in local buffers? */
-=======
 	BackendId	backend;		/* InvalidBackendId if not a temp rel */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	int			nestLevel;		/* xact nesting level of request */
 	struct PendingRelDelete *next;		/* linked-list link */
@@ -100,11 +96,7 @@ typedef struct xl_smgr_truncate
  * transaction aborts later on, the storage will be destroyed.
  */
 void
-<<<<<<< HEAD
-RelationCreateStorage(RelFileNode rnode, bool isLocalBuf)
-=======
 RelationCreateStorage(RelFileNode rnode, char relpersistence)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	PendingRelDelete *pending;
 	SMgrRelation srel;
@@ -133,35 +125,14 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	srel = smgropen(rnode, backend);
 	smgrcreate(srel, MAIN_FORKNUM, false);
 
-<<<<<<< HEAD
-	if (!isLocalBuf)
-	{
-		/*
-		 * Make an XLOG entry reporting the file creation.
-		 */
-		xlrec.rnode = rnode;
-
-		rdata.data = (char *) &xlrec;
-		rdata.len = sizeof(xlrec);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
-
-		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
-	}
-=======
 	if (needs_wal)
 		log_smgrcreate(&srel->smgr_rnode.node, MAIN_FORKNUM);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = rnode;
-<<<<<<< HEAD
-	pending->isLocalBuf = isLocalBuf;
-=======
 	pending->backend = backend;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pending->atCommit = false;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
@@ -204,11 +175,7 @@ RelationDropStorage(Relation rel)
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = rel->rd_node;
-<<<<<<< HEAD
-	pending->isLocalBuf = rel->rd_isLocalBuf;
-=======
 	pending->backend = rel->rd_backend;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pending->atCommit = true;	/* delete if commit */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
@@ -346,11 +313,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	}
 
 	/* Do the real work */
-<<<<<<< HEAD
-	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks, rel->rd_isLocalBuf);
-=======
 	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -397,15 +360,7 @@ smgrDoPendingDeletes(bool isCommit)
 				srel = smgropen(pending->relnode, pending->backend);
 				for (i = 0; i <= MAX_FORKNUM; i++)
 				{
-<<<<<<< HEAD
-					smgrdounlink(srel,
-								 i,
-								 pending->isLocalBuf,
-								 false);
-=======
-					if (smgrexists(srel, i))
-						smgrdounlink(srel, i, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					smgrdounlink(srel, i, false);
 				}
 				smgrclose(srel);
 			}
@@ -463,11 +418,6 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 			*rptr = pending->relnode;
 			rptr++;
 		}
-<<<<<<< HEAD
-		if (haveNonTemp && !pending->isLocalBuf)
-			*haveNonTemp = true;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return nrels;
 }
@@ -558,7 +508,6 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		 */
 		smgrcreate(reln, MAIN_FORKNUM, true);
 
-<<<<<<< HEAD
 		/*
 		 * Before we perform the truncation, update minimum recovery point
 		 * to cover this WAL record. Once the relation is truncated, there's
@@ -577,10 +526,7 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		 */
 		XLogFlush(lsn);
 
-		smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno, false);
-=======
 		smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* Also tell xlogutils.c about it */
 		XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);

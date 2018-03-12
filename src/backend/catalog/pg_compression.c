@@ -79,7 +79,7 @@ comptype_to_name(char *comptype)
 			 "of %d bytes", comptype, NAMEDATALEN - 1);
 
 	len = strlen(comptype);
-	dct = str_tolower(comptype, len);
+	dct = asc_tolower(comptype, len);
 	len = strlen(dct);
 	
 	memcpy(&(NameStr(compname)), dct, len);

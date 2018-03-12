@@ -134,9 +134,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
-
 	/* Post creation hook for new conversion */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
 						   ConversionRelationId, HeapTupleGetOid(tup), 0);

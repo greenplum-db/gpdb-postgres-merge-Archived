@@ -83,6 +83,7 @@ extern Oid TypeCreateWithOptions(Oid newtypeOid,
 		   int32 typeMod,
 		   int32 typNDims,
 		   bool typeNotNull,
+		   Oid typeCollation,
 		   Datum typoptions);
 
 extern void GenerateTypeDependencies(Oid typeNamespace,

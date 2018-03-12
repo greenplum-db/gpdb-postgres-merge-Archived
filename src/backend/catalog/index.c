@@ -125,7 +125,6 @@ static void validate_index_heapscan(Relation heapRelation,
 						IndexInfo *indexInfo,
 						Snapshot snapshot,
 						v_i_state *state);
-<<<<<<< HEAD
 static double IndexBuildHeapScan(Relation heapRelation,
 								 Relation indexRelation,
 								 struct IndexInfo *indexInfo,
@@ -150,10 +149,7 @@ static double IndexBuildAppendOnlyColScan(Relation parentRelation,
 										  IndexBuildCallback callback,
 										  void *callback_state);
 
-=======
-static Oid	IndexGetRelation(Oid indexId);
 static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);
 static void ResetReindexProcessing(void);
 static void SetReindexPending(List *indexes);
@@ -737,29 +733,13 @@ index_create(Relation heapRelation,
 	bool		is_exclusion;
 	Oid			namespaceId;
 	int			i;
-<<<<<<< HEAD
-	LOCKMODE	heap_lockmode;
-=======
 	char		relpersistence;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	is_exclusion = (indexInfo->ii_ExclusionOps != NULL);
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/*
-<<<<<<< HEAD
-	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing a standard
-	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
-	 * (but not VACUUM).
-	 */
-	heap_lockmode = (concurrent ? ShareUpdateExclusiveLock : ShareLock);
-	heapRelation = heap_open(heapRelationId, heap_lockmode);
-
-
-	/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * The index will be in the same namespace as its parent table, and is
 	 * shared across databases if and only if the parent is.  Likewise, it
 	 * will use the relfilenode map if and only if the parent does; and it
@@ -844,28 +824,10 @@ index_create(Relation heapRelation,
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-<<<<<<< HEAD
 		if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgradeQE())
 			indexRelationId = GetPreassignedOidForRelation(namespaceId, indexRelationName);
 		else
 			indexRelationId = GetNewOid(pg_class);
-=======
-		/*
-		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
-		 * supplied.
-		 */
-		if (IsBinaryUpgrade &&
-			OidIsValid(binary_upgrade_next_index_pg_class_oid))
-		{
-			indexRelationId = binary_upgrade_next_index_pg_class_oid;
-			binary_upgrade_next_index_pg_class_oid = InvalidOid;
-		}
-		else
-		{
-			indexRelationId =
-				GetNewRelFileNode(tableSpaceId, pg_class, relpersistence);
-		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*
@@ -880,11 +842,8 @@ index_create(Relation heapRelation,
 								indexTupDesc,
 								accessMethodObjectId,
 								RELKIND_INDEX,
-<<<<<<< HEAD
-								RELSTORAGE_HEAP,
-=======
 								relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+								RELSTORAGE_HEAP,
 								shared_relation,
 								mapped_relation,
 								allow_system_table_mods);
@@ -1009,11 +968,7 @@ index_create(Relation heapRelation,
 		if (isconstraint)
 		{
 			char		constraintType;
-<<<<<<< HEAD
 			const char *constraintName = indexRelationName;
-			Oid			conOid;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			if ( altConName )
 			{
@@ -1046,90 +1001,16 @@ index_create(Relation heapRelation,
 				constraintType = 0;		/* keep compiler quiet */
 			}
 
-<<<<<<< HEAD
-			/* primary/unique constraints shouldn't have any expressions */
-			if (indexInfo->ii_Expressions &&
-				constraintType != CONSTRAINT_EXCLUSION)
-				elog(ERROR, "constraints cannot have index expressions");
-
-			conOid = CreateConstraintEntry(constraintName,
-										   namespaceId,
-										   constraintType,
-										   deferrable,
-										   initdeferred,
-										   heapRelationId,
-										   indexInfo->ii_KeyAttrNumbers,
-										   indexInfo->ii_NumIndexAttrs,
-										   InvalidOid,	/* no domain */
-										   indexRelationId,		/* index OID */
-										   InvalidOid,	/* no foreign key */
-										   NULL,
-										   NULL,
-										   NULL,
-										   NULL,
-										   0,
-										   ' ',
-										   ' ',
-										   ' ',
-										   indexInfo->ii_ExclusionOps,
-										   NULL,		/* no check constraint */
-										   NULL,
-										   NULL,
-										   true,		/* islocal */
-										   0);	/* inhcount */
-
-			referenced.classId = ConstraintRelationId;
-			referenced.objectId = conOid;
-			referenced.objectSubId = 0;
-
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
-
-			/*
-			 * If the constraint is deferrable, create the deferred uniqueness
-			 * checking trigger.  (The trigger will be given an internal
-			 * dependency on the constraint by CreateTrigger, so there's no
-			 * need to do anything more here.)
-			 */
-			if (deferrable)
-			{
-				RangeVar   *heapRel;
-				CreateTrigStmt *trigger;
-
-				heapRel = makeRangeVar(get_namespace_name(namespaceId),
-							  pstrdup(RelationGetRelationName(heapRelation)),
-									   -1);
-
-				trigger = makeNode(CreateTrigStmt);
-				trigger->trigname = (isprimary ? "PK_ConstraintTrigger" :
-									 "Unique_ConstraintTrigger");
-				trigger->relation = heapRel;
-				trigger->funcname = SystemFuncName("unique_key_recheck");
-				trigger->args = NIL;
-				trigger->before = false;
-				trigger->row = true;
-				trigger->events = TRIGGER_TYPE_INSERT | TRIGGER_TYPE_UPDATE;
-				trigger->columns = NIL;
-				trigger->whenClause = NULL;
-				trigger->isconstraint = true;
-				trigger->deferrable = true;
-				trigger->initdeferred = initdeferred;
-				trigger->constrrel = NULL;
-
-				(void) CreateTrigger(trigger, NULL, conOid, indexRelationId,
-									 true);
-			}
-=======
 			index_constraint_create(heapRelation,
 									indexRelationId,
 									indexInfo,
-									indexRelationName,
+									constraintName,
 									constraintType,
 									deferrable,
 									initdeferred,
 									false,		/* already marked primary */
 									false,		/* pg_index entry is OK */
 									allow_system_table_mods);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		else
 		{
@@ -1273,27 +1154,20 @@ index_create(Relation heapRelation,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Close the heap and index; but we keep the locks that we acquired above
-	 * until end of transaction unless we're dealing with a child of a partition
-	 * table, in which case the lock on the master is sufficient.
+	 * Close the index; but we keep the lock that we acquired above until end
+	 * of transaction.	Closing the heap is caller's responsibility.
+	 *
+	 * GPDB: if we're dealing with a child of a partitioned table, also release
+	 * the lock. We should be holding a lock on the master, which is sufficient.
 	 */
 	if (rel_needs_long_lock(RelationGetRelid(heapRelation)))
 	{
 		index_close(indexRelation, NoLock);
-		heap_close(heapRelation, NoLock);
 	}
 	else
 	{
 		index_close(indexRelation, AccessExclusiveLock);
-		heap_close(heapRelation, heap_lockmode);
 	}
-=======
-	 * Close the index; but we keep the lock that we acquired above until end
-	 * of transaction.	Closing the heap is caller's responsibility.
-	 */
-	index_close(indexRelation, NoLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return indexRelationId;
 }
@@ -2010,9 +1884,8 @@ index_build(Relation heapRelation,
 	 * However, when reindexing an existing index, we should do nothing here.
 	 * Any HOT chains that are broken with respect to the index must predate
 	 * the index's original creation, so there is no need to change the
-<<<<<<< HEAD
-	 * index's usability horizon.  Moreover, we *must not* try to change
-	 * the index's pg_index entry while reindexing pg_index itself, and this
+	 * index's usability horizon.  Moreover, we *must not* try to change the
+	 * index's pg_index entry while reindexing pg_index itself, and this
 	 * optimization nicely prevents that.
 	 *
 	 * We also need not set indcheckxmin during a concurrent index build,
@@ -2028,13 +1901,6 @@ index_build(Relation heapRelation,
 	 */
 	if (indexInfo->ii_BrokenHotChain && !isreindex &&
 		!indexInfo->ii_Concurrent)
-=======
-	 * index's usability horizon.  Moreover, we *must not* try to change the
-	 * index's pg_index entry while reindexing pg_index itself, and this
-	 * optimization nicely prevents that.
-	 */
-	if (indexInfo->ii_BrokenHotChain && !isreindex)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		Oid			indexId = RelationGetRelid(indexRelation);
 		Relation	pg_index;
@@ -2478,12 +2344,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 						/*
 						 * Otherwise index it but don't check for uniqueness,
-<<<<<<< HEAD
-						 * the same as a RECENTLY_DEAD tuple.  (We can't
-						 * actually get here, but keep compiler quiet.)
-=======
 						 * the same as a RECENTLY_DEAD tuple.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						 */
 						indexIt = true;
 					}
@@ -3507,7 +3368,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
-<<<<<<< HEAD
 	 * found some still-broken HOT chains. If it did, and we don't have to
 	 * change any of the other flags, we just leave indcheckxmin alone (note
 	 * that index_build won't have changed it, because this is a reindex).
@@ -3533,24 +3393,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * reindexing pg_index itself, we must not try to update tuples in it.
 	 * pg_index's indexes should always have these flags in their clean state,
 	 * so that won't happen.
-=======
-	 * found some still-broken HOT chains.	If it did, we normally leave
-	 * indcheckxmin alone (note that index_build won't have changed it,
-	 * because this is a reindex).	But if the index was invalid or not ready
-	 * and there were broken HOT chains, it seems best to force indcheckxmin
-	 * true, because the normal argument that the HOT chains couldn't conflict
-	 * with the index is suspect for an invalid index.
-	 *
-	 * Note that it is important to not update the pg_index entry if we don't
-	 * have to, because updating it will move the index's usability horizon
-	 * (recorded as the tuple's xmin value) if indcheckxmin is true.  We don't
-	 * really want REINDEX to move the usability horizon forward ever, but we
-	 * have no choice if we are to fix indisvalid or indisready.  Of course,
-	 * clearing indcheckxmin eliminates the issue, so we're happy to do that
-	 * if we can.  Another reason for caution here is that while reindexing
-	 * pg_index itself, we must not try to update it.  We assume that
-	 * pg_index's indexes will always have these flags in their clean state.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (!skipped_constraint)
 	{
@@ -3574,11 +3416,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 		{
 			if (!indexInfo->ii_BrokenHotChain)
 				indexForm->indcheckxmin = false;
-<<<<<<< HEAD
 			else if (index_bad)
-=======
-			else if (!indexForm->indisvalid || !indexForm->indisready)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				indexForm->indcheckxmin = true;
 			indexForm->indisvalid = true;
 			indexForm->indisready = true;
@@ -3648,14 +3486,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
  * "flags" is a bitmask that can include any combination of these bits:
  *
  * REINDEX_REL_PROCESS_TOAST: if true, process the toast table too (if any).
+ * In GPDB, auxiliary AO heap tables, i.e. AO segments, AO block directory,
+ * and AO visibilitymap, are also processed if this is set.
  *
-<<<<<<< HEAD
- * Returns true if any indexes were rebuilt.  Note that a
- * CommandCounterIncrement will occur after each index rebuild.
- *
- * In GPDB, if 'toast_too' is true, we also reindex auxiliary AO heap
- * tables: AO segments, AO block directory, and AO visibilitymap.
-=======
  * REINDEX_REL_SUPPRESS_INDEX_USE: if true, the relation was just completely
  * rebuilt by an operation such as VACUUM FULL or CLUSTER, and therefore its
  * indexes are inconsistent with it.  This makes things tricky if the relation
@@ -3676,7 +3509,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
  * Returns true if any indexes were rebuilt (including toast table's index
  * when relevant).	Note that a CommandCounterIncrement will occur after each
  * index rebuild.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ *
  */
 bool
 reindex_relation(Oid relid, int flags)
@@ -3802,7 +3635,7 @@ reindex_relation(Oid relid, int flags)
 		result |= reindex_relation(toast_relid, flags);
 
 	/* Obtain the aoseg_relid and aoblkdir_relid if the relation is an AO table. */
-	if (toast_too && relIsAO)
+	if ((flags & REINDEX_REL_PROCESS_TOAST) && relIsAO)
 		GetAppendOnlyEntryAuxOids(relid, SnapshotNow,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
@@ -3812,22 +3645,22 @@ reindex_relation(Oid relid, int flags)
 	 * If an AO rel has a secondary segment list rel, reindex that too while we
 	 * still hold the lock on the master table.
 	 */
-	if (toast_too && OidIsValid(aoseg_relid))
-		result |= reindex_relation(aoseg_relid, false, false);
+	if (OidIsValid(aoseg_relid))
+		result |= reindex_relation(aoseg_relid, 0);
 
 	/*
 	 * If an AO rel has a secondary block directory rel, reindex that too while we
 	 * still hold the lock on the master table.
 	 */
-	if (toast_too && OidIsValid(aoblkdir_relid))
-		result |= reindex_relation(aoblkdir_relid, false, false);
+	if (OidIsValid(aoblkdir_relid))
+		result |= reindex_relation(aoblkdir_relid, 0);
 	
 	/*
 	 * If an AO rel has a secondary visibility map rel, reindex that too while we
 	 * still hold the lock on the master table.
 	 */
-	if (toast_too && OidIsValid(aovisimap_relid))
-		result |= reindex_relation(aovisimap_relid, false, false);
+	if (OidIsValid(aovisimap_relid))
+		result |= reindex_relation(aovisimap_relid, 0);
 
 	return result;
 }

@@ -3162,12 +3162,8 @@ PopOverrideSearchPath(void)
 	}
 }
 
+
 /*
-<<<<<<< HEAD
- * get_conversion_oid - find a conversion by possibly qualified name
- */
-Oid
-=======
  * get_collation_oid - find a collation by possibly qualified name
  */
 Oid
@@ -3242,7 +3238,6 @@ get_collation_oid(List *name, bool missing_ok)
  * get_conversion_oid - find a conversion by possibly qualified name
  */
 Oid
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 get_conversion_oid(List *name, bool missing_ok)
 {
 	char	   *schemaname;
@@ -3259,13 +3254,8 @@ get_conversion_oid(List *name, bool missing_ok)
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(schemaname);
 		conoid = GetSysCacheOid2(CONNAMENSP,
-<<<<<<< HEAD
-							   PointerGetDatum(conversion_name),
-							   ObjectIdGetDatum(namespaceId));
-=======
 								 PointerGetDatum(conversion_name),
 								 ObjectIdGetDatum(namespaceId));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else
 	{
@@ -3291,13 +3281,8 @@ get_conversion_oid(List *name, bool missing_ok)
 	if (!OidIsValid(conoid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-<<<<<<< HEAD
-						errmsg("conversion \"%s\" does not exist",
-							   NameListToString(name))));
-=======
 				 errmsg("conversion \"%s\" does not exist",
 						NameListToString(name))));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return conoid;
 }
 
@@ -3542,10 +3527,7 @@ InitTempTableNamespace(void)
 
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
 
-<<<<<<< HEAD
-	namespaceId = GetSysCacheOid(NAMESPACENAME,
-								 CStringGetDatum(namespaceName),
-								 0, 0, 0);
+	namespaceId = get_namespace_oid(namespaceName, true);
 
 	/*
 	 * GPDB: Delete old temp schema.
@@ -3561,24 +3543,6 @@ InitTempTableNamespace(void)
 	 * old schemas.
 	 */
 	if (OidIsValid(namespaceId))
-=======
-	namespaceId = get_namespace_oid(namespaceName, true);
-	if (!OidIsValid(namespaceId))
-	{
-		/*
-		 * First use of this temp namespace in this database; create it. The
-		 * temp namespaces are always owned by the superuser.  We leave their
-		 * permissions at default --- i.e., no access except to superuser ---
-		 * to ensure that unprivileged users can't peek at other backends'
-		 * temp tables.  This works because the places that access the temp
-		 * namespace for my own backend skip permissions checks on it.
-		 */
-		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
-		/* Advance command counter to make namespace visible */
-		CommandCounterIncrement();
-	}
-	else
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		RemoveTempRelations(namespaceId);
 		RemoveSchemaById(namespaceId);
@@ -3596,7 +3560,8 @@ InitTempTableNamespace(void)
 	 * temp tables.  This works because the places that access the temp
 	 * namespace for my own backend skip permissions checks on it.
 	 */
-	namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
+	namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
+								  true);
 	/* Advance command counter to make namespace visible */
 	CommandCounterIncrement();
 
@@ -3610,15 +3575,8 @@ InitTempTableNamespace(void)
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
 			 session_suffix);
 
-<<<<<<< HEAD
-	toastspaceId = GetSysCacheOid(NAMESPACENAME,
-								  CStringGetDatum(namespaceName),
-								  0, 0, 0);
-	if (OidIsValid(toastspaceId))
-=======
 	toastspaceId = get_namespace_oid(namespaceName, true);
-	if (!OidIsValid(toastspaceId))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	if (OidIsValid(toastspaceId))
 	{
 		RemoveSchemaById(toastspaceId);
 		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
@@ -3626,7 +3584,8 @@ InitTempTableNamespace(void)
 		toastspaceId = InvalidOid;
 		CommandCounterIncrement();
 	}
-	toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
+	toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
+								   true);
 	/* Advance command counter to make namespace visible */
 	CommandCounterIncrement();
 
@@ -3984,12 +3943,8 @@ check_search_path(char **newval, void **extra, GucSource source)
 			if (!SearchSysCacheExists1(NAMESPACENAME,
 									   CStringGetDatum(curname)))
 			{
-<<<<<<< HEAD
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist", curname)));
-=======
+			  if (Gp_role != GP_ROLE_EXECUTE)
+			  {
 				if (source == PGC_S_TEST)
 					ereport(NOTICE,
 							(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -4000,7 +3955,7 @@ check_search_path(char **newval, void **extra, GucSource source)
 					result = false;
 					break;
 				}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			  }
 			}
 		}
 	}

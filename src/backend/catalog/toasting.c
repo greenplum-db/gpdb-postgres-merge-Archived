@@ -64,14 +64,10 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child)
 	 * pg_class tuple.	This is redundant for all present users.  Tuple
 	 * toasting behaves safely in the face of a concurrent TOAST table add.
 	 */
-<<<<<<< HEAD
 	if (is_part_child)
 		rel = heap_open(relOid, NoLock);
 	else
-		rel = heap_open(relOid, AccessExclusiveLock);
-=======
-	rel = heap_open(relOid, ShareUpdateExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		rel = heap_open(relOid, ShareUpdateExclusiveLock);
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, is_part_child);
@@ -127,6 +123,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	Relation	toast_rel;
 	Relation	class_rel;
 	Oid			toast_relid;
+	Oid			toast_idxid;
 	Oid			toast_typid = InvalidOid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
@@ -241,11 +238,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   NIL,
 										   /* relam */ InvalidOid,
 										   RELKIND_TOASTVALUE,
-<<<<<<< HEAD
-										   RELSTORAGE_HEAP,
-=======
 										   rel->rd_rel->relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										   RELSTORAGE_HEAP,
 										   shared_relation,
 										   mapped_relation,
 										   true,
@@ -254,13 +248,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   NULL, /* CDB POLICY */
 										   reloptions,
 										   false,
-<<<<<<< HEAD
 										   true,
 										   /* valid_opts */ false);
-=======
-										   true);
 	Assert(toast_relid != InvalidOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* make the toast relation visible, else heap_open will fail */
 	CommandCounterIncrement();
@@ -305,15 +295,15 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
-<<<<<<< HEAD
-	toast_idxid = index_create(toast_relid, toast_idxname, toastIndexOid,
-							   indexInfo,
-							   list_make2("chunk_id", "chunk_seq"),
-							   BTREE_AM_OID,
-							   rel->rd_rel->reltablespace,
-							   classObjectId, coloptions, (Datum) 0,
-							   true, false, false, false,
-							   true, false, false, NULL);
+	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid,
+				 indexInfo,
+				 list_make2("chunk_id", "chunk_seq"),
+				 BTREE_AM_OID,
+				 rel->rd_rel->reltablespace,
+				 collationObjectId, classObjectId, coloptions, (Datum) 0,
+				 true, false, false, false,
+				 true, false, false, NULL);
+	heap_close(toast_rel, NoLock);
 
 	/*
 	 * If this is a partitioned child, we can unlock since the master is
@@ -324,18 +314,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 		UnlockRelationOid(toast_relid, ShareLock);
 		UnlockRelationOid(toast_idxid, AccessExclusiveLock);
 	}
-=======
-	index_create(toast_rel, toast_idxname, toastIndexOid,
-				 indexInfo,
-				 list_make2("chunk_id", "chunk_seq"),
-				 BTREE_AM_OID,
-				 rel->rd_rel->reltablespace,
-				 collationObjectId, classObjectId, coloptions, (Datum) 0,
-				 true, false, false, false,
-				 true, false, false);
-
-	heap_close(toast_rel, NoLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

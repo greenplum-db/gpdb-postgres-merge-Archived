@@ -86,26 +86,20 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 		 */
 		Oid			new_oid;
 
-		do
+		/*
+		 * In QE node, however, use the OIDs assigned by the master (they are delivered
+		 * out-of-band, see oid_dispatch.c.
+		 */
+		if (Gp_role == GP_ROLE_EXECUTE)
+			new_oid = InvalidOid;
+		else
 		{
-<<<<<<< HEAD
-			/*
-			 * In QE node, however, use the OIDs assigned by the master (they are delivered
-			 * out-of-band, see oid_dispatch.c.
-			 */
-			if (Gp_role == GP_ROLE_EXECUTE)
-				oids[elemno] = InvalidOid;
-			else
-				oids[elemno] = GetNewOid(pg_enum);
+			do
+			{
+				new_oid = GetNewOid(pg_enum);
+			} while (new_oid & 1);
 		}
-
-		/* sort them, just in case counter wrapped from high to low */
-		qsort(oids, num_elems, sizeof(Oid), oid_cmp);
-=======
-			new_oid = GetNewOid(pg_enum);
-		} while (new_oid & 1);
 		oids[elemno] = new_oid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* sort them, just in case OID counter wrapped from high to low */
@@ -184,8 +178,6 @@ EnumValuesDelete(Oid enumTypeOid)
 }
 
 
-<<<<<<< HEAD
-=======
 /*
  * AddEnumLabel
  *		Add a new label to the enum set. By default it goes at
@@ -511,7 +503,6 @@ RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems)
 }
 
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /* qsort comparison function for oids */
 static int
 oid_cmp(const void *p1, const void *p2)

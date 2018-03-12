@@ -36,7 +36,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 
 /*
@@ -71,10 +70,6 @@ add_type_encoding(Oid typid, Datum typoptions)
 
 	heap_close(pg_type_encoding_desc, RowExclusiveLock);
 }
-=======
-/* Potentially set by contrib/pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_type_oid = InvalidOid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* ----------------------------------------------------------------
  *		TypeShellMake
@@ -163,16 +158,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-<<<<<<< HEAD
-=======
-	/* Use binary-upgrade override for pg_type.oid, if supplied. */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_type_oid))
-	{
-		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-		binary_upgrade_next_pg_type_oid = InvalidOid;
-	}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
@@ -256,11 +241,8 @@ TypeCreateWithOptions(Oid newTypeOid,
 		   int32 typeMod,
 		   int32 typNDims,		/* Array dimensions for baseType */
 		   bool typeNotNull,
-<<<<<<< HEAD
+		   Oid typeCollation,
 		   Datum typoptions)
-=======
-		   Oid typeCollation)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Relation	pg_type_desc;
 	Oid			typeObjectId;
@@ -476,15 +458,6 @@ TypeCreateWithOptions(Oid newTypeOid,
 		/* Force the OID if requested by caller */
 		if (OidIsValid(newTypeOid))
 			HeapTupleSetOid(tup, newTypeOid);
-<<<<<<< HEAD
-=======
-		/* Use binary-upgrade override for pg_type.oid, if supplied. */
-		else if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_type_oid))
-		{
-			HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
-			binary_upgrade_next_pg_type_oid = InvalidOid;
-		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		/* else allow system to assign oid */
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
@@ -563,7 +536,8 @@ TypeCreate(Oid newTypeOid,
 		   char storage,
 		   int32 typeMod,
 		   int32 typNDims,
-		   bool typeNotNull)
+		   bool typeNotNull,
+		   Oid typeCollation)
 {
 	return TypeCreateWithOptions(newTypeOid,
 		   typeName,
@@ -595,6 +569,7 @@ TypeCreate(Oid newTypeOid,
 		   typeMod,
 		   typNDims,
 		   typeNotNull,
+		   typeCollation,
 		   (Datum) 0);
 }
 

@@ -101,7 +101,6 @@ forkname_to_number(char *forkName)
 }
 
 /*
-<<<<<<< HEAD
  * Return directory name within tablespace location to use, for this server.
  * This is the GDPB replacement for PostgreSQL's TABLESPACE_VERSION_DIRECTORY
  * constant.
@@ -109,16 +108,15 @@ forkname_to_number(char *forkName)
 const char *
 tablespace_version_directory(void)
 {
-	static char path[MAXPGPATH];
+	static char path[MAXPGPATH] = "";
 
-	snprintf(path, MAXPGPATH, "%s_db%d", GP_TABLESPACE_VERSION_DIRECTORY, GpIdentity.dbid);
+	if (!path[0])
+		snprintf(path, MAXPGPATH, "%s_db%d", GP_TABLESPACE_VERSION_DIRECTORY, GpIdentity.dbid);
 
 	return path;
 }
 
 /*
- * relpath			- construct path to a relation's file
-=======
  * forkname_chars
  *		We use this to figure out whether a filename could be a relation
  *		fork (as opposed to an oddly named stray file that somehow ended
@@ -150,7 +148,6 @@ forkname_chars(const char *str, ForkNumber *fork)
 
 /*
  * relpathbackend - construct path to a relation's file
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * Result is a palloc'd string.
  */
@@ -206,50 +203,39 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-<<<<<<< HEAD
-		if (forknum != MAIN_FORKNUM)
-			path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
-					 rnode.spcNode, tablespace_version_directory(),
-					 rnode.dbNode, rnode.relNode, forkNames[forknum]);
-		else
-			path = psprintf("pg_tblspc/%u/%s/%u/%u",
-					 rnode.spcNode, tablespace_version_directory(),
-					 rnode.dbNode, rnode.relNode);
-=======
 		if (backend == InvalidBackendId)
 		{
 			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 1
+				+ strlen(tablespace_version_directory()) + 1 + OIDCHARS + 1
 				+ OIDCHARS + 1 + FORKNAMECHARS + 1;
 			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.spcNode, tablespace_version_directory(),
 						 rnode.dbNode, rnode.relNode,
 						 forkNames[forknum]);
 			else
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.spcNode, tablespace_version_directory(),
 						 rnode.dbNode, rnode.relNode);
 		}
 		else
 		{
 			/* OIDCHARS will suffice for an integer, too */
 			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 2
+				+ strlen(tablespace_version_directory()) + 1 + OIDCHARS + 2
 				+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
 			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u_%s",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.spcNode, tablespace_version_directory(),
 						 rnode.dbNode, backend, rnode.relNode,
 						 forkNames[forknum]);
 			else
 				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
+						 rnode.spcNode, tablespace_version_directory(),
 						 rnode.dbNode, backend, rnode.relNode);
 		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	return path;
 }
@@ -259,13 +245,13 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
  * and the filename separately.
  */
 void
-reldir_and_filename(RelFileNode rnode, ForkNumber forknum,
+reldir_and_filename(RelFileNode node, BackendId backend, ForkNumber forknum,
 					char **dir, char **filename)
 {
 	char	   *path;
 	int			i;
 
-	path = relpath(rnode, forknum);
+	path = relpathbackend(node, backend, forknum);
 
 	/*
 	 * The base path is like "<path>/<rnode>". Split it into
@@ -789,7 +775,8 @@ GetNewSequenceRelationOid(Relation relation)
 
 		/* see notes above about using SnapshotDirty */
 		scan = index_beginscan(relation, indexrel,
-							   &SnapshotDirty, 1, &key);
+							   &SnapshotDirty, 1, 0);
+		index_rescan(scan, &key, 1, NULL, 0);
 
 		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));
 
@@ -798,7 +785,7 @@ GetNewSequenceRelationOid(Relation relation)
 		if (!collides)
 		{
 			/* Check for existing file of same name */
-			rpath = relpath(rnode, MAIN_FORKNUM);
+			rpath = relpathbackend(rnode, relation->rd_backend, MAIN_FORKNUM);
 			fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
 
 			if (fd >= 0)
@@ -868,10 +855,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 	RelFileNodeBackend rnode;
 	char	   *rpath;
 	int			fd;
-<<<<<<< HEAD
 	bool		collides = true;
-=======
-	bool		collides;
 	BackendId	backend;
 
 	switch (relpersistence)
@@ -887,7 +871,6 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
 			return InvalidOid;	/* placate compiler */
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* This logic should match RelationInitPhysicalAddr */
 	rnode.node.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
@@ -904,19 +887,11 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 		/* Generate the Relfilenode */
-		rnode.relNode = GetNewSegRelfilenode();
+		rnode.node.relNode = GetNewSegRelfilenode();
 
-		if (!IsOidAcceptable(rnode.relNode))
+		if (!IsOidAcceptable(rnode.node.relNode))
 			continue;
-=======
-		/* Generate the OID */
-		if (pg_class)
-			rnode.node.relNode = GetNewOid(pg_class);
-		else
-			rnode.node.relNode = GetNewObjectId();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* Check for existing file of same name */
 		rpath = relpath(rnode, MAIN_FORKNUM);
@@ -947,11 +922,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 		pfree(rpath);
 	} while (collides);
 
-<<<<<<< HEAD
-	elog(DEBUG1, "Calling GetNewRelFileNode returns new relfilenode = %d", rnode.relNode);
+	elog(DEBUG1, "Calling GetNewRelFileNode returns new relfilenode = %d", rnode.node.relNode);
 
-	return rnode.relNode;
-=======
 	return rnode.node.relNode;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

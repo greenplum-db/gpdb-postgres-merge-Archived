@@ -39,7 +39,7 @@ extern char *relpathbackend(RelFileNode rnode, BackendId backend,
 			   ForkNumber forknum);
 extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
 
-extern void reldir_and_filename(RelFileNode rnode, ForkNumber forknum,
+extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
 					char **dir, char **filename);
 
 /* First argument is a RelFileNodeBackend */

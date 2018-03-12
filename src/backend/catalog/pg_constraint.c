@@ -826,42 +826,6 @@ get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 	return conOid;
 }
 
-<<<<<<< HEAD
-
-/**
- * This method determines if the input attribute is a foreign key and if so,
- * retrieves the primary key's relation oid and attribute number. It looks at
- * the pg_constraint system table to determine the answer.
- * 
- * Input:
- * 	relid - relation whose attribute we are examining
- *  attno - attribute number of the said column
- *  
- * Output:
- * 	*pkrelid - relation id of the table that contains the primary key
- *  *pkattno - attribute number of the primary key
- * 	return   - true if found/ false otherwise
- * 
- * It returns a value of true if (relid, attno) is indeed a foreign key. It also
- * sets the output pkrelid and pkattno. If it returns false, then this
- * column is not a primary key and these output variables are not modified.
- */
-
-bool
-ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber *pkattno)
-{
-	bool		found;
-	Relation	conDesc;
-	SysScanDesc conscan;
-	ScanKeyData skey;
-	HeapTuple	tup;
-
-	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
-
-	found = false;
-
-	ScanKeyInit(&skey,
-=======
 /*
  * Determine whether a relation can be proven functionally dependent on
  * a set of grouping columns.  If so, return TRUE and add the pg_constraint
@@ -871,10 +835,10 @@ ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber 
  * the rel of interest are Vars with the indicated varno/varlevelsup.
  *
  * Currently we only check to see if the rel has a primary key that is a
- * subset of the grouping_columns.	We could also use plain unique constraints
+ * subset of the grouping_columns.  We could also use plain unique constraints
  * if all their columns are known not null, but there's a problem: we need
  * to be able to represent the not-null-ness as part of the constraints added
- * to *constraintDeps.	FIXME whenever not-null constraints get represented
+ * to *constraintDeps.  FIXME whenever not-null constraints get represented
  * in pg_constraint.
  */
 bool
@@ -893,69 +857,10 @@ check_functional_grouping(Oid relid,
 	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relid));
 
-<<<<<<< HEAD
-	conscan = systable_beginscan(conDesc, ConstraintRelidIndexId, true,
-								 SnapshotNow, 1, &skey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
-	{
-		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
-		
-		if (con->conrelid == relid && con->contype == CONSTRAINT_FOREIGN)
-		{
-			Datum		val;
-			bool		valisnull;
-			Datum		*valarray;
-			int          valarray_length;
-
-			/* first ensure that this is the right key */
-			val = heap_getattr(tup, Anum_pg_constraint_conkey,
-					RelationGetDescr(conDesc), &valisnull);
-
-			Assert(!valisnull);
-
-			deconstruct_array(DatumGetArrayTypeP(val),
-					INT2OID, 2, true, 's',
-					&valarray, NULL, &valarray_length);
-
-			if (valarray_length == 1 && DatumGetInt16(valarray[0]) == attno)
-			{
-				Datum		fval;
-				bool		fvalisnull;
-				Datum		*fvalarray;
-				int          fvalarray_length;
-
-				/* this is the right key, now extract the primary table,key */
-				Assert(con->confrelid != InvalidOid);
-
-				fval = heap_getattr(tup, Anum_pg_constraint_confkey,
-						RelationGetDescr(conDesc), &fvalisnull);
-
-				Assert(!fvalisnull);
-				deconstruct_array(DatumGetArrayTypeP(fval),
-						INT2OID, 2, true, 's',
-						&fvalarray, NULL, &fvalarray_length);
-
-				Assert(fvalarray_length == 1);
-
-				found = true;
-				*pkrelid = con->confrelid;
-				*pkattno = (AttrNumber) DatumGetInt16(fvalarray[0]);
-				break;
-			}
-		}
-	}
-
-	systable_endscan(conscan);
-	heap_close(conDesc, AccessShareLock);
-
-	return found;
-=======
 	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
 							  SnapshotNow, 1, skey);
 
@@ -1031,5 +936,100 @@ check_functional_grouping(Oid relid,
 	heap_close(pg_constraint, AccessShareLock);
 
 	return result;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+}
+
+
+/**
+ * This method determines if the input attribute is a foreign key and if so,
+ * retrieves the primary key's relation oid and attribute number. It looks at
+ * the pg_constraint system table to determine the answer.
+ * 
+ * Input:
+ * 	relid - relation whose attribute we are examining
+ *  attno - attribute number of the said column
+ *  
+ * Output:
+ * 	*pkrelid - relation id of the table that contains the primary key
+ *  *pkattno - attribute number of the primary key
+ * 	return   - true if found/ false otherwise
+ * 
+ * It returns a value of true if (relid, attno) is indeed a foreign key. It also
+ * sets the output pkrelid and pkattno. If it returns false, then this
+ * column is not a primary key and these output variables are not modified.
+ */
+
+bool
+ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber *pkattno)
+{
+	bool		found;
+	Relation	conDesc;
+	SysScanDesc conscan;
+	ScanKeyData skey;
+	HeapTuple	tup;
+
+	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
+
+	found = false;
+
+	ScanKeyInit(&skey,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	conscan = systable_beginscan(conDesc, ConstraintRelidIndexId, true,
+								 SnapshotNow, 1, &skey);
+
+	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
+		
+		if (con->conrelid == relid && con->contype == CONSTRAINT_FOREIGN)
+		{
+			Datum		val;
+			bool		valisnull;
+			Datum		*valarray;
+			int          valarray_length;
+
+			/* first ensure that this is the right key */
+			val = heap_getattr(tup, Anum_pg_constraint_conkey,
+					RelationGetDescr(conDesc), &valisnull);
+
+			Assert(!valisnull);
+
+			deconstruct_array(DatumGetArrayTypeP(val),
+					INT2OID, 2, true, 's',
+					&valarray, NULL, &valarray_length);
+
+			if (valarray_length == 1 && DatumGetInt16(valarray[0]) == attno)
+			{
+				Datum		fval;
+				bool		fvalisnull;
+				Datum		*fvalarray;
+				int          fvalarray_length;
+
+				/* this is the right key, now extract the primary table,key */
+				Assert(con->confrelid != InvalidOid);
+
+				fval = heap_getattr(tup, Anum_pg_constraint_confkey,
+						RelationGetDescr(conDesc), &fvalisnull);
+
+				Assert(!fvalisnull);
+				deconstruct_array(DatumGetArrayTypeP(fval),
+						INT2OID, 2, true, 's',
+						&fvalarray, NULL, &fvalarray_length);
+
+				Assert(fvalarray_length == 1);
+
+				found = true;
+				*pkrelid = con->confrelid;
+				*pkattno = (AttrNumber) DatumGetInt16(fvalarray[0]);
+				break;
+			}
+		}
+	}
+
+	systable_endscan(conscan);
+	heap_close(conDesc, AccessShareLock);
+
+	return found;
 }
