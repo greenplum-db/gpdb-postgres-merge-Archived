@@ -3,12 +3,8 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -112,14 +108,13 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  */
 #define ERRCODE_APPNAME_UNKNOWN "42704"
 
-<<<<<<< HEAD
-=======
+#if 0 // GPDB_91_MERGE_FIXME
 /* This is part of the protocol so just define it */
 #define ERRCODE_INVALID_PASSWORD "28P01"
 /* This too */
 #define ERRCODE_CANNOT_CONNECT_NOW "57P03"
+#endif
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * fall back options if they are not specified by arguments or defined
  * by environment variables
@@ -525,13 +520,8 @@ PQconnectdbParams(const char *const * keywords,
  * check server status, accepting parameters identical to PQconnectdbParams
  */
 PGPing
-<<<<<<< HEAD
 PQpingParams(const char *const * keywords,
 			 const char *const * values,
-=======
-PQpingParams(const char **keywords,
-			 const char **values,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			 int expand_dbname)
 {
 	PGconn	   *conn = PQconnectStartParams(keywords, values, expand_dbname);
@@ -729,68 +719,20 @@ PQconnectStart(const char *conninfo)
 	return conn;
 }
 
+/*
+ * Move option values into conn structure
+ *
+ * Don't put anything cute here --- intelligence should be in
+ * connectOptions2 ...
+ *
+ * Returns true on success. On failure, returns false and sets error message.
+ */
 static bool
 fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
 	const internalPQconninfoOption *option;
 
-	/*
-	 * Move option values into conn structure
-	 *
-	 * Don't put anything cute here --- intelligence should be in
-	 * connectOptions2 ...
-	 *
-	 * XXX: probably worth checking strdup() return value here...
-	 */
-<<<<<<< HEAD
 	for (option = PQconninfoOptions; option->keyword; option++)
-=======
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "application_name");
-	conn->appname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "fallback_application_name");
-	conn->fbappname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "client_encoding");
-	conn->client_encoding_initial = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives");
-	conn->keepalives = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_idle");
-	conn->keepalives_idle = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_interval");
-	conn->keepalives_interval = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_count");
-	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslkey");
-	conn->sslkey = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcert");
-	conn->sslcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslrootcert");
-	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcrl");
-	conn->sslcrl = tmp ? strdup(tmp) : NULL;
-#ifdef USE_SSL
-	tmp = conninfo_getval(connOptions, "requiressl");
-	if (tmp && tmp[0] == '1')
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		if (option->connofs >= 0)
 		{
@@ -812,24 +754,8 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 			}
 		}
 	}
-<<<<<<< HEAD
 
 	return true;
-=======
-#endif
-	tmp = conninfo_getval(connOptions, "requirepeer");
-	conn->requirepeer = tmp ? strdup(tmp) : NULL;
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "krbsrvname");
-	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
-#endif
-#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "gsslib");
-	conn->gsslib = tmp ? strdup(tmp) : NULL;
-#endif
-	tmp = conninfo_getval(connOptions, "replication");
-	conn->replication = tmp ? strdup(tmp) : NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2796,11 +2722,8 @@ error_return:
 static PGPing
 internal_ping(PGconn *conn)
 {
-<<<<<<< HEAD
-	int last_sqlstate;
+	int			last_sqlstate;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Say "no attempt" if we never got to PQconnectPoll */
 	if (!conn || !conn->options_valid)
 		return PQPING_NO_ATTEMPT;
@@ -2842,25 +2765,19 @@ internal_ping(PGconn *conn)
 	if (strlen(conn->last_sqlstate) != 5)
 		return PQPING_NO_RESPONSE;
 
-<<<<<<< HEAD
 	last_sqlstate = MAKE_SQLSTATE(conn->last_sqlstate[0], conn->last_sqlstate[1],
 								  conn->last_sqlstate[2], conn->last_sqlstate[3],
 								  conn->last_sqlstate[4]);
 
-	if (last_sqlstate == ERRCODE_MIRROR_READY)
-		return PQPING_MIRROR_READY;
+	// GPDB_91_MERGE_FIXME: where's this defined?
+	//if (last_sqlstate == ERRCODE_MIRROR_READY)
+	//	return PQPING_MIRROR_READY;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Report PQPING_REJECT if server says it's not accepting connections. (We
 	 * distinguish this case mainly for the convenience of pg_ctl.)
 	 */
-<<<<<<< HEAD
 	if (last_sqlstate == ERRCODE_CANNOT_CONNECT_NOW)
-=======
-	if (strcmp(conn->last_sqlstate, ERRCODE_CANNOT_CONNECT_NOW) == 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return PQPING_REJECT;
 
 	/*
@@ -3046,11 +2963,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslrootcert);
 	if (conn->sslcrl)
 		free(conn->sslcrl);
-<<<<<<< HEAD
 	if (conn->sslcompression)
 		free(conn->sslcompression);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (conn->requirepeer)
 		free(conn->requirepeer);
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
@@ -5687,15 +5601,8 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 		return -1;
 
 	/* Resolve special "auto" value from the locale */
-<<<<<<< HEAD
-	/* TODO */
-//	if (strcmp(encoding, "auto") == 0)
-//		encoding = pg_encoding_to_char(pg_get_encoding_from_locale(NULL, true));
-//		encoding = pg_encoding_to_char(pg_get_encoding_from_locale(NULL));
-=======
 	if (strcmp(encoding, "auto") == 0)
 		encoding = pg_encoding_to_char(pg_get_encoding_from_locale(NULL, true));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* check query buffer overflow */
 	if (sizeof(qbuf) < (sizeof(query) + strlen(encoding)))

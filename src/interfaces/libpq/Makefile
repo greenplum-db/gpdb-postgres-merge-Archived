@@ -29,17 +29,12 @@ endif
 # platforms require special flags.
 LIBS := $(LIBS:-lpgport=)
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
 	libpq-events.o \
-	md5.o ip.o wchar.o encnames.o inet_net_ntop.o noblock.o pgstrcasecmp.o \
-	thread.o  \
-	$(filter crypt.o getaddrinfo.o getpeereid.o inet_aton.o open.o snprintf.o strerror.o strlcpy.o win32error.o, $(LIBOBJS))
-=======
 # We can't use Makefile variables here because the MSVC build system scrapes
 # OBJS from this file.
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
@@ -53,7 +48,6 @@ OBJS += $(filter crypt.o getaddrinfo.o getpeereid.o inet_aton.o open.o snprintf.
 OBJS += ip.o md5.o
 # utils/mb
 OBJS += encnames.o wchar.o
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
@@ -100,11 +94,7 @@ backend_src = $(top_srcdir)/src/backend
 # For some libpgport modules, this only happens if configure decides 
 # the module is needed (see filter hack in OBJS, above).
 
-<<<<<<< HEAD
-crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c pgsleep.c: % : $(top_srcdir)/src/port/%
-=======
 chklocale.c crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgsleep.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c: % : $(top_srcdir)/src/port/%
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	rm -f $@ && $(LN_S) $< .
 
 ip.c md5.c: % : $(backend_src)/libpq/%
@@ -147,11 +137,7 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
-<<<<<<< HEAD
-	rm -f *.o pg_config_paths.h crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c md5.c ip.c encnames.c wchar.c win32error.c pgsleep.c pthread.h libpq.rc exports.list
-=======
 	rm -f $(OBJS) pthread.h libpq.rc
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h
 	rm -f inet_net_ntop.c noblock.c pgstrcasecmp.c thread.c

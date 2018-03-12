@@ -770,7 +770,6 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
 
-<<<<<<< HEAD
 	/*
 	 * Extract the common name from the certificate.
 	 *
@@ -783,12 +782,6 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not get server common name from server certificate\n"));
-=======
-	if (!(conn->pghost && conn->pghost[0] != '\0'))
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return false;
 	}
 	peer_cn = malloc(len + 1);
@@ -1089,11 +1082,7 @@ initialize_SSL(PGconn *conn)
 
 	/* Read the client certificate file */
 	if (conn->sslcert && strlen(conn->sslcert) > 0)
-<<<<<<< HEAD
 		strlcpy(fnbuf, conn->sslcert, sizeof(fnbuf));
-=======
-		strncpy(fnbuf, conn->sslcert, sizeof(fnbuf));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
 	else
@@ -1310,11 +1299,7 @@ initialize_SSL(PGconn *conn)
 	 * verification after the connection has been completed.
 	 */
 	if (conn->sslrootcert && strlen(conn->sslrootcert) > 0)
-<<<<<<< HEAD
 		strlcpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
-=======
-		strncpy(fnbuf, conn->sslrootcert, sizeof(fnbuf));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	else if (have_homedir)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
 	else
@@ -1339,11 +1324,7 @@ initialize_SSL(PGconn *conn)
 		if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
 		{
 			if (conn->sslcrl && strlen(conn->sslcrl) > 0)
-<<<<<<< HEAD
 				strlcpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
-=======
-				strncpy(fnbuf, conn->sslcrl, sizeof(fnbuf));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			else if (have_homedir)
 				snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CRL_FILE);
 			else

@@ -96,11 +96,8 @@
 #include "storage/ipc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "tcop/tcopprot.h"
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * Configuration options
@@ -134,6 +131,10 @@ static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
 static pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/*
+ * Message status
+ */
+static bool PqCommBusy;			/* busy sending data to the client */
 /* XXX This flag is used by frontend protocal 1 and 2 only.  That is 
  * VERY OLD (We should be on Protocol 3).
  */
@@ -144,10 +145,7 @@ static void pq_close(int code, Datum arg);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 static void pq_set_nonblocking(bool nonblocking);
-<<<<<<< HEAD
 static bool pq_send_mutex_lock();
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
@@ -165,10 +163,7 @@ pq_init(void)
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
 	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);
 	PqSendPointer = PqSendStart = PqRecvPointer = PqRecvLength = 0;
-<<<<<<< HEAD
-=======
 	PqCommBusy = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	DoingCopyOut = false;
 	on_proc_exit(pq_close, 0);
 }
@@ -1383,7 +1378,6 @@ pq_flush(void)
 {
 	int			res;
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 	{
 		if (!pq_send_mutex_lock())
@@ -1391,14 +1385,18 @@ pq_flush(void)
 			return EOF;
 		}
 	}
-=======
+
 	/* No-op if reentrant call */
 	if (PqCommBusy)
+	{
+		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
+			pthread_mutex_unlock(&send_mutex);
 		return 0;
+	}
 	PqCommBusy = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pq_set_nonblocking(false);
 	res = internal_flush();
+	PqCommBusy = false;
 
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 		pthread_mutex_unlock(&send_mutex);
@@ -1470,11 +1468,8 @@ internal_flush(void)
 			 * the connection.
 			 */
 			PqSendStart = PqSendPointer = 0;
-<<<<<<< HEAD
 			ClientConnectionLost = 1;
 			InterruptPending = 1;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			return EOF;
 		}
 
@@ -1501,7 +1496,7 @@ pq_flush_if_writable(void)
 	/* Quick exit if nothing to do */
 	if (PqSendPointer == PqSendStart)
 		return 0;
-<<<<<<< HEAD
+
 	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
 	{
 		if (!pq_send_mutex_lock())
@@ -1509,17 +1504,14 @@ pq_flush_if_writable(void)
 			return EOF;
 		}
 	}
-	/* Temporarily put the socket into non-blocking mode */
-	pq_set_nonblocking(true);
-
-	res = internal_flush();
-	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
-		pthread_mutex_unlock(&send_mutex);
-=======
 
 	/* No-op if reentrant call */
 	if (PqCommBusy)
+	{
+		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
+			pthread_mutex_unlock(&send_mutex);
 		return 0;
+	}
 
 	/* Temporarily put the socket into non-blocking mode */
 	pq_set_nonblocking(true);
@@ -1527,7 +1519,8 @@ pq_flush_if_writable(void)
 	PqCommBusy = true;
 	res = internal_flush();
 	PqCommBusy = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster)
+		pthread_mutex_unlock(&send_mutex);
 	return res;
 }
 
@@ -1627,11 +1620,7 @@ fail:
 void
 pq_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
-<<<<<<< HEAD
 	int res		PG_USED_FOR_ASSERTS_ONLY;
-=======
-	int			res;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			required;
 
 	/*

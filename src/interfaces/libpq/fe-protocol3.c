@@ -2200,13 +2200,10 @@ build_startup_packet(const PGconn *conn, char *packet,
 	if (conn->client_encoding_initial && conn->client_encoding_initial[0])
 		ADD_STARTUP_OPTION("client_encoding", conn->client_encoding_initial);
 
-<<<<<<< HEAD
 	/* CDB: Add qExec startup data */
 	if (conn->gpqeid && conn->gpqeid[0])
 		ADD_STARTUP_OPTION("gpqeid", conn->gpqeid);
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Add any environment-driven GUC settings needed */
 	for (next_eo = options; next_eo->envName; next_eo++)
 	{

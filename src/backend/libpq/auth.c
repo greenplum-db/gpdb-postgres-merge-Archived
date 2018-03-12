@@ -71,16 +71,11 @@ static int	recv_and_check_password_packet(Port *port);
 /* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
-<<<<<<< HEAD
-static int	authident(hbaPort *port);
-static bool ident_unix(int sock, char *ident_user);
-=======
 static int	ident_inet(hbaPort *port);
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	auth_peer(hbaPort *port);
 #endif
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*----------------------------------------------------------------
@@ -237,8 +232,6 @@ static int	CheckRADIUSAuth(Port *port);
  *----------------------------------------------------------------
  */
 
-<<<<<<< HEAD
-=======
 /*
  * This hook allows plugins to get control following client authentication,
  * but before the user has been informed about the results.  It could be used
@@ -246,7 +239,6 @@ static int	CheckRADIUSAuth(Port *port);
  */
 ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * Tell the user the authentication failed, but not (much about) why.
  *
@@ -281,56 +273,13 @@ auth_failed(Port *port, int status)
 	/* internal communication failure */
 	if (!port->hba)
 	{
-<<<<<<< HEAD
 		errstr = gettext_noop("authentication failed for user \"%s\": "
 							  "invalid authentication method");
 	}
 	else
 	{
-		switch (port->hba->auth_method)
-		{
-			case uaReject:
-			case uaImplicitReject:
-				errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
-				break;
-			case uaKrb5:
-				errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
-				break;
-			case uaTrust:
-				errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
-				break;
-			case uaIdent:
-				errstr = gettext_noop("Ident authentication failed for user \"%s\"");
-				break;
-			case uaPassword:
-			case uaMD5:
-				errstr = gettext_noop("password authentication failed for user \"%s\"");
-				/* We use it to indicate if a .pgpass password failed. */
-				errcode_return = ERRCODE_INVALID_PASSWORD;
-				break;
-			case uaGSS:
-				errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
-				break;
-			case uaSSPI:
-				errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
-				break;
-			case uaPAM:
-				errstr = gettext_noop("PAM authentication failed for user \"%s\"");
-				break;
-			case uaLDAP:
-				errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
-				break;
-			case uaCert:
-				errstr = gettext_noop("certificate authentication failed for user \"%s\"");
-				break;
-			case uaRADIUS:
-				errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
-				break;
-			default:
-				errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
-				break;
-		}
-=======
+	  switch (port->hba->auth_method)
+	  {
 		case uaReject:
 		case uaImplicitReject:
 			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
@@ -374,7 +323,7 @@ auth_failed(Port *port, int status)
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	  }
 	}
 
 	ereport(FATAL,
@@ -388,7 +337,7 @@ auth_failed(Port *port, int status)
  * QE. This is non-trivial because a QE some times runs at the master (i.e., an
  * entry-DB for things like master only tables).
  */
-static bool
+static int
 internal_client_authentication(Port *port)
 {
 	if (GpIdentity.segindex == MASTER_CONTENT_ID)
@@ -426,13 +375,13 @@ internal_client_authentication(Port *port)
 			}
 			return true;
 		}
+#ifdef HAVE_UNIX_SOCKETS
 		else if (port->raddr.addr.ss_family == AF_UNIX)
 		{
 			/* 
 			 * Internal connection via a domain socket -- use ident
 			 */
 			char *local_name;
-			char remote_name[IDENT_USERNAME_MAX + 1];
 			struct passwd *pw;
 
 			pw = getpwuid(geteuid());
@@ -444,16 +393,15 @@ internal_client_authentication(Port *port)
 
 			local_name = pw->pw_name;
 
-			remote_name[0] = '\0';
-
-			if (!ident_unix(port->sock, remote_name) ||
-				!strlen(remote_name) ||
-				strcmp(local_name, remote_name) != 0)
+			if (!auth_peer(port))
 				return false;
 			else
+			{
 				FakeClientAuthentication(port);
-			return true;
+				return true;
+			}
 		}
+#endif   /* HAVE_UNIX_SOCKETS */
 		else
 		{
 			/* Security violation? */
@@ -1852,17 +1800,11 @@ interpret_ident_response(const char *ident_response,
 static int
 ident_inet(hbaPort *port)
 {
-<<<<<<< HEAD
-	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
-	int			rc;				/* Return code from a locally called function */
-=======
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-	pgsocket	sock_fd,		/* File descriptor for socket on which we talk
-								 * to Ident */
-				rc;				/* Return code from a locally called function */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
+	int			rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
@@ -1900,15 +1842,9 @@ ident_inet(hbaPort *port)
 	rc = pg_getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
 	if (rc || !ident_serv)
 	{
-<<<<<<< HEAD
 		/* we don't expect this to happen */
 		ident_return = false;
 		goto ident_inet_done;
-=======
-		if (ident_serv)
-			pg_freeaddrinfo_all(hints.ai_family, ident_serv);
-		return STATUS_ERROR;	/* we don't expect this to happen */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1922,15 +1858,9 @@ ident_inet(hbaPort *port)
 	rc = pg_getaddrinfo_all(local_addr_s, NULL, &hints, &la);
 	if (rc || !la)
 	{
-<<<<<<< HEAD
 		/* we don't expect this to happen */
 		ident_return = false;
 		goto ident_inet_done;
-=======
-		if (la)
-			pg_freeaddrinfo_all(hints.ai_family, la);
-		return STATUS_ERROR;	/* we don't expect this to happen */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
@@ -2017,22 +1947,15 @@ ident_inet(hbaPort *port)
 ident_inet_done:
 	if (sock_fd >= 0)
 		closesocket(sock_fd);
-<<<<<<< HEAD
 	if (ident_serv)
 		pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
 	if (la)
 		pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
 
-	return ident_return;
-=======
-	pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
-	pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
-
 	if (ident_return)
 		/* Success! Check the usermap */
 		return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 	return STATUS_ERROR;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2074,78 +1997,7 @@ auth_peer(hbaPort *port)
 		ereport(LOG,
 				(errmsg("local user with ID %d does not exist",
 						(int) uid)));
-<<<<<<< HEAD
-		return false;
-	}
-
-	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-
-	return true;
-#elif defined(SO_PEERCRED)
-	/* Linux style: use getsockopt(SO_PEERCRED) */
-	struct ucred peercred;
-	socklen_t so_len = sizeof(peercred);
-	struct passwd *pass;
-
-	errno = 0;
-	if (getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
-		so_len != sizeof(peercred))
-	{
-		/* We didn't get a valid credentials struct. */
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return false;
-	}
-
-	pass = getpwuid(peercred.uid);
-
-	if (pass == NULL)
-	{
-		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) peercred.uid)));
-		return false;
-	}
-
-	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
-
-	return true;
-#elif defined(HAVE_GETPEERUCRED)
-	/* Solaris > 10 */
-	uid_t		uid;
-	struct passwd *pass;
-	ucred_t    *ucred;
-
-	ucred = NULL;				/* must be initialized to NULL */
-	if (getpeerucred(sock, &ucred) == -1)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not get peer credentials: %m")));
-		return false;
-	}
-
-	if ((uid = ucred_geteuid(ucred)) == -1)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-		   errmsg("could not get effective UID from peer credentials: %m")));
-		return false;
-	}
-
-	ucred_free(ucred);
-
-	pass = getpwuid(uid);
-	if (pass == NULL)
-	{
-		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) uid)));
-		return false;
-=======
 		return STATUS_ERROR;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
