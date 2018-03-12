@@ -67,8 +67,7 @@ typedef struct
 
 #define MaxPolicyAttributeNumber MaxHeapAttributeNumber
 
-int validate_partition_spec(ParseState 			*pstate,
-							CreateStmtContext 	*cxt, 
+extern int validate_partition_spec(CreateStmtContext *cxt, 
 							CreateStmt 			*stmt, 
 							PartitionBy 		*partitionBy, 	
 							char	   			*at_depth,

@@ -66,7 +66,8 @@
 #include "utils/datetime.h"
 #include "utils/numeric.h"
 #include "utils/xml.h"
-#include "cdb/cdbvars.h" /* CDB *//* gp_enable_partitioned_tables */
+
+#include "utils/guc.h"
 
 
 /* Location tracking support --- simpler than bison's default */
@@ -5025,7 +5026,7 @@ CreateExternalStmt:	CREATE OptWritable EXTERNAL OptWeb OptTemp TABLE qualified_n
 							CreateExternalStmt *n = makeNode(CreateExternalStmt);
 							n->iswritable = $2;
 							n->isweb = $4;
-							$7->istemp = $5;
+							$7->relpersistence = $5;
 							n->relation = $7;
 							n->tableElts = $9;
 							n->exttypedesc = (ExtTableTypeDesc *) $11;

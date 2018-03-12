@@ -201,6 +201,9 @@ select_common_collation(ParseState *pstate, List *exprs, bool none_ok)
 	context.strength = COLLATE_NONE;
 	context.location = -1;
 
+	context.collation2 = InvalidOid;
+	context.location2 = -1;
+
 	/* and away we go */
 	(void) assign_collations_walker((Node *) exprs, &context);
 

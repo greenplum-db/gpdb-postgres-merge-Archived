@@ -106,7 +106,7 @@ static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 								  List *orderClause, List *targetlist, bool isFollowing,
 								  int location);
 static SortGroupClause *make_group_clause(TargetEntry *tle, List *targetlist,
-				  Oid eqop, Oid sortop, bool nulls_first);
+				  Oid eqop, Oid sortop, bool nulls_first, bool hashable);
 
 typedef struct grouping_rewrite_ctx
 {
@@ -1953,6 +1953,7 @@ make_grouping_clause(ParseState *pstate, GroupingClause *grpcl, List* targetList
                                                         &targetList, EXPR_KIND_GROUP_BY);
 			Oid			sortop;
 			Oid			eqop;
+			bool		hashable;
 
 			/* Unlike ordinary grouping sets, we will create duplicate
 			 * expression entries. For example, rollup(a,a) consists
@@ -1960,10 +1961,10 @@ make_grouping_clause(ParseState *pstate, GroupingClause *grpcl, List* targetList
 			 */
 			get_sort_group_operators(exprType((Node *) tle->expr),
 									 true, true, false,
-									 &sortop, &eqop, NULL);
+									 &sortop, &eqop, NULL, &hashable);
 			result->groupsets =
 				lappend(result->groupsets,
-						make_group_clause(tle, targetList, eqop, sortop, false));
+						make_group_clause(tle, targetList, eqop, sortop, false, hashable));
 		}
 	}
 
@@ -2128,7 +2129,7 @@ create_group_clause(List *tlist_group, List *targetlist,
 
 					/* Use the sort clause's sorting information */
 					gc = make_group_clause(tle, targetlist,
-										   sc->eqop, sc->sortop, sc->nulls_first);
+										   sc->eqop, sc->sortop, sc->nulls_first, sc->hashable);
 					result = lappend(result, gc);
 					found = true;
 					break;
@@ -2151,7 +2152,7 @@ create_group_clause(List *tlist_group, List *targetlist,
 
 static SortGroupClause *
 make_group_clause(TargetEntry *tle, List *targetlist,
-				  Oid eqop, Oid sortop, bool nulls_first)
+				  Oid eqop, Oid sortop, bool nulls_first, bool hashable)
 {
 	SortGroupClause *result;
 
@@ -2160,6 +2161,8 @@ make_group_clause(TargetEntry *tle, List *targetlist,
 	result->eqop = eqop;
 	result->sortop = sortop;
 	result->nulls_first = nulls_first;
+	result->hashable = hashable;
+
 	return result;
 }
 
@@ -2284,6 +2287,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 			SortGroupClause *gc;
 			Oid			sortop;
 			Oid			eqop;
+			bool		hashable;
 
 			if (useSQL99)
 				tle = findTargetlistEntrySQL99(pstate, node, targetlist,
@@ -2304,8 +2308,8 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 
 			get_sort_group_operators(exprType((Node *) tle->expr),
 									 true, true, false,
-									 &sortop, &eqop, NULL);
-			gc = make_group_clause(tle, *targetlist, eqop, sortop, false);
+									 &sortop, &eqop, NULL, &hashable);
+			gc = make_group_clause(tle, *targetlist, eqop, sortop, false, hashable);
 			result = lappend(result, gc);
 		}
 	}
@@ -3383,12 +3387,13 @@ transformRowExprToList(ParseState *pstate, RowExpr *rowexpr,
 										 EXPR_KIND_GROUP_BY);
 			Oid			sortop;
 			Oid			eqop;
+			bool		hashable;
 
 			get_sort_group_operators(exprType((Node *) arg_tle->expr),
 									 true, true, false,
-									 &sortop, &eqop, NULL);
+									 &sortop, &eqop, NULL, &hashable);
 			grping_set = lappend(grping_set,
-								 make_group_clause(arg_tle, targetList, eqop, sortop, false));
+								 make_group_clause(arg_tle, targetList, eqop, sortop, false, hashable));
 		}
 	}
 	groupsets = lappend (groupsets, grping_set);
@@ -3436,17 +3441,18 @@ transformRowExprToGroupClauses(ParseState *pstate, RowExpr *rowexpr,
 										 EXPR_KIND_GROUP_BY);
 			Oid			sortop;
 			Oid			eqop;
+			bool		hashable;
 
 			get_sort_group_operators(exprType((Node *) arg_tle->expr),
 									 true, true, false,
-									 &sortop, &eqop, NULL);
+									 &sortop, &eqop, NULL, &hashable);
 
 			/* avoid making duplicate expression entries */
 			if (targetIsInSortList(arg_tle, sortop, groupsets))
 				continue;
 
 			groupsets = lappend(groupsets,
-								make_group_clause(arg_tle, targetList, eqop, sortop, false));
+								make_group_clause(arg_tle, targetList, eqop, sortop, false, hashable));
 		}
 	}
 
@@ -3637,7 +3643,7 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
 
 			get_sort_group_operators(newrtype,
 									 false, false, false,
-									 &sortop, NULL, NULL);
+									 &sortop, NULL, NULL, NULL);
 
 			if (OidIsValid(sortop))
 			{

@@ -3747,7 +3747,6 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 	/* Phase 2: update system catalogs */
 	ATRewriteCatalogs(&wqueue, lockmode);
 
-<<<<<<< HEAD
 	/*
 	 * Build list of tables OIDs that we performed SET DISTRIBUTED BY on.
 	 *
@@ -3814,10 +3813,12 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 	/* 
 	 * Phase 3: scan/rewrite tables as needed. If the data is in an external
 	 * table, no need to rewrite it or to add toast.
+	 * GPDB_91_MERGE_FIXME: How do we handle FOREIGN TABLEs? Should handle
+	 * external tables the same..
 	 */
 	if (!is_data_remote)
 	{
-		ATRewriteTables(&wqueue);
+		ATRewriteTables(&wqueue, lockmode);
 
 		ATAddToastIfNeeded(&wqueue);
 	}
@@ -3874,10 +3875,6 @@ prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at)
 				errhint("Use SPLIT with the AT clause instead.")));
 
 	}
-=======
-	/* Phase 3: scan/rewrite tables as needed */
-	ATRewriteTables(&wqueue, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*

@@ -407,7 +407,8 @@ coerce_type(ParseState *pstate, Node *node,
 			Insist(OidIsValid(infunc));
 
 			/* do unknownout(Var) */
-			fe = makeFuncExpr(outfunc, CSTRINGOID, list_make1(node), cformat);
+			fe = makeFuncExpr(outfunc, CSTRINGOID, list_make1(node),
+							  InvalidOid, InvalidOid, cformat);
 			fe->location = location;
 
 			if (location >= 0 &&
@@ -419,13 +420,14 @@ coerce_type(ParseState *pstate, Node *node,
 			 * type we're casting to
 			 */
 			args = list_make3(fe,
-							  makeConst(OIDOID, -1, sizeof(Oid),
+							  makeConst(OIDOID, -1, InvalidOid, sizeof(Oid),
 										ObjectIdGetDatum(intypioparam),
 										false, true),
-							  makeConst(INT4OID, -1, sizeof(int32),
+							  makeConst(INT4OID, -1, InvalidOid, sizeof(int32),
 										Int32GetDatum(-1),
 										false, true));
-			fe = makeFuncExpr(infunc, targetTypeId, args, cformat);
+			fe = makeFuncExpr(infunc, targetTypeId, args,
+							  InvalidOid, InvalidOid, cformat);
 			fe->location = location;
 
 			return (Node *)fe;

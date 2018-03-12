@@ -74,6 +74,7 @@
 #include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
 #include "cdb/cdbvars.h"
+#include "utils/guc.h"
 #include "utils/tqual.h"
 
 
@@ -520,7 +521,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		 */
 		seqstmt = makeNode(CreateSeqStmt);
 		seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-		seqstmt->sequence->istemp = cxt->relation->istemp;
+		seqstmt->sequence->relpersistence = cxt->relation->relpersistence;
 		seqstmt->options = NIL;
 
 		/*
@@ -1512,8 +1513,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 		switch (nodeTag(element))
 		{
 			case T_ColumnDef:
-				transformColumnDefinition(pstate, &cxt,
-										  (ColumnDef *) element);
+				transformColumnDefinition(&cxt, (ColumnDef *) element);
 				break;
 
 			case T_Constraint:
@@ -1527,8 +1527,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 					/* LIKE */
 					bool	isBeginning = (cxt.columns == NIL);
 
-					transformInhRelation(pstate, &cxt,
-										 (InhRelation *) element, true);
+					transformInhRelation(&cxt, (InhRelation *) element, true);
 
 					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
 						stmt->distributedBy == NIL &&
@@ -1598,7 +1597,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 		else
 		{
 			/* regular DISTRIBUTED BY transformation */
-			transformDistributedBy(pstate, &cxt, stmt->distributedBy, &stmt->policy,
+			transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
 								   likeDistributedBy, bQuiet);
 		}
 	}
@@ -1625,7 +1624,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 
 /****************stmt->policy*********************/
 static void
-transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
+transformDistributedBy(CreateStmtContext *cxt,
 					   List *distributedBy, GpPolicy **policyp,
 					   List *likeDistributedBy,
 					   bool bQuiet)
@@ -1923,12 +1922,11 @@ transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
 			foreach(columns, cxt->columns)
 			{
 				Oid			typeOid;
-				int32		typmod;
 
 				column = (ColumnDef *) lfirst(columns);
 				colindex++;
 
-				typeOid = typenameTypeId(NULL, column->typeName, &typmod);
+				typeOid = typenameTypeId(NULL, column->typeName);
 
 				/*
 				 * if we can hash on this type, or if it's an array type (which
@@ -2036,9 +2034,8 @@ transformDistributedBy(ParseState *pstate, CreateStmtContext *cxt,
 						if (strcmp(column->colname, key) == 0)
 						{
 							Oid			typeOid;
-							int32		typmod;
 
-							typeOid = typenameTypeId(NULL, column->typeName, &typmod);
+							typeOid = typenameTypeId(NULL, column->typeName);
 							
 							/*
 							 * To be a part of a distribution key, this type must
@@ -3757,12 +3754,11 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 */
 	foreach(l, cxt.alist)
 	{
-		Node	   *idxstmt = (Node *) lfirst(l);
+		IndexStmt  *idxstmt = (IndexStmt *) lfirst(l);
 		List	   *idxstmts;
 		ListCell   *li;
 
-		idxstmts = transformIndexStmt((IndexStmt *) idxstmt,
-									  queryString);
+		idxstmts = transformIndexStmt(idxstmt, queryString);
 		/* GPDB_91_MERGE_FIXME: Why is this a loop in GPDB? */
 		foreach(li, idxstmts)
 		{
@@ -4351,10 +4347,9 @@ TypeNameGetStorageDirective(TypeName *typname)
 	SysScanDesc sscan;
 	HeapTuple	tuple;
 	Oid			typid;
-	int32		typmod;
 	List	   *out = NIL;
 
-	typid = typenameTypeId(NULL, typname, &typmod);
+	typid = typenameTypeId(NULL, typname);
 
 	rel = heap_open(TypeEncodingRelationId, AccessShareLock);
 

@@ -100,8 +100,8 @@ static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 static Node *transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 												bool isTopLevel, setop_types_ctx *setop_types);
 static void coerceSetOpTypes(ParseState *pstate, Node *sop,
-							 List *coltypes, List *coltypmods,
-							 List **colInfo);
+							 List *preselected_coltypes, List *preselected_coltypmods,
+							 List **targetlist);
 static void select_setop_types(ParseState *pstate, setop_types_ctx *ctx, SetOperation op, List **selected_types, List **selected_typmods);
 static void determineRecursiveColTypes(ParseState *pstate,
 						   Node *larg, List *nrtargetlist);
@@ -2260,7 +2260,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	 */
 	select_setop_types(pstate, &ctx, stmt->op, &selected_types, &selected_typmods);
 
-	coerceSetOpTypes(pstate, top, selected_types, selected_typmods, colInfo);
+	coerceSetOpTypes(pstate, top, selected_types, selected_typmods, targetlist);
 
 	return top;
 }
@@ -2465,19 +2465,11 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Extract a list of the non-junk TLEs for upper-level processing.
 		 */
-<<<<<<< HEAD
 		numCols = 0;
 		foreach(tl, selectQuery->targetList)
-=======
-		if (targetlist)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
-			*targetlist = NIL;
-			foreach(tl, selectQuery->targetList)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-<<<<<<< HEAD
 			if (!tle->resjunk)
 				numCols++;
 		}
@@ -2518,10 +2510,6 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 				 */
 				if (i == setop_types->ncols)
 					break;
-=======
-				if (!tle->resjunk)
-					*targetlist = lappend(*targetlist, tle);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 		}
 
@@ -2548,13 +2536,6 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 	{
 		/* Process an internal node (set operation node) */
 		SetOperationStmt *op = makeNode(SetOperationStmt);
-<<<<<<< HEAD
-=======
-		List	   *ltargetlist;
-		List	   *rtargetlist;
-		ListCell   *ltl;
-		ListCell   *rtl;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -2567,14 +2548,8 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Recursively transform the left child node.
 		 */
-<<<<<<< HEAD
 		op->larg = transformSetOperationTree_internal(pstate, stmt->larg,
 													  false, setop_types);
-=======
-		op->larg = transformSetOperationTree(pstate, stmt->larg,
-											 false,
-											 &ltargetlist);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * If we are processing a recursive union query, now is the time to
@@ -2598,26 +2573,21 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 		if (isTopLevel &&
 			pstate->p_parent_cte &&
 			pstate->p_parent_cte->cterecursive)
-<<<<<<< HEAD
 		{
-			List *lcolinfo;
+			List *ltargetlist;
 			List *selected_types;
 			List *selected_typmods;
 
 			select_setop_types(pstate, setop_types, stmt->op, &selected_types, &selected_typmods);
 
-			coerceSetOpTypes(pstate, op->larg, selected_types, selected_typmods, &lcolinfo);
+			coerceSetOpTypes(pstate, op->larg, selected_types, selected_typmods, &ltargetlist);
 
-			determineRecursiveColTypes(pstate, op->larg, lcolinfo);
-		}
-=======
 			determineRecursiveColTypes(pstate, op->larg, ltargetlist);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		}
 
 		/*
 		 * Recursively transform the right child node.
 		 */
-<<<<<<< HEAD
 		op->rarg = transformSetOperationTree_internal(pstate, stmt->rarg,
 													  false, setop_types);
 
@@ -2637,7 +2607,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 static void
 coerceSetOpTypes(ParseState *pstate, Node *sop,
 				 List *preselected_coltypes, List *preselected_coltypmods,
-				 List **colInfo)
+				 List **targetlist)
 {
 	if (IsA(sop, RangeTblRef))
 	{
@@ -2646,26 +2616,30 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 		ListCell   *tl;
 
 		/*
-		 * Extract a list of the result expressions. This is the same we did in
-		 * the first pass, in transformSetOperationTree_internal().
+		 * Extract a list of the non-junk TLEs for upper-level processing.
+		 * This is the same we did in the first pass, in
+		 * transformSetOperationTree_internal().
 		 */
-		*colInfo = NIL;
-		foreach(tl, selectQuery->targetList)
+		if (targetlist)
 		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			*targetlist = NIL;
+			foreach(tl, selectQuery->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-			if (!tle->resjunk)
-				*colInfo = lappend(*colInfo, tle->expr);
+				if (!tle->resjunk)
+					*targetlist = lappend(*targetlist, tle);
+			}
 		}
 		return;
 	}
 	else
 	{
 		SetOperationStmt *op = (SetOperationStmt *) sop;
-		List	   *lcolinfo;
-		List	   *rcolinfo;
-		ListCell   *lci;
-		ListCell   *rci;
+		List	   *ltargetlist;
+		List	   *rtargetlist;
+		ListCell   *ltl;
+		ListCell   *rtl;
 		ListCell   *pct;
 		ListCell   *pcm;
 		const char *context;
@@ -2679,16 +2653,11 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 		/* Recurse to determine the children's types first */
 		coerceSetOpTypes(pstate, op->larg,
 						 preselected_coltypes, preselected_coltypmods,
-						 &lcolinfo);
+						 &ltargetlist);
 
 		coerceSetOpTypes(pstate, op->rarg,
 						 preselected_coltypes, preselected_coltypmods,
-						 &rcolinfo);
-=======
-		op->rarg = transformSetOperationTree(pstate, stmt->rarg,
-											 false,
-											 &rtargetlist);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+						 &rtargetlist);
 
 		/*
 		 * Verify that the two children have the same number of non-junk
@@ -2702,25 +2671,17 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 					 parser_errposition(pstate,
 										exprLocation((Node *) rtargetlist))));
 
-<<<<<<< HEAD
 		Assert(list_length(preselected_coltypes) == list_length(preselected_coltypmods));
 
-		*colInfo = NIL;
-		op->colTypes = NIL;
-		op->colTypmods = NIL;
-		/* don't have a "foreach4", so chase two of the lists by hand */
-		pct = list_head(preselected_coltypes);
-		pcm = list_head(preselected_coltypmods);
-		forboth(lci, lcolinfo, rci, rcolinfo)
-=======
 		if (targetlist)
 			*targetlist = NIL;
 		op->colTypes = NIL;
 		op->colTypmods = NIL;
 		op->colCollations = NIL;
-		op->groupClauses = NIL;
+		/* don't have a "foreach5", so chase three of the lists by hand */
+		pct = list_head(preselected_coltypes);
+		pcm = list_head(preselected_coltypmods);
 		forboth(ltl, ltargetlist, rtl, rtargetlist)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			TargetEntry *ltle = (TargetEntry *) lfirst(ltl);
 			TargetEntry *rtle = (TargetEntry *) lfirst(rtl);
@@ -2730,11 +2691,11 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 			Oid			rcoltype = exprType(rcolnode);
 			int32		lcoltypmod = exprTypmod(lcolnode);
 			int32		rcoltypmod = exprTypmod(rcolnode);
-<<<<<<< HEAD
 			Node       *bestexpr = NULL;
-			SetToDefault *rescolnode;
+			int			bestlocation;
 			Oid			rescoltype = pct ? lfirst_oid(pct) : InvalidOid;
 			int32		rescoltypmod = pcm ? lfirst_int(pcm) : -1;
+			Oid			rescolcoll;
 
 			/*
 			 * If the preprocessed coltype is InvalidOid, we fall back
@@ -2748,27 +2709,11 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 												list_make2(lcolnode, rcolnode),
 												context,
 												&bestexpr);
+				bestlocation = exprLocation(bestexpr);
 				/* if same type and same typmod, use typmod; else default */
 				if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
 					rescoltypmod = lcoltypmod;
 			}
-=======
-			Node	   *bestexpr;
-			int			bestlocation;
-			Oid			rescoltype;
-			int32		rescoltypmod;
-			Oid			rescolcoll;
-
-			/* select common type, same as CASE et al */
-			rescoltype = select_common_type(pstate,
-											list_make2(lcolnode, rcolnode),
-											context,
-											&bestexpr);
-			bestlocation = exprLocation(bestexpr);
-			/* if same type and same typmod, use typmod; else default */
-			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
-				rescoltypmod = lcoltypmod;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			else
 			{
 				/*
@@ -2776,6 +2721,7 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 				 * query's expression for error reporting purposes.
 				 */
 				bestexpr = lcolnode;
+				bestlocation = exprLocation(lcolnode);
 			}
 
 			/*
@@ -2841,16 +2787,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 										 (op->op == SETOP_UNION && op->all));
 
 			/* emit results */
-<<<<<<< HEAD
-			rescolnode = makeNode(SetToDefault);
-			rescolnode->typeId = rescoltype;
-			rescolnode->typeMod = rescoltypmod;
-			rescolnode->location = exprLocation(bestexpr);
-			*colInfo = lappend(*colInfo, rescolnode);
-
-			/* Set final decision */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
 			op->colCollations = lappend_oid(op->colCollations, rescolcoll);
@@ -2891,8 +2827,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 
 				op->groupClauses = lappend(op->groupClauses, grpcl);
 			}
-<<<<<<< HEAD
-=======
 
 			/*
 			 * Construct a dummy tlist entry to return.  We use a SetToDefault
@@ -2914,8 +2848,6 @@ coerceSetOpTypes(ParseState *pstate, Node *sop,
 										 false);
 				*targetlist = lappend(*targetlist, restle);
 			}
-		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			pct = pct ? lnext(pct) : NULL;
 			pcm = pcm ? lnext(pcm) : NULL;
@@ -3381,17 +3313,15 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-<<<<<<< HEAD
-					if(get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
+					/* ignore foreign tables */
+					if (rte->relkind == RELKIND_FOREIGN_TABLE)
+						break;
+
+					if (get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
 
-=======
-					/* ignore foreign tables */
-					if (rte->relkind == RELKIND_FOREIGN_TABLE)
-						break;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					applyLockingClause(qry, i,
 									   lc->forUpdate, lc->noWait, pushedDown);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
