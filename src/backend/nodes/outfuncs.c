@@ -137,8 +137,11 @@
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
 	 _outToken(str, NULL))
 
+#endif /* COMPILING_BINARY_FUNCS */
+
 #define booltostr(x)  ((x) ? "true" : "false")
 
+#ifndef COMPILING_BINARY_FUNCS
 static void _outNode(StringInfo str, void *obj);
 
 /*
@@ -476,6 +479,7 @@ _outSequence(StringInfo str, Sequence *node)
 	WRITE_NODE_FIELD(subplans);
 }
 
+static void
 _outMergeAppend(StringInfo str, MergeAppend *node)
 {
 	int			i;
@@ -2522,6 +2526,8 @@ _outPlannerParamItem(StringInfo str, PlannerParamItem *node)
  *
  *****************************************************************************/
 
+static void _outCreateStmt(StringInfo str, CreateStmt *node);
+
 #ifndef COMPILING_BINARY_FUNCS
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
@@ -3071,6 +3077,7 @@ static void
 _outInhRelation(StringInfo str, InhRelation *node)
 {
 	WRITE_NODE_TYPE("INHRELATION");
+
 	WRITE_NODE_FIELD(relation);
 	WRITE_UINT_FIELD(options);
 }
@@ -3497,15 +3504,6 @@ _outDefElem(StringInfo str, DefElem *node)
 	WRITE_STRING_FIELD(defname);
 	WRITE_NODE_FIELD(arg);
 	WRITE_ENUM_FIELD(defaction, DefElemAction);
-}
-
-static void
-_outInhRelation(StringInfo str, InhRelation *node)
-{
-	WRITE_NODE_TYPE("INHRELATION");
-
-	WRITE_NODE_FIELD(relation);
-	WRITE_UINT_FIELD(options);
 }
 
 static void
@@ -4429,7 +4427,6 @@ _outCursorPosInfo(StringInfo str, CursorPosInfo *node)
 	WRITE_OID_FIELD(table_oid);
 }
 
-
 static void
 _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 {
@@ -4439,9 +4436,11 @@ _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(funcname);
 	WRITE_NODE_FIELD(args);
-	WRITE_BOOL_FIELD(before);
 	WRITE_BOOL_FIELD(row);
+	WRITE_BOOL_FIELD(timing);
 	WRITE_INT_FIELD(events);
+	WRITE_NODE_FIELD(columns);
+	WRITE_NODE_FIELD(whenClause);
 	WRITE_BOOL_FIELD(isconstraint);
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
@@ -4992,16 +4991,14 @@ _outNode(StringInfo str, void *obj)
 			case T_AppendPath:
 				_outAppendPath(str, obj);
 				break;
-<<<<<<< HEAD
+			case T_MergeAppendPath:
+				_outMergeAppendPath(str, obj);
+				break;
 			case T_AppendOnlyPath:
 				_outAppendOnlyPath(str, obj);
 				break;
 			case T_AOCSPath:
 				_outAOCSPath(str, obj);
-=======
-			case T_MergeAppendPath:
-				_outMergeAppendPath(str, obj);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 			case T_ResultPath:
 				_outResultPath(str, obj);
@@ -5095,6 +5092,7 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CreateForeignTableStmt:
 				_outCreateForeignTableStmt(str, obj);
+				break;
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
 				break;

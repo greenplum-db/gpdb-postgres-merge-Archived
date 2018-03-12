@@ -377,9 +377,9 @@ _readRangeVar(void)
 	READ_STRING_FIELD(schemaname);
 	READ_STRING_FIELD(relname);
 	READ_ENUM_FIELD(inhOpt, InhOption); Assert(local_node->inhOpt <= INH_DEFAULT);
-	READ_BOOL_FIELD(istemp);
+	READ_CHAR_FIELD(relpersistence);
 	READ_NODE_FIELD(alias);
-    READ_LOCATION_FIELD(location);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1107,7 +1107,7 @@ _readCreateStmt(void)
 	READ_NODE_FIELD(options);
 	READ_ENUM_FIELD(oncommit,OnCommitAction);
 	READ_STRING_FIELD(tablespacename);
-	READ_BOOL_STRING(if_not_exists);
+	READ_BOOL_FIELD(if_not_exists);
 
 	READ_NODE_FIELD(distributedBy);
 	READ_CHAR_FIELD(relKind);
@@ -2195,12 +2195,10 @@ _readPlanRowMark(void)
 
 	READ_UINT_FIELD(rti);
 	READ_UINT_FIELD(prti);
+	READ_UINT_FIELD(rowmarkId);
 	READ_ENUM_FIELD(markType, RowMarkType);
 	READ_BOOL_FIELD(noWait);
 	READ_BOOL_FIELD(isParent);
-	READ_INT_FIELD(ctidAttNo);
-	READ_INT_FIELD(toidAttNo);
-	READ_INT_FIELD(wholeAttNo);
 
 	READ_DONE();
 }
@@ -2484,9 +2482,11 @@ _readCreateTrigStmt(void)
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(funcname);
 	READ_NODE_FIELD(args);
-	READ_BOOL_FIELD(before);
 	READ_BOOL_FIELD(row);
+	READ_INT_FIELD(timing);
 	READ_INT_FIELD(events);
+	READ_NODE_FIELD(columns);
+	READ_NODE_FIELD(whenClause);
 	READ_BOOL_FIELD(isconstraint);
 	READ_BOOL_FIELD(deferrable);
 	READ_BOOL_FIELD(initdeferred);
@@ -2745,7 +2745,7 @@ _readCreateFdwStmt(void)
 	READ_LOCALS(CreateFdwStmt);
 
 	READ_STRING_FIELD(fdwname);
-	READ_NODE_FIELD(validator);
+	READ_NODE_FIELD(func_options);
 	READ_NODE_FIELD(options);
 
 	READ_DONE();
@@ -2757,8 +2757,7 @@ _readAlterFdwStmt(void)
 	READ_LOCALS(AlterFdwStmt);
 
 	READ_STRING_FIELD(fdwname);
-	READ_NODE_FIELD(validator);
-	READ_BOOL_FIELD(change_validator);
+	READ_NODE_FIELD(func_options);
 	READ_NODE_FIELD(options);
 
 	READ_DONE();
@@ -3239,6 +3238,9 @@ readNodeBinary(void)
 				break;
 			case T_ConvertRowtypeExpr:
 				return_value = _readConvertRowtypeExpr();
+				break;
+			case T_CollateExpr:
+				return_value = _readCollateExpr();
 				break;
 			case T_CaseExpr:
 				return_value = _readCaseExpr();

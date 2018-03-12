@@ -1204,7 +1204,7 @@ _outCreateFdwStmt(StringInfo str, CreateFdwStmt *node)
 	WRITE_NODE_TYPE("CREATEFDWSTMT");
 
 	WRITE_STRING_FIELD(fdwname);
-	WRITE_NODE_FIELD(validator);
+	WRITE_NODE_FIELD(func_options);
 	WRITE_NODE_FIELD(options);
 }
 
@@ -1214,8 +1214,7 @@ _outAlterFdwStmt(StringInfo str, AlterFdwStmt *node)
 	WRITE_NODE_TYPE("ALTERFDWSTMT");
 
 	WRITE_STRING_FIELD(fdwname);
-	WRITE_NODE_FIELD(validator);
-	WRITE_BOOL_FIELD(change_validator);
+	WRITE_NODE_FIELD(func_options);
 	WRITE_NODE_FIELD(options);
 }
 
@@ -1384,8 +1383,17 @@ _outNode(StringInfo str, void *obj)
 			case T_DynamicTableScan:
 				_outDynamicTableScan(str, obj);
 				break;
+			case T_CteScan:
+				_outCteScan(str, obj);
+				break;
 			case T_WorkTableScan:
 				_outWorkTableScan(str, obj);
+				break;
+			case T_ForeignScan:
+				_outForeignScan(str, obj);
+				break;
+			case T_FdwPlan:
+				_outFdwPlan(str, obj);
 				break;
 			case T_ExternalScan:
 				_outExternalScan(str, obj);
@@ -1422,9 +1430,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ValuesScan:
 				_outValuesScan(str, obj);
-				break;
-			case T_CteScan:
-				_outCteScan(str, obj);
 				break;
 			case T_Join:
 				_outJoin(str, obj);
@@ -1467,6 +1472,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Limit:
 				_outLimit(str, obj);
+				break;
+			case T_NestLoopParam:
+				_outNestLoopParam(str, obj);
 				break;
 			case T_PlanRowMark:
 				_outPlanRowMark(str, obj);
@@ -1564,6 +1572,9 @@ _outNode(StringInfo str, void *obj)
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
 				break;
+			case T_CollateExpr:
+				_outCollateExpr(str, obj);
+				break;
 			case T_CaseExpr:
 				_outCaseExpr(str, obj);
 				break;
@@ -1649,8 +1660,14 @@ _outNode(StringInfo str, void *obj)
 			case T_TidPath:
 				_outTidPath(str, obj);
 				break;
+			case T_ForeignPath:
+				_outForeignPath(str, obj);
+				break;
 			case T_AppendPath:
 				_outAppendPath(str, obj);
+				break;
+			case T_MergeAppendPath:
+				_outMergeAppendPath(str, obj);
 				break;
 			case T_AppendOnlyPath:
 				_outAppendOnlyPath(str, obj);
@@ -1732,6 +1749,9 @@ _outNode(StringInfo str, void *obj)
 
 			case T_CreateStmt:
 				_outCreateStmt(str, obj);
+				break;
+			case T_CreateForeignTableStmt:
+				_outCreateForeignTableStmt(str, obj);
 				break;
 			case T_ColumnReferenceStorageDirective:
 				_outColumnReferenceStorageDirective(str, obj);
@@ -1972,6 +1992,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TypeCast:
 				_outTypeCast(str, obj);
 				break;
+			case T_CollateClause:
+				_outCollateClause(str, obj);
+				break;
 			case T_IndexElem:
 				_outIndexElem(str, obj);
 				break;
@@ -2187,6 +2210,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_PlaceHolderInfo:
 				_outPlaceHolderInfo(str, obj);
+				break;
+			case T_MinMaxAggInfo:
+				_outMinMaxAggInfo(str, obj);
 				break;
 
 			case T_CookedConstraint:

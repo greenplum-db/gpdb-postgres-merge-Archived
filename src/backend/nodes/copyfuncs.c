@@ -3488,8 +3488,6 @@ CopyCreateStmtFields(CreateStmt *from, CreateStmt *newnode)
 	COPY_SCALAR_FIELD(ownerid);
 	COPY_SCALAR_FIELD(buildAoBlkdir);
 	COPY_NODE_FIELD(attr_encodings);
-
-	return newnode;
 }
 
 static CreateStmt *
@@ -4270,44 +4268,6 @@ _copyDiscardStmt(DiscardStmt *from)
 	return newnode;
 }
 
-static CreateExtensionStmt *
-_copyCreateExtensionStmt(const CreateExtensionStmt *from)
-{
-	CreateExtensionStmt *newnode = makeNode(CreateExtensionStmt);
-
-	COPY_STRING_FIELD(extname);
-	COPY_SCALAR_FIELD(if_not_exists);
-	COPY_NODE_FIELD(options);
-	COPY_SCALAR_FIELD(create_ext_state);
-
-	return newnode;
-}
-
-static AlterExtensionStmt *
-_copyAlterExtensionStmt(AlterExtensionStmt *from)
-{
-	AlterExtensionStmt *newnode = makeNode(AlterExtensionStmt);
-
-	COPY_STRING_FIELD(extname);
-	COPY_NODE_FIELD(options);
-
-	return newnode;
-}
-
-static AlterExtensionContentsStmt *
-_copyAlterExtensionContentsStmt(AlterExtensionContentsStmt *from)
-{
-	AlterExtensionContentsStmt *newnode = makeNode(AlterExtensionContentsStmt);
-
-	COPY_STRING_FIELD(extname);
-	COPY_SCALAR_FIELD(action);
-	COPY_SCALAR_FIELD(objtype);
-	COPY_NODE_FIELD(objname);
-	COPY_NODE_FIELD(objargs);
-
-	return newnode;
-}
-
 static CreateTableSpaceStmt *
 _copyCreateTableSpaceStmt(CreateTableSpaceStmt *from)
 {
@@ -4344,13 +4304,14 @@ _copyAlterTableSpaceOptionsStmt(AlterTableSpaceOptionsStmt *from)
 }
 
 static CreateExtensionStmt *
-_copyCreateExtensionStmt(CreateExtensionStmt *from)
+_copyCreateExtensionStmt(const CreateExtensionStmt *from)
 {
 	CreateExtensionStmt *newnode = makeNode(CreateExtensionStmt);
 
 	COPY_STRING_FIELD(extname);
 	COPY_SCALAR_FIELD(if_not_exists);
 	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(create_ext_state);
 
 	return newnode;
 }
@@ -5681,15 +5642,6 @@ copyObject(void *from)
 			break;
 		case T_DiscardStmt:
 			retval = _copyDiscardStmt(from);
-			break;
-		case T_CreateExtensionStmt:
-			retval = _copyCreateExtensionStmt(from);
-			break;
-		case T_AlterExtensionStmt:
-			retval = _copyAlterExtensionStmt(from);
-			break;
-		case T_AlterExtensionContentsStmt:
-			retval = _copyAlterExtensionContentsStmt(from);
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _copyCreateTableSpaceStmt(from);

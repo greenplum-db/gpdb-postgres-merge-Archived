@@ -1376,8 +1376,9 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or new owner or tablespace */
-	Node	   *def;			/* definition of new column, index,
-								 * constraint, or parent table */
+	Node	   *def;			/* definition of new column, column type,
+								 * index, constraint, or parent table */
+	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		part_expanded;	/* expands from another command, for partitioning */
 	List	   *partoids;		/* If applicable, OIDs of partition part tables */
