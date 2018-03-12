@@ -369,7 +369,7 @@ create_partition_selector(PlannerInfo *root, DynamicScanInfo *dsinfo,
 	ps->staticScanIds = NIL;
 
 	ps->propagationExpression = (Node *)
-		makeConst(INT4OID, -1, 4, Int32GetDatum(ps->scanId), false, true);
+		makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum(ps->scanId), false, true);
 
 	return ps;
 }

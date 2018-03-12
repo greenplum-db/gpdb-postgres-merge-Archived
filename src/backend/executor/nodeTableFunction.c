@@ -373,7 +373,8 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 			/* Record data type: Construct tuple desc based on rangeTable */
 			resultdesc = BuildDescFromLists(rte->eref->colnames,
 											rte->funccoltypes,
-											rte->funccoltypmods);
+											rte->funccoltypmods,
+											rte->funccolcollations);
 			scanstate->is_rowtype = true;
 			break;
 		}

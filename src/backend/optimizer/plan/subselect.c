@@ -193,7 +193,7 @@ assign_nestloop_param(PlannerInfo *root, Var *var)
 	retval->paramid = i;
 	retval->paramtype = var->vartype;
 	retval->paramtypmod = var->vartypmod;
-<<<<<<< HEAD
+	retval->paramcollid = var->varcollid;
 	retval->location = var->location;
 
 	return retval;
@@ -253,9 +253,7 @@ replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 	retval->paramid = i;
 	retval->paramtype = exprType((Node *) phv->phexpr);
 	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
-=======
-	retval->paramcollid = var->varcollid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	retval->paramcollid = exprCollation((Node *) phv->phexpr);
 	retval->location = -1;
 
 	return retval;
@@ -1518,7 +1516,8 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	{
 		rnode = copyObject(subselect->limitCount);
 		IncrementVarSublevelsUp(rnode, -1, 1);
-		lnode = (Node *) makeConst(INT8OID, -1, sizeof(int64), Int64GetDatum(0),
+		lnode = (Node *) makeConst(INT8OID, -1, InvalidOid,
+								   sizeof(int64), Int64GetDatum(0),
 								   false, true);
 		limitqual = (Node *) make_op(NULL, list_make1(makeString("<")),
 									 lnode, rnode, -1);
@@ -1544,7 +1543,8 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		{
 			lnode = copyObject(subselect->limitOffset);
 			IncrementVarSublevelsUp(lnode, -1, 1);
-			rnode = (Node *) makeConst(INT8OID, -1, sizeof(int64), Int64GetDatum(1),
+			rnode = (Node *) makeConst(INT8OID, -1, InvalidOid,
+									   sizeof(int64), Int64GetDatum(1),
 									   false, true);
 			node = (Node *) make_op(NULL, list_make1(makeString("<")),
 									lnode, rnode, -1);
@@ -1568,7 +1568,8 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (!contain_vars_of_level_or_above(sublink->subselect, 1))
 	{
-		subselect->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64), Int64GetDatum(1),
+		subselect->limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+												   sizeof(int64), Int64GetDatum(1),
 												   false, true);
 		node = make_and_qual(limitqual, (Node *) sublink);
 		if (under_not)
@@ -1689,7 +1690,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->alias = NULL;
 	result->rtindex = 0;
 
-	return result;
+	return (Node *) result;
 }
 
 /*
@@ -2735,25 +2736,19 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 	}
 
 	/* Process left and right child plans, if any */
-<<<<<<< HEAD
 	/*
 	 * In a TableFunctionScan, the 'lefttree' is more like a SubQueryScan's
 	 * subplan, and contains a plan that's already been finalized by the
 	 * inner invocation of subquery_planner(). So skip that.
 	 */
 	if (!IsA(plan, TableFunctionScan))
-		context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(root,
-													 plan->lefttree,
-													 valid_params,
-													 scan_params));
-=======
-	child_params = finalize_plan(root,
-								 plan->lefttree,
-								 valid_params,
-								 scan_params);
-	context.paramids = bms_add_members(context.paramids, child_params);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	{
+		child_params = finalize_plan(root,
+									 plan->lefttree,
+									 valid_params,
+									 scan_params);
+		context.paramids = bms_add_members(context.paramids, child_params);
+	}
 
 	if (nestloop_params)
 	{
@@ -2930,13 +2925,9 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	 */
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
-<<<<<<< HEAD
-	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod);
-    node->qDispSliceId = 0;             /*CDB*/
-=======
 	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod,
 					   &node->firstColCollation);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+    node->qDispSliceId = 0;             /*CDB*/
 	node->plan_id = list_length(root->glob->subplans);
 	node->is_initplan = true;
 	root->init_plans = lappend(root->init_plans, node);

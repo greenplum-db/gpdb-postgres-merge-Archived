@@ -3,11 +3,6 @@
  * planagg.c
  *	  Special planning for aggregate queries.
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2006-2008, Greenplum inc
- * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * This module tries to replace MIN/MAX aggregate functions by subqueries
  * of the form
  *		(SELECT col FROM tab
@@ -22,8 +17,9 @@
  * scan all the rows anyway.
  *
  *
+ * Portions Copyright (c) 2006-2008, Greenplum inc
+ * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -313,9 +309,25 @@ find_minmax_aggs_walker(Node *node, List **context)
 		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
-		if (list_length(aggref->args) != 1 || aggref->aggorder != NIL)
+		if (list_length(aggref->args) != 1)
 			return true;		/* it couldn't be MIN/MAX */
-<<<<<<< HEAD
+
+		/*
+		 * ORDER BY is usually irrelevant for MIN/MAX, but it can change the
+		 * outcome if the aggsortop's operator class recognizes non-identical
+		 * values as equal.  For example, 4.0 and 4.00 are equal according to
+		 * numeric_ops, yet distinguishable.  If MIN() receives more than one
+		 * value equal to 4.0 and no value less than 4.0, it is unspecified
+		 * which of those equal values MIN() returns.  An ORDER BY expression
+		 * that differs for each of those equal values of the argument
+		 * expression makes the result predictable once again.  This is a
+		 * niche requirement, and we do not implement it with subquery paths.
+		 * In any case, this test lets us reject ordered-set aggregates
+		 * quickly.
+		 */
+		if (aggref->aggorder != NIL)
+			return true;
+		/* note: we do not care if DISTINCT is mentioned ... */
 
 		/*
 		 * We might implement the optimization when a FILTER clause is present
@@ -324,14 +336,12 @@ find_minmax_aggs_walker(Node *node, List **context)
 		 */
 		if (aggref->aggfilter != NULL)
 			return true;
-=======
-		/* note: we do not care if DISTINCT is mentioned ... */
-		curTarget = (TargetEntry *) linitial(aggref->args);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		aggsortop = fetch_agg_sort_op(aggref->aggfnoid);
 		if (!OidIsValid(aggsortop))
 			return true;		/* not a MIN/MAX aggregate */
+
+		curTarget = (TargetEntry *) linitial(aggref->args);
 
 		if (contain_mutable_functions((Node *) curTarget->expr))
 			return true;		/* not potentially indexable */
@@ -477,10 +487,6 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	query_planner(subroot, parse->targetList, 1.0, 1.0,
 				  &cheapest_path, &sorted_path, &dNumGroups);
 
-<<<<<<< HEAD
-    /* Replace the plan's tlist with a copy of the one we built above. */
-    plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
-=======
 	/*
 	 * Fail if no presorted path.  However, if query_planner determines that
 	 * the presorted path is also the cheapest, it will set sorted_path to
@@ -496,7 +502,6 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 		else
 			return false;
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Determine cost to get just the first row of the presorted path.
@@ -536,7 +541,8 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *mminfo)
 	 */
 	plan = create_plan(subroot, mminfo->path);
 
-	plan->targetlist = subparse->targetList;
+	/* Replace the plan's tlist with a copy of the one we built above. */
+	plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,

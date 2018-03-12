@@ -2521,11 +2521,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_NODE_FIELD(funcexpr);
 	COPY_NODE_FIELD(funccoltypes);
 	COPY_NODE_FIELD(funccoltypmods);
-<<<<<<< HEAD
-	COPY_VARLENA_FIELD(funcuserdata, -1);
-=======
 	COPY_NODE_FIELD(funccolcollations);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COPY_VARLENA_FIELD(funcuserdata, -1);
 	COPY_NODE_FIELD(values_lists);
 	COPY_NODE_FIELD(values_collations);
 	COPY_STRING_FIELD(ctename);

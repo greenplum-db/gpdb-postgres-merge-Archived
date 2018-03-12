@@ -101,14 +101,11 @@ static SubqueryScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static WorkTableScan *create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 						  List *tlist, List *scan_clauses);
-<<<<<<< HEAD
+static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
+						List *tlist, List *scan_clauses);
 static BitmapAppendOnlyScan *create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 								   BitmapAppendOnlyPath *best_path,
 								   List *tlist, List *scan_clauses);
-=======
-static ForeignScan *create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
-						List *tlist, List *scan_clauses);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -179,38 +176,8 @@ static ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 				 Index scanrelid, bool fsSystemCol, FdwPlan *fdwplan);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
-<<<<<<< HEAD
 static List *flatten_grouping_list(List *groupcls);
 static void adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node);
-=======
-static NestLoop *make_nestloop(List *tlist,
-			  List *joinclauses, List *otherclauses, List *nestParams,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static HashJoin *make_hashjoin(List *tlist,
-			  List *joinclauses, List *otherclauses,
-			  List *hashclauses,
-			  Plan *lefttree, Plan *righttree,
-			  JoinType jointype);
-static Hash *make_hash(Plan *lefttree,
-		  Oid skewTable,
-		  AttrNumber skewColumn,
-		  bool skewInherit,
-		  Oid skewColType,
-		  int32 skewColTypmod);
-static MergeJoin *make_mergejoin(List *tlist,
-			   List *joinclauses, List *otherclauses,
-			   List *mergeclauses,
-			   Oid *mergefamilies,
-			   Oid *mergecollations,
-			   int *mergestrategies,
-			   bool *mergenullsfirst,
-			   Plan *lefttree, Plan *righttree,
-			   JoinType jointype);
-static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators,
-		  Oid *collations, bool *nullsFirst,
-		  double limit_tuples);
 static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Plan *lefttree, List *pathkeys,
 						   bool adjust_tlist_in_place,
@@ -219,8 +186,6 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
 						   bool **p_nullsFirst);
-static Material *make_material(Plan *lefttree);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -715,13 +680,18 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
 	Plan	   *plan;
-<<<<<<< HEAD
+	Relids		saveOuterRels = root->curOuterRels;
 	bool		partition_selector_created;
 
 	Assert(best_path->outerjoinpath);
 	Assert(best_path->innerjoinpath);
 
-	inner_plan = create_subplan(root, best_path->innerjoinpath);
+	/* For a nestloop, include outer relids in curOuterRels for inner side */
+	if (best_path->path.pathtype == T_NestLoop)
+		root->curOuterRels = bms_union(root->curOuterRels,
+								   best_path->outerjoinpath->parent->relids);
+
+	inner_plan = create_plan_recurse(root, best_path->innerjoinpath);
 
 	/*
 	 * Try to inject Partition Selectors.
@@ -731,19 +701,7 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 												best_path,
 												&inner_plan);
 
-	outer_plan = create_subplan(root, best_path->outerjoinpath);
-=======
-	Relids		saveOuterRels = root->curOuterRels;
-
 	outer_plan = create_plan_recurse(root, best_path->outerjoinpath);
-
-	/* For a nestloop, include outer relids in curOuterRels for inner side */
-	if (best_path->path.pathtype == T_NestLoop)
-		root->curOuterRels = bms_union(root->curOuterRels,
-								   best_path->outerjoinpath->parent->relids);
-
-	inner_plan = create_plan_recurse(root, best_path->innerjoinpath);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	switch (best_path->path.pathtype)
 	{
@@ -863,11 +821,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
 
-<<<<<<< HEAD
-		subplans = lappend(subplans, create_subplan(root, subpath));
-=======
 		subplans = lappend(subplans, create_plan_recurse(root, subpath));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	plan = make_append(subplans, tlist);
@@ -898,7 +852,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 	 * prepare_sort_from_pathkeys on it before we do so on the individual
 	 * child plans, to make cross-checking the sort info easier.
 	 */
-	copy_path_costsize(plan, (Path *) best_path);
+	copy_path_costsize(root, plan, (Path *) best_path);
 	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -1010,11 +964,7 @@ create_material_plan(PlannerInfo *root, MaterialPath *best_path)
 	Material   *plan;
 	Plan	   *subplan;
 
-<<<<<<< HEAD
-	subplan = create_subplan(root, best_path->subpath);
-=======
 	subplan = create_plan_recurse(root, best_path->subpath);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* We don't want any excess columns in the materialized tuples */
 	disuse_physical_tlist(subplan, best_path->subpath);
@@ -1050,11 +1000,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	int			groupColPos;
 	ListCell   *l;
 
-<<<<<<< HEAD
-	subplan = create_subplan(root, best_path->subpath);
-=======
 	subplan = create_plan_recurse(root, best_path->subpath);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Return naked subplan if we don't need to do any actual unique-ifying */
 	if (best_path->umethod == UNIQUE_PATH_NOOP)
@@ -1073,7 +1019,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		limitplan->plan.lefttree = subplan;
 		limitplan->plan.righttree = NULL;
 		limitplan->limitOffset = NULL;
-		limitplan->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
+		limitplan->limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+												   sizeof(int64),
 												   Int64GetDatum(1),
 												   false, true);
 		return (Plan *) limitplan;
@@ -3034,7 +2981,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 								 fsSystemCol,
 								 best_path->fdwplan);
 
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
 
 	return scan_plan;
 }
@@ -3200,11 +3147,11 @@ create_nestloop_plan(PlannerInfo *root,
 		otherclauses = NIL;
 	}
 
-<<<<<<< HEAD
 	if (best_path->jointype == JOIN_LASJ_NOTIN)
 	{
 		joinclauses = remove_isnotfalse(joinclauses);
-=======
+	}
+
 	/*
 	 * Identify any nestloop parameters that should be supplied by this join
 	 * node, and move them from root->curOuterParams to the nestParams list.
@@ -3225,7 +3172,6 @@ create_nestloop_plan(PlannerInfo *root,
 		}
 		else
 			prev = cell;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	join_plan = make_nestloop(tlist,
@@ -4875,24 +4821,11 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-<<<<<<< HEAD
 	plan = add_sort_cost(root, plan, numCols, sortColIdx, sortOperators,
 						 limit_tuples);
 
 	plan->targetlist = cdbpullup_targetlist(lefttree,
 				 cdbpullup_exprHasSubplanRef((Expr *) lefttree->targetlist));
-=======
-	cost_sort(&sort_path, root, NIL,
-			  lefttree->total_cost,
-			  lefttree->plan_rows,
-			  lefttree->plan_width,
-			  0.0,
-			  work_mem,
-			  limit_tuples);
-	plan->startup_cost = sort_path.startup_cost;
-	plan->total_cost = sort_path.total_cost;
-	plan->targetlist = lefttree->targetlist;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -4937,6 +4870,8 @@ add_sort_cost(PlannerInfo *root, Plan *input, int numCols,
 			  input->total_cost,
 			  input->plan_rows,
 			  input->plan_width,
+			  0.0,
+			  work_mem,
 			  limit_tuples);
 	input->startup_cost = sort_path.startup_cost;
 	input->total_cost = sort_path.total_cost;

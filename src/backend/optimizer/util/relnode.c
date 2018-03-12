@@ -749,7 +749,9 @@ cdb_define_pseudo_column(PlannerInfo   *root,
 
     /* Make a Var node which upper nodes can copy to reference the column. */
     var = makeVar(rel->relid, rci->pseudoattno,
-                  exprType((Node *)defexpr), exprTypmod((Node *)defexpr),
+                  exprType((Node *) defexpr),
+				  exprTypmod((Node *) defexpr),
+				  exprCollation((Node *) defexpr),
                   0);
 
     /* Note the estimated number of bytes for a value of this type. */

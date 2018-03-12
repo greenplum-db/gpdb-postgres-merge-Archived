@@ -109,7 +109,7 @@ extern Plan *plan_grouping_extension(PlannerInfo *root,
 									 int *p_numGroupCols,
 									 AttrNumber **p_grpColIdx,
 									 Oid **p_grpOperators,
-									 AggClauseCounts *agg_counts,
+									 AggClauseCosts *agg_costs,
 									 CanonicalGroupingSets *canonical_grpsets,
 									 double *p_dNumGroups,
 									 bool *querynode_changed,
@@ -142,7 +142,8 @@ extern List *reconstruct_group_clause(List *orig_groupClause, List *tlist,
 
 extern Motion *make_motion(PlannerInfo *root, Plan *lefttree, List *sortPathKeys, bool useExecutorVarFormat);
 extern Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
+		  AttrNumber *sortColIdx, Oid *sortOperators,
+		  Oid *collations, bool *nullsFirst,
 		  double limit_tuples);
 
 extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
@@ -166,13 +167,14 @@ extern Hash *make_hash(Plan *lefttree,
 		  Oid skewColType,
 		  int32 skewColTypmod);
 extern NestLoop *make_nestloop(List *tlist,
-							   List *joinclauses, List *otherclauses,
-							   Plan *lefttree, Plan *righttree,
-							   JoinType jointype);
+			  List *joinclauses, List *otherclauses, List *nestParams,
+			  Plan *lefttree, Plan *righttree,
+			  JoinType jointype);
 extern MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
 			   List *mergeclauses,
 			   Oid *mergefamilies,
+			   Oid *mergecollations,
 			   int *mergestrategies,
 			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,

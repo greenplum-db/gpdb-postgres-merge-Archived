@@ -465,7 +465,7 @@ cdb_grouping_planner(PlannerInfo *root,
 	List	   *sub_tlist = NIL;
 	bool		has_groups = root->parse->groupClause != NIL;
 	bool		has_aggs = agg_counts->numAggs > 0;
-	bool		has_ordered_aggs = agg_counts->hasOrderedAggs;
+	bool		has_ordered_aggs = agg_counts->numOrderedAggs > 0;
 	ListCell   *lc;
 
 	bool		is_grpext = false;

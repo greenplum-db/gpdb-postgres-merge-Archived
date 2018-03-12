@@ -106,7 +106,7 @@ typedef struct GroupExtContext
 	Oid		   *grpOperators;
 	int numDistinctCols;
 	AttrNumber *distinctColIdx;
-	AggClauseCounts *agg_counts;
+	AggClauseCosts *agg_costs;
 	double *p_dNumGroups;
 	List *current_pathkeys;
 	
@@ -368,7 +368,7 @@ plan_grouping_extension(PlannerInfo *root,
 						bool is_agg, bool twostage,
 						List *qual,
 						int *p_numGroupCols, AttrNumber **p_grpColIdx, Oid **p_grpOperators,
-						AggClauseCounts *agg_counts,
+						AggClauseCosts *agg_costs,
 						CanonicalGroupingSets *canonical_grpsets,
 						double *p_dNumGroups,
 						bool *querynode_changed,
@@ -394,7 +394,7 @@ plan_grouping_extension(PlannerInfo *root,
 		   context.numGroupCols * sizeof(Oid));
 	context.numDistinctCols = 0;
 	context.distinctColIdx = NULL;
-	context.agg_counts = agg_counts;
+	context.agg_costs = agg_costs;
 	context.p_dNumGroups = p_dNumGroups;
 	context.current_pathkeys = *p_current_pathkeys;
 	context.is_agg = is_agg;
@@ -499,8 +499,8 @@ make_aggs_for_rollup(PlannerInfo *root,
 	 * aggregates. Otherwise, we fall back to use
 	 * Append-Aggs.
 	 */
-	if (context->agg_counts->numOrderedAggs == 0 &&
-		!context->agg_counts->missing_prelimfunc)
+	if (context->agg_costs->numOrderedAggs == 0 &&
+		!context->agg_costs->missing_prelimfunc)
 		result_plan = make_list_aggs_for_rollup(root, context, lefttree);
 	else
 		result_plan = make_append_aggs_for_rollup(root, context, lefttree);
@@ -820,8 +820,8 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 										(need_repeat_node ?
 										 context->current_rollup->grpset_counts[group_no] : 0),
 										current_numGroups,
-										context->agg_counts->numAggs,
-										context->agg_counts->transitionSpace,
+										context->agg_costs->numAggs,
+										context->agg_costs->transitionSpace,
 										"rollup",
 										&context->current_pathkeys,
 										agg_node, false, false);
@@ -886,7 +886,7 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 								   agg_node->plan_rows, agg_node->plan_width,
 								   &dummy_path,
 								   NULL, 0, *context->p_dNumGroups,
-								   context->agg_counts))
+								   context->agg_costs))
 			context->aggstrategy = AGG_HASHED;
 
 		/* Add a sort node */
@@ -921,8 +921,8 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 										0, /* input_grouping */
 										0, /* grouping */
 										(need_repeat_node ? 1 : 0), /* rollup_gs_times */
-										lNumGroups, context->agg_counts->numAggs,
-										context->agg_counts->transitionSpace,
+										lNumGroups, context->agg_costs->numAggs,
+										context->agg_costs->transitionSpace,
 										"rollup", &context->current_pathkeys,
 										agg_node,
 										false,
@@ -1014,7 +1014,7 @@ make_append_aggs_for_rollup(PlannerInfo *root,
 	GroupExtContext context_copy = { };
 	double numGroups = *(context->p_dNumGroups);
 	double numGroups_for_gather = 0;
-	bool has_ordered_aggs = context->agg_counts->hasOrderedAggs;
+	bool has_ordered_aggs = context->agg_costs->hasOrderedAggs;
 
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
 
@@ -1106,13 +1106,14 @@ add_distinct_cost(Plan *agg_plan, GroupExtContext *context)
 	
 	double num_groups = *context->p_dNumGroups;
 	double avgsize = agg_plan->plan_rows / num_groups;
-	foreach (dqa_lc, context->agg_counts->dqaArgs)
+	foreach (dqa_lc, context->agg_costs->dqaArgs)
 	{
 		Path path_dummy;
 		Node *dqa_expr = (Node *)lfirst(dqa_lc);
 		
 		cost_sort(&path_dummy, NULL, NIL, 0.0, avgsize,
-				  get_typavgwidth(exprType(dqa_expr), exprTypmod(dqa_expr)), -1.0);
+				  get_typavgwidth(exprType(dqa_expr), exprTypmod(dqa_expr)),
+				  0, work_mem, -1.0);
 		agg_plan->total_cost += path_dummy.total_cost;
 	}
 }
@@ -1210,7 +1211,7 @@ generate_dqa_plan(PlannerInfo *root,
 	group_context.p_dNumGroups = context->p_dNumGroups;
 	group_context.pcurrent_pathkeys = &pathkeys;
 	group_context.querynode_changed = &(context->querynode_changed);
-	agg_plan = cdb_grouping_planner(root, context->agg_counts, &group_context);
+	agg_plan = cdb_grouping_planner(root, context->agg_costs, &group_context);
 
 	if (agg_plan == NULL)
 	{
@@ -1747,7 +1748,7 @@ add_first_agg(PlannerInfo *root,
 			numGroupCols, groupColIdx, groupOperators,
 			lNumGroups, num_nullcols, input_grouping, grouping,
 			rollup_gs_times,
-			context->agg_counts->numAggs, context->agg_counts->transitionSpace,
+			context->agg_costs->numAggs, context->agg_costs->transitionSpace,
 			current_lefttree);
 
 	/* Pull up the Flow from the subplan */
@@ -2143,7 +2144,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 	 * any. If lefttree is not a projection capable plan, we insert a
 	 * Result on top of it
 	 */
-	if (context->agg_counts->dqaArgs != NIL)
+	if (context->agg_costs->dqaArgs != NIL)
 	{
 		if (!is_projection_capable_plan(lefttree))
 		{
@@ -2156,7 +2157,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 		Assert(is_projection_capable_plan(lefttree));
 		lefttree->targetlist = 
 			augment_subplan_tlist(lefttree->targetlist,
-								  context->agg_counts->dqaArgs,
+								  context->agg_costs->dqaArgs,
 								  &(context->numDistinctCols),
 								  &(context->distinctColIdx),
 								  true);
@@ -2230,7 +2231,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 		root->parse = copyObject(orig_query);
 
 		if (gp_enable_groupext_distinct_pruning &&
-			context->agg_counts->numOrderedAggs > 0 &&
+			context->agg_costs->numOrderedAggs > 0 &&
 			gp_distinct_grouping_sets_threshold > 0)
 		{
 			/*
@@ -2242,7 +2243,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 			 * distinct-qualified aggregates.
 			 */
 			if (context->curr_grpset_no >=
-				gp_distinct_grouping_sets_threshold / context->agg_counts->numOrderedAggs)
+				gp_distinct_grouping_sets_threshold / context->agg_costs->numOrderedAggs)
 				gp_enable_groupext_distinct_pruning = false;
 		}
 
@@ -2335,21 +2336,23 @@ plan_list_rollup_plans(PlannerInfo *root,
 static Node *
 replace_grouping_columns_quals(Node *node, void *grpcols)
 {
-	ListCell *lc = NULL;
-	
+	ListCell   *lc;
+
 	if (node == NULL || IsA(node, Const))
 		return node;
 
 	Assert(IsA(grpcols, List));
 
-	foreach (lc, (List*)grpcols)
+	foreach (lc, (List *) grpcols)
 	{
-		Node *grpcol = lfirst(lc);
-		if (equal(node, grpcol)) {
+		Node	   *grpcol = lfirst(lc);
 
+		if (equal(node, grpcol))
+		{
 			/* Generate a NULL constant to replace the node. */
-			Const *null = makeNullConst(exprType((Node *)grpcol), -1);
-			return (Node *)null;
+			return (Node *) makeNullConst(exprType(grpcol),
+										  exprTypmod(grpcol),
+										  exprCollation(grpcol));
 		}
 	}
 
@@ -2359,21 +2362,23 @@ replace_grouping_columns_quals(Node *node, void *grpcols)
 static Node *
 replace_grouping_columns_targetlist(Node *node, void *grpcols)
 {
-	ListCell *lc = NULL;
+	ListCell   *lc;
 	
 	if (node == NULL)
 		return NULL;
 
 	Assert(IsA(grpcols, List));
 
-	foreach (lc, (List*)grpcols)
+	foreach (lc, (List *) grpcols)
 	{
-		Node *grpcol = lfirst(lc);
-		if (equal(node, grpcol)) {
+		Node	   *grpcol = lfirst(lc);
 
+		if (equal(node, grpcol))
+		{
 			/* Generate a NULL constant to replace the node. */
-			Const *null = makeNullConst(exprType((Node *)grpcol), -1);
-			return (Node *)null;
+			return (Node *) makeNullConst(exprType(grpcol),
+										  exprTypmod(grpcol),
+										  exprCollation(grpcol));
 		}
 	}
 
@@ -2586,7 +2591,8 @@ add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping)
 
 	if (repeat_count >= 1)
 	{
-		repeatCountExpr = (Expr *)makeConst(INT4OID, -1, sizeof(int32),
+		repeatCountExpr = (Expr *)makeConst(INT4OID, -1, InvalidOid,
+											sizeof(int32),
 											Int32GetDatum(repeat_count),
 											false, true);
 	}
@@ -2596,6 +2602,7 @@ add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping)
 										  repeat_count_resno,
 										  INT4OID,
 										  -1,
+										  InvalidOid,
 										  0);
 	}
 
@@ -2631,7 +2638,9 @@ add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping)
 				Assert(!no_exprs);
 				if (list_length(exp_ctx.list_exprs) == 0)
 				{
-					te->expr = (Expr *)makeNullConst(exprType((Node *)te->expr), -1);
+					te->expr = (Expr *)makeNullConst(exprType((Node *) te->expr),
+													 exprTypmod((Node *) te->expr),
+													 exprCollation((Node *) te->expr));
 					continue;
 				}
 

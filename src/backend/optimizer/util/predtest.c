@@ -2547,8 +2547,13 @@ TryProcessEqualityNodeForPossibleValues(OpExpr *expr, Node *variable, PossibleVa
 					Assert(!"unreachable");
 			}
 
-			newConst = makeConst(consttype, /* consttypmod */ 0, constlen, constvalue,
-				/* constisnull */ false, /* constbyval */ true);
+			newConst = makeConst(consttype,
+								 /* consttypmod */ 0,
+								 /* constcollid */ InvalidOid,
+								 constlen,
+								 constvalue,
+								 /* constisnull */ false,
+								 /* constbyval */ true);
 
 
 			resultOut->isAnyValuePossible = false;

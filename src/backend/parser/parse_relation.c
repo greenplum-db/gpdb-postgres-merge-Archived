@@ -1239,10 +1239,12 @@ addRangeTableEntryForFunction(ParseState *pstate,
 				{
 					Form_pg_attribute attr = tupdesc->attrs[i];
 
-					rte->funccoltypes	= lappend_oid(rte->funccoltypes, 
+					rte->funccoltypes	= lappend_oid(rte->funccoltypes,
 													  attr->atttypid);
-					rte->funccoltypmods = lappend_int(rte->funccoltypmods, 
+					rte->funccoltypmods = lappend_int(rte->funccoltypmods,
 													  attr->atttypmod);
+					rte->funccolcollations = lappend_int(rte->funccolcollations,
+													  attr->attcollation);
 				}
 			}
 		}

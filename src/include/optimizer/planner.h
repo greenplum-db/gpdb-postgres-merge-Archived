@@ -45,7 +45,7 @@ extern bool choose_hashed_grouping(PlannerInfo *root,
 								   Path *sorted_path,
 								   int numGroupOps,
 								   double dNumGroups,
-								   AggClauseCounts *agg_counts);
+								   AggClauseCosts *agg_costs);
 
 extern Expr *expression_planner(Expr *expr);
 

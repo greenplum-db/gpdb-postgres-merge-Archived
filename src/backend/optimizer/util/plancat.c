@@ -60,12 +60,6 @@ static List *get_relation_constraints(PlannerInfo *root,
 						 bool include_notnull);
 
 static void
-estimate_tuple_width(Relation   rel,
-                     int32     *attr_widths,
-                     int32     *bytes_per_tuple,
-                     double    *tuples_per_page);
-
-static void
 cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
                       Relation      baserel,
                       Relation      rel,
@@ -454,7 +448,6 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 	BlockNumber relpages;
 	double		reltuples;
 	double		density;
-    int32       tuple_width;
     BlockNumber curpages = 0;
 
     *default_stats_used = false;
@@ -527,10 +520,16 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
         /*
          * When we have no data because the relation was truncated,
          * estimate tuples per page from attribute datatypes.
-         * (CDB: The code that was here has been moved into the
-         * estimate_tuple_width function below.)
+		 *
+		 * (This is the same computation as in get_relation_info()
          */
-        estimate_tuple_width(rel, attr_widths, &tuple_width, &density);
+		int32		tuple_width;
+
+		tuple_width = get_rel_data_width(rel, attr_widths);
+		tuple_width += sizeof(HeapTupleHeaderData);
+		tuple_width += sizeof(ItemPointerData);
+		/* note: integer division is intentional here */
+		density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 	}
 	*tuples = ceil(density * curpages);
 
@@ -554,7 +553,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 	BlockNumber relpages;
 	double		reltuples;
 	double		density;
-    int32       tuple_width;
 
 	switch (rel->rd_rel->relkind)
 	{
@@ -639,15 +637,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				density = reltuples / (double) relpages;
 			else
 			{
-<<<<<<< HEAD
-	            /*
-	             * When we have no data because the relation was truncated,
-	             * estimate tuples per page from attribute datatypes.
-                 * (CDB: The code that was here has been moved into the
-                 * estimate_tuple_width function below.)
-                 */
-                estimate_tuple_width(rel, attr_widths, &tuple_width, &density);
-=======
 				/*
 				 * When we have no data because the relation was truncated,
 				 * estimate tuple width from attribute datatypes.  We assume
@@ -670,7 +659,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				tuple_width += sizeof(ItemPointerData);
 				/* note: integer division is intentional here */
 				density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			}
 			*tuples = ceil(density * curpages);
 			break;
@@ -694,35 +682,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 
 
 /*
-<<<<<<< HEAD
- * estimate_tuple_width
- *
- * CDB: Pulled this code out of estimate_rel_size below to make a
- * separate function.
- */
-void
-estimate_tuple_width(Relation   rel,
-                     int32     *attr_widths,
-                     int32     *bytes_per_tuple,
-                     double    *tuples_per_page)
-{
-	/*
-	 * Estimate tuple width from attribute datatypes.  We assume
-	 * here that the pages are completely full, which is OK for
-	 * tables (since they've presumably not been VACUUMed yet) but
-	 * is probably an overestimate for indexes.  Fortunately
-	 * get_relation_info() can clamp the overestimate to the
-	 * parent table's size.
-	 *
-	 * Note: this code intentionally disregards alignment
-	 * considerations, because (a) that would be gilding the lily
-	 * considering how crude the estimate is, and (b) it creates
-	 * platform dependencies in the default plans which are kind
-	 * of a headache for regression testing.
-	 */
-    double      density;
-    int32		tuple_width = 0;
-=======
  * get_rel_data_width
  *
  * Estimate the average width of (the data part of) the relation's tuples.
@@ -739,7 +698,6 @@ static int32
 get_rel_data_width(Relation rel, int32 *attr_widths)
 {
 	int32		tuple_width = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			i;
 
 	for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
@@ -749,8 +707,6 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 
 		if (att->attisdropped)
 			continue;
-<<<<<<< HEAD
-=======
 
 		/* use previously cached data, if any */
 		if (attr_widths != NULL && attr_widths[i] > 0)
@@ -759,7 +715,6 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 			continue;
 		}
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		/* This should match set_rel_width() in costsize.c */
 		item_width = get_attavgwidth(RelationGetRelid(rel), i);
 		if (item_width <= 0)
@@ -771,16 +726,6 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 			attr_widths[i] = item_width;
 		tuple_width += item_width;
 	}
-<<<<<<< HEAD
-	tuple_width += sizeof(HeapTupleHeaderData);
-	tuple_width += sizeof(ItemPointerData);
-    /* note: integer division is intentional here */
-	density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
-
-    *bytes_per_tuple = tuple_width;
-    *tuples_per_page = Max(1.0, density);
-}                               /* estimate_tuple_width */
-=======
 
 	return tuple_width;
 }
@@ -806,7 +751,6 @@ get_relation_data_width(Oid relid, int32 *attr_widths)
 
 	return result;
 }
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -1289,7 +1233,7 @@ cdb_default_stats_warning_needed(Oid reloid)
     relation = relation_open(reloid, NoLock);
 
     /* Keep quiet if temporary or system table. */
-    if (relation->rd_istemp ||
+    if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP ||
         IsSystemClass(relation->rd_rel))
         warn = false;
 

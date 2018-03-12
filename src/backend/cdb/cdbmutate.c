@@ -1531,6 +1531,7 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 	List	   *colnames = NIL;
 	List	   *coltypes = NIL;
 	List	   *coltypmods = NIL;
+	List	   *colcollations = NIL;
 	ShareInputScan *producer;
 
 	Assert(ctxt->producer_count > share_id);
@@ -1542,10 +1543,12 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 		Oid			vartype;
 		int32		vartypmod;
+		Oid			varcollid;
 		char	   *resname;
 
 		vartype = exprType((Node *) tle->expr);
 		vartypmod = exprTypmod((Node *) tle->expr);
+		varcollid = exprCollation((Node *) tle->expr);
 
 		/*
 		 * We should've filled in tle->resname in shareinput_save_producer().
@@ -1560,6 +1563,7 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 		colnames = lappend(colnames, makeString(resname));
 		coltypes = lappend_oid(coltypes, vartype);
 		coltypmods = lappend_int(coltypmods, vartypmod);
+		colcollations = lappend_oid(colcollations, varcollid);
 		attno++;
 	}
 
@@ -1579,6 +1583,7 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 	rte->eref = makeAlias(rte->ctename, colnames);
 	rte->ctecoltypes = coltypes;
 	rte->ctecoltypmods = coltypmods;
+	rte->ctecollations = colcollations;
 
 	rte->inh = false;
 	rte->inFromCl = false;

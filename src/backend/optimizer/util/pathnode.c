@@ -1897,6 +1897,7 @@ create_unique_rowid_path(PlannerInfo *root,
 				  subpath->total_cost,
 				  rel->rows,
 				  rel->width,
+				  0, work_mem,
 				  -1.0);
 
 		/*

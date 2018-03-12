@@ -130,17 +130,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * something like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
-<<<<<<< HEAD
-		root->query_pathkeys = canonicalize_pathkeys(root,
-													 root->query_pathkeys);
-		root->group_pathkeys = canonicalize_pathkeys(root,
-													 root->group_pathkeys);
-		root->window_pathkeys = canonicalize_pathkeys(root,
-													  root->window_pathkeys);
-		root->distinct_pathkeys = canonicalize_pathkeys(root,
-													root->distinct_pathkeys);
-		root->sort_pathkeys = canonicalize_pathkeys(root,
-													root->sort_pathkeys);
+		canonicalize_all_pathkeys(root);
 
 		{
 			char		exec_location;
@@ -152,9 +142,6 @@ query_planner(PlannerInfo *root, List *tlist,
 			else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
 				CdbPathLocus_MakeStrewn(&(*cheapest_path)->locus);
 		}
-=======
-		canonicalize_all_pathkeys(root);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return;
 	}
 
@@ -253,13 +240,9 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
 	 * Make sure that the Vars they need are marked as needed at the relevant
-<<<<<<< HEAD
-	 * join level.
-=======
 	 * join level.	This must be done before join removal because it might
 	 * cause Vars or placeholders to be needed above a join when they weren't
 	 * so marked before.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	fix_placeholder_input_needed_levels(root);
 
@@ -359,14 +342,11 @@ query_planner(PlannerInfo *root, List *tlist,
 		if (!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys) ||
 			!pathkeys_contained_in(root->distinct_pathkeys, root->group_pathkeys))
 			tuple_fraction = 0.0;
-<<<<<<< HEAD
 		/* GPDB_84_MERGE_FIXME: Are we missing the condition on window_pathkeys on
 		 * purpose? */
-=======
 
 		/* In any case, limit_tuples shouldn't be specified here */
 		Assert(limit_tuples < 0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	else if (parse->hasAggs || root->hasHavingQual)
 	{
@@ -463,13 +443,8 @@ query_planner(PlannerInfo *root, List *tlist,
 			/* Figure cost for sorting */
 			cost_sort(&sort_path, root, root->query_pathkeys,
 					  cheapestpath->total_cost,
-<<<<<<< HEAD
 					  cdbpath_rows(root, cheapestpath), final_rel->width,
-					  limit_tuples);
-=======
-					  final_rel->rows, final_rel->width,
 					  0.0, work_mem, limit_tuples);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,
@@ -486,7 +461,22 @@ query_planner(PlannerInfo *root, List *tlist,
 
 
 /*
-<<<<<<< HEAD
+ * canonicalize_all_pathkeys
+ *		Canonicalize all pathkeys that were generated before entering
+ *		query_planner and then stashed in PlannerInfo.
+ */
+static void
+canonicalize_all_pathkeys(PlannerInfo *root)
+{
+	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
+	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
+	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
+	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
+	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
+}
+
+
+/*
  * distcols_in_groupclause -
  *     Return all distinct tleSortGroupRef values in a GROUP BY clause.
  *
@@ -609,18 +599,4 @@ CopyPlannerConfig(const PlannerConfig *c1)
 
 	memcpy(c2, c1, sizeof(PlannerConfig));
 	return c2;
-=======
- * canonicalize_all_pathkeys
- *		Canonicalize all pathkeys that were generated before entering
- *		query_planner and then stashed in PlannerInfo.
- */
-static void
-canonicalize_all_pathkeys(PlannerInfo *root)
-{
-	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
-	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
-	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
-	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
-	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

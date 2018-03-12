@@ -26,9 +26,8 @@
 #include "optimizer/clauses.h" /* AggClauseCounts */
 #include "optimizer/planmain.h"   /* GroupContext */
 
-extern Plan *
-cdb_grouping_planner(PlannerInfo* root,
-					 AggClauseCounts *agg_counts,
+extern Plan *cdb_grouping_planner(PlannerInfo* root,
+					 AggClauseCosts *agg_costs,
 					 GroupContext *group_context);
 
 extern bool cdbpathlocus_collocates(PlannerInfo *root, CdbPathLocus locus, List *pathkeys, bool exact_match);
@@ -71,7 +70,7 @@ extern List *reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_
 								  List *orig_tlist, List *new_tlist);
 extern List *augment_subplan_tlist(List *tlist, List *exprs, int *pnum, AttrNumber **pcols, bool return_resno);
 
-extern Plan *within_agg_planner(PlannerInfo *root, AggClauseCounts *agg_counts,
+extern Plan *within_agg_planner(PlannerInfo *root, AggClauseCosts *agg_counts,
 								GroupContext *group_context);
 
 extern void UpdateScatterClause(Query *query, List *newtlist);

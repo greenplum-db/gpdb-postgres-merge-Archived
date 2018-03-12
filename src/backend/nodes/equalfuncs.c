@@ -2631,11 +2631,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	COMPARE_NODE_FIELD(funcexpr);
 	COMPARE_NODE_FIELD(funccoltypes);
 	COMPARE_NODE_FIELD(funccoltypmods);
-<<<<<<< HEAD
-	COMPARE_VARLENA_FIELD(funcuserdata, -1);
-=======
 	COMPARE_NODE_FIELD(funccolcollations);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	COMPARE_VARLENA_FIELD(funcuserdata, -1);
 	COMPARE_NODE_FIELD(values_lists);
 	COMPARE_NODE_FIELD(values_collations);
 	COMPARE_STRING_FIELD(ctename);
