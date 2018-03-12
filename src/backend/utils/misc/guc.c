@@ -57,9 +57,6 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
-#include "replication/syncrep.h"
-#include "replication/walsender.h"
-#include "replication/walreceiver.h"
 #include "postmaster/walwriter.h"
 #include "replication/syncrep.h"
 #include "replication/walreceiver.h"
@@ -190,7 +187,6 @@ static void assign_syslog_ident(const char *newval, void *extra);
 static void assign_session_replication_role(int newval, void *extra);
 static bool check_temp_buffers(int *newval, void **extra, GucSource source);
 static bool check_phony_autocommit(bool *newval, void **extra, GucSource source);
-static bool check_custom_variable_classes(char **newval, void **extra, GucSource source);
 static bool check_debug_assertions(bool *newval, void **extra, GucSource source);
 static bool check_bonjour(bool *newval, void **extra, GucSource source);
 static bool check_ssl(bool *newval, void **extra, GucSource source);
@@ -843,15 +839,6 @@ static struct config_bool ConfigureNamesBool[] =
 		  GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&enableFsync,
-		true,
-		NULL, NULL, NULL
-	},
-	{
-		{"synchronous_commit", PGC_USERSET, DEFUNCT_OPTIONS,
-			gettext_noop("Sets immediate fsync at commit."),
-			NULL
-		},
-		&XactSyncCommit,
 		true,
 		NULL, NULL, NULL
 	},
@@ -2095,17 +2082,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_sender_delay", PGC_SIGHUP, WAL_REPLICATION,
-			gettext_noop("WAL sender sleep time between WAL replications."),
-			NULL,
-			GUC_UNIT_MS
-		},
-		&WalSndDelay,
-		1000, 1, 10000,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"replication_timeout", PGC_SUSET, WAL_REPLICATION,
 			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
 			NULL,
@@ -2290,7 +2266,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_max_workers,
-		3, 1, INT_MAX / 4, assign_autovacuum_max_workers, NULL
+		3, 1, INT_MAX / 4,
+		NULL, assign_autovacuum_max_workers, NULL
 	},
 
 	{
@@ -2589,8 +2566,7 @@ static struct config_real ConfigureNamesReal[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&defunct_double,
-		DEFAULT_GEQO_SELECTION_BIAS,
-		MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS,
+		1.0, 0.0, 100.0,
 		NULL, NULL, NULL
 	},
 	{
@@ -2672,7 +2648,8 @@ static struct config_string ConfigureNamesString[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
 		},
 		&allow_system_table_mods_str,
-		"none", assign_allow_system_table_mods, show_allow_system_table_mods
+		"none",
+		NULL, assign_allow_system_table_mods, show_allow_system_table_mods
 	},
 
 	{
@@ -3195,7 +3172,7 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&wal_consistency_checking_string,
 		"",
-		assign_wal_consistency_checking, NULL
+		NULL, assign_wal_consistency_checking, NULL
 	},
 
 	/* End-of-list marker */
@@ -6730,7 +6707,7 @@ DispatchSetPGVariable(const char *name, List *args, bool is_local)
 					 */
 
 					if (val[0] != '\'')
-						appendStringInfo(&buffer, "%s", quote_literal_internal(val));
+						appendStringInfo(&buffer, "%s", quote_literal_cstr(val));
 					else
 						appendStringInfo(&buffer, "%s",val);
 

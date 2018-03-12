@@ -3203,7 +3203,6 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * statstuple: pg_statistic tuple to be examined.
  * reqkind: STAKIND code for desired statistics slot kind.
  * reqop: STAOP value wanted, or InvalidOid if don't care.
-<<<<<<< HEAD
  * flags: bitmask of ATTSTATSSLOT_VALUES and/or ATTSTATSSLOT_NUMBERS.
  *
  * If a matching slot is found, TRUE is returned, and *sslot is filled thus:
@@ -3226,20 +3225,6 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  *
  * If it's desirable to call free_attstatsslot when get_attstatsslot might
  * not have been called, memset'ing sslot to zeroes will allow that.
-=======
- * actualop: if not NULL, *actualop receives the actual STAOP value.
- * values, nvalues: if not NULL, the slot's stavalues are extracted.
- * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
- *
- * If assigned, values and numbers are set to point to palloc'd arrays.
- * If the attribute type is pass-by-reference, the values referenced by
- * the values array are themselves palloc'd.  The palloc'd stuff can be
- * freed by calling free_attstatsslot.
- *
- * Note: at present, atttype/atttypmod aren't actually used here at all.
- * But the caller must have the correct (or at least binary-compatible)
- * type ID to pass to free_attstatsslot later.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 bool
 get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
@@ -3276,31 +3261,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 							  &isnull);
 		if (isnull)
 			elog(ERROR, "stavalues is null");
-<<<<<<< HEAD
-=======
-		statarray = DatumGetArrayTypeP(val);
-
-		/*
-		 * Need to get info about the array element type.  We look at the
-		 * actual element type embedded in the array, which might be only
-		 * binary-compatible with the passed-in atttype.  The info we extract
-		 * here should be the same either way, but deconstruct_array is picky
-		 * about having an exact type OID match.
-		 */
-		arrayelemtype = ARR_ELEMTYPE(statarray);
-		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(arrayelemtype));
-		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "cache lookup failed for type %u", arrayelemtype);
-		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
-
-		/* Deconstruct array into Datum elements; NULLs not expected */
-		deconstruct_array(statarray,
-						  arrayelemtype,
-						  typeForm->typlen,
-						  typeForm->typbyval,
-						  typeForm->typalign,
-						  values, NULL, nvalues);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * Detoast the array if needed, and in any case make a copy that's
@@ -3468,39 +3428,6 @@ get_namespace_name(Oid nspid)
 	else
 		return NULL;
 }
-<<<<<<< HEAD
-
-/*				---------- PG_AUTHID CACHE ----------					 */
-
-/*
- * get_roleid
- *	  Given a role name, look up the role's OID.
- *	  Returns InvalidOid if no such role.
- */
-Oid
-get_roleid(const char *rolname)
-{
-	return GetSysCacheOid1(AUTHNAME, PointerGetDatum(rolname));
-}
-
-/*
- * get_roleid_checked
- *	  Given a role name, look up the role's OID.
- *	  ereports if no such role.
- */
-Oid
-get_roleid_checked(const char *rolname)
-{
-	Oid			roleid;
-
-	roleid = get_roleid(rolname);
-	if (!OidIsValid(roleid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role \"%s\" does not exist", rolname)));
-	return roleid;
-}
-
 
 /*
  * relation_oids
@@ -4328,5 +4255,3 @@ child_triggers(Oid relationId, int32 triggerType)
 	/* no child triggers matching the given type */
 	return found;
 }
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

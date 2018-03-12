@@ -67,11 +67,7 @@ static sigjmp_buf *GUC_flex_fatal_jmp;
 /* flex fails to supply a prototype for yylex, so provide one */
 int GUC_yylex(void);
 
-<<<<<<< HEAD
 static int GUC_flex_fatal(const char *msg);
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static char *GUC_scanstr(const char *s);
 
 %}
@@ -140,11 +136,6 @@ ProcessConfigFile(GucContext context)
 				   *head,
 				   *tail;
 	char	   *cvc = NULL;
-<<<<<<< HEAD
-	const char *envvar;
-=======
-	struct config_string *cvc_struct;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			i;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
@@ -163,57 +154,13 @@ ProcessConfigFile(GucContext context)
 	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
-<<<<<<< HEAD
-	if (!ParseConfigFile(ConfigFileName, NULL,
-						 0, elevel,
-						 &head, &tail))
+	if (!ParseConfigFile(ConfigFileName, NULL, 0, elevel, &head, &tail))
 		goto cleanup_list;
 
 	Assert(gp_replication_config_filename);
 
-	if (!ParseConfigFile(gp_replication_config_filename, NULL,
-						 0, elevel,
-						 &head, &tail))
+	if (!ParseConfigFile(gp_replication_config_filename, NULL, 0, elevel, &head, &tail))
 		goto cleanup_list;
-=======
-	if (!ParseConfigFile(ConfigFileName, NULL, 0, elevel, &head, &tail))
-		goto cleanup_list;
-
-	/*
-	 * We need the proposed new value of custom_variable_classes to check
-	 * custom variables with.  ParseConfigFile ensured that if it's in
-	 * the file, it's first in the list.  But first check to see if we
-	 * have an active value from the command line, which should override
-	 * the file in any case.  (Since there's no relevant env var, the
-	 * only possible nondefault sources are the file and ARGV.)
-	 */
-	cvc_struct = (struct config_string *)
-		find_option("custom_variable_classes", false, elevel);
-	Assert(cvc_struct);
-	if (cvc_struct->gen.reset_source > PGC_S_FILE)
-	{
-		cvc = guc_strdup(elevel, cvc_struct->reset_val);
-		if (cvc == NULL)
-			goto cleanup_list;
-	}
-	else if (head != NULL &&
-			 guc_name_compare(head->name, "custom_variable_classes") == 0)
-	{
-		/*
-		 * Need to canonicalize the value by calling the check hook.
-		 */
-		void   *extra = NULL;
-
-		cvc = guc_strdup(elevel, head->value);
-		if (cvc == NULL)
-			goto cleanup_list;
-		if (!call_string_check_hook(cvc_struct, &cvc, &extra,
-									PGC_S_FILE, elevel))
-			goto cleanup_list;
-		if (extra)
-			free(extra);
-	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Mark all extant GUC variables as not present in the config file.
@@ -399,7 +346,6 @@ ProcessConfigFile(GucContext context)
 }
 
 /*
-<<<<<<< HEAD
  * Flex fatal errors bring us here.  Stash the error message and jump back to
  * ParseConfigFp().  Assume all msg arguments point to string constants; this
  * holds for flex 2.5.31 (earliest we support) and flex 2.5.35 (latest as of
@@ -416,8 +362,6 @@ GUC_flex_fatal(const char *msg)
 }
 
 /*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * See next function for details. This one will just work with a config_file
  * name rather than an already opened File Descriptor
  */
@@ -442,10 +386,6 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("could not open configuration file \"%s\": maximum nesting depth exceeded",
 						config_file)));
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return false;
 	}
 
@@ -481,10 +421,6 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						config_file)));
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		return false;
 	}
 
@@ -525,7 +461,6 @@ bool
 ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p)
 {
-<<<<<<< HEAD
 	volatile bool OK = true;
 	unsigned int save_ConfigFileLineno = ConfigFileLineno;
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
@@ -548,12 +483,6 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		goto cleanup_exit;
 	}
 
-=======
-	bool		OK = true;
-	YY_BUFFER_STATE lex_buffer;
-	int			token;
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Parse
 	 */
@@ -565,12 +494,8 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	/* This loop iterates once per logical line */
 	while ((token = yylex()))
 	{
-<<<<<<< HEAD
 		char	   *opt_name = NULL;
 		char	   *opt_value = NULL;
-=======
-		char	   *opt_name, *opt_value;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		ConfigVariable *item;
 
 		if (token == GUC_EOL)	/* empty or comment line */
@@ -667,12 +592,9 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 
 cleanup_exit:
 	yy_delete_buffer(lex_buffer);
-<<<<<<< HEAD
 	/* Each recursion level must save and restore these static variables. */
 	ConfigFileLineno = save_ConfigFileLineno;
 	GUC_flex_fatal_jmp = save_GUC_flex_fatal_jmp;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return OK;
 }
 

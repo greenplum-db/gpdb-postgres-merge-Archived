@@ -10,19 +10,11 @@
  * be used for grouping and sorting the type (GROUP BY, ORDER BY ASC/DESC).
  *
  * Several seemingly-odd choices have been made to support use of the type
-<<<<<<< HEAD
- * cache by the generic array comparison routines array_eq() and array_cmp().
- * Because those routines are used as index support operations, they cannot
- * leak memory.  To allow them to execute efficiently, all information that
- * either of them would like to re-use across calls is made available in the
- * type cache.
-=======
  * cache by generic array and record handling routines, such as array_eq(),
  * record_cmp(), and hash_array().	Because those routines are used as index
  * support operations, they cannot leak memory.  To allow them to execute
  * efficiently, all information that they would like to re-use across calls
  * is kept in the type cache.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * Once created, a type cache entry lives as long as the backend does, so
  * there is no need for a call to release a cache entry.  (For present uses,
