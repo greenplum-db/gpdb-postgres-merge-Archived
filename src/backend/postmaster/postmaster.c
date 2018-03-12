@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -656,11 +652,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
 	while ((opt = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:mM:nOo:Pp:r:S:sTt:UW:-:")) != -1)
-=======
-	while ((opt = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		switch (opt)
 		{
@@ -1807,16 +1799,12 @@ ServerLoop(void)
 		if (WalWriterPID == 0 && pmState == PM_RUN)
 			WalWriterPID = StartWalWriter();
 
-<<<<<<< HEAD
-		/* If we have lost the autovacuum launcher, try to start a new one */
-=======
 		/*
 		 * If we have lost the autovacuum launcher, try to start a new one. We
 		 * don't want autovacuum to run in binary upgrade mode because
 		 * autovacuum might update relfrozenxid for empty tables before the
 		 * physical files are put in place.
 		 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		if (!IsBinaryUpgrade && AutoVacPID == 0 &&
 			(AutoVacuumingActive() || start_autovac_launcher) &&
 			pmState == PM_RUN)
@@ -2371,29 +2359,19 @@ canAcceptConnections(void)
 	 */
 	if (pmState != PM_RUN)
 	{
-<<<<<<< HEAD
-		if (Shutdown > NoShutdown)
-			return CAC_SHUTDOWN;	/* shutdown is pending */
-
-		/*
-		 * If the wal receiver has been launched at least once, return that
-		 * the mirror is ready.
-		 */
-		if (pm_launch_walreceiver)
-			return CAC_MIRROR_READY;
-
-		if (!FatalError &&
-			(pmState == PM_STARTUP ||
-			 pmState == PM_RECOVERY))
-=======
 		if (pmState == PM_WAIT_BACKUP)
 			result = CAC_WAITBACKUP;	/* allow superusers only */
 		else if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
+		/*
+		 * If the wal receiver has been launched at least once, return that
+		 * the mirror is ready.
+		 */
+		else if (pm_launch_walreceiver)
+			return CAC_MIRROR_READY;
 		else if (!FatalError &&
 				 (pmState == PM_STARTUP ||
 				  pmState == PM_RECOVERY))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			return CAC_STARTUP; /* normal startup */
 		else if (!FatalError &&
 				 pmState == PM_HOT_STANDBY)
@@ -2445,20 +2423,6 @@ ConnCreate(int serverFd)
 			StreamClose(port->sock);
 		ConnFree(port);
 		return NULL;
-<<<<<<< HEAD
-	}
-	else
-	{
-		/*
-		 * Precompute password salt values to use for this connection. It's
-		 * slightly annoying to do this long in advance of knowing whether
-		 * we'll need 'em or not, but we must do the random() calls before we
-		 * fork, not after.  Else the postmaster's random sequence won't get
-		 * advanced, and all backends would end up using the same salt...
-		 */
-		RandomSalt(port->md5Salt);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*
@@ -2931,16 +2895,12 @@ reaper(SIGNAL_ARGS)
 				BgWriterPID = StartBackgroundWriter();
 			if (WalWriterPID == 0)
 				WalWriterPID = StartWalWriter();
-<<<<<<< HEAD
 
 			/*
 			 * Likewise, start other special children as needed.  In a restart
 			 * situation, some of them may be alive already.
 			 */
-			if (AutoVacuumingActive() && AutoVacPID == 0)
-=======
 			if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				AutoVacPID = StartAutoVacLauncher();
 			if (XLogArchivingActive() && PgArchPID == 0)
 				PgArchPID = pgarch_start();
@@ -3263,12 +3223,6 @@ CleanupBackend(int pid,
 	 * the active backend list.
 	 */
 #ifdef WIN32
-<<<<<<< HEAD
-	/*
-	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal
-	 * case, since that sometimes happens under load when the process fails
-	 * to start properly (long before it starts using shared memory).
-=======
 
 	/*
 	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal case,
@@ -3276,7 +3230,6 @@ CleanupBackend(int pid,
 	 * properly (long before it starts using shared memory). Microsoft reports
 	 * it is related to mutex failure:
 	 * http://archives.postgresql.org/pgsql-hackers/2010-09/msg00790.php
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (exitstatus == ERROR_WAIT_NO_CHILDREN)
 	{
@@ -5104,6 +5057,10 @@ sigusr1_handler(SIGNAL_ARGS)
 		PostmasterStateMachine();
 	}
 
+	// GPDB_91_MERGE_FIXME: We got this second copy of this block from upstream
+	// I'm not sure what to here..
+#if 0
+	
 	if (CheckPromoteSignal() && StartupPID != 0 &&
 		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
 		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY))
@@ -5111,6 +5068,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		/* Tell startup process to finish recovery */
 		signal_child(StartupPID, SIGUSR2);
 	}
+#endif
 
 	PG_SETMASK(&UnBlockSig);
 

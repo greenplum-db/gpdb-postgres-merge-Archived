@@ -417,7 +417,8 @@ Section: Class 57 - Operator Intervention
 57P01    E    ERRCODE_ADMIN_SHUTDOWN                                         admin_shutdown
 57P02    E    ERRCODE_CRASH_SHUTDOWN                                         crash_shutdown
 57P03    E    ERRCODE_CANNOT_CONNECT_NOW                                     cannot_connect_now
-57P04    E    ERRCODE_DATABASE_DROPPED										 database_dropped
+57P04    E    ERRCODE_DATABASE_DROPPED                                       database_dropped
+57M02    E    ERRCODE_MIRROR_READY                                           mirror_ready
 
 Section: Class 58 - System Error (errors external to PostgreSQL itself)
 

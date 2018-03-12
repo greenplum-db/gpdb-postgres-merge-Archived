@@ -2769,9 +2769,8 @@ internal_ping(PGconn *conn)
 								  conn->last_sqlstate[2], conn->last_sqlstate[3],
 								  conn->last_sqlstate[4]);
 
-	// GPDB_91_MERGE_FIXME: where's this defined?
-	//if (last_sqlstate == ERRCODE_MIRROR_READY)
-	//	return PQPING_MIRROR_READY;
+	if (last_sqlstate == ERRCODE_MIRROR_READY)
+		return PQPING_MIRROR_READY;
 
 	/*
 	 * Report PQPING_REJECT if server says it's not accepting connections. (We

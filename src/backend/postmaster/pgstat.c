@@ -2435,12 +2435,8 @@ pgstat_bestart(void)
 	beentry->st_userid = userid;
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
 	beentry->st_clientaddr = clientaddr;
-<<<<<<< HEAD
-	beentry->st_waiting = PGBE_WAITING_NONE;
-=======
 	beentry->st_clienthostname[0] = '\0';
-	beentry->st_waiting = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	beentry->st_waiting = PGBE_WAITING_NONE;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
@@ -2452,15 +2448,13 @@ pgstat_bestart(void)
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
 
-<<<<<<< HEAD
+	if (MyProcPort && MyProcPort->remote_hostname)
+		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname, NAMEDATALEN);
+
 	/*
 	 * GPDB: Initialize per-portal statistics hash for resource queues.
 	 */
 	pgstat_init_localportalhash();
-=======
-	if (MyProcPort && MyProcPort->remote_hostname)
-		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname, NAMEDATALEN);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Update app name to current GUC setting */
 	if (application_name)

@@ -361,7 +361,7 @@ extern char *XLogLocationToString5_Long(XLogRecPtr *loc);
 
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
-extern bool CheckPromoteSignal(void);
+extern bool CheckPromoteSignal(bool do_unlink);
 extern void WakeupRecovery(void);
 
 /*

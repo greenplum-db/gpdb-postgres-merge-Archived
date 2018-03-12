@@ -1819,7 +1819,7 @@ void
 cdb_sequence_nextval_server(Oid    tablespaceid,
                             Oid    dbid,
                             Oid    relid,
-                            bool   istemp,
+                            char relpersistence,
                             int64 *plast,
                             int64 *pcached,
                             int64 *pincrement,

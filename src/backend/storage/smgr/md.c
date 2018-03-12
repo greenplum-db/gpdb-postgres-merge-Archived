@@ -1431,11 +1431,11 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno);
+		RememberFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno);
 	}
 	else
 	{
-		if (ForwardFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno))
+		if (ForwardFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno))
 			return;				/* passed it off successfully */
 
 		ereport(DEBUG1,
@@ -1461,7 +1461,7 @@ register_unlink(RelFileNodeBackend rnode)
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(rnode, MAIN_FORKNUM, UNLINK_RELATION_REQUEST);
+		RememberFsyncRequest(rnode.node, MAIN_FORKNUM, UNLINK_RELATION_REQUEST);
 	}
 	else
 	{
@@ -1473,7 +1473,7 @@ register_unlink(RelFileNodeBackend rnode)
 		 * XXX should we just leave the file orphaned instead?
 		 */
 		Assert(IsUnderPostmaster);
-		while (!ForwardFsyncRequest(rnode, MAIN_FORKNUM,
+		while (!ForwardFsyncRequest(rnode.node, MAIN_FORKNUM,
 									UNLINK_RELATION_REQUEST))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 	}
@@ -1499,8 +1499,7 @@ register_unlink(RelFileNodeBackend rnode)
  * structure for them.)
  */
 void
-RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
-					 BlockNumber segno)
+RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 {
 	Assert(pendingOpsTable);
 
@@ -1616,7 +1615,7 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
  * ForgetRelationFsyncRequests -- forget any fsyncs for a rel
  */
 void
-ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
+ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 {
 	if (pendingOpsTable)
 	{
@@ -1651,12 +1650,11 @@ ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
 void
 ForgetDatabaseFsyncRequests(Oid dbid)
 {
-	RelFileNodeBackend rnode;
+	RelFileNode rnode;
 
 	rnode.node.dbNode = dbid;
 	rnode.node.spcNode = 0;
 	rnode.node.relNode = 0;
-	rnode.backend = InvalidBackendId;
 
 	if (pendingOpsTable)
 	{
