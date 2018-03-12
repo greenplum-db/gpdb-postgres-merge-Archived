@@ -163,13 +163,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "reconfiguring SHMMIN is called for.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
-<<<<<<< HEAD
-						 (unsigned long) size, NBuffers, MaxBackends) : 0,
-				 (shmget_errno == ENOMEM) ?
-=======
 						 (unsigned long) size) : 0,
 				 (errno == ENOMEM) ?
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 				   "memory segment exceeded available memory or swap space, "
 			   "or exceeded your kernel's SHMALL parameter.  You can either "
@@ -179,15 +174,9 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "or max_connections.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
-<<<<<<< HEAD
-						 (unsigned long) size, NBuffers, MaxBackends) : 0,
-				 (shmget_errno == ENOSPC) ?
-				 errhint("This error does *not* mean that you have run out of disk space. "
-=======
 						 (unsigned long) size) : 0,
 				 (errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.  "
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
 		  "or because the system's overall limit for shared memory has been "

@@ -3,63 +3,6 @@
  * unix_latch.c
  *	  Routines for inter-process latches
  *
-<<<<<<< HEAD
-=======
- * A latch is a boolean variable, with operations that let you to sleep
- * until it is set. A latch can be set from another process, or a signal
- * handler within the same process.
- *
- * The latch interface is a reliable replacement for the common pattern of
- * using pg_usleep() or select() to wait until a signal arrives, where the
- * signal handler sets a global variable. Because on some platforms, an
- * incoming signal doesn't interrupt sleep, and even on platforms where it
- * does there is a race condition if the signal arrives just before
- * entering the sleep, the common pattern must periodically wake up and
- * poll the global variable. pselect() system call was invented to solve
- * the problem, but it is not portable enough. Latches are designed to
- * overcome these limitations, allowing you to sleep without polling and
- * ensuring a quick response to signals from other processes.
- *
- * There are two kinds of latches: local and shared. A local latch is
- * initialized by InitLatch, and can only be set from the same process.
- * A local latch can be used to wait for a signal to arrive, by calling
- * SetLatch in the signal handler. A shared latch resides in shared memory,
- * and must be initialized at postmaster startup by InitSharedLatch. Before
- * a shared latch can be waited on, it must be associated with a process
- * with OwnLatch. Only the process owning the latch can wait on it, but any
- * process can set it.
- *
- * There are three basic operations on a latch:
- *
- * SetLatch		- Sets the latch
- * ResetLatch	- Clears the latch, allowing it to be set again
- * WaitLatch	- Waits for the latch to become set
- *
- * The correct pattern to wait for an event is:
- *
- * for (;;)
- * {
- *	   ResetLatch();
- *	   if (work to do)
- *		   Do Stuff();
- *
- *	   WaitLatch();
- * }
- *
- * It's important to reset the latch *before* checking if there's work to
- * do. Otherwise, if someone sets the latch between the check and the
- * ResetLatch call, you will miss it and Wait will block.
- *
- * To wake up the waiter, you must first set a global flag or something
- * else that the main loop tests in the "if (work to do)" part, and call
- * SetLatch *after* that. SetLatch is designed to return quickly if the
- * latch is already set.
- *
- *
- * Implementation
- * --------------
- *
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * The Unix implementation uses the so-called self-pipe trick to overcome
  * the race condition involved with select() and setting a global flag
  * in the signal handler. When a latch is set and the current process
@@ -68,27 +11,18 @@
  * interrupt select() on all platforms, and even on platforms where it
  * does, a signal that arrives just before the select() call does not
  * prevent the select() from entering sleep. An incoming byte on a pipe
-<<<<<<< HEAD
  * however reliably interrupts the sleep, and causes select() to return
  * immediately even if the signal arrives before select() begins.
  *
  * (Actually, we prefer poll() over select() where available, but the
  * same comments apply to it.)
-=======
- * however reliably interrupts the sleep, and makes select() to return
- * immediately if the signal arrives just before select() begins.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * When SetLatch is called from the same process that owns the latch,
  * SetLatch writes the byte directly to the pipe. If it's owned by another
  * process, SIGUSR1 is sent and the signal handler in the waiting process
  * writes the byte to the pipe on behalf of the signaling process.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -103,36 +37,27 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
-<<<<<<< HEAD
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
-=======
-#include "storage/latch.h"
-#include "storage/shmem.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Are we currently in WaitLatch? The signal handler would like to know. */
 static volatile sig_atomic_t waiting = false;
 
-<<<<<<< HEAD
 /* Read and write ends of the self-pipe */
 static int	selfpipe_readfd = -1;
 static int	selfpipe_writefd = -1;
@@ -174,32 +99,13 @@ InitializeLatchSupport(void)
 }
 
 /*
-=======
-/* Read and write end of the self-pipe */
-static int	selfpipe_readfd = -1;
-static int	selfpipe_writefd = -1;
-
-/* private function prototypes */
-static void initSelfPipe(void);
-static void drainSelfPipe(void);
-static void sendSelfPipeByte(void);
-
-
-/*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Initialize a backend-local latch.
  */
 void
 InitLatch(volatile Latch *latch)
 {
-<<<<<<< HEAD
 	/* Assert InitializeLatchSupport has been called in this process */
 	Assert(selfpipe_readfd >= 0);
-=======
-	/* Initialize the self pipe if this is our first latch in the process */
-	if (selfpipe_readfd == -1)
-		initSelfPipe();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	latch->is_set = false;
 	latch->owner_pid = MyProcPid;
@@ -208,23 +114,14 @@ InitLatch(volatile Latch *latch)
 
 /*
  * Initialize a shared latch that can be set from other processes. The latch
-<<<<<<< HEAD
  * is initially owned by no-one; use OwnLatch to associate it with the
-=======
- * is initially owned by no-one, use OwnLatch to associate it with the
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * current process.
  *
  * InitSharedLatch needs to be called in postmaster before forking child
  * processes, usually right after allocating the shared memory block
-<<<<<<< HEAD
  * containing the latch with ShmemInitStruct. (The Unix implementation
  * doesn't actually require that, but the Windows one does.) Because of
  * this restriction, we have no concurrency issues to worry about here.
-=======
- * containing the latch with ShmemInitStruct. The Unix implementation
- * doesn't actually require that, but the Windows one does.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 void
 InitSharedLatch(volatile Latch *latch)
@@ -236,7 +133,6 @@ InitSharedLatch(volatile Latch *latch)
 
 /*
  * Associate a shared latch with the current process, allowing it to
-<<<<<<< HEAD
  * wait on the latch.
  *
  * Although there is a sanity check for latch-already-owned, we don't do
@@ -247,17 +143,10 @@ InitSharedLatch(volatile Latch *latch)
  * In any process that calls OwnLatch(), make sure that
  * latch_sigusr1_handler() is called from the SIGUSR1 signal handler,
  * as shared latches use SIGUSR1 for inter-process communication.
-=======
- * wait on it.
- *
- * Make sure that latch_sigusr1_handler() is called from the SIGUSR1 signal
- * handler, as shared latches use SIGUSR1 to for inter-process communication.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 void
 OwnLatch(volatile Latch *latch)
 {
-<<<<<<< HEAD
 	/* Assert InitializeLatchSupport has been called in this process */
 	Assert(selfpipe_readfd >= 0);
 
@@ -267,17 +156,6 @@ OwnLatch(volatile Latch *latch)
 	if (latch->owner_pid != 0)
 		elog(ERROR, "latch already owned");
 
-=======
-	Assert(latch->is_shared);
-
-	/* Initialize the self pipe if this is our first latch in the process */
-	if (selfpipe_readfd == -1)
-		initSelfPipe();
-
-	/* sanity check */
-	if (latch->owner_pid != 0)
-		elog(ERROR, "latch already owned");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	latch->owner_pid = MyProcPid;
 }
 
@@ -289,15 +167,11 @@ DisownLatch(volatile Latch *latch)
 {
 	Assert(latch->is_shared);
 	Assert(latch->owner_pid == MyProcPid);
-<<<<<<< HEAD
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	latch->owner_pid = 0;
 }
 
 /*
-<<<<<<< HEAD
  * Wait for a given latch to be set, or for postmaster death, or until timeout
  * is exceeded. 'wakeEvents' is a bitmask that specifies which of those events
  * to wait for. If the latch is already set (and WL_LATCH_SET is given), the
@@ -306,21 +180,11 @@ DisownLatch(volatile Latch *latch)
  * The 'timeout' is given in milliseconds. It must be >= 0 if WL_TIMEOUT flag
  * is given.  Note that some extra overhead is incurred when WL_TIMEOUT is
  * given, so avoid using a timeout if possible.
-=======
- * Wait for given latch to be set or until timeout is exceeded.
- * If the latch is already set, the function returns immediately.
- *
- * The 'timeout' is given in microseconds, and -1 means wait forever.
- * On some platforms, signals cause the timeout to be restarted, so beware
- * that the function can sleep for several times longer than the specified
- * timeout.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * The latch must be owned by the current process, ie. it must be a
  * backend-local latch initialized with InitLatch, or a shared latch
  * associated with the current process by calling OwnLatch.
  *
-<<<<<<< HEAD
  * Returns bit mask indicating which condition(s) caused the wake-up. Note
  * that if multiple wake-up conditions are true, there is no guarantee that
  * we return all of them in one call, but we will return at least one.
@@ -558,84 +422,19 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		}
 
 		if (wakeEvents & WL_SOCKET_READABLE)
-=======
- * Returns 'true' if the latch was set, or 'false' if timeout was reached.
- */
-bool
-WaitLatch(volatile Latch *latch, long timeout)
-{
-	return WaitLatchOrSocket(latch, PGINVALID_SOCKET, false, false, timeout) > 0;
-}
-
-/*
- * Like WaitLatch, but will also return when there's data available in
- * 'sock' for reading or writing. Returns 0 if timeout was reached,
- * 1 if the latch was set, 2 if the socket became readable or writable.
- */
-int
-WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
-				  bool forWrite, long timeout)
-{
-	struct timeval tv,
-			   *tvp = NULL;
-	fd_set		input_mask;
-	fd_set		output_mask;
-	int			rc;
-	int			result = 0;
-
-	if (latch->owner_pid != MyProcPid)
-		elog(ERROR, "cannot wait on a latch owned by another process");
-
-	/* Initialize timeout */
-	if (timeout >= 0)
-	{
-		tv.tv_sec = timeout / 1000000L;
-		tv.tv_usec = timeout % 1000000L;
-		tvp = &tv;
-	}
-
-	waiting = true;
-	for (;;)
-	{
-		int			hifd;
-
-		/*
-		 * Clear the pipe, and check if the latch is set already. If someone
-		 * sets the latch between this and the select() below, the setter will
-		 * write a byte to the pipe (or signal us and the signal handler will
-		 * do that), and the select() will return immediately.
-		 */
-		drainSelfPipe();
-		if (latch->is_set)
-		{
-			result = 1;
-			break;
-		}
-
-		FD_ZERO(&input_mask);
-		FD_SET(selfpipe_readfd, &input_mask);
-		hifd = selfpipe_readfd;
-		if (sock != PGINVALID_SOCKET && forRead)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			FD_SET(sock, &input_mask);
 			if (sock > hifd)
 				hifd = sock;
 		}
 
-<<<<<<< HEAD
 		if (wakeEvents & WL_SOCKET_WRITEABLE)
-=======
-		FD_ZERO(&output_mask);
-		if (sock != PGINVALID_SOCKET && forWrite)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			FD_SET(sock, &output_mask);
 			if (sock > hifd)
 				hifd = sock;
 		}
 
-<<<<<<< HEAD
 		/* Sleep */
 		rc = select(hifd + 1, &input_mask, &output_mask, NULL, tvp);
 
@@ -703,38 +502,12 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 #endif
 		}
 	} while (result == 0);
-=======
-		rc = select(hifd + 1, &input_mask, &output_mask, NULL, tvp);
-		if (rc < 0)
-		{
-			if (errno == EINTR)
-				continue;
-			ereport(ERROR,
-					(errcode_for_socket_access(),
-					 errmsg("select() failed: %m")));
-		}
-		if (rc == 0)
-		{
-			/* timeout exceeded */
-			result = 0;
-			break;
-		}
-		if (sock != PGINVALID_SOCKET &&
-			((forRead && FD_ISSET(sock, &input_mask)) ||
-			 (forWrite && FD_ISSET(sock, &output_mask))))
-		{
-			result = 2;
-			break;				/* data available in socket */
-		}
-	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	waiting = false;
 
 	return result;
 }
 
 /*
-<<<<<<< HEAD
  * Sets a latch and wakes up anyone waiting on it.
  *
  * This is cheap if the latch is already set, otherwise not so much.
@@ -742,17 +515,12 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
  * NB: when calling this in a signal handler, be sure to save and restore
  * errno around it.  (That's standard practice in most signal handlers, of
  * course, but we used to omit it in handlers that only set a flag.)
-=======
- * Sets a latch and wakes up anyone waiting on it. Returns quickly if the
- * latch is already set.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 void
 SetLatch(volatile Latch *latch)
 {
 	pid_t		owner_pid;
 
-<<<<<<< HEAD
 	/*
 	 * XXX there really ought to be a memory barrier operation right here, to
 	 * ensure that any flag variables we might have changed get flushed to
@@ -772,20 +540,12 @@ SetLatch(volatile Latch *latch)
 	latch->is_set = true;
 	elogif(debug_latch, LOG, "latch set -- Latch for process (pid %u) is now set.",
 								latch->owner_pid);
-=======
-	/* Quick exit if already set */
-	if (latch->is_set)
-		return;
-
-	latch->is_set = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * See if anyone's waiting for the latch. It can be the current process if
 	 * we're in a signal handler. We use the self-pipe to wake up the select()
 	 * in that case. If it's another process, send a signal.
 	 *
-<<<<<<< HEAD
 	 * Fetch owner_pid only once, in case the latch is concurrently getting
 	 * owned or disowned. XXX: This assumes that pid_t is atomic, which isn't
 	 * guaranteed to be true! In practice, the effective range of pid_t fits
@@ -821,23 +581,6 @@ SetLatch(volatile Latch *latch)
 		kill(owner_pid, SIGUSR1);
 		elogif(debug_latch, LOG, "latch set -- Sent SIGUSR1 to process, pid %u.",owner_pid);
 	}
-=======
-	 * Fetch owner_pid only once, in case the owner simultaneously disowns the
-	 * latch and clears owner_pid. XXX: This assumes that pid_t is atomic,
-	 * which isn't guaranteed to be true! In practice, the effective range of
-	 * pid_t fits in a 32 bit integer, and so should be atomic. In the worst
-	 * case, we might end up signaling wrong process if the right one disowns
-	 * the latch just as we fetch owner_pid. Even then, you're very unlucky if
-	 * a process with that bogus pid exists.
-	 */
-	owner_pid = latch->owner_pid;
-	if (owner_pid == 0)
-		return;
-	else if (owner_pid == MyProcPid)
-		sendSelfPipeByte();
-	else
-		kill(owner_pid, SIGUSR1);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -851,7 +594,6 @@ ResetLatch(volatile Latch *latch)
 	Assert(latch->owner_pid == MyProcPid);
 
 	latch->is_set = false;
-<<<<<<< HEAD
 
 	/*
 	 * XXX there really ought to be a memory barrier operation right here, to
@@ -875,49 +617,14 @@ ResetLatch(volatile Latch *latch)
  *
  * NB: when calling this in a signal handler, be sure to save and restore
  * errno around it.
-=======
-}
-
-/*
- * SetLatch uses SIGUSR1 to wake up the process waiting on the latch. Wake
- * up WaitLatch.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 void
 latch_sigusr1_handler(void)
 {
 	if (waiting)
-<<<<<<< HEAD
 	{
 		sendSelfPipeByte();
 	}
-=======
-		sendSelfPipeByte();
-}
-
-/* initialize the self-pipe */
-static void
-initSelfPipe(void)
-{
-	int			pipefd[2];
-
-	/*
-	 * Set up the self-pipe that allows a signal handler to wake up the
-	 * select() in WaitLatch. Make the write-end non-blocking, so that
-	 * SetLatch won't block if the event has already been set many times
-	 * filling the kernel buffer. Make the read-end non-blocking too, so that
-	 * we can easily clear the pipe by reading until EAGAIN or EWOULDBLOCK.
-	 */
-	if (pipe(pipefd) < 0)
-		elog(FATAL, "pipe() failed: %m");
-	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) < 0)
-		elog(FATAL, "fcntl() failed on read-end of self-pipe: %m");
-	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) < 0)
-		elog(FATAL, "fcntl() failed on write-end of self-pipe: %m");
-
-	selfpipe_readfd = pipefd[0];
-	selfpipe_writefd = pipefd[1];
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /* Send one byte to the self-pipe, to wake up WaitLatch */
@@ -951,7 +658,6 @@ retry:
 	}
 }
 
-<<<<<<< HEAD
 /*
  * Read all available data from the self-pipe
  *
@@ -959,19 +665,12 @@ retry:
  * return, it must reset that flag first (though ideally, this will never
  * happen).
  */
-=======
-/* Read all available data from the self-pipe */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void
 drainSelfPipe(void)
 {
 	/*
 	 * There shouldn't normally be more than one byte in the pipe, or maybe a
-<<<<<<< HEAD
 	 * few bytes if multiple processes run SetLatch at the same instant.
-=======
-	 * few more if multiple processes run SetLatch at the same instant.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	char		buf[16];
 	int			rc;
@@ -982,7 +681,6 @@ drainSelfPipe(void)
 		if (rc < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
-<<<<<<< HEAD
 			{
 				elogif(debug_latch, LOG, "latch drainpipe -- pipe read() returned empty.");
 				break;			/* the pipe is empty */
@@ -1010,15 +708,5 @@ drainSelfPipe(void)
 			break;
 		}
 		/* else buffer wasn't big enough, so read again */
-=======
-				break;			/* the pipe is empty */
-			else if (errno == EINTR)
-				continue;		/* retry */
-			else
-				elog(ERROR, "read() on self-pipe failed: %m");
-		}
-		else if (rc == 0)
-			elog(ERROR, "unexpected EOF on self-pipe");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }
