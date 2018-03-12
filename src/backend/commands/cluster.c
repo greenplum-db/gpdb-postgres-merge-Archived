@@ -641,13 +641,10 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
-<<<<<<< HEAD
 					 swap_toast_by_content,
 					 true /* swap_stats */,
+					 false,
 					 frozenXid);
-=======
-					 swap_toast_by_content, false, frozenXid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -725,11 +722,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
 										  NIL,
 										  OldHeap->rd_rel->relam,
 										  OldHeap->rd_rel->relkind,
-<<<<<<< HEAD
-										  OldHeap->rd_rel->relstorage,
-=======
 										  OldHeap->rd_rel->relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+										  OldHeap->rd_rel->relstorage,
 										  false,
 										  RelationIsMapped(OldHeap),
 										  true,
@@ -738,13 +732,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
                                           NULL,                         /*CDB*/
 										  reloptions,
 										  false,
-<<<<<<< HEAD
 										  /* allowSystemTableModsDDL */ true,
 										  /* valid_opts */ true);
-=======
-										  true);
 	Assert(OIDNewHeap != InvalidOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	ReleaseSysCache(tuple);
 
@@ -860,21 +850,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 	/*
 	 * If the OldHeap has a toast table, get lock on the toast table to keep
-<<<<<<< HEAD
-	 * it from being vacuumed.  This is needed because autovacuum processes
-	 * toast tables independently of their main tables, with no lock on the
-	 * latter.  If an autovacuum were to start on the toast table after we
-	 * compute our OldestXmin below, it would use a later OldestXmin, and then
-	 * possibly remove as DEAD toast tuples belonging to main tuples we think
-	 * are only RECENTLY_DEAD.  Then we'd fail while trying to copy those
-=======
 	 * it from being vacuumed.	This is needed because autovacuum processes
 	 * toast tables independently of their main tables, with no lock on the
 	 * latter.	If an autovacuum were to start on the toast table after we
 	 * compute our OldestXmin below, it would use a later OldestXmin, and then
 	 * possibly remove as DEAD toast tuples belonging to main tuples we think
 	 * are only RECENTLY_DEAD.	Then we'd fail while trying to copy those
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * tuples.
 	 *
 	 * We don't need to open the toast relation here, just lock it.  The lock
@@ -1606,11 +1587,8 @@ void
 finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool is_system_catalog,
 				 bool swap_toast_by_content,
-<<<<<<< HEAD
 				 bool swap_stats,
-=======
 				 bool check_constraints,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 TransactionId frozenXid)
 {
 	ObjectAddress object;

@@ -19,11 +19,8 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
@@ -511,8 +508,12 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 
 	recordDependencyOnOwner(ForeignDataWrapperRelationId, fdwId, ownerId);
 
-<<<<<<< HEAD
-	heap_close(rel, NoLock);
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself, false);
+
+	/* Post creation hook for new foreign data wrapper */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ForeignDataWrapperRelationId, fdwId, 0);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -521,16 +522,8 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
-
-	/* Post creation hook for new foreign data wrapper */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   ForeignDataWrapperRelationId, fdwId, 0);
 
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -655,15 +648,6 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 
 	heap_freetuple(tp);
 
-<<<<<<< HEAD
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-	}
-=======
 	/* Update function dependencies if we changed them */
 	if (handler_given || validator_given)
 	{
@@ -701,8 +685,15 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		}
 	}
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
+
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -883,8 +874,11 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 
 	recordDependencyOnOwner(ForeignServerRelationId, srvId, ownerId);
 
-<<<<<<< HEAD
-	heap_close(rel, NoLock);
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself, false);
+
+	/* Post creation hook for new foreign server */
+	InvokeObjectAccessHook(OAT_POST_CREATE, ForeignServerRelationId, srvId, 0);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -893,15 +887,8 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
-
-	/* Post creation hook for new foreign server */
-	InvokeObjectAccessHook(OAT_POST_CREATE, ForeignServerRelationId, srvId, 0);
 
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -995,7 +982,6 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 
 	heap_freetuple(tp);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1003,9 +989,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
+
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -1193,8 +1178,11 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 		recordDependencyOnOwner(UserMappingRelationId, umId, useId);
 	}
 
-<<<<<<< HEAD
-	heap_close(rel, NoLock);
+	/* dependency on extension */
+	recordDependencyOnCurrentExtension(&myself, false);
+
+	/* Post creation hook for new user mapping */
+	InvokeObjectAccessHook(OAT_POST_CREATE, UserMappingRelationId, umId, 0);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1203,15 +1191,8 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
-
-	/* Post creation hook for new user mapping */
-	InvokeObjectAccessHook(OAT_POST_CREATE, UserMappingRelationId, umId, 0);
 
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -1298,7 +1279,6 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	heap_freetuple(tp);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1306,9 +1286,8 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
+
 	heap_close(rel, RowExclusiveLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 

@@ -162,26 +162,10 @@ DropConversionsCommand(DropStmt *drop)
 
 		if (!OidIsValid(conversionOid))
 		{
-<<<<<<< HEAD
-			if (!drop->missing_ok)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("conversion \"%s\" does not exist",
-								NameListToString(name))));
-			}
-			else
-			{
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport(NOTICE,
-							(errmsg("conversion \"%s\" does not exist, skipping",
-									NameListToString(name))));
-			}
-=======
-			ereport(NOTICE,
+			if (Gp_role != GP_ROLE_EXECUTE)
+				ereport(NOTICE,
 					(errmsg("conversion \"%s\" does not exist, skipping",
 							NameListToString(name))));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			continue;
 		}
 

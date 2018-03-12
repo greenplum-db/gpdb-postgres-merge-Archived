@@ -197,12 +197,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		else
 		{
 			numArgs = 1;
-<<<<<<< HEAD
-			aggArgTypes[0] = typenameTypeId(NULL, baseType, NULL);
-=======
-			aggArgTypes = (Oid *) palloc(sizeof(Oid));
 			aggArgTypes[0] = typenameTypeId(NULL, baseType);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		parameterTypes = buildoidvector(aggArgTypes, numArgs);
 		allParameterTypes = NULL;
@@ -225,7 +220,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 					 errmsg("basetype is redundant with aggregate input type specification")));
 
 		numArgs = list_length(args);
-<<<<<<< HEAD
 		interpret_function_parameter_list(args,
 										  InvalidOid,
 										  true, /* is an aggregate */
@@ -241,15 +235,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		Assert(parameterDefaults == NIL);
 		/* There shouldn't have been any OUT parameters, either */
 		Assert(requiredResultType == InvalidOid);
-=======
-		aggArgTypes = (Oid *) palloc(sizeof(Oid) * numArgs);
-		foreach(lc, args)
-		{
-			TypeName   *curTypeName = (TypeName *) lfirst(lc);
-
-			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName);
-		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/*

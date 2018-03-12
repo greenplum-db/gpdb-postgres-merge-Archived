@@ -2022,7 +2022,7 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 		if (newslot->tts_tupleDescriptor != tupdesc)
 			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
 		slot = newslot;
 	}
 	return slot;
@@ -2034,15 +2034,11 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-<<<<<<< HEAD
-	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+	if (trigdesc && trigdesc->trig_insert_after_row)
 	{
 		if(RelationIsAoCols(relinfo->ri_RelationDesc))
 			elog(ERROR, "Trigger is not supported on AOCS yet");
 
-=======
-	if (trigdesc && trigdesc->trig_insert_after_row)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_INSERT,
 							  true, NULL, trigtuple, recheckIndexes, NULL);
 	}
@@ -2106,7 +2102,7 @@ ExecIRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 		if (newslot->tts_tupleDescriptor != tupdesc)
 			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
 		slot = newslot;
 	}
 	return slot;
@@ -2375,13 +2371,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 ItemPointer tupleid, TupleTableSlot *slot)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-<<<<<<< HEAD
-	int			ntrigs = trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
-	int		   *tgindx = trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
 	HeapTuple	slottuple = ExecFetchSlotHeapTuple(slot);
-=======
-	HeapTuple	slottuple = ExecMaterializeSlot(slot);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	HeapTuple	newtuple = slottuple;
 	TriggerData LocTriggerData;
 	HeapTuple	trigtuple;
@@ -2409,13 +2399,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	 */
 	if (newSlot != NULL)
 	{
-<<<<<<< HEAD
 		slot = ExecFilterJunk(estate->es_junkFilter, newSlot);
 		slottuple = ExecFetchSlotHeapTuple(slot);
-=======
-		slot = ExecFilterJunk(relinfo->ri_junkFilter, newSlot);
-		slottuple = ExecMaterializeSlot(slot);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		newtuple = slottuple;
 	}
 
@@ -2462,11 +2447,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	if (newtuple != slottuple)
 	{
 		/*
-<<<<<<< HEAD
-		 * Return the modified tuple using the es_trig_tuple_slot.  We assume
-=======
 		 * Return the modified tuple using the es_trig_tuple_slot.	We assume
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 * the tuple was allocated in per-tuple memory context, and therefore
 		 * will go away by itself. The tuple table slot should not try to
 		 * clear it.
@@ -2476,11 +2457,7 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 
 		if (newslot->tts_tupleDescriptor != tupdesc)
 			ExecSetSlotDescriptor(newslot, tupdesc);
-<<<<<<< HEAD
 		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-=======
-		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		slot = newslot;
 	}
 	return slot;

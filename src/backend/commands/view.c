@@ -266,24 +266,17 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		createStmt->options = list_make1(defWithOids(false));
 		createStmt->oncommit = ONCOMMIT_NOOP;
 		createStmt->tablespacename = NULL;
-<<<<<<< HEAD
 		createStmt->relKind = RELKIND_VIEW;
-=======
 		createStmt->if_not_exists = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * finally create the relation (this will error out if there's an
 		 * existing view, so we don't need more code to complain if "replace"
 		 * is false).
 		 */
-<<<<<<< HEAD
-		return DefineRelation(createStmt, RELKIND_VIEW, RELSTORAGE_VIRTUAL, false);
-=======
-		relid = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid);
+		relid = DefineRelation(createStmt, RELKIND_VIEW, InvalidOid, RELSTORAGE_VIRTUAL, false);
 		Assert(relid != InvalidOid);
 		return relid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }
 
@@ -465,17 +458,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		elog(ERROR, "unexpected parse analysis result");
 
 	/*
-<<<<<<< HEAD
-	 * Don't allow creating a view that contains dynamically typed functions.
-	 * We cannot guarantee that the future return type would be the same when
-	 * the view was used, as what it was now.
-	 */
-	if (viewParse->hasDynamicFunctions)
-		ereport(ERROR,
-				(errcode(ERRCODE_INDETERMINATE_DATATYPE),
-				 errmsg("CREATE VIEW statements cannot include calls to "
-						"dynamically typed function")));
-=======
 	 * Check for unsupported cases.  These tests are redundant with ones in
 	 * DefineQueryRewrite(), but that function will complain about a bogus ON
 	 * SELECT rule, and we'd rather the message complain about a view.
@@ -488,7 +470,17 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		errmsg("views must not contain data-modifying statements in WITH")));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	/*
+	 * Don't allow creating a view that contains dynamically typed functions.
+	 * We cannot guarantee that the future return type would be the same when
+	 * the view was used, as what it was now.
+	 */
+	if (viewParse->hasDynamicFunctions)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+				 errmsg("CREATE VIEW statements cannot include calls to "
+						"dynamically typed function")));
 
 	/*
 	 * If a list of column names was given, run through and insert these into
@@ -531,18 +523,11 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		&& isViewOnTempTable(viewParse))
 	{
 		view = copyObject(view);	/* don't corrupt original command */
-<<<<<<< HEAD
-		view->istemp = true;
+		view->relpersistence = RELPERSISTENCE_TEMP;
 		if (Gp_role != GP_ROLE_EXECUTE)
 			ereport(NOTICE,
 					(errmsg("view \"%s\" will be a temporary view",
 							view->relname)));
-=======
-		view->relpersistence = RELPERSISTENCE_TEMP;
-		ereport(NOTICE,
-				(errmsg("view \"%s\" will be a temporary view",
-						view->relname)));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* Unlogged views are not sensible. */

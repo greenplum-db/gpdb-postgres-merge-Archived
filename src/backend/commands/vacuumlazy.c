@@ -101,16 +101,10 @@ typedef struct LVRelStats
 	/* hasindex = true means two-pass strategy; false means one-pass */
 	bool		hasindex;
 	/* Overall statistics about rel */
-<<<<<<< HEAD
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
 	double		scanned_tuples;	/* counts only tuples on scanned pages */
-=======
-	BlockNumber rel_pages;		/* total number of pages */
-	BlockNumber scanned_pages;	/* number of pages we examined */
-	double		scanned_tuples; /* counts only tuples on scanned pages */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	BlockNumber pages_removed;
@@ -244,10 +238,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
-<<<<<<< HEAD
 	vacrelstats->old_rel_pages = onerel->rd_rel->relpages;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
 	vacrelstats->num_index_scans = 0;
 	vacrelstats->pages_removed = 0;
@@ -293,7 +284,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	FreeSpaceMapVacuum(onerel);
 
 	/*
-<<<<<<< HEAD
 	 * Update statistics in pg_class.
 	 *
 	 * A corner case here is that if we scanned no pages at all because every
@@ -321,23 +311,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						vacrelstats->hasindex,
 						new_frozen_xid,
 						true /* isvacuum */);
-=======
-	 * Update statistics in pg_class.  But don't change relfrozenxid if we
-	 * skipped any pages.
-	 */
-	vac_update_relstats(onerel,
-						vacrelstats->rel_pages, vacrelstats->new_rel_tuples,
-						vacrelstats->hasindex,
-					  (vacrelstats->scanned_pages < vacrelstats->rel_pages) ?
-						InvalidTransactionId :
-						FreezeLimit);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
 						 vacrelstats->new_rel_tuples);
-<<<<<<< HEAD
 
 	if (gp_indexcheck_vacuum == INDEX_CHECK_ALL ||
 		(gp_indexcheck_vacuum == INDEX_CHECK_SYSTEM &&
@@ -351,8 +329,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				_bt_validate_vacuum(Irel[i], onerel, OldestXmin);
 		}
 	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -375,7 +351,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							vacrelstats->new_rel_tuples,
 							pg_rusage_show(&ru0))));
 	}
-<<<<<<< HEAD
 }
 
 /*
@@ -473,8 +448,6 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 							 onerel->rd_rel->relisshared,
 							 vacrelstats->new_rel_tuples);
 	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -576,15 +549,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * of pages.
 	 *
 	 * Before entering the main loop, establish the invariant that
-<<<<<<< HEAD
-	 * next_not_all_visible_block is the next block number >= blkno that's
-	 * not all-visible according to the visibility map, or nblocks if there's
-	 * no such block.  Also, we set up the skipping_all_visible_blocks flag,
-=======
 	 * next_not_all_visible_block is the next block number >= blkno that's not
 	 * all-visible according to the visibility map, or nblocks if there's no
 	 * such block.	Also, we set up the skipping_all_visible_blocks flag,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * which is needed because we need hysteresis in the decision: once we've
 	 * started skipping blocks, we may as well skip everything up to the next
 	 * not-all-visible block.
@@ -983,25 +950,16 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			PageSetAllVisible(page);
 			MarkBufferDirty(buf);
 		}
-<<<<<<< HEAD
-=======
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		/*
 		 * It's possible for the value returned by GetOldestXmin() to move
 		 * backwards, so it's not wrong for us to see tuples that appear to
 		 * not be visible to everyone yet, while PD_ALL_VISIBLE is already
 		 * set. The real safe xmin value never moves backwards, but
 		 * GetOldestXmin() is conservative and sometimes returns a value
-<<<<<<< HEAD
-		 * that's unnecessarily small, so if we see that contradiction it
-		 * just means that the tuples that we think are not visible to
-		 * everyone yet actually are, and the PD_ALL_VISIBLE flag is correct.
-=======
 		 * that's unnecessarily small, so if we see that contradiction it just
 		 * means that the tuples that we think are not visible to everyone yet
 		 * actually are, and the PD_ALL_VISIBLE flag is correct.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 *
 		 * There should never be dead tuples on a page with PD_ALL_VISIBLE
 		 * set, however.
@@ -1057,11 +1015,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* now we can compute the new value for pg_class.reltuples */
 	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
 														 nblocks,
-<<<<<<< HEAD
-														 vacrelstats->scanned_pages,
-=======
 												  vacrelstats->scanned_pages,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 														 num_tuples);
 
 	/* If any tuples need to be deleted, perform final vacuum cycle */
@@ -1343,19 +1297,11 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	if (new_rel_pages != old_rel_pages)
 	{
 		/*
-<<<<<<< HEAD
-		 * Note: we intentionally don't update vacrelstats->rel_pages with
-		 * the new rel size here.  If we did, it would amount to assuming that
-		 * the new pages are empty, which is unlikely. Leaving the numbers
-		 * alone amounts to assuming that the new pages have the same tuple
-		 * density as existing ones, which is less unlikely.
-=======
 		 * Note: we intentionally don't update vacrelstats->rel_pages with the
 		 * new rel size here.  If we did, it would amount to assuming that the
 		 * new pages are empty, which is unlikely.	Leaving the numbers alone
 		 * amounts to assuming that the new pages have the same tuple density
 		 * as existing ones, which is less unlikely.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		UnlockRelation(onerel, AccessExclusiveLock);
 		return;

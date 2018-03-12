@@ -610,14 +610,9 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 		if (errno == ENOENT)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FILE),
-<<<<<<< HEAD
-					 errmsg("directory \"%s\" does not exist",
-							location)));
-=======
 					 errmsg("directory \"%s\" does not exist", location),
 					 InRecovery ? errhint("Create this directory for the tablespace before "
 										  "restarting the server.") : 0));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		else
 			ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1133,7 +1128,6 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
  * Routines for handling the GUC variable 'default_tablespace'.
  */
 
-<<<<<<< HEAD
 /*
  * Returns true if tablespace exists, false otherwise
  */
@@ -1172,14 +1166,9 @@ check_tablespace(const char *tablespacename)
 	return result;
 }
 
-/* assign_hook: validate new default_tablespace, do extra actions as needed */
-const char *
-assign_default_tablespace(const char *newval, bool doit, GucSource source)
-=======
 /* check_hook: validate new default_tablespace */
 bool
 check_default_tablespace(char **newval, void **extra, GucSource source)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
@@ -1187,14 +1176,13 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
 	 */
 	if (IsTransactionState())
 	{
-<<<<<<< HEAD
 		/*
 		 * get_tablespace_oid cannot be used because it acquires lock hence
 		 * ends up allocating xid (maybe in reader gang too) instead
 		 * check_tablespace is used.
 		 */
-		if (newval[0] != '\0' &&
-			!check_tablespace(newval))
+		if (**newval != '\0' &&
+			!check_tablespace(*newval))
 		{
 			/*
 			 * When source == PGC_S_TEST, we are checking the argument of an
@@ -1204,22 +1192,19 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
 			 * be created later.  Because of that, issue a NOTICE if source ==
 			 * PGC_S_TEST, but accept the value anyway.
 			 */
-			ereport((source == PGC_S_TEST) ? NOTICE : GUC_complaint_elevel(source),
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							newval)));
 			if (source == PGC_S_TEST)
-				return newval;
+			{
+				ereport(NOTICE,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("tablespace \"%s\" does not exist",
+								*newval)));
+			}
 			else
-				return NULL;
-=======
-		if (**newval != '\0' &&
-			!OidIsValid(get_tablespace_oid(*newval, true)))
-		{
-			GUC_check_errdetail("Tablespace \"%s\" does not exist.",
-								*newval);
-			return false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			{
+				GUC_check_errdetail("Tablespace \"%s\" does not exist.",
+									*newval);
+				return false;
+			}
 		}
 	}
 
@@ -1333,35 +1318,26 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 				continue;
 			}
 
-<<<<<<< HEAD
-			/* Else verify that name is a valid tablespace name */
-			curoid = get_tablespace_oid(curname, true);
+			/*
+			 * In an interactive SET command, we ereport for bad info.  When
+			 * source == PGC_S_TEST, we are checking the argument of an ALTER
+			 * DATABASE SET or ALTER USER SET command.  pg_dumpall dumps all
+			 * roles before tablespaces, so if we're restoring a pg_dumpall
+			 * script the tablespace might not yet exist, but will be created
+			 * later.  Because of that, issue a NOTICE if source == PGC_S_TEST,
+			 * but accept the value anyway.  Otherwise, silently ignore any
+			 * bad list elements.
+			 */
+			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
 			if (curoid == InvalidOid)
 			{
-				/*
-				 * In an interactive SET command, we ereport for bad info.
-				 * When source == PGC_S_TEST, we are checking the argument of
-				 * an ALTER DATABASE SET or ALTER USER SET command.  pg_dumpall
-				 * dumps all roles before tablespaces, so if we're restoring a
-				 * pg_dumpall script the tablespace might not yet exist, but
-				 * will be created later.  Because of that, issue a NOTICE if
-				 * source == PGC_S_TEST, but accept the value anyway.
-				 * Otherwise, silently ignore any bad list elements.
-				 */
-				if (source >= PGC_S_INTERACTIVE)
-					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
+				if (source == PGC_S_TEST)
+					ereport(NOTICE,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("tablespace \"%s\" does not exist",
 									curname)));
-=======
-			/*
-			 * In an interactive SET command, we ereport for bad info.
-			 * Otherwise, silently ignore any bad list elements.
-			 */
-			curoid = get_tablespace_oid(curname, source < PGC_S_INTERACTIVE);
-			if (curoid == InvalidOid)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				continue;
+			}
 
 			/*
 			 * Allow explicit specification of database's default tablespace

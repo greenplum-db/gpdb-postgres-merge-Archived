@@ -153,7 +153,6 @@ static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
  */
 void
 analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
-<<<<<<< HEAD
 {
 	bool		optimizerBackup;
 
@@ -183,10 +182,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 }
 
 static void
-analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
-					 BufferAccessStrategy bstrategy)
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 
@@ -210,13 +206,10 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
 	 * has been dropped since we last saw it, we don't need to process it.
 	 */
-<<<<<<< HEAD
-	onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
-=======
 	if (!(vacstmt->options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
+		onerel = try_relation_open(relid, ShareUpdateExclusiveLock, false);
 	else if (ConditionalLockRelationOid(relid, ShareUpdateExclusiveLock))
-		onerel = try_relation_open(relid, NoLock);
+		onerel = try_relation_open(relid, NoLock, false);
 	else
 	{
 		onerel = NULL;
@@ -226,7 +219,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 				  errmsg("skipping analyze of \"%s\" --- lock not available",
 						 vacstmt->relation->relname)));
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	if (!onerel)
 		return;
 
@@ -265,11 +257,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!(vacstmt->options & VACOPT_VACUUM))
 			ereport(WARNING,
-<<<<<<< HEAD
-					(errmsg("skipping \"%s\" --- cannot analyze indexes, views, external tables, or special system tables",
-=======
 					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 							RelationGetRelationName(onerel))));
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
@@ -309,13 +297,9 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
-<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
-		do_analyze_rel(onerel, vacstmt, false, false);
-=======
-	do_analyze_rel(onerel, vacstmt, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		do_analyze_rel(onerel, vacstmt, false);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -526,15 +510,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	}
 
 	/*
-<<<<<<< HEAD
-=======
-	 * Quit if no analyzable columns.
-	 */
-	if (attr_cnt <= 0 && !analyzableindex)
-		goto cleanup;
-
-	/*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * Determine how many rows we need to sample, using the worst case from
 	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
 	 * possible overflow in Vitter's algorithm.  (Note: that will also be
@@ -695,16 +670,11 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Update pages/tuples stats in pg_class. In PostgreSQL, we don't do this
 	 * when we're building inherited stats, but in GPDB, we do. The reason is
 	 * mostly historical; the planner, or at least ORCA, expects the
 	 * relpages/reltuples on a partitioned table to represent the total across
 	 * all partitions.
-=======
-	 * Update pages/tuples stats in pg_class ... but not if we're doing
-	 * inherited stats.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
@@ -768,22 +738,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Report ANALYZE to the stats collector, too.  However, if doing
-=======
 	 * Report ANALYZE to the stats collector, too.	However, if doing
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * inherited stats we shouldn't report, because the stats collector only
 	 * tracks per-table stats.
 	 */
 	if (!inh)
 		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
-<<<<<<< HEAD
-=======
-
-	/* We skip to here if there were no analyzable columns */
-cleanup:
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!(vacstmt->options & VACOPT_VACUUM))
@@ -1046,14 +1006,6 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_FIXED_PART_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_FIXED_PART_SIZE);
-<<<<<<< HEAD
-	typtuple = SearchSysCacheCopy1(TYPEOID,
-								   ObjectIdGetDatum(attr->atttypid));
-	if (!HeapTupleIsValid(typtuple))
-		elog(ERROR, "cache lookup failed for type %u", attr->atttypid);
-	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
-	stats->relstorage = RelationGetForm(onerel)->relstorage;
-=======
 
 	/*
 	 * When analyzing an expression index, believe the expression tree's type
@@ -1080,8 +1032,8 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
 	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
+	stats->relstorage = RelationGetForm(onerel)->relstorage;
 	ReleaseSysCache(typtuple);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -1456,11 +1408,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-<<<<<<< HEAD
-	 * Estimate total numbers of rows in relation.  For live rows, use
-=======
 	 * Estimate total numbers of rows in relation.	For live rows, use
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * vac_estimate_reltuples; for dead rows, we have no source of old
 	 * information, so we have to assume the density is the same in unseen
 	 * pages as in the pages we scanned.
@@ -1470,11 +1418,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 										bs.m,
 										liverows);
 	if (bs.m > 0)
-<<<<<<< HEAD
-		*totaldeadrows = floor((deadrows * totalblocks) / bs.m + 0.5);
-=======
 		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	else
 		*totaldeadrows = 0.0;
 

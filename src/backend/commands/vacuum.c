@@ -1307,11 +1307,7 @@ vacuum_set_xid_limits(int freeze_min_age,
  *		If we scanned the whole relation then we should just use the count of
  *		live tuples seen; but if we did not, we should not trust the count
  *		unreservedly, especially not in VACUUM, which may have scanned a quite
-<<<<<<< HEAD
- *		nonrandom subset of the table.  When we have only partial information,
-=======
  *		nonrandom subset of the table.	When we have only partial information,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *		we take the old value of pg_class.reltuples as a measurement of the
  *		tuple density in the unscanned pages.
  *
@@ -1323,11 +1319,7 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 					   BlockNumber scanned_pages,
 					   double scanned_tuples)
 {
-<<<<<<< HEAD
-	BlockNumber	old_rel_pages = relation->rd_rel->relpages;
-=======
 	BlockNumber old_rel_pages = relation->rd_rel->relpages;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	double		old_rel_tuples = relation->rd_rel->reltuples;
 	double		old_density;
 	double		new_density;
@@ -1388,13 +1380,8 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 	 * nonrandom sample of pages, but we know for certain that the pages we
 	 * didn't look at are precisely the ones that haven't changed lately.
 	 * Thus, there is a reasonable argument for doing exactly the same thing
-<<<<<<< HEAD
-	 * as for the ANALYZE case, that is use the old density measurement as
-	 * the value for the unscanned pages.
-=======
 	 * as for the ANALYZE case, that is use the old density measurement as the
 	 * value for the unscanned pages.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 *
 	 * This logic could probably use further refinement.
 	 */
@@ -2057,11 +2044,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 		|| RelationIsExternal(onerel))
 	{
 		ereport(WARNING,
-<<<<<<< HEAD
-				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views or external tables",
-=======
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables or special system tables",
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
@@ -2195,7 +2178,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 		}
 	}
 	else
-<<<<<<< HEAD
 	{
 		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
 
@@ -2209,9 +2191,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 			vac_update_relstats_from_list(stats_context.updated_stats);
 		}
 	}
-=======
-		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Roll back any GUC changes executed by index functions */
 	AtEOXact_GUC(false, save_nestlevel);

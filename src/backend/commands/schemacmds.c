@@ -127,7 +127,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/* Create the schema's namespace */
 	if (shouldDispatch || Gp_role != GP_ROLE_EXECUTE)
 	{
-		namespaceId = NamespaceCreate(schemaName, owner_uid);
+		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 
 		if (shouldDispatch)
 		{
@@ -156,7 +156,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	}
 	else
 	{
-		namespaceId = NamespaceCreate(schemaName, owner_uid);
+		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 	}
 
 	/* Advance cmd counter to make the namespace visible */

@@ -149,7 +149,6 @@ DefineSequence(CreateSeqStmt *seq)
 	bool		null[SEQ_COL_LASTCOL];
 	int			i;
 	NameData	name;
-	OffsetNumber offnum;
 
 	bool shouldDispatch =  Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode();
 
@@ -248,17 +247,12 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->options = list_make1(defWithOids(false));
 	stmt->oncommit = ONCOMMIT_NOOP;
 	stmt->tablespacename = NULL;
-<<<<<<< HEAD
+	stmt->if_not_exists = false;
 	stmt->relKind = RELKIND_SEQUENCE;
 	stmt->ownerid = GetUserId();
 
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, RELSTORAGE_HEAP, false);
-=======
-	stmt->if_not_exists = false;
-
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId);
+	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, RELSTORAGE_HEAP, false);
 	Assert(seqoid != InvalidOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Open and lock the new sequence.  (This lock is redundant; an
@@ -271,13 +265,20 @@ DefineSequence(CreateSeqStmt *seq)
 	rel = heap_open(seqoid, AccessExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
-<<<<<<< HEAD
-	/* Now form sequence tuple */
-	tuple = heap_form_tuple(tupDesc, value, null);
-=======
 	/* now initialize the sequence's data */
 	tuple = heap_form_tuple(tupDesc, value, null);
 	fill_seq_with_data(rel, tuple);
+
+	/* Dispatch to segments */
+	if (shouldDispatch)
+	{
+		CdbDispatchUtilityStatement((Node *) seq,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
 
 	/* process OWNED BY if given */
 	if (owned_by)
@@ -305,10 +306,8 @@ ResetSequence(Oid seq_relid)
 	SeqTable	elm;
 	Form_pg_sequence seq;
 	Buffer		buf;
-	Page		page;
+	HeapTupleData seqtuple;
 	HeapTuple	tuple;
-	HeapTupleData tupledata;
-	ItemId		lp;
 
 	/*
 	 * Read the old sequence.  This does a bit more work than really
@@ -316,18 +315,12 @@ ResetSequence(Oid seq_relid)
 	 * indeed a sequence.
 	 */
 	init_sequence(seq_relid, &elm, &seq_rel);
-	seq = read_info(elm, seq_rel, &buf);
+	(void) read_seq_tuple(elm, seq_rel, &buf, &seqtuple);
 
 	/*
 	 * Copy the existing sequence tuple.
 	 */
-	page = BufferGetPage(buf);
-	lp = PageGetItemId(page, FirstOffsetNumber);
-	Assert(ItemIdIsNormal(lp));
-
-	tupledata.t_data = (HeapTupleHeader) PageGetItem(page, lp);
-	tupledata.t_len = ItemIdGetLength(lp);
-	tuple = heap_copytuple(&tupledata);
+	tuple = heap_copytuple(&seqtuple);
 
 	/* Now we're done with the old page */
 	UnlockReleaseBuffer(buf);
@@ -368,7 +361,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	Buffer		buf;
 	Page		page;
 	sequence_magic *sm;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	OffsetNumber offnum;
 
 	/* Initialize first page of relation with special magic number */
 	buf = ReadBuffer(rel, P_NEW);
@@ -380,18 +373,9 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
-<<<<<<< HEAD
 	/* Now insert sequence tuple */
+
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-=======
-	/* hack: ensure heap_insert will insert on the just-created page */
-	RelationSetTargetBlock(rel, 0);
-
-	/* Now insert sequence tuple */
-	simple_heap_insert(rel, tuple);
-
-	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Since VACUUM does not process sequences, we have to force the tuple
@@ -445,27 +429,6 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buf);
-<<<<<<< HEAD
-
-	/* process OWNED BY if given */
-	if (owned_by)
-		process_owned_by(rel, owned_by);
-
-	heap_close(rel, NoLock);
-
-	
-	/* Dispatch to segments */
-	if (shouldDispatch)
-	{
-		CdbDispatchUtilityStatement((Node *) seq,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-	}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -480,10 +443,13 @@ AlterSequence(AlterSeqStmt *stmt)
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
-	Page		page;
+	HeapTupleData seqtuple;
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
+	int			numopts;
+	char	   *alter_subtype = "";		/* metadata tracking: kind of
+										   redundant to say "role" */
 
 	/* open and AccessShareLock sequence */
 	relid = RangeVarGetRelid(stmt->sequence, false);
@@ -494,53 +460,8 @@ AlterSequence(AlterSeqStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   stmt->sequence->relname);
 
-<<<<<<< HEAD
-	/* do the work */
-	AlterSequenceInternal(relid, stmt->options);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-}
-
-/*
- * AlterSequenceInternal
- *
- * Same as AlterSequence except that the sequence is specified by OID
- * and we assume the caller already checked permissions.
- */
-void
-AlterSequenceInternal(Oid relid, List *options)
-{
-	SeqTable	elm;
-	Relation	seqrel;
-	Buffer		buf;
-	Form_pg_sequence seq;
-	FormData_pg_sequence new;
-	List	   *owned_by;
-	HeapTupleData seqtuple;
-	int64		save_increment;
-	bool		bSeqIsTemp = false;
-	int			numopts	   = 0;
-	char	   *alter_subtype = "";		/* metadata tracking: kind of
-										   redundant to say "role" */
-
-	/* open and AccessShareLock sequence */
-	init_sequence(relid, &elm, &seqrel);
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* lock page' buffer and read tuple into new sequence structure */
-
-	/* hack to keep ALTER SEQUENCE OWNED BY from changing currval state */
-	save_increment = elm->increment;
-	
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
-	elm->increment = seq->increment_by;
 
 	/* Copy old values of options into workspace */
 	memcpy(&new, seq, sizeof(FormData_pg_sequence));
@@ -548,17 +469,9 @@ AlterSequenceInternal(Oid relid, List *options)
 	/* Check and set new values */
 	init_params(stmt->options, false, &new, &owned_by);
 
-	if (owned_by)
-	{
-		/* Restore previous state of elm (assume nothing else changes) */
-		elm->increment = save_increment;
-	}
-	else
-	{
-		/* Clear local cache so that we don't think we have cached numbers */
-		/* Note that we do not change the currval() state */
-		elm->cached = elm->last;
-	}
+	/* Clear local cache so that we don't think we have cached numbers */
+	/* Note that we do not change the currval() state */
+	elm->cached = elm->last;
 
 	/* Now okay to update the on-disk tuple */
 	START_CRIT_SECTION();
@@ -568,14 +481,7 @@ AlterSequenceInternal(Oid relid, List *options)
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
-<<<<<<< HEAD
-
-	bSeqIsTemp = seqrel->rd_istemp;
-
-	if (!bSeqIsTemp)
-=======
 	if (RelationNeedsWAL(seqrel))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -609,23 +515,19 @@ AlterSequenceInternal(Oid relid, List *options)
 
 	relation_close(seqrel, NoLock);
 
-	numopts = list_length(options);
-
+	numopts = list_length(stmt->options);
 	if (numopts > 1)
 	{
-		char allopts[NAMEDATALEN];
-
-		sprintf(allopts, "%d OPTIONS", numopts);
-
-		alter_subtype = pstrdup(allopts);
+		alter_subtype = psprintf("%d OPTIONS", numopts);
 	}
 	else if (0 == numopts)
 	{
 		alter_subtype = "0 OPTIONS";
 	}
-	else if ((Gp_role == GP_ROLE_DISPATCH) && (!bSeqIsTemp))
+	else if (Gp_role == GP_ROLE_DISPATCH &&
+			 seqrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
 	{
-		ListCell		*option = list_head(options);
+		ListCell		*option = list_head(stmt->options);
 		DefElem			*defel	= (DefElem *) lfirst(option);
 		char			*tempo	= NULL;
 
@@ -633,12 +535,13 @@ AlterSequenceInternal(Oid relid, List *options)
 		if (0 == strcmp(alter_subtype, "owned_by"))
 			alter_subtype = "OWNED BY";
 
-		tempo = str_toupper(alter_subtype, strlen(alter_subtype));
+		tempo = asc_toupper(alter_subtype, strlen(alter_subtype));
 
 		alter_subtype = tempo;
 	}
 
-	if (Gp_role == GP_ROLE_DISPATCH && !bSeqIsTemp)
+	else if (Gp_role == GP_ROLE_DISPATCH &&
+			 seqrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
 	{
 		/* MPP-6929: metadata tracking */
 		MetaTrackUpdObject(RelationRelationId,
@@ -646,6 +549,14 @@ AlterSequenceInternal(Oid relid, List *options)
 						   GetUserId(),
 						   "ALTER", alter_subtype);
 	}
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
 }
 
 
@@ -686,7 +597,7 @@ nextval_internal(Oid relid)
 	init_sequence(relid, &elm, &seqrel);
 
 	/* read-only transactions may only modify temp sequences */
-	if (!seqrel->rd_islocaltemp)
+	if (seqrel->rd_backend != MyBackendId)
 		PreventCommandIfReadOnly("nextval()");
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
@@ -766,33 +677,6 @@ cdb_sequence_nextval(SeqTable elm,
 	bool 		have_overflow = false;
 	bool		logit = false;
 
-<<<<<<< HEAD
-=======
-	/* open and AccessShareLock sequence */
-	init_sequence(relid, &elm, &seqrel);
-
-	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_USAGE) != ACLCHECK_OK &&
-		pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for sequence %s",
-						RelationGetRelationName(seqrel))));
-
-	/* read-only transactions may only modify temp sequences */
-	if (seqrel->rd_backend != MyBackendId)
-		PreventCommandIfReadOnly("nextval()");
-
-	if (elm->last != elm->cached)		/* some numbers were cached */
-	{
-		Assert(elm->last_valid);
-		Assert(elm->increment != 0);
-		elm->last += elm->increment;
-		relation_close(seqrel, NoLock);
-		last_used_seq = elm;
-		return elm->last;
-	}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
 	page = BufferGetPage(buf);
@@ -1134,8 +1018,10 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	/* ready to change the on-disk (or really, in-buffer) tuple */
 	START_CRIT_SECTION();
 
-<<<<<<< HEAD
-=======
+	seq->last_value = next;		/* last fetched number */
+	seq->is_called = iscalled;
+	seq->log_cnt = 0;
+
 	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
@@ -1160,40 +1046,6 @@ do_setval(Oid relid, int64 next, bool iscalled)
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
 			((PageHeader) page)->pd_upper;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
-
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
-
-		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
-	}
-
-	/* save info in sequence relation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-	seq->last_value = next;		/* last fetched number */
-	seq->is_called = iscalled;
-	seq->log_cnt = 0;
-
-	MarkBufferDirty(buf);
-
-	/* XLOG stuff */
-	if (!seqrel->rd_istemp)
-	{
-		xl_seq_rec	xlrec;
-		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
-		Page		page = BufferGetPage(buf);
-
-		xlrec.node = seqrel->rd_node;
-
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = sizeof(xl_seq_rec);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-
-		rdata[1].data = (char *) seqtuple.t_data;
-		rdata[1].len = seqtuple.t_len;
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
@@ -1340,23 +1192,21 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 					 errmsg("\"%s\" is not a sequence",
 							RelationGetRelationName(seqrel))));
 
-<<<<<<< HEAD
 		*p_rel = seqrel;
-	}
-=======
-	/*
-	 * If the sequence has been transactionally replaced since we last saw it,
-	 * discard any cached-but-unissued values.	We do not touch the currval()
-	 * state, however.
-	 */
-	if (seqrel->rd_rel->relfilenode != elm->filenode)
-	{
-		elm->filenode = seqrel->rd_rel->relfilenode;
-		elm->cached = elm->last;
+
+		/*
+		 * If the sequence has been transactionally replaced since we last saw it,
+		 * discard any cached-but-unissued values.	We do not touch the currval()
+		 * state, however.
+		 */
+		if (seqrel->rd_rel->relfilenode != elm->filenode)
+		{
+			elm->filenode = seqrel->rd_rel->relfilenode;
+			elm->cached = elm->last;
+		}
 	}
 
 	/* Return results */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	*p_elm = elm;
 }
 
@@ -1391,18 +1241,17 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsNormal(lp));
 
-<<<<<<< HEAD
 	/* Note we currently only bother to set these two fields of *seqtuple */
 	seqtuple->t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);
 	seqtuple->t_len = ItemIdGetLength(lp);
 
 	/*
-	 * Previous releases of Postgres neglected to prevent SELECT FOR UPDATE
-	 * on a sequence, which would leave a non-frozen XID in the sequence
-	 * tuple's xmax, which eventually leads to clog access failures or worse.
-	 * If we see this has happened, clean up after it.  We treat this like a
-	 * hint bit update, ie, don't bother to WAL-log it, since we can certainly
-	 * do this again if the update gets lost.
+	 * Previous releases of Postgres neglected to prevent SELECT FOR UPDATE on
+	 * a sequence, which would leave a non-frozen XID in the sequence tuple's
+	 * xmax, which eventually leads to clog access failures or worse. If we
+	 * see this has happened, clean up after it.  We treat this like a hint
+	 * bit update, ie, don't bother to WAL-log it, since we can certainly do
+	 * this again if the update gets lost.
 	 */
 	if (HeapTupleHeaderGetXmax(seqtuple->t_data) != InvalidTransactionId)
 	{
@@ -1413,25 +1262,6 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 	}
 
 	seq = (Form_pg_sequence) GETSTRUCT(seqtuple);
-=======
-	/*
-	 * Previous releases of Postgres neglected to prevent SELECT FOR UPDATE on
-	 * a sequence, which would leave a non-frozen XID in the sequence tuple's
-	 * xmax, which eventually leads to clog access failures or worse. If we
-	 * see this has happened, clean up after it.  We treat this like a hint
-	 * bit update, ie, don't bother to WAL-log it, since we can certainly do
-	 * this again if the update gets lost.
-	 */
-	if (HeapTupleHeaderGetXmax(tuple.t_data) != InvalidTransactionId)
-	{
-		HeapTupleHeaderSetXmax(tuple.t_data, InvalidTransactionId);
-		tuple.t_data->t_infomask &= ~HEAP_XMAX_COMMITTED;
-		tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
-		SetBufferCommitInfoNeedsSave(*buf);
-	}
-
-	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* this is a handy place to update our copy of the increment */
 	elm->increment = seq->increment_by;
@@ -1559,12 +1389,8 @@ init_params(List *options, bool isInit,
 	if (is_cycled != NULL)
 	{
 		new->is_cycled = intVal(is_cycled->arg);
-<<<<<<< HEAD
-		Assert(new->is_cycled == false || new->is_cycled == true);
-		new->log_cnt = 0;
-=======
 		Assert(BoolIsValid(new->is_cycled));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		new->log_cnt = 0;
 	}
 	else if (isInit)
 		new->is_cycled = false;
@@ -1820,6 +1646,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
+	HeapTupleData seqtuple;
 	Form_pg_sequence seq;
 
 	/* open and AccessShareLock sequence */
@@ -1847,7 +1674,7 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
 
 	memset(isnull, 0, sizeof(isnull));
 
-	seq = read_info(elm, seqrel, &buf);
+	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
 
 	values[0] = Int64GetDatum(seq->start_value);
 	values[1] = Int64GetDatum(seq->min_value);
@@ -1938,10 +1765,6 @@ cdb_sequence_relation_init(Relation seqrel,
     seqrel->rd_refcnt = 99;
 
     seqrel->rd_id = relid;
-    seqrel->rd_istemp = istemp;
-
-    /* Must use shared buffer pool so seqserver & QDs can see the data. */
-    seqrel->rd_isLocalBuf = false;
 
 	seqrel->rd_rel = (Form_pg_class)palloc0(CLASS_TUPLE_SIZE);
     sprintf(seqrel->rd_rel->relname.data, "pg_class.oid=%d", relid);
