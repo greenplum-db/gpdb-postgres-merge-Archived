@@ -1219,6 +1219,7 @@ text_position_setup_ptr_len(char* p1, int len1, char* p2, int len2, TextPosition
 		}
 	}
 }
+
 static int
 text_position_next(int start_pos, TextPositionState *state)
 {
@@ -1517,16 +1518,14 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 		memcpy(a2p, arg2, len2);
 		a2p[len2] = '\0';
 
-<<<<<<< HEAD
-		result = gp_strcoll(a1p, a2p);
-=======
+		// GPDB_91_MERGE_FIXME: Why does gp_strcoll() exist?
+		// Should we remove it, or add gp_strcoll_l()?
 #ifdef HAVE_LOCALE_T
 		if (mylocale)
 			result = strcoll_l(a1p, a2p, mylocale);
 		else
 #endif
-			result = strcoll(a1p, a2p);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			result = gp_strcoll(a1p, a2p);
 
 		/*
 		 * In some locales strcoll() can claim that nonidentical strings are
@@ -3216,7 +3215,17 @@ split_text(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
+ * Convenience function to return true when two text params are equal.
+ */
+static bool
+text_isequal(text *txt1, text *txt2)
+{
+	return DatumGetBool(DirectFunctionCall2(texteq,
+											PointerGetDatum(txt1),
+											PointerGetDatum(txt2)));
+}
+
+/*
  * text_to_array_impl
  *		Carries out the actual tokenization and array conversion of an input string.
  *
@@ -3232,22 +3241,6 @@ split_text(PG_FUNCTION_ARGS)
  * Returns the pointer where the last match was found. Successively the
  * caller can splice more data starting from this address to find further
  * array elements.
-=======
- * Convenience function to return true when two text params are equal.
- */
-static bool
-text_isequal(text *txt1, text *txt2)
-{
-	return DatumGetBool(DirectFunctionCall2(texteq,
-											PointerGetDatum(txt1),
-											PointerGetDatum(txt2)));
-}
-
-/*
- * text_to_array
- * parse input string and return text array of elements,
- * based on provided field separator
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 static char* text_to_array_impl(char *string, int stringByteLen, char *delimiter,
 		int delimiterByteLen, int delimiterCharLen, ArrayBuildState **arrayState, bool endOfString)

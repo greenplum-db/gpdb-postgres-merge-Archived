@@ -387,22 +387,14 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * database.  So we handle all cases, instead. 
  */
 static int64
-<<<<<<< HEAD
 calculate_relation_size(Relation rel, ForkNumber forknum)
-=======
-calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	int64		totalsize = 0;
 	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-<<<<<<< HEAD
-	relationpath = relpath(rel->rd_node, forknum);
-=======
-	relationpath = relpathbackend(*rfn, backend, forknum);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	relationpath = relpathbackend(rel->rd_node, rel->rd_backend, forknum);
 
 if (RelationIsHeap(rel))
 {
@@ -469,7 +461,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	if (Gp_role == GP_ROLE_EXECUTE && Gp_segment == -1)
 		elog(ERROR, "This query is not currently supported by GPDB.");
 
-<<<<<<< HEAD
 	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	/*
@@ -505,10 +496,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
-	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
-							  forkname_to_number(text_to_cstring(forkName)));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	relation_close(rel, AccessShareLock);
 
@@ -531,22 +518,12 @@ calculate_toast_table_size(Oid toastrelid)
 
 	/* toast heap size, including FSM and VM size */
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-<<<<<<< HEAD
 		size += calculate_relation_size(toastRel, forkNum);
-=======
-		size += calculate_relation_size(&(toastRel->rd_node),
-										toastRel->rd_backend, forkNum);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* toast index size, including FSM and VM size */
 	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
 	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-<<<<<<< HEAD
 		size += calculate_relation_size(toastIdxRel, forkNum);
-=======
-		size += calculate_relation_size(&(toastIdxRel->rd_node),
-										toastIdxRel->rd_backend, forkNum);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	relation_close(toastIdxRel, AccessShareLock);
 	relation_close(toastRel, AccessShareLock);
@@ -578,7 +555,6 @@ calculate_table_size(Oid relOid)
 	/*
 	 * heap size, including FSM and VM
 	 */
-<<<<<<< HEAD
 	if (rel->rd_node.relNode == 0)
 		size = 0;
 	else
@@ -587,11 +563,6 @@ calculate_table_size(Oid relOid)
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 			size += calculate_relation_size(rel, forkNum);
 	}
-=======
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(&(rel->rd_node), rel->rd_backend,
-										forkNum);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Size of toast relation
@@ -649,17 +620,10 @@ calculate_indexes_size(Oid relOid)
 
 			idxRel = try_relation_open(idxOid, AccessShareLock, false);
 
-<<<<<<< HEAD
 			if (RelationIsValid(idxRel))
 			{
 				for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-					size += calculate_relation_size(idxRel, forkNum);
-=======
-			for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-				size += calculate_relation_size(&(idxRel->rd_node),
-												idxRel->rd_backend,
-												forkNum);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					size += calculate_relation_size(rel, forkNum);
 
 				relation_close(idxRel, AccessShareLock);
 			}

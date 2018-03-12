@@ -1697,13 +1697,8 @@ autovac_balance_cost(void)
 {
 	/*
 	 * The idea here is that we ration out I/O equally.  The amount of I/O
-<<<<<<< HEAD
-	 * that a worker can consume is determined by cost_limit/cost_delay, so
-	 * we try to equalize those ratios rather than the raw limit settings.
-=======
 	 * that a worker can consume is determined by cost_limit/cost_delay, so we
 	 * try to equalize those ratios rather than the raw limit settings.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 *
 	 * note: in cost_limit, zero also means use value from elsewhere, because
 	 * zero is not a valid value.
@@ -1758,11 +1753,7 @@ autovac_balance_cost(void)
 
 			/*
 			 * We put a lower bound of 1 on the cost_limit, to avoid division-
-<<<<<<< HEAD
-			 * by-zero in the vacuum code.  Also, in case of roundoff trouble
-=======
 			 * by-zero in the vacuum code.	Also, in case of roundoff trouble
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			 * in these calculations, let's be sure we don't ever set
 			 * cost_limit to more than the base value.
 			 */
@@ -2243,15 +2234,9 @@ do_autovacuum(void)
 		LWLockRelease(AutovacuumScheduleLock);
 
 		/*
-<<<<<<< HEAD
-		 * Remember the prevailing values of the vacuum cost GUCs.  We have
-		 * to restore these at the bottom of the loop, else we'll compute
-		 * wrong values in the next iteration of autovac_balance_cost().
-=======
 		 * Remember the prevailing values of the vacuum cost GUCs.	We have to
 		 * restore these at the bottom of the loop, else we'll compute wrong
 		 * values in the next iteration of autovac_balance_cost().
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		stdVacuumCostDelay = VacuumCostDelay;
 		stdVacuumCostLimit = VacuumCostLimit;

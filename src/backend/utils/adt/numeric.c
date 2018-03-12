@@ -331,19 +331,6 @@ static void dump_var(const char *str, NumericVar *var);
 #define dump_var(s,v)
 #endif
 
-<<<<<<< HEAD
-/* ----------
- * a few Numeric access things not defined in numeric.h
- */
-#define NUMERIC_SIGN_DSCALE(num) ((num)->n_sign_dscale)
-#define NUMERIC_WEIGHT(num) ((num)->n_weight)
-#define NUMERIC_DIGITS(num) ((NumericDigit *)(num)->n_data)
-#define NUMERIC_NDIGITS(num) \
-	((VARSIZE(num) - NUMERIC_HDRSZ) / sizeof(NumericDigit))
-/*
- *----------
- */
-
 #define quick_init_var(v) \
 	do { \
 		(v)->buf = (v)->ndb;	\
@@ -389,16 +376,6 @@ static void dump_var(const char *str, NumericVar *var);
 		(v)->buf[0] = 0;	\
 		(v)->digits = (v)->buf + 1;	\
 	} while (0)
-=======
-#define digitbuf_alloc(ndigits)  \
-	((NumericDigit *) palloc((ndigits) * sizeof(NumericDigit)))
-#define digitbuf_free(buf)	\
-	do { \
-		 if ((buf) != NULL) \
-			 pfree(buf); \
-	} while (0)
-
-#define init_var(v)		MemSetAligned(v, 0, sizeof(NumericVar))
 
 #define NUMERIC_DIGITS(num) (NUMERIC_IS_SHORT(num) ? \
 	(num)->choice.n_short.n_data : (num)->choice.n_long.n_data)
@@ -408,7 +385,6 @@ static void dump_var(const char *str, NumericVar *var);
 	((scale) <= NUMERIC_SHORT_DSCALE_MAX && \
 	(weight) <= NUMERIC_SHORT_WEIGHT_MAX && \
 	(weight) >= NUMERIC_SHORT_WEIGHT_MIN)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
@@ -821,13 +797,9 @@ numeric		(PG_FUNCTION_ARGS)
 	 * honest...)
 	 */
 	ddigits = (NUMERIC_WEIGHT(num) + 1) * DEC_DIGITS;
-<<<<<<< HEAD
-	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num))
-=======
 	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num)
 		&& (NUMERIC_CAN_BE_SHORT(scale, NUMERIC_WEIGHT(num))
 			|| !NUMERIC_IS_SHORT(num)))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		new = (Numeric) palloc(VARSIZE(num));
 		memcpy(new, num, VARSIZE(num));
@@ -940,15 +912,11 @@ numeric_abs(PG_FUNCTION_ARGS)
 	res = (Numeric) palloc(VARSIZE(num));
 	memcpy(res, num, VARSIZE(num));
 
-<<<<<<< HEAD
-	NUMERIC_SIGN_DSCALE(res) = NUMERIC_POS | NUMERIC_DSCALE(num);
-=======
 	if (NUMERIC_IS_SHORT(num))
 		res->choice.n_short.n_header =
 			num->choice.n_short.n_header & ~NUMERIC_SHORT_SIGN_MASK;
 	else
 		res->choice.n_long.n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -980,12 +948,6 @@ numeric_uminus(PG_FUNCTION_ARGS)
 	if (NUMERIC_NDIGITS(num) != 0)
 	{
 		/* Else, flip the sign */
-<<<<<<< HEAD
-		if (NUMERIC_SIGN(num) == NUMERIC_POS)
-			NUMERIC_SIGN_DSCALE(res) = NUMERIC_NEG | NUMERIC_DSCALE(num);
-		else
-			NUMERIC_SIGN_DSCALE(res) = NUMERIC_POS | NUMERIC_DSCALE(num);
-=======
 		if (NUMERIC_IS_SHORT(num))
 			res->choice.n_short.n_header =
 				num->choice.n_short.n_header ^ NUMERIC_SHORT_SIGN_MASK;
@@ -995,7 +957,6 @@ numeric_uminus(PG_FUNCTION_ARGS)
 		else
 			res->choice.n_long.n_sign_dscale =
 				NUMERIC_POS | NUMERIC_DSCALE(num);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	PG_RETURN_NUMERIC(res);
@@ -1037,13 +998,8 @@ numeric_sign(PG_FUNCTION_ARGS)
 	 * The packed format is known to be totally zero digit trimmed always. So
 	 * we can identify a ZERO by the fact that there are no digits at all.
 	 */
-<<<<<<< HEAD
-	if (VARSIZE(num) == NUMERIC_HDRSZ)
-		init_ro_var_from_var(&const_zero, &result);
-=======
 	if (NUMERIC_NDIGITS(num) == 0)
-		set_var_from_var(&const_zero, &result);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		init_ro_var_from_var(&const_zero, &result);
 	else
 	{
 		/*
@@ -2912,37 +2868,6 @@ int8_decum(PG_FUNCTION_ARGS)
 }
 
 
-<<<<<<< HEAD
-=======
-Datum
-numeric_avg(PG_FUNCTION_ARGS)
-{
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum	   *transdatums;
-	int			ndatums;
-	Numeric		N,
-				sumX;
-
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 2)
-		elog(ERROR, "expected 2-element numeric array");
-	N = DatumGetNumeric(transdatums[0]);
-	sumX = DatumGetNumeric(transdatums[1]);
-
-	/* SQL92 defines AVG of no values to be NULL */
-	/* N is zero iff no digits (cf. numeric_uminus) */
-	if (NUMERIC_NDIGITS(N) == 0)
-		PG_RETURN_NULL();
-
-	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div,
-										NumericGetDatum(sumX),
-										NumericGetDatum(N)));
-}
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * Workhorse routine for the standard deviance and variance
  * aggregates. 'transarray' is the aggregate's transition
@@ -3614,7 +3539,7 @@ typedef struct NumericAvgTransData
 	int32   pad;  /* pad so int64 and float64 will be 8 bytes alligned */
 #endif
 	int64 count; 
-	NumericData sum;
+	struct NumericData sum;
 } NumericAvgTransData;
 	
 static inline NumericAvgTransData *num_avg_store_sum(NumericAvgTransData* tr, NumericVar *var)
@@ -3838,12 +3763,8 @@ dump_numeric(const char *str, Numeric num)
 
 	ndigits = NUMERIC_NDIGITS(num);
 
-<<<<<<< HEAD
-	printf("%s: NUMERIC w=%d d=%d ", str, NUMERIC_WEIGHT(num), NUMERIC_DSCALE(num));
-=======
 	printf("%s: NUMERIC w=%d d=%d ", str,
 		   NUMERIC_WEIGHT(num), NUMERIC_DSCALE(num));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	switch (NUMERIC_SIGN(num))
 	{
 		case NUMERIC_POS:
@@ -4124,7 +4045,6 @@ set_var_from_num(Numeric num, NumericVar *dest)
 	dest->dscale = NUMERIC_DSCALE(num);
 
 	memcpy(dest->digits, NUMERIC_DIGITS(num), ndigits * sizeof(NumericDigit));
-<<<<<<< HEAD
 }
 */
 
@@ -4163,8 +4083,6 @@ init_ro_var_from_num(Numeric num, NumericVar *dest)
 	dest->dscale = NUMERIC_DSCALE(num);
 	dest->digits = NUMERIC_DIGITS(num);
 	dest->buf = dest->ndb;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -4493,12 +4411,8 @@ make_result(NumericVar *var)
 
 	if (sign == NUMERIC_NAN)
 	{
-<<<<<<< HEAD
 		free_var(var);
-		result = (Numeric) palloc(NUMERIC_HDRSZ);
-=======
 		result = (Numeric) palloc(NUMERIC_HDRSZ_SHORT);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		SET_VARSIZE(result, NUMERIC_HDRSZ_SHORT);
 		result->choice.n_header = NUMERIC_NAN;
@@ -4552,10 +4466,7 @@ make_result(NumericVar *var)
 	}
 
 	memcpy(NUMERIC_DIGITS(result), digits, n * sizeof(NumericDigit));
-<<<<<<< HEAD
-=======
 	Assert(NUMERIC_NDIGITS(result) == n);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Check for overflow of int16 fields */
 	if (NUMERIC_WEIGHT(result) != weight ||
@@ -4594,8 +4505,8 @@ make_result_inplace(NumericVar *var, Numeric result, int in_len)
 
 		Assert(result);
 		SET_VARSIZE(result, NUMERIC_HDRSZ);
-		NUMERIC_WEIGHT(result) = 0;
-		NUMERIC_SIGN_DSCALE(result) = NUMERIC_NAN;
+		result->choice.n_header = NUMERIC_NAN;
+		/* the header word is all we need */
 
 		return 0;
 	}
@@ -4626,10 +4537,12 @@ make_result_inplace(NumericVar *var, Numeric result, int in_len)
 	if(in_len < len)
 		return len;
 
+	/* GPDB_91_MERGE_FIXME: this always uses the "long" format. Is that good? */
 	Assert(result);
 	SET_VARSIZE(result, len);
-	NUMERIC_WEIGHT(result) = weight;
-	NUMERIC_SIGN_DSCALE(result) = sign | (var->dscale & NUMERIC_DSCALE_MASK);
+	result->choice.n_long.n_sign_dscale =
+		sign | (var->dscale & NUMERIC_DSCALE_MASK);
+	result->choice.n_long.n_weight = weight;
 
 	memcpy(NUMERIC_DIGITS(result), digits, n * sizeof(NumericDigit));
 

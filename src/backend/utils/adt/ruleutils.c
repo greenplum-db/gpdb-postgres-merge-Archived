@@ -2280,8 +2280,8 @@ deparse_context_for_planstate(Node *planstate, List *ancestors,
 	 */
 	if (dpns->inner_plan && IsA(dpns->inner_plan, PartitionSelector))
 	{
-		dpns->inner_plan = (Plan *) plan;
-		dpns->outer_plan = (Plan *) plan;
+		dpns->inner_planstate = (PlanState *) planstate;
+		dpns->outer_planstate = (PlanState *) planstate;
 	}
 
 	/* Return a one-deep namespace stack */
@@ -3838,82 +3838,6 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
-<<<<<<< HEAD
- * push_plan: set up deparse_namespace to recurse into the tlist of a subplan
- *
- * When expanding an OUTER or INNER reference, we must push new outer/inner
- * subplans in case the referenced expression itself uses OUTER/INNER.	We
- * modify the top stack entry in-place to avoid affecting levelsup issues
- * (although in a Plan tree there really shouldn't be any).
- *
- * Caller must save and restore outer_plan and inner_plan around this.
- *
- * We also use this to initialize the fields during deparse_context_for_plan.
- */
-static void
-push_plan(deparse_namespace *dpns, Plan *subplan)
-{
-	/*
-	 * We special-case Append to pretend that the first child plan is the
-	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
-	 * according to one of the children, and the first one is the most natural
-	 * choice.	Likewise special-case ModifyTable to pretend that the first
-	 * child plan is the OUTER referent; this is to support RETURNING lists
-	 * containing references to non-target relations.
-	 */
-	if (IsA(subplan, Append))
-		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
-	else if (IsA(subplan, Sequence))
-	{
-		/*
-		 * A Sequence node returns tuples from the *last* child node only.
-		 * The other subplans can even have a different, incompatible tuple
-		 * descriptor. A typical case is to have a PartitionSelector node
-		 * as the first subplan, and the Dynamic Table Scan as the second
-		 * subplan.
-		 */
-		dpns->outer_plan = (Plan *) llast(((Sequence *) subplan)->subplans);
-	}
-	else if (IsA(subplan, ModifyTable))
-		dpns->outer_plan = (Plan *) linitial(((ModifyTable *) subplan)->plans);
-	else
-		dpns->outer_plan = outerPlan(subplan);
-
-	/*
-	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
-	 * use OUTER because that could someday conflict with the normal meaning.)
-	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
-	 */
-	if (IsA(subplan, SubqueryScan))
-		dpns->inner_plan = ((SubqueryScan *) subplan)->subplan;
-	else if (IsA(subplan, CteScan))
-	{
-		int			ctePlanId = ((CteScan *) subplan)->ctePlanId;
-
-		if (ctePlanId > 0 && ctePlanId <= list_length(dpns->subplans))
-			dpns->inner_plan = list_nth(dpns->subplans, ctePlanId - 1);
-		else
-			dpns->inner_plan = NULL;
-	}
-	else if (IsA(subplan, Sequence))
-	{
-		/*
-		 * Set the inner_plan to a sequences first child only if it is a
-		 * partition selector. This is a specific fix to enable Explain's of
-		 * query plans that have a Partition Selector
-		 */
-		Plan *node = (Plan *) linitial(((Sequence *) subplan)->subplans);
-		if (IsA(node, PartitionSelector))
-			dpns->inner_plan = node;
-	}
-	else
-		dpns->inner_plan = innerPlan(subplan);
-}
-
-
-/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Display a Var appropriately.
  *
  * In some cases (currently only when recursing into an unnamed join)
@@ -5501,7 +5425,6 @@ get_rule_expr(Node *node, deparse_context *context,
 					Node	   *w = (Node *) when->expr;
 
 					if (caseexpr->arg)
-<<<<<<< HEAD
 					{
 						/*
 						 * The parser should have produced WHEN clauses of
@@ -5548,30 +5471,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						}
 						else
 							get_rule_expr(w, context, false);
-=======
-					{
-						/*
-						 * The parser should have produced WHEN clauses of the
-						 * form "CaseTestExpr = RHS", possibly with an
-						 * implicit coercion inserted above the CaseTestExpr.
-						 * For accurate decompilation of rules it's essential
-						 * that we show just the RHS.  However in an
-						 * expression that's been through the optimizer, the
-						 * WHEN clause could be almost anything (since the
-						 * equality operator could have been expanded into an
-						 * inline function).  If we don't recognize the form
-						 * of the WHEN clause, just punt and display it as-is.
-						 */
-						if (IsA(w, OpExpr))
-						{
-							List	   *args = ((OpExpr *) w)->args;
-
-							if (list_length(args) == 2 &&
-								IsA(strip_implicit_coercions(linitial(args)),
-									CaseTestExpr))
-								w = (Node *) lsecond(args);
-						}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					}
 
 					if (!PRETTY_INDENT(context))
@@ -5772,76 +5671,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_NullIfExpr:
-			{
-				NullIfExpr *nullifexpr = (NullIfExpr *) node;
-
-				appendStringInfo(buf, "NULLIF(");
-				get_rule_expr((Node *) nullifexpr->args, context, true);
-				appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_NullTest:
-			{
-				NullTest   *ntest = (NullTest *) node;
-
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren((Node *) ntest->arg, context, true, node);
-				switch (ntest->nulltesttype)
-				{
-					case IS_NULL:
-						appendStringInfo(buf, " IS NULL");
-						break;
-					case IS_NOT_NULL:
-						appendStringInfo(buf, " IS NOT NULL");
-						break;
-					default:
-						elog(ERROR, "unrecognized nulltesttype: %d",
-							 (int) ntest->nulltesttype);
-				}
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_BooleanTest:
-			{
-				BooleanTest *btest = (BooleanTest *) node;
-
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren((Node *) btest->arg, context, false, node);
-				switch (btest->booltesttype)
-				{
-					case IS_TRUE:
-						appendStringInfo(buf, " IS TRUE");
-						break;
-					case IS_NOT_TRUE:
-						appendStringInfo(buf, " IS NOT TRUE");
-						break;
-					case IS_FALSE:
-						appendStringInfo(buf, " IS FALSE");
-						break;
-					case IS_NOT_FALSE:
-						appendStringInfo(buf, " IS NOT FALSE");
-						break;
-					case IS_UNKNOWN:
-						appendStringInfo(buf, " IS UNKNOWN");
-						break;
-					case IS_NOT_UNKNOWN:
-						appendStringInfo(buf, " IS NOT UNKNOWN");
-						break;
-					default:
-						elog(ERROR, "unrecognized booltesttype: %d",
-							 (int) btest->booltesttype);
-				}
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
-			}
-			break;
-
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;
@@ -5999,8 +5828,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-<<<<<<< HEAD
-=======
 		case T_NullTest:
 			{
 				NullTest   *ntest = (NullTest *) node;
@@ -6061,7 +5888,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case T_CoerceToDomain:
 			{
 				CoerceToDomain *ctest = (CoerceToDomain *) node;
@@ -8163,7 +7989,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 
 			/* Always quote to make WITH (tablename=...) work correctly */
 			char *relname = get_rel_name(rule->parchildrelid);
-			appendStringInfo(&sid1, "tablename=%s", quote_literal_internal(relname));
+			appendStringInfo(&sid1, "tablename=%s", quote_literal_cstr(relname));
 
 			/* MPP-7191, MPP-7193: fully-qualify storage type if not
 			 * specified (and not a template)
@@ -8223,7 +8049,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 			 */
 
 			char *relname = get_rel_name(part->parrelid);
-			appendStringInfo(&buf, "tablename=%s", quote_literal_internal(relname));
+			appendStringInfo(&buf, "tablename=%s", quote_literal_cstr(relname));
 		}
 
 		opts = rule->parreloptions;

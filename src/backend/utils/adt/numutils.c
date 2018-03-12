@@ -114,38 +114,7 @@ pg_atoi(char *s, int size, int c)
 void
 pg_itoa(int16 i, char *a)
 {
-<<<<<<< HEAD
-	/* 
-	 * The standard postgres way is to sprintf, but that uses a lot of cpu.
-	 * Do a fast conversion to string instead.
-	 */
-	char tmp[33];
-	char *tp = tmp;
-	char *sp;
-	int ii = 0;
-	unsigned long v;
-	long value = i;
-	bool sign = (value < 0);;
-	if (sign)
-		v = -value;
-	else
-		v = (unsigned long)value;
-	while (v || tp == tmp)
-	{
-		ii = v % 10;
-		v = v / 10;
-		*tp++ = ii+'0';
-	}
-	sp = a;
-	if (sign)
-		*sp++ = '-';
-	while (tp > tmp)
-		*sp++ = *--tp;
-	*sp = 0;
-	
-=======
 	pg_ltoa((int32) i, a);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -157,35 +126,6 @@ pg_itoa(int16 i, char *a)
 void
 pg_ltoa(int32 value, char *a)
 {
-<<<<<<< HEAD
-	/*
-	 * The standard postgres way is to sprintf, but that uses a lot of cpu.
-	 * Do a fast conversion to string instead.
-	 */
-	char tmp[33];
-	char *tp = tmp;
-	char *sp;
-	int ii = 0;
-	unsigned long v;
-	long value = l;
-	bool sign = (value < 0);;
-	if (sign)
-		v = -value;
-	else
-		v = (unsigned long)value;
-	while (v || tp == tmp)
-	{
-		ii = v % 10;
-		v = v / 10;
-		*tp++ = ii+'0';
-	}
-	sp = a;
-	if (sign)
-		*sp++ = '-';
-	while (tp > tmp)
-		*sp++ = *--tp;
-	*sp = 0;
-=======
 	char	   *start = a;
 	bool		neg = false;
 
@@ -283,5 +223,4 @@ pg_lltoa(int64 value, char *a)
 		*start++ = *a;
 		*a-- = swap;
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
