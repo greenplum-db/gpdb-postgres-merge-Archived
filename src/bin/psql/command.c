@@ -438,13 +438,9 @@ exec_command(const char *cmd,
 			case 'v':
 			case 'i':
 			case 's':
-<<<<<<< HEAD
 			case 'E':	/* PostgreSQL use dx for extension, change to dE for foreign table */
             /* case 'S':  // GPDB:  We used to show just system tables for this */
 			case 'P':   /* GPDB: Parent-only tables, no children */
-=======
-			case 'E':
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				success = listTables(&cmd[1], pattern, show_verbose, show_system);
 				break;
 			case 'r':
@@ -587,7 +583,8 @@ exec_command(const char *cmd,
 	 */
 	else if (strcmp(cmd, "ef") == 0)
 	{
-<<<<<<< HEAD
+		int			lineno = -1;
+
 		if (pset.sversion < 80400)
 		{
 			psql_error("The server (version %d.%d) does not support editing function source.\n",
@@ -595,11 +592,6 @@ exec_command(const char *cmd,
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
-=======
-		int			lineno = -1;
-
-		if (!query_buf)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			psql_error("no query buffer\n");
 			status = PSQL_CMD_ERROR;
@@ -1600,11 +1592,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
 			param_is_newly_set(PQport(o_conn), PQport(pset.db)))
 		{
-<<<<<<< HEAD
-			char	*host = PQhost(pset.db);
-=======
 			char	   *host = PQhost(pset.db);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			if (host == NULL)
 				host = DEFAULT_PGSOCKET_DIR;
@@ -2063,12 +2051,8 @@ process_file(char *filename, bool single_txn)
 
 error:
 	if (fd != stdin)
-<<<<<<< HEAD
-	fclose(fd);
-=======
 		fclose(fd);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pset.inputfile = oldfilename;
 	return result;
 }

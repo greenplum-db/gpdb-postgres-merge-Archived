@@ -96,15 +96,12 @@ extern bool listForeignServers(const char *pattern, bool verbose);
 /* \deu */
 extern bool listUserMappings(const char *pattern, bool verbose);
 
-<<<<<<< HEAD
-=======
 /* \det */
 extern bool listForeignTables(const char *pattern, bool verbose);
 
 /* \dL */
 extern bool listLanguages(const char *pattern, bool verbose, bool showSystem);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /* \dx */
 extern bool listExtensions(const char *pattern);
 

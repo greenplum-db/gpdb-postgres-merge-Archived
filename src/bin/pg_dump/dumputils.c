@@ -108,11 +108,7 @@ fmtId(const char *rawid)
 	if (quote_all_identifiers)
 		need_quotes = true;
 	/* slightly different rules for first character */
-<<<<<<< HEAD
-	if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || (rawid[0] == '_')))
-=======
 	else if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		need_quotes = true;
 	else
 	{

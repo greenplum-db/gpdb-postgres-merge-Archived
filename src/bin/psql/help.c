@@ -159,15 +159,11 @@ slashUsage(unsigned short int pager)
 	FILE	   *output;
 	char	   *currdb;
 
-<<<<<<< HEAD
 	currdb = PQdb(pset.db);
 	if (currdb == NULL)
 		currdb = "";
 
-	output = PageOutput(90, pager);
-=======
 	output = PageOutput(92, pager);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -217,12 +213,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dFd[+] [PATTERN]      list text search dictionaries\n"));
 	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));
 	fprintf(output, _("  \\dFt[+] [PATTERN]      list text search templates\n"));
-<<<<<<< HEAD
-	fprintf(output, _("  \\dg[+]  [PATTERN]      list roles (groups)\n"));
-	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
-=======
 	fprintf(output, _("  \\dg[+]  [PATTERN]      list roles\n"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	fprintf(output, _("  \\di[S+] [PATTERN]      list indexes\n"));
 	fprintf(output, _("  \\dl                    list large objects, same as \\lo_list\n"));
 	fprintf(output, _("  \\dL[S+] [PATTERN]      list procedural languages\n"));
@@ -237,12 +228,10 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
 	fprintf(output, _("  \\du[+]  [PATTERN]      list roles\n"));
 	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
-<<<<<<< HEAD
+	/* GPDB_91_MERGE_FIXME: can we use \dE for both external and foreign tables? */
 	fprintf(output, _("  \\dE     [PATTERN]      list external tables\n"));
-=======
 	fprintf(output, _("  \\dE[S+] [PATTERN]      list foreign tables\n"));
 	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	fprintf(output, _("  \\l[+]                  list all databases\n"));
 	fprintf(output, _("  \\sf[+] FUNCNAME        show a function's definition\n"));
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
@@ -446,7 +435,6 @@ void
 print_copyright(void)
 {
 	puts(
-<<<<<<< HEAD
 		 "Greenplum Database version of PostgreSQL Database Management System\n"
 		 "Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 2014-Present Pivotal Software, Inc.\n\n"
@@ -454,14 +442,7 @@ print_copyright(void)
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
-		 "Permission to use, copy, modify, and distribute this software and its\n"
-=======
-		 "PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
-		 "Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group\n\n"
-		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 	"Permission to use, copy, modify, and distribute this software and its\n"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 "documentation for any purpose, without fee, and without a written agreement\n"
 	 "is hereby granted, provided that the above copyright notice and this\n"
 	   "paragraph and the following two paragraphs appear in all copies.\n\n"

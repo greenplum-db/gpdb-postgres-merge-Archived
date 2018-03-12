@@ -41,13 +41,10 @@ static bool describeOneTSConfig(const char *oid, const char *nspname,
 					const char *pnspname, const char *prsname);
 static void printACLColumn(PQExpBuffer buf, const char *colname);
 static bool listOneExtensionContents(const char *extname, const char *oid);
-<<<<<<< HEAD
 static bool isGPDB(void);
 static bool isGPDB4200OrLater(void);
 static bool isGPDB5000OrLater(void);
 static bool isGPDB6000OrLater(void);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 static bool isGPDB(void)
 {
@@ -670,12 +667,9 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 						  "      E'\\n'\n"
 						  "  ) AS \"%s\",\n",
 						  gettext_noop("Elements"));
-<<<<<<< HEAD
 	if (verbose && isGE42 == true)
 		appendPQExpBuffer(&buf, " pg_catalog.array_to_string(te.typoptions, ',') AS \"%s\",\n", gettext_noop("Type Options"));
-=======
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	appendPQExpBuffer(&buf,
 				"  pg_catalog.obj_description(t.oid, 'pg_type') as \"%s\"\n",
@@ -1321,14 +1315,11 @@ describeOneTableDetails(const char *schemaname,
 		Oid			tablespace;
 		char	   *reloptions;
 		char	   *reloftype;
-<<<<<<< HEAD
+		char		relpersistence;
 		char	   *compressionType;
 		char	   *compressionLevel;
 		char	   *blockSize;
 		char	   *checksum;
-=======
-		char		relpersistence;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1458,15 +1449,12 @@ describeOneTableDetails(const char *schemaname,
 		atooid(PQgetvalue(res, 0, 7)) : 0;
 	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		strdup(PQgetvalue(res, 0, 8)) : 0;
-<<<<<<< HEAD
+	tableinfo.relpersistence = (pset.sversion >= 90100 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
+		PQgetvalue(res, 0, 9)[0] : 0;
 
 	/* GPDB Only:  relstorage  */
 	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
 
-=======
-	tableinfo.relpersistence = (pset.sversion >= 90100 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
-		PQgetvalue(res, 0, 9)[0] : 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	PQclear(res);
 	res = NULL;
 
@@ -1562,7 +1550,8 @@ describeOneTableDetails(const char *schemaname,
 	switch (tableinfo.relkind)
 	{
 		case 'r':
-<<<<<<< HEAD
+			/* GPDB_91_MERGE_FIXME: for an unlogged AO-table, we will not print
+			 * the fact that it's unlogged */
 			if(tableinfo.relstorage == 'a')
 				printfPQExpBuffer(&title, _("Append-Only Table \"%s.%s\""),
 								  schemaname, relationname);
@@ -1571,10 +1560,9 @@ describeOneTableDetails(const char *schemaname,
 								  schemaname, relationname);
 			else if(tableinfo.relstorage == 'x')
 				printfPQExpBuffer(&title, _("External table \"%s.%s\""),
-=======
-			if (tableinfo.relpersistence == 'u')
+								  schemaname, relationname);
+			else if (tableinfo.relpersistence == 'u')
 				printfPQExpBuffer(&title, _("Unlogged table \"%s.%s\""),
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								  schemaname, relationname);
 			else
 				printfPQExpBuffer(&title, _("Table \"%s.%s\""),
@@ -1730,12 +1718,8 @@ describeOneTableDetails(const char *schemaname,
 		/* Storage and Description */
 		if (verbose)
 		{
-<<<<<<< HEAD
-			int			firstvcol = (tableinfo.relkind == 'i' ? 6 : 5);
-			int			firstvcol_offset = 0;
-=======
 			int			firstvcol = (tableinfo.relkind == 'i' ? 7 : 6);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			int			firstvcol_offset = 0;
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* Storage */
@@ -3299,30 +3283,23 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	bool		showIndexes = strchr(tabtypes, 'i') != NULL;
 	bool		showViews = strchr(tabtypes, 'v') != NULL;
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
-<<<<<<< HEAD
-	bool		showExternal = strchr(tabtypes, 'E') != NULL;
-=======
 	bool		showForeign = strchr(tabtypes, 'E') != NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {false, false, true, false, false, false, false};
 
-<<<<<<< HEAD
-	if (!(showTables || showIndexes || showViews || showSeq || showExternal))
-		showTables = showViews = showSeq = showExternal = true;
+	if (!(showTables || showIndexes || showViews || showSeq || showForeign))
+		showTables = showViews = showSeq = showForeign = true;
+
+	bool		showExternal = showForeign;
 
 	if (strchr(tabtypes, 'P') != NULL)
 	{
 		showTables = true;
 		showChildren = false;
 	}
-=======
-	if (!(showTables || showIndexes || showViews || showSeq || showForeign))
-		showTables = showViews = showSeq = showForeign = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	initPQExpBuffer(&buf);
 
@@ -4634,11 +4611,11 @@ listExtensions(const char *pattern)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT e.extname AS \"%s\", "
-							  "e.extversion AS \"%s\", n.nspname AS \"%s\", c.description AS \"%s\"\n"
-							  "FROM pg_catalog.pg_extension e "
-							  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
-							  "LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid "
-							  "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
+	 "e.extversion AS \"%s\", n.nspname AS \"%s\", c.description AS \"%s\"\n"
+					  "FROM pg_catalog.pg_extension e "
+			 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
+				 "LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid "
+		 "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Version"),
 					  gettext_noop("Schema"),
@@ -4699,7 +4676,7 @@ listExtensionContents(const char *pattern)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT e.extname, e.oid\n"
-							  "FROM pg_catalog.pg_extension e\n");
+					  "FROM pg_catalog.pg_extension e\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern,
 						  false, false,
@@ -4838,167 +4815,6 @@ listForeignTables(const char *pattern, bool verbose)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of foreign tables");
-	myopt.translate_header = true;
-
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
-
-	PQclear(res);
-	return true;
-}
-
-/*
- * \dx
- *
- * Briefly describes installed extensions.
- */
-bool
-listExtensions(const char *pattern)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-
-	if (pset.sversion < 90100)
-	{
-		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
-		return true;
-	}
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-					  "SELECT e.extname AS \"%s\", "
-	 "e.extversion AS \"%s\", n.nspname AS \"%s\", c.description AS \"%s\"\n"
-					  "FROM pg_catalog.pg_extension e "
-			 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
-				 "LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid "
-		 "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
-					  gettext_noop("Name"),
-					  gettext_noop("Version"),
-					  gettext_noop("Schema"),
-					  gettext_noop("Description"));
-
-	processSQLNamePattern(pset.db, &buf, pattern,
-						  false, false,
-						  NULL, "e.extname", NULL,
-						  NULL);
-
-	appendPQExpBuffer(&buf, "ORDER BY 1;");
-
-	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
-	if (!res)
-		return false;
-
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of installed extensions");
-	myopt.translate_header = true;
-
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
-
-	PQclear(res);
-	return true;
-}
-
-/*
- * \dx+
- *
- * List contents of installed extensions.
- */
-bool
-listExtensionContents(const char *pattern)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	int			i;
-
-	if (pset.sversion < 90100)
-	{
-		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
-		return true;
-	}
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-					  "SELECT e.extname, e.oid\n"
-					  "FROM pg_catalog.pg_extension e\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern,
-						  false, false,
-						  NULL, "e.extname", NULL,
-						  NULL);
-
-	appendPQExpBuffer(&buf, "ORDER BY 1;");
-
-	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
-	if (!res)
-		return false;
-
-	if (PQntuples(res) == 0)
-	{
-		if (!pset.quiet)
-		{
-			if (pattern)
-				fprintf(stderr, _("Did not find any extension named \"%s\".\n"),
-						pattern);
-			else
-				fprintf(stderr, _("Did not find any extensions.\n"));
-		}
-		PQclear(res);
-		return false;
-	}
-
-	for (i = 0; i < PQntuples(res); i++)
-	{
-		const char *extname;
-		const char *oid;
-
-		extname = PQgetvalue(res, i, 0);
-		oid = PQgetvalue(res, i, 1);
-
-		if (!listOneExtensionContents(extname, oid))
-		{
-			PQclear(res);
-			return false;
-		}
-		if (cancel_pressed)
-		{
-			PQclear(res);
-			return false;
-		}
-	}
-
-	PQclear(res);
-	return true;
-}
-
-static bool
-listOneExtensionContents(const char *extname, const char *oid)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	char		title[1024];
-	printQueryOpt myopt = pset.popt;
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-		"SELECT pg_catalog.pg_describe_object(classid, objid, 0) AS \"%s\"\n"
-					  "FROM pg_catalog.pg_depend\n"
-					  "WHERE refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass AND refobjid = '%s' AND deptype = 'e'\n"
-					  "ORDER BY 1;",
-					  gettext_noop("Object Description"),
-					  oid);
-
-	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
-	if (!res)
-		return false;
-
-	myopt.nullPrint = NULL;
-	snprintf(title, sizeof(title), _("Objects in extension \"%s\""), extname);
-	myopt.title = title;
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);

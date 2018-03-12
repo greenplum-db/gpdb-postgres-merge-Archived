@@ -160,17 +160,13 @@ static void read_post_opts(void);
 static PGPing test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
 
-<<<<<<< HEAD
 static char postopts_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 static char recovery_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
-static char conf_file[MAXPGPATH];
 static char backup_file[MAXPGPATH];
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
 #endif
@@ -510,17 +506,6 @@ start_postmaster(void)
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
 static PGPing
-<<<<<<< HEAD
-test_postmaster_connection(bool do_checkpoint __attribute__((unused)))
-{
-	PGPing		ret = PQPING_NO_RESPONSE;
-	int			i;
-	char		portstr[32];
-	char	   *p;
-	char	   *q;
-	char		connstr[MAXPGPATH * 2 + 256]; /* Should be way more than enough! */
-	static const char *backend_options = "'-c gp_session_role=utility'";
-=======
 test_postmaster_connection(bool do_checkpoint)
 {
 	PGPing		ret = PQPING_NO_RESPONSE;
@@ -528,113 +513,11 @@ test_postmaster_connection(bool do_checkpoint)
 	pgpid_t		pm_pid = 0;
 	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* if requested wait time is zero, return "still starting up" code */
 	if (wait_seconds <= 0)
 		return PQPING_REJECT;
 
-<<<<<<< HEAD
-	/*
-	 * Look in post_opts for a -p switch.
-	 *
-	 * This parsing code is not amazingly bright; it could for instance get
-	 * fooled if ' -p' occurs within a quoted argument value.  Given that few
-	 * people pass complicated settings in post_opts, it's probably good
-	 * enough.
-	 */
-	for (p = post_opts; *p;)
-	{
-		/* advance past whitespace */
-		while (isspace((unsigned char) *p))
-			p++;
-
-		if (strncmp(p, "-p", 2) == 0)
-		{
-			p += 2;
-			/* advance past any whitespace/quoting */
-			while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
-				p++;
-			/* find end of value (not including any ending quote!) */
-			q = p;
-			while (*q &&
-				   !(isspace((unsigned char) *q) || *q == '\'' || *q == '"'))
-				q++;
-			/* and save the argument value */
-			strlcpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
-			/* keep looking, maybe there is another -p */
-			p = q;
-		}
-		/* Advance to next whitespace */
-		while (*p && !isspace((unsigned char) *p))
-			p++;
-	}
-
-	/*
-	 * Search config file for a 'port' option.
-	 *
-	 * This parsing code isn't amazingly bright either, but it should be okay
-	 * for valid port settings.
-	 */
-	if (!*portstr)
-	{
-		char	  **optlines;
-
-		optlines = readfile(conf_file);
-		if (optlines != NULL)
-		{
-			for (; *optlines != NULL; optlines++)
-			{
-				p = *optlines;
-
-				while (isspace((unsigned char) *p))
-					p++;
-				if (strncmp(p, "port", 4) != 0)
-					continue;
-				p += 4;
-				while (isspace((unsigned char) *p))
-					p++;
-				if (*p != '=')
-					continue;
-				p++;
-				/* advance past any whitespace/quoting */
-				while (isspace((unsigned char) *p) || *p == '\'' || *p == '"')
-					p++;
-				/* find end of value (not including any ending quote/comment!) */
-				q = p;
-				while (*q &&
-					   !(isspace((unsigned char) *q) ||
-						 *q == '\'' || *q == '"' || *q == '#'))
-					q++;
-				/* and save the argument value */
-				strlcpy(portstr, p, Min((q - p) + 1, sizeof(portstr)));
-				/* keep looking, maybe there is another */
-			}
-		}
-	}
-
-	/* Check environment */
-	if (!*portstr && getenv("PGPORT") != NULL)
-		strlcpy(portstr, getenv("PGPORT"), sizeof(portstr));
-
-	/* Else use compiled-in default */
-	if (!*portstr)
-		snprintf(portstr, sizeof(portstr), "%d", DEF_PGPORT);
-
-	/*
-	 * We need to set a connect timeout otherwise on Windows the SCM will
-	 * probably timeout first
-	 */
-	snprintf(connstr, sizeof(connstr),
-			"dbname=postgres port=%s connect_timeout=5 options=%s", portstr, backend_options);
-
-	for (i = 0; i < wait_seconds; i++)
-	{
-		ret = PQping(connstr);
-		if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT ||
-			ret == PQPING_MIRROR_READY)
-			break;
-=======
 	connstr[0] = '\0';
 
 	for (i = 0; i < wait_seconds; i++)
@@ -806,48 +689,29 @@ test_postmaster_connection(bool do_checkpoint)
 		 */
 		if (pm_pid > 0 && !postmaster_is_alive((pid_t) pm_pid))
 			return PQPING_NO_RESPONSE;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/* No response, or startup still in process; wait */
 #if defined(WIN32)
 		if (do_checkpoint)
 		{
 			/*
-<<<<<<< HEAD
-			 * Increment the wait hint by 6 secs (connection timeout +
-			 * sleep) We must do this to indicate to the SCM that our
-			 * startup time is changing, otherwise it'll usually send a
-			 * stop signal after 20 seconds, despite incrementing the
-			 * checkpoint counter.
-=======
 			 * Increment the wait hint by 6 secs (connection timeout + sleep)
 			 * We must do this to indicate to the SCM that our startup time is
 			 * changing, otherwise it'll usually send a stop signal after 20
 			 * seconds, despite incrementing the checkpoint counter.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			 */
 			status.dwWaitHint += 6000;
 			status.dwCheckPoint++;
 			SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
 		}
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		else
 #endif
 			print_msg(".");
 
-<<<<<<< HEAD
-		pg_usleep(1000000); /* 1 sec */
-	}
-
-=======
 		pg_usleep(1000000);		/* 1 sec */
 	}
 
 	/* return result of last call to PQping */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	return ret;
 }
 
@@ -1052,13 +916,10 @@ do_start(void)
 				print_msg(_(" stopped waiting\n"));
 				print_msg(_("server is still starting up\n"));
 				break;
-<<<<<<< HEAD
 			case PQPING_MIRROR_READY:
 				print_msg(_(" done\n"));
 				print_msg(_("server started in mirror mode\n"));
 				break;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			case PQPING_NO_RESPONSE:
 				print_msg(_(" stopped waiting\n"));
 				write_stderr(_("%s: could not start server\n"
@@ -1287,71 +1148,6 @@ do_reload(void)
 	}
 
 	print_msg(_("server signaled\n"));
-}
-
-
-/*
- * promote
- */
-
-static void
-do_promote(void)
-{
-	FILE	   *prmfile;
-	pgpid_t		pid;
-	struct stat statbuf;
-
-	pid = get_pgpid();
-
-	if (pid == 0)				/* no pid file */
-	{
-		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
-		write_stderr(_("Is server running?\n"));
-		exit(1);
-	}
-	else if (pid < 0)			/* standalone backend, not postmaster */
-	{
-		pid = -pid;
-		write_stderr(_("%s: cannot promote server; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
-		exit(1);
-	}
-
-	/* If recovery.conf doesn't exist, the server is not in standby mode */
-	if (stat(recovery_file, &statbuf) != 0)
-	{
-		write_stderr(_("%s: cannot promote server; "
-					   "server is not in standby mode\n"),
-					 progname);
-		exit(1);
-	}
-
-	if ((prmfile = fopen(promote_file, "w")) == NULL)
-	{
-		write_stderr(_("%s: could not create promote signal file \"%s\": %s\n"),
-					 progname, promote_file, strerror(errno));
-		exit(1);
-	}
-	if (fclose(prmfile))
-	{
-		write_stderr(_("%s: could not write promote signal file \"%s\": %s\n"),
-					 progname, promote_file, strerror(errno));
-		exit(1);
-	}
-
-	sig = SIGUSR1;
-	if (kill((pid_t) pid, sig) != 0)
-	{
-		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
-					 progname, pid, strerror(errno));
-		if (unlink(promote_file) != 0)
-			write_stderr(_("%s: could not remove promote signal file \"%s\": %s\n"),
-						 progname, promote_file, strerror(errno));
-		exit(1);
-	}
-
-	print_msg(_("server promoting\n"));
 }
 
 
