@@ -406,7 +406,8 @@ DefineExternalRelation(CreateExternalStmt *createExtStmt)
 	 * QEs.
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
-		reloid = DefineRelation(createStmt, RELKIND_RELATION, RELSTORAGE_EXTERNAL, true);
+		reloid = DefineRelation(createStmt, RELKIND_RELATION, InvalidOid,
+								RELSTORAGE_EXTERNAL, true);
 
 	/*
 	 * Now we take care of pg_exttable.
@@ -1112,6 +1113,7 @@ InvokeProtocolValidation(Oid procOid, char *procName, bool iswritable, List *loc
 	InitFunctionCallInfoData( /* FunctionCallInfoData */ fcinfo,
 							  /* FmgrInfo */ validator_udf,
 							  /* nArgs */ 0,
+							  /* Collation */ InvalidOid, 
 							  /* Call Context */ (Node *) validator_data,
 							  /* ResultSetInfo */ NULL);
 

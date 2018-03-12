@@ -93,14 +93,11 @@
 #include "rewrite/rewriteManip.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
-<<<<<<< HEAD
 #include "storage/sinval.h"
 #include "tcop/utility.h"
-=======
 #include "storage/lock.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -266,15 +263,10 @@ static const struct dropmsgstrings dropmsgstringarray[] = {
 #define		ATT_FOREIGN_TABLE		0x0010
 
 static void truncate_check_rel(Relation rel);
-<<<<<<< HEAD
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel,
 						List *inhAttrNameList, bool is_partition);
-List * MergeAttributes(List *schema, List *supers, bool istemp, bool isPartitioned,
+List * MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitioned,
 				List **supOids, List **supconstr, int *supOidCount, GpPolicy *policy);
-=======
-static List *MergeAttributes(List *schema, List *supers, char relpersistence,
-				List **supOids, List **supconstr, int *supOidCount);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
@@ -286,14 +278,9 @@ static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 					 Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
-<<<<<<< HEAD
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 				   LOCKMODE lockmode);
-=======
-				   Oid oldNspOid, Oid newNspOid,
-				   const char *newNspName, LOCKMODE lockmode);
 static void ATExecValidateConstraint(Relation rel, const char *constrName);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
@@ -306,46 +293,24 @@ static void validateForeignKeyConstraint(char *conname,
 							 Oid pkindOid, Oid constraintOid);
 static void createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 						 Oid constraintOid, Oid indexOid);
-<<<<<<< HEAD
-static void ATController(Relation rel, List *cmds, bool recurse);
-static void prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at);
-static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
-		  bool recurse, bool recursing);
-static void ATRewriteCatalogs(List **wqueue);
-static void ATAddToastIfNeeded(List **wqueue);
-static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
-		  AlterTableCmd *cmd);
-static void ATRewriteTables(List **wqueue);
-static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap);
-static void ATAocsWriteNewColumns(
-		AOCSAddColumnDesc idesc, AOCSHeaderScanDesc sdesc,
-		AlteredTableInfo *tab, ExprContext *econtext, TupleTableSlot *slot);
-static bool ATAocsNoRewrite(AlteredTableInfo *tab);
-=======
 static void ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
+static void prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
+static void ATAddToastIfNeeded(List **wqueue);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATRewriteTables(List **wqueue, LOCKMODE lockmode);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+static void ATAocsWriteNewColumns(
+		AOCSAddColumnDesc idesc, AOCSHeaderScanDesc sdesc,
+		AlteredTableInfo *tab, ExprContext *econtext, TupleTableSlot *slot);
+static bool ATAocsNoRewrite(AlteredTableInfo *tab);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
 static void ATSimplePermissions(Relation rel, int allowed_targets);
 static void ATWrongRelkindError(Relation rel, int allowed_targets);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
-<<<<<<< HEAD
-				  AlterTableCmd *cmd, bool recurse);
-#if 0
-static void ATOneLevelRecursion(List **wqueue, Relation rel,
-					AlterTableCmd *cmd);
-#endif
-static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
-				AlterTableCmd *cmd);
-static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
-				ColumnDef *colDef, bool isOid);
-=======
 				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
 static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					  LOCKMODE lockmode);
@@ -356,23 +321,16 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recu
 static void ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid,
 				bool recurse, bool recursing, LOCKMODE lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
 static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
 			  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
 static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
-<<<<<<< HEAD
-				 const char *colName);
+				 const char *colName, LOCKMODE lockmode);
 static void ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd);
 static void ATExecColumnDefault(Relation rel, const char *colName,
-					ColumnDef *newDefault);
-=======
-				 const char *colName, LOCKMODE lockmode);
-static void ATExecColumnDefault(Relation rel, const char *colName,
-					Node *newDefault, LOCKMODE lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					ColumnDef *newDefault, LOCKMODE lockmode);
 static void ATPrepSetStatistics(Relation rel, const char *colName,
 					Node *newValue, LOCKMODE lockmode);
 static void ATExecSetStatistics(Relation rel, const char *colName,
@@ -418,35 +376,23 @@ static void change_owner_recurse_to_sequences(Oid relationOid,
 static void ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode);
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
-<<<<<<< HEAD
-					char *tablespacename);
+					char *tablespacename, LOCKMODE lockmode);
 static void ATPartsPrepSetTableSpace(List **wqueue, Relation rel, AlterTableCmd *cmd, 
 									 List *oids);
-static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
-static void ATExecSetRelOptions(Relation rel, List *defList, bool isReset);
-=======
-					char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
 static void ATExecSetRelOptions(Relation rel, List *defList, bool isReset, LOCKMODE lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 					   char fires_when, bool skip_system, LOCKMODE lockmode);
 static void ATExecEnableDisableRule(Relation rel, char *rulename,
-<<<<<<< HEAD
-						char fires_when);
-static void ATExecAddInherit(Relation rel, Node *node);
-static void ATExecDropInherit(Relation rel, RangeVar *parent, bool is_partition);
-=======
 						char fires_when, LOCKMODE lockmode);
 static void ATPrepAddInherit(Relation child_rel);
-static void ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
-static void ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode);
+static void ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode);
+static void ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode, bool is_partition);
 static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid);
 static void ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode);
 static void ATExecDropOf(Relation rel, LOCKMODE lockmode);
 static void ATExecGenericOptions(Relation rel, List *options);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 				   ForkNumber forkNum, char relpersistence);
 static const char *storage_name(char c);
@@ -527,11 +473,7 @@ static void CheckDropRelStorage(RangeVar *rel, ObjectType removeType);
  * ----------------------------------------------------------------
  */
 Oid
-<<<<<<< HEAD
-DefineRelation(CreateStmt *stmt, char relkind, char relstorage, bool dispatch)
-=======
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
@@ -623,7 +565,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 			relstorage == RELSTORAGE_FOREIGN  ||
 			relstorage == RELSTORAGE_VIRTUAL)))
 	{
-<<<<<<< HEAD
 		/* 
 		 * These relkinds have no storage, and thus do not support tablespaces.
 		 * We shouldn't go through the regular default case for these because
@@ -640,11 +581,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		 * dispatch.
 		 */
 		tablespaceId = get_tablespace_oid(stmt->tablespacename, false);
-		if (!OidIsValid(tablespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							stmt->tablespacename)));
 	}
 	else
 	{
@@ -652,7 +588,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		 * Get the default tablespace specified via default_tablespace, or fall
 		 * back on the database tablespace.
 		 */
-		tablespaceId = GetDefaultTablespace(stmt->relation->istemp);
+		tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence);
 
 		/* Need the real tablespace id for dispatch */
 		if (!OidIsValid(tablespaceId)) 
@@ -663,14 +599,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		 */
 		if (shouldDispatch)
 			stmt->tablespacename = get_tablespace_name(tablespaceId);
-=======
-		tablespaceId = get_tablespace_oid(stmt->tablespacename, false);
-	}
-	else
-	{
-		tablespaceId = GetDefaultTablespace(stmt->relation->relpersistence);
-		/* note InvalidOid is OK in this case */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* Check permissions except when using database's default */
@@ -711,12 +639,12 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 * inherited attributes. Update the offsets of the distribution attributes
 	 * in GpPolicy if necessary
 	 */
-<<<<<<< HEAD
 	isPartitioned = stmt->partitionBy ? true : false;
 	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 	{
 		schema = MergeAttributes(schema, stmt->inhRelations,
-								 stmt->relation->istemp, isPartitioned,
+								 stmt->relation->relpersistence,
+								 isPartitioned,
 								 &stmt->inhOids, &old_constraints,
 								 &stmt->parentOidCount, stmt->policy);
 	}
@@ -728,11 +656,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 		 */
 		old_constraints = NIL;
 	}
-=======
-	schema = MergeAttributes(schema, stmt->inhRelations,
-							 stmt->relation->relpersistence,
-							 &inheritOids, &old_constraints, &parentOidCount);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Create a tuple descriptor from the relation schema.	Note that this
@@ -872,22 +795,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 										  InvalidOid,
 										  InvalidOid,
 										  ofTypeId,
-<<<<<<< HEAD
-										  stmt->ownerid,
-=======
 										  ownerId,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 										  descriptor,
 										  cooked_constraints,
 										  /* relam */ InvalidOid,
 										  relkind,
-<<<<<<< HEAD
+										  stmt->relation->relpersistence,
 										  relstorage,
 										  tablespaceId==GLOBALTABLESPACE_OID,
-=======
-										  stmt->relation->relpersistence,
-										  false,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 										  false,
 										  localHasOids,
 										  stmt->parentOidCount,
@@ -898,7 +813,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 										  allowSystemTableModsDDL,
 										  valid_opts);
 
-<<<<<<< HEAD
 	/*
 	 * Give a warning if you use OIDS=TRUE on user tables. We do this after calling
 	 * heap_create_with_catalog, because heap_create_with_catalog performs some extra
@@ -911,11 +825,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 				(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
 	}
 
-	StoreCatalogInheritance(relationId, stmt->inhOids);
-=======
 	/* Store inheritance information for new rel. */
-	StoreCatalogInheritance(relationId, inheritOids);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	StoreCatalogInheritance(relationId, stmt->inhOids);
 
 	/*
 	 * We must bump the command counter to make the newly-created relation
@@ -1796,7 +1707,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 		/*
 		 * Reconstruct the indexes to match, and we're done.
 		 */
-		reindex_relation(RelationGetRelid(rel), true, false);
+		reindex_relation(RelationGetRelid(rel), REINDEX_REL_PROCESS_TOAST);
 	}
 
 <<<<<<< HEAD
@@ -1839,17 +1750,10 @@ ExecuteTruncate(TruncateStmt *stmt)
 							   GetUserId(),
 							   "VACUUM", "TRUNCATE");
 
-<<<<<<< HEAD
 			MetaTrackUpdObject(RelationRelationId,
 							   a_relid,
 							   GetUserId(),
 							   "TRUNCATE", "");
-=======
-			/*
-			 * Reconstruct the indexes to match, and we're done.
-			 */
-			reindex_relation(heap_relid, REINDEX_REL_PROCESS_TOAST);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 	}
 
@@ -1970,12 +1874,8 @@ storage_name(char c)
  * 'schema' is the column/attribute definition for the table. (It's a list
  *		of ColumnDef's.) It is destructively changed.
  * 'supers' is a list of names (as RangeVar nodes) of parent relations.
-<<<<<<< HEAD
- * 'istemp' is TRUE if we are creating a temp relation.
- * 'GpPolicy *' is NULL if the distribution policy is not to be updated
-=======
  * 'relpersistence' is a persistence type of the table.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ * 'GpPolicy *' is NULL if the distribution policy is not to be updated
  *
  * Output arguments:
  * 'supOids' receives a list of the OIDs of the parent relations.
@@ -2027,15 +1927,9 @@ storage_name(char c)
  *		rather arbitrary choice of which parent default to use.
  *----------
  */
-<<<<<<< HEAD
 List *
-MergeAttributes(List *schema, List *supers, bool istemp, bool isPartitioned,
+MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitioned,
 				List **supOids, List **supconstr, int *supOidCount, GpPolicy *policy)
-=======
-static List *
-MergeAttributes(List *schema, List *supers, char relpersistence,
-				List **supOids, List **supconstr, int *supOidCount)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	ListCell   *entry;
 	List	   *inhSchema = NIL;
@@ -3828,7 +3722,6 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 	{
 		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 
-<<<<<<< HEAD
 		if (cmd->subtype == AT_PartAddInternal)
 			is_partition = true;
 		else if (cmd->subtype == AT_AddOids && Gp_role == GP_ROLE_DISPATCH)
@@ -3842,10 +3735,7 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 						(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
 		}
 
-		ATPrepCmd(&wqueue, rel, cmd, recurse, false);
-=======
 		ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	if (is_partition)
@@ -3898,7 +3788,7 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 						masterSetCmd = lsecond((List *)cmd->def);
 						continue;
 					}
-
+-
 					/*
 					 * cmd->def stores the data we're sending to the QEs.
 					 * The second element is where we stash QE data to drive
@@ -4102,16 +3992,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, false);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			if (!cmd->part_expanded)
 				ATPartitionCheck(cmd->subtype, rel, false, recursing);
-=======
-			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			/* No command-specific prep needed */
 			pass = AT_PASS_ADD_CONSTR;
 			break;
@@ -4134,16 +4019,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
-<<<<<<< HEAD
 		case AT_DropColumnRecurse:
-			ATSimplePermissions(rel, false);
-			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-			ATPartitionCheck(cmd->subtype, rel, false, recursing);
-=======
 			ATSimplePermissions(rel,
 						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
+			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_DROP;
 			break;
@@ -4249,14 +4130,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, false);
-			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
-			ATPartitionCheck(cmd->subtype, rel, false, recursing);
-=======
 			ATSimplePermissions(rel,
 						 ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
+			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			/* Performs own recursion */
 			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd, lockmode);
 			pass = AT_PASS_ALTER_TYPE;
@@ -4302,12 +4179,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, false);
-			ATPartitionCheck(cmd->subtype, rel, false, recursing);
-=======
 			ATSimplePermissions(rel, ATT_TABLE);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			/* Performs own recursion */
 			if (rel->rd_rel->relhasoids)
 			{
@@ -4482,17 +4355,11 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_EnableAlwaysRule:
 		case AT_EnableReplicaRule:
 		case AT_DisableRule:
-<<<<<<< HEAD
-		case AT_AddInherit:		/* INHERIT / NO INHERIT */
-		case AT_DropInherit:
-			ATSimplePermissions(rel, false);
-			ATPartitionCheck(cmd->subtype, rel, true, recursing);
-=======
 		case AT_DropInherit:	/* NO INHERIT */
 		case AT_AddOf:			/* OF */
 		case AT_DropOf: /* NOT OF */
 			ATSimplePermissions(rel, ATT_TABLE);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			ATPartitionCheck(cmd->subtype, rel, true, recursing);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -5099,10 +4966,10 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 			rel = relation_open(tab->relid, NoLock);
 
 			foreach(lcmd, subcmds)
-<<<<<<< HEAD
 			{
 				AlterTableCmd	*atc = (AlterTableCmd *) lfirst(lcmd);
-				ATExecCmd(wqueue, tab, rel, atc);
+
+				ATExecCmd(wqueue, tab, rel, atc, lockmode);
 
 				/*
 				 * SET DISTRIBUTED BY() calls RelationForgetRelation(),
@@ -5111,9 +4978,6 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 				if (atc->subtype == AT_SetDistributedBy)
 					rel = relation_open(tab->relid, NoLock);
 			}
-=======
-				ATExecCmd(wqueue, tab, rel, (AlterTableCmd *) lfirst(lcmd), lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			/*
 			 * After the ALTER TYPE pass, do cleanup work (this is not done in
@@ -5127,7 +4991,6 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 		}
 	}
 
-<<<<<<< HEAD
 }
 
 static void
@@ -5135,31 +4998,17 @@ ATAddToastIfNeeded(List **wqueue)
 {
 	ListCell   *ltab;
 
-	/*
-	 * Check to see if a toast table must be added, if we executed any
-	 * subcommands that might have added a column or changed column storage.
-	 */
-=======
 	/* Check to see if a toast table must be added. */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	foreach(ltab, *wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 
-<<<<<<< HEAD
-		if (tab->relkind == RELKIND_RELATION &&
-			(tab->subcmds[AT_PASS_ADD_COL] ||
-			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
-			 tab->subcmds[AT_PASS_COL_ATTRS]))
+		if (tab->relkind == RELKIND_RELATION)
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
 			AlterTableCreateToastTable(tab->relid, (Datum) 0, is_part);
 		}
-=======
-		if (tab->relkind == RELKIND_RELATION)
-			AlterTableCreateToastTable(tab->relid, (Datum) 0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }
 
@@ -5184,12 +5033,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 							false, true, false, lockmode);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
-<<<<<<< HEAD
 		case AT_ColumnDefaultRecurse:
-			ATExecColumnDefault(rel, cmd->name, (ColumnDef *) cmd->def);
-=======
-			ATExecColumnDefault(rel, cmd->name, cmd->def, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			ATExecColumnDefault(rel, cmd->name, (ColumnDef *) cmd->def, lockmode);
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			ATExecDropNotNull(rel, cmd->name, lockmode);
@@ -5570,14 +5415,10 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			 * in the case of ALTER TABLE rewrites as the temp relfile will
 			 * not have correct stats.
 			 */
-<<<<<<< HEAD
 			finish_heap_swap(tab->relid, OIDNewHeap, false, false,
 							 false /* swap_stats */,
+							 true,
 							 RecentXmin);
-=======
-			finish_heap_swap(tab->relid, OIDNewHeap,
-							 false, false, true, RecentXmin);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		else
 		{
@@ -6790,17 +6631,9 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
 			break;
 	}
 
-<<<<<<< HEAD
-	if (!allowSystemTableModsDDL && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
-=======
 	ereport(ERROR,
 			(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			 errmsg(msg, RelationGetRelationName(rel))));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -7334,11 +7167,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	collOid = GetColumnDefCollation(NULL, colDef, typeOid);
 
 	/* make sure datatype is legal for a column */
-<<<<<<< HEAD
-	CheckAttributeType(colDef->colname, typeOid,
-=======
 	CheckAttributeType(colDef->colname, typeOid, collOid,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					   list_make1_oid(rel->rd_rel->reltype),
 					   false);
 
@@ -7943,11 +7772,7 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 
 static void
 ATExecColumnDefault(Relation rel, const char *colName,
-<<<<<<< HEAD
-					ColumnDef *colDef)
-=======
-					Node *newDefault, LOCKMODE lockmode)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+					ColumnDef *colDef, LOCKMODE lockmode)
 {
 	AttrNumber	attnum;
 
@@ -8855,11 +8680,6 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	CommandCounterIncrement();
 
 	/*
-<<<<<<< HEAD
-	 * Propagate to children as appropriate.  Unlike most other ALTER routines,
-	 * we have to do this one level of recursion at a time; we can't use
-	 * find_all_inheritors to do it in one pass.
-=======
 	 * If the constraint got merged with an existing constraint, we're done.
 	 * We mustn't recurse to child tables in this case, because they've
 	 * already got the constraint, and visiting them again would lead to an
@@ -8872,7 +8692,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * Propagate to children as appropriate.  Unlike most other ALTER
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
 	 */
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 
@@ -8905,15 +8725,9 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			/* Find or create work queue entry for this table */
 			childtab = ATGetQueueEntry(wqueue, childrel);
 
-<<<<<<< HEAD
 			/* Recurse to child */
 			ATAddCheckConstraint(wqueue, childtab, childrel,
-								 constr, recurse, true);
-=======
-		/* Recurse to child */
-		ATAddCheckConstraint(wqueue, childtab, childrel,
-							 constr, recurse, true, lockmode);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+								 constr, recurse, true, lockmode);
 
 			heap_close(childrel, NoLock);
 		}
@@ -10170,8 +9984,7 @@ ATPrepAlterColumnType(List **wqueue,
 	targetcollid = GetColumnDefCollation(NULL, def, targettype);
 
 	/* make sure datatype is legal for a column */
-<<<<<<< HEAD
-	CheckAttributeType(colName, targettype,
+	CheckAttributeType(colName, targettype, targetcollid,
 					   list_make1_oid(rel->rd_rel->reltype),
 					   false);
 
@@ -10185,13 +9998,6 @@ ATPrepAlterColumnType(List **wqueue,
 	 */
 
 	/* GPDB: we always need the RTE */
-=======
-	CheckAttributeType(colName, targettype, targetcollid,
-					   list_make1_oid(rel->rd_rel->reltype),
-					   false);
-
-	if (tab->relkind == RELKIND_RELATION)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		/*
 		 * Set up an expression to transform the old data value to the new
@@ -11466,10 +11272,7 @@ ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename, L
 
 	/* Check that the tablespace exists */
 	tablespaceId = get_tablespace_oid(tablespacename, false);
-<<<<<<< HEAD
-=======
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Check its permissions */
 	aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
@@ -11837,7 +11640,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	 */
 	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence);
 
-<<<<<<< HEAD
 	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 	{
 		copy_append_only_data(rel->rd_node, newrnode, rel->rd_istemp);
@@ -11845,27 +11647,27 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	else
 	{
 		/* copy main fork */
-		copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM, rel->rd_istemp);
-=======
-	/* copy main fork */
-	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM,
-					   rel->rd_rel->relpersistence);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM,
+						   rel->rd_rel->relpersistence);
 
 		/* copy those extra forks that exist */
 		for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 		{
-<<<<<<< HEAD
 			if (smgrexists(rel->rd_smgr, forkNum))
 			{
 				smgrcreate(dstrel, forkNum, false);
-				copy_relation_data(rel->rd_smgr, dstrel, forkNum, rel->rd_istemp);
+
+				/*
+				 * WAL log creation if the relation is persistent, or this is the
+				 * init fork of an unlogged relation.
+				 */
+				if (rel->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT ||
+					(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
+					 forkNum == INIT_FORKNUM))
+					log_smgrcreate(&newrnode, forkNum);
+				copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+								   rel->rd_rel->relpersistence);
 			}
-=======
-			smgrcreate(dstrel, forkNum, false);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
-							   rel->rd_rel->relpersistence);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 	}
 
@@ -11980,13 +11782,9 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 		/* XLOG stuff */
 		if (use_wal)
-<<<<<<< HEAD
-			log_newpage_relFileNode(&dst->smgr_rnode, forkNum, blkno, page);
+			log_newpage_relFileNode(&dst->smgr_rnode.node, forkNum, blkno, page);
 
 		PageSetChecksumInplace(page, blkno);
-=======
-			log_newpage(&dst->smgr_rnode.node, forkNum, blkno, page);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/*
 		 * Now write the page.	We say isTemp = true even if it's not a temp
@@ -12328,7 +12126,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
  * same data types and expressions.
  */
 static void
-ATExecAddInherit(Relation child_rel, Node *node)
+ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 {
 	Relation	parent_rel;
 	bool		is_partition;
@@ -12738,11 +12536,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
  * exactly the same way.
  */
 static void
-<<<<<<< HEAD
-ATExecDropInherit(Relation rel, RangeVar *parent, bool is_partition)
-=======
-ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode, bool is_partition)
 {
 	Relation	parent_rel;
 	Relation	catalogRelation;
@@ -14116,7 +13910,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	}
 
 	/* now, reindex */
-	reindex_relation(tarrelid, false, false);
+	reindex_relation(tarrelid, 0);
 
 	/* Step (g) */
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -17463,17 +17257,11 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 	/* Fix other dependent stuff */
 	if (rel->rd_rel->relkind == RELKIND_RELATION)
 	{
-<<<<<<< HEAD
 		AlterIndexNamespaces(classRel, rel, oldNspOid, nspOid, objsMoved);
 		AlterSeqNamespaces(classRel, rel, oldNspOid, nspOid,
-						   objsMoved, AccessExclusiveLock);
+						   objsMoved, lockmode);
 		AlterConstraintNamespaces(RelationGetRelid(rel), oldNspOid, nspOid,
 								  false, objsMoved);
-=======
-		AlterIndexNamespaces(classRel, rel, oldNspOid, nspOid);
-		AlterSeqNamespaces(classRel, rel, oldNspOid, nspOid, newschema, lockmode);
-		AlterConstraintNamespaces(relid, oldNspOid, nspOid, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	heap_close(classRel, RowExclusiveLock);
@@ -17590,12 +17378,8 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
  */
 static void
 AlterSeqNamespaces(Relation classRel, Relation rel,
-<<<<<<< HEAD
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 				   LOCKMODE lockmode)
-=======
-	 Oid oldNspOid, Oid newNspOid, const char *newNspName, LOCKMODE lockmode)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Relation	depRel;
 	SysScanDesc scan;

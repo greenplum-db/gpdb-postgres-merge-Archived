@@ -2228,15 +2228,11 @@ CreateCast(CreateCastStmt *stmt)
 	}
 
 	/* dependency on extension */
-<<<<<<< HEAD
 	recordDependencyOnCurrentExtension(&myself, false);
-=======
-	recordDependencyOnCurrentExtension(&myself);
 
 	/* Post creation hook for new cast */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
 						   CastRelationId, myself.objectId, 0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	heap_freetuple(tuple);
 
@@ -2367,11 +2363,7 @@ void
 AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema)
 {
-<<<<<<< HEAD
-	Oid 		procOid;
-=======
 	Oid			procOid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	Oid			nspOid;
 
 	/* get function OID */
@@ -2380,11 +2372,7 @@ AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 	else
 		procOid = LookupFuncNameTypeNames(name, argtypes, false);
 
-<<<<<<< HEAD
-	/* get schema OID and check its permission */
-=======
 	/* get schema OID and check its permissions */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	nspOid = LookupCreationNamespace(newschema);
 
 	AlterFunctionNamespace_oid(procOid, nspOid);
@@ -2422,15 +2410,9 @@ AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
 							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-<<<<<<< HEAD
-						errmsg("function \"%s\" already exists in schema \"%s\"",
-							   NameStr(proc->proname),
-							   get_namespace_name(nspOid))));
-=======
 				 errmsg("function \"%s\" already exists in schema \"%s\"",
 						NameStr(proc->proname),
 						get_namespace_name(nspOid))));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* OK, modify the pg_proc row */
 
@@ -2449,12 +2431,6 @@ AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
 	heap_freetuple(tup);
 
 	heap_close(procRel, RowExclusiveLock);
-<<<<<<< HEAD
-=======
-
-	return oldNspOid;
-}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	return oldNspOid;
 }

@@ -634,34 +634,13 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 	else
 		return false;
 
-<<<<<<< HEAD
-	/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-	if (source != PGC_S_OVERRIDE &&
-			newXactIsoLevel != XactIsoLevel && IsTransactionState())
-	{
-		if (FirstSnapshotSet)
-		{
-			if (source >= PGC_S_INTERACTIVE)
-				ereport(ERROR,
-						(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-						 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
-		}
-		if (IsSubTransaction())
-		{
-			if (source >= PGC_S_INTERACTIVE)
-				ereport(ERROR,
-						(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-						 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
-			/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		}
-	}
-
-	if (doit)
-		XactIsoLevel = newXactIsoLevel;
-
-	return value;
-=======
-	if (newXactIsoLevel != XactIsoLevel)
+	/* GPDB_91_MERGE_FIXME: There used to be some extra conditions on PGC_S_OVERRIDE:
+	 * I suspect things might've changed so much since they were added in GPDB, that
+	 * we don't really need them anymore. If everything works without it, then remove
+	 * this comment, but if something around isolation level and abort is broken,
+	 * this is where to look...
+	 */
+	if (newXactIsoLevel != XactIsoLevel && IsTransactionState())
 	{
 		if (FirstSnapshotSet)
 		{
@@ -679,6 +658,7 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 		/* Can't go to serializable mode while recovery is still active */
 		if (newXactIsoLevel == XACT_SERIALIZABLE && RecoveryInProgress())
 		{
+			GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
 			GUC_check_errmsg("cannot use serializable mode in a hot standby");
 			GUC_check_errhint("You can use REPEATABLE READ instead.");
 			return false;
@@ -697,7 +677,6 @@ void
 assign_XactIsoLevel(const char *newval, void *extra)
 {
 	XactIsoLevel = *((int *) extra);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 const char *
@@ -932,18 +911,9 @@ assign_session_authorization(const char *newval, void *extra)
 {
 	role_auth_extra *myextra = (role_auth_extra *) extra;
 
-<<<<<<< HEAD
-	/* If session_authorization hasn't been set in this process, return "" */
-	if (value == NULL || value[0] == '\0')
-		return "";
-
-	Assert(strspn(value, "x") == NAMEDATALEN &&
-		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
-=======
 	/* Do nothing for the boot_val default of NULL */
 	if (!myextra)
 		return;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	SetSessionAuthorization(myextra->roleid, myextra->is_superuser);
 }

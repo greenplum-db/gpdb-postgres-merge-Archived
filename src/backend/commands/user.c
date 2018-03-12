@@ -20,12 +20,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/oid_dispatch.h"
-#include "catalog/pg_auth_time_constraint.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -47,7 +42,8 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-<<<<<<< HEAD
+#include "catalog/oid_dispatch.h"
+#include "catalog/pg_auth_time_constraint.h"
 #include "catalog/pg_resgroup.h"
 #include "catalog/pg_resqueue.h"
 #include "commands/resgroupcmds.h"
@@ -64,11 +60,6 @@ typedef struct extAuthPair
 	char	   *protocol;
 	char	   *type;
 } extAuthPair;
-=======
-/* Potentially set by contrib/pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* GUC parameter */
 extern bool Password_encryption;
@@ -130,15 +121,12 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createrole = false;		/* Can this user create roles? */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
-<<<<<<< HEAD
+	bool		isreplication = false;	/* Is this a replication role? */
 	bool		createrextgpfd = false; /* Can create readable gpfdist exttab? */
 	bool		createrexthttp = false; /* Can create readable http exttab? */
 	bool		createwextgpfd = false; /* Can create writable gpfdist exttab? */
 	bool		createrexthdfs = false; /* Can create readable gphdfs exttab? */
 	bool		createwexthdfs = false; /* Can create writable gphdfs exttab? */
-=======
-	bool		isreplication = false;	/* Is this a replication role? */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			connlimit = -1; /* maximum connections allowed */
 	List	   *addroleto = NIL;	/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
@@ -594,16 +582,6 @@ CreateRole(CreateRoleStmt *stmt)
 	new_record_nulls[Anum_pg_authid_rolresgroup - 1] = false;
 
 	tuple = heap_form_tuple(pg_authid_dsc, new_record, new_record_nulls);
-
-	/*
-	 * pg_largeobject_metadata contains pg_authid.oid's, so we use the
-	 * binary-upgrade override, if specified.
-	 */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_authid_oid))
-	{
-		HeapTupleSetOid(tuple, binary_upgrade_next_pg_authid_oid);
-		binary_upgrade_next_pg_authid_oid = InvalidOid;
-	}
 
 	/*
 	 * Insert new record in the pg_authid table

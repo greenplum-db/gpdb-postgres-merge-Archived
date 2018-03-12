@@ -5124,7 +5124,7 @@ atpxPart_validate_spec(
 												get_namespace_name(
 																   RelationGetNamespace(rel)),
 												pstrdup(RelationGetRelationName(rel)), -1)),
-						false, true /* isPartitioned */ ,
+						relpersistence, true /* isPartitioned */ ,
 						&inheritOids, &old_constraints, &parentOidCount, NULL);
 
 	pcxt->columns = schema;

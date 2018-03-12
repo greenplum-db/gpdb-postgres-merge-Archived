@@ -294,7 +294,8 @@ DefineType(List *names, List *parameters)
 			defelp = &alignmentEl;
 		else if (pg_strcasecmp(defel->defname, "storage") == 0)
 			defelp = &storageEl;
-<<<<<<< HEAD
+		else if (pg_strcasecmp(defel->defname, "collatable") == 0)
+			defelp = &collatableEl;
 		else if (is_storage_encoding_directive(defel->defname))
 		{
 			/* 
@@ -305,10 +306,6 @@ DefineType(List *names, List *parameters)
 			encoding = lappend(encoding, defel);
 			continue;
 		}
-=======
-		else if (pg_strcasecmp(defel->defname, "collatable") == 0)
-			defelp = &collatableEl;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		else
 		{
 			/* WARNING, not ERROR, for historical backwards-compatibility */
@@ -600,17 +597,7 @@ DefineType(List *names, List *parameters)
 	 * oid must be preserved by binary upgrades.
 	 */
 	typoid =
-<<<<<<< HEAD
-
-	/*
-	 * The pg_type.oid is stored in user tables as array elements (base types)
-	 * in ArrayType and in composite types in DatumTupleFields.  This oid must
-	 * be preserved by binary upgrades.
-	 */
 		TypeCreateWithOptions(InvalidOid,	/* no predetermined type OID */
-=======
-		TypeCreate(InvalidOid,	/* no predetermined type OID */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				   typeName,	/* type name */
 				   typeNamespace,		/* namespace */
 				   InvalidOid,	/* relation oid (n/a here) */
@@ -640,11 +627,8 @@ DefineType(List *names, List *parameters)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array Dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-<<<<<<< HEAD
+				   collation,	/* type's collation */
 				   typoptions);
-=======
-				   collation);	/* type's collation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Create the array type that goes with it.
@@ -683,11 +667,8 @@ DefineType(List *names, List *parameters)
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
-<<<<<<< HEAD
+			   collation,		/* type's collation */
 			   typoptions);
-=======
-			   collation);		/* type's collation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	pfree(array_type);
 
@@ -1176,12 +1157,8 @@ DefineDomain(CreateDomainStmt *stmt)
 				   storage,		/* TOAST strategy */
 				   basetypeMod, /* typeMod value */
 				   typNDims,	/* Array dimensions for base type */
-<<<<<<< HEAD
-				   typNotNull	/* Type NOT NULL */);
-=======
 				   typNotNull,	/* Type NOT NULL */
 				   domaincoll); /* type's collation */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Process constraints which refer to the domain ID returned by TypeCreate
@@ -1727,17 +1704,9 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	Oid			old_type_oid;
 	Oid			typeNamespace;
-<<<<<<< HEAD
+	Oid			relid;
 
 	createStmt->ownerid = GetUserId();
-
-	if (coldeflist == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("composite type must have at least one attribute")));
-=======
-	Oid			relid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * now set the parameters for keys/inheritance etc. All of these are
@@ -1774,26 +1743,10 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	/*
 	 * Finally create the relation.  This also creates the type.
 	 */
-<<<<<<< HEAD
-	return  DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, RELSTORAGE_VIRTUAL, true);
-
-	/*
-	 * DefineRelation already dispatches this.
-	 *
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CompositeTypeStmt *stmt = makeNode(CompositeTypeStmt);
-		stmt->typevar = (RangeVar *)typevar;
-		stmt->coldeflist = coldeflist;
-
-		CdbDispatchUtilityStatement((Node *) stmt);
-	}*/
-
-=======
-	relid = DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid);
+	relid = DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE, InvalidOid,
+						   RELSTORAGE_VIRTUAL, true);
 	Assert(relid != InvalidOid);
 	return relid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2952,23 +2905,15 @@ AlterTypeNamespace(List *names, const char *newschema)
 	TypeName   *typename;
 	Oid			typeOid;
 	Oid			nspOid;
-<<<<<<< HEAD
 	ObjectAddresses *objsMoved;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
-	typeOid = typenameTypeId(NULL, typename, NULL);
-=======
-
-	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
 	typeOid = typenameTypeId(NULL, typename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* get schema OID and check its permissions */
 	nspOid = LookupCreationNamespace(newschema);
 
-<<<<<<< HEAD
 	objsMoved = new_object_addresses();
 	AlterTypeNamespace_oid(typeOid, nspOid, objsMoved);
 	free_object_addresses(objsMoved);
@@ -2976,13 +2921,6 @@ AlterTypeNamespace(List *names, const char *newschema)
 
 Oid
 AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
-=======
-	AlterTypeNamespace_oid(typeOid, nspOid);
-}
-
-Oid
-AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Oid			elemOid;
 
@@ -3002,11 +2940,7 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
 						 format_type_be(elemOid))));
 
 	/* and do the work */
-<<<<<<< HEAD
 	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true, objsMoved);
-=======
-	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -3141,7 +3075,6 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 	/* Recursively alter the associated array type, if any */
 	if (OidIsValid(arrayOid))
-<<<<<<< HEAD
 		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true, objsMoved);
 
 	return oldNspOid;
@@ -3166,7 +3099,7 @@ AlterType(AlterTypeStmt *stmt)
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typname = makeTypeNameFromNameList(stmt->typeName);
-	typid = typenameTypeId(NULL, typname, NULL);
+	typid = typenameTypeId(NULL, typname);
 
 	if (type_is_rowtype(typid))
 		ereport(ERROR,
@@ -3261,9 +3194,4 @@ remove_type_encoding(Oid typid)
 	systable_endscan(sscan);
 
 	heap_close(rel, RowExclusiveLock);
-=======
-		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true);
-
-	return oldNspOid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

@@ -432,8 +432,7 @@ create_proc_lang(const char *languageName, bool replace,
 								languageOwner);
 
 	/* dependency on extension */
-	if (!is_update)
-		recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, is_update);
 
 	/* dependency on the PL handler function */
 	referenced.classId = ProcedureRelationId;
@@ -459,15 +458,10 @@ create_proc_lang(const char *languageName, bool replace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-<<<<<<< HEAD
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, false);
-=======
 	/* Post creation hook for new procedural language */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
 						   LanguageRelationId, myself.objectId, 0);
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	heap_close(rel, RowExclusiveLock);
 }
 

@@ -1096,10 +1096,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	if (heapScan != NULL)
 		heap_endscan(heapScan);
 
-<<<<<<< HEAD
-	/* Update FreezeXid based on adjustments made by heap_freeze_tuple() */
-	FreezeXid = get_rewrite_freeze_xid(rwstate);
-=======
 	/*
 	 * In scan-and-sort mode, complete the sort, then read out all live tuples
 	 * from the tuplestore and write them to the new relation.
@@ -1130,7 +1126,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 
 		tuplesort_end(tuplesort);
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Write out any remaining tuples, and fsync if needed */
 	end_heap_rewrite(rwstate);
@@ -1490,52 +1485,9 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				elog(ERROR, "cannot swap toast files by links for system catalogs");
 
 			/* Delete old dependencies */
-<<<<<<< HEAD
 			changeDependencyLinks(r1, r2,
 								  relform1->reltoastrelid, relform2->reltoastrelid,
 								  "TOAST");
-=======
-			if (relform1->reltoastrelid)
-			{
-				count = deleteDependencyRecordsFor(RelationRelationId,
-												   relform1->reltoastrelid,
-												   false);
-				if (count != 1)
-					elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-						 count);
-			}
-			if (relform2->reltoastrelid)
-			{
-				count = deleteDependencyRecordsFor(RelationRelationId,
-												   relform2->reltoastrelid,
-												   false);
-				if (count != 1)
-					elog(ERROR, "expected one dependency record for TOAST table, found %ld",
-						 count);
-			}
-
-			/* Register new dependencies */
-			baseobject.classId = RelationRelationId;
-			baseobject.objectSubId = 0;
-			toastobject.classId = RelationRelationId;
-			toastobject.objectSubId = 0;
-
-			if (relform1->reltoastrelid)
-			{
-				baseobject.objectId = r1;
-				toastobject.objectId = relform1->reltoastrelid;
-				recordDependencyOn(&toastobject, &baseobject,
-								   DEPENDENCY_INTERNAL);
-			}
-
-			if (relform2->reltoastrelid)
-			{
-				baseobject.objectId = r2;
-				toastobject.objectId = relform2->reltoastrelid;
-				recordDependencyOn(&toastobject, &baseobject,
-								   DEPENDENCY_INTERNAL);
-			}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 	}
 

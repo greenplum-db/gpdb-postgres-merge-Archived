@@ -94,7 +94,6 @@ typedef struct
 } v_i_state;
 
 /* non-export function prototypes */
-static bool relationHasPrimaryKey(Relation rel);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 List *indexColNames,
@@ -163,7 +162,7 @@ static void ResetReindexPending(void);
  *
  * Caller must have suitable lock on the relation.
  */
-static bool
+bool
 relationHasPrimaryKey(Relation rel)
 {
 	bool		result = false;
@@ -271,6 +270,7 @@ index_check_primary_key(Relation heapRel,
 
 			cmd->subtype = AT_SetNotNull;
 			cmd->name = pstrdup(NameStr(attform->attname));
+			cmd->part_expanded = true;
 			cmds = lappend(cmds, cmd);
 		}
 

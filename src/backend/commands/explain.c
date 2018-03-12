@@ -90,9 +90,6 @@ static void show_scan_qual(List *qual, const char *qlabel,
 static void show_upper_qual(List *qual, const char *qlabel,
 				PlanState *planstate, List *ancestors,
 				ExplainState *es);
-<<<<<<< HEAD
-static void show_sort_keys(SortState *sortstate, ExplainState *es);
-=======
 static void show_sort_keys(SortState *sortstate, List *ancestors,
 			   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
@@ -100,7 +97,6 @@ static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 static void show_sort_keys_common(PlanState *planstate,
 					  int nkeys, AttrNumber *keycols,
 					  List *ancestors, ExplainState *es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
@@ -115,21 +111,11 @@ static void ExplainMemberNodes(List *plans, PlanState **planstate,
 				   Plan *outer_plan, ExplainState *es);
 static void ExplainSubPlans(List *plans, const char *relationship,
 				ExplainState *es, SliceTable *sliceTable);
-static void ExplainPropertyList(const char *qlabel, List *data,
-					ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 
-#define ExplainPropertyText(qlabel, value, es)	\
-	ExplainProperty(qlabel, value, false, es)
 static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
 									  const char *fmt,...);
-static void ExplainPropertyInteger(const char *qlabel, int value,
-					   ExplainState *es);
-static void ExplainPropertyLong(const char *qlabel, long value,
-					ExplainState *es);
-static void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
-					 ExplainState *es);
 =======
 static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
@@ -469,6 +455,9 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
+	/*
+	 * Start timing.
+	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 
 	/*
@@ -483,7 +472,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 								GetActiveSnapshot(), InvalidSnapshot,
 								None_Receiver, params, instrument_option);
 
-<<<<<<< HEAD
 	if (gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
 	{
 		Assert(queryString);
@@ -499,15 +487,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	if (query_info_collect_hook)
 		(*query_info_collect_hook)(METRICS_QUERY_SUBMIT, queryDesc);
 
-	/*
-	 * Start timing.
-	 */
-	INSTR_TIME_SET_CURRENT(starttime);
-
-	/* If analyzing, we need to cope with queued triggers */
-	if (es->analyze)
-		AfterTriggerBeginQuery();
-
     /* Allocate workarea for summary stats. */
     if (es->analyze)
     {
@@ -518,8 +497,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	else
 		queryDesc->showstatctx = NULL;
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/* Select execution options */
 	if (es->analyze)
 		eflags = 0;				/* default run-to-completion flags */
@@ -539,19 +516,14 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 		/* run the plan */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-<<<<<<< HEAD
 		/* Wait for completion of all qExec processes. */
 		if (queryDesc->estate->dispatcherState && queryDesc->estate->dispatcherState->primaryResults)
 			CdbCheckDispatchResult(queryDesc->estate->dispatcherState, DISPATCH_WAIT_NONE);
 
-		/* We can't clean up 'till we're done printing the stats... */
-		/* Suspend timing. */
-=======
 		/* run cleanup too */
 		ExecutorFinish(queryDesc);
 
 		/* We can't run ExecutorEnd 'till we're done printing the stats... */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		totaltime += elapsed_time(&starttime);
 	}
 
@@ -668,7 +640,6 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
-<<<<<<< HEAD
 	es->showstatctx = queryDesc->showstatctx;
 
 	/* CDB: Find slice table entry for the root slice. */
@@ -688,11 +659,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
                                      es->showstatctx);
 	}
 
-	ExplainNode(queryDesc->plannedstmt->planTree, queryDesc->planstate,
-				NULL, NULL, NULL, es);
-=======
 	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -1067,13 +1034,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_WorkTableScan:
 			pname = sname = "WorkTable Scan";
 			break;
-<<<<<<< HEAD
-		case T_ShareInputScan:
-			pname = sname = "Shared Scan";
-=======
 		case T_ForeignScan:
 			pname = sname = "Foreign Scan";
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		break;
+		case T_ShareInputScan:
+			pname = sname = "Shared Scan";
 			break;
 		case T_Material:
 			pname = sname = "Materialize";
@@ -1828,10 +1793,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	}
 
 	/* initPlan-s */
-<<<<<<< HEAD
 	if (plan->initPlan)
-		ExplainSubPlans(planstate->initPlan, "InitPlan", es, planstate->state->es_sliceTable);
+		ExplainSubPlans(planstate->initPlan, ancestors, "InitPlan", es, planstate->state->es_sliceTable);
 
+<<<<<<< HEAD
 	/* lefttree */
 	if (outerPlan(plan) && !skip_outer)
 	{
@@ -1854,9 +1819,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		appendStringInfo(es->str, "\n");
     }
 =======
-	if (planstate->initPlan)
-		ExplainSubPlans(planstate->initPlan, ancestors, "InitPlan", es);
-
 	/* lefttree */
 	if (outerPlanState(planstate))
 		ExplainNode(outerPlanState(planstate), ancestors,
@@ -1911,11 +1873,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	/* subPlan-s */
 	if (planstate->subPlan)
-<<<<<<< HEAD
-		ExplainSubPlans(planstate->subPlan, "SubPlan", es, NULL);
-=======
 		ExplainSubPlans(planstate->subPlan, ancestors, "SubPlan", es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* end of child plans */
 	if (haschildren)
@@ -1996,7 +1954,7 @@ show_expression(Node *node, const char *qlabel,
 											es->rtable);
 
 	/* Deparse the expression */
-	exprstr = deparse_expression(node, context, useprefix, false);
+	exprstr = deparse_expr_sweet(node, context, useprefix, false);
 
 	/* And add to es->str */
 	ExplainPropertyText(qlabel, exprstr, es);
@@ -2019,22 +1977,8 @@ show_qual(List *qual, const char *qlabel,
 	/* Convert AND list to explicit AND */
 	node = (Node *) make_ands_explicit(qual);
 
-<<<<<<< HEAD
-	/* Set up deparsing context */
-	context = deparse_context_for_plan((Node *) plan,
-									   (Node *) outer_plan,
-									   es->rtable,
-									   es->pstmt->subplans);
-
-	/* Deparse the expression */
-	exprstr = deparse_expr_sweet(node, context, useprefix, false);
-
-	/* And add to es->str */
-	ExplainPropertyText(qlabel, exprstr, es);
-=======
 	/* And show it */
 	show_expression(node, qlabel, planstate, ancestors, useprefix, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2256,38 +2200,6 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 	ExplainPropertyList(qlabel, result, es);
 =======
 	ExplainPropertyList("Sort Key", result, es);
-}
-
-/*
- * If it's EXPLAIN ANALYZE, show tuplesort stats for a sort node
- */
-static void
-show_sort_info(SortState *sortstate, ExplainState *es)
-{
-	Assert(IsA(sortstate, SortState));
-	if (es->analyze && sortstate->sort_Done &&
-		sortstate->tuplesortstate != NULL)
-	{
-		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
-		const char *sortMethod;
-		const char *spaceType;
-		long		spaceUsed;
-
-		tuplesort_get_stats(state, &sortMethod, &spaceType, &spaceUsed);
-
-		if (es->format == EXPLAIN_FORMAT_TEXT)
-		{
-			appendStringInfoSpaces(es->str, es->indent * 2);
-			appendStringInfo(es->str, "Sort Method: %s  %s: %ldkB\n",
-							 sortMethod, spaceType, spaceUsed);
-		}
-		else
-		{
-			ExplainPropertyText("Sort Method", sortMethod, es);
-			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
-			ExplainPropertyText("Sort Space Type", spaceType, es);
-		}
-	}
 >>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
@@ -2418,7 +2330,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 		case T_IndexScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
-<<<<<<< HEAD
+		case T_ForeignScan:
+		case T_ModifyTable:
 		case T_ExternalScan:
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
@@ -2427,10 +2340,6 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 		case T_DynamicIndexScan:
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
-=======
-		case T_ForeignScan:
-		case T_ModifyTable:
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			/* Assert it's on a real relation */
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
@@ -2578,12 +2487,9 @@ ExplainMemberNodes(List *plans, PlanState **planstates,
  * SubPlanStates.
  */
 static void
-<<<<<<< HEAD
-ExplainSubPlans(List *plans, const char *relationship, ExplainState *es, SliceTable *sliceTable)
-=======
 ExplainSubPlans(List *plans, List *ancestors,
-				const char *relationship, ExplainState *es)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				const char *relationship, ExplainState *es,
+				SliceTable *sliceTable)
 {
 	ListCell   *lst;
 	Slice      *saved_slice = es->currentSlice;
@@ -2593,7 +2499,6 @@ ExplainSubPlans(List *plans, List *ancestors,
 		SubPlanState *sps = (SubPlanState *) lfirst(lst);
 		SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
-<<<<<<< HEAD
 		/* Subplan might have its own root slice */
 		if (sliceTable && sp->qDispSliceId > 0)
 		{
@@ -2601,15 +2506,8 @@ ExplainSubPlans(List *plans, List *ancestors,
 												 sp->qDispSliceId);
 		}
 
-		ExplainNode(exec_subplan_get_plan(es->pstmt, sp),
-					sps->planstate,
-					NULL,
-					relationship, sp->plan_name,
-					es);
-=======
 		ExplainNode(sps->planstate, ancestors,
 					relationship, sp->plan_name, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	es->currentSlice = saved_slice;

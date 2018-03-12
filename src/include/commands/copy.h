@@ -124,19 +124,17 @@ typedef struct CopyStateData
 	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
 	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
 								 * dest == COPY_NEW_FE in COPY FROM */
-	bool		fe_copy;		/* true for all FE copy dests */
 	bool		fe_eof;			/* true if detected end of copy data */
 	EolType		eol_type;		/* EOL type of input */
 	char	   *eol_str;		/* optional NEWLINE from command. before eol_type is defined */
-	int			client_encoding;	/* remote side's character encoding */
-	bool		need_transcoding;		/* client encoding diff from server? */
+	int			file_encoding;	/* file or remote side's character encoding */
+	bool		need_transcoding;		/* file encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
 	FmgrInfo   *enc_conversion_proc; /* conv proc from exttbl encoding to 
 										server or the other way around */
 	FmgrInfo   *custom_formatter_func; /* function to convert to custom format */
 	char	   *custom_formatter_name; /* name of function to convert to custom format */
 	List	   *custom_formatter_params; /* list of defelems that hold user's format parameters */
-	uint64		processed;		/* # of tuples processed */
 	size_t		bytesread;
 
 	/* parameters from the COPY command */
@@ -144,8 +142,6 @@ typedef struct CopyStateData
 	QueryDesc  *queryDesc;		/* executable query to copy from */
 	List	   *attnumlist;		/* integer list of attnums to copy */
 	List	   *attnamelist;	/* list of attributes by name */
-	List	   *force_quote;	/* the raw fc column name list */
-	List	   *force_notnull;  /* the raw fnn column name list */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
 	bool		custom;			/* custom format? */
@@ -155,15 +151,18 @@ typedef struct CopyStateData
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to client encoding */
+	char	   *null_print_client;		/* same converted to file encoding */
 	char	   *delim;			/* column delimiter (must be 1 byte) */
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
+	List	   *force_quote;	/* list of column names */
+	bool		force_quote_all;	/* FORCE QUOTE *? */
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
+	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	bool		fill_missing;	/* missing attrs at end of line are NULL */
 
-	/* these are just for error messages, see copy_in_error_callback */
+	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
 	int64		cur_lineno;		/* line number for error messages.  Negative means it isn't available. */
 	int64       cur_byteno;     /* number of bytes processed from input */
@@ -171,10 +170,27 @@ typedef struct CopyStateData
 	//const char *cur_attval;		 /* current att value for error messages */
 
 	/*
+	 * Working state for COPY TO/FROM
+	 */
+	MemoryContext copycontext;	/* per-copy execution context */
+
+	/*
 	 * Working state for COPY TO
 	 */
 	FmgrInfo   *out_functions;	/* lookup info for output functions */
 	MemoryContext rowcontext;	/* per-row evaluation context */
+
+	/*
+	 * Working state for COPY FROM
+	 */
+	AttrNumber	num_defaults;
+	bool		file_has_oids;
+	FmgrInfo	oid_in_function;
+	Oid			oid_typioparam;
+	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
+	Oid		   *typioparams;	/* array of element types for in_functions */
+	int		   *defmap;			/* array of default att numbers */
+	ExprState **defexprs;		/* array of default att expressions */
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -185,6 +201,11 @@ typedef struct CopyStateData
 	 * the buffer on each cycle.
 	 */
 	StringInfoData attribute_buf;
+
+	/* field raw data pointers found by COPY FROM */
+
+	int			max_fields;
+	char	  **raw_fields;
 
 	/*
 	 * Similarly, line_buf holds the whole input line being processed. The
@@ -260,12 +281,6 @@ typedef struct CopyStateData
 	ProgramPipes	*program_pipes; /* COPY PROGRAM pipes for data and stderr */
 	/* end Greenplum Database specific variables */
 } CopyStateData;
-
-typedef CopyStateData *CopyState;
-
-
-#define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
-#define OCTVALUE(c) ((c) - '0')
 
 /*
  * Some platforms like macOS (since Yosemite) already define 64 bit versions

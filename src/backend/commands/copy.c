@@ -24,11 +24,8 @@
 
 #include "access/fileam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
-=======
 #include "access/sysattr.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
@@ -66,153 +63,13 @@
 #include "postmaster/autostats.h"
 #include "utils/resscheduler.h"
 
-<<<<<<< HEAD
-extern int popen_with_stderr(int *rwepipe, const char *exe, bool forwrite);
-extern int pclose_with_stderr(int pid, int *rwepipe, StringInfo sinfo);
-extern char *make_command(const char *cmd, extvar_t *ev);
-=======
+
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
 
-/*
- * Represents the different source/dest cases we need to worry about at
- * the bottom level
- */
-typedef enum CopyDest
-{
-	COPY_FILE,					/* to/from file */
-	COPY_OLD_FE,				/* to/from frontend (2.0 protocol) */
-	COPY_NEW_FE					/* to/from frontend (3.0 protocol) */
-} CopyDest;
-
-/*
- *	Represents the end-of-line terminator type of the input
- */
-typedef enum EolType
-{
-	EOL_UNKNOWN,
-	EOL_NL,
-	EOL_CR,
-	EOL_CRNL
-} EolType;
-
-/*
- * This struct contains all the state variables used throughout a COPY
- * operation. For simplicity, we use the same struct for all variants of COPY,
- * even though some fields are used in only some cases.
- *
- * Multi-byte encodings: all supported client-side encodings encode multi-byte
- * characters by having the first byte's high bit set. Subsequent bytes of the
- * character can have the high bit not set. When scanning data in such an
- * encoding to look for a match to a single-byte (ie ASCII) character, we must
- * use the full pg_encoding_mblen() machinery to skip over multibyte
- * characters, else we might find a false match to a trailing byte. In
- * supported server encodings, there is no possibility of a false match, and
- * it's faster to make useless comparisons to trailing bytes than it is to
- * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is TRUE
- * when we have to do it the hard way.
- */
-typedef struct CopyStateData
-{
-	/* low-level state data */
-	CopyDest	copy_dest;		/* type of copy source/destination */
-	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
-								 * dest == COPY_NEW_FE in COPY FROM */
-	bool		fe_eof;			/* true if detected end of copy data */
-	EolType		eol_type;		/* EOL type of input */
-	int			file_encoding;	/* file or remote side's character encoding */
-	bool		need_transcoding;		/* file encoding diff from server? */
-	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
-
-	/* parameters from the COPY command */
-	Relation	rel;			/* relation to copy to or from */
-	QueryDesc  *queryDesc;		/* executable query to copy from */
-	List	   *attnumlist;		/* integer list of attnums to copy */
-	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
-	bool		binary;			/* binary format? */
-	bool		oids;			/* include OIDs? */
-	bool		csv_mode;		/* Comma Separated Value format? */
-	bool		header_line;	/* CSV header line? */
-	char	   *null_print;		/* NULL marker string (server encoding!) */
-	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to file encoding */
-	char	   *delim;			/* column delimiter (must be 1 byte) */
-	char	   *quote;			/* CSV quote char (must be 1 byte) */
-	char	   *escape;			/* CSV escape char (must be 1 byte) */
-	List	   *force_quote;	/* list of column names */
-	bool		force_quote_all;	/* FORCE QUOTE *? */
-	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
-	List	   *force_notnull;	/* list of column names */
-	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
-
-	/* these are just for error messages, see CopyFromErrorCallback */
-	const char *cur_relname;	/* table name for error messages */
-	int			cur_lineno;		/* line number for error messages */
-	const char *cur_attname;	/* current att for error messages */
-	const char *cur_attval;		/* current att value for error messages */
-
-	/*
-	 * Working state for COPY TO/FROM
-	 */
-	MemoryContext copycontext;	/* per-copy execution context */
-
-	/*
-	 * Working state for COPY TO
-	 */
-	FmgrInfo   *out_functions;	/* lookup info for output functions */
-	MemoryContext rowcontext;	/* per-row evaluation context */
-
-	/*
-	 * Working state for COPY FROM
-	 */
-	AttrNumber	num_defaults;
-	bool		file_has_oids;
-	FmgrInfo	oid_in_function;
-	Oid			oid_typioparam;
-	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
-	Oid		   *typioparams;	/* array of element types for in_functions */
-	int		   *defmap;			/* array of default att numbers */
-	ExprState **defexprs;		/* array of default att expressions */
-
-	/*
-	 * These variables are used to reduce overhead in textual COPY FROM.
-	 *
-	 * attribute_buf holds the separated, de-escaped text for each field of
-	 * the current line.  The CopyReadAttributes functions return arrays of
-	 * pointers into this buffer.  We avoid palloc/pfree overhead by re-using
-	 * the buffer on each cycle.
-	 */
-	StringInfoData attribute_buf;
-
-	/* field raw data pointers found by COPY FROM */
-
-	int			max_fields;
-	char	  **raw_fields;
-
-	/*
-	 * Similarly, line_buf holds the whole input line being processed. The
-	 * input cycle is first to read the whole line into line_buf, convert it
-	 * to server encoding there, and then extract the individual attribute
-	 * fields into attribute_buf.  line_buf is preserved unmodified so that we
-	 * can display it in error messages if appropriate.
-	 */
-	StringInfoData line_buf;
-	bool		line_buf_converted;		/* converted to server encoding? */
-
-	/*
-	 * Finally, raw_buf holds raw data read from the data source (file or
-	 * client connection).	CopyReadLine parses this data sufficiently to
-	 * locate line boundaries, then transfers the data to line_buf and
-	 * converts it.  Note: we guarantee that there is a \0 at
-	 * raw_buf[raw_buf_len].
-	 */
-#define RAW_BUF_SIZE 65536		/* we palloc RAW_BUF_SIZE+1 bytes */
-	char	   *raw_buf;
-	int			raw_buf_index;	/* next byte to process */
-	int			raw_buf_len;	/* total # of bytes stored */
-} CopyStateData;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+extern int popen_with_stderr(int *rwepipe, const char *exe, bool forwrite);
+extern int pclose_with_stderr(int pid, int *rwepipe, StringInfo sinfo);
+extern char *make_command(const char *cmd, extvar_t *ev);
 
 /* DestReceiver for COPY (SELECT) TO */
 typedef struct
@@ -226,15 +83,6 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 
 /* non-export function prototypes */
-<<<<<<< HEAD
-static void DoCopyTo(CopyState cstate);
-extern void CopyToDispatch(CopyState cstate);
-static void CopyTo(CopyState cstate);
-extern void CopyFromDispatch(CopyState cstate);
-static void CopyFrom(CopyState cstate);
-static void CopyFromProcessDataFileHeader(CopyState cstate, CdbCopy *cdbCopy, bool *pfile_has_oids);
-static char *CopyReadOidAttr(CopyState cstate, bool *isnull);
-=======
 static CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
 		  const char *queryString, List *attnamelist, List *options);
 static void EndCopy(CopyState cstate);
@@ -243,28 +91,32 @@ static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
-static void CopyOneRowTo(CopyState cstate, Oid tupleOid,
-			 Datum *values, bool *nulls);
 static uint64 CopyFrom(CopyState cstate);
-static bool CopyReadLine(CopyState cstate);
-static bool CopyReadLineText(CopyState cstate);
+<<<<<<< HEAD
 static int	CopyReadAttributesText(CopyState cstate);
 static int	CopyReadAttributesCSV(CopyState cstate);
 static Datum CopyReadBinaryAttribute(CopyState cstate,
 						int column_no, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
 						bool *isnull);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+=======
 static void CopyAttributeOutText(CopyState cstate, char *string);
 static void CopyAttributeOutCSV(CopyState cstate, char *string,
 								bool use_quote, bool single_attr);
 static bool DetectLineEnd(CopyState cstate, size_t bytesread  __attribute__((unused)));
 static void CopyReadAttributesTextNoDelim(CopyState cstate, bool *nulls,
 										  int num_phys_attrs, int attnum);
+>>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static Datum CopyReadBinaryAttribute(CopyState cstate,
 									 int column_no, FmgrInfo *flinfo,
 									 Oid typioparam, int32 typmod,
 									 bool *isnull, bool skip_parsing);
+
+/* GPDB additions */
+extern void CopyToDispatch(CopyState cstate);
+extern void CopyFromDispatch(CopyState cstate);
+static void CopyFromProcessDataFileHeader(CopyState cstate, CdbCopy *cdbCopy, bool *pfile_has_oids);
+static char *CopyReadOidAttr(CopyState cstate, bool *isnull);
 
 /* Low-level communications functions */
 static void SendCopyBegin(CopyState cstate);

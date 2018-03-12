@@ -3,13 +3,9 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -89,8 +85,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexNameAddition(List *colnames);
-<<<<<<< HEAD
-static bool relationHasPrimaryKey(Relation rel);
 static bool relationHasUniqueIndex(Relation rel);
 
 
@@ -180,8 +174,6 @@ cdb_sync_indcheckxmin_with_segments(Oid indexRelationId)
 		heap_close(pg_index, RowExclusiveLock);
 	}
 }
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -480,96 +472,6 @@ DefineIndex(RangeVar *heapRelation,
 		CheckPredicate(predicate);
 
 	/*
-<<<<<<< HEAD
-	 * Extra checks when creating a PRIMARY KEY index.
-	 */
-	if (primary)
-	{
-		List	   *cmds;
-		ListCell   *keys;
-
-		/*
-		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In
-		 * CREATE TABLE, we have faith that the parser rejected multiple pkey
-		 * clauses; and CREATE INDEX doesn't have a way to say PRIMARY KEY, so
-		 * it's no problem either.
-		 */
-		if (is_alter_table &&
-			relationHasPrimaryKey(rel))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-			 errmsg("multiple primary keys for table \"%s\" are not allowed",
-					RelationGetRelationName(rel))));
-		}
-
-		/*
-		 * Check that all of the attributes in a primary key are marked as not
-		 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
-		 */
-		cmds = NIL;
-		foreach(keys, attributeList)
-		{
-			IndexElem  *key = (IndexElem *) lfirst(keys);
-			HeapTuple	atttuple;
-
-			if (!key->name)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("primary keys cannot be expressions")));
-
-			/* System attributes are never null, so no problem */
-			if (SystemAttributeByName(key->name, rel->rd_rel->relhasoids))
-				continue;
-
-			atttuple = SearchSysCacheAttName(relationId, key->name);
-			if (HeapTupleIsValid(atttuple))
-			{
-				if (!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
-				{
-					/* Add a subcommand to make this one NOT NULL */
-					AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-					cmd->subtype = AT_SetNotNull;
-					cmd->name = key->name;
-					cmd->part_expanded = true;
-
-					cmds = lappend(cmds, cmd);
-				}
-				ReleaseSysCache(atttuple);
-			}
-			else
-			{
-				/*
-				 * This shouldn't happen during CREATE TABLE, but can happen
-				 * during ALTER TABLE.	Keep message in sync with
-				 * transformIndexConstraints() in parser/parse_utilcmd.c.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" named in key does not exist",
-								key->name)));
-			}
-		}
-
-		/*
-		 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
-		 * tables?	Currently, since the PRIMARY KEY itself doesn't cascade,
-		 * we don't cascade the notnull constraint(s) either; but this is
-		 * pretty debatable.
-		 *
-		 * XXX: possible future improvement: when being called from ALTER
-		 * TABLE, it would be more efficient to merge this with the outer
-		 * ALTER TABLE, so as to avoid two scans.  But that seems to
-		 * complicate DefineIndex's API unduly.
-		 */
-		if (cmds)
-			AlterTableInternal(relationId, cmds, false);
-	}
-
-	/*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	 * Parse AM-specific options, convert to text array form, validate.
 	 */
 	reloptions = transformRelOptions((Datum) 0, options, NULL, NULL, false, false);
@@ -662,23 +564,6 @@ DefineIndex(RangeVar *heapRelation,
 				  indexRelationName, RelationGetRelationName(rel))));
 	}
 
-<<<<<<< HEAD
-	if (rel_needs_long_lock(RelationGetRelid(rel)))
-		need_longlock = true;
-	/* if this is a concurrent build, we must lock you long time */
-	else if (concurrent)
-		need_longlock = true;
-	else
-		need_longlock = false;
-
-	/* save lockrelid and locktag for below, then close rel */
-	heaprelid = rel->rd_lockInfo.lockRelId;
-	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	if (need_longlock)
-		heap_close(rel, NoLock);
-	else
-		heap_close(rel, heap_lockmode);
-
    	if (shouldDispatch)
 	{
 		cdb_sync_oid_to_segments();
@@ -692,8 +577,14 @@ DefineIndex(RangeVar *heapRelation,
 		 */
 	}
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	if (rel_needs_long_lock(RelationGetRelid(rel)))
+		need_longlock = true;
+	/* if this is a concurrent build, we must lock you long time */
+	else if (concurrent)
+		need_longlock = true;
+	else
+		need_longlock = false;
+
 	/*
 	 * Make the catalog entries for the index, including constraints. Then, if
 	 * not skip_build || concurrent, actually build the index.
@@ -712,7 +603,6 @@ DefineIndex(RangeVar *heapRelation,
 
 	if (!concurrent)
 	{
-<<<<<<< HEAD
 		/*
 		 * Dispatch the command to all primary and mirror segment dbs.
 		 * Start a global transaction and reconfigure cluster if needed.
@@ -732,19 +622,22 @@ DefineIndex(RangeVar *heapRelation,
 			if (!indexInfo->ii_BrokenHotChain)
 				cdb_sync_indcheckxmin_with_segments(indexRelationId);
 		}
-		return;					/* We're done, in the standard case */
-	}
-=======
+
 		/* Close the heap and we're done, in the non-concurrent case */
-		heap_close(rel, NoLock);
+		if (need_longlock)
+			heap_close(rel, NoLock);
+		else
+			heap_close(rel, heap_lockmode);
 		return;
 	}
 
 	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	heap_close(rel, NoLock);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	if (need_longlock)
+		heap_close(rel, NoLock);
+	else
+		heap_close(rel, heap_lockmode);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
@@ -1179,19 +1072,12 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			attcollation = exprCollation(expr);
 
 			/*
-<<<<<<< HEAD
 			 * transformExpr() should have already rejected subqueries,
 			 * aggregates, and window functions, based on the EXPR_KIND_
 			 * for an index expression.
 			 */
 
 			/*
-			 * A expression using mutable functions is probably wrong, since
-			 * if you aren't going to get the same result for the same data
-			 * every time, it's not clear what the index entries mean at all.
-			 */
-			if (CheckMutability((Expr *) attribute->expr))
-=======
 			 * Strip any top-level COLLATE clause.	This ensures that we treat
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
@@ -1263,7 +1149,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		else
 		{
 			if (OidIsValid(attcollation))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("collations are not supported by type %s",
@@ -1875,45 +1760,6 @@ ChooseIndexColumnNames(List *indexElems)
 }
 
 /*
-<<<<<<< HEAD
- * relationHasPrimaryKey -
- *
- *	See whether an existing relation has a primary key.
- */
-static bool
-relationHasPrimaryKey(Relation rel)
-{
-	bool		result = false;
-	List	   *indexoidlist;
-	ListCell   *indexoidscan;
-
-	/*
-	 * Get the list of index OIDs for the table from the relcache, and look up
-	 * each one in the pg_index syscache until we find one marked primary key
-	 * (hopefully there isn't more than one such).
-	 */
-	indexoidlist = RelationGetIndexList(rel);
-
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirst_oid(indexoidscan);
-		HeapTuple	indexTuple;
-
-		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
-			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
-		ReleaseSysCache(indexTuple);
-		if (result)
-			break;
-	}
-
-	list_free(indexoidlist);
-
-	return result;
-}
-
-/*
  * relationHasUniqueIndex -
  *
  *	See whether an existing relation has a unique index.
@@ -1951,8 +1797,6 @@ relationHasUniqueIndex(Relation rel)
 }
 
 /*
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * ReindexIndex
  *		Recreate a specific index.
  */
@@ -2040,7 +1884,7 @@ ReindexRelationList(List *relids)
 			stmt->kind = OBJECT_TABLE;
 
 			/* perform reindex locally */
-			if (!reindex_relation(relid, true, false))
+			if (!reindex_relation(relid, REINDEX_REL_PROCESS_TOAST))
 				ereport(NOTICE,
 					(errmsg("table \"%s\" has no indexes",
 							RelationGetRelationName(rel))));
@@ -2074,7 +1918,6 @@ ReindexRelationList(List *relids)
 void
 ReindexTable(ReindexStmt *stmt)
 {
-<<<<<<< HEAD
 	Oid			relid;
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
@@ -2085,7 +1928,7 @@ ReindexTable(ReindexStmt *stmt)
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
-		reindex_relation(stmt->relid, true, false);
+		reindex_relation(stmt->relid, REINDEX_REL_PROCESS_TOAST);
 		return;
 	}
 
@@ -2153,34 +1996,6 @@ ReindexTable(ReindexStmt *stmt)
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
-=======
-	Oid			heapOid;
-	HeapTuple	tuple;
-
-	heapOid = RangeVarGetRelid(relation, false);
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(heapOid));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "cache lookup failed for relation %u", heapOid);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION &&
-		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						relation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(heapOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   relation->relname);
-
-	ReleaseSysCache(tuple);
-
-	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -2283,29 +2098,7 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-<<<<<<< HEAD
 	ReindexRelationList(relids);
-=======
-	/* Now reindex each rel in a separate transaction */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
-	foreach(l, relids)
-	{
-		Oid			relid = lfirst_oid(l);
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, REINDEX_REL_PROCESS_TOAST))
-			ereport(NOTICE,
-					(errmsg("table \"%s.%s\" was reindexed",
-							get_namespace_name(get_rel_namespace(relid)),
-							get_rel_name(relid))));
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-	StartTransactionCommand();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	MemoryContextDelete(private_context);
 }

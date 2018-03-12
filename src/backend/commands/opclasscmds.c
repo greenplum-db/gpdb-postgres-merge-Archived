@@ -715,11 +715,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* dependency on owner */
 	recordDependencyOnOwner(OperatorClassRelationId, opclassoid, GetUserId());
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself);
+	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new operator class */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
@@ -775,61 +773,8 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create an operator family")));
 
-<<<<<<< HEAD
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
-
-	/*
-	 * Make sure there is no existing opfamily of this name (this is just to
-	 * give a more friendly error message than "duplicate key").
-	 */
-	if (SearchSysCacheExists3(OPFAMILYAMNAMENSP,
-							  ObjectIdGetDatum(amoid),
-							  CStringGetDatum(opfname),
-							  ObjectIdGetDatum(namespaceoid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("operator family \"%s\" for access method \"%s\" already exists",
-						opfname, stmt->amname)));
-
-	/*
-	 * Okay, let's create the pg_opfamily entry.
-	 */
-	memset(values, 0, sizeof(values));
-	memset(nulls, false, sizeof(nulls));
-
-	values[Anum_pg_opfamily_opfmethod - 1] = ObjectIdGetDatum(amoid);
-	namestrcpy(&opfName, opfname);
-	values[Anum_pg_opfamily_opfname - 1] = NameGetDatum(&opfName);
-	values[Anum_pg_opfamily_opfnamespace - 1] = ObjectIdGetDatum(namespaceoid);
-	values[Anum_pg_opfamily_opfowner - 1] = ObjectIdGetDatum(GetUserId());
-
-	tup = heap_form_tuple(rel->rd_att, values, nulls);
-
-	opfamilyoid = simple_heap_insert(rel, tup);
-
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_freetuple(tup);
-
-	/*
-	 * Create dependencies for the opfamily proper.  Note: we do not create a
-	 * dependency link to the AM, because we don't currently support DROP
-	 * ACCESS METHOD.
-	 */
-	myself.classId = OperatorFamilyRelationId;
-	myself.objectId = opfamilyoid;
-	myself.objectSubId = 0;
-
-	/* dependency on namespace */
-	referenced.classId = NamespaceRelationId;
-	referenced.objectId = namespaceoid;
-	referenced.objectSubId = 0;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-
-	/* dependency on owner */
-	recordDependencyOnOwner(OperatorFamilyRelationId, opfamilyoid, GetUserId());
-
-	heap_close(rel, RowExclusiveLock);
+	/* Insert pg_opfamily catalog entry */
+	(void) CreateOpFamily(stmt->amname, opfname, namespaceoid, amoid);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -840,10 +785,6 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	/* Insert pg_opfamily catalog entry */
-	(void) CreateOpFamily(stmt->amname, opfname, namespaceoid, amoid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -2150,58 +2091,6 @@ AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid)
 								 Anum_pg_opclass_opcnamespace,
 								 Anum_pg_opclass_opcowner,
 								 ACL_KIND_OPCLASS);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
-}
-
-/*
- * ALTER OPERATOR CLASS any_name USING access_method SET SCHEMA name
- */
-void
-AlterOpClassNamespace(List *name, char *access_method, const char *newschema)
-{
-	Oid			amOid;
-	Relation	rel;
-	Oid			opclassOid;
-	Oid			nspOid;
-
-	amOid = get_am_oid(access_method, false);
-
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
-
-	/* Look up the opclass */
-	opclassOid = get_opclass_oid(amOid, name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, CLAOID, -1,
-						 opclassOid, nspOid,
-						 Anum_pg_opclass_opcname,
-						 Anum_pg_opclass_opcnamespace,
-						 Anum_pg_opclass_opcowner,
-						 ACL_KIND_OPCLASS);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, CLAOID, -1,
-							 opclassOid, newNspOid,
-							 Anum_pg_opclass_opcname,
-							 Anum_pg_opclass_opcnamespace,
-							 Anum_pg_opclass_opcowner,
-							 ACL_KIND_OPCLASS);
 
 	heap_close(rel, RowExclusiveLock);
 
