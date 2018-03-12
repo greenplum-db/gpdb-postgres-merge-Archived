@@ -39,24 +39,14 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"MultiXact", multixact_redo, multixact_desc, NULL, NULL, NULL, NULL},
 	{"RelMap", relmap_redo, relmap_desc, NULL, NULL, NULL},
 	{"Standby", standby_redo, standby_desc, NULL, NULL, NULL},
-<<<<<<< HEAD
 	{"Heap2", heap2_redo, heap2_desc, NULL, NULL, NULL, heap_mask},
 	{"Heap", heap_redo, heap_desc, NULL, NULL, NULL, heap_mask},
 	{"Btree", btree_redo, btree_desc, btree_xlog_startup, btree_xlog_cleanup, btree_safe_restartpoint, btree_mask},
 	{"Hash", hash_redo, hash_desc, NULL, NULL, NULL, NULL},
 	{"Gin", gin_redo, gin_desc, gin_xlog_startup, gin_xlog_cleanup, gin_safe_restartpoint, gin_mask},
-	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, gist_safe_restartpoint, gist_mask},
+	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, NULL, gist_mask},
 	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL, seq_mask},
 	{"Bitmap", bitmap_redo, bitmap_desc, bitmap_xlog_startup, bitmap_xlog_cleanup, bitmap_safe_restartpoint, NULL},
 	{"DistributedLog", DistributedLog_redo, DistributedLog_desc, NULL, NULL, NULL, NULL},
 	{"Appendonly Table Log Records", appendonly_redo, appendonly_desc, NULL, NULL, NULL, NULL}
-=======
-	{"Heap2", heap2_redo, heap2_desc, NULL, NULL, NULL},
-	{"Heap", heap_redo, heap_desc, NULL, NULL, NULL},
-	{"Btree", btree_redo, btree_desc, btree_xlog_startup, btree_xlog_cleanup, btree_safe_restartpoint},
-	{"Hash", hash_redo, hash_desc, NULL, NULL, NULL},
-	{"Gin", gin_redo, gin_desc, gin_xlog_startup, gin_xlog_cleanup, gin_safe_restartpoint},
-	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, NULL},
-	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 };

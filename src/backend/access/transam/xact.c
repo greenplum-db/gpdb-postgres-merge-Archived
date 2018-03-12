@@ -513,19 +513,11 @@ AssignTransactionId(TransactionState s)
 	 */
 	if (isSubXact && !TransactionIdIsValid(s->parent->transactionId))
 	{
-<<<<<<< HEAD
-		TransactionState	p = s->parent;
-		TransactionState   *parents;
-		size_t	parentOffset = 0;
-
-		parents = palloc(sizeof(TransactionState) *  s->nestingLevel);
-=======
 		TransactionState p = s->parent;
 		TransactionState *parents;
 		size_t		parentOffset = 0;
 
 		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		while (p != NULL && !TransactionIdIsValid(p->transactionId))
 		{
 			parents[parentOffset++] = p;
@@ -533,13 +525,8 @@ AssignTransactionId(TransactionState s)
 		}
 
 		/*
-<<<<<<< HEAD
-		 * This is technically a recursive call, but the recursion will
-		 * never be more than one layer deep.
-=======
 		 * This is technically a recursive call, but the recursion will never
 		 * be more than one layer deep.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		while (parentOffset != 0)
 			AssignTransactionId(parents[--parentOffset]);
@@ -1163,8 +1150,8 @@ RecordTransactionCommit(void)
 	TransactionId *children;
 	int			nmsgs = 0;
 	SharedInvalidationMessage *invalMessages = NULL;
-<<<<<<< HEAD
-	bool		RelcacheInitFileInval;
+	bool		RelcacheInitFileInval = false;
+	bool		wrote_xlog;
 	bool		isDtxPrepared = 0;
 	bool		omitCommitRecordForDirtyQEReader;
 	TMGXACT_LOG gxact_log;
@@ -1179,10 +1166,6 @@ RecordTransactionCommit(void)
 	else
 		xid = GetTopTransactionIdIfAny();
 	markXidCommitted = TransactionIdIsValid(xid);
-=======
-	bool		RelcacheInitFileInval = false;
-	bool		wrote_xlog;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rels);
@@ -1291,11 +1274,7 @@ RecordTransactionCommit(void)
 		 * assigned is a sequence advance record due to nextval() --- we want
 		 * to flush that to disk before reporting commit.)
 		 */
-<<<<<<< HEAD
-		if (!isDtxPrepared && XactLastRecEnd.xrecoff == 0)
-=======
-		if (!wrote_xlog)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		if (!isDtxPrepared && !wrote_xlog)
 			goto cleanup;
 	}
 	else
@@ -1432,7 +1411,6 @@ RecordTransactionCommit(void)
 
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	/*
-<<<<<<< HEAD
 	 * In PostgreSQL, we can defer flushing XLOG, if the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit.
@@ -1441,34 +1419,9 @@ RecordTransactionCommit(void)
 	 * because we use two-phase commit across the nodes. In order to make GPDB support
 	 * async-commit, we also need to implement the temp table detection.
 	 */
-	if (XactSyncCommit || forceSyncCommit || haveNonTemp)
-#endif
-=======
-	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
-	 * to happen asynchronously if synchronous_commit=off, or if the current
-	 * transaction has not performed any WAL-logged operation.	The latter
-	 * case can arise if the current transaction wrote only to temporary
-	 * and/or unlogged tables.	In case of a crash, the loss of such a
-	 * transaction will be irrelevant since temp tables will be lost anyway,
-	 * and unlogged tables will be truncated.  (Given the foregoing, you might
-	 * think that it would be unnecessary to emit the XLOG record at all in
-	 * this case, but we don't currently try to do that.  It would certainly
-	 * cause problems at least in Hot Standby mode, where the
-	 * KnownAssignedXids machinery requires tracking every XID assignment.	It
-	 * might be OK to skip it only when wal_level < hot_standby, but for now
-	 * we don't.)
-	 *
-	 * However, if we're doing cleanup of any non-temp rels or committing any
-	 * command that wanted to force sync commit, then we must flush XLOG
-	 * immediately.  (We must not allow asynchronous commit if there are any
-	 * non-temp tables to be deleted, because we might delete the files before
-	 * the COMMIT record is flushed to disk.  We do allow asynchronous commit
-	 * if all to-be-deleted tables are temporary though, since they are lost
-	 * anyway if we crash.)
-	 */
 	if ((wrote_xlog && synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
 		forceSyncCommit || nrels > 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#endif
 	{
 		/*
 		 * Synchronous commit case:
@@ -1859,13 +1812,8 @@ RecordTransactionAbort(bool isSubXact)
 		elog(PANIC, "cannot abort transaction %u, it was already committed",
 			 xid);
 
-<<<<<<< HEAD
-	/* Get data needed for abort record */
-	nrels = smgrGetPendingDeletes(false, &rels, NULL);
-=======
 	/* Fetch the data we need for the abort record */
 	nrels = smgrGetPendingDeletes(false, &rels);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	nchildren = xactGetCommittedChildren(&children);
 
 	/* XXX do we really need a critical section here? */
@@ -2548,10 +2496,6 @@ CommitTransaction(void)
 	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
 
-<<<<<<< HEAD
-	/* Close any open regular cursors */
-	AtCommit_Portals();
-
 	AtEOXact_SharedSnapshot();
 
 	/* Perform any Resource Scheduler commit procesing. */
@@ -2561,8 +2505,6 @@ CommitTransaction(void)
 	/* Perform any AO table commit processing */
 	AtCommit_AppendOnly();
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
 	 * cursors, to avoid dangling-reference problems)
@@ -2857,14 +2799,8 @@ PrepareTransaction(void)
 	/* Shut down the deferred-trigger manager */
 	AfterTriggerEndXact(true);
 
-<<<<<<< HEAD
-	/* Close any open regular cursors */
-	AtCommit_Portals();
-
 	AtEOXact_SharedSnapshot();
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Let ON COMMIT management do its thing (must happen after closing
 	 * cursors, to avoid dangling-reference problems)
@@ -5875,16 +5811,9 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn,
 	/* Make sure files supposed to be dropped are dropped */
 	if (xlrec->nrels > 0)
 	{
-<<<<<<< HEAD
 		for (i = 0; i < xlrec->nrels; i++)
-=======
-		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
-		ForkNumber	fork;
-
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
-			SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+			SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
@@ -6002,22 +5931,13 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			SMgrRelation srel = smgropen(xlrec->xnodes[i]);
+			SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
 			{
-				/*
-				 * In GPDB, always try to drop the main fork. This is because
-				 * smgrexists() doesn't do the right thing for AOCO tables.
-				 * smgrexists() checks for the existence of the first segment (0),
-				 * but an AOCO table doesn't user segment 0.
-				 */
-				if (smgrexists(srel, fork) || fork == MAIN_FORKNUM)
-				{
-					XLogDropRelation(xlrec->xnodes[i], fork);
-					smgrdounlink(srel, fork, false, true);
-				}
+				XLogDropRelation(xlrec->xnodes[i], fork);
+				smgrdounlink(srel, fork, true);
 			}
 			smgrclose(srel);
 		}
@@ -6100,16 +6020,8 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
-<<<<<<< HEAD
 			XLogDropRelation(xlrec->xnodes[i], fork);
-			smgrdounlink(srel, fork, false, true);
-=======
-			if (smgrexists(srel, fork))
-			{
-				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, true);
-			}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			smgrdounlink(srel, fork, true);
 		}
 		smgrclose(srel);
 	}

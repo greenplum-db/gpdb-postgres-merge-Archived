@@ -59,14 +59,10 @@
 #include "pgstat.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
-<<<<<<< HEAD
 #include "storage/backendid.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-=======
-#include "storage/fd.h"
 #include "storage/predicate.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
@@ -1185,16 +1181,17 @@ EndPrepare(GlobalTransaction gxact)
 
 	XLogFlush(gxact->prepare_lsn);
 
+	/* If we crash now, we have prepared: WAL replay will fix things */
+	if (Debug_abort_after_segment_prepared)
+	{
+		ereport(PANIC,
+				(errcode(ERRCODE_FAULT_INJECT),
+				 errmsg("Raise an error as directed by Debug_abort_after_segment_prepared")));
+	}
+
 	/*
 	 * Now we may update the CLOG, if we wrote COMMIT record above
 	 */
-	if (max_wal_senders > 0)
-		WalSndWakeup();
-
-	/* If we crash now, we have prepared: WAL replay will fix things */
-<<<<<<< HEAD
-	if (Debug_abort_after_segment_prepared)
-=======
 
 	/*
 	 * Wake up all walsenders to send WAL up to the PREPARE record immediately
@@ -1202,15 +1199,6 @@ EndPrepare(GlobalTransaction gxact)
 	 */
 	if (max_wal_senders > 0)
 		WalSndWakeup();
-
-	/* write correct CRC and close file */
-	if ((write(fd, &statefile_crc, sizeof(pg_crc32))) != sizeof(pg_crc32))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-	{
-		ereport(PANIC,
-				(errcode(ERRCODE_FAULT_INJECT),
-				 errmsg("Raise an error as directed by Debug_abort_after_segment_prepared")));
-	}
 
 	/*
 	 * Mark the prepared transaction as valid.	As soon as xact.c marks MyProc
@@ -1485,12 +1473,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
-<<<<<<< HEAD
-			smgrdounlink(srel, fork, false, false);
-=======
-			if (smgrexists(srel, fork))
-				smgrdounlink(srel, fork, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			smgrdounlink(srel, fork, false);
 		}
 		smgrclose(srel);
 	}
@@ -1995,7 +1978,10 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* Flush XLOG to disk */
 	XLogFlush(recptr);
 
-<<<<<<< HEAD
+	/*
+	 * Wake up all walsenders to send WAL up to the COMMIT PREPARED record
+	 * immediately if replication is enabled
+	 */
 	if (max_wal_senders > 0)
 		WalSndWakeup();
 
@@ -2007,26 +1993,18 @@ RecordTransactionCommitPrepared(TransactionId xid,
 									distribTimeStamp,
 									distribXid,
 									/* isRedo */ false);
-=======
-	/*
-	 * Wake up all walsenders to send WAL up to the COMMIT PREPARED record
-	 * immediately if replication is enabled
-	 */
-	if (max_wal_senders > 0)
-		WalSndWakeup();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Mark the transaction committed in pg_clog */
 	TransactionIdCommitTree(xid, nchildren, children);
 
-<<<<<<< HEAD
-=======
+	// GPDB_91_MERGE_FIXME: These were missing from GPDB. Why?
+#if 0
 	/* Checkpoint can proceed now */
 	MyProc->inCommit = false;
 
 	END_CRIT_SECTION();
+#endif
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	/*
 	 * Wait for synchronous replication, if required.
 	 *
@@ -2125,10 +2103,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	 * Note that at this stage we have marked clog, but still show as running
 	 * in the procarray and continue to hold locks.
 	 */
-<<<<<<< HEAD
 	Assert(recptr.xrecoff != 0);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	SyncRepWaitForLSN(recptr);
 }
 
