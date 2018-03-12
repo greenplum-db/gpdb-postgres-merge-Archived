@@ -87,6 +87,9 @@ typedef struct AggStatePerAggData
 	FmgrInfo    prelimfn;
 	FmgrInfo	finalfn;
 
+	/* Input collation derived for aggregate */
+	Oid			aggCollation;
+
 	/* number of sorting columns */
 	int			numSortCols;
 
@@ -97,6 +100,7 @@ typedef struct AggStatePerAggData
 	/* deconstructed sorting information (arrays of length numSortCols) */
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
+	Oid		   *sortCollations;
 	bool	   *sortNullsFirst;
 
 	/*

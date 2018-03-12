@@ -57,9 +57,9 @@ ForeignNext(ForeignScanState *node)
 	 */
 	if (plan->fsSystemCol && !TupIsNull(slot))
 	{
-		HeapTuple	tup = ExecMaterializeSlot(slot);
+		(void) ExecMaterializeSlot(slot);
 
-		tup->t_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
+		//tup->t_tableOid = RelationGetRelid(node->ss.ss_currentRelation);
 	}
 
 	return slot;
@@ -121,7 +121,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
+	//scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize child expressions

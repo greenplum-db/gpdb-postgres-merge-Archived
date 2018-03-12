@@ -124,16 +124,11 @@ MultiExecHash(HashState *node)
 
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
-<<<<<<< HEAD
 		bool hashkeys_null = false;
 
-		if (ExecHashGetHashValue(node, hashtable, econtext, hashkeys, false,
-								 node->hs_keepnull, &hashvalue, &hashkeys_null))
-=======
-		if (ExecHashGetHashValue(hashtable, econtext, hashkeys,
+		if (ExecHashGetHashValue(node, hashtable, econtext, hashkeys,
 								 false, hashtable->keepNulls,
-								 &hashvalue))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+								 &hashvalue, &hashkeys_null))
 		{
 			int			bucketNumber;
 
@@ -273,11 +268,8 @@ ExecEndHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashJoinTable
-<<<<<<< HEAD
-ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOperators, uint64 operatorMemKB)
-=======
-ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOperators, bool keepNulls,
+					uint64 operatorMemKB)
 {
 	HashJoinTable hashtable;
 	Plan	   *outerNode;
@@ -907,18 +899,11 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		 */
 		HashJoinTuple hashTuple;
 
-<<<<<<< HEAD
+		/* Create the HashJoinTuple */
 		hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 													   hashTupleSize);
 		hashTuple->hashvalue = hashvalue;
 		memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, memtuple_get_size(tuple));
-=======
-		/* Create the HashJoinTuple */
-		hashTupleSize = HJTUPLE_OVERHEAD + tuple->t_len;
-		hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
-													   hashTupleSize);
-		hashTuple->hashvalue = hashvalue;
-		memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, tuple->t_len);
 
 		/*
 		 * We always reset the tuple-matched flag on insertion.  This is okay
@@ -929,7 +914,6 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(hashTuple));
 
 		/* Push it onto the front of the bucket's list */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		hashTuple->next = hashtable->buckets[bucketno];
 		hashtable->buckets[bucketno] = hashTuple;
 
@@ -1133,13 +1117,8 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
  * econtext->ecxt_innertuple, using hjstate->hj_HashTupleSlot as the slot
  * for the latter.
  */
-<<<<<<< HEAD
-HashJoinTuple
-ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
-=======
 bool
-ExecScanHashBucket(HashJoinState *hjstate,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 				   ExprContext *econtext)
 {
 	List	   *hjclauses = hjstate->hashqualclauses;

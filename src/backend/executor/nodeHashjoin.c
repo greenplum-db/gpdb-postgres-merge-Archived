@@ -22,11 +22,8 @@
 #include "executor/instrument.h"	/* Instrumentation */
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-<<<<<<< HEAD
-#include "utils/faultinjector.h"
-=======
 #include "miscadmin.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#include "utils/faultinjector.h"
 #include "utils/memutils.h"
 
 #include "cdb/cdbvars.h"
@@ -911,12 +908,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	/* child Hash node needs to evaluate inner hash keys, too */
 	((HashState *) innerPlanState(hjstate))->hashkeys = rclauses;
 
-<<<<<<< HEAD
-	hjstate->hj_NeedNewOuter = true;
-=======
-	hjstate->js.ps.ps_TupFromTlist = false;
 	hjstate->hj_JoinState = HJ_BUILD_HASHTABLE;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	hjstate->hj_MatchedOuter = false;
 	hjstate->hj_OuterNotEmpty = false;
 
@@ -1502,11 +1494,6 @@ ExecReScanHashJoin(HashJoinState *node)
 	node->hj_CurSkewBucketNo = INVALID_SKEW_BUCKET_NO;
 	node->hj_CurTuple = NULL;
 
-<<<<<<< HEAD
-	node->hj_NeedNewOuter = true;
-=======
-	node->js.ps.ps_TupFromTlist = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	node->hj_MatchedOuter = false;
 	node->hj_FirstOuterTupleSlot = NULL;
 

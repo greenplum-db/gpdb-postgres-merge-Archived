@@ -2272,12 +2272,8 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 		ResetUsage();
 #endif
 
-<<<<<<< HEAD
-	if (!cdbpathlocus_querysegmentcatalogs && fire_triggers)
-		AfterTriggerBeginQuery();
-
 	bool orig_gp_enable_gpperfmon = gp_enable_gpperfmon;
-=======
+
 	/* Select execution options */
 	if (fire_triggers)
 		eflags = 0;				/* default run-to-completion flags */
@@ -2285,7 +2281,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 		eflags = EXEC_FLAG_SKIP_TRIGGERS;
 
 	ExecutorStart(queryDesc, eflags);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	PG_TRY();
 	{
@@ -2320,16 +2315,10 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 		else
 			checkTuples = false;
 
-		if (!cdbpathlocus_querysegmentcatalogs)
-		{
-			/* Take care of any queued AFTER triggers */
-			if (fire_triggers)
-				AfterTriggerEndQuery(queryDesc->estate);
-		}
-
 		if (Gp_role == GP_ROLE_DISPATCH)
 			autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
+		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
 		/* FreeQueryDesc is done by the caller */
 
@@ -2371,16 +2360,10 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 	}
 	PG_END_TRY();
 
-<<<<<<< HEAD
 	_SPI_current->processed = queryDesc->es_processed;	/* Mpp: Dispatched
 														 * queries fill in this
 														 * at Executor End */
 	_SPI_current->lastoid = queryDesc->es_lastoid;
-=======
-	ExecutorFinish(queryDesc);
-	ExecutorEnd(queryDesc);
-	/* FreeQueryDesc is done by the caller */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)

@@ -172,12 +172,9 @@ TupleTableSlot *
 ExecInsert(TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
 		   EState *estate,
-<<<<<<< HEAD
+		   bool canSetTag,
 		   PlanGenerator planGen,
 		   bool isUpdate)
-=======
-		   bool canSetTag)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
@@ -590,12 +587,9 @@ ExecDelete(ItemPointer tupleid,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
 		   EState *estate,
-<<<<<<< HEAD
+		   bool canSetTag,
 		   PlanGenerator planGen,
 		   bool isUpdate)
-=======
-		   bool canSetTag)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
@@ -1210,16 +1204,8 @@ ExecUpdate(ItemPointer tupleid,
 		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
 									tupleid, slot);
 
-<<<<<<< HEAD
-		if (slot == NULL)	/* "do nothing" */
-			return NULL;
-=======
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
-
-		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	/* INSTEAD OF ROW UPDATE Triggers */
@@ -1676,26 +1662,17 @@ ExecModifyTable(ModifyTableState *node)
 		switch (operation)
 		{
 			case CMD_INSERT:
-<<<<<<< HEAD
-				slot = ExecInsert(slot, planSlot, estate,
+				slot = ExecInsert(slot, planSlot, estate, node->canSetTag,
 								  PLANGEN_PLANNER, false /* isUpdate */);
-=======
-				slot = ExecInsert(slot, planSlot, estate, node->canSetTag);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 			case CMD_UPDATE:
 				slot = ExecUpdate(tupleid, oldtuple, slot, planSlot,
 								&node->mt_epqstate, estate, node->canSetTag);
 				break;
 			case CMD_DELETE:
-<<<<<<< HEAD
 				slot = ExecDelete(tupleid, planSlot,
-								  &node->mt_epqstate, estate,
+								  &node->mt_epqstate, estate, node->canSetTag,
 								  PLANGEN_PLANNER, false /* isUpdate */);
-=======
-				slot = ExecDelete(tupleid, oldtuple, planSlot,
-								&node->mt_epqstate, estate, node->canSetTag);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				break;
 			default:
 				elog(ERROR, "unknown operation");

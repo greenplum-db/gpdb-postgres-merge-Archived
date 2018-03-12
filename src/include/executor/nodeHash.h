@@ -27,8 +27,8 @@ extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node);
 
 extern HashJoinTable ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate,
-					bool keepNulls,
-					List *hashOperators, uint64 operatorMemKB);
+					List *hashOperators, bool keepNulls,
+					uint64 operatorMemKB);
 extern void ExecHashTableDestroy(HashState *hashState, HashJoinTable hashtable);
 extern bool ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 					struct TupleTableSlot *slot,

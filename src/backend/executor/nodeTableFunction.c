@@ -427,7 +427,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 
 	scanstate->userdata = rte->funcuserdata;
 	/* Initialize a function cache for the function expression */
-	init_fcache(func->funcid, scanstate->fcache, 
+	init_fcache(func->funcid, func->inputcollid, scanstate->fcache, 
 				econtext->ecxt_per_query_memory, 
 				true);
 
@@ -435,6 +435,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	InitFunctionCallInfoData(scanstate->fcinfo,               /* Fcinfo  */
 							 &(scanstate->fcache->func),      /* Flinfo  */
 							 0,                               /* Nargs   */
+							 InvalidOid,					  /* input_collation */
 							 (Node*) scanstate,               /* Context */
 							 (Node*) &(scanstate->rsinfo));   /* ResultInfo */
 
@@ -476,7 +477,7 @@ ExecEndTableFunction(TableFunctionState *node)
 }
 
 void
-ExecReScanTableFunction(TableFunctionState *node, ExprContext *exprCtxt)
+ExecReScanTableFunction(TableFunctionState *node)
 {
 	/* TableFunction Planner marks TableFunction nodes as not rescannable */
 	elog(ERROR, "invalid rescan of TableFunctionScan");
@@ -516,6 +517,7 @@ HeapTuple
 AnyTable_GetNextTuple(AnyTable t)
 {
 	MemoryContext oldcontext;
+	TupleTableSlot *slot;
 
 	if (t == NULL)
 	{
@@ -539,7 +541,14 @@ AnyTable_GetNextTuple(AnyTable t)
 	 * 3) copy result into a HeapTuple
 	 * ----------------------------------------
 	 */
-	return ExecRemoveJunk(t->junkfilter, t->econtext->ecxt_outertuple);
+
+	/* GDPB_91_MERGE_FIXME: We used to call  ExecRemoveJunk here, but it
+	 * was removed in the upstream. I copied the implementation of
+	 * ExecRemoveJunk here, but based on the commit message (2e852e541c),
+	 * I don't think we should be doing this either
+	 */
+	slot = ExecFilterJunk(t->junkfilter, t->econtext->ecxt_outertuple);
+	return ExecCopySlotHeapTuple(slot);
 }
 
 /*

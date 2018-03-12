@@ -102,7 +102,6 @@ ExecSort(SortState *node)
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
-<<<<<<< HEAD
 		if(plannode->share_type == SHARE_SORT_XSLICE)
 		{
 			char rwfile_prefix[100];
@@ -121,7 +120,9 @@ ExecSort(SortState *node)
 				tupDesc,
 				plannode->numCols,
 				plannode->sortColIdx,
-				plannode->sortOperators, plannode->nullsFirst,
+				plannode->sortOperators,
+				plannode->collations,
+				plannode->nullsFirst,
 				PlanStateOperatorMemKB((PlanState *) node),
 				true
 				);
@@ -131,21 +132,13 @@ ExecSort(SortState *node)
 			tuplesortstate = tuplesort_begin_heap(&node->ss, tupDesc,
 												  plannode->numCols,
 												  plannode->sortColIdx,
-												  plannode->sortOperators, plannode->nullsFirst,
+												  plannode->sortOperators,
+												  plannode->collations,
+												  plannode->nullsFirst,
 												  PlanStateOperatorMemKB((PlanState *) node),
 												  node->randomAccess);
 		}
 
-=======
-		tuplesortstate = tuplesort_begin_heap(tupDesc,
-											  plannode->numCols,
-											  plannode->sortColIdx,
-											  plannode->sortOperators,
-											  plannode->collations,
-											  plannode->nullsFirst,
-											  work_mem,
-											  node->randomAccess);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		if (node->bounded)
 			tuplesort_set_bound(tuplesortstate, node->bound);
 		node->tuplesortstate->sortstore = tuplesortstate;

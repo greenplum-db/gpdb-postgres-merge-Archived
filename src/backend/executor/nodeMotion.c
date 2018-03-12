@@ -1504,7 +1504,7 @@ doSendTuple(Motion * motion, MotionState * node, TupleTableSlot *outerTupleSlot)
  * provided there is only one outer tuple.)
  */
 void
-ExecReScanMotion(MotionState *node, ExprContext *exprCtxt)
+ExecReScanMotion(MotionState *node)
 {
 	if (node->mstype != MOTIONSTATE_RECV ||
 					node->numTuplesToParent != 0)

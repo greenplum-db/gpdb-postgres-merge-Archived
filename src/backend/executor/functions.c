@@ -726,6 +726,14 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	/* Utility commands don't need Executor. */
 	if (es->qd->utilitystmt == NULL)
 	{
+		int			eflags;
+
+		if (!IsResManagerMemoryPolicyNone()
+			&& SPI_IsMemoryReserved())
+		{
+			es->qd->plannedstmt->query_mem = SPI_GetMemoryReservation();
+		}
+
 		/*
 		 * In lazyEval mode, do not let the executor set up an AfterTrigger
 		 * context.  This is necessary not just an optimization, because we
@@ -733,27 +741,11 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		 * AfterTrigger level still active.  We are careful not to select
 		 * lazyEval mode for any statement that could possibly queue triggers.
 		 */
-<<<<<<< HEAD
-		if (es->qd->operation != CMD_SELECT)
-			AfterTriggerBeginQuery();
-		
-		
-		if (!IsResManagerMemoryPolicyNone()
-			&& SPI_IsMemoryReserved())
-		{
-			es->qd->plannedstmt->query_mem = SPI_GetMemoryReservation();
-		}
-
-		ExecutorStart(es->qd, 0);
-=======
-		int			eflags;
-
 		if (es->lazyEval)
 			eflags = EXEC_FLAG_SKIP_TRIGGERS;
 		else
 			eflags = 0;			/* default run-to-completion flags */
 		ExecutorStart(es->qd, eflags);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	es->status = F_EXEC_RUN;
@@ -806,32 +798,21 @@ postquel_end(execution_state *es)
 	/* Utility commands don't need Executor. */
 	if (es->qd->utilitystmt == NULL)
 	{
-<<<<<<< HEAD
-		/* Make our snapshot the active one for any called functions */
-		PushActiveSnapshot(es->qd->snapshot);
+		Oid			relationOid = InvalidOid; 	/* relation that is modified */
+		AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL; 	/* command type */
 
-		{
-			Oid			relationOid = InvalidOid; 	/* relation that is modified */
-			AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL; 	/* command type */
+		if (es->qd->operation != CMD_SELECT)
+			AfterTriggerEndQuery(es->qd->estate);
 
-			if (es->qd->operation != CMD_SELECT)
-				AfterTriggerEndQuery(es->qd->estate);
+		if (Gp_role == GP_ROLE_DISPATCH)
+			autostats_get_cmdtype(es->qd, &cmdType, &relationOid);
 
-			if (Gp_role == GP_ROLE_DISPATCH)
-				autostats_get_cmdtype(es->qd, &cmdType, &relationOid);
-
-			ExecutorEnd(es->qd);
-
-			/* MPP-14001: Running auto_stats */
-			if (Gp_role == GP_ROLE_DISPATCH)
-				auto_stats(cmdType, relationOid, es->qd->es_processed, true /* inFunction */);
-		}
-
-		PopActiveSnapshot();
-=======
 		ExecutorFinish(es->qd);
 		ExecutorEnd(es->qd);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+		/* MPP-14001: Running auto_stats */
+		if (Gp_role == GP_ROLE_DISPATCH)
+			auto_stats(cmdType, relationOid, es->qd->es_processed, true /* inFunction */);
 	}
 
 	(*es->qd->dest->rDestroy) (es->qd->dest);
@@ -1036,15 +1017,22 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	if (!fcache->tstore)
 		fcache->tstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
-	/*
-<<<<<<< HEAD
-	 * Find first unfinished query in function.
-	 */
-	while (es && es->status == F_EXEC_DONE)
-		es = es->next;
-
 	bool orig_gp_enable_gpperfmon = gp_enable_gpperfmon;
-=======
+
+PG_TRY();
+{
+	/*
+	 * Temporarily disable gpperfmon since we don't send information for internal queries in
+	 * most cases, except when the debugging level is set to DEBUG4 or DEBUG5.
+	 */
+	if (log_min_messages > DEBUG4)
+	{
+		gp_enable_gpperfmon = false;
+	}
+
+	gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
+
+	/*
 	 * Execute each command in the function one after another until we either
 	 * run out of commands or get a result row from a lazily-evaluated SELECT.
 	 *
@@ -1057,7 +1045,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * suspend execution before completion is if we are returning a row from a
 	 * lazily-evaluated SELECT.  So, when first entering this loop, we'll
 	 * either start a new query (and push a fresh snapshot) or re-establish
-	 * the active snapshot from the existing query descriptor.	If we need to
+	 * the active snapshot from the existing query descriptor.  If we need to
 	 * start a new query in a subsequent execution of the loop, either we need
 	 * a fresh snapshot (and pushed_snapshot is false) or the existing
 	 * snapshot is on the active stack and we can just bump its command ID.
@@ -1097,67 +1085,27 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		}
 
 		completed = postquel_getnext(es, fcache);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-
-	PG_TRY();
-	{
-		/*
-		 * Temporarily disable gpperfmon since we don't send information for internal queries in
-		 * most cases, except when the debugging level is set to DEBUG4 or DEBUG5.
-		 */
-		if (log_min_messages > DEBUG4)
-		{
-			gp_enable_gpperfmon = false;
-		}
-
-		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
 
 		/*
-		 * Execute each command in the function one after another until we either
-		 * run out of commands or get a result row from a lazily-evaluated SELECT.
+		 * If we ran the command to completion, we can shut it down now. Any
+		 * row(s) we need to return are safely stashed in the tuplestore, and
+		 * we want to be sure that, for example, AFTER triggers get fired
+		 * before we return anything.  Also, if the function doesn't return
+		 * set, we can shut it down anyway because it must be a SELECT and we
+		 * don't care about fetching any more result rows.
 		 */
-<<<<<<< HEAD
-		while (es)
-		{
-			bool		completed;
+		if (completed || !fcache->returnsSet)
+			postquel_end(es);
 
-			if (es->status == F_EXEC_START)
-				postquel_start(es, fcache);
-
-			completed = postquel_getnext(es, fcache);
-
-			/*
-			 * If we ran the command to completion, we can shut it down now. Any
-			 * row(s) we need to return are safely stashed in the tuplestore, and
-			 * we want to be sure that, for example, AFTER triggers get fired
-			 * before we return anything.  Also, if the function doesn't return
-			 * set, we can shut it down anyway because it must be a SELECT and we
-			 * don't care about fetching any more result rows.
-			 */
-			if (completed || !fcache->returnsSet)
-				postquel_end(es);
-
-			/*
-			 * Break from loop if we didn't shut down (implying we got a
-			 * lazily-evaluated row).  Otherwise we'll press on till the whole
-			 * function is done, relying on the tuplestore to keep hold of the
-			 * data to eventually be returned.  This is necessary since an
-			 * INSERT/UPDATE/DELETE RETURNING that sets the result might be
-			 * followed by additional rule-inserted commands, and we want to
-			 * finish doing all those commands before we return anything.
-			 */
-			if (es->status != F_EXEC_DONE)
-				break;
-			es = es->next;
-		}
-
-		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
-	}
-	PG_CATCH();
-	{
-		gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
-		PG_RE_THROW();
-=======
+		/*
+		 * Break from loop if we didn't shut down (implying we got a
+		 * lazily-evaluated row).  Otherwise we'll press on till the whole
+		 * function is done, relying on the tuplestore to keep hold of the
+		 * data to eventually be returned.  This is necessary since an
+		 * INSERT/UPDATE/DELETE RETURNING that sets the result might be
+		 * followed by additional rule-inserted commands, and we want to
+		 * finish doing all those commands before we return anything.
+		 */
 		if (es->status != F_EXEC_DONE)
 			break;
 
@@ -1175,7 +1123,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 			/*
 			 * Flush the current snapshot so that we will take a new one for
-			 * the new query list.	This ensures that new snaps are taken at
+			 * the new query list.  This ensures that new snaps are taken at
 			 * original-query boundaries, matching the behavior of interactive
 			 * execution.
 			 */
@@ -1185,9 +1133,16 @@ fmgr_sql(PG_FUNCTION_ARGS)
 				pushed_snapshot = false;
 			}
 		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
-	PG_END_TRY();
+
+	gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
+}
+PG_CATCH();
+{
+	gp_enable_gpperfmon = orig_gp_enable_gpperfmon;
+	PG_RE_THROW();
+}
+PG_END_TRY();
 
 	/*
 	 * The tuplestore now contains whatever row(s) we are supposed to return.
@@ -1664,11 +1619,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 * the function that's calling it.
 		 *
 		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
-<<<<<<< HEAD
-		 * will succeed for any composite restype.  For the moment we rely on
-=======
 		 * will succeed for any composite restype.	For the moment we rely on
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
 		 */

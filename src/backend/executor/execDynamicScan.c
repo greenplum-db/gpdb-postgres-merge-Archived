@@ -523,22 +523,12 @@ DynamicScan_Begin(ScanState *scanState, Plan *plan, EState *estate, int eflags)
  *		Prepares for the rescanning of one or more relations (partitions).
  */
 void
-DynamicScan_ReScan(ScanState *scanState, ExprContext *exprCtxt)
+DynamicScan_ReScan(ScanState *scanState)
 {
 	/* Only BitmapTableScanState supports this unified iteration of partitions */
 	Assert(T_BitmapTableScanState == scanState->ps.type);
 
 	Assert(scanState->tableType >= 0 && scanState->tableType < TableTypeInvalid);
-
-	/*
-	 * If we are being passed an outer tuple, link it into the "regular"
-	 * per-tuple econtext for possible qual eval.
-	 */
-	if (exprCtxt != NULL)
-	{
-		ExprContext *stdecontext = scanState->ps.ps_ExprContext;
-		stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-	}
 
 	/* Notify controller about the request for rescan */
 	DynamicScan_Controller(scanState, SCAN_RESCAN, NULL /* PartitionInitMethod */,

@@ -1895,7 +1895,7 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 	 * that the parameter is a Const. Make sure this matches!
 	 *------
 	 */
-	cur_row_val = makeVar(OUTER, node->firstOrderCol, typeId, -1, 0);
+	cur_row_val = makeVar(OUTER, node->firstOrderCol, typeId, -1, InvalidOid, 0);
 
 	if (node->frameOptions & FRAMEOPTION_START_VALUE)
 	{
@@ -1932,6 +1932,7 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 					   (Node *) offset,
 					   (Node *) makeConst(offset->typeId,
 										  offset->typeMod,
+										  InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
 										  len,
 										  zero,
 										  false,
@@ -1972,6 +1973,7 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 					   (Node *) offset,
 					   (Node *) makeConst(offset->typeId,
 										  offset->typeMod,
+										  InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
 										  len,
 										  zero,
 										  false,

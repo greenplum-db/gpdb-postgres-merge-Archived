@@ -33,7 +33,7 @@
 #include "cdb/cdbvars.h"
 
 static void ExecMaterialExplainEnd(PlanState *planstate, struct StringInfoData *buf);
-static void ExecChildRescan(MaterialState *node, ExprContext *exprCtxt);
+static void ExecChildRescan(MaterialState *node);
 static void DestroyTupleStore(MaterialState *node);
 
 
@@ -525,16 +525,16 @@ DestroyTupleStore(MaterialState *node)
  * ExecChildRescan
  *      Helper function for rescanning child of materialize node
  */
-void
-ExecChildRescan(MaterialState *node, ExprContext *exprCtxt)
+static void
+ExecChildRescan(MaterialState *node)
 {
 	Assert(node);
 	/*
 	 * if parameters of subplan have changed, then subplan will be rescanned by
 	 * first ExecProcNode. Otherwise, we need to rescan subplan here
 	 */
-	if (((PlanState *) node)->lefttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 
 	node->eof_underlying = false;
 }
@@ -553,14 +553,8 @@ ExecReScanMaterial(MaterialState *node)
 	if (node->eflags != 0)
 	{
 		/*
-<<<<<<< HEAD
 		 * If tuple store is empty, then either we have not materialized yet
 		 * or tuple store was destroyed after a previous execution of materialize.
-=======
-		 * If we haven't materialized yet, just return. If outerplan's
-		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
-		 * else no reason to re-scan it at all.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 */
 		if (NULL == node->ts_state->matstore)
 		{
@@ -570,7 +564,7 @@ ExecReScanMaterial(MaterialState *node)
 			 */
 			if (node->ts_destroyed)
 			{
-				ExecChildRescan(node, exprCtxt);
+				ExecChildRescan(node);
 			}
 			return;
 		}
@@ -588,17 +582,9 @@ ExecReScanMaterial(MaterialState *node)
 		if (node->ss.ps.lefttree->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-<<<<<<< HEAD
 			DestroyTupleStore(node);
-			if (((PlanState *) node)->lefttree->chgParam == NULL)
-				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
-=======
-			tuplestore_end(node->tuplestorestate);
-			node->tuplestorestate = NULL;
 			if (node->ss.ps.lefttree->chgParam == NULL)
 				ExecReScan(node->ss.ps.lefttree);
-			node->eof_underlying = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 		else
 		{
@@ -608,7 +594,7 @@ ExecReScanMaterial(MaterialState *node)
 	else
 	{
 		/* In this case we are just passing on the subquery's output */
-		ExecChildRescan(node, exprCtxt);
+		ExecChildRescan(node);
 	}
 }
 
@@ -652,16 +638,6 @@ ExecEagerFreeMaterial(MaterialState *node)
 		}
 		Assert(node->ts_pos);
 
-<<<<<<< HEAD
 		DestroyTupleStore(node);
-=======
-		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.
-		 */
-		if (node->ss.ps.lefttree->chgParam == NULL)
-			ExecReScan(node->ss.ps.lefttree);
-		node->eof_underlying = false;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }

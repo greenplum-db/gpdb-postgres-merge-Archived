@@ -492,7 +492,9 @@ switcheroo_tuplesort_begin_heap_file_readerwriter(
 		const char* rwfile_prefix, bool isWriter,
 		TupleDesc tupDesc,
 		int nkeys, AttrNumber *attNums,
-		Oid *sortOperators, bool *nullsFirstFlags,
+		Oid *sortOperators,
+		Oid *sortCollations,
+		bool *nullsFirstFlags,
 		int workMem, bool randomAccess)
 {
 	switcheroo_Tuplesortstate *state;
@@ -502,7 +504,8 @@ switcheroo_tuplesort_begin_heap_file_readerwriter(
 		state = (switcheroo_Tuplesortstate *)
 			tuplesort_begin_heap_file_readerwriter_mk(ss, rwfile_prefix, isWriter,
 													  tupDesc, nkeys, attNums,
-													  sortOperators, nullsFirstFlags,
+													  sortOperators, sortCollations,
+													  nullsFirstFlags,
 													  workMem, randomAccess);
 	}
 	else
@@ -510,7 +513,8 @@ switcheroo_tuplesort_begin_heap_file_readerwriter(
 		state = (switcheroo_Tuplesortstate *)
 			tuplesort_begin_heap_file_readerwriter_pg(ss, rwfile_prefix, isWriter,
 													  tupDesc, nkeys, attNums,
-													  sortOperators, nullsFirstFlags,
+													  sortOperators, sortCollations,
+													  nullsFirstFlags,
 													  workMem, randomAccess);
 	}
 	state->is_mk_tuplesortstate = gp_enable_mk_sort;

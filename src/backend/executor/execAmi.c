@@ -150,7 +150,7 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_AssertOpState:
-			ExecReScanAssertOp((AssertOpState *) node, exprCtxt);
+			ExecReScanAssertOp((AssertOpState *) node);
 			break;
 
 		case T_BitmapAndState:
@@ -172,23 +172,23 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_ExternalScanState:
-			ExecExternalReScan((ExternalScanState *) node, exprCtxt);
+			ExecReScanExternal((ExternalScanState *) node);
 			break;			
 
 		case T_TableScanState:
-			ExecTableReScan((TableScanState *) node, exprCtxt);
+			ExecReScanTable((TableScanState *) node);
 			break;
 
 		case T_DynamicTableScanState:
-			ExecDynamicTableReScan((DynamicTableScanState *) node, exprCtxt);
+			ExecReScanDynamicTable((DynamicTableScanState *) node);
 			break;
 
 		case T_BitmapTableScanState:
-			ExecBitmapTableReScan((BitmapTableScanState *) node, exprCtxt);
+			ExecReScanBitmapTable((BitmapTableScanState *) node);
 			break;
 
 		case T_DynamicIndexScanState:
-			ExecDynamicIndexReScan((DynamicIndexScanState *) node, exprCtxt);
+			ExecReScanDynamicIndex((DynamicIndexScanState *) node);
 			break;
 
 		case T_BitmapIndexScanState:
@@ -196,7 +196,7 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_DynamicBitmapIndexScanState:
-			ExecDynamicBitmapIndexReScan((DynamicBitmapIndexScanState *) node, exprCtxt);
+			ExecReScanDynamicBitmapIndex((DynamicBitmapIndexScanState *) node);
 			break;
 
 		case T_BitmapHeapScanState:
@@ -212,7 +212,7 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_SequenceState:
-			ExecReScanSequence((SequenceState *) node, exprCtxt);
+			ExecReScanSequence((SequenceState *) node);
 			break;
 
 		case T_FunctionScanState:
@@ -236,7 +236,7 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_BitmapAppendOnlyScanState:
-			ExecBitmapAppendOnlyReScan((BitmapAppendOnlyScanState *) node, exprCtxt);
+			ExecReScanBitmapAppendOnly((BitmapAppendOnlyScanState *) node);
 			break;
 
 		case T_NestLoopState:
@@ -288,18 +288,18 @@ ExecReScan(PlanState *node)
 			break;
 
 		case T_MotionState:
-			ExecReScanMotion((MotionState *) node, exprCtxt);
+			ExecReScanMotion((MotionState *) node);
 			break;
 
 		case T_TableFunctionScan:
-			ExecReScanTableFunction((TableFunctionState *) node, exprCtxt);
+			ExecReScanTableFunction((TableFunctionState *) node);
 			break;
 
 		case T_ShareInputScanState:
-			ExecShareInputScanReScan((ShareInputScanState *) node, exprCtxt);
+			ExecReScanShareInputScan((ShareInputScanState *) node);
 			break;
 		case T_PartitionSelectorState:
-			ExecReScanPartitionSelector((PartitionSelectorState *) node, exprCtxt);
+			ExecReScanPartitionSelector((PartitionSelectorState *) node);
 			break;
 			
 		default:

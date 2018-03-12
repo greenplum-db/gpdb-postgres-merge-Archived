@@ -87,7 +87,6 @@
 #include "utils/workfile_mgr.h"
 #include "utils/faultinjector.h"
 
-<<<<<<< HEAD
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_class.h"
 
@@ -111,10 +110,8 @@
 #include "cdb/cdbtargeteddispatch.h"
 
 extern bool cdbpathlocus_querysegmentcatalogs;
-/* Hooks for plugins to get control in ExecutorStart/Run/End() */
-=======
+
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
 ExecutorRun_hook_type ExecutorRun_hook = NULL;
 ExecutorFinish_hook_type ExecutorFinish_hook = NULL;
@@ -134,10 +131,6 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *dest);
-<<<<<<< HEAD
-=======
-static bool ExecCheckRTEPerms(RangeTblEntry *rte);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
@@ -149,9 +142,6 @@ static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
 
 static void FillSliceTable(EState *estate, PlannedStmt *stmt);
-
-void ExecCheckRTPerms(List *rangeTable);
-void ExecCheckRTEPerms(RangeTblEntry *rte);
 
 static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
 static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
@@ -503,7 +493,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			}
 			else
 			{
-				reltablespace = GetDefaultTablespace(intoClause->rel->istemp);
+				reltablespace = GetDefaultTablespace(intoClause->rel->relpersistence);
 
 				/* Need the real tablespace id for dispatch */
 				if (!OidIsValid(reltablespace))
@@ -1587,7 +1577,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	if (plannedstmt->intoClause != NULL)
 	{
 		Assert(plannedstmt->intoClause->rel);
-		if (plannedstmt->intoClause->rel->istemp)
+		if (plannedstmt->intoClause->rel->relpersistence == RELPERSISTENCE_TEMP)
 			ExecutorMarkTransactionDoesWrites();
 		else
 			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
@@ -1928,7 +1918,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				break;
 		}
 
-<<<<<<< HEAD
 		/*
 		 * Check that relation is a legal target for marking.
 		 *
@@ -1967,11 +1956,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 					break;
 			}
 		}
-=======
+
 		/* Check that relation is a legal target for marking */
 		if (relation)
 			CheckValidRowMarkRel(relation, rc->markType);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
 		erm->relation = relation;
@@ -2310,7 +2298,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  int instrument_options)
 {
-<<<<<<< HEAD
 	/*
 	 * Check valid relkind ... parser and/or planner should have noticed this
 	 * already, but let's make sure.
@@ -2369,8 +2356,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	}
 
 	/* OK, fill in the node */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
 	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -2400,26 +2385,12 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 	resultRelInfo->ri_projectReturning = NULL;
-<<<<<<< HEAD
 	resultRelInfo->ri_aoInsertDesc = NULL;
 	resultRelInfo->ri_aocsInsertDesc = NULL;
 	resultRelInfo->ri_extInsertDesc = NULL;
 	resultRelInfo->ri_deleteDesc = NULL;
 	resultRelInfo->ri_updateDesc = NULL;
 	resultRelInfo->ri_aosegno = InvalidFileSegNumber;
-
-	/*
-	 * If there are indices on the result relation, open them and save
-	 * descriptors in the result relation info, so that we can add new index
-	 * entries for the tuples we add/update.  We need not do this for a
-	 * DELETE, however, since deletion doesn't affect indexes.
-	 */
-	if (Gp_role != GP_ROLE_EXECUTE || Gp_is_writer) /* only needed by the root slice who will do the actual updating */
-	{
-		if (resultRelationDesc->rd_rel->relhasindex &&
-			operation != CMD_DELETE)
-			ExecOpenIndices(resultRelInfo);
-	}
 }
 
 /*
@@ -2470,8 +2441,6 @@ ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
 	}
 
 	Assert(found);
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /*
@@ -4034,14 +4003,10 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  GetUserId(),
 											  tupdesc,
 											  NIL,
-<<<<<<< HEAD
 											  /* relam */ InvalidOid,
 											  relkind,
-											  relstorage,
-=======
-											  RELKIND_RELATION,
 											  into->rel->relpersistence,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+											  relstorage,
 											  false,
 											  false,
 											  true,
@@ -4050,13 +4015,9 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  targetPolicy,  	/* MPP */
 											  reloptions,
 											  true,
-<<<<<<< HEAD
 											  allowSystemTableModsDDL,
 											  /* valid_opts */ !validate_reloptions);
-=======
-											  allowSystemTableMods);
 	Assert(intoRelationId != InvalidOid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	FreeTupleDesc(tupdesc);
 
@@ -4395,7 +4356,6 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 		InitResultRelInfo(resultRelInfo,
 						  resultRelation,
 						  1,
-						  CMD_INSERT,
 						  estate->es_instrument);
 		
 		map_part_attrs(estate->es_result_relations->ri_RelationDesc, 

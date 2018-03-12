@@ -137,7 +137,7 @@ ExecNestLoop(NestLoopState *node)
 			return NULL;
 		}
 
-		ExecReScan(innerPlan, econtext);
+		ExecReScan(innerPlan);
 		ResetExprContext(econtext);
 
 		node->nl_innerSquelchNeeded = false; /* no need to squelch inner since it was completely prefetched */
@@ -225,21 +225,11 @@ ExecNestLoop(NestLoopState *node)
 			 * now rescan the inner plan
 			 */
 			ENL1_printf("rescanning inner plan");
-<<<<<<< HEAD
-
-			/*
-			 * The scan key of the inner plan might depend on the current
-			 * outer tuple (e.g. in index scans), that's why we pass our expr
-			 * context.
-			 */
-			if ( node->require_inner_reset || node->reset_inner )
+			if (node->require_inner_reset || node->reset_inner)
 			{
-				ExecReScan(innerPlan, econtext);
+				ExecReScan(innerPlan);
 				node->reset_inner = false;
 			}
-=======
-			ExecReScan(innerPlan);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		/*
@@ -436,7 +426,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 * inner child, because it will always be rescanned with fresh parameter
 	 * values.
 	 */
-<<<<<<< HEAD
+
 	/*
 	 * XXX ftian: Because share input need to make the whole thing into a tree,
 	 * we can put the underlying share only under one shareinputscan.  During execution,
@@ -450,28 +440,22 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 * Until we find a better way to handle the dependency of ShareInputScan on 
 	 * execution order, this is pretty much what we have to deal with.
 	 */
-	if (nlstate->prefetch_inner)
-	{
-		innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate,
-				eflags | EXEC_FLAG_REWIND);
-		if (!node->shared_outer)
-			outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
-	}
-	else
-	{
-		if (!node->shared_outer)
-			outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
-		innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate,
-				eflags | EXEC_FLAG_REWIND);
-	}
-=======
-	outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
 	if (node->nestParams == NIL)
 		eflags |= EXEC_FLAG_REWIND;
 	else
 		eflags &= ~EXEC_FLAG_REWIND;
-	innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate, eflags);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	if (nlstate->prefetch_inner)
+	{
+		innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate, eflags);
+		if (!node->shared_outer)
+			outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
+	}
+	else
+	{
+		if (!node->shared_outer)
+			outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
+		innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate, eflags);
+	}
 
 	/*
 	 * tuple table initialization

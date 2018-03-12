@@ -96,17 +96,10 @@ static Datum ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate,
 					 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
-<<<<<<< HEAD
-static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
-			  bool *isNull, ExprDoneCond *isDone);
-=======
 static Datum ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
 				  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParamExtern(ExprState *exprstate, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
-static void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
-			MemoryContext fcacheCxt, bool needDescForSets);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static void ShutdownFuncExpr(Datum arg);
 static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
 				   TupleDesc *cache_field, ExprContext *econtext);
@@ -1157,29 +1150,10 @@ ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
 	prm = &(econtext->ecxt_param_exec_vals[thisParamId]);
 	if (prm->execPlan != NULL)
 	{
-<<<<<<< HEAD
-		/*
-		 * PARAM_EXEC params (internal executor parameters) are stored in the
-		 * ecxt_param_exec_vals array, and can be accessed by array index.
-		 */
-		ParamExecData *prm;
-
-		prm = &(econtext->ecxt_param_exec_vals[thisParamId]);
-		if (prm->execPlan != NULL)
-		{
-			/* Parameter not evaluated yet, so go do it */
-			ExecSetParamPlan(prm->execPlan, econtext, NULL);
-			/* ExecSetParamPlan should have processed this param... */
-			Assert(prm->execPlan == NULL);
-		}
-		*isNull = prm->isnull;
-		return prm->value;
-=======
 		/* Parameter not evaluated yet, so go do it */
-		ExecSetParamPlan(prm->execPlan, econtext);
+		ExecSetParamPlan(prm->execPlan, econtext, NULL);
 		/* ExecSetParamPlan should have processed this param... */
 		Assert(prm->execPlan == NULL);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 	*isNull = prm->isnull;
 	return prm->value;
@@ -1363,13 +1337,8 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 /*
  * init_fcache - initialize a FuncExprState node during first use
  */
-<<<<<<< HEAD
 void
-init_fcache(Oid foid, FuncExprState *fcache,
-=======
-static void
 init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			MemoryContext fcacheCxt, bool needDescForSets)
 {
 	AclResult	aclresult;
@@ -6486,6 +6455,7 @@ ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull)
 	Expr		   *aexpr;
 	Oid				argtype;
 	int32			argtypmod;
+	Oid				argcollation;
 	Const		   *result;
 
 	/* argument number sanity check */
@@ -6509,8 +6479,9 @@ ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull)
 				 errmsg("unable to resolve function argument type"),
 				 errposition(exprLocation((Node *) aexpr))));
 	argtypmod = exprTypmod((Node *) aexpr);
+	argcollation = exprCollation((Node *) aexpr);
 
-	result = (Const *) evaluate_expr(aexpr, argtype, argtypmod);
+	result = (Const *) evaluate_expr(aexpr, argtype, argtypmod, argcollation);
 	/* evaluate_expr always returns Const */
 	Assert(IsA(result, Const));
 

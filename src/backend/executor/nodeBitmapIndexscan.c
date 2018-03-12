@@ -168,8 +168,9 @@ ExecReScanBitmapIndexScan(BitmapIndexScanState *node)
 
 	/* reset index scan */
 	if (node->biss_RuntimeKeysReady)
-<<<<<<< HEAD
-		index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
+		index_rescan(node->biss_ScanDesc,
+					 node->biss_ScanKeys, node->biss_NumScanKeys,
+					 NULL, 0);
 
 	/* Sanity check */
 	if (node->biss_result &&
@@ -185,11 +186,6 @@ ExecReScanBitmapIndexScan(BitmapIndexScanState *node)
 		tbm_generic_free(node->biss_result);
 		node->biss_result = NULL;
 	}
-=======
-		index_rescan(node->biss_ScanDesc,
-					 node->biss_ScanKeys, node->biss_NumScanKeys,
-					 NULL, 0);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 /* ----------------------------------------------------------------

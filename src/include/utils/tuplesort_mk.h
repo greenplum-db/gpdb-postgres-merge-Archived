@@ -32,6 +32,10 @@ extern Tuplesortstate_mk *tuplesort_begin_heap_mk(ScanState * ss,
 					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
 
+extern Tuplesortstate *tuplesort_begin_cluster_mk(TupleDesc tupDesc,
+						Relation indexRel,
+						int workMem, bool randomAccess);
+
 extern Tuplesortstate_mk *tuplesort_begin_index_mk(Relation indexRel,
 					  bool enforceUnique,
 					  int workMem, bool randomAccess);
@@ -47,7 +51,8 @@ extern Tuplesortstate_mk *tuplesort_begin_heap_file_readerwriter_mk(
 		const char* rwfile_prefix, bool isWriter,
 		TupleDesc tupDesc,
 		int nkeys, AttrNumber *attNums,
-		Oid *sortOperators, bool *nullsFirstFlags,
+		Oid *sortOperators, Oid *sortCollations,
+		bool *nullsFirstFlags,
 		int workMem, bool randomAccess);
 
 extern void cdb_tuplesort_init_mk(Tuplesortstate_mk *state, int unique,

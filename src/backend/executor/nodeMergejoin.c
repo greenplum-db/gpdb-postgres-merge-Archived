@@ -706,7 +706,7 @@ ExecMergeJoin(MergeJoinState *node)
 		innerTupleSlot = ExecProcNode(innerPlan);
 		node->mj_InnerTupleSlot = innerTupleSlot;
 
-		ExecReScan(innerPlan, econtext);
+		ExecReScan(innerPlan);
 		ResetExprContext(econtext);
 
 		node->mj_squelchInner = false; /* we will never need to Squelch the inner, we've fetched it all */

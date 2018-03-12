@@ -126,115 +126,7 @@
 #include "cdb/cdbexplain.h"
 #include "cdb/cdbvars.h" /* mpp_hybrid_hash_agg */
 
-<<<<<<< HEAD
 #define IS_HASHAGG(aggstate) (((Agg *) (aggstate)->ss.ps.plan)->aggstrategy == AGG_HASHED)
-=======
-/*
- * AggStatePerAggData - per-aggregate working state for the Agg scan
- */
-typedef struct AggStatePerAggData
-{
-	/*
-	 * These values are set up during ExecInitAgg() and do not change
-	 * thereafter:
-	 */
-
-	/* Links to Aggref expr and state nodes this working state is for */
-	AggrefExprState *aggrefstate;
-	Aggref	   *aggref;
-
-	/* number of input arguments for aggregate function proper */
-	int			numArguments;
-
-	/* number of inputs including ORDER BY expressions */
-	int			numInputs;
-
-	/* Oids of transfer functions */
-	Oid			transfn_oid;
-	Oid			finalfn_oid;	/* may be InvalidOid */
-
-	/*
-	 * fmgr lookup data for transfer functions --- only valid when
-	 * corresponding oid is not InvalidOid.  Note in particular that fn_strict
-	 * flags are kept here.
-	 */
-	FmgrInfo	transfn;
-	FmgrInfo	finalfn;
-
-	/* Input collation derived for aggregate */
-	Oid			aggCollation;
-
-	/* number of sorting columns */
-	int			numSortCols;
-
-	/* number of sorting columns to consider in DISTINCT comparisons */
-	/* (this is either zero or the same as numSortCols) */
-	int			numDistinctCols;
-
-	/* deconstructed sorting information (arrays of length numSortCols) */
-	AttrNumber *sortColIdx;
-	Oid		   *sortOperators;
-	Oid		   *sortCollations;
-	bool	   *sortNullsFirst;
-
-	/*
-	 * fmgr lookup data for input columns' equality operators --- only
-	 * set/used when aggregate has DISTINCT flag.  Note that these are in
-	 * order of sort column index, not parameter index.
-	 */
-	FmgrInfo   *equalfns;		/* array of length numDistinctCols */
-
-	/*
-	 * initial value from pg_aggregate entry
-	 */
-	Datum		initValue;
-	bool		initValueIsNull;
-
-	/*
-	 * We need the len and byval info for the agg's input, result, and
-	 * transition data types in order to know how to copy/delete values.
-	 *
-	 * Note that the info for the input type is used only when handling
-	 * DISTINCT aggs with just one argument, so there is only one input type.
-	 */
-	int16		inputtypeLen,
-				resulttypeLen,
-				transtypeLen;
-	bool		inputtypeByVal,
-				resulttypeByVal,
-				transtypeByVal;
-
-	/*
-	 * Stuff for evaluation of inputs.	We used to just use ExecEvalExpr, but
-	 * with the addition of ORDER BY we now need at least a slot for passing
-	 * data to the sort object, which requires a tupledesc, so we might as
-	 * well go whole hog and use ExecProject too.
-	 */
-	TupleDesc	evaldesc;		/* descriptor of input tuples */
-	ProjectionInfo *evalproj;	/* projection machinery */
-
-	/*
-	 * Slots for holding the evaluated input arguments.  These are set up
-	 * during ExecInitAgg() and then used for each input row.
-	 */
-	TupleTableSlot *evalslot;	/* current input tuple */
-	TupleTableSlot *uniqslot;	/* used for multi-column DISTINCT */
-
-	/*
-	 * These values are working state that is initialized at the start of an
-	 * input tuple group and updated for each input tuple.
-	 *
-	 * For a simple (non DISTINCT/ORDER BY) aggregate, we just feed the input
-	 * values straight to the transition function.	If it's DISTINCT or
-	 * requires ORDER BY, we pass the input values into a Tuplesort object;
-	 * then at completion of the input tuple group, we scan the sorted values,
-	 * eliminate duplicates if needed, and run the transition function on the
-	 * rest.
-	 */
-
-	Tuplesortstate *sortstate;	/* sort object, if DISTINCT or ORDER BY */
-}	AggStatePerAggData;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * AggStatePerAggData -- per-aggregate working state
@@ -364,13 +256,13 @@ initialize_aggregates(AggState *aggstate,
 			 * otherwise sort the full tuple.  (See comments for
 			 * process_ordered_aggregate_single.)
 			 */
-<<<<<<< HEAD
 			if (peraggstate->numInputs == 1)
 			{
 				peraggstate->sortstate =
 					tuplesort_begin_datum(&aggstate->ss,
 										  peraggstate->evaldesc->attrs[0]->atttypid,
 										  peraggstate->sortOperators[0],
+										  peraggstate->sortCollations[0],
 										  peraggstate->sortNullsFirst[0],
 										  PlanStateOperatorMemKB((PlanState *) aggstate), false);
 			}
@@ -381,6 +273,7 @@ initialize_aggregates(AggState *aggstate,
 										 peraggstate->evaldesc,
 										 peraggstate->numSortCols, peraggstate->sortColIdx,
 										 peraggstate->sortOperators,
+										 peraggstate->sortCollations,
 										 peraggstate->sortNullsFirst,
 										 PlanStateOperatorMemKB((PlanState *) aggstate), false);
 			}
@@ -405,22 +298,6 @@ initialize_aggregates(AggState *aggstate,
 								   unique,
 								   sort_flags, maxdistinct);
 			}
-=======
-			peraggstate->sortstate =
-				(peraggstate->numInputs == 1) ?
-				tuplesort_begin_datum(peraggstate->evaldesc->attrs[0]->atttypid,
-									  peraggstate->sortOperators[0],
-									  peraggstate->sortCollations[0],
-									  peraggstate->sortNullsFirst[0],
-									  work_mem, false) :
-				tuplesort_begin_heap(peraggstate->evaldesc,
-									 peraggstate->numSortCols,
-									 peraggstate->sortColIdx,
-									 peraggstate->sortOperators,
-									 peraggstate->sortCollations,
-									 peraggstate->sortNullsFirst,
-									 work_mem, false);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 
 		/*
@@ -568,20 +445,12 @@ invoke_agg_trans_func(AggState *aggstate,
 	/*
 	 * OK to call the transition function
 	 */
-<<<<<<< HEAD
 	InitFunctionCallInfoData(*fcinfo, transfn,
 							 numTransInputs + 1,
+							 peraggstate->aggCollation,
 							 (void *) funcctx, NULL);
 	fcinfo->arg[0] = transValue;
 	fcinfo->argnull[0] = *transValueIsNull;
-=======
-	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
-							 numArguments + 1,
-							 peraggstate->aggCollation,
-							 (void *) aggstate, NULL);
-	fcinfo->arg[0] = pergroupstate->transValue;
-	fcinfo->argnull[0] = pergroupstate->transValueIsNull;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	newVal = FunctionCallInvoke(fcinfo);
 
@@ -936,16 +805,12 @@ finalize_aggregate(AggState *aggstate,
 	{
 		int			numFinalArgs = peraggstate->numFinalArgs;
 
-<<<<<<< HEAD
 		/* set up aggstate->curperagg for AggGetAggref() */
 		aggstate->curperagg = peraggstate;
 
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
-=======
-		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn), 1,
 								 peraggstate->aggCollation,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 								 (void *) aggstate, NULL);
 
 		/* Fill in the transition state value */
@@ -1034,37 +899,6 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 }
 
 /*
-<<<<<<< HEAD
-=======
- * Initialize the hash table to empty.
- *
- * The hash table always lives in the aggcontext memory context.
- */
-static void
-build_hash_table(AggState *aggstate)
-{
-	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
-	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	Size		entrysize;
-
-	Assert(node->aggstrategy == AGG_HASHED);
-	Assert(node->numGroups > 0);
-
-	entrysize = sizeof(AggHashEntryData) +
-		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
-
-	aggstate->hashtable = BuildTupleHashTable(node->numCols,
-											  node->grpColIdx,
-											  aggstate->eqfunctions,
-											  aggstate->hashfunctions,
-											  node->numGroups,
-											  entrysize,
-											  aggstate->aggcontext,
-											  tmpmem);
-}
-
-/*
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Create a list of the tuple columns that actually need to be stored in
  * hashtable entries.  The incoming tuples from the child plan node will
  * contain grouping columns, other columns referenced in our targetlist and
@@ -2249,15 +2083,13 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			fmgr_info_set_expr((Node *) finalfnexpr, &peraggstate->finalfn);
 		}
 
-<<<<<<< HEAD
 		if (OidIsValid(peraggstate->prelimfn_oid))
 		{
 			fmgr_info(peraggstate->prelimfn_oid, &peraggstate->prelimfn);
 			peraggstate->prelimfn.fn_expr = (Node *) prelimfnexpr;
 		}
-=======
+
 		peraggstate->aggCollation = aggref->inputcollid;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		get_typlenbyval(aggref->aggtype,
 						&peraggstate->resulttypeLen,
@@ -2506,57 +2338,7 @@ ExecReScanAgg(AggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
-<<<<<<< HEAD
 	ExecEagerFreeAgg(node);
-=======
-	node->agg_done = false;
-
-	node->ss.ps.ps_TupFromTlist = false;
-
-	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
-	{
-		/*
-		 * In the hashed case, if we haven't yet built the hash table then we
-		 * can just return; nothing done yet, so nothing to undo. If subnode's
-		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
-		 * else no reason to re-scan it at all.
-		 */
-		if (!node->table_filled)
-			return;
-
-		/*
-		 * If we do have the hash table and the subplan does not have any
-		 * parameter changes, then we can just rescan the existing hash table;
-		 * no need to build it again.
-		 */
-		if (node->ss.ps.lefttree->chgParam == NULL)
-		{
-			ResetTupleHashIterator(node->hashtable, &node->hashiter);
-			return;
-		}
-	}
-
-	/* Make sure we have closed any open tuplesorts */
-	for (aggno = 0; aggno < node->numaggs; aggno++)
-	{
-		AggStatePerAgg peraggstate = &node->peragg[aggno];
-
-		if (peraggstate->sortstate)
-			tuplesort_end(peraggstate->sortstate);
-		peraggstate->sortstate = NULL;
-	}
-
-	/* Release first tuple of group, if we have made a copy */
-	if (node->grp_firstTuple != NULL)
-	{
-		heap_freetuple(node->grp_firstTuple);
-		node->grp_firstTuple = NULL;
-	}
-
-	/* Forget current agg values */
-	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
-	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Release all temp storage. Note that with AGG_HASHED, the hash table is

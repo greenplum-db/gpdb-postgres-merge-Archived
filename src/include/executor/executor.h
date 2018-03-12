@@ -240,6 +240,7 @@ extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void standard_ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
+extern bool ExecCheckRTEPerms(RangeTblEntry *rte);
 extern void CheckValidResultRel(Relation resultRel, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Relation resultRelationDesc,
@@ -314,8 +315,8 @@ extern Datum GetAttributeByNum(HeapTupleHeader tuple, AttrNumber attrno,
 				  bool *isNull);
 extern Datum GetAttributeByName(HeapTupleHeader tuple, const char *attname,
 				   bool *isNull);
-extern void init_fcache(Oid foid, FuncExprState *fcache,
-						MemoryContext fcacheCxt, bool needDescForSets);
+extern void init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
+			MemoryContext fcacheCxt, bool needDescForSets);
 extern ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 									 List *argList, 
 									 ExprContext *econtext);
