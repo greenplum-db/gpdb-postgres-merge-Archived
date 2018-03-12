@@ -36,11 +36,7 @@ kwlookup.c: % : $(top_srcdir)/src/backend/parser/%
 
 all: pg_dump pg_restore pg_dumpall
 
-<<<<<<< HEAD
-pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(KEYWRDOBJS) $(libpq_builddir)/libpq.a
-=======
 pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(KEYWRDOBJS) | submake-libpq submake-libpgport
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	$(CC) $(CFLAGS) pg_dump.o common.o pg_dump_sort.o $(KEYWRDOBJS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 pg_restore: pg_restore.o $(OBJS) $(KEYWRDOBJS) | submake-libpq submake-libpgport
