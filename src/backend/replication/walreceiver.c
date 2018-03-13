@@ -22,14 +22,8 @@
  * normal operation.
  *
  * This file contains the server-facing parts of walreceiver. The libpq-
-<<<<<<< HEAD
- * specific parts are in the libpqwalreceiver module.
-=======
  * specific parts are in the libpqwalreceiver module. It's loaded
  * dynamically to avoid linking the server with libpq.
- *
- * Portions Copyright (c) 2010-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *

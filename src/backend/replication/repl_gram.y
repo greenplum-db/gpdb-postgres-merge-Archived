@@ -3,11 +3,7 @@
  *
  * repl_gram.y				- Parser for the replication commands
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,19 +15,12 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/xlogdefs.h"
 #include "nodes/makefuncs.h"
 #include "nodes/replnodes.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
 
-=======
-#include "nodes/makefuncs.h"
-#include "nodes/parsenodes.h"
-#include "replication/replnodes.h"
-#include "replication/walsender.h"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Result of the parsing is returned here */
 Node *replication_parse_result;
@@ -85,24 +74,16 @@ Node *replication_parse_result;
 %token K_PROGRESS
 %token K_FAST
 %token K_NOWAIT
-<<<<<<< HEAD
 %token K_EXCLUDE
 %token K_WAL
 %token K_START_REPLICATION
 %token K_SYNC
-=======
-%token K_WAL
-%token K_START_REPLICATION
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 %type <node>	command
 %type <node>	base_backup start_replication identify_system
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
-<<<<<<< HEAD
 %type <boolval> sync_opt
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 %%
 
 firstcmd: command opt_semicolon
@@ -144,11 +125,7 @@ base_backup:
 			;
 
 base_backup_opt_list: base_backup_opt_list base_backup_opt { $$ = lappend($1, $2); }
-<<<<<<< HEAD
 			| /* EMPTY */			{ $$ = NIL; }
-=======
-			| /* EMPTY */           { $$ = NIL; }
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 base_backup_opt:
 			K_LABEL SCONST
@@ -176,46 +153,33 @@ base_backup_opt:
 				  $$ = makeDefElem("nowait",
 						   (Node *)makeInteger(TRUE));
 				}
-<<<<<<< HEAD
 			| K_EXCLUDE SCONST
 				{
 				  $$ = makeDefElem("exclude",
 						  (Node *)makeString($2));
 				}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			;
 
 /*
  * START_REPLICATION %X/%X
  */
 start_replication:
-<<<<<<< HEAD
 			K_START_REPLICATION RECPTR sync_opt
-=======
-			K_START_REPLICATION RECPTR
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				{
 					StartReplicationCmd *cmd;
 
 					cmd = makeNode(StartReplicationCmd);
 					cmd->startpoint = $2;
-<<<<<<< HEAD
 					cmd->sync = $3;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 					$$ = (Node *) cmd;
 				}
 			;
-<<<<<<< HEAD
 
 sync_opt:
 		K_SYNC				{ $$ = true; }
 		| /* EMPTY */		{ $$ = false; }
 		;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 %%
 
 #include "repl_scanner.c"
