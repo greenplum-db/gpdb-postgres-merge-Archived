@@ -349,15 +349,16 @@ static int cdbexplain_collectExtraText(PlanState *planstate,
 									   StringInfo notebuf);
 static int cdbexplain_countLeafPartTables(PlanState *planstate);
 
-static void show_motion_keys(Plan *plan, List *hashExpr, int nkeys,
+static void show_motion_keys(PlanState *planstate, List *hashExpr, int nkeys,
 							 AttrNumber *keycols, const char *qlabel,
-							 ExplainState *es);
-static void explain_partition_selector(PartitionSelector *ps, Plan *parent,
-						   ExplainState *es);
-static void show_grouping_keys(Plan *plan, int numCols,
+							 List *ancestors, ExplainState *es);
+static void explain_partition_selector(PartitionSelector *ps,
+						   PlanState *parentstate,
+						   List *ancestors, ExplainState *es);
+static void show_grouping_keys(PlanState *planstate, int numCols,
 							   AttrNumber *subplanColIdx,
 							   const char  *qlabel,
-							   ExplainState *es);
+							   List *ancestors, ExplainState *es);
 
 /*
  * Convert the sort method in string to corresponding
@@ -2160,9 +2161,10 @@ cdbexplain_countLeafPartTables(PlanState *planstate)
  * Show the hash and merge keys for a Motion node.
  */
 static void
-show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
-			     const char *qlabel, ExplainState *es)
+show_motion_keys(PlanState *planstate, List *hashExpr, int nkeys, AttrNumber *keycols,
+			     const char *qlabel, List *ancestors, ExplainState *es)
 {
+	Plan	   *plan = planstate->plan;
 	List	   *context;
 	char	   *exprstr;
 	bool		useprefix = list_length(es->rtable) > 1;
@@ -2173,10 +2175,9 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
 		return;
 
 	/* Set up deparse context */
-	context = deparse_context_for_plan((Node *) plan,
-									   (Node *) outerPlan(plan),
-									   es->rtable,
-									   es->pstmt->subplans);
+	context = deparse_context_for_planstate((Node *) planstate,
+											ancestors,
+											es->rtable);
 
     /* Merge Receive ordering key */
     for (keyno = 0; keyno < nkeys; keyno++)
@@ -2216,8 +2217,8 @@ show_motion_keys(Plan *plan, List *hashExpr, int nkeys, AttrNumber *keycols,
  * expression and number of statically selected partitions, if available.
  */
 static void
-explain_partition_selector(PartitionSelector *ps, Plan *parent,
-						   ExplainState *es)
+explain_partition_selector(PartitionSelector *ps, PlanState *parentstate,
+						   List *ancestors, ExplainState *es)
 {
 	if (ps->printablePredicate)
 	{
@@ -2226,10 +2227,9 @@ explain_partition_selector(PartitionSelector *ps, Plan *parent,
 		char	   *exprstr;
 
 		/* Set up deparsing context */
-		context = deparse_context_for_plan((Node *) parent,
-										   (Node *) outerPlan(parent),
-										   es->rtable,
-										   es->pstmt->subplans);
+		context = deparse_context_for_planstate((Node *) parentstate,
+												ancestors,
+												es->rtable);
 		useprefix = list_length(es->rtable) > 1;
 
 		/* Deparse the expression */
@@ -2251,9 +2251,10 @@ explain_partition_selector(PartitionSelector *ps, Plan *parent,
  * Show GROUP BY keys for an Agg or Group node.
  */
 static void
-show_grouping_keys(Plan *plan, int nkeys, AttrNumber *subplanColIdx,
-                   const char *qlabel, ExplainState *es)
+show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
+                   const char *qlabel, List *ancestors, ExplainState *es)
 {
+	Plan	   *plan = planstate->plan;
     Plan       *subplan = plan->lefttree;
     List	   *context;
 	List	   *result = NIL;
@@ -2278,10 +2279,9 @@ show_grouping_keys(Plan *plan, int nkeys, AttrNumber *subplanColIdx,
 		outerPlan = (Node *) llast(((Sequence *) subplan)->subplans);
 
 	/* Set up deparse context */
-	context = deparse_context_for_plan((Node *) subplan,
-									   outerPlan,
-									   es->rtable,
-									   es->pstmt->subplans);
+	context = deparse_context_for_planstate((Node *) subplan,
+											ancestors,
+											es->rtable);
 
 	if (IsA(plan, Agg))
 	{
