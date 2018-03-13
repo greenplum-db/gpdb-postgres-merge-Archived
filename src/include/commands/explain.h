@@ -43,7 +43,7 @@ typedef struct ExplainState
     struct CdbExplain_ShowStatCtx  *showstatctx;    /* EXPLAIN ANALYZE info */
     Slice          *currentSlice;   /* slice whose nodes we are visiting */
 
-	Plan	   *parentPlan;
+	PlanState  *parentPlanState;
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */

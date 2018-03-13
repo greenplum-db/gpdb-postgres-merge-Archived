@@ -97,35 +97,25 @@ static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 static void show_sort_keys_common(PlanState *planstate,
 					  int nkeys, AttrNumber *keycols,
 					  List *ancestors, ExplainState *es);
-static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
-					 ExplainState *es);
-static void show_windowagg_keys(WindowAggState *waggstate, ExplainState *es);
+					 List *ancestors, ExplainState *es);
+static void show_sort_info(SortState *sortstate, ExplainState *es);
+static void show_windowagg_keys(WindowAggState *waggstate, List *ancestors, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
-<<<<<<< HEAD
-static void ExplainMemberNodes(List *plans, PlanState **planstate,
-				   Plan *outer_plan, ExplainState *es);
-static void ExplainSubPlans(List *plans, const char *relationship,
-				ExplainState *es, SliceTable *sliceTable);
-static void ExplainProperty(const char *qlabel, const char *value,
-				bool numeric, ExplainState *es);
-
-static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
-									  const char *fmt,...);
-=======
 static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
-				const char *relationship, ExplainState *es);
+				const char *relationship, ExplainState *es, SliceTable *sliceTable);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
+									  const char *fmt,...);
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es);
 static void ExplainCloseGroup(const char *objtype, const char *labelname,
@@ -824,11 +814,6 @@ show_dispatch_info(Slice *slice, ExplainState *es)
  * ancestors is a list of parent PlanState nodes, most-closely-nested first.
  * These are needed in order to interpret PARAM_EXEC Params.
  *
-<<<<<<< HEAD
- * es->parentPlan points to the parent plan node and can be used by PartitionSelector
- * to deparse its printablePredicate. (This is passed in ExplainState rather than
- * as a normal argument, to avoid changing the function signature from upstream.)
-=======
  * relationship describes the relationship of this plan node to its parent
  * (eg, "Outer", "Inner"); it can be null at top level.  plan_name is an
  * optional name to be attached to the node.
@@ -837,19 +822,20 @@ show_dispatch_info(Slice *slice, ExplainState *es)
  * want it to change at plan-node boundaries.  In non-text formats, es->indent
  * corresponds to the nesting depth of logical output groups, and therefore
  * is controlled by ExplainOpenGroup/ExplainCloseGroup.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ *
+ * es->parentPlanState points to the parent planstate node and can be used by
+ * PartitionSelector to deparse its printablePredicate. (This is passed in
+ * ExplainState rather than as a normal argument, to avoid changing the
+ * function signature from upstream.)
  */
 static void
 ExplainNode(PlanState *planstate, List *ancestors,
 			const char *relationship, const char *plan_name,
 			ExplainState *es)
 {
-<<<<<<< HEAD
-	Plan	   *parentPlan;
-    Slice      *save_currentSlice = es->currentSlice;    /* save */
-=======
 	Plan	   *plan = planstate->plan;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	PlanState  *parentplanstate;
+    Slice      *save_currentSlice = es->currentSlice;    /* save */
 	const char *pname;			/* node type name for text output */
 	const char *sname;			/* node type name for non-text output */
 	const char *strategy = NULL;
@@ -864,11 +850,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 									  per-segment estimates */
 
 	/* Remember who called us. */
-	parentPlan = es->parentPlan;
-	es->parentPlan = plan;
-
-<<<<<<< HEAD
-	Assert(plan);
+	parentplanstate = es->parentPlanState;
+	es->parentPlanState = planstate;
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -912,8 +895,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 												  pMotion->motionID);
 	}
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	switch (nodeTag(plan))
 	{
 		case T_Result:
@@ -1520,7 +1501,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						   "Index Cond", planstate, ancestors, es);
 			break;
 		case T_BitmapHeapScan:
-<<<<<<< HEAD
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
 		{
@@ -1537,7 +1517,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			}
 
 			show_scan_qual(bitmapqualorig,
-						   "Recheck Cond", plan, outer_plan, es);
+						   "Recheck Cond", planstate, ancestors, es);
 		}
 			/* FALL THRU */
 		case T_SeqScan:
@@ -1546,13 +1526,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_AOCSScan:
 		case T_TableScan:
 		case T_DynamicTableScan:
-		case T_FunctionScan:
-=======
-			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
-						   "Recheck Cond", planstate, ancestors, es);
-			/* FALL THRU */
-		case T_SeqScan:
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_WorkTableScan:
@@ -1597,7 +1570,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		case T_HashJoin:
-<<<<<<< HEAD
 		{
 			HashJoin *hash_join = (HashJoin *) plan;
 			/*
@@ -1609,49 +1581,37 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				cond_to_show = hash_join->hashqualclauses;
 
 			show_upper_qual(cond_to_show,
-							"Hash Cond", plan, es);
-=======
-			show_upper_qual(((HashJoin *) plan)->hashclauses,
 							"Hash Cond", planstate, ancestors, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
 							"Join Filter", planstate, ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		}
 		case T_Agg:
-<<<<<<< HEAD
-			show_upper_qual(plan->qual, "Filter", plan, es);
-			show_grouping_keys(plan,
+			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			show_grouping_keys(planstate,
 						       ((Agg *) plan)->numCols,
 						       ((Agg *) plan)->grpColIdx,
 						       "Group Key",
-						       es);
+						       ancestors, es);
 			break;
 		case T_WindowAgg:
-			show_windowagg_keys((WindowAggState *) planstate, es);
+			show_windowagg_keys((WindowAggState *) planstate, ancestors, es);
 			break;
 		case T_TableFunctionScan:
-			show_scan_qual(plan->qual, "Filter", plan, outer_plan, es);
+			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			/* TODO: Partitioning and ordering information */
 			break;
 		case T_Unique:
-			show_motion_keys(plan,
+			show_motion_keys(planstate,
                              NIL,
 						     ((Unique *) plan)->numCols,
 						     ((Unique *) plan)->uniqColIdx,
 						     "Group Key",
-						     es);
-			break;
-		case T_Sort:
-			show_sort_keys((SortState *) planstate, es);
-=======
-		case T_Group:
-			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+						     ancestors, es);
 			break;
 		case T_Sort:
 			show_sort_keys((SortState *) planstate, ancestors, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			show_sort_info((SortState *) planstate, es);
 			break;
 		case T_MergeAppend:
@@ -1667,26 +1627,27 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			show_hash_info((HashState *) planstate, es);
 			break;
 		case T_Repeat:
-			show_upper_qual(plan->qual, "Filter", plan, es);
+			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			break;
 		case T_Motion:
 			{
 				Motion	   *pMotion = (Motion *) plan;
 
 				if (pMotion->sendSorted || pMotion->motionType == MOTIONTYPE_HASH)
-					show_motion_keys(plan,
-							pMotion->hashExpr,
-							pMotion->numSortCols,
-							pMotion->sortColIdx,
-							"Merge Key",
-							es);
+					show_motion_keys(planstate,
+									 pMotion->hashExpr,
+									 pMotion->numSortCols,
+									 pMotion->sortColIdx,
+									 "Merge Key",
+									 ancestors, es);
 			}
 			break;
 		case T_AssertOp:
-			show_upper_qual(plan->qual, "Assert Cond", plan, es);
+			show_upper_qual(plan->qual, "Assert Cond", planstate, ancestors, es);
 			break;
 		case T_PartitionSelector:
-			explain_partition_selector((PartitionSelector *) plan, parentPlan, es);
+			explain_partition_selector((PartitionSelector *) plan,
+									   parentplanstate, ancestors, es);
 			break;
 		default:
 			break;
@@ -1796,19 +1757,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (plan->initPlan)
 		ExplainSubPlans(planstate->initPlan, ancestors, "InitPlan", es, planstate->state->es_sliceTable);
 
-<<<<<<< HEAD
 	/* lefttree */
 	if (outerPlan(plan) && !skip_outer)
 	{
-		/*
-		 * Ordinarily we don't pass down our own outer_plan value to our child
-		 * nodes, but in bitmap scan trees we must, since the bottom
-		 * BitmapIndexScan nodes may have outer references.
-		 */
-		ExplainNode(outerPlan(plan), outerPlanState(planstate),
-					(IsA(plan, BitmapHeapScan) ||
-					 IsA(plan, BitmapAppendOnlyScan) ||
-					 IsA(plan, BitmapTableScan)) ? outer_plan : NULL,
+		ExplainNode(outerPlanState(planstate), ancestors,
 					"Outer", NULL, es);
 	}
     else if (skip_outer)
@@ -1818,12 +1770,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		appendStringInfoString(es->str, skip_outer_msg);
 		appendStringInfo(es->str, "\n");
     }
-=======
-	/* lefttree */
-	if (outerPlanState(planstate))
-		ExplainNode(outerPlanState(planstate), ancestors,
-					"Outer", NULL, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* righttree */
 	if (innerPlanState(planstate))
@@ -1851,7 +1797,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Sequence:
 			ExplainMemberNodes(((Sequence *) plan)->subplans,
 							   ((SequenceState *) planstate)->subplans,
-							   outer_plan, es);
+							   ancestors, es);
 			break;
 		case T_BitmapAnd:
 			ExplainMemberNodes(((BitmapAnd *) plan)->bitmapplans,
@@ -1873,7 +1819,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	/* subPlan-s */
 	if (planstate->subPlan)
-		ExplainSubPlans(planstate->subPlan, ancestors, "SubPlan", es);
+		ExplainSubPlans(planstate->subPlan, ancestors, "SubPlan", es, NULL);
 
 	/* end of child plans */
 	if (haschildren)
@@ -2013,18 +1959,13 @@ show_upper_qual(List *qual, const char *qlabel,
  * Show the sort keys for a Sort node.
  */
 static void
-<<<<<<< HEAD
-show_sort_keys(SortState *sortstate, ExplainState *es)
+show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 {
 	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
-	const char *SortKeystr = "Sort Key";
 
-	if (plan->noduplicates)
-		SortKeystr = "Sort Key (Distinct)";
-
-	show_sort_group_keys((PlanState *) sortstate, SortKeystr,
-						 plan->numCols, plan->sortColIdx,
-						 es);
+	show_sort_keys_common((PlanState *) sortstate,
+						  plan->numCols, plan->sortColIdx,
+						  ancestors, es);
 }
 
 /*
@@ -2103,7 +2044,7 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 }
 
 static void
-show_windowagg_keys(WindowAggState *waggstate, ExplainState *es)
+show_windowagg_keys(WindowAggState *waggstate, List *ancestors, ExplainState *es)
 {
 	WindowAgg *window = (WindowAgg *) waggstate->ss.ps.plan;
 
@@ -2111,33 +2052,16 @@ show_windowagg_keys(WindowAggState *waggstate, ExplainState *es)
 	{
 		show_sort_group_keys((PlanState *) waggstate, "Partition By",
 							 window->partNumCols, window->partColIdx,
-							 es);
+							 ancestors, es);
 	}
 
 	show_sort_group_keys((PlanState *) waggstate, "Order By",
 						 window->ordNumCols, window->ordColIdx,
-						 es);
+						 ancestors, es);
 	/* XXX don't show framing for now */
 }
 
 
-/*
- * Common code to show sort/group keys, which are represented in plan nodes
- * as arrays of targetlist indexes
- */
-static void
-show_sort_group_keys(PlanState *planstate, const char *qlabel,
-					 int nkeys, AttrNumber *keycols,
-					 ExplainState *es)
-=======
-show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
-{
-	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
-
-	show_sort_keys_common((PlanState *) sortstate,
-						  plan->numCols, plan->sortColIdx,
-						  ancestors, es);
-}
 
 /*
  * Likewise, for a MergeAppend node.
@@ -2156,7 +2080,6 @@ show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 static void
 show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 					  List *ancestors, ExplainState *es)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 {
 	Plan	   *plan = planstate->plan;
 	List	   *context;
@@ -2164,21 +2087,21 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 	bool		useprefix;
 	int			keyno;
 	char	   *exprstr;
+	const char *SortKeystr;
 
 	if (nkeys <= 0)
 		return;
 
+	if (IsA(planstate, SortState) &&
+		((SortState *) planstate)->noduplicates)
+		SortKeystr = "Sort Key (Distinct)";
+	else
+		SortKeystr = "Sort Key";
+
 	/* Set up deparsing context */
-<<<<<<< HEAD
-	context = deparse_context_for_plan((Node *) plan,
-									   NULL,
-									   es->rtable,
-									   es->pstmt->subplans);
-=======
 	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
 											es->rtable);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
@@ -2196,11 +2119,7 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 		result = lappend(result, exprstr);
 	}
 
-<<<<<<< HEAD
-	ExplainPropertyList(qlabel, result, es);
-=======
-	ExplainPropertyList("Sort Key", result, es);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	ExplainPropertyList(SortKeystr, result, es);
 }
 
 /*
