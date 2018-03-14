@@ -42,9 +42,9 @@ typedef struct CopyStateData *CopyState;
 typedef enum EolType
 {
 	EOL_UNKNOWN,
-	EOL_LF,
+	EOL_NL,
 	EOL_CR,
-	EOL_CRLF
+	EOL_CRNL
 } EolType;
 
 /*
@@ -102,6 +102,29 @@ typedef struct ProgramPipes
 } ProgramPipes;
 
 /*
+ *
+ *
+ **
+
+COPY FROM modes (from file/client to table)
+
+1. "normal" mode. This means ON SEGMENT, or utility mode, or non-distributed table in QD
+
+2. Dispatcher mode. We are reading file/client, and forwarding all data to QEs
+3. Executor mode. We are receiving pre-processed data from QD, and inserting to table.
+
+COPY TO modes (table/query to file/client)
+
+ */
+
+typedef enum
+{
+	COPY_DIRECT,
+	COPY_DISPATCH,
+	COPY_EXECUTOR
+} CopyDispatchMode;
+
+/*
  * This struct contains all the state variables used throughout a COPY
  * operation. For simplicity, we use the same struct for all variants of COPY,
  * even though some fields are used in only some cases.
@@ -139,6 +162,8 @@ typedef struct CopyStateData
 
 	/* parameters from the COPY command */
 	Relation	rel;			/* relation to copy to or from */
+	GpPolicy	cdb_policy;		/* in ON SEGMENT mode, we received this from QD. Otherwise
+								 * it's equal to rel->rd_cdbpolicy */
 	QueryDesc  *queryDesc;		/* executable query to copy from */
 	List	   *attnumlist;		/* integer list of attnums to copy */
 	List	   *attnamelist;	/* list of attributes by name */
@@ -162,12 +187,14 @@ typedef struct CopyStateData
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	bool		fill_missing;	/* missing attrs at end of line are NULL */
 
+	CopyDispatchMode dispatch_mode;
+
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
 	int64		cur_lineno;		/* line number for error messages.  Negative means it isn't available. */
 	int64       cur_byteno;     /* number of bytes processed from input */
 	const char *cur_attname;	/* current att for error messages */
-	//const char *cur_attval;		 /* current att value for error messages */
+	const char *cur_attval;		/* current att value for error messages */
 
 	/*
 	 * Working state for COPY TO/FROM
@@ -191,6 +218,15 @@ typedef struct CopyStateData
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
+	List	   *range_table;
+
+	StringInfo	dispatch_msgbuf; /* used in COPY_DISPATCH mode, to construct message
+								  * to send to QE. */
+	
+	/* Error handling options */
+	CopyErrMode	errMode;
+	struct CdbSreh *cdbsreh; /* single row error handler */
+	int			num_consec_csv_err; /* # of consecutive csv invalid format errs */
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -228,13 +264,11 @@ typedef struct CopyStateData
 	 * raw_buf[raw_buf_len].
 	 */
 
-#define RAW_BUF_SIZE 65536
-
-	/* NOTE: raw_buf in Greenplum Database is used with different logic than postgres COPY */
-	char		raw_buf[RAW_BUF_SIZE + 1];		/* extra byte for '\0' */
+#define RAW_BUF_SIZE 65536		/* we palloc RAW_BUF_SIZE+1 bytes */
+	char	   *raw_buf;
 	int			raw_buf_index;	/* next byte to process */
-	bool		raw_buf_done;	/* finished processing the current buffer */
-	int			missing_bytes;  /* see scanTextLine() for explanation */
+	int			raw_buf_len;	/* total # of bytes stored */
+
 	/* Greenplum Database specific variables */
 	bool		is_copy_in;		/* copy in or out? */
 	char		eol_ch[2];		/* The byte values of the 1 or 2 eol bytes */
@@ -266,11 +300,6 @@ typedef struct CopyStateData
 	ErrLocType  err_loc_type;   /* see enum def for description */
 	bool		md_error;
 	
-	/* Error handling options */
-	CopyErrMode	errMode;
-	struct CdbSreh		*cdbsreh; /* single row error handler */
-	int			num_consec_csv_err; /* # of consecutive csv invalid format errs */
-
 	PartitionNode *partitions; /* partitioning meta data from dispatcher */
 	List		  *ao_segnos;  /* AO table meta data from dispatcher */
 	bool          skip_ext_partition;  /* skip external partition */
@@ -293,32 +322,23 @@ typedef struct CopyStateData
 #define ntohll(x) ((1==ntohl(1)) ? (x) : ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 #endif
 
-extern void ValidateControlChars(bool copy, bool load, bool csv_mode, char *delim,
-								 char *null_print, char *quote, char *escape,
-								 List *force_quote, bool force_quote_all, List *force_notnull,
-								 bool header_line, bool fill_missing, char *newline,
-								 int numcols);
 extern uint64 DoCopy(const CopyStmt *stmt, const char *queryString);
 
-extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options);
+extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options,
+				   int num_columns, bool is_copy);
 extern CopyState BeginCopyFrom(Relation rel, const char *filename,
-			  List *attnamelist, List *options);
+			  bool is_program, List *attnamelist, List *options, List *ao_segnos);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
-			 Datum *values, bool *nulls, Oid *tupleOid);
+						 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error);
 extern bool NextCopyFromRawFields(CopyState cstate,
 					  char ***fields, int *nfields);
-extern void CopyFromErrorCallback(void *arg);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
 extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
-extern bool CopyReadLineText(CopyState cstate, size_t bytesread);
-extern bool CopyReadLineCSV(CopyState cstate, size_t bytesread);
-extern void CopyReadAttributesText(CopyState cstate, char * __restrict nulls,
-			 int * __restrict attr_offsets, int num_phys_attrs, Form_pg_attribute * __restrict attr);
-extern void CopyReadAttributesCSV(CopyState cstate, char *nulls, int *attr_offsets,
-					  int num_phys_attrs, Form_pg_attribute *attr);
+extern bool CopyReadLineText(CopyState cstate);
+extern bool CopyReadLineCSV(CopyState cstate);
 extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 						 Datum *values, bool *nulls);
 extern void CopyOneCustomRowTo(CopyState cstate, bytea *value);
@@ -367,5 +387,31 @@ typedef struct  cdbhashdata
 	CdbHash *cdbHash; /* a CdbHash API object */
 	GpPolicy *policy; /* policy for this cdb hash */
 } cdbhashdata;
+
+
+typedef struct
+{
+	/*
+	 * target relation OID. Normally, the same as cstate->relid, but for
+	 * a partitioned relation, it indicate the target partition.
+	 */
+	Oid			relid;
+
+	Oid			loaded_oid;
+
+	int64		lineno;
+
+	int16		fld_count;
+
+	/*
+	 * Default values. For each default value:
+	 * <data>
+	 *
+	 * The data is the raw Datum.
+	 */
+
+	/* data follows */
+} copy_from_dispatch_frame;
+
 
 #endif /* COPY_H */
