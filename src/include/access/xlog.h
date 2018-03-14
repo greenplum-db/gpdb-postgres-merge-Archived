@@ -309,7 +309,7 @@ extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
-extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, Relation relation);
+extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer);
 
 extern void RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup);
 

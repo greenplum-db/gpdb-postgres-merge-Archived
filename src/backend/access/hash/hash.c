@@ -285,7 +285,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Since this can be redone later if needed, mark as a hint.
 			 */
-			MarkBufferDirtyHint(so->hashso_curbuf, rel);
+			MarkBufferDirtyHint(so->hashso_curbuf);
 		}
 
 		/*
