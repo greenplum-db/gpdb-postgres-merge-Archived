@@ -87,7 +87,7 @@ ResetUnloggedRelations(int op)
 			continue;
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
-				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+				 spc_de->d_name, tablespace_version_directory());
 		ResetUnloggedRelationsInTablespaceDir(temp_path, op);
 	}
 

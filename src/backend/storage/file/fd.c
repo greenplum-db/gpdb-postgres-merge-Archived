@@ -150,13 +150,9 @@ static int	max_safe_fds = 32;	/* default if not changed */
 
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
-<<<<<<< HEAD
-#define FD_CLOSE_AT_EOXACT	(1 << 1)	/* T = close at eoXact */
-=======
 #define FD_XACT_TEMPORARY	(1 << 1)	/* T = delete at eoXact */
 #define FD_XACT_TRANSIENT	(1 << 2)	/* T = close (not delete) at aoXact,
 										 * but keep VFD */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* Flag to tell whether there are files to close/delete at end of transaction */
 static bool have_pending_fd_cleanup = false;
@@ -999,14 +995,14 @@ OpenNamedTemporaryFile(const char *fileName,
 	/* Register it with the current resource owner */
 	if (!interXact)
 	{
-		VfdCache[file].fdstate |= FD_CLOSE_AT_EOXACT;
+		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 
 		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
 		ResourceOwnerRememberFile(CurrentResourceOwner, file);
 		VfdCache[file].resowner = CurrentResourceOwner;
 
 		/* ensure cleanup happens at eoxact */
-		have_xact_temporary_files = true;
+		have_pending_fd_cleanup = true;
 	}
 
 	return file;
@@ -1076,7 +1072,7 @@ OpenTemporaryFile(bool interXact, const char *filePrefix)
 	/* Register it with the current resource owner */
 	if (!interXact)
 	{
-		VfdCache[file].fdstate |= FD_CLOSE_AT_EOXACT;
+		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 
 		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
 		ResourceOwnerRememberFile(CurrentResourceOwner, file);
@@ -2225,24 +2221,9 @@ CleanupTempFiles(bool isProcExit)
 		{
 			unsigned short fdstate = VfdCache[i].fdstate;
 
-<<<<<<< HEAD
-			if ((fdstate & (FD_TEMPORARY | FD_CLOSE_AT_EOXACT)) && VfdCache[i].fileName != NULL)
-			{
-				/*
-				 * If we're in the process of exiting a backend process, close
-				 * all temporary files. Otherwise, only close temporary files
-				 * local to the current transaction. They should be closed by
-				 * the ResourceOwner mechanism already, so this is just a
-				 * debugging cross-check.
-				 */
-				if (isProcExit)
-					FileClose(i);
-				else if (fdstate & FD_CLOSE_AT_EOXACT)
-=======
 			if (VfdCache[i].fileName != NULL)
 			{
 				if (fdstate & FD_TEMPORARY)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				{
 					/*
 					 * If we're in the process of exiting a backend process, close
@@ -2332,7 +2313,7 @@ RemovePgTempFiles(void)
 		RemovePgTempFilesInDir(temp_path);
 
 		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
-				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+				 spc_de->d_name, tablespace_version_directory());
 		RemovePgTempRelationFiles(temp_path);
 	}
 
