@@ -131,7 +131,7 @@ extern void mdsync(void);
 extern void mdpostckpt(void);
 
 extern void SetForwardFsyncRequests(void);
-extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
+extern void RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 					 BlockNumber segno);
 extern void ForgetRelationFsyncRequests(RelFileNodeBackend rnode,
 							ForkNumber forknum);

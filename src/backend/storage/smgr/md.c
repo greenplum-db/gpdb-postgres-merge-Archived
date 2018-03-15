@@ -314,7 +314,7 @@ mdcreate_ao(RelFileNode rnode, int32 segmentFileNum, bool isRedo)
 	char		buf[MAXPGPATH];
 	File		fd;
 
-	path = relpath(rnode, MAIN_FORKNUM);
+	path = relpathbackend(rnode, InvalidBackendId, MAIN_FORKNUM);
 
 	if (segmentFileNum != 0)
 	{
@@ -509,7 +509,7 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 			 * The base path is like "<path>/<rnode>". Split it into
 			 * path and filename parts.
 			 */
-			reldir_and_filename(rnode, forkNum, &dirpart, &filepart);
+			reldir_and_filename(rnode.node, InvalidBackendId, forkNum, &dirpart, &filepart);
 			filedot = psprintf("%s.", filepart);
 
 			/* Scan the directory */
@@ -652,7 +652,7 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
-	File		fd = -1;
+	File		fd;
 
 	/* No work if already open */
 	if (reln->md_fd[forknum])
@@ -685,6 +685,7 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 					 errmsg("could not open file \"%s\": %m", path)));
 		}
 	}
+
 	pfree(path);
 
 	if (reln->smgr_transient)
@@ -999,7 +1000,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 			 * from the mdfd_chain). We truncate the file, but do not delete
 			 * it, for reasons explained in the header comments.
 			 */
-			if (FileTruncate(v->mdfd_vfd, 0) <  0)
+			if (FileTruncate(v->mdfd_vfd, 0) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not truncate file \"%s\": %m",
@@ -1024,7 +1025,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks,
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
-			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) <  0)
+			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 					errmsg("could not truncate file \"%s\" to %u blocks: %m",
@@ -1431,7 +1432,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno);
+		RememberFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno);
 	}
 	else
 	{
@@ -1461,7 +1462,7 @@ register_unlink(RelFileNodeBackend rnode)
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(rnode.node, MAIN_FORKNUM, UNLINK_RELATION_REQUEST);
+		RememberFsyncRequest(rnode, MAIN_FORKNUM, UNLINK_RELATION_REQUEST);
 	}
 	else
 	{
@@ -1499,7 +1500,8 @@ register_unlink(RelFileNodeBackend rnode)
  * structure for them.)
  */
 void
-RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
+RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
+					 BlockNumber segno)
 {
 	Assert(pendingOpsTable);
 
@@ -1615,7 +1617,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
  * ForgetRelationFsyncRequests -- forget any fsyncs for a rel
  */
 void
-ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
+ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
 {
 	if (pendingOpsTable)
 	{
@@ -1634,7 +1636,7 @@ ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 		 * which would be bad, so I'm inclined to assume that the checkpointer
 		 * will always empty the queue soon.
 		 */
-		while (!ForwardFsyncRequest(rnode, forknum, FORGET_RELATION_FSYNC))
+		while (!ForwardFsyncRequest(rnode.node, forknum, FORGET_RELATION_FSYNC))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 
 		/*
@@ -1650,11 +1652,12 @@ ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 void
 ForgetDatabaseFsyncRequests(Oid dbid)
 {
-	RelFileNode rnode;
+	RelFileNodeBackend rnode;
 
 	rnode.node.dbNode = dbid;
 	rnode.node.spcNode = 0;
 	rnode.node.relNode = 0;
+	rnode.backend = InvalidBackendId;
 
 	if (pendingOpsTable)
 	{
@@ -1664,7 +1667,7 @@ ForgetDatabaseFsyncRequests(Oid dbid)
 	else if (IsUnderPostmaster)
 	{
 		/* see notes in ForgetRelationFsyncRequests */
-		while (!ForwardFsyncRequest(rnode, InvalidForkNumber,
+		while (!ForwardFsyncRequest(rnode.node, InvalidForkNumber,
 									FORGET_DATABASE_FSYNC))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 	}
