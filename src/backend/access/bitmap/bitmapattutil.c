@@ -66,10 +66,12 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	ObjectAddress	objAddr, referenced;
 	Oid		   *classObjectId;
 	int16	   *coloptions;
+	Oid		   *colcollations;
 	Oid			heapid;
 	Oid			idxid;
 	int			indattrs;
 	int			i;
+	Relation	lov_heap_rel;
 
 	Assert(rel != NULL);
 
@@ -159,6 +161,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 tupDesc, NIL,
 								 /* relam */ InvalidOid,
 								 RELKIND_RELATION,
+								 rel->rd_rel->relpersistence,
 								 RELSTORAGE_HEAP,
 								 rel->rd_rel->relisshared,
 								 false, /* mapped_relation */
@@ -173,6 +176,9 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	 * tuple visible for opening.
 	 */
 	CommandCounterIncrement();
+
+	/* ShareLock is not really needed here, but take it anyway */
+	lov_heap_rel = heap_open(heapid, ShareLock);
 
 	objAddr.classId = RelationRelationId;
 	objAddr.objectId = heapid;
@@ -199,6 +205,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 
 	classObjectId = (Oid *) palloc(indattrs * sizeof(Oid));
 	coloptions = (int16 *) palloc(indattrs * sizeof(int16));
+	colcollations = (Oid *) palloc(indattrs * sizeof(Oid));
 	indexColNames = NIL;
 	for (i = 0; i < indattrs; i++)
 	{
@@ -207,15 +214,17 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		indexInfo->ii_KeyAttrNumbers[i] = i + 1;
 		classObjectId[i] = GetDefaultOpClass(typid, BTREE_AM_OID);
 		coloptions[i] = 0;
+		colcollations = InvalidOid;
 
 		indexColNames = lappend(indexColNames, NameStr(tupDesc->attrs[i]->attname));
 	}
 
-	idxid = index_create(heapid, lovIndexName, InvalidOid,
+	idxid = index_create(lov_heap_rel, lovIndexName, InvalidOid,
 						 indexInfo,
 						 indexColNames,
 						 BTREE_AM_OID,
 						 rel->rd_rel->reltablespace,
+						 colcollations,
 						 classObjectId, coloptions, (Datum) 0,
 						 /* isprimary */ false,
 						 /* isconstraint */ false,
@@ -224,6 +233,8 @@ _bitmap_create_lov_heapandindex(Relation rel,
 						 /* allow_system_table_mods */ true,
 						 false, false, NULL);
 	*lovIndexOid = idxid;
+
+	heap_close(lov_heap_rel, NoLock);
 }
 
 /*
