@@ -297,7 +297,7 @@ _bitmap_init_buildstate(Relation index, BMBuildState *bmstate)
 	 * writes page to the shared buffer, we can't disable WAL archiving.
 	 * We will add this shortly.
 	 */	
-	bmstate->use_wal = !index->rd_istemp;
+	bmstate->use_wal = RelationNeedsWAL(index);
 }
 
 /*

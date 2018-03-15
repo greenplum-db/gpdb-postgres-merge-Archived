@@ -82,7 +82,7 @@ bmbuild(PG_FUNCTION_ARGS)
 	tupDesc = RelationGetDescr(index);
 
 	/* initialize the bitmap index. */
-	_bitmap_init(index, !index->rd_istemp);
+	_bitmap_init(index, RelationNeedsWAL(index));
 
 	/* initialize the build state. */
 	_bitmap_init_buildstate(index, &bmstate);

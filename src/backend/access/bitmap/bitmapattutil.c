@@ -119,7 +119,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 
 		/* XLOG the metapage */
 
-		if (!lovIndex->rd_istemp)
+		if (RelationNeedsWAL(lovIndex))
 		{
 			log_newpage_rel(lovIndex, BufferGetBlockNumber(btree_metabuf), MAIN_FORKNUM,
 						btree_metapage);
