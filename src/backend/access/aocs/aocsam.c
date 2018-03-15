@@ -102,7 +102,7 @@ open_all_datumstreamread_segfiles(Relation rel,
 								  int num_proj_atts,
 								  AppendOnlyBlockDirectory *blockDirectory)
 {
-	char	   *basepath = relpath(rel->rd_node, MAIN_FORKNUM);
+	char	   *basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	int			i;
 
 	Assert(proj_atts);
@@ -652,7 +652,7 @@ ReadNext:
 static void
 OpenAOCSDatumStreams(AOCSInsertDesc desc)
 {
-	char	   *basepath = relpath(desc->aoi_rel->rd_node, MAIN_FORKNUM);
+	char	   *basepath = relpathbackend(desc->aoi_rel->rd_node, desc->aoi_rel->rd_backend, MAIN_FORKNUM);
 	char		fn[MAXPGPATH];
 	int32		fileSegNo;
 
@@ -1114,7 +1114,7 @@ aocs_fetch_init(Relation relation,
 {
 	AOCSFetchDesc aocsFetchDesc;
 	int			colno;
-	char	   *basePath = relpath(relation->rd_node, MAIN_FORKNUM);
+	char	   *basePath = relpathbackend(relation->rd_node, relation->rd_backend, MAIN_FORKNUM);
 	TupleDesc	tupleDesc = RelationGetDescr(relation);
 	StdRdOptions **opts = RelationGetAttributeOptions(relation);
 

@@ -14,6 +14,7 @@
 #include "libpq/pqsignal.h"
 #include "gpmon/gpmon.h"
 
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 #include "cdb/cdbtm.h"

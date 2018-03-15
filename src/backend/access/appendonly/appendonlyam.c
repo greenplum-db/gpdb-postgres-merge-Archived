@@ -2441,7 +2441,7 @@ AppendOnlyDeleteDesc
 appendonly_delete_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot)
 {
 	Assert(RelationIsAoRows(rel));
-	Assert(!IsXactIsoLevelSerializable);
+	Assert(!IsolationUsesXactSnapshot());
 
 	AppendOnlyDeleteDesc aoDeleteDesc = palloc0(sizeof(AppendOnlyDeleteDescData));
 
@@ -2507,7 +2507,7 @@ AppendOnlyUpdateDesc
 appendonly_update_init(Relation rel, Snapshot appendOnlyMetaDataSnapshot, int segno)
 {
 	Assert(RelationIsAoRows(rel));
-	Assert(!IsXactIsoLevelSerializable);
+	Assert(!IsolationUsesXactSnapshot());
 
 	/*
 	 * allocate and initialize the insert descriptor

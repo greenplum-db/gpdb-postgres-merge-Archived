@@ -53,9 +53,10 @@
 #include "postmaster/postmaster.h"		/* postmaster port */
 #include "utils/relcache.h"
 #include "utils/lsyscache.h"
+#include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/uri.h"
-#include "utils/builtins.h"
 
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbtm.h"
@@ -2532,11 +2533,11 @@ external_set_env_vars_ext(extvar_t *extvar, char *uri, bool csv, char *escape, c
 				encoded_delim = "0D";
 				line_delim_len = 1;
 				break;
-			case EOL_LF:
+			case EOL_NL:
 				encoded_delim = "0A";
 				line_delim_len = 1;
 				break;
-			case EOL_CRLF:
+			case EOL_CRNL:
 				encoded_delim = "0D0A";
 				line_delim_len = 2;
 				break;
