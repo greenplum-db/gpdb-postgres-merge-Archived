@@ -364,13 +364,13 @@ ExecStopExternalScan(ExternalScanState *node)
 */
 
 /* ----------------------------------------------------------------
-*		ExecExternalReScan
+*		ExecReScanExternal
 *
 *		Rescans the relation.
 * ----------------------------------------------------------------
 */
 void
-ExecExternalReScan(ExternalScanState *node, ExprContext *exprCtxt)
+ExecReScanExternal(ExternalScanState *node)
 {
 	FileScanDesc fileScan = node->ess_ScanDesc;
 

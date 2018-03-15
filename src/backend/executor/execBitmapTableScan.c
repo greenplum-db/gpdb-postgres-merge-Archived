@@ -335,7 +335,7 @@ BitmapTableScanEnd(BitmapTableScanState *scanState)
  * Prepares for a rescan.
  */
 void
-BitmapTableScanReScan(BitmapTableScanState *node, ExprContext *exprCtxt)
+BitmapTableScanReScan(BitmapTableScanState *node)
 {
 	ScanState *scanState = &node->ss;
 	DynamicScan_ReScan(scanState);

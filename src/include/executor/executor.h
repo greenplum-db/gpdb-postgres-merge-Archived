@@ -439,7 +439,7 @@ extern void initGpmonPktForBitmapTableScan(Plan *planNode, gpmon_packet_t *gpmon
 extern TupleTableSlot *BitmapTableScanNext(BitmapTableScanState *scanState);
 extern void BitmapTableScanBegin(BitmapTableScanState *scanState, Plan *plan, EState *estate, int eflags);
 extern void BitmapTableScanEnd(BitmapTableScanState *scanState);
-extern void BitmapTableScanReScan(BitmapTableScanState *node, ExprContext *exprCtxt);
+extern void BitmapTableScanReScan(BitmapTableScanState *node);
 extern bool BitmapTableScanRecheckTuple(BitmapTableScanState *scanState, TupleTableSlot *slot);
 
 /*

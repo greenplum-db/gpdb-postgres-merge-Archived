@@ -71,6 +71,7 @@
 #include "utils/tqual.h"
 
 #include "cdb/cdbvars.h"
+#include "utils/guc.h"
 #include "utils/visibility_summary.h"
 
 

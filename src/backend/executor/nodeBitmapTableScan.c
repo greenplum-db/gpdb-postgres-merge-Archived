@@ -110,7 +110,7 @@ ExecBitmapTableScan(BitmapTableScanState *node)
 void
 ExecReScanBitmapTable(BitmapTableScanState *node)
 {
-	BitmapReScanTableScan(node);
+	BitmapTableScanReScan(node);
 	/*
 	 * Always rescan the input immediately, to ensure we can pass down any
 	 * outer tuple that might be used in index quals.
