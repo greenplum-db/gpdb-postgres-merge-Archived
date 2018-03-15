@@ -339,28 +339,15 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-<<<<<<< HEAD
-		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0 &&
+		resultRelInfo->ri_TrigDesc->trig_insert_before_row &&
 		!isUpdate)
 	{
-		HeapTuple	newtuple;
-		HeapTuple	tuple;
-
-		tuple = ExecMaterializeSlot(slot);
-
-		if (resultRelationDesc->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, tuple_oid);
-=======
-		resultRelInfo->ri_TrigDesc->trig_insert_before_row)
-	{
 		slot = ExecBRInsertTriggers(estate, resultRelInfo, slot);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
 	}
 
 	/* INSTEAD OF ROW INSERT Triggers */
@@ -371,135 +358,6 @@ ExecInsert(TupleTableSlot *slot,
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
-
-<<<<<<< HEAD
-		if (newtuple != tuple)	/* modified by Trigger(s) */
-		{
-			/*
-			 * Put the modified tuple into a slot for convenience of routines
-			 * below.  We assume the tuple was allocated in per-tuple memory
-			 * context, and therefore will go away by itself. The tuple table
-			 * slot should not try to clear it.
-			 */
-			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
-			TupleDesc	tupdesc = RelationGetDescr(resultRelationDesc);
-
-			if (newslot->tts_tupleDescriptor != tupdesc)
-				ExecSetSlotDescriptor(newslot, tupdesc);
-			ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
-			newslot->tts_tableOid = slot->tts_tableOid; /* for constraints */
-			slot = newslot;
-			tuple = newtuple;
-
-			/*
-			 * since we keep the OID in a separate variable, also update that,
-			 * in case the trigger set it.
-			 */
-			if (resultRelationDesc->rd_rel->relhasoids)
-				tuple_oid = HeapTupleGetOid(newtuple);
-		}
-	}
-
-	/*
-	 * Check the constraints of the tuple
-	 */
-	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints(resultRelInfo, slot, estate);
-
-	/*
-	 * insert the tuple
-	 *
-	 * Note: heap_insert returns the tid (location) of the new tuple in the
-	 * t_self field.
-	 *
-	 * NOTE: for append-only relations we use the append-only access methods.
-	 */
-	if (rel_is_aorows)
-	{
-		MemTuple	mtuple;
-
-		if (resultRelInfo->ri_aoInsertDesc == NULL)
-		{
-			/* Set the pre-assigned fileseg number to insert into */
-			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-
-			resultRelInfo->ri_aoInsertDesc =
-				appendonly_insert_init(resultRelationDesc,
-									   resultRelInfo->ri_aosegno,
-									   false);
-		}
-
-		mtuple = ExecFetchSlotMemTuple(slot, false);
-		newId = appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, tuple_oid, (AOTupleId *) &lastTid);
-	}
-	else if (rel_is_aocols)
-	{
-		if (resultRelInfo->ri_aocsInsertDesc == NULL)
-		{
-			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-			resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc, 
-																resultRelInfo->ri_aosegno, false);
-		}
-
-		newId = aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
-		lastTid = *slot_get_ctid(slot);
-	}
-	else if (rel_is_external)
-	{
-		/* Writable external table */
-		HeapTuple tuple;
-
-		if (resultRelInfo->ri_extInsertDesc == NULL)
-			resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
-
-		/*
-		 * get the heap tuple out of the tuple table slot, making sure we have a
-		 * writable copy. (external_insert() can scribble on the tuple)
-		 */
-		tuple = ExecMaterializeSlot(slot);
-		if (resultRelationDesc->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, tuple_oid);
-
-		newId = external_insert(resultRelInfo->ri_extInsertDesc, tuple);
-		ItemPointerSetInvalid(&lastTid);
-	}
-	else
-	{
-		HeapTuple tuple;
-
-		Insist(rel_is_heap);
-
-		/*
-		 * get the heap tuple out of the tuple table slot, making sure we have a
-		 * writable copy. (heap_insert() will scribble on the tuple)
-		 */
-		tuple = ExecMaterializeSlot(slot);
-		if (resultRelationDesc->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, tuple_oid);
-
-		newId = heap_insert(resultRelationDesc,
-							tuple,
-							estate->es_output_cid, 0, NULL,
-							GetCurrentTransactionId());
-		lastTid = tuple->t_self;
-	}
-
-	(estate->es_processed)++;
-	(resultRelInfo->ri_aoprocessed)++;
-	estate->es_lastoid = newId;
-	setLastTid(&lastTid);
-
-	slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
-
-	/*
-	 * insert index entries for tuple
-	 */
-	if (resultRelInfo->ri_NumIndices > 0)
-		recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-											   estate);
-=======
-		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
 
 		newId = InvalidOid;
 	}
@@ -514,31 +372,102 @@ ExecInsert(TupleTableSlot *slot,
 		/*
 		 * insert the tuple
 		 *
-		 * Note: heap_insert returns the tid (location) of the new tuple in
-		 * the t_self field.
+		 * Note: heap_insert returns the tid (location) of the new tuple in the
+		 * t_self field.
+		 *
+		 * NOTE: for append-only relations we use the append-only access methods.
 		 */
-		newId = heap_insert(resultRelationDesc, tuple,
-							estate->es_output_cid, 0, NULL);
+		if (rel_is_aorows)
+		{
+			MemTuple	mtuple;
+
+			if (resultRelInfo->ri_aoInsertDesc == NULL)
+			{
+				/* Set the pre-assigned fileseg number to insert into */
+				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+
+				resultRelInfo->ri_aoInsertDesc =
+					appendonly_insert_init(resultRelationDesc,
+										   resultRelInfo->ri_aosegno,
+										   false);
+			}
+
+			mtuple = ExecFetchSlotMemTuple(slot, false);
+			newId = appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, tuple_oid, (AOTupleId *) &lastTid);
+		}
+		else if (rel_is_aocols)
+		{
+			if (resultRelInfo->ri_aocsInsertDesc == NULL)
+			{
+				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+				resultRelInfo->ri_aocsInsertDesc = aocs_insert_init(resultRelationDesc, 
+																	resultRelInfo->ri_aosegno, false);
+			}
+
+			newId = aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
+			lastTid = *slot_get_ctid(slot);
+			(resultRelInfo->ri_aoprocessed)++;
+		}
+		else if (rel_is_external)
+		{
+			/* Writable external table */
+			HeapTuple tuple;
+
+			if (resultRelInfo->ri_extInsertDesc == NULL)
+				resultRelInfo->ri_extInsertDesc = external_insert_init(resultRelationDesc);
+
+			/*
+			 * get the heap tuple out of the tuple table slot, making sure we have a
+			 * writable copy. (external_insert() can scribble on the tuple)
+			 */
+			tuple = ExecMaterializeSlot(slot);
+			if (resultRelationDesc->rd_rel->relhasoids)
+				HeapTupleSetOid(tuple, tuple_oid);
+
+			newId = external_insert(resultRelInfo->ri_extInsertDesc, tuple);
+			ItemPointerSetInvalid(&lastTid);
+			(resultRelInfo->ri_aoprocessed)++;
+		}
+		else
+		{
+			HeapTuple tuple;
+
+			Insist(rel_is_heap);
+
+			/*
+			 * get the heap tuple out of the tuple table slot, making sure we have a
+			 * writable copy. (heap_insert() will scribble on the tuple)
+			 */
+			tuple = ExecMaterializeSlot(slot);
+			if (resultRelationDesc->rd_rel->relhasoids)
+				HeapTupleSetOid(tuple, tuple_oid);
+
+			newId = heap_insert(resultRelationDesc,
+								tuple,
+								estate->es_output_cid, 0, NULL,
+								GetCurrentTransactionId());
+			lastTid = tuple->t_self;
+		}
 
 		/*
 		 * insert index entries for tuple
 		 */
 		if (resultRelInfo->ri_NumIndices > 0)
-			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
 												   estate);
 	}
-
 	if (canSetTag)
 	{
 		(estate->es_processed)++;
 		estate->es_lastoid = newId;
-		setLastTid(&(tuple->t_self));
+		setLastTid(&lastTid);
 	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	slot->tts_tableOid = RelationGetRelid(resultRelationDesc);
 
 	/* AFTER ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 &&
+		resultRelInfo->ri_TrigDesc->trig_insert_after_row &&
 		!isUpdate)
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
@@ -624,17 +553,11 @@ ExecDelete(ItemPointer tupleid,
 	}
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
-<<<<<<< HEAD
 	if (planGen == PLANGEN_PLANNER)
-=======
-	/* BEFORE ROW DELETE Triggers */
-	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		/* BEFORE ROW DELETE Triggers */
 		if (resultRelInfo->ri_TrigDesc &&
-			resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+			resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 		{
 			bool		dodelete;
 
@@ -670,7 +593,6 @@ ExecDelete(ItemPointer tupleid,
 		tuple.t_data = oldtuple;
 		tuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_tableOid = InvalidOid;
 
 		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, &tuple);
 
@@ -689,138 +611,79 @@ ExecDelete(ItemPointer tupleid,
 		 * mode transactions.
 		 */
 ldelete:;
-<<<<<<< HEAD
-	if (isHeapTable)
-	{
-		result = heap_delete(resultRelationDesc, tupleid,
-						 &update_ctid, &update_xmax,
-						 estate->es_output_cid,
-						 estate->es_crosscheck_snapshot,
-						 true /* wait for commit */ );
-	}
-	else if (isAORowsTable)
-	{
-		if (IsXactIsoLevelSerializable)
+		if (isHeapTable)
 		{
-			if (!isUpdate)
-				ereport(ERROR,
-					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));		
-			else
-				ereport(ERROR,
-					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Updates on append-only tables are not supported in serializable transactions.")));	
+			result = heap_delete(resultRelationDesc, tupleid,
+								 &update_ctid, &update_xmax,
+								 estate->es_output_cid,
+								 estate->es_crosscheck_snapshot,
+								 true /* wait for commit */ );
 		}
-
-		if (resultRelInfo->ri_deleteDesc == NULL)
+		else if (isAORowsTable)
 		{
-			resultRelInfo->ri_deleteDesc = 
-				appendonly_delete_init(resultRelationDesc, GetActiveSnapshot());
-		}
-
-		AOTupleId* aoTupleId = (AOTupleId*)tupleid;
-		result = appendonly_delete(resultRelInfo->ri_deleteDesc, aoTupleId);
-	} 
-	else if (isAOColsTable)
-	{
-		if (IsXactIsoLevelSerializable)
-		{
-			if (!isUpdate)
-				ereport(ERROR,
-					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Deletes on append-only tables are not supported in serializable transactions.")));		
-			else
-				ereport(ERROR,
-					   (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Updates on append-only tables are not supported in serializable transactions.")));		
-		}
-
-		if (resultRelInfo->ri_deleteDesc == NULL)
-		{
-			resultRelInfo->ri_deleteDesc = 
-				aocs_delete_init(resultRelationDesc);
-		}
-
-		AOTupleId* aoTupleId = (AOTupleId*)tupleid;
-		result = aocs_delete(resultRelInfo->ri_deleteDesc, aoTupleId);
-	}
-	else
-	{
-		Insist(0);
-	}
-	switch (result)
-	{
-		case HeapTupleSelfUpdated:
-			/* already deleted by self; nothing to do */
-
-			/*-------
-			 * In an scenario in which R(a,b) and S(a,b) have 
-			 *        R               S
-			 *    ________         ________
-			 *     (1, 1)           (1, 2)
-			 *                      (1, 7)
- 			 *
-   			 *  An update query such as:
- 			 *   UPDATE R SET a = S.b  FROM S WHERE R.b = S.a;
- 			 *   
- 			 *  will have an non-deterministic output. The tuple in R 
-			 * can be updated to (2,1) or (7,1).
- 			 * Since the introduction of SplitUpdate, these queries will 
-			 * send multiple requests to delete the same tuple. Therefore, 
-			 * in order to avoid a non-deterministic output, 
-			 * an error is reported in such scenario.
-			 *-------
- 			 */
-			if (isUpdate)
+			if (IsolationUsesXactSnapshot())
 			{
-				ereport(ERROR,
-					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION ),
-					errmsg("multiple updates to a row by the same query is not allowed")));
+				if (!isUpdate)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Deletes on append-only tables are not supported in serializable transactions.")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
 			}
-			return NULL;
-=======
-		result = heap_delete(resultRelationDesc, tupleid,
-							 &update_ctid, &update_xmax,
-							 estate->es_output_cid,
-							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ );
+
+			if (resultRelInfo->ri_deleteDesc == NULL)
+			{
+				resultRelInfo->ri_deleteDesc = 
+					appendonly_delete_init(resultRelationDesc, GetActiveSnapshot());
+			}
+
+			AOTupleId *aoTupleId = (AOTupleId *) tupleid;
+			result = appendonly_delete(resultRelInfo->ri_deleteDesc, aoTupleId);
+		} 
+		else if (isAOColsTable)
+		{
+			if (IsolationUsesXactSnapshot())
+			{
+				if (!isUpdate)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Deletes on append-only tables are not supported in serializable transactions.")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
+			}
+
+			if (resultRelInfo->ri_deleteDesc == NULL)
+			{
+				resultRelInfo->ri_deleteDesc = 
+					aocs_delete_init(resultRelationDesc);
+			}
+
+			AOTupleId *aoTupleId = (AOTupleId *) tupleid;
+			result = aocs_delete(resultRelInfo->ri_deleteDesc, aoTupleId);
+		}
+		else
+		{
+			Insist(0);
+		}
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
 				/* already deleted by self; nothing to do */
 				return NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			case HeapTupleMayBeUpdated:
 				break;
 
-<<<<<<< HEAD
-		case HeapTupleUpdated:
-			if (IsXactIsoLevelSerializable)
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			if (!ItemPointerEquals(tupleid, &update_ctid))
-			{
-				TupleTableSlot *epqslot;
-
-				Assert(update_xmax != InvalidTransactionId);
-
-				epqslot = EvalPlanQual(estate,
-									   epqstate,
-									   resultRelationDesc,
-									   resultRelInfo->ri_RangeTableIndex,
-									   &update_ctid,
-									   update_xmax);
-				if (!TupIsNull(epqslot))
-=======
 			case HeapTupleUpdated:
 				if (IsolationUsesXactSnapshot())
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
 				if (!ItemPointerEquals(tupleid, &update_ctid))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				{
 					TupleTableSlot *epqslot;
 
@@ -854,28 +717,16 @@ ldelete:;
 		 */
 	}
 
-<<<<<<< HEAD
+	if (canSetTag)
+		(estate->es_processed)++;
+
 	if (!isUpdate)
 	{
-		(estate->es_processed)++;
 		/*
 		 * To notify master if tuples deleted or not, to update mod_count.
 		 */
 		(resultRelInfo->ri_aoprocessed)++;
 	}
-
-	/*
-	 * Note: Normally one would think that we have to delete index tuples
-	 * associated with the heap tuple now...
-	 *
-	 * ... but in POSTGRES, we have no need to do this because VACUUM will
-	 * take care of it later.  We can't delete index tuples immediately
-	 * anyway, since the tuple is still visible to other transactions.
-	 */
-=======
-	if (canSetTag)
-		(estate->es_processed)++;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (!(isAORowsTable || isAOColsTable) && planGen == PLANGEN_PLANNER)
 	{
@@ -895,20 +746,13 @@ ldelete:;
 		HeapTupleData deltuple;
 		Buffer		delbuffer;
 
-<<<<<<< HEAD
-		// FIXME: What if it's an AO table?
+		// GPDB_91_MERGE_FIXME: What if it's an AO table?
 
-		deltuple.t_self = *tupleid;
-		if (!heap_fetch(resultRelationDesc, SnapshotAny,
-						&deltuple, &delbuffer, false, NULL))
-			elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
-=======
 		if (oldtuple != NULL)
 		{
 			deltuple.t_data = oldtuple;
 			deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 			ItemPointerSetInvalid(&(deltuple.t_self));
-			deltuple.t_tableOid = InvalidOid;
 			delbuffer = InvalidBuffer;
 		}
 		else
@@ -918,7 +762,6 @@ ldelete:;
 							&deltuple, &delbuffer, false, NULL))
 				elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
 		}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
 			ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
@@ -1218,7 +1061,6 @@ ExecUpdate(ItemPointer tupleid,
 		oldtup.t_data = oldtuple;
 		oldtup.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 		ItemPointerSetInvalid(&(oldtup.t_self));
-		oldtup.t_tableOid = InvalidOid;
 
 		slot = ExecIRUpdateTriggers(estate, resultRelInfo,
 									&oldtup, slot);
@@ -1227,7 +1069,6 @@ ExecUpdate(ItemPointer tupleid,
 			return NULL;
 
 		/* trigger might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
 	}
 	else
 	{
@@ -1244,22 +1085,6 @@ lreplace:;
 		if (resultRelationDesc->rd_att->constr)
 			ExecConstraints(resultRelInfo, slot, estate);
 
-<<<<<<< HEAD
-	/*
-	 * replace the heap tuple
-	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
-	 * the row to be updated is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
-	 * referential integrity updates in serializable transactions.
-	 */
-	if (rel_is_heap)
-	{
-		HeapTuple tuple;
-
-		tuple = ExecMaterializeSlot(slot);
-
-=======
 		/*
 		 * replace the heap tuple
 		 *
@@ -1269,104 +1094,80 @@ lreplace:;
 		 * needed for referential integrity updates in transaction-snapshot
 		 * mode transactions.
 		 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-		result = heap_update(resultRelationDesc, tupleid, tuple,
+		if (rel_is_heap)
+		{
+			HeapTuple tuple;
+
+			tuple = ExecMaterializeSlot(slot);
+
+			result = heap_update(resultRelationDesc, tupleid, tuple,
 							 &update_ctid, &update_xmax,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */ );
-<<<<<<< HEAD
+
 		lastTid = tuple->t_self;
 		wasHotUpdate = HeapTupleIsHeapOnly(tuple) != 0;
-	}
-	else if (rel_is_aorows)
-	{
-		MemTuple mtuple;
-
-		if (IsXactIsoLevelSerializable)
+		}
+		else if (rel_is_aorows)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
+			MemTuple mtuple;
+
+			if (IsolationUsesXactSnapshot())
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
+			}
+
+			if (resultRelInfo->ri_updateDesc == NULL)
+			{
+				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+				resultRelInfo->ri_updateDesc = (AppendOnlyUpdateDesc)
+					appendonly_update_init(resultRelationDesc, GetActiveSnapshot(), resultRelInfo->ri_aosegno);
+			}
+
+			mtuple = ExecFetchSlotMemTuple(slot, false);
+
+			result = appendonly_update(resultRelInfo->ri_updateDesc,
+									   mtuple, (AOTupleId *) tupleid, (AOTupleId *) &lastTid);
+			(resultRelInfo->ri_aoprocessed)++;
+			wasHotUpdate = false;
+		}
+		else if (rel_is_aocols)
+		{
+			if (IsolationUsesXactSnapshot())
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
+			}
+
+			if (resultRelInfo->ri_updateDesc == NULL)
+			{
+				ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
+				resultRelInfo->ri_updateDesc = (AppendOnlyUpdateDesc)
+					aocs_update_init(resultRelationDesc, resultRelInfo->ri_aosegno);
+			}
+			result = aocs_update(resultRelInfo->ri_updateDesc,
+								 slot, (AOTupleId *) tupleid, (AOTupleId *) &lastTid);
+			(resultRelInfo->ri_aoprocessed)++;
+			wasHotUpdate = false;
+		}
+		else
+		{
+			elog(ERROR, "invalid relation type");
 		}
 
-		if (resultRelInfo->ri_updateDesc == NULL)
-		{
-			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-			resultRelInfo->ri_updateDesc = (AppendOnlyUpdateDesc)
-				appendonly_update_init(resultRelationDesc, GetActiveSnapshot(), resultRelInfo->ri_aosegno);
-		}
-
-		mtuple = ExecFetchSlotMemTuple(slot, false);
-
-		result = appendonly_update(resultRelInfo->ri_updateDesc,
-								   mtuple, (AOTupleId *) tupleid, (AOTupleId *) &lastTid);
-		wasHotUpdate = false;
-	}
-	else if (rel_is_aocols)
-	{
-		if (IsXactIsoLevelSerializable)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Updates on append-only tables are not supported in serializable transactions.")));
-		}
-
-		if (resultRelInfo->ri_updateDesc == NULL)
-		{
-			ResultRelInfoSetSegno(resultRelInfo, estate->es_result_aosegnos);
-			resultRelInfo->ri_updateDesc = (AppendOnlyUpdateDesc)
-				aocs_update_init(resultRelationDesc, resultRelInfo->ri_aosegno);
-		}
-		result = aocs_update(resultRelInfo->ri_updateDesc,
-							 slot, (AOTupleId *) tupleid, (AOTupleId *) &lastTid);
-		wasHotUpdate = false;
-	}
-	else
-	{
-		elog(ERROR, "invalid relation type");
-	}
-
-	switch (result)
-	{
-		case HeapTupleSelfUpdated:
-			/* already deleted by self; nothing to do */
-			return NULL;
-=======
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
 				/* already deleted by self; nothing to do */
 				return NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			case HeapTupleMayBeUpdated:
 				break;
 
-<<<<<<< HEAD
-		case HeapTupleUpdated:
-			if (IsXactIsoLevelSerializable)
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			if (!ItemPointerEquals(tupleid, &update_ctid))
-			{
-				TupleTableSlot *epqslot;
-
-				Assert(update_xmax != InvalidTransactionId);
-
-				epqslot = EvalPlanQual(estate,
-									   epqstate,
-									   resultRelationDesc,
-									   resultRelInfo->ri_RangeTableIndex,
-									   &update_ctid,
-									   update_xmax);
-				if (!TupIsNull(epqslot))
-				{
-					*tupleid = update_ctid;
-					slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
-					goto lreplace;
-=======
 			case HeapTupleUpdated:
 				if (IsolationUsesXactSnapshot())
 					ereport(ERROR,
@@ -1386,10 +1187,8 @@ lreplace:;
 					{
 						*tupleid = update_ctid;
 						slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
-						tuple = ExecMaterializeSlot(slot);
 						goto lreplace;
 					}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				}
 				/* tuple already deleted; nothing to do */
 				return NULL;
@@ -1415,14 +1214,13 @@ lreplace:;
 		 *
 		 * If it's a HOT update, we mustn't insert new index entries.
 		 */
-		if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
-			recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+		if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
+			recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
 												   estate);
 	}
 
-<<<<<<< HEAD
-	(estate->es_processed)++;
-	(resultRelInfo->ri_aoprocessed)++;
+	if (canSetTag)
+		(estate->es_processed)++;
 
 	/*
 	 * Note: instead of having to update the old index tuples associated with
@@ -1443,14 +1241,10 @@ lreplace:;
 	if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
 		recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
 											   estate);
-=======
-	if (canSetTag)
-		(estate->es_processed)++;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 &&
+		resultRelInfo->ri_TrigDesc->trig_update_after_row &&
 		rel_is_heap)
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
@@ -1670,7 +1464,7 @@ ExecModifyTable(ModifyTableState *node)
 								&node->mt_epqstate, estate, node->canSetTag);
 				break;
 			case CMD_DELETE:
-				slot = ExecDelete(tupleid, planSlot,
+				slot = ExecDelete(tupleid, oldtuple, planSlot,
 								  &node->mt_epqstate, estate, node->canSetTag,
 								  PLANGEN_PLANNER, false /* isUpdate */);
 				break;
@@ -1749,20 +1543,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->resultRelInfo = estate->es_result_relations + node->resultRelIndex;
 	mtstate->mt_arowmarks = (List **) palloc0(sizeof(List *) * nplans);
 	mtstate->mt_nplans = nplans;
-<<<<<<< HEAD
-	mtstate->operation = operation;
-	/* set up epqstate with dummy subplan pointer for the moment */
-	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, node->epqParam);
+	/* set up epqstate with dummy subplan data for the moment */
+	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL, node->epqParam);
 
 	/* GPDB: Don't fire statement-triggers in QE reader processes */
 	if (Gp_role != GP_ROLE_EXECUTE || Gp_is_writer)
 		mtstate->fireBSTriggers = true;
-=======
-
-	/* set up epqstate with dummy subplan data for the moment */
-	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL, node->epqParam);
-	mtstate->fireBSTriggers = true;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * call ExecInitNode on each of the plans to be executed and save the
@@ -1889,7 +1675,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		}
 	}
 
-<<<<<<< HEAD
 	/* GPDB_90_MERGE_FIXME: This code was heavily refactored in the merge.
 	 * This used to be in ExecInsert, in execMain.c. It was also heavily
 	 * modified in GPDB, to handle rowmarks differently, and to disable
@@ -1897,13 +1682,12 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * because I wasn't sure how, and wasn't sure which of the changes
 	 * were still needed.
 	 */
-=======
+
 	/* select first subplan */
 	mtstate->mt_whichplan = 0;
 	subplan = (Plan *) linitial(node->plans);
 	EvalPlanQualSetPlan(&mtstate->mt_epqstate, subplan,
 						mtstate->mt_arowmarks[0]);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Initialize the junk filter(s) if needed.  INSERT queries need a filter
