@@ -1903,17 +1903,9 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *
  * This is used in two different scenarios: a normal join clause, where
  * all the Vars in the clause *must* be replaced by OUTER or INNER references;
-<<<<<<< HEAD
- * and an indexscan being used on the inner side of a nestloop join.
- * In the latter case we want to replace the outer-relation Vars by OUTER
- * references, while Vars of the inner relation should be returned without change
- * (those will later be adjusted in fix_scan_list).
- * (We also implement RETURNING clause fixup using this second scenario.)
-=======
  * and a RETURNING clause, which may contain both Vars of the target relation
  * and Vars of other relations.  In the latter case we want to replace the
  * other-relation Vars by OUTER references, while leaving target Vars alone.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * For a normal join, acceptable_rel should be zero so that any failure to
  * match a Var will be reported as an error.  For the RETURNING case, pass
@@ -1924,13 +1916,8 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  * 'inner_itlist' is the indexed target list of the inner join relation,
  *		or NULL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
-<<<<<<< HEAD
- *		whose Vars may appear in the clause without provoking an error.
- * 'rtoffset' is what to add to varno for Vars of relations other than acceptable_rel.
-=======
  *		whose Vars may appear in the clause without provoking an error
  * 'rtoffset': how much to increment varnoold by
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * Returns the new expression tree.  The original clause structure is
  * not modified.

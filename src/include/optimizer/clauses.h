@@ -29,10 +29,7 @@
 
 typedef struct
 {
-	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
 	bool		hasOrderedAggs;	/* any ordered aggs? */
-	bool	missing_prelimfunc; /* CDB: any agg func w/o a prelim func? */
-
 	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */

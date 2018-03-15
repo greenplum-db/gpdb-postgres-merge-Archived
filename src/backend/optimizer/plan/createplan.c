@@ -185,7 +185,7 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   AttrNumber **p_sortColIdx,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
-						   bool **p_nullsFirst);
+						   bool **p_nullsFirst, bool add_keys_to_targetlist);
 
 
 /*
@@ -865,7 +865,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 									  &node->sortColIdx,
 									  &node->sortOperators,
 									  &node->collations,
-									  &node->nullsFirst);
+									  &node->nullsFirst,
+									  true);
 
 	/*
 	 * Now prepare the child plans.  We must apply prepare_sort_from_pathkeys
@@ -892,7 +893,8 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path)
 											 &sortColIdx,
 											 &sortOperators,
 											 &collations,
-											 &nullsFirst);
+											 &nullsFirst,
+											 true);
 
 		/*
 		 * Check that we got the same sort key information.  We just Assert
@@ -4939,16 +4941,7 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
  * Input parameters:
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
-<<<<<<< HEAD
- *	  'limit_tuples' is the bound on the number of output tuples;
- *				-1 if no bound
- *	  'add_keys_to_targetlist' is true if it is ok to append to the subplan's
- *				targetlist or insert a Result node atop the subplan to
- *				evaluate sort key exprs that are not already present in the
- *				subplan's tlist.
-=======
  *	  'adjust_tlist_in_place' is TRUE if lefttree must be modified in-place
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * We must convert the pathkey information into arrays of sort key column
  * numbers, sort operator OIDs, collation OIDs, and nulls-first flags,
@@ -4957,21 +4950,6 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
  *
  * If the pathkeys include expressions that aren't simple Vars, we will
  * usually need to add resjunk items to the input plan's targetlist to
-<<<<<<< HEAD
- * compute these expressions (since the Sort node itself won't do it).
- * If the input plan type isn't one that can do projections, this means
- * adding a Result node just to do the projection.
- *
- * Returns a new Sort node if successful.
- *
- * Returns NULL if the sort key is degenerate (0 length after truncating
- * due to add_keys_to_targetlist==false and/or omitting key cols that are
- * equal to a constant expr.)
- */
-Sort *
-make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
-						double limit_tuples, bool add_keys_to_targetlist)
-=======
  * compute these expressions, since the Sort/MergeAppend node itself won't
  * do any such calculations.  If the input plan type isn't one that can do
  * projections, this means adding a Result node just to do the projection.
@@ -4989,8 +4967,8 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 						   AttrNumber **p_sortColIdx,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
-						   bool **p_nullsFirst)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+						   bool **p_nullsFirst,
+						   bool add_keys_to_targetlist)
 {
 	List	   *tlist = lefttree->targetlist;
 	ListCell   *i;
@@ -5200,10 +5178,14 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *	  'limit_tuples' is the bound on the number of output tuples;
  *				-1 if no bound
- */
+ *	  'add_keys_to_targetlist' is true if it is ok to append to the subplan's
+ *				targetlist or insert a Result node atop the subplan to
+ *				evaluate sort key exprs that are not already present in the
+ *				subplan's tlist.
+x */
 Sort *
 make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
-						double limit_tuples)
+						double limit_tuples, bool add_keys_to_targetlist)
 {
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -5218,7 +5200,14 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 										  &sortColIdx,
 										  &sortOperators,
 										  &collations,
-										  &nullsFirst);
+										  &nullsFirst,
+										  add_keys_to_targetlist);
+
+	if (lefttree == NULL)
+	{
+		Assert(!add_keys_to_targetlist);
+		return NULL;
+	}
 
 	/* Now build the Sort node */
 	return make_sort(root, lefttree, numsortkeys,
@@ -5360,10 +5349,10 @@ make_sort_from_groupcols(PlannerInfo *root,
 
 		get_sort_group_operators(exprType((Node *) tle->expr),
 								 true, false, false,
-								 &lt_opr, NULL, NULL);
+								 &lt_opr, NULL, NULL, NULL);
 
-		numsortkeys = add_sort_column(tle->resno, lt_opr, false,
-						 numsortkeys, sortColIdx, sortOperators, nullsFirst);
+		numsortkeys = add_sort_column(tle->resno, lt_opr, InvalidOid, false,
+									  numsortkeys, sortColIdx, sortOperators, collations, nullsFirst);
 	}
 
 
@@ -5572,12 +5561,11 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->streaming = streaming;
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
-<<<<<<< HEAD
 
 	add_agg_cost(root, plan, tlist, qual, aggstrategy, streaming,
 				 numGroupCols, grpColIdx,
 				 numGroups, num_nullcols,
-				 numAggs, transSpace);
+				 aggcosts, transSpace);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -5605,7 +5593,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 			 bool streaming,
 			 int numGroupCols, AttrNumber *grpColIdx,
 			 long numGroups, int num_nullcols,
-			 int numAggs, int transSpace)
+			 const AggClauseCosts *aggcosts, int transSpace)
 {
 	Path		agg_path;		/* dummy for result of cost_agg */
 	QualCost	qual_cost;
@@ -5631,7 +5619,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 	if (aggstrategy == AGG_HASHED)
 	{
 		/* The following estimate is very rough but good enough for planning. */
-		entrywidth = agg_hash_entrywidth(numAggs,
+		entrywidth = agg_hash_entrywidth(aggcosts->numAggs,
 								   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + plan->plan_width,
 								   transSpace);
 		if (!calcHashAggTableSizes(global_work_mem(root),
@@ -5644,7 +5632,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 		}
 
 		cost_agg(&agg_path, root,
-				 aggstrategy, numAggs,
+				 aggstrategy, aggcosts,
 				 numGroupCols, numGroups,
 				 plan->startup_cost,
 				 plan->total_cost,
@@ -5653,22 +5641,13 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 	}
 	else
 		cost_agg(&agg_path, root,
-				 aggstrategy, numAggs,
+				 aggstrategy, aggcosts,
 				 numGroupCols, numGroups,
 				 plan->startup_cost,
 				 plan->total_cost,
 				 plan->plan_rows, 0.0, 0.0,
 				 0.0, false);
 
-
-=======
-	cost_agg(&agg_path, root,
-			 aggstrategy, aggcosts,
-			 numGroupCols, numGroups,
-			 lefttree->startup_cost,
-			 lefttree->total_cost,
-			 lefttree->plan_rows);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	plan->startup_cost = agg_path.startup_cost;
 	plan->total_cost = agg_path.total_cost;
 

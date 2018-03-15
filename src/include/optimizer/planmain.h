@@ -216,7 +216,7 @@ extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan,
 		 bool streaming, 
 		 int numGroupCols, AttrNumber *grpColIdx,
 		 long numGroups, int num_nullcols,
-		 int numAggs, int transSpace);
+		 const AggClauseCosts *aggcosts, int transSpace);
 extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);      /*CDB*/
 
 extern List *create_external_scan_uri_list(struct ExtTableEntry *extEntry, bool *ismasteronly);

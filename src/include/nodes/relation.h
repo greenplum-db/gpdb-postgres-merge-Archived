@@ -69,6 +69,9 @@ typedef struct AggClauseCosts
 	QualCost	transCost;		/* total per-input-row execution costs */
 	Cost		finalCost;		/* total costs of agg final functions */
 	Size		transitionSpace;	/* space for pass-by-ref transition data */
+
+	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
+	bool	missing_prelimfunc; /* CDB: any agg func w/o a prelim func? */
 } AggClauseCosts;
 
 

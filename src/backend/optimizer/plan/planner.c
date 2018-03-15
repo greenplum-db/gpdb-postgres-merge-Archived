@@ -1762,7 +1762,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 		}
 		else	/* Not GP_ROLE_DISPATCH */
-		if (result_plan != NULL)
 		{
 			/*
 			 * Check to see if it's possible to optimize MIN/MAX aggregates.

@@ -14,6 +14,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "nodes/makefuncs.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_clause.h"   /* assignSortGroupRef */
@@ -35,6 +37,7 @@
 #include "cdb/cdbllize.h"                   /* pull_up_Flow */
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"                /* INT4OID */
+#include "utils/guc.h"
 #include "utils/lsyscache.h"                /* get_typavgwidth */
 
 /*
@@ -893,18 +896,21 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 		if (context->aggstrategy == AGG_SORTED)
 		{
 			Oid		   *cmpOperators = palloc(context->numGroupCols * sizeof(Oid));
+			Oid		   *collations = palloc(context->numGroupCols * sizeof(Oid));
 			bool	   *nullsFirst = palloc(context->numGroupCols * sizeof(bool));
 			int			i;
 
 			for (i = 0; i < context->numGroupCols; i++)
 			{
 				cmpOperators[i] = get_ordering_op_for_equality_op(prelimGroupOperators[i], false);
+				collations[i] = InvalidOid; /* GDPB_91_MERGE_FIXME: collation? */
 				nullsFirst[i] = false;
 			}
 
 			agg_node = (Plan *) make_sort(root, agg_node, context->numGroupCols,
 										  prelimGroupColIdx,
 										  cmpOperators,
+										  collations,
 										  nullsFirst, -1.0);
 			mark_sort_locus(agg_node);
 		}
@@ -1014,7 +1020,7 @@ make_append_aggs_for_rollup(PlannerInfo *root,
 	GroupExtContext context_copy = { };
 	double numGroups = *(context->p_dNumGroups);
 	double numGroups_for_gather = 0;
-	bool has_ordered_aggs = context->agg_costs->hasOrderedAggs;
+	bool has_ordered_aggs = (context->agg_costs->numOrderedAggs > 0);
 
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
 
@@ -1744,12 +1750,14 @@ add_first_agg(PlannerInfo *root,
 	 * GROUPING in groupColIdx, which is the last entry in groupColIdx.
 	 * The parameter numGroupCols should have excluded the GROUPING column.
 	 */
-	agg_node = (Plan *)make_agg(root, current_tlist, current_qual, context->aggstrategy, false,
-			numGroupCols, groupColIdx, groupOperators,
-			lNumGroups, num_nullcols, input_grouping, grouping,
-			rollup_gs_times,
-			context->agg_costs->numAggs, context->agg_costs->transitionSpace,
-			current_lefttree);
+	agg_node = (Plan *)make_agg(root, current_tlist, current_qual, context->aggstrategy,
+								context->agg_costs,
+								false, /* streaming */
+								numGroupCols, groupColIdx, groupOperators,
+								lNumGroups, num_nullcols, input_grouping, grouping,
+								rollup_gs_times,
+								context->agg_costs->transitionSpace,
+								current_lefttree);
 
 	/* Pull up the Flow from the subplan */
 	agg_node->flow = pull_up_Flow(agg_node, agg_node->lefttree);
