@@ -356,6 +356,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 												   available_rels);
 			if (subst && IsA(subst, JoinExpr))
 			{
+				j = (JoinExpr *) subst;
 				/* Yes; recursively process what we pulled up */
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,

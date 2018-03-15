@@ -1143,7 +1143,7 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 	 * Get Oid of the sort operator that would be used for a sort-merge
 	 * equijoin on a pair of exprs of the same type.
 	 */
-	if (eqopoid == InvalidOid || !op_mergejoinable(eqopoid))
+	if (eqopoid == InvalidOid || !op_mergejoinable(eqopoid, typeoid))
 		elog(ERROR, "could not find mergejoinable = operator for type %u", typeoid);
 
 	mergeopfamilies = get_mergejoin_opfamilies(eqopoid);
@@ -1156,7 +1156,12 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 	}
 	if (!lc)
 		elog(ERROR, "could not find operator family for equality operator %u", eqopoid);
-	eclass = get_eclass_for_sort_expr(root, (Expr *) expr, typeoid, mergeopfamilies, 0);
+	eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
+									  mergeopfamilies,
+									  InvalidOid, /* GDPB_91_MERGE_FIXME: collation? */
+									  typeoid,
+									  0,
+									  true);
 	if (!canonical)
 		pk = makePathKey(eclass, opfamily, strategy, false);
 	else
@@ -1251,9 +1256,11 @@ cdb_pull_up_pathkey(PlannerInfo *root,
 
 	outer_ec = get_eclass_for_sort_expr(root,
 										newexpr,
-										exprType((Node *) newexpr),
 										pathkey->pk_eclass->ec_opfamilies,
-										0);
+										exprType((Node *) newexpr),
+										exprCollation((Node *) newexpr),
+										0,
+										true);
 
 	/* Find or create the equivalence class for the transformed expr. */
 	return make_canonical_pathkey(root,
@@ -1359,12 +1366,13 @@ make_pathkeys_for_groupclause(PlannerInfo *root,
 
 			sortkey = (Expr *) get_sortgroupclause_expr(sortcl, tlist);
 			Assert(OidIsValid(sortcl->sortop));
-			pathkey = make_pathkey_from_sortinfo(root,
-												 sortkey,
-												 sortcl->sortop,
-												 sortcl->nulls_first,
-												 sortcl->tleSortGroupRef,
-												 false);
+			pathkey = make_pathkey_from_sortop(root,
+											   sortkey,
+											   sortcl->sortop,
+											   sortcl->nulls_first,
+											   sortcl->tleSortGroupRef,
+											   true,
+											   false);
 
 			/*
 			 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might
