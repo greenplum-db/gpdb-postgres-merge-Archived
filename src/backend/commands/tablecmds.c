@@ -388,7 +388,7 @@ static void ATExecEnableDisableRule(Relation rel, char *rulename,
 static void ATPrepAddInherit(Relation child_rel);
 static void ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode);
 static void ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode, bool is_partition);
-static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid);
+static void drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid, bool is_partition);
 static void ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode);
 static void ATExecDropOf(Relation rel, LOCKMODE lockmode);
 static void ATExecGenericOptions(Relation rel, List *options);
@@ -398,7 +398,7 @@ static void copy_relation_data(SMgrRelation rel, SMgrRelation dst,
 static const char *storage_name(char c);
 
 
-static void copy_append_only_data(RelFileNode src, RelFileNode dst, bool istemp);
+static void copy_append_only_data(RelFileNode src, RelFileNode dst, BackendId backendid, char relpersistence);
 static void ATExecSetDistributedBy(Relation rel, Node *node,
 								   AlterTableCmd *cmd);
 static void ATPrepExchange(Relation rel, AlterPartitionCmd *pc);
@@ -450,6 +450,9 @@ static char *alterTableCmdString(AlterTableType subtype);
 static void change_dropped_col_datatypes(Relation rel);
 
 static void CheckDropRelStorage(RangeVar *rel, ObjectType removeType);
+
+static void inherit_parent(Relation parent_rel, Relation child_rel,
+						   bool is_partition, List *inhAttrNameList);
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -11480,7 +11483,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 
 	if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 	{
-		copy_append_only_data(rel->rd_node, newrnode, rel->rd_istemp);
+		copy_append_only_data(rel->rd_node, newrnode, rel->rd_backend, rel->rd_rel->relpersistence);
 	}
 	else
 	{
@@ -11652,7 +11655,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
  * Currently, AO tables don't have any extra forks.
  */
 static void
-copy_append_only_data(RelFileNode src, RelFileNode dst, bool istemp)
+copy_append_only_data(RelFileNode src, RelFileNode dst, BackendId backendid, char relpersistence)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -11665,9 +11668,9 @@ copy_append_only_data(RelFileNode src, RelFileNode dst, bool istemp)
 	/*
 	 * Get the directory and base filename of the data file.
 	 */
-	reldir_and_filename(src, MAIN_FORKNUM, &srcdir, &srcfilename);
+	reldir_and_filename(src, MAIN_FORKNUM, backendid, &srcdir, &srcfilename);
 	srcfiledot = psprintf("%s.", srcfilename);
-	dstpath = relpath(dst, MAIN_FORKNUM);
+	dstpath = relpathbackend(dst, backendid, MAIN_FORKNUM);
 
 	/*
 	 * Scan the directory, looking for files belonging to this relation.
@@ -11871,26 +11874,12 @@ ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 	ATSimplePermissions(parent_rel, ATT_TABLE);
 
 	/* Permanent rels cannot inherit from temporary ones */
-	if (parent_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		child_rel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
+	if (RelationUsesTempNamespace(parent_rel)
+		&& !RelationUsesTempNamespace(child_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot inherit from temporary relation \"%s\"",
 						RelationGetRelationName(parent_rel))));
-
-	/* If parent rel is temp, it must belong to this session */
-	if (parent_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!parent_rel->rd_islocaltemp)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot inherit from temporary relation of another session")));
-
-	/* Ditto for the child */
-	if (child_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!child_rel->rd_islocaltemp)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot inherit to temporary relation of another session")));
 
 	if (is_partition)
 	{
@@ -12530,7 +12519,8 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode, bool is_par
 
 	drop_parent_dependency(RelationGetRelid(rel),
 						   RelationRelationId,
-						   RelationGetRelid(parent_rel));
+						   RelationGetRelid(parent_rel),
+						   is_partition);
 
 	/* keep our lock on the parent relation until commit */
 	heap_close(parent_rel, NoLock);
@@ -12553,7 +12543,7 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode, bool is_par
  * through pg_depend.
  */
 static void
-drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid)
+drop_parent_dependency(Oid relid, Oid refclassid, Oid refobjid, bool is_partition)
 {
 	Relation	catalogRelation;
 	SysScanDesc scan;
@@ -12791,7 +12781,8 @@ build_ctas_with_dist(Relation rel, List *dist_clause,
 	 * Update snapshot command ID to ensure this query sees results of any
 	 * previously executed queries.
 	 */
-	PushUpdatedSnapshot(GetActiveSnapshot());
+	PushCopiedSnapshot(GetActiveSnapshot());
+	UpdateActiveSnapshotCommandId();
 
 	/* Create dest receiver for COPY OUT */
 	dest = CreateDestReceiver(DestIntoRel);
@@ -13631,7 +13622,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	 * belong in the dispatch block above (MPP-9663).
 	 */
 	ATExecChangeOwner(RangeVarGetRelid(tmprv, false),
-					  rel->rd_rel->relowner, true);
+					  rel->rd_rel->relowner, true, AccessExclusiveLock);
 	CommandCounterIncrement(); /* see the effects of the command */
 
 	/*
@@ -14287,7 +14278,8 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	}
 
 	/* execute the command */
-	ATExecCmd(wqueue, tab, rel2, atc);
+	/* GPDB_91_MERGE_FIXME: is this lock mode right? */
+	ATExecCmd(wqueue, tab, rel2, atc, AccessExclusiveLock);
 
 	if (!bPartitionCmd)
 	{
@@ -14582,7 +14574,8 @@ exchange_part_inheritance(Oid oldrelid, Oid newrelid)
 	ATExecDropInherit(oldrel,
 			makeRangeVar(get_namespace_name(parent->rd_rel->relnamespace),
 					     RelationGetRelationName(parent), -1),
-			true);
+					  AccessExclusiveLock, /* GPDB_91_MERGE_FIXME: lock mode? */
+					  true);
 
 	inherit_parent(parent, newrel, true /* it's a partition */, NIL);
 	heap_close(parent, NoLock);
@@ -16624,7 +16617,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 
 	/* If the table was already typed, drop the existing dependency. */
 	if (rel->rd_rel->reloftype)
-		drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype);
+		drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype, false);
 
 	/* Record a dependency on the new type. */
 	tableobj.classId = RelationRelationId;
@@ -16673,7 +16666,7 @@ ATExecDropOf(Relation rel, LOCKMODE lockmode)
 	 * table is presumed enough rights.  No lock required on the type, either.
 	 */
 
-	drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype);
+	drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype, false);
 
 	/* Clear pg_class.reloftype */
 	relationRelation = heap_open(RelationRelationId, RowExclusiveLock);
@@ -17069,7 +17062,7 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 	{
 		AlterIndexNamespaces(classRel, rel, oldNspOid, nspOid, objsMoved);
 		AlterSeqNamespaces(classRel, rel, oldNspOid, nspOid,
-						   objsMoved, lockmode);
+						   objsMoved, AccessExclusiveLock);
 		AlterConstraintNamespaces(RelationGetRelid(rel), oldNspOid, nspOid,
 								  false, objsMoved);
 	}

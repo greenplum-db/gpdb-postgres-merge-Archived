@@ -1756,7 +1756,7 @@ cdb_sequence_relation_init(Relation seqrel,
                            Oid      tablespaceid,
                            Oid      dbid,
                            Oid      relid,
-                           bool     istemp)
+						   char     relpersistence)
 {
     /* See RelationBuildDesc in relcache.c */
     memset(seqrel, 0, sizeof(*seqrel));
@@ -1768,11 +1768,14 @@ cdb_sequence_relation_init(Relation seqrel,
 
 	seqrel->rd_rel = (Form_pg_class)palloc0(CLASS_TUPLE_SIZE);
     sprintf(seqrel->rd_rel->relname.data, "pg_class.oid=%d", relid);
+	seqrel->rd_rel->relpersistence = relpersistence;
 
     /* as in RelationInitPhysicalAddr... */
     seqrel->rd_node.spcNode = tablespaceid;
     seqrel->rd_node.dbNode = dbid;
     seqrel->rd_node.relNode = relid;
+
+	/* GPDB_91_MERGE_FIXME: should we set seqrel->rd_backend here? */
 }                               /* cdb_sequence_relation_init */
 
 /*
@@ -1852,7 +1855,7 @@ cdb_sequence_nextval_server(Oid    tablespaceid,
 
     /* Build a pseudo relcache entry with just enough info to call bufmgr. */
     seqrel = &fakerel;
-    cdb_sequence_relation_init(seqrel, tablespaceid, dbid, relid, istemp);
+    cdb_sequence_relation_init(seqrel, tablespaceid, dbid, relid, relpersistence);
 
     /* CDB TODO: Catch errors. */
 
