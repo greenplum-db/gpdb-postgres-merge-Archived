@@ -416,7 +416,7 @@ SyncRepCancelWait(void)
 }
 
 void
-SyncRepCleanupAtProcExit(void)
+SyncRepCleanupAtProcExit(int code, Datum arg)
 {
 	if (!SHMQueueIsDetached(&(MyProc->syncRepLinks)))
 	{

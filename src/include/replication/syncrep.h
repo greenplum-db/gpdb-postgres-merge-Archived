@@ -39,7 +39,7 @@ extern char *SyncRepStandbyNames;
 extern void SyncRepWaitForLSN(XLogRecPtr XactCommitLSN);
 
 /* called at backend exit */
-extern void SyncRepCleanupAtProcExit(void);
+extern void SyncRepCleanupAtProcExit(int code, Datum arg);
 
 /* called by wal sender */
 extern void SyncRepInitConfig(void);
