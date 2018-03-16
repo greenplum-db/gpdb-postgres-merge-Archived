@@ -1154,13 +1154,8 @@ associate(void)
 			 * Note, though, that if there's no rule, a '%s' in the format is
 			 * a bad thing.
 			 */
-<<<<<<< HEAD
 			if (zp->z_format_specifier == 's')
 				error("%s", _("%s in ruleless zone"));
-=======
-			if (strchr(zp->z_format, '%') != NULL)
-				error(_("%s in ruleless zone"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		}
 	}
 	if (errors)
@@ -1441,18 +1436,11 @@ inzsub(char **fields, int nfields, bool iscont)
 	}
 	z.z_filename = filename;
 	z.z_linenum = linenum;
-<<<<<<< HEAD
 	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid UT offset"), true);
 	if ((cp = strchr(fields[i_format], '%')) != NULL)
 	{
 		if ((*++cp != 's' && *cp != 'z') || strchr(cp, '%')
 			|| strchr(fields[i_format], '/'))
-=======
-	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid UTC offset"), TRUE);
-	if ((cp = strchr(fields[i_format], '%')) != NULL)
-	{
-		if (*++cp != 's' || strchr(cp, '%') != NULL)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{
 			error(_("invalid abbreviation format"));
 			return false;
@@ -3691,7 +3679,6 @@ mkdirs(char const *argname, bool ancestors)
 	char	   *cp;
 
 	cp = name = ecpyalloc(argname);
-<<<<<<< HEAD
 
 	/*
 	 * On MS-Windows systems, do not worry about drive letters or backslashes,
@@ -3706,9 +3693,6 @@ mkdirs(char const *argname, bool ancestors)
 		cp++;
 
 	while (cp && ((cp = strchr(cp, '/')) || !ancestors))
-=======
-	while ((cp = strchr(cp + 1, '/')) != NULL)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		if (cp)
 			*cp = '\0';

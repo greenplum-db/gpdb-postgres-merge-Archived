@@ -588,7 +588,6 @@ TFT     18000    # Kerguelen Time (obsolete)
 
 #################### PACIFIC ####################
 
-<<<<<<< HEAD
 CHADT   49500 D  # Chatham Daylight Time (New Zealand) (obsolete)
 CHAST   45900    # Chatham Standard Time (New Zealand) (obsolete)
 CHUT    36000    # Chuuk Time (obsolete)
@@ -600,27 +599,6 @@ FJT     43200    # Fiji Time (obsolete)
 GALT   -21600    # Galapagos Time (obsolete)
 GAMT   -32400    # Gambier Time (obsolete)
 GILT    43200    # Gilbert Islands Time (obsolete)
-=======
-CHADT   49500 D  # Chatham Daylight Time (New Zealand)
-                 #     (Pacific/Chatham)
-CHAST   45900    # Chatham Standard Time (New Zealand)
-                 #     (Pacific/Chatham)
-CHUT    36000    # Chuuk Time
-                 #     (Pacific/Chuuk)
-CKT     43200    # Cook Islands Time (not in zic)
-EASST  -18000 D  # Easter Island Summer Time (Chile)
-                 #     (Pacific/Easter)
-EAST   -21600    # Easter Island Time (Chile)
-                 #     (Pacific/Easter)
-FJST   -46800 D  # Fiji Summer Time (not in zic)
-FJT    -43200    # Fiji Time (not in zic)
-GALT   -21600    # Galapagos Time
-                 #     (Pacific/Galapagos)
-GAMT   -32400    # Gambier Time
-                 #     (Pacific/Gambier)
-GILT    43200    # Gilbert Islands Time
-                 #     (Pacific/Tarawa)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 HST    -36000    # Hawaiian Standard Time
                  #     (Pacific/Honolulu)
                  #     (Pacific/Johnston)
@@ -636,7 +614,6 @@ NZDT    46800 D  # New Zealand Daylight Time
 NZST    43200    # New Zealand Standard Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
-<<<<<<< HEAD
 PGT     36000    # Papua New Guinea Time (obsolete)
 PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati) (obsolete)
 PONT    39600    # Ponape Time (Micronesia) (obsolete)
@@ -650,29 +627,3 @@ VUT     39600    # Vanuata Time (obsolete)
 WAKT    43200    # Wake Time (obsolete)
 WFT     43200    # Wallis and Futuna Time (obsolete)
 YAPT    36000    # Yap Time (Micronesia) (not in IANA database)
-=======
-PGT     36000    # Papua New Guinea Time
-                 #     (Pacific/Port_Moresby)
-PHOT    46800    # Phoenix Islands Time (Kiribati)
-                 #     (Pacific/Enderbury)
-PONT    39600    # Ponape Time (Micronesia)
-                 #     (Pacific/Ponape)
-PWT     32400    # Palau Time
-                 #     (Pacific/Palau)
-TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
-                 #     (Pacific/Tahiti)
-TKT    -36000    # Tokelau Time
-                 #     (Pacific/Fakaofo)
-TOT     46800    # Tonga Time (not in zic)
-TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
-                 #     (Pacific/Truk)
-TVT     43200    # Tuvalu Time
-                 #     (Pacific/Funafuti)
-VUT     39600    # Vanuata Time (not in zic)
-WAKT    43200    # Wake Time
-                 #     (Pacific/Wake)
-WFT     43200    # Wallis and Futuna Time
-                 #     (Pacific/Wallis)
-YAPT    36000    # Yap Time (Micronesia) (not in zic)
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
