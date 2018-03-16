@@ -14,12 +14,20 @@
 //---------------------------------------------------------------------------
 
 #include "postgres.h"
+
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "utils/datum.h"
 #include "utils/date.h"
+
+/*
+ * GPDB_91_MERGE_FIXME: This allows us to call numeric_is_nan(). This is probably
+ * a violation of some ORCA coding rule, because we don't do this elsewhere...
+ */
+extern "C" {
 #include "utils/numeric.h"
+}
 
 #include "gpopt/translate/CTranslatorScalarToDXL.h"
 #include "gpopt/translate/CTranslatorQueryToDXL.h"
