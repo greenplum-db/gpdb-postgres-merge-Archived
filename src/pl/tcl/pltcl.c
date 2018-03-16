@@ -97,15 +97,9 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct pltcl_interp_desc
 {
-<<<<<<< HEAD
-	Oid			user_id;				/* Hash key (must be first!) */
-	Tcl_Interp *interp;					/* The interpreter */
-	Tcl_HashTable query_hash;			/* pltcl_query_desc structs */
-=======
 	Oid			user_id;		/* Hash key (must be first!) */
 	Tcl_Interp *interp;			/* The interpreter */
 	Tcl_HashTable query_hash;	/* pltcl_query_desc structs */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } pltcl_interp_desc;
 
 
@@ -145,11 +139,7 @@ typedef struct pltcl_query_desc
 
 /**********************************************************************
  * For speedy lookup, we maintain a hash table mapping from
-<<<<<<< HEAD
- * function OID + trigger OID + user OID to pltcl_proc_desc pointers.
-=======
  * function OID + trigger flag + user OID to pltcl_proc_desc pointers.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * The reason the pltcl_proc_desc struct isn't directly part of the hash
  * entry is to simplify recovery from errors during compile_pltcl_function.
  *
@@ -160,11 +150,6 @@ typedef struct pltcl_query_desc
  **********************************************************************/
 typedef struct pltcl_proc_key
 {
-<<<<<<< HEAD
-	Oid			proc_id;				/* Function OID */
-	Oid			trig_id;				/* Trigger OID, or 0 if not trigger */
-	Oid			user_id;				/* User calling the function, or 0 */
-=======
 	Oid			proc_id;		/* Function OID */
 
 	/*
@@ -173,16 +158,11 @@ typedef struct pltcl_proc_key
 	 */
 	Oid			is_trigger;		/* is it a trigger function? */
 	Oid			user_id;		/* User calling the function, or 0 */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 } pltcl_proc_key;
 
 typedef struct pltcl_proc_ptr
 {
-<<<<<<< HEAD
-	pltcl_proc_key proc_key;			/* Hash key (must be first!) */
-=======
 	pltcl_proc_key proc_key;	/* Hash key (must be first!) */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	pltcl_proc_desc *proc_ptr;
 } pltcl_proc_ptr;
 
@@ -219,11 +199,7 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
-<<<<<<< HEAD
-											   bool pltrusted);
-=======
 					   bool pltrusted);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
@@ -1219,11 +1195,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 
 	/* Try to find function in pltcl_proc_htab */
 	proc_key.proc_id = fn_oid;
-<<<<<<< HEAD
-	proc_key.trig_id = tgreloid;
-=======
 	proc_key.is_trigger = OidIsValid(tgreloid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	proc_key.user_id = pltrusted ? GetUserId() : InvalidOid;
 
 	proc_ptr = hash_search(pltcl_proc_htab, &proc_key,
@@ -1279,24 +1251,16 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		int			tcl_rc;
 
 		/************************************************************
-<<<<<<< HEAD
-		 * Build our internal proc name from the functions Oid + trigger Oid
-=======
 		 * Build our internal proc name from the function's Oid.  Append
 		 * "_trigger" when appropriate to ensure the normal and trigger
 		 * cases are kept separate.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		 ************************************************************/
 		if (!is_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u", fn_oid);
 		else
 			snprintf(internal_proname, sizeof(internal_proname),
-<<<<<<< HEAD
-					 "__PLTcl_proc_%u_trigger_%u", fn_oid, tgreloid);
-=======
 					 "__PLTcl_proc_%u_trigger", fn_oid);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		/************************************************************
 		 * Allocate a new procedure description block

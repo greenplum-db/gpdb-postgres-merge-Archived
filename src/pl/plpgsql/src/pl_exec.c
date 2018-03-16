@@ -3086,20 +3086,11 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot COPY to/from client in PL/pgSQL")));
-<<<<<<< HEAD
-
-			/* Fixes MPP-3344 */
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot begin/end transactions in PL/pgSQL"),
 			errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
-<<<<<<< HEAD
-			break;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		default:
 			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
@@ -3693,11 +3684,7 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 /* ----------
  * exec_assign_value			Put a value into a target field
  *
-<<<<<<< HEAD
  * Note: in some code paths, this will leak memory in the eval_econtext;
-=======
- * Note: in some code paths, this may leak memory in the eval_econtext;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * we assume that will be cleaned up later by exec_eval_cleanup.  We cannot
  * call exec_eval_cleanup here for fear of destroying the input Datum value.
  * ----------
@@ -3967,23 +3954,14 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				ArrayType  *oldarrayval;
 				ArrayType  *newarrayval;
 				SPITupleTable *save_eval_tuptable;
-<<<<<<< HEAD
 				MemoryContext oldcontext;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 				/*
 				 * We need to do subscript evaluation, which might require
 				 * evaluating general expressions; and the caller might have
-<<<<<<< HEAD
-				 * done that too in order to prepare the input Datum.  We
-				 * have to save and restore the caller's SPI_execute result,
-				 * if any.
-=======
 				 * done that too in order to prepare the input Datum.  We have
 				 * to save and restore the caller's SPI_execute result, if
 				 * any.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				 */
 				save_eval_tuptable = estate->eval_tuptable;
 				estate->eval_tuptable = NULL;
@@ -4056,19 +4034,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 								 errmsg("array subscript in assignment must not be null")));
 
 					/*
-<<<<<<< HEAD
-					 * Clean up in case the subscript expression wasn't simple.
-					 * We can't do exec_eval_cleanup, but we can do this much
-					 * (which is safe because the integer subscript value is
-					 * surely pass-by-value), and we must do it in case the
-					 * next subscript expression isn't simple either.
-=======
 					 * Clean up in case the subscript expression wasn't
 					 * simple. We can't do exec_eval_cleanup, but we can do
 					 * this much (which is safe because the integer subscript
 					 * value is surely pass-by-value), and we must do it in
 					 * case the next subscript expression isn't simple either.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					 */
 					if (estate->eval_tuptable != NULL)
 						SPI_freetuptable(estate->eval_tuptable);
@@ -4807,11 +4777,7 @@ loop_exit:
  * Because we only store one execution tree for a simple expression, we
  * can't handle recursion cases.  So, if we see the tree is already busy
  * with an evaluation in the current xact, we just return FALSE and let the
-<<<<<<< HEAD
- * caller run the expression the hard way.  (Other alternatives such as
-=======
  * caller run the expression the hard way.	(Other alternatives such as
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * creating a new tree for a recursive call either introduce memory leaks,
  * or add enough bookkeeping to be doubtful wins anyway.)  Another case that
  * is covered by the expr_simple_in_use test is where a previous execution
@@ -4891,13 +4857,8 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	if (expr->expr_simple_lxid != curlxid)
 	{
-<<<<<<< HEAD
-		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
-												  simple_eval_estate);
-=======
 		oldcontext = MemoryContextSwitchTo(simple_eval_estate->es_query_cxt);
 		expr->expr_simple_state = ExecInitExpr(expr->expr_simple_expr, NULL);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		expr->expr_simple_in_use = false;
 		expr->expr_simple_lxid = curlxid;
 		MemoryContextSwitchTo(oldcontext);
