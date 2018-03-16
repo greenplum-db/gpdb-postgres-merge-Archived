@@ -94,9 +94,6 @@ static void show_sort_keys(SortState *sortstate, List *ancestors,
 			   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 					   ExplainState *es);
-static void show_sort_keys_common(PlanState *planstate,
-					  int nkeys, AttrNumber *keycols,
-					  List *ancestors, ExplainState *es);
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
 					 List *ancestors, ExplainState *es);
@@ -1962,10 +1959,16 @@ static void
 show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 {
 	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
+	const char *SortKeystr;
 
-	show_sort_keys_common((PlanState *) sortstate,
-						  plan->numCols, plan->sortColIdx,
-						  ancestors, es);
+	if (sortstate->noduplicates)
+		SortKeystr = "Sort Key (Distinct)";
+	else
+		SortKeystr = "Sort Key";
+
+	show_sort_group_keys((PlanState *) sortstate, SortKeystr,
+						 plan->numCols, plan->sortColIdx,
+						 ancestors, es);
 }
 
 /*
@@ -2072,14 +2075,15 @@ show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 {
 	MergeAppend *plan = (MergeAppend *) mstate->ps.plan;
 
-	show_sort_keys_common((PlanState *) mstate,
-						  plan->numCols, plan->sortColIdx,
-						  ancestors, es);
+	show_sort_group_keys((PlanState *) mstate, "Sort Key",
+						 plan->numCols, plan->sortColIdx,
+						 ancestors, es);
 }
 
 static void
-show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
-					  List *ancestors, ExplainState *es)
+show_sort_group_keys(PlanState *planstate, const char *qlabel,
+					 int nkeys, AttrNumber *keycols,
+					 List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = planstate->plan;
 	List	   *context;
@@ -2087,16 +2091,9 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 	bool		useprefix;
 	int			keyno;
 	char	   *exprstr;
-	const char *SortKeystr;
 
 	if (nkeys <= 0)
 		return;
-
-	if (IsA(planstate, SortState) &&
-		((SortState *) planstate)->noduplicates)
-		SortKeystr = "Sort Key (Distinct)";
-	else
-		SortKeystr = "Sort Key";
 
 	/* Set up deparsing context */
 	context = deparse_context_for_planstate((Node *) planstate,
@@ -2119,7 +2116,7 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 		result = lappend(result, exprstr);
 	}
 
-	ExplainPropertyList(SortKeystr, result, es);
+	ExplainPropertyList(qlabel, result, es);
 }
 
 /*
