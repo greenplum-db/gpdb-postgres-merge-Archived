@@ -2274,7 +2274,7 @@ DATA(insert OID = 1783 ( int2					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "1700"
 DESCR("convert numeric to int2");
 
 /* Complex Number type */
-DATA(insert OID = 3057 ( complex_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "195 195" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
+DATA(insert OID = 7057 ( complex_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "195 195" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
 DESCR("compare two complex numbers");
 
 /* formatting */
@@ -2923,7 +2923,7 @@ DESCR("is schema another session's temp schema?");
 
 DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 16 "23" _null_ _null_ _null_ _null_ pg_cancel_backend _null_ _null_ _null_ ));
 DESCR("cancel a server process' current query");
-DATA(insert OID = 950 ( pg_cancel_backend		PGNSP PGUID 12 1 0 0 f f f t f v 2 0 16 "23 25" _null_ _null_ _null_ _null_ pg_cancel_backend_msg _null_ _null_ _null_ ));
+DATA(insert OID = 7155 ( pg_cancel_backend		PGNSP PGUID 12 1 0 0 f f f t f v 2 0 16 "23 25" _null_ _null_ _null_ _null_ pg_cancel_backend_msg _null_ _null_ _null_ ));
 DESCR("cancel a server process' current query");
 DATA(insert OID = 2096 ( pg_terminate_backend		PGNSP PGUID 12 1 0 0 f f f t f v 1 0 16 "23" _null_ _null_ _null_ _null_ pg_terminate_backend _null_ _null_ _null_ ));
 DESCR("terminate a server process");
@@ -4431,16 +4431,6 @@ DESCR("list available extension versions");
 DATA(insert OID = 3084 (  pg_extension_update_paths		PGNSP PGUID 12 10 100 0 f f f t t s 1 0 2249 "19" "{19,25,25,25}" "{i,o,o,o}" "{name,source,target,path}" _null_ pg_extension_update_paths _null_ _null_ _null_ ));
 DESCR("list an extension's version update paths");
 DATA(insert OID = 3086 (  pg_extension_config_dump		PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2278 "2205 25" _null_ _null_ _null_ _null_ pg_extension_config_dump _null_ _null_ _null_ ));
-DESCR("flag an extension's table contents to be emitted by pg_dump");
-
-/* Extensions */
-DATA(insert OID = 3082 (  pg_available_extensions		PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,25}" "{o,o,o}" "{name,default_version,comment}" _null_ pg_available_extensions _null_ _null_ _null_ n a ));
-DESCR("list available extensions");
-DATA(insert OID = 3083 (  pg_available_extension_versions	PGNSP PGUID 12 10 100 0 f f f t t s 0 0 2249 "" "{19,25,16,16,19,1003,25}" "{o,o,o,o,o,o,o}" "{name,version,superuser,relocatable,schema,requires,comment}" _null_ pg_available_extension_versions _null_ _null_ _null_ n a ));
-DESCR("list available extension versions");
-DATA(insert OID = 3084 (  pg_extension_update_paths		PGNSP PGUID 12 10 100 0 f f f t t s 1 0 2249 "19" "{19,25,25,25}" "{i,o,o,o}" "{name,source,target,path}" _null_ pg_extension_update_paths _null_ _null_ _null_ n a ));
-DESCR("list an extension's version update paths");
-DATA(insert OID = 3086 (  pg_extension_config_dump		PGNSP PGUID 12 1 0 0 f f f t f v 2 0 2278 "2205 25" _null_ _null_ _null_ _null_ pg_extension_config_dump _null_ _null_ _null_ n a));
 DESCR("flag an extension's table contents to be emitted by pg_dump");
 
 /* SQL-spec window functions */

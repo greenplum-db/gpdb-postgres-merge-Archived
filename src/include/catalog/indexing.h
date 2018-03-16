@@ -410,10 +410,10 @@ DECLARE_UNIQUE_INDEX(pg_proc_callback_profnoid_promethod_index, 3126, on pg_proc
 DECLARE_INDEX(pg_partition_encoding_parencoid_index, 9909, on pg_partition_encoding using btree(parencoid oid_ops));
 #define PartitionEncodingParencoidIndexId	9909
 
-DECLARE_UNIQUE_INDEX(pg_compression_oid_index, 3058, on pg_compression using btree(oid oid_ops));
-#define CompressionOidIndexId	3058
-DECLARE_UNIQUE_INDEX(pg_compression_compname_index, 3059, on pg_compression using btree(compname name_ops));
-#define CompressionCompnameIndexId	3059
+DECLARE_UNIQUE_INDEX(pg_compression_oid_index, 7058, on pg_compression using btree(oid oid_ops));
+#define CompressionOidIndexId	7058
+DECLARE_UNIQUE_INDEX(pg_compression_compname_index, 7059, on pg_compression using btree(compname name_ops));
+#define CompressionCompnameIndexId	7059
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

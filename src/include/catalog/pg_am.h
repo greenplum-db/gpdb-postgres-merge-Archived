@@ -141,8 +141,7 @@ DATA(insert OID = 2742 (  gin	0 5 f f f f t t f t f f 0 gininsert ginbeginscan -
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
 
-GPDB_EXTRA_COL(amcanshrink = f);
-DATA(insert OID = 7013 (  bitmap	5 1 f f f t t t f f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
+DATA(insert OID = 7013 (  bitmap	5 1 f f f t t t f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbuildempty bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
 DESCR("bitmap index access method");
 #define BITMAP_AM_OID 7013
 

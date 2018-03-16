@@ -102,6 +102,14 @@ bmbuild(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
+/*
+ *	bmbuildempty() -- build an empty bitmap index in the initialization fork
+ */
+Datum
+bmbuildempty(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "GPDB_91_MERGE_FIXME: bmbuildempty not implemented");
+}
 
 /*
  * bminsert() -- insert an index tuple into a bitmap index.

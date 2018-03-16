@@ -101,11 +101,11 @@
 
  CREATE FUNCTION pg_renice_session(int4, int4) RETURNS int4 LANGUAGE internal VOLATILE STRICT AS 'pg_renice_session' WITH (OID=6042, DESCRIPTION="change priority of all the backends for a given session id");
 
- CREATE FUNCTION gp_replication_error() RETURNS text LANGUAGE internal VOLATILE STRICT AS 'gp_replication_error' WITH (OID=3098, DESCRIPTION="get replication error");
+ CREATE FUNCTION gp_replication_error() RETURNS text LANGUAGE internal VOLATILE STRICT AS 'gp_replication_error' WITH (OID=7098, DESCRIPTION="get replication error");
 
- CREATE FUNCTION pg_stat_get_wal_senders(OUT pid int4, OUT state text, OUT sent_location text, OUT write_location text, OUT flush_location text, OUT replay_location text, OUT sync_priority int4, OUT sync_state text) RETURNS SETOF pg_catalog.record LANGUAGE internal STABLE AS 'pg_stat_get_wal_senders' WITH (OID=3099, DESCRIPTION="statistics: information about currently active replication");
+ CREATE FUNCTION pg_stat_get_wal_senders(OUT pid int4, OUT state text, OUT sent_location text, OUT write_location text, OUT flush_location text, OUT replay_location text, OUT sync_priority int4, OUT sync_state text) RETURNS SETOF pg_catalog.record LANGUAGE internal STABLE AS 'pg_stat_get_wal_senders' WITH (OID=7099, DESCRIPTION="statistics: information about currently active replication");
 
- CREATE FUNCTION pg_terminate_backend(int4, text) RETURNS bool LANGUAGE internal VOLATILE STRICT AS 'pg_terminate_backend_msg' WITH (OID=951, DESCRIPTION="terminate a server process");
+ CREATE FUNCTION pg_terminate_backend(int4, text) RETURNS bool LANGUAGE internal VOLATILE STRICT AS 'pg_terminate_backend_msg' WITH (OID=7154, DESCRIPTION="terminate a server process");
 
  CREATE FUNCTION pg_resgroup_get_status_kv(IN prop_in text, OUT rsgid oid, OUT prop text, OUT value text) RETURNS SETOF pg_catalog.record LANGUAGE internal VOLATILE AS 'pg_resgroup_get_status_kv' WITH (OID=6065, DESCRIPTION="statistics: information about resource groups in key-value style");
 
@@ -262,23 +262,10 @@
 
  CREATE FUNCTION gp_update_ao_master_stats(text) RETURNS int8 LANGUAGE internal VOLATILE MODIFIES SQL DATA AS 'gp_update_ao_master_stats_name' WITH (OID=7174, DESCRIPTION="append only tables utility function");
 
- CREATE FUNCTION xmlexists(text, xml) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xmlexists' WITH (OID=7182, DESCRIPTION="test XML value against XPath expression");
-
- CREATE FUNCTION xpath_exists(text, xml, _text) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xpath_exists' WITH (OID=7183, DESCRIPTION="test XML value against XPath expression, with namespace support");
-
- CREATE FUNCTION xpath_exists(text, xml) RETURNS bool LANGUAGE sql IMMUTABLE STRICT AS $$select pg_catalog.xpath_exists($1, $2, '{}'::pg_catalog.text[])$$ WITH (OID=3049, DESCRIPTION="test XML value against XPath expression");
-
- CREATE FUNCTION xml_is_well_formed(text) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xml_is_well_formed' WITH (OID=7184, DESCRIPTION="determine if a string is well formed XML");
-
- CREATE FUNCTION xml_is_well_formed_document(text) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xml_is_well_formed_document' WITH (OID=7185, DESCRIPTION="determine if a string is well formed XML document");
-
- CREATE FUNCTION xml_is_well_formed_content(text) RETURNS bool LANGUAGE internal IMMUTABLE STRICT AS 'xml_is_well_formed_content' WITH (OID=7186, DESCRIPTION="determine if a string is well formed XML content");
-
-
 -- the bitmap index access method routines
- CREATE FUNCTION bmgettuple(internal, internal) RETURNS bool LANGUAGE internal VOLATILE STRICT AS 'bmgettuple' WITH (OID=3050, DESCRIPTION="bitmap(internal)");
+ CREATE FUNCTION bmgettuple(internal, internal) RETURNS bool LANGUAGE internal VOLATILE STRICT AS 'bmgettuple' WITH (OID=7050, DESCRIPTION="bitmap(internal)");
 
- CREATE FUNCTION bmgetbitmap(internal, internal) RETURNS internal LANGUAGE internal VOLATILE STRICT AS 'bmgetbitmap' WITH (OID=3051, DESCRIPTION="bitmap(internal)");
+ CREATE FUNCTION bmgetbitmap(internal, internal) RETURNS internal LANGUAGE internal VOLATILE STRICT AS 'bmgetbitmap' WITH (OID=7051, DESCRIPTION="bitmap(internal)");
 
  CREATE FUNCTION bminsert(internal, internal, internal, internal, internal, internal) RETURNS bool LANGUAGE internal VOLATILE STRICT AS 'bminsert' WITH (OID=7187, DESCRIPTION="bitmap(internal)");
 
@@ -293,6 +280,8 @@
  CREATE FUNCTION bmrestrpos(internal) RETURNS void LANGUAGE internal VOLATILE STRICT AS 'bmrestrpos' WITH (OID=7192, DESCRIPTION="bitmap(internal)");
 
  CREATE FUNCTION bmbuild(internal, internal, internal) RETURNS internal LANGUAGE internal VOLATILE STRICT AS 'bmbuild' WITH (OID=7193, DESCRIPTION="bitmap(internal)");
+
+ CREATE FUNCTION bmbuildempty(internal) RETURNS internal LANGUAGE internal VOLATILE STRICT AS 'bmbuildempty' WITH (OID=7011, DESCRIPTION="bitmap(internal)");
 
  CREATE FUNCTION bmbulkdelete(internal, internal, internal, internal) RETURNS internal LANGUAGE internal VOLATILE STRICT AS 'bmbulkdelete' WITH (OID=7194, DESCRIPTION="bitmap(internal)");
 
@@ -328,7 +317,7 @@
 -- Functions to deal with SREH error logs
  CREATE FUNCTION gp_read_error_log(exttable text, OUT cmdtime timestamptz, OUT relname text, OUT filename text, OUT linenum int4, OUT bytenum int4, OUT errmsg text, OUT rawdata text, OUT rawbytes bytea) RETURNS SETOF record LANGUAGE INTERNAL STRICT VOLATILE EXECUTE ON ALL SEGMENTS AS 'gp_read_error_log' WITH (OID = 7076, DESCRIPTION="read the error log for the specified external table");
 
- CREATE FUNCTION gp_truncate_error_log(text) RETURNS bool LANGUAGE INTERNAL STRICT VOLATILE AS 'gp_truncate_error_log' WITH (OID=3069, DESCRIPTION="truncate the error log for the specified external table");
+ CREATE FUNCTION gp_truncate_error_log(text) RETURNS bool LANGUAGE INTERNAL STRICT VOLATILE AS 'gp_truncate_error_log' WITH (OID=7069, DESCRIPTION="truncate the error log for the specified external table");
 
 -- elog related
  CREATE FUNCTION gp_elog(text) RETURNS void LANGUAGE internal IMMUTABLE STRICT AS 'gp_elog' WITH (OID=5044, DESCRIPTION="Insert text into the error log");
@@ -355,15 +344,15 @@
  CREATE FUNCTION gp_request_fts_probe_scan() RETURNS bool LANGUAGE internal VOLATILE AS 'gp_request_fts_probe_scan' EXECUTE ON MASTER WITH (OID=5035, DESCRIPTION="Request a FTS probe scan and wait for response");
 
 
- CREATE FUNCTION cosh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dcosh' WITH (OID=3539, DESCRIPTION="Hyperbolic cosine function");
+ CREATE FUNCTION cosh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dcosh' WITH (OID=7539, DESCRIPTION="Hyperbolic cosine function");
 
- CREATE FUNCTION sinh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dsinh' WITH (OID=3540, DESCRIPTION="Hyperbolic sine function");
+ CREATE FUNCTION sinh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dsinh' WITH (OID=7540, DESCRIPTION="Hyperbolic sine function");
 
- CREATE FUNCTION tanh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dtanh' WITH (OID=3541, DESCRIPTION="Hyperbolic tangent function");
+ CREATE FUNCTION tanh(float8) RETURNS float8 LANGUAGE internal IMMUTABLE AS 'dtanh' WITH (OID=7541, DESCRIPTION="Hyperbolic tangent function");
 
- CREATE FUNCTION anytable_in(cstring) RETURNS anytable LANGUAGE internal IMMUTABLE STRICT AS 'anytable_in' WITH (OID=3054, DESCRIPTION="anytable type serialization input function");
+ CREATE FUNCTION anytable_in(cstring) RETURNS anytable LANGUAGE internal IMMUTABLE STRICT AS 'anytable_in' WITH (OID=7054, DESCRIPTION="anytable type serialization input function");
 
- CREATE FUNCTION anytable_out(anytable) RETURNS cstring LANGUAGE internal IMMUTABLE STRICT AS 'anytable_out' WITH (OID=3055, DESCRIPTION="anytable type serialization output function");
+ CREATE FUNCTION anytable_out(anytable) RETURNS cstring LANGUAGE internal IMMUTABLE STRICT AS 'anytable_out' WITH (OID=7055, DESCRIPTION="anytable type serialization output function");
 
  CREATE FUNCTION gp_quicklz_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'quicklz_constructor' WITH (OID=5076, DESCRIPTION="quicklz constructor");
 
@@ -395,25 +384,25 @@
 
  CREATE FUNCTION gp_rle_type_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'rle_type_validator' WITH(OID=9923, DESCRIPTION="Type speific RLE compression validator");
 
- CREATE FUNCTION gp_zstd_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'zstd_constructor' WITH (OID=3071, DESCRIPTION="zstd compressor and decompressor constructor");
+ CREATE FUNCTION gp_zstd_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'zstd_constructor' WITH (OID=7071, DESCRIPTION="zstd compressor and decompressor constructor");
 
- CREATE FUNCTION gp_zstd_destructor(internal) RETURNS void LANGUAGE internal VOLATILE AS 'zstd_destructor' WITH(OID=3072, DESCRIPTION="zstd compressor and decompressor destructor");
+ CREATE FUNCTION gp_zstd_destructor(internal) RETURNS void LANGUAGE internal VOLATILE AS 'zstd_destructor' WITH(OID=7072, DESCRIPTION="zstd compressor and decompressor destructor");
 
- CREATE FUNCTION gp_zstd_compress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_compress' WITH(OID=3073, DESCRIPTION="zstd compressor");
+ CREATE FUNCTION gp_zstd_compress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_compress' WITH(OID=7073, DESCRIPTION="zstd compressor");
 
- CREATE FUNCTION gp_zstd_decompress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_decompress' WITH(OID=3074, DESCRIPTION="zstd decompressor");
+ CREATE FUNCTION gp_zstd_decompress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_decompress' WITH(OID=7074, DESCRIPTION="zstd decompressor");
 
- CREATE FUNCTION gp_zstd_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_validator' WITH(OID=3075, DESCRIPTION="zstdcompression validator");
+ CREATE FUNCTION gp_zstd_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_validator' WITH(OID=7075, DESCRIPTION="zstdcompression validator");
 
- CREATE FUNCTION gp_dummy_compression_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_constructor' WITH (OID=3064, DESCRIPTION="Dummy compression destructor");
+ CREATE FUNCTION gp_dummy_compression_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_constructor' WITH (OID=7064, DESCRIPTION="Dummy compression destructor");
 
- CREATE FUNCTION gp_dummy_compression_destructor(internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_destructor' WITH (OID=3065, DESCRIPTION="Dummy compression destructor");
+ CREATE FUNCTION gp_dummy_compression_destructor(internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_destructor' WITH (OID=7065, DESCRIPTION="Dummy compression destructor");
 
- CREATE FUNCTION gp_dummy_compression_compress(internal, int4, internal, int4, internal, internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_compress' WITH (OID=3066, DESCRIPTION="Dummy compression compressor");
+ CREATE FUNCTION gp_dummy_compression_compress(internal, int4, internal, int4, internal, internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_compress' WITH (OID=7066, DESCRIPTION="Dummy compression compressor");
 
- CREATE FUNCTION gp_dummy_compression_decompress(internal, int4, internal, int4, internal, internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_decompress' WITH (OID=3067, DESCRIPTION="Dummy compression decompressor");
+ CREATE FUNCTION gp_dummy_compression_decompress(internal, int4, internal, int4, internal, internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_decompress' WITH (OID=7067, DESCRIPTION="Dummy compression decompressor");
 
- CREATE FUNCTION gp_dummy_compression_validator(internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_validator' WITH (OID=3068, DESCRIPTION="Dummy compression validator");
+ CREATE FUNCTION gp_dummy_compression_validator(internal) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_validator' WITH (OID=7068, DESCRIPTION="Dummy compression validator");
 
  CREATE FUNCTION linear_interpolate( anyelement, anyelement, int8, anyelement, int8 ) RETURNS int8 LANGUAGE internal IMMUTABLE STRICT AS 'linterp_int64' WITH (OID=6072, DESCRIPTION="linear interpolation: x, x0,y0, x1,y1"); 
 
@@ -545,4 +534,4 @@
  
  CREATE FUNCTION complex_lte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_lte' WITH (OID=3595, DESCRIPTION="less than or equal");
  
- CREATE FUNCTION complex_gte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_gte' WITH (OID=3596, DESCRIPTION="greater than or equal");
+ CREATE FUNCTION complex_gte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_gte' WITH (OID=7596, DESCRIPTION="greater than or equal");
