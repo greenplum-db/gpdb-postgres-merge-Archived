@@ -257,7 +257,6 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 
-<<<<<<< HEAD
 SELECT '' AS five, f1 FROM FLOAT8_TBL ORDER BY 2;
 
 -- test if you can dump/restore subnormal (1e-323) values
@@ -278,6 +277,3 @@ TRUNCATE FLOATS;
 COPY FLOATS FROM '/tmp/floats';
 
 SELECT * FROM FLOATS ORDER BY a;
-=======
-SELECT '' AS five, * FROM FLOAT8_TBL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

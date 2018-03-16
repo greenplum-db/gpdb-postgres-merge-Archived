@@ -47,12 +47,7 @@ select distinct on (foobar) * from pg_database;
 -- missing relation name (this had better not wildcard!)
 delete from;
 
-<<<<<<< HEAD
-
--- no such relation 
-=======
 -- no such relation
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 delete from nonesuch;
 
 

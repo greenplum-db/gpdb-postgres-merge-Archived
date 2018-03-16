@@ -151,7 +151,6 @@ SELECT h.seqno AS f20000
 
 -- SELECT count(*) AS i988 FROM hash_ovfl_heap
 --  WHERE x = 1000;
-<<<<<<< HEAD
 
 
 -- test that we can disable hash index
@@ -159,5 +158,3 @@ create table hash_test(i int);
 create index hash_test_idx on hash_test using hash (i);
 drop table hash_test;
 reset all;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

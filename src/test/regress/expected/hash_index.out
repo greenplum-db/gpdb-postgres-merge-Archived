@@ -111,12 +111,8 @@ SELECT h.seqno AS i1492, h.random AS i1
 UPDATE hash_i4_heap
    SET seqno = 20000
    WHERE hash_i4_heap.random = 1492795354;
-<<<<<<< HEAD
 ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 SELECT h.seqno AS i20000 
-=======
-SELECT h.seqno AS i20000
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
    FROM hash_i4_heap h
    WHERE h.random = 1492795354;
  i20000 

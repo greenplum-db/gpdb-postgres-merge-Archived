@@ -103,15 +103,9 @@ select * from copytest except select * from copytest2 order by 1,2,3;
 -- test header line feature
 
 create temp table copytest3 (
-<<<<<<< HEAD
-	c1 int, 
-	"col with , comma" text, 
-	"col with "" quote"  int) distributed by (c1);
-=======
 	c1 int,
 	"col with , comma" text,
-	"col with "" quote"  int);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	"col with "" quote"  int) distributed by (c1);
 
 copy copytest3 from stdin csv header;
 this is just a line full of junk that would error out if parsed
@@ -120,7 +114,6 @@ this is just a line full of junk that would error out if parsed
 \.
 
 copy copytest3 to stdout csv header;
-<<<<<<< HEAD
 
 -- test copy force quote
 
@@ -144,5 +137,3 @@ CREATE TEMP TABLE venue(
 
 COPY venue FROM '@abs_srcdir@/data/venue_pipe.txt' WITH DELIMITER AS '|';
 SELECT count(*) FROM venue;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

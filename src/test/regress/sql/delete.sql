@@ -1,13 +1,8 @@
 CREATE TABLE delete_test (
     id SERIAL PRIMARY KEY,
-<<<<<<< HEAD
-    a INT
-) DISTRIBUTED BY (id);
-=======
     a INT,
     b text
-);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+) DISTRIBUTED BY (id);
 
 INSERT INTO delete_test (a) VALUES (10);
 INSERT INTO delete_test (a, b) VALUES (50, repeat('x', 10000));

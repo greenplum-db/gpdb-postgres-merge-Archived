@@ -115,7 +115,6 @@ DROP GROUP tg2;
 DROP GROUP IF EXISTS tg1, tg2;
 
 DROP GROUP tg1;
-<<<<<<< HEAD
 
 --create a schema with the same name as the logged in user name and try to drop and recreate a table
 drop database if exists drop_table_test;
@@ -141,5 +140,3 @@ CREATE TABLE tbl_to_drop(i int);
 DROP SCHEMA :cur_user CASCADE;
 \c regression
 drop database drop_table_test;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
