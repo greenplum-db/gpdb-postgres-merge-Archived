@@ -868,7 +868,7 @@ create external table ext_t1 (a int, b int)
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '	' null '\N' escape '\'
+Format options: delimiter '	' null E'\\N' escape E'\\'
 External options: {}
 External location: file:///tmp/test.txt
 Execute on: all segments
@@ -885,7 +885,7 @@ create external table ext_t2 (a int, b int)
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '	' null '\N' escape '\'
+Format options: delimiter '	' null E'\\N' escape E'\\'
 External options: {}
 External location: file:///tmp/test.txt
 Execute on: all segments

@@ -152,8 +152,7 @@ domain_name			varchar(350)
 )
 location ('gpfdist://@hostname@:7070/exttab1/whois.csv' )
 format 'csv' ( header quote as 'ggg');
-NOTICE:  HEADER means that each one of the data files has a header row.
-ERROR:  quote must be a single character
+ERROR:  quote must be a single one-byte character
 select count(*) from bad_whois;
 ERROR:  relation "bad_whois" does not exist
 LINE 1: select count(*) from bad_whois;
@@ -2723,7 +2722,7 @@ External table "public.exttab_with_options"
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '|' null '\N' escape '\'
+Format options: delimiter '|' null E'\N' escape E'\'
 External options: {hello=world,bonjour=again,"nihao=again and again"}
 External location: file://@hostname@@abs_srcdir@/data/exttab_few_errors.data
 Execute on: all segments
@@ -2737,7 +2736,7 @@ External table "public.exttab_with_option_empty"
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '|' null '\N' escape '\'
+Format options: delimiter '|' null E'\\N' escape E'\\'
 External options: {}
 External location: file://@hostname@@abs_srcdir@/data/exttab_few_errors.data
 Execute on: all segments
