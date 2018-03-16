@@ -1,16 +1,4 @@
-<<<<<<< HEAD
-libpgcrypto.a
-libpgcrypto.so
-libpgcrypto.so.0
-libpgcrypto.so.0.0
-log
-tmp_check
-/pgcrypto.sql
-# Generated subdirectories
-/results/
-=======
 # Generated subdirectories
 /log/
 /results/
 /tmp_check/
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

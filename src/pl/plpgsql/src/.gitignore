@@ -1,14 +1,3 @@
 /pl_gram.c
 /pl_gram.h
-<<<<<<< HEAD
-/pl.tab.h
-/pl_scan.c
-
-/libplpgsql.a
-/libplpgsql.so
-/libplpgsql.so.1
-/libplpgsql.so.1.0
-/plpgsql.so
-=======
 /plerrcodes.h
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

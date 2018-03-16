@@ -1,32 +1,16 @@
 # Stuff shipped in tarballs
-<<<<<<< HEAD
-*.html
-*.[1-9]
-=======
 /html/
 /html-stamp
 /man1/
 /man3/
 /man7/
 /man-stamp
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # Other popular build targets
 /HISTORY
 /INSTALL
 /regress_README
 /postgres-US.pdf
 /postgres-A4.pdf
-<<<<<<< HEAD
-# GENERATED_SGML
-/features-supported.sgml
-/features-unsupported.sgml
-/version.sgml
-/bookindex.sgml
-/HTML.index
-/HTML.index.start
-# Assorted byproducts from building the above
-/postgres.xml
-=======
 /postgres.html
 /postgres.txt
 # GENERATED_SGML
@@ -41,7 +25,6 @@
 /HISTORY.html
 /INSTALL.html
 /regress_README.html
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /postgres-US.aux
 /postgres-US.log
 /postgres-US.out

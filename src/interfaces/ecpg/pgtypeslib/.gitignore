@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-libpgtypes.a
-libpgtypes.so
-libpgtypes.so.2
-libpgtypes.so.2.2
-pgstrcasecmp.c
-libpgtypes.so.3
-libpgtypes.so.3.1
-exports.list
-=======
 /pgtypeslib.def
 /libpgtypesdll.def
 /libpgtypesddll.def
@@ -15,4 +5,3 @@ exports.list
 /exports.list
 
 /pgstrcasecmp.c
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

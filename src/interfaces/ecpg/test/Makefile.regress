@@ -1,11 +1,6 @@
 override CPPFLAGS := -I../../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-<<<<<<< HEAD
 	-I$(libpq_srcdir) $(CPPFLAGS) -Wno-error
 override CFLAGS += $(PTHREAD_CFLAGS) 
-=======
-	-I$(libpq_srcdir) $(CPPFLAGS)
-override CFLAGS += $(PTHREAD_CFLAGS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 override LDFLAGS := -L../../ecpglib -L../../pgtypeslib $(filter-out -l%, $(libpq)) $(LDFLAGS)
 override LIBS := -lecpg -lpgtypes $(filter -l%, $(libpq)) $(LIBS) $(PTHREAD_LIBS)
