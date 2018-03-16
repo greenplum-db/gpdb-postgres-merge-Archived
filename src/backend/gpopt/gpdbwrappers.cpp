@@ -1809,7 +1809,7 @@ gpdb::PnodeMakeNULLConst
 {
 	GP_WRAP_START;
 	{
-		return (Node *) makeNullConst(oidType, -1 /*consttypmod*/);
+		return (Node *) makeNullConst(oidType, -1 /*consttypmod*/, InvalidOid);
 	}
 	GP_WRAP_END;
 	return NULL;
@@ -1844,7 +1844,8 @@ gpdb::PvarMakeVar
 {
 	GP_WRAP_START;
 	{
-		return makeVar(varno, varattno, vartype, vartypmod, varlevelsup);
+		// GPDB_91_MERGE_FIXME: collation?
+		return makeVar(varno, varattno, vartype, vartypmod, InvalidOid, varlevelsup);
 	}
 	GP_WRAP_END;
 	return NULL;
@@ -2059,13 +2060,14 @@ gpdb::DConvertNetworkToScalar
 bool
 gpdb::FOpHashJoinable
 	(
-	Oid opno
+	Oid opno,
+	Oid inputtype
 	)
 {
 	GP_WRAP_START;
 	{
 		/* catalog tables: pg_operator */
-		return op_hashjoinable(opno);
+		return op_hashjoinable(opno, inputtype);
 	}
 	GP_WRAP_END;
 	return false;
@@ -2782,7 +2784,7 @@ gpdb::CheckRTPermissions
 {
 	GP_WRAP_START;
 	{
-		ExecCheckRTPerms(plRangeTable);
+		ExecCheckRTPerms(plRangeTable, true);
 		return;
 	}
 	GP_WRAP_END;
@@ -2806,7 +2808,7 @@ gpdb::IndexOpProperties
 		// type is simply ignored.
 		Oid	lefttype;
 
-		get_op_opfamily_properties(opno, opfamily, strategy, &lefttype, subtype);
+		get_op_opfamily_properties(opno, opfamily, false, strategy, &lefttype, subtype);
 		return;
 	}
 	GP_WRAP_END;
@@ -2865,7 +2867,8 @@ gpdb::PexprEvaluate
 {
 	GP_WRAP_START;
 	{
-		return evaluate_expr(pexpr, oidResultType, iTypeMod);
+		// GPDB_91_MERGE_FIXME: collation?
+		return evaluate_expr(pexpr, oidResultType, iTypeMod, InvalidOid);
 	}
 	GP_WRAP_END;
 	return NULL;

@@ -113,7 +113,9 @@ CConfigParamMapping::SConfigMappingElem CConfigParamMapping::m_elem[] =
 
 		{
 		EopttraceMinidump,
-		&optimizer_minidump,
+		// GPDB_91_MERGE_FIXME: I turned optimizer_minidump from bool into
+		// an enum-type GUC. It's a bit dirty to cast it like this..
+		(bool *) &optimizer_minidump,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Generate optimizer minidump.")
 		},

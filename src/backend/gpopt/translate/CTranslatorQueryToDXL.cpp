@@ -882,7 +882,7 @@ CTranslatorQueryToDXL::PdxlnCTAS()
 									GPOS_NEW(m_pmp) CDXLCtasStorageOptions(pmdnameTableSpace, ectascommit, pdrgpctasopt),
 									ereldistrpolicy,
 									pdrgpulDistr,  
-									pintocl->rel->istemp, 
+									pintocl->rel->relpersistence == RELPERSISTENCE_TEMP,
 									fHasOids,
 									erelstorage, 
 									pdrgpulSource,

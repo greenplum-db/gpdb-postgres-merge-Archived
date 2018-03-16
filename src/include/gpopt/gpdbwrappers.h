@@ -453,7 +453,7 @@ namespace gpdb {
 	double DConvertNetworkToScalar(Datum datum, Oid typid);
 
 	// is the given operator hash-joinable
-	bool FOpHashJoinable(Oid opno);
+	bool FOpHashJoinable(Oid opno, Oid inputtype);
 
 	// is the given operator strict
 	bool FOpStrict(Oid opno);

@@ -15,6 +15,7 @@
 //---------------------------------------------------------------------------
 
 #include "postgres.h"
+
 #include "nodes/nodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
@@ -23,6 +24,7 @@
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "cdb/partitionselection.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/uri.h"
 #include "gpos/base.h"
@@ -5047,7 +5049,8 @@ CTranslatorDXLToPlStmt::PintoclFromCtas
 {
 	IntoClause *pintocl = MakeNode(IntoClause);
 	pintocl->rel = MakeNode(RangeVar);
-	pintocl->rel->istemp = pdxlop->FTemporary();
+	/* GPDB_91_MERGE_FIXME: what about unlogged? */
+	pintocl->rel->relpersistence = pdxlop->FTemporary() ? RELPERSISTENCE_TEMP : RELPERSISTENCE_PERMANENT;
 	pintocl->rel->relname = CTranslatorUtils::SzFromWsz(pdxlop->Pmdname()->Pstr()->Wsz());
 	pintocl->rel->schemaname = NULL;
 	if (NULL != pdxlop->PmdnameSchema())
