@@ -289,9 +289,6 @@ ProcessQuery(Portal portal,
 	 */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0);
 
-	/* Now take care of any queued AFTER triggers */
-	AfterTriggerEndQuery(queryDesc->estate);
-
 	autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
 
 	/*
