@@ -2280,8 +2280,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int64 tcount)
 	else
 		eflags = EXEC_FLAG_SKIP_TRIGGERS;
 
-	ExecutorStart(queryDesc, eflags);
-
 	PG_TRY();
 	{
 		Oid			relationOid = InvalidOid; 	/* relation that is modified */

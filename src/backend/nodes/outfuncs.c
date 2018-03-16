@@ -1393,8 +1393,6 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(aggdirectargs);
 	WRITE_NODE_FIELD(args);
-	WRITE_OID_FIELD(aggcollid);
-	WRITE_OID_FIELD(inputcollid);
 	WRITE_NODE_FIELD(aggorder);
 	WRITE_NODE_FIELD(aggdistinct);
 	WRITE_NODE_FIELD(aggfilter);

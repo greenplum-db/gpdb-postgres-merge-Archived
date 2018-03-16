@@ -3372,7 +3372,6 @@ CopyFrom(CopyState cstate)
 	CommandId	mycid = GetCurrentCommandId(true);
 	int			hi_options = 0; /* start with default heap_insert options */
 	BulkInsertState bistate;
-	int		   *attr_offsets;
 	bool		no_more_data = false;
 	bool		cur_row_rejected = false;
 	int			original_lineno_for_qe = 0; /* keep compiler happy (var referenced by macro) */
@@ -3509,13 +3508,11 @@ CopyFrom(CopyState cstate)
 		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
 	}
 
-	attr_offsets = (int *) palloc(num_phys_attrs * sizeof(int));
+	partValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
+	partNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
-	partValues = (Datum *) palloc(attr_count * sizeof(Datum));
-	partNulls = (bool *) palloc(attr_count * sizeof(bool));
-
-	baseValues = (Datum *) palloc(attr_count * sizeof(Datum));
-	baseNulls = (bool *) palloc(attr_count * sizeof(bool));
+	baseValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
+	baseNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	bistate = GetBulkInsertState();
 
