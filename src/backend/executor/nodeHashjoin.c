@@ -106,7 +106,7 @@ ExecHashJoin(HashJoinState *node)
 	for (;;)
 	{
 		/* We must never use an eagerly released hash table */
-		Assert(!hashtable->eagerlyReleased);
+		Assert(hashtable == NULL || !hashtable->eagerlyReleased);
 
 		switch (node->hj_JoinState)
 		{
@@ -897,7 +897,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	curbatch = hashtable->curbatch;
 
 	if (curbatch >= nbatch)
-		return nbatch;
+		return false;
 
 	if (curbatch >= 0 && hashtable->stats)
 		ExecHashTableExplainBatchEnd(hashState, hashtable);
@@ -1032,7 +1032,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	if (!ExecHashJoinReloadHashTable(hjstate))
 	{
 		/* We no longer continue as we couldn't load the batch */
-		return nbatch;
+		return false;
 	}
 
 	/*

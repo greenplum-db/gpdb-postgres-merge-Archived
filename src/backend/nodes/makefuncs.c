@@ -220,8 +220,6 @@ makeTargetEntry(Expr *expr,
 	tle->expr = expr;
 	tle->resno = resno;
 	tle->resname = resname;
-	
-	Assert(tle->resno >= 1);
 
 	/*
 	 * We always set these fields to 0. If the caller wants to change them he

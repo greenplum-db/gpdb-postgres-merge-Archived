@@ -946,7 +946,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	bool		is_from = stmt->is_from;
 	bool		pipe = (stmt->filename == NULL || Gp_role == GP_ROLE_EXECUTE);
 	Relation	rel;
-	Oid			relid;
 	uint64		processed;
 	List	   *range_table = NIL;
 	List	   *attnamelist = stmt->attlist;
@@ -1017,8 +1016,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		rel = heap_openrv(stmt->relation,
 						  (is_from ? RowExclusiveLock : AccessShareLock));
 
-		relid = RelationGetRelid(rel);
-
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
 		rte->relid = RelationGetRelid(rel);
@@ -1044,7 +1041,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	{
 		Assert(stmt->query);
 
-		relid = InvalidOid;
 		rel = NULL;
 	}
 
@@ -1120,10 +1116,10 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 			{
 				MemoryContext oldcxt;
 				oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-				cstate->rel->rd_cdbpolicy = palloc(sizeof(GpPolicy) + sizeof(AttrNumber) * stmt->nattrs);
-				cstate->rel->rd_cdbpolicy->nattrs = stmt->nattrs;
-				cstate->rel->rd_cdbpolicy->ptype = stmt->ptype;
-				memcpy(cstate->rel->rd_cdbpolicy->attrs, stmt->distribution_attrs, sizeof(AttrNumber) * stmt->nattrs);
+				rel->rd_cdbpolicy = palloc(sizeof(GpPolicy) + sizeof(AttrNumber) * stmt->nattrs);
+				rel->rd_cdbpolicy->nattrs = stmt->nattrs;
+				rel->rd_cdbpolicy->ptype = stmt->ptype;
+				memcpy(rel->rd_cdbpolicy->attrs, stmt->distribution_attrs, sizeof(AttrNumber) * stmt->nattrs);
 				MemoryContextSwitchTo(oldcxt);
 			}
 		}
@@ -1176,22 +1172,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (rel != NULL)
 		heap_close(rel, (is_from ? NoLock : AccessShareLock));
 
-    /* MPP-4407. Logging number of tuples copied */
-	if (Gp_role == GP_ROLE_DISPATCH
-			&& is_from
-			&& relid != InvalidOid
-			&& GetCommandLogLevel((Node *) stmt) <= log_statement)
-	{
-		elog(DEBUG1, "type_of_statement = %s dboid = %d tableoid = %d num_tuples_modified = %u",
-				autostats_cmdtype_to_string(AUTOSTATS_CMDTYPE_COPY),
-				MyDatabaseId,
-				relid,
-				(unsigned int) processed);
-	}
-
     /* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
-	if (Gp_role == GP_ROLE_DISPATCH && is_from)
-		auto_stats(AUTOSTATS_CMDTYPE_COPY, relid, processed, false /* inFunction */);
+	if (Gp_role == GP_ROLE_DISPATCH && is_from && rel)
+		auto_stats(AUTOSTATS_CMDTYPE_COPY, RelationGetRelid(rel), processed, false /* inFunction */);
 
 	return processed;
 }
@@ -1902,6 +1885,8 @@ BeginCopy(bool is_from,
 	}
 
 	cstate->copy_dest = COPY_FILE;		/* default */
+
+	MemoryContextSwitchTo(oldcontext);
 	
 	return cstate;
 }
@@ -4045,13 +4030,18 @@ CopyFrom(CopyState cstate)
 		if (hi_options & HEAP_INSERT_SKIP_WAL)
 			heap_sync(resultRelInfo->ri_RelationDesc);
 
-		/* Close indices and then the relation itself */
 		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+
+		/*
+		 * Keep the main relation open, it will be closed by the caller.
+		 * But close the ones we opened in this function.
+		 */
+		if (resultRelInfo->ri_RelationDesc != cstate->rel)
+		{
+			heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		}
 		resultRelInfo++;
 	}
-
-	cstate->rel = NULL; /* closed above */
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -4424,6 +4414,8 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 	int		   *defmap = cstate->defmap;
 	ExprState **defexprs = cstate->defexprs;
 
+	*got_error = false;
+
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
@@ -4653,6 +4645,8 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 	AttrNumber	num_phys_attrs;
 	copy_from_dispatch_frame frame;
 	int			r;
+
+	*got_error = false;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;

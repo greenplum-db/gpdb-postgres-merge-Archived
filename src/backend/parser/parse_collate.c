@@ -583,6 +583,11 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				location = exprLocation((Node *) tent->expr);
 			}
 			break;
+		case T_WindowClause:
+			(void) expression_tree_walker(node,
+										  assign_collations_walker,
+										  (void *) &loccontext);
+			break;
 		case T_List:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,

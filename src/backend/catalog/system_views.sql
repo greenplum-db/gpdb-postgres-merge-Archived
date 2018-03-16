@@ -541,7 +541,7 @@ CREATE VIEW pg_stat_replication AS
     FROM pg_stat_get_activity(NULL) AS S, pg_authid U,
             pg_stat_get_wal_senders() AS W
     WHERE S.usesysid = U.oid AND
-            S.procpid = W.pid;
+            S.procpid = W.procpid;
 
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
 $$

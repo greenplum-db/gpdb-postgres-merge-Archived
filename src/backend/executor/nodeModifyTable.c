@@ -1106,8 +1106,8 @@ lreplace:;
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */ );
 
-		lastTid = tuple->t_self;
-		wasHotUpdate = HeapTupleIsHeapOnly(tuple) != 0;
+			lastTid = tuple->t_self;
+			wasHotUpdate = HeapTupleIsHeapOnly(tuple) != 0;
 		}
 		else if (rel_is_aorows)
 		{
@@ -1221,26 +1221,6 @@ lreplace:;
 
 	if (canSetTag)
 		(estate->es_processed)++;
-
-	/*
-	 * Note: instead of having to update the old index tuples associated with
-	 * the heap tuple, all we do is form and insert new index tuples. This is
-	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done later by VACUUM (see notes in ExecDelete).	All we do
-	 * here is insert new index tuples.  -cim 9/27/89
-	 */
-
-	/*
-	 * insert index entries for tuple
-	 *
-	 * Note: heap_update returns the tid (location) of the new tuple in the
-	 * t_self field.
-	 *
-	 * If it's a HOT update, we mustn't insert new index entries.
-	 */
-	if (resultRelInfo->ri_NumIndices > 0 && !wasHotUpdate)
-		recheckIndexes = ExecInsertIndexTuples(slot, &lastTid,
-											   estate);
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
