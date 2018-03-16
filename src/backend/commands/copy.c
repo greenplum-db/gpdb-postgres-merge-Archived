@@ -154,7 +154,7 @@ static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
 static uint64 CopyFrom(CopyState cstate);
-static bool CopyReadLine(CopyState cstate);
+static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate);
 static int	CopyReadAttributesCSV(CopyState cstate);
 
@@ -605,7 +605,7 @@ CopySendEndOfRow(CopyState cstate)
 			/* Dump the accumulated row as one CopyData message */
 			(void) pq_putmessage('d', fe_msgbuf->data, fe_msgbuf->len);
 			break;
-		case COPY_EXTERNAL_SOURCE:
+		case COPY_CALLBACK:
 			/* we don't actually do the write here, we let the caller do it */
 #ifndef WIN32
 			CopySendChar(cstate, '\n');
@@ -681,7 +681,7 @@ CopyToDispatchFlush(CopyState cstate)
 			/* Dump the accumulated row as one CopyData message */
 			(void) pq_putmessage('d', fe_msgbuf->data, fe_msgbuf->len);
 			break;
-		case COPY_EXTERNAL_SOURCE:
+		case COPY_CALLBACK:
 			Insist(false); /* internal error */
 			break;
 
@@ -811,8 +811,8 @@ CopyGetData(CopyState cstate, void *databuf, int datasize)
 				datasize -= avail;
 			}
 			break;
-		case COPY_EXTERNAL_SOURCE:
-			Insist(false); /* RET read their own data with external_senddata() */
+		case COPY_CALLBACK:
+			bytesread = cstate->data_source_cb(databuf, datasize);
 			break;
 
 	}
@@ -1064,7 +1064,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 			PreventCommandIfReadOnly("COPY FROM");
 
 		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,
-							   stmt->attlist, options,
+							   NULL, stmt->attlist, options,
 							   stmt->ao_segnos);
 		cstate->range_table = range_table;
 
@@ -2965,7 +2965,7 @@ CopyOneRowTo(CopyState cstate, Oid tupleOid, Datum *values, bool *nulls)
 	 * the caller do it - send the data to its local external source (see
 	 * external_insert() ).
 	 */
-	if (cstate->copy_dest != COPY_EXTERNAL_SOURCE)
+	if (cstate->copy_dest != COPY_CALLBACK)
 	{
 		CopySendEndOfRow(cstate);
 	}
@@ -4077,6 +4077,7 @@ CopyState
 BeginCopyFrom(Relation rel,
 			  const char *filename,
 			  bool is_program,
+			  copy_data_source_cb data_source_cb,
 			  List *attnamelist,
 			  List *options,
 			  List *ao_segnos)
@@ -4155,6 +4156,7 @@ BeginCopyFrom(Relation rel,
 		 * Fetch the output function and typioparam info. We need it
 		 * for handling default functions on the dispatcher COPY, if
 		 * there are any.
+		 * GPDB_91_MERGE_FIXME: I think we don't need these any more
 		 */
 		if (cstate->binary)
 			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
@@ -4194,7 +4196,12 @@ BeginCopyFrom(Relation rel,
 	cstate->num_defaults = num_defaults;
 	cstate->is_program = is_program;
 
-	if (pipe)
+	if (data_source_cb)
+	{
+		cstate->copy_dest = COPY_CALLBACK;
+		cstate->data_source_cb = data_source_cb;
+	}
+	else if (pipe)
 	{
 		Assert(!is_program);	/* the grammar does not allow this */
 		if (whereToSendOutput == DestRemote)
@@ -4863,7 +4870,7 @@ EndCopyFrom(CopyState cstate)
  * by newline.  The terminating newline or EOF marker is not included
  * in the final value of line_buf.
  */
-static bool
+bool
 CopyReadLine(CopyState cstate)
 {
 	bool		result;
@@ -4951,7 +4958,7 @@ CopyReadLine(CopyState cstate)
 /*
  * CopyReadLineText - inner loop of CopyReadLine for text mode
  */
-bool
+static bool
 CopyReadLineText(CopyState cstate)
 {
 	char	   *copy_raw_buf;
@@ -6420,7 +6427,6 @@ static void CopyInitDataParser(CopyState cstate)
 	/* Set up data buffer to hold a chunk of data */
 	MemSet(cstate->raw_buf, ' ', RAW_BUF_SIZE * sizeof(char));
 	cstate->raw_buf[RAW_BUF_SIZE] = '\0';
-	cstate->line_done = true;
 }
 
 /*

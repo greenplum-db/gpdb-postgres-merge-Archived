@@ -30,11 +30,12 @@ typedef enum CopyDest
 	COPY_FILE,					/* to/from file (or a piped program) */
 	COPY_OLD_FE,				/* to/from frontend (2.0 protocol) */
 	COPY_NEW_FE,				/* to/from frontend (3.0 protocol) */
-	COPY_EXTERNAL_SOURCE		/* to/from external source (RET/WET) */
+	COPY_CALLBACK				/* to/from callback function (used for external tables) */
 } CopyDest;
 
 /* CopyStateData is private in commands/copy.c */
 typedef struct CopyStateData *CopyState;
+typedef int (*copy_data_source_cb) (void *outbuf, int datasize);
 
 /*
  *	Represents the end-of-line terminator type of the input
@@ -169,6 +170,7 @@ typedef struct CopyStateData
 	List	   *attnamelist;	/* list of attributes by name */
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
+	copy_data_source_cb data_source_cb; /* function for reading data */
 	bool		custom;			/* custom format? */
 	bool		oids;			/* include OIDs? */
 	bool        binary;         /* binary format */
@@ -275,8 +277,6 @@ typedef struct CopyStateData
 	bool		escape_off;		/* treat backslashes as non-special? */
 	bool		delimiter_off;  /* no delimiter. 1-column external tabs only */
 	int			last_hash_field;
-	bool		line_done;		/* finished processing the whole line or
-								 * stopped in the middle */
 	bool		end_marker;
 	char	   *begloc;
 	char	   *endloc;
@@ -327,7 +327,8 @@ extern uint64 DoCopy(const CopyStmt *stmt, const char *queryString);
 extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options,
 				   int num_columns, bool is_copy);
 extern CopyState BeginCopyFrom(Relation rel, const char *filename,
-			  bool is_program, List *attnamelist, List *options, List *ao_segnos);
+			  bool is_program, copy_data_source_cb data_source_cb,
+			  List *attnamelist, List *options, List *ao_segnos);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error);
@@ -337,8 +338,7 @@ extern bool NextCopyFromRawFields(CopyState cstate,
 extern DestReceiver *CreateCopyDestReceiver(void);
 
 extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
-extern bool CopyReadLineText(CopyState cstate);
-extern bool CopyReadLineCSV(CopyState cstate);
+extern bool CopyReadLine(CopyState cstate);
 extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 						 Datum *values, bool *nulls);
 extern void CopyOneCustomRowTo(CopyState cstate, bytea *value);

@@ -105,11 +105,12 @@ typedef struct FileScanDescData
 	/* current file parse state */
 	struct CopyStateData *fs_pstate;
 
+	bool		raw_buf_done;
+
 	Form_pg_attribute *attr;
 	AttrNumber	num_phys_attrs;
 	Datum	   *values;
 	bool	   *nulls;
-	int		   *attr_offsets;
 	FmgrInfo   *in_functions;
 	Oid		   *typioparams;
 	Oid			in_func_oid;
@@ -118,7 +119,6 @@ typedef struct FileScanDescData
 	bool		fs_inited;		/* false = scan not init'd yet */
 	TupleDesc	fs_tupDesc;
 	HeapTupleData fs_ctup;		/* current tuple in scan, if any */
-	Buffer		fs_cbuf;		/* always invalid buffer */
 
 	/* custom data formatter */
 	FormatterData *fs_formatter;

@@ -81,10 +81,10 @@ static void FunctionCallPrepareFormatter(FunctionCallInfoData *fcinfo,
 
 static void open_external_readable_source(FileScanDesc scan);
 static void open_external_writable_source(ExternalInsertDesc extInsertDesc);
+static int	external_getdata_callback(void *outbuf, int datasize);
 static int	external_getdata(URL_FILE *extfile, CopyState pstate, int maxread);
 static void external_senddata(URL_FILE *extfile, CopyState pstate);
 static void external_scan_error_callback(void *arg);
-static void readHeaderLine(CopyState pstate);
 static void parseFormatString(CopyState pstate, char *fmtstr, bool iscustom);
 static void justifyDatabuf(StringInfo buf);
 
@@ -145,7 +145,6 @@ external_beginscan(Relation relation, uint32 scancounter,
 	scan->fs_inited = false;
 	scan->fs_ctup.t_data = NULL;
 	ItemPointerSetInvalid(&scan->fs_ctup.t_self);
-	scan->fs_cbuf = InvalidBuffer;
 	scan->fs_rd = relation;
 	scan->fs_scancounter = scancounter;
 	scan->fs_noop = false;
@@ -263,11 +262,15 @@ external_beginscan(Relation relation, uint32 scancounter,
 	/*
 	 * Allocate and init our structure that keeps track of data parsing state
 	 */
-	scan->fs_pstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
+	scan->fs_pstate = BeginCopyFrom(relation, NULL, false,
+									external_getdata_callback,
+									NIL,
+									fmtOpts,
+									NIL);
 
 	/* Initialize all the parsing and state variables */
 	InitParseState(scan->fs_pstate, relation, NULL, NULL, false, fmtOpts, fmtType,
-				scan->fs_uri, rejLimit, rejLimitInRows, fmterrtbl, encoding);
+				   scan->fs_uri, rejLimit, rejLimitInRows, fmterrtbl, encoding);
 
 	if (fmttype_is_custom(fmtType))
 	{
@@ -298,9 +301,8 @@ external_rescan(FileScanDesc scan)
 	scan->fs_pstate->fe_eof = false;
 	scan->fs_pstate->cur_lineno = 0;
 	scan->fs_pstate->cur_attname = NULL;
-	scan->fs_pstate->raw_buf_done = true;		/* true so we will read data
-												 * in first run */
-	scan->fs_pstate->line_done = true;
+	scan->fs_pstate->raw_buf_len = 0;		/* so we will read data
+											 * in first run */
 	scan->fs_pstate->bytesread = 0;
 }
 
@@ -386,8 +388,6 @@ external_endscan(FileScanDesc scan)
 			pfree(scan->fs_pstate->attribute_buf.data);
 		if (scan->fs_pstate->line_buf.data)
 			pfree(scan->fs_pstate->line_buf.data);
-		if (scan->fs_pstate->attr_offsets)
-			pfree(scan->fs_pstate->attr_offsets);
 		if (scan->fs_pstate->force_quote_flags)
 			pfree(scan->fs_pstate->force_quote_flags);
 		if (scan->fs_pstate->force_notnull_flags)
@@ -672,7 +672,6 @@ external_insert(ExternalInsertDesc extInsertDesc, HeapTuple instup)
 	/* Reset our buffer to start clean next round */
 	pstate->fe_msgbuf->len = 0;
 	pstate->fe_msgbuf->data[0] = '\0';
-	pstate->processed++;
 
 	return HeapTupleGetOid(instup);
 }
@@ -758,7 +757,6 @@ else \
 	pstate->cdbsreh->rawdata = pstate->line_buf.data; \
 	pstate->cdbsreh->is_server_enc = pstate->line_buf_converted; \
 	pstate->cdbsreh->linenumber = pstate->cur_lineno; \
-	pstate->cdbsreh->processed = ++pstate->processed; \
 	pstate->cdbsreh->consec_csv_err = pstate->num_consec_csv_err; \
 \
 	/* set the error message. Use original msg and add column name if availble */ \
@@ -779,233 +777,83 @@ else \
 		pfree(pstate->cdbsreh->errmsg); \
 }
 
-/*
- * parse_next_line
- *
- * Given a buffer of data, extract the next data line from it and parse it
- * to attributes according to the data format specifications.
- *
- * Returns:
- *	LINE_OK			- line parsed successfully.
- *	LINE_ERROR		- line was mal-formatted. error caught and handled.
- *	NEED_MORE_DATA	- line not parsed all the way through. need more data.
- *	END_MARKER		- saw line end marker. skip attr parsing, we're done.
- */
-static DataLineStatus
-parse_next_line(FileScanDesc scan)
-{
-	CopyState	pstate = scan->fs_pstate;
-	MemoryContext oldctxt = CurrentMemoryContext;
-	MemoryContext err_ctxt = oldctxt;
-
-	DataLineStatus ret_mode = LINE_OK;
-
-	ListCell   *cur;
-
-	/* Initialize all values for row to NULL */
-	MemSet(scan->values, 0, scan->num_phys_attrs * sizeof(Datum));
-	MemSet(scan->nulls, true, scan->num_phys_attrs * sizeof(bool));
-	MemSet(pstate->attr_offsets, 0, scan->num_phys_attrs * sizeof(int));
-
-	PG_TRY();
-	{
-		/* Get a line */
-		pstate->line_done = pstate->csv_mode ?
-			CopyReadLineCSV(pstate, pstate->bytesread) :
-			CopyReadLineText(pstate, pstate->bytesread);
-
-		/* Did not get a complete and valid data line? */
-		if (!pstate->line_done)
-		{
-			if (pstate->line_buf.len == 0 && pstate->raw_buf_done)
-			{
-				ret_mode = NEED_MORE_DATA;
-			}
-
-			/*
-			 * If eof is not yet reached, we skip att parsing and read more
-			 * data. But if eof _was_ reached it means that this data line is
-			 * defective and let the attribute parser find the error (we leave
-			 * ret_mode intact).
-			 */
-			if (!pstate->fe_eof)
-				ret_mode = NEED_MORE_DATA;
-
-			/* found end marker "\." set ret_mode to skip attribute parsing */
-			if (pstate->end_marker)
-				ret_mode = END_MARKER;
-		}
-
-		if (ret_mode == LINE_OK)
-		{
-			if (pstate->csv_mode)
-				CopyReadAttributesCSV(pstate, scan->nulls, pstate->attr_offsets,
-									  scan->num_phys_attrs, scan->attr);
-			else
-				CopyReadAttributesText(pstate, scan->nulls, pstate->attr_offsets,
-									   scan->num_phys_attrs, scan->attr);
-
-			err_ctxt = pstate->rowcontext;
-			MemoryContextSwitchTo(err_ctxt);
-
-			foreach(cur, pstate->attnumlist)
-			{
-				int			attnum = lfirst_int(cur);
-				int			m = attnum - 1;
-				char	   *string;
-				bool		isnull;
-
-				string = pstate->attribute_buf.data + pstate->attr_offsets[m];
-
-				if (!scan->nulls[m])
-					isnull = false;
-				else
-					isnull = true;
-
-				/* check FORCE NOT NULL for this column */
-				if (pstate->csv_mode && isnull && pstate->force_notnull_flags[m])
-				{
-					string = pstate->null_print;		/* set to NULL string */
-					isnull = false;
-				}
-
-				if (!isnull)
-				{
-					pstate->cur_attname = NameStr(scan->attr[m]->attname);
-
-					scan->values[m] = InputFunctionCall(&scan->in_functions[m],
-														string,
-														scan->typioparams[m],
-												   scan->attr[m]->atttypmod);
-					scan->nulls[m] = false;
-					pstate->cur_attname = NULL;
-				}
-			}
-			EXT_RESET_LINEBUF;
-		}
-	}
-	PG_CATCH();
-	{
-		ret_mode = LINE_ERROR;
-		MemoryContextSwitchTo(err_ctxt);
-		FILEAM_HANDLE_ERROR;
-	}
-	PG_END_TRY();
-
-	MemoryContextSwitchTo(oldctxt);
-
-	if (ret_mode == LINE_ERROR)
-	{
-		ErrorIfRejectLimitReached(pstate->cdbsreh, NULL);
-		EXT_RESET_LINEBUF;
-	}
-
-	return ret_mode;
-}
-
 static HeapTuple
 externalgettup_defined(FileScanDesc scan)
 {
 	HeapTuple	tuple = NULL;
 	CopyState	pstate = scan->fs_pstate;
-	bool		needData = false;
+	bool		got_error;
+	Oid			loaded_oid;
 
-	/* If we either got things to read or stuff to process */
-	while (!pstate->fe_eof || !pstate->raw_buf_done)
+	/* on first time around just throw the header line away */
+	if (pstate->header_line && pstate->bytesread > 0)
 	{
-		/* need to fill our buffer with data? */
-		if (pstate->raw_buf_done)
+		PG_TRY();
 		{
-			pstate->bytesread = external_getdata(scan->fs_file, pstate, RAW_BUF_SIZE);
-			pstate->begloc = pstate->raw_buf;
-			pstate->raw_buf_done = (pstate->bytesread == 0);
-			pstate->raw_buf_index = 0;
-
-			/* on first time around just throw the header line away */
-			if (pstate->header_line && pstate->bytesread > 0)
-			{
-				PG_TRY();
-				{
-					readHeaderLine(pstate);
-				}
-				PG_CATCH();
-				{
-					/*
-					 * got here? encoding conversion error occured on the
-					 * header line (first row).
-					 */
-					if (pstate->errMode == ALL_OR_NOTHING)
-					{
-						PG_RE_THROW();
-					}
-					else
-					{
-						/* SREH - release error state */
-						if (!elog_dismiss(DEBUG5))
-							PG_RE_THROW();		/* hope to never get here! */
-
-						/*
-						 * note: we don't bother doing anything special here.
-						 * we are never interested in logging a header line
-						 * error. just continue the workflow.
-						 */
-					}
-				}
-				PG_END_TRY();
-
-				EXT_RESET_LINEBUF;
-				pstate->header_line = false;
-			}
+			/* Read the data file header line, and ignore it. */
+			(void) CopyReadLine(pstate);
 		}
-
-		/* while there is still data in our buffer */
-		while (!pstate->raw_buf_done || needData)
+		PG_CATCH();
 		{
-			DataLineStatus ret_mode = parse_next_line(scan);
-
-			if (ret_mode == LINE_OK)
+			/*
+			 * got here? encoding conversion error occured on the
+			 * header line (first row).
+			 */
+			if (pstate->errMode == ALL_OR_NOTHING)
 			{
-				/* convert to heap tuple */
-
-				/*
-				 * XXX This is bad code.  Planner should be able to decide
-				 * whether we need heaptuple or memtuple upstream, so make the
-				 * right decision here.
-				 */
-				tuple = heap_form_tuple(scan->fs_tupDesc, scan->values, scan->nulls);
-				pstate->processed++;
-				MemoryContextReset(pstate->rowcontext);
-				return tuple;
-			}
-			else if (ret_mode == LINE_ERROR && !pstate->raw_buf_done)
-			{
-				/* error was handled in parse_next_line. move to the next */
-				continue;
-			}
-			else if (ret_mode == END_MARKER)
-			{
-				scan->fs_inited = false;
-				return NULL;
+				PG_RE_THROW();
 			}
 			else
 			{
-				/* try to get more data if possible */
-				Assert((ret_mode == NEED_MORE_DATA) ||
-					   (ret_mode == LINE_ERROR && pstate->raw_buf_done));
-				needData = true;
-				break;
+				/* SREH - release error state */
+				if (!elog_dismiss(DEBUG5))
+					PG_RE_THROW();		/* hope to never get here! */
+
+				/*
+				 * note: we don't bother doing anything special here.
+				 * we are never interested in logging a header line
+				 * error. just continue the workflow.
+				 */
 			}
 		}
+		PG_END_TRY();
+
+		EXT_RESET_LINEBUF;
+		pstate->header_line = false;
 	}
 
+	/* Get a line */
+	for (;;)
+	{
+		if (!NextCopyFrom(pstate,
+						  NULL,
+						  scan->values,
+						  scan->nulls,
+						  &loaded_oid,
+						  &got_error))
+		{
+			scan->fs_inited = false;
+			return NULL;
+		}
+		if (got_error)
+		{
+			HandleSingleRowError(pstate->cdbsreh);
+			ErrorIfRejectLimitReached(pstate->cdbsreh, NULL);
+			continue;
+		}
+		break;
+	}
+
+	/* convert to heap tuple */
+
 	/*
-	 * if we got here we finished reading all the data.
+	 * XXX This is bad code.  Planner should be able to decide
+	 * whether we need heaptuple or memtuple upstream, so make the
+	 * right decision here.
 	 */
-	scan->fs_inited = false;
-
-	return NULL;
-
-
+	tuple = heap_form_tuple(scan->fs_tupDesc, scan->values, scan->nulls);
+	MemoryContextReset(pstate->rowcontext);
+	return tuple;
 }
 
 static HeapTuple
@@ -1023,13 +871,13 @@ externalgettup_custom(FileScanDesc scan)
 	while (!no_more_data)
 	{
 		/* need to fill our buffer with data? */
-		if (pstate->raw_buf_done)
+		if (scan->raw_buf_done)
 		{
 			int			bytesread = external_getdata(scan->fs_file, pstate, RAW_BUF_SIZE);
 
 			if (bytesread > 0)
 				appendBinaryStringInfo(&formatter->fmt_databuf, pstate->raw_buf, bytesread);
-			pstate->raw_buf_done = false;
+			scan->raw_buf_done = false;
 
 			/* HEADER not yet supported ... */
 			if (pstate->header_line)
@@ -1039,7 +887,7 @@ externalgettup_custom(FileScanDesc scan)
 		if (formatter->fmt_databuf.len > 0 || !pstate->fe_eof)
 		{
 			/* while there is still data in our buffer */
-			while (!pstate->raw_buf_done)
+			while (!scan->raw_buf_done)
 			{
 				bool		error_caught = false;
 
@@ -1112,7 +960,6 @@ externalgettup_custom(FileScanDesc scan)
 							/* got a tuple back */
 
 							tuple = formatter->fmt_tuple;
-							pstate->processed++;
 							MemoryContextReset(formatter->fmt_perrow_ctx);
 
 							return tuple;
@@ -1123,7 +970,7 @@ externalgettup_custom(FileScanDesc scan)
 							 * Callee consumed all data in the buffer. Prepare
 							 * to read more data into it.
 							 */
-							pstate->raw_buf_done = true;
+							scan->raw_buf_done = true;
 							justifyDatabuf(&formatter->fmt_databuf);
 
 							if (pstate->fe_eof && formatter->fmt_databuf.len > 0)
@@ -1285,34 +1132,8 @@ InitParseState(CopyState pstate, Relation relation,
 			   char *uri, int rejectlimit,
 			   bool islimitinrows, Oid fmterrtbl, int encoding)
 {
-	TupleDesc	tupDesc = NULL;
 	char	   *format_str = NULL;
 	bool		format_is_custom = fmttype_is_custom(fmtType);
-
-	pstate->fe_eof = false;
-	pstate->eol_type = EOL_UNKNOWN;
-	pstate->eol_str = NULL;
-	pstate->cur_relname = RelationGetRelationName(relation);
-	pstate->cur_lineno = 0;
-	pstate->err_loc_type = ROWNUM_ORIGINAL;
-	pstate->cur_attname = NULL;
-	pstate->raw_buf_done = true;	/* true so we will read data in first run */
-	pstate->line_done = true;
-	pstate->bytesread = 0;
-	pstate->custom = false;
-	pstate->header_line = false;
-	pstate->fill_missing = false;
-	pstate->line_buf_converted = false;
-	pstate->raw_buf_index = 0;
-	pstate->processed = 0;
-	pstate->filename = uri;
-	pstate->copy_dest = COPY_EXTERNAL_SOURCE;
-	pstate->missing_bytes = 0;
-	pstate->csv_mode = fmttype_is_csv(fmtType);
-	pstate->custom = fmttype_is_custom(fmtType);
-	pstate->custom_formatter_func = NULL;
-	pstate->custom_formatter_name = NULL;
-	pstate->rel = relation;
 
 	/*
 	 * Error handling setup
@@ -1349,23 +1170,8 @@ InitParseState(CopyState pstate, Relation relation,
 		pstate->num_consec_csv_err = 0;
 	}
 
-
-	/*
-	 * Set up encoding conversion info.  Even if the client and server
-	 * encodings are the same, we must apply pg_client_to_server() to validate
-	 * data in multibyte encodings.
-	 *
-	 * Each external table specifies the encoding of its external data. We
-	 * will therefore set a client encoding and client-to-server conversion
-	 * procedure in here (server-to-client in WET) and these will be used in
-	 * the data conversion routines (in copy.c CopyReadLineXXX(), etc).
-	 */
-	Insist(PG_VALID_ENCODING(encoding));
-	pstate->client_encoding = encoding;
-	setEncodingConversionProc(pstate, encoding, iswritable);
-	pstate->need_transcoding = (pstate->client_encoding != GetDatabaseEncoding() ||
-								pg_database_encoding_max_length() > 1);
-	pstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(pstate->client_encoding);
+	// GPDB_91_MERGE_FIXME: how do we get encoding to BeginCopyFrom?
+	//pstate->client_encoding = encoding;
 
 	/*
 	 * Now parse the data FORMAT options.
@@ -1392,97 +1198,6 @@ InitParseState(CopyState pstate, Relation relation,
 		pstate->custom_formatter_func = palloc(sizeof(FmgrInfo));
 		fmgr_info(procOid, pstate->custom_formatter_func);
 	}
-
-	tupDesc = RelationGetDescr(relation);
-	pstate->attr_offsets = (int *) palloc(tupDesc->natts * sizeof(int));
-
-	/* Generate or convert list of attributes to process */
-	pstate->attnumlist = CopyGetAttnums(tupDesc, relation, NIL);
-
-	/* Convert FORCE NOT NULL name list to per-column flags, check validity */
-	pstate->force_notnull_flags = (bool *) palloc0(tupDesc->natts * sizeof(bool));
-	if (pstate->force_notnull)
-	{
-		List	   *attnums;
-		ListCell   *cur;
-
-		attnums = CopyGetAttnums(tupDesc, relation, pstate->force_notnull);
-
-		foreach(cur, attnums)
-		{
-			int			attnum = lfirst_int(cur);
-
-			pstate->force_notnull_flags[attnum - 1] = true;
-		}
-	}
-
-	/* Convert FORCE QUOTE name list to per-column flags, check validity */
-	pstate->force_quote_flags = (bool *) palloc0(tupDesc->natts * sizeof(bool));
-	if (pstate->force_quote)
-	{
-		List	   *attnums;
-		ListCell   *cur;
-
-		attnums = CopyGetAttnums(tupDesc, relation, pstate->force_quote);
-
-		foreach(cur, attnums)
-		{
-			int			attnum = lfirst_int(cur);
-
-			pstate->force_quote_flags[attnum - 1] = true;
-		}
-	}
-
-	/* finally take care of state that is WET or RET specific */
-	if (!iswritable)
-	{
-		/* RET */
-		initStringInfo(&pstate->attribute_buf);
-		initStringInfo(&pstate->line_buf);
-
-		/* Set up data buffer to hold a chunk of data */
-		MemSet(pstate->raw_buf, ' ', RAW_BUF_SIZE * sizeof(char));
-		pstate->raw_buf[RAW_BUF_SIZE] = '\0';
-
-	}
-	else
-	{
-		/* WET */
-
-		Form_pg_attribute *attr = tupDesc->attrs;
-		ListCell   *cur;
-
-		pstate->null_print_client = pstate->null_print; /* default */
-
-		/* We use fe_msgbuf as a per-row buffer */
-		pstate->fe_msgbuf = makeStringInfo();
-
-		pstate->out_functions =
-			(FmgrInfo *) palloc(tupDesc->natts * sizeof(FmgrInfo));
-
-		/* Get info about the columns we need to process. */
-		foreach(cur, pstate->attnumlist)
-		{
-			int			attnum = lfirst_int(cur);
-			Oid			out_func_oid;
-			bool		isvarlena;
-
-			getTypeOutputInfo(attr[attnum - 1]->atttypid,
-							  &out_func_oid,
-							  &isvarlena);
-			fmgr_info(out_func_oid, &pstate->out_functions[attnum - 1]);
-		}
-
-		/*
-		 * we need to convert null_print to client encoding, because it will
-		 * be sent directly with CopySendString.
-		 */
-		if (pstate->need_transcoding)
-			pstate->null_print_client = pg_server_to_client(pstate->null_print,
-													 pstate->null_print_len);
-	}
-
-
 	/*
 	 * Create a temporary memory context that we can reset once per row to
 	 * recover palloc'd memory.  This avoids any problems with leaks inside
@@ -1529,11 +1244,12 @@ FunctionCallPrepareFormatter(FunctionCallInfoData *fcinfo,
 	formatter->fmt_perrow_ctx = pstate->rowcontext;
 	formatter->fmt_needs_transcoding = pstate->need_transcoding;
 	formatter->fmt_conversion_proc = pstate->enc_conversion_proc;
-	formatter->fmt_external_encoding = pstate->client_encoding;
+	formatter->fmt_external_encoding = pstate->file_encoding;
 
 	InitFunctionCallInfoData( /* FunctionCallInfoData */ *fcinfo,
 							  /* FmgrInfo */ pstate->custom_formatter_func,
 							  /* nArgs */ nArgs,
+							  /* collation */ InvalidOid,
 							  /* Call Context */ (Node *) formatter,
 							  /* ResultSetInfo */ NULL);
 }
@@ -1601,6 +1317,16 @@ open_external_writable_source(ExternalInsertDesc extInsertDesc)
 										true /* forwrite */ ,
 										&extvar,
 										extInsertDesc->ext_pstate);
+}
+
+/*
+ * Fetch more data from the source, and feed it to the COPY FROM machinery
+ * for parsing.
+ */
+static int
+external_getdata_callback(void *outbuf, int datasize)
+{
+	elog(ERROR, "GPDB_91_MERGE_FIXME: unfinished");
 }
 
 /*
@@ -1730,20 +1456,6 @@ external_scan_error_callback(void *arg)
 						   cstate->cur_relname, cstate->filename);
 		}
 	}
-}
-
-/*
- * Read the data file header line and ignore it.
- *
- * This function should be called only once for each data file
- * and only if HEADER is specified in the SQL command.
- */
-static void
-readHeaderLine(CopyState pstate)
-{
-	pstate->line_done = pstate->csv_mode ?
-		CopyReadLineCSV(pstate, pstate->bytesread) :
-		CopyReadLineText(pstate, pstate->bytesread);
 }
 
 void
