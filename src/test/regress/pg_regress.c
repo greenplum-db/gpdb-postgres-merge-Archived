@@ -92,12 +92,9 @@ bool		debug = false;
 char	   *inputdir = ".";
 char	   *outputdir = ".";
 char	   *psqldir = PGBINDIR;
-<<<<<<< HEAD
+char	   *launcher = NULL;
 bool 		optimizer_enabled = false;
 bool 		resgroup_enabled = false;
-=======
-char	   *launcher = NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static _stringlist *loadlanguage = NULL;
 static _stringlist *loadextension = NULL;
 static int	max_connections = 0;
@@ -116,13 +113,10 @@ static bool port_specified_by_user = false;
 static char *dlpath = PKGLIBDIR;
 static char *user = NULL;
 static _stringlist *extraroles = NULL;
-<<<<<<< HEAD
+static _stringlist *extra_install = NULL;
 static char *initfile = NULL;
 static char *aodir = NULL;
 static char *resgroupdir = NULL;
-=======
-static _stringlist *extra_install = NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* internal variables */
 static const char *progname;
@@ -2398,14 +2392,11 @@ help(void)
 	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
 	printf(_("  --use-existing            use an existing installation\n"));
-<<<<<<< HEAD
+	printf(_("  --launcher=CMD            use CMD as launcher of psql\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
 	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
 	printf(_("                            UAO row and column tests\n"));
 	printf(_("  --resgroup-dir=DIR        directory name prefix containing resgroup tests\n"));
-=======
-	printf(_("  --launcher=CMD            use CMD as launcher of psql\n"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
 	printf(_("  --no-locale               use C locale\n"));
@@ -2458,16 +2449,13 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"create-role", required_argument, NULL, 18},
 		{"temp-config", required_argument, NULL, 19},
 		{"use-existing", no_argument, NULL, 20},
-<<<<<<< HEAD
+		{"launcher", required_argument, NULL, 21},
+		{"load-extension", required_argument, NULL, 22},
+		{"extra-install", required_argument, NULL, 23},
         {"init-file", required_argument, NULL, 25},
         {"ao-dir", required_argument, NULL, 26},
         {"resgroup-dir", required_argument, NULL, 27},
         {"exclude-tests", required_argument, NULL, 28},
-=======
-		{"launcher", required_argument, NULL, 21},
-		{"load-extension", required_argument, NULL, 22},
-		{"extra-install", required_argument, NULL, 23},
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2561,7 +2549,15 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 20:
 				use_existing = true;
 				break;
-<<<<<<< HEAD
+			case 21:
+				launcher = strdup(optarg);
+				break;
+			case 22:
+				add_stringlist_item(&loadextension, optarg);
+				break;
+			case 23:
+				add_stringlist_item(&extra_install, optarg);
+				break;
             case 25:
                 initfile = strdup(optarg);
                 break;
@@ -2574,17 +2570,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
             case 28:
                 split_to_stringlist(strdup(optarg), ", ", &exclude_tests);
                 break;
-=======
-			case 21:
-				launcher = strdup(optarg);
-				break;
-			case 22:
-				add_stringlist_item(&loadextension, optarg);
-				break;
-			case 23:
-				add_stringlist_item(&extra_install, optarg);
-				break;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),

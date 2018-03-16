@@ -18,14 +18,4 @@ subdir = contrib/hstore
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
-<<<<<<< HEAD
-
-installcheck: prepare_hstore_sql
-
-prepare_hstore_sql:
-	cp $(GPHOME)/share/postgresql/contrib/hstore.sql ./hstore.sql
-
-.PHONY: prepare_hstore_sql
-=======
 endif
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

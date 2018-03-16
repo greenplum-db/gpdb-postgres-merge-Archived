@@ -41,12 +41,9 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
-<<<<<<< HEAD
+extern char *launcher;
 extern bool optimizer_enabled;
 extern bool resgroup_enabled;
-=======
-extern char *launcher;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * This should not be global but every module should be able to read command

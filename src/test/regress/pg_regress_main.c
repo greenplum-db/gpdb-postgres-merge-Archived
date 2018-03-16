@@ -54,16 +54,13 @@ psql_start_test(const char *testname,
 	char		outfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH] = "";
 	char		psql_cmd[MAXPGPATH * 3];
-<<<<<<< HEAD
+	size_t		offset = 0;
 	char		use_utility_mode = 0;
 	char	   *lastslash;
 
 	/* generalise later */
 	if (strcmp(testname, "upg2") == 0)
 		use_utility_mode = 1;
-=======
-	size_t		offset = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Look for files in the output dir first, consistent with a vpath search.
@@ -121,18 +118,13 @@ psql_start_test(const char *testname,
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);
 
-<<<<<<< HEAD
-	snprintf(psql_cmd, sizeof(psql_cmd),
-			 "%s " SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
-			 use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
-=======
 	if (launcher)
 		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 						   "%s ", launcher);
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			 "%s " SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
 			 psqldir ? psqldir : "",
 			 psqldir ? "/" : "",
 			 dblist->str,

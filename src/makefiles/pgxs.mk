@@ -274,11 +274,7 @@ endif
 
 # against installed postmaster
 installcheck: submake
-<<<<<<< HEAD
-	$(top_builddir)/src/test/regress/pg_regress --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-=======
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 ifdef PGXS
 check:

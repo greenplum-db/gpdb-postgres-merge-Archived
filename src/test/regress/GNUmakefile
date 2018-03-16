@@ -129,11 +129,7 @@ installdirs-tests: installdirs
 
 # Get some extra C modules from contrib/spi and contrib/dummy_seclabel...
 
-<<<<<<< HEAD
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
-=======
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+all: refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX) tablespace-setup includecheck hooktest query_info_hook_test
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@
@@ -177,29 +173,7 @@ query_info_hook_test:
 ## Run tests
 ##
 
-<<<<<<< HEAD
-pg_regress_call = ./pg_regress --inputdir=$(srcdir) --dlpath=. $(if $(MULTIBYTE),--multibyte=$(MULTIBYTE)) $(MAXCONNOPT) $(NOLOCALE) --init-file=$(srcdir)/init_file
-
-check: all
-	$(pg_regress_call) --temp-install=./tmp_check --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule 
-
-installcheck: all
-	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule 
-
-installcheck-good: all twophase_pqexecparams hooktest query_info_hook_test
-	if [ -z "$(INSTALLCHECK_GOOD_KERBEROS)" ]; then \
-	$(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao; \
-	else \
-	bash kerberos/setup_test.sh; \
-	PGUSER="gpadmin/kerberos-test" $(pg_regress_call)  --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao --host=`hostname`; \
-	fi
-
-testbouncer: all
-	bash -c "bouncer/setup.sh"
-	$(pg_regress_call)  --port=65432 --psqldir=$(PSQLDIR) --schedule=./minimal_schedule --host=`hostname`;
-	bash -c "bouncer/stop.sh"
-=======
-REGRESS_OPTS = --dlpath=.
+REGRESS_OPTS = --dlpath=. --init-file=$(srcdir)/init_file
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
@@ -209,10 +183,17 @@ installcheck: all tablespace-setup
 
 installcheck-parallel: all tablespace-setup
 	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+installcheck-good: all twophase_pqexecparams hooktest query_info_hook_test
+	$(pg_regress_installcheck)  --schedule=$(srcdir)/parallel_schedule --schedule=$(srcdir)/greenplum_schedule --ao-dir=uao $(EXTRA_TESTS)
+
+testbouncer: all
+	bash -c "bouncer/setup.sh"
+	$(pg_regress_check)  --port=65432 --schedule=./minimal_schedule --host=`hostname` $(EXTRA_TESTS)
+	bash -c "bouncer/stop.sh"
 
 standbycheck: all
-	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
+	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule  $(EXTRA_TESTS)
 
 # old interfaces follow...
 
@@ -235,7 +216,6 @@ bkuprestore: all
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-<<<<<<< HEAD
 	$(MAKE) -C $(top_builddir)/contrib/spi clean
 	$(MAKE) -C hooktest/ clean
 	$(MAKE) -C query_info_hook_test/ clean
@@ -243,20 +223,12 @@ clean distclean maintainer-clean: clean-lib
 # things created by dynamic configs
 	find sql -type l | xargs rm -f
 	find expected -type l | xargs rm -f
-	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) pg_regress_main.o pg_regress.o pg_regress$(X)
-# things created by various check targets
-	rm -f $(output_files) $(input_files)
-	rm -rf testtablespace
-	rm -rf results tmp_check log
-	rm -f regression.diffs regression.out regress.out run_check.out
-	rm -f data/pg_class32.data
-	rm -f gmon.out
-	rm -f $(srcdir)/sql/cppudf.sql
-=======
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX) dummy_seclabel$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
 	rm -rf $(pg_regress_clean_files)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	rm -f data/pg_class32.data
+	rm -f gmon.out
+	rm -f $(srcdir)/sql/cppudf.sql
