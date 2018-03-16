@@ -4646,7 +4646,7 @@ struct config_string ConfigureNamesString_gp[] =
 		},
 		&gp_session_role_string,
 		"dispatch",
-		NULL, assign_gp_session_role, show_gp_session_role
+		check_gp_session_role, assign_gp_session_role, show_gp_session_role
 	},
 
 	{

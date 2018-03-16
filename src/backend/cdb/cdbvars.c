@@ -457,26 +457,21 @@ role_to_string(GpRoleValue role)
 
 
 /*
- * Assign hook routine for "gp_session_role" option.  Because this variable
+ * Check and Assign routines for "gp_session_role" option.  Because this variable
  * has context PGC_BACKEND, we expect this assigment to happen only during
  * setup of a BACKEND, e.g., based on the role value specified on the connect
  * request.
  *
  * See src/backend/util/misc/guc.c for option definition.
  */
-const char *
-assign_gp_session_role(const char *newval, bool doit, GucSource source __attribute__((unused)))
+bool
+check_gp_session_role(char **newval, void **extra, GucSource source)
 {
-#if FALSE
-	elog(DEBUG1, "assign_gp_session_role: gp_session_role=%s, newval=%s, doit=%s",
-		 show_gp_session_role(), newval, (doit ? "true" : "false"));
-#endif
-
-	GpRoleValue newrole = string_to_role(newval);
+	GpRoleValue newrole = string_to_role(*newval);
 
 	if (newrole == GP_ROLE_UNDEFINED)
 	{
-		return NULL;
+		return false;
 	}
 
 	/* Force utility mode in a stand-alone backend. */
@@ -485,28 +480,37 @@ assign_gp_session_role(const char *newval, bool doit, GucSource source __attribu
 		if (source != PGC_S_DEFAULT)
 			elog(WARNING, "gp_session_role forced to 'utility' in single-user mode");
 
-		newval = strdup("utility");
-		newrole = GP_ROLE_UTILITY;
+		*newval = strdup("utility");
 	}
+	return true;
+}
 
-	if (doit)
-	{
-		Gp_session_role = newrole;
-		Gp_role = Gp_session_role;
+void
+assign_gp_session_role(const char *newval, void *extra)
+{
+#if FALSE
+	elog(DEBUG1, "assign_gp_session_role: gp_session_role=%s, newval=%s",
+		 show_gp_session_role(), newval);
+#endif
 
-		if (Gp_role == GP_ROLE_DISPATCH)
-			Gp_segment = -1;
+	GpRoleValue newrole = string_to_role(newval);
 
-		if (Gp_role == GP_ROLE_UTILITY && MyProc != NULL)
-			MyProc->mppIsWriter = false;
-	}
-	return newval;
+	Assert(newrole != GP_ROLE_UNDEFINED);
+
+	Gp_session_role = newrole;
+	Gp_role = Gp_session_role;
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		Gp_segment = -1;
+
+	if (Gp_role == GP_ROLE_UTILITY && MyProc != NULL)
+		MyProc->mppIsWriter = false;
 }
 
 
 
 /*
- * Assign hook routine for "gp_role" option.  This variable has context
+ * Check and Assign routines for "gp_role" option.  This variable has context
  * PGC_SUSET so that is can only be set by a superuser via the SET command.
  * (It can also be set using an option on postmaster start, but this isn't
  * interesting beccause the derived global CdbRole is always set (along with
@@ -514,75 +518,79 @@ assign_gp_session_role(const char *newval, bool doit, GucSource source __attribu
  *
  * See src/backend/util/misc/guc.c for option definition.
  */
-const char *
-assign_gp_role(const char *newval, bool doit, GucSource source)
+bool
+check_gp_role(char **newval, void **extra, GucSource source)
+{
+	GpRoleValue newrole = string_to_role(*newval);
+
+	if (newrole == GP_ROLE_UNDEFINED)
+	{
+		return false;
+	}
+	return true;
+}
+
+void
+assign_gp_role(const char *newval, void *extra)
 {
 #if FALSE
 	elog(DEBUG1, "assign_gp_role: gp_role=%s, newval=%s, doit=%s",
 		 show_gp_role(), newval, (doit ? "true" : "false"));
 #endif
 
-
 	GpRoleValue newrole = string_to_role(newval);
 	GpRoleValue oldrole = Gp_role;
 
-	if (newrole == GP_ROLE_UNDEFINED)
+	Assert(newrole != GP_ROLE_UNDEFINED);
+
+	/*
+	 * When changing between roles, we must call cdb_cleanup and then
+	 * cdb_setup to get setup and connections appropriate to the new role.
+	 */
+	bool		do_disconnect = false;
+	bool		do_connect = false;
+
+	if (Gp_role != newrole && IsUnderPostmaster)
 	{
-		return NULL;
+		if (Gp_role != GP_ROLE_UTILITY)
+			do_disconnect = true;
+
+		if (newrole != GP_ROLE_UTILITY)
+			do_connect = true;
 	}
 
-	if (doit)
+	if (do_disconnect)
+		cdb_cleanup(0, 0);
+
+	Gp_role = newrole;
+
+	// GPDB_91_MERGE_FIXME: we don't have access to 'source' anymore
+	//if (source != PGC_S_DEFAULT)
 	{
-		/*
-		 * When changing between roles, we must call cdb_cleanup and then
-		 * cdb_setup to get setup and connections appropriate to the new role.
-		 */
-		bool		do_disconnect = false;
-		bool		do_connect = false;
-
-		if (Gp_role != newrole && IsUnderPostmaster)
+		if (do_connect)
 		{
-			if (Gp_role != GP_ROLE_UTILITY)
-				do_disconnect = true;
-
-			if (newrole != GP_ROLE_UTILITY)
-				do_connect = true;
-		}
-
-		if (do_disconnect)
-			cdb_cleanup(0, 0);
-
-		Gp_role = newrole;
-
-		if (source != PGC_S_DEFAULT)
-		{
-			if (do_connect)
+			/*
+			 * In case there are problems with the Greenplum Database
+			 * tables or data, we catch any error coming out of
+			 * cdblink_setup so we can set the gp_role back to what it
+			 * was.  Otherwise we may be left with inappropriate
+			 * connections for the new role.
+			 */
+			PG_TRY();
 			{
-				/*
-				 * In case there are problems with the Greenplum Database
-				 * tables or data, we catch any error coming out of
-				 * cdblink_setup so we can set the gp_role back to what it
-				 * was.  Otherwise we may be left with inappropriate
-				 * connections for the new role.
-				 */
-				PG_TRY();
-				{
-					cdb_setup();
-				}
-				PG_CATCH();
-				{
-					cdb_cleanup(0, 0);
-					Gp_role = oldrole;
-					if (Gp_role != GP_ROLE_UTILITY)
-						cdb_setup();
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
+				cdb_setup();
 			}
+			PG_CATCH();
+			{
+				cdb_cleanup(0, 0);
+				Gp_role = oldrole;
+				if (Gp_role != GP_ROLE_UTILITY)
+					cdb_setup();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
 		}
 	}
-
-	return newval;
 }
 
 

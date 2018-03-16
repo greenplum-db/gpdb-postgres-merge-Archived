@@ -2072,6 +2072,7 @@ _readColumnDef(void)
 	READ_INT_FIELD(inhcount);
 	READ_BOOL_FIELD(is_local);
 	READ_BOOL_FIELD(is_not_null);
+	READ_BOOL_FIELD(is_from_type);
 	READ_INT_FIELD(attnum);
 	READ_CHAR_FIELD(storage);
 	READ_NODE_FIELD(raw_default);

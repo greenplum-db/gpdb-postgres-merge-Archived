@@ -2695,7 +2695,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&log_timezone_string,
-		NULL,
+		"GMT",
 		check_log_timezone, assign_log_timezone, show_log_timezone
 	},
 
@@ -2977,7 +2977,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_REPORT | GUC_GPDB_ADDOPT
 		},
 		&timezone_string,
-		NULL,
+		"GMT",
 		check_timezone, assign_timezone, show_timezone
 	},
 	{

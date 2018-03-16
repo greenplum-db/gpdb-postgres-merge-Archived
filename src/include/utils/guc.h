@@ -744,9 +744,11 @@ extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
 /* in cdb/cdbvars.c */
-extern const char *assign_gp_session_role(const char *newval, bool doit, GucSource source);
+extern bool check_gp_session_role(char **newval, void **extra, GucSource source);
+extern void assign_gp_session_role(const char *newval, void *extra);
 extern const char *show_gp_session_role(void);
-extern const char *assign_gp_role(const char *newval, bool doit, GucSource source);
+extern bool check_gp_role(char **newval, void **extra, GucSource source);
+extern void assign_gp_role(const char *newval, void *extra);
 extern const char *show_gp_role(void);
 extern void assign_gp_connections_per_thread(int newval, void *extra);
 extern const char *show_gp_connections_per_thread(void);
