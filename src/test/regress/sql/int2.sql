@@ -84,13 +84,11 @@ SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT2_TBL i;
 
 SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT2_TBL i;
 
-<<<<<<< HEAD
+-- corner cases
+SELECT (-1::int2<<15)::text;
+SELECT ((-1::int2<<15)+1::int2)::text;
+
 -- check sane handling of INT16_MIN overflow cases
 SELECT (-32768)::int2 * (-1)::int2;
 SELECT (-32768)::int2 / (-1)::int2;
 SELECT (-32768)::int2 % (-1)::int2;
-=======
--- corner cases
-SELECT (-1::int2<<15)::text;
-SELECT ((-1::int2<<15)+1::int2)::text;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

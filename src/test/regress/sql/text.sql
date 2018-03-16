@@ -29,7 +29,6 @@ select 'four: ' || 2+2;
 
 select 3 || 4.0;
 
-<<<<<<< HEAD
 --
 -- TEXT CASTING TO/FROM ANY TYPE
 --
@@ -39,7 +38,7 @@ SELECT '{1,2}'::text::integer[];
 
 CREATE TYPE usr_define_type as (id int, name text);
 SELECT '(1,abc)'::text::usr_define_type;
-=======
+
 /*
  * various string functions
  */
@@ -87,4 +86,3 @@ select format('%1$1', 1);
 --checkk mix of positional and ordered placeholders
 select format('Hello %s %1$s %s', 'World', 'Hello again');
 select format('Hello %s %s, %2$s %2$s', 'World', 'Hello again');
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

@@ -86,15 +86,9 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x
 SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
    FROM FLOAT8_TBL f where f.f1 = '1004.3';
 
-<<<<<<< HEAD
--- absolute value 
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
-   FROM FLOAT8_TBL f ORDER BY 2;
-=======
 -- absolute value
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1
    FROM FLOAT8_TBL f;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 -- truncate
 SELECT '' AS five, f.f1, trunc(f.f1) AS trunc_f1

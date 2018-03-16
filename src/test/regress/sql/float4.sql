@@ -81,9 +81,4 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 --   SET f1 = FLOAT4_TBL.f1 * '-1'
 --   WHERE FLOAT4_TBL.f1 > '0.0';
 
-<<<<<<< HEAD
 --SELECT '' AS five, * FROM FLOAT4_TBL;
-
-=======
-SELECT '' AS five, * FROM FLOAT4_TBL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

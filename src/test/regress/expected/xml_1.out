@@ -644,7 +644,6 @@ SELECT xml_is_well_formed('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
-<<<<<<< HEAD
 -- External entity references should not leak filesystem information.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
 ERROR:  unsupported XML feature
@@ -659,5 +658,3 @@ SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

@@ -51,7 +51,6 @@ ERROR:  operator does not exist: integer || numeric
 LINE 1: select 3 || 4.0;
                  ^
 HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
-<<<<<<< HEAD
 --
 -- TEXT CASTING TO/FROM ANY TYPE
 --
@@ -78,7 +77,8 @@ SELECT '(1,abc)'::text::usr_define_type;
  usr_define_type 
 -----------------
  (1,abc)
-=======
+(1 row)
+
 /*
  * various string functions
  */
@@ -267,6 +267,5 @@ select format('Hello %s %s, %2$s %2$s', 'World', 'Hello again');
                       format                      
 --------------------------------------------------
  Hello World Hello again, Hello again Hello again
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 (1 row)
 

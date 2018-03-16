@@ -287,15 +287,9 @@ SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
      | 1008618.49
 (1 row)
 
-<<<<<<< HEAD
--- absolute value 
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
-   FROM FLOAT8_TBL f ORDER BY 2;
-=======
 -- absolute value
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1
    FROM FLOAT8_TBL f;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  five |          f1          |        abs_f1        
 ------+----------------------+----------------------
       |               -34.84 |                34.84
