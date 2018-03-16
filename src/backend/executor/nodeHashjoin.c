@@ -293,7 +293,7 @@ ExecHashJoin(HashJoinState *node)
 					if (HJ_FILL_INNER(node))
 					{
 						/* set up to scan for unmatched inner tuples */
-						ExecPrepHashTableForUnmatched(hashNode, node);
+						ExecPrepHashTableForUnmatched(node);
 						node->hj_JoinState = HJ_FILL_INNER_TUPLES;
 					}
 					else
@@ -389,7 +389,7 @@ ExecHashJoin(HashJoinState *node)
 				if (joinqual == NIL || ExecQual(joinqual, econtext, false))
 				{
 					node->hj_MatchedOuter = true;
-					HeapTupleHeaderSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
+					MemTupleSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
 
 					/* In an antijoin, we never return a matched tuple */
 					if (node->js.jointype == JOIN_ANTI)
@@ -410,12 +410,9 @@ ExecHashJoin(HashJoinState *node)
 					{
 						TupleTableSlot *result;
 
-						result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+						result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
 
-						if (isDone != ExprEndResult)
-						{
-							return result;
-						}
+						return result;
 					}
 				}
 				break;
@@ -443,12 +440,9 @@ ExecHashJoin(HashJoinState *node)
 					{
 						TupleTableSlot *result;
 
-						result = ExecProject(node->js.ps.ps_ProjInfo, &isDone);
+						result = ExecProject(node->js.ps.ps_ProjInfo, NULL);
 
-						if (isDone != ExprEndResult)
-						{
-							return result;
-						}
+						return result;
 					}
 				}
 				break;
@@ -460,7 +454,7 @@ ExecHashJoin(HashJoinState *node)
 				 * so any unmatched inner tuples in the hashtable have to be
 				 * emitted before we continue to the next batch.
 				 */
-				if (!ExecScanHashTableForUnmatched(hashNode, node, econtext))
+				if (!ExecScanHashTableForUnmatched(node, econtext))
 				{
 					/* no more unmatched tuples */
 					node->hj_JoinState = HJ_NEED_NEW_BATCH;

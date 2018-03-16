@@ -46,11 +46,11 @@ extern void ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 						  int *batchno);
 extern bool ExecScanHashBucket(HashState *hashState, HashJoinState *hjstate,
 				   ExprContext *econtext);
-extern void ExecPrepHashTableForUnmatched(HashState *hashState, HashJoinState *hjstate);
-extern bool ExecScanHashTableForUnmatched(HashState *hashState, HashJoinState *hjstate,
+extern void ExecPrepHashTableForUnmatched(HashJoinState *hjstate);
+extern bool ExecScanHashTableForUnmatched(HashJoinState *hjstate,
 							  ExprContext *econtext);
 extern void ExecHashTableReset(HashState *hashState, HashJoinTable hashtable);
-extern void ExecHashTableResetMatchFlags(HashState *hashState, HashJoinTable hashtable);
+extern void ExecHashTableResetMatchFlags(HashJoinTable hashtable);
 extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 						uint64 operatorMemKB,
 						int *numbuckets,

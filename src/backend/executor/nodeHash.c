@@ -911,7 +911,7 @@ ExecHashTableInsert(HashState *hashState, HashJoinTable hashtable,
 		 * could not possibly have been matched to an outer tuple before it
 		 * went into the batch file.
 		 */
-		HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(hashTuple));
+		MemTupleClearMatch(HJTUPLE_MINTUPLE(hashTuple));
 
 		/* Push it onto the front of the bucket's list */
 		hashTuple->next = hashtable->buckets[bucketno];
@@ -1234,7 +1234,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 
 		while (hashTuple != NULL)
 		{
-			if (!HeapTupleHeaderHasMatch(HJTUPLE_MINTUPLE(hashTuple)))
+			if (!MemTupleHasMatch(HJTUPLE_MINTUPLE(hashTuple)))
 			{
 				TupleTableSlot *inntuple;
 
@@ -1313,7 +1313,7 @@ ExecHashTableResetMatchFlags(HashJoinTable hashtable)
 	for (i = 0; i < hashtable->nbuckets; i++)
 	{
 		for (tuple = hashtable->buckets[i]; tuple != NULL; tuple = tuple->next)
-			HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(tuple));
+			MemTupleClearMatch(HJTUPLE_MINTUPLE(tuple));
 	}
 
 	/* ... and the same for the skew buckets, if any */
@@ -1323,7 +1323,7 @@ ExecHashTableResetMatchFlags(HashJoinTable hashtable)
 		HashSkewBucket *skewBucket = hashtable->skewBucket[j];
 
 		for (tuple = skewBucket->tuples; tuple != NULL; tuple = tuple->next)
-			HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(tuple));
+			MemTupleClearMatch(HJTUPLE_MINTUPLE(tuple));
 	}
 }
 
@@ -1940,12 +1940,8 @@ ExecHashSkewTableInsert(HashState *hashState,
 	hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 												   hashTupleSize);
 	hashTuple->hashvalue = hashvalue;
-<<<<<<< HEAD
 	memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, memtuple_get_size(tuple));
-=======
-	memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, tuple->t_len);
-	HeapTupleHeaderClearMatch(HJTUPLE_MINTUPLE(hashTuple));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	MemTupleClearMatch(HJTUPLE_MINTUPLE(hashTuple));
 
 	/* Push it onto the front of the skew bucket's list */
 	hashTuple->next = hashtable->skewBucket[bucketNumber]->tuples;
