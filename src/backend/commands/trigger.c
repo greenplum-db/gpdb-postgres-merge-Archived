@@ -2540,7 +2540,7 @@ ExecIRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 		if (newslot->tts_tupleDescriptor != tupdesc)
 			ExecSetSlotDescriptor(newslot, tupdesc);
-		ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+		ExecStoreHeapTuple(newtuple, newslot, InvalidBuffer, false);
 		slot = newslot;
 	}
 	return slot;

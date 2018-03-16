@@ -91,7 +91,8 @@ markDirty(Buffer buffer, Relation relation, HeapTupleHeader tuple, bool isXmin)
 
 	if (!gp_disable_tuple_hints)
 	{
-		if (!relation->rd_istemp)
+		/* GPDB_91_MERGE_FIXME: what is the rationale of not dirtying local buffers? */
+		if (relation->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
 			MarkBufferDirtyHint(buffer);
 		return;
 	}

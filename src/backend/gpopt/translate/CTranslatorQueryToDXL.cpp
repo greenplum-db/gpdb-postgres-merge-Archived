@@ -2949,7 +2949,6 @@ CTranslatorQueryToDXL::UnsupportedRTEKind
 	static const SRTENameElem rgStrMap[] =
 		{
 		{RTE_JOIN, GPOS_WSZ_LIT("RangeTableEntry of type Join")},
-		{RTE_SPECIAL, GPOS_WSZ_LIT("RangeTableEntry of type Special")},
 		{RTE_VOID, GPOS_WSZ_LIT("RangeTableEntry of type Void")},
 		{RTE_TABLEFUNCTION, GPOS_WSZ_LIT("RangeTableEntry of type Table Function")}
 		};

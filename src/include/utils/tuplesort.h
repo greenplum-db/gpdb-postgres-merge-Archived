@@ -59,10 +59,12 @@
 #define tuplesort_begin_datum tuplesort_begin_datum_pg
 #define tuplesort_set_bound tuplesort_set_bound_pg
 #define tuplesort_puttupleslot tuplesort_puttupleslot_pg
+#define tuplesort_putheaptuple tuplesort_putheaptuple_pg
 #define tuplesort_putindextuple tuplesort_putindextuple_pg
 #define tuplesort_putdatum tuplesort_putdatum_pg
 #define tuplesort_performsort tuplesort_performsort_pg
 #define tuplesort_gettupleslot tuplesort_gettupleslot_pg
+#define tuplesort_getheaptuple tuplesort_getheaptuple_pg
 #define tuplesort_getindextuple tuplesort_getindextuple_pg
 #define tuplesort_getdatum tuplesort_getdatum_pg
 #define tuplesort_skiptuples tuplesort_skiptuples_pg
@@ -217,10 +219,12 @@ extern int32 ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
 #undef tuplesort_begin_datum
 #undef tuplesort_set_bound
 #undef tuplesort_puttupleslot
+#undef tuplesort_putheaptuple
 #undef tuplesort_putindextuple
 #undef tuplesort_putdatum
 #undef tuplesort_performsort
 #undef tuplesort_gettupleslot
+#undef tuplesort_getheaptuple
 #undef tuplesort_getindextuple
 #undef tuplesort_getdatum
 #undef tuplesort_skiptuples
@@ -386,6 +390,15 @@ switcheroo_tuplesort_puttupleslot(switcheroo_Tuplesortstate *state, TupleTableSl
 }
 
 static inline void
+switcheroo_tuplesort_putheaptuple(switcheroo_Tuplesortstate *state, HeapTuple tup)
+{
+	if (state->is_mk_tuplesortstate)
+		tuplesort_putheaptuple_mk((Tuplesortstate_mk *) state, tup);
+	else
+		tuplesort_putheaptuple_pg((Tuplesortstate_pg *) state, tup);
+}
+
+static inline void
 switcheroo_tuplesort_putindextuple(switcheroo_Tuplesortstate *state, IndexTuple tuple)
 {
 	if (state->is_mk_tuplesortstate)
@@ -420,6 +433,15 @@ switcheroo_tuplesort_gettupleslot(switcheroo_Tuplesortstate *state, bool forward
 		return tuplesort_gettupleslot_mk((Tuplesortstate_mk *) state, forward, slot);
 	else
 		return tuplesort_gettupleslot_pg((Tuplesortstate_pg *) state, forward, slot);
+}
+
+static inline HeapTuple
+switcheroo_tuplesort_getheaptuple(switcheroo_Tuplesortstate *state, bool forward, bool *should_free)
+{
+	if (state->is_mk_tuplesortstate)
+		return tuplesort_getheaptuple_mk((Tuplesortstate_mk *) state, forward, should_free);
+	else
+		return tuplesort_getheaptuple_pg((Tuplesortstate_pg *) state, forward, should_free);
 }
 
 static inline IndexTuple
@@ -623,15 +645,18 @@ switcheroo_tuplesort_set_gpmon(switcheroo_Tuplesortstate *state,
 #define Tuplesortstate switcheroo_Tuplesortstate
 
 #define tuplesort_begin_heap switcheroo_tuplesort_begin_heap
+#define tuplesort_begin_cluster switcheroo_tuplesort_begin_cluster
 #define tuplesort_begin_index_btree switcheroo_tuplesort_begin_index_btree
 #define tuplesort_begin_index_hash switcheroo_tuplesort_begin_index_hash
 #define tuplesort_begin_datum switcheroo_tuplesort_begin_datum
 #define tuplesort_set_bound switcheroo_tuplesort_set_bound
 #define tuplesort_puttupleslot switcheroo_tuplesort_puttupleslot
+#define tuplesort_putheaptuple switcheroo_tuplesort_putheaptuple
 #define tuplesort_putindextuple switcheroo_tuplesort_putindextuple
 #define tuplesort_putdatum switcheroo_tuplesort_putdatum
 #define tuplesort_performsort switcheroo_tuplesort_performsort
 #define tuplesort_gettupleslot switcheroo_tuplesort_gettupleslot
+#define tuplesort_getheaptuple switcheroo_tuplesort_getheaptuple
 #define tuplesort_getindextuple switcheroo_tuplesort_getindextuple
 #define tuplesort_getdatum switcheroo_tuplesort_getdatum
 #define tuplesort_skiptuples switcheroo_tuplesort_skiptuples

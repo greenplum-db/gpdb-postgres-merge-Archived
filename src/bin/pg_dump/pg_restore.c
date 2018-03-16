@@ -144,11 +144,7 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:uU:vwWxX:1",
-=======
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:j:lL:n:Op:P:RsS:t:T:uU:vwWx:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)

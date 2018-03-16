@@ -62,6 +62,7 @@ extern void cdb_tuplesort_init_mk(Tuplesortstate_mk *state, int unique,
 extern void tuplesort_set_bound_mk(Tuplesortstate_mk *state, int64 bound);
 
 extern void tuplesort_puttupleslot_mk(Tuplesortstate_mk *state, TupleTableSlot *slot);
+extern void tuplesort_putheaptuple_mk(Tuplesortstate_mk *state, HeapTuple tup);
 extern void tuplesort_putindextuple_mk(Tuplesortstate_mk *state, IndexTuple tuple);
 extern void tuplesort_putdatum_mk(Tuplesortstate_mk *state, Datum val, bool isNull);
 
@@ -71,6 +72,7 @@ extern void tuplesort_begin_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk **p
 extern bool tuplesort_gettupleslot_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk *pos, bool forward, TupleTableSlot *slot, MemoryContext mcontext);
 
 extern bool tuplesort_gettupleslot_mk(Tuplesortstate_mk *state, bool forward, TupleTableSlot *slot);
+extern HeapTuple tuplesort_getheaptuple_mk(Tuplesortstate_mk *state, bool forward, bool *should_free);
 extern IndexTuple tuplesort_getindextuple_mk(Tuplesortstate_mk *state, bool forward, bool *should_free);
 extern bool tuplesort_getdatum_mk(Tuplesortstate_mk *state, bool forward, Datum *val, bool *isNull);
 extern bool tuplesort_skiptuples_mk(Tuplesortstate_mk *state, int64 ntuples, bool forward);

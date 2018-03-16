@@ -1314,11 +1314,7 @@ parse_include(void)
 		yytext[i] = '\0';
 		memmove(yytext, yytext+1, strlen(yytext));
 
-<<<<<<< HEAD
 		strlcpy(inc_file, yytext, sizeof(inc_file));
-=======
-		strncpy(inc_file, yytext, sizeof(inc_file));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		yyin = fopen(inc_file, "r");
 		if (!yyin)
 		{

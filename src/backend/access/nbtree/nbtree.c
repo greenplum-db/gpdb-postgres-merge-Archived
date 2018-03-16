@@ -228,7 +228,7 @@ btbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+		log_newpage_rel(index, INIT_FORKNUM,
 					BTREE_METAPAGE, metapage);
 
 	/*

@@ -827,7 +827,7 @@ ProcKill(int code, Datum arg)
 	Assert(MyProc != NULL);
 
 	/* Make sure we're out of the sync rep lists */
-	SyncRepCleanupAtProcExit();
+	SyncRepCleanupAtProcExit(0, 0);
 
 	/* 
 	 * Cleanup for any resource locks on portals - from holdable cursors or

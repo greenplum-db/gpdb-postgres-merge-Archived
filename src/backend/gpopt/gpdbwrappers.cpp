@@ -1124,7 +1124,7 @@ gpdb::OidEqualityOp
 
 		get_sort_group_operators(oidType,
 					 false, true, false,
-					 NULL, &eq_opr, NULL);
+					 NULL, &eq_opr, NULL, NULL);
 
 		return eq_opr;
 	}

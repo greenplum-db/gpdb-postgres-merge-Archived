@@ -524,10 +524,10 @@ ginbuildempty(PG_FUNCTION_ARGS)
 	MarkBufferDirty(RootBuffer);
 
 	/* XLOG the new pages */
-	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+	log_newpage_rel(index, INIT_FORKNUM,
 				BufferGetBlockNumber(MetaBuffer),
 				BufferGetPage(MetaBuffer));
-	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+	log_newpage_rel(index, INIT_FORKNUM,
 				BufferGetBlockNumber(RootBuffer),
 				BufferGetPage(RootBuffer));
 	END_CRIT_SECTION();

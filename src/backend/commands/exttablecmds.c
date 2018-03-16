@@ -857,11 +857,11 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 		initStringInfo(&cfbuf);
 
 		/* +1 leaves room for sprintf's trailing null */
-		appendStringInfo(&cfbuf, "delimiter %s", quote_literal_internal(cstate->delim));
-		appendStringInfo(&cfbuf, " null %s", quote_literal_internal(cstate->null_print));
-		appendStringInfo(&cfbuf, " escape %s", quote_literal_internal(cstate->escape));
+		appendStringInfo(&cfbuf, "delimiter %s", quote_literal_cstr(cstate->delim));
+		appendStringInfo(&cfbuf, " null %s", quote_literal_cstr(cstate->null_print));
+		appendStringInfo(&cfbuf, " escape %s", quote_literal_cstr(cstate->escape));
 		if (fmttype_is_csv(formattype))
-			appendStringInfo(&cfbuf, " quote %s", quote_literal_internal(cstate->quote));
+			appendStringInfo(&cfbuf, " quote %s", quote_literal_cstr(cstate->quote));
 		if (cstate->header_line)
 			appendStringInfo(&cfbuf, " header");
 		if (cstate->fill_missing)

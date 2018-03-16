@@ -192,16 +192,12 @@ ECPG: stmtViewStmt rule
 
 		output_simple_statement($1);
 	}
-<<<<<<< HEAD
-ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionsOptSingleRowErrorHandlingskip_external_partition addon
-=======
 ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
 	{
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		$$ = cat_str(2,mm_strdup("where current of"), cursor_marker);
 	}
-ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromcopy_file_namecopy_delimiteropt_withcopy_options addon
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionsOptSingleRowErrorHandlingskip_external_partition addon
 			if (strcmp($6, "to") == 0 && strcmp($7, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
 			else if (strcmp($6, "from") == 0 && strcmp($7, "stdout") == 0)
