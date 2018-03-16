@@ -1971,7 +1971,8 @@ parruleord_open_gap(Oid partid, int2 level, Oid parent, int2 ruleord,
 	ScanKeyInit(&scankey[2], 3,
 				BTLessEqualStrategyNumber, F_INT2LE,
 				Int16GetDatum(ruleord));
-	sd = index_beginscan(rel, irel, SnapshotNow, 3, scankey);
+	sd = index_beginscan(rel, irel, SnapshotNow, 3, 0);
+	index_rescan(sd, scankey, 3, NULL, 0);
 	while (HeapTupleIsValid(tuple = index_getnext(sd, BackwardScanDirection)))
 	{
 		int			old_ruleord;
@@ -5425,7 +5426,7 @@ atpxPart_validate_spec(
 	}
 
 	pstate = make_parsestate(NULL);
-	result = validate_partition_spec(pstate, pcxt, ct, pBy, "", -1);
+	result = validate_partition_spec(pcxt, ct, pBy, "", -1);
 	free_parsestate(pstate);
 
 	return result;
@@ -8402,6 +8403,7 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  con->contype,
 									  con->condeferrable,
 									  con->condeferred,
+									  con->convalidated,
 									  RelationGetRelid(cand),
 									  keys,
 									  nkeys,
@@ -8454,6 +8456,7 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  con->contype,
 									  con->condeferrable,
 									  con->condeferred,
+									  con->convalidated,
 									  RelationGetRelid(cand),
 									  keys,
 									  nkeys,

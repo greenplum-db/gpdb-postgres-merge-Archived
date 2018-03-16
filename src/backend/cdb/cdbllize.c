@@ -29,10 +29,11 @@
 #include "optimizer/planmain.h" /* for is_projection_capable_plan() */
 #include "optimizer/var.h"		/* for contain_vars_of_level_or_above() */
 #include "parser/parsetree.h"	/* for rt_fetch() */
-#include "utils/lsyscache.h"	/* for getatttypetypmod() */
 #include "parser/parse_oper.h"	/* for compatible_oper_opid() */
 #include "nodes/makefuncs.h"	/* for makeVar() */
 #include "nodes/value.h"		/* for makeString() */
+#include "utils/guc.h"	/* for getatttypetypmod() */
+#include "utils/lsyscache.h"	/* for getatttypetypmod() */
 #include "utils/relcache.h"		/* RelationGetPartitioningKey() */
 
 #include "cdb/cdbvars.h"

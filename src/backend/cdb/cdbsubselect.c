@@ -221,7 +221,7 @@ IsCorrelatedEqualityOpExpr(OpExpr *opexp, Expr **innerExpr, Oid *eqOp, Oid *sort
 	 * If this is an expression of the form a = b, then we want to know about
 	 * the vars involved.
 	 */
-	if (!op_mergejoinable(opexp->opno))
+	if (!op_mergejoinable(opexp->opno, exprType(linitial(opexp->args))))
 		return false;
 
 	/*
@@ -625,6 +625,7 @@ convert_EXPR_to_join(PlannerInfo *root, OpExpr *opexp)
 											 subselectAggTLE->resno,
 											 exprType((Node *) subselectAggTLE->expr),
 											 exprTypmod((Node *) subselectAggTLE->expr),
+											 exprCollation((Node *) subselectAggTLE->expr),
 											 0);
 
 		list_nth_replace(opexp->args, 1, aggVar);
@@ -713,7 +714,7 @@ add_dummy_const(List *tlist)
 	Const	   *zconst;
 	int			resno;
 
-	zconst = makeConst(INT4OID, -1, sizeof(int32), (Datum) 0,
+	zconst = makeConst(INT4OID, -1, InvalidOid, sizeof(int32), (Datum) 0,
 					   false, true);	/* isnull, byval */
 	resno = list_length(tlist) + 1;
 	dummy = makeTargetEntry((Expr *) zconst,

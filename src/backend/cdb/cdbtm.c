@@ -44,6 +44,7 @@
 
 #include "cdb/cdbllize.h"
 #include "utils/faultinjector.h"
+#include "utils/guc.h"
 #include "utils/fmgroids.h"
 #include "utils/sharedsnapshot.h"
 #include "utils/snapmgr.h"
@@ -2664,7 +2665,7 @@ verify_shared_snapshot_ready(void)
  * See verify_shared_snapshot_ready(...) for additional information.
  */
 bool
-assign_gp_write_shared_snapshot(bool newval, bool doit, GucSource source __attribute__((unused)))
+assign_gp_write_shared_snapshot(bool newval, bool doit, GucSource source)
 {
 
 #if FALSE

@@ -6472,9 +6472,9 @@ ATSimplePermissions(Relation rel, int allowed_targets)
 			 * AO segment tables.
 			 */
 			if (IsUnderPostmaster)
-			{
 				actual_target = ATT_TABLE;
-			}
+			else
+				actual_target = 0;
 			break;
 
 		default:
@@ -6595,7 +6595,6 @@ ATSimpleRecursion(List **wqueue, Relation rel,
  * Also check the RESTRICT/CASCADE behavior.  Given CASCADE, also permit
  * recursion to inheritance children of the typed tables.
  */
-#if 0 /* unused in GPDB */
 static void
 ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					  LOCKMODE lockmode)
@@ -6620,7 +6619,6 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		relation_close(childrel, NoLock);
 	}
 }
-#endif
 
 
 /*

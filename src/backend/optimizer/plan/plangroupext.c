@@ -927,8 +927,8 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 										0, /* input_grouping */
 										0, /* grouping */
 										(need_repeat_node ? 1 : 0), /* rollup_gs_times */
-										lNumGroups, context->agg_costs->numAggs,
-										context->agg_costs->transitionSpace,
+										lNumGroups,
+										context->agg_costs,
 										"rollup", &context->current_pathkeys,
 										agg_node,
 										false,

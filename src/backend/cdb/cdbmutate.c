@@ -346,6 +346,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 													  n,
 													  exprType((Node *) target->expr),
 													  exprTypmod((Node *) target->expr),
+													  exprCollation((Node *) target->expr),
 													  0);
 
 								if (equal(var1, new_var))
@@ -1583,7 +1584,7 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 	rte->eref = makeAlias(rte->ctename, colnames);
 	rte->ctecoltypes = coltypes;
 	rte->ctecoltypmods = coltypmods;
-	rte->ctecollations = colcollations;
+	rte->ctecolcollations = colcollations;
 
 	rte->inh = false;
 	rte->inFromCl = false;
@@ -1860,6 +1861,7 @@ replace_shareinput_targetlists_walker(Node *node, PlannerGlobal *glob, bool fPop
 			newtle->expr = (Expr *) makeVar(sisc->scan.scanrelid, attno,
 											exprType((Node *) tle->expr),
 											exprTypmod((Node *) tle->expr),
+											exprCollation((Node *) tle->expr),
 											0);
 			newtargetlist = lappend(newtargetlist, newtle);
 			attno++;
@@ -2353,7 +2355,6 @@ rte_param_walker(List *rtable, ParamWalkerContext *context)
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-			case RTE_SPECIAL:
 			case RTE_VOID:
 			case RTE_CTE:
 				/* nothing to do */
@@ -2826,7 +2827,10 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 			/*
 			 * Make the constant result node.
 			 */
-			simple = (Expr *) makeConst(expr->funcresulttype, -1, resultTypLen,
+			simple = (Expr *) makeConst(expr->funcresulttype,
+										-1,
+										expr->funccollid,
+										resultTypLen,
 										const_val, const_is_null,
 										resultTypByVal);
 

@@ -960,17 +960,13 @@ gp_truncate_error_log(PG_FUNCTION_ARGS)
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		int			i = 0;
-		StringInfoData sql;
+		char	   *sql;
 		CdbPgResults cdb_pgresults = {NULL, 0};
 
-		initStringInfo(&sql);
+		sql = psprintf("SELECT pg_catalog.gp_truncate_error_log(%s)",
+					   quote_literal_cstr(text_to_cstring(relname)));
 
-
-		appendStringInfo(&sql,
-						 "SELECT pg_catalog.gp_truncate_error_log(%s)",
-						 quote_literal_internal(text_to_cstring(relname)));
-
-		CdbDispatchCommand(sql.data, DF_WITH_SNAPSHOT, &cdb_pgresults);
+		CdbDispatchCommand(sql, DF_WITH_SNAPSHOT, &cdb_pgresults);
 
 		for (i = 0; i < cdb_pgresults.numResults; i++)
 		{
@@ -990,7 +986,7 @@ gp_truncate_error_log(PG_FUNCTION_ARGS)
 		}
 
 		cdbdisp_clearCdbPgResults(&cdb_pgresults);
-		pfree(sql.data);
+		pfree(sql);
 	}
 
 	/* Return true iif all segments return true. */

@@ -57,8 +57,7 @@ extern Plan *add_second_stage_agg(PlannerInfo *root,
 								  uint64 grouping,
 								  int rollup_gs_times,
 								  double numGroups,
-								  int numAggs,
-								  int transSpace,
+								  AggClauseCosts *agg_costs,
 								  const char *alias,
 								  List **p_current_pathkeys,
 								  Plan *result_plan,
@@ -70,7 +69,7 @@ extern List *reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_
 								  List *orig_tlist, List *new_tlist);
 extern List *augment_subplan_tlist(List *tlist, List *exprs, int *pnum, AttrNumber **pcols, bool return_resno);
 
-extern Plan *within_agg_planner(PlannerInfo *root, AggClauseCosts *agg_counts,
+extern Plan *within_agg_planner(PlannerInfo *root, AggClauseCosts *agg_costs,
 								GroupContext *group_context);
 
 extern void UpdateScatterClause(Query *query, List *newtlist);

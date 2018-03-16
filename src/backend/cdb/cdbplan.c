@@ -820,7 +820,6 @@ plan_tree_mutator(Node *node,
 				switch (rte->rtekind)
 				{
 					case RTE_RELATION:	/* ordinary relation reference */
-					case RTE_SPECIAL:	/* special rule relation (NEW or OLD) */
 					case RTE_VOID:	/* deleted entry */
 						/* No extras. */
 						break;
