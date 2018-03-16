@@ -2115,6 +2115,7 @@ _readSort(void)
 	READ_INT_FIELD(numCols);
 	READ_INT_ARRAY(sortColIdx, local_node->numCols, AttrNumber);
 	READ_OID_ARRAY(sortOperators, local_node->numCols);
+	READ_OID_ARRAY(collations, local_node->numCols);
 	READ_BOOL_ARRAY(nullsFirst, local_node->numCols);
 
     /* CDB */
@@ -2267,6 +2268,7 @@ _readMotion(void)
 	READ_INT_FIELD(numSortCols);
 	READ_INT_ARRAY(sortColIdx, local_node->numSortCols, AttrNumber);
 	READ_OID_ARRAY(sortOperators, local_node->numSortCols);
+	READ_OID_ARRAY(collations, local_node->numSortCols);
 	READ_BOOL_ARRAY(nullsFirst, local_node->numSortCols);
 
 	READ_INT_FIELD(segidColIdx);

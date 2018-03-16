@@ -1254,10 +1254,11 @@ typedef struct Motion
 	AttrNumber segidColIdx;			/* index of the segid column in the target list */
 
 	/* The following field is only used when sendSorted == true */
-	int			numSortCols;		/* number of sort key columns */
-	AttrNumber	*sortColIdx;		/* their indexes in target list */
-	Oid			*sortOperators;		/* OID of operators to sort them by */
-	bool	   *nullsFirst;
+	int			numSortCols;	/* number of sort-key columns */
+	AttrNumber *sortColIdx;		/* their indexes in the target list */
+	Oid		   *sortOperators;	/* OIDs of operators to sort them by */
+	Oid		   *collations;		/* OIDs of collations */
+	bool	   *nullsFirst;		/* NULLS FIRST/LAST directions */
 } Motion;
 
 /*

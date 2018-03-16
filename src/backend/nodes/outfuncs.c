@@ -1188,6 +1188,10 @@ _outMotion(StringInfo str, Motion *node)
 	for (i = 0; i < node->numSortCols; i++)
 		appendStringInfo(str, " %u", node->sortOperators[i]);
 
+	appendStringInfoLiteral(str, " :collations");
+	for (i = 0; i < node->numSortCols; i++)
+		appendStringInfo(str, " %u", node->collations[i]);
+
 	WRITE_INT_FIELD(segidColIdx);
 
 	_outPlanInfo(str, (Plan *) node);

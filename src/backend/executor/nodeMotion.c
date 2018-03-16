@@ -540,7 +540,9 @@ static void create_motion_mk_heap(MotionState *node)
     create_mksort_context(
             &ctxt->mkctxt,
             motion->numSortCols, motion->sortColIdx,
-            motion->sortOperators, motion->nullsFirst,
+            motion->sortOperators,
+			motion->collations,
+			motion->nullsFirst,
 			NULL,
             tupsort_fetch_datum_motion,
             tupsort_free_datum_motion,

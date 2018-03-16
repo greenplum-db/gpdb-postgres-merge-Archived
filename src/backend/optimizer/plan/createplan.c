@@ -5438,6 +5438,7 @@ make_motion(PlannerInfo *root, Plan *lefttree, List *sortPathKeys, bool useExecu
 		node->numSortCols = sort->numCols;
 		node->sortColIdx = sort->sortColIdx;
 		node->sortOperators = sort->sortOperators;
+		node->collations = sort->collations;
 		node->nullsFirst = sort->nullsFirst;
 
 #ifdef USE_ASSERT_CHECKING

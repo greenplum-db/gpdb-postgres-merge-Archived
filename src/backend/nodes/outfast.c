@@ -489,6 +489,7 @@ _outSort(StringInfo str, Sort *node)
 	WRITE_INT_FIELD(numCols);
 	WRITE_INT_ARRAY(sortColIdx, node->numCols, AttrNumber);
 	WRITE_OID_ARRAY(sortOperators, node->numCols);
+	WRITE_OID_ARRAY(collations, node->numCols);
 	WRITE_BOOL_ARRAY(nullsFirst, node->numCols);
 
     /* CDB */
@@ -552,6 +553,7 @@ _outMotion(StringInfo str, Motion *node)
 	WRITE_INT_FIELD(numSortCols);
 	WRITE_INT_ARRAY(sortColIdx, node->numSortCols, AttrNumber);
 	WRITE_OID_ARRAY(sortOperators, node->numSortCols);
+	WRITE_OID_ARRAY(collations, node->numSortCols);
 	WRITE_BOOL_ARRAY(nullsFirst, node->numSortCols);
 
 	WRITE_INT_FIELD(segidColIdx);
