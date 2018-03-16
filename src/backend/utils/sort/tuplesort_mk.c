@@ -661,7 +661,7 @@ void
 create_mksort_context(
 					  MKContext *mkctxt,
 					  int nkeys, AttrNumber *attNums,
-					  Oid *sortOperators, bool *nullsFirstFlags,
+					  Oid *sortOperators, Oid *sortCollations, bool *nullsFirstFlags,
 					  ScanKey sk,
 				MKFetchDatumForPrepare fetchForPrep, MKFreeTuple freeTupleFn,
 					  TupleDesc tupdesc, bool tbyv, int tlen)
@@ -736,7 +736,7 @@ create_mksort_context(
 
 			if (sinfo->scanKey.sk_func.fn_addr == btint4cmp)
 				sinfo->lvtype = MKLV_TYPE_INT32;
-			if (!lc_collate_is_c())
+			if (!lc_collate_is_c(sinfo->scanKey.sk_collation))
 			{
 				if (sinfo->scanKey.sk_func.fn_addr == bpcharcmp)
 					sinfo->lvtype = MKLV_TYPE_CHAR;
@@ -757,7 +757,7 @@ Tuplesortstate_mk *
 tuplesort_begin_heap_mk(ScanState *ss,
 						TupleDesc tupDesc,
 						int nkeys, AttrNumber *attNums,
-						Oid *sortOperators, bool *nullsFirstFlags,
+						Oid *sortOperators, Oid *sortCollations, bool *nullsFirstFlags,
 						int workMem, bool randomAccess)
 {
 	Tuplesortstate_mk *state = tuplesort_begin_common(ss, workMem, randomAccess, true);
@@ -781,7 +781,9 @@ tuplesort_begin_heap_mk(ScanState *ss,
 	create_mksort_context(
 						  &state->mkctxt,
 						  nkeys, attNums,
-						  sortOperators, nullsFirstFlags,
+						  sortOperators,
+						  sortCollations,
+						  nullsFirstFlags,
 						  NULL,
 						  tupsort_fetch_datum_mtup,
 						  freetup_heap,
@@ -797,7 +799,7 @@ tuplesort_begin_heap_file_readerwriter_mk(ScanState *ss,
 									const char *rwfile_prefix, bool isWriter,
 										  TupleDesc tupDesc,
 										  int nkeys, AttrNumber *attNums,
-								   Oid *sortOperators, bool *nullsFirstFlags,
+										  Oid *sortOperators, Oid *sortCollations, bool *nullsFirstFlags,
 										  int workMem, bool randomAccess)
 {
 	Tuplesortstate_mk *state;
@@ -817,7 +819,7 @@ tuplesort_begin_heap_file_readerwriter_mk(ScanState *ss,
 		 * named by rwfile_prefix.
 		 */
 		state = tuplesort_begin_heap_mk(ss, tupDesc, nkeys, attNums,
-										sortOperators, nullsFirstFlags,
+										sortOperators, sortCollations, nullsFirstFlags,
 										workMem, randomAccess);
 
 		state->tapeset_file_prefix = MemoryContextStrdup(state->sortcontext, rwfile_prefix);
@@ -901,7 +903,7 @@ tuplesort_begin_index_mk(Relation indexRel,
 	create_mksort_context(
 						  &state->mkctxt,
 						  state->nKeys, NULL,
-						  NULL, NULL,
+						  NULL, NULL, NULL,
 						  state->cmpScanKey,
 						  tupsort_fetch_datum_itup,
 						  freetup_index,
@@ -918,7 +920,7 @@ tuplesort_begin_index_mk(Relation indexRel,
 Tuplesortstate_mk *
 tuplesort_begin_datum_mk(ScanState *ss,
 						 Oid datumType,
-						 Oid sortOperator, bool nullsFirstFlag,
+						 Oid sortOperator, Oid sortCollation, bool nullsFirstFlag,
 						 int workMem, bool randomAccess)
 {
 	Tuplesortstate_mk *state = tuplesort_begin_common(ss, workMem, randomAccess, true);
@@ -949,7 +951,7 @@ tuplesort_begin_datum_mk(ScanState *ss,
 	create_mksort_context(
 						  &state->mkctxt,
 						  1, NULL,
-						  &sortOperator, &nullsFirstFlag,
+						  &sortOperator, &sortCollation, &nullsFirstFlag,
 						  NULL,
 						  NULL, /* tupsort_prepare_datum, */
 						  typbyval ? freetup_noop : freetup_datum,
@@ -2728,15 +2730,15 @@ markrunend(Tuplesortstate_mk *state, int tapenum)
 
 
 /*
- * Inline-able copy of FunctionCall2() to save some cycles in sorting.
+ * Inline-able copy of FunctionCall2Coll() to save some cycles in sorting.
  */
 static inline Datum
-myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
+myFunctionCall2Coll(FmgrInfo *flinfo, Oid collation, Datum arg1, Datum arg2)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	InitFunctionCallInfoData(fcinfo, flinfo, 2, NULL, NULL);
+	InitFunctionCallInfoData(fcinfo, flinfo, 2, collation, NULL, NULL);
 
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
@@ -2759,7 +2761,7 @@ myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
  * NULLS_FIRST options are encoded in sk_flags the same way btree does it.
  */
 static inline int32
-inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
+inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 						Datum datum1, bool isNull1,
 						Datum datum2, bool isNull2)
 {
@@ -2783,8 +2785,8 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
 	}
 	else
 	{
-		compare = DatumGetInt32(myFunctionCall2(sortFunction,
-												datum1, datum2));
+		compare = DatumGetInt32(myFunctionCall2Coll(sortFunction, collation,
+													datum1, datum2));
 
 		if (sk_flags & SK_BT_DESC)
 			compare = -compare;
@@ -3098,7 +3100,9 @@ tupsort_compare_datum(MKEntry *v1, MKEntry *v2, MKLvContext *lvctxt, MKContext *
 	switch (lvctxt->lvtype)
 	{
 		case MKLV_TYPE_NONE:
-			return inlineApplySortFunction(&lvctxt->scanKey.sk_func, lvctxt->scanKey.sk_flags,
+			return inlineApplySortFunction(&lvctxt->scanKey.sk_func,
+										   lvctxt->scanKey.sk_flags,
+										   lvctxt->scanKey.sk_collation,
 										   v1->d, false,
 										   v2->d, false
 				);
@@ -3183,7 +3187,7 @@ tupsort_compare_char(MKEntry *v1, MKEntry *v2, MKLvContext *lvctxt, MKContext *m
 	Assert(!mke_is_null(v1));
 	Assert(!mke_is_null(v2));
 
-	Assert(!lc_collate_is_c());
+	Assert(!lc_collate_is_c(lvctxt->scanKey.sk_collation));
 	Assert(mkContext->fetchForPrep);
 
 	Assert(p1->ref > 0 && p2->ref > 0);
@@ -3220,8 +3224,11 @@ tupsort_compare_char(MKEntry *v1, MKEntry *v2, MKLvContext *lvctxt, MKContext *m
 										 * null */
 				Assert(!p2IsNull);
 
-				result = inlineApplySortFunction(&lvctxt->scanKey.sk_func, lvctxt->scanKey.sk_flags,
-									   p1Original, false, p2Original, false);
+				result = inlineApplySortFunction(&lvctxt->scanKey.sk_func,
+												 lvctxt->scanKey.sk_flags,
+												 lvctxt->scanKey.sk_collation,
+												 p1Original, false,
+												 p2Original, false);
 			}
 			else
 			{
@@ -3422,8 +3429,6 @@ tupsort_prepare_char(MKEntry *a, bool isCHAR)
 	refcnt_locale_str_k kstr;
 	int			avail = sizeof(kstr.data);
 	bool		storePrefixOnly;
-
-	Assert(!lc_collate_is_c());
 
 	if (mke_is_null(a))
 		return;

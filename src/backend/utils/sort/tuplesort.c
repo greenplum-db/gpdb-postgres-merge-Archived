@@ -541,10 +541,10 @@ static void reversedirection_heap(Tuplesortstate *state);
 static int comparetup_cluster(const SortTuple *a, const SortTuple *b,
 				   Tuplesortstate *state);
 static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_cluster(Tuplesortstate *state, int tapenum,
+static void writetup_cluster(Tuplesortstate *state, LogicalTape *lt,
 				 SortTuple *stup);
-static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-				int tapenum, unsigned int len);
+static void readtup_cluster(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
+				LogicalTape *lt, unsigned int len);
 static int comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 					   Tuplesortstate *state);
 static int comparetup_index_hash(const SortTuple *a, const SortTuple *b,
@@ -1724,6 +1724,9 @@ tuplesort_gettupleslot_pos(Tuplesortstate *state, TuplesortPos *pos,
 HeapTuple
 tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
 {
+	// Need to extract a HeapTuple from here somehow...
+	elog(ERROR, "GPDB_91_MERGE_FIXME: not implemented");
+#if 0
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
@@ -1733,6 +1736,7 @@ tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
 	MemoryContextSwitchTo(oldcontext);
 
 	return stup.tuple;
+#endif
 }
 
 /*
@@ -3260,11 +3264,11 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 
 		ecxt_scantuple = GetPerTupleExprContext(state->estate)->ecxt_scantuple;
 
-		ExecStoreTuple(ltup, ecxt_scantuple, InvalidBuffer, false);
+		ExecStoreHeapTuple(ltup, ecxt_scantuple, InvalidBuffer, false);
 		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
 					   l_index_values, l_index_isnull);
 
-		ExecStoreTuple(rtup, ecxt_scantuple, InvalidBuffer, false);
+		ExecStoreHeapTuple(rtup, ecxt_scantuple, InvalidBuffer, false);
 		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
 					   r_index_values, r_index_isnull);
 
@@ -3303,20 +3307,20 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 }
 
 static void
-writetup_cluster(Tuplesortstate *state, int tapenum, SortTuple *stup)
+writetup_cluster(Tuplesortstate *state, LogicalTape *lt, SortTuple *stup)
 {
 	HeapTuple	tuple = (HeapTuple) stup->tuple;
 	unsigned int tuplen = tuple->t_len + sizeof(ItemPointerData) + sizeof(int);
 
 	/* We need to store t_self, but not other fields of HeapTupleData */
-	LogicalTapeWrite(state->tapeset, tapenum,
+	LogicalTapeWrite(state->tapeset, lt,
 					 &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(state->tapeset, tapenum,
+	LogicalTapeWrite(state->tapeset, lt,
 					 &tuple->t_self, sizeof(ItemPointerData));
-	LogicalTapeWrite(state->tapeset, tapenum,
+	LogicalTapeWrite(state->tapeset, lt,
 					 tuple->t_data, tuple->t_len);
 	if (state->randomAccess)	/* need trailing length word? */
-		LogicalTapeWrite(state->tapeset, tapenum,
+		LogicalTapeWrite(state->tapeset, lt,
 						 &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
@@ -3324,8 +3328,8 @@ writetup_cluster(Tuplesortstate *state, int tapenum, SortTuple *stup)
 }
 
 static void
-readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-				int tapenum, unsigned int tuplen)
+readtup_cluster(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
+				LogicalTape *lt, unsigned int tuplen)
 {
 	unsigned int t_len = tuplen - sizeof(ItemPointerData) - sizeof(int);
 	HeapTuple	tuple = (HeapTuple) palloc(t_len + HEAPTUPLESIZE);
@@ -3334,17 +3338,17 @@ readtup_cluster(Tuplesortstate *state, SortTuple *stup,
 	/* Reconstruct the HeapTupleData header */
 	tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 	tuple->t_len = t_len;
-	LogicalTapeReadExact(state->tapeset, tapenum,
+	LogicalTapeReadExact(state->tapeset, lt,
 						 &tuple->t_self, sizeof(ItemPointerData));
 	/* We don't currently bother to reconstruct t_tableOid */
 #if 0
 	tuple->t_tableOid = InvalidOid;
 #endif
 	/* Read in the tuple body */
-	LogicalTapeReadExact(state->tapeset, tapenum,
+	LogicalTapeReadExact(state->tapeset, lt,
 						 tuple->t_data, tuple->t_len);
 	if (state->randomAccess)	/* need trailing length word? */
-		LogicalTapeReadExact(state->tapeset, tapenum,
+		LogicalTapeReadExact(state->tapeset, lt,
 							 &tuplen, sizeof(tuplen));
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value, if it's a simple column */
@@ -3792,7 +3796,7 @@ tuplesort_begin_heap_file_readerwriter(ScanState *ss,
 		const char *rwfile_prefix, bool isWriter,
 		TupleDesc tupDesc,
 		int nkeys, AttrNumber *attNums,
-		Oid *sortOperators, bool *nullsFirstFlags,
+		Oid *sortOperators, Oid *sortCollations, bool *nullsFirstFlags,
 		int workMem, bool randomAccess)
 {
 	Tuplesortstate *state;
@@ -3810,7 +3814,7 @@ tuplesort_begin_heap_file_readerwriter(ScanState *ss,
 		 * rwfile_prefix.
 		 */
 		state = tuplesort_begin_heap(NULL, tupDesc, nkeys, attNums,
-									 sortOperators, nullsFirstFlags,
+									 sortOperators, sortCollations, nullsFirstFlags,
 									 workMem, randomAccess);
 
 		state->pfile_rwfile_prefix = MemoryContextStrdup(state->sortcontext, rwfile_prefix);

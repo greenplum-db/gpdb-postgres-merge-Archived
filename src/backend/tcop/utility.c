@@ -178,7 +178,7 @@ check_xact_readonly(Node *parsetree)
 
 				createStmt = (CreateStmt *) parsetree;
 
-				if (createStmt->relation->istemp)
+				if (createStmt->relation->relpersistence == RELPERSISTENCE_TEMP)
 					return;		// Permit creation of TEMPORARY tables in read-only mode.
 
 				ereport(ERROR,
@@ -738,7 +738,9 @@ standard_ProcessUtility(Node *parsetree,
 						/* Create the table itself */
 						relOid = DefineRelation((CreateStmt *) stmt,
 												RELKIND_FOREIGN_TABLE,
-												InvalidOid);
+												InvalidOid,
+												RELSTORAGE_FOREIGN,
+												true);
 						CreateForeignTable((CreateForeignTableStmt *) stmt,
 										   relOid);
 					}

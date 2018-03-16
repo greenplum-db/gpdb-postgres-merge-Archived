@@ -3484,9 +3484,6 @@ die(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
-
-		/* Interrupt any sync rep wait which is currently in progress. */
-		SetLatch(&(MyProc->waitLatch));
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3530,9 +3527,6 @@ StatementCancelHandler(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
-
-		/* Interrupt any sync rep wait which is currently in progress. */
-		SetLatch(&(MyProc->waitLatch));
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
