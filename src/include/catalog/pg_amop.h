@@ -400,11 +400,11 @@ DATA(insert (	1988   1700 1700 4 s 1757 403 0 ));
 DATA(insert (	1988   1700 1700 5 s 1756 403 0 ));
 
 /* btree complex */
-DATA(insert (	3221   195 195 1 s 3481	403 0 ));
-DATA(insert (	3221   195 195 2 s 3483	403 0 ));
-DATA(insert (	3221   195 195 3 s 3469	403 0 ));
-DATA(insert (	3221   195 195 4 s 3484 403 0 ));
-DATA(insert (	3221   195 195 5 s 3482	403 0 ));
+DATA(insert (	3221   7198 7198 1 s 3481 403 0 ));
+DATA(insert (	3221   7198 7198 2 s 3483 403 0 ));
+DATA(insert (	3221   7198 7198 3 s 3469 403 0 ));
+DATA(insert (	3221   7198 7198 4 s 3484 403 0 ));
+DATA(insert (	3221   7198 7198 5 s 3482 403 0 ));
 
 /*
  *	btree bool

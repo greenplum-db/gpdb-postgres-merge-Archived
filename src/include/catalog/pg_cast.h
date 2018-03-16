@@ -367,14 +367,14 @@ DATA(insert ( 1562 1562 1687 i f ));
 DATA(insert ( 1700 1700 1703 i f ));
 
 /* complex type */
-DATA(insert (701  195 3584 i f));
-DATA(insert (700  195 3585 i f));
-DATA(insert (20   195 3586 i f));
-DATA(insert (23   195 3587 i f));
-DATA(insert (21   195 3588 i f));
-DATA(insert (600  195 0 e b));
-DATA(insert (195  600 0 e b));
-DATA(insert (1700 195 3592 i f));
+DATA(insert (701  7198 3584 i f));
+DATA(insert (700  7198 3585 i f));
+DATA(insert (20   7198 3586 i f));
+DATA(insert (23   7198 3587 i f));
+DATA(insert (21   7198 3588 i f));
+DATA(insert (600  7198 0 e b));
+DATA(insert (7198  600 0 e b));
+DATA(insert (1700 7198 3592 i f));
 
 /*
  * CDB: Allow explicit cast from tid to int8
