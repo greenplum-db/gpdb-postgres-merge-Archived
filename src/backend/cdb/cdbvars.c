@@ -593,25 +593,17 @@ assign_gp_role(const char *newval, bool doit, GucSource source)
  *
  * See src/backend/util/misc/guc.c for option definition.
  */
-bool
-assign_gp_connections_per_thread(int newval, bool doit, GucSource source __attribute__((unused)))
+void
+assign_gp_connections_per_thread(int newval, void *extra)
 {
 #if FALSE
-	elog(DEBUG1, "assign_gp_connections_per_thread: gp_connections_per_thread=%s, newval=%d, doit=%s",
-		 show_gp_connections_per_thread(), newval, (doit ? "true" : "false"));
+	elog(DEBUG1, "assign_gp_connections_per_thread: gp_connections_per_thread=%s, newval=%d",
+		 show_gp_connections_per_thread(), newval);
 #endif
 
-	if (doit)
-	{
-		if (newval < 0)
-			return false;
-
-		cdbdisp_setAsync(newval == 0);
-		cdbgang_setAsync(newval == 0);
-		gp_connections_per_thread = newval;
-	}
-
-	return true;
+	cdbdisp_setAsync(newval == 0);
+	cdbgang_setAsync(newval == 0);
+	gp_connections_per_thread = newval;
 }
 
 /*
@@ -718,41 +710,26 @@ int gp_log_interconnect;
  *
  */
 bool
-gpvars_assign_gp_enable_gpperfmon(bool newval, bool doit, GucSource source)
+gpvars_check_gp_enable_gpperfmon(bool *newval, void **extra, GucSource source)
 {
-	if (doit)
+	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
 	{
-
-		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to set gp_enable_gpperfmon")));
-		}
-		else
-		{
-			gp_enable_gpperfmon = newval;
-		}
+		GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
+		GUC_check_errmsg("must be superuser to set gp_enable_gpperfmon");
+		return false;
 	}
 
 	return true;
 }
 
 bool
-gpvars_assign_gp_gpperfmon_send_interval(int newval, bool doit, GucSource source)
+gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, GucSource source)
 {
-	if (doit)
+	if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
 	{
-		if (Gp_role == GP_ROLE_DISPATCH && IsUnderPostmaster && GetCurrentRoleId() != InvalidOid && !superuser())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to set gp_gpperfmon_send_interval")));
-		}
-		else
-		{
-			gp_gpperfmon_send_interval = newval;
-		}
+		GUC_check_errcode(ERRCODE_INSUFFICIENT_PRIVILEGE);
+		GUC_check_errmsg("must be superuser to set gp_gpperfmon_send_interval");
+		return false;
 	}
 
 	return true;
@@ -815,19 +792,12 @@ gpvars_show_gp_resource_manager_policy(void)
  * gpvars_assign_statement_mem
  */
 bool
-gpvars_assign_statement_mem(int newval, bool doit, GucSource source __attribute__((unused)))
+gpvars_check_statement_mem(int *newval, void **extra, GucSource source)
 {
-	if (doit)
+	if (newval >= max_statement_mem)
 	{
-		if (newval >= max_statement_mem)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("Invalid input for statement_mem, must be less than max_statement_mem (%d kB)",
-							max_statement_mem)));
-		}
-
-		statement_mem = newval;
+		GUC_error_errmsg("Invalid input for statement_mem, must be less than max_statement_mem (%d kB)",
+						max_statement_mem)));
 	}
 
 	return true;

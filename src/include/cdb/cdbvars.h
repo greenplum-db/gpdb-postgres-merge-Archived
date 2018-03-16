@@ -327,7 +327,7 @@ extern int gp_fts_transition_timeout;
  */
 extern int	gp_connections_per_thread; /* GUC var - server operating mode.  */
 
-extern bool assign_gp_connections_per_thread(int newval, bool doit, enum GucSource source);
+extern void assign_gp_connections_per_thread(int newval, void *extra);
 extern const char *show_gp_connections_per_thread(void);
 
 /*
@@ -336,7 +336,7 @@ extern const char *show_gp_connections_per_thread(void);
  */
 extern int32 gp_subtrans_warn_limit;
 
-extern bool assign_gp_write_shared_snapshot(bool newval, bool doit, enum GucSource source);
+extern void assign_gp_write_shared_snapshot(bool newval, void *extra);
 
 extern bool gp_set_read_only;
 
@@ -836,8 +836,8 @@ extern int gp_motion_slice_noop;
 extern bool gp_disable_tuple_hints;
 
 /* Enable gpmon */
-extern bool gpvars_assign_gp_enable_gpperfmon(bool newval, bool doit, enum GucSource source);
-extern bool gpvars_assign_gp_gpperfmon_send_interval(int newval, bool doit, enum GucSource source);
+extern bool gpvars_check_gp_enable_gpperfmon(bool *newval, void **extra, enum GucSource source);
+extern bool gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, enum GucSource source);
 extern bool gp_enable_gpperfmon;
 extern int gp_gpperfmon_send_interval;
 extern bool gp_enable_query_metrics;
@@ -977,15 +977,15 @@ extern void write_log(const char *fmt,...) __attribute__((format(printf, 1, 2)))
 
 extern void verifyGpIdentityIsSet(void);
 
-extern const char *gpvars_assign_gp_resource_manager_policy(const char *newval, bool doit, enum GucSource source __attribute__((unused)) );
+extern const char *gpvars_assign_gp_resource_manager_policy(const char *newval, bool doit, enum GucSource source);
 
 extern const char *gpvars_show_gp_resource_manager_policy(void);
 
-extern const char *gpvars_assign_gp_resqueue_memory_policy(const char *newval, bool doit, enum GucSource source __attribute__((unused)) );
+extern const char *gpvars_assign_gp_resqueue_memory_policy(const char *newval, bool doit, enum GucSource source);
 
 extern const char *gpvars_show_gp_resqueue_memory_policy(void);
 
-extern bool gpvars_assign_statement_mem(int newval, bool doit, enum GucSource source __attribute__((unused)) );
+extern bool gpvars_check_statement_mem(int *newval, void **extra, enum GucSource source);
 
 extern void increment_command_count(void);
 

@@ -69,12 +69,11 @@
 /*
  * Assign/Show hook functions defined in this module
  */
-static const char *assign_gp_workfile_compress_algorithm(const char *newval, bool doit, GucSource source);
-static const char *assign_optimizer_minidump(const char *newval,
-						  bool doit, GucSource source);
-static bool assign_optimizer(bool newval, bool doit, GucSource source);
-static bool assign_dispatch_log_stats(bool newval, bool doit, GucSource source);
-static bool assign_gp_hashagg_default_nbatches(int newval, bool doit, GucSource source);
+static bool check_gp_workfile_compress_algorithm(char **newval, void **extra, GucSource source);
+static void assign_gp_workfile_compress_algorithm(const char *newval, void *extra);
+static bool check_optimizer(bool *newval, void **extra, GucSource source);
+static bool check_dispatch_log_stats(bool *newval, void **extra, GucSource source);
+static bool check_gp_hashagg_default_nbatches(int *newval, void **extra, GucSource source);
 
 /* Helper function for guc setter */
 extern const char *gpvars_assign_gp_resqueue_priority_default_value(const char *newval,
@@ -85,7 +84,8 @@ static const char *assign_gp_default_storage_options(
 							const char *newval, bool doit, GucSource source);
 
 
-static bool assign_pljava_classpath_insecure(bool newval, bool doit, GucSource source);
+static bool check_pljava_classpath_insecure(bool *newval, void **extra, GucSource source);
+static void assign_pljava_classpath_insecure(bool newval, void *extra);
 
 extern struct config_generic *find_option(const char *name, bool create_placeholders, int elevel);
 
@@ -245,7 +245,6 @@ static char *gp_resource_manager_str;
  * and is kept in sync by assign_hooks.
  */
 static char *gp_workfile_compress_algorithm_str;
-static char *optimizer_minidump_str;
 
 /* Backoff-related GUCs */
 bool		gp_enable_resqueue_priority;
@@ -348,7 +347,7 @@ int			optimizer_log_failure;
 bool		optimizer_control = true;
 bool		optimizer_trace_fallback;
 bool		optimizer_partition_selection_log;
-bool		optimizer_minidump;
+int			optimizer_minidump;
 int			optimizer_cost_model;
 bool		optimizer_metadata_caching;
 int			optimizer_mdcache_size;
@@ -502,6 +501,12 @@ static const struct config_enum_entry optimizer_log_failure_options[] = {
 	{"all", OPTIMIZER_ALL_FAIL},
 	{"unexpected", OPTIMIZER_UNEXPECTED_FAIL},
 	{"expected", OPTIMIZER_EXPECTED_FAIL},
+	{NULL, 0}
+};
+
+static const struct config_enum_entry optimizer_minidump_options[] = {
+	{"onerror", OPTIMIZER_MINIDUMP_FAIL},
+	{"always", OPTIMIZER_MINIDUMP_ALWAYS},
 	{NULL, 0}
 };
 
@@ -758,7 +763,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&log_dispatch_stats,
 		false,
-		NULL, assign_dispatch_log_stats, NULL
+		check_dispatch_log_stats, NULL, NULL
 	},
 
 	{
@@ -1246,7 +1251,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&Gp_write_shared_snapshot,
 		false,
-		assign_gp_write_shared_snapshot, NULL, NULL
+		NULL, assign_gp_write_shared_snapshot, NULL
 	},
 
 	{
@@ -1819,7 +1824,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_enable_gpperfmon,
 		false,
-		gpvars_assign_gp_enable_gpperfmon, NULL, NULL
+		gpvars_check_gp_enable_gpperfmon, NULL, NULL
 	},
 
 	{
@@ -2234,7 +2239,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 #else
 		false,
 #endif
-		NULL, assign_optimizer, NULL
+		check_optimizer, NULL, NULL
 	},
 
 	{
@@ -3037,7 +3042,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&pljava_classpath_insecure,
 		false,
-		assign_pljava_classpath_insecure, NULL, NULL
+		check_pljava_classpath_insecure, assign_pljava_classpath_insecure, NULL
 	},
 
 	{
@@ -3183,7 +3188,7 @@ struct config_int ConfigureNamesInt_gp[] =
 #else
 		128000, 1000, INT_MAX,
 #endif
-		NULL, gpvars_assign_statement_mem, NULL
+		gpvars_check_statement_mem, NULL, NULL
 	},
 
 	{
@@ -3907,7 +3912,7 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&gp_hashagg_default_nbatches,
 		32, 4, 1048576,
-		NULL, assign_gp_hashagg_default_nbatches, NULL
+		check_gp_hashagg_default_nbatches, NULL, NULL
 	},
 
 	{
@@ -3939,7 +3944,7 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&gp_gpperfmon_send_interval,
 		1, 1, 3600,
-		NULL, gpvars_assign_gp_gpperfmon_send_interval, NULL
+		gpvars_check_gp_gpperfmon_send_interval, NULL, NULL
 	},
 
 	{
@@ -4597,7 +4602,7 @@ struct config_string ConfigureNamesString_gp[] =
 		},
 		&gp_workfile_compress_algorithm_str,
 		"none",
-		NULL, assign_gp_workfile_compress_algorithm, NULL
+		check_gp_workfile_compress_algorithm, assign_gp_workfile_compress_algorithm, NULL
 	},
 
 	{
@@ -4631,16 +4636,6 @@ struct config_string ConfigureNamesString_gp[] =
 		&memory_profiler_query_id,
 		"none",
 		NULL, NULL, NULL
-	},
-
-	{
-		{"optimizer_minidump", PGC_USERSET, LOGGING_WHEN,
-			gettext_noop("Generate optimizer minidump."),
-			gettext_noop("Valid values are onerror, always"),
-		},
-		&optimizer_minidump_str,
-		"onerror",
-		NULL, assign_optimizer_minidump, NULL
 	},
 
 	{
@@ -4992,6 +4987,16 @@ struct config_enum ConfigureNamesEnum_gp[] =
 	},
 
 	{
+		{"optimizer_minidump", PGC_USERSET, LOGGING_WHEN,
+			gettext_noop("Generate optimizer minidump."),
+			gettext_noop("Valid values are onerror, always"),
+		},
+		&optimizer_minidump,
+		OPTIMIZER_MINIDUMP_FAIL, optimizer_minidump_options,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"password_hash_algorithm", PGC_SUSET, CONN_AUTH_SECURITY,
 			gettext_noop("The cryptograph hash algorithm to apply to passwords before storing them."),
 			gettext_noop("Valid values are MD5 or SHA-256."),
@@ -5170,9 +5175,9 @@ struct config_enum ConfigureNamesEnum_gp[] =
 };
 
 static bool
-assign_pljava_classpath_insecure(bool newval, bool doit, GucSource source)
+check_pljava_classpath_insecure(bool *newval, void **extra, GucSource source)
 {
-	if ( newval == true )
+	if ( *newval == true )
 	{
 		struct config_generic *pljava_cp = find_option("pljava_classpath", false, ERROR);
 		if (pljava_cp != NULL)
@@ -5181,65 +5186,59 @@ assign_pljava_classpath_insecure(bool newval, bool doit, GucSource source)
 		}
 		else
 		{
-			elog(ERROR, "Failed to set insecure PLJAVA classpath");
+			GUC_check_errdetail("Failed to set insecure PLJAVA classpath");
+			return false;
 		}
 	}
 	return true;
 }
 
-static const char *
-assign_optimizer_minidump(const char *val, bool assign, GucSource source)
+static void
+assign_pljava_classpath_insecure(bool newval, void *extra)
 {
-	if (pg_strcasecmp(val, "onerror") == 0 && assign)
+	if ( newval == true )
 	{
-		optimizer_minidump = OPTIMIZER_MINIDUMP_FAIL;
+		struct config_generic *pljava_cp = find_option("pljava_classpath", false, ERROR);
+		if (pljava_cp != NULL)
+		{
+			pljava_cp->context = PGC_USERSET;
+		}
 	}
-	else if (pg_strcasecmp(val, "always") == 0 && assign)
-	{
-		optimizer_minidump = OPTIMIZER_MINIDUMP_ALWAYS;
-	}
-	else
-	{
-		return NULL;			/* fail */
-	}
-
-	return val;
-}
-
-static const char *
-assign_gp_workfile_compress_algorithm(const char *newval, bool doit, GucSource source)
-{
-	int			i = bfz_string_to_compression(newval);
-
-	if (i == -1)
-		return NULL;			/* fail */
-	if (doit)
-		gp_workfile_compress_algorithm = i;
-	return newval;				/* OK */
 }
 
 static bool
-assign_optimizer(bool newval, bool doit, GucSource source)
+check_gp_workfile_compress_algorithm(char **newval, void **extra, GucSource source)
+{
+	int			i = bfz_string_to_compression(*newval);
+
+	if (i == -1)
+		return false;			/* fail */
+	else
+		return true;				/* OK */
+}
+
+static void
+assign_gp_workfile_compress_algorithm(const char *newval, void *extra)
+{
+	int			i = bfz_string_to_compression(newval);
+
+	Assert(i != -1);
+	gp_workfile_compress_algorithm = i;
+}
+
+static bool
+check_optimizer(bool *newval, void **extra, GucSource source)
 {
 #ifndef USE_ORCA
-	if (newval)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("ORCA is not supported by this build")));
+	if (*newval)
+		GUC_check_errmsg("ORCA is not supported by this build")));
 #endif
 
 	if (!optimizer_control)
 	{
 		if (source >= PGC_S_INTERACTIVE)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot change the value of \"optimizer\"")));
-		}
-
-		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
-		if (source != PGC_S_OVERRIDE)
-		{
+			GUC_check_errmsg("cannot change the value of \"optimizer\"");
 			return false;
 		}
 	}
@@ -5248,9 +5247,9 @@ assign_optimizer(bool newval, bool doit, GucSource source)
 }
 
 static bool
-assign_dispatch_log_stats(bool newval, bool doit, GucSource source)
+check_dispatch_log_stats(bool *newval, void **extra, GucSource source)
 {
-	if (newval &&
+	if (*newval &&
 		(log_parser_stats || log_planner_stats || log_executor_stats || log_statement_stats))
 	{
 		if (source >= PGC_S_INTERACTIVE)
@@ -5268,24 +5267,18 @@ assign_dispatch_log_stats(bool newval, bool doit, GucSource source)
 }
 
 bool
-assign_gp_hashagg_default_nbatches(int newval, bool doit, GucSource source)
+check_gp_hashagg_default_nbatches(int *newval, void **extra, GucSource source)
 {
 	/* Must be a power of two */
-	if (0 == (newval & (newval - 1)))
+	if (0 == (*newval & (*newval - 1)))
 	{
-		if (doit)
-		{
-			gp_hashagg_default_nbatches = newval;
-		}
+		return true;
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("gp_hashagg_default_nbatches must be a power of two: %d",
-					(int) newval)));
+		GUC_check_errmsg("gp_hashagg_default_nbatches must be a power of two");
+		return false;
 	}
-	return true; /* OK */
 }
 
 /*

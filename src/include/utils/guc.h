@@ -92,7 +92,7 @@ typedef enum
  *
  * NB: see GucSource_Names in guc.c if you change this.
  */
-typedef enum
+typedef enum GucSource
 {
 	PGC_S_DEFAULT,				/* hard-wired default ("boot_val") */
 	PGC_S_DYNAMIC_DEFAULT,		/* default computed during initialization */
@@ -408,7 +408,7 @@ extern bool optimizer_control;	/* controls whether the user can change the setti
 extern bool	optimizer_log;
 extern int  optimizer_log_failure;
 extern bool	optimizer_trace_fallback;
-extern bool optimizer_minidump;
+extern int optimizer_minidump;
 extern int  optimizer_cost_model;
 extern bool optimizer_metadata_caching;
 extern int	optimizer_mdcache_size;

@@ -173,8 +173,8 @@ static bool call_enum_check_hook(struct config_enum * conf, int *newval,
 static bool check_log_destination(char **newval, void **extra, GucSource source);
 static void assign_log_destination(const char *newval, void *extra);
 
-static const char *assign_wal_consistency_checking(const char *newval,
-											bool doit, GucSource source);
+static bool check_wal_consistency_checking(char **newval, void **extra, GucSource source);
+static void assign_wal_consistency_checking(const char *newval, void *extra);
 
 #ifdef HAVE_SYSLOG
 static int	syslog_facility = LOG_LOCAL0;
@@ -490,13 +490,17 @@ static char *allow_system_table_mods_str;
 /* should be static, but commands/variable.c needs to get at this */
 char	   *role_string;
 
-static const char *
-assign_allow_system_table_mods(const char *newval,
-							   bool doit,
-							   GucSource source);
+typedef struct
+{
+	bool		valueDDL;
+	bool		valueDML;
+} allow_system_table_mods_extra;
 
-static const char *
-show_allow_system_table_mods(void);
+static bool check_allow_system_table_mods(char **newval, void **extra,
+							  GucSource source);
+static void assign_allow_system_table_mods(const char *newval, void *extra);
+
+static const char *show_allow_system_table_mods(void);
 
 
 /*
@@ -2649,7 +2653,7 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&allow_system_table_mods_str,
 		"none",
-		NULL, assign_allow_system_table_mods, show_allow_system_table_mods
+		check_allow_system_table_mods, assign_allow_system_table_mods, show_allow_system_table_mods
 	},
 
 	{
@@ -3161,7 +3165,8 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&external_pid_file,
-		NULL, assign_canonical_path, NULL
+		NULL,
+		check_canonical_path, NULL, NULL
 	},
 
 	{
@@ -3172,7 +3177,7 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&wal_consistency_checking_string,
 		"",
-		NULL, assign_wal_consistency_checking, NULL
+		check_wal_consistency_checking, assign_wal_consistency_checking, NULL
 	},
 
 	/* End-of-list marker */
@@ -8799,32 +8804,29 @@ assign_session_replication_role(int newval, void *extra)
 /*
  * assign_hook and show_hook subroutines
  */
-
-static const char *
-assign_wal_consistency_checking(const char *newval, bool doit, GucSource source)
+static bool
+check_wal_consistency_checking(char **newval, void **extra, GucSource source)
 {
 	char	   *rawstring;
 	List	   *elemlist;
 	ListCell   *l;
 	bool		newwalconsistency[RM_MAX_ID + 1];
+	bool	   *myextra;
 
 	/* Initialize the array */
 	MemSet(newwalconsistency, 0, (RM_MAX_ID + 1) * sizeof(bool));
 
 	/* Need a modifiable copy of string */
-	rawstring = guc_strdup(ERROR, newval);
+	rawstring = pstrdup(*newval);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawstring, ',', &elemlist))
 	{
-		free(rawstring);
-		list_free(elemlist);
-
 		/* syntax error in list */
-		ereport(GUC_complaint_elevel(source),
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("List syntax is invalid.")));
-		return NULL;
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
 	}
 
 	foreach(l, elemlist)
@@ -8861,29 +8863,27 @@ assign_wal_consistency_checking(const char *newval, bool doit, GucSource source)
 		/* If a valid resource manager is found, check for the next one. */
 		if (!found)
 		{
-			free(rawstring);
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
 			list_free(elemlist);
-
-			ereport(GUC_complaint_elevel(source),
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("Unrecognized key word: \"%s\".", tok)));
-			return NULL;
+			return false;
 		}
 	}
 
-	free(rawstring);
+	pfree(rawstring);
 	list_free(elemlist);
 
-	if (doit)
-	{
-		/* assign new value */
-		wal_consistency_checking = guc_malloc(ERROR, (RM_MAX_ID + 1) * sizeof(bool));
-		memcpy(wal_consistency_checking,
-			   newwalconsistency,
-			   (RM_MAX_ID + 1) * sizeof(bool));
-	}
+	myextra = (bool *) guc_malloc(ERROR, (RM_MAX_ID + 1) * sizeof(bool));
+	memcpy(myextra, newwalconsistency, (RM_MAX_ID + 1) * sizeof(bool));
+	*extra = myextra;
 
-	return newval;
+	return true;
+}
+
+static void
+assign_wal_consistency_checking(const char *newval, void *extra)
+{
+	wal_consistency_checking = ((bool *) extra);
 }
 
 static bool
@@ -9276,43 +9276,48 @@ show_log_file_mode(void)
  * 		- upgrade_mode GUC set
  * 		- in single user mode
  */
-static const char *
-assign_allow_system_table_mods(const char *newval,
-							   bool doit,
-							   GucSource source)
+static bool
+check_allow_system_table_mods(char **newval, void **extra, GucSource source)
 {
-	bool valueDDL = false;
-	bool valueDML = false;
+	bool		valueDDL = false;
+	bool		valueDML = false;
+	allow_system_table_mods_extra *myextra;
 
 	if (newval == NULL || newval[0] == 0 ||
-		!pg_strcasecmp("none", newval));
-	else if (!pg_strcasecmp("dml", newval))
+		!pg_strcasecmp("none", *newval))
+	{
+	}
+	else if (!pg_strcasecmp("dml", *newval))
 		valueDML = true;
-	else if (!pg_strcasecmp("ddl", newval) && !IsUnderPostmaster)
+	else if (!pg_strcasecmp("ddl", *newval) && !IsUnderPostmaster)
 		valueDDL = true;
-	else if (!pg_strcasecmp("all", newval) && !IsUnderPostmaster)
+	else if (!pg_strcasecmp("all", *newval) && !IsUnderPostmaster)
 	{
 		valueDML = true;
 		valueDDL = true;
 	}
 	else
 	{
-		if (source >= PGC_S_INTERACTIVE)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("Unknown system table modification policy. (Current policy: '%s')",
-						show_allow_system_table_mods())));
-
-		return NULL;
+		GUC_check_errdetail("Unknown system table modification policy.");
+		return false;
 	}
 
-	if (doit)
-	{
-		allowSystemTableModsDML = valueDML;
-		allowSystemTableModsDDL = valueDDL;
-	}
+	/* Prepare an "extra" struct for assign_allow_system_table_mods */
+	myextra = malloc(sizeof(allow_system_table_mods_extra));
+	myextra->valueDDL = valueDDL;
+	myextra->valueDML = valueDML;
+	*extra = (void *) myextra;
 
-	return newval;
+	return true;
+}
+
+static void
+assign_allow_system_table_mods(const char *newval, void *extra)
+{
+	allow_system_table_mods_extra *myextra = (allow_system_table_mods_extra *) extra;
+
+	allowSystemTableModsDML = myextra->valueDML;
+	allowSystemTableModsDDL = myextra->valueDDL;
 }
 
 static const char *
