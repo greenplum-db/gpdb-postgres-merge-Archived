@@ -105,9 +105,12 @@ ExecDML(DMLState *node)
 		 * actions depending on the type of plan (constraint enforcement and
 		 * triggers.)
 		 */
-		ExecInsert(node->cleanedUpSlot, NULL /* destReceiver */,
-				node->ps.state, PLANGEN_OPTIMIZER /* Plan origin */, 
-				isUpdate);
+		ExecInsert(node->cleanedUpSlot,
+				   NULL,
+				   node->ps.state,
+				   true, /* GPDB_91_MERGE_FIXME: canSetTag, where to get this? */
+				   PLANGEN_OPTIMIZER /* Plan origin */,
+				   isUpdate);
 	}
 	else /* DML_DELETE */
 	{
@@ -120,8 +123,14 @@ ExecDML(DMLState *node)
 		tupleid = &tuple_ctid;
 
 		/* Correct tuple count by ignoring deletes when splitting tuples. */
-		ExecDelete(tupleid, node->cleanedUpSlot, NULL /* DestReceiver */, node->ps.state,
-				PLANGEN_OPTIMIZER /* Plan origin */, isUpdate);
+		ExecDelete(tupleid,
+				   NULL, /* GPDB_91_MERGE_FIXME: oldTuple? */
+				   node->cleanedUpSlot,
+				   NULL /* DestReceiver */,
+				   node->ps.state,
+				   true, /* GPDB_91_MERGE_FIXME: where to get canSetTag? */
+				   PLANGEN_OPTIMIZER /* Plan origin */,
+				   isUpdate);
 	}
 
 	return slot;
