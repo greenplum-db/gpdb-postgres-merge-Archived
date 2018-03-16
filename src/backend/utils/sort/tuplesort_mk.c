@@ -878,6 +878,14 @@ tuplesort_begin_heap_file_readerwriter_mk(ScanState *ss,
 }
 
 Tuplesortstate_mk *
+tuplesort_begin_cluster_mk(TupleDesc tupDesc,
+						   Relation indexRel,
+						   int workMem, bool randomAccess)
+{
+	elog(ERROR, "GPDB_91_MERGE_FIXME: tuplesort_begin_cluster_mk() not implemented yet");
+}
+
+Tuplesortstate_mk *
 tuplesort_begin_index_mk(Relation indexRel,
 						 bool enforceUnique,
 						 int workMem, bool randomAccess)
@@ -1136,6 +1144,25 @@ tuplesort_puttupleslot_mk(Tuplesortstate_mk *state, TupleTableSlot *slot)
 	mke_blank(&e);
 
 	COPYTUP(state, &e, (void *) slot);
+	puttuple_common(state, &e);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * Accept one tuple while collecting input data for sort.
+ *
+ * Note that the input data is always copied; the caller need not save it.
+ */
+void
+tuplesort_putheaptuple_mk(Tuplesortstate_mk *state, HeapTuple tup)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MKEntry		e;
+
+	mke_blank(&e);
+
+	COPYTUP(state, &e, (void *) tup);
 	puttuple_common(state, &e);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -1662,6 +1689,18 @@ tuplesort_gettupleslot_pos_mk(Tuplesortstate_mk *state, TuplesortPos_mk *pos,
 
 	ExecClearTuple(slot);
 	return false;
+}
+
+/*
+ * Fetch the next tuple in either forward or back direction.
+ * Returns NULL if no more tuples.	If *should_free is set, the
+ * caller must pfree the returned tuple when done with it.
+ */
+HeapTuple
+tuplesort_getheaptuple_mk(Tuplesortstate_mk *state, bool forward, bool *should_free)
+{
+	// Need to extract a HeapTuple from here somehow...
+	elog(ERROR, "GPDB_91_MERGE_FIXME: tuplesort_getheaptuple_mk not implemented yet");
 }
 
 /*

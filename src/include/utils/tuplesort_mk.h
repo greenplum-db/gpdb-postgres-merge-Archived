@@ -32,7 +32,7 @@ extern Tuplesortstate_mk *tuplesort_begin_heap_mk(ScanState * ss,
 					 bool *nullsFirstFlags,
 					 int workMem, bool randomAccess);
 
-extern Tuplesortstate *tuplesort_begin_cluster_mk(TupleDesc tupDesc,
+extern Tuplesortstate_mk *tuplesort_begin_cluster_mk(TupleDesc tupDesc,
 						Relation indexRel,
 						int workMem, bool randomAccess);
 
