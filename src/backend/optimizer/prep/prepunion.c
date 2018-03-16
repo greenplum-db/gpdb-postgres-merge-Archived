@@ -840,7 +840,6 @@ make_union_unique(SetOperationStmt *op, Plan *plan,
 								 0, /* input_grouping */
 								 0, /* grouping */
 								 0, /* rollupGSTimes */
-								 0, /* transSpace */
 								 plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		*sortClauses = NIL;

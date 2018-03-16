@@ -823,8 +823,7 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 										(need_repeat_node ?
 										 context->current_rollup->grpset_counts[group_no] : 0),
 										current_numGroups,
-										context->agg_costs->numAggs,
-										context->agg_costs->transitionSpace,
+										context->agg_costs,
 										"rollup",
 										&context->current_pathkeys,
 										agg_node, false, false);
@@ -1756,7 +1755,6 @@ add_first_agg(PlannerInfo *root,
 								numGroupCols, groupColIdx, groupOperators,
 								lNumGroups, num_nullcols, input_grouping, grouping,
 								rollup_gs_times,
-								context->agg_costs->transitionSpace,
 								current_lefttree);
 
 	/* Pull up the Flow from the subplan */

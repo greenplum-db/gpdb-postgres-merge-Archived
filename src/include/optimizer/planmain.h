@@ -153,7 +153,6 @@ extern Agg *make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 long numGroups, int numNullCols,
 		 uint64 inputGrouping, uint64 grouping,
 		 int rollupGSTimes,
-		 int transSpace,
 		 Plan *lefttree);
 extern HashJoin *make_hashjoin(List *tlist,
 			  List *joinclauses, List *otherclauses,
@@ -216,7 +215,7 @@ extern Plan *add_agg_cost(PlannerInfo *root, Plan *plan,
 		 bool streaming, 
 		 int numGroupCols, AttrNumber *grpColIdx,
 		 long numGroups, int num_nullcols,
-		 const AggClauseCosts *aggcosts, int transSpace);
+		 const AggClauseCosts *aggcosts);
 extern Plan *plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist);      /*CDB*/
 
 extern List *create_external_scan_uri_list(struct ExtTableEntry *extEntry, bool *ismasteronly);

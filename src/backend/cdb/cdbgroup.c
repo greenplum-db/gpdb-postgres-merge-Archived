@@ -398,7 +398,7 @@ static void set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaIn
 static Cost incremental_sort_cost(double rows, int width, int numKeyCols);
 static Cost incremental_agg_cost(double rows, int width, AggStrategy strategy,
 					 int numGroupCols, double numGroups,
-					 const AggClauseCosts *aggcosts, int transSpace);
+					 const AggClauseCosts *aggcosts);
 static Cost incremental_motion_cost(double sendrows, double recvrows);
 
 static bool contain_aggfilters(Node *node);
@@ -1114,7 +1114,6 @@ make_one_stage_agg_plan(PlannerInfo *root,
 										0,	/* input_grouping */
 										ctx->grouping,
 										0,	/* rollup_gs_times */
-										ctx->agg_costs->transitionSpace,
 										result_plan);
 		/* Hashed aggregation produces randomly-ordered results */
 		current_pathkeys = NIL;
@@ -1168,7 +1167,6 @@ make_one_stage_agg_plan(PlannerInfo *root,
 											0,	/* input_grouping */
 											ctx->grouping,
 											0,	/* rollup_gs_times */
-											ctx->agg_costs->transitionSpace,
 											result_plan);
 		}
 
@@ -1429,7 +1427,6 @@ make_two_stage_agg_plan(PlannerInfo *root,
 										0,	/* input_grouping */
 										0,	/* grouping */
 										0,	/* rollup_gs_times */
-										ctx->agg_costs->transitionSpace,
 										result_plan);
 		/* May lose useful locus and sort. Unlikely, but could do better. */
 		mark_plan_strewn(result_plan);
@@ -2112,7 +2109,6 @@ make_plan_for_one_dqa(PlannerInfo *root, MppGroupContext *ctx, int dqa_index,
 									0, /* input_grouping */
 									0, /* grouping */
 									0, /* rollup_gs_times */
-									ctx->agg_costs->transitionSpace, /* worst case */
 									result_plan);
 
 	dqaduphazard = (aggstrategy == AGG_HASHED && stream_bottom_agg);
@@ -4319,7 +4315,6 @@ add_second_stage_agg(PlannerInfo *root,
 								 input_grouping,
 								 grouping,
 								 rollup_gs_times,
-								 agg_costs->transitionSpace,
 								 result_plan);
 
 	/*
@@ -4608,8 +4603,7 @@ cost_1phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 					 AGG_HASHED, false,
 					 ctx->numGroupCols, ctx->groupColIdx,
 					 numGroups, 0,
-					 ctx->agg_costs,
-					 ctx->agg_costs->transitionSpace);
+					 ctx->agg_costs);
 	}
 	else
 	{
@@ -4621,8 +4615,7 @@ cost_1phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_PLAIN, false,
 						 0, NULL,
 						 1, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 		else
 		{
@@ -4636,8 +4629,7 @@ cost_1phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_SORTED, false,
 						 ctx->numGroupCols, ctx->groupColIdx,
 						 numGroups, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 
 		/*
@@ -4724,8 +4716,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 					 AGG_HASHED, root->config->gp_hashagg_streambottom,
 					 ctx->numGroupCols, ctx->groupColIdx,
 					 numGroups, 0,
-					 ctx->agg_costs,
-					 ctx->agg_costs->transitionSpace);
+					 ctx->agg_costs);
 
 		if (gp_hashagg_streambottom)
 		{
@@ -4743,8 +4734,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_PLAIN, false,
 						 0, NULL,
 						 1, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 		else
 		{
@@ -4759,8 +4749,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_SORTED, false,
 						 ctx->numGroupCols, ctx->groupColIdx,
 						 numGroups, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 
 		/*
@@ -4821,8 +4810,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 					 AGG_HASHED, false,
 					 ctx->numGroupCols, ctx->groupColIdx,
 					 numGroups, 0,
-					 ctx->agg_costs,
-					 ctx->agg_costs->transitionSpace);
+					 ctx->agg_costs);
 	}
 	else
 	{
@@ -4834,8 +4822,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_PLAIN, false,
 						 0, NULL,
 						 1, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 		else
 		{
@@ -4846,8 +4833,7 @@ cost_2phase_aggregation(PlannerInfo *root, MppGroupContext *ctx, AggPlanInfo *in
 						 AGG_SORTED, false,
 						 ctx->numGroupCols, ctx->groupColIdx,
 						 numGroups, 0,
-						 ctx->agg_costs,
-						 ctx->agg_costs->transitionSpace);
+						 ctx->agg_costs);
 		}
 	}
 
@@ -5200,20 +5186,16 @@ set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, 
 													ctx->numGroupCols);
 	Cost		gagg_input = incremental_agg_cost(input_rows, input_width,
 												  AGG_SORTED, ctx->numGroupCols + 1,
-												  numGroups, ctx->agg_costs,
-												  ctx->agg_costs->transitionSpace);
+												  numGroups, ctx->agg_costs);
 	Cost		gagg_dargs = incremental_agg_cost(darg_rows, input_width,
 												  AGG_SORTED, ctx->numGroupCols,
-												  numGroups, ctx->agg_costs,
-												  ctx->agg_costs->transitionSpace);
+												  numGroups, ctx->agg_costs);
 	Cost		hagg_input = incremental_agg_cost(input_rows, input_width,
 												  AGG_HASHED, ctx->numGroupCols + 1,
-												  numGroups, ctx->agg_costs,
-												  ctx->agg_costs->transitionSpace);
+												  numGroups, ctx->agg_costs);
 	Cost		hagg_dargs = incremental_agg_cost(darg_rows, input_width,
 												  AGG_HASHED, ctx->numGroupCols,
-												  numGroups, ctx->agg_costs,
-												  ctx->agg_costs->transitionSpace);
+												  numGroups, ctx->agg_costs);
 	Cost		cost_base;
 	Cost		cost_sorted;
 	Cost		cost_cheapest;
@@ -5242,8 +5224,7 @@ set_coplan_strategies(PlannerInfo *root, MppGroupContext *ctx, DqaInfo *dqaArg, 
 	{
 		Cost		pagg_dargs = incremental_agg_cost(darg_rows, input_width,
 													  AGG_PLAIN, 0,
-													  1, ctx->agg_costs,
-													  ctx->agg_costs->transitionSpace);
+													  1, ctx->agg_costs);
 
 		type_sorted = type_cheapest = DQACOPLAN_PGS;
 		cost_sorted = cost_cheapest = sort_input + gagg_input + pagg_dargs;
@@ -5324,10 +5305,10 @@ incremental_sort_cost(double rows, int width, int numKeyCols)
 
 /* incremental_agg_cost -- helper for set_coplan_strategies
  */
-Cost
+static Cost
 incremental_agg_cost(double rows, int width, AggStrategy strategy,
 					 int numGroupCols, double numGroups,
-					 const AggClauseCosts *aggcosts, int transSpace)
+					 const AggClauseCosts *aggcosts)
 {
 	Plan		dummy;
 
@@ -5339,7 +5320,7 @@ incremental_agg_cost(double rows, int width, AggStrategy strategy,
 				 NULL, NULL,
 				 strategy, false,
 				 numGroupCols, NULL,
-				 numGroups, 0, aggcosts, transSpace);
+				 numGroups, 0, aggcosts);
 
 	return dummy.total_cost;
 }

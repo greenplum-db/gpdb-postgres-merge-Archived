@@ -1146,7 +1146,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 0, /* input_grouping */
 								 0, /* grouping */
 								 0, /* rollup_gs_times */
-								 0,
 								 subplan);
 	}
 	else
@@ -5540,7 +5539,6 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 long numGroups, int num_nullcols,
 		 uint64 input_grouping, uint64 grouping,
 		 int rollupGSTimes,
-		 int transSpace,
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
@@ -5551,7 +5549,10 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;
-	node->transSpace = transSpace;
+	if (aggcosts)
+		node->transSpace = aggcosts->transitionSpace;
+	else
+		node->transSpace = 0;
 	node->numNullCols = num_nullcols;
 	node->inputGrouping = input_grouping;
 	node->grouping = grouping;
@@ -5565,7 +5566,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	add_agg_cost(root, plan, tlist, qual, aggstrategy, streaming,
 				 numGroupCols, grpColIdx,
 				 numGroups, num_nullcols,
-				 aggcosts, transSpace);
+				 aggcosts);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -5593,7 +5594,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 			 bool streaming,
 			 int numGroupCols, AttrNumber *grpColIdx,
 			 long numGroups, int num_nullcols,
-			 const AggClauseCosts *aggcosts, int transSpace)
+			 const AggClauseCosts *aggcosts)
 {
 	Path		agg_path;		/* dummy for result of cost_agg */
 	QualCost	qual_cost;
@@ -5621,7 +5622,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 		/* The following estimate is very rough but good enough for planning. */
 		entrywidth = agg_hash_entrywidth(aggcosts->numAggs,
 								   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + plan->plan_width,
-								   transSpace);
+								   aggcosts->transitionSpace);
 		if (!calcHashAggTableSizes(global_work_mem(root),
 								   numGroups,
 								   entrywidth,

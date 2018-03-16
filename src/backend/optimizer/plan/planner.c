@@ -1905,7 +1905,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												0, /* input_grouping */
 												0, /* grouping */
 												0, /* rollup_gs_times */
-												agg_costs.transitionSpace,
 												result_plan);
 
 				if (canonical_grpsets != NULL &&
@@ -1973,7 +1972,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												0, /* input_grouping */
 												0, /* grouping */
 												0, /* rollup_gs_times */
-												agg_costs.transitionSpace,
 												result_plan);
 
 				if (canonical_grpsets != NULL &&
@@ -2554,7 +2552,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 											0, /* input_grouping */
 											0, /* grouping */
 											0, /* rollupGSTimes */
-											0, /* transSpace */
 											result_plan);
 			/* Hashed aggregation produces randomly-ordered results */
 			current_pathkeys = NIL;
