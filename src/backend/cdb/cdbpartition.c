@@ -5096,8 +5096,7 @@ apply_template_storage_encodings(CreateStmt *ct, Oid relid, Oid paroid,
  */
 
 static int
-atpxPart_validate_spec(
-					   PartitionBy *pBy,
+atpxPart_validate_spec(PartitionBy *pBy,
 					   CreateStmtContext *pcxt,
 					   Relation rel,
 					   CreateStmt *ct,
@@ -5125,7 +5124,8 @@ atpxPart_validate_spec(
 												get_namespace_name(
 																   RelationGetNamespace(rel)),
 												pstrdup(RelationGetRelationName(rel)), -1)),
-						relpersistence, true /* isPartitioned */ ,
+						RELPERSISTENCE_PERMANENT, /* GPDB_91_MERGE_FIXME: what if it's unlogged or temp? Where to get a proper value for this? */
+						true /* isPartitioned */ ,
 						&inheritOids, &old_constraints, &parentOidCount, NULL);
 
 	pcxt->columns = schema;

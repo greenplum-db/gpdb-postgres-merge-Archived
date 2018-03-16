@@ -92,7 +92,7 @@ typedef enum
  *
  * NB: see GucSource_Names in guc.c if you change this.
  */
-typedef enum GucSource
+typedef enum
 {
 	PGC_S_DEFAULT,				/* hard-wired default ("boot_val") */
 	PGC_S_DYNAMIC_DEFAULT,		/* default computed during initialization */
@@ -742,6 +742,23 @@ extern void assign_search_path(const char *newval, void *extra);
 /* in access/transam/xlog.c */
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
+
+/* in cdb/cdbvars.c */
+extern const char *assign_gp_session_role(const char *newval, bool doit, GucSource source);
+extern const char *show_gp_session_role(void);
+extern const char *assign_gp_role(const char *newval, bool doit, GucSource source);
+extern const char *show_gp_role(void);
+extern void assign_gp_connections_per_thread(int newval, void *extra);
+extern const char *show_gp_connections_per_thread(void);
+extern void assign_gp_write_shared_snapshot(bool newval, void *extra);
+extern const char *gpvars_assign_gp_resource_manager_policy(const char *newval, bool doit, GucSource source);
+extern const char *gpvars_show_gp_resource_manager_policy(void);
+extern const char *gpvars_assign_gp_resqueue_memory_policy(const char *newval, bool doit, GucSource source);
+extern const char *gpvars_show_gp_resqueue_memory_policy(void);
+extern bool gpvars_check_statement_mem(int *newval, void **extra, GucSource source);
+extern bool gpvars_check_gp_enable_gpperfmon(bool *newval, void **extra, GucSource source);
+extern bool gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, GucSource source);
+
 
 extern StdRdOptions *defaultStdRdOptions(char relkind);
 

@@ -2320,7 +2320,9 @@ CTranslatorScalarToDXL::DValue
 	if (pmdid->FEquals(&CMDIdGPDB::m_mdidNumeric))
 	{
 		Numeric num = (Numeric) (pba);
-		if (NUMERIC_IS_NAN(num))
+
+		// NOTE: we assume that numeric_is_nan() cannot throw an error!
+		if (numeric_is_nan(num))
 		{
 			// in GPDB NaN is considered the largest numeric number.
 			return CDouble(GPOS_FP_ABS_MAX);

@@ -794,10 +794,10 @@ gpvars_show_gp_resource_manager_policy(void)
 bool
 gpvars_check_statement_mem(int *newval, void **extra, GucSource source)
 {
-	if (newval >= max_statement_mem)
+	if (*newval >= max_statement_mem)
 	{
-		GUC_error_errmsg("Invalid input for statement_mem, must be less than max_statement_mem (%d kB)",
-						max_statement_mem)));
+		GUC_check_errmsg("Invalid input for statement_mem, must be less than max_statement_mem (%d kB)",
+						 max_statement_mem);
 	}
 
 	return true;

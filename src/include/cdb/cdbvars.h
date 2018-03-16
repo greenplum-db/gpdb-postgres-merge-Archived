@@ -20,9 +20,6 @@
 #define CDBVARS_H
 
 #include "access/xlogdefs.h"  /*XLogRecPtr*/
-//#include "utils/guc.h"
-
-enum GucSource;
 
 /*
  * ----- Declarations of Greenplum-specific global variables ------
@@ -125,13 +122,9 @@ typedef enum
 extern GpRoleValue Gp_session_role;	/* GUC var - server startup mode.  */
 extern char *gp_session_role_string;	/* Use by guc.c as staging area for
 										 * value. */
-extern const char *assign_gp_session_role(const char *newval, bool doit, enum GucSource source);
-extern const char *show_gp_session_role(void);
 
 extern GpRoleValue Gp_role;	/* GUC var - server operating mode.  */
 extern char *gp_role_string;	/* Use by guc.c as staging area for value. */
-extern const char *assign_gp_role(const char *newval, bool doit, enum GucSource source);
-extern const char *show_gp_role(void);
 
 extern bool gp_reraise_signal; /* try to force a core dump ?*/
 
@@ -327,16 +320,11 @@ extern int gp_fts_transition_timeout;
  */
 extern int	gp_connections_per_thread; /* GUC var - server operating mode.  */
 
-extern void assign_gp_connections_per_thread(int newval, void *extra);
-extern const char *show_gp_connections_per_thread(void);
-
 /*
  * If number of subtransactions within a transaction exceed this limit,
  * then a warning is given to the user.
  */
 extern int32 gp_subtrans_warn_limit;
-
-extern void assign_gp_write_shared_snapshot(bool newval, void *extra);
 
 extern bool gp_set_read_only;
 
@@ -836,8 +824,6 @@ extern int gp_motion_slice_noop;
 extern bool gp_disable_tuple_hints;
 
 /* Enable gpmon */
-extern bool gpvars_check_gp_enable_gpperfmon(bool *newval, void **extra, enum GucSource source);
-extern bool gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, enum GucSource source);
 extern bool gp_enable_gpperfmon;
 extern int gp_gpperfmon_send_interval;
 extern bool gp_enable_query_metrics;
@@ -976,16 +962,6 @@ extern SeqServerControlBlock *seqServerCtl;
 extern void write_log(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 
 extern void verifyGpIdentityIsSet(void);
-
-extern const char *gpvars_assign_gp_resource_manager_policy(const char *newval, bool doit, enum GucSource source);
-
-extern const char *gpvars_show_gp_resource_manager_policy(void);
-
-extern const char *gpvars_assign_gp_resqueue_memory_policy(const char *newval, bool doit, enum GucSource source);
-
-extern const char *gpvars_show_gp_resqueue_memory_policy(void);
-
-extern bool gpvars_check_statement_mem(int *newval, void **extra, enum GucSource source);
 
 extern void increment_command_count(void);
 

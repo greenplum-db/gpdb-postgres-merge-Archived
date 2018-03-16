@@ -2691,8 +2691,6 @@ assign_gp_write_shared_snapshot(bool newval, void *extra)
 			PopActiveSnapshot();
 		}
 	}
-
-	return true;
 }
 
 static void
