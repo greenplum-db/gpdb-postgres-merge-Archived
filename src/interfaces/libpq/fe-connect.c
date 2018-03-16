@@ -228,9 +228,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Client-Encoding", "", 10,
 	offsetof(struct pg_conn, client_encoding_initial)},
 
-	{"client_encoding", "PGCLIENTENCODING", NULL, NULL,
-	"Client-Encoding", "", 10},
-
 	/*
 	 * "tty" is no longer used either, but keep it present for backwards
 	 * compatibility.
@@ -307,9 +304,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
-
-	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
-	"Require-Peer", "", 10},
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */

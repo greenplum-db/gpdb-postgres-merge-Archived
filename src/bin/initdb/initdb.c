@@ -1668,6 +1668,8 @@ setup_description(void)
 				"   WHERE c.relname = t.classname;\n");
 
 	/* Create default descriptions for operator implementation functions */
+	// GPDB_91_MERGE_FIXME: this was failing, disable temporarily
+#if 0
 	PG_CMD_PUTS("WITH funcdescs AS ( "
 				"SELECT p.oid as p_oid, oprname, "
 			  "coalesce(obj_description(o.oid, 'pg_operator'),'') as opdesc "
@@ -1679,7 +1681,7 @@ setup_description(void)
 				"  WHERE opdesc NOT LIKE 'deprecated%' AND "
 				"  NOT EXISTS (SELECT 1 FROM pg_description "
 		  "    WHERE objoid = p_oid AND classoid = 'pg_proc'::regclass);\n");
-
+#endif
 	PG_CMD_CLOSE;
 
 	check_ok();
