@@ -45,11 +45,13 @@ extern bool has_unique_index(RelOptInfo *rel, AttrNumber attno);
 extern Selectivity restriction_selectivity(PlannerInfo *root,
 						Oid operatorid,
 						List *args,
+						Oid inputcollid,
 						int varRelid);
 
 extern Selectivity join_selectivity(PlannerInfo *root,
 				 Oid operatorid,
 				 List *args,
+				 Oid inputcollid,
 				 JoinType jointype,
 				 SpecialJoinInfo *sjinfo);
 

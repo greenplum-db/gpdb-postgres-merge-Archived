@@ -85,6 +85,15 @@
  * joins, however, the selectivity is defined as the fraction of the left-hand
  * side relation's rows that are expected to have a match (ie, at least one
  * row with a TRUE result) in the right-hand side.
+ *
+ * For both oprrest and oprjoin functions, the operator's input collation OID
+ * (if any) is passed using the standard fmgr mechanism, so that the estimator
+ * function can fetch it with PG_GET_COLLATION().  Note, however, that all
+ * statistics in pg_statistic are currently built using the database's default
+ * collation.  Thus, in most cases where we are looking at statistics, we
+ * should ignore the actual operator collation and use DEFAULT_COLLATION_OID.
+ * We expect that the error induced by doing this is usually not large enough
+ * to justify complicating matters.
  *----------
  */
 
@@ -1163,9 +1172,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	}
 
 	/*
-	 * Pull out any fixed prefix implied by the pattern, and estimate the
-	 * fractional selectivity of the remainder of the pattern.  Unlike many of
-	 * the other functions in this file, we use the pattern operator's actual
+	 * Divide pattern into fixed prefix and remainder.  Unlike many of the
+	 * other functions in this file, we use the pattern operator's actual
 	 * collation for this step.  This is not because we expect the collation
 	 * to make a big difference in the selectivity estimate (it seldom would),
 	 * but because we want to be sure we cache compiled regexps under the
@@ -1776,18 +1784,20 @@ scalararraysel(PlannerInfo *root,
 										elem_nulls[i],
 										elmbyval));
 			if (is_join_clause)
-				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int16GetDatum(jointype),
-												  PointerGetDatum(sjinfo)));
+				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
+													  clause->inputcollid,
+													  PointerGetDatum(root),
+													  ObjectIdGetDatum(operator),
+													  PointerGetDatum(args),
+													  Int16GetDatum(jointype),
+													  PointerGetDatum(sjinfo)));
 			else
-				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int32GetDatum(varRelid)));
+				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
+													  clause->inputcollid,
+													  PointerGetDatum(root),
+													  ObjectIdGetDatum(operator),
+													  PointerGetDatum(args),
+													  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1818,18 +1828,20 @@ scalararraysel(PlannerInfo *root,
 			 */
 			args = list_make2(leftop, elem);
 			if (is_join_clause)
-				s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int16GetDatum(jointype),
-												  PointerGetDatum(sjinfo)));
+				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
+													  clause->inputcollid,
+													  PointerGetDatum(root),
+													  ObjectIdGetDatum(operator),
+													  PointerGetDatum(args),
+													  Int16GetDatum(jointype),
+													  PointerGetDatum(sjinfo)));
 			else
-				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int32GetDatum(varRelid)));
+				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
+													  clause->inputcollid,
+													  PointerGetDatum(root),
+													  ObjectIdGetDatum(operator),
+													  PointerGetDatum(args),
+													  Int32GetDatum(varRelid)));
 			if (useOr)
 				s1 = s1 + s2 - s1 * s2;
 			else
@@ -1854,18 +1866,20 @@ scalararraysel(PlannerInfo *root,
 		dummyexpr->collation = clause->inputcollid;
 		args = list_make2(leftop, dummyexpr);
 		if (is_join_clause)
-			s2 = DatumGetFloat8(FunctionCall5(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  Int16GetDatum(jointype),
-											  PointerGetDatum(sjinfo)));
+			s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
+												  clause->inputcollid,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int16GetDatum(jointype),
+												  PointerGetDatum(sjinfo)));
 		else
-			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-											  PointerGetDatum(root),
-											  ObjectIdGetDatum(operator),
-											  PointerGetDatum(args),
-											  Int32GetDatum(varRelid)));
+			s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
+												  clause->inputcollid,
+												  PointerGetDatum(root),
+												  ObjectIdGetDatum(operator),
+												  PointerGetDatum(args),
+												  Int32GetDatum(varRelid)));
 		s1 = useOr ? 0.0 : 1.0;
 
 		/*
@@ -1937,6 +1951,7 @@ rowcomparesel(PlannerInfo *root,
 {
 	Selectivity s1;
 	Oid			opno = linitial_oid(clause->opnos);
+	Oid			inputcollid = linitial_oid(clause->inputcollids);
 	List	   *opargs;
 	bool		is_join_clause;
 
@@ -1977,6 +1992,7 @@ rowcomparesel(PlannerInfo *root,
 		/* Estimate selectivity for a join clause. */
 		s1 = join_selectivity(root, opno,
 							  opargs,
+							  inputcollid,
 							  jointype,
 							  sjinfo);
 	}
@@ -1985,6 +2001,7 @@ rowcomparesel(PlannerInfo *root,
 		/* Estimate selectivity for a restriction clause. */
 		s1 = restriction_selectivity(root, opno,
 									 opargs,
+									 inputcollid,
 									 varRelid);
 	}
 

@@ -645,6 +645,7 @@ clause_selectivity(PlannerInfo *root,
 										 list_make2(var,
 													makeBoolConst(true,
 																  false)),
+										 InvalidOid,
 										 varRelid);
 		}
 	}
@@ -719,13 +720,15 @@ clause_selectivity(PlannerInfo *root,
 	}
 	else if (is_opclause(clause) || IsA(clause, DistinctExpr))
 	{
-		Oid			opno = ((OpExpr *) clause)->opno;
+		OpExpr	   *opclause = (OpExpr *) clause;
+		Oid			opno = opclause->opno;
 
 		if (treat_as_join_clause(clause, rinfo, varRelid, sjinfo))
 		{
 			/* Estimate selectivity for a join clause. */
 			s1 = join_selectivity(root, opno,
-								  ((OpExpr *) clause)->args,
+								  opclause->args,
+								  opclause->inputcollid,
 								  jointype,
 								  sjinfo);
 		}
@@ -733,7 +736,8 @@ clause_selectivity(PlannerInfo *root,
 		{
 			/* Estimate selectivity for a restriction clause. */
 			s1 = restriction_selectivity(root, opno,
-										 ((OpExpr *) clause)->args,
+										 opclause->args,
+										 opclause->inputcollid,
 										 varRelid);
 		}
 
