@@ -364,7 +364,11 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
-	bool		isLocalBuf = SmgrIsTemp(smgr);
+	/*
+	 * Temp tables in Greenplum use shared buffers so that backends executing
+	 * multiple slices of the same query can share them.
+	 */
+	bool		isLocalBuf = false; /* SmgrIsTemp(smgr); */
 
 	*hit = false;
 
@@ -899,6 +903,8 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
 	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
+	else if (relpersistence == RELPERSISTENCE_TEMP)
+		buf->flags |= BM_TAG_VALID | BM_TEMP;
 	else
 		buf->flags |= BM_TAG_VALID;
 	buf->usage_count = 1;
@@ -1314,7 +1320,11 @@ BufferSync(int flags)
 		 */
 		LockBufHdr(bufHdr);
 
-		if ((bufHdr->flags & mask) == mask)
+		/*
+		 * Temp tables in Greenplum use shared buffers.  Filter buffers
+		 * belonging to temp tables out during checkpoint.
+		 */
+		if ((bufHdr->flags & mask) == mask && !(bufHdr->flags & BM_TEMP))
 		{
 			bufHdr->flags |= BM_CHECKPOINT_NEEDED;
 			num_to_write++;
@@ -2171,6 +2181,8 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 {
 	int			i;
 
+/* Temp tables use shared buffers in Greenplum */
+#if 0
 	/* If it's a local relation, it's localbuf.c's problem. */
 	if (RelFileNodeBackendIsTemp(rnode))
 	{
@@ -2178,6 +2190,7 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
 		return;
 	}
+#endif
 
 	for (i = 0; i < NBuffers; i++)
 	{

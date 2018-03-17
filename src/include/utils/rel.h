@@ -28,8 +28,6 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-#include "cdb/cdbvars.h"
-
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -466,20 +464,11 @@ typedef struct StdRdOptions
  * RelationUsesLocalBuffers
  *		True if relation's pages are stored in local buffers.
  *
- * GPDB: On QEs, temp relations must use shared buffer cache so data
- * will be visible to all segmates.  On QD, sequence objects must
- * use shared buffer cache so data will be visible to sequence server.
+ * In GPDB, we do not use local buffers for temp tables because segmates need
+ * to share temp table contents.  Currently, there is no other reason to use
+ * local buffers.
  */
-static inline bool
-RelationUsesLocalBuffers(Relation relation)
-{
-	if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		relation->rd_rel->relkind != RELKIND_SEQUENCE &&
-		Gp_role != GP_ROLE_EXECUTE)
-		return true;
-	else
-		return false;
-}
+#define RelationUsesLocalBuffers(relation) false
 
 /*
  * RelationUsesTempNamespace
