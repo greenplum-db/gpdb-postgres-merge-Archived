@@ -3714,7 +3714,7 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(lc);
 		Node	   *texpr = (Node *) te->expr;
-		int32		item_width;
+		int32		item_width = 0;
 
 		Assert(IsA(te, TargetEntry));
 		/* junk columns aren't visible to upper query */
@@ -3736,11 +3736,6 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 
 			item_width = subrel->attr_widths[var->varattno - subrel->min_attr];
 		}
-		else
-		{
-			item_width = get_typavgwidth(exprType(texpr), exprTypmod(texpr));
-		}
-		Assert(item_width > 0);
 		Assert(te->resno >= rel->min_attr && te->resno <= rel->max_attr);
 		rel->attr_widths[te->resno - rel->min_attr] = item_width;
 	}
