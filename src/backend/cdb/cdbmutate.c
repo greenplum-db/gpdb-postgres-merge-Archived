@@ -2711,8 +2711,13 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 		newexpr->funcid = expr->funcid;
 		newexpr->funcresulttype = expr->funcresulttype;
 		newexpr->funcretset = expr->funcretset;
+		newexpr->funcvariadic = expr->funcvariadic;
 		newexpr->funcformat = expr->funcformat;
+		newexpr->funccollid = expr->funccollid;
+		newexpr->inputcollid = expr->inputcollid;
 		newexpr->args = args;
+		newexpr->location = expr->location;
+		newexpr->is_tablefunc = expr->is_tablefunc;
 
 		/*
 		 * Check for constant inputs
@@ -2873,7 +2878,10 @@ pre_dispatch_function_evaluation_mutator(Node *node,
 		newexpr->opfuncid = expr->opfuncid;
 		newexpr->opresulttype = expr->opresulttype;
 		newexpr->opretset = expr->opretset;
+		newexpr->opcollid = expr->opcollid;
+		newexpr->inputcollid = expr->inputcollid;
 		newexpr->args = args;
+		newexpr->location = expr->location;
 
 		return (Node *) newexpr;
 	}
