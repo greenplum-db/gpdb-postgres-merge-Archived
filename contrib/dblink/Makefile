@@ -2,21 +2,15 @@
 
 MODULE_big = dblink
 OBJS	= dblink.o
-<<<<<<< HEAD
-=======
 PG_CPPFLAGS = -I$(libpq_srcdir)
 SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
 EXTENSION = dblink
 DATA = dblink--1.0.sql dblink--unpackaged--1.0.sql
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 REGRESS = dblink
-<<<<<<< HEAD
-REGRESS_OPTS = --init-file=$(top_builddir)/src/test/regress/init_file --dbname=contrib_regression
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+REGRESS_OPTS = --init-file=$(top_builddir)/src/test/regress/init_file
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
