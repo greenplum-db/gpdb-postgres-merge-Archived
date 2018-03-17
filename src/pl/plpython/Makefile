@@ -38,13 +38,9 @@ override python_libspec := -L${python_configdir}/../.. ${python_libspec}
 # to work without, we have to skip it.
 ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
 
-<<<<<<< HEAD
 # do not fail build due to warnings in this code
-#override CPPFLAGS := -Wno-error -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO
-override CPPFLAGS := -Wno-error -I$(srcdir) $(python_includespec) $(CPPFLAGS) 
-=======
-override CPPFLAGS := -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO
+override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
 
 rpathdir = $(python_libdir):$(INSTLOC)/ext/python/lib
@@ -98,16 +94,11 @@ REGRESS = \
 	plpython_types \
 	plpython_error \
 	plpython_unicode \
-<<<<<<< HEAD
+	plpython_quote \
 	plpython_composite \
 	plpython_subtransaction \
 	plpython_returns \
 	plpython_gpdb \
-=======
-	plpython_quote \
-	plpython_composite \
-	plpython_subtransaction \
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	plpython_drop
 
 # where to find psql for running the tests
@@ -176,11 +167,7 @@ check: submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
-<<<<<<< HEAD
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-=======
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 endif
 
 .PHONY: submake
