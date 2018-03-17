@@ -873,6 +873,8 @@ _readDistinctExpr(void)
 
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
+	READ_OID_FIELD(opcollid);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
 
@@ -889,8 +891,8 @@ _readScalarArrayOpExpr(void)
 
 	READ_OID_FIELD(opno);
 	READ_OID_FIELD(opfuncid);
-
 	READ_BOOL_FIELD(useOr);
+	READ_OID_FIELD(inputcollid);
 	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
 
