@@ -1,15 +1,5 @@
-<<<<<<< HEAD
---
--- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of hstore.sql.
---
-SET client_min_messages = warning;
-\set ECHO none
-psql:hstore.sql:234: WARNING:  => is deprecated as an operator name
-=======
 CREATE EXTENSION hstore;
 WARNING:  => is deprecated as an operator name
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DETAIL:  This name may be disallowed altogether in future versions of PostgreSQL.
 set escape_string_warning=off;
 --hstore;

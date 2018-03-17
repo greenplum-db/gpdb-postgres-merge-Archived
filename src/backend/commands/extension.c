@@ -1230,7 +1230,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 * in case of race conditions; but this is a friendlier error message, and
 	 * besides we need a check to support IF NOT EXISTS.
 	 */
-	if (get_extension_oid(stmt->extname, true) != InvalidOid)
+	if (stmt->create_ext_state != CREATE_EXTENSION_END &&
+			get_extension_oid(stmt->extname, true) != InvalidOid)
 	{
 		if (stmt->if_not_exists)
 		{
@@ -1247,11 +1248,40 @@ CreateExtension(CreateExtensionStmt *stmt)
 							stmt->extname)));
 	}
 
+	/* We want to promote user to superuser in QE when creating extension */
+	/* GPDB_91_MERGE_FIXME: I don't see any such promotion here. But this is doing
+	 * something else important. Update comment.
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		switch (stmt->create_ext_state)
+		{
+			case CREATE_EXTENSION_INIT:
+				elog(WARNING, "Can not be here when QE create extension");
+				Insist(0);
+				creating_extension = false;
+				CurrentExtensionObject = InvalidOid;
+				return;
+			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
+				creating_extension = true;
+				break;
+			case CREATE_EXTENSION_END:		/* Mark creating_extension flag = false */
+				creating_extension = false;
+				CurrentExtensionObject = InvalidOid;
+				return;
+			default:
+				elog(ERROR, "unrecognized create_ext_state: %d",
+						stmt->create_ext_state);
+		}
+	}
+
 	/*
 	 * We use global variables to track the extension being created, so we can
 	 * create only one extension at the same time.
+	 * Except that QE do CREATE_EXTENSION_BEGIN.
 	 */
-	if (creating_extension)
+	if (creating_extension && !(stmt->create_ext_state == CREATE_EXTENSION_BEGIN &&
+				Gp_role == GP_ROLE_EXECUTE))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nested CREATE EXTENSION is not supported")));

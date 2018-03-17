@@ -88,12 +88,9 @@ test: delete
 test: namespace
 ignore: prepared_xacts
 test: privileges
-<<<<<<< HEAD
-test: lock
-=======
 test: security_label
 test: collate
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+test: lock
 test: misc
 test: rules
 test: select_views
