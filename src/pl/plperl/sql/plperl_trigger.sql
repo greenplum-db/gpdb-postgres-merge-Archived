@@ -70,8 +70,6 @@ delete from trigger_test;
 
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 
-<<<<<<< HEAD
-=======
 insert into trigger_test values(1,'insert', '("(1)")');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
 
@@ -86,7 +84,6 @@ delete from trigger_test_view;
 DROP VIEW trigger_test_view;
 delete from trigger_test;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 DROP FUNCTION trigger_data();
 
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$

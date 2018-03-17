@@ -242,25 +242,15 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
 	getDefaultACLs(&numDefaultACLs);
-<<<<<<< HEAD
-=======
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
 	collinfo = getCollations(&numCollations);
 	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
 	getConversions(&numConversions);
-<<<<<<< HEAD
-=======
-
-	if (g_verbose)
-		write_msg(NULL, "reading type casts\n");
-	getCasts(&numCasts);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");

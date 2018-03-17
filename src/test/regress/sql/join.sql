@@ -567,17 +567,6 @@ from int8_tbl t1 left join
 group by t1.q2 order by 1;
 
 --
-<<<<<<< HEAD
--- test case where a PlaceHolderVar is propagated into a subquery
---
-select * from
-  int8_tbl t1 left join
-  (select q1 as x, 42 as y from int8_tbl t2) ss
-  on t1.q2 = ss.x
-where
-  1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
-order by 1,2;
-=======
 -- test incorrect failure to NULL pulled-up subexpressions
 --
 begin;
@@ -616,7 +605,17 @@ from c left join
 order by c.name;
 
 rollback;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+--
+-- test case where a PlaceHolderVar is propagated into a subquery
+--
+select * from
+  int8_tbl t1 left join
+  (select q1 as x, 42 as y from int8_tbl t2) ss
+  on t1.q2 = ss.x
+where
+  1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
+order by 1,2;
 
 --
 -- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE

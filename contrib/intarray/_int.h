@@ -135,15 +135,9 @@ typedef struct QUERYTYPE
 	ITEM		items[1];		/* variable length array */
 } QUERYTYPE;
 
-<<<<<<< HEAD
-#define HDRSIZEQT   (VARHDRSZ + sizeof(int4))
-#define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
-#define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
-=======
 #define HDRSIZEQT	offsetof(QUERYTYPE, items)
 #define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
 #define GETQUERY(x)  ( (x)->items )
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* "type" codes for ITEM */
 #define END		0
@@ -161,13 +155,8 @@ typedef struct QUERYTYPE
 
 bool		signconsistent(QUERYTYPE *query, BITVEC sign, bool calcnot);
 bool		execconsistent(QUERYTYPE *query, ArrayType *array, bool calcnot);
-<<<<<<< HEAD
-bool		ginconsistent(QUERYTYPE *query, bool *check);
-int4		shorterquery(ITEM *q, int4 len);
-=======
 
 bool		gin_bool_consistent(QUERYTYPE *query, bool *check);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 bool		query_has_required_values(QUERYTYPE *query);
 
 int			compASC(const void *a, const void *b);
@@ -181,14 +170,5 @@ int			compDESC(const void *a, const void *b);
 			qsort((void*) ARRPTR(a), _nelems_, sizeof(int4), \
 				  (direction) ? compASC : compDESC ); \
 	} while(0)
-<<<<<<< HEAD
-
-/* fmgr macros for QUERYTYPE objects */
-#define DatumGetQueryTypeP(X)		  ((QUERYTYPE *) PG_DETOAST_DATUM(X))
-#define DatumGetQueryTypePCopy(X)	  ((QUERYTYPE *) PG_DETOAST_DATUM_COPY(X))
-#define PG_GETARG_QUERYTYPE_P(n)	  DatumGetQueryTypeP(PG_GETARG_DATUM(n))
-#define PG_GETARG_QUERYTYPE_P_COPY(n) DatumGetQueryTypePCopy(PG_GETARG_DATUM(n))
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif   /* ___INT_H__ */

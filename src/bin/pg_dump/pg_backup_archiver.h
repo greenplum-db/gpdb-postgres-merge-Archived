@@ -132,17 +132,8 @@ typedef void (*DeClonePtr) (struct _archiveHandle * AH);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 
-<<<<<<< HEAD
 typedef void (*DieFuncPtr) (int taskRC, char * pszErrorMsg);
 
-typedef struct _outputContext
-{
-	void	   *OF;
-	int			gzOut;
-} OutputContext;
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 typedef enum
 {
 	SQL_SCAN = 0,				/* normal */

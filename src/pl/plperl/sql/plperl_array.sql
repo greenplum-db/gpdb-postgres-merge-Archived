@@ -152,7 +152,6 @@ $$ LANGUAGE plperl;
 
 select plperl_arrays_inout('{{1}, {2}, {3}}');
 
-<<<<<<< HEAD
 -- check that we can return an array literal
 CREATE OR REPLACE FUNCTION plperl_arrays_inout_l(INTEGER[]) returns INTEGER[] AS $$
 	return shift.''; # stringify it
@@ -160,8 +159,6 @@ $$ LANGUAGE plperl;
 
 select plperl_arrays_inout_l('{{1}, {2}, {3}}');
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- make sure setof works
 create or replace function perl_setof_array(integer[]) returns setof integer[] language plperl as $$
 	my $arr = shift;

@@ -115,11 +115,7 @@ static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
-<<<<<<< HEAD
-static void _moveAfter(ArchiveHandle *AH __attribute__((unused)), TocEntry *pos, TocEntry *te);
-=======
 static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static int	RestoringToDB(ArchiveHandle *AH);
@@ -1025,10 +1021,6 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	FILE	   *fh;
 	char		buf[100];
 	bool		incomplete_line;
-<<<<<<< HEAD
-	TocEntry   *tePrev;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Allocate space for the 'wanted' array, and init it */
 	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
@@ -1174,15 +1166,6 @@ archprintf(Archive *AH, const char *fmt,...)
 static void
 SetOutput(ArchiveHandle *AH, char *filename, int compression)
 {
-<<<<<<< HEAD
-	OutputContext sav =
-	{
-		NULL,					/* OF */
-		0,						/* gzOut */
-	};
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			fn;
 
 	if (filename)
@@ -3103,17 +3086,12 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			strcmp(te->desc, "TYPE") == 0 ||
 			strcmp(te->desc, "VIEW") == 0 ||
 			strcmp(te->desc, "SEQUENCE") == 0 ||
-<<<<<<< HEAD
-			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
-			strcmp(te->desc, "SERVER") == 0 ||
-			strcmp(te->desc, "PROTOCOL") == 0 ||
-=======
 			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||
 			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
 			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
-			strcmp(te->desc, "SERVER") == 0)
+			strcmp(te->desc, "SERVER") == 0 ||
+			strcmp(te->desc, "PROTOCOL") == 0)
 		{
 			PQExpBuffer temp = createPQExpBuffer();
 

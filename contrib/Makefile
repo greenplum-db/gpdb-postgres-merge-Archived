@@ -65,19 +65,16 @@ ifeq ($(with_libxml),yes)
 SUBDIRS += xml2
 endif
 
-<<<<<<< HEAD
+ifeq ($(with_selinux),yes)
+SUBDIRS += sepgsql
+endif
+
 ifeq ($(enable_orca),yes)
 SUBDIRS += orca_debug
 endif
 
 SUBDIRS += gp_replica_check
 
-=======
-ifeq ($(with_selinux),yes)
-SUBDIRS += sepgsql
-endif
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 # Missing:
 #		start-scripts	\ (does not have a makefile)
 

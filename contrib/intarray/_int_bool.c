@@ -665,41 +665,6 @@ bqarr_out(PG_FUNCTION_ARGS)
 Datum
 querytree(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	QUERYTYPE  *query = (QUERYTYPE *) PG_GETARG_QUERYTYPE_P_COPY(0);
-	INFIX		nrm;
-	text	   *res;
-	ITEM	   *q;
-	int4		len;
-
-	if (query->size == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("empty query")));
-
-	q = (ITEM *) palloc(sizeof(ITEM) * query->size);
-	memcpy((void *) q, GETQUERY(query), sizeof(ITEM) * query->size);
-	len = shorterquery(q, query->size);
-	PG_FREE_IF_COPY(query, 0);
-
-	if (len == 0)
-	{
-		res = cstring_to_text("T");
-	}
-	else
-	{
-		nrm.curpol = q + len - 1;
-		nrm.buflen = 32;
-		nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
-		*(nrm.cur) = '\0';
-		infix(&nrm, true);
-		res = cstring_to_text_with_len(nrm.buf, nrm.cur - nrm.buf);
-	}
-	pfree(q);
-
-	PG_RETURN_TEXT_P(res);
-=======
 	elog(ERROR, "querytree is no longer implemented");
 	PG_RETURN_NULL();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

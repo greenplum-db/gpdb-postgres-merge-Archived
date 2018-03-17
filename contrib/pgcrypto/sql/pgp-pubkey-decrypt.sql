@@ -641,10 +641,7 @@ from keytbl, encdata where keytbl.id=5 and encdata.id=1;
 -- password-protected secret key, right password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'parool')
 from keytbl, encdata where keytbl.id=5 and encdata.id=1;
-<<<<<<< HEAD
 
 -- test for a short read from prefix_init
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=6 and encdata.id=5;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
