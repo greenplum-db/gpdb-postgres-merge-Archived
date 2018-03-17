@@ -287,8 +287,6 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		if (!wstate->btws_zeropage)
 			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
 
-		// UNDONE: Unfortunately, I think we write temp relations to the mirror...
-
 		/* don't set checksum for all-zero page */
 		smgrextend(wstate->index->rd_smgr, MAIN_FORKNUM,
 				   wstate->btws_pages_written++,
@@ -296,8 +294,6 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 				   true);
 	}
 
-
-	// UNDONE: Unfortunately, I think we write temp relations to the mirror...
 	PageSetChecksumInplace(page, blkno);
 
 	/*
