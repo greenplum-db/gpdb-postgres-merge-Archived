@@ -152,6 +152,7 @@ static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
 			List *options);
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
+static uint64 CopyToDispatch(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
 static uint64 CopyFrom(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
@@ -183,6 +184,7 @@ static bool CopyGetInt16(CopyState cstate, int16 *val);
 static bool CopyGetInt32(CopyState cstate, int32 *val);
 
 static void SendCopyFromForwardedTuple(CopyState cstate,
+						   CdbCopy *cdbCopy,
 						   int target_seg,
 						   Oid relid,
 						   int64 lineno,
@@ -1886,6 +1888,34 @@ BeginCopy(bool is_from,
 
 	cstate->copy_dest = COPY_FILE;		/* default */
 
+	/* Determine the mode */
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE)
+	{
+		if (cstate->rel && cstate->rel->rd_cdbpolicy)
+		{
+			/*
+			 * Distributed table. The QD and QE will need to co-operate.
+			 */
+			if (Gp_role == GP_ROLE_DISPATCH)
+			{
+				cstate->dispatch_mode = COPY_DISPATCH;
+				cstate->dispatch_msgbuf = makeStringInfo();
+			}
+			else
+				cstate->dispatch_mode = COPY_EXECUTOR;
+		}
+		else
+		{
+			/*
+			 * Not working on a table, or the table is not distributed (i.e. a catalog
+			 * table). Run the COPY in dispatcher.
+			 */
+			cstate->dispatch_mode = COPY_DIRECT;
+		}
+	}
+	else
+		cstate->dispatch_mode = COPY_DIRECT;
+
 	MemoryContextSwitchTo(oldcontext);
 	
 	return cstate;
@@ -2143,7 +2173,18 @@ DoCopyTo(CopyState cstate)
 			cstate->copy_dest = COPY_FILE;
 		}
 
-		processed = CopyTo(cstate);
+		/*
+		 * We want to dispatch COPY TO commands only in the case that
+		 * we are the dispatcher and we are copying from a user relation
+		 * (a relation where data is distributed in the segment databases).
+		 * Otherwize, if we are not the dispatcher *or* if we are
+		 * doing COPY (SELECT) we just go straight to work, without
+		 * dispatching COPY commands to executors.
+		 */
+		if (Gp_role == GP_ROLE_DISPATCH && cstate->rel && cstate->rel->rd_cdbpolicy)
+			processed = CopyToDispatch(cstate);
+		else
+			processed = CopyTo(cstate);
 
 		if (fe_copy)
 			SendCopyEnd(cstate);
@@ -2304,6 +2345,205 @@ static void CopyToCreateDispatchCommand(CopyState cstate,
 			/* do NOT include HEADER. Header row is created by dispatcher COPY */
 		}
 	}
+}
+
+/*
+ * Copy from relation TO file. Starts a COPY TO command on each of
+ * the executors and gathers all the results and writes it out.
+ */
+static uint64
+CopyToDispatch(CopyState cstate)
+{
+	TupleDesc	tupDesc;
+	int			num_phys_attrs;
+	int			attr_count;
+	Form_pg_attribute *attr;
+	CdbCopy    *cdbCopy;
+	StringInfoData cdbcopy_err;
+	StringInfoData cdbcopy_cmd;
+	uint64		processed = 0;
+
+	tupDesc = cstate->rel->rd_att;
+	attr = tupDesc->attrs;
+	num_phys_attrs = tupDesc->natts;
+	attr_count = list_length(cstate->attnumlist);
+
+	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
+	cstate->fe_msgbuf = makeStringInfo();
+
+	/*
+	 * prepare to get COPY data from segDBs:
+	 * 1 - re-construct the orignial COPY command sent from the client.
+	 * 2 - execute a BEGIN DTM transaction.
+	 * 3 - send the COPY command to all segment databases.
+	 */
+
+	cdbCopy = makeCdbCopy(false);
+
+	cdbCopy->partitions = RelationBuildPartitionDesc(cstate->rel, false);
+	cdbCopy->skip_ext_partition = cstate->skip_ext_partition;
+
+	/* XXX: lock all partitions */
+
+	/* allocate memory for error and copy strings */
+	initStringInfo(&cdbcopy_err);
+	initStringInfo(&cdbcopy_cmd);
+
+	/* create the command to send to QE's and store it in cdbcopy_cmd */
+	CopyToCreateDispatchCommand(cstate,
+								&cdbcopy_cmd,
+								num_phys_attrs,
+								attr);
+
+	/*
+	 * Start a COPY command in every db of every segment in Greenplum Database.
+	 *
+	 * From this point in the code we need to be extra careful
+	 * about error handling. ereport() must not be called until
+	 * the COPY command sessions are closed on the executors.
+	 * Calling ereport() will leave the executors hanging in
+	 * COPY state.
+	 */
+	elog(DEBUG5, "COPY command sent to segdbs: %s", cdbcopy_cmd.data);
+
+	PG_TRY();
+	{
+		cdbCopyStart(cdbCopy, cdbcopy_cmd.data, NULL);
+
+		if (cstate->binary)
+		{
+			/* Generate header for a binary copy */
+			int32		tmp;
+
+			/* Signature */
+			CopySendData(cstate, (char *) BinarySignature, 11);
+			/* Flags field */
+			tmp = 0;
+			if (cstate->oids)
+				tmp |= (1 << 16);
+			CopySendInt32(cstate, tmp);
+			/* No header extension */
+			tmp = 0;
+			CopySendInt32(cstate, tmp);
+		}
+
+		/* if a header has been requested send the line */
+		if (cstate->header_line)
+		{
+			ListCell   *cur;
+			bool		hdr_delim = false;
+
+			/*
+			 * For non-binary copy, we need to convert null_print to client
+			 * encoding, because it will be sent directly with CopySendString.
+			 *
+			 * MPP: in here we only care about this if we need to print the
+			 * header. We rely on the segdb server copy out to do the conversion
+			 * before sending the data rows out. We don't need to repeat it here
+			 */
+			if (cstate->need_transcoding)
+				cstate->null_print = (char *)
+					pg_server_to_custom(cstate->null_print,
+										strlen(cstate->null_print),
+										cstate->file_encoding,
+										cstate->enc_conversion_proc);
+
+			foreach(cur, cstate->attnumlist)
+			{
+				int			attnum = lfirst_int(cur);
+				char	   *colname;
+
+				if (hdr_delim)
+					CopySendChar(cstate, cstate->delim[0]);
+				hdr_delim = true;
+
+				colname = NameStr(attr[attnum - 1]->attname);
+
+				CopyAttributeOutCSV(cstate, colname, false,
+									list_length(cstate->attnumlist) == 1);
+			}
+
+			/* add a newline and flush the data */
+			CopySendEndOfRow(cstate);
+		}
+
+		/*
+		 * This is the main work-loop. In here we keep collecting data from the
+		 * COPY commands on the segdbs, until no more data is available. We
+		 * keep writing data out a chunk at a time.
+		 */
+		while(true)
+		{
+			bool done;
+			bool copy_cancel = (QueryCancelPending ? true : false);
+
+			/* get a chunk of data rows from the QE's */
+			done = cdbCopyGetData(cdbCopy, copy_cancel, &processed);
+
+			/* send the chunk of data rows to destination (file or stdout) */
+			if(cdbCopy->copy_out_buf.len > 0) /* conditional is important! */
+			{
+				/*
+				 * in the dispatcher we receive chunks of whole rows with row endings.
+				 * We don't want to use CopySendEndOfRow() b/c it adds row endings and
+				 * also b/c it's intended for a single row at a time. Therefore we need
+				 * to fill in the out buffer and just flush it instead.
+				 */
+				CopySendData(cstate, (void *) cdbCopy->copy_out_buf.data, cdbCopy->copy_out_buf.len);
+				CopyToDispatchFlush(cstate);
+			}
+
+			if(done)
+			{
+				if(cdbCopy->remote_data_err || cdbCopy->io_errors)
+					appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
+
+				break;
+			}
+		}
+	}
+    /* catch error from CopyStart, CopySendEndOfRow or CopyToDispatchFlush */
+	PG_CATCH();
+	{
+		appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
+
+		cdbCopyEnd(cdbCopy);
+
+		ereport(LOG,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("%s", cdbcopy_err.data)));
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	if (cstate->binary)
+	{
+		/* Generate trailer for a binary copy */
+		CopySendInt16(cstate, -1);
+		/* Need to flush out the trailer */
+		CopySendEndOfRow(cstate);
+	}
+
+	/* we can throw the error now if QueryCancelPending was set previously */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
+	 * report all accumulated errors back to the client.
+	 */
+	if (cdbCopy->remote_data_err)
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("%s", cdbcopy_err.data)));
+	if (cdbCopy->io_errors)
+		ereport(ERROR,
+				(errcode(ERRCODE_IO_ERROR),
+				 errmsg("%s", cdbcopy_err.data)));
+
+	pfree(cdbcopy_cmd.data);
+	pfree(cdbcopy_err.data);
+	pfree(cdbCopy);
+
+	return processed;
 }
 
 /*
@@ -3511,9 +3751,6 @@ CopyFrom(CopyState cstate)
 	partValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
 	partNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
-	baseValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-	baseNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
-
 	bistate = GetBulkInsertState();
 
 	/* Set up callback to identify error line number */
@@ -3675,6 +3912,11 @@ CopyFrom(CopyState cstate)
 		/* Switch into its memory context */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
+		/* Initialize all values for row to NULL */
+		ExecClearTuple(baseSlot);
+		baseValues = slot_get_values(baseSlot);
+		baseNulls = slot_get_isnull(baseSlot);
+
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
 			if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid, &got_error))
@@ -3792,7 +4034,7 @@ CopyFrom(CopyState cstate)
 		{
 			/* in the QD, forward the row to the correct segment. */
 
-			SendCopyFromForwardedTuple(cstate, target_seg,
+			SendCopyFromForwardedTuple(cstate, cdbCopy, target_seg,
 									   RelationGetRelid(resultRelInfo->ri_RelationDesc),
 									   cstate->cur_lineno,
 									   cstate->line_buf.data,
@@ -3923,6 +4165,19 @@ CopyFrom(CopyState cstate)
 			if (relstorage_is_ao(relstorage))
 				resultRelInfo->ri_aoprocessed++;
 		}
+	}
+
+	/*
+	 * Done reading input data and sending it off to the segment
+	 * databases Now we would like to end the copy command on
+	 * all segment databases across the cluster.
+	 */
+	if (cstate->dispatch_mode == COPY_DISPATCH)
+	{
+		int			total_completed_from_qes;
+		int			total_rejected_from_qes;
+
+		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes);
 	}
 
 	/*
@@ -4070,7 +4325,7 @@ BeginCopyFrom(Relation rel,
 			  List *ao_segnos)
 {
 	CopyState	cstate;
-	bool		pipe = (filename == NULL);
+	bool		pipe = (filename == NULL || Gp_role == GP_ROLE_EXECUTE);
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
 	AttrNumber	num_phys_attrs,
@@ -4697,7 +4952,7 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("unexpected EOF in COPY data")));
-		if (attnum < 1 || attnum >= frame.fld_count)
+		if (attnum < 1 || attnum > frame.fld_count)
 			elog(ERROR, "invalid attnum received from QD: %d", attnum);
 		m = attnum - 1;
 
@@ -4747,9 +5002,9 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 
 		cstate->cur_attname = NULL;
 
-		values[attnum] = value;
+		values[m] = value;
 		/* NULLs are currently not transmitted */
-		nulls[attnum] = false;
+		nulls[m] = false;
 	}
 
 	/*
@@ -4766,6 +5021,7 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
  */
 static void
 SendCopyFromForwardedTuple(CopyState cstate,
+						   CdbCopy *cdbCopy,
 						   int target_seg,
 						   Oid relid,
 						   int64 lineno,
@@ -4840,6 +5096,9 @@ SendCopyFromForwardedTuple(CopyState cstate,
 	frame->loaded_oid = tuple_oid;
 	frame->lineno = lineno;
 	frame->fld_count = num_sent_fields;
+
+	cdbCopySendData(cdbCopy, target_seg, msgbuf->data, msgbuf->len);
+
 }
 
 /*
