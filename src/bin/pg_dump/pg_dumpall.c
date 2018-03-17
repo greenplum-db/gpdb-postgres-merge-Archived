@@ -101,12 +101,8 @@ main(int argc, char *argv[])
 	bool		output_clean = false;
 	int			roles_only = 0;
 	bool		tablespaces_only = false;
-<<<<<<< HEAD
-	bool		schema_only = false;
 	bool		gp_syntax = false;
 	bool		no_gp_syntax = false;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	PGconn	   *conn;
 	int			encoding;
 	const char *std_strings;
@@ -208,11 +204,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acf:Fgh:il:oOp:rsS:tU:vwWxX:", long_options, &optindex)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "acf:gh:il:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	while ((c = getopt_long(argc, argv, "acf:Fgh:il:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -386,6 +378,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (gp_syntax && no_gp_syntax)
+	{
+		fprintf(stderr, _("%s: options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n"),
+				progname);
+		exit(1);
+	}
+
 	/* Add long options to the pg_dump argument list */
 	if (binary_upgrade)
 		appendPQExpBuffer(pgdumpopts, " --binary-upgrade");
@@ -403,60 +402,12 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
 		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
-<<<<<<< HEAD
-	if (roles_only)
-		appendPQExpBuffer(pgdumpopts, " --roles-only");
-
-	/* Complain if any arguments remain */
-	if (optind < argc)
-	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-
-	/* Make sure the user hasn't specified a mix of globals-only options */
-	if (globals_only && roles_only)
-	{
-		fprintf(stderr, _("%s: options -g/--globals-only and -r/--roles-only cannot be used together\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-
-	if (globals_only && tablespaces_only)
-	{
-		fprintf(stderr, _("%s: options -g/--globals-only and -t/--tablespaces-only cannot be used together\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-
-	if (roles_only && tablespaces_only)
-	{
-		fprintf(stderr, _("%s: options -r/--roles-only and -t/--tablespaces-only cannot be used together\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-=======
 	if (no_security_labels)
 		appendPQExpBuffer(pgdumpopts, " --no-security-labels");
 	if (no_unlogged_table_data)
 		appendPQExpBuffer(pgdumpopts, " --no-unlogged-table-data");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-
-	if (gp_syntax && no_gp_syntax)
-	{
-		fprintf(stderr, _("%s: options \"--gp-syntax\" and \"--no-gp-syntax\" cannot be used together\n"),
-				progname);
-		exit(1);
-	}
+	if (roles_only)
+		appendPQExpBuffer(pgdumpopts, " --roles-only");
 
 	/*
 	 * If there was a database specified on the command line, use that,
@@ -520,7 +471,6 @@ main(int argc, char *argv[])
 	if (!std_strings)
 		std_strings = "off";
 
-	fprintf(OPF,"--\n-- Greenplum Database cluster dump\n--\n\n");
 	/* Set the role if requested */
 	if (use_role && server_version >= 80100)
 	{
@@ -531,14 +481,11 @@ main(int argc, char *argv[])
 		destroyPQExpBuffer(query);
 	}
 
-<<<<<<< HEAD
-=======
 	/* Force quoting of all identifiers if requested. */
 	if (quote_all_identifiers && server_version >= 90100)
 		executeCommand(conn, "SET quote_all_identifiers = true");
 
-	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	fprintf(OPF,"--\n-- Greenplum Database cluster dump\n--\n\n");
 	if (verbose)
 		dumpTimestamp("Started on");
 
@@ -1067,9 +1014,8 @@ dumpRoles(PGconn *conn)
 				i_rolconnlimit,
 				i_rolpassword,
 				i_rolvaliduntil,
-<<<<<<< HEAD
+				i_rolreplication,
 				i_rolcomment,
-				i_oid,
 				i_rolqueuename = -1,	/* keep compiler quiet */
 				i_rolgroupname = -1,	/* keep compiler quiet */
 				i_rolcreaterextgpfd = -1,
@@ -1077,10 +1023,6 @@ dumpRoles(PGconn *conn)
 				i_rolcreatewextgpfd = -1,
 				i_rolcreaterexthdfs = -1,
 				i_rolcreatewexthdfs = -1;
-=======
-				i_rolreplication,
-				i_rolcomment;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			i;
 	bool		exttab_auth = (server_version >= 80214);
 	bool		hdfs_auth = (server_version >= 80215);
@@ -1091,83 +1033,38 @@ dumpRoles(PGconn *conn)
 	char	   *extauth_col = exttab_auth ? ", rolcreaterextgpfd, rolcreaterexthttp, rolcreatewextgpfd" : "";
 	char	   *hdfs_col = hdfs_auth ? ", rolcreaterexthdfs, rolcreatewexthdfs " : "";
 
-<<<<<<< HEAD
 	/*
 	 * Query to select role info get resqueue if version support it get
 	 * external table auth on gpfdist, gpfdists and http if version support it get
 	 * external table auth on gphdfs if version support it note: rolconfig is
 	 * dumped later
 	 */
-	printfPQExpBuffer(buf,
-					  "SELECT rolname, oid, rolsuper, rolinherit, "
-					  "rolcreaterole, rolcreatedb, rolcatupdate, "
-					  "rolcanlogin, rolconnlimit, rolpassword, "
-					  "rolvaliduntil, "
-					  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
-					  " %s %s %s %s"
-					  "FROM pg_authid "
-					  "ORDER BY 1",
-					  resq_col, resgroup_col, extauth_col, hdfs_col);
-=======
+
 	/* note: rolconfig is dumped later */
 	if (server_version >= 90100)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, "
+						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+						  " %s %s %s %s"
 						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "ORDER BY 2",
+						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else if (server_version >= 80200)
 		printfPQExpBuffer(buf,
 						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, "
+						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+						  " %s %s %s %s"
 						  "FROM pg_authid "
-						  "ORDER BY 2");
-	else if (server_version >= 80100)
-		printfPQExpBuffer(buf,
-						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, "
-						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, false as rolreplication, "
-						  "null as rolcomment "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
+						  "ORDER BY 2",
+						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else
-		printfPQExpBuffer(buf,
-						  "SELECT 0, usename as rolname, "
-						  "usesuper as rolsuper, "
-						  "true as rolinherit, "
-						  "usesuper as rolcreaterole, "
-						  "usecreatedb as rolcreatedb, "
-						  "true as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment "
-						  "FROM pg_shadow "
-						  "UNION ALL "
-						  "SELECT 0, groname as rolname, "
-						  "false as rolsuper, "
-						  "true as rolinherit, "
-						  "false as rolcreaterole, "
-						  "false as rolcreatedb, "
-						  "false as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment "
-						  "FROM pg_group "
-						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
-						  " WHERE usename = groname) "
-						  "ORDER BY 2");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		error_unsupported_server_version(conn);
 
 	res = executeQuery(conn, buf->data);
 
@@ -1183,7 +1080,6 @@ dumpRoles(PGconn *conn)
 	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
 	i_rolreplication = PQfnumber(res, "rolreplication");
 	i_rolcomment = PQfnumber(res, "rolcomment");
-	i_oid = PQfnumber(res, "oid");
 
 	if (resource_queues)
 		i_rolqueuename = PQfnumber(res, "rolqueuename");

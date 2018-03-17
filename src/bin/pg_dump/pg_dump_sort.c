@@ -70,40 +70,6 @@ static const int oldObjectTypePriority[] =
 static const int newObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
-<<<<<<< HEAD
-	2,							/* DO_EXTENSION */
-	3,							/* DO_TYPE */
-	3,							/* DO_SHELL_TYPE */
-	4,							/* DO_FUNC */
-	5,							/* DO_AGG */
-	6,							/* DO_OPERATOR */
-	7,							/* DO_OPCLASS */
-	7,							/* DO_OPFAMILY */
-	9,							/* DO_CONVERSION */
-	16,							/* DO_TABLE */
-	18,							/* DO_ATTRDEF */
-	23,							/* DO_INDEX */
-	24,							/* DO_RULE */
-	25,							/* DO_TRIGGER */
-	22,							/* DO_CONSTRAINT */
-	26,							/* DO_FK_CONSTRAINT */
-	2,							/* DO_PROCLANG */
-	8,							/* DO_CAST */
-	20,							/* DO_TABLE_DATA */
-	17,							/* DO_DUMMY_TYPE */
-	10,							/* DO_TSPARSER */
-	12,							/* DO_TSDICT */
-	11,							/* DO_TSTEMPLATE */
-	13,							/* DO_TSCONFIG */
-	14,							/* DO_FDW */
-	15,							/* DO_FOREIGN_SERVER */
-	27,							/* DO_DEFAULT_ACL */
-	19,							/* DO_BLOB */
-	21,							/* DO_BLOB_DATA */
-	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
-	8,							/* DO_EXTPROTOCOL */
-	22							/* DO_TYPE_STORAGE_OPTIONS */
-=======
 	4,							/* DO_EXTENSION */
 	5,							/* DO_TYPE */
 	5,							/* DO_SHELL_TYPE */
@@ -134,7 +100,11 @@ static const int newObjectTypePriority[] =
 	21,							/* DO_BLOB */
 	23,							/* DO_BLOB_DATA */
 	3							/* DO_COLLATION */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	,
+	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
+	8,							/* DO_EXTPROTOCOL */
+	22							/* DO_TYPE_STORAGE_OPTIONS */
 };
 
 

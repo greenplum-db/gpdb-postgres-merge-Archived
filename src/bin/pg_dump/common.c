@@ -47,35 +47,21 @@ static int	numCatalogIds = 0;
  * arrays themselves would be simpler, but it doesn't work because pg_dump.c
  * may have already established pointers between items.)
  */
-<<<<<<< HEAD
-=======
-static TableInfo *tblinfo;
-static TypeInfo *typinfo;
-static FuncInfo *funinfo;
-static OprInfo *oprinfo;
-static int	numTables;
-static int	numTypes;
-static int	numFuncs;
-static int	numOperators;
-static int	numCollations;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
-<<<<<<< HEAD
+static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
 static DumpableObject **extinfoindex;
 static int	numTables;
 static int	numTypes;
 static int	numFuncs;
 static int	numOperators;
+static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
 static int  numTypeStorageOptions;
-=======
-static DumpableObject **collinfoindex;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -100,21 +86,14 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
 TableInfo *
 getSchemaData(int *numTablesPtr)
 {
-<<<<<<< HEAD
 	TableInfo  *tblinfo;
 	TypeInfo   *typinfo;
 	FuncInfo   *funinfo;
 	OprInfo    *oprinfo;
+	CollInfo   *collinfo;
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-=======
-	ExtensionInfo *extinfo;
-	InhInfo    *inhinfo;
-	CollInfo   *collinfo;
-	int			numNamespaces;
-	int			numExtensions;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -148,7 +127,6 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
-<<<<<<< HEAD
 	nspinfo = getNamespaces(&numNamespaces);
 	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
 
@@ -162,13 +140,6 @@ getSchemaData(int *numTablesPtr)
 		write_msg(NULL, "reading user-defined tables\n");
 	tblinfo = getTables(&numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
-=======
-	getNamespaces(&numNamespaces);
-
-	if (g_verbose)
-		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(&numExtensions);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
@@ -268,18 +239,6 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading rewrite rules\n");
 	getRules(&numRules);
-<<<<<<< HEAD
-=======
-
-	/*
-	 * Identify extension member objects and mark them as not to be dumped.
-	 * This must happen after reading all objects that can be direct members
-	 * of extensions, but before we begin to process table subsidiary objects.
-	 */
-	if (g_verbose)
-		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(extinfo, numExtensions);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -861,7 +820,17 @@ findOprByOid(Oid oid)
 }
 
 /*
-<<<<<<< HEAD
+ * findCollationByOid
+ *	  finds the entry (in collinfo) of the collation with the given oid
+ *	  returns NULL if not found
+ */
+CollInfo *
+findCollationByOid(Oid oid)
+{
+	return (CollInfo *) findObjectByOid(oid, collinfoindex, numCollations);
+}
+
+/*
  * findNamespaceByOid
  *	  finds the entry (in nspinfo) of the namespace with the given oid
  *	  returns NULL if not found
@@ -957,16 +926,6 @@ ExtensionMemberIdCompare(const void *p1, const void *p2)
 	if (cmpval == 0)
 		cmpval = oidcmp(obj1->catId.tableoid, obj2->catId.tableoid);
 	return cmpval;
-=======
- * findCollationByOid
- *	  finds the entry (in collinfo) of the collation with the given oid
- *	  returns NULL if not found
- */
-CollInfo *
-findCollationByOid(Oid oid)
-{
-	return (CollInfo *) findObjectByOid(oid, collinfoindex, numCollations);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
