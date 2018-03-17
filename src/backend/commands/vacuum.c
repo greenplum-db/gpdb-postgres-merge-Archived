@@ -108,7 +108,7 @@ static MemoryContext vac_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt);
+static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype);
 static void vac_truncate_clog(TransactionId frozenXID);
 static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		   bool for_wraparound);
@@ -238,16 +238,18 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 	/*
 	 * Analyze on midlevel partition is not allowed directly so
-	 * vacuum_relations and analyze_relations may be different.  In case ofx3
+	 * vacuum_relations and analyze_relations may be different.  In case of
 	 * partitioned tables, vacuum_relation will contain all OIDs of the
 	 * partitions of a partitioned table. However, analyze_relation will
 	 * contain all the OIDs of partition of a partitioned table except midlevel
 	 * partition unless GUC optimizer_analyze_midlevel_partition is set to on.
 	 */
 	if (vacstmt->options & VACOPT_VACUUM)
-		vacuum_relations = get_rel_oids(relid, vacstmt);
+	{
+		vacuum_relations = get_rel_oids(relid, vacstmt, VACOPT_VACUUM);
+	}
 	if (vacstmt->options & VACOPT_ANALYZE)
-		analyze_relations = get_rel_oids(relid, vacstmt);
+		analyze_relations = get_rel_oids(relid, vacstmt, VACOPT_ANALYZE);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -1014,12 +1016,19 @@ vacuumStatement_Relation(VacuumStmt *vacstmt, Oid relid,
  *
  * The list is built in vac_context so that it will survive across our
  * per-relation transactions.
+ *
+ * 'stmttype' is either VACOPT_VACUUM or VACOPT_ANALYZE, to indicate
+ * whether we should fetch the list for VACUUM or ANALYZE. It's
+ * passed as a separate argument, so that the caller can build
+ * separate lists for a combined "VACUUM ANALYZE".
  */
 static List *
-get_rel_oids(Oid relid, VacuumStmt *vacstmt)
+get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
+
+	Assert(stmttype == VACOPT_VACUUM || stmttype == VACOPT_ANALYZE);
 
 	/* OID supplied by VACUUM's caller? */
 	if (OidIsValid(relid))
@@ -1030,7 +1039,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt)
 	}
 	else if (vacstmt->relation)
 	{
-		if ((vacstmt->options & VACOPT_VACUUM) != 0)
+		if (stmttype == VACOPT_VACUUM)
 		{
 			/* Process a specific relation */
 			Oid			relid;
@@ -1039,8 +1048,6 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt)
 			/* the caller should've separated VACUUMs and ANALYZEs into separate
 			 * commands before getting here.
 			 */
-			Assert((vacstmt->options & VACOPT_ANALYZE) == 0);
-
 			relid = RangeVarGetRelid(vacstmt->relation, false);
 
 			if (rel_is_partitioned(relid))
@@ -1065,9 +1072,6 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt)
 		}
 		else
 		{
-			Assert((vacstmt->options & VACOPT_ANALYZE) != 0);
-			Assert((vacstmt->options & VACOPT_VACUUM) == 0);
-
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			/**
 			 * ANALYZE one relation (optionally, a list of columns).
