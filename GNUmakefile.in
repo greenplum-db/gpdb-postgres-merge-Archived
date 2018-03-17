@@ -56,8 +56,9 @@ install:
 	$(MAKE) -C contrib/gp_internal_tools $@
 	$(MAKE) -C contrib/gp_cancel_query $@
 	$(MAKE) -C contrib/indexscan $@ 
-	$(MAKE) -C contrib/pg_upgrade_support $@
-	$(MAKE) -C contrib/pg_upgrade $@
+	# GPDB_91_MERGE_FIXME: pg_upgrade disabled for now
+	#$(MAKE) -C contrib/pg_upgrade_support $@
+	#$(MAKE) -C contrib/pg_upgrade $@
 	$(MAKE) -C contrib/hstore $@
 	$(MAKE) -C contrib/pgcrypto $@
 	$(MAKE) -C gpMgmt $@
