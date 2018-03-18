@@ -2008,7 +2008,7 @@ BeginCopyTo(Relation rel,
 	MemoryContext oldcontext;
 
 	if (rel != NULL && rel->rd_rel->relkind != RELKIND_RELATION &&
-		RelationIsExternal(rel))
+		!RelationIsExternal(rel))
 	{
 		if (rel->rd_rel->relkind == RELKIND_VIEW)
 			ereport(ERROR,
