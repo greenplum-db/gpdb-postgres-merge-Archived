@@ -5620,6 +5620,16 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 
 	if (aggstrategy == AGG_HASHED)
 	{
+		AggClauseCosts dummy_aggcosts;
+
+		/* Like in cost_agg, use all-zero per-aggregate costs if NULL is passed */
+		if (aggcosts == NULL)
+		{
+			Assert(aggstrategy == AGG_HASHED);
+			MemSet(&dummy_aggcosts, 0, sizeof(AggClauseCosts));
+			aggcosts = &dummy_aggcosts;
+		}
+
 		/* The following estimate is very rough but good enough for planning. */
 		entrywidth = agg_hash_entrywidth(aggcosts->numAggs,
 								   sizeof(HeapTupleData) + sizeof(HeapTupleHeaderData) + plan->plan_width,
