@@ -3679,6 +3679,25 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
+				/* GPDB additions */
+			case AT_SetDistributedBy:
+			case AT_PartAdd:
+			case AT_PartAddForSplit:
+			case AT_PartAlter:
+			case AT_PartDrop:
+			case AT_PartExchange:
+			case AT_PartRename:
+			case AT_PartSetTemplate:
+			case AT_PartSplit:
+			case AT_PartTruncate:
+			case AT_PartAddInternal:
+				/*
+				 * GPDB_91_MERGE_FIXME: Is AccessExclusiveLock unnecessarily strict for
+				 * some of these?
+				 */
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
 			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
@@ -17670,12 +17689,17 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_ReAddIndex: /* internal to commands/tablecmds.c */
 			cmdstring = pstrdup("add index or primary/unique key to");
 			break;
-			
+
 		case AT_AddConstraint: /* add constraint */
 		case AT_AddConstraintRecurse: /* internal to commands/tablecmds.c */
+		case AT_AddIndexConstraint:
 			cmdstring = pstrdup("add a constraint to");
 			break;
-			
+
+		case AT_ValidateConstraint:
+			cmdstring = pstrdup("validate constraint of");
+			break;
+
 		case AT_ProcessedConstraint: /* pre-processed add constraint (local in parser/analyze.c) */
 			break;
 
@@ -17729,7 +17753,16 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_DropInherit: /* NO INHERIT parent */
 			cmdstring = pstrdup("alter inheritance on");
 			break;
-			
+
+		case AT_AddOf:
+		case AT_DropOf:
+			cmdstring = pstrdup("alter OF type on");
+			break;
+
+		case AT_GenericOptions:
+			cmdstring = pstrdup("alter options on");
+			break;
+
 		case AT_SetDistributedBy: /* SET DISTRIBUTED BY */
 			cmdstring = pstrdup("set distributed on");
 			break;
