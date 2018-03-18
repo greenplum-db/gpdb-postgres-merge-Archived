@@ -377,6 +377,9 @@ cur_row_rejected = false; /* reset for next run */ \
 cstate->cur_attname = NULL;\
 continue; /* move on to the next data line */
 
+
+static volatile CopyState glob_cstate = NULL;
+
 /*
  * Send copy start/stop messages for frontend copies.  These have changed
  * in past protocol redesigns.
@@ -955,6 +958,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	TupleDesc	tupDesc;
 	List	   *options;
 
+	glob_cstate = NULL;
+
 	options = stmt->options;
 
 	if (stmt->sreh && !is_from)
@@ -1137,27 +1142,30 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	}
 	else
 	{
-		cstate = BeginCopyTo(rel, stmt->query, queryString,
-							 stmt->filename, stmt->is_program,
-							 stmt->attlist, options);
-
 		/*
 		 * GPDB_91_MERGE_FIXME: ExecutorStart() is called in BeginCopyTo,
 		 * but the TRY-CATCH block only starts here. If an error is
 		 * thrown in-between, we would fail to call mppExecutorCleanup. We
 		 * really should be using a ResourceOwner or something else for
 		 * cleanup, instead of TRY-CATCH blocks...
+		 *
+		 * Update: I tried to fix this using the glob_cstate hack. It's ugly,
+		 * but fixes at least some cases that came up in regression tests.
 		 */
 		PG_TRY();
 		{
+			cstate = BeginCopyTo(rel, stmt->query, queryString,
+								 stmt->filename, stmt->is_program,
+								 stmt->attlist, options);
+
 			processed = DoCopyTo(cstate);	/* copy from database to file */
 		}
 		PG_CATCH();
 		{
-			if (cstate->queryDesc)
+			if (glob_cstate && glob_cstate->queryDesc)
 			{
 				/* should shutdown the mpp stuff such as interconnect and dispatch thread */
-				mppExecutorCleanup(cstate->queryDesc);
+				mppExecutorCleanup(glob_cstate->queryDesc);
 			}
 			PG_RE_THROW();
 		}
@@ -1679,6 +1687,8 @@ BeginCopy(bool is_from,
 
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
+
+	glob_cstate = cstate;
 
 	/*
 	 * We allocate everything used by a cstate in a new memory context. This
@@ -3998,24 +4008,27 @@ CopyFrom(CopyState cstate)
 			slot = baseSlot;
 		}
 
-		if (is_check_distkey && distData->p_nattrs > 0)
+		if (cstate->dispatch_mode == COPY_DISPATCH || is_check_distkey)
 		{
 			target_seg = GetTargetSeg(distData, slot_get_values(slot), slot_get_isnull(slot));
 
-			PG_TRY();
+			if (is_check_distkey)
 			{
-				/* check distribution key if COPY FROM ON SEGMENT */
-				if (GpIdentity.segindex != target_seg)
-					ereport(ERROR,
-							(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
-							 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
-									GpIdentity.segindex, target_seg)));
+				PG_TRY();
+				{
+					/* check distribution key if COPY FROM ON SEGMENT */
+					if (GpIdentity.segindex != target_seg)
+						ereport(ERROR,
+								(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
+								 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
+										GpIdentity.segindex, target_seg)));
+				}
+				PG_CATCH();
+				{
+					COPY_HANDLE_ERROR;
+				}
+				PG_END_TRY();
 			}
-			PG_CATCH();
-			{
-				COPY_HANDLE_ERROR;
-			}
-			PG_END_TRY();
 		}
 
 		/*
@@ -4953,7 +4966,7 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("unexpected EOF in COPY data")));
-		if (attnum < 1 || attnum > frame.fld_count)
+		if (attnum < 1 || attnum > num_phys_attrs)
 			elog(ERROR, "invalid attnum received from QD: %d", attnum);
 		m = attnum - 1;
 

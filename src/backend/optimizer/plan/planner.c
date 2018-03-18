@@ -4403,6 +4403,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	root->planner_cxt = CurrentMemoryContext;
 	root->wt_param_id = -1;
 
+	root->config = DefaultPlannerConfig();
+
 	/* Build a minimal RTE for the rel */
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
