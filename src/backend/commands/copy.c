@@ -3615,7 +3615,7 @@ CopyFrom(CopyState cstate)
 	bool		no_more_data = false;
 	bool		cur_row_rejected = false;
 	int			original_lineno_for_qe = 0; /* keep compiler happy (var referenced by macro) */
-	CdbCopy    *cdbCopy = NULL; /* never used... for compiling COPY_HANDLE_ERROR */
+	CdbCopy    *cdbCopy = NULL;
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
@@ -3739,15 +3739,6 @@ CopyFrom(CopyState cstate)
 	 */
 	ExecBSInsertTriggers(estate, resultRelInfo);
 
-	/* 
-	 * Skip header processing if dummy file get from master for COPY FROM ON
-	 * SEGMENT
-	 */
-	if (!cstate->on_segment || Gp_role != GP_ROLE_EXECUTE)
-	{
-		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
-	}
-
 	partValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
 	partNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
@@ -3812,6 +3803,7 @@ CopyFrom(CopyState cstate)
 		p_attr_types = distData->p_attr_types;
 		p_nattrs = distData->p_nattrs;
 
+
 		/* store the COPY command string in cdbcopy_cmd */
 		char *cdbcopy_cmd = CopyFromCreateDispatchCommand(cstate,
 													policy,
@@ -3847,6 +3839,15 @@ CopyFrom(CopyState cstate)
 		PG_TRY();
 		{
 			cdbCopyStart(cdbCopy, cdbcopy_cmd, cstate->rel->rd_cdbpolicy);
+
+			/*
+			 * Skip header processing if dummy file get from master for COPY FROM ON
+			 * SEGMENT
+			 */
+			if (!cstate->on_segment)
+			{
+				CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
+			}
 		}
 		PG_CATCH();
 		{
