@@ -851,11 +851,13 @@ processSequenceRequest(int sockfd )
 	}
 	PG_CATCH();
 	{
+		AbortOutOfAnyTransaction();
 		if (!elog_demote(LOG))
 		{
     		elog(LOG, "unable to demote error");
 			PG_RE_THROW();
 		}
+		FlushErrorState();
 		return false;
 	}
 	PG_END_TRY();
