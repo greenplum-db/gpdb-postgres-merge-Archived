@@ -924,10 +924,13 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				{
 					set_upper_references(glob, plan, rtoffset);
 				}
-				splan->plan.targetlist =
-					fix_scan_list(glob, splan->plan.targetlist, rtoffset);
-				splan->plan.qual =
-					fix_scan_list(glob, splan->plan.qual, rtoffset);
+				else
+				{
+					splan->plan.targetlist =
+						fix_scan_list(glob, splan->plan.targetlist, rtoffset);
+					splan->plan.qual =
+						fix_scan_list(glob, splan->plan.qual, rtoffset);
+				}
 
 				/* resconstantqual can't contain any subplan variable refs */
 				splan->resconstantqual =
