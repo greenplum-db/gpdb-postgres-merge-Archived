@@ -2111,7 +2111,7 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 		if (!target)
 			elog(ERROR, "no tlist entry for key %d", keyresno);
 		/* Deparse the expression, showing any top-level cast */
-		exprstr = deparse_expression((Node *) target->expr, context,
+		exprstr = deparse_expr_sweet((Node *) target->expr, context,
 									 useprefix, true);
 		result = lappend(result, exprstr);
 	}

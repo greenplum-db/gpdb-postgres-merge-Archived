@@ -2255,11 +2255,10 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
                    const char *qlabel, List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = planstate->plan;
-    Plan       *subplan = plan->lefttree;
     List	   *context;
 	List	   *result = NIL;
     char	   *exprstr;
-    bool		useprefix = list_length(es->rtable) > 1;
+    bool		useprefix;
     int			keyno;
 	int         num_null_cols = 0;
 	int         rollup_gs_times = 0;
@@ -2267,21 +2266,11 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
     if (nkeys <= 0)
 		return;
 
-    Node *outerPlan = (Node *) outerPlan(subplan);
-
-	/*
-	 * Dig the child nodes of the subplan. This logic should match that in
-	 * push_plan function, in ruleutils.c!
-	 */
-	if (IsA(subplan, Append))
-		outerPlan = linitial(((Append *) subplan)->appendplans);
-	else if (IsA(subplan, Sequence))
-		outerPlan = (Node *) llast(((Sequence *) subplan)->subplans);
-
 	/* Set up deparse context */
-	context = deparse_context_for_planstate((Node *) subplan,
+	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
 											es->rtable);
+	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	if (IsA(plan, Agg))
 	{
@@ -2293,7 +2282,7 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
     {
 	    /* find key expression in tlist */
 	    AttrNumber      keyresno = subplanColIdx[keyno];
-	    TargetEntry    *target = get_tle_by_resno(subplan->targetlist, keyresno);
+	    TargetEntry    *target = get_tle_by_resno(plan->targetlist, keyresno);
 		char grping_str[50];
 
 	    if (!target)
