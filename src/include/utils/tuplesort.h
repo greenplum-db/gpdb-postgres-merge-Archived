@@ -297,6 +297,10 @@ switcheroo_tuplesort_begin_cluster(TupleDesc tupDesc,
 {
 	switcheroo_Tuplesortstate *state;
 
+	/* GPDB_91_MERGE_FIXME: The new 'cluster' variant hasn't been implemented
+	 * in mksort yet.
+	 */
+#if 0
 	if (gp_enable_mk_sort)
 	{
 		state = (switcheroo_Tuplesortstate *)
@@ -304,12 +308,14 @@ switcheroo_tuplesort_begin_cluster(TupleDesc tupDesc,
 									   workMem, randomAccess);
 	}
 	else
+#endif
 	{
 		state = (switcheroo_Tuplesortstate *)
 			tuplesort_begin_cluster_pg(tupDesc, indexRel,
 									   workMem, randomAccess);
 	}
 	state->is_mk_tuplesortstate = gp_enable_mk_sort;
+	state->is_mk_tuplesortstate = false;
 	return state;
 }
 

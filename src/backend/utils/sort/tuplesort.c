@@ -1724,19 +1724,15 @@ tuplesort_gettupleslot_pos(Tuplesortstate *state, TuplesortPos *pos,
 HeapTuple
 tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
 {
-	// Need to extract a HeapTuple from here somehow...
-	elog(ERROR, "GPDB_91_MERGE_FIXME: not implemented");
-#if 0
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
-	if (!tuplesort_gettuple_common(state, forward, &stup, should_free))
+	if (!tuplesort_gettuple_common_pos(state, &state->pos, forward, &stup, should_free))
 		stup.tuple = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	return stup.tuple;
-#endif
+	return (HeapTuple) stup.tuple;
 }
 
 /*
