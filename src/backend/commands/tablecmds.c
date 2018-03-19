@@ -9907,7 +9907,6 @@ ATPrepAlterColumnType(List **wqueue,
 		 */
 		/* GPDB: we always need the RTE */
 		/* GPDB_91_MERGE_FIXME: Why do we always need the RTE? */
-		if (true)
 		{
 			RangeTblEntry *rte;
 
@@ -9918,6 +9917,10 @@ ATPrepAlterColumnType(List **wqueue,
 												false,
 												true);
 			addRTEtoQuery(pstate, rte, false, true, true);
+		}
+
+		if (transform)
+		{
 			transform = transformExpr(pstate, transform,
 									  EXPR_KIND_ALTER_COL_TRANSFORM);
 
@@ -9926,20 +9929,6 @@ ATPrepAlterColumnType(List **wqueue,
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 					  errmsg("transform expression must not return a set")));
-
-			/* No subplans or aggregates, either... */
-			if (pstate->p_hasSubLinks)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use subquery in transform expression")));
-			if (pstate->p_hasAggs)
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate function in transform expression")));
-			if (pstate->p_hasWindowFuncs)
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("cannot use window function in transform expression")));
 		}
 		else
 		{
