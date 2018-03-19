@@ -365,7 +365,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				/* Creating index-page GISTSearchItem */
 				item->blkno = ItemPointerGetBlockNumber(&it->t_tid);
 				/* lsn of current page is lsn of parent page for child */
-				item->data.parentlsn = PageGetLSN(page);
+				item->data.parentlsn = BufferGetLSNAtomic(buffer);
 			}
 
 			/* Insert it into the queue using new distance data */
@@ -548,13 +548,21 @@ Datum
 gistgetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	Node	   *n = (Node *) PG_GETARG_POINTER(1);
+	TIDBitmap  *tbm;
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	GISTSearchItem fakeItem;
 
+	if (n == NULL)
+		tbm = tbm_create(work_mem * 1024L);
+	else if (!IsA(n, TIDBitmap))
+		elog(ERROR, "non hash bitmap");
+	else
+		tbm = (TIDBitmap *) n;
+
 	if (!so->qual_ok)
-		PG_RETURN_INT64(0);
+		PG_RETURN_POINTER(tbm);
 
 	pgstat_count_index_scan(scan->indexRelation);
 
@@ -584,5 +592,5 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 		pfree(item);
 	}
 
-	PG_RETURN_INT64(ntids);
+	PG_RETURN_POINTER(tbm);
 }
