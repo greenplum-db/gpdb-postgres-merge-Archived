@@ -587,7 +587,14 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
 										  (void *) &loccontext);
-			break;
+			/*
+			 * GPDB_91_MERGE_FIXME: is it sane to return from here? If we
+			 * don't, compilation errors occur on certain compilers such as
+			 * clang and the GCC used in CI.  The compilation fails because
+			 * collation and strength variables may be used uninitialized
+			 * (-Wmaybe-uninitialized) after the switch statement.
+			 */
+			return false;
 		case T_List:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
