@@ -246,6 +246,7 @@ SELECT proname, pronargs
 FROM pg_proc 
 WHERE pronargs > 8 and prolang = 12 AND
 	proname NOT IN ('gp_add_segment') AND
+	proname NOT LIKE '%costestimate' AND
     NOT proisagg AND 
     NOT proiswindow;
 
