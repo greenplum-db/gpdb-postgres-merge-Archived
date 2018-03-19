@@ -2002,7 +2002,13 @@ auth_peer(hbaPort *port)
 
 	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
-	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
+	/*
+	 * GPDB: check for port->hba == NULL here, because auth_peer is used
+	 * without an HBA entry in the short-circuited QD->QE authentication,
+	 * from internal_client_authentication().
+	 */
+	return check_usermap(port->hba ? port->hba->usermap : NULL,
+						 port->user_name, ident_user, false);
 }
 #endif   /* HAVE_UNIX_SOCKETS */
 
