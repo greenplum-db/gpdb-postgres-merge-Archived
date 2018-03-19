@@ -458,7 +458,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 			 * of the child's baserel.  Transform the pathkey list to refer to
 			 * columns of the appendrel.
 			 */
-			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL && index_pathkeys)
 			{
 				AppendRelInfo *appinfo = NULL;
 				RelOptInfo *appendrel = NULL;
