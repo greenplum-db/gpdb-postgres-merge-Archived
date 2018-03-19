@@ -1368,6 +1368,14 @@ AlterEnum(AlterEnumStmt *stmt)
 				 stmt->newValNeighbor, stmt->newValIsAfter);
 
 	ReleaseSysCache(tup);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
 }
 
 

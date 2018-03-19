@@ -337,6 +337,15 @@ restart:
 		newOid = binary_upgrade_next_pg_enum_oid;
 		binary_upgrade_next_pg_enum_oid = InvalidOid;
 	}
+	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
+	{
+		/*
+		 * In QE, the dispatcher has alrady allocated the OID for us. Like in
+		 * EnumValuesCreate(), it is delivered out-of-band, and set on the tuple by
+		 * heap_insert().
+		 */
+		newOid = InvalidOid;
+	}
 	else
 	{
 		/*

@@ -1210,7 +1210,14 @@ standard_ProcessUtility(Node *parsetree,
 			 * with enum OID values getting into indexes and then having their
 			 * defining pg_enum entries go away.
 			 */
-			PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+			if (Gp_role != GP_ROLE_EXECUTE)
+			{
+				/*
+				 * Don't allow master to call this in a transaction block.  Segments are ok as
+				 * distributed transaction participants.
+				 */
+				PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+			}
 			AlterEnum((AlterEnumStmt *) parsetree);
 			break;
 

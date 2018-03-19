@@ -2773,6 +2773,19 @@ _readCookedConstraint(void)
 	READ_DONE();
 }
 
+static AlterEnumStmt *
+_readAlterEnumStmt(void)
+{
+	READ_LOCALS(AlterEnumStmt);
+
+	READ_NODE_FIELD(typeName);
+	READ_STRING_FIELD(newVal);
+	READ_STRING_FIELD(newValNeighbor);
+	READ_BOOL_FIELD(newValIsAfter);
+
+	READ_DONE();
+}
+
 static CreateFdwStmt *
 _readCreateFdwStmt(void)
 {
@@ -3447,6 +3460,9 @@ readNodeBinary(void)
 				break;
 			case T_CreateEnumStmt:
 				return_value = _readCreateEnumStmt();
+				break;
+			case T_AlterEnumStmt:
+				return_value = _readAlterEnumStmt();
 				break;
 			case T_CreateCastStmt:
 				return_value = _readCreateCastStmt();

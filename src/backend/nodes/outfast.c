@@ -1207,7 +1207,6 @@ _outSerializedParamExternData(StringInfo str, SerializedParamExternData *node)
 		_outDatum(str, node->value, node->plen, node->pbyval);
 }
 
-
 static void
 _outCookedConstraint(StringInfo str, CookedConstraint *node)
 {
@@ -1219,6 +1218,17 @@ _outCookedConstraint(StringInfo str, CookedConstraint *node)
 	WRITE_NODE_FIELD(expr);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_INT_FIELD(inhcount);
+}
+
+static void
+_outAlterEnumStmt(StringInfo str, AlterEnumStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERENUMSTMT");
+
+	WRITE_NODE_FIELD(typeName);
+	WRITE_STRING_FIELD(newVal);
+	WRITE_STRING_FIELD(newValNeighbor);
+	WRITE_BOOL_FIELD(newValIsAfter);
 }
 
 static void
@@ -1855,6 +1865,10 @@ _outNode(StringInfo str, void *obj)
 			case T_CreateEnumStmt:
 				_outCreateEnumStmt(str,obj);
 				break;
+			case T_AlterEnumStmt:
+				_outAlterEnumStmt(str, obj);
+				break;
+
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str,obj);
 				break;
