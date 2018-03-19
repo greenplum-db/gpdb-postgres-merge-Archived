@@ -744,8 +744,7 @@ create_mksort_context(MKContext *mkctxt,
 
 			/* GPDB_91_MERGE_FIXME: these MKLV_TYPE_CHAR and MKLV_TYPE_TEXT
 			 * fastpaths only work with the default collation of the database.
-			 *
-
+			 */
 			if (!lc_collate_is_c(sinfo->scanKey.sk_collation) &&
 				sinfo->scanKey.sk_collation == DEFAULT_COLLATION_OID)
 			{
