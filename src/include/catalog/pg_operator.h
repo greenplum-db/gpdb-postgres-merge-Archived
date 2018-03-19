@@ -1725,32 +1725,56 @@ DESCR("greater than or equal");
 
 /* gpxlogloc operators */
 DATA(insert OID = 3325 (  "="     PGNSP PGUID b t f 3310 3310	16 3325 3326 gpxlogloceq eqsel eqjoinsel ));
+DESCR("equal");
 DATA(insert OID = 3326 (  "<>"    PGNSP PGUID b f f 3310 3310	16 3326 3325 gpxloglocne neqsel neqjoinsel ));
+DESCR("not equal");
 DATA(insert OID = 3327 (  "<"     PGNSP PGUID b f f 3310 3310	16 3328 3330 gpxlogloclt scalarltsel scalarltjoinsel ));
+DESCR("less than");
 DATA(insert OID = 3328 (  ">"     PGNSP PGUID b f f 3310 3310	16 3327 3329 gpxloglocgt scalargtsel scalargtjoinsel ));
+DESCR("greater than");
 DATA(insert OID = 3329 (  "<="    PGNSP PGUID b f f 3310 3310	16 3330 3328 gpxloglocle scalarltsel scalarltjoinsel ));
+DESCR("less than or equal");
 DATA(insert OID = 3330 (  ">="    PGNSP PGUID b f f 3310 3310	16 3329 3327 gpxloglocge scalargtsel scalargtjoinsel ));
+DESCR("greater than or equal");
 
 /* operators for complex data type */
 DATA(insert OID = 3469 (  "="	   PGNSP PGUID b t f 7198 7198 16 3469 3470 complex_eq eqsel eqjoinsel)); 
+DESCR("equal");
 DATA(insert OID = 3470 (  "<>"	   PGNSP PGUID b f f 7198 7198 16 3470 3469 complex_ne  neqsel neqjoinsel)); 
+DESCR("not equal");
 DATA(insert OID = 3471 (  "@"	   PGNSP PGUID l f f 0   7198 701 0	0	 complexabs  - -)); 
+DESCR("absolute value");
 DATA(insert OID = 3472 (  "+"	   PGNSP PGUID b f f 7198 7198 7198 0	0	complex_pl  - -));
+DESCR("add");
 DATA(insert OID = 3473 (  "+"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_up  - -));
+DESCR("add");
 DATA(insert OID = 3474 (  "-"	   PGNSP PGUID b f f 7198 7198 7198 0	0	 complex_mi  - -));
+DESCR("subtract");
 DATA(insert OID = 3475 (  "-"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_um  - -));
+DESCR("subtract");
 DATA(insert OID = 3476 (  "*"	   PGNSP PGUID b f f 7198 7198 7198 0	0	 complex_mul - -));
+DESCR("multiply");
 DATA(insert OID = 3477 (  "/"	   PGNSP PGUID b f f 7198 7198 7198 0	0	 complex_div - -)); 
+DESCR("divide");
 DATA(insert OID = 3478 (  "^"	   PGNSP PGUID b f f 7198 7198 7198 0	0	 complex_power 	- -));
+DESCR("exponentiation");
 DATA(insert OID = 3479 (  "|/"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_sqrt 	- -));
+DESCR("square root");
 DATA(insert OID = 3480 (  "||/"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_cbrt	- -));
+DESCR("cube root");
 DATA(insert OID = 3481 (  "<<"	   PGNSP PGUID b f f 7198 7198 16 3482 3484 complex_lt  scalarltsel scalarltjoinsel));
+DESCR("less than (for btree indexes)");
 DATA(insert OID = 3482 (  ">>"	   PGNSP PGUID b f f 7198 7198 16 3481 3483 complex_gt  scalargtsel scalargtjoinsel));
+DESCR("greater than (for btree indexes)");
 DATA(insert OID = 3483 (  "<<="	   PGNSP PGUID b f f 7198 7198 16 3484 3482 complex_lte  scalarltsel scalarltjoinsel));
+DESCR("less than or equal (for btree indexes)");
 DATA(insert OID = 3484 (  ">>="	   PGNSP PGUID b f f 7198 7198 16 3483 3481 complex_gte  scalargtsel scalargtjoinsel));
+DESCR("greater than or equal (for btree indexes)");
 
 DATA(insert OID = 7095 (  "/"    PGNSP PGUID b f f 1186  1186 701          0  0 interval_interval_div - - ));
+DESCR("divide");
 DATA(insert OID = 7096 (  "%"    PGNSP PGUID b f f 1186  1186 1186         0  0 interval_interval_mod - - ));
+DESCR("modulus");
 
 /*
  * function prototypes

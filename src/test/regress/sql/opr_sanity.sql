@@ -736,11 +736,8 @@ ORDER BY 1, 2;
 -- to avoid this because it opens the door for confusion in connection with
 -- ORDER BY: novices frequently put the ORDER BY in the wrong place.
 -- See the fate of the single-argument form of string_agg() for history.
-<<<<<<< HEAD
 -- (Note: we don't forbid users from creating such aggregates; the policy is
 -- just to think twice before creating built-in aggregates like this.)
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- The only aggregates that should show up here are count(x) and count(*).
 
 SELECT p1.oid::regprocedure, p2.oid::regprocedure
@@ -750,23 +747,12 @@ WHERE p1.oid < p2.oid AND p1.proname = p2.proname AND
     array_dims(p1.proargtypes) != array_dims(p2.proargtypes)
 ORDER BY 1;
 
-<<<<<<< HEAD
--- For the same reason, we avoid creating built-in variadic aggregates.
-
-SELECT oid, proname
-FROM pg_proc AS p
-WHERE proisagg AND provariadic != 0;
-
--- For the same reason, built-in aggregates with default arguments are no good.
-=======
 -- For the same reason, aggregates with default arguments are no good.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 SELECT oid, proname
 FROM pg_proc AS p
 WHERE proisagg AND proargdefaults IS NOT NULL;
 
-<<<<<<< HEAD
 -- For the same reason, we avoid creating built-in variadic aggregates, except
 -- that variadic ordered-set aggregates are OK (since they have special syntax
 -- that is not subject to the misplaced ORDER BY issue).
@@ -775,8 +761,6 @@ SELECT p.oid, proname
 FROM pg_proc AS p JOIN pg_aggregate AS a ON a.aggfnoid = p.oid
 WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- **************** pg_opfamily ****************
 
 -- Look for illegal values in pg_opfamily fields

@@ -922,11 +922,8 @@ ORDER BY 1, 2;
 -- to avoid this because it opens the door for confusion in connection with
 -- ORDER BY: novices frequently put the ORDER BY in the wrong place.
 -- See the fate of the single-argument form of string_agg() for history.
-<<<<<<< HEAD
 -- (Note: we don't forbid users from creating such aggregates; the policy is
 -- just to think twice before creating built-in aggregates like this.)
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- The only aggregates that should show up here are count(x) and count(*).
 SELECT p1.oid::regprocedure, p2.oid::regprocedure
 FROM pg_proc AS p1, pg_proc AS p2
@@ -934,34 +931,12 @@ WHERE p1.oid < p2.oid AND p1.proname = p2.proname AND
     p1.proisagg AND p2.proisagg AND
     array_dims(p1.proargtypes) != array_dims(p2.proargtypes)
 ORDER BY 1;
-<<<<<<< HEAD
-       oid        |          oid          
-------------------+-----------------------
- count("any")     | count()
- string_agg(text) | string_agg(text,text)
-(2 rows)
-
--- For the same reason, we avoid creating built-in variadic aggregates.
-SELECT oid, proname
-FROM pg_proc AS p
-WHERE proisagg AND provariadic != 0;
- oid  |   proname    
-------+--------------
- 3986 | rank
- 3988 | percent_rank
- 3990 | cume_dist
- 3992 | dense_rank
-(4 rows)
-
--- For the same reason, built-in aggregates with default arguments are no good.
-=======
      oid      |   oid   
 --------------+---------
  count("any") | count()
 (1 row)
 
 -- For the same reason, aggregates with default arguments are no good.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 SELECT oid, proname
 FROM pg_proc AS p
 WHERE proisagg AND proargdefaults IS NOT NULL;
@@ -969,7 +944,6 @@ WHERE proisagg AND proargdefaults IS NOT NULL;
 -----+---------
 (0 rows)
 
-<<<<<<< HEAD
 -- For the same reason, we avoid creating built-in variadic aggregates, except
 -- that variadic ordered-set aggregates are OK (since they have special syntax
 -- that is not subject to the misplaced ORDER BY issue).
@@ -980,8 +954,6 @@ WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 -----+---------
 (0 rows)
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- **************** pg_opfamily ****************
 -- Look for illegal values in pg_opfamily fields
 SELECT p1.oid
@@ -1189,7 +1161,6 @@ ORDER BY 1, 2, 3;
        2742 |            2 | @@@
        2742 |            3 | <@
        2742 |            4 | =
-<<<<<<< HEAD
        7013 |            1 | <
        7013 |            1 | ~<~
        7013 |            2 | <=
@@ -1199,10 +1170,7 @@ ORDER BY 1, 2, 3;
        7013 |            4 | ~>=~
        7013 |            5 | >
        7013 |            5 | ~>~
-(52 rows)
-=======
-(40 rows)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+(53 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -1381,19 +1349,12 @@ FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
          amproclefttype = amprocrighttype AND amproclefttype = opcintype
 WHERE am.amname = 'gist' OR am.amname = 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
-<<<<<<< HEAD
-HAVING count(*) < amsupport - 1 OR amprocfamily IS NULL;
+HAVING (count(*) != amsupport AND count(*) != amsupport - 1)
+    OR amprocfamily IS NULL;
  amname |   opcname    | count 
 --------+--------------+-------
  gin    | _complex_ops |     1
 (1 row)
-=======
-HAVING (count(*) != amsupport AND count(*) != amsupport - 1)
-    OR amprocfamily IS NULL;
- amname | opcname | count 
---------+---------+-------
-(0 rows)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
