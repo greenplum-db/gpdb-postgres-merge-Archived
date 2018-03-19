@@ -801,9 +801,6 @@ postquel_end(execution_state *es)
 		Oid			relationOid = InvalidOid; 	/* relation that is modified */
 		AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL; 	/* command type */
 
-		if (es->qd->operation != CMD_SELECT)
-			AfterTriggerEndQuery(es->qd->estate);
-
 		if (Gp_role == GP_ROLE_DISPATCH)
 			autostats_get_cmdtype(es->qd, &cmdType, &relationOid);
 
