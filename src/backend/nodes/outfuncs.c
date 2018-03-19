@@ -2562,7 +2562,6 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
@@ -2574,6 +2573,8 @@ _outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
 	WRITE_STRING_FIELD(servername);
 	WRITE_NODE_FIELD(options);
 }
+
+#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outColumnReferenceStorageDirective(StringInfo str, ColumnReferenceStorageDirective *node)
@@ -4439,7 +4440,7 @@ _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 	WRITE_NODE_FIELD(funcname);
 	WRITE_NODE_FIELD(args);
 	WRITE_BOOL_FIELD(row);
-	WRITE_BOOL_FIELD(timing);
+	WRITE_INT_FIELD(timing);
 	WRITE_INT_FIELD(events);
 	WRITE_NODE_FIELD(columns);
 	WRITE_NODE_FIELD(whenClause);

@@ -1100,11 +1100,9 @@ _readCreateExtensionStmt(void)
 	READ_DONE();
 }
 
-static CreateStmt *
-_readCreateStmt(void)
+static void
+_readCreateStmt_common(CreateStmt *local_node)
 {
-	READ_LOCALS(CreateStmt);
-
 	READ_NODE_FIELD(relation);
 	READ_NODE_FIELD(tableElts);
 	READ_NODE_FIELD(inhRelations);
@@ -1137,17 +1135,39 @@ _readCreateStmt(void)
 	 * Some extra checks to make sure we didn't get lost
 	 * during serialization/deserialization
 	 */
-	Assert(local_node->relKind == RELKIND_INDEX ||
-		   local_node->relKind == RELKIND_RELATION ||
+	Assert(local_node->relKind == RELKIND_RELATION ||
+		   local_node->relKind == RELKIND_INDEX ||
 		   local_node->relKind == RELKIND_SEQUENCE ||
-		   local_node->relKind == RELKIND_UNCATALOGED ||
 		   local_node->relKind == RELKIND_TOASTVALUE ||
 		   local_node->relKind == RELKIND_VIEW ||
 		   local_node->relKind == RELKIND_COMPOSITE_TYPE ||
+		   local_node->relKind == RELKIND_FOREIGN_TABLE ||
+		   local_node->relKind == RELKIND_UNCATALOGED ||
 		   local_node->relKind == RELKIND_AOSEGMENTS ||
 		   local_node->relKind == RELKIND_AOBLOCKDIR ||
 		   local_node->relKind == RELKIND_AOVISIMAP);
 	Assert(local_node->oncommit <= ONCOMMIT_DROP);
+}
+
+static CreateStmt *
+_readCreateStmt(void)
+{
+	READ_LOCALS(CreateStmt);
+
+	_readCreateStmt_common(local_node);
+
+	READ_DONE();
+}
+
+static CreateForeignTableStmt *
+_readCreateForeignTableStmt(void)
+{
+	READ_LOCALS(CreateForeignTableStmt);
+
+	_readCreateStmt_common(&local_node->base);
+
+	READ_STRING_FIELD(servername);
+	READ_NODE_FIELD(options);
 
 	READ_DONE();
 }
@@ -3345,6 +3365,9 @@ readNodeBinary(void)
 
 			case T_CreateStmt:
 				return_value = _readCreateStmt();
+				break;
+			case T_CreateForeignTableStmt:
+				return_value = _readCreateForeignTableStmt();
 				break;
 			case T_ColumnReferenceStorageDirective:
 				return_value = _readColumnReferenceStorageDirective();

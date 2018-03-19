@@ -423,6 +423,7 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 	numCols = list_length(node->mergeclauses);
 
 	WRITE_OID_ARRAY(mergeFamilies, numCols);
+	WRITE_OID_ARRAY(mergeCollations, numCols);
 	WRITE_INT_ARRAY(mergeStrategies, numCols, int);
 	WRITE_BOOL_ARRAY(mergeNullsFirst, numCols);
 
@@ -676,10 +677,8 @@ _outCreateExtensionStmt(StringInfo str, CreateExtensionStmt *node)
 }
 
 static void
-_outCreateStmt(StringInfo str, CreateStmt *node)
+_outCreateStmt_common(StringInfo str, CreateStmt *node)
 {
-	WRITE_NODE_TYPE("CREATESTMT");
-
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(tableElts);
 	WRITE_NODE_FIELD(inhRelations);
@@ -704,6 +703,25 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	WRITE_OID_FIELD(ownerid);
 	WRITE_BOOL_FIELD(buildAoBlkdir);
 	WRITE_NODE_FIELD(attr_encodings);
+}
+
+static void
+_outCreateStmt(StringInfo str, CreateStmt *node)
+{
+	WRITE_NODE_TYPE("CREATESTMT");
+
+	_outCreateStmt_common(str, node);
+}
+
+static void
+_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
+{
+	WRITE_NODE_TYPE("CREATEFOREIGNTABLESTMT");
+
+	_outCreateStmt_common(str, &node->base);
+
+	WRITE_STRING_FIELD(servername);
+	WRITE_NODE_FIELD(options);
 }
 
 static void
