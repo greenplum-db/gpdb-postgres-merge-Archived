@@ -5231,7 +5231,7 @@ check_optimizer(bool *newval, void **extra, GucSource source)
 {
 #ifndef USE_ORCA
 	if (*newval)
-		GUC_check_errmsg("ORCA is not supported by this build")));
+		GUC_check_errmsg("ORCA is not supported by this build");
 #endif
 
 	if (!optimizer_control)
