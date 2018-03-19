@@ -395,8 +395,14 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				 partitionBy->partQuiet != PART_VERBO_NORMAL)
 			bQuiet = true;
 	}
-	transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
-						   likeDistributedBy, bQuiet);
+
+	/*
+	 * Transform DISTRIBUTED BY (or constuct a default one, if not given
+	 *  explicitly). Not for foreign tables, though.
+	 */
+	if (stmt->relKind == RELKIND_RELATION)
+		transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
+							   likeDistributedBy, bQuiet);
 
 	/*
 	 * Process table partitioning clause
