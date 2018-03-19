@@ -386,13 +386,8 @@ CREATE TABLE trigger_test (
         v varchar
 );
 
-<<<<<<< HEAD
-CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger 
-LANGUAGE plpgsql NO SQL AS $$
-=======
 CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger
 LANGUAGE plpgsql AS $$
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 declare
 

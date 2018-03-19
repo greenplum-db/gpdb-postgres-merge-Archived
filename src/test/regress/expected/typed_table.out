@@ -64,12 +64,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "gppersons1_pkey"
  id     | integer | not null
  name   | text    | 
 Indexes:
-<<<<<<< HEAD
     "gppersons1_pkey" PRIMARY KEY, btree (id)
-=======
-    "persons2_pkey" PRIMARY KEY, btree (id)
-    "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 Typed table of type: person_type
 Distributed by: (id)
 
@@ -84,7 +79,7 @@ NOTICE:  CREATE TABLE / UNIQUE will create implicit index "gppersons2_name_key" 
  id     | integer | 
  name   | text    | 
 Indexes:
-    "gppersons2_name_key" UNIQUE, btree (name)
+    "gppersons2_name_key" UNIQUE CONSTRAINT, btree (name)
 Typed table of type: person_type
 Distributed by: (name)
 

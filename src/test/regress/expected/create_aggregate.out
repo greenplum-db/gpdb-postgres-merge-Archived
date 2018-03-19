@@ -3,11 +3,7 @@
 --
 -- all functions CREATEd
 CREATE AGGREGATE newavg (
-<<<<<<< HEAD
-   sfunc = int4_avg_accum, basetype = int4, stype = bytea, 
-=======
-   sfunc = int4_avg_accum, basetype = int4, stype = _int8,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+   sfunc = int4_avg_accum, basetype = int4, stype = bytea,
    finalfunc = int8_avg,
    initcond1 = '{0}'
 );

@@ -245,13 +245,16 @@ CREATE TABLE array_index_op_test (
 	i			int4[],
 	t			text[]
 );
-<<<<<<< HEAD
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'seqno' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
-CREATE TABLE test_tsvector( 
-	t text, 
-	a tsvector 
+CREATE TABLE IF NOT EXISTS test_tsvector(
+	t text,
+	a tsvector
 );
+CREATE TABLE IF NOT EXISTS test_tsvector(
+	t text
+);
+NOTICE:  relation "test_tsvector" already exists, skipping
 -- large custom format table definitions
 drop external table if exists large_custom_format_definitions;
 NOTICE:  table "large_custom_format_definitions" does not exist, skipping
@@ -2118,13 +2121,3 @@ line_delim=E'\n'
 )
 ;
 drop external table if exists large_custom_format_definitions;
-=======
-CREATE TABLE IF NOT EXISTS test_tsvector(
-	t text,
-	a tsvector
-);
-CREATE TABLE IF NOT EXISTS test_tsvector(
-	t text
-);
-NOTICE:  relation "test_tsvector" already exists, skipping
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

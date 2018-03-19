@@ -259,17 +259,9 @@ select max(unique2) from tenk1 order by max(unique2);
 explain (costs off)
   select max(unique2) from tenk1 order by max(unique2)+1;
 select max(unique2) from tenk1 order by max(unique2)+1;
-<<<<<<< HEAD
-
--- MPP: This works in Postgres
-select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
-
--- check for correct detection of nested-aggregate errors
-select max(min(unique1)) from tenk1;
-select (select max(min(unique1)) from int8_tbl) from tenk1;
-=======
 explain (costs off)
   select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
+-- MPP: This works in Postgres
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
 
 -- try it on an inheritance tree
@@ -292,7 +284,10 @@ explain (costs off)
 select min(f1), max(f1) from minmaxtest;
 
 drop table minmaxtest cascade;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+-- check for correct detection of nested-aggregate errors
+select max(min(unique1)) from tenk1;
+select (select max(min(unique1)) from int8_tbl) from tenk1;
 
 --
 -- Test combinations of DISTINCT and/or ORDER BY
@@ -435,7 +430,12 @@ select string_agg(a,',') from (values('aaaa'),(null),('bbbb'),('cccc')) g(a);
 select string_agg(a,'AB') from (values(null),(null),('bbbb'),('cccc')) g(a);
 select string_agg(a,',') from (values(null),(null)) g(a);
 
-<<<<<<< HEAD
+-- check some implicit casting cases, as per bug #5564
+select string_agg(distinct f1, ',' order by f1) from varchar_tbl;  -- ok
+select string_agg(distinct f1::text, ',' order by f1) from varchar_tbl;  -- not ok
+select string_agg(distinct f1, ',' order by f1::text) from varchar_tbl;  -- not ok
+select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -- ok
+
 -- FILTER tests
 
 select min(unique1) filter (where unique1 > 100) from tenk1;
@@ -582,10 +582,3 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
-=======
--- check some implicit casting cases, as per bug #5564
-select string_agg(distinct f1, ',' order by f1) from varchar_tbl;  -- ok
-select string_agg(distinct f1::text, ',' order by f1) from varchar_tbl;  -- not ok
-select string_agg(distinct f1, ',' order by f1::text) from varchar_tbl;  -- not ok
-select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -- ok
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687

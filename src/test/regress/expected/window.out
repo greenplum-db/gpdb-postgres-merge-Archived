@@ -410,12 +410,8 @@ SELECT nth_value(ten, four + 1) OVER (PARTITION BY four ORDER BY ten), ten, four
            |   3 |    3
 (10 rows)
 
-<<<<<<< HEAD
 reset search_path;
-SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum 
-=======
 SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 FROM tenk1 GROUP BY ten, two;
  ten | two | gsum  |  wsum  
 -----+-----+-------+--------

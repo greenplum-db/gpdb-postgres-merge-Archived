@@ -237,7 +237,10 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 	a tsvector
 );
 
-<<<<<<< HEAD
+CREATE TABLE IF NOT EXISTS test_tsvector(
+	t text
+);
+
 -- large custom format table definitions
 drop external table if exists large_custom_format_definitions;
 create readable external table large_custom_format_definitions (
@@ -2103,8 +2106,3 @@ line_delim=E'\n'
 )
 ;
 drop external table if exists large_custom_format_definitions;
-=======
-CREATE TABLE IF NOT EXISTS test_tsvector(
-	t text
-);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
