@@ -184,9 +184,7 @@ WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in G
 -- Delete one row, add the constraint again -- should fail
 DELETE FROM tmp3 where a=5;
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
-<<<<<<< HEAD
 ERROR:  constraint "tmpconstr" for relation "tmp3" already exists
-=======
 ALTER TABLE tmp3 drop constraint tmpconstr;
 INSERT INTO tmp3 values (5,50);
 -- Try NOT VALID and then VALIDATE CONSTRAINT, but fails. Delete failure then re-validate
@@ -199,7 +197,6 @@ DELETE FROM tmp3 where a=5;
 -- Try (and succeed) and repeat to show it works on already valid constraint
 ALTER TABLE tmp3 validate constraint tmpconstr;
 ALTER TABLE tmp3 validate constraint tmpconstr;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
@@ -430,15 +427,11 @@ DETAIL:  Key (test)=(2) already exists.
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
-<<<<<<< HEAD
 ERROR:  cannot create unique index on system column
-=======
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_oid1" for table "atacc1"
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
 ERROR:  could not create unique index "atacc_test1"
 DETAIL:  Key (test)=(0) is duplicated.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int ) distributed by (test);
@@ -1556,34 +1549,26 @@ select * from another;
 (3 rows)
 
 drop table another;
-<<<<<<< HEAD
-=======
 -- table's row type
 create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);
 alter table tab1 alter column b type varchar; -- fails
 ERROR:  cannot alter table "tab1" because column "tab2"."y" uses its rowtype
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- disallow recursive containment of row types
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
 alter table recur1 add column f2 recur1[]; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
-<<<<<<< HEAD
-=======
 create domain array_of_recur1 as recur1[];
 alter table recur1 add column f2 array_of_recur1; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 create temp table recur2 (f1 int, f2 recur1);
 alter table recur1 add column f2 recur2; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
 alter table recur1 add column f2 int;
 alter table recur1 alter column f2 type recur2; -- fails
 ERROR:  composite type recur1 cannot be made a member of itself
-<<<<<<< HEAD
-=======
 -- SET STORAGE may need to add a TOAST table
 create table test_storage (a text);
 alter table test_storage alter a set storage plain;
@@ -1718,7 +1703,6 @@ rollback;
 drop table alterlock;
 drop view my_locks;
 drop type lockmodes;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 --
 -- alter function
 --

@@ -176,13 +176,8 @@ ALTER TABLE tmp_view RENAME TO tmp_view_new;
 ANALYZE tenk1;
 set enable_seqscan to off;
 set enable_bitmapscan to off;
-<<<<<<< HEAD
--- 5 values, sorted 
-SELECT unique1 FROM tenk1 WHERE unique1 < 5 ORDER BY 1;
-=======
 -- 5 values, sorted
-SELECT unique1 FROM tenk1 WHERE unique1 < 5;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+SELECT unique1 FROM tenk1 WHERE unique1 < 5 ORDER BY 1;
 reset enable_seqscan;
 reset enable_bitmapscan;
 
@@ -1128,30 +1123,22 @@ select * from another;
 
 drop table another;
 
-<<<<<<< HEAD
-=======
 -- table's row type
 create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);
 alter table tab1 alter column b type varchar; -- fails
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- disallow recursive containment of row types
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
 alter table recur1 add column f2 recur1[]; -- fails
-<<<<<<< HEAD
-=======
 create domain array_of_recur1 as recur1[];
 alter table recur1 add column f2 array_of_recur1; -- fails
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 create temp table recur2 (f1 int, f2 recur1);
 alter table recur1 add column f2 recur2; -- fails
 alter table recur1 add column f2 int;
 alter table recur1 alter column f2 type recur2; -- fails
 
-<<<<<<< HEAD
-=======
 -- SET STORAGE may need to add a TOAST table
 create table test_storage (a text);
 alter table test_storage alter a set storage plain;
@@ -1239,7 +1226,6 @@ drop table alterlock;
 drop view my_locks;
 drop type lockmodes;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 --
 -- alter function
 --

@@ -3562,10 +3562,13 @@ AlterTableGetLockLevel(List *cmds)
 				 */
 			case AT_AddColumn:	/* may rewrite heap, in some cases and visible
 								 * to SELECT */
+			case AT_AddColumnRecurse:
 			case AT_DropColumn:	/* change visible to SELECT */
+			case AT_DropColumnRecurse:
 			case AT_AddColumnToView:	/* CREATE VIEW */
 			case AT_AlterColumnType:	/* must rewrite heap */
 			case AT_DropConstraint:		/* as DROP INDEX */
+			case AT_DropConstraintRecurse:		/* as DROP INDEX */
 			case AT_AddOids:	/* must rewrite heap */
 			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
@@ -3934,7 +3937,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_AddColumnRecurse:		/* ADD COLUMN internal */
 		case AT_AddOidsRecurse:			/* SET WITH OIDS internal */
-			ATSimplePermissions(rel, false);
+			Assert(Gp_role == GP_ROLE_EXECUTE);
 			/* No need to do ATPartitionCheck */
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
 			/* Recursion occurs during execution phase */
@@ -4309,7 +4312,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
-			ATSimplePermissions(rel, false);
+			ATSimplePermissions(rel, ATT_TABLE);
 			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
@@ -4869,7 +4872,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 		case AT_PartTruncate:			/* Truncate */
 		case AT_PartAddInternal:		/* internal partition creation */
-			ATSimplePermissions(rel, false);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 				/* XXX XXX XXX */
 			/* This command never recurses */
@@ -17623,9 +17626,9 @@ ATPrepExchange(Relation rel, AlterPartitionCmd *pc)
 							 AccessExclusiveLock);
 		
 	}
-	ATSimplePermissions(rel, false);
-	ATSimplePermissions(oldrel, false);
-	ATSimplePermissions(newrel, false);
+	ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+	ATSimplePermissions(oldrel, ATT_TABLE | ATT_FOREIGN_TABLE);
+	ATSimplePermissions(newrel, ATT_TABLE | ATT_FOREIGN_TABLE);
 	
 	/* Check that old and new look the same, error if not. */
 	is_exchangeable(rel, oldrel, newrel, true);
