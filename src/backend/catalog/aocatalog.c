@@ -48,7 +48,6 @@ CreateAOAuxiliaryTable(
 	char aoauxiliary_idxname[NAMEDATALEN];
 	bool shared_relation;
 	bool mapped_relation;
-	Relation	aoauxiliary_rel;
 	Oid relOid, aoauxiliary_relid = InvalidOid;
 	Oid aoauxiliary_idxid = InvalidOid;
 	ObjectAddress baseobject;
@@ -143,15 +142,16 @@ CreateAOAuxiliaryTable(
 	/* Make this table visible, else index creation will fail */
 	CommandCounterIncrement();
 
-	/* ShareLock is not really needed here, but take it anyway */
-	aoauxiliary_rel = heap_open(aoauxiliary_relid, ShareLock);
-
 	/* Create an index on AO auxiliary tables (like visimap) except for pg_aoseg table */
 	if (relkind != RELKIND_AOSEGMENTS)
 	{
 		Oid		   *collationObjectId;
+		Relation	aoauxiliary_rel;
 
-		collationObjectId = palloc0(list_length(indexColNames));
+		/* ShareLock is not really needed here, but take it anyway */
+		aoauxiliary_rel = heap_open(aoauxiliary_relid, ShareLock);
+
+		collationObjectId = palloc0(list_length(indexColNames) * sizeof(Oid));
 
 		aoauxiliary_idxid = index_create(aoauxiliary_rel,
 										 aoauxiliary_idxname,
@@ -165,7 +165,7 @@ CreateAOAuxiliaryTable(
 										 true, false, false, NULL);
 
 		/* Unlock target table -- no one can see it */
-		UnlockRelationOid(aoauxiliary_relid, ShareLock);
+		heap_close(aoauxiliary_rel, ShareLock);
 
 		/* Unlock the index -- no one can see it anyway */
 		UnlockRelationOid(aoauxiliary_idxid, AccessExclusiveLock);
