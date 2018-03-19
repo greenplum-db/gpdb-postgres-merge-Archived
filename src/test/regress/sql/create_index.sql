@@ -255,14 +255,9 @@ RESET enable_bitmapscan;
 --
 
 SET enable_seqscan = OFF;
-<<<<<<< HEAD
 SET optimizer_enable_tablescan = OFF;
-SET enable_indexscan = ON;
-SET enable_bitmapscan = OFF;
-=======
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
 
@@ -310,24 +305,6 @@ DROP INDEX intarrayidx, textarrayidx;
 
 CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
 
-<<<<<<< HEAD
-SET enable_seqscan = OFF;
-RESET optimizer_enable_tablescan;
-SET enable_indexscan = ON;
-SET enable_bitmapscan = OFF;
-
-SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
-
-SET enable_indexscan = OFF;
-SET enable_bitmapscan = ON;
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
