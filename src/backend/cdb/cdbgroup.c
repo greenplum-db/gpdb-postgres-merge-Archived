@@ -3141,6 +3141,8 @@ generate_three_tlists(List *tlist,
 
 			new_aggref->aggfnoid = aggref->aggfnoid;
 			new_aggref->aggtype = aggref->aggtype;
+			new_aggref->aggcollid = aggref->aggcollid;
+			new_aggref->inputcollid = aggref->inputcollid;
 			new_aggref->args =
 				list_make1((Expr *)
 						   makeTargetEntry((Expr *) aggvar, 1, NULL, false));
@@ -3905,6 +3907,8 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 				iref = makeNode(Aggref);
 				iref->aggfnoid = pref->aggfnoid;
 				iref->aggtype = transtype;
+				iref->aggcollid = aggref->aggcollid;
+				iref->inputcollid = aggref->inputcollid;
 				iref->args = list_make1((Expr *) makeTargetEntry(copyObject(args), 1, NULL, false));
 				/* FILTER is evaluated at the PARTIAL stage. */
 				iref->agglevelsup = 0;
@@ -3924,6 +3928,8 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 
 			fref->aggfnoid = aggref->aggfnoid;
 			fref->aggtype = aggref->aggtype;
+			fref->aggcollid = aggref->aggcollid;
+			fref->inputcollid = aggref->inputcollid;
 			fref->args = list_make1((Expr *) makeTargetEntry((Expr *) args, 1, NULL, false));
 			/* FILTER is evaluated at the PARTIAL stage. */
 			fref->agglevelsup = 0;

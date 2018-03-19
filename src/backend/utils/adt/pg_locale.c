@@ -1245,6 +1245,12 @@ lc_guess_strxfrm_scaling_factor(int *scaleFactorOut, int *constantFactorOut)
 	static int constantFactor = -1;
 	static int scaleFactor = -1;
 
+	/*
+	 * GPDB_91_MERGE_FIXME: caching the value only makes sense for the default
+	 * collation, but I think we incorrectly try to use it for everything.
+	 * (Actually, strxfrm only works for the current LC_COLLATE setting, anyway.)
+	 */
+
 	if ( scaleFactor == -1)
 	{
 		static const int numVariationsPerByte = 8;

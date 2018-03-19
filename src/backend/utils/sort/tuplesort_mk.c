@@ -105,6 +105,7 @@
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "executor/instrument.h"	/* Instrumentation */
 #include "lib/stringinfo.h"		/* StringInfo */
@@ -658,8 +659,7 @@ tuplesort_begin_pos_mk(Tuplesortstate_mk *st, TuplesortPos_mk ** pos)
 }
 
 void
-create_mksort_context(
-					  MKContext *mkctxt,
+create_mksort_context(MKContext *mkctxt,
 					  int nkeys, AttrNumber *attNums,
 					  Oid *sortOperators, Oid *sortCollations, bool *nullsFirstFlags,
 					  ScanKey sk,
@@ -690,6 +690,7 @@ create_mksort_context(
 	{
 		Oid			sortFunction;
 		bool		reverse;
+		int			flags;
 		MKLvContext *sinfo = mkctxt->lvctxt + i;
 
 		if (sortOperators)
@@ -702,21 +703,25 @@ create_mksort_context(
 				elog(ERROR, "operator %u is not a valid ordering operator",
 					 sortOperators[i]);
 
+			/* We use btree's conventions for encoding directionality */
+			flags = 0;
+			if (reverse)
+				flags |= SK_BT_DESC;
+			if (nullsFirstFlags[i])
+				flags |= SK_BT_NULLS_FIRST;
+
 			/*
 			 * We needn't fill in sk_strategy or sk_subtype since these
 			 * scankeys will never be passed to an index.
 			 */
-			ScanKeyInit(&sinfo->scanKey,
-						attNums ? attNums[i] : i + 1,
-						InvalidStrategy,
-						sortFunction,
-						(Datum) 0);
-
-			/* However, we use btree's conventions for encoding directionality */
-			if (reverse)
-				sinfo->scanKey.sk_flags |= SK_BT_DESC;
-			if (nullsFirstFlags[i])
-				sinfo->scanKey.sk_flags |= SK_BT_NULLS_FIRST;
+			ScanKeyEntryInitialize(&sinfo->scanKey,
+								   flags,
+								   attNums ? attNums[i] : i + 1,
+								   InvalidStrategy,
+								   InvalidOid,
+								   sortCollations[i],
+								   sortFunction,
+								   (Datum) 0);
 		}
 		else
 		{
@@ -736,7 +741,13 @@ create_mksort_context(
 
 			if (sinfo->scanKey.sk_func.fn_addr == btint4cmp)
 				sinfo->lvtype = MKLV_TYPE_INT32;
-			if (!lc_collate_is_c(sinfo->scanKey.sk_collation))
+
+			/* GPDB_91_MERGE_FIXME: these MKLV_TYPE_CHAR and MKLV_TYPE_TEXT
+			 * fastpaths only work with the default collation of the database.
+			 *
+
+			if (!lc_collate_is_c(sinfo->scanKey.sk_collation) &&
+				sinfo->scanKey.sk_collation == DEFAULT_COLLATION_OID)
 			{
 				if (sinfo->scanKey.sk_func.fn_addr == bpcharcmp)
 					sinfo->lvtype = MKLV_TYPE_CHAR;
