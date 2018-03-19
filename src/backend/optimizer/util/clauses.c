@@ -504,8 +504,6 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		if (aggref->aggorder != NIL || aggref->aggdistinct != NIL)
 			costs->numOrderedAggs++;
 
-		/* GPDB_91_MERGE_FIXME: Do we still need this? Where to stash the dqaArgs field? */
-#if 0
 		if (aggref->aggdistinct != NIL)
 		{
 			ListCell *lc;
@@ -514,17 +512,16 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
-				if ( !list_member(counts->dqaArgs, tle->expr) )
-					counts->dqaArgs = lappend(counts->dqaArgs, tle->expr);
+				if ( !list_member(costs->dqaArgs, tle->expr) )
+					costs->dqaArgs = lappend(costs->dqaArgs, tle->expr);
 			}
 		}
 
 		/* CDB wants to know whether the function can do 2-stage aggregation */
 		if ( aggprelimfn == InvalidOid )
 		{
-			counts->missing_prelimfunc = true; /* Nope! */
+			costs->missing_prelimfunc = true; /* Nope! */
 		}
-#endif
 
 		/* add component function execution costs to appropriate totals */
 		costs->transCost.per_tuple += get_func_cost(aggtransfn) * cpu_operator_cost;
