@@ -108,7 +108,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		lovIndex = index_open(idxid, AccessExclusiveLock);
 
 		RelationSetNewRelfilenode(lovHeap, RecentXmin);
-		RelationSetNewRelfilenode(lovIndex, RecentXmin);
+		RelationSetNewRelfilenode(lovIndex, InvalidTransactionId);
 
 		/*
 		 * After creating the new relfilenode for a btee index, this is not
@@ -214,7 +214,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		indexInfo->ii_KeyAttrNumbers[i] = i + 1;
 		classObjectId[i] = GetDefaultOpClass(typid, BTREE_AM_OID);
 		coloptions[i] = 0;
-		colcollations = InvalidOid;
+		colcollations[i] = InvalidOid;
 
 		indexColNames = lappend(indexColNames, NameStr(tupDesc->attrs[i]->attname));
 	}
