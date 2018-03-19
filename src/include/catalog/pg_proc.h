@@ -2274,7 +2274,7 @@ DATA(insert OID = 1783 ( int2					PGNSP PGUID 12 1 0 0 f f f t f i 1 0 21 "1700"
 DESCR("convert numeric to int2");
 
 /* Complex Number type */
-DATA(insert OID = 7057 ( complex_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "195 195" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
+DATA(insert OID = 7057 ( complex_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "7198 7198" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
 DESCR("compare two complex numbers");
 
 /* formatting */
