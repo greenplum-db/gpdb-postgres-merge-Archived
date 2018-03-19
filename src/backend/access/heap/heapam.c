@@ -912,9 +912,12 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
 	}
 
+	/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
+#endif
 
 	pgstat_initstats(r);
 
@@ -978,9 +981,12 @@ try_relation_open(Oid relationId, LOCKMODE lockmode, bool noWait)
 				 errdetail("This can be validly caused by a concurrent delete operation on this object.")));
 	}
 
+	/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 	/* Make note that we've accessed a temporary relation */
 	if (RelationUsesLocalBuffers(r))
 		MyXactAccessedTempRel = true;
+#endif
 
 	pgstat_initstats(r);
 

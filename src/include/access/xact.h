@@ -66,8 +66,11 @@ typedef enum
 /* Synchronous commit level */
 extern int	synchronous_commit;
 
+/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 /* Kluge for 2PC support */
 extern bool MyXactAccessedTempRel;
+#endif
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules

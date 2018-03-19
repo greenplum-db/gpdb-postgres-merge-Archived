@@ -98,7 +98,9 @@ int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
  *
  * Not used in GPDB, see comments in PrepareTransaction()
  */
+#if 0
 bool		MyXactAccessedTempRel = false;
+#endif
 
 int32 gp_subtrans_warn_limit = 16777216; /* 16 million */
 
@@ -2164,7 +2166,10 @@ StartTransaction(void)
 	XactDeferrable = DefaultXactDeferrable;
 	XactIsoLevel = DefaultXactIsoLevel;
 	forceSyncCommit = false;
+	/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 	MyXactAccessedTempRel = false;
+#endif
 	seqXlogWrite = false;
 
 	/* set read only by fts, if any fts action is read only */
