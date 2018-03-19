@@ -1534,7 +1534,7 @@ gingetbitmap(PG_FUNCTION_ARGS)
 		ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))
-		PG_RETURN_INT64(0);
+		PG_RETURN_POINTER(tbm);
 
 	ntids = 0;
 
