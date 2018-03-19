@@ -1769,13 +1769,15 @@ cdb_sequence_relation_init(Relation seqrel,
 	seqrel->rd_rel = (Form_pg_class)palloc0(CLASS_TUPLE_SIZE);
     sprintf(seqrel->rd_rel->relname.data, "pg_class.oid=%d", relid);
 	seqrel->rd_rel->relpersistence = relpersistence;
+	seqrel->rd_rel->relkind = RELKIND_SEQUENCE;
 
     /* as in RelationInitPhysicalAddr... */
     seqrel->rd_node.spcNode = tablespaceid;
     seqrel->rd_node.dbNode = dbid;
     seqrel->rd_node.relNode = relid;
+	/* GPDB_91_MERGE_FIXME: Do we ever use the seqserver for temp sequences? I think not.. */
+	seqrel->rd_backend = InvalidBackendId;
 
-	/* GPDB_91_MERGE_FIXME: should we set seqrel->rd_backend here? */
 }                               /* cdb_sequence_relation_init */
 
 /*
