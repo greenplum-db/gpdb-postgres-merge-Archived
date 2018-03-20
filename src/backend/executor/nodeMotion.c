@@ -247,9 +247,11 @@ ExecMotion(MotionState * node)
 	{
 		return execMotionSender(node);
 	}
-
-	Assert(!"Non-active motion is executed");
-	return NULL;
+	else
+	{
+		elog(ERROR, "cannot execute inactive Motion");
+		return NULL;
+	}
 }
 
 static TupleTableSlot *

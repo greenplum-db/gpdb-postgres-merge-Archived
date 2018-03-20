@@ -4082,6 +4082,10 @@ finalize_split_expr_mutator(Node *node, MppGroupContext *ctx)
 			elog(ERROR, "Unexpected failure of multi-phase aggregation planning");
 		}
 
+		/* sanity check. */
+		if (attrno < 1 || attrno > list_length(ctx->top_tlist))
+			elog(ERROR, "invalid attrno");
+
 		tle = (TargetEntry *) list_nth(ctx->top_tlist, attrno - 1);
 
 		return (Node *) tle->expr;
