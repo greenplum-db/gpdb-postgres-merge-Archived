@@ -227,25 +227,6 @@ test__SessionState_ShmemSize__StructLayout(void **state)
 }
 
 /*
- * Checks if the SessionState_ShmemSize calculates correct size
- */
-void
-test__SessionState_ShmemSize__CalculatesCorrectSize(void **state)
-{
-	const Size headerSize = GetSessionStateArrayHeaderSize();
-
-	MaxBackends = 0;
-	assert_true(headerSize == SessionState_ShmemSize());
-
-	MaxBackends = 10;
-	assert_true(headerSize + 10 * sizeof(SessionState) == SessionState_ShmemSize());
-
-	/* Current maximum value for Maxbackends is INT_MAX / BLCKSZ */
-	MaxBackends = MAX_MAX_BACKENDS;
-	assert_true(headerSize + (MAX_MAX_BACKENDS) * sizeof(SessionState) == SessionState_ShmemSize());
-}
-
-/*
  * Checks if SessionState_ShmemInit does nothing under postmaster.
  * Note, it is *only* expected to re-attach with an existing array.
  */
@@ -294,7 +275,10 @@ test__SessionState_ShmemInit__InitializesWhenPostmaster(void **state)
 {
 	IsUnderPostmaster = false;
 
-	int allMaxBackends[] = {1, 100, MAX_MAX_BACKENDS};
+	/* The intention is that MAX_BACKENDS here would match the value in guc.c */
+#define MAX_BACKENDS 0x7fffff
+
+	int allMaxBackends[] = {1, 100, MAX_BACKENDS};
 
 	for (int i = 0; i < sizeof(allMaxBackends) / sizeof(int); i++)
 	{
@@ -604,7 +588,6 @@ main(int argc, char* argv[])
 
 	const UnitTest tests[] = {
 		unit_test(test__SessionState_ShmemSize__StructLayout),
-		unit_test(test__SessionState_ShmemSize__CalculatesCorrectSize),
 		unit_test(test__SessionState_ShmemInit__NoOpUnderPostmaster),
 		unit_test(test__SessionState_ShmemInit__InitializesWhenPostmaster),
 		unit_test(test__SessionState_ShmemInit__LinkedListSanity),
