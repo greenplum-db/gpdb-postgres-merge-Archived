@@ -513,6 +513,7 @@ test_postmaster_connection(bool do_checkpoint)
 	pgpid_t		pm_pid = 0;
 	char		connstr[MAXPGPATH * 2 + 256];
 	int			i;
+	static const char *backend_options = "'-c gp_session_role=utility'";
 
 	/* if requested wait time is zero, return "still starting up" code */
 	if (wait_seconds <= 0)
@@ -642,8 +643,8 @@ test_postmaster_connection(bool do_checkpoint)
 						 * timeout first.
 						 */
 						snprintf(connstr, sizeof(connstr),
-						"dbname=postgres port=%d host='%s' connect_timeout=5",
-								 portnum, host_str);
+						"dbname=postgres port=%d host='%s' connect_timeout=5 options=%s",
+								 portnum, host_str, backend_options);
 					}
 				}
 			}
