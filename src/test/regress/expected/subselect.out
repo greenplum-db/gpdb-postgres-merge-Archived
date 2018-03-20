@@ -677,12 +677,3 @@ from int4_tbl;
  (4,5,6.0)
 (5 rows)
 
---
--- Test case for premature memory release during hashing of subplan output
---
-select '1'::text in (select '1'::name union all select '1'::name);
- ?column? 
-----------
- t
-(1 row)
-
