@@ -100,10 +100,10 @@ gp_dump_query_oids(PG_FUNCTION_ARGS)
 		Node	   *parsetree = (Node *) lfirst(lc);
 		List	   *queryTree_sublist;
 
-		queryTree_sublist = pg_analyze_and_rewrite_params(parsetree,
-														  sqlText,
-														  NULL,
-														  NULL);
+		queryTree_sublist = pg_analyze_and_rewrite(parsetree,
+												   sqlText,
+												   NULL,
+												   0);
 		flat_query_list = list_concat(flat_query_list,
 									  list_copy(queryTree_sublist));
 	}
