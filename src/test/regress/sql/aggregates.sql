@@ -524,8 +524,8 @@ select percentile_disc(array[0.25,0.5,0.75]) within group (order by x)
 from unnest('{fred,jim,fred,jack,jill,fred,jill,jim,jim,sheila,jim,sheila}'::text[]) u(x);
 
 -- check collation propagates up in suitable cases:
---select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
---  from (values ('fred'),('jim')) v(x);
+select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
+  from (values ('fred'),('jim')) v(x);
 
 -- ordered-set aggs created with CREATE AGGREGATE
 select test_rank(3) within group (order by x)
@@ -547,8 +547,8 @@ select rank(sum(x)) within group (order by x) from generate_series(1,5) x;
 select rank(3) within group (order by x) from (values ('fred'),('jim')) v(x);
 select rank(3) within group (order by stringu1,stringu2) from tenk1;
 select rank('fred') within group (order by x) from generate_series(1,5) x;
---select rank('adam'::text collate "C") within group (order by x collate "POSIX")
---  from (values ('fred'),('jim')) v(x);
+select rank('adam'::text collate "C") within group (order by x collate "POSIX")
+  from (values ('fred'),('jim')) v(x);
 -- hypothetical-set type unification successes:
 select rank('adam'::varchar) within group (order by x) from (values ('fred'),('jim')) v(x);
 select rank('3') within group (order by x) from generate_series(1,5) x;

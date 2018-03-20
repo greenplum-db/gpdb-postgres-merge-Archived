@@ -3135,8 +3135,8 @@ generate_three_tlists(List *tlist,
 			aggvar = makeVar(middle_varno,
 							 tle->resno,
 							 aggref->aggtype,
-							 aggref->aggcollid,
 							 -1,
+							 aggref->aggcollid,
 							 0);
 
 			new_aggref->aggfnoid = aggref->aggfnoid;

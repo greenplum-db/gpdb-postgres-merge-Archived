@@ -214,7 +214,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		indexInfo->ii_KeyAttrNumbers[i] = i + 1;
 		classObjectId[i] = GetDefaultOpClass(typid, BTREE_AM_OID);
 		coloptions[i] = 0;
-		colcollations[i] = InvalidOid;
+		colcollations[i] = rel->rd_indcollation[i];
 
 		indexColNames = lappend(indexColNames, NameStr(tupDesc->attrs[i]->attname));
 	}

@@ -1297,8 +1297,13 @@ from unnest('{fred,jim,fred,jack,jill,fred,jill,jim,jim,sheila,jim,sheila}'::tex
 (1 row)
 
 -- check collation propagates up in suitable cases:
---select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
---  from (values ('fred'),('jim')) v(x);
+select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
+  from (values ('fred'),('jim')) v(x);
+ pg_collation_for 
+------------------
+ "POSIX"
+(1 row)
+
 -- ordered-set aggs created with CREATE AGGREGATE
 select test_rank(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
@@ -1345,8 +1350,11 @@ select rank('fred') within group (order by x) from generate_series(1,5) x;
 ERROR:  invalid input syntax for integer: "fred"
 LINE 1: select rank('fred') within group (order by x) from generate_...
                     ^
---select rank('adam'::text collate "C") within group (order by x collate "POSIX")
---  from (values ('fred'),('jim')) v(x);
+select rank('adam'::text collate "C") within group (order by x collate "POSIX")
+  from (values ('fred'),('jim')) v(x);
+ERROR:  collation mismatch between explicit collations "C" and "POSIX"
+LINE 1: ...adam'::text collate "C") within group (order by x collate "P...
+                                                             ^
 -- hypothetical-set type unification successes:
 select rank('adam'::varchar) within group (order by x) from (values ('fred'),('jim')) v(x);
  rank 
