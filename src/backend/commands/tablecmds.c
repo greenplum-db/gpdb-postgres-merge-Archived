@@ -11927,7 +11927,7 @@ ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 	 * concurrency issues.
 	 */
 	if (is_partition)
-		heap_close(parent_rel, AccessShareLock);
+		heap_close(parent_rel, ShareUpdateExclusiveLock);
 	else
 		heap_close(parent_rel, NoLock);
 

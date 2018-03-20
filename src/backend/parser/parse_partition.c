@@ -924,6 +924,7 @@ make_child_node(CreateStmtContext *cxt, CreateStmt *stmt, char *relname,
 
 	child_tab_name->catalogname = cxt->relation->catalogname;
 	child_tab_name->schemaname = cxt->relation->schemaname;
+	child_tab_name->relpersistence = cxt->relation->relpersistence;
 	child_tab_name->relname = relname;
 	child_tab_name->location = -1;
 
