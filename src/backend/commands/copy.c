@@ -967,7 +967,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 				(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY single row error handling only available using COPY FROM")));
 
-
 /* GPDB_91_MERGE_FIXME: this should probably be done earlier, e.g. in parser */
 	/* Transfer any SREH options to the options list, so that BeginCopy can see them. */
 	if (stmt->sreh)
@@ -975,19 +974,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		SingleRowErrorDesc *sreh = (SingleRowErrorDesc *) stmt->sreh;
 
 		options = list_copy(options);
-		
-		if (sreh->is_limit_in_rows)
-			options = lappend(options,
-							  makeDefElem("sreh_reject_rows_limit", (Node *) makeInteger(sreh->rejectlimit)));
-		else
-			options = lappend(options,
-							  makeDefElem("sreh_reject_percent_limit", (Node *) makeInteger(sreh->rejectlimit)));
-
-		options = lappend(options,
-						  makeDefElem("sreh_into_file", (Node *) makeInteger(sreh->into_file)));
+		options = lappend(options, makeDefElem("sreh", (Node *) sreh));
 	}
 
-	
 	/* Disallow COPY to/from file or program except to superusers. */
 	if (!pipe && !superuser())
 	{
@@ -1079,13 +1068,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		/*
 		 * Error handling setup
 		 */
-		if (stmt->sreh)
+		if (cstate->sreh)
 		{
 			/* Single row error handling requested */
-			SingleRowErrorDesc *sreh;
+			SingleRowErrorDesc *sreh = cstate->sreh;
 			bool		log_to_file = false;
-
-			sreh = (SingleRowErrorDesc *)stmt->sreh;
 
 			if (sreh->into_file)
 			{
@@ -1348,6 +1335,20 @@ ProcessCopyOptions(CopyState cstate,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			cstate->eol_str = strVal(defel->arg);
+		}
+		else if (strcmp(defel->defname, "sreh") == 0)
+		{
+			if (defel->arg == NULL || !IsA(defel->arg, SingleRowErrorDesc))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
+			if (cstate->sreh)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+
+			cstate->sreh = (SingleRowErrorDesc *) defel->arg;
 		}
 		else if (strcmp(defel->defname, "on_segment") == 0)
 		{

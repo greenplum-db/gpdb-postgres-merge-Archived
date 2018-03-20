@@ -190,7 +190,7 @@ typedef struct CopyStateData
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	bool		fill_missing;	/* missing attrs at end of line are NULL */
 
-	CopyDispatchMode dispatch_mode;
+	SingleRowErrorDesc *sreh;
 
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
@@ -202,6 +202,7 @@ typedef struct CopyStateData
 	/*
 	 * Working state for COPY TO/FROM
 	 */
+	CopyDispatchMode dispatch_mode;
 	MemoryContext copycontext;	/* per-copy execution context */
 
 	/*
