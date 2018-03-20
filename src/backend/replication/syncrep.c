@@ -223,7 +223,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		int			len;
 
 		old_status = get_real_act_ps_display(&len);
-		new_status = (char *) palloc(len + 32 + 1);
+		new_status = (char *) palloc(len + 32 + 12 + 1);
 		memcpy(new_status, old_status, len);
 		sprintf(new_status + len, " waiting for %X/%X replication",
 				XactCommitLSN.xlogid, XactCommitLSN.xrecoff);
