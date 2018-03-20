@@ -48,7 +48,7 @@ raw_parser_ex(const char *str, int init_token)
 	if (init_token)
 	{
 		/* Add an initial token to tell the parser to do special parsing */
-		yyextra.lookahead_token = PARSE_COPY_OPTIONS;
+		yyextra.lookahead_token = init_token;
 		memset(&yyextra.lookahead_yylval, 0, sizeof(yyextra.lookahead_yylval));
 		yyextra.lookahead_yylloc = 0;
 		yyextra.have_lookahead = true;

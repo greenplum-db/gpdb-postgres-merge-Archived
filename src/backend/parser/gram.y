@@ -546,8 +546,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <str>		opt_existing_window_name
 %type <ival>	window_frame_exclusion
 
-%token			PARSE_COPY_OPTIONS
-
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -561,6 +559,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
 %token			TYPECAST DOT_DOT COLON_EQUALS
+
+%token			PARSE_COPY_OPTIONS
 
 /*
  * If you want to make any keyword changes, update the keyword table in
@@ -1101,7 +1101,7 @@ stmtblock:	stmtmulti
  */
 stmtblock: PARSE_COPY_OPTIONS copy_options
 			{
-				$$ = $2;
+				pg_yyget_extra(yyscanner)->parsetree = $2;
 			}
 		;
 

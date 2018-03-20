@@ -456,8 +456,7 @@ CTranslatorDXLToPlStmt::PtsFromDXLTblScan
 		ExternalScan *pes = MakeNode(ExternalScan);
 		pes->scan.scanrelid = iRel;
 		pes->uriList = gpdb::PlExternalScanUriList(pextentry, &isMasterOnly);
-		Value *pval = gpdb::PvalMakeString(pextentry->fmtopts);
-		pes->fmtOpts = ListMake1(pval);
+		pes->fmtOptString = pextentry->fmtopts;
 		pes->fmtType = pextentry->fmtcode;
 		pes->isMasterOnly = isMasterOnly;
 		GPOS_ASSERT((IMDRelation::EreldistrMasterOnly == pmdrelext->Ereldistribution()) == isMasterOnly);
