@@ -876,12 +876,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
-			{
-				if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE)
-					relation->rd_backend = gp_session_id;
-				else
-					relation->rd_backend = MyBackendId;
-			}
+				relation->rd_backend = MyTempSessionId();
 			else
 			{
 				/*

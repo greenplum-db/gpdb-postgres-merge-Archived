@@ -17,6 +17,7 @@
 #define REL_H
 
 #include "access/tupdesc.h"
+#include "catalog/catalog.h" /* for MyTempSessionId() */
 #include "catalog/pg_am.h"
 #include "catalog/pg_appendonly.h"
 #include "catalog/pg_class.h"
@@ -485,7 +486,7 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_LOCAL(relation) \
-	((relation)->rd_backend == MyBackendId || \
+	((relation)->rd_backend == MyTempSessionId() || \
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
 
 /*
@@ -496,7 +497,7 @@ typedef struct StdRdOptions
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP \
-	&& (relation)->rd_backend != MyBackendId)
+	 && (relation)->rd_backend != MyTempSessionId())
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);
