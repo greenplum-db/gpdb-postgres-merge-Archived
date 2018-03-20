@@ -155,8 +155,8 @@ static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estat
  */
 typedef struct ResultPartHashEntry 
 {
-	Oid targetid; /* OID of part relation */
-	int offset; /* Index ResultRelInfo in es_result_partitions */
+	Oid			targetid; /* OID of part relation */
+	ResultRelInfo resultRelInfo;
 } ResultPartHashEntry;
 
 
@@ -2393,6 +2393,78 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_aosegno = InvalidFileSegNumber;
 }
 
+
+void
+CloseResultRelInfo(ResultRelInfo *resultRelInfo)
+{
+	/* end (flush) the INSERT operation in the access layer */
+	if (resultRelInfo->ri_aoInsertDesc)
+		appendonly_insert_finish(resultRelInfo->ri_aoInsertDesc);
+	if (resultRelInfo->ri_aocsInsertDesc)
+		aocs_insert_finish(resultRelInfo->ri_aocsInsertDesc);
+	if (resultRelInfo->ri_extInsertDesc)
+		external_insert_finish(resultRelInfo->ri_extInsertDesc);
+
+	if (resultRelInfo->ri_deleteDesc != NULL)
+	{
+		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
+			appendonly_delete_finish(resultRelInfo->ri_deleteDesc);
+		else
+		{
+			Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
+			aocs_delete_finish(resultRelInfo->ri_deleteDesc);
+		}
+		resultRelInfo->ri_deleteDesc = NULL;
+	}
+	if (resultRelInfo->ri_updateDesc != NULL)
+	{
+		if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
+			appendonly_update_finish(resultRelInfo->ri_updateDesc);
+		else
+		{
+			Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
+			aocs_update_finish(resultRelInfo->ri_updateDesc);
+		}
+		resultRelInfo->ri_updateDesc = NULL;
+	}
+
+	if (resultRelInfo->ri_resultSlot)
+	{
+		Assert(resultRelInfo->ri_resultSlot->tts_tupleDescriptor);
+		ReleaseTupleDesc(resultRelInfo->ri_resultSlot->tts_tupleDescriptor);
+		ExecClearTuple(resultRelInfo->ri_resultSlot);
+	}
+
+	if (resultRelInfo->ri_partSlot)
+	{
+		Assert(resultRelInfo->ri_partInsertMap); /* paired with slot */
+		ExecDropSingleTupleTableSlot(resultRelInfo->ri_partSlot);
+	}
+
+	if (resultRelInfo->ri_PartitionParent)
+		relation_close(resultRelInfo->ri_PartitionParent, AccessShareLock);
+
+	/* Close indices and then the relation itself */
+	ExecCloseIndices(resultRelInfo);
+	heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+
+	/* Recurse into partitions */
+	/* Examine each hash table entry. */
+	if (resultRelInfo->ri_partition_hash)
+	{
+		HASH_SEQ_STATUS hash_seq_status;
+		ResultPartHashEntry *entry;
+
+		hash_freeze(resultRelInfo->ri_partition_hash);
+		hash_seq_init(&hash_seq_status, resultRelInfo->ri_partition_hash);
+		while ((entry = hash_seq_search(&hash_seq_status)) != NULL)
+		{
+			CloseResultRelInfo(&entry->resultRelInfo);
+		}
+		/* No need for hash_seq_term() since we iterated to end. */
+	}
+}
+
 /*
  * ResultRelInfoSetSegno
  *
@@ -2731,50 +2803,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	resultRelInfo = estate->es_result_relations;
 	for (i = 0; i < estate->es_num_result_relations; i++)
 	{
-		/* end (flush) the INSERT operation in the access layer */
-		if (resultRelInfo->ri_aoInsertDesc)
-			appendonly_insert_finish(resultRelInfo->ri_aoInsertDesc);
-		if (resultRelInfo->ri_aocsInsertDesc)
-			aocs_insert_finish(resultRelInfo->ri_aocsInsertDesc);
-		if (resultRelInfo->ri_extInsertDesc)
-			external_insert_finish(resultRelInfo->ri_extInsertDesc);
-
-		if (resultRelInfo->ri_deleteDesc != NULL)
-		{
-			if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-				appendonly_delete_finish(resultRelInfo->ri_deleteDesc);
-			else
-			{
-				Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
-				aocs_delete_finish(resultRelInfo->ri_deleteDesc);
-			}
-			resultRelInfo->ri_deleteDesc = NULL;
-		}
-		if (resultRelInfo->ri_updateDesc != NULL)
-		{
-			if (RelationIsAoRows(resultRelInfo->ri_RelationDesc))
-				appendonly_update_finish(resultRelInfo->ri_updateDesc);
-			else
-			{
-				Assert(RelationIsAoCols(resultRelInfo->ri_RelationDesc));
-				aocs_update_finish(resultRelInfo->ri_updateDesc);
-			}
-			resultRelInfo->ri_updateDesc = NULL;
-		}
-		
-		if (resultRelInfo->ri_resultSlot)
-		{
-			Assert(resultRelInfo->ri_resultSlot->tts_tupleDescriptor);
-			ReleaseTupleDesc(resultRelInfo->ri_resultSlot->tts_tupleDescriptor);
-			ExecClearTuple(resultRelInfo->ri_resultSlot);
-		}
-
-		if (resultRelInfo->ri_PartitionParent)
-			relation_close(resultRelInfo->ri_PartitionParent, AccessShareLock);
-
-		/* Close indices and then the relation itself */
-		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		CloseResultRelInfo(resultRelInfo);
 		resultRelInfo++;
 	}
 
@@ -4273,9 +4302,10 @@ intorel_destroy(DestReceiver *self)
 static ResultRelInfo *
 get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 {
-	ResultRelInfo *resultRelInfo;
-	Oid targetid;
-	bool found;
+	ResultRelInfo *parentInfo = estate->es_result_relation_info;
+	ResultRelInfo *childInfo = estate->es_result_relation_info;
+	Oid			targetid;
+	bool		found;
 	ResultPartHashEntry *entry;
 
 	/* add a short term memory context if one wasn't assigned already */
@@ -4293,81 +4323,54 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 				(errcode(ERRCODE_NO_PARTITION_FOR_PARTITIONING_KEY),
 				 errmsg("no partition for partitioning key")));
 
-	if (estate->es_partition_state->result_partition_hash == NULL)
+	if (parentInfo->ri_partition_hash == NULL)
 	{
 		HASHCTL ctl;
-		long num_buckets;
-
-		/* reasonable assumption? */
-		num_buckets =
-			list_length(all_partition_relids(estate->es_result_partitions));
-		num_buckets /= num_partition_levels(estate->es_result_partitions);
 
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(*entry);
 		ctl.hash = oid_hash;
 
-		estate->es_partition_state->result_partition_hash =
+		parentInfo->ri_partition_hash =
 			hash_create("Partition Result Relation Hash",
-						num_buckets,
+						10,
 						&ctl,
 						HASH_ELEM | HASH_FUNCTION);
 	}
 
-	entry = hash_search(estate->es_partition_state->result_partition_hash,
+	entry = hash_search(parentInfo->ri_partition_hash,
 						&targetid,
 						HASH_ENTER,
 						&found);
 
+	childInfo = &entry->resultRelInfo;
 	if (found)
 	{
-		resultRelInfo = estate->es_result_relations;
-		resultRelInfo += entry->offset;
-		Assert(RelationGetRelid(resultRelInfo->ri_RelationDesc) == targetid);
+		Assert(RelationGetRelid(childInfo->ri_RelationDesc) == targetid);
 	}
 	else
 	{
-		int result_array_size =
-			estate->es_partition_state->result_partition_array_size;
-		int natts;
+		int			natts;
 		Relation	resultRelation;
 
-		if (estate->es_num_result_relations + 1 >= result_array_size)
-		{
-			int32 sz = result_array_size * 2;
-
-			/* we shouldn't be able to overflow */
-			Insist((int)sz > result_array_size);
-
-			estate->es_result_relation_info = estate->es_result_relations =
-					(ResultRelInfo *)repalloc(estate->es_result_relations,
-										 	  sz * sizeof(ResultRelInfo));
-			estate->es_partition_state->result_partition_array_size = (int)sz;
-		}
-
-		resultRelInfo = estate->es_result_relations;
-		natts = resultRelInfo->ri_RelationDesc->rd_att->natts; /* in base relation */
-		resultRelInfo += estate->es_num_result_relations;
-		entry->offset = estate->es_num_result_relations;
-
-		estate->es_num_result_relations++;
+		natts = parentInfo->ri_RelationDesc->rd_att->natts; /* in base relation */
 
 		resultRelation = heap_open(targetid, RowExclusiveLock);
-		InitResultRelInfo(resultRelInfo,
+		InitResultRelInfo(childInfo,
 						  resultRelation,
 						  1,
 						  estate->es_instrument);
-		
-		map_part_attrs(estate->es_result_relations->ri_RelationDesc, 
-					   resultRelInfo->ri_RelationDesc,
-					   &(resultRelInfo->ri_partInsertMap),
+
+		map_part_attrs(parentInfo->ri_RelationDesc,
+					   childInfo->ri_RelationDesc,
+					   &(childInfo->ri_partInsertMap),
 					   TRUE); /* throw on error, so result not needed */
 
-		if (resultRelInfo->ri_partInsertMap)
-			resultRelInfo->ri_partSlot = 
-				MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
+		if (childInfo->ri_partInsertMap)
+			childInfo->ri_partSlot =
+				MakeSingleTupleTableSlot(childInfo->ri_RelationDesc->rd_att);
 	}
-	return resultRelInfo;
+	return childInfo;
 }
 
 ResultRelInfo *
@@ -4718,41 +4721,6 @@ map_part_attrs(Relation base, Relation part, AttrMap **map_ptr, bool throw)
 	return TRUE;
 }
 
-/*
- * Clear any partition state held in the argument EState node.  This is
- * called during ExecEndPlan and is not, itself, recursive.
- *
- * At present, the only required cleanup is to decrement reference counts
- * in any tuple descriptors held in slots in the partition state.
- */
-void
-ClearPartitionState(EState *estate)
-{
-	PartitionState *pstate = estate->es_partition_state;
-	HASH_SEQ_STATUS hash_seq_status;
-	ResultPartHashEntry *entry;
-
-	if ( pstate == NULL || pstate->result_partition_hash == NULL )
-		return;
-
-	/* Examine each hash table entry. */
-	hash_freeze(pstate->result_partition_hash);
-	hash_seq_init(&hash_seq_status, pstate->result_partition_hash);
-	while ( (entry = hash_seq_search(&hash_seq_status)) )
-	{
-		ResultPartHashEntry *part = (ResultPartHashEntry*)entry;
-		ResultRelInfo *info = &estate->es_result_relations[part->offset];
-		if ( info->ri_partSlot )
-		{
-			Assert( info->ri_partInsertMap ); /* paired with slot */
-			ExecDropSingleTupleTableSlot(info->ri_partSlot);
-		}
-	}
-	/* No need for hash_seq_term() since we iterated to end. */
-	hash_destroy(pstate->result_partition_hash);
-	pstate->result_partition_hash = NULL;
-}
-
 #if 0 /* for debugging purposes only */
 char *
 DumpSliceTable(SliceTable *table)
@@ -5021,7 +4989,6 @@ createPartitionState(PartitionNode *partsAndRules,
 	PartitionState *partitionState = makeNode(PartitionState);
 	partitionState->accessMethods = createPartitionAccessMethods(num_partition_levels(partsAndRules));
 	partitionState->max_partition_attr = max_partition_attr(partsAndRules);
-	partitionState->result_partition_array_size = resultPartSize;
 
 	return partitionState;
 }

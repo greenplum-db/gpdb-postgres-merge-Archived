@@ -380,6 +380,13 @@ typedef struct ResultRelInfo
 	int			ri_PartCheckTupDescMatch;
 	/* Attribute map in checkPartitionUpdate */
 	struct AttrMap *ri_PartCheckMap;
+
+	/*
+	 * Hash table of sub-ResultRelInfos, one for each active partition.
+	 * Keyed by partition's OID.
+	 */
+	HTAB	   *ri_partition_hash;
+
 } ResultRelInfo;
 
 typedef struct ShareNodeEntry
@@ -412,8 +419,6 @@ typedef struct PartitionState
 	NodeTag		type;
 
 	AttrNumber	max_partition_attr;
-	int			result_partition_array_size; /* max elements of result relation array */
-	HTAB	   *result_partition_hash;
 	PartitionAccessMethods *accessMethods;
 } PartitionState;
 

@@ -4277,36 +4277,16 @@ CopyFrom(CopyState cstate)
 
 	/*
 	 * Finalize appends and close relations we opened.
+	 *
+	 * The main target relation is included in the array, but we want to keep
+	 * that open, and let the caller close it. Increment the refcount so
+	 * that it's still open, even though we close it in the loop.
 	 */
+	RelationIncrementReferenceCount(cstate->rel);
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
 	{
-		if (resultRelInfo->ri_aoInsertDesc)
-			appendonly_insert_finish(resultRelInfo->ri_aoInsertDesc);
-
-		if (resultRelInfo->ri_aocsInsertDesc)
-			aocs_insert_finish(resultRelInfo->ri_aocsInsertDesc);
-
-		if (resultRelInfo->ri_extInsertDesc)
-			external_insert_finish(resultRelInfo->ri_extInsertDesc);
-
-		/*
-		 * If we skipped writing WAL, then we need to sync the heap (but not
-		 * indexes since those use WAL anyway)
-		 */
-		if (hi_options & HEAP_INSERT_SKIP_WAL)
-			heap_sync(resultRelInfo->ri_RelationDesc);
-
-		ExecCloseIndices(resultRelInfo);
-
-		/*
-		 * Keep the main relation open, it will be closed by the caller.
-		 * But close the ones we opened in this function.
-		 */
-		if (resultRelInfo->ri_RelationDesc != cstate->rel)
-		{
-			heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-		}
+		CloseResultRelInfo(resultRelInfo);
 		resultRelInfo++;
 	}
 

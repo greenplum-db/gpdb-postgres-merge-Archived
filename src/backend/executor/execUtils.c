@@ -287,14 +287,6 @@ FreeExecutorState(EState *estate)
 	}
 
 	/*
-	 * Greenplum: release partition-related resources (esp. TupleDesc ref counts).
-	 */
-	if (estate->es_partition_state)
-	{
-		ClearPartitionState(estate);
-	}
-
-	/*
 	 * Free the per-query memory context, thereby releasing all working
 	 * memory, including the EState node itself.
 	 */

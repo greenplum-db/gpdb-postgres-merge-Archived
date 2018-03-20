@@ -488,7 +488,7 @@ extern void end_tup_output(TupOutputState *tstate);
  */
 extern EState *CreateExecutorState(void);
 extern void FreeExecutorState(EState *estate);
-extern void ClearPartitionState(EState *estate);
+extern void CloseResultRelInfo(ResultRelInfo *resultRelInfo);
 extern ExprContext *CreateExprContext(EState *estate);
 extern ExprContext *CreateStandaloneExprContext(void);
 extern void FreeExprContext(ExprContext *econtext, bool isCommit);
