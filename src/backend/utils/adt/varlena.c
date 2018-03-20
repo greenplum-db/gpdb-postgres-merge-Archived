@@ -1018,6 +1018,13 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
 
+	/*
+	 * Initialize unused fields, to keep compiler quiet about missing
+	 * initializations. But ignore 'skiptable', it's large enough that
+	 * clearing it unnecessarily could be a measurable slowdown.
+	 */
+	memset(state, 0, offsetof(TextPositionState, skiptable));
+
 	if (pg_database_encoding_max_length() == 1)
 	{
 		/* simple case - single byte encoding */
