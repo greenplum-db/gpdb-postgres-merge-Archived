@@ -3262,13 +3262,6 @@ ATVerifyObject(AlterTableStmt *stmt, Relation rel)
 					 errhint("Use ALTER EXTERNAL TABLE instead")));
 		}
 	}
-	else if (!RelationIsExternal(rel) && stmt->relkind != OBJECT_TABLE)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a base table", RelationGetRelationName(rel)),
-				 errhint("Use ALTER TABLE instead")));
-	}
 
 	/*
 	 * Check the ALTER command type is supported for this object
