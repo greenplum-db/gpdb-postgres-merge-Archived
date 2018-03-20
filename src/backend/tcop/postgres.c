@@ -1316,6 +1316,8 @@ exec_mpp_query(const char *query_string,
 		 * Now we can create the destination receiver object.
 		 */
 		receiver = CreateDestReceiver(dest);
+		if (dest == DestRemote)
+			SetRemoteDestReceiverParams(receiver, portal);
 
 		/*
 		 * Switch back to transaction context for execution.
