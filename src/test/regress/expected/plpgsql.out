@@ -3221,14 +3221,8 @@ begin
 end;
 $$ language plpgsql;
 select * from sc_test();  -- fails because of NO SCROLL specification
-<<<<<<< HEAD
 ERROR:  backward scan is not supported in this version of Greenplum Database
-CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
-=======
-ERROR:  cursor can only scan forward
-HINT:  Declare it with SCROLL option to enable backward scan.
 CONTEXT:  PL/pgSQL function "sc_test" line 7 at FETCH
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 create or replace function sc_test() returns setof integer as $$
 declare
   c refcursor;
@@ -4232,12 +4226,8 @@ SAVEPOINT a;
 select error2('nonexistent.stuffs');
 ERROR:  schema "nonexistent" does not exist
 CONTEXT:  SQL function "error1" statement 1
-<<<<<<< HEAD
 SQL statement "SELECT error1(p_name_table)"
-PL/pgSQL function "error2" line 2 at RETURN
-=======
 PL/pgSQL function "error2" line 3 at RETURN
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 ROLLBACK TO a;
 select error2('public.stuffs');
  error2 
@@ -4358,8 +4348,7 @@ ERROR:  column "foo" does not exist
 LINE 1: SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomn...
                                         ^
 QUERY:  SELECT rtrim(roomno) AS roomno, foo FROM Room ORDER BY roomno
-<<<<<<< HEAD
-CONTEXT:  PL/pgSQL function "inline_code_block" line 3 at FOR over SELECT rows
+CONTEXT:  PL/pgSQL function "inline_code_block" line 4 at FOR over SELECT rows
 -- Check handling of errors thrown from/into anonymous code blocks.
 do $outer$
 begin
@@ -4389,9 +4378,6 @@ NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
 NOTICE:  caught division by zero
-=======
-CONTEXT:  PL/pgSQL function "inline_code_block" line 4 at FOR over SELECT rows
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 create function scope_test() returns int as $$

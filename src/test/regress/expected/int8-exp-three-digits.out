@@ -802,7 +802,19 @@ SELECT * FROM generate_series('+4567890123456789'::int8, '+4567890123456799'::in
  4567890123456799
 (6 rows)
 
-<<<<<<< HEAD
+-- corner case
+SELECT (-1::int8<<63)::text;
+         text         
+----------------------
+ -9223372036854775808
+(1 row)
+
+SELECT ((-1::int8<<63)+1)::text;
+         text         
+----------------------
+ -9223372036854775807
+(1 row)
+
 -- check sane handling of INT64_MIN overflow cases
 SELECT (-9223372036854775808)::int8 * (-1)::int8;
 ERROR:  bigint out of range
@@ -832,18 +844,5 @@ SELECT (-9223372036854775808)::int8 % (-1)::int2;
  ?column? 
 ----------
         0
-=======
--- corner case
-SELECT (-1::int8<<63)::text;
-         text         
-----------------------
- -9223372036854775808
-(1 row)
-
-SELECT ((-1::int8<<63)+1)::text;
-         text         
-----------------------
- -9223372036854775807
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 (1 row)
 
