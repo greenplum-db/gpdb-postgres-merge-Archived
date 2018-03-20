@@ -1856,13 +1856,7 @@ main(int argc, char **argv)
 	state = (CState *) xmalloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD
-	memset(state, 0, sizeof(*state));
-
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
-=======
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:")) != -1)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Crs:t:T:U:lf:D:F:M:j:x:q")) != -1)
 	{
 		switch (c)
 		{
