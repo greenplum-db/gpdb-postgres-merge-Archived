@@ -3616,7 +3616,6 @@ CopyFrom(CopyState cstate)
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTableSlot *baseSlot;
-	bool		file_has_oids = false;
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
@@ -3857,7 +3856,7 @@ CopyFrom(CopyState cstate)
 			 */
 			if (!cstate->on_segment)
 			{
-				CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
+				CopyFromProcessDataFileHeader(cstate, cdbCopy, &cstate->file_has_oids);
 			}
 		}
 		PG_CATCH();
@@ -3892,15 +3891,14 @@ CopyFrom(CopyState cstate)
 		 * EACH ROW triggers that we already fire on COPY.
 		 */
 		//ExecBSInsertTriggers(estate, resultRelInfo);
-
-		/* Skip header processing if dummy file on master for COPY FROM ON SEGMENT */
-		if (!cstate->on_segment || Gp_role != GP_ROLE_DISPATCH)
-		{
-			CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
-		}
 	}
 
-	
+	/* Skip header processing if dummy file on master for COPY FROM ON SEGMENT */
+	if (!cstate->on_segment || Gp_role != GP_ROLE_DISPATCH)
+	{
+		CopyFromProcessDataFileHeader(cstate, cdbCopy, &cstate->file_has_oids);
+	}
+
 	if (Gp_role == GP_ROLE_EXECUTE && (cstate->on_segment == false))
 		cstate->err_loc_type = ROWNUM_EMBEDDED; /* get original row num from QD COPY */
 	else
@@ -4238,7 +4236,7 @@ CopyFrom(CopyState cstate)
 
 		is_segment_data_processed = true;
 
-		CopyFromProcessDataFileHeader(cstate, cdbCopy, &file_has_oids);
+		CopyFromProcessDataFileHeader(cstate, cdbCopy, &cstate->file_has_oids);
 		CopyInitDataParser(cstate);
 		no_more_data = false;
 	}
