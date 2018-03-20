@@ -659,7 +659,7 @@ select myfunc(0), current_setting('work_mem');
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 CONTEXT:  SQL statement "set local work_mem = '2MB'"
-PL/pgSQL function "myfunc" line 2 at SQL statement
+PL/pgSQL function "myfunc" line 3 at SQL statement
  myfunc | current_setting 
 --------+-----------------
  2MB    | 3MB
@@ -669,7 +669,7 @@ alter function myfunc(int) reset all;
 select myfunc(0), current_setting('work_mem');
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 CONTEXT:  SQL statement "set local work_mem = '2MB'"
-PL/pgSQL function "myfunc" line 2 at SQL statement
+PL/pgSQL function "myfunc" line 3 at SQL statement
  myfunc | current_setting 
 --------+-----------------
  2MB    | 3MB
@@ -691,7 +691,7 @@ select myfunc(0), current_setting('work_mem');
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 CONTEXT:  SQL statement "set work_mem = '2MB'"
-PL/pgSQL function "myfunc" line 2 at SQL statement
+PL/pgSQL function "myfunc" line 3 at SQL statement
  myfunc | current_setting 
 --------+-----------------
  2MB    | 3MB
@@ -725,7 +725,7 @@ select myfunc(0);
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 CONTEXT:  SQL statement "set work_mem = '2MB'"
-PL/pgSQL function "myfunc" line 2 at SQL statement
+PL/pgSQL function "myfunc" line 3 at SQL statement
 ERROR:  division by zero
 CONTEXT:  SQL statement "SELECT 1/$1"
 PL/pgSQL function "myfunc" line 4 at PERFORM
@@ -739,7 +739,7 @@ select myfunc(1), current_setting('work_mem');
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 WARNING:  "work_mem": setting is deprecated, and may be removed in a future release.
 CONTEXT:  SQL statement "set work_mem = '2MB'"
-PL/pgSQL function "myfunc" line 2 at SQL statement
+PL/pgSQL function "myfunc" line 3 at SQL statement
  myfunc | current_setting 
 --------+-----------------
  2MB    | 3MB

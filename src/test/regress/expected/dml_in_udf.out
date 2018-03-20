@@ -174,9 +174,9 @@ ERROR:  relation "errorhandlingtmptable" does not exist
 LINE 1: INSERT INTO  errorhandlingtmpTABLE VALUES ('fjdk')
                      ^
 QUERY:  INSERT INTO  errorhandlingtmpTABLE VALUES ('fjdk')
-CONTEXT:  PL/pgSQL function "insert_wrong" line 2 at SQL statement
+CONTEXT:  PL/pgSQL function "insert_wrong" line 3 at SQL statement
 SQL statement "SELECT insert_wrong()"
-PL/pgSQL function "dml_plperl_fn2" line 6 at PERFORM
+PL/pgSQL function "dml_plperl_fn2" line 7 at PERFORM
 SELECT COUNT(*) FROM dml_plperl_t2;
  count 
 -------
@@ -216,34 +216,34 @@ CREATE TABLE dml_plpgsql_t1(a char) distributed by (a);
 SELECT dml_indata(1,10);
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
 NOTICE:  Error in data
 CONTEXT:  SQL statement "SELECT dml_insertvalue(100)"
-PL/pgSQL function "dml_indata" line 6 at PERFORM
+PL/pgSQL function "dml_indata" line 7 at PERFORM
  dml_indata 
 ------------
  
