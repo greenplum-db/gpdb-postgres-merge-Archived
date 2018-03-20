@@ -549,6 +549,8 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_JoinExpr:
 		case T_FromExpr:
 		case T_SortGroupClause:
+		case T_GroupingClause:
+		case T_WindowClause:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
 										  (void *) &loccontext);
@@ -558,6 +560,8 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			 * anything with join nodes except recurse through them to process
 			 * WHERE/ON expressions.  So just stop here.  Likewise, we don't
 			 * need to do anything when invoked on sort/group lists.
+			 *
+			 * GPDB: same for WindowClauses.
 			 */
 			return false;
 		case T_Query:
@@ -583,18 +587,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				location = exprLocation((Node *) tent->expr);
 			}
 			break;
-		case T_WindowClause:
-			(void) expression_tree_walker(node,
-										  assign_collations_walker,
-										  (void *) &loccontext);
-			/*
-			 * GPDB_91_MERGE_FIXME: is it sane to return from here? If we
-			 * don't, compilation errors occur on certain compilers such as
-			 * clang and the GCC used in CI.  The compilation fails because
-			 * collation and strength variables may be used uninitialized
-			 * (-Wmaybe-uninitialized) after the switch statement.
-			 */
-			return false;
 		case T_List:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,

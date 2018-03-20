@@ -842,6 +842,18 @@ exprCollation(Node *expr)
 		case T_PlaceHolderVar:
 			coll = exprCollation((Node *) ((PlaceHolderVar *) expr)->phexpr);
 			break;
+
+		case T_GroupingFunc:
+			coll = InvalidOid;	/* result is always int8 */
+			break;
+
+		case T_Grouping:
+			coll = InvalidOid;	/* result is always int8 */
+			break;
+		case T_GroupId:
+			coll = InvalidOid;	/* result is always int4 */
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			coll = InvalidOid;	/* keep compiler quiet */
