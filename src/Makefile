@@ -57,14 +57,12 @@ clean:
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@
 	$(MAKE) -C test/thread $@
-	$(MAKE) -C tools/fsync $@
 
 distclean maintainer-clean:
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
 	$(MAKE) -C test/isolation $@
 	$(MAKE) -C test/thread $@
-	$(MAKE) -C tools/fsync $@
 	rm -f Makefile.port Makefile.global
 
 coverage:

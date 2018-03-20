@@ -5,23 +5,15 @@ top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = \
-<<<<<<< HEAD
-=======
-		adminpack	\
 		auth_delay	\
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		auto_explain	\
 		btree_gin	\
 		citext		\
 		dblink		\
 		dict_int	\
 		dict_xsyn	\
-<<<<<<< HEAD
-=======
 		dummy_seclabel	\
-		earthdistance	\
 		file_fdw	\
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		fuzzystrmatch	\
 		hstore		\
 		intarray	\
