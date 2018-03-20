@@ -876,7 +876,12 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
-				relation->rd_backend = MyBackendId;
+			{
+				if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE)
+					relation->rd_backend = gp_session_id;
+				else
+					relation->rd_backend = MyBackendId;
+			}
 			else
 			{
 				/*
@@ -2700,7 +2705,7 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_backend = InvalidBackendId;
 			break;
 		case RELPERSISTENCE_TEMP:
-			rel->rd_backend = MyBackendId;
+			rel->rd_backend = MyTempSessionId();
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);

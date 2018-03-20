@@ -21,6 +21,7 @@
 
 #include "access/genam.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -3469,7 +3470,6 @@ InitTempTableNamespace(void)
 	char		namespaceName[NAMEDATALEN];
 	Oid			namespaceId;
 	Oid			toastspaceId;
-	int			session_suffix;
 
 	/*
 	 * First, do permission check to see if we are authorized to make temp
@@ -3489,28 +3489,6 @@ InitTempTableNamespace(void)
 						get_database_name(MyDatabaseId))));
 
 	/*
-	 * TempNamespace name creation rules are different depending on the
-	 * nature of the current connection role.
-	 */
-	switch (Gp_role)
-	{
-		case GP_ROLE_DISPATCH:
-		case GP_ROLE_EXECUTE:
-			session_suffix = gp_session_id;
-			break;
-
-		case GP_ROLE_UTILITY:
-			session_suffix = MyBackendId;
-			break;
-
-		default:
-			/* Should never hit this */
-			elog(ERROR, "invalid backend temp schema creation");
-			session_suffix = -1;	/* keep compiler quiet */
-			break;
-	}
-
-	/*
 	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
 	 * from problems with modifying the system catalogs, there is a naming
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
@@ -3525,7 +3503,7 @@ InitTempTableNamespace(void)
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 				 errmsg("cannot create temporary tables during recovery")));
 
-	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", session_suffix);
+	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyTempSessionId());
 
 	namespaceId = get_namespace_oid(namespaceName, true);
 
@@ -3573,7 +3551,7 @@ InitTempTableNamespace(void)
 	 * the same OID on master and segments.)
 	 */
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
-			 session_suffix);
+			 MyTempSessionId());
 
 	toastspaceId = get_namespace_oid(namespaceName, true);
 	if (OidIsValid(toastspaceId))
