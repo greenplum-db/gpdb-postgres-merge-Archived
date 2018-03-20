@@ -546,6 +546,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <str>		opt_existing_window_name
 %type <ival>	window_frame_exclusion
 
+%token			PARSE_COPY_OPTIONS
+
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -1089,6 +1091,17 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 stmtblock:	stmtmulti
 			{
 				pg_yyget_extra(yyscanner)->parsetree = $1;
+			}
+		;
+
+/*
+ * PARSE_COPY_OPTIONS is a special token that means that we're not processing
+ * a full SQL statement, but only a list of COPY options. This is used to
+ * process options to an external table, just like COPY does.
+ */
+stmtblock: PARSE_COPY_OPTIONS copy_options
+			{
+				$$ = $2;
 			}
 		;
 

@@ -817,7 +817,7 @@ CopyGetData(CopyState cstate, void *databuf, int datasize)
 			}
 			break;
 		case COPY_CALLBACK:
-			bytesread = cstate->data_source_cb(databuf, datasize);
+			bytesread = cstate->data_source_cb(databuf, datasize, cstate->data_source_cb_extra);
 			break;
 
 	}

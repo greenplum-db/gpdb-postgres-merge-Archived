@@ -610,7 +610,7 @@ _outExternalScan(StringInfo str, ExternalScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(uriList);
-	WRITE_NODE_FIELD(fmtOpts);
+	WRITE_STRING_FIELD(fmtOptString);
 	WRITE_CHAR_FIELD(fmtType);
 	WRITE_BOOL_FIELD(isMasterOnly);
 	WRITE_INT_FIELD(rejLimit);

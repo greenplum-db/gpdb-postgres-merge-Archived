@@ -1740,7 +1740,7 @@ _readExternalScan(void)
 	readScanInfo((Scan *)local_node);
 
 	READ_NODE_FIELD(uriList);
-	READ_NODE_FIELD(fmtOpts);
+	READ_STRING_FIELD(fmtOptString);
 	READ_CHAR_FIELD(fmtType);
 	READ_BOOL_FIELD(isMasterOnly);
 	READ_INT_FIELD(rejLimit);

@@ -264,7 +264,7 @@ ExecInitExternalScan(ExternalScan *node, EState *estate, int eflags)
 	currentScanDesc = external_beginscan(currentRelation,
 									 node->scancounter,
 									 node->uriList,
-									 node->fmtOpts,
+									 node->fmtOptString,
 									 node->fmtType,
 									 node->isMasterOnly,
 									 node->rejLimit,

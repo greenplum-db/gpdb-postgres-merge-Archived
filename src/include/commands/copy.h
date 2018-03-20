@@ -35,7 +35,7 @@ typedef enum CopyDest
 
 /* CopyStateData is private in commands/copy.c */
 typedef struct CopyStateData *CopyState;
-typedef int (*copy_data_source_cb) (void *outbuf, int datasize);
+typedef int (*copy_data_source_cb) (void *outbuf, int datasize, void *extra);
 
 /*
  *	Represents the end-of-line terminator type of the input
@@ -171,6 +171,7 @@ typedef struct CopyStateData
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
 	copy_data_source_cb data_source_cb; /* function for reading data */
+	void	   *data_source_cb_extra;
 	bool		custom;			/* custom format? */
 	bool		oids;			/* include OIDs? */
 	bool        binary;         /* binary format */

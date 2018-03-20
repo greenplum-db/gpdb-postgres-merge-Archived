@@ -386,7 +386,6 @@ plan_tree_mutator(Node *node,
 				SCANMUTATE(newextscan, extscan);
 
 				MUTATE(newextscan->uriList, extscan->uriList, List *);
-				MUTATE(newextscan->fmtOpts, extscan->fmtOpts, List *);
 				newextscan->fmtType = extscan->fmtType;
 				newextscan->isMasterOnly = extscan->isMasterOnly;
 

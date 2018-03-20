@@ -130,7 +130,7 @@ static ExternalScan *make_externalscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
 				  List *filenames,
-				  List *fmtopts,
+				  char *fmtoptstring,
 				  bool istext,
 				  bool ismasteronly,
 				  int rejectlimit,
@@ -1385,7 +1385,6 @@ create_externalscan_plan(PlannerInfo *root, Path *best_path,
 	int			rejectlimit = -1;
 	Oid			fmtErrTblOid = InvalidOid;
 	ExtTableEntry *ext = rel->extEntry;
-	List	   *fmtopts;
 
 	/* it should be an external rel... */
 	Assert(scan_relid > 0);
@@ -1416,7 +1415,6 @@ create_externalscan_plan(PlannerInfo *root, Path *best_path,
 
 	/* data format description */
 	Assert(ext->fmtopts);
-	fmtopts = list_make1(makeString(pstrdup(ext->fmtopts)));
 
 	/* single row error handling */
 	if (ext->rejectlimit != -1)
@@ -1430,7 +1428,7 @@ create_externalscan_plan(PlannerInfo *root, Path *best_path,
 								  scan_clauses,
 								  scan_relid,
 								  filenames,
-								  fmtopts,
+								  ext->fmtopts,
 								  ext->fmtcode,
 								  ismasteronly,
 								  rejectlimit,
@@ -4251,7 +4249,7 @@ make_externalscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
 				  List *urilist,
-				  List *fmtopts,
+				  char *fmtoptstring,
 				  char fmttype,
 				  bool ismasteronly,
 				  int rejectlimit,
@@ -4272,7 +4270,7 @@ make_externalscan(List *qptlist,
 
 	/* external specifictions */
 	node->uriList = urilist;
-	node->fmtOpts = fmtopts;
+	node->fmtOptString = fmtoptstring;
 	node->fmtType = fmttype;
 	node->isMasterOnly = ismasteronly;
 	node->rejLimit = rejectlimit;

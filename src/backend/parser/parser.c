@@ -33,8 +33,8 @@
  *
  * Returns a list of raw (un-analyzed) parse trees.
  */
-List *
-raw_parser(const char *str)
+static List *
+raw_parser_ex(const char *str, int init_token)
 {
 	core_yyscan_t yyscanner;
 	base_yy_extra_type yyextra;
@@ -45,7 +45,16 @@ raw_parser(const char *str)
 							 ScanKeywords, NumScanKeywords);
 
 	/* base_yylex() only needs this much initialization */
-	yyextra.have_lookahead = false;
+	if (init_token)
+	{
+		/* Add an initial token to tell the parser to do special parsing */
+		yyextra.lookahead_token = PARSE_COPY_OPTIONS;
+		memset(&yyextra.lookahead_yylval, 0, sizeof(yyextra.lookahead_yylval));
+		yyextra.lookahead_yylloc = 0;
+		yyextra.have_lookahead = true;
+	}
+	else
+		yyextra.have_lookahead = false;
 
 	/* initialize the bison parser */
 	parser_init(&yyextra);
@@ -60,6 +69,24 @@ raw_parser(const char *str)
 		return NIL;
 
 	return yyextra.parsetree;
+}
+
+List *
+raw_parser(const char *str)
+{
+	return raw_parser_ex(str, 0);
+}
+
+/*
+ * raw_parser_copy_options
+ *		Given a string of COPY options, do lexical and grammatical analysis.
+ *
+ * Returns a list of DefElems.
+ */
+List *
+raw_parser_copy_options(const char *str)
+{
+	return raw_parser_ex(str, PARSE_COPY_OPTIONS);
 }
 
 

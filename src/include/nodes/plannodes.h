@@ -759,7 +759,7 @@ typedef struct ExternalScan
 {
 	Scan		scan;
 	List		*uriList;       /* data uri or null for each segment  */
-	List		*fmtOpts;       /* data format options                */
+	char	   *fmtOptString;	/* data format options                */
 	char		fmtType;        /* data format type                   */
 	bool		isMasterOnly;   /* true for EXECUTE on master seg only */
 	int			rejLimit;       /* reject limit (-1 for no sreh)      */
