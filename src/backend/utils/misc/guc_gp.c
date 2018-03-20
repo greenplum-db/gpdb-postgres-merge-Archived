@@ -3680,6 +3680,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_UNIT_S | GUC_GPDB_ADDOPT
 		},
 		&gp_debug_linger,
+		0, 0, 3600,
 #endif
 		NULL, NULL, NULL
 	},
