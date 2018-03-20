@@ -889,12 +889,15 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 			/* Is receiving slice a root slice that runs here in the qDisp? */
 			if (recvSlice->sliceIndex == recvSlice->rootIndex)
 			{
-				motionstate->mstype = MOTIONSTATE_RECV; 
-				Assert(recvSlice->gangType == GANGTYPE_UNALLOCATED || recvSlice->gangType == GANGTYPE_PRIMARY_WRITER);
+				motionstate->mstype = MOTIONSTATE_RECV;
+				Assert(recvSlice->gangType == GANGTYPE_UNALLOCATED ||
+					   recvSlice->gangType == GANGTYPE_PRIMARY_WRITER);
 			}
 			else
 			{
-				Assert(recvSlice->gangSize == 1);
+				/* sanity checks */
+				if (recvSlice->gangSize != 1)
+					elog(ERROR, "unexpected gang size: %d", recvSlice->gangSize);
 				Assert(node->outputSegIdx[0] >= 0
 					   ? (recvSlice->gangType == GANGTYPE_SINGLETON_READER ||
 						  recvSlice->gangType == GANGTYPE_ENTRYDB_READER ||
