@@ -4084,7 +4084,8 @@ finalize_split_expr_mutator(Node *node, MppGroupContext *ctx)
 
 		/* sanity check. */
 		if (attrno < 1 || attrno > list_length(ctx->top_tlist))
-			elog(ERROR, "invalid attrno");
+			elog(ERROR, "invalid attrno %d, should be in the range [1, %d]",
+				 attrno, list_length(ctx->top_tlist));
 
 		tle = (TargetEntry *) list_nth(ctx->top_tlist, attrno - 1);
 
