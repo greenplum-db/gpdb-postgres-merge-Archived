@@ -2255,6 +2255,8 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
                    const char *qlabel, List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = planstate->plan;
+	PlanState  *subplanstate = outerPlanState(planstate);
+	Plan	   *subplan = subplanstate->plan;
     List	   *context;
 	List	   *result = NIL;
     char	   *exprstr;
@@ -2267,7 +2269,7 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
 		return;
 
 	/* Set up deparse context */
-	context = deparse_context_for_planstate((Node *) planstate,
+	context = deparse_context_for_planstate((Node *) subplanstate,
 											ancestors,
 											es->rtable);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
@@ -2282,23 +2284,20 @@ show_grouping_keys(PlanState *planstate, int nkeys, AttrNumber *subplanColIdx,
     {
 	    /* find key expression in tlist */
 	    AttrNumber      keyresno = subplanColIdx[keyno];
-	    TargetEntry    *target = get_tle_by_resno(plan->targetlist, keyresno);
-		char grping_str[50];
+	    TargetEntry    *target = get_tle_by_resno(subplan->targetlist, keyresno);
 
 	    if (!target)
 		    elog(ERROR, "no tlist entry for key %d", keyresno);
 
 		if (IsA(target->expr, Grouping))
 		{
-			sprintf(grping_str, "grouping");
 			/* Append "grouping" explicitly. */
-			exprstr = grping_str;
+			exprstr = "grouping";
 		}
 		else if (IsA(target->expr, GroupId))
 		{
-			sprintf(grping_str, "groupid");
 			/* Append "groupid" explicitly. */
-			exprstr = grping_str;
+			exprstr = "groupid";
 		}
 		else
 			/* Deparse the expression, showing any top-level cast */
