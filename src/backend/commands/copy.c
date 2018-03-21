@@ -2571,7 +2571,7 @@ CopyTo(CopyState cstate)
 	int			num_phys_attrs;
 	Form_pg_attribute *attr;
 	ListCell   *cur;
-	uint64		processed;
+	uint64		processed = 0;
 	List *target_rels = NIL;
 	ListCell *lc;
 	CdbCopy    *cdbCopy = NULL;
