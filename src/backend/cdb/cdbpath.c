@@ -1581,7 +1581,7 @@ cdbpath_dedup_fixup_walker(Path *path, void *context)
 			break;
 
 		default:
-			Insist(0);
+			elog(ERROR, "cannot create a unique ID for path type: %d", path->pathtype);
 	}
 	return CdbVisit_Skip;		/* already visited kids, don't revisit them */
 }								/* cdbpath_dedup_fixup_walker */
