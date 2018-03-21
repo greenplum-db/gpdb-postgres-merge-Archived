@@ -177,7 +177,8 @@ static void SendCopyEnd(CopyState cstate);
 static void CopySendData(CopyState cstate, const void *databuf, int datasize);
 static void CopySendString(CopyState cstate, const char *str);
 static void CopySendChar(CopyState cstate, char c);
-static int	CopyGetData(CopyState cstate, void *databuf, int datasize);
+static int  CopyGetData(CopyState cstate, void *databuf,
+						int datasize);
 
 static void CopySendInt32(CopyState cstate, int32 val);
 static bool CopyGetInt32(CopyState cstate, int32 *val);
@@ -2057,7 +2058,6 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 		dispatchStmt->distribution_attrs = NULL;
 	}
 
-	/* GPDB_91_MERGE_FIXME: Fill in the extra fields here */
 	CdbDispatchUtilityStatement((Node *) dispatchStmt,
 								DF_NEED_TWO_PHASE |
 								DF_WITH_SNAPSHOT |
@@ -2072,7 +2072,12 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 }
 
 
-/* GPDB_91_MERGE_FIXME: This should be called from somewhere in case of ON SEGMENT */
+/*
+ * Modify the filename in cstate->filename, and cstate->cdbsreh if any,
+ * for COPY ON SEGMENT.
+ *
+ * Replaces the "<SEGID>" token in the filename with this segment's ID.
+ */
 static void
 MangleCopyFileName(CopyState cstate)
 {
@@ -2369,8 +2374,8 @@ EndCopyTo(CopyState cstate)
 }
 
 /*
- * Copy from relation TO file. Starts a COPY TO command on each of
- * the executors and gathers all the results and writes it out.
+ * Copy FROM relation TO file, in the dispatcher. Starts a COPY TO command on
+ * each of the executors and gathers all the results and writes it out.
  */
 static uint64
 CopyToDispatch(CopyState cstate)
@@ -2392,15 +2397,7 @@ CopyToDispatch(CopyState cstate)
 	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
 	cstate->fe_msgbuf = makeStringInfo();
 
-	/*
-	 * prepare to get COPY data from segDBs:
-	 * 1 - re-construct the orignial COPY command sent from the client.
-	 * 2 - execute a BEGIN DTM transaction.
-	 * 3 - send the COPY command to all segment databases.
-	 */
-
 	cdbCopy = makeCdbCopy(false);
-
 	cdbCopy->partitions = RelationBuildPartitionDesc(cstate->rel, false);
 	cdbCopy->skip_ext_partition = cstate->skip_ext_partition;
 
@@ -3236,10 +3233,8 @@ static uint64
 CopyFrom(CopyState cstate)
 {
 	TupleDesc	tupDesc;
-	Form_pg_attribute *attr;
 	AttrNumber	num_phys_attrs,
-				attr_count,
-				num_defaults;
+				attr_count;
 	Datum		*partValues = NULL;
 	bool		*partNulls = NULL;
 	ResultRelInfo *resultRelInfo;
@@ -3288,10 +3283,8 @@ CopyFrom(CopyState cstate)
 	}
 
 	tupDesc = RelationGetDescr(cstate->rel);
-	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 	attr_count = list_length(cstate->attnumlist);
-	num_defaults = 0;
 
 	/*----------
 	 * Check to see if we can avoid writing WAL
@@ -3371,8 +3364,6 @@ CopyFrom(CopyState cstate)
 	/* Triggers might need a slot as well */
 	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
-	econtext = GetPerTupleExprContext(estate);
-
 	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
 
@@ -3388,6 +3379,7 @@ CopyFrom(CopyState cstate)
 	partNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	bistate = GetBulkInsertState();
+	econtext = GetPerTupleExprContext(estate);
 
 	/* Set up callback to identify error line number */
 	errcontext.callback = CopyFromErrorCallback;
@@ -3412,7 +3404,7 @@ CopyFrom(CopyState cstate)
 		bool multi_dist_policy = estate->es_result_partitions
 	        && !partition_policies_equal(cstate->rel->rd_cdbpolicy,
 	                                     estate->es_result_partitions);
-		distData = InitDistributionData(cstate, attr, num_phys_attrs,
+		distData = InitDistributionData(cstate, tupDesc->attrs, num_phys_attrs,
 										estate, multi_dist_policy);
 		p_attr_types = distData->p_attr_types;
 		p_nattrs = distData->p_nattrs;
@@ -3421,7 +3413,7 @@ CopyFrom(CopyState cstate)
 		if (estate->es_result_partitions)
 		{
 			PartitionData *partitionData;
-			partitionData = InitPartitionData(estate, attr, num_phys_attrs);
+			partitionData = InitPartitionData(estate, tupDesc->attrs, num_phys_attrs);
 		}
 	}
 
@@ -4365,6 +4357,22 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			}
 		}
 
+		/*
+		 * A completely empty line is not allowed with FILL MISSING FIELDS. Without
+		 * FILL MISSING FIELDS, it's almost surely an error, but not always:
+		 * a table with a single text column, for example, needs to accept empty
+		 * lines.
+		 */
+		if (cstate->line_buf.len == 0 &&
+			cstate->fill_missing &&
+			list_length(cstate->attnumlist) > 1)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+					 errmsg("missing data for column \"%s\", found empty data line",
+							NameStr(attr[1]->attname))));
+		}
+
 		/* Loop to read the user attributes on the line. */
 		foreach(cur, cstate->attnumlist)
 		{
@@ -4666,7 +4674,8 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 }
 
 /*
- * This is the sending counterpart of NextCopyFromExecute.
+ * This is the sending counterpart of NextCopyFromExecute. Used in the QD,
+ * to send a row to a QE.
  */
 static void
 SendCopyFromForwardedTuple(CopyState cstate,
