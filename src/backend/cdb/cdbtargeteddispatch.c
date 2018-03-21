@@ -490,6 +490,7 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 				/* no change to dispatchInfo --> just iterate children */
 				break;
 			case T_Append:
+			case T_MergeAppend:
 				/* no change to dispatchInfo --> just iterate children */
 				break;
 			case T_LockRows:

@@ -479,6 +479,7 @@ _outSequence(StringInfo str, Sequence *node)
 	WRITE_NODE_FIELD(subplans);
 }
 
+#ifndef COMPILING_BINARY_FUNCS
 static void
 _outMergeAppend(StringInfo str, MergeAppend *node)
 {
@@ -508,6 +509,7 @@ _outMergeAppend(StringInfo str, MergeAppend *node)
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
 }
+#endif
 
 #ifndef COMPILING_BINARY_FUNCS
 static void

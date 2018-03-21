@@ -442,6 +442,18 @@ ParallelizeCorrelatedSubPlanUpdateFlowMutator(Node *node)
 				((Plan *) node)->flow = pull_up_Flow((Plan *) node, first_append);
 				break;
 			}
+		case T_MergeAppend:
+			{
+				List	   *merge_list = (List *) ((MergeAppend *) node)->mergeplans;
+
+				if (merge_list == NULL)
+					break;
+				Plan	   *first_merge = (Plan *) (lfirst(list_head(merge_list)));
+
+				Assert(first_merge && first_merge->flow);
+				((Plan *) node)->flow = pull_up_Flow((Plan *) node, first_merge);
+				break;
+			}
 		default:
 			break;
 	}
@@ -1224,6 +1236,7 @@ adjustPlanFlow(Plan *plan,
 			break;
 
 		case T_Append:			/* Maybe handle specially some day. */
+		case T_MergeAppend:
 		default:
 			break;
 	}
@@ -1423,6 +1436,7 @@ motion_sanity_walker(Node *node, sanity_result_t *result)
 		case T_TableFunctionScan:
 		case T_ShareInputScan:
 		case T_Append:
+		case T_MergeAppend:
 		case T_SeqScan:
 		case T_ExternalScan:
 		case T_AppendOnlyScan:

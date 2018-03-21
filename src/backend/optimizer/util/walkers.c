@@ -200,6 +200,13 @@ plan_tree_walker(Node *node,
 				return true;
 			break;
 
+		case T_MergeAppend:
+			if (walk_plan_node_fields((Plan *) node, walker, context))
+				return true;
+			if (walker((Node *) ((MergeAppend *) node)->mergeplans, context))
+				return true;
+			break;
+
 		case T_RecursiveUnion:
 			if (walk_plan_node_fields((Plan *) node, walker, context))
 				return true;
