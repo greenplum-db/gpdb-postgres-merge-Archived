@@ -3059,7 +3059,7 @@ void
 CopyFromErrorCallback(void *arg)
 {
 	CopyState	cstate = (CopyState) arg;
-	char buffer[20];
+	char		buffer[20];
 
 	/*
 	 * If we saved the error context from a QE in cdbcopy.c append it here.
@@ -3089,51 +3089,58 @@ CopyFromErrorCallback(void *arg)
 	}
 	else
 	{
-	if (cstate->cur_attname)
-	{
-		/* error is relevant to a particular column */
-		char	   *att_buf;
-
-		att_buf = limit_printout_length(cstate->attribute_buf.data);
-
-		errcontext("COPY %s, line %s, column %s",
-				   cstate->cur_relname,
-				   linenumber_atoi(buffer, cstate->cur_lineno),
-				   att_buf);
-		pfree(att_buf);
-	}
-	else
-	{
-		/* error is relevant to a particular line */
-		if (cstate->line_buf_converted || !cstate->need_transcoding)
+		if (cstate->cur_attname && cstate->cur_attval)
 		{
-			char	   *line_buf;
+			/* error is relevant to a particular column */
+			char	   *attval;
 
-			line_buf = extract_line_buf(cstate);
-			truncateEolStr(line_buf, cstate->eol_type);
-
-			errcontext("COPY %s, line %s: \"%s\"",
+			attval = limit_printout_length(cstate->cur_attval);
+			errcontext("COPY %s, line %s, column %s: \"%s\"",
 					   cstate->cur_relname,
 					   linenumber_atoi(buffer, cstate->cur_lineno),
-					   line_buf);
-			pfree(line_buf);
+					   cstate->cur_attname, attval);
+			pfree(attval);
+		}
+		else if (cstate->cur_attname)
+		{
+			/* error is relevant to a particular column, value is NULL */
+			errcontext("COPY %s, line %s, column %s: null input",
+					   cstate->cur_relname,
+					   linenumber_atoi(buffer, cstate->cur_lineno),
+					   cstate->cur_attname);
 		}
 		else
 		{
-			/*
-			 * Here, the line buffer is still in a foreign encoding,
-			 * and indeed it's quite likely that the error is precisely
-			 * a failure to do encoding conversion (ie, bad data).	We
-			 * dare not try to convert it, and at present there's no way
-			 * to regurgitate it without conversion.  So we have to punt
-			 * and just report the line number.
-			 */
-			errcontext("COPY %s, line %s",
-					   cstate->cur_relname,
-					   linenumber_atoi(buffer, cstate->cur_lineno));
+			/* error is relevant to a particular line */
+			if (cstate->line_buf_converted || !cstate->need_transcoding)
+			{
+				char	   *line_buf;
+
+				line_buf = extract_line_buf(cstate);
+				truncateEolStr(line_buf, cstate->eol_type);
+
+				errcontext("COPY %s, line %s: \"%s\"",
+						   cstate->cur_relname,
+						   linenumber_atoi(buffer, cstate->cur_lineno),
+						   line_buf);
+				pfree(line_buf);
+			}
+			else
+			{
+				/*
+				 * Here, the line buffer is still in a foreign encoding,
+				 * and indeed it's quite likely that the error is precisely
+				 * a failure to do encoding conversion (ie, bad data).	We
+				 * dare not try to convert it, and at present there's no way
+				 * to regurgitate it without conversion.  So we have to punt
+				 * and just report the line number.
+				 */
+				errcontext("COPY %s, line %s",
+						   cstate->cur_relname,
+						   linenumber_atoi(buffer, cstate->cur_lineno));
+			}
 		}
 	}
-}
 }
 
 /*
