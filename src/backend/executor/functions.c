@@ -157,7 +157,8 @@ static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
 
-bool querytree_safe_for_qe_walker(Node *expr, void *context)
+bool
+querytree_safe_for_qe_walker(Node *expr, void *context)
 {
 	Assert(context == NULL);
 	
@@ -228,10 +229,11 @@ bool querytree_safe_for_qe_walker(Node *expr, void *context)
  * 2. The query must be select only.
  * In case of a problem, the method spits out an error.
  */
-void querytree_safe_for_qe(Query *query)
+void
+querytree_safe_for_qe(Node *node)
 {
-	Assert(query);
-	querytree_safe_for_qe_walker((Node *)query, NULL);
+	Assert(node);
+	querytree_safe_for_qe_walker(node, NULL);
 }
 
 /*
@@ -574,33 +576,8 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
-		bool		canRunLocal = true;
-		ListCell   *list_item;
-
-		foreach(list_item, queryTree_list)
-		{
-			Node	   *parsetree = (Node *) lfirst(list_item);
-			if (IsA(parsetree,Query))
-			{
-				/* This will error out if there is a problem with the query tree */
-				querytree_safe_for_qe((Query*)parsetree);
-			}
-			else
-			{
-				canRunLocal = false;
-				break;
-			}		
-		}
-
-		if (!canRunLocal)
-		{
-			if (procedureStruct->provolatile == PROVOLATILE_VOLATILE)
-				elog(ERROR,"Volatile SQL function %s cannot be executed from the segment databases",NameStr(procedureStruct->proname));	
-			else if (procedureStruct->provolatile == PROVOLATILE_STABLE)
-				elog(ERROR,"Stable SQL function %s cannot be executed from the segment databases",NameStr(procedureStruct->proname));
-			else 
-				elog(ERROR,"SQL function %s cannot be executed from the segment databases",NameStr(procedureStruct->proname));		
-		}
+		/* This will error out if there is a problem with the query tree */
+		querytree_safe_for_qe((Node *) queryTree_list);
 	}
 
 	/*
