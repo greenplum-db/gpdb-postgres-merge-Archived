@@ -800,6 +800,9 @@ exprCollation(Node *expr)
 		case T_RowExpr:
 			coll = InvalidOid;	/* result is always composite */
 			break;
+		case T_TableValueExpr:
+			coll = InvalidOid;  /* result is always anytable */
+			break;
 		case T_RowCompareExpr:
 			coll = InvalidOid;	/* result is always boolean */
 			break;
@@ -1013,6 +1016,9 @@ exprSetCollation(Node *expr, Oid collation)
 			break;
 		case T_RowExpr:
 			Assert(!OidIsValid(collation));		/* result is always composite */
+			break;
+		case T_TableValueExpr:
+			Assert(!OidIsValid(collation));		/* result is always anytable */
 			break;
 		case T_RowCompareExpr:
 			Assert(!OidIsValid(collation));		/* result is always boolean */
