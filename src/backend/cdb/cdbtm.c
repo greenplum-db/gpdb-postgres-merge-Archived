@@ -2336,9 +2336,6 @@ recoverTM(void)
 {
 	bool		dtmRecoveryDeferred;
 
-	/* intialize fts sync count */
-	verifyFtsSyncCount();
-
 	elog(DTM_DEBUG3, "Starting to Recover DTM...");
 
 	/*

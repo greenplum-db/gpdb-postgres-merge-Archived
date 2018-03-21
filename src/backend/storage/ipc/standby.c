@@ -21,6 +21,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
@@ -192,6 +193,8 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 	if (!VirtualTransactionIdIsValid(*waitlist))
 		return;
 
+	gpstat_report_waiting(PGBE_WAITING_LOCK);
+
 	waitStart = GetCurrentTimestamp();
 	new_status = NULL;			/* we haven't changed the ps display */
 
@@ -214,7 +217,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				const char *old_status;
 				int			len;
 
-				old_status = get_ps_display(&len);
+				old_status = get_real_act_ps_display(&len);
 				new_status = (char *) palloc(len + 8 + 1);
 				memcpy(new_status, old_status, len);
 				strcpy(new_status + len, " waiting");
@@ -241,6 +244,14 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 					pg_usleep(5000L);
 			}
 		}
+
+		/* Reset ps display if we changed it */
+		if (new_status)
+		{
+			set_ps_display(new_status, false);
+			pfree(new_status);
+		}
+		gpstat_report_waiting(PGBE_WAITING_NONE);
 
 		/* The virtual transaction is gone now, wait for the next one */
 		waitlist++;

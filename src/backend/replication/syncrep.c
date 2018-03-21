@@ -223,6 +223,10 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		int			len;
 
 		old_status = get_real_act_ps_display(&len);
+		/*
+		 * The 32 represents the bytes in the string " waiting for %X/%X", as
+		 * in upstream.  The 12 represents GPDB specific " replication" suffix.
+		 */
 		new_status = (char *) palloc(len + 32 + 12 + 1);
 		memcpy(new_status, old_status, len);
 		sprintf(new_status + len, " waiting for %X/%X replication",
@@ -232,7 +236,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	}
 
 	/* Inform this backend is waiting for replication to pg_stat_activity */
-	pgstat_report_waiting(PGBE_WAITING_REPLICATION);
+	gpstat_report_waiting(PGBE_WAITING_REPLICATION);
 
 	/*
 	 * Wait for specified LSN to be confirmed.
@@ -363,7 +367,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	}
 
 	/* Now inform no more waiting for replication */
-	pgstat_report_waiting(PGBE_WAITING_NONE);
+	gpstat_report_waiting(PGBE_WAITING_NONE);
 }
 
 /*

@@ -433,8 +433,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	/*
 	 * Do the truncation.
 	 */
-	// GPDB_84_MERGE_FIXME: is allowedNotFound = false correct here?
-	mdtruncate(reln, forknum, nblocks, false /* allowedNotFound */);
+	mdtruncate(reln, forknum, nblocks);
 }
 
 /*

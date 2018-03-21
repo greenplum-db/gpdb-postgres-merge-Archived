@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	    src/include/postmaster/fts.h
+ *		src/include/postmaster/fts.h
  *
  *-------------------------------------------------------------------------
  */
@@ -34,31 +34,6 @@
 
 #define FTS_MESSAGE_RESPONSE_NTUPLES 1
 
-typedef struct
-{
-	int16 dbid;
-	bool isPrimaryAlive;
-	bool isMirrorAlive;
-	bool isInSync;
-	bool isSyncRepEnabled;
-	bool isRoleMirror;
-	bool retryRequested;
-} probe_result;
-
-typedef struct
-{
-	CdbComponentDatabaseInfo *segment_db_info;
-	probe_result result;
-	bool isScheduled;
-	const char *message;
-} probe_response_per_segment;
-
-typedef struct
-{
-	int num_of_requests; /* number of primaries (with mirror) we want to request */
-	probe_response_per_segment *responses;
-} fts_context;
-
 typedef struct FtsResponse
 {
 	bool IsMirrorUp;
@@ -68,6 +43,7 @@ typedef struct FtsResponse
 	bool RequestRetry;
 } FtsResponse;
 
+extern bool am_ftsprobe;
 extern bool am_ftshandler;
 extern bool am_mirror;
 
@@ -149,17 +125,6 @@ typedef struct
 extern int ftsprobe_start(void);
 
 /*
- * Interface for probing segments
- */
-extern void FtsProbeSegments(CdbComponentDatabases *dbs, uint8 *scan_status);
-
-/*
- * Interface for segment state checking
- */
-extern bool FtsIsSegmentAlive(CdbComponentDatabaseInfo *segInfo);
-extern CdbComponentDatabaseInfo *FtsGetPeerSegment(CdbComponentDatabases *cdbs,
-												   int content, int dbid);
-/*
  * Interface for checking if FTS is active
  */
 extern bool FtsIsActive(void);
@@ -168,13 +133,6 @@ extern bool FtsIsActive(void);
  * Interface for WALREP specific checking
  */
 extern void HandleFtsMessage(const char* query_string);
-extern void FtsWalRepMessageSegments(fts_context *context);
-
-/*
- * If master has requested FTS to shutdown.
- */
-#ifdef FAULT_INJECTOR
-extern bool IsFtsShudownRequested(void);
-#endif
+extern void probeWalRepUpdateConfig(int16 dbid, int16 segindex, char role,
+									bool IsSegmentAlive, bool IsInSync);
 #endif   /* FTS_H */
-

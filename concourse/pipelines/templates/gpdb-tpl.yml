@@ -85,7 +85,6 @@ groups:
                     cs_pg_twophase_suites %}
   - cs_[[ test_name ]]
 {% endfor %}
-  - storage
   - segwalrep_mirrorless_centos6
   - gate_cs_end
 {% endif %}
@@ -210,7 +209,6 @@ groups:
                     cs_pg_twophase_suites %}
   - cs_[[ test_name ]]
 {% endfor %}
-  - storage
   - segwalrep_mirrorless_centos6
   - gate_cs_end
 
@@ -602,18 +600,19 @@ resources:
 ##  \__,_|_| |_|\___|_| |_|\___/|_|  |___/
 ## ======================================================================
 
-ccp_create_params_anchor: &ccp_default_params
+anchors:
+- &ccp_default_params
   action: create
   delete_on_failure: true
   generate_random_name: true
   terraform_source: ccp_src/aws/
 
-ccp_vars_anchor: &ccp_default_vars
+- &ccp_default_vars
   aws_instance-node-instance_type: t2.medium
   aws_ebs_volume_type: standard
   platform: centos6
 
-ccp_destroy_anchor: &ccp_destroy
+- &ccp_destroy
   put: terraform
   tags: ["ccp"]
   params:
@@ -626,7 +625,7 @@ ccp_destroy_anchor: &ccp_destroy
   get_params:
     action: destroy
 
-ccp_destroy_two_clusters_anchor: &ccp_destroy_two_clusters
+- &ccp_destroy_two_clusters
   do:
   - *ccp_destroy
   - put: terraform2
@@ -641,14 +640,14 @@ ccp_destroy_two_clusters_anchor: &ccp_destroy_two_clusters
     get_params:
       action: destroy
 
-ccp_gen_cluster_default_params_anchor: &ccp_gen_cluster_default_params
+- &ccp_gen_cluster_default_params
   AWS_ACCESS_KEY_ID: {{tf-machine-access-key-id}}
   AWS_SECRET_ACCESS_KEY: {{tf-machine-secret-access-key}}
   AWS_DEFAULT_REGION: {{aws-region}}
   BUCKET_PATH: clusters/
   BUCKET_NAME: {{tf-bucket-name}}
 
-set_failed_anchor: &set_failed
+- &set_failed
   do:
   - task: on_failure_set_failed
     tags: ["ccp"]
@@ -671,7 +670,7 @@ set_failed_anchor: &set_failed
         BUCKET_PATH: clusters/
         BUCKET_NAME: {{tf-bucket-name}}
 
-set_failed_anchor_two_clusters: &set_failed_two_clusters
+- &set_failed_two_clusters
   do:
   - *set_failed
   - task: on_failure_set_failed
@@ -694,12 +693,8 @@ set_failed_anchor_two_clusters: &set_failed_two_clusters
         AWS_DEFAULT_REGION: {{tf-machine-region}}
         BUCKET_PATH: clusters/
         BUCKET_NAME: {{tf-bucket-name}}
-pulse_properties_anchor: &pulse_properties
-  PULSE_URL: {{pulse_url}}
-  PULSE_USERNAME: {{pulse_username}}
-  PULSE_PASSWORD: {{pulse_password}}
 
-cs_ccp_aggregate_dpm_start_anchor: &cs_ccp_aggregate_dpm_start
+- &cs_ccp_aggregate_dpm_start
   - get: gpdb_src
     tags: ["ccp"]
     passed: [gate_dpm_start]
@@ -713,7 +708,7 @@ cs_ccp_aggregate_dpm_start_anchor: &cs_ccp_aggregate_dpm_start
   - get: centos-gpdb-dev-6
     tags: ["ccp"]
 
-cs_ccp_aggregate_cluster_start_anchor: &cs_ccp_aggregate_cluster_start
+- &cs_ccp_aggregate_cluster_start
   - get: gpdb_src
     tags: ["ccp"]
     passed: [gate_cs_start]
@@ -727,12 +722,12 @@ cs_ccp_aggregate_cluster_start_anchor: &cs_ccp_aggregate_cluster_start
   - get: centos-gpdb-dev-6
     tags: ["ccp"]
 
-cs_ccp_terraform_vars_anchor: &cs_ccp_terraform_vars
+- &cs_ccp_terraform_vars
   aws_instance-node-instance_type: m4.large
   aws_ebs_volume_type: gp2
   number_of_nodes: 1
 
-cs_ccp_terraform_params_anchor: &cs_ccp_terraform_params
+- &cs_ccp_terraform_params
   tags: ["ccp"]
   params:
     <<: *ccp_default_params
@@ -740,13 +735,13 @@ cs_ccp_terraform_params_anchor: &cs_ccp_terraform_params
       <<: *ccp_default_vars
       <<: *cs_ccp_terraform_vars
 
-cs_ccp_gen_cluster_params_anchor: &cs_ccp_gen_cluster_params
+- &cs_ccp_gen_cluster_params
   tags: ["ccp"]
   file: ccp_src/ci/tasks/gen_cluster.yml
   params:
     <<: *ccp_gen_cluster_default_params
 
-cs_ccp_run_tests_params_anchor: &cs_ccp_run_tests_params
+- &cs_ccp_run_tests_params
   tags: ["ccp"]
   file: gpdb_src/concourse/tasks/run_tinc.yml
   image: centos-gpdb-dev-6
@@ -1696,35 +1691,6 @@ jobs:
 
 {% endfor %}
 
-- name: storage
-  plan:
-  - aggregate:
-    - get: gpdb_src
-      params: {submodules: none}
-      passed: [gate_cs_start]
-    - get: bin_gpdb
-      resource: bin_gpdb_centos6
-      passed: [gate_cs_start]
-      trigger: [[ test_trigger ]]
-    - get: centos-gpdb-dev-6
-  - aggregate:
-    - task: storage_tests
-      file: gpdb_src/concourse/tasks/tinc_gpdb.yml
-      params:
-        MAKE_TEST_COMMAND: storage
-        TEST_OS: centos
-        CONFIGURE_FLAGS: {{configure_flags}}
-      image: centos-gpdb-dev-6
-      timeout: 3h
-    - task: storage_vacuum_xidlimits
-      file: gpdb_src/concourse/tasks/tinc_gpdb.yml
-      params:
-        MAKE_TEST_COMMAND: storage_vacuum_xidlimits
-        TEST_OS: centos
-        CONFIGURE_FLAGS: {{configure_flags}}
-      image: centos-gpdb-dev-6
-      timeout: 3h
-
 - name: segwalrep_mirrorless_centos6
   plan:
   - aggregate:
@@ -1753,7 +1719,6 @@ jobs:
                     cs_pg_twophase_suites %}
       - cs_[[ test_name ]]
 {% endfor %}
-      - storage
       - segwalrep_mirrorless_centos6
       trigger: true
 
@@ -1844,7 +1809,7 @@ jobs:
     <<: *cs_ccp_run_tests_params
     params:
       TINC_TARGET: mpp_interconnect
-    # ccp_destroy should be part of *cs_ccp_run_tests_params_anchor
+    # ccp_destroy should be part of *cs_ccp_run_tests_params
   ensure:
     <<: *set_failed
 
@@ -2560,7 +2525,6 @@ jobs:
     - mpp_resource_group_centos6
     - mpp_resource_group_centos7
     - mpp_resource_group_sles12
-    - storage
     - segwalrep_mirrorless_centos6
 {% for test_name in cs_walrep_suites +
                     cs_pg_twophase_suites %}

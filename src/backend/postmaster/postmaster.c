@@ -180,7 +180,6 @@ static Dllist *BackendList;
 typedef enum pmsub_type
 {
 	SeqServerProc = 0,
-	WalRedoServerProc,
 	FtsProbeProc,
 	PerfmonProc,
 	BackoffProc,
@@ -335,6 +334,9 @@ static PMState pmState = PM_INIT;
 
 /* CDB */
 
+/* Set at database system is ready to accept connections */
+pg_time_t PMAcceptingConnectionsStartTime = 0;
+
 typedef enum PMSUBPROC_FLAGS
 {
 	PMSUBPROC_FLAG_QD 					= 0x1,
@@ -375,6 +377,8 @@ static PMSubProc PMSubProcList[MaxPMSubType] =
 	(PMSubStartCallback*)&perfmon_segmentinfo_start,
 	"stats sender process", PMSUBPROC_FLAG_QD_AND_QE, true},
 };
+
+static PMSubProc *FTSSubProc = &PMSubProcList[FtsProbeProc];
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
@@ -1024,21 +1028,6 @@ PostmasterMain(int argc, char *argv[])
 	 * Unix socket.
 	 */
 	CreateDataDirLockFile(true);
-
-	/*
-	 * If timezone is not set, determine what the OS uses.	(In theory this
-	 * should be done during GUC initialization, but because it can take as
-	 * much as several seconds, we delay it until after we've created the
-	 * postmaster.pid file.  This prevents problems with boot scripts that
-	 * expect the pidfile to appear quickly.  Also, we avoid problems with
-	 * trying to locate the timezone files too early in initialization.)
-	 */
-	pg_timezone_initialize();
-
-	/*
-	 * Likewise, init timezone_abbreviations if not already set.
-	 */
-	pg_timezone_abbrev_initialize();
 
 	/*
 	 * Remember postmaster startup time
@@ -1901,7 +1890,18 @@ IsRoleMirror(void)
 	return (stat(RECOVERY_COMMAND_FILE, &stat_buf) == 0);
 }
 
-
+/*
+ * Once the flag is reset, libpq connections (e.g. FTS probe requests) should
+ * not get CAC_MIRROR_READY response.  This flag is needed during GPDB startup
+ * to enable "pg_ctl -w".  It need not interfere during or after promotion.
+ * This function is called right after removing RECOVERY_COMMAND_FILE upon
+ * receiving a promotion request.
+ */
+void
+ResetMirrorReadyFlag(void)
+{
+	pm_launch_walreceiver = false;
+}
 
 
 /*
@@ -2240,8 +2240,7 @@ retry1:
 					 errmsg("sorry, too many clients already")));
 			break;
 		case CAC_WAITBACKUP:
-			/* GPDB_84_MERGE_FIXME: we don't have a WAITBACKUP state. 
-			 * Do we want to just remove this case entirely? */
+			/* Greenplum does not currently use WAITBACKUP state. */
 			Assert(port->canAcceptConnections != CAC_WAITBACKUP);
 			break;
 		case CAC_MIRROR_READY:
@@ -2881,9 +2880,6 @@ reaper(SIGNAL_ARGS)
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
 
-			/* Unset this since we are in normal operation */
-			pm_launch_walreceiver = false;
-
 			/*
 			 * Crank up the background writer, if we didn't do that already
 			 * when we entered consistent recovery state.  It doesn't matter
@@ -2923,6 +2919,8 @@ reaper(SIGNAL_ARGS)
 						(errmsg("database system is ready to accept connections"),
 						 errdetail("%s",version),
 						 errSendAlert(true)));
+
+				PMAcceptingConnectionsStartTime = (pg_time_t) time(NULL);
 			}
 
 			continue;
@@ -2941,7 +2939,6 @@ reaper(SIGNAL_ARGS)
 			if (subProc->pid != 0 && pid == subProc->pid)
 			{
 				subProc->pid = 0;
-
 				if (!EXIT_STATUS_0(exitstatus))
 					LogChildExit(LOG, subProc->procName, pid, exitstatus);
 
@@ -5036,6 +5033,12 @@ sigusr1_handler(SIGNAL_ARGS)
 		StartAutovacuumWorker();
 	}
 
+	Assert(FTSSubProc->procType == FtsProbeProc);
+	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FTSSubProc->pid != 0)
+	{
+		signal_child(FTSSubProc->pid, SIGINT);
+	}
+
 	/*
 	 * Check if we are being promoted.  Don't check and delete promote file
 	 * until we start the recovery.  This allows users to indicate promote
@@ -5085,7 +5088,7 @@ void SignalPromote(void)
 	if ((fd = fopen(PROMOTE_SIGNAL_FILE, "w")))
 	{
 		fclose(fd);
-		signal_child(StartupPID, SIGUSR2);
+		kill(PostmasterPid, SIGUSR1);
 	}
 }
 

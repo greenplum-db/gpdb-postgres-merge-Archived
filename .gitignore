@@ -12,11 +12,7 @@
 *.mo
 objfiles.txt
 .deps/
-<<<<<<< HEAD
 *.log
-*.vcproj
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 *.gcno
 *.gcda
 *.gcov
@@ -25,7 +21,6 @@ lcov.info
 *.vcproj
 win32ver.rc
 *.exe
-<<<<<<< HEAD
 lib*dll.defautom4te.cache
 **/test/*.t
 **/tags
@@ -51,19 +46,15 @@ build.sh
 GPATH
 GRTAGS
 GTAGS
-=======
 lib*dll.def
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 # Local excludes in root directory
 /GNUmakefile
 /config.log
 /config.status
-<<<<<<< HEAD
 /VERSION
-=======
 /pgsql.sln
 /pgsql.sln.cache
 /Debug/
 /Release/
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+/CMakeLists.txt

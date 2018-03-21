@@ -78,7 +78,7 @@ SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
 /* local functions */
 static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot,
-			  bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
+                              bool distributedSnapshotIgnore, bool *setDistributedSnapshotIgnore);
 static bool XidInMVCCSnapshot_Local(TransactionId xid, Snapshot snapshot);
 
 /*

@@ -1091,17 +1091,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"gp_fts_transition_parallel", PGC_POSTMASTER, GP_ARRAY_TUNING,
-			gettext_noop("Activate parallel segment transition."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_fts_transition_parallel,
-		true,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_debug_pgproc", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Print debug info relevant to PGPROC."),
 			NULL /* long description */ ,
@@ -3775,7 +3764,7 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_fts_probe_retries", PGC_POSTMASTER, GP_ARRAY_TUNING,
+		{"gp_fts_probe_retries", PGC_SIGHUP, GP_ARRAY_TUNING,
 			gettext_noop("Number of retries for FTS to complete probing a segment."),
 			gettext_noop("Used by the fts-probe process."),
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
@@ -3786,7 +3775,7 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_fts_probe_timeout", PGC_USERSET, GP_ARRAY_TUNING,
+		{"gp_fts_probe_timeout", PGC_SIGHUP, GP_ARRAY_TUNING,
 			gettext_noop("Maximum time (in seconds) allowed for FTS to complete probing a segment."),
 			gettext_noop("Used by the fts-probe process."),
 			GUC_UNIT_S
@@ -3797,7 +3786,7 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_fts_probe_interval", PGC_POSTMASTER, GP_ARRAY_TUNING,
+		{"gp_fts_probe_interval", PGC_SIGHUP, GP_ARRAY_TUNING,
 			gettext_noop("A complete probe of all segments starts each time a timer with this period expires."),
 			gettext_noop("Used by the fts-probe process. "),
 			GUC_UNIT_S
@@ -3808,35 +3797,13 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_fts_probe_threadcount", PGC_POSTMASTER, GP_ARRAY_TUNING,
-			gettext_noop("Use this number of threads for probing the segments."),
-			gettext_noop("The number of threads to create at each probe interval expiration."),
-			GUC_NOT_IN_SAMPLE
+		{"gp_fts_mark_mirror_down_grace_period", PGC_SIGHUP, GP_ARRAY_TUNING,
+			gettext_noop("Time (in seconds) allowed to mirror after disconnection, to reconnect before being marked as down in configuration by FTS."),
+			gettext_noop("Used by the fts-probe process."),
+			GUC_UNIT_S
 		},
-		&gp_fts_probe_threadcount,
-		16, 1, 128,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_fts_transition_retries", PGC_POSTMASTER, GP_ARRAY_TUNING,
-			gettext_noop("The number of retries for FTS to request a segment state transition."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&gp_fts_transition_retries,
-		5, 1, 100,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_fts_transition_timeout", PGC_POSTMASTER, GP_ARRAY_TUNING,
-			gettext_noop("Timeout (in seconds) for FTS to request a segment state transition."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_UNIT_S
-		},
-		&gp_fts_transition_timeout,
-		3600, 1, 36000,
+		&gp_fts_mark_mirror_down_grace_period,
+		30, 0, 3600,
 		NULL, NULL, NULL
 	},
 
