@@ -1747,7 +1747,14 @@ ProcessCopyOptions(CopyState cstate,
 	}
 
 	if (cstate->escape != NULL && !pg_strcasecmp(cstate->escape, "off"))
+	{
 		cstate->escape_off = true;
+		/*
+		 * We sanitize NUL characters from the input early on, so we can be
+		 * sure that we'll never see any in the input.
+		 */
+		cstate->escape = "\0";
+	}
 
 	/* set end of line type if NEWLINE keyword was specified */
 	if (cstate->eol_str)
