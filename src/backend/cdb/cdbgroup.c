@@ -2876,9 +2876,9 @@ describe_subplan_tlist(List *sub_tlist,
 			TargetEntry *tle = (TargetEntry *) lfirst(lc_tle);
 			TargetEntry *sub_tle;
 
-			sub_tle = tlist_member((Node *) tle->expr, sub_tlist);
 			Assert(tle->ressortgroupref != 0);
-			Assert(tle->ressortgroupref == sub_tle->ressortgroupref);
+			sub_tle = get_sortgroupref_tle(tle->ressortgroupref, sub_tlist);
+
 			Assert(keyno < nkeys);
 
 			cols[keyno] = sub_tle->resno;
