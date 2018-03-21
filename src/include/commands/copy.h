@@ -104,18 +104,21 @@ typedef struct ProgramPipes
 
 /*
  *
+ * COPY FROM modes (from file/client to table)
  *
- **
-
-COPY FROM modes (from file/client to table)
-
-1. "normal" mode. This means ON SEGMENT, or utility mode, or non-distributed table in QD
-
-2. Dispatcher mode. We are reading file/client, and forwarding all data to QEs
-3. Executor mode. We are receiving pre-processed data from QD, and inserting to table.
-
-COPY TO modes (table/query to file/client)
-
+ * 1. "normal", direct, mode. This means ON SEGMENT running on a segment, or
+ *    utility mode, or non-distributed table in QD.
+ * 2. Dispatcher mode. We are reading from file/client, and forwarding all data to QEs,
+ *    or vice versa.
+ * 3. Executor mode. We are receiving pre-processed data from QD, and inserting to table.
+ *
+ * COPY TO modes (table/query to file/client)
+ *
+ * 1. Direct. This can mean ON SEGMENT running on segment, or utility mode, or
+ *    non-distributed table in QD. Or COPY TO running on segment.
+ * 2. Dispatcher mode. We are receiving pre-formatted data from segments, and forwarding
+ *    it all to to the client.
+ * 3. Executor mode. Not used.
  */
 
 typedef enum
@@ -330,6 +333,7 @@ extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options,
 				   int num_columns, bool is_copy);
 extern CopyState BeginCopyFrom(Relation rel, const char *filename,
 			  bool is_program, copy_data_source_cb data_source_cb,
+			  void *data_source_cb_extra,
 			  List *attnamelist, List *options, List *ao_segnos);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
@@ -339,7 +343,6 @@ extern bool NextCopyFromRawFields(CopyState cstate,
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
-extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
 extern bool CopyReadLine(CopyState cstate);
 extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 						 Datum *values, bool *nulls);
@@ -389,31 +392,5 @@ typedef struct  cdbhashdata
 	CdbHash *cdbHash; /* a CdbHash API object */
 	GpPolicy *policy; /* policy for this cdb hash */
 } cdbhashdata;
-
-
-typedef struct
-{
-	/*
-	 * target relation OID. Normally, the same as cstate->relid, but for
-	 * a partitioned relation, it indicate the target partition.
-	 */
-	Oid			relid;
-
-	Oid			loaded_oid;
-
-	int64		lineno;
-
-	int16		fld_count;
-
-	/*
-	 * Default values. For each default value:
-	 * <data>
-	 *
-	 * The data is the raw Datum.
-	 */
-
-	/* data follows */
-} copy_from_dispatch_frame;
-
 
 #endif /* COPY_H */

@@ -269,10 +269,10 @@ external_beginscan(Relation relation, uint32 scancounter,
 	 */
 	scan->fs_pstate = BeginCopyFrom(relation, NULL, false,
 									external_getdata_callback,
+									(void *) scan,
 									NIL,
 									fmtOpts,
 									NIL);
-	scan->fs_pstate->data_source_cb_extra = scan;
 
 	/* Initialize all the parsing and state variables */
 	InitParseState(scan->fs_pstate, relation, NULL, NULL, false, fmtType,

@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
  *
  * cdbcopy.c
- * 	 Rrovides routines that executed a COPY command on an MPP cluster. These
+ * 	 Provides routines that executed a COPY command on an MPP cluster. These
  * 	 routines are called from the backend COPY command whenever MPP is in the
  * 	 default dispatch mode.
  *
@@ -97,100 +97,41 @@ makeCdbCopy(bool is_copy_in)
  * may pg_throw via elog/ereport.
  */
 void
-cdbCopyStart(CdbCopy *c, char *copyCmd, struct GpPolicy *policy)
+cdbCopyStart(CdbCopy *c, CopyStmt *stmt, struct GpPolicy *policy)
 {
 	int			seg;
-	MemoryContext oldcontext;
-	List	   *parsetree_list;
-	Node	   *parsetree = NULL;
-	List	   *querytree_list;
-	Query	   *q = makeNode(Query);
 
 	/* clean err message */
 	c->err_msg.len = 0;
 	c->err_msg.data[0] = '\0';
 	c->err_msg.cursor = 0;
 
-	/*
-	 * A context it is safe to build parse trees in. We don't want them in
-	 * TopMemory, as the trees should only last for this one statement
-	 */
-	oldcontext = MemoryContextSwitchTo(MessageContext);
-
-	/* dispatch copy command to both primary and mirror writer gangs */
-
-	/*
-	 * Let's parse the copy command into a query tree, serialize it, and send
-	 * it down to the QE or DA.
-	 *
-	 * Note that we can't just use the original CopyStmt node in this routine,
-	 * but we need to use the re-created command that copy.c prepared for us
-	 * as it may be different from the original command in several cases (such
-	 * as COPY into tables where a default value is evaluated on the QD).
-	 */
-
-	/*
-	 * parse it to a raw parsetree
-	 */
-
-	parsetree_list = pg_parse_query(copyCmd);
-
-	/*
-	 * Assume it will be one statement node, not multiple ones.
-	 */
-
-	parsetree = (Node *) linitial(parsetree_list);
-	Assert(nodeTag(parsetree) == T_CopyStmt);
-
-	/*
-	 * Ok, we have a raw parse tree of the copy stmt.
-	 *
-	 * I don't think analyze and rewrite will do much to it, but it will at
-	 * least package it up as a query node, which we need for serializing. And
-	 * if the copy statement has a "select" statement embedded, this is
-	 * essential.
-	 */
-
-	querytree_list = pg_analyze_and_rewrite(parsetree, copyCmd,
-											NULL, 0);
-
-	/*
-	 * Again, assume it is one query node, not multiple
-	 */
-	q = (Query *) linitial(querytree_list);
-
-
-	Assert(IsA(q, Query));
-	Assert(q->commandType == CMD_UTILITY);
-	Assert(q->utilityStmt != NULL);
-	Assert(IsA(q->utilityStmt, CopyStmt));
+	stmt = copyObject(stmt);
 
 	/* add in partitions for dispatch */
-	((CopyStmt *) q->utilityStmt)->partitions = c->partitions;
+	stmt->partitions = c->partitions;
 
 	/* add in AO segno map for dispatch */
-	((CopyStmt *) q->utilityStmt)->ao_segnos = c->ao_segnos;
+	stmt->ao_segnos = c->ao_segnos;
 
-	((CopyStmt *) q->utilityStmt)->skip_ext_partition = c->skip_ext_partition;
+	stmt->skip_ext_partition = c->skip_ext_partition;
 
 	if (policy)
 	{
-		((CopyStmt *) q->utilityStmt)->nattrs = policy->nattrs;
-		((CopyStmt *) q->utilityStmt)->ptype = policy->ptype;
-		((CopyStmt *) q->utilityStmt)->distribution_attrs = policy->attrs;
+		stmt->nattrs = policy->nattrs;
+		stmt->ptype = policy->ptype;
+		stmt->distribution_attrs = policy->attrs;
 	}
 	else
 	{
-		((CopyStmt *) q->utilityStmt)->nattrs = 0;
-		((CopyStmt *) q->utilityStmt)->ptype = 0;
-		((CopyStmt *) q->utilityStmt)->distribution_attrs = NULL;
+		stmt->nattrs = 0;
+		stmt->ptype = 0;
+		stmt->distribution_attrs = NULL;
 	}
 
-	MemoryContextSwitchTo(oldcontext);
-
-	CdbDispatchUtilityStatement((Node *) q->utilityStmt,
+	CdbDispatchUtilityStatement((Node *) stmt,
 								(c->copy_in ? DF_NEED_TWO_PHASE | DF_WITH_SNAPSHOT : DF_WITH_SNAPSHOT) | DF_CANCEL_ON_ERROR,
-								NIL,	/* FIXME */
+								NIL,
 								NULL);
 
 	SIMPLE_FAULT_INJECTOR(CdbCopyStartAfterDispatch);
@@ -200,8 +141,6 @@ cdbCopyStart(CdbCopy *c, char *copyCmd, struct GpPolicy *policy)
 	{
 		c->segdb_state[seg][0] = SEGDB_COPY;	/* we be jammin! */
 	}
-
-	return;
 }
 
 /*
@@ -406,6 +345,11 @@ cdbCopyGetData(CdbCopy *c, bool copy_cancel, uint64 *rows_processed)
 
 				if (nbytes == -2)
 				{
+					/* GPDB_91_MERGE_FIXME: How should we handle errors here? We used
+					 * to append them to err_msg, but that doesn't seem right. Surely
+					 * we should ereport()? I put in just a quick elog() for now..
+					 */
+					elog(ERROR, "could not dispatch COPY: %s", PQerrorMessage(q->conn));
 					appendStringInfo(&(c->err_msg),
 									 "Failed to get data from segment %d: %s\n",
 									 source_seg, PQerrorMessage(q->conn));
