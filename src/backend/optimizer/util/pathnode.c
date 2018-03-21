@@ -1350,7 +1350,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 		new_subpaths = lappend(new_subpaths, subpath);
 	}
 
-	*subpaths_out = subpaths;
+	*subpaths_out = new_subpaths;
 }
 
 /*
