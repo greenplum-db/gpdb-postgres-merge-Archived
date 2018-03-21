@@ -3563,6 +3563,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_DropConstraint:		/* as DROP INDEX */
 			case AT_DropConstraintRecurse:		/* as DROP INDEX */
 			case AT_AddOids:	/* must rewrite heap */
+			case AT_AddOidsRecurse:
 			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
