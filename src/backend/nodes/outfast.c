@@ -931,6 +931,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			WRITE_NODE_FIELD(funcexpr);
 			WRITE_NODE_FIELD(funccoltypes);
 			WRITE_NODE_FIELD(funccoltypmods);
+			WRITE_NODE_FIELD(funccolcollations);
 			WRITE_BYTEA_FIELD(funcuserdata);
 			break;
 		case RTE_VALUES:

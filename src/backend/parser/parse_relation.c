@@ -1243,7 +1243,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 													  attr->atttypid);
 					rte->funccoltypmods = lappend_int(rte->funccoltypmods,
 													  attr->atttypmod);
-					rte->funccolcollations = lappend_int(rte->funccolcollations,
+					rte->funccolcollations = lappend_oid(rte->funccolcollations,
 													  attr->attcollation);
 				}
 			}

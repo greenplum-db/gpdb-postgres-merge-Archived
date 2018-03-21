@@ -3955,6 +3955,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			WRITE_NODE_FIELD(funcexpr);
 			WRITE_NODE_FIELD(funccoltypes);
 			WRITE_NODE_FIELD(funccoltypmods);
+			WRITE_NODE_FIELD(funccolcollations);
 			if (node->funcuserdata)
 			{
 				appendStringInfoLiteral(str, " :funcuserdata ");

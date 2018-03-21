@@ -2177,6 +2177,7 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(funcexpr);
 			READ_NODE_FIELD(funccoltypes);
 			READ_NODE_FIELD(funccoltypmods);
+			READ_NODE_FIELD(funccolcollations);
 			if (pg_strtok_peek_fldname("funcuserdata"))
 			{
 				READ_BYTEA_FIELD(funcuserdata);

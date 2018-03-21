@@ -1044,6 +1044,7 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(funcexpr);
 			READ_NODE_FIELD(funccoltypes);
 			READ_NODE_FIELD(funccoltypmods);
+			READ_NODE_FIELD(funccolcollations);
 			READ_BYTEA_FIELD(funcuserdata);
 			break;
 		case RTE_VALUES:
