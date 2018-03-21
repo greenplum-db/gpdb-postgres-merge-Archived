@@ -278,7 +278,6 @@ typedef struct CopyStateData
 
 	/* Greenplum Database specific variables */
 	bool		is_copy_in;		/* copy in or out? */
-	char		eol_ch[2];		/* The byte values of the 1 or 2 eol bytes */
 	bool		escape_off;		/* treat backslashes as non-special? */
 	bool		delimiter_off;  /* no delimiter. 1-column external tabs only */
 	int			last_hash_field;

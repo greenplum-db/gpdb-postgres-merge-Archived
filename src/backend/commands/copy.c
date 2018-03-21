@@ -3944,7 +3944,7 @@ BeginCopyFrom(Relation rel,
 
 	/* Initialize state variables */
 	cstate->fe_eof = false;
-	cstate->eol_type = EOL_UNKNOWN;
+	// cstate->eol_type = EOL_UNKNOWN; /* GPDB: don't overwrite value set in ProcessCopyOptions */
 	cstate->cur_relname = RelationGetRelationName(cstate->rel);
 	cstate->cur_lineno = 0;
 	cstate->cur_attname = NULL;
@@ -6402,25 +6402,20 @@ void setEncodingConversionProc(CopyState cstate, int client_encoding, bool iswri
 	}
 }
 
-void CopyEolStrToType(CopyState cstate)
+void
+CopyEolStrToType(CopyState cstate)
 {
 	if (pg_strcasecmp(cstate->eol_str, "lf") == 0)
 	{
 		cstate->eol_type = EOL_NL;
-		cstate->eol_ch[0] = '\n';
-		cstate->eol_ch[1] = '\0';
 	}
 	else if (pg_strcasecmp(cstate->eol_str, "cr") == 0)
 	{
 		cstate->eol_type = EOL_CR;
-		cstate->eol_ch[0] = '\r';
-		cstate->eol_ch[1] = '\0';		
 	}
 	else if (pg_strcasecmp(cstate->eol_str, "crlf") == 0)
 	{
 		cstate->eol_type = EOL_CRNL;
-		cstate->eol_ch[0] = '\r';
-		cstate->eol_ch[1] = '\n';		
 		
 	}
 	else /* error. must have been validated in CopyValidateControlChars() ! */
