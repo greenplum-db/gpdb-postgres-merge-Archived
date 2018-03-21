@@ -74,6 +74,14 @@ setupFunctionArguments(TableFunctionState *node)
 	ListCell	*arg	  = NULL;
 	bool		 argDone;
 
+	/* Initialize the function call info */
+	InitFunctionCallInfoData(node->fcinfo,                    /* Fcinfo  */
+							 &(node->fcache->func),           /* Flinfo  */
+							 list_length(node->fcache->args), /* Nargs   */
+							 InvalidOid,					  /* input_collation */
+							 (Node *) node,                   /* Context */
+							 (Node *) &(node->rsinfo));       /* ResultInfo */
+
 	/* Evaluate the static function args */
 	argDone = ExecEvalFuncArgs(&node->fcinfo, 
 							   node->fcache->args, 
@@ -428,16 +436,7 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 	scanstate->userdata = rte->funcuserdata;
 	/* Initialize a function cache for the function expression */
 	init_fcache(func->funcid, func->inputcollid, scanstate->fcache, 
-				econtext->ecxt_per_query_memory, 
-				true);
-
-	/* Initialize the function call info */
-	InitFunctionCallInfoData(scanstate->fcinfo,               /* Fcinfo  */
-							 &(scanstate->fcache->func),      /* Flinfo  */
-							 0,                               /* Nargs   */
-							 InvalidOid,					  /* input_collation */
-							 (Node*) scanstate,               /* Context */
-							 (Node*) &(scanstate->rsinfo));   /* ResultInfo */
+				econtext->ecxt_per_query_memory, true);
 
 	/* setup the AnyTable input */
 	scanstate->inputscan->econtext = econtext;
