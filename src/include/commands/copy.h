@@ -312,7 +312,12 @@ typedef struct CopyStateData
 	bool		ignore_extra_line; /* Don't count CSV header or binary trailer in
 									  "processed" line number for on_segment mode*/
 	ProgramPipes	*program_pipes; /* COPY PROGRAM pipes for data and stderr */
-	/* end Greenplum Database specific variables */
+
+
+	/* Information on the connections to QEs. */
+	CdbCopy    *cdbCopy;
+
+/* end Greenplum Database specific variables */
 } CopyStateData;
 
 /*

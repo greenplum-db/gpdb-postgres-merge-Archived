@@ -49,7 +49,6 @@ makeCdbCopy(bool is_copy_in)
 	/* fresh start */
 	c->total_segs = 0;
 	c->primary_writer = NULL;
-	c->remote_data_err = false;
 	c->io_errors = false;
 	c->copy_in = is_copy_in;
 	c->skip_ext_partition = false;
@@ -302,7 +301,6 @@ cdbCopyGetData(CdbCopy *c, bool copy_cancel, uint64 *rows_processed)
 					{
 						appendStringInfo(&(c->err_msg), "Error from segment %d: %s\n",
 										 source_seg, PQresultErrorMessage(res));
-						c->remote_data_err = true;
 						first_error = false;
 					}
 
@@ -392,7 +390,6 @@ processCopyEndResults(CdbCopy *c,
 					  int size,
 					  SegmentDatabaseDescriptor **failedSegDBs,
 					  bool *err_header,
-					  bool *first_error,
 					  int *failed_count,
 					  int *total_rows_rejected,
 					  int *total_rows_completed)
@@ -404,6 +401,7 @@ processCopyEndResults(CdbCopy *c,
 	int			segment_rows_rejected = 0;	/* num of rows rejected by this QE */
 	int			segment_rows_completed = 0; /* num of rows completed by this
 											 * QE */
+	ErrorData *first_error = NULL;
 
 	for (seg = 0; seg < size; seg++)
 	{
@@ -474,40 +472,8 @@ processCopyEndResults(CdbCopy *c,
 				 * We get the error message in pieces so that we could append
 				 * whoami to the primary error message only.
 				 */
-				if (*first_error)
-				{
-					char	   *pri = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
-					char	   *dtl = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
-					char	   *ctx = PQresultErrorField(res, PG_DIAG_CONTEXT);
-
-					if (pri)
-						appendStringInfo(&(c->err_msg), "%s", pri);
-					else
-						appendStringInfo(&(c->err_msg), "Unknown primary error.");
-
-					if (q->whoami)
-						appendStringInfo(&(c->err_msg), "  (%s)", q->whoami);
-
-					if (dtl)
-						appendStringInfo(&(c->err_msg), "\n%s", dtl);
-
-					/*
-					 * note that due to cdb_tidy_message() in elog.c "If more
-					 * than one line, move lines after the first to errdetail"
-					 * so we save the context in another stringInfo and fetch
-					 * it in the error callback in copy.c, so it wouldn't
-					 * appear as DETAIL...
-					 */
-					if (ctx)
-						appendStringInfo(&(c->err_context), "%s", ctx);
-
-					/*
-					 * Indicate that the err_msg already was filled with one
-					 * error
-					 */
-					*first_error = false;
-				}
-				c->remote_data_err = true;
+				if (!first_error)
+					first_error = cdbdisp_get_PQerror(res);
 			}
 
 			/*
@@ -627,6 +593,9 @@ processCopyEndResults(CdbCopy *c,
 			(*failed_count)++;
 		}
 	}
+
+	if (first_error)
+		ReThrowError(first_error);
 }
 
 /*
@@ -660,7 +629,6 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
 	int			total_rows_rejected = 0;	/* total num rows rejected by all
 											 * QEs */
 	bool		err_header = false;
-	bool		first_error = true;
 	struct SegmentDatabaseDescriptor *db_descriptors;
 	int			size;
 
@@ -692,7 +660,7 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
 
 	processCopyEndResults(c, db_descriptors, results, size,
 						  failedSegDBs, &err_header,
-						  &first_error, &failed_count, &total_rows_rejected,
+						  &failed_count, &total_rows_rejected,
 						  total_rows_completed);
 
 	/* If lost contact with segment db, try to reconnect. */

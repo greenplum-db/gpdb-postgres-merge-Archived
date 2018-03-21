@@ -41,7 +41,6 @@ typedef struct CdbCopy
 	int			total_segs;		/* total number of segments in cdb */
 	int		   *mirror_map;		/* indicates how many db's each segment has */
 	bool		copy_in;		/* direction: true for COPY FROM false for COPY TO */
-	bool		remote_data_err;/* data error occurred on a remote COPY session */
 	bool		io_errors;		/* true if any I/O error occurred trying to
 								 * communicate with segDB's */
 	bool		skip_ext_partition;/* skip external partition */ 

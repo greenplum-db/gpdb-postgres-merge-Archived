@@ -1200,12 +1200,22 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 			cstate->partitions = stmt->partitions;
 		}
 
-		if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
+		PG_TRY();
 		{
-			processed = CopyDispatchOnSegment(cstate, stmt);
+			if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
+			{
+				processed = CopyDispatchOnSegment(cstate, stmt);
+			}
+			else
+				processed = CopyFrom(cstate);	/* copy from file to database */
 		}
-		else
-			processed = CopyFrom(cstate);	/* copy from file to database */
+		PG_CATCH();
+		{
+			if (cstate->cdbCopy)
+				cdbCopyEnd(cstate->cdbCopy);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		EndCopyFrom(cstate);
 	}
 	else
@@ -2424,6 +2434,8 @@ CopyToDispatch(CopyState cstate)
 
 	PG_TRY();
 	{
+		bool		done;
+
 		cdbCopyStart(cdbCopy, stmt, NULL);
 
 		if (cstate->binary)
@@ -2488,16 +2500,15 @@ CopyToDispatch(CopyState cstate)
 		 * COPY commands on the segdbs, until no more data is available. We
 		 * keep writing data out a chunk at a time.
 		 */
-		while(true)
+		do
 		{
-			bool done;
-			bool copy_cancel = (QueryCancelPending ? true : false);
+			bool		copy_cancel = (QueryCancelPending ? true : false);
 
 			/* get a chunk of data rows from the QE's */
 			done = cdbCopyGetData(cdbCopy, copy_cancel, &processed);
 
 			/* send the chunk of data rows to destination (file or stdout) */
-			if(cdbCopy->copy_out_buf.len > 0) /* conditional is important! */
+			if (cdbCopy->copy_out_buf.len > 0) /* conditional is important! */
 			{
 				/*
 				 * in the dispatcher we receive chunks of whole rows with row endings.
@@ -2508,15 +2519,7 @@ CopyToDispatch(CopyState cstate)
 				CopySendData(cstate, (void *) cdbCopy->copy_out_buf.data, cdbCopy->copy_out_buf.len);
 				CopyToDispatchFlush(cstate);
 			}
-
-			if(done)
-			{
-				if(cdbCopy->remote_data_err || cdbCopy->io_errors)
-					appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
-
-				break;
-			}
-		}
+		} while(!done);
 	}
     /* catch error from CopyStart, CopySendEndOfRow or CopyToDispatchFlush */
 	PG_CATCH();
@@ -2546,10 +2549,6 @@ CopyToDispatch(CopyState cstate)
 	/*
 	 * report all accumulated errors back to the client.
 	 */
-	if (cdbCopy->remote_data_err)
-		ereport(ERROR,
-				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-				 errmsg("%s", cdbcopy_err.data)));
 	if (cdbCopy->io_errors)
 		ereport(ERROR,
 				(errcode(ERRCODE_IO_ERROR),
@@ -2883,10 +2882,6 @@ CopyTo(CopyState cstate)
 	 */
 	if (cdbCopy)
 	{
-		if (cdbCopy->remote_data_err)
-			ereport(ERROR,
-					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg("%s", cdbcopy_err.data)));
 		if (cdbCopy->io_errors)
 			ereport(ERROR,
 					(errcode(ERRCODE_IO_ERROR),
@@ -3450,6 +3445,8 @@ CopyFrom(CopyState cstate)
 		 */
 		cdbCopy = makeCdbCopy(true);
 
+		((volatile CopyState) cstate)->cdbCopy = cdbCopy;
+
 		cdbCopy->partitions = estate->es_result_partitions;
 		if (list_length(cstate->ao_segnos) > 0)
 			cdbCopy->ao_segnos = cstate->ao_segnos;
@@ -3474,58 +3471,24 @@ CopyFrom(CopyState cstate)
 		 * COPY session there, so we are fine there.
 		 */
 		elog(DEBUG5, "COPY command sent to segdbs");
-		PG_TRY();
-		{
-			cdbCopyStart(cdbCopy, glob_copystmt, cstate->rel->rd_cdbpolicy);
 
+		cdbCopyStart(cdbCopy, glob_copystmt, cstate->rel->rd_cdbpolicy);
+
+		/*
+		 * Skip header processing if dummy file get from master for COPY FROM ON
+		 * SEGMENT
+		 */
+		if (!cstate->on_segment)
+		{
 			/*
-			 * Skip header processing if dummy file get from master for COPY FROM ON
-			 * SEGMENT
+			 * Send QD->QE header to all segments except:
+			 * dummy file on master for COPY FROM ON SEGMENT
 			 */
 			if (!cstate->on_segment)
 			{
-				/*
-				 * Send QD->QE header to all segments except:
-				 * dummy file on master for COPY FROM ON SEGMENT
-				 */
-				if (!cstate->on_segment)
-				{
-					SendCopyFromForwardedHeader(cstate, cdbCopy, cstate->file_has_oids);
-				}
+				SendCopyFromForwardedHeader(cstate, cdbCopy, cstate->file_has_oids);
 			}
 		}
-		PG_CATCH();
-		{
-			StringInfoData cdbcopy_err;
-
-			initStringInfo(&cdbcopy_err);
-
-			/* get error message from CopyStart */
-			appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
-
-			/* end COPY in all the segdbs in progress */
-			cdbCopyEnd(cdbCopy);
-
-			/* get error message from CopyEnd */
-			appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
-
-			ereport(LOG,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("%s", cdbcopy_err.data)));
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-
-		/* Prepare to catch AFTER triggers. */
-		//AfterTriggerBeginQuery();
-
-		/*
-		 * Check BEFORE STATEMENT insertion triggers. It's debateable whether we
-		 * should do this for COPY, since it's not really an "INSERT" statement as
-		 * such. However, executing these triggers maintains consistency with the
-		 * EACH ROW triggers that we already fire on COPY.
-		 */
-		//ExecBSInsertTriggers(estate, resultRelInfo);
 	}
 
 	if (Gp_role == GP_ROLE_EXECUTE && (cstate->on_segment == false))
@@ -3808,19 +3771,6 @@ CopyFrom(CopyState cstate)
 	}
 
 	/*
-	 * Done reading input data and sending it off to the segment
-	 * databases Now we would like to end the copy command on
-	 * all segment databases across the cluster.
-	 */
-	if (cstate->dispatch_mode == COPY_DISPATCH)
-	{
-		int			total_completed_from_qes;
-		int			total_rejected_from_qes;
-
-		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes);
-	}
-
-	/*
 	 * After processed data from QD, which is empty and just for workflow, now
 	 * to process the data on segment, only one shot if cstate->on_segment &&
 	 * Gp_role == GP_ROLE_DISPATCH
@@ -3837,6 +3787,19 @@ CopyFrom(CopyState cstate)
 	FreeBulkInsertState(bistate);
 
 	MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/*
+	 * Done reading input data and sending it off to the segment
+	 * databases Now we would like to end the copy command on
+	 * all segment databases across the cluster.
+	 */
+	if (cstate->dispatch_mode == COPY_DISPATCH)
+	{
+		int			total_completed_from_qes;
+		int			total_rejected_from_qes;
+
+		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes);
+	}
 
 	/* Execute AFTER STATEMENT insertion triggers */
 	ExecASInsertTriggers(estate, resultRelInfo);
@@ -4609,6 +4572,8 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("unexpected OID received in COPY data")));
+
+	cstate->cur_lineno = frame.lineno;
 
 	for (i = 0; i < frame.fld_count; i++)
 	{
