@@ -343,6 +343,8 @@ extern bool NextCopyFromRawFields(CopyState cstate,
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 
+extern List *CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
+
 extern bool CopyReadLine(CopyState cstate);
 extern void CopyOneRowTo(CopyState cstate, Oid tupleOid,
 						 Datum *values, bool *nulls);

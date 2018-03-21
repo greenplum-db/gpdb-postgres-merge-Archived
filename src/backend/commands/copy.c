@@ -167,8 +167,6 @@ static Datum CopyReadBinaryAttribute(CopyState cstate,
 static void CopyAttributeOutText(CopyState cstate, char *string);
 static void CopyAttributeOutCSV(CopyState cstate, char *string,
 								bool use_quote, bool single_attr);
-static List *CopyGetAttnums(TupleDesc tupDesc, Relation rel,
-			   List *attnamelist);
 
 /* Low-level communications functions */
 static void SendCopyBegin(CopyState cstate);
@@ -5996,7 +5994,7 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
  *
  * rel can be NULL ... it's only used for error reports.
  */
-static List *
+List *
 CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 {
 	List	   *attnums = NIL;
