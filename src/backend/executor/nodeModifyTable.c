@@ -1634,12 +1634,45 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	{
 		PlanRowMark *rc = (PlanRowMark *) lfirst(l);
 		ExecRowMark *erm;
+		bool		isdistributed = false;
 
 		Assert(IsA(rc, PlanRowMark));
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)
 			continue;
+
+		/*
+		 * Like in preprocess_targetlist, ignore distributed tables.
+		 */
+		/*
+		 * GPDB_91_MERGE_FIXME: we are largely just ignoring locking altogether.
+		 * Perhaps that's OK as long as we take a full table lock on any UPDATEs
+		 * or DELETEs. But sure doesn't seem right. Can we do better?
+		 */
+		{
+			RangeTblEntry *rte = rt_fetch(rc->rti, estate->es_plannedstmt->rtable);
+
+			if (rte->rtekind == RTE_RELATION)
+			{
+				Relation relation = heap_open(rte->relid, NoLock);
+				if (relation->rd_cdbpolicy &&
+					relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+					isdistributed = true;
+				heap_close(relation, NoLock);
+				if (isdistributed)
+					continue;
+			}
+		}
+		if (Gp_role == GP_ROLE_EXECUTE)
+		{
+			/*
+			 * In the executor, we don't have information on which tables are
+			 * distributed. Assume that everything is; we wouldn't be running this
+			 * slice on an entry table otherwise.
+			 */
+			continue;
+		}
 
 		/* find ExecRowMark (same for all subplans) */
 		erm = ExecFindRowMark(estate, rc->rti);
