@@ -5472,12 +5472,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						else
 							get_rule_expr(w, context, false);
 					}
-
-					if (!PRETTY_INDENT(context))
-						appendStringInfoChar(buf, ' ');
-					appendContextKeyword(context, "WHEN ",
-										 0, 0, 0);
-					get_rule_expr(w, context, false);
 					appendStringInfo(buf, " THEN ");
 					get_rule_expr((Node *) when->result, context, true);
 				}
