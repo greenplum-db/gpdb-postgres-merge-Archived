@@ -1052,6 +1052,14 @@ exprSetCollation(Node *expr, Oid collation)
 		case T_CurrentOfExpr:
 			Assert(!OidIsValid(collation));		/* result is always boolean */
 			break;
+
+		case T_GroupId:
+			Assert(!OidIsValid(collation));		/* result is always int4 */
+			break;
+		case T_Grouping:
+			Assert(!OidIsValid(collation));		/* result is always int8 */
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
 			break;
