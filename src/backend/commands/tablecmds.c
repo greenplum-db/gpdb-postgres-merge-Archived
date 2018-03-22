@@ -8414,11 +8414,15 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 	 * to match.
 	 */
 	constraintName = stmt->idxname;
+	if (constraintName == NULL && stmt->altconname)
+		constraintName = stmt->altconname;
+
 	if (constraintName == NULL)
 		constraintName = indexName;
 	else if (strcmp(constraintName, indexName) != 0)
 	{
-		ereport(NOTICE,
+		if (Gp_role != GP_ROLE_EXECUTE)
+			ereport(NOTICE,
 				(errmsg("ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\"",
 						indexName, constraintName)));
 		RenameRelation(index_oid, constraintName, OBJECT_INDEX, NULL);
