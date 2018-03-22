@@ -401,7 +401,7 @@ static const struct config_enum_entry allow_system_table_mods_options[] = {
 	{"none", ALLOW_SYSTEM_TABLE_MODS_NONE, false},
 	{"ddl", ALLOW_SYSTEM_TABLE_MODS_DDL, false},
 	{"dml", ALLOW_SYSTEM_TABLE_MODS_DML, false},
-	{"all", ALLOW_SYSTEM_TABLE_MODS_DML, false},
+	{"all", ALLOW_SYSTEM_TABLE_MODS_ALL, false},
 	{NULL, 0, false}
 };
 
