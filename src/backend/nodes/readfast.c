@@ -2220,6 +2220,20 @@ _readLimit(void)
 }
 
 /*
+ * _readNestLoopParam
+ */
+static NestLoopParam *
+_readNestLoopParam(void)
+{
+	READ_LOCALS(NestLoopParam);
+
+	READ_INT_FIELD(paramno);
+	READ_NODE_FIELD(paramval);
+
+	READ_DONE();
+}
+
+/*
  * _readPlanRowMark
  */
 static PlanRowMark *
@@ -3192,6 +3206,9 @@ readNodeBinary(void)
 				break;
 			case T_Limit:
 				return_value = _readLimit();
+				break;
+			case T_NestLoopParam:
+				return_value = _readNestLoopParam();
 				break;
 			case T_PlanRowMark:
 				return_value = _readPlanRowMark();

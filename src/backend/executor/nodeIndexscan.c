@@ -98,11 +98,6 @@ IndexNext(IndexScanState *node)
 
 		return slot;
 	}
-
-	if (!node->ss.ps.delayEagerFree)
-	{
-		ExecEagerFreeIndexScan(node);
-	}
 	
 	/*
 	 * if we get here it means the index scan failed so we are at the end of
