@@ -4300,7 +4300,8 @@ intorel_destroy(DestReceiver *self)
  * table entries (such as the pointer returned from this function).
  */
 static ResultRelInfo *
-get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
+get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc,
+		 bool openIndices)
 {
 	ResultRelInfo *parentInfo = estate->es_result_relation_info;
 	ResultRelInfo *childInfo = estate->es_result_relation_info;
@@ -4361,6 +4362,9 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 						  1,
 						  estate->es_instrument);
 
+		if (openIndices)
+			ExecOpenIndices(childInfo);
+
 		map_part_attrs(parentInfo->ri_RelationDesc,
 					   childInfo->ri_RelationDesc,
 					   &(childInfo->ri_partInsertMap),
@@ -4375,13 +4379,13 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc)
 
 ResultRelInfo *
 values_get_partition(Datum *values, bool *nulls, TupleDesc tupdesc,
-					 EState *estate)
+					 EState *estate, bool openIndices)
 {
 	ResultRelInfo *relinfo;
 
 	Assert(PointerIsValid(estate->es_result_partitions));
 
-	relinfo = get_part(estate, values, nulls, tupdesc);
+	relinfo = get_part(estate, values, nulls, tupdesc, openIndices);
 
 	return relinfo;
 }
@@ -4406,7 +4410,8 @@ slot_get_partition(TupleTableSlot *slot, EState *estate)
 	values = slot_get_values(slot);
 	nulls = slot_get_isnull(slot);
 
-	resultRelInfo = get_part(estate, values, nulls, slot->tts_tupleDescriptor);
+	resultRelInfo = get_part(estate, values, nulls, slot->tts_tupleDescriptor,
+							 true);
 
 	return resultRelInfo;
 }

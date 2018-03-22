@@ -3406,7 +3406,8 @@ CopyFrom(CopyState cstate)
 			if (estate->es_result_partitions)
 			{
 				resultRelInfo = values_get_partition(baseValues, baseNulls,
-													 tupDesc, estate);
+													 tupDesc, estate, true);
+
 				estate->es_result_relation_info = resultRelInfo;
 				FreeBulkInsertState(bistate);
 				bistate = GetBulkInsertState();
@@ -6591,7 +6592,9 @@ GetDistributionPolicyForPartition(CopyState cstate, EState *estate,
 	distData->p_attr_types = p_attr_types;
 	resultRelInfo = values_get_partition(values_for_partition,
 	                                     nulls,
-	                                     tupDesc, estate);
+	                                     tupDesc,
+										 estate,
+										 false); /* don't need indices in QD */
 
 	/*
 	 * If we a partition set with differing policies,

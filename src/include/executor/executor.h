@@ -576,7 +576,7 @@ extern uint64 get_grouping_groupid(TupleTableSlot *slot,
 
 extern ResultRelInfo *slot_get_partition(TupleTableSlot *slot, EState *estate);
 extern ResultRelInfo *values_get_partition(Datum *values, bool *nulls,
-										   TupleDesc desc, EState *estate);
+					 TupleDesc desc, EState *estate, bool openIndices);
 
 extern void SendAOTupCounts(EState *estate);
 

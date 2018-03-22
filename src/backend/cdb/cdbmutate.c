@@ -3054,7 +3054,7 @@ sri_optimize_for_result(PlannerInfo *root, Plan *plan, RangeTblEntry *rte,
 			estate->es_num_result_relations = 1;
 			estate->es_result_relation_info = rri;
 			rri = values_get_partition(values, nulls, RelationGetDescr(rel),
-									   estate);
+									   estate, false);
 
 			/*
 			 * 5: get target policy for destination table
@@ -3064,7 +3064,6 @@ sri_optimize_for_result(PlannerInfo *root, Plan *plan, RangeTblEntry *rte,
 			if ((*targetPolicy)->ptype != POLICYTYPE_PARTITIONED)
 				elog(ERROR, "policy must be partitioned");
 
-			ExecCloseIndices(rri);
 			heap_close(rri->ri_RelationDesc, NoLock);
 			FreeExecutorState(estate);
 		}
