@@ -45,6 +45,7 @@
 #include "utils/syscache.h"
 
 #include "cdb/cdbllize.h"                   /* pull_up_Flow() */
+#include "cdb/cdbsetop.h"
 
 
 static bool find_minmax_aggs_walker(Node *node, List **context);
@@ -544,6 +545,20 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *mminfo)
 	/* Replace the plan's tlist with a copy of the one we built above. */
 	plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
 
+	if (plan->flow->flotype == FLOW_SINGLETON)
+	{
+		/* ok */
+	}
+	else if (plan->flow->flotype == FLOW_PARTITIONED)
+	{
+		plan = (Plan *) make_motion_gather(subroot, plan, -1,
+										   subroot->sort_pathkeys);
+	}
+	else
+		elog(ERROR, "MIN/MAX subplan has unexpected flowtype: %d", plan->flow->type);
+
+	if (!focusPlan(plan, true, false))
+		elog(ERROR, "could not focus MIN/MAX subplan");
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,
 							   subparse->limitCount,
