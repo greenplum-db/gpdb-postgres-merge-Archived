@@ -282,8 +282,12 @@ _bitmap_init_buildstate(Relation index, BMBuildState *bmstate)
 									 NULL, &eq_opr, NULL, NULL);
 			opfuncid = get_opcode(eq_opr);
 
-			ScanKeyEntryInitialize(&(bmstate->bm_lov_scanKeys[attno]), SK_ISNULL, 
-								   attno + 1, BTEqualStrategyNumber, InvalidOid, InvalidOid,
+			ScanKeyEntryInitialize(&(bmstate->bm_lov_scanKeys[attno]),
+								   SK_ISNULL,
+								   attno + 1,
+								   BTEqualStrategyNumber,
+								   InvalidOid,
+								   bmstate->bm_lov_index->rd_indcollation[attno],
 								   opfuncid, 0);
 		}
 

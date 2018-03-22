@@ -2481,19 +2481,14 @@ _bitmap_doinsert(Relation rel, ItemPointerData ht_ctid, Datum *attdata,
 
 		scanKey = (ScanKey) (((char *)scanKeys) + attno * sizeof(ScanKeyData));
 
-		ScanKeyEntryInitialize(scanKey, SK_ISNULL, attno + 1, 
-							   BTEqualStrategyNumber, InvalidOid, InvalidOid, opfuncid, 0);
-
-		if (nulls[attno])
-		{
-			scanKey->sk_flags = SK_ISNULL;
-			scanKey->sk_argument = attdata[attno];
-		}
-		else
-		{
-			scanKey->sk_flags = 0;
-			scanKey->sk_argument = attdata[attno];
-		}
+		ScanKeyEntryInitialize(scanKey,
+							   nulls[attno] ? SK_ISNULL : 0,
+							   attno + 1,
+							   BTEqualStrategyNumber,
+							   InvalidOid,
+							   lovIndex->rd_indcollation[attno],
+							   opfuncid,
+							   attdata[attno]);
 	}
 
 	scanDesc = index_beginscan(lovHeap, lovIndex, GetActiveSnapshot(),
