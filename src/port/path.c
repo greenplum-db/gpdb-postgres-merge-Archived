@@ -13,7 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "c.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
