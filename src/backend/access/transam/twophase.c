@@ -1232,11 +1232,6 @@ EndPrepare(GlobalTransaction gxact)
 
 	SIMPLE_FAULT_INJECTOR(EndPreparedTwoPhaseSleep);
 
-	/*
-	 * Wait for synchronous replication, if required.
-	 */
-	Assert(gxact->prepare_lsn.xrecoff != 0);
-	SyncRepWaitForLSN(gxact->prepare_lsn);
 
 	/*
 	 * Wait for synchronous replication, if required.
@@ -1244,6 +1239,7 @@ EndPrepare(GlobalTransaction gxact)
 	 * Note that at this stage we have marked the prepare, but still show as
 	 * running in the procarray (twice!) and continue to hold locks.
 	 */
+	Assert(gxact->prepare_lsn.xrecoff != 0);
 	SyncRepWaitForLSN(gxact->prepare_lsn);
 
 	records.tail = records.head = NULL;
