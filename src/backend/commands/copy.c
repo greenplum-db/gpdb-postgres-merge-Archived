@@ -205,12 +205,6 @@ static bool NextCopyFromX(CopyState cstate, ExprContext *econtext,
 static void HandleCopyError(CopyState cstate);
 static void HandleQDErrorFrame(CopyState cstate);
 
-
-/* byte scaning utils */
-static void attr_get_key(CopyState cstate, CdbCopy *cdbCopy, int original_lineno_for_qe,
-						 unsigned int target_seg, AttrNumber p_nattrs, AttrNumber *attrs,
-						 Form_pg_attribute *attr_descs, int *attr_offsets, bool *attr_nulls,
-						 FmgrInfo *in_functions, Oid *typioparams, Datum *values);
 static void CopyFromErrorCallback(void *arg);
 static void CopyInitPartitioningState(EState *estate);
 static void CopyInitDataParser(CopyState cstate);
@@ -225,9 +219,8 @@ static PartitionData *InitPartitionData(EState *estate, Form_pg_attribute *attr,
 static GpDistributionData *
 GetDistributionPolicyForPartition(CopyState cstate, EState *estate,
                                   PartitionData *partitionData, HTAB *hashmap,
-                                  Oid *p_attr_types,
-                                  GetAttrContext *getAttrContext,
-                                  MemoryContext ctxt);
+                                  Oid *p_attr_types, TupleDesc tupDesc,
+                                  Datum *values, bool *nulls);
 static unsigned int
 GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
@@ -1137,6 +1130,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 								 stmt->filename, stmt->is_program,
 								 stmt->attlist, options);
 
+			cstate->partitions = stmt->partitions;
 
 			if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
 			{
@@ -2474,31 +2468,13 @@ CopyTo(CopyState cstate)
 	Form_pg_attribute *attr;
 	ListCell   *cur;
 	uint64		processed = 0;
-	List *target_rels = NIL;
+	List	   *target_rels;
 	ListCell *lc;
 	CdbCopy    *cdbCopy = NULL;
 	StringInfoData cdbcopy_err;
 
 	if (cstate->rel)
-	{
-		if (cstate->partitions)
-		{
-			ListCell *lc;
-			List *relids = all_partition_relids(cstate->partitions);
-
-			foreach(lc, relids)
-			{
-				Oid relid = lfirst_oid(lc);
-				Relation rel = heap_open(relid, AccessShareLock);
-
-				target_rels = lappend(target_rels, rel);
-			}
-		}
-		else
-			target_rels = lappend(target_rels, cstate->rel);
-
 		tupDesc = RelationGetDescr(cstate->rel);
-	}
 	else
 		tupDesc = cstate->queryDesc->tupDesc;
 
@@ -2598,6 +2574,22 @@ CopyTo(CopyState cstate)
 			CopySendEndOfRow(cstate);
 		}
 	}
+
+	if (cstate->partitions)
+	{
+		List	   *relids = all_partition_relids(cstate->partitions);
+
+		target_rels = NIL;
+		foreach(lc, relids)
+		{
+			Oid relid = lfirst_oid(lc);
+			Relation rel = heap_open(relid, AccessShareLock);
+
+			target_rels = lappend(target_rels, rel);
+		}
+	}
+	else
+		target_rels = list_make1(cstate->rel);
 
 	if (cstate->rel)
 	{
@@ -3106,6 +3098,7 @@ CopyFrom(CopyState cstate)
 	int			i;
 	Datum	   *baseValues;
 	bool	   *baseNulls;
+	PartitionData *partitionData = NULL;
 
 	Assert(cstate->rel);
 
@@ -3240,7 +3233,7 @@ CopyFrom(CopyState cstate)
 
 	is_check_distkey = (cstate->on_segment && Gp_role == GP_ROLE_EXECUTE && gp_enable_segment_copy_checking) ? true : false;
 
-	if (is_check_distkey || cstate->dispatch_mode == COPY_DISPATCH)
+	if (cstate->dispatch_mode == COPY_DISPATCH)
 	{
 		/*
 		 * Variables for cdbpolicy
@@ -3248,8 +3241,16 @@ CopyFrom(CopyState cstate)
 		AttrNumber	p_nattrs; /* num of attributes in the distribution policy */
 		Oid       *p_attr_types;	/* types for each policy attribute */
 
-		estate->es_result_partitions =
-			RelationBuildPartitionDesc(cstate->rel, false);
+		if (cstate->dispatch_mode == COPY_DISPATCH)
+		{
+			estate->es_result_partitions =
+				RelationBuildPartitionDesc(cstate->rel, false);
+		}
+		else
+		{
+			/* In QE, the dispatcher sent these as part of the CopyStmt, and it
+			 * was already copied into the EState earlier. */
+		}
 
 		CopyInitPartitioningState(estate);
 
@@ -3265,9 +3266,21 @@ CopyFrom(CopyState cstate)
 		/* init partition routing data structure */
 		if (estate->es_result_partitions)
 		{
-			PartitionData *partitionData;
 			partitionData = InitPartitionData(estate, tupDesc->attrs, num_phys_attrs);
 		}
+	}
+	else if (is_check_distkey)
+	{
+		/*
+		 * We are executing COPY FROM ON SEGMENT, and we need to check that the row
+		 * we're about to load really belongs to this segment.
+		 *
+		 * We don't support partitioned tables where the distribution key is different
+		 * for different partitions, so this is a lot simpler than the dispatcher case
+		 * above.
+		 */
+		distData = InitDistributionData(cstate, tupDesc->attrs, num_phys_attrs,
+										estate, false);
 
 		/*
 		 * If this table is distributed randomly, there is nothing to check.
@@ -3433,20 +3446,49 @@ CopyFrom(CopyState cstate)
 			slot = baseSlot;
 		}
 
-		if (cstate->dispatch_mode == COPY_DISPATCH || is_check_distkey)
+		if (cstate->dispatch_mode == COPY_DISPATCH)
+		{
+			GpDistributionData *part_distData;
+
+			/* lock partition */
+			if (estate->es_result_partitions)
+			{
+				part_distData = GetDistributionPolicyForPartition(
+					cstate, estate, partitionData,
+					distData->hashmap,
+					distData->p_attr_types, tupDesc,
+					slot_get_values(slot), slot_get_isnull(slot));
+
+				if (!part_distData->cdbHash)
+					part_distData = distData;
+			}
+			else
+				part_distData = distData;
+
+			target_seg = GetTargetSeg(part_distData, slot_get_values(slot), slot_get_isnull(slot));
+
+			/*
+			 * policy should be PARTITIONED (normal tables) or
+			 * ENTRY
+			 */
+			if (!part_distData->policy)
+			{
+				elog(FATAL, "Bad or undefined policy. (%p)", part_distData->policy);
+			}
+		}
+		else if (is_check_distkey)
 		{
 			target_seg = GetTargetSeg(distData, slot_get_values(slot), slot_get_isnull(slot));
 
-			if (is_check_distkey)
+			/* check distribution key if COPY FROM ON SEGMENT */
+			if (GpIdentity.segindex != target_seg)
 			{
 				PG_TRY();
 				{
-					/* check distribution key if COPY FROM ON SEGMENT */
-					if (GpIdentity.segindex != target_seg)
-						ereport(ERROR,
-								(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
-								 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
-										GpIdentity.segindex, target_seg)));
+					ereport(ERROR,
+							(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
+							 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
+									GpIdentity.segindex, target_seg)));
 				}
 				PG_CATCH();
 				{
@@ -6126,72 +6168,6 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 	return attnums;
 }
 
-static void
-attr_get_key(CopyState cstate, CdbCopy *cdbCopy, int original_lineno_for_qe,
-			 unsigned int target_seg,
-			 AttrNumber p_nattrs, AttrNumber *attrs,
-			 Form_pg_attribute *attr_descs, int *attr_offsets, bool *attr_nulls,
-			 FmgrInfo *in_functions, Oid *typioparams, Datum *values)
-{
-	AttrNumber p_index;
-
-	/*
-	 * Since we only need the internal format of values that
-	 * we want to hash on (partitioning keys only), we want to
-	 * skip converting the other values so we can run faster.
-	 */
-	for (p_index = 0; p_index < p_nattrs; p_index++)
-	{
-		ListCell *cur;
-
-		/*
-		 * For this partitioning key, search for its location in the attr list.
-		 * (note that fields may be out of order, so this is necessary).
-		 */
-		foreach(cur, cstate->attnumlist)
-		{
-			int			attnum = lfirst_int(cur);
-			int			m = attnum - 1;
-			char	   *string;
-			bool		isnull;
-
-			if (attnum == attrs[p_index])
-			{
-				string = cstate->attribute_buf.data + attr_offsets[m];
-
-				if (attr_nulls[m])
-					isnull = true;
-				else
-					isnull = false;
-
-				if (cstate->csv_mode && isnull &&
-					cstate->force_notnull_flags[m])
-				{
-					string = cstate->null_print;		/* set to NULL string */
-					isnull = false;
-				}
-
-				/* we read an SQL NULL, no need to do anything */
-				if (!isnull)
-				{
-					cstate->cur_attname = NameStr(attr_descs[m]->attname);
-
-					values[m] = InputFunctionCall(&in_functions[m],
-												  string,
-												  typioparams[m],
-												  attr_descs[m]->atttypmod);
-
-					attr_nulls[m] = false;
-					cstate->cur_attname = NULL;
-				}		/* end if (!isnull) */
-
-				break;	/* go to next partitioning key
-						 * attribute */
-			}
-		}		/* end foreach */
-	}			/* end for partitioning indexes */
-}
-
 /* remove end of line chars from end of a buffer */
 void truncateEol(StringInfo buf, EolType eol_type)
 {
@@ -6593,57 +6569,25 @@ InitPartitionData(EState *estate, Form_pg_attribute *attr,
 }
 
 /* Get distribution policy for specific part */
-/* GPDB_91_MERGE_FIXME: In my refactoring, this went unused. Probably causes a lot of failures,
- * and we'll need to add back code to call this...
- */
 static GpDistributionData *
 GetDistributionPolicyForPartition(CopyState cstate, EState *estate,
                                   PartitionData *partitionData, HTAB *hashmap,
-                                  Oid *p_attr_types,
-                                  GetAttrContext *getAttrContext,
-                                  MemoryContext ctxt)
+                                  Oid *p_attr_types, TupleDesc tupDesc,
+                                  Datum *values, bool *nulls)
 {
 	ResultRelInfo *resultRelInfo;
 	Datum *values_for_partition;
 	GpPolicy *part_policy = NULL; /* policy for specific part */
 	AttrNumber part_p_nattrs = 0; /* partition policy max attno */
 	CdbHash *part_hash = NULL;
-	int target_seg = 0; /* not used in attr_get_key function */
 
-	if (!cstate->binary)
-	{
-		/*
-		 * Text/CSV: Ensure we parse all partition attrs.
-		 * Q: Wouldn't this potentially reparse values (and miss defaults)?
-		 *    Why not merge with he other attr_get_key call
-		 *    (replace part_values with values)?
-		 */
-		MemSet(partitionData->part_values, 0,
-		       getAttrContext->num_phys_attrs * sizeof(Datum));
-		attr_get_key(cstate, getAttrContext->cdbCopy,
-		             getAttrContext->original_lineno_for_qe, target_seg,
-		             partitionData->part_attnums, partitionData->part_attnum,
-		             getAttrContext->attr, getAttrContext->attr_offsets,
-		             getAttrContext->nulls, partitionData->part_infuncs,
-		             partitionData->part_typio, partitionData->part_values);
-		values_for_partition = partitionData->part_values;
-	}
-	else
-	{
-		/*
-		 * Binary: We've made sure to parse partition attrs above.
-		 */
-		values_for_partition = getAttrContext->values;
-	}
+	values_for_partition = values;
 
-	/* values_get_partition() calls palloc() */
-	MemoryContext save_cxt = MemoryContextSwitchTo(ctxt);
 	GpDistributionData *distData = palloc(sizeof(GpDistributionData));
 	distData->p_attr_types = p_attr_types;
 	resultRelInfo = values_get_partition(values_for_partition,
-	                                     getAttrContext->nulls,
-	                                     getAttrContext->tupDesc, estate);
-	MemoryContextSwitchTo(save_cxt);
+	                                     nulls,
+	                                     tupDesc, estate);
 
 	/*
 	 * If we a partition set with differing policies,
@@ -6664,20 +6608,20 @@ GetDistributionPolicyForPartition(CopyState cstate, EState *estate,
 		}
 		else
 		{
+			MemoryContext oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 			Relation rel = heap_open(relid, NoLock);
-			MemoryContextSwitchTo(ctxt);
 
 			/*
 			 * Make sure this all persists the current
 			 * iteration.
 			 */
 			d->relid = relid;
-			part_hash = d->cdbHash = makeCdbHash(
-			        getAttrContext->cdbCopy->total_segs);
-			part_policy = d->policy = GpPolicyCopy(ctxt, rel->rd_cdbpolicy);
+			part_hash = d->cdbHash = makeCdbHash(cstate->cdbCopy->total_segs);
+			part_policy = d->policy = GpPolicyCopy(cstate->copycontext, rel->rd_cdbpolicy);
 			part_p_nattrs = part_policy->nattrs;
 			heap_close(rel, NoLock);
-			MemoryContextSwitchTo(save_cxt);
+
+			MemoryContextSwitchTo(oldcontext);
 		}
 	}
 	distData->policy = part_policy;
