@@ -20,7 +20,6 @@
 #include "utils/relcache.h"
 
 #include "catalog/oid_dispatch.h"
-#include "cdb/cdbvars.h"
 
 #define OIDCHARS		10		/* max chars printed by %u */
 /*
@@ -50,22 +49,6 @@ extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber
 /* First argument is a RelFileNode */
 #define relpathperm(rnode, forknum) \
 		relpathbackend((rnode), InvalidBackendId, (forknum))
-
-/*
- * In PostgreSQL, the backend's backend ID is used as part of the filenames
- * of temporary tables. However, in GPDB, temporary tables are shared across
- * backends, if you have a query with multiple QE reader processes. Because
- * of that, they are kept in the shared buffer cache, but it also means that
- * we cannot use the "current backend ID" in the filename, because each
- * QE process has a different backend ID. Use the current "session id"
- * instead.
- *
- * MyTempSessionId() macro should be used in place of MyBackendId, wherever
- * we deal with RelFileNodes. That includes at leastRelFileNodeBackend.backend
- * and RelationData.rd_backend fields.
- */
-#define MyTempSessionId() \
-	((Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE) ? gp_session_id : MyBackendId)
 
 extern bool IsSystemRelation(Relation relation);
 extern bool IsToastRelation(Relation relation);

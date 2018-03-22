@@ -900,7 +900,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
+	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT | BM_TEMP);
 	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
 	else if (relpersistence == RELPERSISTENCE_TEMP)
@@ -2010,7 +2010,13 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	/* Find smgr relation for buffer, and mark it as transient */
 	if (reln == NULL)
 	{
-		reln = smgropen(buf->tag.rnode, InvalidBackendId);
+		/* it's OK to check this flag without the buffer header lock,
+		 * it cannot change while we hold a pin on it
+		 */
+		bool		istemp = (buf->flags & BM_TEMP) != 0;
+
+		reln = smgropen(buf->tag.rnode,
+						istemp ? TempRelBackendId : InvalidBackendId);
 		smgrsettransient(reln);
 	}
 

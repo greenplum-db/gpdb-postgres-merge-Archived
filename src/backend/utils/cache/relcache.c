@@ -875,19 +875,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			relation->rd_backend = InvalidBackendId;
 			break;
 		case RELPERSISTENCE_TEMP:
-			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
-				relation->rd_backend = MyTempSessionId();
-			else
-			{
-				/*
-				 * If it's a local temp table, but not one of ours, we have to
-				 * use the slow, grotty method to figure out the owning
-				 * backend.
-				 */
-				relation->rd_backend =
-					GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
-				Assert(relation->rd_backend != InvalidBackendId);
-			}
+			relation->rd_backend = TempRelBackendId;
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c",
@@ -2700,7 +2688,7 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_backend = InvalidBackendId;
 			break;
 		case RELPERSISTENCE_TEMP:
-			rel->rd_backend = MyTempSessionId();
+			rel->rd_backend = TempRelBackendId;
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
