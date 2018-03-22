@@ -1331,7 +1331,18 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 			pathnode->locus = projectedlocus;
 		else if (cdbpathlocus_compare(CdbPathLocus_Comparison_Equal,
 									  pathnode->locus, projectedlocus))
-		{}
+		{
+			/* compatible */
+		}
+		else if (CdbPathLocus_IsGeneral(pathnode->locus))
+		{
+			/* compatible */
+			pathnode->locus = projectedlocus;
+		}
+		else if (CdbPathLocus_IsGeneral(projectedlocus))
+		{
+			/* compatible */
+		}
 		else if (CdbPathLocus_IsPartitioned(pathnode->locus) &&
 				 CdbPathLocus_IsPartitioned(projectedlocus))
 			CdbPathLocus_MakeStrewn(&pathnode->locus);
