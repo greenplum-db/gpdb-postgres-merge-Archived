@@ -2470,8 +2470,6 @@ CopyTo(CopyState cstate)
 	uint64		processed = 0;
 	List	   *target_rels;
 	ListCell *lc;
-	CdbCopy    *cdbCopy = NULL;
-	StringInfoData cdbcopy_err;
 
 	if (cstate->rel)
 		tupDesc = RelationGetDescr(cstate->rel);
@@ -2775,17 +2773,6 @@ CopyTo(CopyState cstate)
 
 		/* Need to flush out the trailer */
 		CopySendEndOfRow(cstate);
-	}
-
-	/*
-	 * report all accumulated errors back to the client.
-	 */
-	if (cdbCopy)
-	{
-		if (cdbCopy->io_errors)
-			ereport(ERROR,
-					(errcode(ERRCODE_IO_ERROR),
-					 errmsg("%s", cdbcopy_err.data)));
 	}
 
 	if (Gp_role == GP_ROLE_EXECUTE && cstate->on_segment)
