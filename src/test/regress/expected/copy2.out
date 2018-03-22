@@ -65,17 +65,13 @@ ERROR:  function cannot execute on a QE slice because it issues a non-SELECT sta
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
 PL/pgSQL function "fn_x_after" line 3 at SQL statement
 COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
-<<<<<<< HEAD
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
-COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X';
-ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
-CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
-=======
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X' ENCODING 'sql_ascii';
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
+CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 -- check results of copy in
 SELECT * FROM x;
  a | b | c | d | e 

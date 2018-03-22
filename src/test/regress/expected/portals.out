@@ -1003,7 +1003,7 @@ COMMIT;
 --    see the effects of the UPDATE. In GPDB, however, a cursor starts
 --    executing in the segments, as soon as the DECLARE CURSOR is issued,
 --    so there's a race condition.
-BEGIN; 
+BEGIN;
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 CREATE TABLE cursor (a int, b int);
 INSERT INTO cursor VALUES (1, 1);
