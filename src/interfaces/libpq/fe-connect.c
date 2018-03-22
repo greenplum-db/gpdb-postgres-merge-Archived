@@ -27,8 +27,6 @@
 #include <poll.h>
 #endif
 
-#include "utils/elog.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -108,12 +106,12 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  */
 #define ERRCODE_APPNAME_UNKNOWN "42704"
 
-#if 0 // GPDB_91_MERGE_FIXME
 /* This is part of the protocol so just define it */
 #define ERRCODE_INVALID_PASSWORD "28P01"
 /* This too */
 #define ERRCODE_CANNOT_CONNECT_NOW "57P03"
-#endif
+/* And this GPDB-specific one, too */
+#define ERRCODE_MIRROR_READY "57M02"
 
 /*
  * fall back options if they are not specified by arguments or defined
@@ -2716,8 +2714,6 @@ error_return:
 static PGPing
 internal_ping(PGconn *conn)
 {
-	int			last_sqlstate;
-
 	/* Say "no attempt" if we never got to PQconnectPoll */
 	if (!conn || !conn->options_valid)
 		return PQPING_NO_ATTEMPT;
@@ -2759,18 +2755,14 @@ internal_ping(PGconn *conn)
 	if (strlen(conn->last_sqlstate) != 5)
 		return PQPING_NO_RESPONSE;
 
-	last_sqlstate = MAKE_SQLSTATE(conn->last_sqlstate[0], conn->last_sqlstate[1],
-								  conn->last_sqlstate[2], conn->last_sqlstate[3],
-								  conn->last_sqlstate[4]);
-
-	if (last_sqlstate == ERRCODE_MIRROR_READY)
+	if (strcmp(conn->last_sqlstate, ERRCODE_MIRROR_READY) == 0)
 		return PQPING_MIRROR_READY;
 
 	/*
 	 * Report PQPING_REJECT if server says it's not accepting connections. (We
 	 * distinguish this case mainly for the convenience of pg_ctl.)
 	 */
-	if (last_sqlstate == ERRCODE_CANNOT_CONNECT_NOW)
+	if (strcmp(conn->last_sqlstate, ERRCODE_CANNOT_CONNECT_NOW) == 0)
 		return PQPING_REJECT;
 
 	/*
@@ -5909,21 +5901,12 @@ static void
 dot_pg_pass_warning(PGconn *conn)
 {
 	/* If it was 'invalid authorization', add .pgpass mention */
+	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
 	/* only works with >= 9.0 servers */
-	if (conn->dot_pgpass_used && conn->password_needed && conn->result)
+		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
+			   ERRCODE_INVALID_PASSWORD) == 0)
 	{
 		char		pgpassfile[MAXPGPATH];
-		char		*sqlstate;
-		int			sqlstate_errcode;
-
-		sqlstate = PQresultErrorField(conn->result, PG_DIAG_SQLSTATE);
-		if (sqlstate == NULL)
-			return;
-
-		sqlstate_errcode = MAKE_SQLSTATE(sqlstate[0], sqlstate[1], sqlstate[2],
-										 sqlstate[3], sqlstate[4]);
-		if (sqlstate_errcode != ERRCODE_INVALID_PASSWORD)
-			return;
 
 		if (!getPgPassFilename(pgpassfile))
 			return;
