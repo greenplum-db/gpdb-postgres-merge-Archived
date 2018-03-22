@@ -150,15 +150,15 @@ ExecInitDML(DML *node, EState *estate, int eflags)
 	DMLState *dmlstate = makeNode(DMLState);
 	dmlstate->ps.plan = (Plan *)node;
 	dmlstate->ps.state = estate;
-	CmdType operation = estate->es_plannedstmt->commandType;
-	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
-
 	/*
 	 * Initialize es_result_relation_info, just like ModifyTable.
 	 * GPDB_90_MERGE_FIXME: do we need to consolidate the ModifyTable and DML
 	 * logic?
 	 */
 	estate->es_result_relation_info = estate->es_result_relations;
+
+	CmdType operation = estate->es_plannedstmt->commandType;
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 
 	ExecInitResultTupleSlot(estate, &dmlstate->ps);
 
