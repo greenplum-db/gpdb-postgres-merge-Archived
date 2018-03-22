@@ -383,7 +383,7 @@ cdbCopyGetData(CdbCopy *c, bool copy_cancel, uint64 *rows_processed)
 /*
  * Process the results from segments after sending the end of copy command.
  */
-static void
+static ErrorData *
 processCopyEndResults(CdbCopy *c,
 					  SegmentDatabaseDescriptor *db_descriptors,
 					  int *results,
@@ -594,8 +594,7 @@ processCopyEndResults(CdbCopy *c,
 		}
 	}
 
-	if (first_error)
-		ReThrowError(first_error);
+	return first_error;
 }
 
 /*
@@ -609,7 +608,14 @@ processCopyEndResults(CdbCopy *c,
 int
 cdbCopyEnd(CdbCopy *c)
 {
-	return cdbCopyEndAndFetchRejectNum(c, NULL);
+	return cdbCopyEndAndFetchRejectNum(c, NULL, NULL);
+}
+
+int
+cdbCopyAbort(CdbCopy *c)
+{
+	return cdbCopyEndAndFetchRejectNum(c, NULL,
+									   "aborting COPY in QE due to error in QD");
 }
 
 /*
@@ -617,7 +623,7 @@ cdbCopyEnd(CdbCopy *c)
  * and fetch the total number of rows completed by all QEs
  */
 int
-cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
+cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed, char *abort_msg)
 {
 	SegmentDatabaseDescriptor *q;
 	SegmentDatabaseDescriptor **failedSegDBs;
@@ -631,6 +637,7 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
 	bool		err_header = false;
 	struct SegmentDatabaseDescriptor *db_descriptors;
 	int			size;
+	ErrorData *edata;
 
 	/* clean err message */
 	c->err_msg.len = 0;
@@ -652,16 +659,16 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
 		q = &db_descriptors[seg];
 		elog(DEBUG1, "PQputCopyEnd seg %d    ", q->segindex);
 		/* end this COPY command */
-		results[seg] = PQputCopyEnd(q->conn, NULL);
+		results[seg] = PQputCopyEnd(q->conn, abort_msg);
 	}
 
 	if (NULL != total_rows_completed)
 		*total_rows_completed = 0;
 
-	processCopyEndResults(c, db_descriptors, results, size,
-						  failedSegDBs, &err_header,
-						  &failed_count, &total_rows_rejected,
-						  total_rows_completed);
+	edata = processCopyEndResults(c, db_descriptors, results, size,
+								  failedSegDBs, &err_header,
+								  &failed_count, &total_rows_rejected,
+								  total_rows_completed);
 
 	/* If lost contact with segment db, try to reconnect. */
 	if (failed_count > 0)
@@ -673,6 +680,10 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed)
 
 	pfree(results);
 	pfree(failedSegDBs);
+
+	/* If we are aborting the COPY, ignore errors sent by the server. */
+	if (edata && !abort_msg)
+		ReThrowError(edata);
 
 	return total_rows_rejected;
 }

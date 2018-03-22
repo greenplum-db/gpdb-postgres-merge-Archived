@@ -789,7 +789,6 @@ externalgettup_defined(FileScanDesc scan)
 {
 	HeapTuple	tuple = NULL;
 	CopyState	pstate = scan->fs_pstate;
-	bool		got_error;
 	Oid			loaded_oid;
 
 	/* on first time around just throw the header line away */
@@ -830,25 +829,14 @@ externalgettup_defined(FileScanDesc scan)
 	}
 
 	/* Get a line */
-	for (;;)
+	if (!NextCopyFrom(pstate,
+					  NULL,
+					  scan->values,
+					  scan->nulls,
+					  &loaded_oid))
 	{
-		if (!NextCopyFrom(pstate,
-						  NULL,
-						  scan->values,
-						  scan->nulls,
-						  &loaded_oid,
-						  &got_error))
-		{
-			scan->fs_inited = false;
-			return NULL;
-		}
-		if (got_error)
-		{
-			HandleSingleRowError(pstate->cdbsreh);
-			ErrorIfRejectLimitReached(pstate->cdbsreh, NULL);
-			continue;
-		}
-		break;
+		scan->fs_inited = false;
+		return NULL;
 	}
 
 	/* convert to heap tuple */
@@ -1001,7 +989,7 @@ externalgettup_custom(FileScanDesc scan)
 				}
 				else
 				{
-					ErrorIfRejectLimitReached(pstate->cdbsreh, NULL);
+					ErrorIfRejectLimitReached(pstate->cdbsreh);
 				}
 
 			}

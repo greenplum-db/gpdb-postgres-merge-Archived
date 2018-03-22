@@ -563,24 +563,15 @@ SELECT * FROM errcopy;
 SELECT relname, errmsg, rawdata FROM gp_read_error_log('errcopy');
  relname |                        errmsg                         |    rawdata    
 ---------+-------------------------------------------------------+---------------
- errcopy | invalid input syntax for integer: "1_text", column c  | 1,1,1_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "2_text", column c  | 2,2,2_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "3_text", column c  | 3,3,3_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "4_text", column c  | 4,4,4_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "6_text", column c  | 6,6,6_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "7_text", column c  | 7,7,7_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "8_text", column c  | 8,8,8_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "9_text", column c  | 9,9,9_text   +
-         |                                                       | 
- errcopy | invalid input syntax for integer: "10_text", column c | 10,10,10_text+
-         |                                                       | 
+ errcopy | invalid input syntax for integer: "1_text", column c  | 1,1,1_text
+ errcopy | invalid input syntax for integer: "2_text", column c  | 2,2,2_text
+ errcopy | invalid input syntax for integer: "3_text", column c  | 3,3,3_text
+ errcopy | invalid input syntax for integer: "4_text", column c  | 4,4,4_text
+ errcopy | invalid input syntax for integer: "6_text", column c  | 6,6,6_text
+ errcopy | invalid input syntax for integer: "7_text", column c  | 7,7,7_text
+ errcopy | invalid input syntax for integer: "8_text", column c  | 8,8,8_text
+ errcopy | invalid input syntax for integer: "9_text", column c  | 9,9,9_text
+ errcopy | invalid input syntax for integer: "10_text", column c | 10,10,10_text
 (9 rows)
 
 -- reject one row with extra column, one row with fewer columns
@@ -610,10 +601,8 @@ SELECT * FROM errcopy ORDER BY a;
 SELECT relname, errmsg, rawdata FROM gp_read_error_log('errcopy');
  relname |                errmsg                 | rawdata 
 ---------+---------------------------------------+---------
- errcopy | missing data for column "c"           | 4,4    +
-         |                                       | 
- errcopy | extra data after last expected column | 5,5,5,5+
-         |                                       | 
+ errcopy | missing data for column "c"           | 4,4
+ errcopy | extra data after last expected column | 5,5,5,5
 (2 rows)
 
 -- metacharacter

@@ -194,15 +194,19 @@ static void SendCopyFromForwardedTuple(CopyState cstate,
 						   Datum *values,
 						   bool *nulls);
 static void SendCopyFromForwardedHeader(CopyState cstate, CdbCopy *cdbCopy, bool file_has_oids);
+static void SendCopyFromForwardedError(CopyState cstate, CdbCopy *cdbCopy, char *errmsg);
 
 static bool NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
-								 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error);
+								 Datum *values, bool *nulls, Oid *tupleOid);
 static bool NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
-								Datum *values, bool *nulls, Oid *tupleOid, bool *got_error);
+								Datum *values, bool *nulls, Oid *tupleOid);
+static bool NextCopyFromX(CopyState cstate, ExprContext *econtext,
+						  Datum *values, bool *nulls, Oid *tupleOid);
+static void HandleCopyError(CopyState cstate);
+static void HandleQDErrorFrame(CopyState cstate);
 
 
 /* byte scaning utils */
-static void CopyExtractRowMetaData(CopyState cstate);
 static void attr_get_key(CopyState cstate, CdbCopy *cdbCopy, int original_lineno_for_qe,
 						 unsigned int target_seg, AttrNumber p_nattrs, AttrNumber *attrs,
 						 Form_pg_attribute *attr_descs, int *attr_offsets, bool *attr_nulls,
@@ -210,7 +214,6 @@ static void attr_get_key(CopyState cstate, CdbCopy *cdbCopy, int original_lineno
 static void CopyFromErrorCallback(void *arg);
 static void CopyInitPartitioningState(EState *estate);
 static void CopyInitDataParser(CopyState cstate);
-static char *extract_line_buf(CopyState cstate);
 
 static GpDistributionData *
 InitDistributionData(CopyState cstate, Form_pg_attribute *attr,
@@ -255,130 +258,6 @@ cstate->attribute_buf.cursor = 0;
 line_buf_with_lineno.len = 0; \
 line_buf_with_lineno.data[0] = '\0'; \
 line_buf_with_lineno.cursor = 0;
-
-/*
- * A data error happened. This code block will always be inside a PG_CATCH()
- * block right when a higher stack level produced an error. We handle the error
- * by checking which error mode is set (SREH or all-or-nothing) and do the right
- * thing accordingly. Note that we MUST have this code in a macro (as opposed
- * to a function) as elog_dismiss() has to be inlined with PG_CATCH in order to
- * access local error state variables.
- *
- * changing me? take a look at FILEAM_HANDLE_ERROR in fileam.c as well.
- */
-#define COPY_HANDLE_ERROR \
-if (cstate->errMode == ALL_OR_NOTHING) \
-{ \
-	/* re-throw error and abort */ \
-	if (Gp_role == GP_ROLE_DISPATCH) \
-		cdbCopyEnd(cdbCopy); \
-	PG_RE_THROW(); \
-} \
-else \
-{ \
-	/* SREH - release error state and handle error */ \
-\
-	ErrorData	*edata; \
-	MemoryContext oldcontext;\
-	bool	rawdata_is_a_copy = false; \
-	cur_row_rejected = true; \
-\
-	/* SREH must only handle data errors. all other errors must not be caught */\
-	if (ERRCODE_TO_CATEGORY(elog_geterrcode()) != ERRCODE_DATA_EXCEPTION)\
-	{\
-		/* re-throw error and abort */ \
-		if (Gp_role == GP_ROLE_DISPATCH) \
-			cdbCopyEnd(cdbCopy); \
-		PG_RE_THROW(); \
-	}\
-\
-	/* save a copy of the error info */ \
-	oldcontext = MemoryContextSwitchTo(cstate->cdbsreh->badrowcontext);\
-	edata = CopyErrorData();\
-	MemoryContextSwitchTo(oldcontext);\
-\
-	if (!elog_dismiss(DEBUG5)) \
-		PG_RE_THROW(); /* <-- hope to never get here! */ \
-\
-	if (Gp_role == GP_ROLE_DISPATCH || cstate->on_segment)\
-	{\
-		Insist(cstate->err_loc_type == ROWNUM_ORIGINAL);\
-		cstate->cdbsreh->rawdata = (char *) palloc(strlen(cstate->line_buf.data) * \
-												   sizeof(char) + 1 + 24); \
-\
-		rawdata_is_a_copy = true; \
-		sprintf(cstate->cdbsreh->rawdata, "%d%c%d%c%s", \
-			    original_lineno_for_qe, \
-				COPY_METADATA_DELIM, \
-				cstate->line_buf_converted, \
-				COPY_METADATA_DELIM, \
-				cstate->line_buf.data);	\
-	}\
-	else\
-	{\
-		if (Gp_role == GP_ROLE_EXECUTE)\
-		{\
-			/* if line has embedded rownum, update the cursor to the pos right after */ \
-			Insist(cstate->err_loc_type == ROWNUM_EMBEDDED);\
-			cstate->line_buf.cursor = 0;\
-			if(!cstate->md_error) \
-				CopyExtractRowMetaData(cstate); \
-		}\
-\
-		cstate->cdbsreh->rawdata = cstate->line_buf.data + cstate->line_buf.cursor; \
-	}\
-\
-	cstate->cdbsreh->is_server_enc = cstate->line_buf_converted; \
-	cstate->cdbsreh->linenumber = cstate->cur_lineno; \
-	cstate->cdbsreh->processed = ++processed; \
-	cstate->cdbsreh->consec_csv_err = cstate->num_consec_csv_err; \
-\
-	/* set the error message. Use original msg and add column name if available */ \
-	if (cstate->cur_attname)\
-	{\
-		cstate->cdbsreh->errmsg = (char *) palloc((strlen(edata->message) + \
-												  strlen(cstate->cur_attname) + \
-												  10 + 1) * sizeof(char)); \
-		sprintf(cstate->cdbsreh->errmsg, "%s, column %s", \
-				edata->message, \
-				cstate->cur_attname); \
-	}\
-	else\
-	{\
-		cstate->cdbsreh->errmsg = pstrdup(edata->message); \
-	}\
-\
-	/* after all the prep work let cdbsreh do the real work */ \
-	HandleSingleRowError(cstate->cdbsreh); \
-\
-	/* cleanup any extra memory copies we made */\
-	if (rawdata_is_a_copy) \
-		pfree(cstate->cdbsreh->rawdata); \
-	if (!IsRejectLimitReached(cstate->cdbsreh)) \
-		pfree(cstate->cdbsreh->errmsg); \
-\
-	MemoryContextReset(cstate->cdbsreh->badrowcontext);\
-\
-}
-
-/*
- * if in SREH mode and data error occured it was already handled in
- * COPY_HANDLE_ERROR. Therefore, skip to the next row before attempting
- * to do any further processing on this one. There's a QE and QD versions
- * since the QE doesn't have a linebuf_with_lineno stringInfo.
- */
-#define QD_GOTO_NEXT_ROW \
-RESET_LINEBUF_WITH_LINENO; \
-RESET_LINEBUF; \
-cur_row_rejected = false; /* reset for next run */ \
-continue; /* move on to the next data line */
-
-#define QE_GOTO_NEXT_ROW \
-RESET_LINEBUF; \
-cur_row_rejected = false; /* reset for next run */ \
-cstate->cur_attname = NULL;\
-continue; /* move on to the next data line */
-
 
 static volatile CopyState glob_cstate = NULL;
 
@@ -430,6 +309,13 @@ static CopyStmt *glob_copystmt = NULL;
  * just collects and forwards them to the client. The QD doesn't need to parse
  * the rows at all.
  */
+static const char QDtoQESignature[20] = "PGCOPY-QD-TO-QE\n\377\r\n\0";
+
+typedef struct
+{
+	bool		file_has_oids;
+} copy_from_dispatch_header;
+
 typedef struct
 {
 	/*
@@ -449,14 +335,23 @@ typedef struct
 	 */
 
 	/* data follows */
-} copy_from_dispatch_frame;
-
-static const char QDtoQESignature[20] = "PGCOPY-QD-TO-QE\n\377\r\n\0";
+} copy_from_dispatch_row;
 
 typedef struct
 {
-	bool		file_has_oids;
-} copy_from_dispatch_header;
+	/*
+	 * target relation OID. Normally, the same as cstate->relid, but for
+	 * a partitioned relation, it indicate the target partition.
+	 */
+	Oid			error_marker;		/* InvalidOid, to distinguish this from row. */
+	int64		lineno;
+	bool		line_buf_converted;
+	uint32		errmsg_len;
+	uint32		line_len;
+
+	/* 'errmsg' follows */
+	/* 'line' follows */
+} copy_from_dispatch_error;
 
 
 
@@ -1166,7 +1061,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 			}
 			cstate->cdbsreh = makeCdbSreh(sreh->rejectlimit,
 										  sreh->is_limit_in_rows,
-										  stmt->filename,
+										  cstate->filename,
 										  stmt->relation->relname,
 										  log_to_file);
 			if (rel)
@@ -1212,7 +1107,13 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		PG_CATCH();
 		{
 			if (cstate->cdbCopy)
-				cdbCopyEnd(cstate->cdbCopy);
+			{
+				MemoryContext oldcontext = MemoryContextSwitchTo(cstate->copycontext);
+
+				cdbCopyAbort(cstate->cdbCopy);
+				cstate->cdbCopy = NULL;
+				MemoryContextSwitchTo(oldcontext);
+			}
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -1495,7 +1396,6 @@ ProcessCopyOptions(CopyState cstate,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify NULL in BINARY mode")));
 
-	cstate->err_loc_type = ROWNUM_ORIGINAL;
 	cstate->eol_type = EOL_UNKNOWN;
 
 	/* Set defaults for omitted options */
@@ -2524,13 +2424,16 @@ CopyToDispatch(CopyState cstate)
     /* catch error from CopyStart, CopySendEndOfRow or CopyToDispatchFlush */
 	PG_CATCH();
 	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(cstate->copycontext);
 		appendBinaryStringInfo(&cdbcopy_err, cdbCopy->err_msg.data, cdbCopy->err_msg.len);
 
-		cdbCopyEnd(cdbCopy);
+		cdbCopyAbort(cdbCopy);
 
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("%s", cdbcopy_err.data)));
+
+		MemoryContextSwitchTo(oldcontext);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3114,16 +3017,14 @@ CopyFromErrorCallback(void *arg)
 			/* error is relevant to a particular line */
 			if (cstate->line_buf_converted || !cstate->need_transcoding)
 			{
-				char	   *line_buf;
+				char	   *lineval;
 
-				line_buf = extract_line_buf(cstate);
-				truncateEolStr(line_buf, cstate->eol_type);
-
+				lineval = limit_printout_length(cstate->line_buf.data);
 				errcontext("COPY %s, line %s: \"%s\"",
 						   cstate->cur_relname,
 						   linenumber_atoi(buffer, cstate->cur_lineno),
-						   line_buf);
-				pfree(line_buf);
+						   lineval);
+				pfree(lineval);
 			}
 			else
 			{
@@ -3141,61 +3042,6 @@ CopyFromErrorCallback(void *arg)
 			}
 		}
 	}
-}
-
-/*
- * If our (copy of) linebuf has the embedded original row number and other
- * row-specific metadata, remove it. It is not part of the actual data, and
- * should not be displayed.
- *
- * we skip this step, however, if md_error was previously set by
- * CopyExtractRowMetaData. That should rarely happen, though.
- *
- * Returned value is a palloc'ed string to print.  The caller should pfree it.
- */
-static char *
-extract_line_buf(CopyState cstate)
-{
-	char	   *line_buf = cstate->line_buf.data;
-
-	if (cstate->err_loc_type == ROWNUM_EMBEDDED && !cstate->md_error)
-	{
-		/* the following is a compacted mod of CopyExtractRowMetaData */
-		int value_len = 0;
-		char *line_start = cstate->line_buf.data;
-		char *lineno_delim = memchr(line_start, COPY_METADATA_DELIM,
-									Min(32, cstate->line_buf.len));
-
-		if (lineno_delim && (lineno_delim != line_start))
-		{
-			/*
-			 * we only continue parsing metadata if the first extraction above
-			 * succeeded. there are some edge cases where we may not have a line
-			 * with MD to parse, for example if some non-copy related error
-			 * propagated here and we don't yet have a proper data line.
-			 * see MPP-11328
-			 */
-			value_len = lineno_delim - line_start + 1;
-			line_start += value_len;
-
-			lineno_delim = memchr(line_start, COPY_METADATA_DELIM,
-								  Min(32, cstate->line_buf.len));
-
-			if (lineno_delim && (lineno_delim != line_start))
-			{
-				value_len = lineno_delim - line_start + 1;
-				line_start += value_len;
-				line_buf = line_start;
-			}
-		}
-	}
-
-	/*
-	 * Finally allocate a new buffer and trim the string to a reasonable
-	 * length.  We need a copy since this might be called from non-ERROR
-	 * context like NOTICE, and we should preserve the original.
-	 */
-	return limit_printout_length(line_buf);
 }
 
 /*
@@ -3253,10 +3099,8 @@ CopyFrom(CopyState cstate)
 	CommandId	mycid = GetCurrentCommandId(true);
 	int			hi_options = 0; /* start with default heap_insert options */
 	BulkInsertState bistate;
-	bool		cur_row_rejected = false;
-	int			original_lineno_for_qe = 0; /* keep compiler happy (var referenced by macro) */
 	CdbCopy    *cdbCopy = NULL;
-	bool is_check_distkey = (cstate->on_segment && Gp_role == GP_ROLE_EXECUTE && gp_enable_segment_copy_checking) ? true : false;
+	bool		is_check_distkey;
 	GpDistributionData	*distData = NULL; /* distribution data used to compute target seg */
 	uint64		processed = 0;
 	int			i;
@@ -3394,6 +3238,8 @@ CopyFrom(CopyState cstate)
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
+	is_check_distkey = (cstate->on_segment && Gp_role == GP_ROLE_EXECUTE && gp_enable_segment_copy_checking) ? true : false;
+
 	if (is_check_distkey || cstate->dispatch_mode == COPY_DISPATCH)
 	{
 		/*
@@ -3422,6 +3268,12 @@ CopyFrom(CopyState cstate)
 			PartitionData *partitionData;
 			partitionData = InitPartitionData(estate, tupDesc->attrs, num_phys_attrs);
 		}
+
+		/*
+		 * If this table is distributed randomly, there is nothing to check.
+		 */
+		if (distData->p_nattrs == 0)
+			is_check_distkey = false;
 	}
 
 	if (cstate->dispatch_mode == COPY_DISPATCH)
@@ -3450,10 +3302,6 @@ CopyFrom(CopyState cstate)
 		cdbCopy->partitions = estate->es_result_partitions;
 		if (list_length(cstate->ao_segnos) > 0)
 			cdbCopy->ao_segnos = cstate->ao_segnos;
-
-		/* add cdbCopy reference to cdbSreh (if needed) */
-		if (cstate->errMode != ALL_OR_NOTHING)
-			cstate->cdbsreh->cdbcopy = cdbCopy;
 
 		/*
 		 * Dispatch the COPY command.
@@ -3491,11 +3339,6 @@ CopyFrom(CopyState cstate)
 		}
 	}
 
-	if (Gp_role == GP_ROLE_EXECUTE && (cstate->on_segment == false))
-		cstate->err_loc_type = ROWNUM_EMBEDDED; /* get original row num from QD COPY */
-	else
-		cstate->err_loc_type = ROWNUM_ORIGINAL; /* we can count rows by ourselves */
-
 	CopyInitDataParser(cstate);
 
 	for (;;)
@@ -3503,7 +3346,6 @@ CopyFrom(CopyState cstate)
 		TupleTableSlot *slot;
 		bool		skip_tuple;
 		Oid			loaded_oid = InvalidOid;
-		bool		got_error;
 		unsigned int target_seg = 0;	/* result segment of cdbhash */
 
 		CHECK_FOR_INTERRUPTS();
@@ -3521,27 +3363,19 @@ CopyFrom(CopyState cstate)
 
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
-			if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid, &got_error))
+			if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid))
 				break;
 		}
 		else if (cstate->dispatch_mode == COPY_EXECUTOR)
 		{
-			if (!NextCopyFromExecute(cstate, econtext, baseValues, baseNulls, &loaded_oid, &got_error))
+			if (!NextCopyFromExecute(cstate, econtext, baseValues, baseNulls, &loaded_oid))
 				break;
 
 		}
 		else
 		{
-			if (!NextCopyFrom(cstate, econtext, baseValues, baseNulls, &loaded_oid, &got_error))
+			if (!NextCopyFrom(cstate, econtext, baseValues, baseNulls, &loaded_oid))
 				break;
-		}
-
-		if (got_error)
-		{
-			/* after all the prep work let cdbsreh do the real work */
-			HandleSingleRowError(cstate->cdbsreh);
-			ErrorIfRejectLimitReached(cstate->cdbsreh, cdbCopy);
-			QE_GOTO_NEXT_ROW;
 		}
 
 		/*
@@ -3564,8 +3398,8 @@ CopyFrom(CopyState cstate)
 		{
 			/* after all the prep work let cdbsreh do the real work */ \
 			HandleSingleRowError(cstate->cdbsreh);
-			ErrorIfRejectLimitReached(cstate->cdbsreh, cdbCopy);
-			QE_GOTO_NEXT_ROW;
+			ErrorIfRejectLimitReached(cstate->cdbsreh);
+			continue;
 		}
 		PG_END_TRY();
 
@@ -3616,7 +3450,7 @@ CopyFrom(CopyState cstate)
 				}
 				PG_CATCH();
 				{
-					COPY_HANDLE_ERROR;
+					HandleCopyError(cstate);
 				}
 				PG_END_TRY();
 			}
@@ -3648,6 +3482,9 @@ CopyFrom(CopyState cstate)
 									   slot_get_values(slot),
 									   slot_get_isnull(slot));
 			skip_tuple = true;
+			processed++;
+			if (cstate->cdbsreh)
+				cstate->cdbsreh->processed++;
 		}
 
 		/* BEFORE ROW INSERT Triggers */
@@ -3767,6 +3604,8 @@ CopyFrom(CopyState cstate)
 			processed++;
 			if (relstorage_is_ao(relstorage))
 				resultRelInfo->ri_aoprocessed++;
+			if (cstate->cdbsreh)
+				cstate->cdbsreh->processed++;
 		}
 	}
 
@@ -3798,7 +3637,27 @@ CopyFrom(CopyState cstate)
 		int			total_completed_from_qes;
 		int			total_rejected_from_qes;
 
-		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes);
+		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes, NULL);
+
+		if (cstate->cdbsreh)
+		{
+			/* emit a NOTICE with number of rejected rows */
+			int			total_rejected = 0;
+			int total_rejected_from_qd = cstate->cdbsreh->rejectcount;
+
+			/*
+			 * If error log has been requested, then we send the row to the segment
+			 * so that it can be written in the error log file. The segment process
+			 * counts it again as a rejected row. So we ignore the reject count
+			 * from the master and only consider the reject count from segments.
+			 */
+			if (cstate->cdbsreh->log_to_file)
+				total_rejected_from_qd = 0;
+
+			total_rejected = total_rejected_from_qd + total_rejected_from_qes;
+
+			ReportSrehResults(cstate->cdbsreh, total_rejected);
+		}
 	}
 
 	/* Execute AFTER STATEMENT insertion triggers */
@@ -4243,6 +4102,135 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
 	return true;
 }
 
+bool
+NextCopyFrom(CopyState cstate, ExprContext *econtext,
+			   Datum *values, bool *nulls, Oid *tupleOid)
+{
+	if (!cstate->cdbsreh)
+		return NextCopyFromX(cstate, econtext, values, nulls, tupleOid);
+	else
+	{
+		MemoryContext oldcontext = CurrentMemoryContext;
+
+		for (;;)
+		{
+			bool		got_error = false;
+			bool		result;
+
+			PG_TRY();
+			{
+				result = NextCopyFromX(cstate, econtext, values, nulls, tupleOid);
+			}
+			PG_CATCH();
+			{
+				HandleCopyError(cstate);
+				got_error = true;
+				MemoryContextSwitchTo(oldcontext);
+			}
+			PG_END_TRY();
+
+			if (!got_error)
+				return result;
+		}
+	}
+}
+
+/*
+ * A data error happened. This code block will always be inside a PG_CATCH()
+ * block right when a higher stack level produced an error. We handle the error
+ * by checking which error mode is set (SREH or all-or-nothing) and do the right
+ * thing accordingly. Note that we MUST have this code in a macro (as opposed
+ * to a function) as elog_dismiss() has to be inlined with PG_CATCH in order to
+ * access local error state variables.
+ *
+ * changing me? take a look at FILEAM_HANDLE_ERROR in fileam.c as well.
+ */
+static void
+HandleCopyError(CopyState cstate)
+{
+	if (cstate->errMode == ALL_OR_NOTHING)
+	{
+		/* re-throw error and abort */
+		PG_RE_THROW();
+	}
+	/* SREH must only handle data errors. all other errors must not be caught */
+	if (ERRCODE_TO_CATEGORY(elog_geterrcode()) != ERRCODE_DATA_EXCEPTION)
+	{
+		/* re-throw error and abort */
+		PG_RE_THROW();
+	}
+	else
+	{
+		/* SREH - release error state and handle error */
+		MemoryContext oldcontext;
+		ErrorData	*edata;
+		char	   *errormsg;
+		CdbSreh	   *cdbsreh = cstate->cdbsreh;
+
+		cdbsreh->processed++;
+
+		oldcontext = MemoryContextSwitchTo(cstate->cdbsreh->badrowcontext);
+
+		/* save a copy of the error info */
+		edata = CopyErrorData();
+
+		FlushErrorState();
+
+		/*
+		 * set the error message. Use original msg and add column name if available.
+		 * We do this even if we're not logging the errors, because
+		 * ErrorIfRejectLimit() below will use this information in the error message,
+		 * if the error count is reached.
+		 */
+		cdbsreh->rawdata = cstate->line_buf.data + cstate->line_buf.cursor;
+
+		cdbsreh->is_server_enc = cstate->line_buf_converted;
+		cdbsreh->linenumber = cstate->cur_lineno;
+		cdbsreh->consec_csv_err = cstate->num_consec_csv_err;
+		if (cstate->cur_attname)
+		{
+			errormsg =  psprintf("%s, column %s",
+								 edata->message, cstate->cur_attname);
+		}
+		else
+		{
+			errormsg = edata->message;
+		}
+		cstate->cdbsreh->errmsg = errormsg;
+
+		if (cstate->cdbsreh->log_to_file)
+		{
+			if (Gp_role == GP_ROLE_DISPATCH && !cstate->on_segment)
+			{
+				cstate->cdbsreh->rejectcount++;
+
+				SendCopyFromForwardedError(cstate, cstate->cdbCopy, errormsg);
+			}
+			else 
+			{
+				/* after all the prep work let cdbsreh do the real work */
+				if (Gp_role == GP_ROLE_DISPATCH)
+				{
+					cstate->cdbsreh->rejectcount++;
+				}
+				else
+				{
+					HandleSingleRowError(cstate->cdbsreh);
+					//ErrorLogWrite(cstate->cdbsreh);
+				}
+			}
+		}
+		else
+			cstate->cdbsreh->rejectcount++;
+
+		ErrorIfRejectLimitReached(cstate->cdbsreh);
+
+		MemoryContextSwitchTo(oldcontext);
+		MemoryContextReset(cstate->cdbsreh->badrowcontext);
+	}
+}
+
+
 /*
  * Read next tuple from file for COPY FROM. Return false if no more tuples.
  *
@@ -4255,8 +4243,8 @@ NextCopyFromRawFields(CopyState cstate, char ***fields, int *nfields)
  * Oid of the tuple is returned with 'tupleOid' separately.
  */
 bool
-NextCopyFrom(CopyState cstate, ExprContext *econtext,
-			 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error)
+NextCopyFromX(CopyState cstate, ExprContext *econtext,
+			 Datum *values, bool *nulls, Oid *tupleOid)
 {
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
@@ -4271,8 +4259,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 	bool		file_has_oids = cstate->file_has_oids;
 	int		   *defmap = cstate->defmap;
 	ExprState **defexprs = cstate->defexprs;
-
-	*got_error = false;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
@@ -4504,46 +4490,56 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
  * input line only partially. We only want to parse enough fields needed
  * to determine which target segment to forward the row to.
  */
-bool
+static bool
 NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
-					 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error)
+					 Datum *values, bool *nulls, Oid *tupleOid)
 {
 	/* GPDB_91_MERGE_FIXME: The idea here would be to only call the
 	 * input function for the fields we need in the QD. But for now,
 	 * screw performance. */
-	return NextCopyFrom(cstate, econtext, values, nulls, tupleOid, got_error);
+	return NextCopyFrom(cstate, econtext, values, nulls, tupleOid);
 }
 
 /*
  * Like NextCopyFrom(), but used in the QE, when we're reading pre-processed
  * rows from the QD.
  */
-bool
+static bool
 NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
-			 Datum *values, bool *nulls, Oid *tupleOid, bool *got_error)
+					Datum *values, bool *nulls, Oid *tupleOid)
 {
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
 	bool		file_has_oids = cstate->file_has_oids;
 	int			i;
 	AttrNumber	num_phys_attrs;
-	copy_from_dispatch_frame frame;
+	copy_from_dispatch_row frame;
 	int			r;
+	Oid			header;
 
-	*got_error = false;
+retry:
+	/* sneak peek at the first Oid field to see if it's a row or an error */
+	r = CopyGetData(cstate, &header, sizeof(Oid));
+	if (r == 0)
+		return false;
+	if (r != sizeof(Oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
+
+	if (header == InvalidOid)
+	{
+		HandleQDErrorFrame(cstate);
+		goto retry;
+	}
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 
-	/* Initialize all values for row to NULL */
-	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
-	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
-
-	r = CopyGetData(cstate, &frame, sizeof(frame));
-	if (r == 0)
-		return false;
-	if (r != sizeof(frame))
+	frame.relid = header;
+	r = CopyGetData(cstate, ((char *) &frame) + sizeof(Oid), sizeof(frame) - sizeof(Oid));
+	if (r != sizeof(frame) - sizeof(Oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("unexpected EOF in COPY data")));
@@ -4572,6 +4568,10 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("unexpected OID received in COPY data")));
+
+	/* Initialize all values for row to NULL */
+	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
+	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 
 	cstate->cur_lineno = frame.lineno;
 
@@ -4650,6 +4650,54 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 	return true;
 }
 
+static void
+HandleQDErrorFrame(CopyState cstate)
+{
+	CdbSreh *cdbsreh = cstate->cdbsreh;
+	MemoryContext oldcontext;
+	copy_from_dispatch_error errframe;
+	char	   *errormsg;
+	char	   *line;
+	int			r;
+
+	Assert(Gp_role == GP_ROLE_EXECUTE);
+
+	oldcontext = MemoryContextSwitchTo(cdbsreh->badrowcontext);
+
+	r = CopyGetData(cstate, ((char *) &errframe) + sizeof(Oid), sizeof(errframe) - sizeof(Oid));
+	if (r != sizeof(errframe) - sizeof(Oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
+
+	errormsg = palloc(errframe.errmsg_len + 1);
+	line = palloc(errframe.line_len + 1);
+
+	r = CopyGetData(cstate, errormsg, errframe.errmsg_len);
+	if (r != errframe.errmsg_len)
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
+	errormsg[errframe.errmsg_len] = '\0';
+
+	r = CopyGetData(cstate, line, errframe.line_len);
+	if (r != errframe.line_len)
+		ereport(ERROR,
+				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+				 errmsg("unexpected EOF in COPY data")));
+	line[errframe.line_len] = '\0';
+
+	cdbsreh->linenumber = errframe.lineno;
+	cdbsreh->rawdata = line;
+	cdbsreh->is_server_enc = errframe.line_buf_converted;
+	cdbsreh->errmsg = errormsg;
+
+	HandleSingleRowError(cdbsreh);
+
+	MemoryContextSwitchTo(oldcontext);
+
+}
+
 /*
  * This is the sending counterpart of NextCopyFromExecute. Used in the QD,
  * to send a row to a QE.
@@ -4668,11 +4716,14 @@ SendCopyFromForwardedTuple(CopyState cstate,
 {
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
-	copy_from_dispatch_frame *frame;
+	copy_from_dispatch_row *frame;
 	StringInfo	msgbuf;
 	int			num_sent_fields = 0;
 	AttrNumber	num_phys_attrs;
 	int			i;
+
+	if (!OidIsValid(relid))
+		elog(ERROR, "invalid target table OID in COPY");
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	attr = tupDesc->attrs;
@@ -4680,8 +4731,8 @@ SendCopyFromForwardedTuple(CopyState cstate,
 
 	msgbuf = cstate->dispatch_msgbuf;
 	resetStringInfo(msgbuf);
-	enlargeStringInfo(msgbuf, sizeof(copy_from_dispatch_frame));
-	msgbuf->len = sizeof(copy_from_dispatch_frame);
+	enlargeStringInfo(msgbuf, sizeof(copy_from_dispatch_row));
+	msgbuf->len = sizeof(copy_from_dispatch_row);
 
 	for (i = 0; i < num_phys_attrs; i++)
 	{
@@ -4725,7 +4776,7 @@ SendCopyFromForwardedTuple(CopyState cstate,
 		}
 	}
 
-	frame = (copy_from_dispatch_frame *) msgbuf->data;
+	frame = (copy_from_dispatch_row *) msgbuf->data;
 
 	frame->relid = relid;
 	frame->loaded_oid = tuple_oid;
@@ -4747,6 +4798,40 @@ SendCopyFromForwardedHeader(CopyState cstate, CdbCopy *cdbCopy, bool file_has_oi
 	header_frame.file_has_oids = file_has_oids;
 
 	cdbCopySendDataToAll(cdbCopy, (char *) &header_frame, sizeof(header_frame));
+}
+
+static void
+SendCopyFromForwardedError(CopyState cstate, CdbCopy *cdbCopy, char *errormsg)
+{
+	copy_from_dispatch_error *errframe;
+	StringInfo	msgbuf;
+	int			target_seg;
+	int			errormsg_len = strlen(errormsg);
+
+	msgbuf = cstate->dispatch_msgbuf;
+	resetStringInfo(msgbuf);
+	enlargeStringInfo(msgbuf, sizeof(copy_from_dispatch_error));
+	/* allocate space for the header (we'll fill it in last). */
+	msgbuf->len = sizeof(copy_from_dispatch_error);
+
+	appendBinaryStringInfo(msgbuf, errormsg, errormsg_len);
+	appendBinaryStringInfo(msgbuf, cstate->line_buf.data, cstate->line_buf.len);
+
+	errframe = (copy_from_dispatch_error *) msgbuf->data;
+
+	errframe->error_marker = InvalidOid;
+	errframe->lineno = cstate->cur_lineno;
+	errframe->line_buf_converted = cstate->line_buf_converted;
+	errframe->line_len = cstate->line_buf.len;
+	errframe->errmsg_len = errormsg_len;
+
+	/* send the bad data row to a random QE (via roundrobin) */
+	if (cstate->lastsegid == cdbCopy->total_segs)
+		cstate->lastsegid = 0; /* start over from first segid */
+
+	target_seg = (cstate->lastsegid++ % cdbCopy->total_segs);
+	
+	cdbCopySendData(cdbCopy, target_seg, msgbuf->data, msgbuf->len);
 }
 
 /*
@@ -6040,85 +6125,6 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 
 	return attnums;
 }
-
-#define COPY_FIND_MD_DELIM \
-md_delim = memchr(line_start, COPY_METADATA_DELIM, Min(32, cstate->line_buf.len)); \
-if(md_delim && (md_delim != line_start)) \
-{ \
-	value_len = md_delim - line_start + 1; \
-	*md_delim = '\0'; \
-} \
-else \
-{ \
-	cstate->md_error = true; \
-}
-
-/*
- * CopyExtractRowMetaData - extract embedded row number from data.
- *
- * If data is being parsed in execute mode the parser (QE) doesn't
- * know the original line number (in the original file) of the current
- * row. Therefore the QD sends this information along with the data.
- * other metadata that the QD sends includes whether the data was
- * converted to server encoding (should always be the case, unless
- * encoding error happened and we're in error log mode).
- *
- * in:
- *    line_buf: <original_num>^<buf_converted>^<data for this row>
- *    lineno: ?
- *    line_buf_converted: ?
- *
- * out:
- *    line_buf: <data for this row>
- *    lineno: <original_num>
- *    line_buf_converted: <t/f>
- */
-static
-void CopyExtractRowMetaData(CopyState cstate)
-{
-	char *md_delim = NULL; /* position of the metadata delimiter */
-
-	/*
-	 * Line_buf may have already skipped an OID column if WITH OIDS defined,
-	 * so we need to start from cursor not always from beginning of linebuf.
-	 */
-	char *line_start = cstate->line_buf.data + cstate->line_buf.cursor;
-	int  value_len = 0;
-
-	cstate->md_error = false;
-
-	/* look for the first delimiter, and extract lineno */
-	COPY_FIND_MD_DELIM;
-
-	/*
-	 * make sure MD exists. that should always be the case
-	 * unless we run into an edge case - see MPP-8052. if that
-	 * happens md_error is now set. we raise an error.
-	 */
-	if(cstate->md_error)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("COPY metadata not found. This probably means that there is a "
-						"mixture of newline types in the data. Use the NEWLINE keyword "
-						"in order to resolve this reliably.")));
-
-	cstate->cur_lineno = atoi(line_start);
-
-	*md_delim = COPY_METADATA_DELIM; /* restore the line_buf byte after setting it to \0 */
-
-	/* reposition line buf cursor to see next metadata value (skip lineno) */
-	cstate->line_buf.cursor += value_len;
-	line_start = cstate->line_buf.data + cstate->line_buf.cursor;
-
-	/* look for the second delimiter, and extract line_buf_converted */
-	COPY_FIND_MD_DELIM;
-	Assert(*line_start == '0' || *line_start == '1');
-	cstate->line_buf_converted = atoi(line_start);
-
-	*md_delim = COPY_METADATA_DELIM;
-	cstate->line_buf.cursor += value_len;
-}
-
 
 static void
 attr_get_key(CopyState cstate, CdbCopy *cdbCopy, int original_lineno_for_qe,
