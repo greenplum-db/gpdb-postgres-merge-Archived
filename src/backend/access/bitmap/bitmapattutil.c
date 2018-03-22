@@ -72,6 +72,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	int			indattrs;
 	int			i;
 	Relation	lov_heap_rel;
+	Oid			namespaceid;
 
 	Assert(rel != NULL);
 
@@ -81,7 +82,17 @@ _bitmap_create_lov_heapandindex(Relation rel,
 	snprintf(lovIndexName, sizeof(lovIndexName),
 			 "pg_bm_%u_index", RelationGetRelid(rel));
 
-	heapid = get_relname_relid(lovHeapName, PG_BITMAPINDEX_NAMESPACE);
+	/*
+	 * The LOV heap and index go in special pg_bitmapindex schema. Those for
+	 * temp relations go into the per-backend temp-toast-table namespace,
+	 * however!
+	 */
+	if (RelationUsesTempNamespace(rel))
+		namespaceid = GetTempToastNamespace();
+	else
+		namespaceid = PG_BITMAPINDEX_NAMESPACE;
+
+	heapid = get_relname_relid(lovHeapName, namespaceid);
 
 	/*
 	 * If heapid exists, then this is happening during re-indexing.
@@ -100,7 +111,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 
 		*lovHeapOid = heapid;
 
-		idxid = get_relname_relid(lovIndexName, PG_BITMAPINDEX_NAMESPACE);
+		idxid = get_relname_relid(lovIndexName, namespaceid);
 		Assert(OidIsValid(idxid));
 		*lovIndexOid = idxid;
 
@@ -152,7 +163,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 
   	heapid =
 		heap_create_with_catalog(lovHeapName,
-								 PG_BITMAPINDEX_NAMESPACE,
+								 namespaceid,
 								 rel->rd_rel->reltablespace,
 								 InvalidOid,
 								 InvalidOid,

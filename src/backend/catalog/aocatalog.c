@@ -19,6 +19,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -52,6 +53,7 @@ CreateAOAuxiliaryTable(
 	Oid aoauxiliary_idxid = InvalidOid;
 	ObjectAddress baseobject;
 	ObjectAddress aoauxiliaryobject;
+	Oid			namespaceid;
 
 	Assert(RelationIsValid(rel));
 	Assert(RelationIsAoRows(rel) || RelationIsAoCols(rel));
@@ -109,6 +111,15 @@ CreateAOAuxiliaryTable(
 			 "%s_%u_index", auxiliaryNamePrefix, relOid);
 
 	/*
+	 * Aux tables for regular relations go in pg_aoseg; those for temp
+	 * relations go into the per-backend temp-toast-table namespace.
+	 */
+	if (RelationUsesTempNamespace(rel))
+		namespaceid = GetTempToastNamespace();
+	else
+		namespaceid = PG_AOSEGMENT_NAMESPACE;
+
+	/*
 	 * We place auxiliary relation in the pg_aoseg namespace
 	 * even if its master relation is a temp table. There cannot be
 	 * any naming collision, and the auxiliary relation will be
@@ -116,7 +127,7 @@ CreateAOAuxiliaryTable(
 	 * the aovisimap relation as temp.
 	 */
 	aoauxiliary_relid = heap_create_with_catalog(aoauxiliary_relname,
-											     PG_AOSEGMENT_NAMESPACE,
+											     namespaceid,
 											     rel->rd_rel->reltablespace,
 											     InvalidOid,
 												 InvalidOid,
