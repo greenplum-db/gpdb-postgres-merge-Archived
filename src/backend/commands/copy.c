@@ -2761,9 +2761,14 @@ CopyTo(CopyState cstate)
 		processed = ((DR_copy *) cstate->queryDesc->dest)->processed;
 	}
 
-	/* binary trailer should not be sent in execute mode. */
-	if (cstate->binary &&
-		!(cstate->dispatch_mode == COPY_EXECUTOR && !cstate->on_segment))
+	if (Gp_role == GP_ROLE_EXECUTE && !cstate->on_segment)
+	{
+		/*
+		 * Trailer should not be printed in execute mode. The dispatcher will
+		 * write it once.
+		 */
+	}
+	else if (cstate->binary)
 	{
 		/* Generate trailer for a binary copy */
 		CopySendInt16(cstate, -1);
