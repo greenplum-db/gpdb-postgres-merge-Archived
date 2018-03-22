@@ -5454,7 +5454,6 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendContextKeyword(context, "WHEN ",
 										 0, 0, 0);
 
-
 					/* WHEN IS NOT DISTINCT FROM */
 					if (not_clause(w))
 					{
@@ -5472,6 +5471,8 @@ get_rule_expr(Node *node, deparse_context *context,
 						else
 							get_rule_expr(w, context, false);
 					}
+					else
+						get_rule_expr(w, context, false);
 					appendStringInfo(buf, " THEN ");
 					get_rule_expr((Node *) when->result, context, true);
 				}
