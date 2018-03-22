@@ -526,11 +526,14 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
-               QUERY PLAN                
------------------------------------------
- Index Scan using gpointind on point_tbl
-   Order By: (f1 <-> '(0,1)'::point)
-(2 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: (f1 <-> '(0,1)'::point)
+   ->  Index Scan using gpointind on point_tbl
+         Order By: f1 <-> '(0,1)'::point
+ Optimizer: legacy query optimizer
+(5 rows)
 
 SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
      f1     
@@ -546,11 +549,13 @@ SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 IS NULL;
-               QUERY PLAN                
------------------------------------------
- Index Scan using gpointind on point_tbl
-   Index Cond: (f1 IS NULL)
-(2 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: f1 IS NULL
+ Optimizer: legacy query optimizer
+(4 rows)
 
 SELECT * FROM point_tbl WHERE f1 IS NULL;
  f1 
@@ -560,12 +565,15 @@ SELECT * FROM point_tbl WHERE f1 IS NULL;
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
-               QUERY PLAN                
------------------------------------------
- Index Scan using gpointind on point_tbl
-   Index Cond: (f1 IS NOT NULL)
-   Order By: (f1 <-> '(0,1)'::point)
-(3 rows)
+                  QUERY PLAN                   
+-----------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: (f1 <-> '(0,1)'::point)
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: f1 IS NOT NULL
+         Order By: f1 <-> '(0,1)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
      f1     
@@ -580,12 +588,15 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gpointind on point_tbl
-   Index Cond: (f1 <@ '(10,10),(-10,-10)'::box)
-   Order By: (f1 <-> '(0,1)'::point)
-(3 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: (f1 <-> '(0,1)'::point)
+   ->  Index Scan using gpointind on point_tbl
+         Index Cond: f1 <@ '(10,10),(-10,-10)'::box
+         Order By: f1 <-> '(0,1)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
    f1    
@@ -601,15 +612,18 @@ SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
-                         QUERY PLAN                         
-------------------------------------------------------------
- Sort
-   Sort Key: ((f1 <-> '(0,1)'::point))
-   ->  Bitmap Heap Scan on point_tbl
-         Recheck Cond: (f1 <@ '(10,10),(-10,-10)'::box)
-         ->  Bitmap Index Scan on gpointind
-               Index Cond: (f1 <@ '(10,10),(-10,-10)'::box)
-(6 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: (f1 <-> '(0,1)'::point)
+   ->  Sort
+         Sort Key: (f1 <-> '(0,1)'::point)
+         ->  Bitmap Heap Scan on point_tbl
+               Recheck Cond: f1 <@ '(10,10),(-10,-10)'::box
+               ->  Bitmap Index Scan on gpointind
+                     Index Cond: f1 <@ '(10,10),(-10,-10)'::box
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
    f1    
@@ -636,15 +650,18 @@ SET enable_bitmapscan = ON;
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
 explain (costs off)
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
-                     QUERY PLAN                     
-----------------------------------------------------
- Sort
-   Sort Key: seqno
-   ->  Bitmap Heap Scan on array_index_op_test
-         Recheck Cond: (i @> '{32}'::integer[])
-         ->  Bitmap Index Scan on intarrayidx
-               Index Cond: (i @> '{32}'::integer[])
-(6 rows)
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: seqno
+   ->  Sort
+         Sort Key: seqno
+         ->  Bitmap Heap Scan on array_index_op_test
+               Recheck Cond: i @> '{32}'::integer[]
+               ->  Bitmap Index Scan on intarrayidx
+                     Index Cond: i @> '{32}'::integer[]
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
  seqno |                i                |                                                                 t                                                                  
@@ -882,15 +899,18 @@ SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 CREATE INDEX textarrayidx ON array_index_op_test USING gin (t);
 explain (costs off)
 SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908}' ORDER BY seqno;
-                         QUERY PLAN                         
-------------------------------------------------------------
- Sort
-   Sort Key: seqno
-   ->  Bitmap Heap Scan on array_index_op_test
-         Recheck Cond: (t @> '{AAAAAAAA72908}'::text[])
-         ->  Bitmap Index Scan on textarrayidx
-               Index Cond: (t @> '{AAAAAAAA72908}'::text[])
-(6 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: seqno
+   ->  Sort
+         Sort Key: seqno
+         ->  Bitmap Heap Scan on array_index_op_test
+               Recheck Cond: t @> '{AAAAAAAA72908}'::text[]
+               ->  Bitmap Index Scan on textarrayidx
+                     Index Cond: t @> '{AAAAAAAA72908}'::text[]
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908}' ORDER BY seqno;
  seqno |           i           |                                                                     t                                                                      
@@ -1286,6 +1306,7 @@ ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
  c      | character(1)          | 
 Indexes:
     "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
+Distributed by: (a)
 
 CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
 ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
@@ -1301,6 +1322,7 @@ NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "cwi_uniq2_i
  c      | character(1)          | 
 Indexes:
     "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
+Distributed by: (a)
 
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 ERROR:  cannot drop index cwi_replaced_pkey because constraint cwi_replaced_pkey on table cwi_test requires it

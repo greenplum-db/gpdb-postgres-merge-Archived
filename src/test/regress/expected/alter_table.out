@@ -1908,6 +1908,8 @@ Composite type "public.test_type2"
  b      | text    | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
+Distributed by: (a)
+
 
 ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
@@ -1930,6 +1932,8 @@ Composite type "public.test_type2"
  c      | text    | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
+Distributed by: (a)
+
 
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
@@ -1952,6 +1956,8 @@ ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
  c      | text              | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
+Distributed by: (a)
+
 
 ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
@@ -1972,6 +1978,8 @@ Composite type "public.test_type2"
  c      | text    | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
+Distributed by: (a)
+
 
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
@@ -1992,6 +2000,8 @@ Composite type "public.test_type2"
  c      | text    | 
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
+Distributed by: (aa)
+
 
 \d test_tbl2_subclass
 Table "public.test_tbl2_subclass"
@@ -2000,6 +2010,8 @@ Table "public.test_tbl2_subclass"
  aa     | integer | 
  c      | text    | 
 Inherits: test_tbl2
+Distributed by: (aa)
+
 
 DROP TABLE test_tbl2_subclass;
 -- This test isn't that interesting on its own, but the purpose is to leave
@@ -2023,6 +2035,7 @@ CREATE TABLE tt4 (x int);							-- too few columns
 CREATE TABLE tt5 (x int, y numeric(8,2), z int);	-- too few columns
 CREATE TABLE tt6 () INHERITS (tt0);					-- can't have a parent
 CREATE TABLE tt7 (x int, q text, y numeric(8,2)) WITH OIDS;
+NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 ALTER TABLE tt7 DROP q;								-- OK
 ALTER TABLE tt0 OF tt_t0;
 ALTER TABLE tt1 OF tt_t0;
@@ -2047,4 +2060,5 @@ ALTER TABLE tt7 NOT OF;
 --------+--------------+-----------
  x      | integer      | 
  y      | numeric(8,2) | 
+Distributed by: (x)
 

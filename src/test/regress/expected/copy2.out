@@ -26,19 +26,19 @@ FOR EACH ROW EXECUTE PROCEDURE fn_x_before();
 COPY x (a, b, c, d, e) from stdin;
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 COPY x (b, d) from stdin;
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 COPY x (b, d) from stdin;
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 COPY x (a, b, c, d, e) from stdin;
 ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
 CONTEXT:  SQL statement "UPDATE x set e='after trigger fired' where c='stuff'"
-PL/pgSQL function "fn_x_after" line 2 at SQL statement
+PL/pgSQL function "fn_x_after" line 3 at SQL statement
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
 ERROR:  column "xyz" of relation "x" does not exist
