@@ -692,6 +692,12 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 								   best_path->outerjoinpath->parent->relids);
 
 	inner_plan = create_plan_recurse(root, best_path->innerjoinpath);
+	if (best_path->path.pathtype == T_NestLoop)
+	{
+		/* Restore curOuterRels */
+		bms_free(root->curOuterRels);
+		root->curOuterRels = saveOuterRels;
+	}
 
 	/*
 	 * Try to inject Partition Selectors.
@@ -718,10 +724,6 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 												 inner_plan);
 			break;
 		case T_NestLoop:
-			/* Restore curOuterRels */
-			bms_free(root->curOuterRels);
-			root->curOuterRels = saveOuterRels;
-
 			plan = (Plan *) create_nestloop_plan(root,
 												 (NestPath *) best_path,
 												 outer_plan,
