@@ -447,8 +447,8 @@ select ten, sum(distinct four) filter (where four > 10) from onek a
 group by ten
 having exists (select 1 from onek b where sum(distinct a.four) = b.four);
 
---select max(foo COLLATE "C") filter (where (bar collate "POSIX") > '0')
---from (values ('a', 'b')) AS v(foo,bar);
+select max(foo COLLATE "C") filter (where (bar collate "POSIX") > '0')
+from (values ('a', 'b')) AS v(foo,bar);
 
 -- outer reference in FILTER (PostgreSQL extension)
 select (select count(*)
@@ -523,9 +523,12 @@ select ten, mode() within group (order by string4) from tenk1 group by ten order
 select percentile_disc(array[0.25,0.5,0.75]) within group (order by x)
 from unnest('{fred,jim,fred,jack,jill,fred,jill,jim,jim,sheila,jim,sheila}'::text[]) u(x);
 
+-- start_ignore
+-- GPDB_92_MERGE_FIXME: We don't have pg_collation_for yet. Will get it in 9.2.
 -- check collation propagates up in suitable cases:
 select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
   from (values ('fred'),('jim')) v(x);
+-- end_ignore
 
 -- ordered-set aggs created with CREATE AGGREGATE
 select test_rank(3) within group (order by x)

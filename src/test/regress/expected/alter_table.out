@@ -2012,7 +2012,6 @@ Table "public.test_tbl2_subclass"
 Inherits: test_tbl2
 Distributed by: (aa)
 
-
 DROP TABLE test_tbl2_subclass;
 -- This test isn't that interesting on its own, but the purpose is to leave
 -- behind a table to test pg_upgrade with. The table has a composite type
