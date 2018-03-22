@@ -849,7 +849,6 @@ exprCollation(Node *expr)
 		case T_GroupingFunc:
 			coll = InvalidOid;	/* result is always int8 */
 			break;
-
 		case T_Grouping:
 			coll = InvalidOid;	/* result is always int8 */
 			break;
@@ -1053,11 +1052,14 @@ exprSetCollation(Node *expr, Oid collation)
 			Assert(!OidIsValid(collation));		/* result is always boolean */
 			break;
 
-		case T_GroupId:
-			Assert(!OidIsValid(collation));		/* result is always int4 */
+		case T_GroupingFunc:
+			Assert(!OidIsValid(collation));		/* result is always int8 */
 			break;
 		case T_Grouping:
 			Assert(!OidIsValid(collation));		/* result is always int8 */
+			break;
+		case T_GroupId:
+			Assert(!OidIsValid(collation));		/* result is always int4 */
 			break;
 
 		default:
