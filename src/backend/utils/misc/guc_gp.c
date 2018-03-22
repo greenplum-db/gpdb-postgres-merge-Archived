@@ -80,8 +80,8 @@ extern const char *gpvars_assign_gp_resqueue_priority_default_value(const char *
 												 bool doit,
 								   GucSource source __attribute__((unused)));
 
-static const char *assign_gp_default_storage_options(
-							const char *newval, bool doit, GucSource source);
+static bool check_gp_default_storage_options(char **newval, void **extra, GucSource source);
+static void assign_gp_default_storage_options(const char *newval, void *extra);
 
 
 static bool check_pljava_classpath_insecure(bool *newval, void **extra, GucSource source);
@@ -4849,7 +4849,7 @@ struct config_string ConfigureNamesString_gp[] =
 			GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
 		},
 		&gp_default_storage_options, "",
-		NULL, assign_gp_default_storage_options, NULL
+		check_gp_default_storage_options, assign_gp_default_storage_options, NULL
 	},
 
 	{
@@ -5298,74 +5298,81 @@ storageOptToString(void)
  * Parse new value of storage options.  Update both, the GUC and
  * global ao_storage_opts object.
  */
-static const char *
-assign_gp_default_storage_options(const char *newval,
-								  bool doit, GucSource source)
+static bool
+check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 {
-	if (source == PGC_S_DEFAULT || newval[0] == '\0')
+	PG_TRY();
 	{
+		/* Value of "appendonly" option if one is specified. */
+		StdRdOptions newopts;
+
+		memset(&newopts, 0, sizeof(StdRdOptions));
+		resetAOStorageOpts(&newopts);
+
 		/*
-		 * Reset/init case, newval = "none".
+		 * Perform identical validations as in case of options specified
+		 * in a WITH() clause.
 		 */
-		if (doit)
-			resetDefaultAOStorageOpts();
-	}
-	else
-	{
-		PG_TRY();
+		if ((*newval)[0])
 		{
-			/* Value of "appendonly" option if one is specified. */
 			bool		aovalue = false;
-			StdRdOptions *newopts = (StdRdOptions *)
-			palloc0(sizeof(StdRdOptions));
-			Datum		newopts_datum = parseAOStorageOpts(newval, &aovalue);
+			Datum		newopts_datum;
 
-			/*
-			 * Perform identical validations as in case of options specified
-			 * in a WITH() clause.
-			 */
-			resetAOStorageOpts(newopts);
-			parse_validate_reloptions(newopts, newopts_datum,
-									   /* validate */ true, RELOPT_KIND_HEAP);
+			newopts_datum = parseAOStorageOpts(*newval, &aovalue);
+			parse_validate_reloptions(&newopts, newopts_datum,
+									  /* validate */ true, RELOPT_KIND_HEAP);
+			newopts.appendonly = aovalue;
 			validateAppendOnlyRelOptions(
-										 newopts->appendonly,
-										 newopts->blocksize,
-										 gp_safefswritesize,
-										 newopts->compresslevel,
-										 newopts->compresstype,
-										 newopts->checksum,
-										 RELKIND_RELATION,
-										 newopts->columnstore);
+				newopts.appendonly,
+				newopts.blocksize,
+				gp_safefswritesize,
+				newopts.compresslevel,
+				newopts.compresstype,
+				newopts.checksum,
+				RELKIND_RELATION,
+				newopts.columnstore);
+		}
 
-			/*
-			 * All validations succeeded, it is safe to udpate global
-			 * appendonly storage options.
-			 */
-			if (doit)
-			{
-				newopts->appendonly = aovalue;
-				setDefaultAOStorageOpts(newopts);
-			}
-		}
-		PG_CATCH();
-		{
-			if (source >= PGC_S_INTERACTIVE)
-				PG_RE_THROW();
-			else
-			{
-				/*
-				 * We are in the middle of backend / postmaster startup.  The
-				 * configured value is bad, proceed with factory defaults.
-				 */
-				elog(WARNING, "Unable to set gp_default_storage_options to '%s'",
-					 newval);
-				resetDefaultAOStorageOpts();
-			}
-		}
-		PG_END_TRY();
+		/*
+		 * All validations succeeded, it is safe to udpate global
+		 * appendonly storage options.
+		 */
+		*extra = malloc(sizeof(StdRdOptions));
+		if (*extra == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+		memcpy(*extra, &newopts, sizeof(StdRdOptions));
+
+		return true;
 	}
-	return doit ? storageOptToString() : newval;
+	PG_CATCH();
+	{
+		if (source >= PGC_S_INTERACTIVE)
+			PG_RE_THROW();
+		else
+		{
+			/*
+			 * We are in the middle of backend / postmaster startup.  The
+			 * configured value is bad, proceed with factory defaults.
+			 */
+			elog(WARNING, "could not set gp_default_storage_options to '%s'",
+				 *newval);
+		}
+		return false;
+	}
+	PG_END_TRY();
 }
+
+
+static void
+assign_gp_default_storage_options(const char *newval, void *extra)
+{
+	StdRdOptions *newopts = (StdRdOptions *) extra;
+
+	setDefaultAOStorageOpts(newopts);
+}
+
 
 bool
 select_gp_replication_config_files(const char *configdir, const char *progname)
