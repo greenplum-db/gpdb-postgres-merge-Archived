@@ -5301,6 +5301,8 @@ storageOptToString(void)
 static bool
 check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 {
+	bool		result = false;
+
 	PG_TRY();
 	{
 		/* Value of "appendonly" option if one is specified. */
@@ -5344,7 +5346,7 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 					 errmsg("out of memory")));
 		memcpy(*extra, &newopts, sizeof(StdRdOptions));
 
-		return true;
+		result = true;
 	}
 	PG_CATCH();
 	{
@@ -5359,9 +5361,11 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 			elog(WARNING, "could not set gp_default_storage_options to '%s'",
 				 *newval);
 		}
-		return false;
+		result = false;
 	}
 	PG_END_TRY();
+
+	return result;
 }
 
 
