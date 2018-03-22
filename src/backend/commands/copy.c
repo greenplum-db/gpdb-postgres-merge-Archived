@@ -3409,9 +3409,8 @@ CopyFrom(CopyState cstate)
 		}
 		PG_CATCH();
 		{
-			/* after all the prep work let cdbsreh do the real work */ \
-			HandleSingleRowError(cstate->cdbsreh);
-			ErrorIfRejectLimitReached(cstate->cdbsreh);
+			/* after all the prep work let cdbsreh do the real work */
+			HandleCopyError(cstate);
 			continue;
 		}
 		PG_END_TRY();
