@@ -1212,6 +1212,8 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 	Motion	   *motion;
 	Path	   *subpath = path->subpath;
 	Plan	   *subplan;
+	Relids		save_curOuterRels = root->curOuterRels;
+	List	   *save_curOuterParams = root->curOuterParams;
 
 	/*
 	 * singleQE-->entry:  Elide the motion.  The subplan will run in the same
@@ -1226,6 +1228,10 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 		subpath->pathkeys = path->path.pathkeys;
 
 		subplan = create_subplan(root, subpath);
+
+		root->curOuterRels = save_curOuterRels;
+		root->curOuterParams = save_curOuterParams;
+
 		return subplan;
 	}
 
@@ -1238,6 +1244,10 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 	motion = cdbpathtoplan_create_motion_plan(root, path, subplan);
 
 	copy_path_costsize(root, &motion->plan, (Path *) path);
+
+	root->curOuterRels = save_curOuterRels;
+	root->curOuterParams = save_curOuterParams;
+
 	return (Plan *) motion;
 }	/* create_motion_plan */
 
