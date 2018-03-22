@@ -149,6 +149,8 @@ ExecInitDML(DML *node, EState *estate, int eflags)
 	DMLState *dmlstate = makeNode(DMLState);
 	dmlstate->ps.plan = (Plan *)node;
 	dmlstate->ps.state = estate;
+	CmdType operation = estate->es_plannedstmt->commandType;
+	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 
 	/*
 	 * Initialize es_result_relation_info, just like ModifyTable.
@@ -211,6 +213,21 @@ ExecInitDML(DML *node, EState *estate, int eflags)
 
 	        /* Request a callback at end of query. */
 	        dmlstate->ps.cdbexplainfun = ExecDMLExplainEnd;
+	}
+
+	/*
+	 * If there are indices on the result relation, open them and save
+	 * descriptors in the result relation info, so that we can add new index
+	 * entries for the tuples we add/update.  We need not do this for a
+	 * DELETE, however, since deletion doesn't affect indexes.
+	 */
+	if (Gp_role != GP_ROLE_EXECUTE || Gp_is_writer) /* only needed by the root slice who will do the actual updating */
+	{
+		if (resultRelInfo->ri_RelationDesc->rd_rel->relhasindex  &&
+			operation != CMD_DELETE)
+		{
+			ExecOpenIndices(resultRelInfo);
+		}
 	}
 
 	return dmlstate;
