@@ -1113,6 +1113,9 @@ select_mergejoin_clauses(PlannerInfo *root,
 		case JOIN_FULL:
 			*mergejoin_allowed = !have_nonmergeable_joinclause;
 			break;
+		case JOIN_LASJ_NOTIN:
+			*mergejoin_allowed = false;
+			break;
 		default:
 			*mergejoin_allowed = true;
 			break;
