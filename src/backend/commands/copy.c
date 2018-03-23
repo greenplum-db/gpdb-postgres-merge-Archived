@@ -3075,6 +3075,7 @@ CopyFrom(CopyState cstate)
 	Datum		*partValues = NULL;
 	bool		*partNulls = NULL;
 	ResultRelInfo *resultRelInfo;
+	ResultRelInfo *parentResultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTableSlot *baseSlot;
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
@@ -3184,6 +3185,8 @@ CopyFrom(CopyState cstate)
 	}
 	resultRelInfo->ri_TrigInstrument = NULL;
 	ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+
+	parentResultRelInfo = resultRelInfo;
 
 	ExecOpenIndices(resultRelInfo);
 
@@ -3366,6 +3369,12 @@ CopyFrom(CopyState cstate)
 		baseValues = slot_get_values(baseSlot);
 		baseNulls = slot_get_isnull(baseSlot);
 
+		/*
+		 * At this stage, we're dealing with tuples in the format of the parent
+		 * table.
+		 */
+		estate->es_result_relation_info = parentResultRelInfo;
+
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
 			if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid))
@@ -3383,31 +3392,37 @@ CopyFrom(CopyState cstate)
 				break;
 		}
 
-		/*
-		 * We might create a ResultRelInfo which needs to persist
-		 * the per tuple context.
-		 */
-		PG_TRY();
+		if (estate->es_result_partitions)
 		{
+			/*
+			 * We might create a ResultRelInfo which needs to persist
+			 * the per tuple context.
+			 */
+			bool		success;
+
 			MemoryContextSwitchTo(estate->es_query_cxt);
-			if (estate->es_result_partitions)
+
+			PG_TRY();
 			{
 				resultRelInfo = values_get_partition(baseValues, baseNulls,
 													 tupDesc, estate, true);
-
-				estate->es_result_relation_info = resultRelInfo;
-				FreeBulkInsertState(bistate);
-				bistate = GetBulkInsertState();
+				success = true;
 			}
-		}
-		PG_CATCH();
-		{
-			/* after all the prep work let cdbsreh do the real work */
-			HandleCopyError(cstate);
-			continue;
-		}
-		PG_END_TRY();
+			PG_CATCH();
+			{
+				/* after all the prep work let cdbsreh do the real work */
+				HandleCopyError(cstate);
+				success = false;
+			}
+			PG_END_TRY();
 
+			if (!success)
+				continue;
+
+			estate->es_result_relation_info = resultRelInfo;
+			FreeBulkInsertState(bistate);
+			bistate = GetBulkInsertState();
+		}
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
 		ExecStoreVirtualTuple(baseSlot);
