@@ -779,23 +779,18 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 	/* Read tuples from outer relation only if it's the first batch */
 	if (curbatch == 0)
 	{
-		for (;;)
+		/*
+		 * Check to see if first outer tuple was already fetched by
+		 * ExecHashJoin() and not used yet.
+		 */
+		slot = hjstate->hj_FirstOuterTupleSlot;
+		if (!TupIsNull(slot))
+			hjstate->hj_FirstOuterTupleSlot = NULL;
+		else
+			slot = ExecProcNode(outerNode);
+
+		while (!TupIsNull(slot))
 		{
-			/*
-			 * Check to see if first outer tuple was already fetched by
-			 * ExecHashJoin() and not used yet.
-			 */
-			slot = hjstate->hj_FirstOuterTupleSlot;
-			if (!TupIsNull(slot))
-				hjstate->hj_FirstOuterTupleSlot = NULL;
-			else
-			{
-				slot = ExecProcNode(outerNode);
-			}
-
-			if (TupIsNull(slot))
-				break;
-
 			/*
 			 * We have to compute the tuple's hash value.
 			 */
@@ -822,22 +817,13 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			 * That tuple couldn't match because of a NULL, so discard it and
 			 * continue with the next one.
 			 */
+			slot = ExecProcNode(outerNode);
 		}
-
-		/*
-		 * We have just reached the end of the first pass. Try to switch to a
-		 * saved batch.
-		 */
-
-		/* SFR: This can cause re-spill! */
-		curbatch = ExecHashJoinNewBatch(hjstate);
-
 
 #ifdef HJDEBUG
 		elog(gp_workfile_caching_loglevel, "HashJoin built table with %.1f tuples for batch %d", hashtable->totalTuples, curbatch);
 #endif
-
-	} /* if (curbatch == 0) */
+	}
 	else if (curbatch < hashtable->nbatch)
 	{
 		ExecWorkFile    *file = hashtable->outerBatchFile[curbatch];
