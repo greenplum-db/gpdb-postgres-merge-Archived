@@ -1211,11 +1211,17 @@ CTranslatorQueryToDXL::PhmiulUpdateCols()
 		ULONG ulResno = pte->resno;
 		GPOS_ASSERT(0 < ulResno);
 
-		CDXLNode *pdxlnCol = (*m_pdrgpdxlnQueryOutput)[ul];
-		CDXLScalarIdent *pdxlopIdent = CDXLScalarIdent::PdxlopConvert(pdxlnCol->Pdxlop());
-		ULONG ulColId = pdxlopIdent->Pdxlcr()->UlID();
+		// Ignore junk columns, as they are have been ignored when adding them
+		// to m_pdrgpdxlnQueryOutput, and are not actually going to be updated.
+		if (!pte->resjunk)
+		{
+			CDXLNode *pdxlnCol = (*m_pdrgpdxlnQueryOutput)[ul];
+			CDXLScalarIdent *pdxlopIdent = CDXLScalarIdent::PdxlopConvert(
+					pdxlnCol->Pdxlop());
+			ULONG ulColId = pdxlopIdent->Pdxlcr()->UlID();
 
-		StoreAttnoColIdMapping(phmiulUpdateCols, ulResno, ulColId);
+			StoreAttnoColIdMapping(phmiulUpdateCols, ulResno, ulColId);
+		}
 		ul++;
 	}
 
