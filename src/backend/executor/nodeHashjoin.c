@@ -361,7 +361,8 @@ ExecHashJoin(HashJoinState *node)
 					isJoinExprNull(node->hj_OuterHashKeys,econtext))
 				{
 					node->hj_MatchedOuter = true;
-					break;		/* loop around for a new outer tuple */
+					node->hj_JoinState = HJ_NEED_NEW_OUTER;
+					continue;
 				}
 
 				/*
@@ -392,7 +393,8 @@ ExecHashJoin(HashJoinState *node)
 					MemTupleSetMatch(HJTUPLE_MINTUPLE(node->hj_CurTuple));
 
 					/* In an antijoin, we never return a matched tuple */
-					if (node->js.jointype == JOIN_ANTI)
+					if (node->js.jointype == JOIN_ANTI ||
+						node->js.jointype == JOIN_LASJ_NOTIN)
 					{
 						node->hj_JoinState = HJ_NEED_NEW_OUTER;
 						continue;
