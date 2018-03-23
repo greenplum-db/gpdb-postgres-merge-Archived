@@ -117,7 +117,7 @@ static void transformLockingClause(ParseState *pstate, Query *qry,
 
 static void setQryDistributionPolicy(SelectStmt *stmt, Query *qry);
 
-static Query *transformGroupedWindows(Query *qry);
+static Query *transformGroupedWindows(ParseState *pstate, Query *qry);
 static void init_grouped_window_context(grouped_window_ctx *ctx, Query *qry);
 static Var *var_for_gw_expr(grouped_window_ctx *ctx, Node *expr, bool force);
 static void discard_grouped_window_context(grouped_window_ctx *ctx);
@@ -873,7 +873,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
  * done with them.
  */
 static Query *
-transformGroupedWindows(Query *qry)
+transformGroupedWindows(ParseState *pstate, Query *qry)
 {
 	Query *subq;
 	RangeTblEntry *rte;
@@ -1003,6 +1003,8 @@ transformGroupedWindows(Query *qry)
 		elog(ERROR, "inconsistency detected in internal grouped windows transformation");
 
 	discard_grouped_window_context(&ctx);
+
+	assign_query_collations(pstate, subq);
 
 	return qry;
 }
@@ -1698,7 +1700,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 * transform it such that the grouped query appears as a subquery
 	 */
 	if (qry->hasWindowFuncs && (qry->groupClause || qry->hasAggs))
-		transformGroupedWindows(qry);
+		transformGroupedWindows(pstate, qry);
 
 	assign_query_collations(pstate, qry);
 
