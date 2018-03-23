@@ -22,6 +22,7 @@
 
 #include <limits.h>
 
+#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -2567,7 +2568,7 @@ join_dqa_coplan(PlannerInfo *root, MppGroupContext *ctx, Plan *outer, int dqa_in
 				RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 				mergefamilies[i] = linitial_oid(rinfo->mergeopfamilies);
-				mergecollations[i] = InvalidOid; /* GPDB_91_MERGE_FIXME: collation? */
+				mergecollations[i] = DEFAULT_COLLATION_OID;
 				mergestrategies[i] = BTLessStrategyNumber;
 				mergenullsfirst[i] = false;
 				i++;
@@ -3897,7 +3898,7 @@ split_aggref(Aggref *aggref, MppGroupContext *ctx)
 						   + attrno,
 						   transtype,
 						   -1,
-						   InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
+						   aggref->aggcollid,
 						   0);
 
 			if (ctx->use_irefs_tlist)
@@ -4495,7 +4496,7 @@ reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_map,
 													  new_tle->expr,
 													  pathkey->pk_eclass->ec_opfamilies,
 													  em->em_datatype,
-													  InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
+													  exprCollation((Node *) tle->expr),
 													  0,
 													  true);
 				new_pathkey = makePathKey(new_eclass, pathkey->pk_opfamily, pathkey->pk_strategy,

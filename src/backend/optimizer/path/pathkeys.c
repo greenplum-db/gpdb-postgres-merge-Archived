@@ -1158,8 +1158,8 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 		elog(ERROR, "could not find operator family for equality operator %u", eqopoid);
 	eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
 									  mergeopfamilies,
-									  InvalidOid, /* GDPB_91_MERGE_FIXME: collation? */
 									  typeoid,
+									  exprCollation(expr),
 									  0,
 									  true);
 	if (!canonical)

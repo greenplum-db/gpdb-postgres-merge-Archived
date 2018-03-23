@@ -1932,7 +1932,7 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 					   (Node *) offset,
 					   (Node *) makeConst(offset->typeId,
 										  offset->typeMod,
-										  InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
+										  exprCollation(node->startOffset),
 										  len,
 										  zero,
 										  false,
@@ -1973,7 +1973,7 @@ initialize_range_bound_exprs(WindowAggState *winstate)
 					   (Node *) offset,
 					   (Node *) makeConst(offset->typeId,
 										  offset->typeMod,
-										  InvalidOid, /* GPDB_91_MERGE_FIXME: collation? */
+										  exprCollation(node->endOffset),
 										  len,
 										  zero,
 										  false,
