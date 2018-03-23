@@ -1761,23 +1761,9 @@ insert into PField values ('PF1_1', 'should fail due to unique index');
 ERROR:  duplicate key value violates unique constraint "pfield_name"
 DETAIL:  Key (name)=(PF1_1) already exists.
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
-<<<<<<< HEAD
 update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
 update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
-=======
-ERROR:  WS.not.there         does not exist
-CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
-update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
-ERROR:  illegal backlink beginning with XX
-CONTEXT:  PL/pgSQL function "tg_backlink_a" line 17 at assignment
-update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
-ERROR:  PS.not.there         does not exist
-CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
-update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
-ERROR:  illegal slotlink beginning with XX
-CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 17 at assignment
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 insert into HSlot values ('HS', 'base.hub1', 1, '');
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.hub"  (seg2 127.0.0.1:40002 pid=1762)
 CONTEXT:  SQL statement "select             * from Hub where name = new.hubname"
