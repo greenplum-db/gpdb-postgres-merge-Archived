@@ -4797,7 +4797,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 							 errmsg("cannot split into an existing partition")));
 				}
 				
-				ATSimplePermissions(target, false);
+				ATSimplePermissions(target, ATT_TABLE);
 				heap_close(target, NoLock);
 			}
 			else
