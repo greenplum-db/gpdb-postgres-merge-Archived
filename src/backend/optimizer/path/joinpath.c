@@ -117,7 +117,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * 1. Consider mergejoin paths where both relations must be explicitly
 	 * sorted.	Skip this if we can't mergejoin.
 	 */
-	if (mergejoin_allowed)
+	if (mergejoin_allowed && jointype != JOIN_LASJ_NOTIN)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
 						   restrictlist, mergeclause_list, jointype, sjinfo);
 
@@ -1112,9 +1112,6 @@ select_mergejoin_clauses(PlannerInfo *root,
 		case JOIN_RIGHT:
 		case JOIN_FULL:
 			*mergejoin_allowed = !have_nonmergeable_joinclause;
-			break;
-		case JOIN_LASJ_NOTIN:
-			*mergejoin_allowed = false;
 			break;
 		default:
 			*mergejoin_allowed = true;
