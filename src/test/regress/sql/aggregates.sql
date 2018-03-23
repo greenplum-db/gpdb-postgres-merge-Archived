@@ -227,9 +227,12 @@ select max(unique1) from tenk1 where unique1 < 42;
 explain (costs off)
   select max(unique1) from tenk1 where unique1 > 42;
 select max(unique1) from tenk1 where unique1 > 42;
+set enable_seqscan=off;
+set enable_bitmapscan=off;
 explain (costs off)
   select max(unique1) from tenk1 where unique1 > 42000;
 select max(unique1) from tenk1 where unique1 > 42000;
+reset enable_seqscan;
 
 -- multi-column index (uses tenk1_thous_tenthous)
 explain (costs off)
@@ -240,6 +243,8 @@ explain (costs off)
 select min(tenthous) from tenk1 where thousand = 33;
 
 -- check parameter propagation into an indexscan subquery
+-- In GPDB, this cannot use the MIN/MAX optimization, because the subplan
+-- parameter cannot be pushed through a Motion node.
 explain (costs off)
   select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
     from int4_tbl;
@@ -261,7 +266,6 @@ explain (costs off)
 select max(unique2) from tenk1 order by max(unique2)+1;
 explain (costs off)
   select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
--- MPP: This works in Postgres
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
 
 -- try it on an inheritance tree
@@ -279,9 +283,11 @@ insert into minmaxtest1 values(13), (14);
 insert into minmaxtest2 values(15), (16);
 insert into minmaxtest3 values(17), (18);
 
+set enable_seqscan=off;
 explain (costs off)
   select min(f1), max(f1) from minmaxtest;
 select min(f1), max(f1) from minmaxtest;
+reset enable_seqscan;
 
 drop table minmaxtest cascade;
 
