@@ -1454,6 +1454,15 @@ ExecModifyTable(ModifyTableState *node)
 		}
 
 		/*
+		 * If the target is a partitioned table, ExecInsert / ExecUpdate /
+		 * ExecDelete might have changed es_result_relation_info to point to
+		 * a partition, instead of the top-level table. Reset it. (It would
+		 * be more tidy if those functions cleaned up after themselves, but
+		 * it's more robust to do it here just once.)
+		 */
+		estate->es_result_relation_info = resultRelInfo;
+
+		/*
 		 * If we got a RETURNING result, return it to caller.  We'll continue
 		 * the work on next call.
 		 */
