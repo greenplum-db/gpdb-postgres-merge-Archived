@@ -567,7 +567,7 @@ CREATE VIEW gp_stat_replication AS
     SELECT *, pg_catalog.gp_replication_error() AS sync_error
     FROM pg_catalog.gp_stat_get_master_replication() AS R
     (gp_segment_id integer, procpid integer, usesysid oid,
-     usename name, application_name text, client_addr inet,
+     usename name, application_name text, client_addr inet, client_hostname text,
      client_port integer, backend_start timestamptz, state text,
      sent_location text, write_location text, flush_location text,
      replay_location text, sync_priority integer, sync_state text)
@@ -575,22 +575,22 @@ CREATE VIEW gp_stat_replication AS
     (
         SELECT G.gp_segment_id
             , R.procpid, R.usesysid, R.usename, R.application_name, R.client_addr
-            , R.client_port, R.backend_start, R.state, R.sent_location
-            , R.write_location, R.flush_location, R.replay_location
-            , R.sync_priority, R.sync_state
-            , G.sync_error
+            , R.client_hostname, R.client_port, R.backend_start, R.state
+	    , R.sent_location, R.write_location, R.flush_location
+	    , R.replay_location, R.sync_priority, R.sync_state, G.sync_error
         FROM (
             SELECT E.*
             FROM pg_catalog.gp_segment_configuration C
-            JOIN pg_catalog.gp_stat_get_segment_replication_error() AS E (gp_segment_id integer, sync_error text)
+            JOIN pg_catalog.gp_stat_get_segment_replication_error()
+	    AS E (gp_segment_id integer, sync_error text)
             ON c.content = E.gp_segment_id
             WHERE C.role = 'm'
         ) G
         LEFT OUTER JOIN pg_catalog.gp_stat_get_segment_replication() AS R
         (gp_segment_id integer, procpid integer, usesysid oid,
          usename name, application_name text, client_addr inet,
-         client_port integer, backend_start timestamptz, state text,
-         sent_location text, write_location text, flush_location text,
+	 client_hostname text, client_port integer, backend_start timestamptz,
+	 state text, sent_location text, write_location text, flush_location text,
          replay_location text, sync_priority integer, sync_state text)
          ON G.gp_segment_id = R.gp_segment_id
     );
