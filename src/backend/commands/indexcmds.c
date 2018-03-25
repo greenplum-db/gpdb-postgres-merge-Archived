@@ -611,6 +611,8 @@ DefineIndex(RangeVar *heapRelation,
 		 */
 		if (shouldDispatch)
 		{
+			/* make sure the QE uses the same index name that we chose */
+			stmt->idxname = indexRelationName;
 			CdbDispatchUtilityStatement((Node *) stmt,
 										DF_CANCEL_ON_ERROR |
 										DF_WITH_SNAPSHOT |
