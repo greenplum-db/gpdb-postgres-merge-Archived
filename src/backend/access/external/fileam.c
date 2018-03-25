@@ -66,7 +66,7 @@
 
 static HeapTuple externalgettup(FileScanDesc scan, ScanDirection dir);
 static void InitParseState(CopyState pstate, Relation relation,
-			   Datum *values, bool *nulls, bool writable,
+			   bool writable,
 			   char fmtType,
 			   char *uri, int rejectlimit,
 			   bool islimitinrows, Oid fmterrtbl, int encoding);
@@ -275,7 +275,7 @@ external_beginscan(Relation relation, uint32 scancounter,
 									NIL);
 
 	/* Initialize all the parsing and state variables */
-	InitParseState(scan->fs_pstate, relation, NULL, NULL, false, fmtType,
+	InitParseState(scan->fs_pstate, relation, false, fmtType,
 				   scan->fs_uri, rejLimit, rejLimitInRows, fmterrtbl, encoding);
 
 	if (fmttype_is_custom(fmtType))
@@ -502,6 +502,7 @@ external_insert_init(Relation rel)
 {
 	ExternalInsertDesc extInsertDesc;
 	ExtTableEntry *extentry;
+	List	   *fmtOpts;
 
 	/*
 	 * Get the pg_exttable information for this table
@@ -561,21 +562,27 @@ external_insert_init(Relation rel)
 	extInsertDesc->ext_nulls = (bool *) palloc(extInsertDesc->ext_tupDesc->natts * sizeof(bool));
 
 	/* GDPB_91_MERGE_FIXME: call BeginCopyFrom  (Or BeginCopyTo?) here */
-	elog(ERROR, "GPDB_91_MERGE_FIXME: need to call BeginCopy here");
-#if 0
+
+	/*
+	 * Writing to an external table is like COPY TO: we get tuples from the executor,
+	 * we format them into the format requested, and write the output to an external
+	 * sink.
+	 */
+
+	/* Parse fmtOptString here */
+	fmtOpts = parseFormatString(extentry->fmtopts, extentry->fmtcode);
+
+	extInsertDesc->ext_pstate = BeginCopyToForExternalTable(rel,
+															fmtOpts);
 	InitParseState(extInsertDesc->ext_pstate,
 				   rel,
-				   extInsertDesc->ext_values,
-				   extInsertDesc->ext_nulls,
 				   true,
-				   extentry->fmtopts,
 				   extentry->fmtcode,
 				   extInsertDesc->ext_uri,
 				   extentry->rejectlimit,
 				   (extentry->rejectlimittype == 'r'),
 				   extentry->fmterrtbl,
 				   extentry->encoding);
-#endif
 
 	if (fmttype_is_custom(extentry->fmtcode))
 	{
@@ -1122,7 +1129,7 @@ lookupCustomFormatter(char *formatter_name, bool iswritable)
  */
 static void
 InitParseState(CopyState pstate, Relation relation,
-			   Datum *values, bool *nulls, bool iswritable,
+			   bool iswritable,
 			   char fmtType,
 			   char *uri, int rejectlimit,
 			   bool islimitinrows, Oid fmterrtbl, int encoding)
@@ -1186,6 +1193,34 @@ InitParseState(CopyState pstate, Relation relation,
 		pstate->custom_formatter_func = palloc(sizeof(FmgrInfo));
 		fmgr_info(procOid, pstate->custom_formatter_func);
 	}
+
+	/* Initialize 'out_functions', like CopyTo() would. */
+	CopyState cstate = pstate;
+	TupleDesc tupDesc = RelationGetDescr(cstate->rel);
+	Form_pg_attribute *attr = tupDesc->attrs;
+	int num_phys_attrs = tupDesc->natts;
+	cstate->out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	ListCell *cur;
+	foreach(cur, cstate->attnumlist)
+	{
+		int			attnum = lfirst_int(cur);
+		Oid			out_func_oid;
+		bool		isvarlena;
+
+		if (cstate->binary)
+			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
+									&out_func_oid,
+									&isvarlena);
+		else
+			getTypeOutputInfo(attr[attnum - 1]->atttypid,
+							  &out_func_oid,
+							  &isvarlena);
+		fmgr_info(out_func_oid, &cstate->out_functions[attnum - 1]);
+	}
+
+	/* and 'fe_mgbuf' */
+	cstate->fe_msgbuf = makeStringInfo();
+
 	/*
 	 * Create a temporary memory context that we can reset once per row to
 	 * recover palloc'd memory.  This avoids any problems with leaks inside

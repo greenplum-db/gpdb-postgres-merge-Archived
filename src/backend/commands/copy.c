@@ -474,31 +474,19 @@ SendCopyEnd(CopyState cstate)
 static void
 CopySendData(CopyState cstate, const void *databuf, int datasize)
 {
-	if (!cstate->is_copy_in) /* copy out */
-	{
-		appendBinaryStringInfo(cstate->fe_msgbuf, (char *) databuf, datasize);
-	}
-	else /* hack for: copy in */
-	{
-		/* we call copySendData in copy-in to handle results
-		 * of default functions that we wish to send from the
-		 * dispatcher to the executor primary and mirror segments.
-		 * we do so by concatenating the results to line buffer.
-		 */
-		appendBinaryStringInfo(&cstate->line_buf, (char *) databuf, datasize);
-	}
+	appendBinaryStringInfo(cstate->fe_msgbuf, (char *) databuf, datasize);
 }
 
 static void
 CopySendString(CopyState cstate, const char *str)
 {
-	CopySendData(cstate, (void *) str, strlen(str));
+	appendBinaryStringInfo(cstate->fe_msgbuf, str, strlen(str));
 }
 
 static void
 CopySendChar(CopyState cstate, char c)
 {
-	CopySendData(cstate, &c, 1);
+	appendStringInfoCharMacro(cstate->fe_msgbuf, c);
 }
 
 /* AXG: Note that this will both add a newline AND flush the data.
@@ -2200,6 +2188,28 @@ BeginCopyTo(Relation rel,
 	}
 
 	MemoryContextSwitchTo(oldcontext);
+
+	return cstate;
+}
+
+/*
+ * Set up CopyState for writing to an external table.
+ */
+CopyState
+BeginCopyToForExternalTable(Relation extrel, List *options)
+{
+	CopyState	cstate;
+
+	Assert(RelationIsExternal(extrel));
+
+	cstate = BeginCopy(false, extrel, NULL, NULL, NIL, options);
+	cstate->dispatch_mode = COPY_DIRECT;
+
+	/*
+	 * We use COPY_CALLBACK to mean that the each line should be
+	 * left in fe_msgbuf. There is no actual callback!
+	 */
+	cstate->copy_dest = COPY_CALLBACK;
 
 	return cstate;
 }
