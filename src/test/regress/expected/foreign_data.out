@@ -662,7 +662,6 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 Server: sc
 Has OIDs: no
 
-
 \det+
                 List of foreign tables
  Schema | Table | Server |          Options           
@@ -740,7 +739,6 @@ Foreign table "foreign_schema.foreign_table_1"
  c8               | text    | 
  c10              | integer | 
 Server: sc
-
 
 -- Information schema
 SELECT * FROM information_schema.foreign_data_wrappers ORDER BY 1, 2;

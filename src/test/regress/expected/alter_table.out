@@ -1910,7 +1910,6 @@ Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 Distributed by: (a)
 
-
 ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
@@ -1933,7 +1932,6 @@ Composite type "public.test_type2"
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 Distributed by: (a)
-
 
 ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
@@ -1958,7 +1956,6 @@ Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 Distributed by: (a)
 
-
 ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
@@ -1980,7 +1977,6 @@ Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 Distributed by: (a)
 
-
 ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
 ERROR:  cannot alter type "test_type2" because it is the type of a typed table
 HINT:  Use ALTER ... CASCADE to alter the typed tables too.
@@ -2001,7 +1997,6 @@ Composite type "public.test_type2"
 Number of child tables: 1 (Use \d+ to list them.)
 Typed table of type: test_type2
 Distributed by: (aa)
-
 
 \d test_tbl2_subclass
 Table "public.test_tbl2_subclass"
