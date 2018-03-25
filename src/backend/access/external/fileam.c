@@ -86,7 +86,7 @@ static int	external_getdata_callback(void *outbuf, int datasize, void *extra);
 static int	external_getdata(URL_FILE *extfile, CopyState pstate, void *outbuf, int maxread);
 static void external_senddata(URL_FILE *extfile, CopyState pstate);
 static void external_scan_error_callback(void *arg);
-static List *parseFormatString(char *fmtstr, bool iscustom);
+static List *parseFormatString(char *fmtstr, char fmtType);
 static void justifyDatabuf(StringInfo buf);
 
 static void base16_encode(char *raw, int len, char *encoded);
@@ -262,7 +262,7 @@ external_beginscan(Relation relation, uint32 scancounter,
 	}
 
 	/* Parse fmtOptString here */
-	fmtOpts = parseFormatString(fmtOptString, fmttype_is_custom(fmtType));
+	fmtOpts = parseFormatString(fmtOptString, fmtType);
 
 	/*
 	 * Allocate and init our structure that keeps track of data parsing state
@@ -1548,15 +1548,29 @@ linenumber_atoi(char buffer[20], int64 linenumber)
  * for use in the backend, for the supported external table options only.
  */
 static List *
-parseFormatString(char *fmtstr, bool iscustom)
+parseFormatString(char *fmtstr, char fmtType)
 {
 	List	   *fmtOpts;
 
-	if (!iscustom)
+	if (!fmttype_is_custom(fmtType))
 	{
 		/* Parse COPY options, like the grammar does. See 'copy_opt_item' in gram.y */
 
 		fmtOpts = raw_parser_copy_options(fmtstr);
+
+		if (fmttype_is_text(fmtType))
+		{
+			/* TEXT is the default */
+		}
+		else if (fmttype_is_csv(fmtType))
+		{
+			/* Add FORMAT 'CSV' option to the beginning of the list */
+			fmtOpts = lcons(makeDefElem("format",
+										(Node *) makeString("csv" )),
+							fmtOpts);
+		}
+		else
+			elog(ERROR, "unrecognized format type '%c'", fmtType);
 	}
 	else
 	{
