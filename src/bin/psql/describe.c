@@ -27,8 +27,8 @@ static bool describeOneTableDetails(const char *schemaname,
 						const char *relationname,
 						const char *oid,
 						bool verbose);
-static int add_distributed_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferData *buf);
-static int add_partition_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferData *buf);
+static void add_distributed_by_footer(printTableContent *const cont, const char *oid);
+static void add_partition_by_footer(printTableContent *const cont, const char *oid);
 static void add_tablespace_footer(printTableContent *const cont, char relkind,
 					  Oid tablespace, const bool newline);
 static void add_role_attribute(PQExpBuffer buf, const char *const str);
@@ -2101,9 +2101,8 @@ describeOneTableDetails(const char *schemaname,
 				}
 			}
 
-			if(writable[0] == 't')
-				if(add_distributed_by_footer(oid, &tmpbuf, &buf))
-					goto error_return;
+			if (writable[0] == 't')
+				add_distributed_by_footer(&cont, oid);
 
 			if (tableinfo.checks)
 			{
@@ -2744,17 +2743,11 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* mpp addition start: dump distributed by clause */
-		resetPQExpBuffer(&tmpbuf);
-		add_distributed_by_footer(oid, &tmpbuf, &buf);
-		printTableAddFooter(&cont, tmpbuf.data);
+		add_distributed_by_footer(&cont, oid);
 
 		/* print 'partition by' clause */
 		if (tuples > 0)
-		{
-			resetPQExpBuffer(&tmpbuf);
-			add_partition_by_footer(oid, &tmpbuf, &buf);
-			printTableAddFooter(&cont, tmpbuf.data);
-		}
+			add_partition_by_footer(&cont, oid);
 
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
 							  true);
@@ -2806,118 +2799,127 @@ error_return:
 	return retval;
 }
 
-static int
-add_distributed_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferData *buf)
+static void
+add_distributed_by_footer(printTableContent *const cont, const char *oid)
 {
+	PQExpBufferData buf;
+	PQExpBufferData tempbuf;
 	PGresult   *result1 = NULL,
 			   *result2 = NULL;
+	int			is_distributed;
 
-	printfPQExpBuffer(buf,
+	initPQExpBuffer(&buf);
+	initPQExpBuffer(&tempbuf);
+
+	printfPQExpBuffer(&tempbuf,
 			 "SELECT attrnums\n"
 					  "FROM pg_catalog.gp_distribution_policy t\n"
 					  "WHERE localoid = '%s' ",
 					  oid);
 
-	result1 = PSQLexec(buf->data, false);
+	result1 = PSQLexec(tempbuf.data, false);
 	if (!result1)
 	{
 		/* Error:  Well, so what?  Best to continue */
+		return;
 	}
-	else
+
+	is_distributed = PQntuples(result1);
+	if (is_distributed)
 	{
-		int is_distributed = PQntuples(result1);
-		if (is_distributed)
+		char	   *col;
+		char	   *dist_columns = PQgetvalue(result1, 0, 0);
+		char	   *dist_colname;
+
+		if (dist_columns && strlen(dist_columns) > 0)
 		{
-			char *col;
-			char *dist_columns = PQgetvalue(result1, 0, 0);
-			char *dist_colname;
-			if(dist_columns && strlen(dist_columns) > 0)
+			dist_columns[strlen(dist_columns)-1] = '\0'; /* remove '}' */
+			dist_columns++;  /* skip '{' */
+
+			/* Get the attname for the first distribution column.*/
+			printfPQExpBuffer(&tempbuf,
+							  "SELECT attname FROM pg_catalog.pg_attribute \n"
+							  "WHERE attrelid = '%s' \n"
+							  "AND attnum = '%d' ",
+							  oid,
+							  atoi(dist_columns));
+			result2 = PSQLexec(tempbuf.data, false);
+			if (!result2)
+				return;
+			dist_colname = PQgetvalue(result2, 0, 0);
+			if (!dist_colname)
+				return;
+			printfPQExpBuffer(&buf, "Distributed by: (%s",
+							  dist_colname);
+			PQclear(result2);
+			dist_colname = NULL;
+			col = strchr(dist_columns,',');
+
+			while (col != NULL)
 			{
-				PQExpBufferData tempbuf;
-
-				initPQExpBuffer(&tempbuf);
-				dist_columns[strlen(dist_columns)-1] = '\0'; /* remove '}' */
-				dist_columns++;  /* skip '{' */
-
-				/* Get the attname for the first distribution column.*/
+				col++;
+				/* Get the attname for next distribution columns.*/
 				printfPQExpBuffer(&tempbuf,
-					"SELECT attname FROM pg_attribute \n"
-					"WHERE attrelid = '%s' \n"
-					"AND attnum = '%d' ",
-					oid,
-					atoi(dist_columns));
+								  "SELECT attname FROM pg_catalog.pg_attribute \n"
+								  "WHERE attrelid = '%s' \n"
+								  "AND attnum = '%d' ",
+								  oid,
+								  atoi(col));
 				result2 = PSQLexec(tempbuf.data, false);
 				if (!result2)
-					return 1;
+					return;
 				dist_colname = PQgetvalue(result2, 0, 0);
 				if (!dist_colname)
-					return 1;
-				printfPQExpBuffer(buf, "Distributed by: (%s",
-								  dist_colname);
+					return;
+				appendPQExpBuffer(&buf, ", %s", dist_colname);
 				PQclear(result2);
-				dist_colname = NULL;
-				col = strchr(dist_columns,',');
-
-				while(col!=NULL)
-				{
-					col++;
-					/* Get the attname for next distribution columns.*/
-					printfPQExpBuffer(&tempbuf,
-						"SELECT attname FROM pg_attribute \n"
-						"WHERE attrelid = '%s' \n"
-						"AND attnum = '%d' ",
-						oid,
-						atoi(col));
-					result2 = PSQLexec(tempbuf.data, false);
-					if (!result2)
-						return 1;
-					dist_colname = PQgetvalue(result2, 0, 0);
-					if (!dist_colname)
-						return 1;
-					appendPQExpBuffer(buf, ", %s", dist_colname);
-					PQclear(result2);
-					col = strchr(col,',');
-				}
-				appendPQExpBuffer(buf, ")");
-				termPQExpBuffer(&tempbuf);
+				col = strchr(col, ',');
 			}
-			else
-			{
-				printfPQExpBuffer(buf, "Distributed randomly");
-			}
-
-			appendPQExpBuffer(inoutbuf, "%s", pg_strdup(buf->data));
+			appendPQExpBuffer(&buf, ")");
+		}
+		else
+		{
+			printfPQExpBuffer(&buf, "Distributed randomly");
 		}
 
-		PQclear(result1);
+		printTableAddFooter(cont, buf.data);
 	}
 
-	return 0; /* success */
+	PQclear(result1);
+
+	termPQExpBuffer(&tempbuf);
+	termPQExpBuffer(&buf);
+
+	return; /* success */
 }
 
 /*
  * Add a 'partition by' description to the footer.
  */
-static int
-add_partition_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferData *buf)
+static void
+add_partition_by_footer(printTableContent *const cont, const char *oid)
 {
-	PGresult	*result = NULL;
+	PGresult   *result;
+	PQExpBufferData buf;
+	int			nRows;
+	int			nPartKey;
+
+	initPQExpBuffer(&buf);
 
 	/* check if current relation is root partition, if it is root partition, at least 1 row returns */
-	printfPQExpBuffer(buf, "SELECT parrelid FROM pg_catalog.pg_partition WHERE parrelid = '%s'", oid);
-	result = PSQLexec(buf->data, false);
+	printfPQExpBuffer(&buf, "SELECT parrelid FROM pg_catalog.pg_partition WHERE parrelid = '%s'", oid);
+	result = PSQLexec(buf.data, false);
 
 	if (!result)
-		return 1;
-	int nRows = PQntuples(result);
-	int nPartKey = 0;
+		return;
+	nRows = PQntuples(result);
 
 	PQclear(result);
 
-	if(nRows)
+	if (nRows)
 	{
 		/* query partition key on the root partition */
-		printfPQExpBuffer(buf,
+		printfPQExpBuffer(&buf,
 			"WITH att_arr AS (SELECT unnest(paratts) \n"
 			"	FROM pg_catalog.pg_partition p \n"
 			"	WHERE p.parrelid = '%s' AND p.parlevel = 0 AND p.paristemplate = false), \n"
@@ -2929,7 +2931,7 @@ add_partition_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferD
 	else
 	{
 		/* query partition key on the intermediate partition */
-		printfPQExpBuffer(buf,
+		printfPQExpBuffer(&buf,
 			"WITH att_arr AS (SELECT unnest(paratts) FROM pg_catalog.pg_partition p, \n"
 			"	(SELECT parrelid, parlevel \n"
 			"		FROM pg_catalog.pg_partition p, pg_catalog.pg_partition_rule pr \n"
@@ -2941,32 +2943,36 @@ add_partition_by_footer(const char* oid, PQExpBufferData *inoutbuf, PQExpBufferD
 			oid, oid);
 	}
 
-	result = PSQLexec(buf->data, false);
+	result = PSQLexec(buf.data, false);
 	if (!result)
-		return 1;
-	nPartKey = PQntuples(result);
+		return;
 
+	nPartKey = PQntuples(result);
 	if (nPartKey)
 	{
-		char *partColName;
-		int i = 0;
-		appendPQExpBuffer(inoutbuf, "Partition by: (");
+		char	   *partColName;
+		int			i;
+
+		resetPQExpBuffer(&buf);
+		appendPQExpBuffer(&buf, "Partition by: (");
 		for (i = 0; i < nPartKey; i++)
 		{
 			if (i > 0)
-				appendPQExpBuffer(inoutbuf, ", ");
+				appendPQExpBuffer(&buf, ", ");
 			partColName = PQgetvalue(result, i, 0);
 
 			if (!partColName)
-				return 1;
-			appendPQExpBuffer(inoutbuf, "%s", partColName);
+				return;
+			appendPQExpBuffer(&buf, "%s", partColName);
 		}
-		appendPQExpBuffer(inoutbuf, ")");
+		appendPQExpBuffer(&buf, ")");
+		printTableAddFooter(cont, buf.data);
 	}
 
 	PQclear(result);
 
-	return 0; /* success */
+	termPQExpBuffer(&buf);
+	return;		/* success */
 }
 
 /*
