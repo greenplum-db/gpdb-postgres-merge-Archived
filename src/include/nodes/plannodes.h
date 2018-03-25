@@ -923,7 +923,7 @@ extern void set_plan_share_type_xslice(Plan *p);
 extern int get_plan_driver_slice(Plan *p);
 extern void set_plan_driver_slice(Plan *P, int slice);
 extern void incr_plan_nsharer_xslice(Plan *p);
-extern bool isDynamicScan(const Scan *scan);
+extern bool isDynamicScan(const Plan *p);
 
 /* ----------------
  *		shareinputscan node

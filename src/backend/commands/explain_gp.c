@@ -1696,7 +1696,7 @@ cdbexplain_showExecStats(struct PlanState *planstate, ExplainState *es)
 			{
 				ScanState  *scanState = (ScanState *) planstate;
 
-				if (!isDynamicScan((Scan *) scanState->ps.plan))
+				if (!isDynamicScan(scanState->ps.plan))
 				{
 					displayPartitionScanned = false;
 				}

@@ -2272,9 +2272,9 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			objecttag = "Relation Name";
 
 			/* Print dynamic scan id for dytnamic scan operators */
-			if (isDynamicScan((Scan *)plan))
+			if (isDynamicScan(plan))
 			{
-				dynamicScanId = ((Scan *)plan)->partIndexPrintable;
+				dynamicScanId = ((Scan *) plan)->partIndexPrintable;
 			}
 
 			break;
