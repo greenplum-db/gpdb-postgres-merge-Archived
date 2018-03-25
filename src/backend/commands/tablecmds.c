@@ -3581,6 +3581,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * These subcommands affect write operations only.
 				 */
 			case AT_ColumnDefault:
+			case AT_ColumnDefaultRecurse:
 			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
 			case AT_AddConstraintRecurse:		/* becomes AT_AddConstraint */
 			case AT_EnableTrig:
