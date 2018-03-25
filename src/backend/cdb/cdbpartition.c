@@ -3773,7 +3773,7 @@ compare_partn_opfuncid(PartitionNode *partnode,
 			}
 
 			opfuncid = get_opfuncid_by_opname(opname, lhsid, rhsid);
-			res = OidFunctionCall2(opfuncid, c->constvalue, d);
+			res = OidFunctionCall2Coll(opfuncid, c->constcollid, c->constvalue, d);
 
 			if (!DatumGetBool(res))
 				return false;
@@ -3923,7 +3923,7 @@ selectListPartition(PartitionNode *partnode, Datum *values, bool *isnull,
 					}
 
 					finfo = &(ls->eqfuncs[i]);
-					res = FunctionCall2(finfo, d, c->constvalue);
+					res = FunctionCall2Coll(finfo, c->constcollid, d, c->constvalue);
 
 					if (!DatumGetBool(res))
 					{
@@ -4101,7 +4101,7 @@ range_test(Datum tupval, Oid ruleTypeOid, Oid exprTypeOid, PartitionRangeState *
 		 * strictly_less = true)
 		 */
 		finfo = get_less_than_comparator(keyno, rs, ruleTypeOid, exprTypeOid, !rule->parrangestartincl /* strictly_less */ , false /* is_direct */ );
-		res = FunctionCall2(finfo, c->constvalue, tupval);
+		res = FunctionCall2Coll(finfo, c->constcollid, c->constvalue, tupval);
 
 		if (!DatumGetBool(res))
 			return -1;
@@ -4123,7 +4123,7 @@ range_test(Datum tupval, Oid ruleTypeOid, Oid exprTypeOid, PartitionRangeState *
 		 * strictly_less = true)
 		 */
 		finfo = get_less_than_comparator(keyno, rs, ruleTypeOid, exprTypeOid, !rule->parrangeendincl /* strictly_less */ , true /* is_direct */ );
-		res = FunctionCall2(finfo, tupval, c->constvalue);
+		res = FunctionCall2Coll(finfo, c->constcollid, tupval, c->constvalue);
 
 		if (!DatumGetBool(res))
 		{

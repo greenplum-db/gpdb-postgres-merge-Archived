@@ -27,6 +27,7 @@
 #include "optimizer/walkers.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
 #include "parser/parse_oper.h"
@@ -2079,11 +2080,15 @@ part_el_cmp(void *a, void *b, void *arg)
 				/* use < */
 				RegProcedure sortFunction = sortfuncs[0][i++];
 
-				if (DatumGetBool(OidFunctionCall2(sortFunction, c1->constvalue,
-												  c2->constvalue)))
+				if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+													  c1->constcollid,
+													  c1->constvalue,
+													  c2->constvalue)))
 					return -1;	/* a < b */
-				if (DatumGetBool(OidFunctionCall2(sortFunction, c2->constvalue,
-												  c1->constvalue)))
+				if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+													  c1->constcollid,
+													  c2->constvalue,
+													  c1->constvalue)))
 					return 1;
 			}
 			/* equal */
@@ -2118,15 +2123,19 @@ part_el_cmp(void *a, void *b, void *arg)
 			sortFunction = sortfuncs[0][i];
 
 			/* try < first */
-			if (DatumGetBool(OidFunctionCall2(sortFunction, c1->constvalue,
-											  c2->constvalue)))
+			if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+												  c1->constcollid,
+												  c1->constvalue,
+												  c2->constvalue)))
 				return -1;
 
 			/* see if they're equal */
 			sortFunction = sortfuncs[1][i];
 
-			if (DatumGetBool(OidFunctionCall2(sortFunction, c1->constvalue,
-											  c2->constvalue)))
+			if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+												  c1->constcollid,
+												  c1->constvalue,
+												  c2->constvalue)))
 			{
 				/* equal, but that might actually mean < */
 				if (pe1 == PART_EDGE_EXCLUSIVE)
@@ -2166,13 +2175,17 @@ part_el_cmp(void *a, void *b, void *arg)
 			/* use < */
 			RegProcedure sortFunction = sortfuncs[0][i];
 
-			if (DatumGetBool(OidFunctionCall2(sortFunction, c1->constvalue,
-											  c2->constvalue)))
+			if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+												  c1->constcollid,
+												  c1->constvalue,
+												  c2->constvalue)))
 				return -1;		/* a < b */
 
 			sortFunction = sortfuncs[1][i];
-			if (DatumGetBool(OidFunctionCall2(sortFunction, c1->constvalue,
-											  c2->constvalue)))
+			if (DatumGetBool(OidFunctionCall2Coll(sortFunction,
+												  c1->constcollid,
+												  c1->constvalue,
+												  c2->constvalue)))
 			{
 				if (pe1 == PART_EDGE_INCLUSIVE &&
 					pe2 == PART_EDGE_EXCLUSIVE)
@@ -2711,6 +2724,9 @@ preprocess_range_spec(partValidationState *vstate)
 														 typid,
 														 typmod,
 														 PARTTYP_RANGE);
+
+						assign_expr_collations(pstate, newnode);
+
 						lfirst(lcend) = newnode;
 						lcend = lnext(lcend);
 					}
@@ -2759,6 +2775,8 @@ preprocess_range_spec(partValidationState *vstate)
 							rtypeId = newrtypeId;
 						}
 
+						assign_expr_collations(pstate, e);
+
 						everytypes = lappend_oid(everytypes, rtypeId);
 					}
 				}
@@ -2784,9 +2802,11 @@ preprocess_range_spec(partValidationState *vstate)
 					Oid			typid;
 					int16		len;
 					bool		typbyval;
+					Oid			typcollation;
 
 					typenameTypeIdAndMod(pstate, type, &typid, &typmod);
 					get_typlenbyval(typid, &len, &typbyval);
+					typcollation = get_typcollation(typid);
 					
 					Assert(lcevery);
 					Assert(lcend);
@@ -2801,7 +2821,7 @@ preprocess_range_spec(partValidationState *vstate)
 											-1);
 
 					myend = makeConst(typid, typmod,
-									  InvalidOid, /* GDPB_91_MERGE_FIXME: collation. Shouldn't we look it up in pg_type.typcollation? */
+									  typcollation,
 									  len,
 									  datumCopy(res, typbyval, len),
 									  false, typbyval);
@@ -2844,6 +2864,7 @@ preprocess_range_spec(partValidationState *vstate)
 					Oid			typid = lfirst_oid(lctypes);
 					bool		byval = get_typbyval(typid);
 					int16		typlen = get_typlen(typid);
+					Oid			typcollation = get_typcollation(typid);
 					Const	   *c;
 
 					/* increment every */
@@ -2853,8 +2874,10 @@ preprocess_range_spec(partValidationState *vstate)
 											NULL, NULL,
 											&typid, -1);
 
-					c = makeConst(typid, -1, typlen,
-								  InvalidOid, /* GDPB_91_MERGE_FIXME: collation. Shouldn't we look it up in pg_type.typcollation? */
+					c = makeConst(typid,
+								  -1,
+								  typcollation,
+								  typlen,
 								  res, false, byval);
 					pfree(lfirst(lceveryinc));
 					lfirst(lceveryinc) = c;
@@ -2981,6 +3004,8 @@ preprocess_range_spec(partValidationState *vstate)
 													 typid, typmod,
 													 PARTTYP_RANGE);
 
+					assign_expr_collations(pstate, newnode);
+
 					lfirst(lcstart) = newnode;
 				}
 			}
@@ -3005,6 +3030,8 @@ preprocess_range_spec(partValidationState *vstate)
 					newnode = coerce_partition_value(myend,
 													 typid, typmod,
 													 PARTTYP_RANGE);
+
+					assign_expr_collations(pstate, newnode);
 
 					lfirst(lcend) = newnode;
 				}
@@ -4147,12 +4174,16 @@ eval_basic_opexpr(ParseState *pstate, List *oprname, Node *leftarg,
 		elog(ERROR, "cache lookup failed for operator %u", opexpr->opno);
 	opexpr->opfuncid = oprcode;
 
+	assign_expr_collations(pstate, (Node *) opexpr);
+
 	lhs = partition_arg_get_val((Node *) linitial(opexpr->args), &isnull);
 	if (!isnull)
 	{
 		rhs = partition_arg_get_val((Node *) lsecond(opexpr->args), &isnull);
 		if (!isnull)
-			res = OidFunctionCall2(opexpr->opfuncid, lhs, rhs);
+			res = OidFunctionCall2Coll(opexpr->opfuncid,
+									   opexpr->inputcollid,
+									   lhs, rhs);
 	}
 
 	/* If the caller supplied a target result type, coerce if necesssary */
@@ -4167,7 +4198,9 @@ eval_basic_opexpr(ParseState *pstate, List *oprname, Node *leftarg,
 				int32		typmod;
 				Const	   *c;
 
-				c = makeConst(opexpr->opresulttype, -1, InvalidOid,
+				c = makeConst(opexpr->opresulttype,
+							  -1,
+							  opexpr->opcollid,
 							  typeLen(typ), res,
 							  isnull, typeByVal(typ));
 				ReleaseSysCache(typ);
@@ -4181,6 +4214,8 @@ eval_basic_opexpr(ParseState *pstate, List *oprname, Node *leftarg,
 										 COERCION_EXPLICIT,
 										 COERCE_IMPLICIT_CAST,
 										 -1);
+
+				assign_expr_collations(pstate, (Node *) e);
 
 				res = partition_arg_get_val((Node *) e, &isnull);
 			}
@@ -4606,6 +4641,7 @@ Node *
 coerce_partition_value(Node *node, Oid typid, int32 typmod,
 					   PartitionByType partype)
 {
+	Oid			typcollation;
 	Node	   *out;
 
 	/* Create a coercion expression to the target type */
@@ -4643,13 +4679,19 @@ coerce_partition_value(Node *node, Oid typid, int32 typmod,
 	}
 
 	/*
+	 * GPDB_91_MERGE_FIXME: For now, partition specifications always use
+	 * default collation. We're not very consistent about that though, I think.
+	 */
+	typcollation = get_typcollation(typid);
+
+	/*
 	 * And then evaluate it. evaluate_expr calls possible cast function, and
 	 * returns a Const. (the check for that below is just for paranoia)
 	 */
 	out = (Node *) evaluate_expr((Expr *) out,
 								 typid,
 								 typmod,
-								 exprCollation(out));
+								 typcollation);
 	if (!IsA(out, Const))
 		elog(ERROR, "partition parameter is not constant");
 
