@@ -314,8 +314,6 @@ coerce_type(ParseState *pstate, Node *node,
 
 		cancel_parser_errposition_callback(&pcbstate);
 
-		cancel_parser_errposition_callback(&pcbstate);
-
 		result = (Node *) newcon;
 
 		/* If target is a domain, apply constraints. */

@@ -4360,6 +4360,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
  						 errmsg("SPLIT is not supported in utility mode")));
 			else if (Gp_role == GP_ROLE_DISPATCH)
 			{
+				ParseState *pstate = make_parsestate(NULL);
 				PgPartRule			*prule1	= NULL;
 				PgPartRule			*prule2	= NULL;
 				PgPartRule			*prule3	= NULL;
@@ -4445,7 +4446,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						List *vals = lfirst(lc);
 						ListCell *lc2;
 						int i = 0;
-						ParseState *pstate = make_parsestate(NULL);
 
 						if (prule1->pNode->part->parnatts != list_length(vals))
 						{
@@ -4463,8 +4463,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 						vals = (List *)transformExpressionList(pstate, vals,
 															   EXPR_KIND_PARTITION_EXPRESSION);
-
-						free_parsestate(pstate);
 
 						foreach(lc2, vals)
 						{
@@ -4487,6 +4485,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						}
 						lfirst(lc) = vals;
 					}
+
+					assign_list_collations(pstate, l1);
 
 					if (rollup_vals)
 					{
@@ -4522,6 +4522,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						pc->arg1 = (Node *)lappend((List *)pc->arg1, l1);
 				}
 
+				free_parsestate(pstate);
+
 				at = lsecond((List *)pc->arg1);
 				if (prule1->pNode->part->parkind == 'l')
 				{
@@ -4532,7 +4534,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						 * Check that AT() value doesn't exist in any existing
 						 * definition.
 						 */
-
 					}
 					else
 					{
@@ -4585,8 +4586,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 										break;
 									}
 
-									d = OidFunctionCall2(funcid, c->constvalue,
-														 v->constvalue);
+									d = OidFunctionCall2Coll(funcid,
+															 c->constcollid,
+															 c->constvalue,
+															 v->constvalue);
 
 									if (DatumGetInt32(d) != 0)
 									{
@@ -4670,8 +4673,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 						if (start)
 						{
 							Insist(exprType((Node *)n) == exprType((Node *)start));
-							res = OidFunctionCall2(funcid, start->constvalue,
-												   atval->constvalue);
+							res = OidFunctionCall2Coll(funcid,
+													   atval->constcollid,
+													   start->constvalue,
+													   atval->constvalue);
 
 							ret = DatumGetInt32(res);
 						}
@@ -4695,9 +4700,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 							if (prule1->topRule->parrangeend)
 							{
 								end = linitial((List *)prule1->topRule->parrangeend);
-								res = OidFunctionCall2(funcid,
-													   atval->constvalue,
-											   		   end->constvalue);
+								res = OidFunctionCall2Coll(funcid,
+														   atval->constcollid,
+														   atval->constvalue,
+														   end->constvalue);
 
 								ret = DatumGetInt32(res);
 
@@ -16279,8 +16285,10 @@ ATPExecPartSplit(Relation *rel,
 										break;
 									}
 
-									d = OidFunctionCall2(funcid, c->constvalue,
-														 v->constvalue);
+									d = OidFunctionCall2Coll(funcid,
+															 v->constcollid,
+															 c->constvalue,
+															 v->constvalue);
 
 									if (DatumGetInt32(d) != 0)
 									{

@@ -4646,7 +4646,10 @@ coerce_partition_value(Node *node, Oid typid, int32 typmod,
 	 * And then evaluate it. evaluate_expr calls possible cast function, and
 	 * returns a Const. (the check for that below is just for paranoia)
 	 */
-	out = (Node *) evaluate_expr((Expr *) out, typid, typmod, InvalidOid);
+	out = (Node *) evaluate_expr((Expr *) out,
+								 typid,
+								 typmod,
+								 exprCollation(out));
 	if (!IsA(out, Const))
 		elog(ERROR, "partition parameter is not constant");
 
