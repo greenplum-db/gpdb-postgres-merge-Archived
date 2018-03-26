@@ -902,8 +902,14 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 
 			for (i = 0; i < context->numGroupCols; i++)
 			{
+				TargetEntry *tle = get_tle_by_resno(agg_node->targetlist, prelimGroupColIdx[i]);
+
+				if (!tle)
+					elog(ERROR, "could not find target entry for column %d while building aggregate for GROUPING SETS",
+						 prelimGroupColIdx[i]);
+
 				cmpOperators[i] = get_ordering_op_for_equality_op(prelimGroupOperators[i], false);
-				collations[i] = InvalidOid; /* GDPB_91_MERGE_FIXME: collation? */
+				collations[i] = exprCollation((Node *) tle->expr);
 				nullsFirst[i] = false;
 			}
 
