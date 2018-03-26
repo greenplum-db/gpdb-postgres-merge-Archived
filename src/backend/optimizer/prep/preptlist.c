@@ -159,22 +159,6 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		Var		   *var;
 		char		resname[32];
 		TargetEntry *tle;
-		RangeTblEntry  *rte;
-		Relation    relation;
-		bool        isdistributed = false;
-
-		/* CDB: Don't try to fetch CTIDs for distributed relation. */
-		rte = rt_fetch(rc->rti, parse->rtable);
-		if (rte->rtekind == RTE_RELATION)
-		{
-			relation = heap_open(rte->relid, NoLock);
-			if (relation->rd_cdbpolicy &&
-				relation->rd_cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
-				isdistributed = true;
-			heap_close(relation, NoLock);
-			if (isdistributed)
-				continue;
-		}
 
 		/* child rels use the same junk attrs as their parents */
 		if (rc->rti != rc->prti)
