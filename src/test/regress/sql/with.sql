@@ -350,7 +350,7 @@ WITH RECURSIVE
 -- Test WITH attached to a data-modifying statement
 --
 
-CREATE TEMPORARY TABLE y (a INTEGER);
+CREATE TEMPORARY TABLE y (a INTEGER) DISTRIBUTED RANDOMLY;
 INSERT INTO y SELECT generate_series(1, 10);
 
 WITH t AS (
