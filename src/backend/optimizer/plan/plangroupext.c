@@ -245,7 +245,8 @@ reorder_pathkeys(PlannerInfo *root,
 				break;
 		}
 
-		Assert(pos < numgrpkeys);
+		if (pos >= numgrpkeys)
+			elog(ERROR, "could not relocate path key column");
 
 		pk = (PathKey *) list_nth(pathkeys, pos);
 
