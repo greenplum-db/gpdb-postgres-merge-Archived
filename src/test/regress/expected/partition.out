@@ -3934,14 +3934,14 @@ select schemaname, tablename, indexname from pg_indexes where schemaname = 'publ
 
 alter table it add constraint it_unique_i unique (i);
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "it_i_key" for table "it"
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "it_1_prt_1_idx" for table "it_1_prt_1"
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "it_1_prt_2_idx" for table "it_1_prt_2"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "it_1_prt_1_i_key" for table "it_1_prt_1"
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "it_1_prt_2_i_key" for table "it_1_prt_2"
 select schemaname, tablename, indexname from pg_indexes where schemaname = 'public' and tablename like 'it%';
- schemaname | tablename  |   indexname    
-------------+------------+----------------
+ schemaname | tablename  |    indexname     
+------------+------------+------------------
  public     | it         | it_i_key
- public     | it_1_prt_1 | it_1_prt_1_idx
- public     | it_1_prt_2 | it_1_prt_2_idx
+ public     | it_1_prt_1 | it_1_prt_1_i_key
+ public     | it_1_prt_2 | it_1_prt_2_i_key
 (3 rows)
 
 alter table it drop constraint it_unique_i;
@@ -3962,14 +3962,14 @@ select schemaname, tablename, indexname from pg_indexes where schemaname = 'publ
 
 alter table it add primary key(i);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_pkey" for table "it"
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_1_idx" for table "it_1_prt_1"
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_2_idx" for table "it_1_prt_2"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_1_pkey" for table "it_1_prt_1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_2_pkey" for table "it_1_prt_2"
 select schemaname, tablename, indexname from pg_indexes where schemaname = 'public' and tablename like 'it%';
- schemaname | tablename  |   indexname    
-------------+------------+----------------
+ schemaname | tablename  |    indexname    
+------------+------------+-----------------
  public     | it         | it_pkey
- public     | it_1_prt_1 | it_1_prt_1_idx
- public     | it_1_prt_2 | it_1_prt_2_idx
+ public     | it_1_prt_1 | it_1_prt_1_pkey
+ public     | it_1_prt_2 | it_1_prt_2_pkey
 (3 rows)
 
 -- FIXME: dropping a primary key doesn't currently work correctly. It doesn't
@@ -3989,14 +3989,14 @@ select schemaname, tablename, indexname from pg_indexes where schemaname = 'publ
 
 alter table it add primary key(i);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_pkey" for table "it"
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_1_idx" for table "it_1_prt_1"
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_2_idx" for table "it_1_prt_2"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_1_pkey" for table "it_1_prt_1"
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "it_1_prt_2_pkey" for table "it_1_prt_2"
 select schemaname, tablename, indexname from pg_indexes where schemaname = 'public' and tablename like 'it%';
- schemaname | tablename  |   indexname    
-------------+------------+----------------
+ schemaname | tablename  |    indexname    
+------------+------------+-----------------
  public     | it         | it_pkey
- public     | it_1_prt_1 | it_1_prt_1_idx
- public     | it_1_prt_2 | it_1_prt_2_idx
+ public     | it_1_prt_1 | it_1_prt_1_pkey
+ public     | it_1_prt_2 | it_1_prt_2_pkey
 (3 rows)
 
 drop table it;
