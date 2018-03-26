@@ -1037,7 +1037,7 @@ externalgettup(FileScanDesc scan,
 	Assert(ScanDirectionIsForward(dir));
 
 	externalscan_error_context.callback = external_scan_error_callback;
-	externalscan_error_context.arg = (void *) scan->fs_pstate;
+	externalscan_error_context.arg = (void *) scan;
 	externalscan_error_context.previous = error_context_stack;
 
 	error_context_stack = &externalscan_error_context;
@@ -1162,7 +1162,7 @@ InitParseState(CopyState pstate, Relation relation,
 		/* Single row error handling */
 		pstate->cdbsreh = makeCdbSreh(rejectlimit,
 									  islimitinrows,
-									  pstate->filename,
+									  uri,
 									  (char *) pstate->cur_relname,
 									  true);
 
@@ -1415,7 +1415,8 @@ external_senddata(URL_FILE *extfile, CopyState pstate)
 static void
 external_scan_error_callback(void *arg)
 {
-	CopyState	cstate = (CopyState) arg;
+	FileScanDesc scan = (FileScanDesc) arg;
+	CopyState	cstate = scan->fs_pstate;
 	char		buffer[20];
 
 	/*
@@ -1436,7 +1437,7 @@ external_scan_error_callback(void *arg)
 		errcontext("External table %s, line %s of %s, column %s",
 				   cstate->cur_relname,
 				   linenumber_atoi(buffer, cstate->cur_lineno),
-				   cstate->filename,
+				   scan->fs_uri,
 				   cstate->cur_attname);
 	}
 	else
@@ -1452,7 +1453,7 @@ external_scan_error_callback(void *arg)
 			errcontext("External table %s, line %s of %s: \"%s\"",
 					   cstate->cur_relname,
 					   linenumber_atoi(buffer, cstate->cur_lineno),
-					   cstate->filename, line_buf);
+					   scan->fs_uri, line_buf);
 			pfree(line_buf);
 		}
 		else
@@ -1473,10 +1474,10 @@ external_scan_error_callback(void *arg)
 				errcontext("External table %s, line %s of file %s",
 						   cstate->cur_relname,
 						   linenumber_atoi(buffer, cstate->cur_lineno),
-						   cstate->filename);
+						   scan->fs_uri);
 			else
 				errcontext("External table %s, file %s",
-						   cstate->cur_relname, cstate->filename);
+						   cstate->cur_relname, scan->fs_uri);
 		}
 	}
 }
