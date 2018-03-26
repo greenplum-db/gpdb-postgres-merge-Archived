@@ -253,6 +253,13 @@ ExecHashJoin(HashJoinState *node)
 				}
 
 				/*
+				 * We just scanned the entire inner side and built the hashtable
+				 * (and its overflow batches). Check here and remember if the inner
+				 * side is empty.
+				 */
+				node->hj_InnerEmpty = (hashtable->totalTuples == 0);
+
+				/*
 				 * need to remember whether nbatch has increased since we
 				 * began scanning the outer relation
 				 */
