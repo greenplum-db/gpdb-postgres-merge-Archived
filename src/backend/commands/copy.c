@@ -3554,6 +3554,40 @@ CopyFrom(CopyState cstate)
 
 		skip_tuple = false;
 
+		/*
+		 * Initialize "insertion desc" if the target requires that. Note that
+		 * we do this (also) in the QD, even though all the data will be
+		 * inserted in the QEs, because we nevertheless need to create the
+		 * pg_aoseg rows in the QD.
+		 */
+		{
+			char		relstorage;
+
+			relstorage = RelinfoGetStorage(resultRelInfo);
+			if (relstorage == RELSTORAGE_AOROWS &&
+				resultRelInfo->ri_aoInsertDesc == NULL)
+			{
+				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+				resultRelInfo->ri_aoInsertDesc =
+					appendonly_insert_init(resultRelInfo->ri_RelationDesc,
+										   resultRelInfo->ri_aosegno, false);
+			}
+			else if (relstorage == RELSTORAGE_AOCOLS &&
+					 resultRelInfo->ri_aocsInsertDesc == NULL)
+			{
+				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+				resultRelInfo->ri_aocsInsertDesc =
+					aocs_insert_init(resultRelInfo->ri_RelationDesc,
+									 resultRelInfo->ri_aosegno, false);
+			}
+			else if (relstorage == RELSTORAGE_EXTERNAL &&
+					 resultRelInfo->ri_extInsertDesc == NULL)
+			{
+				resultRelInfo->ri_extInsertDesc =
+					external_insert_init(resultRelInfo->ri_RelationDesc);
+			}
+		}
+
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
 			/* in the QD, forward the row to the correct segment. */
@@ -3592,33 +3626,9 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
+			char		relstorage = RelinfoGetStorage(resultRelInfo);
 			List	   *recheckIndexes = NIL;
-			char		relstorage;
 			ItemPointerData insertedTid;
-
-			relstorage = RelinfoGetStorage(resultRelInfo);
-			if (relstorage == RELSTORAGE_AOROWS &&
-				resultRelInfo->ri_aoInsertDesc == NULL)
-			{
-				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
-				resultRelInfo->ri_aoInsertDesc =
-					appendonly_insert_init(resultRelInfo->ri_RelationDesc,
-										   resultRelInfo->ri_aosegno, false);
-			}
-			else if (relstorage == RELSTORAGE_AOCOLS &&
-					 resultRelInfo->ri_aocsInsertDesc == NULL)
-			{
-				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
-				resultRelInfo->ri_aocsInsertDesc =
-					aocs_insert_init(resultRelInfo->ri_RelationDesc,
-									 resultRelInfo->ri_aosegno, false);
-			}
-			else if (relstorage == RELSTORAGE_EXTERNAL &&
-					 resultRelInfo->ri_extInsertDesc == NULL)
-			{
-				resultRelInfo->ri_extInsertDesc =
-					external_insert_init(resultRelInfo->ri_RelationDesc);
-			}
 
 			/* Check the constraints of the tuple */
 			if (resultRelInfo->ri_RelationDesc->rd_att->constr)
@@ -3762,6 +3772,49 @@ CopyFrom(CopyState cstate)
 
 	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
 		SendAOTupCounts(estate);
+
+	/* update AO tuple counts */
+	if (cstate->dispatch_mode == COPY_DISPATCH)
+	{
+		for (i = estate->es_num_result_relations - 1; i >= 0; i--)
+		{
+			resultRelInfo = &estate->es_result_relations[i];
+
+			if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
+			{
+				int64 tupcount;
+
+				if (cdbCopy->aotupcounts)
+				{
+					HTAB *ht = cdbCopy->aotupcounts;
+					struct {
+						Oid relid;
+						int64 tupcount;
+					} *ao;
+					bool found;
+					Oid relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+
+					ao = hash_search(ht, &relid, HASH_FIND, &found);
+					if (found)
+						tupcount = ao->tupcount;
+					else
+						tupcount = 0;
+				}
+				else
+				{
+					tupcount = processed;
+				}
+
+				/* find out which segnos the result rels in the QE's used */
+				ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+
+				if (resultRelInfo->ri_aoInsertDesc)
+					resultRelInfo->ri_aoInsertDesc->insertCount += tupcount;
+				if (resultRelInfo->ri_aocsInsertDesc)
+					resultRelInfo->ri_aocsInsertDesc->insertCount += tupcount;
+			}
+		}
+	}
 
 	/* NB: do not pfree baseValues/baseNulls and partValues/partNulls here, since
 	 * there may be duplicate free in ExecDropSingleTupleTableSlot; if not, they
