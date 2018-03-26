@@ -6622,29 +6622,29 @@ analyze bar;
 set optimizer_segments = 3;
 set optimizer_nestloop_factor = 1.0;
 explain select foo_p.b, foo_p.t from foo_p left outer join bar on foo_p.a = bar.k  where foo_p.t is not null and foo_p.a = (array[1])[1];
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
- Gather Motion 2:1  (slice2; segments: 2)  (cost=412.08..636.60 rows=13400 width=36)
-   ->  Hash Left Join  (cost=412.08..636.60 rows=6700 width=36)
-         Hash Cond: public.foo_p.a = bar.k
-         ->  Append  (cost=0.00..23.50 rows=3 width=35)
-               ->  Seq Scan on foo_p_1_prt_other foo_p  (cost=0.00..1.00 rows=1 width=40)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-               ->  Seq Scan on foo_p_1_prt_2 foo_p  (cost=0.00..4.50 rows=1 width=34)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-               ->  Seq Scan on foo_p_1_prt_3 foo_p  (cost=0.00..4.50 rows=1 width=34)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-               ->  Seq Scan on foo_p_1_prt_4 foo_p  (cost=0.00..4.50 rows=1 width=34)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-               ->  Seq Scan on foo_p_1_prt_5 foo_p  (cost=0.00..4.50 rows=1 width=34)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-               ->  Seq Scan on foo_p_1_prt_6 foo_p  (cost=0.00..4.50 rows=1 width=34)
-                     Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
-         ->  Hash  (cost=356.25..356.25 rows=2234 width=4)
-               ->  Broadcast Motion 2:2  (slice1; segments: 2)  (cost=0.00..356.25 rows=2234 width=4)
-                     ->  Seq Scan on bar  (cost=0.00..289.25 rows=1117 width=4)
-                           Filter: k = ('{1}'::integer[])[1]
- Settings:  optimizer_segments=3
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=28.57..566.28 rows=13400 width=31)
+   ->  Hash Right Join  (cost=28.57..566.28 rows=4467 width=31)
+         Hash Cond: bar.k = public.foo_p.a
+         ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..378.58 rows=2234 width=4)
+               ->  Seq Scan on bar  (cost=0.00..289.25 rows=745 width=4)
+                     Filter: k = ('{1}'::integer[])[1]
+         ->  Hash  (cost=28.50..28.50 rows=2 width=35)
+               ->  Append  (cost=0.00..28.50 rows=2 width=35)
+                     ->  Seq Scan on foo_p_1_prt_other foo_p  (cost=0.00..1.00 rows=1 width=40)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_2 foo_p  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_3 foo_p  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_4 foo_p  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_5 foo_p  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+                     ->  Seq Scan on foo_p_1_prt_6 foo_p  (cost=0.00..5.50 rows=1 width=34)
+                           Filter: t IS NOT NULL AND a = ('{1}'::integer[])[1]
+ Optimizer: legacy query optimizer
 (21 rows)
 
 reset optimizer_segments;
