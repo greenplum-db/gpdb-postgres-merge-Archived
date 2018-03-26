@@ -348,6 +348,15 @@ ExecInsert(TupleTableSlot *slot,
 			return NULL;
 
 		/* trigger might have changed tuple */
+		if (resultRelationDesc->rd_rel->relhasoids)
+		{
+			if (TupHasHeapTuple(slot))
+			{
+				HeapTuple trigtup = TupGetHeapTuple(slot);
+
+				tuple_oid = HeapTupleGetOid(trigtup);
+			}
+		}
 	}
 
 	/* INSTEAD OF ROW INSERT Triggers */
