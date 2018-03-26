@@ -680,7 +680,7 @@ standard_ProcessUtility(Node *parsetree,
 						 */
 						relOid = DefineRelation((CreateStmt *) stmt,
 												relKind,
-												InvalidOid,
+												((CreateStmt *) stmt)->ownerid,
 												relStorage, false);
 
 						/*
@@ -738,7 +738,7 @@ standard_ProcessUtility(Node *parsetree,
 						/* Create the table itself */
 						relOid = DefineRelation((CreateStmt *) stmt,
 												RELKIND_FOREIGN_TABLE,
-												InvalidOid,
+												((CreateStmt *) stmt)->ownerid,
 												RELSTORAGE_FOREIGN,
 												true);
 						CreateForeignTable((CreateForeignTableStmt *) stmt,

@@ -757,7 +757,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 		stmt->relStorage = relstorage;
 
 		if (!OidIsValid(stmt->ownerid))
-			stmt->ownerid = GetUserId();
+			stmt->ownerid = ownerId;
 
 		oldContext = MemoryContextSwitchTo(CacheMemoryContext);
 		stmt->relation->schemaname = get_namespace_name(namespaceId);
@@ -772,7 +772,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	else
 	{
 		if (!OidIsValid(stmt->ownerid))
-			stmt->ownerid = GetUserId();
+			stmt->ownerid = ownerId;
 	}
 
 	/* MPP-8405: disallow OIDS on partitioned tables */
