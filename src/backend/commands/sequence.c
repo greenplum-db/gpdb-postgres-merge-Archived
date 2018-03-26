@@ -1038,14 +1038,8 @@ do_setval(Oid relid, int64 next, bool iscalled)
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		/* set values that will be saved in xlog */
-		seq->last_value = next;
-		seq->is_called = true;
-		seq->log_cnt = 0;
-
-		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
-		rdata[1].len = ((PageHeader) page)->pd_special -
-			((PageHeader) page)->pd_upper;
+		rdata[1].data = (char *) seqtuple.t_data;
+		rdata[1].len = seqtuple.t_len;
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
@@ -1057,6 +1051,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buf);
+
 	relation_close(seqrel, NoLock);
 }
 
