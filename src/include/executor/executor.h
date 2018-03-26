@@ -574,6 +574,7 @@ extern int64 tuple_grouping(TupleTableSlot *outerslot, int numGroupCols,
 extern uint64 get_grouping_groupid(TupleTableSlot *slot,
 								   int grping_idx);
 
+extern ResultRelInfo *targetid_get_partition(Oid targetid, EState *estate, bool openIndices);
 extern ResultRelInfo *slot_get_partition(TupleTableSlot *slot, EState *estate);
 extern ResultRelInfo *values_get_partition(Datum *values, bool *nulls,
 					 TupleDesc desc, EState *estate, bool openIndices);

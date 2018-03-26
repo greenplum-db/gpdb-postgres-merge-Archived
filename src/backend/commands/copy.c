@@ -198,8 +198,8 @@ static void SendCopyFromForwardedError(CopyState cstate, CdbCopy *cdbCopy, char 
 
 static bool NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
 								 Datum *values, bool *nulls, Oid *tupleOid);
-static bool NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
-								Datum *values, bool *nulls, Oid *tupleOid);
+static TupleTableSlot *NextCopyFromExecute(CopyState cstate, ExprContext *econtext, EState *estate,
+								Oid *tupleOid);
 static bool NextCopyFromX(CopyState cstate, ExprContext *econtext,
 						  Datum *values, bool *nulls, Oid *tupleOid);
 static void HandleCopyError(CopyState cstate);
@@ -1476,7 +1476,7 @@ ProcessCopyOptions(CopyState cstate,
 
 	if (!cstate->csv_mode && cstate->escape != NULL && strlen(cstate->escape) != 1)
 	{
-		if (pg_strcasecmp(cstate->escape, "off"))
+		if (pg_strcasecmp(cstate->escape, "off") != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("escape must be a single character, or [OFF/off] to disable escapes")));
@@ -1636,7 +1636,7 @@ ProcessCopyOptions(CopyState cstate,
 		}
 	}
 
-	if (cstate->escape != NULL && !pg_strcasecmp(cstate->escape, "off"))
+	if (cstate->escape != NULL && pg_strcasecmp(cstate->escape, "off") == 0)
 	{
 		cstate->escape_off = true;
 		/*
@@ -3200,6 +3200,8 @@ CopyFrom(CopyState cstate)
 
 	ExecOpenIndices(resultRelInfo);
 
+	resultRelInfo->ri_resultSlot = MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
+
 	estate->es_result_relations = resultRelInfo;
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
@@ -3385,133 +3387,157 @@ CopyFrom(CopyState cstate)
 		 */
 		estate->es_result_relation_info = parentResultRelInfo;
 
-		if (cstate->dispatch_mode == COPY_DISPATCH)
+		if (cstate->dispatch_mode == COPY_EXECUTOR)
 		{
-			if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid))
-				break;
-		}
-		else if (cstate->dispatch_mode == COPY_EXECUTOR)
-		{
-			if (!NextCopyFromExecute(cstate, econtext, baseValues, baseNulls, &loaded_oid))
+			slot = NextCopyFromExecute(cstate, econtext, estate, &loaded_oid);
+			if (slot == NULL)
 				break;
 
-		}
-		else
-		{
-			if (!NextCopyFrom(cstate, econtext, baseValues, baseNulls, &loaded_oid))
-				break;
-		}
-
-		if (estate->es_result_partitions)
-		{
 			/*
-			 * We might create a ResultRelInfo which needs to persist
-			 * the per tuple context.
+			 * NextCopyFromExecute set up estate->es_result_relation_info,
+			 * and stored the tuple in the correct slot.
 			 */
-			bool		success;
+			resultRelInfo = estate->es_result_relation_info;
 
-			MemoryContextSwitchTo(estate->es_query_cxt);
-
-			PG_TRY();
+			/* GPDB_91_MERGE_FIXME: We should probably keep BulkInsertState in
+			 * ResultRelInfo, so that we could keep one open for each partition
+			 * we insert to.
+			 */
+			if (resultRelInfo != parentResultRelInfo)
 			{
-				resultRelInfo = values_get_partition(baseValues, baseNulls,
-													 tupDesc, estate, true);
-				success = true;
+				MemoryContextSwitchTo(estate->es_query_cxt);
+				FreeBulkInsertState(bistate);
+				bistate = GetBulkInsertState();
+				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 			}
-			PG_CATCH();
-			{
-				/* after all the prep work let cdbsreh do the real work */
-				HandleCopyError(cstate);
-				success = false;
-			}
-			PG_END_TRY();
-
-			if (!success)
-				continue;
-
-			estate->es_result_relation_info = resultRelInfo;
-			FreeBulkInsertState(bistate);
-			bistate = GetBulkInsertState();
-		}
-		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-
-		ExecStoreVirtualTuple(baseSlot);
-
-		/*
-		 * And now we can form the input tuple.
-		 *
-		 * The resulting tuple is stored in 'slot'
-		 */
-		if (resultRelInfo->ri_partSlot != NULL)
-		{
-			AttrMap *map = resultRelInfo->ri_partInsertMap;
-			Assert(map != NULL);
-
-			slot = resultRelInfo->ri_partSlot;
-			ExecClearTuple(slot);
-			partValues = slot_get_values(resultRelInfo->ri_partSlot);
-			partNulls = slot_get_isnull(resultRelInfo->ri_partSlot);
-			MemSet(partValues, 0, attr_count * sizeof(Datum));
-			MemSet(partNulls, true, attr_count * sizeof(bool));
-
-			reconstructTupleValues(map, baseValues, baseNulls, (int) num_phys_attrs,
-								   partValues, partNulls, (int) attr_count);
-			ExecStoreVirtualTuple(slot);
 		}
 		else
 		{
-			slot = baseSlot;
-		}
-
-		if (cstate->dispatch_mode == COPY_DISPATCH)
-		{
-			GpDistributionData *part_distData;
-
-			/* lock partition */
-			if (estate->es_result_partitions)
+			if (cstate->dispatch_mode == COPY_DISPATCH)
 			{
-				part_distData = GetDistributionPolicyForPartition(
-					cstate, estate, partitionData,
-					distData->hashmap,
-					distData->p_attr_types, tupDesc,
-					slot_get_values(slot), slot_get_isnull(slot));
-
-				if (!part_distData->cdbHash)
-					part_distData = distData;
+				if (!NextCopyFromDispatch(cstate, econtext, baseValues, baseNulls, &loaded_oid))
+					break;
 			}
 			else
-				part_distData = distData;
-
-			target_seg = GetTargetSeg(part_distData, slot_get_values(slot), slot_get_isnull(slot));
-
-			/*
-			 * policy should be PARTITIONED (normal tables) or
-			 * ENTRY
-			 */
-			if (!part_distData->policy)
 			{
-				elog(FATAL, "Bad or undefined policy. (%p)", part_distData->policy);
+				if (!NextCopyFrom(cstate, econtext, baseValues, baseNulls, &loaded_oid))
+					break;
 			}
-		}
-		else if (is_check_distkey)
-		{
-			target_seg = GetTargetSeg(distData, slot_get_values(slot), slot_get_isnull(slot));
 
-			/* check distribution key if COPY FROM ON SEGMENT */
-			if (GpIdentity.segindex != target_seg)
+			if (estate->es_result_partitions)
 			{
+				/*
+				 * We might create a ResultRelInfo which needs to persist
+				 * the per tuple context.
+				 */
+				bool		success;
+
+				MemoryContextSwitchTo(estate->es_query_cxt);
+
 				PG_TRY();
 				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
-							 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
-									GpIdentity.segindex, target_seg)));
+					resultRelInfo = values_get_partition(baseValues, baseNulls,
+														 tupDesc, estate, true);
+					success = true;
 				}
 				PG_CATCH();
 				{
+					/* after all the prep work let cdbsreh do the real work */
 					HandleCopyError(cstate);
+					success = false;
 				}
 				PG_END_TRY();
+
+				if (!success)
+					continue;
+
+				estate->es_result_relation_info = resultRelInfo;
+				FreeBulkInsertState(bistate);
+				bistate = GetBulkInsertState();
+			}
+			MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+			ExecStoreVirtualTuple(baseSlot);
+
+			/*
+			 * And now we can form the input tuple.
+			 *
+			 * The resulting tuple is stored in 'slot'
+			 */
+			if (resultRelInfo->ri_partInsertMap)
+			{
+				AttrMap *map = resultRelInfo->ri_partInsertMap;
+
+				if (!resultRelInfo->ri_resultSlot)
+					resultRelInfo->ri_resultSlot =
+						MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
+
+				slot = resultRelInfo->ri_resultSlot;
+				ExecClearTuple(slot);
+				partValues = slot_get_values(resultRelInfo->ri_resultSlot);
+				partNulls = slot_get_isnull(resultRelInfo->ri_resultSlot);
+				MemSet(partValues, 0, attr_count * sizeof(Datum));
+				MemSet(partNulls, true, attr_count * sizeof(bool));
+
+				reconstructTupleValues(map, baseValues, baseNulls, (int) num_phys_attrs,
+									   partValues, partNulls, (int) attr_count);
+				ExecStoreVirtualTuple(slot);
+			}
+			else
+			{
+				slot = baseSlot;
+			}
+
+			if (cstate->dispatch_mode == COPY_DISPATCH)
+			{
+				GpDistributionData *part_distData;
+
+				/* lock partition */
+				if (estate->es_result_partitions)
+				{
+					part_distData = GetDistributionPolicyForPartition(
+						cstate, estate, partitionData,
+						distData->hashmap,
+						distData->p_attr_types, tupDesc,
+						slot_get_values(slot), slot_get_isnull(slot));
+
+					if (!part_distData->cdbHash)
+						part_distData = distData;
+				}
+				else
+					part_distData = distData;
+
+				target_seg = GetTargetSeg(part_distData, slot_get_values(slot), slot_get_isnull(slot));
+
+				/*
+				 * policy should be PARTITIONED (normal tables) or
+				 * ENTRY
+				 */
+				if (!part_distData->policy)
+				{
+					elog(FATAL, "Bad or undefined policy. (%p)", part_distData->policy);
+				}
+			}
+			else if (is_check_distkey)
+			{
+				target_seg = GetTargetSeg(distData, slot_get_values(slot), slot_get_isnull(slot));
+
+				/* check distribution key if COPY FROM ON SEGMENT */
+				if (GpIdentity.segindex != target_seg)
+				{
+					PG_TRY();
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
+								 errmsg("value of distribution key doesn't belong to segment with ID %d, it belongs to segment with ID %d",
+										GpIdentity.segindex, target_seg)));
+					}
+					PG_CATCH();
+					{
+						HandleCopyError(cstate);
+					}
+					PG_END_TRY();
+				}
 			}
 		}
 
@@ -4563,9 +4589,9 @@ NextCopyFromDispatch(CopyState cstate, ExprContext *econtext,
  * Like NextCopyFrom(), but used in the QE, when we're reading pre-processed
  * rows from the QD.
  */
-static bool
+static TupleTableSlot *
 NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
-					Datum *values, bool *nulls, Oid *tupleOid)
+					EState *estate, Oid *tupleOid)
 {
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
@@ -4575,12 +4601,17 @@ NextCopyFromExecute(CopyState cstate, ExprContext *econtext,
 	copy_from_dispatch_row frame;
 	int			r;
 	Oid			header;
+	ResultRelInfo *resultRelInfo;
+	TupleTableSlot *slot;
+	Datum	   *values;
+	bool	   *nulls;
+	MemoryContext oldcxt;
 
 retry:
 	/* sneak peek at the first Oid field to see if it's a row or an error */
 	r = CopyGetData(cstate, &header, sizeof(Oid));
 	if (r == 0)
-		return false;
+		return NULL;
 	if (r != sizeof(Oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
@@ -4592,10 +4623,6 @@ retry:
 		goto retry;
 	}
 
-	tupDesc = RelationGetDescr(cstate->rel);
-	attr = tupDesc->attrs;
-	num_phys_attrs = tupDesc->natts;
-
 	frame.relid = header;
 	r = CopyGetData(cstate, ((char *) &frame) + sizeof(Oid), sizeof(frame) - sizeof(Oid));
 	if (r != sizeof(frame) - sizeof(Oid))
@@ -4603,11 +4630,44 @@ retry:
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("unexpected EOF in COPY data")));
 
+	if (!OidIsValid(frame.relid))
+		elog(ERROR, "invalid target relation id in tuple frame received from QD");
+
+	/*
+	 * Look up the correct partition
+	 */
+	oldcxt = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	resultRelInfo = estate->es_result_relation_info;
+	if (frame.relid != RelationGetRelid(resultRelInfo->ri_RelationDesc))
+	{
+		resultRelInfo = targetid_get_partition(frame.relid, estate, true);
+		estate->es_result_relation_info = resultRelInfo;
+	}
+
+	if (!resultRelInfo->ri_resultSlot)
+		resultRelInfo->ri_resultSlot =
+			MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
+	slot = resultRelInfo->ri_resultSlot;
+
+	tupDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+	attr = tupDesc->attrs;
+	num_phys_attrs = tupDesc->natts;
+
+	MemoryContextSwitchTo(oldcxt);
+
 	/* check for overflowing fields */
 	if (frame.fld_count < 0 || frame.fld_count > num_phys_attrs)
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("extra data after last expected column")));
+
+	/* Initialize all values for row to NULL */
+	ExecClearTuple(slot);
+	values = slot_get_values(resultRelInfo->ri_resultSlot);
+	nulls = slot_get_isnull(resultRelInfo->ri_resultSlot);
+	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
+	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 
 	/* Read the OID field if present */
 	if (file_has_oids)
@@ -4627,10 +4687,6 @@ retry:
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					 errmsg("unexpected OID received in COPY data")));
-
-	/* Initialize all values for row to NULL */
-	MemSet(values, 0, num_phys_attrs * sizeof(Datum));
-	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 
 	cstate->cur_lineno = frame.lineno;
 
@@ -4706,7 +4762,9 @@ retry:
 	 * in the QD.
 	 */
 
-	return true;
+	ExecStoreVirtualTuple(slot);
+
+	return slot;
 }
 
 static void

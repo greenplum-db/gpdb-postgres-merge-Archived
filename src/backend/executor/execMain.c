@@ -2435,12 +2435,6 @@ CloseResultRelInfo(ResultRelInfo *resultRelInfo)
 		ExecClearTuple(resultRelInfo->ri_resultSlot);
 	}
 
-	if (resultRelInfo->ri_partSlot)
-	{
-		Assert(resultRelInfo->ri_partInsertMap); /* paired with slot */
-		ExecDropSingleTupleTableSlot(resultRelInfo->ri_partSlot);
-	}
-
 	if (resultRelInfo->ri_PartitionParent)
 		relation_close(resultRelInfo->ri_PartitionParent, AccessShareLock);
 
@@ -4303,11 +4297,7 @@ static ResultRelInfo *
 get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc,
 		 bool openIndices)
 {
-	ResultRelInfo *parentInfo = estate->es_result_relation_info;
-	ResultRelInfo *childInfo = estate->es_result_relation_info;
 	Oid			targetid;
-	bool		found;
-	ResultPartHashEntry *entry;
 
 	/* add a short term memory context if one wasn't assigned already */
 	Assert(estate->es_partition_state != NULL &&
@@ -4323,6 +4313,17 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc,
 		ereport(ERROR,
 				(errcode(ERRCODE_NO_PARTITION_FOR_PARTITIONING_KEY),
 				 errmsg("no partition for partitioning key")));
+
+	return targetid_get_partition(targetid, estate, openIndices);
+}
+
+ResultRelInfo *
+targetid_get_partition(Oid targetid, EState *estate, bool openIndices)
+{
+	ResultRelInfo *parentInfo = estate->es_result_relation_info;
+	ResultRelInfo *childInfo = estate->es_result_relation_info;
+	ResultPartHashEntry *entry;
+	bool		found;
 
 	if (parentInfo->ri_partition_hash == NULL)
 	{
@@ -4369,10 +4370,6 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc,
 					   childInfo->ri_RelationDesc,
 					   &(childInfo->ri_partInsertMap),
 					   TRUE); /* throw on error, so result not needed */
-
-		if (childInfo->ri_partInsertMap)
-			childInfo->ri_partSlot =
-				MakeSingleTupleTableSlot(childInfo->ri_RelationDesc->rd_att);
 	}
 	return childInfo;
 }
