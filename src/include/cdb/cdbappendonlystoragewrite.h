@@ -95,7 +95,7 @@ typedef struct AppendOnlyStorageWrite
 	 */
 	int64		startEof;
 
-	RelFileNode relFileNode;
+	RelFileNodeBackend relFileNode;
 	int32		segmentFileNum;
 
 	/*
@@ -184,14 +184,14 @@ extern void AppendOnlyStorageWrite_FinishSession(AppendOnlyStorageWrite *storage
 
 extern void AppendOnlyStorageWrite_TransactionCreateFile(AppendOnlyStorageWrite *storageWrite,
 											 char *filePathName,
-											 RelFileNode *relFileNode,
+											 RelFileNodeBackend *relFileNode,
 											 int32 segmentFileNum);
 extern void AppendOnlyStorageWrite_OpenFile(AppendOnlyStorageWrite *storageWrite,
 								char *filePathName,
 								int version,
 								int64 logicalEof,
 								int64 fileLen_uncompressed,
-								RelFileNode *relFileNode,
+								RelFileNodeBackend *relFileNode,
 								int32 segmentFileNum);
 extern void AppendOnlyStorageWrite_FlushAndCloseFile(AppendOnlyStorageWrite *storageWrite,
 											 int64 *newLogicalEof,

@@ -41,6 +41,7 @@ extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
 
 extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
 					char **dir, char **filename);
+extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
 
 /* First argument is a RelFileNodeBackend */
 #define relpath(rnode, forknum) \
@@ -49,6 +50,9 @@ extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber
 /* First argument is a RelFileNode */
 #define relpathperm(rnode, forknum) \
 		relpathbackend((rnode), InvalidBackendId, (forknum))
+
+#define aorelpath(rnode, segno) \
+		aorelpathbackend((rnode).node, (rnode).backend, (segno))
 
 extern bool IsSystemRelation(Relation relation);
 extern bool IsToastRelation(Relation relation);

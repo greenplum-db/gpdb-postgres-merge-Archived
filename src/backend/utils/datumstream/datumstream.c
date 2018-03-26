@@ -782,7 +782,8 @@ destroy_datumstreamread(DatumStreamRead * ds)
 
 
 void
-datumstreamwrite_open_file(DatumStreamWrite * ds, char *fn, int64 eof, int64 eofUncompressed, RelFileNode relFileNode, int32 segmentFileNum, int version)
+datumstreamwrite_open_file(DatumStreamWrite *ds, char *fn, int64 eof, int64 eofUncompressed,
+						   RelFileNodeBackend relFileNode, int32 segmentFileNum, int version)
 {
 	ds->eof = eof;
 	ds->eofUncompress = eofUncompressed;

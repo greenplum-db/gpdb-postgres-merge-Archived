@@ -652,7 +652,8 @@ ReadNext:
 static void
 OpenAOCSDatumStreams(AOCSInsertDesc desc)
 {
-	char	   *basepath = relpathbackend(desc->aoi_rel->rd_node, desc->aoi_rel->rd_backend, MAIN_FORKNUM);
+	RelFileNodeBackend rnode;
+	char	   *basepath;
 	char		fn[MAXPGPATH];
 	int32		fileSegNo;
 
@@ -700,6 +701,10 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 
 	desc->rowCount = seginfo->total_tupcount;
 
+	rnode.node = desc->aoi_rel->rd_node;
+	rnode.backend = desc->aoi_rel->rd_backend;
+	basepath = relpath(rnode, MAIN_FORKNUM);
+
 	for (i = 0; i < nvp; ++i)
 	{
 		AOCSVPInfoEntry *e = getAOCSVPEntry(seginfo, i);
@@ -708,7 +713,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 		Assert(strlen(fn) + 1 <= MAXPGPATH);
 
 		datumstreamwrite_open_file(desc->ds[i], fn, e->eof, e->eof_uncompressed,
-								   desc->aoi_rel->rd_node,
+								   rnode,
 								   fileSegNo, seginfo->formatversion);
 	}
 
@@ -1757,7 +1762,7 @@ void
 aocs_addcol_newsegfile(AOCSAddColumnDesc desc,
 					   AOCSFileSegInfo *seginfo,
 					   char *basepath,
-					   RelFileNode relfilenode)
+					   RelFileNodeBackend relfilenode)
 {
 	int32		fileSegNo;
 	char		fn[MAXPGPATH];

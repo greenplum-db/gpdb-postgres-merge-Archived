@@ -312,20 +312,13 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * If isRedo is true, it's okay for the file to exist already.
  */
 void
-mdcreate_ao(RelFileNode rnode, int32 segmentFileNum, bool isRedo)
+mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 {
 	char	   *path;
 	char		buf[MAXPGPATH];
 	File		fd;
 
-	path = relpathbackend(rnode, InvalidBackendId, MAIN_FORKNUM);
-
-	if (segmentFileNum != 0)
-	{
-		snprintf(buf, MAXPGPATH, "%s.%d", path, segmentFileNum);
-		pfree(path);
-		path = buf;
-	}
+	path = aorelpath(rnode, segmentFileNum);
 
 	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 

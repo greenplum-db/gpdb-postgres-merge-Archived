@@ -423,11 +423,16 @@ errdetail_appendonly_insert_block_header(AppendOnlyInsertDesc aoInsertDesc)
 static void
 SetCurrentFileSegForWrite(AppendOnlyInsertDesc aoInsertDesc)
 {
+	RelFileNodeBackend rnode;
+
 	FileSegInfo *fsinfo;
 	int64		eof;
 	int64		eof_uncompressed;
 	int64		varblockcount;
 	int32		fileSegNo;
+
+	rnode.node = aoInsertDesc->aoi_rel->rd_node;
+	rnode.backend = aoInsertDesc->aoi_rel->rd_backend;
 
 	/* Make the 'segment' file name */
 	MakeAOSegmentFileName(aoInsertDesc->aoi_rel,
@@ -484,7 +489,7 @@ SetCurrentFileSegForWrite(AppendOnlyInsertDesc aoInsertDesc)
 	{
 		AppendOnlyStorageWrite_TransactionCreateFile(&aoInsertDesc->storageWrite,
 													 aoInsertDesc->appendFilePathName,
-													 &aoInsertDesc->aoi_rel->rd_node,
+													 &rnode,
 													 aoInsertDesc->cur_segno);
 	}
 
@@ -496,7 +501,7 @@ SetCurrentFileSegForWrite(AppendOnlyInsertDesc aoInsertDesc)
 									aoInsertDesc->fsInfo->formatversion,
 									eof,
 									eof_uncompressed,
-									&aoInsertDesc->aoi_rel->rd_node,
+									&rnode,
 									aoInsertDesc->cur_segno);
 
 	/* reset counts */

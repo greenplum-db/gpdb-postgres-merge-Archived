@@ -280,6 +280,30 @@ reldir_and_filename(RelFileNode node, BackendId backend, ForkNumber forknum,
 }
 
 /*
+ * Like relpathbackend(), but more convenient when dealing with
+ * AO relations. The filename pattern is the same as for heap
+ * tables, but this variant takes also 'segno' as argument.
+ */
+char *
+aorelpathbackend(RelFileNode node, BackendId backend, int32 segno)
+{
+	char	   *fullpath;
+	char	   *path;
+
+	path = relpathbackend(node, backend, MAIN_FORKNUM);
+	if (segno == 0)
+		fullpath = path;
+	else
+	{
+		/* be sure we have enough space for the '.segno' */
+		fullpath = (char *) palloc(strlen(path) + 12);
+		sprintf(fullpath, "%s.%u", path, segno);
+		pfree(path);
+	}
+	return fullpath;
+}
+
+/*
  * GetDatabasePath			- construct path to a database dir
  *
  * Result is a palloc'd string.

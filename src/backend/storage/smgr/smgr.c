@@ -283,7 +283,7 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  *		already because we are in a WAL replay sequence.
  */
 void
-smgrcreate_ao(RelFileNode rnode, int32 segmentFileNum, bool isRedo)
+smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 {
 	mdcreate_ao(rnode, segmentFileNum, isRedo);
 }

@@ -60,12 +60,11 @@ AOSegmentFilePathNameLen(Relation rel)
  * The filepathname parameter assume sufficient space.
  */
 void
-FormatAOSegmentFileName(
-							char *basepath, 
-							int segno, 
-							int col, 
-							int32 *fileSegNo,
-							char *filepathname)
+FormatAOSegmentFileName(char *basepath,
+						int segno,
+						int col,
+						int32 *fileSegNo,
+						char *filepathname)
 {
 	int	pseudoSegNo;
 	

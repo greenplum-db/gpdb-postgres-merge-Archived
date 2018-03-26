@@ -5735,8 +5735,13 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 			 * Create new segfiles for new columns for current
 			 * appendonly segment.
 			 */
+			RelFileNodeBackend rnode;
+
+			rnode.node = rel->rd_node;
+			rnode.backend = rel->rd_backend;
+
 			aocs_addcol_newsegfile(idesc, segInfos[segi],
-								   basepath, rel->rd_node);
+								   basepath, rnode);
 
 			ATAocsWriteNewColumns(idesc, sdesc, tab, econtext, slot);
 		}
