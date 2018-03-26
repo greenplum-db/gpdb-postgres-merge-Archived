@@ -43,15 +43,9 @@ contents.sort()
 return ", ".join(contents)
 $$ LANGUAGE plpythonu;
 select module_contents();
-<<<<<<< HEAD
-                                                     module_contents                                                      
---------------------------------------------------------------------------------------------------------------------------
- Error, Fatal, SPIError, debug, error, execute, fatal, info, log, notice, prepare, spiexceptions, subtransaction, warning
-=======
                                                                            module_contents                                                                            
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Error, Fatal, SPIError, debug, error, execute, fatal, info, log, notice, prepare, quote_ident, quote_literal, quote_nullable, spiexceptions, subtransaction, warning
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 (1 row)
 
 CREATE FUNCTION elog_test() RETURNS void

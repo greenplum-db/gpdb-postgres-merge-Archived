@@ -1,21 +1,12 @@
-<<<<<<< HEAD
 -- We will update on fname, so we can't have it as a distribution key,
 -- which in turn means it can't be part of a primary key
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 CREATE TABLE users (
 	fname text not null,
 	lname text not null,
 	username text,
-<<<<<<< HEAD
 	userid serial
-	-- , PRIMARY KEY(lname, fname) 
+	-- , PRIMARY KEY(lname, fname)
 	) DISTRIBUTED BY (userid);
-=======
-	userid serial,
-	PRIMARY KEY(lname, fname)
-	) ;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 CREATE INDEX users_username_idx ON users(username);
 CREATE INDEX users_fname_idx ON users(fname);

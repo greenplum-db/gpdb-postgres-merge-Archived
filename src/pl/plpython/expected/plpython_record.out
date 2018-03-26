@@ -297,17 +297,11 @@ SELECT * FROM test_in_out_params('test_in');
 (1 row)
 
 SELECT * FROM test_in_out_params_multi('test_in');
-<<<<<<< HEAD
-ERROR:  length of returned sequence did not match number of columns in row
-CONTEXT:  while creating return value
-PL/Python function "test_in_out_params_multi"
-=======
            second           |           third            
 ----------------------------+----------------------------
  test_in_record_in_to_out_1 | test_in_record_in_to_out_2
 (1 row)
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 SELECT * FROM test_inout_params('test_in');
      first     
 ---------------

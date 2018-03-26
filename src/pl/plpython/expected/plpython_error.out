@@ -32,11 +32,7 @@ CREATE FUNCTION sql_syntax_error() RETURNS text
 'plpy.execute("syntax error")'
         LANGUAGE plpythonu;
 SELECT sql_syntax_error();
-<<<<<<< HEAD
-ERROR:  plpy.SPIError: syntax error at or near "syntax"
-=======
 ERROR:  spiexceptions.SyntaxError: syntax error at or near "syntax"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 LINE 1: syntax error
         ^
 QUERY:  syntax error
@@ -64,11 +60,7 @@ CREATE FUNCTION exception_index_invalid_nested() RETURNS text
 return rv[0]'
 	LANGUAGE plpythonu;
 SELECT exception_index_invalid_nested();
-<<<<<<< HEAD
-ERROR:  plpy.SPIError: function test5(unknown) does not exist
-=======
 ERROR:  spiexceptions.UndefinedFunction: function test5(unknown) does not exist
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 LINE 1: SELECT test5('foo')
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
@@ -91,11 +83,7 @@ return None
 '
 	LANGUAGE plpythonu;
 SELECT invalid_type_uncaught('rick');
-<<<<<<< HEAD
-ERROR:  plpy.SPIError: type "test" does not exist
-=======
 ERROR:  spiexceptions.UndefinedObject: type "test" does not exist
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "invalid_type_uncaught", line 3, in <module>
     SD["plan"] = plpy.prepare(q, [ "test" ])
@@ -120,10 +108,6 @@ return None
 	LANGUAGE plpythonu;
 SELECT invalid_type_caught('rick');
 NOTICE:  type "test" does not exist
-<<<<<<< HEAD
-=======
-CONTEXT:  PL/Python function "invalid_type_caught"
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  invalid_type_caught 
 ---------------------
  
