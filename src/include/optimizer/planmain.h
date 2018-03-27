@@ -123,6 +123,7 @@ extern bool contain_group_id(Node *node);
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
+extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan,
 				  List *subrtable, List *subrowmark);

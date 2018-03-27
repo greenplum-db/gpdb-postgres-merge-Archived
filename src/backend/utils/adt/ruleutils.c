@@ -3893,7 +3893,10 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
 		if (!tle)
+		{
 			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+			return NULL;
+		}
 
 		Assert(netlevelsup == 0);
 		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
@@ -3970,7 +3973,8 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	}
 	else
 	{
-		elog(ERROR, "bogus varno: %d", var->varno);
+		elog(WARNING, "bogus varno: %d", var->varno);
+		return psprintf("<BOGUS %d>", var->varattno);
 		return NULL;			/* keep compiler quiet */
 	}
 
@@ -4178,7 +4182,10 @@ get_name_for_var_field(Var *var, int fieldno,
 
 		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
 		if (!tle)
+		{
 			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+			return NULL;
+		}
 
 		Assert(netlevelsup == 0);
 		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
@@ -4210,7 +4217,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	}
 	else
 	{
-		elog(ERROR, "bogus varno: %d", var->varno);
+		elog(WARNING, "bogus varno: %d", var->varno);
+		return psprintf("<BOGUS %d>", var->varattno);
 		return NULL;			/* keep compiler quiet */
 	}
 

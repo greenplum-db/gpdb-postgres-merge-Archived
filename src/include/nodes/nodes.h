@@ -335,6 +335,7 @@ typedef enum NodeTag
 
     /* Tags for MPP planner nodes (relation.h) */
     T_CdbMotionPath = 580,
+	T_PartitionSelectorPath,
     T_CdbRelColumnInfo,
 
 	/*
