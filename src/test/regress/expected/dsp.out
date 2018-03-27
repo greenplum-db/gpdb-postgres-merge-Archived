@@ -872,6 +872,7 @@ Format options: delimiter '	' null E'\\N' escape E'\\'
 External options: {}
 External location: file:///tmp/test.txt
 Execute on: all segments
+Has OIDs: no
 
 create external table ext_t2 (a int, b int)
     location ('file:///tmp/test.txt') format 'text'
@@ -891,6 +892,7 @@ External location: file:///tmp/test.txt
 Execute on: all segments
 Segment reject limit: 100 rows
 Error Log in File
+Has OIDs: no
 
 drop external table ext_t1;
 drop external table ext_t2;
