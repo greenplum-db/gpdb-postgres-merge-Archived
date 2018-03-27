@@ -11687,7 +11687,7 @@ copy_append_only_data(RelFileNode src, RelFileNode dst, BackendId backendid, cha
 	/*
 	 * Get the directory and base filename of the data file.
 	 */
-	reldir_and_filename(src, MAIN_FORKNUM, backendid, &srcdir, &srcfilename);
+	reldir_and_filename(src, backendid, MAIN_FORKNUM, &srcdir, &srcfilename);
 	srcfiledot = psprintf("%s.", srcfilename);
 	dstpath = relpathbackend(dst, backendid, MAIN_FORKNUM);
 
