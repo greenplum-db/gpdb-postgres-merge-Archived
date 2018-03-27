@@ -713,7 +713,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 		Assert(strlen(fn) + 1 <= MAXPGPATH);
 
 		datumstreamwrite_open_file(desc->ds[i], fn, e->eof, e->eof_uncompressed,
-								   rnode,
+								   &rnode,
 								   fileSegNo, seginfo->formatversion);
 	}
 
@@ -1795,7 +1795,7 @@ aocs_addcol_newsegfile(AOCSAddColumnDesc desc,
 		Assert(strlen(fn) + 1 <= MAXPGPATH);
 		datumstreamwrite_open_file(desc->dsw[i], fn,
 								   0 /* eof */ , 0 /* eof_uncompressed */ ,
-								   relfilenode, fileSegNo,
+								   &relfilenode, fileSegNo,
 								   version);
 		desc->dsw[i]->blockFirstRowNum = 1;
 	}
