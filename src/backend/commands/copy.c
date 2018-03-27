@@ -1017,11 +1017,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 							   stmt->ao_segnos);
 		cstate->range_table = range_table;
 
-		if (cstate->on_segment && stmt->filename == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("STDIN and STDOUT are not supported by 'COPY ON SEGMENT'")));
-
 		/*
 		 * Error handling setup
 		 */
@@ -2128,6 +2123,11 @@ BeginCopyTo(Relation rel,
 	if (cstate->on_segment && Gp_role == GP_ROLE_DISPATCH)
 	{
 		/* in ON SEGMENT mode, we don't open anything on the dispatcher. */
+
+		if (filename == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("STDOUT is not supported by 'COPY ON SEGMENT'")));
 	}
 	else if (pipe)
 	{
@@ -3981,6 +3981,11 @@ BeginCopyFrom(Relation rel,
 	if (cstate->on_segment && Gp_role == GP_ROLE_DISPATCH)
 	{
 		/* open nothing */
+
+		if (filename == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("STDIN is not supported by 'COPY ON SEGMENT'")));
 	}
 	else if (data_source_cb)
 	{
