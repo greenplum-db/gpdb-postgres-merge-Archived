@@ -5253,18 +5253,17 @@ check_gp_hashagg_default_nbatches(int *newval, void **extra, GucSource source)
  * Malloc a new string representing current storage_opts.
  */
 static char *
-storageOptToString(void)
+storageOptToString(const StdRdOptions *ao_opts)
 {
 	StringInfoData buf;
 	char	   *ret;
-	const StdRdOptions *ao_opts = currentAOStorageOptions();
 
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "%s=%s", SOPT_APPENDONLY,
 					 ao_opts->appendonly ? "true" : "false");
 	appendStringInfo(&buf, ",%s=%d,", SOPT_BLOCKSIZE,
 					 ao_opts->blocksize);
-	if (ao_opts->compresstype)
+	if (ao_opts->compresstype[0])
 	{
 		appendStringInfo(&buf, "%s=%s,", SOPT_COMPTYPE,
 						 ao_opts->compresstype);
@@ -5323,7 +5322,6 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 			newopts_datum = parseAOStorageOpts(*newval, &aovalue);
 			parse_validate_reloptions(&newopts, newopts_datum,
 									  /* validate */ true, RELOPT_KIND_HEAP);
-			newopts.appendonly = aovalue;
 			validateAppendOnlyRelOptions(
 				newopts.appendonly,
 				newopts.blocksize,
@@ -5333,6 +5331,7 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 				newopts.checksum,
 				RELKIND_RELATION,
 				newopts.columnstore);
+			newopts.appendonly = aovalue;
 		}
 
 		/*
@@ -5345,6 +5344,10 @@ check_gp_default_storage_options(char **newval, void **extra, GucSource source)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		memcpy(*extra, &newopts, sizeof(StdRdOptions));
+
+		free(*newval);
+		*newval = NULL;
+		*newval = storageOptToString(&newopts);
 
 		result = true;
 	}
