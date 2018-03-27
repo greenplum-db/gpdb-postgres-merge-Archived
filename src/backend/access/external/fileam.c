@@ -846,9 +846,12 @@ externalgettup_defined(FileScanDesc scan)
 					  scan->nulls,
 					  &loaded_oid))
 	{
+		MemoryContextSwitchTo(oldcontext);
 		scan->fs_inited = false;
 		return NULL;
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 
 	/* convert to heap tuple */
 
@@ -859,7 +862,6 @@ externalgettup_defined(FileScanDesc scan)
 	 */
 	tuple = heap_form_tuple(scan->fs_tupDesc, scan->values, scan->nulls);
 
-	MemoryContextSwitchTo(oldcontext);
 	return tuple;
 }
 
