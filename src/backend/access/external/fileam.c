@@ -797,6 +797,10 @@ externalgettup_defined(FileScanDesc scan)
 	HeapTuple	tuple = NULL;
 	CopyState	pstate = scan->fs_pstate;
 	Oid			loaded_oid;
+	MemoryContext oldcontext;
+
+	MemoryContextReset(pstate->rowcontext);
+	oldcontext = MemoryContextSwitchTo(pstate->rowcontext);
 
 	/* on first time around just throw the header line away */
 	if (pstate->header_line && pstate->bytesread > 0)
@@ -854,7 +858,8 @@ externalgettup_defined(FileScanDesc scan)
 	 * right decision here.
 	 */
 	tuple = heap_form_tuple(scan->fs_tupDesc, scan->values, scan->nulls);
-	MemoryContextReset(pstate->rowcontext);
+
+	MemoryContextSwitchTo(oldcontext);
 	return tuple;
 }
 
