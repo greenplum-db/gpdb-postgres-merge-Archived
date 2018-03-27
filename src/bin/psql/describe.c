@@ -4664,6 +4664,10 @@ listExtensionContents(const char *pattern)
 	PGresult   *res;
 	int			i;
 
+	/*
+	 * In PostgreSQL, extension support added in 9.1, but it was backported
+	 * to GPDB 5, which is based on 8.3.
+	 */
 	if (pset.sversion < 80300)
 	{
 		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
@@ -4672,10 +4676,10 @@ listExtensionContents(const char *pattern)
 	}
 
 	/*
-	 * GPDB_91_MERGE_FIXME: We don't have the pg_desribe_object function,
-	 * needed for \dx+, in GPDB yet. We will get it when we merge with
-	 * PostgreSQL 9.1 (or if we decide to cherry-pick it earlier). Until
-	 * then, print the same as plain \dx does.
+	 * The pg_desribe_object function is is needed \dx+. It was introduced
+	 * in PostgreSQL 9.1. That means that GPDB 5 didn't have it, even though
+	 * extensions support was backported. If we can't use pg_describe_object,
+	 * print the same as plain \dx does.
 	 */
 	if (pset.sversion < 90100)
 	{
