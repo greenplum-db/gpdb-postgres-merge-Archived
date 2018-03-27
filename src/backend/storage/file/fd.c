@@ -2451,7 +2451,18 @@ RemovePgTempRelationFilesInDbspace(const char *dbspacedirname)
 	FreeDir(dbspace_dir);
 }
 
-/* t<digits>_<digits>, or t<digits>_<digits>_<forkname> */
+/*
+ * In PostgreSQL, the pattern is:
+ *
+ * t<digits>_<digits>, or t<digits>_<digits>_<forkname>
+ *
+ * In GPDB, however, we leave out the first <digits>. In PostgreSQL it's
+ * used for the backend ID, but we don't use that in GPDB because even
+ * temporary relation are kept in shared buffers, and need to be accessible
+ * from multiple backends. So the pattern in GPDB is:
+ *
+ * t_<digits>, or t<digits>_<digits>_<forkname>
+ */
 static bool
 looks_like_temp_rel_name(const char *name)
 {
@@ -2462,11 +2473,10 @@ looks_like_temp_rel_name(const char *name)
 	if (name[0] != 't')
 		return false;
 
-	/* Followed by a non-empty string of digits and then an underscore. */
-	for (pos = 1; isdigit((unsigned char) name[pos]); ++pos)
-		;
-	if (pos == 1 || name[pos] != '_')
+	/* Followed by underscode. */
+	if (name[1] != '_')
 		return false;
+	pos = 1;
 
 	/* Followed by another nonempty string of digits. */
 	for (savepos = ++pos; isdigit((unsigned char) name[pos]); ++pos)
