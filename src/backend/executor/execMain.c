@@ -4064,7 +4064,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 									 false);
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, reloptions, true);
-	AlterTableCreateToastTable(intoRelationId, reloptions, false);
+	AlterTableCreateToastTable(intoRelationId, reloptions, false, true);
 	AlterTableCreateAoSegTable(intoRelationId, false);
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
 

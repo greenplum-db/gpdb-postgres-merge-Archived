@@ -4973,7 +4973,7 @@ ATAddToastIfNeeded(List **wqueue)
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
-			AlterTableCreateToastTable(tab->relid, (Datum) 0, is_part);
+			AlterTableCreateToastTable(tab->relid, (Datum) 0, is_part, false /* is_create */);
 		}
 	}
 }

@@ -53,9 +53,14 @@ static bool needs_toast_table(Relation rel);
  * We expect the caller to have verified that the relation is a table and have
  * already done any necessary permission checks.  Callers expect this function
  * to end with CommandCounterIncrement if it makes any changes.
+ *
+ * If 'is_create' is true, we are creating the toast table for a new table,
+ * rather than adding it to an existing one. The difference is that the
+ * caller is expected to already hold an AccessExclusiveLock, if we're
+ * creating a new table.
  */
 void
-AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child, bool is_create)
 {
 	Relation	rel;
 
@@ -63,9 +68,16 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child)
 	 * Grab a DDL-exclusive lock on the target table, since we'll update the
 	 * pg_class tuple.	This is redundant for all present users.  Tuple
 	 * toasting behaves safely in the face of a concurrent TOAST table add.
+	 *
+	 * When we're creating a new table, we should already hold an AccessExclusiveLock
+	 * on it. It may seem silly to acquire a *stronger* lock in that, case, but
+	 * the idea is that it's cheaper to hold an AccessExclusiveLock twice, rather
+	 * than both an AccessExlusiveLock and a ShareUpdateExclusiveLock.
 	 */
 	if (is_part_child)
 		rel = heap_open(relOid, NoLock);
+	else if (is_create)
+		rel = heap_open(relOid, AccessExclusiveLock);
 	else
 		rel = heap_open(relOid, ShareUpdateExclusiveLock);
 

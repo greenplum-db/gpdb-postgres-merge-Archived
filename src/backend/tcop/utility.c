@@ -705,7 +705,8 @@ standard_ProcessUtility(Node *parsetree,
 
 							AlterTableCreateToastTable(relOid,
 													   toast_options,
-													   cstmt->is_part_child);
+													   cstmt->is_part_child,
+													   true);
 							AlterTableCreateAoSegTable(relOid,
 													   cstmt->is_part_child);
 

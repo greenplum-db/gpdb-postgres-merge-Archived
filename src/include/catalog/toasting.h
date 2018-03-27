@@ -18,7 +18,7 @@
  * toasting.c prototypes
  */
 extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
-									   bool is_part_child);
+									   bool is_part_child, bool is_create);
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 
