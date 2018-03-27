@@ -2651,56 +2651,66 @@ ExecContextForcesOids(PlanState *planstate, bool *hasoids)
 void
 SendAOTupCounts(EState *estate)
 {
+	StringInfoData buf;
+	ResultRelInfo *resultRelInfo;
+	int			i;
+	List	   *all_ao_rels = NIL;
+	ListCell   *lc;
+
 	/*
 	 * If we're inserting into partitions, send tuple counts for
 	 * AO tables back to the QD.
 	 */
-	if (Gp_role == GP_ROLE_EXECUTE && estate->es_result_partitions)
+	if (Gp_role != GP_ROLE_EXECUTE || !estate->es_result_partitions)
+		return;
+
+	resultRelInfo = estate->es_result_relations;
+	for (i = 0; i < estate->es_num_result_relations; i++)
 	{
-		StringInfoData buf;
-		ResultRelInfo *resultRelInfo;
-		int aocount = 0;
-		int i;
+		resultRelInfo = &estate->es_result_relations[i];
 
-		resultRelInfo = estate->es_result_relations;
-		for (i = 0; i < estate->es_num_result_relations; i++)
+		if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
+			all_ao_rels = lappend(all_ao_rels, resultRelInfo);
+
+		if (resultRelInfo->ri_partition_hash)
 		{
-			if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-				aocount++;
+			HASH_SEQ_STATUS hash_seq_status;
+			ResultPartHashEntry *entry;
 
-			resultRelInfo++;
-		}
-
-		if (aocount)
-		{
-			if (Debug_appendonly_print_insert)
-				ereport(LOG,(errmsg("QE sending tuple counts of %d partitioned "
-									"AO relations... ", aocount)));
-
-			pq_beginmessage(&buf, 'o');
-			pq_sendint(&buf, aocount, 4);
-
-			resultRelInfo = estate->es_result_relations;
-			for (i = 0; i < estate->es_num_result_relations; i++)
+			hash_seq_init(&hash_seq_status, resultRelInfo->ri_partition_hash);
+			while ((entry = hash_seq_search(&hash_seq_status)) != NULL)
 			{
-				if (relstorage_is_ao(RelinfoGetStorage(resultRelInfo)))
-				{
-					Oid relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-					uint64 tupcount = resultRelInfo->ri_aoprocessed;
-
-					pq_sendint(&buf, relid, 4);
-					pq_sendint64(&buf, tupcount);
-
-					if (Debug_appendonly_print_insert)
-						ereport(LOG,(errmsg("sent tupcount " INT64_FORMAT " for "
-											"relation %d", tupcount, relid)));
-
-				}
-				resultRelInfo++;
+				if (relstorage_is_ao(RelinfoGetStorage(&entry->resultRelInfo)))
+					all_ao_rels = lappend(all_ao_rels, &entry->resultRelInfo);
 			}
-			pq_endmessage(&buf);
 		}
 	}
+
+	if (!all_ao_rels)
+		return;
+
+	if (Debug_appendonly_print_insert)
+		ereport(LOG,(errmsg("QE sending tuple counts of %d partitioned "
+							"AO relations... ", list_length(all_ao_rels))));
+
+	pq_beginmessage(&buf, 'o');
+	pq_sendint(&buf, list_length(all_ao_rels), 4);
+
+	foreach(lc, all_ao_rels)
+	{
+		resultRelInfo = (ResultRelInfo *) lfirst(lc);
+		Oid			relid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+		uint64		tupcount = resultRelInfo->ri_aoprocessed;
+
+		pq_sendint(&buf, relid, 4);
+		pq_sendint64(&buf, tupcount);
+
+		if (Debug_appendonly_print_insert)
+			ereport(LOG,(errmsg("sent tupcount " INT64_FORMAT " for "
+								"relation %d", tupcount, relid)));
+
+	}
+	pq_endmessage(&buf);
 }
 
 /* ----------------------------------------------------------------

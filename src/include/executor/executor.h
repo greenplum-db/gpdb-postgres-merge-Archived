@@ -67,7 +67,7 @@ struct ChunkTransportState;             /* #include "cdb/cdbinterconnect.h" */
 #define ExecEvalExpr(expr, econtext, isNull, isDone) \
 	((*(expr)->evalfunc) (expr, econtext, isNull, isDone))
 
-#define RelinfoGetStorage(relinfo) relinfo->ri_RelationDesc->rd_rel->relstorage
+#define RelinfoGetStorage(relinfo) ((relinfo)->ri_RelationDesc->rd_rel->relstorage)
 
 /*
  * Indicate whether an executor node is running in the slice

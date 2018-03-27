@@ -403,6 +403,7 @@ ExecInsert(TupleTableSlot *slot,
 
 			mtuple = ExecFetchSlotMemTuple(slot, false);
 			newId = appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, tuple_oid, (AOTupleId *) &lastTid);
+			(resultRelInfo->ri_aoprocessed)++;
 		}
 		else if (rel_is_aocols)
 		{
@@ -435,7 +436,6 @@ ExecInsert(TupleTableSlot *slot,
 
 			newId = external_insert(resultRelInfo->ri_extInsertDesc, tuple);
 			ItemPointerSetInvalid(&lastTid);
-			(resultRelInfo->ri_aoprocessed)++;
 		}
 		else
 		{
