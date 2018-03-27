@@ -59,6 +59,7 @@
 #include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
+#include "utils/memutils.h"
 
 
 /* Globally visible state variables */
@@ -925,12 +926,23 @@ execute_extension_script(CreateExtensionStmt *stmt,
 		AtEOXact_GUC(true, save_nestlevel);
 		if (Gp_role == GP_ROLE_DISPATCH && stmt != NULL)
 		{
-			/* We must reset QE CurrentExtensionObject to InvalidOid */
+			/*
+			 * We must reset QE CurrentExtensionObject to InvalidOid.
+			 *
+			 * Doing heavy operations like this during exception processing
+			 * is not very cool. Let's at least get out of ErrorContext, to
+			 * leave that free for actual error processing. (Besides, the
+			 * error handling in dispatcher will hit an assertion in
+			 * CopyErrorData(), if another error happens while we're already
+			 * in ErrorContext.)
+			 */
+			MemoryContext oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 			stmt->create_ext_state = CREATE_EXTENSION_END;
 			CdbDispatchUtilityStatement((Node *) stmt,
 										DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
 										GetAssignedOidsForDispatch(),
 										NULL);
+			MemoryContextSwitchTo(oldcxt);
 		}
 		PG_RE_THROW();
 	}
@@ -1520,10 +1532,10 @@ CreateExtension(CreateExtensionStmt *stmt)
 	/*
 	 * Execute the installation script file.
 	 *
-	 * In the QD, dispatch the command to segments first, to create the extension
-	 * object. In the QE, *only* create the extension object, not actual that
-	 * are part of the extension. When we create those objects in the QD, we
-	 * will dispatch separate CREATE commands for each.
+	 * In the QD, dispatch the command to segments first, to create the
+	 * extension object. In the QE, *only* create the extension object, not
+	 * the objects that are part of the extension. When we create those
+	 * objects in the QD, we will dispatch separate CREATE commands for each.
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
