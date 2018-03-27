@@ -623,7 +623,7 @@ calculate_indexes_size(Oid relOid)
 			if (RelationIsValid(idxRel))
 			{
 				for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-					size += calculate_relation_size(rel, forkNum);
+					size += calculate_relation_size(idxRel, forkNum);
 
 				relation_close(idxRel, AccessShareLock);
 			}
