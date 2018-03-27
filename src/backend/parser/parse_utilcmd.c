@@ -2322,7 +2322,7 @@ fillin_encoding(List *list)
 	if (foundCompressType == false && cmplevel == NULL)
 	{
 		/* No compression option specified, use current defaults. */
-		arg = ao_opts->compresstype ?
+		arg = ao_opts->compresstype[0] ?
 				pstrdup(ao_opts->compresstype) : "none";
 		el = makeDefElem("compresstype", (Node *) makeString(arg));
 		retList = lappend(retList, el);
@@ -2348,7 +2348,7 @@ fillin_encoding(List *list)
 			 * compresslevel.  Therefore, choose default compresstype
 			 * if configured, otherwise use zlib.
 			 */
-			if (ao_opts->compresstype &&
+			if (ao_opts->compresstype[0] &&
 				strcmp(ao_opts->compresstype, "none") != 0)
 			{
 				arg = pstrdup(ao_opts->compresstype);

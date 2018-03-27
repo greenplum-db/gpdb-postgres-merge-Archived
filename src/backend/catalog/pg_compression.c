@@ -485,7 +485,7 @@ default_column_encoding_clause(void)
 {
 	const StdRdOptions *ao_opts = currentAOStorageOptions();
 	DefElem *e1, *e2, *e3;
-	if (ao_opts->compresstype)
+	if (ao_opts->compresstype[0])
 	{
 		e1 = makeDefElem("compresstype",
 						 (Node *)makeString(pstrdup(ao_opts->compresstype)));
