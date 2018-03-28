@@ -2135,7 +2135,6 @@ describeOneTableDetails(const char *schemaname,
 				}
 				PQclear(res);
 			}
-			add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace, true);
 		}
 
 		PQclear(result);
