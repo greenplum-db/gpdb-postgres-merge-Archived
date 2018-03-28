@@ -6887,7 +6887,15 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
 
 	if (recurse)
-		cmd->subtype = AT_AddColumnRecurse;
+	{
+		if (cmd->subtype == AT_AddColumn || cmd->subtype == AT_AddColumnRecurse)
+			cmd->subtype = AT_AddColumnRecurse;
+		else if (cmd->subtype == AT_AddOids || cmd->subtype == AT_AddOidsRecurse)
+			cmd->subtype = AT_AddOidsRecurse;
+		else
+			elog(ERROR, "unexpected ALTER TABLE subtype %d in ADD COLUMN command",
+				 cmd->subtype);
+	}
 
 	/* GPDB_91_MERGE_FIXME: I don't know if this is still needed or not.
 	 * Perhaps not, because of the new way OIDs are dispatched. We'll see when
