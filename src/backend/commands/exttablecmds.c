@@ -856,15 +856,18 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 
 		initStringInfo(&cfbuf);
 
-		/* +1 leaves room for sprintf's trailing null */
-		appendStringInfo(&cfbuf, "delimiter %s", quote_literal_cstr(cstate->delim));
-		appendStringInfo(&cfbuf, " null %s", quote_literal_cstr(cstate->null_print));
-		if (cstate->escape[0])
-			appendStringInfo(&cfbuf, " escape %s", quote_literal_cstr(cstate->escape));
-		else
-			appendStringInfo(&cfbuf, " escape 'off'");
+		/*
+		 * NOTE: These are intentionally not escaped "correctly"! For
+		 * historical reasons, these options are stored in a weird format
+		 * that looks like they're SQL literals, but the escaping is
+		 * different. See comments in escape_fmtopts_string(), in
+		 * src/bin/pg_dump/dumputils.c.
+		 */
+		appendStringInfo(&cfbuf, "delimiter '%s'", cstate->delim);
+		appendStringInfo(&cfbuf, " null '%s'", cstate->null_print);
+		appendStringInfo(&cfbuf, " escape '%s'", cstate->escape);
 		if (fmttype_is_csv(formattype))
-			appendStringInfo(&cfbuf, " quote %s", quote_literal_cstr(cstate->quote));
+			appendStringInfo(&cfbuf, " quote '%s'", cstate->quote);
 		if (cstate->header_line)
 			appendStringInfo(&cfbuf, " header");
 		if (cstate->fill_missing)
