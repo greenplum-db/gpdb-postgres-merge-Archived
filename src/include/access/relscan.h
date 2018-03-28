@@ -121,6 +121,8 @@ typedef struct FileScanDescData
 	HeapTupleData fs_ctup;		/* current tuple in scan, if any */
 
 	/* custom data formatter */
+	FmgrInfo   *fs_custom_formatter_func; /* function to convert to custom format */
+	List	   *fs_custom_formatter_params; /* list of defelems that hold user's format parameters */
 	FormatterData *fs_formatter;
 
 	/* external partition */

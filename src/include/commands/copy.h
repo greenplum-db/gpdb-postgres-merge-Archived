@@ -122,9 +122,6 @@ typedef struct CopyStateData
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
 	FmgrInfo   *enc_conversion_proc; /* conv proc from exttbl encoding to 
 										server or the other way around */
-	FmgrInfo   *custom_formatter_func; /* function to convert to custom format */
-	char	   *custom_formatter_name; /* name of function to convert to custom format */
-	List	   *custom_formatter_params; /* list of defelems that hold user's format parameters */
 	size_t		bytesread;
 
 	/* parameters from the COPY command */
@@ -138,7 +135,6 @@ typedef struct CopyStateData
 	bool		is_program;		/* is 'filename' a program to popen? */
 	copy_data_source_cb data_source_cb; /* function for reading data */
 	void	   *data_source_cb_extra;
-	bool		custom;			/* custom format? */
 	bool		oids;			/* include OIDs? */
 	bool        binary;         /* binary format */
 	bool		csv_mode;		/* Comma Separated Value format? */

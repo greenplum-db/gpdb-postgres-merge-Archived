@@ -2211,6 +2211,17 @@ BeginCopyToForExternalTable(Relation extrel, List *options)
 	 */
 	cstate->copy_dest = COPY_CALLBACK;
 
+	/*
+	 * Some more initialization, that in the normal COPY TO codepath, is done
+	 * in CopyTo() itself.
+	 */
+	cstate->null_print_client = cstate->null_print;		/* default */
+	if (cstate->need_transcoding)
+		cstate->null_print_client = pg_server_to_custom(cstate->null_print,
+														cstate->null_print_len,
+														cstate->file_encoding,
+														cstate->enc_conversion_proc);
+
 	return cstate;
 }
 
