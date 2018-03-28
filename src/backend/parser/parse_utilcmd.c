@@ -1487,11 +1487,13 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	List  	   *likeDistributedBy = NIL;
 	bool	    bQuiet = false;	/* shut up transformDistributedBy messages */
 	bool		iswritable = stmt->iswritable;
-	
+
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
+	memset(&cxt, 0, sizeof(CreateStmtContext));
+	cxt.pstate = pstate;
 	cxt.stmtType = "CREATE EXTERNAL TABLE";
 	cxt.relation = stmt->relation;
 	cxt.inhRelations = NIL;
