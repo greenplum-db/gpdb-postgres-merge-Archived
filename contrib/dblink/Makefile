@@ -10,7 +10,6 @@ EXTENSION = dblink
 DATA = dblink--1.0.sql dblink--unpackaged--1.0.sql
 
 REGRESS = dblink
-REGRESS_OPTS = --init-file=$(top_builddir)/src/test/regress/init_file
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -23,9 +22,4 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-installcheck: prepare_dblink_sql
-
-prepare_dblink_sql:
-	cp $(GPHOME)/share/postgresql/contrib/dblink.sql ./dblink.sql
-
-.PHONY: prepare_dblink_sql
+REGRESS_OPTS += --init-file=$(top_builddir)/src/test/regress/init_file

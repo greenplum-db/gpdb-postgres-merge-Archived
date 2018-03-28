@@ -165,48 +165,26 @@ RETURNS text
 AS 'MODULE_PATHNAME','dblink_current_query'
 LANGUAGE C;
 
-<<<<<<< HEAD:contrib/dblink/dblink.sql.in
 -- GPDB does not support these functions correctly
--- CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
+-- CREATE FUNCTION dblink_send_query(text, text)
 -- RETURNS int4
 -- AS 'MODULE_PATHNAME', 'dblink_send_query'
 -- LANGUAGE C STRICT;
-
--- CREATE OR REPLACE FUNCTION dblink_is_busy(text)
+--
+-- CREATE FUNCTION dblink_is_busy(text)
 -- RETURNS int4
 -- AS 'MODULE_PATHNAME', 'dblink_is_busy'
 -- LANGUAGE C STRICT;
-
--- CREATE OR REPLACE FUNCTION dblink_get_result(text)
+--
+-- CREATE FUNCTION dblink_get_result(text)
 -- RETURNS SETOF record
 -- AS 'MODULE_PATHNAME', 'dblink_get_result'
 -- LANGUAGE C STRICT;
-
--- CREATE OR REPLACE FUNCTION dblink_get_result(text, bool)
+--
+-- CREATE FUNCTION dblink_get_result(text, bool)
 -- RETURNS SETOF record
 -- AS 'MODULE_PATHNAME', 'dblink_get_result'
 -- LANGUAGE C STRICT;
-=======
-CREATE FUNCTION dblink_send_query(text, text)
-RETURNS int4
-AS 'MODULE_PATHNAME', 'dblink_send_query'
-LANGUAGE C STRICT;
-
-CREATE FUNCTION dblink_is_busy(text)
-RETURNS int4
-AS 'MODULE_PATHNAME', 'dblink_is_busy'
-LANGUAGE C STRICT;
-
-CREATE FUNCTION dblink_get_result(text)
-RETURNS SETOF record
-AS 'MODULE_PATHNAME', 'dblink_get_result'
-LANGUAGE C STRICT;
-
-CREATE FUNCTION dblink_get_result(text, bool)
-RETURNS SETOF record
-AS 'MODULE_PATHNAME', 'dblink_get_result'
-LANGUAGE C STRICT;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687:contrib/dblink/dblink--1.0.sql
 
 CREATE FUNCTION dblink_get_connections()
 RETURNS text[]
