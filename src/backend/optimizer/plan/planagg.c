@@ -101,6 +101,12 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 		return;
 
 	/*
+	 * Reject if disabled by caller.
+	 */
+	if (!root->config->gp_enable_minmax_optimization)
+		return;
+
+	/*
 	 * We also restrict the query to reference exactly one table, since join
 	 * conditions can't be handled reasonably.  (We could perhaps handle a
 	 * query containing cartesian-product joins, but it hardly seems worth the

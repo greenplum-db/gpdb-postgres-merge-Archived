@@ -1689,8 +1689,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (result_plan != NULL)
 		{
 			/*
-			 * optimize_minmax_aggregates generated the full plan, with
-			 * the right tlist, and it has no sort order.
+			 * optimize_minmax_aggregates generated the full plan, with the
+			 * right tlist, and it has no sort order.
 			 */
 			current_pathkeys = NIL;
 			mark_plan_entry(result_plan);
