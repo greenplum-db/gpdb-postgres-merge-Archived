@@ -42,12 +42,7 @@ typedef struct FtsProbeInfo
 typedef struct FtsControlBlock
 {
 	LWLockId	ControlLock;
-
-	bool		ftsReadOnlyFlag;
-	bool		ftsAdminRequestedRO;
-
 	FtsProbeInfo fts_probe_info;
-
 }	FtsControlBlock;
 
 extern volatile FtsProbeInfo *ftsProbeInfo;
@@ -55,22 +50,12 @@ extern volatile FtsProbeInfo *ftsProbeInfo;
 extern int	FtsShmemSize(void);
 extern void FtsShmemInit(void);
 
-extern bool FtsTestConnection(CdbComponentDatabaseInfo *db_to_test, bool full_scan);
-extern void FtsReConfigureMPP(bool create_new_gangs);
-extern void FtsHandleNetFailure(SegmentDatabaseDescriptor **, int);
+extern bool FtsIsSegmentUp(CdbComponentDatabaseInfo *dBInfo);
 extern bool FtsTestSegmentDBIsDown(SegmentDatabaseDescriptor *, int);
 
 extern bool verifyFtsSyncCount(void);
-extern void FtsCondSetTxnReadOnly(bool *);
 extern void ftsLock(void);
 extern void ftsUnlock(void);
-
 extern void FtsNotifyProber(void);
-
-extern bool isFtsReadOnlySet(void);
 extern uint8 getFtsVersion(void);
-
-/* markStandbyStatus forces persistent state change ?! */
-#define markStandbyStatus(dbid, state) (markSegDBPersistentState((dbid), (state)))
-
 #endif   /* CDBFTS_H */

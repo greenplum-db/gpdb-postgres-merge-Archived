@@ -326,8 +326,6 @@ extern int	gp_connections_per_thread; /* GUC var - server operating mode.  */
  */
 extern int32 gp_subtrans_warn_limit;
 
-extern bool gp_set_read_only;
-
 extern const char *role_to_string(GpRoleValue role);
 
 extern int	gp_segment_connect_timeout; /* GUC var - timeout specifier for gang creation */

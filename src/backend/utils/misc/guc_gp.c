@@ -444,6 +444,7 @@ bool 		optimizer_parallel_union;
 bool		optimizer_array_constraints;
 bool		optimizer_cte_inlining;
 bool		optimizer_enable_space_pruning;
+bool		optimizer_enable_associativity;
 
 /* Analyze related GUCs for Optimizer */
 bool		optimizer_analyze_root_partition;
@@ -1196,17 +1197,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&gp_cost_hashjoin_chainwalk,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"gp_set_read_only", PGC_SUSET, GP_ARRAY_CONFIGURATION,
-			gettext_noop("Sets the system read only"),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_set_read_only,
 		false,
 		NULL, NULL, NULL
 	},
@@ -3054,6 +3044,15 @@ struct config_bool ConfigureNamesBool_gp[] =
 		&gp_ignore_error_table,
 		false,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"optimizer_enable_associativity", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables Join Associativity in optimizer"),
+			NULL
+		},
+		&optimizer_enable_associativity,
+		false, NULL, NULL
 	},
 
 	/* End-of-list marker */

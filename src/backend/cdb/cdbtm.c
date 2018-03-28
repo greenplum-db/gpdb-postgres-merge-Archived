@@ -778,7 +778,7 @@ doNotifyingCommitPrepared(void)
 
 	copyDirectDispatchFromTransaction(&direct);
 
-	Assert(currentGxact->state == DTX_STATE_FORCED_COMMITTED);
+	Assert(currentGxact->state == DTX_STATE_INSERTED_COMMITTED);
 	setCurrentGxactState(DTX_STATE_NOTIFYING_COMMIT_PREPARED);
 
 	if (strlen(currentGxact->gid) >= TMGIDSIZE)
@@ -1213,7 +1213,6 @@ rollbackDtxTransaction(void)
 				 currentGxact->gid);
 			break;
 
-		case DTX_STATE_FORCED_COMMITTED:
 		case DTX_STATE_NOTIFYING_COMMIT_PREPARED:
 		case DTX_STATE_INSERTING_COMMITTED:
 		case DTX_STATE_INSERTED_COMMITTED:
@@ -1473,13 +1472,6 @@ initTM(void)
 			 */
 			PG_TRY();
 			{
-				/*
-				 * FtsNotifyProber could throw ERROR, so we should catch it if
-				 * it happens.
-				 */
-				if (!first)
-					FtsNotifyProber();
-
 				initTM_recover_as_needed();
 				succeeded = true;
 			}
@@ -2267,21 +2259,6 @@ insertedDistributedCommitted(void)
 	setCurrentGxactState(DTX_STATE_INSERTED_COMMITTED);
 }
 
-
-/*
- * Change state to DTX_STATE_FORCED_COMMITTED.
- */
-void
-forcedDistributedCommitted(XLogRecPtr *recptr)
-{
-	elog(DTM_DEBUG5,
-		 "forcedDistributedCommitted entering in state = %s for gid = %s (xlog record %X/%X)",
-		 DtxStateToString(currentGxact->state), currentGxact->gid, recptr->xlogid, recptr->xrecoff);
-
-	Assert(currentGxact->state == DTX_STATE_INSERTED_COMMITTED);
-	setCurrentGxactState(DTX_STATE_FORCED_COMMITTED);
-}
-
 /* generate global transaction id */
 static DistributedTransactionId
 generateGID(void)
@@ -2334,30 +2311,7 @@ getMaxDistributedXid(void)
 static void
 recoverTM(void)
 {
-	bool		dtmRecoveryDeferred;
-
 	elog(DTM_DEBUG3, "Starting to Recover DTM...");
-
-	/*
-	 * do not do recovery if read only mode is set. in this case, there may be
-	 * in-doubt transaction in down segdb , which will not be resolved at this
-	 * time.
-	 */
-	if (isFtsReadOnlySet())
-	{
-		elog(DTM_DEBUG3, "FTS is Read Only.  Defer DTM recovery till later.");
-		if (currentGxact != NULL)
-		{
-			elog(DTM_DEBUG5,
-				 "recoverTM setting currentGxact to NULL for gid = %s (index = %d)",
-				 currentGxact->gid, currentGxact->debugIndex);
-		}
-		currentGxact = NULL;
-
-		dtmRecoveryDeferred = true;
-	}
-	else
-		dtmRecoveryDeferred = false;
 
 	if (Gp_role == GP_ROLE_UTILITY)
 	{
@@ -2365,19 +2319,14 @@ recoverTM(void)
 		return;
 	}
 
-	if (!dtmRecoveryDeferred)
-	{
-		/*
-		 * Attempt to recover all in-doubt transactions.
-		 *
-		 * first resolve all in-doubt transactions from the DTM's perspective
-		 * and then resolve any remaining in-doubt transactions that the RMs
-		 * have.
-		 */
-		recoverInDoubtTransactions();
-	}
-	else
-		elog(LOG, "DTM starting in readonly-mode: deferring recovery");
+	/*
+	 * Attempt to recover all in-doubt transactions.
+	 *
+	 * first resolve all in-doubt transactions from the DTM's perspective
+	 * and then resolve any remaining in-doubt transactions that the RMs
+	 * have.
+	 */
+	recoverInDoubtTransactions();
 
 	/* finished recovery successfully. */
 
