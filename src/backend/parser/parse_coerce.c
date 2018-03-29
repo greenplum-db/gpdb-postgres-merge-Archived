@@ -623,9 +623,10 @@ coerce_unknown_var(ParseState *pstate, Var *var,
             /* Make a new Var for the caller */
             if (joinvar->vartype != UNKNOWNOID)
             {
-                var = (Var *)copyObject(var);
+                var = (Var *) copyObject(var);
                 var->vartype = joinvar->vartype;
                 var->vartypmod = joinvar->vartypmod;
+				var->varcollid = joinvar->varcollid;
             }
             break;
         }
@@ -666,6 +667,7 @@ coerce_unknown_var(ParseState *pstate, Var *var,
                 var = (Var *)copyObject(var);
                 var->vartype = exprtype;
                 var->vartypmod = exprTypmod(targetexpr);
+				var->varcollid = exprCollation(targetexpr);
             }
             break;
 		}
