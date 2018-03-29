@@ -5419,17 +5419,17 @@ set_config_option(const char *name, const char *value,
 		return false;
 	}
 
-        /*
-         * Check if option can be set by the user.
-         */
-        if (record->flags & GUC_DISALLOW_USER_SET)
+	/*
+	 * Check if option can be set by the user.
+	 */
+	if (record->flags & GUC_DISALLOW_USER_SET)
  	{
-              /* Only print a warning in the dispatch or utility mode */
-          if (changeVal)
-  	          if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
-	              elog(WARNING, "\"%s\": can not be set by the user and will be ignored.", name);
-	      return true;
-        }  /* end if (record->flags & GUC_DISALLOW_USER_SET) */
+		/* Only print a warning in the dispatch or utility mode */
+		if (changeVal)
+			if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
+				elog(WARNING, "\"%s\": can not be set by the user and will be ignored.", name);
+		return true;
+	}  /* end if (record->flags & GUC_DISALLOW_USER_SET) */
 
 	/*
 	 * If source is postgresql.conf, mark the found record with
@@ -5567,90 +5567,6 @@ set_config_option(const char *name, const char *value,
 			elog(WARNING, "\"%s\": setting is ignored because it is defunct",
 				 name);
 		return true;
-	}
-
-	/*
-	 * Disallow changing GUC_NOT_WHILE_SEC_REST values if we are inside a
-	 * security restriction context.  We can reject this regardless of
-	 * the GUC context or source, mainly because sources that it might be
-	 * reasonable to override for won't be seen while inside a function.
-	 *
-	 * Note: variables marked GUC_NOT_WHILE_SEC_REST should usually be marked
-	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
-	 * An exception might be made if the reset value is assumed to be "safe".
-	 *
-	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".  We need to prohibit changing these inside a local userid
-	 * context because when we exit it, GUC won't be notified, leaving things
-	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
-	 * but that would change behavior in possibly-undesirable ways.)  Also,
-	 * we prohibit changing these in a security-restricted operation because
-	 * otherwise RESET could be used to regain the session user's privileges.
-	 */
-	if (record->flags & GUC_NOT_WHILE_SEC_REST)
-	{
-		if (InLocalUserIdChange())
-		{
-			/*
-			 * Phrasing of this error message is historical, but it's the
-			 * most common case.
-			 */
-			ereport(elevel,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("cannot set parameter \"%s\" within security-definer function",
-							name)));
-			return false;
-		}
-		if (InSecurityRestrictedOperation())
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
-							name)));
-			return false;
-		}
-	}
-
-	/*
-	 * Disallow changing GUC_NOT_WHILE_SEC_REST values if we are inside a
-	 * security restriction context.  We can reject this regardless of
-	 * the GUC context or source, mainly because sources that it might be
-	 * reasonable to override for won't be seen while inside a function.
-	 *
-	 * Note: variables marked GUC_NOT_WHILE_SEC_REST should usually be marked
-	 * GUC_NO_RESET_ALL as well, because ResetAllOptions() doesn't check this.
-	 * An exception might be made if the reset value is assumed to be "safe".
-	 *
-	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".  We need to prohibit changing these inside a local userid
-	 * context because when we exit it, GUC won't be notified, leaving things
-	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
-	 * but that would change behavior in possibly-undesirable ways.)  Also,
-	 * we prohibit changing these in a security-restricted operation because
-	 * otherwise RESET could be used to regain the session user's privileges.
-	 */
-	if (record->flags & GUC_NOT_WHILE_SEC_REST)
-	{
-		if (InLocalUserIdChange())
-		{
-			/*
-			 * Phrasing of this error message is historical, but it's the
-			 * most common case.
-			 */
-			ereport(elevel,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("cannot set parameter \"%s\" within security-definer function",
-							name)));
-			return false;
-		}
-		if (InSecurityRestrictedOperation())
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("cannot set parameter \"%s\" within security-restricted operation",
-							name)));
-			return false;
-		}
 	}
 
 	/*
