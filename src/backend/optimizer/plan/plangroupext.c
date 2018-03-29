@@ -408,6 +408,38 @@ plan_grouping_extension(PlannerInfo *root,
 	context.canonical_rollups = NIL;
 	context.curr_grpset_no = 0;
 
+	/*
+	 * GPDB_91_MERGE_FIXME: The code in this file assumes that there is a
+	 * one-to-one mapping between the pathkeys in root->group_pathkeys, and
+	 * the grpColIdx array. However, that is not necessarily so. group_pathkeys
+	 * is originally generated from root->parse->groupClause, just like the
+	 * grpColIdx array. However, if there are unnecessary entries in
+	 * group_pathkeys, the planner will eliminate them. For example, in this
+	 * query (from the regression suite):
+	 *
+	 * select cn,sum(qty) from sale group by rollup(cn,vn) having vn=10;
+	 *
+	 * The 'vn' is a constant for any matching rows, therefore there is no
+	 * need to sort on that column. The planner recognizes this, and
+	 * eliminates it from group_pathkeys.
+	 *
+	 * To work around that problem, we negate any such optimization here, by
+	 * reconstructing group_pathkeys with all the redundant columns present.
+	 * That's pretty lame, but makes the tests pass.
+	 */
+	if (context.numGroupCols != list_length(root->group_pathkeys))
+	{
+		root->group_pathkeys =
+			make_pathkeys_for_groupclause(root,
+										  root->parse->groupClause,
+										  tlist);
+
+		/* now they really should match. */
+		if (context.numGroupCols != list_length(root->group_pathkeys))
+			elog(ERROR, "different number grouping path keys (%d) vs grouping columns (%d)",
+				 list_length(root->group_pathkeys), context.numGroupCols);
+	}
+
 	/**
 	 * MPP-8358 - we don't handle certain situations in group extension correctly.
 	 */
@@ -671,7 +703,8 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 			/* Add sort node if needed, and set AggStrategy */
 			if (root->parse->groupClause)
 			{
-				group_pathkeys = reorder_pathkeys(root, root->group_pathkeys,
+				group_pathkeys = reorder_pathkeys(root,
+												  root->group_pathkeys,
 												  orig_grpColIdx,
 												  groupColIdx);
 				if (!pathkeys_contained_in(group_pathkeys,

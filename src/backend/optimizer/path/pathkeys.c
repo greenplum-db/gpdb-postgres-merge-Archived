@@ -1359,23 +1359,29 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
  *	 a list of GroupClauses or GroupingClauses.
  *
  * Note: similar to make_pathkeys_for_sortclauses, the result is NOT in
- * canonical form.
+ * canonical form. However, if the same column appears twice anywhere in
+ * the grouping clause or withing grouping sets, only one PathKey is
+ * generated for it.
  */
-List *
-make_pathkeys_for_groupclause(PlannerInfo *root,
-							  List *groupclause,
-							  List *tlist)
-{
-	List	   *pathkeys = NIL;
-	ListCell   *l;
 
-	List	   *sub_pathkeys = NIL;
+typedef struct
+{
+	PlannerInfo *root;
+	List	   *tlist;
+	Bitmapset *used_refs;
+	List	   *result;
+} pathkeys_for_groupclause_context;
+
+static void
+make_pathkeys_for_groupclause_recurse(pathkeys_for_groupclause_context *cxt,
+									  List *groupclause)
+{
+	ListCell   *l;
 
 	foreach(l, groupclause)
 	{
 		Expr	   *sortkey;
 		PathKey    *pathkey;
-
 		Node	   *node = lfirst(l);
 
 		if (node == NULL)
@@ -1385,40 +1391,53 @@ make_pathkeys_for_groupclause(PlannerInfo *root,
 		{
 			SortGroupClause *sortcl = (SortGroupClause *) node;
 
-			sortkey = (Expr *) get_sortgroupclause_expr(sortcl, tlist);
-			Assert(OidIsValid(sortcl->sortop));
-			pathkey = make_pathkey_from_sortop(root,
-											   sortkey,
-											   sortcl->sortop,
-											   sortcl->nulls_first,
-											   sortcl->tleSortGroupRef,
-											   true,
-											   false);
+			if (!bms_is_member(sortcl->tleSortGroupRef, cxt->used_refs))
+			{
+				sortkey = (Expr *) get_sortgroupclause_expr(sortcl, cxt->tlist);
+				Assert(OidIsValid(sortcl->sortop));
+				pathkey = make_pathkey_from_sortop(cxt->root,
+												   sortkey,
+												   sortcl->sortop,
+												   sortcl->nulls_first,
+												   sortcl->tleSortGroupRef,
+												   true,
+												   false);
 
-			/*
-			 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might
-			 * replace it with a longer sublist later.
-			 */
-			pathkeys = lappend(pathkeys, pathkey);
+				/*
+				 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might
+				 * replace it with a longer sublist later.
+				 */
+				cxt->result = lappend(cxt->result, pathkey);
+				cxt->used_refs = bms_add_member(cxt->used_refs, sortcl->tleSortGroupRef);
+			}
 		}
 		else if (IsA(node, List))
 		{
-			pathkeys = list_concat(pathkeys,
-						   make_pathkeys_for_groupclause(root, (List *) node,
-														 tlist));
+			make_pathkeys_for_groupclause_recurse(cxt, (List *) node);
 		}
 		else if (IsA(node, GroupingClause))
 		{
-			sub_pathkeys =
-				list_concat(sub_pathkeys,
-							make_pathkeys_for_groupclause(root, ((GroupingClause *) node)->groupsets,
-														  tlist));
+			make_pathkeys_for_groupclause_recurse(cxt,
+												  ((GroupingClause *) node)->groupsets);
 		}
 	}
+}
 
-	pathkeys = list_concat(pathkeys, sub_pathkeys);
+List *
+make_pathkeys_for_groupclause(PlannerInfo *root,
+							  List *groupclause,
+							  List *tlist)
+{
+	pathkeys_for_groupclause_context cxt;
 
-	return pathkeys;
+	cxt.root = root;
+	cxt.tlist = tlist;
+	cxt.used_refs = NULL;
+	cxt.result = NIL;
+
+	make_pathkeys_for_groupclause_recurse(&cxt, groupclause);
+
+	return cxt.result;
 }
 
 /****************************************************************************
