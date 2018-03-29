@@ -1625,15 +1625,16 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		}
 
 		/*
-		 * If are connected in utility mode, disallow PREPARE TRANSACTION statements.
+		 * If are connected in utility mode, disallow PREPARE TRANSACTION
+		 * statements.
 		 */
-                TransactionStmt *transStmt = (TransactionStmt *)parsetree;
-		if (Gp_role == GP_ROLE_UTILITY && IsA(parsetree, TransactionStmt) && transStmt->kind == TRANS_STMT_PREPARE)
+		TransactionStmt *transStmt = (TransactionStmt *) parsetree;
+		if (Gp_role == GP_ROLE_UTILITY && IsA(parsetree, TransactionStmt) &&
+			transStmt->kind == TRANS_STMT_PREPARE)
 		{
-		  ereport( ERROR
-			   , (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			    errmsg("PREPARE TRANSACTION is not supported in utility mode"))
-			 );
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PREPARE TRANSACTION is not supported in utility mode")));
 		}
 
 		/*
