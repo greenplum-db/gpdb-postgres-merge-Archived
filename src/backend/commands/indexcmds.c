@@ -258,10 +258,16 @@ DefineIndex(RangeVar *heapRelation,
 	Snapshot	snapshot;
 	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
-	bool		shouldDispatch = Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode();
+	bool		shouldDispatch;
 	List	   *dispatch_oids;
 	char	   *altconname = stmt ? stmt->altconname : NULL;
 	int			i;
+
+	if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode() &&
+		!is_alter_table)
+		shouldDispatch = true;
+	else
+		shouldDispatch = false;
 
 	/*
 	 * count attributes in index
@@ -506,7 +512,7 @@ DefineIndex(RangeVar *heapRelation,
 					  accessMethodName, accessMethodId,
 					  amcanorder, isconstraint);
 
-	if (shouldDispatch)
+	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		if ((primary || unique) && rel->rd_cdbpolicy)
 			checkPolicyForUniqueIndex(rel,

@@ -8275,10 +8275,6 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	Assert(IsA(stmt, IndexStmt));
 
-	/* The index should already be built if we are a QE */
-	if (Gp_role == GP_ROLE_EXECUTE)
-		return;
-
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
 	/* skip index build if phase 3 will have to rewrite table anyway */
