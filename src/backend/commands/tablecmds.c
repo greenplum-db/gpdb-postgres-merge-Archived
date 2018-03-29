@@ -8312,27 +8312,26 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	if (Gp_role == GP_ROLE_DISPATCH &&
 		rel_is_partitioned(RelationGetRelid(rel)))
 	{
-		List *children = find_all_inheritors(RelationGetRelid(rel), NoLock, NULL);
-		ListCell *lc;
-		bool prefix_match = false;
-		char *pname = RelationGetRelationName(rel);
-		char *iname = stmt->idxname ? stmt->idxname : "idx";
-		DestReceiver *dest = None_Receiver;
+		List	   *children;
+		ListCell   *lc;
+		bool		prefix_match = false;
+		char	   *pname = RelationGetRelationName(rel);
+		char	   *iname = stmt->idxname;
 
 		/* is the parent relation name a prefix of the index name? */
-		if (strlen(iname) > strlen(pname) &&
+		if (iname && strlen(iname) > strlen(pname) &&
 			strncmp(pname, iname, strlen(pname)) == 0)
 			prefix_match = true;
 
+		children = find_all_inheritors(RelationGetRelid(rel), NoLock, NULL);
 		foreach(lc, children)
 		{
-			Oid relid = lfirst_oid(lc);
-			Relation crel;
+			Oid			relid = lfirst_oid(lc);
+			Relation	crel;
 			IndexStmt *istmt;
 			AlterTableStmt *ats;
 			AlterTableCmd *atc;
-			RangeVar *rv;
-			char *idxname;
+			RangeVar   *rv;
 
 			if (relid == RelationGetRelid(rel))
 				continue;
@@ -8347,28 +8346,35 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			rv = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 							  get_rel_name(relid), -1);
 			istmt->relation = rv;
-			if (prefix_match)
+			if (iname)
 			{
-				/* 
-				 * If the next character in the index name is '_', absorb
-				 * it, as ChooseRelationName() will add another.
-				 */
-				int off = 0;
-				if (iname[strlen(pname)] == '_')
-					off = 1;
-				idxname = ChooseRelationName(RelationGetRelationName(crel),
-											 NULL,
-											 (iname + strlen(pname) + off),
-											 RelationGetNamespace(crel));
+				char	   *idxname;
+
+				if (prefix_match)
+				{
+					/*
+					 * If the next character in the index name is '_', absorb
+					 * it, as ChooseRelationName() will add another.
+					 */
+					int			off = 0;
+
+					if (iname[strlen(pname)] == '_')
+						off = 1;
+					idxname = ChooseRelationName(RelationGetRelationName(crel),
+												 NULL,
+												 (iname + strlen(pname) + off),
+												 RelationGetNamespace(crel));
+				}
+				else
+					idxname = ChooseRelationName(RelationGetRelationName(crel),
+												 NULL,
+												 iname,
+												 RelationGetNamespace(crel));
+				istmt->idxname = idxname;
 			}
-			else
-				idxname = ChooseRelationName(RelationGetRelationName(crel),
-											 NULL,
-											 iname,
-											 RelationGetNamespace(crel));
-			istmt->idxname = idxname;
+
 			atc->subtype = AT_AddIndex;
-			atc->def = (Node *)istmt;
+			atc->def = (Node *) istmt;
 			atc->part_expanded = true;
 
 			ats->relation = copyObject(istmt->relation);
@@ -8377,11 +8383,11 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 			heap_close(crel, AccessShareLock); /* already locked master */
 
-			ProcessUtility((Node *)ats,
+			ProcessUtility((Node *) ats,
 						   synthetic_sql,
 						   NULL,
 						   false, /* not top level */
-						   dest,
+						   None_Receiver,
 						   NULL);
 		}
 	}
