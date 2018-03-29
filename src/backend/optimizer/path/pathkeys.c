@@ -1000,13 +1000,34 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 																 tle);
 
 					/* See if we have a matching EC for that */
+					/*
+					 * In GPDB, we pass create_it = 'true', because even if the
+					 * sub-pathkey doesn't seem interesting to the parent, we
+					 * want to preserve the ordering if the result is gathered
+					 * to a single node later on. This case comes up, if you
+					 * e.g. create a view with an ORDER BY:
+					 *
+					 * CREATE VIEW v AS SELECT * FROM sourcetable ORDER BY vn;
+					 *
+					 * and query it:
+					 *
+					 * SELECT row_number() OVER(), vn FROM v_sourcetable;
+					 *
+					 * Although it's not required by the SQL standard, we try
+					 * to preserve the PostgreSQL behaviour, and honor the
+					 * ORDER BY. The parent query doesn't have an equivalence
+					 * class for the path key (vn), but if we don't pass it
+					 * up to the parent, it will not preserve the order when
+					 * it adds the Gather Motion to pull together the rows,
+					 * underneath the WindowAgg.
+					 */
 					outer_ec = get_eclass_for_sort_expr(root,
 														outer_expr,
 												   sub_eclass->ec_opfamilies,
 														sub_expr_type,
 														sub_expr_coll,
 														0,
-														false);
+														true); /* create_it */
 
 					/*
 					 * If we don't find a matching EC, this sub-pathkey isn't
