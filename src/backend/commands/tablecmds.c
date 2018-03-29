@@ -6890,6 +6890,8 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 	{
 		if (cmd->subtype == AT_AddColumn || cmd->subtype == AT_AddColumnRecurse)
 			cmd->subtype = AT_AddColumnRecurse;
+		else if (cmd->subtype == AT_AddColumnToView)
+			cmd->subtype = AT_AddColumnRecurse;
 		else if (cmd->subtype == AT_AddOids || cmd->subtype == AT_AddOidsRecurse)
 			cmd->subtype = AT_AddOidsRecurse;
 		else
