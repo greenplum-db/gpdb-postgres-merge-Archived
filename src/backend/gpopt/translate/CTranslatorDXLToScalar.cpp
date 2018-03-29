@@ -17,6 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/makefuncs.h"
+#include "catalog/pg_collation.h"
 #include "utils/datum.h"
 
 #include "gpos/base.h"
@@ -323,6 +324,10 @@ CTranslatorDXLToScalar::PopexprFromDXLNodeScOpExpr
 	// translate children
 	popexpr->args = PlistTranslateScalarChildren(popexpr->args, pdxlnOpExpr, pmapcidvar);
 
+	// GDPB_91_MERGE_FIXME: collation?
+	popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
+	popexpr->opcollid = gpdb::OidTypeCollation(popexpr->opresulttype);
+
 	return (Expr *)popexpr;
 }
 
@@ -523,6 +528,10 @@ CTranslatorDXLToScalar::PaggrefFromDXLNodeScAggref
 		paggref->args = gpdb::PlAppendElement(paggref->args, pteNew);
 	}
 
+	// GDPB_91_MERGE_FIXME: collation?
+	paggref->inputcollid = gpdb::OidExprCollation((Node *) argExprs);
+	paggref->aggcollid = gpdb::OidTypeCollation(paggref->aggtype);
+
 	return (Expr *)paggref;
 }
 
@@ -605,6 +614,10 @@ CTranslatorDXLToScalar::PfuncexprFromDXLNodeScFuncExpr
 	pfuncexpr->funcformat = COERCE_DONTCARE;
 	pfuncexpr->funcresulttype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidRetType())->OidObjectId();
 	pfuncexpr->args = PlistTranslateScalarChildren(pfuncexpr->args, pdxlnFuncExpr, pmapcidvar);
+
+	// GDPB_91_MERGE_FIXME: collation?
+	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
+	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
 
 	return (Expr *)pfuncexpr;
 }
@@ -1148,6 +1161,10 @@ CTranslatorDXLToScalar::PrelabeltypeOrFuncexprFromDXLNodeScalarCast(const CDXLSc
 		pfuncexpr->args = NIL;
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprChild);
 
+		// GDPB_91_MERGE_FIXME: collation?
+		pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
+		pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
+
 		return (Expr *) pfuncexpr;
 	}
 
@@ -1648,6 +1665,7 @@ CTranslatorDXLToScalar::PconstGeneric
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumgeneric->Pmdid())->OidObjectId();
 	pconst->consttypmod = pdxldatumgeneric->ITypeModifier();
+	pconst->constcollid = gpdb::OidTypeCollation(pconst->consttype);
 	pconst->constbyval = pdxldatumgeneric->FByValue();
 	pconst->constisnull = pdxldatumgeneric->FNull();
 	pconst->constlen = pdxldatumgeneric->UlLength();
@@ -1897,6 +1915,10 @@ CTranslatorDXLToScalar::PopexprFromDXLNodeScCmp
 	Expr *pexprRight = PexprFromDXLNodeScalar(pdxlnRight, pmapcidvar);
 
 	popexpr->args = ListMake2(pexprLeft, pexprRight);
+
+	// GDPB_91_MERGE_FIXME: collation?
+	popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
+	popexpr->opcollid = gpdb::OidTypeCollation(popexpr->opresulttype);;
 
 	return (Expr *) popexpr;
 }

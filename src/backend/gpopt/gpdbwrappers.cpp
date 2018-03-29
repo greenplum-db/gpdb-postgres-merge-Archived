@@ -29,6 +29,7 @@
 #include "naucrates/exception.h"
 
 #include "gpopt/gpdbwrappers.h"
+#include "catalog/pg_collation.h"
 
 #include "utils/ext_alloc.h"
 
@@ -541,6 +542,60 @@ gpdb::IExprTypeMod
 	GP_WRAP_END;
 	return 0;
 }
+
+Oid
+gpdb::OidExprCollation
+	(
+	Node *pnodeExpr
+	)
+{
+	GP_WRAP_START;
+	{
+		if (pnodeExpr && IsA(pnodeExpr, List))
+		{
+			// GDPB_91_MERGE_FIXME: collation? doing this is hacky
+			List *exprlist = (List *) pnodeExpr;
+			ListCell   *lc;
+
+			Oid oidCollation = InvalidOid;
+			foreach(lc, exprlist)
+			{
+				Node *expr = (Node *) lfirst(lc);
+				if ((oidCollation = exprCollation(expr)) != InvalidOid)
+				{
+					break;
+				}
+			}
+			return oidCollation;
+		}
+		else
+		{
+			return exprCollation(pnodeExpr);
+		}
+	}
+	GP_WRAP_END;
+	return 0;
+}
+
+Oid
+gpdb::OidTypeCollation
+(
+ Oid type
+ )
+{
+	GP_WRAP_START;
+	{
+		Oid collation = InvalidOid;
+		if (type_is_collatable(type))
+		{
+			collation = DEFAULT_COLLATION_OID;
+		}
+		return collation;
+	}
+	GP_WRAP_END;
+	return 0;
+}
+
 
 List *
 gpdb::PlExtractNodesPlan
@@ -1845,7 +1900,8 @@ gpdb::PvarMakeVar
 	GP_WRAP_START;
 	{
 		// GPDB_91_MERGE_FIXME: collation?
-		return makeVar(varno, varattno, vartype, vartypmod, InvalidOid, varlevelsup);
+		Oid collation = OidTypeCollation(vartype);
+		return makeVar(varno, varattno, vartype, vartypmod, collation, varlevelsup);
 	}
 	GP_WRAP_END;
 	return NULL;

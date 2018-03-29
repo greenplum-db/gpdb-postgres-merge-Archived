@@ -21,6 +21,7 @@
 #include "nodes/primnodes.h"
 #include "catalog/gp_policy.h"
 #include "catalog/pg_exttable.h"
+#include "catalog/pg_collation.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "cdb/partitionselection.h"
@@ -1263,9 +1264,12 @@ CTranslatorDXLToPlStmt::PplanFunctionScanFromDXLTVF
 		GPOS_ASSERT(InvalidOid != oidType);
 
 		INT typMod = gpdb::IExprTypeMod((Node*) pte->expr);
+		Oid typCollation = gpdb::OidTypeCollation(oidType);
 
 		pfuncscan->funccoltypes = gpdb::PlAppendOid(pfuncscan->funccoltypes, oidType);
 		pfuncscan->funccoltypmods = gpdb::PlAppendInt(pfuncscan->funccoltypmods, typMod);
+		// GDPB_91_MERGE_FIXME: collation?
+		pfuncscan->funccolcollations = gpdb::PlAppendOid(pfuncscan->funccolcollations, typCollation);
 	}
 
 	SetParamIds(pplan);
@@ -1345,6 +1349,10 @@ CTranslatorDXLToPlStmt::PrteFromDXLTVF
 		Expr *pexprFuncArg = m_pdxlsctranslator->PexprFromDXLNodeScalar(pdxlnFuncArg, &mapcidvarplstmt);
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprFuncArg);
 	}
+
+	// GDPB_91_MERGE_FIXME: collation?
+	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
+	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
 
 	prte->funcexpr = (Node *)pfuncexpr;
 	prte->inFromCl = true;
@@ -1817,7 +1825,7 @@ CTranslatorDXLToPlStmt::PplanMotionFromDXLMotion
 		pmotion->collations = (Oid *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(Oid));
 		pmotion->nullsFirst = (bool *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(bool));
 
-		TranslateSortCols(pdxlnSortColList, pdxltrctxOut, pmotion->sortColIdx, pmotion->sortOperators, pmotion->nullsFirst);
+		TranslateSortCols(pdxlnSortColList, pdxltrctxOut, pmotion->sortColIdx, pmotion->sortOperators, pmotion->collations, pmotion->nullsFirst);
 	}
 	else
 	{
@@ -2333,7 +2341,7 @@ CTranslatorDXLToPlStmt::PwindowFromDXLWindow
 		pwindow->ordColIdx = (AttrNumber *) gpdb::GPDBAlloc(ulNumCols * sizeof(AttrNumber));
 		pwindow->ordOperators = (Oid *) gpdb::GPDBAlloc(ulNumCols * sizeof(Oid));
 		bool *pNullsFirst = (bool *) gpdb::GPDBAlloc(ulNumCols * sizeof(bool));
-		TranslateSortCols(pdxlnSortColList, &dxltrctxChild, pwindow->ordColIdx, pwindow->ordOperators, pNullsFirst);
+		TranslateSortCols(pdxlnSortColList, &dxltrctxChild, pwindow->ordColIdx, pwindow->ordOperators, NULL, pNullsFirst);
 
 		// The firstOrder* fields are separate from just picking the first of ordCol*,
 		// because the Postgres planner might omit columns that are redundant with the
@@ -2526,7 +2534,7 @@ CTranslatorDXLToPlStmt::PsortFromDXLSort
 	psort->collations = (Oid *) gpdb::GPDBAlloc(ulNumCols * sizeof(Oid));
 	psort->nullsFirst = (bool *) gpdb::GPDBAlloc(ulNumCols * sizeof(bool));
 
-	TranslateSortCols(pdxlnSortColList, &dxltrctxChild, psort->sortColIdx, psort->sortOperators, psort->nullsFirst);
+	TranslateSortCols(pdxlnSortColList, &dxltrctxChild, psort->sortColIdx, psort->sortOperators, psort->collations, psort->nullsFirst);
 
 	SetParamIds(pplan);
 
@@ -4758,6 +4766,7 @@ CTranslatorDXLToPlStmt::TranslateSortCols
 	const CDXLTranslateContext *pdxltrctxChild,
 	AttrNumber *pattnoSortColIds,
 	Oid *poidSortOpIds,
+	Oid *poidSortCollations,
 	bool *pboolNullsFirst
 	)
 {
@@ -4776,6 +4785,10 @@ CTranslatorDXLToPlStmt::TranslateSortCols
 
 		pattnoSortColIds[ul] = pteSortCol->resno;
 		poidSortOpIds[ul] = CMDIdGPDB::PmdidConvert(pdxlopSortCol->PmdidSortOp())->OidObjectId();
+		if (poidSortCollations)
+		{
+			poidSortCollations[ul] = gpdb::OidExprCollation((Node *) pteSortCol->expr);
+		}
 		pboolNullsFirst[ul] = pdxlopSortCol->FSortNullsFirst();
 	}
 }

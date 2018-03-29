@@ -150,6 +150,12 @@ namespace gpdb {
 	// expression type modifier
 	int32 IExprTypeMod(Node *expr);
 
+	// expression collation
+	Oid	OidExprCollation(Node *expr);
+
+	// expression collation - GDPB_91_MERGE_FIXME
+	Oid	OidTypeCollation(Oid type);
+
 	// extract nodes with specific tag from a plan tree
 	List *PlExtractNodesPlan(Plan *pl, int nodeTag, bool descendIntoSubqueries);
 
