@@ -1211,8 +1211,9 @@ CTranslatorQueryToDXL::PhmiulUpdateCols()
 		ULONG ulResno = pte->resno;
 		GPOS_ASSERT(0 < ulResno);
 
-		// Ignore junk columns, as they are have been ignored when adding them
-		// to m_pdrgpdxlnQueryOutput, and are not actually going to be updated.
+		// GPDB_90_MERGE_FIXME: Ignore junk columns, as they are have been
+		// ignored when adding them to m_pdrgpdxlnQueryOutput, and are not
+		// actually going to be updated. Is this the right thing to do?
 		if (!pte->resjunk)
 		{
 			CDXLNode *pdxlnCol = (*m_pdrgpdxlnQueryOutput)[ul];
