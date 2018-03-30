@@ -2656,6 +2656,11 @@ doQEDistributedExplicitBegin(int txnOptions)
 	unpackMppTxnOptions(txnOptions,
 						&ExplicitIsoLevel, &ExplicitReadOnly);
 
+	/*
+	 * Transaction isolation level shouldn't be changed once snapshot has been
+	 * taken.
+	 */
+	Assert(!FirstSnapshotSet);
 	XactIsoLevel = ExplicitIsoLevel;
 	XactReadOnly = ExplicitReadOnly;
 

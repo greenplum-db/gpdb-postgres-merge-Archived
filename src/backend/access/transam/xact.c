@@ -2187,6 +2187,22 @@ StartTransaction(void)
 					 "not tied to distributed transaction id, but still coordinated as a distributed transaction.");
 			}
 
+			/*
+			 * In case of explicit begin, transaction options are set during
+			 * processing of the explicit begin command in setupQEDtxContext().
+			 */
+			if (!s->startedInRecovery &&
+				DistributedTransactionContext != DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER)
+			{
+				/*
+				 * Transaction isolation level shouldn't be changed once
+				 * snapshot has been taken.
+				 */
+				Assert(!FirstSnapshotSet);
+				unpackMppTxnOptions(QEDtxContextInfo.distributedTxnOptions,
+									&XactIsoLevel, &XactReadOnly);
+			}
+
 			if (SharedLocalSnapshotSlot != NULL)
 			{
 				LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_EXCLUSIVE);
@@ -2255,6 +2271,17 @@ StartTransaction(void)
 			 */
 			Assert (SharedLocalSnapshotSlot != NULL);
 			currentDistribXid = QEDtxContextInfo.distributedXid;
+
+			if (!s->startedInRecovery)
+			{
+				/*
+				 * Transaction isolation level shouldn't be changed once
+				 * snapshot has been taken.
+				 */
+				Assert(!FirstSnapshotSet);
+				unpackMppTxnOptions(QEDtxContextInfo.distributedTxnOptions,
+									&XactIsoLevel, &XactReadOnly);
+			}
 
 			ereport((Debug_print_full_dtm ? LOG : DEBUG5),
 					(errmsg("qExec reader: distributedXid %d currcid %d gxid = %u DtxContext '%s' sharedsnapshots: %s",

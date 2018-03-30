@@ -637,18 +637,7 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 
 	if (newXactIsoLevel != XactIsoLevel && IsTransactionState())
 	{
-		/*
-		 * Reader backends are exempted from the check because they set
-		 * transaction_isolation GUC while processing command line options,
-		 * which happens inside a transaction and under a snapshot.  It is not
-		 * a problem because for any database access, the readers use writer's
-		 * snapshot.
-		 *
-		 * GPDB_91_MERGE_FIXME: there should be a better way to fix this.  Can
-		 * the transaction isolation level be set through DTX context, similar
-		 * to how writers set it?  See doQEDistributedExplicitBegin().
-		 */
-		if (FirstSnapshotSet && Gp_is_writer)
+		if (FirstSnapshotSet)
 		{
 			GUC_check_errcode(ERRCODE_ACTIVE_SQL_TRANSACTION);
 			GUC_check_errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query");
