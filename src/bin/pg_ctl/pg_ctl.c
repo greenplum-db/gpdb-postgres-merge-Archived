@@ -654,7 +654,8 @@ test_postmaster_connection(bool do_checkpoint)
 		if (connstr[0] != '\0')
 		{
 			ret = PQping(connstr);
-			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT)
+			if (ret == PQPING_OK || ret == PQPING_NO_ATTEMPT ||
+				ret == PQPING_MIRROR_READY)
 				break;
 		}
 
