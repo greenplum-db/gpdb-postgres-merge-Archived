@@ -796,6 +796,7 @@ CTranslatorRelcacheToDXL::Pdrgpmdcol
 										att->attnum,
 										pmdidCol,
 										att->atttypmod,
+										att->attcollation,
 										!att->attnotnull,
 										att->attisdropped,
 										pdxlnDefault /* default value */,
@@ -1015,6 +1016,7 @@ CTranslatorRelcacheToDXL::AddSystemColumns
 										attno, 
 										CTranslatorUtils::PmdidSystemColType(pmp, attno),
 										IDefaultTypeModifier,
+										OidInvalidCollation,
 										false,	// fNullable
 										false,	// fDropped
 										NULL,	// default value
@@ -2087,6 +2089,7 @@ CTranslatorRelcacheToDXL::Pmdcheckconstraint
 										pmdcol->IAttno(),
 										pmdidColType,
 										pmdcol->ITypeModifier(),
+										pmdcol->OidCollation(),
 										false /* fColDropped */
 										);
 		pdrgpdxlcd->Append(pdxlcd);
@@ -3411,6 +3414,7 @@ CTranslatorRelcacheToDXL::PmdpartcnstrIndex
 										pmdcol->IAttno(),
 										pmdidColType,
 										pmdcol->ITypeModifier(),
+										pmdcol->OidCollation(),
 										false // fColDropped
 										);
 		pdrgpdxlcd->Append(pdxlcd);
@@ -3500,6 +3504,7 @@ CTranslatorRelcacheToDXL::PmdpartcnstrRelation
 											pmdcol->IAttno(),
 											pmdidColType,
 											pmdcol->ITypeModifier(),
+											pmdcol->OidCollation(),
 											false // fColDropped
 											);
 			pdrgpdxlcd->Append(pdxlcd);

@@ -815,6 +815,7 @@ CTranslatorQueryToDXL::PdxlnCTAS()
 											iResno /* iAttno */,
 											pmdid,
 											pdxlopIdent->ITypeModifier(),
+											gpmd::OidInvalidCollation /* FIXME COLLATION */,
 											false /* fDropped */
 											);
 		pdrgpdxlcd->Append(pdxlcd);
@@ -1612,7 +1613,8 @@ CTranslatorQueryToDXL::PdxlnWindow
 																					GPOS_NEW(m_pmp) CMDName(m_pmp, pmdnameAlias->Pstr()),
 																					ulColId,
 																					GPOS_NEW(m_pmp) CMDIdGPDB(gpdb::OidExprType((Node*) pte->expr)),
-																					gpdb::IExprTypeMod((Node*) pte->expr)
+																					gpdb::IExprTypeMod((Node*) pte->expr),
+																					 gpdb::OidExprCollation((Node *) pte->expr)
 																					)
 																		)
 															);
@@ -2388,6 +2390,7 @@ CTranslatorQueryToDXL::PdxlnConstTableGet() const
 										1 /* iAttno */,
 										GPOS_NEW(m_pmp) CMDIdGPDB(pmdid->OidObjectId()),
 										IDefaultTypeModifier,
+										OidInvalidCollation,
 										false /* fDropped */
 										);
 	pdrgpdxlcd->Append(pdxlcd);
@@ -3112,6 +3115,7 @@ CTranslatorQueryToDXL::PdxlnFromValues
 													ulColPos + 1 /* iAttno */,
 													GPOS_NEW(m_pmp) CMDIdGPDB(pconst->consttype),
 													pconst->consttypmod,
+													pconst->constcollid,
 													false /* fDropped */
 													);
 
@@ -3144,6 +3148,7 @@ CTranslatorQueryToDXL::PdxlnFromValues
 														ulColPos + 1 /* iAttno */,
 														GPOS_NEW(m_pmp) CMDIdGPDB(gpdb::OidExprType((Node*) pexpr)),
 														gpdb::IExprTypeMod((Node*) pexpr),
+														gpdb::OidExprCollation((Node *) pexpr),
 														false /* fDropped */
 														);
 					pdrgpdxlcd->Append(pdxlcd);
@@ -3944,7 +3949,8 @@ CTranslatorQueryToDXL::PdrgpdxlnConstructOutputCols
 		// create a column reference
 		IMDId *pmdidType = GPOS_NEW(m_pmp) CMDIdGPDB(gpdb::OidExprType( (Node*) pte->expr));
 		INT iTypeModifier = gpdb::IExprTypeMod((Node*) pte->expr);
-		CDXLColRef *pdxlcr = GPOS_NEW(m_pmp) CDXLColRef(m_pmp, pmdname, ulColId, pmdidType, iTypeModifier);
+		OID oidCollation = gpdb::OidExprCollation((Node *) pte->expr);
+		CDXLColRef *pdxlcr = GPOS_NEW(m_pmp) CDXLColRef(m_pmp, pmdname, ulColId, pmdidType, iTypeModifier, oidCollation);
 		CDXLScalarIdent *pdxlopIdent = GPOS_NEW(m_pmp) CDXLScalarIdent
 												(
 												m_pmp,

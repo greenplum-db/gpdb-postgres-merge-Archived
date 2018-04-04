@@ -530,6 +530,7 @@ CQueryMutators::PnodeGrpbyPrLMutator
 						(AttrNumber) ulAttno,
 						gpdb::OidExprType(pnode),
 						gpdb::IExprTypeMod(pnode),
+						gpdb::OidExprCollation(pnode),
 						0 // query levelsup
 						);
 
@@ -552,6 +553,7 @@ CQueryMutators::PnodeGrpbyPrLMutator
 								(AttrNumber) ulAttno,
 								gpdb::OidExprType(pnode),
 								gpdb::IExprTypeMod(pnode),
+								gpdb::OidExprCollation(pnode),
 								0 // query levelsup
 								);
 
@@ -574,6 +576,7 @@ CQueryMutators::PnodeGrpbyPrLMutator
 							pteFound->resno,
 							gpdb::OidExprType((Node*) pteFound->expr),
 							gpdb::IExprTypeMod( (Node*) pteFound->expr),
+							gpdb::OidExprCollation((Node*) pteFound->expr),
 							0 // query levelsup
 					);
 
@@ -591,6 +594,7 @@ CQueryMutators::PnodeGrpbyPrLMutator
 							(AttrNumber) pteFoundNewDrvdTable->resno,
 							gpdb::OidExprType( (Node*) pteFoundNewDrvdTable->expr),
 							gpdb::IExprTypeMod( (Node*) pteFoundNewDrvdTable->expr),
+							gpdb::OidExprCollation( (Node*) pteFoundNewDrvdTable->expr),
 							0 // query levelsup
 							);
 		}
@@ -810,6 +814,7 @@ CQueryMutators::PnodeFixGrpCol
 					(AttrNumber) ulArity,
 					gpdb::OidExprType( (Node*) pteOriginal->expr),
 					gpdb::IExprTypeMod( (Node*) pteOriginal->expr),
+					gpdb::OidExprCollation((Node*) pteOriginal->expr),
 					0 // query levelsup
 			);
 
@@ -1085,6 +1090,7 @@ CQueryMutators::PvarInsertIntoDerivedTable
 					ulAttno,
 					gpdb::OidExprType((Node*) pnode),
 					gpdb::IExprTypeMod((Node*) pnode),
+					gpdb::OidExprCollation((Node*) pnode),
 					context->m_ulCurrLevelsUp
 					);
 
@@ -1119,6 +1125,7 @@ CQueryMutators::PnodeFind
 						pteFound->resno,
 						gpdb::OidExprType( (Node*) pteFound->expr),
 						gpdb::IExprTypeMod( (Node*) pteFound->expr),
+						gpdb::OidExprCollation((Node*) pteFound->expr),
 						context->m_ulCurrLevelsUp
 						);
 
@@ -1355,6 +1362,7 @@ CQueryMutators::Pte
 							(AttrNumber) ulVarAttno,
 							gpdb::OidExprType( (Node*) pteOld->expr),
 							gpdb::IExprTypeMod( (Node*) pteOld->expr),
+							gpdb::OidExprCollation((Node*) pteOld->expr),
 							0 // query levelsup
 							);
 
@@ -1520,6 +1528,7 @@ CQueryMutators::PqueryEliminateDistinctClause
 									pte->resno,
 									gpdb::OidExprType((Node*) pte->expr),
 									gpdb::IExprTypeMod((Node*) pte->expr),
+									gpdb::OidExprCollation((Node*) pte->expr),
 									0 // query levels up
 									);
 			TargetEntry *pteNew= gpdb::PteMakeTargetEntry((Expr*) pvarNew, (AttrNumber) ulResNo, pte->resname, false);
@@ -1658,6 +1667,7 @@ CQueryMutators::PqueryNormalizeWindowPrL
 										pteNew->resno,
 										gpdb::OidExprType((Node*) pte->expr),
 										gpdb::IExprTypeMod((Node*) pte->expr),
+										gpdb::OidExprCollation((Node*) pte->expr),
 										0 // query levels up
 										);
 				TargetEntry *pteNewCopy = gpdb::PteMakeTargetEntry((Expr*) pvarNew, ulResNoNew, pte->resname, pte->resjunk);
@@ -1748,6 +1758,7 @@ CQueryMutators::PnodeWindowPrLMutator
 								(AttrNumber) ulResNo,
 								gpdb::OidExprType(pnode),
 								gpdb::IExprTypeMod(pnode),
+								gpdb::OidExprCollation(pnode),
 								0 // query levelsup
 								);
 
@@ -1778,6 +1789,7 @@ CQueryMutators::PnodeWindowPrLMutator
 								(AttrNumber) ulResNo,
 								gpdb::OidExprType(pnode),
 								gpdb::IExprTypeMod(pnode),
+								gpdb::OidExprCollation(pnode),
 								0 // query levelsup
 								);
 		}
@@ -1790,6 +1802,7 @@ CQueryMutators::PnodeWindowPrLMutator
 								pteFound->resno,
 								gpdb::OidExprType(pnode),
 								gpdb::IExprTypeMod(pnode),
+								gpdb::OidExprCollation(pnode),
 								0 // query levelsup
 								);
 		}

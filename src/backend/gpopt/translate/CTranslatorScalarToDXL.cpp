@@ -181,7 +181,8 @@ CTranslatorScalarToDXL::PdxlnScIdFromVar
 												pmdname,
 												ulId,
 												GPOS_NEW(m_pmp) CMDIdGPDB(pvar->vartype),
-												pvar->vartypmod
+												pvar->vartypmod,
+												200  /* FIXME */
 												);
 
 	// create the scalar ident operator
@@ -602,7 +603,7 @@ CTranslatorScalarToDXL::Pdxldatum
 	pmdid->Release();
 
  	// translate gpdb datum into a DXL datum
-	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, pconst->consttypmod, pconst->constisnull,
+	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, pconst->consttypmod, pconst->constcollid, pconst->constisnull,
 															 pconst->constlen,
 															 pconst->constvalue);
 
@@ -1518,7 +1519,8 @@ CTranslatorScalarToDXL::PdxlnWindowFrameEdgeVal
 																GPOS_NEW(m_pmp) CMDName(m_pmp, &strUnnamedCol),
 																ulPrElId,
 																GPOS_NEW(m_pmp) CMDIdGPDB(gpdb::OidExprType(const_cast<Node*>(pnode))),
-																gpdb::IExprTypeMod(const_cast<Node*>(pnode))
+																gpdb::IExprTypeMod(const_cast<Node*>(pnode)),
+																gpdb::OidExprCollation(const_cast<Node*>(pnode))
 																)
 													);
 
@@ -2092,6 +2094,7 @@ CTranslatorScalarToDXL::Pdxldatum
 	IMemoryPool *pmp,
 	const IMDType *pmdtype,
 	INT iTypeModifier,
+	OID oidCollation,
 	BOOL fNull,
 	ULONG ulLen,
 	Datum datum
@@ -2122,7 +2125,7 @@ CTranslatorScalarToDXL::Pdxldatum
 	if (NULL == pf)
 	{
 		// generate a datum of generic type
-		return PdxldatumGeneric(pmp, pmdtype, iTypeModifier, fNull, ulLen, datum);
+		return PdxldatumGeneric(pmp, pmdtype, iTypeModifier, oidCollation, fNull, ulLen, datum);
 	}
 	else
 	{
@@ -2143,6 +2146,7 @@ CTranslatorScalarToDXL::PdxldatumGeneric
 	IMemoryPool *pmp,
 	const IMDType *pmdtype,
 	INT iTypeModifier,
+	OID oidCollation,
 	BOOL fNull,
 	ULONG ulLen,
 	Datum datum
@@ -2171,7 +2175,7 @@ CTranslatorScalarToDXL::PdxldatumGeneric
 		lValue = LValue(pmdid, fNull, pba, ulLength);
 	}
 
-	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, fConstByVal, fNull, pba, ulLength, lValue, dValue);
+	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, oidCollation, fConstByVal, fNull, pba, ulLength, lValue, dValue);
 }
 
 
@@ -2498,7 +2502,7 @@ CTranslatorScalarToDXL::Pdatum
 	}
 	GPOS_ASSERT(fNull || ulLength > 0);
 
-	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, gpmd::IDefaultTypeModifier, fNull, ulLength, datum);
+	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, gpmd::IDefaultTypeModifier, gpmd::OidInvalidCollation, fNull, ulLength, datum);
 	IDatum *pdatum = pmdtype->Pdatum(pmp, pdxldatum);
 	pdxldatum->Release();
 	return pdatum;

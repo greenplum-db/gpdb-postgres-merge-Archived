@@ -192,6 +192,7 @@ namespace gpdxl
 						CIdGenerator *pidgtor,
 						IMDId *pmdidRetType,
 						INT iTypeModifier,
+						OID oidCollation,
 						CMDName *pmdName
 						);
 

@@ -186,6 +186,7 @@ CTranslatorUtils::Pdxltabdesc
 											pmdcol->IAttno(),
 											pmdidColType,
 											pmdcol->ITypeModifier(), /* iTypeModifier */
+											pmdcol->OidCollation(),
 											false, /* fColDropped */
 											pmdcol->UlLength()
 											);
@@ -330,7 +331,7 @@ CTranslatorUtils::Pdxltvf
 		// function returns base type
 		CMDName mdnameFunc = pmdfunc->Mdname();
 		// table valued functions don't describe the returned column type modifiers, hence the -1
-		pdrgdxlcd = PdrgdxlcdBase(pmp, pidgtor, pmdidRetType, IDefaultTypeModifier, &mdnameFunc);
+		pdrgdxlcd = PdrgdxlcdBase(pmp, pidgtor, pmdidRetType, IDefaultTypeModifier, OidInvalidCollation, &mdnameFunc);
 	}
 
 	CMDName *pmdfuncname = GPOS_NEW(pmp) CMDName(pmp, pmdfunc->Mdname().Pstr());
@@ -487,6 +488,7 @@ CTranslatorUtils::PdrgdxlcdRecord
 										INT(ul + 1) /* iAttno */,
 										pmdidColType,
 										iTypeModifier,
+										OidInvalidCollation /* FIXME COLLATION */,
 										false /* fColDropped */
 										);
 		pdrgdxlcd->Append(pdxlcd);
@@ -541,6 +543,7 @@ CTranslatorUtils::PdrgdxlcdRecord
 										INT(ul + 1) /* iAttno */,
 										pmdidColType,
 										IDefaultTypeModifier,
+										OidInvalidCollation,
 										false /* fColDropped */
 										);
 		pdrgdxlcd->Append(pdxlcd);
@@ -565,6 +568,7 @@ CTranslatorUtils::PdrgdxlcdBase
 	CIdGenerator *pidgtor,
 	IMDId *pmdidRetType,
 	INT iTypeModifier,
+	OID oidCollation,
 	CMDName *pmdName
 	)
 {
@@ -581,6 +585,7 @@ CTranslatorUtils::PdrgdxlcdBase
 									INT(1) /* iAttno */,
 									pmdidRetType,
 									iTypeModifier, /* iTypeModifier */
+									oidCollation,
 									false /* fColDropped */
 									);
 
@@ -626,6 +631,7 @@ CTranslatorUtils::PdrgdxlcdComposite
 										INT(ul + 1) /* iAttno */,
 										pmdidColType,
 										pmdcol->ITypeModifier(), /* iTypeModifier */
+										pmdcol->OidCollation(),
 										false /* fColDropped */
 										);
 		pdrgdxlcd->Append(pdxlcd);
@@ -1627,6 +1633,7 @@ CTranslatorUtils::Pdxlcd
 	// create a column descriptor
 	OID oidType = gpdb::OidExprType((Node *) pte->expr);
 	INT iTypeModifier = gpdb::IExprTypeMod((Node *) pte->expr);
+	OID oidCollation = gpdb::OidExprCollation((Node *) pte->expr);
 	CMDIdGPDB *pmdidColType = GPOS_NEW(pmp) CMDIdGPDB(oidType);
 	CDXLColDescr *pdxlcd = GPOS_NEW(pmp) CDXLColDescr
 									(
@@ -1636,6 +1643,7 @@ CTranslatorUtils::Pdxlcd
 									ulPos, /* attno */
 									pmdidColType,
 									iTypeModifier, /* iTypeModifier */
+									oidCollation,
 									false /* fColDropped */
 									);
 
@@ -1663,7 +1671,7 @@ CTranslatorUtils::PdxlnDummyPrElem
 
 	// create a column reference for the scalar identifier to be casted
 	CMDName *pmdname = GPOS_NEW(pmp) CMDName(pmp, pdxlcdOutput->Pmdname()->Pstr());
-	CDXLColRef *pdxlcr = GPOS_NEW(pmp) CDXLColRef(pmp, pmdname, ulColIdInput, pmdidCopy, pdxlcdOutput->ITypeModifier());
+	CDXLColRef *pdxlcr = GPOS_NEW(pmp) CDXLColRef(pmp, pmdname, ulColIdInput, pmdidCopy, pdxlcdOutput->ITypeModifier(), pdxlcdOutput->OidCollation());
 	CDXLScalarIdent *pdxlopIdent = GPOS_NEW(pmp) CDXLScalarIdent(pmp, pdxlcr);
 
 	CDXLNode *pdxlnPrEl = GPOS_NEW(pmp) CDXLNode
@@ -1767,7 +1775,7 @@ CTranslatorUtils::UlColId
 	)
 {
 	OID oid = CMDIdGPDB::PmdidConvert(pmdid)->OidObjectId();
-	Var *pvar = gpdb::PvarMakeVar(iVarno, iVarAttno, oid, -1, 0);
+	Var *pvar = gpdb::PvarMakeVar(iVarno, iVarAttno, oid, IDefaultTypeModifier, OidInvalidCollation, 0);
 	ULONG ulColId = pmapvarcolid->UlColId(ulQueryLevel, pvar, EpspotNone);
 	gpdb::GPDBFree(pvar);
 
@@ -2406,6 +2414,7 @@ CTranslatorUtils::PdxlnPrElNull
 										pmp,
 										pmdid,
 										IDefaultTypeModifier,
+										OidInvalidCollation,
 										fByValue /*fConstByVal*/,
 										true /*fConstNull*/,
 										NULL, /*pba */
