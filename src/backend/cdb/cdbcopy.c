@@ -640,6 +640,17 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed, char *abort_m
 	int			size;
 	ErrorData *edata;
 
+	/*
+	 * Don't try to end a copy that already ended with the destruction of the
+	 * writer gang. We know that this has happened if the CdbCopy's
+	 * primary_writer is NULL.
+	 *
+	 * GPDB_91_MERGE_FIXME: ugh, this is nasty. We shouldn't be calling
+	 * cdbCopyEnd twice on the same CdbCopy in the first place!
+	 */
+	if (!c->primary_writer)
+		return -1;
+
 	/* clean err message */
 	c->err_msg.len = 0;
 	c->err_msg.data[0] = '\0';
@@ -678,6 +689,7 @@ cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed, char *abort_m
 		elog(LOG, "COPY signals FTS to probe segments");
 		SendPostmasterSignal(PMSIGNAL_WAKEN_FTS);
 		DisconnectAndDestroyAllGangs(true);
+		c->primary_writer = NULL;
 		ereport(ERROR,
 				(errmsg_internal("MPP detected %d segment failures, system is reconnected", failed_count),
 				 errSendAlert(true)));
