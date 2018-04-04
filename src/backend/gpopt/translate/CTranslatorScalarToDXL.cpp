@@ -182,7 +182,7 @@ CTranslatorScalarToDXL::PdxlnScIdFromVar
 												ulId,
 												GPOS_NEW(m_pmp) CMDIdGPDB(pvar->vartype),
 												pvar->vartypmod,
-												200  /* FIXME */
+												pvar->varcollid
 												);
 
 	// create the scalar ident operator

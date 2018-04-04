@@ -2414,6 +2414,7 @@ CTranslatorUtils::PdxlnPrElNull
 										pmp,
 										pmdid,
 										IDefaultTypeModifier,
+										OidInvalidCollation,
 										fByValue /*fConstByVal*/,
 										true /*fConstNull*/,
 										NULL, /*pba */
