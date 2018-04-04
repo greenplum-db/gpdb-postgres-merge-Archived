@@ -302,7 +302,7 @@ static CopyStmt *glob_copystmt = NULL;
  * just collects and forwards them to the client. The QD doesn't need to parse
  * the rows at all.
  */
-static const char QDtoQESignature[20] = "PGCOPY-QD-TO-QE\n\377\r\n\0";
+static const char QDtoQESignature[] = "PGCOPY-QD-TO-QE\n\377\r\n";
 
 typedef struct
 {
@@ -4122,11 +4122,12 @@ BeginCopyFrom(Relation rel,
 	else if (cstate->dispatch_mode == COPY_EXECUTOR && cstate->copy_dest != COPY_CALLBACK)
 	{
 		/* Read special header from QD */
-		char		readSig[11];
+		static const size_t sigsize = sizeof(QDtoQESignature);
+		char		readSig[sigsize];
 		copy_from_dispatch_header header_frame;
 
-		if (CopyGetData(cstate, &readSig, 20) != 20 ||
-			memcmp(readSig, QDtoQESignature, 20) != 0)
+		if (CopyGetData(cstate, &readSig, sigsize) != sigsize ||
+			memcmp(readSig, QDtoQESignature, sigsize) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("QD->QE COPY communication signature not recognized")));
@@ -4978,7 +4979,7 @@ SendCopyFromForwardedHeader(CopyState cstate, CdbCopy *cdbCopy, bool file_has_oi
 {
 	copy_from_dispatch_header header_frame;
 
-	cdbCopySendDataToAll(cdbCopy, QDtoQESignature, 20);
+	cdbCopySendDataToAll(cdbCopy, QDtoQESignature, sizeof(QDtoQESignature));
 
 	memset(&header_frame, 0, sizeof(header_frame));
 	header_frame.file_has_oids = file_has_oids;
