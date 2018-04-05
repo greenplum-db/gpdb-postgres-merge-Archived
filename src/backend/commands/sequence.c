@@ -287,6 +287,8 @@ DefineSequence(CreateSeqStmt *seq)
 	heap_close(rel, NoLock);
 }
 
+static void gp_alter_sequence_internal(Oid relid, List *options);
+
 /*
  * Reset a sequence to its initial value.
  *
@@ -308,6 +310,18 @@ ResetSequence(Oid seq_relid)
 	Buffer		buf;
 	HeapTupleData seqtuple;
 	HeapTuple	tuple;
+
+	/*
+	 * GPDB_91_MERGE_FIXME: GPDB does not support transactional restart of
+	 * sequence relations.  This is a consequence of the assumption in sequence
+	 * server that relfilenode of a sequence relation is identical to its OID.
+	 * The RelationSetNewRelfilenode() call below violates that assumption and
+	 * breaks sequence server implementation.  Until sequences in GPDB are
+	 * redesigned, we have to resort to non-transactional sequence restarts.
+	 */
+	gp_alter_sequence_internal(
+		seq_relid, list_make1(makeDefElem("restart", NULL)));
+	return;
 
 	/*
 	 * Read the old sequence.  This does a bit more work than really
@@ -440,6 +454,31 @@ void
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
+
+	/* find sequence */
+	relid = RangeVarGetRelid(stmt->sequence, false);
+
+	/* allow ALTER to sequence owner only */
+	/* if you change this, see also callers of AlterSequenceInternal! */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   stmt->sequence->relname);
+
+	/* do the work */
+	gp_alter_sequence_internal(relid, stmt->options);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
+}
+
+static void
+gp_alter_sequence_internal(Oid relid, List *options)
+{
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
@@ -452,13 +491,7 @@ AlterSequence(AlterSeqStmt *stmt)
 										   redundant to say "role" */
 
 	/* open and AccessShareLock sequence */
-	relid = RangeVarGetRelid(stmt->sequence, false);
 	init_sequence(relid, &elm, &seqrel);
-
-	/* allow ALTER to sequence owner only */
-	if (!pg_class_ownercheck(relid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   stmt->sequence->relname);
 
 	/* lock page' buffer and read tuple into new sequence structure */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
@@ -467,7 +500,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	memcpy(&new, seq, sizeof(FormData_pg_sequence));
 
 	/* Check and set new values */
-	init_params(stmt->options, false, &new, &owned_by);
+	init_params(options, false, &new, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -515,7 +548,7 @@ AlterSequence(AlterSeqStmt *stmt)
 
 	relation_close(seqrel, NoLock);
 
-	numopts = list_length(stmt->options);
+	numopts = list_length(options);
 	if (numopts > 1)
 	{
 		alter_subtype = psprintf("%d OPTIONS", numopts);
@@ -527,7 +560,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	else if (Gp_role == GP_ROLE_DISPATCH &&
 			 seqrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
 	{
-		ListCell		*option = list_head(stmt->options);
+		ListCell		*option = list_head(options);
 		DefElem			*defel	= (DefElem *) lfirst(option);
 		char			*tempo	= NULL;
 
@@ -549,14 +582,6 @@ AlterSequence(AlterSeqStmt *stmt)
 						   GetUserId(),
 						   "ALTER", alter_subtype);
 	}
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
 }
 
 
