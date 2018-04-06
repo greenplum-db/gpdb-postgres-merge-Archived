@@ -595,7 +595,7 @@ make_list_aggs_for_rollup(PlannerInfo *root,
 						  context->numGroupCols,
 						  context->grpColIdx,
 						  context->grpOperators,
-						  &tlist1, &tlist2, &tlist3, &qual3);
+						  root, &tlist1, &tlist2, &tlist3, &qual3);
 
 	orig_grpColIdx = context->grpColIdx;
 	orig_grpOperators = context->grpOperators;
