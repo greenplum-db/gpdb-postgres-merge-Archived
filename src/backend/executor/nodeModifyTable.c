@@ -1821,9 +1821,17 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * before earlier ones.  This ensures that we don't throw away RETURNING
 	 * rows that need to be seen by a later CTE subplan.
 	 */
-	if (!mtstate->canSetTag)
-		estate->es_auxmodifytables = lcons(mtstate,
-										   estate->es_auxmodifytables);
+
+	/*
+	 * GPDB_91_MERGE_FIXME
+	 * ModifyTable node is supposed to be executed only on QE.?
+	 */
+	if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		if (!mtstate->canSetTag)
+			estate->es_auxmodifytables = lcons(mtstate,
+											   estate->es_auxmodifytables);
+	}
 
 	return mtstate;
 }
