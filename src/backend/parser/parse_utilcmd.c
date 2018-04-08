@@ -266,6 +266,21 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("INHERITS clause cannot be used with column oriented tables")));
 
+	/*
+	 * GPDB_91_MERGE_FIXME: Previous gpdb does not allow create
+	 * partition on temp table. Let's follow this at this moment
+	 * although we do do not understand why even we know temp
+	 * partition table seems to be not practical. Previous gpdb
+	 * does not have this issue since in make_child_node()
+	 * child_tab_name->istemp is not assigned and it's default
+	 * value is false.
+	 */
+	if ((stmt->partitionBy || stmt->is_part_child) &&
+	    stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot create partition inherited from temporary relation")));
+
 	/* Only on top-most partitioned tables. */
 	if (stmt->partitionBy && !stmt->is_part_child)
 		fixCreateStmtForPartitionedTable(stmt);
