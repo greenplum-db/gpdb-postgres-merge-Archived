@@ -1821,13 +1821,13 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * before earlier ones.  This ensures that we don't throw away RETURNING
 	 * rows that need to be seen by a later CTE subplan.
 	 */
-
-	/*
-	 * GPDB_91_MERGE_FIXME
-	 * ModifyTable node is not supposed to be executed on QD.
-	 */
 	if (Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY)
 	{
+		/*
+		 * We do not need this unless in executor or with utility role. Note
+		 * This was added for the data modifying CTE feature but there are other
+		 * cases could run into this also.
+		 */
 		if (!mtstate->canSetTag)
 			estate->es_auxmodifytables = lcons(mtstate,
 											   estate->es_auxmodifytables);
