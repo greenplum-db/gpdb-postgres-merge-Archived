@@ -1824,9 +1824,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	/*
 	 * GPDB_91_MERGE_FIXME
-	 * ModifyTable node is supposed to be executed only on QE.?
+	 * ModifyTable node is not supposed to be executed on QD.
 	 */
-	if (Gp_role == GP_ROLE_EXECUTE)
+	if (Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY)
 	{
 		if (!mtstate->canSetTag)
 			estate->es_auxmodifytables = lcons(mtstate,
