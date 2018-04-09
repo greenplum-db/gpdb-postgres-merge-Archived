@@ -963,7 +963,7 @@ WITH RECURSIVE x(n) AS (
 ERROR:  Window Functions in a recursive query is not implemented
 LINE 4:  SELECT level+1, row_number() over() FROM x, bar)
                          ^
-CREATE TEMPORARY TABLE y (a INTEGER);
+CREATE TEMPORARY TABLE y (a INTEGER) DISTRIBUTED RANDOMLY;
 INSERT INTO y SELECT generate_series(1, 10);
 -- LEFT JOIN
 WITH RECURSIVE x(n) AS (SELECT a FROM y WHERE a = 1
