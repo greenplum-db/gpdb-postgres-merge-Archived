@@ -9378,6 +9378,14 @@ validateForeignKeyConstraint(char *conname,
 	ereport(DEBUG1,
 			(errmsg("validating foreign key constraint \"%s\"", conname)));
 
+	/* Greenplum Database: Ignore foreign keys for now, with a warning. */
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
+		ereport(WARNING,
+				(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+				 errmsg("Referential integrity (FOREIGN KEY) constraints are "
+						"not supported in Greenplum Database, "
+						"will not be enforced.")));
+
 	/*
 	 * Build a trigger call structure; we'll need it either way.
 	 */
@@ -9498,12 +9506,13 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now, with warning
 	 */
-	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE)
+	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 	{
-		if (Gp_role == GP_ROLE_DISPATCH)
-			ereport(WARNING,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.")));
+				 errmsg("Referential integrity (FOREIGN KEY) constraints are "
+						"not supported in Greenplum Database, "
+						"will not be enforced.")));
 	}
 
 	/*

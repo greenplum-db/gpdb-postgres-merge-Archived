@@ -225,15 +225,19 @@ INSERT INTO tmp3 values (5,50);
 
 -- Try NOT VALID and then VALIDATE CONSTRAINT, but fails. Delete failure then re-validate
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full NOT VALID;
+-- FK constraints are not supported in GPDB
+--start_ignore
 ALTER TABLE tmp3 validate constraint tmpconstr;
+--end_ignore
 
 -- Delete failing row
 DELETE FROM tmp3 where a=5;
 
 -- Try (and succeed) and repeat to show it works on already valid constraint
+--start_ignore
 ALTER TABLE tmp3 validate constraint tmpconstr;
 ALTER TABLE tmp3 validate constraint tmpconstr;
-
+--end_ignore
 
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
@@ -433,7 +437,10 @@ insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
 -- should succeed
-insert into atacc1 (test) values (4);
+-- In GPDB, we must insert enough values so as to cause duplicates to
+-- be detected on at least one out of several (usually 3) gpdb
+-- segments.
+insert into atacc1 select i from generate_series(3,10)i;
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
 -- try to create duplicates via alter table using - should fail

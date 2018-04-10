@@ -3784,7 +3784,10 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		ListCell   *li;
 
 		idxstmts = transformIndexStmt(idxstmt, queryString);
-		/* GPDB_91_MERGE_FIXME: Why is this a loop in GPDB? */
+		/*
+		 * This is a loop in GPDB because transformIndexStmt() returns a list.
+		 * See notes there for more details.
+		 */
 		foreach(li, idxstmts)
 		{
 			Assert(IsA(idxstmt, IndexStmt));
