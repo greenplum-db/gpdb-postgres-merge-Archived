@@ -274,6 +274,27 @@ SET allow_system_table_mods='DML';
 -- Simulate broken stats by changing the data type of MCV slot to a different type than in pg_attribute 
 UPDATE pg_statistic SET stavalues1='{1,2,3}'::int[] WHERE starelid ='bfv_statistic.test_broken_stats'::regclass AND staattnum=2;
 
+-- GPDB_91_MERGE_FIXME: Use FULL JOIN here to avoid the check for type
+-- of pg_statistics.stavalues when scanning selectivity of merge join.
+
+-- As pg_statistics.stavalues has been updated with a different type (allowed
+-- in GPDB but disallowed in Postgres), the check for type will error out.
+
+-- This issue also exists in GPDB if enable_mergejoin=on (off by default).
+
+-- GUC enable_mergejoin works differently in GPDB and Postgres. When it is
+-- set to off, GPDB will not consider merge join during planning, so GPDB
+-- will not encounter the type check error.
+-- In Postgres, when enable_mergejoin is set off, merge join is still considered
+-- by planner, but with a huge constant cost.
+SELECT * FROM test_broken_stats t1 FULL JOIN good_tab t2 ON t1.b = t2.b;
+
+-- start_matchsubs
+-- m/ERROR:  invalid MCV array of type integer, for attribute of type text \(selfuncs\.c\:\d+\)/
+-- s/\(selfuncs\.c:\d+\)//
+-- end_matchsubs
+
+-- expect to error out with type check error.
 SELECT * FROM test_broken_stats t1, good_tab t2 WHERE t1.b = t2.b;
 
 RESET allow_system_table_mods;
