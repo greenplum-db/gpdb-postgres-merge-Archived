@@ -512,6 +512,12 @@ DefineIndex(RangeVar *heapRelation,
 					  accessMethodName, accessMethodId,
 					  amcanorder, isconstraint);
 
+	/*
+	 * Extra checks when creating a PRIMARY KEY index.
+	 */
+	if (primary)
+		index_check_primary_key(rel, indexInfo, is_alter_table);
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		if ((primary || unique) && rel->rd_cdbpolicy)
@@ -536,12 +542,6 @@ DefineIndex(RangeVar *heapRelation,
 		if (stmt)
 			quiet = true;
 	}
-
-	/*
-	 * Extra checks when creating a PRIMARY KEY index.
-	 */
-	if (primary)
-		index_check_primary_key(rel, indexInfo, is_alter_table);
 
 	/*
 	 * Report index creation if appropriate (delay this till after most of the
