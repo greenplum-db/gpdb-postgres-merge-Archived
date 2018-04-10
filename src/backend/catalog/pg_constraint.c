@@ -840,6 +840,9 @@ get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
  * to be able to represent the not-null-ness as part of the constraints added
  * to *constraintDeps.  FIXME whenever not-null constraints get represented
  * in pg_constraint.
+ *
+ * GPDB_91_MERGE_FIXME: this does not seem to correctly reject invalid GROUPING
+ * SET queries. Possibly because those were backported from 9.5?
  */
 bool
 check_functional_grouping(Oid relid,
