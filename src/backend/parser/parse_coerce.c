@@ -164,30 +164,6 @@ coerce_type(ParseState *pstate, Node *node,
 		 * function argument must be its actual type, not the polymorphic
 		 * pseudotype.
 		 */
-
-		/*
-		 * BUG BUG 
-		 * JIRA MPP-3786
-		 *
-		 * Special handling for ANYARRAY type.  
-		 */
-		if(targetTypeId == ANYARRAYOID && IsA(node, Const))
-		{
-			Const	   *con = (Const *) node;
-			Const	   *newcon = makeNode(Const);
-			Oid elemoid = get_element_type(inputTypeId);
-
-			if(elemoid == InvalidOid)
-				ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH), 
-					 errmsg("Cannot convert non-Array type to ANYARRAY")));
-
-			memcpy(newcon, con, sizeof(Const));
-			newcon->consttype = ANYARRAYOID;
-
-			return (Node *) newcon;
-		}
-
 		return node;
 	}
 	if (targetTypeId == ANYARRAYOID ||
@@ -207,6 +183,30 @@ coerce_type(ParseState *pstate, Node *node,
 		 * since the other functions in this file will not match such a
 		 * parameter to ANYENUM.  But that should get changed eventually.
 		 */
+
+		/*
+		 * BUG BUG 
+		 * JIRA MPP-3786
+		 *
+		 * Special handling for ANYARRAY type.  
+		 */
+		if(targetTypeId == ANYARRAYOID && IsA(node, Const) && inputTypeId != UNKNOWNOID)
+		{
+			Const	   *con = (Const *) node;
+			Const	   *newcon = makeNode(Const);
+			Oid elemoid = get_element_type(inputTypeId);
+
+			if(elemoid == InvalidOid)
+				ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH), 
+					 errmsg("Cannot convert non-Array type to ANYARRAY")));
+
+			memcpy(newcon, con, sizeof(Const));
+			newcon->consttype = ANYARRAYOID;
+
+			return (Node *) newcon;
+		}
+
 		if (inputTypeId != UNKNOWNOID)
 		{
 			Oid			baseTypeId = getBaseType(inputTypeId);
