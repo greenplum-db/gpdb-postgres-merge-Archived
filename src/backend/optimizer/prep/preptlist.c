@@ -64,6 +64,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	List	   *range_table = parse->rtable;
 	CmdType		command_type = parse->commandType;
 	ListCell   *lc;
+	RangeTblEntry *rte = NULL;
 
 	/*
 	 * Sanity check: if there is a result relation, it'd better be a real
@@ -71,7 +72,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	 */
 	if (result_relation)
 	{
-		RangeTblEntry *rte = rt_fetch(result_relation, range_table);
+		rte = rt_fetch(result_relation, range_table);
 
 		if (rte->subquery != NULL || rte->relid == InvalidOid)
 			elog(ERROR, "subquery cannot be result relation");
@@ -87,33 +88,25 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 								  result_relation, range_table);
 
 	/*
-	 * for "update" and "delete" queries, add ctid of the result relation into
-	 * the target list so that the ctid will propagate through execution and
-	 * ExecutePlan() will be able to identify the right tuple to replace or
-	 * delete.	This extra field is marked "junk" so that it is not stored
-	 * back into the tuple.
+	 * GPDB_91_MERGE_FIXME: Do we need (how?) handle relkind other than RELKIND_RELATION?
+	 * If we do not check RELKIND_RELATION in code below, returning.sql will fail with error:
+	 * "no relation entry for relid 2 (relnode.c:199)"
+	 * That is because after calling makeVar() below, it will finally
+	 * call into find_base_rel(), which accesses simple_rel_array[result_relation],
+	 * however apparently simple_rel_array[] is not for a view relation.
 	 */
-	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
+	if ((command_type == CMD_UPDATE || command_type == CMD_DELETE) &&
+		(rte->relkind == RELKIND_RELATION))
 	{
-		TargetEntry *tleCtid = NULL;
-		Var			*varCtid = NULL;
-		
 		TargetEntry *tleSegid = NULL;
 		Var 		*varSegid = NULL;
 		
-		varCtid = makeVar(result_relation, SelfItemPointerAttributeNumber,
-						  TIDOID, -1, InvalidOid, 0);
-
-		tleCtid = makeTargetEntry((Expr *) varCtid,
-							  list_length(tlist) + 1, 	/* resno */
-							  pstrdup("ctid"),			/* resname */
-							  true);					/* resjunk */
 		/* Get type info for segid column */
 		Oid			reloid,
 					vartypeid;
 		int32		type_mod;
 		Oid			type_coll;
-		
+
 		reloid = getrelid(result_relation, parse->rtable);
 		
 		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
@@ -127,22 +120,12 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 			);
 
 		tleSegid = makeTargetEntry((Expr *) varSegid,
-							  list_length(tlist) + 2,	/* resno */
+							  list_length(tlist) + 1,	/* resno */
 							  pstrdup("gp_segment_id"),	/* resname */
 							  true);					/* resjunk */
 		
-
-		/*
-		 * For an UPDATE, expand_targetlist already created a fresh tlist. For
-		 * DELETE, better do a listCopy so that we don't destructively modify
-		 * the original tlist (is this really necessary?).
-		 */
-		if (command_type == CMD_DELETE)
-			tlist = list_copy(tlist);
-
-		tlist = lappend(tlist, tleCtid);
 		tlist = lappend(tlist, tleSegid);
-	} 
+	}
 
 	/* simply updatable cursors */
 	if (root->glob->simplyUpdatable)
