@@ -16,6 +16,9 @@
  */
 #include "postgres.h"
 
+#include "libpq-fe.h"
+#include "libpq-int.h"
+
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -31,6 +34,12 @@
 #include "commands/defrem.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+/*
+ * GPDB_91_MERGE_FIXME: eww. cdbsreh.c does this PQArgBlock redefinition too, to
+ * avoid the conflict with libpg-fe, above. Probably want to backport 01cca2c1
+ * from upstream.
+ */
+#define PQArgBlock PQArgBlock_
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -52,6 +61,7 @@
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbcopy.h"
 #include "cdb/cdbdisp_query.h"
+#include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbsreh.h"
 #include "cdb/cdbvars.h"
@@ -1911,6 +1921,10 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 	GpPolicy *policy = cstate->rel->rd_cdbpolicy;
 	CopyStmt   *dispatchStmt;
 	List	   *all_relids;
+	CdbPgResults pgresults = {0};
+	int			i;
+	uint64		processed = 0;
+	int			rejected = 0; /* GPDB_91_MERGE_FIXME: should be uint64! */
 
 	dispatchStmt = copyObject((Node *) stmt);
 
@@ -1955,11 +1969,25 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 								DF_WITH_SNAPSHOT |
 								DF_CANCEL_ON_ERROR,
 								NIL,
-								NULL);
+								&pgresults);
 
-	/* GPDB_91_MERGE_FIXME: Collect results from segments */
-	uint64 processed = 0;
+	/*
+	 * GPDB_91_MERGE_FIXME: SREH handling seems to be handled in a different
+	 * place for every type of copy. This should be consolidated with the
+	 * others.
+	 */
+	for (i = 0; i < pgresults.numResults; ++i)
+	{
+		struct pg_result *result = pgresults.pg_results[i];
 
+		processed += result->numCompleted;
+		rejected += result->numRejected;
+	}
+
+	if (rejected)
+		ReportSrehResults(NULL, rejected);
+
+	cdbdisp_clearCdbPgResults(&pgresults);
 	return processed;
 }
 
@@ -3775,11 +3803,15 @@ CopyFrom(CopyState cstate)
 	/*
 	 * If SREH and in executor mode send the number of rejected
 	 * rows to the client (QD COPY).
-	 * If COPY ... FROM ... ON SEGMENT, then need to send the number of completed
+	 * If COPY ... FROM/TO ... ON SEGMENT, then we need to send the number of
+	 * completed rows as well.
 	 */
-	if (cstate->errMode != ALL_OR_NOTHING && cstate->dispatch_mode == COPY_EXECUTOR)
+	if ((cstate->errMode != ALL_OR_NOTHING && cstate->dispatch_mode == COPY_EXECUTOR)
+		|| cstate->on_segment)
+	{
 		SendNumRows((cstate->errMode != ALL_OR_NOTHING) ? cstate->cdbsreh->rejectcount : 0,
 				cstate->on_segment ? processed : 0);
+	}
 
 	if (estate->es_result_partitions && Gp_role == GP_ROLE_EXECUTE)
 		SendAOTupCounts(estate);
