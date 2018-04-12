@@ -11258,14 +11258,20 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset, LOCKMODE lockmode
 
 	datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
 
-	/* MPP-5777: disallow all options except fillfactor.
+	/*
+	 * Disallow all AO options.  ALTER TABLE SET ... command does not rewrite a
+	 * table.  Setting AO options (e.g. setting appendonly=true when it's
+	 * currently unset) involves rewrite of the table and is handled using the
+	 * SET WITH variant of ALTER TABLE.
+	 *
+	 * GPDP_91_MERGE_FIXME: Is it possible to use the new reloptions format to
+	 * avoid replicating each AO reloption here?  How about introducing new
+	 * RELOPT_KIND_AO and RELOPT_KIND_AOCO to relopt_kind?
+	 *
 	 * Future work: could convert from SET to SET WITH codepath which
 	 * can support additional reloption types
 	 */
-	if ((defList != NIL)
-/*		&& ((rel->rd_rel->relkind == RELKIND_RELATION)
-		|| (rel->rd_rel->relkind == RELKIND_TOASTVALUE)) */
-			)
+	if (defList != NIL)
 	{
 		ListCell   *cell;
 
@@ -11273,19 +11279,30 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset, LOCKMODE lockmode
 		{
 			DefElem    *def = lfirst(cell);
 			int			kw_len = strlen(def->defname);
-			char	   *text_str = "fillfactor";
-			int			text_len = strlen(text_str);
 
-			if ((text_len != kw_len) ||
-				(pg_strncasecmp(text_str, def->defname, kw_len) != 0))
+			if (pg_strncasecmp(SOPT_APPENDONLY, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_BLOCKSIZE, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_COMPTYPE, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_COMPLEVEL, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_CHECKSUM, def->defname, kw_len) == 0 ||
+				pg_strncasecmp(SOPT_ORIENTATION, def->defname, kw_len) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("cannot SET reloption \"%s\"",
 								def->defname)));
-
+			/*
+			 * Autovacuum on user tables is not enabled in Greenplum.  Move on
+			 * with a warning.  The decision to not error out is in favor of
+			 * DDL compatibility with external BI tools.
+			 */
+			if ((Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY) &&
+				pg_strncasecmp(def->defname, "autovacuum",
+							   strlen("autovaccum")) == 0)
+				ereport(WARNING,
+						(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+						 errmsg("autovacuum is not supported in Greenplum")));
 		}
 	}
-
 
 	/* Generate new proposed reloptions (text array) */
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,

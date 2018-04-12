@@ -1665,6 +1665,7 @@ select * from my_locks order by 1;
 
 commit;
 begin; alter table alterlock set (toast.autovacuum_enabled = off);
+WARNING:  autovacuum is not supported in Greenplum
 select * from my_locks order by 1;
   relname  |       max_lockmode       
 -----------+--------------------------
@@ -1674,6 +1675,7 @@ select * from my_locks order by 1;
 
 commit;
 begin; alter table alterlock set (autovacuum_enabled = off);
+WARNING:  autovacuum is not supported in Greenplum
 select * from my_locks order by 1;
   relname  |       max_lockmode       
 -----------+--------------------------
