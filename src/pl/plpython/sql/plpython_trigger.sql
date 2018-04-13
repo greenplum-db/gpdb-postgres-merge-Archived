@@ -317,7 +317,8 @@ CREATE FUNCTION set_modif_time() RETURNS trigger AS $$
     return 'MODIFY'
 $$ LANGUAGE plpythonu;
 
-CREATE TABLE pb (a TEXT, modif_time TIMESTAMP(0) WITHOUT TIME ZONE);
+-- Add 'DISTRIBUTED RANDOMLY' to avoid "ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns"
+CREATE TABLE pb (a TEXT, modif_time TIMESTAMP(0) WITHOUT TIME ZONE) DISTRIBUTED RANDOMLY;
 
 CREATE TRIGGER set_modif_time BEFORE UPDATE ON pb
   FOR EACH ROW EXECUTE PROCEDURE set_modif_time();
