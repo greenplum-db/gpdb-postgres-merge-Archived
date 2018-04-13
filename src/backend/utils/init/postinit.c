@@ -673,7 +673,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * transaction or create a snapshot.  Neither are they required to
 	 * respond to a FTS message.
 	 */
-	if (!bootstrap && !(am_ftshandler && am_mirror))
+	if (!bootstrap && !am_mirror)
 	{
 		StartTransactionCommand();
 		(void) GetTransactionSnapshot();
@@ -702,8 +702,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username)));
 	}
-	else if (am_ftshandler && am_mirror)
+	else if (am_mirror)
 	{
+		Assert(am_ftshandler);
 		/*
 		 * A mirror must receive and act upon FTS messages.  Performing proper
 		 * authentication involves reading pg_authid.  Heap access is not
@@ -784,11 +785,23 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		Assert(!bootstrap);
 
-		/* must have authenticated as a replication role */
-		if (!is_authenticated_user_replication_role())
+		/*
+		 * must have authenticated as a replication role
+		 *
+		 * In Greenplum, this code path is overloaded for handling FTS messages
+		 * on primary as well as mirror.
+		 * is_authenticated_user_replication_role() performs a syscache lookup,
+		 * which cannot happen on mirror/standby.
+		 */
+		if (am_walsender && !is_authenticated_user_replication_role())
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be replication role to start walsender")));
+
+		if (am_ftshandler && !am_superuser)
+			ereport(FATAL,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be superuser role to handle FTS request")));
 
 		/* process any options passed in the startup packet */
 		if (MyProcPort != NULL)
@@ -805,7 +818,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		pgstat_bestart();
 
 		/* close the transaction we started above */
-		if (!(am_ftshandler && am_mirror))
+		if (!am_mirror)
 			CommitTransactionCommand();
 
 		return;

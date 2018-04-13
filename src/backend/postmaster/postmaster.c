@@ -147,6 +147,10 @@ void SeqServerMain(int argc, char *argv[]);
 void FtsProbeMain(int argc, char *argv[]);
 #endif
 
+/*
+ * This is set in backends that are handling a FTS message on mirror.  The
+ * assumption is am_ftshandler must be set if this is set.
+ */
 bool am_mirror = false;
 bool pm_launch_walreceiver = false;
 
