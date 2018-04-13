@@ -88,12 +88,20 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 								  result_relation, range_table);
 
 	/*
-	 * GPDB_91_MERGE_FIXME: Do we need (how?) handle relkind other than RELKIND_RELATION?
-	 * If we do not check RELKIND_RELATION in code below, returning.sql will fail with error:
+	 * GPDB_91_MERGE_FIXME:
+	 * We seem to need to handle relkind other than RELKIND_RELATION.
+	 * Previously there is no RELKIND_RELATION checking below, and that causes
+	 * returning.sql test failure during pg 9.1 merging:
 	 * "no relation entry for relid 2 (relnode.c:199)"
-	 * That is because after calling makeVar() below, it will finally
-	 * call into find_base_rel(), which accesses simple_rel_array[result_relation],
-	 * however apparently simple_rel_array[] is not for a view relation.
+	 * That is because result_relation is the view relation while after
+	 * we call makeVar() below, the code will finally call into
+	 * add_vars_to_targetlist()->find_base_rel(), which accesses
+	 * simple_rel_array[result_relation], however apparently
+	 * simple_rel_array[] is not for a view relation.
+	 * The key point is that after previous pullup, we should not use
+	 * result_relation for varno in MakeVar(). It seems that we should move the
+	 * code below to rewriteTargetListUD() and thus we could have
+	 * the 'gp_segment_id' column with a correct varno in the Var.
 	 */
 	if ((command_type == CMD_UPDATE || command_type == CMD_DELETE) &&
 		(rte->relkind == RELKIND_RELATION))
