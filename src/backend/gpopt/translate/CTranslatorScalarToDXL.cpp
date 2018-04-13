@@ -2175,7 +2175,7 @@ CTranslatorScalarToDXL::PdxldatumGeneric
 		lValue = LValue(pmdid, fNull, pba, ulLength);
 	}
 
-	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, oidCollation, fConstByVal, fNull, pba, ulLength, lValue, dValue);
+	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, fConstByVal, fNull, pba, ulLength, lValue, dValue);
 }
 
 
