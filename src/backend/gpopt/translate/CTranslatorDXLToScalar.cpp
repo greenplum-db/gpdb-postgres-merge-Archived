@@ -316,6 +316,20 @@ CTranslatorDXLToScalar::PopexprFromDXLNodeScOpExpr
 		popexpr->opresulttype = OidFunctionReturnType(pmdscop->PmdidFunc());
 	}
 
+	OID oidCollation = pdxlopOpExpr->OidCollation();
+	if (OidInvalidCollation != oidCollation)
+	{
+		/* FIXME COLLATION */
+		popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
+		popexpr->opcollid = oidCollation;
+	}
+	else
+	{
+		/* FIXME COLLATION */
+		popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
+		popexpr->opcollid = gpdb::OidTypeCollation(popexpr->opresulttype);
+	}
+
 	const IMDFunction *pmdfunc = m_pmda->Pmdfunc(pmdscop->PmdidFunc());
 	popexpr->opretset = pmdfunc->FReturnsSet();
 
@@ -323,10 +337,6 @@ CTranslatorDXLToScalar::PopexprFromDXLNodeScOpExpr
 
 	// translate children
 	popexpr->args = PlistTranslateScalarChildren(popexpr->args, pdxlnOpExpr, pmapcidvar);
-
-	// GDPB_91_MERGE_FIXME: collation?
-	popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
-	popexpr->opcollid = gpdb::OidTypeCollation(popexpr->opresulttype);
 
 	return (Expr *)popexpr;
 }
