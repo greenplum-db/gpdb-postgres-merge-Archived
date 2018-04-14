@@ -428,11 +428,12 @@ CTranslatorScalarToDXL::PdxlnScOpExprFromExpr
 		return PdxlnScCmpFromOpExpr(pexpr, pmapvarcolid);
 	}
 
+        OID oidCollation = popexpr->opcollid; /* FIXME: or is it inputcollid? */
 	// get operator name and id
 	IMDId *pmdid = GPOS_NEW(m_pmp) CMDIdGPDB(popexpr->opno);
 	const CWStringConst *pstr = PstrOpName(pmdid);
 
-	CDXLScalarOpExpr *pdxlop = GPOS_NEW(m_pmp) CDXLScalarOpExpr(m_pmp, pmdid, pmdidReturnType, GPOS_NEW(m_pmp) CWStringConst(pstr->Wsz()));
+	CDXLScalarOpExpr *pdxlop = GPOS_NEW(m_pmp) CDXLScalarOpExpr(m_pmp, pmdid, pmdidReturnType, oidCollation, GPOS_NEW(m_pmp) CWStringConst(pstr->Wsz()));
 
 	// create the DXL node holding the scalar opexpr
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
