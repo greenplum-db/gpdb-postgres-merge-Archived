@@ -752,6 +752,7 @@ isGreenplumDbHashable(Oid typid)
 		case CHAROID:
 		case BPCHAROID:
 		case TEXTOID:
+		case PGNODETREEOID:
 		case VARCHAROID:
 		case BYTEAOID:
 		case NAMEOID:
