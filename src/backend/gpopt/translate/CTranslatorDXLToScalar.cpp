@@ -600,14 +600,6 @@ CTranslatorDXLToScalar::PwindowrefFromDXLNodeScWindowRef
 	return (Expr *) pwindowfunc;
 }
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CTranslatorDXLToScalar::PfuncexprFromDXLNodeScFuncExpr
-//
-//	@doc:
-//		Translates a DXL scalar opexpr into a GPDB FuncExpr node
-//
-//---------------------------------------------------------------------------
 Expr *
 CTranslatorDXLToScalar::PfuncexprFromDXLNodeScFuncExpr
 	(
@@ -622,12 +614,10 @@ CTranslatorDXLToScalar::PfuncexprFromDXLNodeScFuncExpr
 	pfuncexpr->funcid = CMDIdGPDB::PmdidConvert(pdxlop->PmdidFunc())->OidObjectId();
 	pfuncexpr->funcretset = pdxlop->FReturnSet();
 	pfuncexpr->funcformat = COERCE_DONTCARE;
+	pfuncexpr->funccollid = pdxlop->OidFuncCollation();
+	pfuncexpr->inputcollid = pdxlop->OidInputCollation();
 	pfuncexpr->funcresulttype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidRetType())->OidObjectId();
 	pfuncexpr->args = PlistTranslateScalarChildren(pfuncexpr->args, pdxlnFuncExpr, pmapcidvar);
-
-	// GDPB_91_MERGE_FIXME: collation?
-	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
-	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
 
 	return (Expr *)pfuncexpr;
 }

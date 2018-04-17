@@ -1265,6 +1265,8 @@ CTranslatorScalarToDXL::PdxlnScFuncExprFromFuncExpr
 	GPOS_ASSERT(IsA(pexpr, FuncExpr));
 	const FuncExpr *pfuncexpr = (FuncExpr *) pexpr;
 	int32 iTypeModifier = gpdb::IExprTypeMod((Node *) pexpr);
+	OID oidFuncCollation = pfuncexpr->funccollid; /* result collation ID */
+	OID oidInputCollation = pfuncexpr->inputcollid;
 
 	CMDIdGPDB *pmdidFunc = GPOS_NEW(m_pmp) CMDIdGPDB(pfuncexpr->funcid);
 
@@ -1278,6 +1280,8 @@ CTranslatorScalarToDXL::PdxlnScFuncExprFromFuncExpr
 												pmdidFunc,
 												GPOS_NEW(m_pmp) CMDIdGPDB(pfuncexpr->funcresulttype),
 												iTypeModifier,
+												oidFuncCollation,
+												oidInputCollation,
 												pfuncexpr->funcretset
 												)
 									);
