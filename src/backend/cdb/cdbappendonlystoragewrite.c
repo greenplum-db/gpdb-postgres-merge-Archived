@@ -275,7 +275,7 @@ AppendOnlyStorageWrite_TransactionCreateFile(AppendOnlyStorageWrite *storageWrit
 	 * gp_replica_check tool, to compare primary and mirror, will complain if
 	 * a file exists in master but not in mirror, even if it's empty.
 	 */
-	if (relFileNode->backend != InvalidBackendId)
+	if (!RelFileNodeBackendIsTemp(*relFileNode))
 		xlog_ao_insert(relFileNode->node, segmentFileNum, 0, NULL, 0);
 }
 

@@ -206,7 +206,7 @@ BufferedAppendWrite(BufferedAppend *bufferedAppend)
 	 * controls the visibility of data in AO / CO files, writing xlog
 	 * record after writing to file works fine.
 	 */
-	if (bufferedAppend->relFileNode.backend != InvalidBackendId)
+	if (!RelFileNodeBackendIsTemp(bufferedAppend->relFileNode))
 		xlog_ao_insert(bufferedAppend->relFileNode.node, bufferedAppend->segmentFileNum,
 					   bufferedAppend->largeWritePosition, largeWriteMemory, bytestotal);
 
