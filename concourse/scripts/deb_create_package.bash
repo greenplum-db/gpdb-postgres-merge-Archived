@@ -9,7 +9,8 @@ SRC_DIR=gpdb_src
 # mv: inter-device move failed: 'debian_release/debian' to 'gpdb_src/debian'; unable to remove target: Directory not empty
 cp -R debian_release/debian ${SRC_DIR}/
 
-git clone --branch v2.55.21 https://github.com/sambitesh/gporca.git ${SRC_DIR}/gporca
+git clone --branch orca_collation_support https://github.com/greenplum-db/gporca.git ${SRC_DIR}/gporca
+
 pushd ${SRC_DIR}
     VERSION=`./getversion | tr " " "."`-oss
     SHA=`git rev-parse --short HEAD`
