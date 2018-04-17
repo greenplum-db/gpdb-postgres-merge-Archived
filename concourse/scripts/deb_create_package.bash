@@ -9,9 +9,6 @@ SRC_DIR=gpdb_src
 # mv: inter-device move failed: 'debian_release/debian' to 'gpdb_src/debian'; unable to remove target: Directory not empty
 cp -R debian_release/debian ${SRC_DIR}/
 
-# Regex to capture required gporca version and download gporca source
-ORCA_TAG=$(grep -Po 'v\d+.\d+.\d+' ${SRC_DIR}/depends/conanfile_orca.txt)
-git clone --branch ${ORCA_TAG} https://github.com/greenplum-db/gporca.git ${SRC_DIR}/gporca
 
 pushd ${SRC_DIR}
     VERSION=`./getversion | tr " " "."`-oss
