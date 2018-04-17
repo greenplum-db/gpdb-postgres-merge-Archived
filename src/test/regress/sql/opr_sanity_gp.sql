@@ -19,7 +19,6 @@ and oprleft IN (
   'char'::regtype,
   'bpchar '::regtype,
   'text'::regtype,
-  'pg_node_tree'::regtype,
   'varchar'::regtype,
   'bytea'::regtype,
   'name'::regtype,
