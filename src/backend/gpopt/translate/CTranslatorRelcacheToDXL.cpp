@@ -1629,6 +1629,7 @@ CTranslatorRelcacheToDXL::Pmdtype
 
 	BOOL fRedistributable = gpdb::FGreenplumDbHashable(oidType);
 
+	OID oidTypeDefaultCollation = gpdb::OidTypeCollation(oidType);
 	pmdid->AddRef();
 
 	return GPOS_NEW(pmp) CMDTypeGenericGPDB
@@ -1656,7 +1657,8 @@ CTranslatorRelcacheToDXL::Pmdtype
 						 fComposite,
 						 pmdidTypeRelid,
 						 pmdidTypeArray,
-						 ptce->typlen
+						 ptce->typlen,
+						 oidTypeDefaultCollation
 						 );
 }
 

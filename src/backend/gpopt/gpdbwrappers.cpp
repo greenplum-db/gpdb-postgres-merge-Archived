@@ -585,12 +585,7 @@ gpdb::OidTypeCollation
 {
 	GP_WRAP_START;
 	{
-		Oid collation = InvalidOid;
-		if (type_is_collatable(type))
-		{
-			collation = DEFAULT_COLLATION_OID;
-		}
-		return collation;
+		return get_typcollation(type);
 	}
 	GP_WRAP_END;
 	return 0;

@@ -1110,7 +1110,8 @@ CTranslatorScalarToDXL::PdxlnScCastFromRelabelType
 												(
 												m_pmp,
 												GPOS_NEW(m_pmp) CMDIdGPDB(prelabeltype->resulttype),
-												GPOS_NEW(m_pmp) CMDIdGPDB(0) // casting function oid
+												GPOS_NEW(m_pmp) CMDIdGPDB(0),// casting function oid
+												prelabeltype->resultcollid
 												)
 									);
 	pdxln->AddChild(pdxlnChild);

@@ -1164,6 +1164,7 @@ CTranslatorDXLToScalar::PrelabeltypeOrFuncexprFromDXLNodeScalarCast(const CDXLSc
 	prelabeltype->resulttypmod = -1;
 	prelabeltype->location = -1;
 	prelabeltype->relabelformat = COERCE_DONTCARE;
+	prelabeltype->resultcollid = pdxlscalarcast->OidCollation();
 
 	return (Expr *) prelabeltype;
 }
