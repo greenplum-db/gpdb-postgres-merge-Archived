@@ -387,6 +387,16 @@ smgrDoPendingDeletes(bool isCommit)
  *
  * Note that the list does not include anything scheduled for termination
  * by upper-level transactions.
+ *
+ * Greenplum-specific notes: We *do* include temporary relations in the returned
+ * list. Because unlike in Upstream Postgres, Greenplum two-phase commits can
+ * involve temporary tables, which necessitates including the temporary
+ * relations in the two-phase state files. Otherwise the relation files won't
+ * get unlink(2)'d, or the shared buffers won't be dropped.
+ *
+ * GPDB_91_MERGE_FIXME: do we bother to skip xlog'ging dropping temp relations?
+ * Note that it seems a big undertaking to exclude temporary relations from the
+ * two-phase state file.
  */
 int
 smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
@@ -400,7 +410,11 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
 		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit
-			&& pending->backend == InvalidBackendId)
+			/*
+			 * Greenplum uses shared buffer for temp tables
+			 */
+			/* && pending->backend == InvalidBackendId) */
+				)
 			nrels++;
 	}
 	if (nrels == 0)
@@ -413,7 +427,11 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
 		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit
-			&& pending->backend == InvalidBackendId)
+			/*
+			 * Keep this loop condition identical to above
+			 */
+			/* && pending->backend == InvalidBackendId) */
+				)
 		{
 			*rptr = pending->relnode;
 			rptr++;
