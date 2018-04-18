@@ -52,7 +52,7 @@ FORMAT 'CUSTOM' (formatter='fixedwidth_in',
 Type: readable
 Encoding: UTF8
 Format type: custom
-Format options: formatter 'fixedwidth_in' s1 '10' s2 '10' s3 '10' col_empty '5' 
+Format options: formatter 'fixedwidth_in' , s1 '10' , s2 '10' , s3 '10' , col_empty '5'
 External options: {}
 External location: file://@hostname@@abs_srcdir@/data/fixedwidth_miss_col_null.tbl
 Execute on: all segments

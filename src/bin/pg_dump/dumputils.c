@@ -1270,6 +1270,9 @@ custom_fmtopts_string(const char *src)
 		char       *find_res = NULL;
 		int        last = 0;
 
+		/* GPDB_91_MERGE_FIXME: fmtopts in systable pg_exttable has changed,
+		 * so we need to add branch code for future upgradation (gpdb6 to gpdb6 above).
+		 */
 		if (!srcdup || !result)
 		{
 			if (result)
