@@ -316,19 +316,8 @@ CTranslatorDXLToScalar::PopexprFromDXLNodeScOpExpr
 		popexpr->opresulttype = OidFunctionReturnType(pmdscop->PmdidFunc());
 	}
 
-	OID oidCollation = pdxlopOpExpr->OidCollation();
-	if (OidInvalidCollation != oidCollation)
-	{
-		/* FIXME COLLATION */
-		popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
-		popexpr->opcollid = oidCollation;
-	}
-	else
-	{
-		/* FIXME COLLATION */
-		popexpr->inputcollid = gpdb::OidExprCollation((Node *) popexpr->args);
-		popexpr->opcollid = gpdb::OidTypeCollation(popexpr->opresulttype);
-	}
+	popexpr->opcollid = pdxlopOpExpr->OidCollation();
+	popexpr->inputcollid = pdxlopOpExpr->OidInputCollation();
 
 	const IMDFunction *pmdfunc = m_pmda->Pmdfunc(pmdscop->PmdidFunc());
 	popexpr->opretset = pmdfunc->FReturnsSet();
