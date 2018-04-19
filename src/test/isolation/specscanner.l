@@ -57,31 +57,19 @@ teardown		{ return(TEARDOWN); }
 					litbuf[litbufpos] = '\0';
 					yylval.str = strdup(litbuf);
 					BEGIN(INITIAL);
-<<<<<<< HEAD
 					return(string_literal);
-=======
-					return(string);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 				}
 <qstr>.			{ addlitchar(yytext[0]); }
 <qstr>\n		{ yyerror("unexpected newline in quoted string"); }
 <qstr><<EOF>>	{ yyerror("unterminated quoted string"); }
 
  /* SQL blocks: { UPDATE ... } */
-<<<<<<< HEAD
 "{"{space}*		{
-=======
-"{"				{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 					litbufpos = 0;
 					BEGIN(sql);
 				}
-<<<<<<< HEAD
 <sql>{space}*"}" {
-=======
-<sql>"}"		{
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 					litbuf[litbufpos] = '\0';
 					yylval.str = strdup(litbuf);
 					BEGIN(INITIAL);
