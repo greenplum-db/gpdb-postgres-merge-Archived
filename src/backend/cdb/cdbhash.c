@@ -752,6 +752,16 @@ isGreenplumDbHashable(Oid typid)
 		case CHAROID:
 		case BPCHAROID:
 		case TEXTOID:
+		/*
+		 * GPDB_91_MERGE_FIXME:
+		 * "pg_node_tree" is introduced in PG 9.1 to be
+		 * the type for nodeToString output. It can be
+		 * coerced to, but not from, text.
+		 *
+		 * Make it GPDB hashable here to let gpcheckcat
+		 * pass.
+		 */
+		case PGNODETREEOID:
 		case VARCHAROID:
 		case BYTEAOID:
 		case NAMEOID:
