@@ -851,7 +851,9 @@ CTranslatorScalarToDXL::PdxlnScMinMaxFromExpr
 											(
 											m_pmp,
 											GPOS_NEW(m_pmp) CMDIdGPDB(pminmaxexpr->minmaxtype),
-											emmt
+											emmt,
+											pminmaxexpr->minmaxcollid,
+											pminmaxexpr->inputcollid
 											);
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);

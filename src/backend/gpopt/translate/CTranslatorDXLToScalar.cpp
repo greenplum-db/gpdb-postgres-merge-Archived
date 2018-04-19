@@ -1340,6 +1340,8 @@ CTranslatorDXLToScalar::PminmaxFromDXLNodeScMinMax
 	MinMaxExpr *pminmax = MakeNode(MinMaxExpr);
 
 	pminmax->minmaxtype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
+	pminmax->minmaxcollid = pdxlop->OidCollation();
+	pminmax->inputcollid = pdxlop->OidInputCollation();
 	pminmax->args = PlistTranslateScalarChildren(pminmax->args, pdxlnMinMax, pmapcidvar);
 	pminmax->location = -1;
 
