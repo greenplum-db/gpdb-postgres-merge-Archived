@@ -1157,7 +1157,8 @@ CTranslatorScalarToDXL::PdxlnScCoerceFromCoerce
                                                                                                 GPOS_NEW(m_pmp) CMDIdGPDB(pcoerce->resulttype),
                                                                                                pcoerce->resulttypmod,
                                                                                                (EdxlCoercionForm) pcoerce->coercionformat,
-                                                                                               pcoerce->location
+                                                                                               pcoerce->location,
+                                                                                               pcoerce->resultcollid
                                                                                                 )
                                                                         );
         pdxln->AddChild(pdxlnChild);
@@ -1200,7 +1201,8 @@ CTranslatorScalarToDXL::PdxlnScCoerceFromCoerceViaIO
                                                                                                 GPOS_NEW(m_pmp) CMDIdGPDB(pcoerce->resulttype),
                                                                                                -1,
                                                                                                (EdxlCoercionForm) pcoerce->coerceformat,
-                                                                                               pcoerce->location
+                                                                                               pcoerce->location,
+                                                                                               pcoerce->resultcollid
                                                                                                 )
                                                                         );
         pdxln->AddChild(pdxlnChild);
@@ -1242,7 +1244,8 @@ CTranslatorScalarToDXL::PdxlnScArrayCoerceExprFromExpr
 							parraycoerce->resulttypmod,
 							parraycoerce->isExplicit,
 							(EdxlCoercionForm) parraycoerce->coerceformat,
-							parraycoerce->location
+							parraycoerce->location,
+							parraycoerce->resultcollid
 							)
 					);
 	

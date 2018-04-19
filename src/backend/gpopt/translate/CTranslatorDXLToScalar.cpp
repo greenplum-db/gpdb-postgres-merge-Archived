@@ -1220,6 +1220,7 @@ CTranslatorDXLToScalar::PcoerceFromDXLNodeScCoerceToDomain
         pcoerce->resulttypmod = pdxlop->ITypeModifier();
         pcoerce->location = pdxlop->ILoc();
         pcoerce->coercionformat = (CoercionForm)  pdxlop->Edxlcf();
+        pcoerce->resultcollid = pdxlop->OidResultCollation();
 
         return (Expr *) pcoerce;
 }
@@ -1253,6 +1254,7 @@ CTranslatorDXLToScalar::PcoerceFromDXLNodeScCoerceViaIO
         pcoerce->arg = pexprChild;
         pcoerce->location = pdxlop->ILoc();
         pcoerce->coerceformat = (CoercionForm)  pdxlop->Edxlcf();
+        pcoerce->resultcollid = pdxlop->OidResultCollation();
 
         return (Expr *) pcoerce;
 }
@@ -1289,6 +1291,7 @@ CTranslatorDXLToScalar::PcoerceFromDXLNodeScArrayCoerceExpr
         pcoerce->isExplicit = pdxlop->FIsExplicit();
         pcoerce->coerceformat = (CoercionForm)  pdxlop->Edxlcf();
         pcoerce->location = pdxlop->ILoc();
+        pcoerce->resultcollid = pdxlop->OidResultCollation();
 
         return (Expr *) pcoerce;
 }
