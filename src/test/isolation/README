@@ -3,7 +3,6 @@ src/test/isolation/README
 Isolation tests
 ===============
 
-<<<<<<< HEAD
 This directory contains a set of tests for concurrent behaviors in
 PostgreSQL.  These tests require running multiple interacting transactions,
 which requires management of multiple concurrent connections, and therefore
@@ -32,32 +31,14 @@ output in the expected/ subdirectory, and add the test's name to the
 isolation_schedule file.
 
 isolationtester is a program that uses libpq to open multiple connections,
-=======
-This directory contains a set of tests for the serializable isolation level.
-Testing isolation requires running multiple overlapping transactions,
-which requires multiple concurrent connections, and can't therefore be
-tested using the normal pg_regress program.
-
-To represent a test with overlapping transactions, we use a test specification
-file with a custom syntax, described in the next section.
-
-isolationtester is program that uses libpq to open multiple connections,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 and executes a test specified by a spec file. A libpq connection string
 specifies the server and database to connect to; defaults derived from
 environment variables are used otherwise.
 
 pg_isolation_regress is a tool similar to pg_regress, but instead of using
-<<<<<<< HEAD
 psql to execute a test, it uses isolationtester.  It accepts all the same
 command-line arguments as pg_regress.
 
-=======
-psql to execute a test, it uses isolationtester.
-
-To run the tests, you need to have a server up and running. Run
-    gmake installcheck
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 Test specification
 ==================
@@ -68,18 +49,12 @@ subdirectory. A test specification consists of four parts, in this order:
 setup { <SQL> }
 
   The given SQL block is executed once, in one session only, before running
-<<<<<<< HEAD
   the test. Create any test tables or other required objects here. This
   part is optional.
-=======
-  the test. Create any test tables or such objects here. This part is
-  optional.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 teardown { <SQL> }
 
   The teardown SQL block is executed once after the test is finished. Use
-<<<<<<< HEAD
   this to clean up in preparation for the next permutation, e.g dropping
   any test tables created by setup. This part is optional.
 
@@ -99,31 +74,10 @@ session "<name>"
   where <name> is a name identifying this step, and SQL is a SQL statement
   (or statements, separated by semicolons) that is executed in the step.
   Step names must be unique across the whole spec file.
-=======
-  this to clean up, e.g dropping any test tables. This part is optional.
-
-session "<name>"
-
-  Each session is executed in a separate connection. A session consists
-  of four parts: setup, teardown and one or more steps. The per-session
-  setup and teardown parts have the same syntax as the per-test setup and
-  teardown described above, but they are executed in every session,
-  before and after each permutation. The setup part typically contains a
-  "BEGIN" command to begin a transaction.
-
-  Each step has a syntax of
-
-  step "<name>" { <SQL> }
-
-  where <name> is a unique name identifying this step, and SQL is a SQL
-  statement (or statements, separated by semicolons) that is executed in the
-  step.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 permutation "<step name>" ...
 
   A permutation line specifies a list of steps that are run in that order.
-<<<<<<< HEAD
   Any number of permutation lines can appear.  If no permutation lines are
   given, the test program automatically generates all possible orderings
   of the steps from each session (running the steps of any one session in
@@ -157,9 +111,3 @@ step is waiting, subsequent steps are run to completion synchronously.
 Note that isolationtester recognizes that a command has blocked by looking
 to see if it is shown as waiting in the pg_locks view; therefore, only
 blocks on heavyweight locks will be detected.
-=======
-  If no permutation lines are given, the test program automatically generates
-  all possible overlapping orderings of the given sessions.
-
-Lines beginning with a # are considered comments.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
