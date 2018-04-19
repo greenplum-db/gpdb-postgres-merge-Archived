@@ -1313,6 +1313,7 @@ CTranslatorDXLToScalar::PcoalesceFromDXLNodeScCoalesce
 	CoalesceExpr *pcoalesce = MakeNode(CoalesceExpr);
 
 	pcoalesce->coalescetype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
+	pcoalesce->coalescecollid = pdxlop->OidCollation();
 	pcoalesce->args = PlistTranslateScalarChildren(pcoalesce->args, pdxlnCoalesce, pmapcidvar);
 	pcoalesce->location = -1;
 

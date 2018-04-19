@@ -806,7 +806,8 @@ CTranslatorScalarToDXL::PdxlnScCoalesceFromExpr
 	CDXLScalarCoalesce *pdxlop = GPOS_NEW(m_pmp) CDXLScalarCoalesce
 											(
 											m_pmp,
-											GPOS_NEW(m_pmp) CMDIdGPDB(pcoalesceexpr->coalescetype)
+											GPOS_NEW(m_pmp) CMDIdGPDB(pcoalesceexpr->coalescetype),
+											pcoalesceexpr->coalescecollid
 											);
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
