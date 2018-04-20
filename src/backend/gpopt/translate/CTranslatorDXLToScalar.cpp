@@ -1153,7 +1153,7 @@ CTranslatorDXLToScalar::PrelabeltypeOrFuncexprFromDXLNodeScalarCast(const CDXLSc
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprChild);
 
 		// GDPB_91_MERGE_FIXME: collation?
-		pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
+		pfuncexpr->inputcollid = gpdb::OidTypeCollation(pfuncexpr->inputcollid);
 		pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
 
 		return (Expr *) pfuncexpr;
@@ -1166,7 +1166,7 @@ CTranslatorDXLToScalar::PrelabeltypeOrFuncexprFromDXLNodeScalarCast(const CDXLSc
 	prelabeltype->resulttypmod = -1;
 	prelabeltype->location = -1;
 	prelabeltype->relabelformat = COERCE_DONTCARE;
-	prelabeltype->resultcollid = pdxlscalarcast->OidCollation();
+	prelabeltype->resultcollid = pdxlscalarcast->OidResultCollation();
 
 	return (Expr *) prelabeltype;
 }

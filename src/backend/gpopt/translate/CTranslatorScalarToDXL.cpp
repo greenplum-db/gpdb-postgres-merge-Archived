@@ -1121,7 +1121,8 @@ CTranslatorScalarToDXL::PdxlnScCastFromRelabelType
 												m_pmp,
 												GPOS_NEW(m_pmp) CMDIdGPDB(prelabeltype->resulttype),
 												GPOS_NEW(m_pmp) CMDIdGPDB(0),// casting function oid
-												prelabeltype->resultcollid
+												prelabeltype->resultcollid,
+												InvalidOid /* input collation is only needed when a cast is created from a function expression */
 												)
 									);
 	pdxln->AddChild(pdxlnChild);
@@ -1252,7 +1253,8 @@ CTranslatorScalarToDXL::PdxlnScArrayCoerceExprFromExpr
 							parraycoerce->isExplicit,
 							(EdxlCoercionForm) parraycoerce->coerceformat,
 							parraycoerce->location,
-							parraycoerce->resultcollid
+							parraycoerce->resultcollid,
+							InvalidOid /* input collation is only needed when a cast is created from a function expression */
 							)
 					);
 	
