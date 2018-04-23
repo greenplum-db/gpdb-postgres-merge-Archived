@@ -166,6 +166,7 @@ CTranslatorDXLToScalar::PcaseexprFromDXLNodeScIfStmt
 
 	CaseExpr *pcaseexpr = MakeNode(CaseExpr);
 	pcaseexpr->casetype = CMDIdGPDB::PmdidConvert(pdxlopIfStmt->PmdidResultType())->OidObjectId();
+	pcaseexpr->casecollid = pdxlopIfStmt->OidCollation();
 
 	CDXLNode *pdxlnCurr = const_cast<CDXLNode*>(pdxlnIfStmt);
 	Expr *pexprElse = NULL;

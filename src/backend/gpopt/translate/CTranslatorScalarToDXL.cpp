@@ -1050,7 +1050,8 @@ CTranslatorScalarToDXL::PdxlnScIfStmtFromCaseExpr
 		CDXLScalarIfStmt *pdxlopIfstmtNew = GPOS_NEW(m_pmp) CDXLScalarIfStmt
 															(
 															m_pmp,
-															GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype)
+															GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype),
+															pcaseexpr->casecollid
 															);
 
 		CDXLNode *pdxlnIfStmtNew = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlopIfstmtNew);
