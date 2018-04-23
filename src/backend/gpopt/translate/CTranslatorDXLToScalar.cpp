@@ -1125,6 +1125,8 @@ CTranslatorDXLToScalar::PnullifFromDXLNodeScNullIf
 	pnullifexpr->opfuncid = CMDIdGPDB::PmdidConvert(pmdscop->PmdidFunc())->OidObjectId();
 	pnullifexpr->opresulttype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
 	pnullifexpr->opretset = false;
+	pnullifexpr->opcollid = pdxlop->OidCollation();
+	pnullifexpr->inputcollid = pdxlop->OidInputCollation();
 
 	// translate children
 	GPOS_ASSERT(2 == pdxlnNullIf->UlArity());

@@ -465,7 +465,14 @@ CTranslatorScalarToDXL::PdxlnScNullIfFromExpr
 
 	GPOS_ASSERT(2 == gpdb::UlListLength(pnullifexpr->args));
 
-	CDXLScalarNullIf *pdxlop = GPOS_NEW(m_pmp) CDXLScalarNullIf(m_pmp, GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opno), GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opresulttype));
+	CDXLScalarNullIf *pdxlop = GPOS_NEW(m_pmp) CDXLScalarNullIf
+		(
+		m_pmp,
+		GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opno),
+		GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opresulttype),
+		pnullifexpr->opcollid,
+		pnullifexpr->inputcollid
+		);
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
 
