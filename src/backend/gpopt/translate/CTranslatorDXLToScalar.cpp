@@ -1123,7 +1123,7 @@ CTranslatorDXLToScalar::PnullifFromDXLNodeScNullIf
 	const IMDScalarOp *pmdscop = m_pmda->Pmdscop(pdxlop->PmdidOp());
 
 	pnullifexpr->opfuncid = CMDIdGPDB::PmdidConvert(pmdscop->PmdidFunc())->OidObjectId();
-	pnullifexpr->opresulttype = OidFunctionReturnType(pmdscop->PmdidFunc());
+	pnullifexpr->opresulttype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
 	pnullifexpr->opretset = false;
 
 	// translate children
