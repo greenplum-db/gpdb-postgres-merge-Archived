@@ -4678,8 +4678,11 @@ struct config_string ConfigureNamesString_gp[] =
 		},
 		&gp_resource_manager_str,
 		"queue",
-		NULL, gpvars_assign_gp_resource_manager_policy, gpvars_show_gp_resource_manager_policy,
+		gpvars_check_gp_resource_manager_policy,
+		gpvars_assign_gp_resource_manager_policy,
+		gpvars_show_gp_resource_manager_policy,
 	},
+
 	{
 		{"gp_email_smtp_server", PGC_SUSET, LOGGING,
 			gettext_noop("Sets the SMTP server and port used to send email alerts."),

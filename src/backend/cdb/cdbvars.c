@@ -732,41 +732,39 @@ gpvars_check_gp_gpperfmon_send_interval(int *newval, void **extra, GucSource sou
 }
 
 /*
+ * gpvars_check_gp_resource_manager_policy
  * gpvars_assign_gp_resource_manager_policy
  * gpvars_show_gp_resource_manager_policy
  */
-const char *
-gpvars_assign_gp_resource_manager_policy(const char *newval, bool doit, GucSource source __attribute__((unused)))
+bool
+gpvars_check_gp_resource_manager_policy(char **newval, void **extra, GucSource source)
 {
-	ResourceManagerPolicy newtype = RESOURCE_MANAGER_POLICY_QUEUE;
+	if (*newval == NULL ||
+		*newval[0] == 0 ||
+		!pg_strcasecmp("queue", *newval) ||
+		!pg_strcasecmp("group", *newval))
+		return true;
 
+	GUC_check_errmsg("invalid value for resource manager policy: \"%s\"", *newval);
+	return false;
+}
+
+void
+gpvars_assign_gp_resource_manager_policy(const char *newval, void *extra)
+{
 	if (newval == NULL || newval[0] == 0)
-		newtype = RESOURCE_MANAGER_POLICY_QUEUE;
+		Gp_resource_manager_policy = RESOURCE_MANAGER_POLICY_QUEUE;
 	else if (!pg_strcasecmp("queue", newval))
-		newtype = RESOURCE_MANAGER_POLICY_QUEUE;
+		Gp_resource_manager_policy = RESOURCE_MANAGER_POLICY_QUEUE;
 	else if (!pg_strcasecmp("group", newval))
 	{
 		ResGroupOps_Bless();
-		newtype = RESOURCE_MANAGER_POLICY_GROUP;
+		Gp_resource_manager_policy = RESOURCE_MANAGER_POLICY_GROUP;
+		gp_enable_resqueue_priority = false;
 	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid value for resource manager policy")));
-
-	if (doit)
-	{
-		Gp_resource_manager_policy = newtype;
-
-		/*
-		 * disable backoff mechanism of resource queue if we are going to
-		 * enable resource group
-		 */
-		if (newtype == RESOURCE_MANAGER_POLICY_GROUP)
-			gp_enable_resqueue_priority = false;
-	}
-
-	return newval;
+	/*
+	 * No else should happen, since newval has been checked in check_hook.
+	 */
 }
 
 const char *
