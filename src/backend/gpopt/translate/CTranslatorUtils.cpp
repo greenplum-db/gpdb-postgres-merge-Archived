@@ -277,6 +277,8 @@ CTranslatorUtils::Pdxltvf
 	// get function id
 	CMDIdGPDB *pmdidFunc = GPOS_NEW(pmp) CMDIdGPDB(pfuncexpr->funcid);
 	CMDIdGPDB *pmdidRetType =  GPOS_NEW(pmp) CMDIdGPDB(pfuncexpr->funcresulttype);
+	OID oidResultCollation = pfuncexpr->funccollid;
+	OID oidInputCollation = pfuncexpr->inputcollid;
 	const IMDType *pmdType = pmda->Pmdtype(pmdidRetType);
 
 	// In the planner, scalar functions that are volatile (SIRV) or read or modify SQL
@@ -336,7 +338,16 @@ CTranslatorUtils::Pdxltvf
 
 	CMDName *pmdfuncname = GPOS_NEW(pmp) CMDName(pmp, pmdfunc->Mdname().Pstr());
 
-	CDXLLogicalTVF *pdxlopTVF = GPOS_NEW(pmp) CDXLLogicalTVF(pmp, pmdidFunc, pmdidRetType, pmdfuncname, pdrgdxlcd);
+	CDXLLogicalTVF *pdxlopTVF = GPOS_NEW(pmp) CDXLLogicalTVF
+													(
+													pmp,
+													pmdidFunc,
+													pmdidRetType,
+													pmdfuncname,
+													pdrgdxlcd,
+													oidResultCollation,
+													oidInputCollation
+													);
 
 	return pdxlopTVF;
 }

@@ -1350,9 +1350,9 @@ CTranslatorDXLToPlStmt::PrteFromDXLTVF
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprFuncArg);
 	}
 
-	// GDPB_91_MERGE_FIXME: collation?
-	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
-	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
+
+	pfuncexpr->inputcollid = pdxlop->OidInputCollation();
+	pfuncexpr->funccollid =	pdxlop->OidResultCollation();
 
 	prte->funcexpr = (Node *)pfuncexpr;
 	prte->inFromCl = true;
