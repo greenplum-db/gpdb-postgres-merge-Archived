@@ -960,18 +960,17 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 			else
 				is_first_option = false;
 
-			/*
-			 * Output "<key> '<val>' ", but replace any space chars in the key
-			 * with meta char (MPP-14467)
-			 */
+			/* Output "<key> '<val>' ". Add quote if key includes space. */
+			bool need_quote = (strstr(key, " ") != NULL);
+			if (need_quote)
+				appendStringInfoChar(&cfbuf, '"');
 			while (*key)
 			{
-				if (*key == ' ')
-					appendStringInfoString(&cfbuf, "<gpx20>");
-				else
-					appendStringInfoChar(&cfbuf, *key);
+				appendStringInfoChar(&cfbuf, *key);
 				key++;
 			}
+			if (need_quote)
+				appendStringInfoChar(&cfbuf, '"');
 			appendStringInfo(&cfbuf, " '%s'", val);
 		}
 

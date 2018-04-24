@@ -1692,16 +1692,7 @@ parseCustomFormatString(char *fmtstr, char **formatter_name, List **formatter_pa
 			*formatter_name = strVal(e->arg);
 		}
 		else
-		{
-			/* MPP-14467 - replace meta chars back to original */
-			resetStringInfo(&key_modified);
-			appendStringInfoString(&key_modified, strVal(e->arg));
-			replaceStringInfoString(&key_modified, "<gpx20>", " ");
-
-			e->arg = (Node *) makeString(pstrdup(key_modified.data));
-
 			*formatter_params = lappend(*formatter_params, (Node *) e);
-		}
 	}
 
 	if (!(*formatter_name))
