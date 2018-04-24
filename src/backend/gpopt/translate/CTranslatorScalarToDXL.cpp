@@ -957,7 +957,8 @@ CTranslatorScalarToDXL::PdxlnScSwitchFromCaseExpr
 	CDXLScalarSwitch *pdxlop = GPOS_NEW(m_pmp) CDXLScalarSwitch
 												(
 												m_pmp,
-												GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype)
+												GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype),
+												pcaseexpr->casecollid
 												);
 	CDXLNode *pdxlnSwitch = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
 
@@ -1019,7 +1020,8 @@ CTranslatorScalarToDXL::PdxlnScCaseTestFromExpr
 	CDXLScalarCaseTest *pdxlop = GPOS_NEW(m_pmp) CDXLScalarCaseTest
 												(
 												m_pmp,
-												GPOS_NEW(m_pmp) CMDIdGPDB(pcasetestexpr->typeId)
+												GPOS_NEW(m_pmp) CMDIdGPDB(pcasetestexpr->typeId),
+												pcasetestexpr->collation
 												);
 
 	return GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);

@@ -231,6 +231,7 @@ CTranslatorDXLToScalar::PcaseexprFromDXLNodeScSwitch
 
 	CaseExpr *pcaseexpr = MakeNode(CaseExpr);
 	pcaseexpr->casetype = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
+	pcaseexpr->casecollid = pdxlop->OidCollation();
 
 	// translate arg child
 	pcaseexpr->arg = PexprFromDXLNodeScalar((*pdxlnSwitch)[0], pmapcidvar);
@@ -280,6 +281,7 @@ CTranslatorDXLToScalar::PcasetestexprFromDXLNodeScCaseTest
 	CaseTestExpr *pcasetestexpr = MakeNode(CaseTestExpr);
 	pcasetestexpr->typeId = CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId();
 	pcasetestexpr->typeMod = -1;
+	pcasetestexpr->collation = pdxlop->OidCollation();
 
 	return (Expr *)pcasetestexpr;
 }
