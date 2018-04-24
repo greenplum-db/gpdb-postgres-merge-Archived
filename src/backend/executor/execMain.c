@@ -4330,8 +4330,8 @@ get_part(EState *estate, Datum *values, bool *isnull, TupleDesc tupdesc,
 ResultRelInfo *
 targetid_get_partition(Oid targetid, EState *estate, bool openIndices)
 {
-	ResultRelInfo *parentInfo = estate->es_result_relation_info;
-	ResultRelInfo *childInfo = estate->es_result_relation_info;
+	ResultRelInfo *parentInfo = estate->es_result_relations;
+	ResultRelInfo *childInfo = estate->es_result_relations;
 	ResultPartHashEntry *entry;
 	bool		found;
 
