@@ -96,14 +96,8 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 
 	if (found)
 	{
-<<<<<<< HEAD
-		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
-=======
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			   "| Your installation contains the \"name\" data type in\n"
 			   "| user tables.  This data type changed its internal\n"
 			   "| alignment between your old and new clusters so this\n"
@@ -195,14 +189,8 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 
 	if (found)
 	{
-<<<<<<< HEAD
-		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
-=======
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			   "| Your installation contains the \"tsquery\" data type.\n"
 			   "| This data type added a new internal field between\n"
 			   "| your old and new clusters so this cluster cannot\n"
@@ -212,8 +200,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 			   "| \t%s\n\n", output_path);
 	}
 	else
-<<<<<<< HEAD
-		check_ok(ctx);
+		check_ok();
 }
 
 
@@ -223,21 +210,19 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
  *	The internal ltree structure was changed in 8.4 so upgrading is impossible.
  */
 void
-old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
+old_8_3_check_ltree_usage(ClusterInfo *cluster)
 {
-	ClusterInfo *active_cluster = (whichCluster == CLUSTER_OLD) ?
-	&ctx->old : &ctx->new;
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for /contrib/ltree");
+	prep_status("Checking for /contrib/ltree");
 
 	snprintf(output_path, sizeof(output_path), "%s/contrib_ltree.txt",
-			 ctx->cwd);
+			 os_info.cwd);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res;
 		bool		db_used = false;
@@ -245,11 +230,11 @@ old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
 		int			rowno;
 		int			i_nspname,
 					i_proname;
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, whichCluster);
+		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/* Find any functions coming from contrib/ltree */
-		res = executeQueryOrDie(ctx, conn,
+		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, p.proname "
 								"FROM	pg_catalog.pg_proc p, "
 								"		pg_catalog.pg_namespace n "
@@ -263,7 +248,7 @@ old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n", output_path);
+				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
 			if (!db_used)
 			{
 				fprintf(script, "Database:  %s\n", active_db->db_name);
@@ -279,11 +264,13 @@ old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
 		PQfinish(conn);
 	}
 
+	if (script)
+		fclose(script);
+
 	if (found)
 	{
-		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_FATAL,
 			   "| Your installation contains the \"ltree\" data type.  This data type\n"
 			   "| changed its internal storage format between your old and new clusters so this\n"
 			   "| cluster cannot currently be upgraded.  You can manually upgrade databases\n"
@@ -293,10 +280,7 @@ old_8_3_check_ltree_usage(migratorContext *ctx, Cluster whichCluster)
 			   "| \t%s\n\n", output_path);
 	}
 	else
-		check_ok(ctx);
-=======
 		check_ok();
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 

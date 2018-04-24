@@ -39,7 +39,7 @@ const char *
 copyAndUpdateFile(pageCnvCtx *pageConverter,
 				  const char *src, const char *dst, bool force)
 {
-	report_progress(ctx, NONE, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
+	report_progress(NULL, FILE_COPY, "Copy \"%s\" to \"%s\"", src, dst);
 
 	if (pageConverter == NULL)
 	{
@@ -117,7 +117,7 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
  * upstream and would give us merge headaches.
  */
 void
-rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *tofile,
+rewriteHeapPageChecksum(const char *fromfile, const char *tofile,
 						const char *schemaName, const char *relName)
 {
 	int			src_fd;
@@ -133,28 +133,27 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
 	 * transfer_relfile() should never call us unless requested by the data
 	 * checksum option but better doublecheck before we start rewriting data.
 	 */
-	if (ctx->checksum_mode == CHECKSUM_NONE)
-		pg_log(ctx, PG_FATAL,
-			   "error, incorrect checksum configuration detected.\n");
+	if (user_opts.checksum_mode == CHECKSUM_NONE)
+		pg_log(PG_FATAL, "error, incorrect checksum configuration detected.\n");
 
 	if ((src_fd = open(fromfile, O_RDONLY | PG_BINARY, 0)) < 0)
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "error while rewriting relation \"%s.%s\": could not open file \"%s\": %s\n",
 			   schemaName, relName, fromfile, strerror(errno));
 
 	if (fstat(src_fd, &statbuf) != 0)
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "error while rewriting relation \"%s.%s\": could not stat file \"%s\": %s\n",
 			   schemaName, relName, fromfile, strerror(errno));
 
 	if ((dst_fd = open(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR)) < 0)
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "error while rewriting relation \"%s.%s\": could not create file \"%s\": %s\n",
 			   schemaName, relName, tofile, strerror(errno));
 
 	blkno = 0;
 	totalBytesRead = 0;
-	buf = (char *) pg_malloc(ctx, BLCKSZ);
+	buf = (char *) pg_malloc(BLCKSZ);
 
 	while ((bytesRead = read(src_fd, buf, BLCKSZ)) == BLCKSZ)
 	{
@@ -163,13 +162,13 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
 		page_size = PageGetPageSize((PageHeader) buf);
 
 		if (!PageSizeIsValid(page_size) && page_size != 0)
-			pg_log(ctx, PG_FATAL,
+			pg_log(PG_FATAL,
 				   "error while rewriting relation \"%s.%s\": invalid page size detected (%zd)\n",
 				   schemaName, relName, page_size);
 
 		if (!PageIsNew(buf))
 		{
-			if (ctx->checksum_mode == CHECKSUM_ADD)
+			if (user_opts.checksum_mode == CHECKSUM_ADD)
 				((PageHeader) buf)->pd_checksum = pg_checksum_page(buf, blkno);
 			else
 				memset(&(((PageHeader) buf)->pd_checksum), 0, sizeof(uint16));
@@ -178,8 +177,7 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
 		writesize = write(dst_fd, buf, BLCKSZ);
 
 		if (writesize != BLCKSZ)
-			pg_log(ctx, PG_FATAL,
-				   "error when rewriting relation \"%s.%s\": %s",
+			pg_log(PG_FATAL, "error when rewriting relation \"%s.%s\": %s",
 				   schemaName, relName, strerror(errno));
 
 		blkno++;
@@ -187,7 +185,7 @@ rewriteHeapPageChecksum(migratorContext *ctx, const char *fromfile, const char *
 	}
 
 	if (totalBytesRead != statbuf.st_size)
-		pg_log(ctx, PG_FATAL,
+		pg_log(PG_FATAL,
 			   "error when rewriting relation \"%s.%s\": torn read on file \"%s\"%c %s\n",
 			   schemaName, relName, fromfile,
 			   (errno != 0 ? ':' : ' '), strerror(errno));
@@ -265,13 +263,8 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (nbytes < 0)
 		{
-<<<<<<< HEAD
-			int save_errno = errno;
-			
-=======
 			int			save_errno = errno;
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 			if (buffer != NULL)
 				free(buffer);
 
@@ -293,11 +286,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 		if (write(dest_fd, buffer, nbytes) != nbytes)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
-<<<<<<< HEAD
-			int save_errno = errno ? errno : ENOSPC;
-=======
 			int			save_errno = errno ? errno : ENOSPC;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 			if (buffer != NULL)
 				free(buffer);
@@ -389,11 +378,7 @@ pg_scandir_internal(const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
-<<<<<<< HEAD
-		pg_log(ctx, PG_FATAL, "Could not open directory \"%s\": %s\n", dirname, getErrorText(errno));
-=======
 		pg_log(PG_FATAL, "could not open directory \"%s\": %m\n", dirname);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	*namelist = NULL;
 
@@ -437,10 +422,10 @@ pg_scandir_internal(const char *dirname,
 #endif
 
 	if (errno)
-		pg_log(ctx, PG_FATAL, "Could not read directory \"%s\": %s\n", dirname, getErrorText(errno));
+		pg_log(PG_FATAL, "Could not read directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	if (closedir(dirdesc))
-		pg_log(ctx, PG_FATAL, "Could not close directory \"%s\": %s\n", dirname, getErrorText(errno));
+		pg_log(PG_FATAL, "Could not close directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	return count;
 }
@@ -496,111 +481,5 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
-<<<<<<< HEAD
-#endif
-
-
-#ifdef NOT_USED
-/*
- * copy_dir()
- *
- *	Copies either a directory or a single file within a directory.  If the
- *	source argument names a directory, we recursively copy that directory,
- *	otherwise we copy a single file.
- */
-static int
-copy_dir(const char *src, const char *dst, bool force)
-{
-	DIR		   *srcdir;
-	struct dirent *de = NULL;
-	struct stat fst;
-
-	if (src == NULL || dst == NULL)
-		return -1;
-
-	/*
-	 * Try to open the source directory - if it turns out not to be a
-	 * directory, assume that it's a file and copy that instead.
-	 */
-	if ((srcdir = opendir(src)) == NULL)
-	{
-		if (errno == ENOTDIR)
-			return copy_file(src, dst, true);
-		return -1;
-	}
-
-	if (mkdir(dst, S_IRWXU) != 0)
-	{
-		/*
-		 * ignore directory already exist error
-		 */
-		if (errno != EEXIST)
-			return -1;
-	}
-
-	while (errno = 0, (de = readdir(srcdir)) != NULL)
-	{
-		char		src_file[MAXPGPATH];
-		char		dest_file[MAXPGPATH];
-
-		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
-			continue;
-
-		memset(src_file, 0, sizeof(src_file));
-		memset(dest_file, 0, sizeof(dest_file));
-
-		snprintf(src_file, sizeof(src_file), "%s/%s", src, de->d_name);
-		snprintf(dest_file, sizeof(dest_file), "%s/%s", dst, de->d_name);
-
-		if (stat(src_file, &fst) < 0)
-		{
-			if (srcdir != NULL)
-			{
-				closedir(srcdir);
-				srcdir = NULL;
-			}
-
-			return -1;
-		}
-
-		if (fst.st_mode & S_IFDIR)
-		{
-			/* recurse to handle subdirectories */
-			if (force)
-				copy_dir(src_file, dest_file, true);
-		}
-		else if (fst.st_mode & S_IFREG)
-		{
-			if ((copy_file(src_file, dest_file, 1)) == -1)
-			{
-				if (srcdir != NULL)
-				{
-					closedir(srcdir);
-					srcdir = NULL;
-				}
-				return -1;
-			}
-		}
-	}
-
-#ifdef WIN32
-	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-
-	if (errno)
-		return -1;
-
-	if (srcdir != NULL)
-	{
-		if (closedir(srcdir))
-			return -1;
-		srcdir = NULL;
-	}
-	return 1;
-}
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 #endif

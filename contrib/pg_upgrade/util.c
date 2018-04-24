@@ -193,40 +193,6 @@ get_user_info(char **user_name)
 }
 
 
-<<<<<<< HEAD
-void
-exit_nicely(migratorContext *ctx, bool need_cleanup)
-{
-	close_progress(ctx);
-
-	stop_postmaster(ctx, true, true);
-
-	pg_free(ctx->logfile);
-
-	if (ctx->log_fd)
-		fclose(ctx->log_fd);
-
-	if (ctx->debug_fd)
-		fclose(ctx->debug_fd);
-
-	/* terminate any running instance of postmaster */
-	if (ctx->postmasterPID != 0)
-		kill(ctx->postmasterPID, SIGTERM);
-
-	if (need_cleanup)
-	{
-		/*
-		 * FIXME must delete intermediate files
-		 */
-		exit(1);
-	}
-	else
-		exit(0);
-}
-
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 void *
 pg_malloc(int n)
 {
@@ -288,7 +254,42 @@ str2uint(const char *str)
 	return strtoul(str, NULL, 10);
 }
 
-<<<<<<< HEAD
+/*
+ *	pg_putenv()
+ *
+ *	This is like putenv(), but takes two arguments.
+ *	It also does unsetenv() if val is NULL.
+ */
+void
+pg_putenv(const char *var, const char *val)
+{
+	if (val)
+	{
+#ifndef WIN32
+		char	   *envstr = (char *) pg_malloc(strlen(var) +
+												strlen(val) + 2);
+
+		sprintf(envstr, "%s=%s", var, val);
+		putenv(envstr);
+
+		/*
+		 * Do not free envstr because it becomes part of the environment on
+		 * some operating systems.	See port/unsetenv.c::unsetenv.
+		 */
+#else
+		SetEnvironmentVariableA(var, val);
+#endif
+	}
+	else
+	{
+#ifndef WIN32
+		unsetenv(var);
+#else
+		SetEnvironmentVariableA(var, "");
+#endif
+	}
+}
+
 static char *
 opname(progress_type op)
 {
@@ -338,14 +339,14 @@ epoch_us(void)
 }
 
 void
-report_progress(migratorContext *ctx, Cluster cluster, progress_type op, char *fmt,...)
+report_progress(ClusterInfo *cluster, progress_type op, char *fmt,...)
 {
 	va_list			args;
 	char			message[MAX_STRING];
 	char			filename[MAXPGPATH];
 	unsigned long	ts;
 
-	if (!ctx->progress)
+	if (!log_opts.progress)
 		return;
 
 	ts = epoch_us();
@@ -357,14 +358,13 @@ report_progress(migratorContext *ctx, Cluster cluster, progress_type op, char *f
 	if (!progress_file)
 	{
 		snprintf(filename, sizeof(filename), "%s/%d.inprogress",
-				 ctx->cwd, ++progress_id);
+				 os_info.cwd, ++progress_id);
 		if ((progress_file = fopen(filename, "w")) == NULL)
-			pg_log(ctx, PG_FATAL, "Could not create progress file:  %s\n",
-				   filename);
+			pg_log(PG_FATAL, "Could not create progress file:  %s\n", filename);
 	}
 
 	fprintf(progress_file, "%lu;%s;%s;%s;\n",
-			epoch_us(), CLUSTERNAME(cluster), opname(op), message);
+			epoch_us(), CLUSTER_NAME(cluster), opname(op), message);
 	progress_counter++;
 
 	/*
@@ -374,20 +374,20 @@ report_progress(migratorContext *ctx, Cluster cluster, progress_type op, char *f
 	 * to the user.
 	 */
 	if ((progress_counter > OP_PER_PROGRESS) && (ts > progress_prev + TS_PER_PROGRESS))
-		close_progress(ctx);
+		close_progress();
 }
 
 void
-close_progress(migratorContext *ctx)
+close_progress(void)
 {
 	char	old[MAXPGPATH];
 	char	new[MAXPGPATH];
 
-	if (!ctx->progress || !progress_file)
+	if (!log_opts.progress || !progress_file)
 		return;
 
-	snprintf(old, sizeof(old), "%s/%d.inprogress", ctx->cwd, progress_id);
-	snprintf(new, sizeof(new), "%s/%d.done", ctx->cwd, progress_id);
+	snprintf(old, sizeof(old), "%s/%d.inprogress", os_info.cwd, progress_id);
+	snprintf(new, sizeof(new), "%s/%d.done", os_info.cwd, progress_id);
 
 	fclose(progress_file);
 	progress_file = NULL;
@@ -395,41 +395,4 @@ close_progress(migratorContext *ctx)
 	rename(old, new);
 	progress_counter = 0;
 	progress_prev = epoch_us();
-=======
-
-/*
- *	pg_putenv()
- *
- *	This is like putenv(), but takes two arguments.
- *	It also does unsetenv() if val is NULL.
- */
-void
-pg_putenv(const char *var, const char *val)
-{
-	if (val)
-	{
-#ifndef WIN32
-		char	   *envstr = (char *) pg_malloc(strlen(var) +
-												strlen(val) + 2);
-
-		sprintf(envstr, "%s=%s", var, val);
-		putenv(envstr);
-
-		/*
-		 * Do not free envstr because it becomes part of the environment on
-		 * some operating systems.	See port/unsetenv.c::unsetenv.
-		 */
-#else
-		SetEnvironmentVariableA(var, val);
-#endif
-	}
-	else
-	{
-#ifndef WIN32
-		unsetenv(var);
-#else
-		SetEnvironmentVariableA(var, "");
-#endif
-	}
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }

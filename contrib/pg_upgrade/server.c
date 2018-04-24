@@ -23,19 +23,7 @@ static PGconn *get_db_conn(ClusterInfo *cluster, const char *db_name);
 PGconn *
 connectToServer(ClusterInfo *cluster, const char *db_name)
 {
-<<<<<<< HEAD
-	char		connectString[MAXPGPATH];
-	unsigned short port = (whichCluster == CLUSTER_OLD) ?
-	ctx->old.port : ctx->new.port;
-	PGconn	   *conn;
-
-	snprintf(connectString, sizeof(connectString),
-			 "dbname = '%s' user = '%s' port = %d options='-c gp_session_role=utility'", db_name, ctx->user, port);
-
-	conn = PQconnectdb(connectString);
-=======
 	PGconn	   *conn = get_db_conn(cluster, db_name);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
@@ -64,7 +52,9 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 	char		conn_opts[MAXPGPATH];
 
 	snprintf(conn_opts, sizeof(conn_opts),
-			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
+			 "dbname = '%s' user = '%s' port = %d "
+			 /* GPDB: for upgrades, connect in utility mode. */
+			 "options='-c gp_session_role=utility'", db_name, os_info.user,
 			 cluster->port);
 
 	return PQconnectdb(conn_opts);
@@ -155,65 +145,18 @@ void
 start_postmaster(ClusterInfo *cluster)
 {
 	char		cmd[MAXPGPATH];
-<<<<<<< HEAD
-	const char *bindir;
-	const char *datadir;
-	unsigned short port;
-	ClusterInfo *cluster;
-#ifndef WIN32
-	char		*output_filename = ctx->logfile;
-#else
-	char		*output_filename = DEVNULL;
-#endif
-	char		*gpdb_options;
-
-	if (whichCluster == CLUSTER_OLD)
-	{
-		bindir = ctx->old.bindir;
-		datadir = ctx->old.pgdata;
-		port = ctx->old.port;
-		cluster = &ctx->old;
-	}
-	else
-	{
-		bindir = ctx->new.bindir;
-		datadir = ctx->new.pgdata;
-		port = ctx->new.port;
-		cluster = &ctx->new;
-	}
-=======
 	PGconn	   *conn;
 	bool		exit_hook_registered = false;
 	int			pg_ctl_return = 0;
+	char	   *gpdb_options;
 
 #ifndef WIN32
 	char	   *output_filename = log_opts.filename;
 #else
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-
-	if (ctx->dispatcher_mode)
-		gpdb_options = "--gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=-1 --xid_warn_limit=10000000";
-	else
-		gpdb_options = "--gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=0 --xid_warn_limit=10000000";
 
 	/*
 	 * On Win32, we can't send both pg_upgrade output and pg_ctl output to the
 	 * same file because we get the error: "The process cannot access the file
-<<<<<<< HEAD
-	 * because it is being used by another process." so we have to send all other
-	 * output to 'nul'.
-	 */
-	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, output_filename, datadir, port,
-			 gpdb_options,
-			 (cluster->controldata.cat_ver >=
-				BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
-				"-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 output_filename);
-	exec_prog(ctx, true, "%s", cmd);
-=======
 	 * because it is being used by another process." so we have to send all
 	 * other output to 'nul'.
 	 */
@@ -230,6 +173,11 @@ start_postmaster(ClusterInfo *cluster)
 		exit_hook_registered = true;
 	}
 
+	if (user_opts.dispatcher_mode)
+		gpdb_options = "--gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=-1 --xid_warn_limit=10000000";
+	else
+		gpdb_options = "--gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=0 --xid_warn_limit=10000000";
+
 	/*
 	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
 	 * vacuums can still happen, so we set autovacuum_freeze_max_age to its
@@ -239,13 +187,13 @@ start_postmaster(ClusterInfo *cluster)
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
 			 cluster->bindir, output_filename, cluster->pgdata, cluster->port,
+			 gpdb_options,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 log_opts.filename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
@@ -305,50 +253,12 @@ stop_postmaster(bool fast)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" %s stop >> "
 			 "\"%s\" 2>&1" SYSTEMQUOTE,
-<<<<<<< HEAD
-			 bindir,
-#ifndef WIN32
-			 ctx->logfile, datadir, fast ? "-m fast" : "", ctx->logfile);
-#else
-			 DEVNULL, datadir, fast ? "-m fast" : "", DEVNULL);
-#endif
-	exec_prog(ctx, fast ? false : true, "%s", cmd);
-=======
 			 bindir, output_filename, datadir, fast ? "-m fast" : "",
 			 output_filename);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	exec_prog(fast ? false : true, "%s", cmd);
 
-<<<<<<< HEAD
-	snprintf(con_opts, sizeof(con_opts),
-			 "dbname = 'template1' user = '%s' port = %d options='-c gp_session_role=utility'", ctx->user, port);
-
-	for (tries = 0; tries < timeout; tries++)
-	{
-		sleep(1);
-		if ((conn = PQconnectdb(con_opts)) != NULL &&
-			PQstatus(conn) == CONNECTION_OK)
-		{
-			PQfinish(conn);
-			ret = true;
-			break;
-		}
-
-		if (tries == STARTUP_WARNING_TRIES)
-			prep_status(ctx, "Trying to start %s server ",
-						CLUSTERNAME(whichCluster));
-		else if (tries > STARTUP_WARNING_TRIES)
-			pg_log(ctx, PG_REPORT, ".");
-	}
-
-	if (tries > STARTUP_WARNING_TRIES)
-		check_ok(ctx);
-
-	return ret;
-=======
 	os_info.running_cluster = NULL;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 

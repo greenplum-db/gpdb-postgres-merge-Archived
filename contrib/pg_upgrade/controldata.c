@@ -11,11 +11,6 @@
 
 #include <ctype.h>
 
-<<<<<<< HEAD
-static void putenv2(migratorContext *ctx, const char *var, const char *val);
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * get_control_data()
  *
@@ -29,13 +24,8 @@ static void putenv2(migratorContext *ctx, const char *var, const char *val);
  * and then pipe its output. With little string parsing we get the
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
-<<<<<<< HEAD
- * we need to actually perform the migration, but it provides enough for
- * check mode.  We do not implement pg_resetxlog -n because it is hard to
-=======
  * we need to actually perform the upgrade, but it provides enough for
  * check mode.	We do not implement pg_resetxlog -n because it is hard to
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  * return valid xid data for a running server.
  */
 void
@@ -60,10 +50,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	bool		got_toast = false;
 	bool		got_date_is_int = false;
 	bool		got_float8_pass_by_value = false;
-<<<<<<< HEAD
 	bool		got_data_checksums = false;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
 	char	   *lc_monetary = NULL;
@@ -79,41 +66,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 * English.  Copied from pg_regress.c.
 	 */
 	if (getenv("LC_COLLATE"))
-<<<<<<< HEAD
-		lc_collate = pg_strdup(ctx, getenv("LC_COLLATE"));
-	if (getenv("LC_CTYPE"))
-		lc_ctype = pg_strdup(ctx, getenv("LC_CTYPE"));
-	if (getenv("LC_MONETARY"))
-		lc_monetary = pg_strdup(ctx, getenv("LC_MONETARY"));
-	if (getenv("LC_NUMERIC"))
-		lc_numeric = pg_strdup(ctx, getenv("LC_NUMERIC"));
-	if (getenv("LC_TIME"))
-		lc_time = pg_strdup(ctx, getenv("LC_TIME"));
-	if (getenv("LANG"))
-		lang = pg_strdup(ctx, getenv("LANG"));
-	if (getenv("LANGUAGE"))
-		language = pg_strdup(ctx, getenv("LANGUAGE"));
-	if (getenv("LC_ALL"))
-		lc_all = pg_strdup(ctx, getenv("LC_ALL"));
-	if (getenv("LC_MESSAGES"))
-		lc_messages = pg_strdup(ctx, getenv("LC_MESSAGES"));
-
-	putenv2(ctx, "LC_COLLATE", NULL);
-	putenv2(ctx, "LC_CTYPE", NULL);
-	putenv2(ctx, "LC_MONETARY", NULL);
-	putenv2(ctx, "LC_NUMERIC", NULL);
-	putenv2(ctx, "LC_TIME", NULL);
-	putenv2(ctx, "LANG",
-#ifndef WIN32
-			NULL);
-#else
-			/* On Windows the default locale cannot be English, so force it */
-			"en");
-#endif
-	putenv2(ctx, "LANGUAGE", NULL);
-	putenv2(ctx, "LC_ALL", NULL);
-	putenv2(ctx, "LC_MESSAGES", "C");
-=======
 		lc_collate = pg_strdup(getenv("LC_COLLATE"));
 	if (getenv("LC_CTYPE"))
 		lc_ctype = pg_strdup(getenv("LC_CTYPE"));
@@ -147,7 +99,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_putenv("LANGUAGE", NULL);
 	pg_putenv("LC_ALL", NULL);
 	pg_putenv("LC_MESSAGES", "C");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
 			 cluster->bindir,
@@ -254,7 +205,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
 			cluster->controldata.logid = str2uint(p);
@@ -265,7 +216,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
 			cluster->controldata.nxtlogseg = str2uint(p);
@@ -424,7 +375,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_log(ctx, PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
 			/* used later for contrib check */
@@ -467,19 +418,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pclose(output);
 
 	/*
-<<<<<<< HEAD
-	 *	Restore environment variables
-	 */
-	putenv2(ctx, "LC_COLLATE", lc_collate);
-	putenv2(ctx, "LC_CTYPE", lc_ctype);
-	putenv2(ctx, "LC_MONETARY", lc_monetary);
-	putenv2(ctx, "LC_NUMERIC", lc_numeric);
-	putenv2(ctx, "LC_TIME", lc_time);
-	putenv2(ctx, "LANG", lang);
-	putenv2(ctx, "LANGUAGE", language);
-	putenv2(ctx, "LC_ALL", lc_all);
-	putenv2(ctx, "LC_MESSAGES", lc_messages);
-=======
 	 * Restore environment variables
 	 */
 	pg_putenv("LC_COLLATE", lc_collate);
@@ -491,17 +429,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_putenv("LANGUAGE", language);
 	pg_putenv("LC_ALL", lc_all);
 	pg_putenv("LC_MESSAGES", lc_messages);
-
-	pg_free(lc_collate);
-	pg_free(lc_ctype);
-	pg_free(lc_monetary);
-	pg_free(lc_numeric);
-	pg_free(lc_time);
-	pg_free(lang);
-	pg_free(language);
-	pg_free(lc_all);
-	pg_free(lc_messages);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	pg_free(lc_collate);
 	pg_free(lc_ctype);
@@ -563,12 +490,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 #if 0	/* not mandatory in GPDB, see above */
 		if (!got_toast)
-<<<<<<< HEAD
-			pg_log(ctx, PG_REPORT, "  maximum TOAST chunk size\n");
-#endif
-=======
 			pg_log(PG_REPORT, "  maximum TOAST chunk size\n");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+#endif
 
 		if (!got_date_is_int)
 			pg_log(PG_REPORT, "  dates/times are integers?\n");
@@ -577,17 +500,12 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_float8_pass_by_value)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
-<<<<<<< HEAD
 		/* value added in Postgres 9.3 */
 		if (!got_data_checksums)
-			pg_log(ctx, PG_REPORT, "  data checksums\n");
+			pg_log(PG_REPORT, "  data checksums\n");
 
-		pg_log(ctx, PG_FATAL,
-			   "Cannot continue without required control information, terminating\n");
-=======
 		pg_log(PG_FATAL,
 			   "Unable to continue without required control information, terminating\n");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 }
 
@@ -638,11 +556,7 @@ check_control_data(ControlData *oldctrl,
 	 * 'got_toast' is not mandatory in GPDB.
 	 */
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
-<<<<<<< HEAD
-		pg_log(ctx, PG_WARNING,
-=======
-		pg_log(PG_FATAL,
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+		pg_log(PG_WARNING,
 			   "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
@@ -664,21 +578,21 @@ check_control_data(ControlData *oldctrl,
 	 */
 	if (oldctrl->data_checksum_version == 0 &&
 		newctrl->data_checksum_version != 0 &&
-		ctx->checksum_mode != CHECKSUM_ADD)
-		pg_log(ctx, PG_FATAL, "old cluster does not use data checksums but the new one does\n");
+		user_opts.checksum_mode != CHECKSUM_ADD)
+		pg_log(PG_FATAL, "old cluster does not use data checksums but the new one does\n");
 	else if (oldctrl->data_checksum_version != 0 &&
 			 newctrl->data_checksum_version == 0 &&
-			 ctx->checksum_mode != CHECKSUM_REMOVE)
-		pg_log(ctx, PG_FATAL, "old cluster uses data checksums but the new one does not\n");
+			 user_opts.checksum_mode != CHECKSUM_REMOVE)
+		pg_log(PG_FATAL, "old cluster uses data checksums but the new one does not\n");
 	else if (oldctrl->data_checksum_version == newctrl->data_checksum_version &&
-			 ctx->checksum_mode != CHECKSUM_NONE)
-		pg_log(ctx, PG_FATAL, "old and new cluster data checksum configuration match, cannot %s data checksums\n",
-				 (ctx->checksum_mode == CHECKSUM_ADD ? "add" : "remove"));
-	else if (oldctrl->data_checksum_version != 0 && ctx->checksum_mode == CHECKSUM_ADD)
-		pg_log(ctx, PG_FATAL, "--add-checksum option not supported for old cluster which uses data checksums\n");
+			 user_opts.checksum_mode != CHECKSUM_NONE)
+		pg_log(PG_FATAL, "old and new cluster data checksum configuration match, cannot %s data checksums\n",
+				 (user_opts.checksum_mode == CHECKSUM_ADD ? "add" : "remove"));
+	else if (oldctrl->data_checksum_version != 0 && user_opts.checksum_mode == CHECKSUM_ADD)
+		pg_log(PG_FATAL, "--add-checksum option not supported for old cluster which uses data checksums\n");
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version
-			 && ctx->checksum_mode == CHECKSUM_NONE)
-		pg_log(ctx, PG_FATAL, "old and new cluster pg_controldata checksum versions do not match\n");
+			 && user_opts.checksum_mode == CHECKSUM_NONE)
+		pg_log(PG_FATAL, "old and new cluster pg_controldata checksum versions do not match\n");
 }
 
 
@@ -695,40 +609,4 @@ rename_old_pg_control(void)
 	if (pg_mv_file(old_path, new_path) != 0)
 		pg_log(PG_FATAL, "Unable to rename %s to %s.\n", old_path, new_path);
 	check_ok();
-}
-
-
-/*
- *	putenv2()
- *
- *	This is like putenv(), but takes two arguments.
- *	It also does unsetenv() if val is NULL.
- */
-static void
-putenv2(migratorContext *ctx, const char *var, const char *val)
-{
-	if (val)
-	{
-#ifndef WIN32
-		char	   *envstr = (char *) pg_malloc(ctx, strlen(var) +
-												strlen(val) + 2);
-
-		sprintf(envstr, "%s=%s", var, val);
-		putenv(envstr);
-		/*
-		 *	Do not free envstr because it becomes part of the environment
-		 *	on some operating systems.  See port/unsetenv.c::unsetenv.
-		 */
-#else
-		SetEnvironmentVariableA(var, val);
-#endif
-	}
-	else
-	{
-#ifndef WIN32
-		unsetenv(var);
-#else
-		SetEnvironmentVariableA(var, "");
-#endif
-	}
 }

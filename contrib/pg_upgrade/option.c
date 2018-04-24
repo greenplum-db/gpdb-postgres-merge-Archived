@@ -138,11 +138,11 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 'j':
-				ctx->checksum_mode = CHECKSUM_REMOVE;
+				user_opts.checksum_mode = CHECKSUM_REMOVE;
 				break;
 
 			case 'J':
-				ctx->checksum_mode = CHECKSUM_ADD;
+				user_opts.checksum_mode = CHECKSUM_ADD;
 				break;
 
 			case 'k':
@@ -186,8 +186,8 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 'X':
-				pg_log(ctx, PG_REPORT, "Running in progress report mode\n");
-				ctx->progress = true;
+				pg_log(PG_REPORT, "Running in progress report mode\n");
+				log_opts.progress = true;
 				break;
 
 			case 1:		/* --dispatcher-mode */
@@ -202,7 +202,7 @@ parseCommandLine(int argc, char *argv[])
 				 * caller of pg_upgrade must use the --dispatcher-mode
 				 * option, when upgrading the QD node.
 				 */
-				ctx->dispatcher_mode = true;
+				user_opts.dispatcher_mode = true;
 				break;
 
 			default:
@@ -228,11 +228,7 @@ parseCommandLine(int argc, char *argv[])
 			pg_log(PG_FATAL, "cannot write to log file %s\n", log_opts.filename);
 	}
 	else
-<<<<<<< HEAD
-		ctx->logfile = pg_strdup(ctx, DEVNULL);
-=======
 		log_opts.filename = strdup(DEVNULL);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 	/* if no debug file name, output to the terminal */
 	if (log_opts.debug && !log_opts.debug_fd)
@@ -243,9 +239,9 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* Ensure we are only adding checksums in copy mode */
-	if (ctx->transfer_mode != TRANSFER_MODE_COPY &&
-		ctx->checksum_mode != CHECKSUM_NONE)
-		pg_log(ctx, PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
+	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
+		user_opts.checksum_mode != CHECKSUM_NONE)
+		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
 
 	/* Get values from env if not already set */
 	validateDirectoryOption(&old_cluster.bindir, "OLDBINDIR", "-b",
@@ -269,26 +265,6 @@ usage(void)
   pg_upgrade [OPTIONS]...\n\
 \n\
 Options:\n\
-<<<<<<< HEAD
- -b, --old-bindir=old_bindir      old cluster executable directory\n\
- -B, --new-bindir=new_bindir      new cluster executable directory\n\
- -c, --check                      check clusters only, don't change any data\n\
- -d, --old-datadir=old_datadir    old cluster data directory\n\
- -D, --new-datadir=new_datadir    new cluster data directory\n\
- -g, --debug                      enable debugging\n\
- -G, --debugfile=debug_filename   output debugging activity to file\n\
- -j, --remove-checksum            remove data checksums when creating new cluster\n\
- -J, --add-checksum               add data checksumming to the new cluster\n\
- -k, --link                       link instead of copying files to new cluster\n\
- -l, --logfile=log_filename       log session activity to file\n\
- -p, --old-port=old_portnum       old cluster port number (default %d)\n\
- -P, --new-port=new_portnum       new cluster port number (default %d)\n\
- -u, --user=username              clusters superuser (default \"%s\")\n\
- -v, --verbose                    enable verbose output\n\
- -X, --progress                   enable progress reporting\n\
- -V, --version                    display version information, then exit\n\
- -h, --help                       show this help, then exit\n\
-=======
   -b, --old-bindir=OLDBINDIR    old cluster executable directory\n\
   -B, --new-bindir=NEWBINDIR    new cluster executable directory\n\
   -c, --check                   check clusters only, don't change any data\n\
@@ -296,15 +272,17 @@ Options:\n\
   -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
   -g, --debug                   enable debugging\n\
   -G, --debugfile=FILENAME      output debugging activity to file\n\
+  -j, --remove-checksum         remove data checksums when creating new cluster\n\
+  -J, --add-checksum            add data checksumming to the new cluster\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -l, --logfile=FILENAME        log session activity to file\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
   -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
   -u, --user=NAME               clusters superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose output\n\
+  -X, --progress                enable progress reporting\n\
   -V, --version                 display version information, then exit\n\
   -h, --help                    show this help, then exit\n\
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\
@@ -335,10 +313,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
   C:\\> set NEWBINDIR=newCluster/bin\n\
   C:\\> pg_upgrade\n"));
 #endif
-<<<<<<< HEAD
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
 
 
@@ -392,13 +367,8 @@ get_pkglibdirs(void)
 	 * we do not need to know the libpath in the old cluster, and might not
 	 * have a working pg_config to ask for it anyway.
 	 */
-<<<<<<< HEAD
-	ctx->old.libpath = NULL;
-	ctx->new.libpath = get_pkglibdir(ctx, ctx->new.bindir);
-=======
 	old_cluster.libpath = NULL;
 	new_cluster.libpath = get_pkglibdir(new_cluster.bindir);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 

@@ -3,13 +3,8 @@
  *
  *	execution functions
  *
-<<<<<<< HEAD
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/exec.c,v 1.8.2.1 2010/07/13 20:15:51 momjian Exp $
-=======
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/exec.c
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  */
 
 #include "pg_upgrade.h"
@@ -18,16 +13,9 @@
 #include <unistd.h>
 
 
-<<<<<<< HEAD
-static void	check_data_dir(migratorContext *ctx, const char *pg_data);
-static void check_bin_dir(migratorContext *ctx, ClusterInfo *cluster, Cluster whichCluster);
-static int	check_exec(migratorContext *ctx, const char *dir, const char *cmdName);
-static const char *validate_exec(const char *path);
-=======
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
 static void validate_exec(const char *dir, const char *cmdName);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -97,99 +85,6 @@ is_server_running(const char *datadir)
 
 /*
  * verify_directories()
-<<<<<<< HEAD
- *
- * does all the hectic work of verifying directories and executables
- * of old and new server.
- *
- * NOTE: May update the values of all parameters
- */
-void
-verify_directories(migratorContext *ctx)
-{
-	prep_status(ctx, "Checking old data directory (%s)", ctx->old.pgdata);
-	check_data_dir(ctx, ctx->old.pgdata);
-	check_ok(ctx);
-
-	prep_status(ctx, "Checking old bin directory (%s)", ctx->old.bindir);
-	check_bin_dir(ctx, &ctx->old, CLUSTER_OLD);
-	check_ok(ctx);
-
-	prep_status(ctx, "Checking new data directory (%s)", ctx->new.pgdata);
-	check_data_dir(ctx, ctx->new.pgdata);
-	check_ok(ctx);
-
-	prep_status(ctx, "Checking new bin directory (%s)", ctx->new.bindir);
-	check_bin_dir(ctx, &ctx->new, CLUSTER_NEW);
-	check_ok(ctx);
-}
-
-
-/*
- * check_data_dir()
- *
- *	This function validates the given cluster directory - we search for a
- *	small set of subdirectories that we expect to find in a valid $PGDATA
- *	directory.  If any of the subdirectories are missing (or secured against
- *	us) we display an error message and exit()
- *
- */
-static void
-check_data_dir(migratorContext *ctx, const char *pg_data)
-{
-	char		subDirName[MAXPGPATH];
-	int			subdirnum;
-	const char *requiredSubdirs[] = {"base", "global", "pg_clog",
-		"pg_multixact", "pg_subtrans", "pg_tblspc", "pg_twophase",
-		"pg_xlog"};
-
-	for (subdirnum = 0;
-		 subdirnum < sizeof(requiredSubdirs) / sizeof(requiredSubdirs[0]);
-		 ++subdirnum)
-	{
-		struct stat statBuf;
-
-		snprintf(subDirName, sizeof(subDirName), "%s/%s", pg_data,
-				 requiredSubdirs[subdirnum]);
-
-		if (stat(subDirName, &statBuf) != 0)
-			report_status(ctx, PG_FATAL, "check for %s failed:  %s",
-						  requiredSubdirs[subdirnum], getErrorText(errno));
-		else if (!S_ISDIR(statBuf.st_mode))
-				report_status(ctx, PG_FATAL, "%s is not a directory",
-							  requiredSubdirs[subdirnum]);
-	}
-}
-
-
-/*
- * check_bin_dir()
- *
- *	This function searches for the executables that we expect to find
- *	in the binaries directory.  If we find that a required executable
- *	is missing (or secured against us), we display an error message and
- *	exit().
- */
-static void
-check_bin_dir(migratorContext *ctx, ClusterInfo *cluster, Cluster whichCluster)
-{
-	check_exec(ctx, cluster->bindir, "postgres");
-	check_exec(ctx, cluster->bindir, "pg_ctl");
-	check_exec(ctx, cluster->bindir, "pg_resetxlog");
-	if (whichCluster == CLUSTER_NEW)
-	{
-		/* these are only needed in the new cluster */
-		check_exec(ctx, cluster->bindir, "pg_config");
-		check_exec(ctx, cluster->bindir, "psql");
-		check_exec(ctx, cluster->bindir, "pg_dumpall");
-	}
-}
-
-
-/*
- * check_exec()
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
  *
  * does all the hectic work of verifying directories and executables
  * of old and new server.
@@ -344,9 +239,6 @@ validate_exec(const char *dir, const char *cmdName)
 #else
 	if ((buf.st_mode & S_IXUSR) == 0)
 #endif
-<<<<<<< HEAD
-=======
 		pg_log(PG_FATAL, "check for %s failed - cannot execute (permission denied)\n",
 			   path);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
