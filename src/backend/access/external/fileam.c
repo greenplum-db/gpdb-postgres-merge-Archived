@@ -157,6 +157,12 @@ external_beginscan(Relation relation, uint32 scancounter,
 	scan->fs_scancounter = scancounter;
 	scan->fs_noop = false;
 	scan->fs_file = NULL;
+	/*
+	 * GPDB_91_MERGE_FIXME: scan->raw_buf_done is used for custom external
+	 * table only now. Maybe we could refactor externalgettup_custom() to
+	 * remove it.
+	 */
+	scan->raw_buf_done = true; /* true so we will read data in first run */
 	scan->fs_formatter = NULL;
 	scan->fs_constraintExprs = NULL;
 	if (relation->rd_att->constr != NULL && relation->rd_att->constr->num_check > 0)
@@ -335,8 +341,8 @@ external_rescan(FileScanDesc scan)
 	scan->fs_pstate->fe_eof = false;
 	scan->fs_pstate->cur_lineno = 0;
 	scan->fs_pstate->cur_attname = NULL;
-	scan->fs_pstate->raw_buf_len = 0;		/* so we will read data
-											 * in first run */
+	scan->raw_buf_done = true; /* true so we will read data in first run */
+	scan->fs_pstate->raw_buf_len = 0;
 	scan->fs_pstate->bytesread = 0;
 }
 
