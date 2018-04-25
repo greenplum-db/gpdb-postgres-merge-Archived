@@ -56,15 +56,10 @@ sub Install
     my $majorver = DetermineMajorVersion();
     print "Installing version $majorver for $conf in $target\n";
 
-<<<<<<< HEAD
-    EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
-        'doc/contrib', 'symbols');
-=======
     EnsureDirectories($target, 'bin', 'lib', 'share', 'share/timezonesets',
                       'share/extension', 'share/contrib',
                       'doc', 'doc/extension', 'doc/contrib',
                       'symbols', 'share/tsearch_data');
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -486,11 +481,7 @@ sub CopyIncludeFiles
 
 	# some xcopy progs don't like mixed slash style paths
 	(my $ctarget = $target) =~ s!/!\\!g;
-<<<<<<< HEAD
-	while (my $d = readdir($D))
-=======
     while (my $d = readdir($D))
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
     {
         next if ($d =~ /^\./);
         next if ($d eq '.git');

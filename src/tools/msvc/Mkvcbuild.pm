@@ -27,30 +27,20 @@ my $postgres;
 my $libpq;
 
 my $contrib_defines = {'refint' => 'REFINT_VERBOSE'};
-<<<<<<< HEAD
 # for GPDB, I've added xlogdump
 my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 
 						'vacuumlo', 'xlogdump');
-my @contrib_uselibpgport = ('oid2name', 'pgbench', 'pg_standby', 
-							'pg_archivecleanup', 'pg_upgrade', 'vacuumlo', 'xlogdump');
-=======
-my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'pg_upgrade','vacuumlo');
 my @contrib_uselibpgport =(
     'oid2name', 'pgbench', 'pg_standby','pg_archivecleanup',
-    'pg_test_fsync', 'pg_upgrade', 'vacuumlo'
+    'pg_test_fsync', 'pg_upgrade', 'vacuumlo', 'xlogdump'
 );
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 my $contrib_extralibs = {'pgbench' => ['wsock32.lib']};
 my $contrib_extraincludes = {'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend']};
 my $contrib_extrasource = {
     'cube' => ['cubescan.l','cubeparse.y'],
     'seg' => ['segscan.l','segparse.y']
 };
-<<<<<<< HEAD
-my @contrib_excludes = ('pgcrypto','intagg','uuid-ossp', 'hstore', 'gp_filedump', 'tsearch2', 'dblink', 'xlogdump', 'gp_sparse_vector','xml2','adminpack');
-=======
-my @contrib_excludes = ('pgcrypto','intagg','sepgsql');
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+my @contrib_excludes = ('pgcrypto','intagg','uuid-ossp', 'hstore', 'gp_filedump', 'tsearch2', 'dblink', 'xlogdump', 'gp_sparse_vector','xml2','adminpack','sepgsql');
 
 sub mkvcbuild
 {
@@ -63,18 +53,11 @@ sub mkvcbuild
 
     our @pgportfiles = qw(
       chklocale.c crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
-<<<<<<< HEAD
-      getaddrinfo.c gettimeofday.c kill.c open.c erand48.c
-      snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c pipe.c
-      pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c sprompt.c thread.c
-      getopt.c getopt_long.c dirent.c rint.c win32env.c win32error.c glob.c);
-=======
       getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c erand48.c
       snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
       pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c
       sprompt.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
-      win32error.c);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+      win32error.c glob.c);
 
     $libpgport = $solution->AddProject('libpgport','lib','misc');
     $libpgport->AddDefine('FRONTEND');
@@ -487,19 +470,6 @@ sub mkvcbuild
             {
                 $proj->AddFile('src\bin\pg_dump\keywords.c');
             }
-            elsif ($f eq 'kwlookup.c')
-            {
-                $proj->AddFile('src\backend\parser\kwlookup.c');
-            }
-            elsif ($f eq 'dumputils.c')
-            {
-                $proj->AddFile('src\bin\pg_dump\dumputils.c');
-            }
-            elsif ($f =~ /print\.c$/)
-            { # Also catches mbprint.c
-                $proj->AddFile('src\bin\psql\\' . $f);
-            }
-<<<<<<< HEAD
             elsif ($f eq '$(top_builddir)/src/backend/parser/keywords.c')
             {
                 $proj->AddFile('src\backend\parser\keywords.c');
@@ -517,10 +487,7 @@ sub mkvcbuild
             { # Also catches mbprint.c
                 $proj->AddFile('src\bin\psql\\' . $f);
             }
-            else
-=======
             elsif ($f =~ /\.c$/)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
             {
                 $proj->AddFile('src\bin\scripts\\' . $f);
             }
