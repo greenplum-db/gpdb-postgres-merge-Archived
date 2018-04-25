@@ -13,37 +13,15 @@
 #include "access/transam.h"
 #include "catalog/pg_class.h"
 
-<<<<<<< HEAD
-static void get_db_infos(migratorContext *ctx, DbInfoArr *dbinfos,
-			 Cluster whichCluster);
-static void dbarr_print(migratorContext *ctx, DbInfoArr *arr,
-			Cluster whichCluster);
-static void relarr_print(migratorContext *ctx, RelInfoArr *arr);
-static void get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
-			  RelInfoArr *relarr, Cluster whichCluster);
-static void relarr_free(RelInfoArr *rel_arr);
-static void map_rel(migratorContext *ctx, const RelInfo *oldrel,
-		const RelInfo *newrel, const DbInfo *old_db,
-		const DbInfo *new_db, const char *olddata,
-		const char *newdata, FileNameMap *map, RelType reltype);
-static void map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
-			  const char *old_nspname, const char *old_relname,
-			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
-			  const DbInfo *new_db, const char *olddata,
-			  const char *newdata, FileNameMap *map);
-=======
 static void create_rel_filename_map(const char *old_data, const char *new_data,
 						const DbInfo *old_db, const DbInfo *new_db,
 						const RelInfo *old_rel, const RelInfo *new_rel,
-						FileNameMap *map);
+						FileNameMap *map, RelType reltype);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
 static void free_rel_infos(RelInfoArr *rel_arr);
 static void print_db_infos(DbInfoArr *dbinfo);
 static void print_rel_infos(RelInfoArr *arr);
-
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 /*
  * gen_db_file_maps()
@@ -66,24 +44,22 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	 * If we in debug mode have a different number of relations in the new and
 	 * old cluster, print a list of the relations we've found to aid debugging.
 	 */
-	if (ctx->debug && (old_db->rel_arr.nrels != new_db->rel_arr.nrels))
+	if (log_opts.debug && (old_db->rel_arr.nrels != new_db->rel_arr.nrels))
 	{
-		pg_log(ctx, PG_WARNING, "Different number of relations found; old: %d, new: %s\n",
+		pg_log(PG_WARNING, "Different number of relations found; old: %d, new: %s\n",
 			   old_db->rel_arr.nrels, new_db->rel_arr.nrels);
 
 		for (new_relnum = 0; new_relnum < new_db->rel_arr.nrels; new_relnum++)
-			pg_log(ctx, PG_WARNING, "new: %s\n",
+			pg_log(PG_WARNING, "new: %s\n",
 				   (new_db->rel_arr.rels[new_relnum]).relname);
 		for (old_relnum = 0; old_relnum < old_db->rel_arr.nrels; old_relnum++)
-			pg_log(ctx, PG_WARNING, "old: %s\n",
+			pg_log(PG_WARNING, "old: %s\n",
 				   (old_db->rel_arr.rels[old_relnum]).relname);
 	}
 
-	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
-		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
-			   old_db->db_name);
+	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
+									 old_db->rel_arr.nrels);
 
-<<<<<<< HEAD
 	old_relnum = new_relnum = 0;
 	while (old_relnum < old_db->rel_arr.nrels ||
 		   new_relnum < new_db->rel_arr.nrels)
@@ -99,7 +75,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		{
 			if (strcmp(old_rel->nspname, "pg_toast") != 0)
 			{
-				pg_log(ctx, PG_WARNING, "Mismatch of relation id: database \"%s\", old relid %d (%s), new relid %d (%s)\n",
+				pg_log(PG_WARNING, "Mismatch of relation id: database \"%s\", old relid %d (%s), new relid %d (%s)\n",
 					   old_db->db_name, old_rel->reloid, old_rel->relname, new_rel->reloid, new_rel->relname);
 			}
 			old_relnum++;
@@ -109,7 +85,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		{
 			if (strcmp(new_rel->nspname, "pg_toast") != 0)
 			{
-				pg_log(ctx, PG_WARNING, "Mismatch of relation id: database \"%s\", old relid %d (%s), new relid %d (%s)\n",
+				pg_log(PG_WARNING, "Mismatch of relation id: database \"%s\", old relid %d (%s), new relid %d (%s)\n",
 					   old_db->db_name, old_rel->reloid, old_rel->relname, new_rel->reloid, new_rel->relname);
 			}
 			new_relnum++;
@@ -125,7 +101,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			(strcmp(old_rel->relname, new_rel->relname) != 0 &&
 			 strcmp(old_rel->nspname, "pg_toast") != 0))
 		{
-			pg_log(ctx, PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
+			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
 				   "old name \"%s.%s\", new name \"%s.%s\"\n",
 				   old_rel->reloid, old_db->db_name,
 				   old_rel->nspname, old_rel->relname,
@@ -154,158 +130,64 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		else
 			reltype = HEAP;
 
-		map_rel(ctx, old_rel, new_rel, old_db, new_db, old_pgdata, new_pgdata,
-				maps + num_maps, reltype);
-
+		/* OK, create a mapping entry */
+		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
+								old_rel, new_rel, maps + num_maps, reltype);
 		num_maps++;
 		old_relnum++;
 		new_relnum++;
-=======
-	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
-									 old_db->rel_arr.nrels);
-
-	for (relnum = 0; relnum < old_db->rel_arr.nrels; relnum++)
-	{
-		RelInfo    *old_rel = &old_db->rel_arr.rels[relnum];
-		RelInfo    *new_rel = &new_db->rel_arr.rels[relnum];
-
-		if (old_rel->reloid != new_rel->reloid)
-			pg_log(PG_FATAL, "Mismatch of relation id: database \"%s\", old relid %d, new relid %d\n",
-				   old_db->db_name, old_rel->reloid, new_rel->reloid);
-
-		/*
-		 * In pre-8.4, TOAST table names change during CLUSTER;  in >= 8.4
-		 * TOAST relation names always use heap table oids, hence we cannot
-		 * check relation names when upgrading from pre-8.4.
-		 */
-		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
-			((GET_MAJOR_VERSION(old_cluster.major_version) >= 804 ||
-			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
-			 strcmp(old_rel->relname, new_rel->relname) != 0))
-			pg_log(PG_FATAL, "Mismatch of relation names: database \"%s\", "
-				   "old rel %s.%s, new rel %s.%s\n",
-				   old_db->db_name, old_rel->nspname, old_rel->relname,
-				   new_rel->nspname, new_rel->relname);
-
-		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
-								old_rel, new_rel, maps + num_maps);
-		num_maps++;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	}
 
 	if (!all_matched)
-		pg_log(ctx, PG_FATAL, "Failed to match up old and new tables in database \"%s\"\n",
-				 old_db->db_name);
+		pg_log(PG_FATAL, "Failed to match up old and new tables in database \"%s\"\n",
+			   old_db->db_name);
 
 	*nmaps = num_maps;
 	return maps;
 }
 
 
-<<<<<<< HEAD
-static void
-map_rel(migratorContext *ctx, const RelInfo *oldrel, const RelInfo *newrel,
-		const DbInfo *old_db, const DbInfo *new_db, const char *olddata,
-		const char *newdata, FileNameMap *map, RelType reltype)
-{
-	map_rel_by_id(ctx, oldrel->relfilenode, newrel->relfilenode, oldrel->nspname,
-				  oldrel->relname, newrel->nspname, newrel->relname, oldrel->tablespace, newrel->tablespace, old_db,
-				  new_db, olddata, newdata, map);
-
-	map->has_numerics = oldrel->has_numerics;
-	map->atts = oldrel->atts;
-	map->natts = oldrel->natts;
-	map->gpdb4_heap_conversion_needed = oldrel->gpdb4_heap_conversion_needed;
-	map->type = reltype;
-
-	/* An AO table doesn't necessarily have segment 0 at all. */
-	map->missing_seg0_ok = relstorage_is_ao(oldrel->relstorage);
-}
-
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 /*
  * create_rel_filename_map()
  *
  * fills a file node map structure and returns it in "map".
  */
 static void
-<<<<<<< HEAD
-map_rel_by_id(migratorContext *ctx, Oid oldid, Oid newid,
-			  const char *old_nspname, const char *old_relname,
-			  const char *new_nspname, const char *new_relname,
-			  const char *old_tablespace, const char *new_tablespace, const DbInfo *old_db,
-			  const DbInfo *new_db, const char *olddata,
-			  const char *newdata, FileNameMap *map)
-{
-	map->new = newid;
-	map->old = oldid;
-
-	snprintf(map->old_nspname, sizeof(map->old_nspname), "%s", old_nspname);
-	snprintf(map->old_relname, sizeof(map->old_relname), "%s", old_relname);
-	snprintf(map->new_nspname, sizeof(map->new_nspname), "%s", new_nspname);
-	snprintf(map->new_relname, sizeof(map->new_relname), "%s", new_relname);
-
-	/* In case old/new tablespaces don't match, do them separately. */
-	if (strlen(old_tablespace) == 0)
-=======
 create_rel_filename_map(const char *old_data, const char *new_data,
 						const DbInfo *old_db, const DbInfo *new_db,
 						const RelInfo *old_rel, const RelInfo *new_rel,
-						FileNameMap *map)
+						FileNameMap *map, RelType reltype)
 {
+	/* In case old/new tablespaces don't match, do them separately. */
 	if (strlen(old_rel->tablespace) == 0)
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	{
 		/*
 		 * relation belongs to the default tablespace, hence relfiles should
 		 * exist in the data directories.
 		 */
-<<<<<<< HEAD
-		snprintf(map->old_file, sizeof(map->old_file), "%s/base/%u", olddata, old_db->db_oid);
-	}
-	else
-	{
-		/*
-		 * relation belongs to some tablespace, hence copy its physical
-		 * location
-		 */
-		snprintf(map->old_file, sizeof(map->old_file), "%s%s/%u", old_tablespace,
-				 ctx->old.tablespace_suffix, old_db->db_oid);
-	}
-
-	/* Do the same for new tablespaces */
-	if (strlen(new_tablespace) == 0)
-	{
-		/*
-		 * relation belongs to the default tablespace, hence relfiles would
-		 * exist in the data directories.
-		 */
-		snprintf(map->new_file, sizeof(map->new_file), "%s/base/%u", newdata, new_db->db_oid);
-	}
-	else
-	{
-		/*
-		 * relation belongs to some tablespace, hence copy its physical
-		 * location
-		 */
-		snprintf(map->new_file, sizeof(map->new_file), "%s%s/%u", new_tablespace,
-				 ctx->new.tablespace_suffix, new_db->db_oid);
-	}
-
-	report_progress(ctx, NONE, FILE_MAP, "Map \"%s\" to \"%s\"", map->old_file, map->new_file);
-=======
 		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", old_data,
 				 old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
-				 new_db->db_oid);
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
 		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_rel->tablespace,
 				 old_cluster.tablespace_suffix, old_db->db_oid);
+	}
+
+	/* Do the same for new tablespaces */
+	if (strlen(new_rel->tablespace) == 0)
+	{
+		/*
+		 * relation belongs to the default tablespace, hence relfiles should
+		 * exist in the data directories.
+		 */
+		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
+				 new_db->db_oid);
+	}
+	else
+	{
+		/* relation belongs to a tablespace, so use the tablespace location */
 		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", new_rel->tablespace,
 				 new_cluster.tablespace_suffix, new_db->db_oid);
 	}
@@ -322,7 +204,18 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* used only for logging and error reporing, old/new are identical */
 	snprintf(map->nspname, sizeof(map->nspname), "%s", old_rel->nspname);
 	snprintf(map->relname, sizeof(map->relname), "%s", old_rel->relname);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+
+	/* GPDB additions to map data */
+	map->has_numerics = old_rel->has_numerics;
+	map->atts = old_rel->atts;
+	map->natts = old_rel->natts;
+	map->gpdb4_heap_conversion_needed = old_rel->gpdb4_heap_conversion_needed;
+	map->type = reltype;
+
+	/* An AO table doesn't necessarily have segment 0 at all. */
+	map->missing_seg0_ok = relstorage_is_ao(old_rel->relstorage);
+
+	report_progress(NULL, FILE_MAP, "Map \"%s\" to \"%s\"", map->old_dir, map->new_dir);
 }
 
 
@@ -410,10 +303,6 @@ get_db_infos(ClusterInfo *cluster)
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
-<<<<<<< HEAD
-
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		snprintf(dbinfos[tupnum].db_name, sizeof(dbinfos[tupnum].db_name), "%s",
 				 PQgetvalue(res, tupnum, i_datname));
 		snprintf(dbinfos[tupnum].db_tblspace, sizeof(dbinfos[tupnum].db_tblspace), "%s",
@@ -435,7 +324,7 @@ get_db_infos(ClusterInfo *cluster)
  * these types.
  */
 static Oid *
-get_numeric_types(migratorContext *ctx, PGconn *conn)
+get_numeric_types(PGconn *conn)
 {
 	char		query[QUERY_ALLOC];
 	PGresult   *res;
@@ -451,7 +340,7 @@ get_numeric_types(migratorContext *ctx, PGconn *conn)
 	 * array we still waste very little memory in the grand scheme of things
 	 * so keep it simple and leave it be with an overflow check instead.
 	 */
-	result = pg_malloc(ctx, sizeof(Oid) * NUMERIC_ALLOC);
+	result = pg_malloc(sizeof(Oid) * NUMERIC_ALLOC);
 	memset(result, InvalidOid, NUMERIC_ALLOC);
 
 	result[result_count++] = 1700;		/* 1700 == NUMERICOID */
@@ -473,7 +362,7 @@ get_numeric_types(migratorContext *ctx, PGconn *conn)
 				 "WHERE base.typbasetype = '%u'::pg_catalog.oid;",
 				 result[iterator++]);
 
-		res = executeQueryOrDie(ctx, conn, query);
+		res = executeQueryOrDie(conn, query);
 
 		if (PQntuples(res) > 0)
 		{
@@ -484,7 +373,7 @@ get_numeric_types(migratorContext *ctx, PGconn *conn)
 		PQclear(res);
 
 		if (result_count == NUMERIC_ALLOC - 1)
-			pg_log(ctx, PG_FATAL, "Too many NUMERIC types found");
+			pg_log(PG_FATAL, "Too many NUMERIC types found");
 	}
 
 	return result;
@@ -511,26 +400,17 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	int			num_rels = 0;
 	char	   *nspname = NULL;
 	char	   *relname = NULL;
-<<<<<<< HEAD
 	char		relstorage;
 	char		relkind;
-	int			i_spclocation = -1;
-	int			i_nspname = -1;
-	int			i_relname = -1;
-	int			i_relstorage = -1;
-	int			i_relkind = -1;
-	int			i_oid = -1;
-	int			i_relfilenode = -1;
-	int			i_reltablespace = -1;
-	int			i_reltoastrelid = -1;
-	int			i_segrelid = -1;
-=======
 	int			i_spclocation,
 				i_nspname,
 				i_relname,
+				i_relstorage,
+				i_relkind,
 				i_oid,
-				i_relfilenode;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+				i_relfilenode,
+				i_reltablespace,
+				i_segrelid;
 	char		query[QUERY_ALLOC];
 	bool		bitmaphack_created = false;
 	Oid		   *numeric_types;
@@ -547,7 +427,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 * find all relations which has these types and limit the extraction to
 	 * those.
 	 */
-	numeric_types = get_numeric_types(ctx, conn);
+	numeric_types = get_numeric_types(conn);
 	memset(typestr, '\0', sizeof(typestr));
 
 	for (i = 0; numeric_types[i] != InvalidOid; i++)
@@ -569,7 +449,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "AND attisdropped = false "
 			 "ORDER BY 1 ASC", typestr);
 
-	res = executeQueryOrDie(ctx, conn, query);
+	res = executeQueryOrDie(conn, query);
 	ntups = PQntuples(res);
 
 	/* Store the relations in a simple ordered array for lookup */
@@ -578,7 +458,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		numeric_rel_num = ntups;
 
 		i_oid = PQfnumber(res, "attrelid");
-		numeric_rels = pg_malloc(ctx, ntups * sizeof(Oid));
+		numeric_rels = pg_malloc(ntups * sizeof(Oid));
 
 		for (relnum = 0; relnum < ntups; relnum++)
 			numeric_rels[relnum] = atooid(PQgetvalue(res, relnum, i_oid));
@@ -595,74 +475,49 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	 */
 
 	snprintf(query, sizeof(query),
-<<<<<<< HEAD
-			 "SELECT DISTINCT c.oid, n.nspname, c.relname, c.relstorage, c.relkind, "
-			 "	c.relfilenode, c.reltoastrelid, c.reltablespace, t.spclocation "
-			 "FROM pg_catalog.pg_class c JOIN "
-			 "		pg_catalog.pg_namespace n "
-			 "	ON c.relnamespace = n.oid "
+			 "SELECT c.oid, n.nspname, c.relname, "
+			 "  c.relstorage, c.relkind, c.reltablespace, "
+			 "	c.relfilenode, t.spclocation "
+			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
+			 "	   ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_index i "
 			 "	   ON c.oid = i.indexrelid "
-			 "   LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			 "	ON c.reltablespace = t.oid "
+			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+			 "	   ON c.reltablespace = t.oid "
 			 "WHERE "
 			 /* exclude possible orphaned temp tables */
-			 "  (((n.nspname !~ '^pg_temp_' AND "
+			 "  ((n.nspname !~ '^pg_temp_' AND "
 			 "    n.nspname !~ '^pg_toast_temp_' AND "
 			 "    n.nspname NOT IN ('gp_toolkit', 'pg_catalog', 'information_schema', 'binary_upgrade', 'pg_aoseg', 'pg_bitmapindex') AND "
 			 "    c.relkind <> 'i' AND " // GPDB TODO: Indexes not supported
 			 "	  c.oid >= %u) "
-			 "	) OR ( "
-			 "	n.nspname = 'pg_catalog' "
-			 "	AND relname IN "
-			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
+			 "  OR (n.nspname = 'pg_catalog' AND "
+	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
 			 "	AND relkind IN ('r','t','o','m','b', 'i'%s) "
 	/* work around what appears to be old 4.3 gp_toolkit bugs */
 			 "  AND relname NOT IN ('__gp_localid', '__gp_masterid', '__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') "
-			 /* pg_dump only dumps valid indexes;  testing indisready is
-			 * necessary in 9.2, and harmless in earlier/later versions. */
-			 /* GPDB 4.3 (based on PostgreSQL 8.2), however, doesn't have indisvalid
-			  * nor indisready. */
 			 " %s "
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode, c.relstorage, c.relkind, "
-			 "			c.reltoastrelid, c.reltablespace, t.spclocation, "
+			 "			c.reltablespace, t.spclocation, "
 			 "			n.nspname "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
-			 FirstNormalObjectId,
-	/* does pg_largeobject_metadata need to be migrated? */
-			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 804) ?
-			 "" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
-	/* see the comment at the top of old_8_3_create_sequence_script() */
-			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 803
-			  && GET_MAJOR_VERSION(ctx->new.major_version) >= 804) ?
-			 "" : ", 'S'",
-			 (GET_MAJOR_VERSION(ctx->old.major_version) <= 802) ?
-			 "" : " AND i.indisvalid IS DISTINCT FROM false AND i.indisready IS DISTINCT FROM false "
-		);
-=======
-			 "SELECT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, t.spclocation "
-			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
-			 "	   ON c.relnamespace = n.oid "
-			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			 "	   ON c.reltablespace = t.oid "
-			 "WHERE relkind IN ('r','t', 'i'%s) AND "
-			 "  ((n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') AND "
-			 "	  c.oid >= %u) "
-			 "  OR (n.nspname = 'pg_catalog' AND "
-	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
-	/* we preserve pg_class.oid so we sort by it to match old/new */
-			 "ORDER BY 1;",
-	/* see the comment at the top of old_8_3_create_sequence_script() */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
-			 "" : ", 'S'",
 	/* this oid allows us to skip system toast tables */
 			 FirstNormalObjectId,
 	/* does pg_largeobject_metadata need to be migrated? */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
-	"" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'");
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+			 "" : ", 'pg_largeobject_metadata', 'pg_largeobject_metadata_oid_index'",
+	/* see the comment at the top of old_8_3_create_sequence_script() */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803
+			  && GET_MAJOR_VERSION(new_cluster.major_version) >= 804) ?
+			 "" : ", 'S'",
+	/* pg_dump only dumps valid indexes;  testing indisready is
+	 * necessary in 9.2, and harmless in earlier/later versions. */
+	/* GPDB 4.3 (based on PostgreSQL 8.2), however, doesn't have indisvalid
+	 * nor indisready. */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 802) ?
+			 "" : " AND i.indisvalid IS DISTINCT FROM false AND i.indisready IS DISTINCT FROM false "
+		);
 
 	res = executeQueryOrDie(conn, query);
 
@@ -676,11 +531,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	i_relstorage = PQfnumber(res, "relstorage");
 	i_relkind = PQfnumber(res, "relkind");
 	i_relfilenode = PQfnumber(res, "relfilenode");
-<<<<<<< HEAD
-	i_reltoastrelid = PQfnumber(res, "reltoastrelid");
 	i_reltablespace = PQfnumber(res, "reltablespace");
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	i_spclocation = PQfnumber(res, "spclocation");
 	i_segrelid = PQfnumber(res, "segrelid");
 
@@ -689,10 +540,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		RelInfo    *curr = &relinfos[num_rels++];
 		const char *tblspace;
 
-<<<<<<< HEAD
 		curr->gpdb4_heap_conversion_needed = false;
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 		curr->reloid = atooid(PQgetvalue(res, relnum, i_oid));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
@@ -702,10 +550,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		strlcpy(curr->relname, relname, sizeof(curr->relname));
 
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
-<<<<<<< HEAD
-		curr->toastrelid = atooid(PQgetvalue(res, relnum, i_reltoastrelid));
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
 			/* Might be "", meaning the cluster default location. */
@@ -760,15 +604,15 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 					 "WHERE  a.relid = %u::pg_catalog.oid ",
 					 curr->reloid);
 
-			aores = executeQueryOrDie(ctx, conn, aoquery);
+			aores = executeQueryOrDie(conn, aoquery);
 			if (PQntuples(aores) == 0)
-				pg_log(ctx, PG_FATAL, "Unable to find auxiliary AO relations for %u (%s)\n",
+				pg_log(PG_FATAL, "Unable to find auxiliary AO relations for %u (%s)\n",
 					   curr->reloid, curr->relname);
 
-			segrel = pg_strdup(ctx, PQgetvalue(aores, 0, PQfnumber(aores, "segrel")));
-			visimaprel = pg_strdup(ctx, PQgetvalue(aores, 0, PQfnumber(aores, "visimaprel")));
+			segrel = pg_strdup(PQgetvalue(aores, 0, PQfnumber(aores, "segrel")));
+			visimaprel = pg_strdup(PQgetvalue(aores, 0, PQfnumber(aores, "visimaprel")));
 			if (!PQgetisnull(aores, 0, PQfnumber(aores, "blkdirrel")))
-				blkdirrel = pg_strdup(ctx, PQgetvalue(aores, 0, PQfnumber(aores, "blkdirrel")));
+				blkdirrel = pg_strdup(PQgetvalue(aores, 0, PQfnumber(aores, "blkdirrel")));
 
 			PQclear(aores);
 
@@ -782,7 +626,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				 * and above, it can be different for each segment, and it's stored
 				 * in the aosegment relation.
 				 */
-				if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802 && whichCluster == CLUSTER_OLD)
+				if (GET_MAJOR_VERSION(cluster->major_version) <= 802)
 				{
 					snprintf(aoquery, sizeof(aoquery),
 							 "SELECT segno, eof, tupcount, varblockcount, "
@@ -802,10 +646,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							 "FROM   pg_aoseg.%s",
 							 segrel);
 				}
-				aores = executeQueryOrDie(ctx, conn, aoquery);
+				aores = executeQueryOrDie(conn, aoquery);
 
 				curr->naosegments = PQntuples(aores);
-				curr->aosegments = (AOSegInfo *) pg_malloc(ctx, sizeof(AOSegInfo) * curr->naosegments);
+				curr->aosegments = (AOSegInfo *) pg_malloc(sizeof(AOSegInfo) * curr->naosegments);
 
 				for (j = 0; j < curr->naosegments; j++)
 				{
@@ -826,7 +670,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			else
 			{
 				/* Get contents of pg_aocsseg_<oid> */
-				if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802 && whichCluster == CLUSTER_OLD)
+				if (GET_MAJOR_VERSION(cluster->major_version) <= 802)
 				{
 					snprintf(aoquery, sizeof(aoquery),
 							 "SELECT segno, tupcount, varblockcount, vpinfo, "
@@ -845,10 +689,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							 segrel);
 				}
 
-				aores = executeQueryOrDie(ctx, conn, aoquery);
+				aores = executeQueryOrDie(conn, aoquery);
 
 				curr->naosegments = PQntuples(aores);
-				curr->aocssegments = (AOCSSegInfo *) pg_malloc(ctx, sizeof(AOCSSegInfo) * curr->naosegments);
+				curr->aocssegments = (AOCSSegInfo *) pg_malloc(sizeof(AOCSSegInfo) * curr->naosegments);
 
 				for (j = 0; j < curr->naosegments; j++)
 				{
@@ -857,7 +701,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 					aocsseg->segno = atoi(PQgetvalue(aores, j, PQfnumber(aores, "segno")));
 					aocsseg->tupcount = atoll(PQgetvalue(aores, j, PQfnumber(aores, "tupcount")));
 					aocsseg->varblockcount = atoll(PQgetvalue(aores, j, PQfnumber(aores, "varblockcount")));
-					aocsseg->vpinfo = pg_strdup(ctx, PQgetvalue(aores, j, PQfnumber(aores, "vpinfo")));
+					aocsseg->vpinfo = pg_strdup(PQgetvalue(aores, j, PQfnumber(aores, "vpinfo")));
 					aocsseg->modcount = atoll(PQgetvalue(aores, j, PQfnumber(aores, "modcount")));
 					aocsseg->state = atoi(PQgetvalue(aores, j, PQfnumber(aores, "state")));
 					aocsseg->version = atoi(PQgetvalue(aores, j, PQfnumber(aores, "formatversion")));
@@ -878,11 +722,11 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 * pg_aovisimap_<oid> is identical for row and column oriented
 			 * tables.
 			 */
-			if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802 && whichCluster == CLUSTER_OLD)
+			if (GET_MAJOR_VERSION(cluster->major_version) <= 802)
 			{
 				if (!bitmaphack_created)
 				{
-					PQclear(executeQueryOrDie(ctx, conn,
+					PQclear(executeQueryOrDie(conn,
 											  "create function pg_temp.bitmaphack_out(bit varying) "
 											  " RETURNS cstring "
 											  " LANGUAGE INTERNAL AS 'byteaout'"));
@@ -900,10 +744,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 						 "FROM pg_aoseg.%s",
 						 visimaprel);
 			}
-			aores = executeQueryOrDie(ctx, conn, aoquery);
+			aores = executeQueryOrDie(conn, aoquery);
 
 			curr->naovisimaps = PQntuples(aores);
-			curr->aovisimaps = (AOVisiMapInfo *) pg_malloc(ctx, sizeof(AOVisiMapInfo) * curr->naovisimaps);
+			curr->aovisimaps = (AOVisiMapInfo *) pg_malloc(sizeof(AOVisiMapInfo) * curr->naovisimaps);
 
 			for (j = 0; j < curr->naovisimaps; j++)
 			{
@@ -911,7 +755,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 				aovisimap->segno = atoi(PQgetvalue(aores, j, PQfnumber(aores, "segno")));
 				aovisimap->first_row_no = atoll(PQgetvalue(aores, j, PQfnumber(aores, "first_row_no")));
-				aovisimap->visimap = pg_strdup(ctx, PQgetvalue(aores, j, PQfnumber(aores, "visimap")));
+				aovisimap->visimap = pg_strdup(PQgetvalue(aores, j, PQfnumber(aores, "visimap")));
 			}
 
 			PQclear(aores);
@@ -926,11 +770,11 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 */
 			if (blkdirrel)
 			{
-				if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802 && whichCluster == CLUSTER_OLD)
+				if (GET_MAJOR_VERSION(cluster->major_version) <= 802)
 				{
 					if (!bitmaphack_created)
 					{
-						PQclear(executeQueryOrDie(ctx, conn,
+						PQclear(executeQueryOrDie(conn,
 												  "create function pg_temp.bitmaphack_out(bit varying) "
 												  " RETURNS cstring "
 												  " LANGUAGE INTERNAL AS 'byteaout'"));
@@ -950,10 +794,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							 blkdirrel);
 				}
 
-				aores = executeQueryOrDie(ctx, conn, aoquery);
+				aores = executeQueryOrDie(conn, aoquery);
 
 				curr->naoblkdirs = PQntuples(aores);
-				curr->aoblkdirs = (AOBlkDir *) pg_malloc(ctx, sizeof(AOBlkDir) * curr->naoblkdirs);
+				curr->aoblkdirs = (AOBlkDir *) pg_malloc(sizeof(AOBlkDir) * curr->naoblkdirs);
 
 				for (j = 0; j < curr->naoblkdirs; j++)
 				{
@@ -962,7 +806,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 					aoblkdir->segno = atoi(PQgetvalue(aores, j, PQfnumber(aores, "segno")));
 					aoblkdir->columngroup_no = atoi(PQgetvalue(aores, j, PQfnumber(aores, "columngroup_no")));
 					aoblkdir->first_row_no = atoll(PQgetvalue(aores, j, PQfnumber(aores, "first_row_no")));
-					aoblkdir->minipage = pg_strdup(ctx, PQgetvalue(aores, j, PQfnumber(aores, "minipage")));
+					aoblkdir->minipage = pg_strdup(PQgetvalue(aores, j, PQfnumber(aores, "minipage")));
 				}
 
 				PQclear(aores);
@@ -1037,14 +881,14 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 						 "ORDER BY attnum",
 						 curr->reloid);
 
-				hres = executeQueryOrDie(ctx, conn, hquery);
+				hres = executeQueryOrDie(conn, hquery);
 				i_attlen = PQfnumber(hres, "attlen");
 				i_attalign = PQfnumber(hres, "attalign");
 				i_atttypid = PQfnumber(hres, "atttypid");
 				i_typbasetype = PQfnumber(hres, "typbasetype");
 
 				curr->natts = PQntuples(hres);
-				curr->atts = (AttInfo *) pg_malloc(ctx, sizeof(AttInfo) * curr->natts);
+				curr->atts = (AttInfo *) pg_malloc(sizeof(AttInfo) * curr->natts);
 				memset(curr->atts, 0, sizeof(AttInfo) * curr->natts);
 
 				for (j = 0; j < PQntuples(hres); j++)
@@ -1074,7 +918,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 * old cluster is based on PostgreSQL 8.2 or older (Greenplum
 			 * 4.3 or older).
 			 */
-			if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802)
+			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 802)
 				curr->gpdb4_heap_conversion_needed = true;
 		}
 		else
@@ -1084,15 +928,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	PQfinish(conn);
 
-<<<<<<< HEAD
 	pg_free(numeric_rels);
 
-	relarr->rels = relinfos;
-	relarr->nrels = num_rels;
-=======
 	dbinfo->rel_arr.rels = relinfos;
 	dbinfo->rel_arr.nrels = num_rels;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
@@ -1102,19 +941,10 @@ free_db_and_rel_infos(DbInfoArr *db_arr)
 	int			dbnum;
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
-<<<<<<< HEAD
-	{
-		if (strcmp(db_arr->dbs[dbnum].db_name, db_name) == 0)
-			return &db_arr->dbs[dbnum];
-	}
-
-	return NULL;
-=======
 		free_rel_infos(&db_arr->dbs[dbnum].rel_arr);
 	pg_free(db_arr->dbs);
 	db_arr->dbs = NULL;
 	db_arr->ndbs = 0;
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 }
 
 
