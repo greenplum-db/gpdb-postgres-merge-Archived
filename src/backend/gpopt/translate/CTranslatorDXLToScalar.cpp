@@ -530,9 +530,8 @@ CTranslatorDXLToScalar::PaggrefFromDXLNodeScAggref
 		paggref->args = gpdb::PlAppendElement(paggref->args, pteNew);
 	}
 
-	// GDPB_91_MERGE_FIXME: collation?
-	paggref->inputcollid = gpdb::OidExprCollation((Node *) argExprs);
-	paggref->aggcollid = gpdb::OidTypeCollation(paggref->aggtype);
+	paggref->inputcollid = pdxlop->OidInputCollation();
+	paggref->aggcollid = pdxlop->OidCollation();
 
 	return (Expr *)paggref;
 }

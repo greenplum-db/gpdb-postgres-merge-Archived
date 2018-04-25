@@ -1406,7 +1406,7 @@ CTranslatorScalarToDXL::PdxlnScAggrefFromAggref
 		pmdidResolvedRetType = GPOS_NEW(m_pmp) CMDIdGPDB(paggref->aggtype);
 	}
 
-	CDXLScalarAggref *pdxlopAggref = GPOS_NEW(m_pmp) CDXLScalarAggref(m_pmp, pmdidAgg, pmdidResolvedRetType, aggDistinct, edxlaggstage);
+	CDXLScalarAggref *pdxlopAggref = GPOS_NEW(m_pmp) CDXLScalarAggref(m_pmp, pmdidAgg, pmdidResolvedRetType, aggDistinct, edxlaggstage, paggref->aggcollid, paggref->inputcollid);
 
 	// create the DXL node holding the scalar aggref
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlopAggref);
