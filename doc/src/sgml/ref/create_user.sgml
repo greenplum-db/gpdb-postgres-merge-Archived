@@ -40,12 +40,8 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-<<<<<<< HEAD
-    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
-    | RESOURCE QUEUE <replaceable class="PARAMETER">queuename</replaceable>
-=======
     | SYSID <replaceable class="PARAMETER">uid</replaceable>
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+    | RESOURCE QUEUE <replaceable class="PARAMETER">queuename</replaceable>
 </synopsis>
  </refsynopsisdiv>
 

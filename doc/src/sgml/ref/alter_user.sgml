@@ -35,10 +35,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
-<<<<<<< HEAD
     | RESOURCE QUEUE <replaceable class="PARAMETER">queuename</replaceable>
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 

@@ -42,15 +42,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column</replaceable> [, ...] ) | * }
-<<<<<<< HEAD
-    FORCE_NOT_NULL ( <replaceable class="parameter">column</replaceable> [, ...] )
+    FORCE_NOT_NULL ( <replaceable class="parameter">column</replaceable> [, ...] ) |
+    ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
     FILL MISSING FIELDS
     LOG ERRORS [SEGMENT REJECT LIMIT <replaceable class="parameter">count</replaceable> [ROWS | PERCENT] ]
     IGNORE EXTERNAL PARTITIONS
-=======
-    FORCE_NOT_NULL ( <replaceable class="parameter">column</replaceable> [, ...] ) |
-    ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 </synopsis>
  </refsynopsisdiv>
 

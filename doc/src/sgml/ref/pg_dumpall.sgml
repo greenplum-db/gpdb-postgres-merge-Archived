@@ -165,7 +165,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
       <term><option>--resource-queues</option></term>
       <listitem>
        <para>
@@ -197,21 +196,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-tablespaces</option></term>
-      <listitem>
-       <para>
-        Do not output commands to create tablespaces nor select tablespaces
-        for objects.
-        With this option, all objects will be created in whichever
-        tablespace is the default during restore.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-=======
-      <term><option>-r</option></term>
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
       <term><option>--roles-only</option></term>
       <listitem>
        <para>

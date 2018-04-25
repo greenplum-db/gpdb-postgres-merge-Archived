@@ -39,13 +39,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
     [ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...] ]
     [ HAVING <replaceable class="parameter">condition</replaceable> [, ...] ]
-<<<<<<< HEAD
 	[ WINDOW <replaceable class="parameter">window_name</replaceable> AS (<replaceable class="parameter">window_specification</replaceable>) ]
-    [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="parameter">select</replaceable> ]
-=======
-    [ WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...] ]
     [ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] <replaceable class="parameter">select</replaceable> ]
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
     [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
@@ -94,13 +89,9 @@ where <replaceable class="parameter">group_elem</replaceable> can be one of:
 
 and <replaceable class="parameter">with_query</replaceable> is:
 
-<<<<<<< HEAD
-    <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> )
-=======
     <replaceable class="parameter">with_query_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] AS ( <replaceable class="parameter">select</replaceable> | <replaceable class="parameter">insert</replaceable> | <replaceable class="parameter">update</replaceable> | <replaceable class="parameter">delete</replaceable> )
 
 TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 </synopsis>
 
  </refsynopsisdiv>
@@ -274,13 +265,6 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     <command>SELECT</command> subquery to reference itself by name.  Such a
     subquery must have the form
 <synopsis>
-<<<<<<< HEAD
-<replaceable class="parameter">non_recursive_term</replaceable> UNION ALL <replaceable class="parameter">recursive_term</replaceable>
-</synopsis>
-    where the recursive self-reference must appear on the right-hand
-    side of <literal>UNION ALL</>.  Only one recursive self-reference
-    is permitted per query.
-=======
 <replaceable class="parameter">non_recursive_term</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">recursive_term</replaceable>
 </synopsis>
     where the recursive self-reference must appear on the right-hand
@@ -290,7 +274,6 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     <command>SELECT</command> query in
     a data-modifying statement.  See <xref linkend="queries-with"> for
     an example.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
    </para>
 
    <para>

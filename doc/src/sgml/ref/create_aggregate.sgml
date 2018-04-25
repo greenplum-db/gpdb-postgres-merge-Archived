@@ -31,7 +31,6 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
 
-<<<<<<< HEAD
 CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
                         ORDER BY [ <replaceable class="parameter">argmode</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
@@ -43,8 +42,6 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , HYPOTHETICAL ]
 )
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 <phrase>or the old syntax</phrase>
 
 CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
@@ -159,7 +156,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    input rows.
   </para>
 
-<<<<<<< HEAD
   <para>
    Sometimes it is useful to declare the final function as taking not just
    the state value, but extra parameters corresponding to the aggregate's
@@ -189,8 +185,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    aggregate-input rows as an additional <quote>hypothetical</> row.
   </para>
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
   <para>
    Aggregates that behave like <function>MIN</> or <function>MAX</> can
    sometimes be optimized by looking into an index instead of scanning every

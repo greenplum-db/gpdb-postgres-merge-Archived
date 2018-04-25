@@ -38,23 +38,10 @@ where option can be:
            protocol='gpfdist'|'http'|'gphdfs'
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-<<<<<<< HEAD
+    | REPLICATION | NOREPLICATION
     | CONNECTION LIMIT connlimit
     | [ENCRYPTED | UNENCRYPTED] PASSWORD 'password'
     | VALID UNTIL 'timestamp'
-=======
-    | REPLICATION | NOREPLICATION
-    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
-
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
-
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 </synopsis>
  </refsynopsisdiv>
 

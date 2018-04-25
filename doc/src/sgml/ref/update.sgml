@@ -21,12 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-=======
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
           ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
     [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]

@@ -428,22 +428,13 @@ PostgreSQL documentation
       <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-<<<<<<< HEAD
-       Dump only tables (or views or sequences) matching the table pattern.
-       Specify the table in the format schema.table.
- 
-       Multiple tables can be selected by writing multiple -t switches. 
-       Also, the table parameter is interpreted as a pattern according 
-       to the same rules used by the <literal>\d</> commands in psql, so multiple tables 
-       can also be selected by writing wildcard characters in the pattern. 
-       When using wildcards, be careful to quote the pattern if needed 
-       to prevent the shell from expanding the wildcards. The -n and -N 
-       switches have no effect when -t is used, because tables
-       selected by -t will be dumped regardless of those switches, 
-       and non-table objects will not be dumped. 
-=======
-        Dump only tables (or views or sequences or foreign tables) matching
-        <replaceable class="parameter">table</replaceable>.  Multiple tables
+        Dump only tables (or views or sequences or foreign tables) matching the
+        <replaceable class="parameter">table</replaceable> pattern.
+        Specify the table in the format schema.table.
+       </para>
+
+       <para>
+        Multiple tables
         can be selected by writing multiple <option>-t</> switches.  Also, the
         <replaceable class="parameter">table</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
@@ -460,7 +451,6 @@ PostgreSQL documentation
         <option>-t</> is used, because tables selected by <option>-t</> will
         be dumped regardless of those switches, and non-table objects will not
         be dumped.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
        </para>
 
        <note>

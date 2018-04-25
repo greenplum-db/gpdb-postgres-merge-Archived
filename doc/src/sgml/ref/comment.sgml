@@ -23,14 +23,8 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
-<<<<<<< HEAD
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>sourcetype</replaceable> AS <replaceable>target_type</replaceable>) |
-  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
-  CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
@@ -52,10 +46,7 @@ COMMENT ON
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
   SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
-<<<<<<< HEAD
-=======
   SERVER <replaceable class="PARAMETER">object_name</replaceable> |
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
   TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -132,20 +123,6 @@ COMMENT ON
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-=======
-    <term><replaceable class="parameter">agg_type</replaceable></term>
-    <listitem>
-     <para>
-      An input data type on which the aggregate function operates.
-      To reference a zero-argument aggregate function, write <literal>*</>
-      in place of the list of input data types.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
      <term><replaceable>source_type</replaceable></term>
      <listitem>
       <para>
@@ -195,12 +172,7 @@ COMMENT ON
     <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
-<<<<<<< HEAD
       The data type of a function or aggregate argument.
-=======
-      The data type(s) of the function's arguments (optionally
-      schema-qualified), if any.
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
      </para>
     </listitem>
    </varlistentry>

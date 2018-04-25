@@ -200,7 +200,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-<<<<<<< HEAD
       <term><option>--no-locale</option></term>
       <listitem>
        <para>
@@ -210,11 +209,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
-=======
       <term><option>--pwfile=<replaceable>filename</></option></term>
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
       <listitem>
        <para>
         Makes <command>initdb</command> read the database superuser's password
@@ -262,7 +257,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-<<<<<<< HEAD
     <varlistentry>
      <term><option>--text-search-config=<replaceable>CFG</></option></term>
      <listitem>
@@ -273,8 +267,6 @@ PostgreSQL documentation
      </listitem>
     </varlistentry>
 
-=======
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
     </variablelist>
    </para>
 
