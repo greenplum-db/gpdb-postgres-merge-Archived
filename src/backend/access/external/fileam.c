@@ -828,6 +828,7 @@ else \
 	pstate->cdbsreh->rawdata = pstate->line_buf.data; \
 	pstate->cdbsreh->is_server_enc = pstate->line_buf_converted; \
 	pstate->cdbsreh->linenumber = pstate->cur_lineno; \
+	pstate->cdbsreh->processed++; \
 	pstate->cdbsreh->consec_csv_err = pstate->num_consec_csv_err; \
 \
 	/* set the error message. Use original msg and add column name if availble */ \
@@ -1041,6 +1042,10 @@ externalgettup_custom(FileScanDesc scan)
 							/* got a tuple back */
 
 							tuple = formatter->fmt_tuple;
+
+							if (pstate->cdbsreh)
+								pstate->cdbsreh->processed++;
+
 							MemoryContextReset(formatter->fmt_perrow_ctx);
 
 							return tuple;
