@@ -11,14 +11,6 @@
 
 #include "access/transam.h"
 
-void
-install_system_support_functions(void)
-{
-	prep_status("Adding support functions to new cluster (postgres)");
-	install_support_functions_in_new_db("postgres");
-	check_ok();
-}
-
 /*
  * install_support_functions_in_new_db()
  *

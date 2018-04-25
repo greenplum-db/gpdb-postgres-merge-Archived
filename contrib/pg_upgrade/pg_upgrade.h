@@ -476,7 +476,6 @@ void rewriteHeapPageChecksum(const char *fromfile, const char *tofile,
 /* function.c */
 
 void		install_support_functions_in_new_db(const char *db_name);
-void		install_system_support_functions(void);
 void		uninstall_support_functions_from_new_cluster(void);
 void		get_loadable_libraries(void);
 void		check_loadable_libraries(void);
