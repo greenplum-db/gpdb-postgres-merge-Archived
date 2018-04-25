@@ -30,9 +30,6 @@
 #include "utils/tqual.h"
 
 
-/* Potentially set by contrib/pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
-
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	oid_cmp(const void *p1, const void *p2);
 static int	sort_order_cmp(const void *p1, const void *p2);
@@ -321,22 +318,6 @@ restart:
 		}
 	}
 
-	/* Get a new OID for the new label */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_pg_enum_oid))
-	{
-		/*
-		 * Use binary-upgrade override for pg_enum.oid, if supplied. During
-		 * binary upgrade, all pg_enum.oid's are set this way so they are
-		 * guaranteed to be consistent.
-		 */
-		if (neighbor != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ALTER TYPE ADD BEFORE/AFTER is incompatible with binary upgrade")));
-
-		newOid = binary_upgrade_next_pg_enum_oid;
-		binary_upgrade_next_pg_enum_oid = InvalidOid;
-	}
 	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
 	{
 		/*

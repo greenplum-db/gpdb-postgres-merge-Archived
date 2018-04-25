@@ -7221,11 +7221,13 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			enum_oid = atooid(PQgetvalue(res, i, PQfnumber(res, "oid")));
 			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
 
+#if 0 /* GPDB: enum value OIDs are preassigned during upgrade. */
 			if (i == 0)
 				appendPQExpBuffer(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
 			appendPQExpBuffer(q,
 							  "SELECT binary_upgrade.set_next_pg_enum_oid('%u'::pg_catalog.oid);\n",
 							  enum_oid);
+#endif
 			appendPQExpBuffer(q, "ALTER TYPE %s.",
 							  fmtId(tyinfo->dobj.namespace->dobj.name));
 			appendPQExpBuffer(q, "%s ADD VALUE ",
