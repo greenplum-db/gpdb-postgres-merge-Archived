@@ -139,23 +139,6 @@ values
 Value</attribute></attributes>');
 create index idx_xpath on t1 ( xpath_string
 ('/attributes/attribute[@name="attr_1"]/text()', xml_data::text));
-<<<<<<< HEAD
--- possible security exploit
-SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
-$$<xsl:stylesheet version="1.0"
-      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-      xmlns:sax="http://icl.com/saxon"
-      extension-element-prefixes="sax">
-
-  <xsl:template match="//foo">
-    <sax:output href="0wn3d.txt" method="text">
-      <xsl:value-of select="'0wn3d via xml2 extension and libxslt'"/>
-      <xsl:apply-templates/>
-    </sax:output>
-  </xsl:template>
-</xsl:stylesheet>$$);
-ERROR:  failed to apply stylesheet
-=======
 SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></employee>'::text, $$<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
   <xsl:strip-space elements="*"/>
@@ -224,4 +207,18 @@ SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></empl
  
 (1 row)
 
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
+-- possible security exploit
+SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
+$$<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+      xmlns:sax="http://icl.com/saxon"
+      extension-element-prefixes="sax">
+
+  <xsl:template match="//foo">
+    <sax:output href="0wn3d.txt" method="text">
+      <xsl:value-of select="'0wn3d via xml2 extension and libxslt'"/>
+      <xsl:apply-templates/>
+    </sax:output>
+  </xsl:template>
+</xsl:stylesheet>$$);
+ERROR:  failed to apply stylesheet

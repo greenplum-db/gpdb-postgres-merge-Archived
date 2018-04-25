@@ -43,16 +43,8 @@ Datum		xslt_process(PG_FUNCTION_ARGS);
 extern void pgxml_parser_init(void);
 
 /* local defs */
-<<<<<<< HEAD
-static void parse_params(const char **params, text *paramstr);
-
-#define MAXPARAMS 20			/* must be even, see parse_params() */
-
-#endif /* USE_LIBXSLT */
-=======
 static const char **parse_params(text *paramstr);
 #endif   /* USE_LIBXSLT */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 PG_FUNCTION_INFO_V1(xslt_process);

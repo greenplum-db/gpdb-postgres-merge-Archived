@@ -61,17 +61,9 @@ static text *pgxml_result_to_text(xmlXPathObjectPtr res, xmlChar *toptag,
 static xmlChar *pgxml_texttoxmlchar(text *textstring);
 
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar *xpath,
-<<<<<<< HEAD
-									 xpath_workspace *workspace);
-
-static void cleanup_workspace(xpath_workspace *workspace);
-
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
-=======
 			xpath_workspace *workspace);
 
 static void cleanup_workspace(xpath_workspace *workspace);
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 
 
 /*
@@ -242,11 +234,7 @@ Datum
 xpath_nodeset(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-<<<<<<< HEAD
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-=======
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
 	xmlChar    *septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(3));
 	xmlChar    *xpath;
@@ -279,11 +267,7 @@ Datum
 xpath_list(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-<<<<<<< HEAD
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-=======
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_P(2));
 	xmlChar    *xpath;
 	text	   *xpres;
@@ -312,11 +296,7 @@ Datum
 xpath_string(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-<<<<<<< HEAD
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-=======
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xmlChar    *xpath;
 	int32		pathsize;
 	text	   *xpres;
@@ -357,11 +337,7 @@ Datum
 xpath_number(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-<<<<<<< HEAD
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-=======
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xmlChar    *xpath;
 	float4		fRes;
 	xmlXPathObjectPtr res;
@@ -393,11 +369,7 @@ Datum
 xpath_bool(PG_FUNCTION_ARGS)
 {
 	text	   *document = PG_GETARG_TEXT_P(0);
-<<<<<<< HEAD
-	text	   *xpathsupp = PG_GETARG_TEXT_P(1);	/* XPath expression */
-=======
 	text	   *xpathsupp = PG_GETARG_TEXT_P(1);		/* XPath expression */
->>>>>>> a4bebdd92624e018108c2610fc3f2c1584b6c687
 	xmlChar    *xpath;
 	int			bRes;
 	xmlXPathObjectPtr res;
