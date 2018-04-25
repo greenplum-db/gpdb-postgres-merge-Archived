@@ -226,7 +226,7 @@ issue_warnings(char *sequence_script_file_name)
 	/* old == GPDB4 warnings */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 802)
 	{
-		new_gpdb5_0_invalidate_indexes(&new_cluster, false);
+		new_gpdb5_0_invalidate_indexes(false);
 	}
 
 	/* old = PG 8.3 warnings? */

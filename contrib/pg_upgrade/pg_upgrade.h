@@ -546,8 +546,8 @@ void		close_progress(void);
 
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
-void new_gpdb5_0_invalidate_indexes(ClusterInfo *cluster, bool check_mode);
-void new_gpdb_invalidate_bitmap_indexes(ClusterInfo *cluster, bool check_mode);
+void new_gpdb5_0_invalidate_indexes(bool check_mode);
+void new_gpdb_invalidate_bitmap_indexes(bool check_mode);
 
 /* version_old_8_3.c */
 

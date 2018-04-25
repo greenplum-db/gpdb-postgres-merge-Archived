@@ -496,11 +496,11 @@ create_new_objects(void)
 	 * reason, anyway.
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 802)
-		new_gpdb5_0_invalidate_indexes(&new_cluster, user_opts.check);
+		new_gpdb5_0_invalidate_indexes(user_opts.check);
 	else
 	{
 		/* TODO: Bitmap indexes are not supported, so mark them as invalid. */
-		new_gpdb_invalidate_bitmap_indexes(&new_cluster, user_opts.check);
+		new_gpdb_invalidate_bitmap_indexes(user_opts.check);
 	}
 
 	/* Before shutting down the cluster, dump all OIDs, if this was the QD node */
