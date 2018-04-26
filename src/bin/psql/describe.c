@@ -2101,9 +2101,6 @@ describeOneTableDetails(const char *schemaname,
 				}
 			}
 
-			if (writable[0] == 't')
-				add_distributed_by_footer(&cont, oid);
-
 			if (tableinfo.checks)
 			{
 				int tuples = 0;
