@@ -9,8 +9,6 @@ include $(top_builddir)/src/Makefile.global
 WITH_MIRRORS ?= true
 REGRESS = setup
 
-WITH_MIRRORS = false
-
 # These two tests can only run without mirrors due to limit of 1
 # walsender-walreceiver connection only
 ifeq ($(WITH_MIRRORS), false)
