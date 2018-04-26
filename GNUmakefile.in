@@ -105,39 +105,6 @@ distclean maintainer-clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
-# GPDB_91_MERGE_FIXME: This works differently in upstream, with the make
-# "recurse" thing. I just left installcheck-world out of the recurse call
-# below and kept this old list, for now.
-#
-# This is a top-level target that runs "all" regression test suites against
-# a running server. This is what the CI pipeline runs.
-installcheck-world:
-	$(MAKE) -C src/test installcheck-good
-	$(MAKE) -C src/test/fsync installcheck
-	$(MAKE) -C src/test/walrep installcheck
-	$(MAKE) -C src/test/heap_checksum installcheck
-	$(MAKE) -C src/test/isolation installcheck
-	$(MAKE) -C src/test/isolation2 installcheck
-	$(MAKE) -C src/pl installcheck
-	#$(MAKE) -C src/interfaces/ecpg installcheck
-	#$(MAKE) -C contrib installcheck
-	$(MAKE) -C contrib/formatter_fixedwidth installcheck
-	$(MAKE) -C contrib/extprotocol installcheck
-	$(MAKE) -C contrib/dblink installcheck
-	$(MAKE) -C contrib/indexscan installcheck
-	$(MAKE) -C contrib/hstore installcheck
-	$(MAKE) -C contrib/pgcrypto installcheck
-	$(MAKE) -C gpAux/extensions installcheck
-	$(MAKE) -C src/bin/gpfdist installcheck
-	$(MAKE) -C src/interfaces/gppc installcheck
-	$(MAKE) -C src/test/kerberos installcheck
-	$(MAKE) -C gpMgmt/bin installcheck
-	gpcheckcat -A
-	# Verify the filesystem objects are consistent between primary and mirror
-	$(MAKE) -C contrib/gp_replica_check installcheck
-
-	$(MAKE) -C contrib/pg_upgrade check
-
 installcheck-resgroup:
 	$(MAKE) -C src/test/isolation2 $@
 
@@ -159,7 +126,40 @@ check installcheck installcheck-parallel:
 
 $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
 
-#$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
+# This is a top-level target that runs "all" regression test suites against
+# a running server. This is what the CI pipeline runs.
+.PHONY: installcheck-world
+
+# Run all ICW targets in different directories under a recurse call, so
+# that make -k works as expected. Order is significant here (for some reason,
+# which probably indicates that we're relying on undefined behavior... we should
+# probably pull anything order-dependent out of recurse() and back into the
+# recipe body).
+$(call recurse,installcheck-world,src/test,installcheck-good)
+$(call recurse,installcheck-world, \
+			   src/test/fsync \
+			   src/test/walrep \
+			   src/test/heap_checksum \
+			   src/test/isolation \
+			   src/test/isolation2 \
+			   src/pl \
+			   contrib/formatter_fixedwidth \
+			   contrib/extprotocol \
+			   contrib/dblink \
+			   contrib/indexscan \
+			   contrib/hstore \
+			   contrib/pgcrypto \
+			   gpAux/extensions \
+			   src/bin/gpfdist \
+			   src/interfaces/gppc \
+			   src/test/kerberos \
+			   gpMgmt/bin,installcheck)
+.PHONY: installcheck-gpcheckcat
+installcheck-world: installcheck-gpcheckcat
+installcheck-gpcheckcat:
+	gpcheckcat -A
+$(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
+$(call recurse,installcheck-world,contrib/pg_upgrade,check)
 
 $(call recurse,maintainer-check,doc src config contrib)
 
