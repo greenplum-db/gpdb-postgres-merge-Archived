@@ -2225,6 +2225,30 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					 errmsg("cannot change foreign table \"%s\"",
 							RelationGetRelationName(resultRel))));
 			break;
+
+		/* GPDB additions */
+		case RELKIND_AOSEGMENTS:
+			if (!allowSystemTableModsDML)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO segment listing relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+		case RELKIND_AOBLOCKDIR:
+			if (!allowSystemTableModsDML)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO block directory relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+		case RELKIND_AOVISIMAP:
+			if (!allowSystemTableModsDML)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO visibility map relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2298,64 +2322,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  int instrument_options)
 {
-	/*
-	 * Check valid relkind ... parser and/or planner should have noticed this
-	 * already, but let's make sure.
-	 */
-	switch (resultRelationDesc->rd_rel->relkind)
-	{
-		case RELKIND_RELATION:
-			/* OK */
-			break;
-		case RELKIND_SEQUENCE:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change sequence \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
-			break;
-		case RELKIND_TOASTVALUE:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change TOAST relation \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
-			break;
-		case RELKIND_AOSEGMENTS:
-			if (!allowSystemTableModsDML)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO segment listing relation \"%s\"",
-								RelationGetRelationName(resultRelationDesc))));
-			break;
-		case RELKIND_AOBLOCKDIR:
-			if (!allowSystemTableModsDML)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO block directory relation \"%s\"",
-								RelationGetRelationName(resultRelationDesc))));
-			break;
-		case RELKIND_AOVISIMAP:
-			if (!allowSystemTableModsDML)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO visibility map relation \"%s\"",
-								RelationGetRelationName(resultRelationDesc))));
-			break;
-
-		case RELKIND_VIEW:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change view \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
-			break;
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change relation \"%s\"",
-							RelationGetRelationName(resultRelationDesc))));
-			break;
-	}
-
-	/* OK, fill in the node */
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
 	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
