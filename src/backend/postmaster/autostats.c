@@ -257,7 +257,10 @@ auto_stats(AutoStatsCmdType cmdType, Oid relationOid, uint64 ntuples, bool inFun
 
 	start = GetCurrentTimestamp();
 
-	if (Gp_role != GP_ROLE_DISPATCH || relationOid == InvalidOid || rel_is_partitioned(relationOid))
+	if (Gp_role != GP_ROLE_DISPATCH || relationOid == InvalidOid
+		|| rel_is_partitioned(relationOid)
+		/* Updates on views are possible via triggers, but we can't analyze views. */
+		|| get_rel_relkind(relationOid) == RELKIND_VIEW)
 	{
 		return;
 	}
