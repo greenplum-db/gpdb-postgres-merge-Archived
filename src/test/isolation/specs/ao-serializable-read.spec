@@ -1,4 +1,4 @@
-# Test reading an AO-table in SERIALIZABLE mode.
+# Test reading an AO-table in REPEATABLE READ mode.
 #
 #
 # This is an old repro script for a GPDB bug that was fixed in GPDB 4.1.0.0.
@@ -14,7 +14,7 @@
 #
 # (2) In session 2:
 #
-# begin TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+# begin TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 # select * from ao;
 #  i | j
 # ---+---
@@ -60,7 +60,7 @@ step "s1insert"	{ insert into ao select i, i from generate_series(0, 99) i; }
 step "s1select"	{ select count(*) from ao; }
 
 session "s2"
-step "s2begin"	{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
+step "s2begin"	{ BEGIN ISOLATION LEVEL REPEATABLE READ; }
 step "s2select"	{ select count(*) from ao; }
 step "s2insert"	{ insert into ao select i, i from generate_series(0, 99) i; }
 teardown	{ abort; }

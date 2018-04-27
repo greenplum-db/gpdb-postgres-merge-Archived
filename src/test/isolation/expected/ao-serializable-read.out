@@ -1,7 +1,7 @@
 Parsed test spec with 2 sessions
 
 starting permutation: s2begin s2select s1insert s1select s2select s2insert s2select
-step s2begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2begin: BEGIN ISOLATION LEVEL REPEATABLE READ;
 step s2select: select count(*) from ao;
 count          
 

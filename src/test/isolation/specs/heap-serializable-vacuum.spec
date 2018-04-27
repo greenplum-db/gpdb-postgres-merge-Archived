@@ -1,6 +1,6 @@
-# Test behaviour with distributed (serializable) snapshots and vacuum.
+# Test behaviour with distributed (repeatable read) snapshots and vacuum.
 #
-# The crux of this test is that session 2 begins a serializable
+# The crux of this test is that session 2 begins a repeatable read
 # transaction, but it doesn't immediately do any actions in that transaction
 # that would open the connections to the QEs. Hence, GetSnapshotData() isn't
 # called in the QEs for session 2 the "s2select" stage. Meanwhile, session 1
@@ -32,7 +32,7 @@ step "s1commit"  { commit; }
 step "s1vacuum"	{ vacuum heaptest; }
 
 session "s2"
-step "s2begin"	{ BEGIN ISOLATION LEVEL SERIALIZABLE;
+step "s2begin"	{ BEGIN ISOLATION LEVEL REPEATABLE READ;
 		  select 123 as "establish snapshot"; }
 step "s2select"	{ select count(*) from heaptest; }
 teardown	{ abort; }

@@ -1,4 +1,4 @@
-# Test behaviour with distributed (serializable) snapshots and vacuum freeze.
+# Test behaviour with distributed (repeatable read) snapshots and vacuum freeze.
 #
 # At highlevel main intent of tests is to validate xmax and xmin correctly gets
 # freezed on vacuum freeze. Also, relfrozenxid for pg_class correctly reflects
@@ -24,7 +24,7 @@ step "s1vacuumfreeze" { VACUUM heaptest; }
 step "s1select" { SELECT COUNT(*) FROM heaptest; }
 
 session "s2"
-step "s2begin" { BEGIN ISOLATION LEVEL SERIALIZABLE;
+step "s2begin" { BEGIN ISOLATION LEVEL REPEATABLE READ;
 		 SELECT 123 AS "establish snapshot"; }
 step "s2select" {
     SELECT CASE 
@@ -95,7 +95,7 @@ step "s4abort"  { ABORT; }
 # (marked invalid) after HeapTupleSatisfiesVacuum() returns tuple cannot be
 # deleted based on global transaction state.
 #
-# Session 2 begins a serializable transaction, but it doesn't immediately do any
+# Session 2 begins a repeatable read transaction, but it doesn't immediately do any
 # command in that transaction that would acquire snapshot on QEs. Hence,
 # GetSnapshotData() isn't called in the QEs for session 2 the "s2select"
 # stage. Meanwhile, session 1 deletes rows from the table that due to session
@@ -119,7 +119,7 @@ permutation "s4begin" "s4delete" "s4abort" "s1setfreezeminage" "s1vacuumfreeze" 
 # making it visible to all the distributed transactions, if some distributed
 # transaction still can't see it.
 #
-# Session 2 begins a serializable transaction, but it doesn't immediately do any
+# Session 2 begins a repeatable read transaction, but it doesn't immediately do any
 # command in that transaction that would acquire snapshot on the QEs. Hence,
 # GetSnapshotData() isn't called in the QEs for session 2 the "s2select"
 # stage. Meanwhile, session 1 inserts more rows to the table and then performs
