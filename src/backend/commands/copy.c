@@ -1292,7 +1292,8 @@ ProcessCopyOptions(CopyState cstate,
 						 errmsg("argument to option \"%s\" must be a list of column names",
 								defel->defname)));
 		}
-		else if (strcmp(defel->defname, "force_not_null") == 0)
+		else if (strcmp(defel->defname, "force_not_null") == 0 ||
+				 strcmp(defel->defname, "force_notnull") == 0)
 		{
 			if (cstate->force_notnull)
 				ereport(ERROR,
