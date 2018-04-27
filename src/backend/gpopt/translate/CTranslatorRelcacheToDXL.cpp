@@ -559,6 +559,13 @@ CTranslatorRelcacheToDXL::Pmdrel
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, pmdid->Wsz());
 	}
 
+	// GPDB_91_MERGE_FIXME - Orca does not support foreign data
+	if (RelationIsForeign(rel))
+	{
+		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDObjUnsupported, GPOS_WSZ_LIT("Foreign Data"));
+	}
+
+
 	CMDName *pmdname = NULL;
 	IMDRelation::Erelstoragetype erelstorage = IMDRelation::ErelstorageSentinel;
 	DrgPmdcol *pdrgpmdcol = NULL;
