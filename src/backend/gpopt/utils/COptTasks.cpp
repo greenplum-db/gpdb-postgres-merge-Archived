@@ -515,11 +515,6 @@ COptTasks::Execute
 	params.error_buffer_size = GPOPT_ERROR_BUFFER_SIZE;
 	params.abort_requested = &abort_flag;
 
-	// GPDB_91_MERGE_FIXME - Disabling index scans under nested loop joins,
-	// as the executor now expects a Param, rather than a Var with an OUTER
-	// table reference for rescans.
-	bool fResult = COptTasks::FSetXform((char *) "CXformImplementIndexApply", true /*fDisable*/);
-
 	// execute task and send log message to server log
 	GPOS_TRY
 	{

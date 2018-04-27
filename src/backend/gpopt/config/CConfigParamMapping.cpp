@@ -416,7 +416,10 @@ CConfigParamMapping::PbsPack
 	}
 
 	// disable index-join if the corresponding GUC is turned off
-	if (!optimizer_enable_indexjoin)
+	// GPDB_91_MERGE_FIXME - Disabling index scans under nested loop joins,
+	// as the executor now expects a Param, rather than a Var with an OUTER
+	// table reference for rescans.
+	/*if (!optimizer_enable_indexjoin) */
 	{
 		CBitSet *pbsIndexJoin = CXform::PbsIndexJoinXforms(pmp);
 		pbs->Union(pbsIndexJoin);
