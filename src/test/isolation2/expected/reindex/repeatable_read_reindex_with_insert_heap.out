@@ -25,7 +25,7 @@ SET
 -- end_ignore
 1: BEGIN;
 BEGIN
-1: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+1: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 SET
 1: select 'dummy select to establish snapshot';
 ?column?                          

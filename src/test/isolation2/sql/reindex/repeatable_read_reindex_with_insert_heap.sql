@@ -13,7 +13,7 @@ create index idxg_reindex_serialize_tab_heap on reindex_serialize_tab_heap(g);
 SET gp_create_table_random_default_distribution=off;
 -- end_ignore
 1: BEGIN;
-1: SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+1: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 1: select 'dummy select to establish snapshot';
 2: BEGIN;
 2: insert into reindex_serialize_tab_heap values(99,'green',now(),10,15.10);
