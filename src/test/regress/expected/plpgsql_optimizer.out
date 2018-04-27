@@ -1783,7 +1783,7 @@ CONTEXT:  SQL statement "select             * from system where name = new.sysna
 PL/pgSQL function "tg_iface_biu" line 6 at SQL statement
 --
 -- The following tests are unrelated to the scenario outlined above;
--- they merely exercise specific parts of PL/PgSQL
+-- they merely exercise specific parts of PL/pgSQL
 --
 --
 -- Test recursion, per bug report 7-Sep-01
@@ -3399,7 +3399,7 @@ NOTICE:  6
 
 drop function exc_using(int, text);
 create or replace function exc_using(int) returns void as $$
-declare 
+declare
   c refcursor;
   i int;
 begin
@@ -3410,7 +3410,7 @@ begin
     raise notice '%', i;
   end loop;
   close c;
-  return;  
+  return;
 end;
 $$ language plpgsql;
 select exc_using(5);
