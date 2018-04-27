@@ -16,9 +16,8 @@
 #test: multiple-row-versions
 
 # GPDB-specific tests
-test: heap-serializable-vacuum-freeze
-test: heap-serializable-vacuum
-test: ao-serializable-read
-test: ao-serializable-vacuum
+test: heap-repeatable-read-vacuum-freeze
+test: heap-repeatable-read-vacuum
+test: ao-repeatable-read-vacuum
 
 test: ao-insert-eof create_index_hot udf-insert-deadlock heap-repeatable-read ao-repeatable-read
