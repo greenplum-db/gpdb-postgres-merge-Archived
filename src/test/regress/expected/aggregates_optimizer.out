@@ -460,11 +460,51 @@ FROM bool_test;
 --
 analyze tenk1;		-- ensure we get consistent plans here
 -- Basic cases
+explain (costs off)
+  select min(unique1) from tenk1;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(5 rows)
+
+select min(unique1) from tenk1;
+ min 
+-----
+   0
+(1 row)
+
+explain (costs off)
+  select max(unique1) from tenk1;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(5 rows)
+
 select max(unique1) from tenk1;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 < 42;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Scan using tenk1_unique1 on tenk1
+                     Index Cond: unique1 < 42
+ Optimizer: PQO version 2.55.21
+(6 rows)
 
 select max(unique1) from tenk1 where unique1 < 42;
  max 
@@ -472,11 +512,37 @@ select max(unique1) from tenk1 where unique1 < 42;
   41
 (1 row)
 
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 > 42;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Table Scan on tenk1
+                     Filter: unique1 > 42
+ Optimizer: PQO version 2.55.21
+(6 rows)
+
 select max(unique1) from tenk1 where unique1 > 42;
  max  
 ------
  9999
 (1 row)
+
+set enable_seqscan=off;
+set enable_bitmapscan=off;
+explain (costs off)
+  select max(unique1) from tenk1 where unique1 > 42000;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Scan using tenk1_unique1 on tenk1
+                     Index Cond: unique1 > 42000
+ Optimizer: PQO version 2.55.21
+(6 rows)
 
 select max(unique1) from tenk1 where unique1 > 42000;
  max 
@@ -484,12 +550,37 @@ select max(unique1) from tenk1 where unique1 > 42000;
     
 (1 row)
 
+reset enable_seqscan;
 -- multi-column index (uses tenk1_thous_tenthous)
+explain (costs off)
+  select max(tenthous) from tenk1 where thousand = 33;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Scan using tenk1_thous_tenthous on tenk1
+                     Index Cond: thousand = 33
+ Optimizer: PQO version 2.55.21
+(6 rows)
+
 select max(tenthous) from tenk1 where thousand = 33;
  max  
 ------
  9033
 (1 row)
+
+explain (costs off)
+  select min(tenthous) from tenk1 where thousand = 33;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Scan using tenk1_thous_tenthous on tenk1
+                     Index Cond: thousand = 33
+ Optimizer: PQO version 2.55.21
+(6 rows)
 
 select min(tenthous) from tenk1 where thousand = 33;
  min 
@@ -498,6 +589,26 @@ select min(tenthous) from tenk1 where thousand = 33;
 (1 row)
 
 -- check parameter propagation into an indexscan subquery
+-- In GPDB, this cannot use the MIN/MAX optimization, because the subplan
+-- parameter cannot be pushed through a Motion node.
+explain (costs off)
+  select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
+    from int4_tbl;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Result
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Table Scan on int4_tbl
+   SubPlan 1  (slice0)
+     ->  Aggregate
+           ->  Result
+                 Filter: tenk1.unique1 > int4_tbl.f1
+                 ->  Materialize
+                       ->  Gather Motion 3:1  (slice2; segments: 3)
+                             ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(11 rows)
+
 select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
   from int4_tbl;
      f1      | gt 
@@ -510,11 +621,35 @@ select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
 (5 rows)
 
 -- check some cases that were handled incorrectly in 8.3.0
+explain (costs off)
+  select distinct max(unique2) from tenk1;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(5 rows)
+
 select distinct max(unique2) from tenk1;
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique2) from tenk1 order by 1;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Sort
+   Sort Key: (max((max(unique2))))
+   ->  Aggregate
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Aggregate
+                     ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(7 rows)
 
 select max(unique2) from tenk1 order by 1;
  max  
@@ -522,11 +657,39 @@ select max(unique2) from tenk1 order by 1;
  9999
 (1 row)
 
+explain (costs off)
+  select max(unique2) from tenk1 order by max(unique2);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Sort
+   Sort Key: (max((max(unique2))))
+   ->  Aggregate
+         ->  Gather Motion 3:1  (slice1; segments: 3)
+               ->  Aggregate
+                     ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(7 rows)
+
 select max(unique2) from tenk1 order by max(unique2);
  max  
 ------
  9999
 (1 row)
+
+explain (costs off)
+  select max(unique2) from tenk1 order by max(unique2)+1;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Result
+   ->  Sort
+         Sort Key: ((max((max(unique2)))) + 1)
+         ->  Result
+               ->  Aggregate
+                     ->  Gather Motion 3:1  (slice1; segments: 3)
+                           ->  Aggregate
+                                 ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(9 rows)
 
 select max(unique2) from tenk1 order by max(unique2)+1;
  max  
@@ -534,7 +697,20 @@ select max(unique2) from tenk1 order by max(unique2)+1;
  9999
 (1 row)
 
--- MPP: This works in Postgres
+explain (costs off)
+  select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Sort
+   Sort Key: (generate_series(1, 3))
+   ->  Result
+         ->  Aggregate
+               ->  Gather Motion 3:1  (slice1; segments: 3)
+                     ->  Aggregate
+                           ->  Table Scan on tenk1
+ Optimizer: PQO version 2.55.21
+(8 rows)
+
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  max  | g 
 ------+---
@@ -593,6 +769,7 @@ select min(f1), max(f1) from minmaxtest;
   11 |  18
 (1 row)
 
+reset enable_seqscan;
 drop table minmaxtest cascade;
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table minmaxtest1
