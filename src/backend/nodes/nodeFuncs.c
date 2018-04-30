@@ -859,6 +859,9 @@ exprCollation(Node *expr)
 		case T_DMLActionExpr:
 			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: Orca only expression? */
 			break;
+		case T_PartBoundExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: Orca only expression? */
+			break;
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
