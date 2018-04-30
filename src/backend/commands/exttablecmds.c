@@ -935,7 +935,6 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 	{
 		/* custom format */
 		StringInfoData cfbuf;
-		bool is_first_option = true;
 
 		initStringInfo(&cfbuf);
 
@@ -955,23 +954,19 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 				formatter = strVal(defel->arg);
 			}
 
-			if (!is_first_option)
-				appendStringInfo(&cfbuf, " , ");
-			else
-				is_first_option = false;
-
-			/* Output "<key> '<val>' ". Add quote if key includes space. */
-			bool need_quote = (strstr(key, " ") != NULL);
-			if (need_quote)
-				appendStringInfoChar(&cfbuf, '"');
+			/*
+			 * Output "<key> '<val>' ", but replace any space chars in the key
+			 * with meta char (MPP-14467)
+			 */
 			while (*key)
 			{
-				appendStringInfoChar(&cfbuf, *key);
+				if (*key == ' ')
+					appendStringInfoString(&cfbuf, "<gpx20>");
+				else
+					appendStringInfoChar(&cfbuf, *key);
 				key++;
 			}
-			if (need_quote)
-				appendStringInfoChar(&cfbuf, '"');
-			appendStringInfo(&cfbuf, " '%s'", val);
+			appendStringInfo(&cfbuf, " '%s' ", val);
 		}
 
 		if (!formatter)

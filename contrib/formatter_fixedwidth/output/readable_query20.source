@@ -23,7 +23,7 @@ External table "public.tbl_ext_fixedwidth"
 Type: readable
 Encoding: UTF8
 Format type: custom
-Format options: formatter 'fixedwidth_in' , col_b '5' , col_a '5' , col_d '5' , col_c '5' , n3 '5' , n1 '5' , n2 '5'
+Format options: formatter 'fixedwidth_in' col_b '5' col_a '5' col_d '5' col_c '5' n3 '5' n1 '5' n2 '5' 
 External options: {}
 External location: file://@hostname@@abs_srcdir@/data/fixedwidth_field_sequence.tbl
 Execute on: all segments
