@@ -1906,6 +1906,12 @@ GetSnapshotData(Snapshot snapshot)
 	Assert(snapshot != NULL);
 
 	/*
+	 * Support for true serializable isolation is not yet implemented in
+	 * Greenplum.  See merge fixme in assign_XactIsoLevel().
+	 */
+	Assert(XactIsoLevel < XACT_SERIALIZABLE);
+
+	/*
 	 * Allocating space for maxProcs xids is usually overkill; numProcs would
 	 * be sufficient.  But it seems better to do the malloc while not holding
 	 * the lock, so we can't look at numProcs.  Likewise, we allocate much
