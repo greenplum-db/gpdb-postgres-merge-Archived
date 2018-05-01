@@ -5203,7 +5203,7 @@ format_opt_item:
 			}
 			| FORCE NOT NULL_P columnList
 			{
-				$$ = makeDefElem("force_notnull", (Node *)$4);
+				$$ = makeDefElem("force_not_null", (Node *)$4);
 			}
 			| FORCE QUOTE columnList
 			{

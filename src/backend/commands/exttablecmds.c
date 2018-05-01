@@ -816,7 +816,7 @@ transformFormatOpts(char formattype, List *formatOpts, int numcols, bool iswrita
 				strcmp(defel->defname, "header") == 0 ||
 				strcmp(defel->defname, "quote") == 0 ||
 				strcmp(defel->defname, "escape") == 0 ||
-				strcmp(defel->defname, "force_notnull") == 0 ||
+				strcmp(defel->defname, "force_not_null") == 0 ||
 				strcmp(defel->defname, "force_quote") == 0 ||
 				/* GPDB_90_MERGE_FIXME: add 'force_quote_all' here */
 				strcmp(defel->defname, "fill_missing_fields") == 0 ||
