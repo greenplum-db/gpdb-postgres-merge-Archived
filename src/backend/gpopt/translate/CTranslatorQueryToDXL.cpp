@@ -1215,15 +1215,15 @@ CTranslatorQueryToDXL::PhmiulUpdateCols()
 		// GPDB_90_MERGE_FIXME: Ignore junk columns, as they are have been
 		// ignored when adding them to m_pdrgpdxlnQueryOutput, and are not
 		// actually going to be updated. Is this the right thing to do?
-		if (!pte->resjunk)
-		{
+//		if (!pte->resjunk)
+//		{
 			CDXLNode *pdxlnCol = (*m_pdrgpdxlnQueryOutput)[ul];
 			CDXLScalarIdent *pdxlopIdent = CDXLScalarIdent::PdxlopConvert(
 					pdxlnCol->Pdxlop());
 			ULONG ulColId = pdxlopIdent->Pdxlcr()->UlID();
 
 			StoreAttnoColIdMapping(phmiulUpdateCols, ulResno, ulColId);
-		}
+//			}
 		ul++;
 	}
 
@@ -3924,10 +3924,10 @@ CTranslatorQueryToDXL::PdrgpdxlnConstructOutputCols
 		GPOS_ASSERT(0 < pte->resno);
 		ULONG ulResNo = pte->resno;
 
-		if (pte->resjunk)
-		{
-			continue;
-		}
+//		if (pte->resjunk)
+//		{
+//			continue;
+//		}
 
 		GPOS_ASSERT(NULL != pte);
 		CMDName *pmdname = NULL;
