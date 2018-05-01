@@ -1192,6 +1192,7 @@ ProcessCopyOptions(CopyState cstate,
 	if (cstate == NULL)
 		cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
 
+	cstate->escape_off = false;
 	cstate->file_encoding = -1;
 
 	/* Extract options from the statement node tree */
@@ -1644,11 +1645,6 @@ ProcessCopyOptions(CopyState cstate,
 	if (cstate->escape != NULL && pg_strcasecmp(cstate->escape, "off") == 0)
 	{
 		cstate->escape_off = true;
-		/*
-		 * We sanitize NUL characters from the input early on, so we can be
-		 * sure that we'll never see any in the input.
-		 */
-		cstate->escape = "\0";
 	}
 
 	/* set end of line type if NEWLINE keyword was specified */
@@ -5551,7 +5547,7 @@ static int
 CopyReadAttributesText(CopyState cstate)
 {
 	char		delimc = cstate->delim[0];
-	char		escapec = cstate->escape[0];
+	char		escapec = cstate->escape_off ? delimc : cstate->escape[0];
 	int			fieldno;
 	char	   *output_ptr;
 	char	   *cur_ptr;
