@@ -2438,11 +2438,13 @@ CTranslatorQueryToDXL::PdxlnFromSetOp
 	// translate the left and right child
 	DrgPul *pdrgpulLeft = GPOS_NEW(m_pmp) DrgPul(m_pmp);
 	DrgPul *pdrgpulRight = GPOS_NEW(m_pmp) DrgPul(m_pmp);
+	DrgPul *pdrgpulLeftOidCollations = GPOS_NEW(m_pmp) DrgPul(m_pmp);
+	DrgPul *pdrgpulRightOidCollations = GPOS_NEW(m_pmp) DrgPul(m_pmp);
 	DrgPmdid *pdrgpmdidLeft = GPOS_NEW(m_pmp) DrgPmdid(m_pmp);
 	DrgPmdid *pdrgpmdidRight = GPOS_NEW(m_pmp) DrgPmdid(m_pmp);
 
-	CDXLNode *pdxlnLeftChild = PdxlnSetOpChild(psetopstmt->larg, pdrgpulLeft, pdrgpmdidLeft, plTargetList);
-	CDXLNode *pdxlnRightChild = PdxlnSetOpChild(psetopstmt->rarg, pdrgpulRight, pdrgpmdidRight, plTargetList);
+	CDXLNode *pdxlnLeftChild = PdxlnSetOpChild(psetopstmt->larg, pdrgpulLeft, pdrgpulLeftOidCollations, pdrgpmdidLeft, plTargetList);
+	CDXLNode *pdxlnRightChild = PdxlnSetOpChild(psetopstmt->rarg, pdrgpulRight, pdrgpulRightOidCollations, pdrgpmdidRight, plTargetList);
 
 	// mark outer references in input columns from left child
 	ULONG *pulColId = GPOS_NEW_ARRAY(m_pmp, ULONG, pdrgpulLeft->UlLength());
@@ -2465,6 +2467,7 @@ CTranslatorQueryToDXL::PdxlnFromSetOp
 												plTargetList,
 												pdrgpmdidLeft,
 												pdrgpulLeft,
+												pdrgpulLeftOidCollations,
 												pfOuterRef,
 												m_pidgtorCol
 												);
@@ -2515,7 +2518,8 @@ CTranslatorQueryToDXL::PdxlnFromSetOp
 	pdrgpulOutput->Release();
 	pdrgpmdidLeft->Release();
 	pdrgpmdidRight->Release();
-
+	pdrgpulLeftOidCollations->Release();
+	pdrgpulRightOidCollations->Release();
 	return pdxln;
 }
 
@@ -2690,11 +2694,13 @@ CTranslatorQueryToDXL::PdxlnSetOpChild
 	(
 	Node *pnodeChild,
 	DrgPul *pdrgpul,
+	DrgPul *pdrgpulCollation,
 	DrgPmdid *pdrgpmdid,
 	List *plTargetList
 	)
 {
 	GPOS_ASSERT(NULL != pdrgpul);
+	GPOS_ASSERT(NULL != pdrgpulCollation);
 	GPOS_ASSERT(NULL != pdrgpmdid);
 
 	if (IsA(pnodeChild, RangeTblRef))
@@ -2741,6 +2747,9 @@ CTranslatorQueryToDXL::PdxlnSetOpChild
 				ULONG *pulColId = GPOS_NEW(m_pmp) ULONG(pdxlnIdent->Pdxlcr()->UlID());
 				pdrgpul->Append(pulColId);
 
+				ULONG *pulOidCollation = GPOS_NEW(m_pmp) ULONG(pdxlnIdent->Pdxlcr()->OidCollation());
+				pdrgpulCollation->Append(pulOidCollation);
+
 				IMDId *pmdidCol = pdxlnIdent->PmdidType();
 				GPOS_ASSERT(NULL != pmdidCol);
 				pmdidCol->AddRef();
@@ -2766,6 +2775,9 @@ CTranslatorQueryToDXL::PdxlnSetOpChild
 			const CDXLColDescr *pdxlcd = (*pdrgpdxlcd)[ul];
 			ULONG *pulColId = GPOS_NEW(m_pmp) ULONG(pdxlcd->UlID());
 			pdrgpul->Append(pulColId);
+
+			ULONG *pulOidCollation = GPOS_NEW(m_pmp) ULONG(pdxlcd->OidCollation());
+			pdrgpulCollation->Append(pulOidCollation);
 
 			IMDId *pmdidCol = pdxlcd->PmdidType();
 			GPOS_ASSERT(NULL != pmdidCol);

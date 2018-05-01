@@ -213,7 +213,7 @@ namespace gpdxl
 			CDXLWindowFrame *PdxlwfLeadLag(BOOL fLead, CDXLNode *pdxlnOffset) const;
 
 			// translate the child of a set operation
-			CDXLNode *PdxlnSetOpChild(Node *pnodeChild, DrgPul *pdrgpul, DrgPmdid *pdrgpmdid, List *plTargetList);
+			CDXLNode *PdxlnSetOpChild(Node *pnodeChild, DrgPul *pdrgpul, DrgPul *pdrgpulCollation, DrgPmdid *pdrgpmdid, List *plTargetList);
 
 			// return a dummy const table get
 			CDXLNode *PdxlnConstTableGet() const;

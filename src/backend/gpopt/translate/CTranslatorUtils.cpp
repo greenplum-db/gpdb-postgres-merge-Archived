@@ -1369,6 +1369,7 @@ CTranslatorUtils::PdrgpulGenerateColIds
 	List *plTargetList,
 	DrgPmdid *pdrgpmdidInput,
 	DrgPul *pdrgpulInput,
+	DrgPul *pdrgpulInputOidCollation,
 	BOOL *pfOuterRef,  // array of flags indicating if input columns are outer references
 	CIdGenerator *pidgtorColId
 	)
@@ -1391,12 +1392,17 @@ CTranslatorUtils::PdrgpulGenerateColIds
 		GPOS_ASSERT(NULL != pte->expr);
 
 		OID oidExprType = gpdb::OidExprType((Node*) pte->expr);
+
+		OID oidCollation = gpdb::OidExprCollation((Node*) pte->expr);
 		if (!pte->resjunk)
 		{
 			ULONG ulColId = ULONG_MAX;
 			IMDId *pmdid = (*pdrgpmdidInput)[ulColPos];
-			if (CMDIdGPDB::PmdidConvert(pmdid)->OidObjectId() != oidExprType || 
-				pfOuterRef[ulColPos])
+			OID inputOidCollation = *(*pdrgpulInputOidCollation)[ulColPos];
+
+			if (CMDIdGPDB::PmdidConvert(pmdid)->OidObjectId() != oidExprType ||
+				pfOuterRef[ulColPos] ||
+				oidCollation != inputOidCollation)
 			{
 				// generate a new column when:
 				//  (1) the type of input column does not match that of the output column, or
