@@ -2730,7 +2730,7 @@ External table "public.exttab_with_options"
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '|' null E'\\N' escape E'\\'
+Format options: delimiter '|' null '\N' escape '\'
 External options: {hello=world,bonjour=again,"nihao=again and again"}
 External location: file://@hostname@@abs_srcdir@/data/exttab_few_errors.data
 Execute on: all segments
@@ -2744,7 +2744,7 @@ External table "public.exttab_with_option_empty"
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '|' null E'\\N' escape E'\\'
+Format options: delimiter '|' null '\N' escape '\'
 External options: {}
 External location: file://@hostname@@abs_srcdir@/data/exttab_few_errors.data
 Execute on: all segments
