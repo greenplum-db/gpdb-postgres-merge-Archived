@@ -560,8 +560,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %token <ival>	ICONST PARAM
 %token			TYPECAST DOT_DOT COLON_EQUALS
 
-%token			PARSE_COPY_OPTIONS
-
 /*
  * If you want to make any keyword changes, update the keyword table in
  * src/include/parser/kwlist.h and add new keywords to the appropriate one
@@ -1091,17 +1089,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 stmtblock:	stmtmulti
 			{
 				pg_yyget_extra(yyscanner)->parsetree = $1;
-			}
-		;
-
-/*
- * PARSE_COPY_OPTIONS is a special token that means that we're not processing
- * a full SQL statement, but only a list of COPY options. This is used to
- * process options to an external table, just like COPY does.
- */
-stmtblock: PARSE_COPY_OPTIONS copy_options
-			{
-				pg_yyget_extra(yyscanner)->parsetree = $2;
 			}
 		;
 
