@@ -5317,9 +5317,26 @@ CopyReadLineText(CopyState cstate)
 				{
 					raw_buf_ptr++;		/* eat newline */
 					cstate->eol_type = EOL_CRNL;		/* in case not set yet */
+
+					/*
+					 * GPDB: end of line. Since we don't error out if we find a
+					 * bare CR or LF in CRLF mode, break here instead.
+					 */
+					break;
 				}
 				else
 				{
+					/*
+					 * GPDB_91_MERGE_FIXME: these commented-out blocks (as well
+					 * as the restructured newline checks) are here because we
+					 * allow the user to manually set the newline mode, and
+					 * therefore don't error out on bare CR/LF in the middle of
+					 * a column. Instead, they will be included verbatim.
+					 *
+					 * This probably has other fallout -- but so does changing
+					 * the behavior. Discuss.
+					 */
+#if 0
 					/* found \r, but no \n */
 					if (cstate->eol_type == EOL_CRNL)
 						ereport(ERROR,
@@ -5330,14 +5347,20 @@ CopyReadLineText(CopyState cstate)
 								 !cstate->csv_mode ?
 						errhint("Use \"\\r\" to represent carriage return.") :
 								 errhint("Use quoted CSV field to represent carriage return.")));
+#endif
 
-					/*
-					 * if we got here, it is the first line and we didn't find
-					 * \n, so don't consume the peeked character
-					 */
-					cstate->eol_type = EOL_CR;
+					/* GPDB: only reset eol_type if it's currently unknown. */
+					if (cstate->eol_type == EOL_UNKNOWN)
+					{
+						/*
+						 * if we got here, it is the first line and we didn't find
+						 * \n, so don't consume the peeked character
+						 */
+						cstate->eol_type = EOL_CR;
+					}
 				}
 			}
+#if 0 /* GPDB_91_MERGE_FIXME: see above. */
 			else if (cstate->eol_type == EOL_NL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
@@ -5347,13 +5370,19 @@ CopyReadLineText(CopyState cstate)
 						 !cstate->csv_mode ?
 					   errhint("Use \"\\r\" to represent carriage return.") :
 						 errhint("Use quoted CSV field to represent carriage return.")));
-			/* If reach here, we have found the line terminator */
-			break;
+#endif
+			/* GPDB: a CR only ends the line in CR mode. */
+			if (cstate->eol_type == EOL_CR)
+			{
+				/* If reach here, we have found the line terminator */
+				break;
+			}
 		}
 
 		/* Process \n */
 		if (c == '\n' && (!cstate->csv_mode || !in_quote))
 		{
+#if 0 /* GPDB_91_MERGE_FIXME: see above. */
 			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
@@ -5363,9 +5392,17 @@ CopyReadLineText(CopyState cstate)
 						 !cstate->csv_mode ?
 						 errhint("Use \"\\n\" to represent newline.") :
 					 errhint("Use quoted CSV field to represent newline.")));
-			cstate->eol_type = EOL_NL;	/* in case not set yet */
-			/* If reach here, we have found the line terminator */
-			break;
+#endif
+			/* GPDB: only reset eol_type if it's currently unknown. */
+			if (cstate->eol_type == EOL_UNKNOWN)
+				cstate->eol_type = EOL_NL;	/* in case not set yet */
+
+			/* GPDB: a LF only ends the line in LF mode. */
+			if (cstate->eol_type == EOL_NL)
+			{
+				/* If reach here, we have found the line terminator */
+				break;
+			}
 		}
 
 		/*
