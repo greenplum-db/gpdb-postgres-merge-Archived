@@ -826,6 +826,7 @@ isDynamicScan(const Plan *plan)
 		case T_TableScan:
 		case T_DynamicTableScan:
 		case T_DynamicIndexScan:
+		case T_DynamicBitmapIndexScan:
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
 			return (((Scan *) plan)->partIndex != INVALID_PART_INDEX);
