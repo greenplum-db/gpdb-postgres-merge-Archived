@@ -2282,6 +2282,8 @@ deparse_context_for_planstate(Node *planstate, List *ancestors,
 	{
 		dpns->inner_planstate = (PlanState *) planstate;
 		dpns->outer_planstate = (PlanState *) planstate;
+		dpns->outer_plan = ((PlanState *) planstate)->plan;
+		dpns->inner_plan = ((PlanState *) planstate)->plan;
 	}
 
 	/* Return a one-deep namespace stack */
@@ -2312,6 +2314,15 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 	 */
 	if (IsA(ps, AppendState))
 		dpns->outer_planstate = ((AppendState *) ps)->appendplans[0];
+	else if (IsA(ps, SequenceState))
+		/*
+		 * A Sequence node returns tuples from the *last* child node only.
+		 * The other subplans can even have a different, incompatible tuple
+		 * descriptor. A typical case is to have a PartitionSelector node
+		 * as the first subplan, and the Dynamic Table Scan as the second
+		 * subplan.
+		 */
+		dpns->outer_planstate = ((SequenceState *) ps)->subplans[1];
 	else if (IsA(ps, MergeAppendState))
 		dpns->outer_planstate = ((MergeAppendState *) ps)->mergeplans[0];
 	else if (IsA(ps, ModifyTableState))
@@ -2333,6 +2344,13 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 		dpns->inner_planstate = ((SubqueryScanState *) ps)->subplan;
 	else if (IsA(ps, CteScanState))
 		dpns->inner_planstate = ((CteScanState *) ps)->cteplanstate;
+	else if (IsA(ps, SequenceState))
+		/*
+		 * Set the inner_plan to a sequences first child only if it is a
+		 * partition selector. This is a specific fix to enable Explain’s of
+		 * query plans that have a Partition Selector
+		 */
+		dpns->inner_planstate = ((SequenceState *) ps)->subplans[0];
 	else
 		dpns->inner_planstate = innerPlanState(ps);
 
