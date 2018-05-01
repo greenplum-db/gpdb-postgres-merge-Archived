@@ -28,10 +28,10 @@ NOTICE:  table "exttabtest_r" does not exist, skipping
     select urilocation,fmttype,fmtopts,encoding,writable from pg_exttable 
     where reloid='exttabtest_r'::regclass 
        or reloid='exttabtest_w'::regclass;
-         urilocation         | fmttype |                  fmtopts                   | encoding | writable 
------------------------------+---------+--------------------------------------------+----------+----------
- {demoprot://exttabtest.txt} | t       | delimiter '     ' null E'\\N' escape E'\\' |        6 | t
- {demoprot://exttabtest.txt} | t       | delimiter '     ' null E'\\N' escape E'\\' |        6 | f
+         urilocation         | fmttype |                fmtopts                 | encoding | writable 
+-----------------------------+---------+----------------------------------------+----------+----------
+ {demoprot://exttabtest.txt} | t       | delimiter '     ' null '\N' escape '\' |        6 | t
+ {demoprot://exttabtest.txt} | t       | delimiter '     ' null '\N' escape '\' |        6 | f
 (2 rows)
 
     -- write to WET
@@ -291,7 +291,7 @@ NOTICE:  protocol "demoprot" does not exist, skipping
         readfunc = write_to_file_stable
     );
     DROP EXTERNAL TABLE IF EXISTS exttabtest_w_switched;
-NOTICE:  table "exttabtest_w_switched" does not exist, skipping
+NOTICE:  table "exttabtest_r_switched" does not exist, skipping
     CREATE WRITABLE EXTERNAL TABLE exttabtest_w_switched (like exttabtest)
         LOCATION('demoprot://exttabtest_switched.txt') 
     FORMAT 'text'
@@ -688,7 +688,7 @@ External table "exttableext.exttabtest_r_newname"
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '	' null E'\\N' escape E'\\'
+Format options: delimiter '	' null '\N' escape '\'
 External options: {}
 External location: demoprot://exttabtest.txt
 Execute on: all segments
@@ -860,7 +860,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause, defaulting to distribution 
 Type: writable
 Encoding: UTF8
 Format type: custom
-Format options: formatter 'formatter_export_s'
+Format options: formatter 'formatter_export_s' 
 External options: {}
 External location: demoprot://exttabtest_test63
 Execute on: all segments
@@ -877,7 +877,7 @@ Distributed by: (id)
 Type: readable
 Encoding: UTF8
 Format type: custom
-Format options: formatter 'formatter_import_s'
+Format options: formatter 'formatter_import_s' 
 External options: {}
 External location: demoprot://exttabtest_test63
 Execute on: all segments
@@ -894,10 +894,10 @@ Execute on: all segments
     pg_class.relname='format_text'
     or
     pg_class.relname='format_csv');
- relname  | fmttype |            fmtopts             | encoding | writable 
-----------+---------+--------------------------------+----------+----------
- format_w | b       | formatter 'formatter_export_s' |        6 | t
- format_r | b       | formatter 'formatter_import_s' |        6 | f
+ relname  | fmttype |             fmtopts             | encoding | writable 
+----------+---------+---------------------------------+----------+----------
+ format_w | b       | formatter 'formatter_export_s'  |        6 | t
+ format_r | b       | formatter 'formatter_import_s'  |        6 | f
 (2 rows)
 
     -- Write to WET
@@ -955,10 +955,10 @@ select max(cnt) - min(cnt)  > 20 from t;
     and (pg_class.relname='format_w'
     or
     pg_class.relname='format_r');
- relname  | fmttype |            fmtopts             | encoding | writable 
-----------+---------+--------------------------------+----------+----------
- format_w | b       | formatter 'formatter_export_s' |        6 | t
- format_r | b       | formatter 'formatter_import_s' |        6 | f
+ relname  | fmttype |             fmtopts             | encoding | writable 
+----------+---------+---------------------------------+----------+----------
+ format_w | b       | formatter 'formatter_export_s'  |        6 | t
+ format_r | b       | formatter 'formatter_import_s'  |        6 | f
 (2 rows)
 
     -- Write to WET, should fail
@@ -1049,12 +1049,12 @@ NOTICE:  table "format_r_s2" does not exist, skipping
     and (pg_class.relname like 'format_w_s%'
         or
         pg_class.relname like 'format_r_s%');
-   relname   | fmttype |            fmtopts             | encoding | writable 
--------------+---------+--------------------------------+----------+----------
- format_w_s1 | b       | formatter 'formatter_export_s' |        6 | t
- format_r_s1 | b       | formatter 'formatter_import_s' |        6 | f
- format_w_s2 | b       | formatter 'formatter_export_s' |        6 | t
- format_r_s2 | b       | formatter 'formatter_import_s' |        6 | f
+   relname   | fmttype |             fmtopts             | encoding | writable 
+-------------+---------+---------------------------------+----------+----------
+ format_w_s1 | b       | formatter 'formatter_export_s'  |        6 | t
+ format_r_s1 | b       | formatter 'formatter_import_s'  |        6 | f
+ format_w_s2 | b       | formatter 'formatter_export_s'  |        6 | t
+ format_r_s2 | b       | formatter 'formatter_import_s'  |        6 | f
 (4 rows)
 
     -- Write to WET    
@@ -1610,7 +1610,7 @@ NOTICE:  table "exttabtest_r" does not exist, skipping
 Type: readable
 Encoding: UTF8
 Format type: text
-Format options: delimiter '	' null E'\\N' escape E'\\'
+Format options: delimiter '	' null '\N' escape '\'
 External options: {}
 External location: demoprot://exttabtest.txt
 Execute on: all segments
