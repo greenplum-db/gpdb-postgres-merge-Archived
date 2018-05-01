@@ -129,7 +129,7 @@ ExecDML(DMLState *node)
 				   node->cleanedUpSlot,
 				   NULL /* DestReceiver */,
 				   node->ps.state,
-				   true, /* GPDB_91_MERGE_FIXME: where to get canSetTag? */
+				   !isUpdate, /* GPDB_91_MERGE_FIXME: where to get canSetTag? */
 				   PLANGEN_OPTIMIZER /* Plan origin */,
 				   isUpdate);
 	}
