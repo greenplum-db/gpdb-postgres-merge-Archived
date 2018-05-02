@@ -2281,6 +2281,9 @@ dumpDatabase(Archive *AH)
 	if (binary_upgrade)
 	{
 		appendPQExpBuffer(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
+
+		appendPQExpBuffer(creaQry, "SET allow_system_table_mods = 'dml';\n");
+
 		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
 						  "SET datfrozenxid = '%u'\n"
 						  "WHERE	datname = ",
@@ -2288,6 +2291,7 @@ dumpDatabase(Archive *AH)
 		appendStringLiteralAH(creaQry, datname, AH);
 		appendPQExpBuffer(creaQry, ";\n");
 
+		appendPQExpBuffer(creaQry, "RESET allow_system_table_mods;\n");
 	}
 
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
@@ -2350,6 +2354,7 @@ dumpDatabase(Archive *AH)
 						  "WHERE oid = %u;\n",
 						  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
 						  LargeObjectRelationId);
+		appendPQExpBuffer(loOutQry, "RESET allow_system_table_mods;\n");
 		ArchiveEntry(AH, nilCatalogId, createDumpId(),
 					 "pg_largeobject", NULL, NULL, "",
 					 false, "pg_largeobject", SECTION_PRE_DATA,
@@ -2384,11 +2389,15 @@ dumpDatabase(Archive *AH)
 			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
 			appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata.relfrozenxid\n");
+
+			appendPQExpBuffer(loOutQry, "SET allow_system_table_mods = 'dml';\n");
+
 			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
 							  "WHERE oid = %u;\n",
 							  atoi(PQgetvalue(lo_res, 0, i_relfrozenxid)),
 							  LargeObjectMetadataRelationId);
+			appendPQExpBuffer(loOutQry, "RESET allow_system_table_mods;\n");
 			ArchiveEntry(AH, nilCatalogId, createDumpId(),
 						 "pg_largeobject_metadata", NULL, NULL, "",
 						 false, "pg_largeobject_metadata", SECTION_PRE_DATA,
@@ -8017,6 +8026,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 			/* stash separately for insertion after the CREATE TYPE */
 			appendPQExpBuffer(dropped,
 					  "\n-- For binary upgrade, recreate dropped column.\n");
+			appendPQExpBuffer(dropped, "SET allow_system_table_mods = 'dml';\n");
 			appendPQExpBuffer(dropped, "UPDATE pg_catalog.pg_attribute\n"
 							  "SET attlen = %s, "
 							  "attalign = '%s', attbyval = false\n"
@@ -8030,6 +8040,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 							  fmtId(tyinfo->dobj.name));
 			appendPQExpBuffer(dropped, "DROP ATTRIBUTE %s;\n",
 							  fmtId(attname));
+			appendPQExpBuffer(dropped, "RESET allow_system_table_mods;\n");
 		}
 	}
 	appendPQExpBuffer(q, "\n);\n");
@@ -13150,16 +13161,16 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 */
 		if (binary_upgrade && tbinfo->relkind == RELKIND_RELATION)
 		{
+			/*
+			 * Greenplum doesn't allow altering system catalogs without
+			 * setting the allow_system_table_mods GUC first.
+			 */
+			appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
+
 			for (j = 0; j < tbinfo->numatts; j++)
 			{
 				if (tbinfo->attisdropped[j])
 				{
-					/*
-					 * Greenplum doesn't allow altering system catalogs without
-					 * setting the allow_system_table_mods GUC first.
-					 */
-					appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
-
 					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate dropped column.\n");
 					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attlen = %d, "
@@ -13179,12 +13190,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 				else if (!tbinfo->attislocal[j])
 				{
-					/*
-					 * Greenplum doesn't allow altering system catalogs without
-					 * setting the allow_system_table_mods GUC first.
-					 */
-					appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
-
 					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate inherited column.\n");
 					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attislocal = false\n"
@@ -13202,12 +13207,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 				if (constr->separate || constr->conislocal)
 					continue;
-
-				/*
-				 * Greenplum doesn't allow altering system catalogs without
-				 * setting the allow_system_table_mods GUC first.
-				 */
-				appendPQExpBuffer(q, "SET allow_system_table_mods = 'dml';\n");
 
 				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inherited constraint.\n");
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",

@@ -1675,6 +1675,8 @@ dumpCreateDB(PGconn *conn)
 
 			appendPQExpBuffer(buf, ";\n");
 
+			appendPQExpBuffer(buf, "SET allow_system_table_mods = 'dml';\n");
+
 			if (strcmp(dbistemplate, "t") == 0)
 			{
 				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
@@ -1692,6 +1694,8 @@ dumpCreateDB(PGconn *conn)
 				appendStringLiteralConn(buf, dbname, conn);
 				appendPQExpBuffer(buf, ";\n");
 			}
+
+			appendPQExpBuffer(buf, "RESET allow_system_table_mods;\n");
 		}
 
 		if (!skip_acls &&

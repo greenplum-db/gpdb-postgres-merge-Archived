@@ -34,12 +34,6 @@ install_support_functions_in_new_db(const char *db_name)
 							  "CREATE SCHEMA binary_upgrade;"));
 	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
-						  "binary_upgrade.add_pg_enum_label(OID, OID, NAME) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(conn,
-							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.create_empty_extension(text, text, bool, text, oid[], text[], text[]) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
