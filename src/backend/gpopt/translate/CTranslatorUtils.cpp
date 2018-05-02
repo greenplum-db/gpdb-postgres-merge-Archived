@@ -490,6 +490,8 @@ CTranslatorUtils::PdrgdxlcdRecord
 		GPOS_DELETE(pstrColName);
 
 		IMDId *pmdidColType = GPOS_NEW(pmp) CMDIdGPDB(coltype);
+		OID OidCol = CMDIdGPDB::PmdidConvert(pmdidColType)->OidObjectId();
+		OID OidDefaultTypeCollation = gpdb::OidTypeCollation(OidCol);
 
 		CDXLColDescr *pdxlcd = GPOS_NEW(pmp) CDXLColDescr
 										(
@@ -499,7 +501,7 @@ CTranslatorUtils::PdrgdxlcdRecord
 										INT(ul + 1) /* iAttno */,
 										pmdidColType,
 										iTypeModifier,
-										OidInvalidCollation /* FIXME COLLATION */,
+										OidDefaultTypeCollation,
 										false /* fColDropped */
 										);
 		pdrgdxlcd->Append(pdxlcd);
@@ -543,6 +545,8 @@ CTranslatorUtils::PdrgdxlcdRecord
 
 		IMDId *pmdidColType = (*pdrgpmdidOutArgTypes)[ul];
 		pmdidColType->AddRef();
+		OID OidCol = CMDIdGPDB::PmdidConvert(pmdidColType)->OidObjectId();
+		OID OidDefaultTypeCollation = gpdb::OidTypeCollation(OidCol);
 
 		// This function is only called to construct column descriptors for table-valued functions
 		// which won't have type modifiers for columns of the returned table
@@ -554,7 +558,7 @@ CTranslatorUtils::PdrgdxlcdRecord
 										INT(ul + 1) /* iAttno */,
 										pmdidColType,
 										IDefaultTypeModifier,
-										OidInvalidCollation,
+										OidDefaultTypeCollation,
 										false /* fColDropped */
 										);
 		pdrgdxlcd->Append(pdxlcd);
