@@ -9608,6 +9608,9 @@ set optimizer_enable_partial_index=on;
 set optimizer_enable_indexjoin=on;
 -- force_explain
 set optimizer_segments = 3;
+-- start_ignore
+-- GPDB_91_MERGE_FIXME GPORCA will fall back since we no longer generate IndexedNLJ and this test disable all other alternatives
+-- end_ignore
 EXPLAIN
 SELECT (tt.event_ts / 100000) / 5 * 5 as fivemin, COUNT(*)
 FROM my_tt_agg_opt tt, my_tq_agg_opt_part tq
@@ -9616,10 +9619,8 @@ WHERE tq.sym = tt.symbol AND
       tt.event_ts >= tq.ets AND
       tt.event_ts <  tq.end_ts
 GROUP BY 1
-ORDER BY 1 asc ;INFO:  GPORCA failed to produce a plan, falling back to planner
--- start_ignore
--- GPDB_91_MERGE_FIXME
--- end_ignore
+ORDER BY 1 asc ;
+INFO:  GPORCA failed to produce a plan, falling back to planner
                                                                 QUERY PLAN                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)  (cost=352568.33..352570.83 rows=1000 width=16)
