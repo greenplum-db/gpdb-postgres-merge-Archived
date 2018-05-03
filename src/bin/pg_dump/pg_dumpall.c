@@ -1823,9 +1823,10 @@ dumpDbRoleConfig(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
+	/* Need "ORDER BY" here to keep order consistency cross pg_dump call */
 	printfPQExpBuffer(buf, "SELECT rolname, datname, unnest(setconfig) "
 					  "FROM pg_db_role_setting, pg_authid, pg_database "
-		  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid");
+		  "WHERE setrole = pg_authid.oid AND setdatabase = pg_database.oid ORDER BY 1,2");
 	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
