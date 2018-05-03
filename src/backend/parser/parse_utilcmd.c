@@ -116,11 +116,11 @@ static void transformConstraintAttrs(CreateStmtContext *cxt,
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 
-static List *getLikeDistributionPolicy(InhRelation *e);
+static DistributedBy *getLikeDistributionPolicy(InhRelation *e);
 static bool co_explicitly_disabled(List *opts);
-static void transformDistributedBy(CreateStmtContext *cxt,
-					   List *distributedBy, GpPolicy **policyp,
-					   List *likeDistributedBy,
+static GpPolicy *transformDistributedBy(CreateStmtContext *cxt,
+					   DistributedBy *distributedBy,
+					   DistributedBy *likeDistributedBy,
 					   bool bQuiet);
 static List *transformAttributeEncoding(List *stenc, CreateStmt *stmt,
 										CreateStmtContext *cxt);
@@ -156,7 +156,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	List	   *save_alist;
 	ListCell   *elements;
 	Oid			namespaceid;
-	List	   *likeDistributedBy = NIL;
+	DistributedBy *likeDistributedBy = NULL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
 	List	   *stenc = NIL;		/* column reference storage encoding clauses */
 
@@ -310,7 +310,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				transformInhRelation(&cxt, (InhRelation *) element, false);
 
 				if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
-					stmt->distributedBy == NIL &&
+					stmt->distributedBy == NULL &&
 					stmt->inhRelations == NIL &&
 					stmt->policy == NULL)
 				{
@@ -416,9 +416,14 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	 *  explicitly). Not for foreign tables, though.
 	 */
 	if (stmt->relKind == RELKIND_RELATION)
-		transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
-							   likeDistributedBy, bQuiet);
+		stmt->policy = transformDistributedBy(&cxt, (DistributedBy *)stmt->distributedBy,
+							   (DistributedBy *)likeDistributedBy, bQuiet);
 
+	if ((stmt->partitionBy != NULL) &&
+		GpPolicyIsReplicated(stmt->policy))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("PARTITION BY clause cannot be used with DISTRIBUTED REPLICATED clause")));
 	/*
 	 * Process table partitioning clause
 	 */
@@ -1499,7 +1504,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	CreateStmtContext cxt;
 	List	   *result;
 	ListCell   *elements;
-	List  	   *likeDistributedBy = NIL;
+	DistributedBy *likeDistributedBy = NULL;
 	bool	    bQuiet = false;	/* shut up transformDistributedBy messages */
 	bool		iswritable = stmt->iswritable;
 
@@ -1553,7 +1558,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 					transformInhRelation(&cxt, (InhRelation *) element, true);
 
 					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
-						stmt->distributedBy == NIL &&
+						stmt->distributedBy == NULL &&
 						stmt->policy == NULL &&
 						iswritable /* dont bother if readable table */)
 					{
@@ -1609,22 +1614,26 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	 */
 	if (iswritable)
 	{
-		if (stmt->distributedBy == NIL && likeDistributedBy == NIL)
+		if (stmt->distributedBy == NULL && likeDistributedBy == NULL)
 		{
 			/*
 			 * defaults to DISTRIBUTED RANDOMLY irrespective of the
 			 * gp_create_table_random_default_distribution guc.
 			 */
-			stmt->policy = createRandomDistribution();
+			stmt->policy = createRandomPartitionedPolicy(NULL);
 		}
 		else
 		{
 			/* regular DISTRIBUTED BY transformation */
-			transformDistributedBy(&cxt, stmt->distributedBy, &stmt->policy,
-								   likeDistributedBy, bQuiet);
+			stmt->policy = transformDistributedBy(&cxt, (DistributedBy *)stmt->distributedBy,
+								   (DistributedBy *)likeDistributedBy, bQuiet);
+			if (GpPolicyIsReplicated(stmt->policy))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("External tables can't have DISTRIBUTED REPLICATED clause.")));
 		}
 	}
-	else if (stmt->distributedBy != NIL)
+	else if (stmt->distributedBy != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("Readable external tables can\'t specify a DISTRIBUTED BY clause.")));
@@ -1644,42 +1653,51 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 	return result;
 }
 
-
 /****************stmt->policy*********************/
-static void
+static GpPolicy*
 transformDistributedBy(CreateStmtContext *cxt,
-					   List *distributedBy, GpPolicy **policyp,
-					   List *likeDistributedBy,
+					   DistributedBy *distributedBy,
+					   DistributedBy *likeDistributedBy,
 					   bool bQuiet)
 {
-	ListCell   *keys = NULL;
-	GpPolicy  *policy = NULL;
-	int			colindex = 0;
-	int			maxattrs = MaxPolicyAttributeNumber;
-	int			numUniqueIndexes = 0;
-	Constraint *uniqueindex = NULL;
+	ListCell	*keys = NULL;
+	GpPolicy 	*policy = NULL;
+	int		colindex;
+	List		*distrkeys = NIL;
+	List		*policykeys = NIL;
+	int		numUniqueIndexes = 0;
+	Constraint	*uniqueindex = NULL;
 
 	/*
 	 * utility mode creates can't have a policy.  Only the QD can have policies
 	 *
 	 */
 	if (Gp_role != GP_ROLE_DISPATCH && !IsBinaryUpgrade)
+		return NULL;
+
+	/* Explictly specified distributed randomly, no futher check needed */
+	if (distributedBy &&
+		(distributedBy->ptype == POLICYTYPE_PARTITIONED && distributedBy->keys == NIL))
+		return createRandomPartitionedPolicy(NULL); 
+
+	/* Check replicated policy */
+	if (distributedBy && distributedBy->ptype == POLICYTYPE_REPLICATED)
 	{
-		*policyp = NULL;
-		return;
+		if (cxt->inhRelations != NIL)	
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INHERITS clause cannot be used with DISTRIBUTED REPLICATED clause")));
+
+		return createReplicatedGpPolicy(NULL); 
 	}
 
-	policy = (GpPolicy *) palloc(sizeof(GpPolicy) + maxattrs *
-								 sizeof(policy->attrs[0]));
-	policy->ptype = POLICYTYPE_PARTITIONED;
-	policy->nattrs = 0;
-	policy->attrs[0] = 1;
+	distrkeys = distributedBy ? distributedBy->keys : NIL;
 
 	/*
 	 * If distributedBy is NIL, the user did not explicitly say what he
 	 * wanted for a distribution policy.  So, we need to assign one.
 	 */
-	if (distributedBy == NIL && cxt && cxt->pkey != NULL)
+	if (distrkeys == NIL && cxt && cxt->pkey != NULL)
 	{
 		/*
 		 * We have a PRIMARY KEY, so let's assign the default distribution
@@ -1699,13 +1717,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 
 			if (iparam && iparam->name != 0)
 			{
-
-				if (distributedBy)
-					distributedBy = lappend(distributedBy,
-											(Node *) makeString(iparam->name));
-				else
-					distributedBy = list_make1((Node *) makeString(iparam->name));
-
+				distrkeys = lappend(distrkeys, (Node *) makeString(iparam->name));
 			}
 		}
 	}
@@ -1741,7 +1753,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 		}
 	}
 
-	if (distributedBy == NIL && cxt && cxt->ixconstraints != NULL &&
+	if (distrkeys == NIL && cxt && cxt->ixconstraints != NULL &&
 		numUniqueIndexes > 0)
 	{
 		/*
@@ -1767,12 +1779,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 
 					if (v && v->val.str != 0)
 					{
-
-						if (distributedBy)
-							distributedBy = lappend(distributedBy, (Node *) makeString(v->val.str));
-						else
-							distributedBy = list_make1((Node *) makeString(v->val.str));
-
+						distrkeys = lappend(distrkeys, (Node *) makeString(v->val.str));
 					}
 				}
 			}
@@ -1801,7 +1808,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 			 * in the segments.
 			 */
 			if ((oldTablePolicy == NULL ||
-					oldTablePolicy->ptype != POLICYTYPE_PARTITIONED) &&
+					oldTablePolicy->ptype == POLICYTYPE_ENTRY) &&
 					!IsBinaryUpgrade)
 			{
 				ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
@@ -1812,14 +1819,32 @@ transformDistributedBy(CreateStmtContext *cxt,
 								  "mixture of distributed and "
 								  "non-distributed tables.")));
 			}
+
+			if ((oldTablePolicy == NULL ||
+					GpPolicyIsReplicated(oldTablePolicy)) &&
+					!IsBinaryUpgrade)
+			{
+				ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+						errmsg("cannot inherit from replicated table \"%s\" "
+							   "to create table \"%s\".",
+							   parent->relname, cxt->relation->relname),
+						errdetail("An inheritance hierarchy cannot contain a "
+								  "mixture of distributed and "
+								  "non-distributed tables.")));
+			}
+
 			/*
 			 * If we still don't know what distribution to use, and this
 			 * is an inherited table, set the distribution based on the
 			 * parent (or one of the parents)
 			 */
-			if (distributedBy == NIL && oldTablePolicy->nattrs >= 0)
+			if (distrkeys == NIL && oldTablePolicy->nattrs >= 0)
 			{
 				int ia;
+
+				if (!bQuiet)
+				 elog(NOTICE, "Table has parent, setting distribution columns "
+					 "to match parent table");
 
 				if (oldTablePolicy->nattrs > 0)
 				{
@@ -1828,35 +1853,38 @@ transformDistributedBy(CreateStmtContext *cxt,
 						char *attname =
 							get_attname(relId, oldTablePolicy->attrs[ia]);
 
-						distributedBy = lappend(distributedBy,
+						distrkeys = lappend(distrkeys,
 												(Node *) makeString(attname));
 					}
 				}
 				else
 				{
-					/* strewn parent */
-					distributedBy = lappend(distributedBy, (Node *)NULL);
+					pfree(oldTablePolicy);
+					return createRandomPartitionedPolicy(NULL);
 				}
-				if (!bQuiet)
-				 elog(NOTICE, "Table has parent, setting distribution columns "
-					 "to match parent table");
 			}
 			pfree(oldTablePolicy);
 		}
 	}
 
-	if (distributedBy == NIL && likeDistributedBy != NIL)
+	if (distrkeys == NIL && likeDistributedBy != NULL)
 	{
-		distributedBy = likeDistributedBy;
 		if (!bQuiet)
 			elog(NOTICE, "Table doesn't have 'DISTRIBUTED BY' clause, "
 				 "defaulting to distribution columns from LIKE table");
+
+		if (likeDistributedBy->ptype == POLICYTYPE_PARTITIONED &&
+			likeDistributedBy->keys == NIL)
+			return createRandomPartitionedPolicy(NULL);
+		else if (likeDistributedBy->ptype == POLICYTYPE_REPLICATED)
+			return createReplicatedGpPolicy(NULL);
+
+		distrkeys = likeDistributedBy->keys;
 	}
 
-	if (gp_create_table_random_default_distribution && NIL == distributedBy)
+	if (gp_create_table_random_default_distribution && NIL == distrkeys)
 	{
-		Assert(NIL == likeDistributedBy);
-		policy = createRandomDistribution();
+		Assert(NULL == likeDistributedBy);
 		
 		if (!bQuiet)
 		{
@@ -1865,16 +1893,13 @@ transformDistributedBy(CreateStmtContext *cxt,
 				 errmsg("Using default RANDOM distribution since no distribution was specified."),
 				 errhint("Consider including the 'DISTRIBUTED BY' clause to determine the distribution of rows.")));
 		}
+		
+		return createRandomPartitionedPolicy(NULL);
 	}
-	else if (distributedBy == NIL)
+	else if (distrkeys == NIL)
 	{
 		/*
 		 * if we get here, we haven't a clue what to use for the distribution columns.
-		 */
-
-		bool	assignedDefault = false;
-
-		/*
 		 * table has one or more attributes and there is still no distribution
 		 * key. pick a default one. the winner is the first attribute that is
 		 * an Greenplum Database-hashable data type.
@@ -1882,9 +1907,6 @@ transformDistributedBy(CreateStmtContext *cxt,
 
 		ListCell   *columns;
 		ColumnDef  *column = NULL;
-
-		/* we will distribute on at most one column */
-		policy->nattrs = 1;
 
 		colindex = 0;
 
@@ -1918,8 +1940,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 					if(isGreenplumDbHashable(typeOid))
 					{
 						char	   *inhname = NameStr(inhattr->attname);
-						policy->attrs[0] = colindex;
-						assignedDefault = true;
+						policykeys = list_make1_int(colindex);
 						if (!bQuiet)
 							ereport(NOTICE,
 								(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
@@ -1934,13 +1955,13 @@ transformDistributedBy(CreateStmtContext *cxt,
 				}
 				heap_close(rel, NoLock);
 
-				if (assignedDefault)
+				if (policykeys != NIL)
 					break;
 			}
 
 		}
 
-		if (!assignedDefault)
+		if (policykeys == NIL)
 		{
 			foreach(columns, cxt->columns)
 			{
@@ -1957,8 +1978,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 				 */
 				if (isGreenplumDbHashable(typeOid))
 				{
-					policy->attrs[0] = colindex;
-					assignedDefault = true;
+					policykeys = list_make1_int(colindex);
 					if (!bQuiet)
 						ereport(NOTICE,
 							(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
@@ -1972,18 +1992,17 @@ transformDistributedBy(CreateStmtContext *cxt,
 			}
 		}
 
-		if (!assignedDefault)
+		if (policykeys == NIL)
 		{
 			/*
 			 * There was no eligible distribution column to default to. This table
 			 * will be partitioned on an empty distribution key list. In other words,
 			 * tuples coming into the system will be randomly assigned a bucket.
 			 */
-			policy->nattrs = 0;
 			if (!bQuiet)
 				elog(NOTICE, "Table doesn't have 'DISTRIBUTED BY' clause, and no column type is suitable for a distribution key. Creating a NULL policy entry.");
+			return createRandomPartitionedPolicy(NULL);
 		}
-
 	}
 	else
 	{
@@ -1992,118 +2011,114 @@ transformDistributedBy(CreateStmtContext *cxt,
 		 * or defaulted to a primary key or unique column. Process it now and
 		 * set the distribution policy.
 		 */
-		policy->nattrs = 0;
-		if (!(distributedBy->length == 1 && linitial(distributedBy) == NULL))
+		foreach(keys, distrkeys)
 		{
-			foreach(keys, distributedBy)
+			char	   *key = strVal(lfirst(keys));
+			bool		found = false;
+			ColumnDef  *column = NULL;
+			ListCell   *columns;
+
+			colindex = 0;
+
+			if (cxt->inhRelations)
 			{
-				char	   *key = strVal(lfirst(keys));
-				bool		found = false;
-				ColumnDef  *column = NULL;
-				ListCell   *columns;
+				/* try inherited tables */
+				ListCell   *inher;
 
-				colindex = 0;
-
-				if (cxt->inhRelations)
+				foreach(inher, cxt->inhRelations)
 				{
-					/* try inherited tables */
-					ListCell   *inher;
+					RangeVar   *inh = (RangeVar *) lfirst(inher);
+					Relation	rel;
+					int			count;
 
-					foreach(inher, cxt->inhRelations)
+					Assert(IsA(inh, RangeVar));
+					rel = heap_openrv(inh, AccessShareLock);
+					if (rel->rd_rel->relkind != RELKIND_RELATION)
+						ereport(ERROR,
+								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+								 errmsg("inherited relation \"%s\" is not a table",
+									 inh->relname)));
+					for (count = 0; count < rel->rd_att->natts; count++)
 					{
-						RangeVar   *inh = (RangeVar *) lfirst(inher);
-						Relation	rel;
-						int			count;
+						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
+						char	   *inhname = NameStr(inhattr->attname);
 
-						Assert(IsA(inh, RangeVar));
-						rel = heap_openrv(inh, AccessShareLock);
-						if (rel->rd_rel->relkind != RELKIND_RELATION)
-							ereport(ERROR,
-									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							   errmsg("inherited relation \"%s\" is not a table",
-									  inh->relname)));
-						for (count = 0; count < rel->rd_att->natts; count++)
-						{
-							Form_pg_attribute inhattr = rel->rd_att->attrs[count];
-							char	   *inhname = NameStr(inhattr->attname);
-
-							if (inhattr->attisdropped)
-								continue;
-							colindex++;
-							if (strcmp(key, inhname) == 0)
-							{
-								found = true;
-
-								break;
-							}
-						}
-						heap_close(rel, NoLock);
-						if (found)
-							elog(DEBUG1, "DISTRIBUTED BY clause refers to columns of inherited table");
-
-						if (found)
-							break;
-					}
-				}
-
-				if (!found)
-				{
-					foreach(columns, cxt->columns)
-					{
-						column = (ColumnDef *) lfirst(columns);
-						Assert(IsA(column, ColumnDef));
+						if (inhattr->attisdropped)
+							continue;
 						colindex++;
-
-						if (strcmp(column->colname, key) == 0)
+						if (strcmp(key, inhname) == 0)
 						{
-							Oid			typeOid;
-
-							typeOid = typenameTypeId(NULL, column->typeName);
-							
-							/*
-							 * To be a part of a distribution key, this type must
-							 * be supported for hashing internally in Greenplum
-							 * Database. We check if the base type is supported
-							 * for hashing or if it is an array type (we support
-							 * hashing on all array types).
-							 */
-							if (!isGreenplumDbHashable(typeOid))
-							{
-								ereport(ERROR,
-										(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
-										 errmsg("type \"%s\" can't be a part of a "
-												"distribution key",
-												format_type_be(typeOid))));
-							}
-
 							found = true;
+
 							break;
 						}
 					}
+					heap_close(rel, NoLock);
+					if (found)
+						elog(DEBUG1, "DISTRIBUTED BY clause refers to columns of inherited table");
+
+					if (found)
+						break;
 				}
-
-				/*
-				* In the ALTER TABLE case, don't complain about index keys
-				* not created in the command; they may well exist already.
-				* DefineIndex will complain about them if not, and will also
-				* take care of marking them NOT NULL.
-				*/
-				if (!found && !cxt->isalter)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" named in 'DISTRIBUTED BY' clause does not exist",
-									key)));
-
-				policy->attrs[policy->nattrs++] = colindex;
 			}
+
+			if (!found)
+			{
+				foreach(columns, cxt->columns)
+				{
+					column = (ColumnDef *) lfirst(columns);
+					Assert(IsA(column, ColumnDef));
+					colindex++;
+
+					if (strcmp(column->colname, key) == 0)
+					{
+						Oid			typeOid;
+
+						typeOid = typenameTypeId(NULL, column->typeName);
+
+						/*
+						 * To be a part of a distribution key, this type must
+						 * be supported for hashing internally in Greenplum
+						 * Database. We check if the base type is supported
+						 * for hashing or if it is an array type (we support
+						 * hashing on all array types).
+						 */
+						if (!isGreenplumDbHashable(typeOid))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
+									 errmsg("type \"%s\" can't be a part of a "
+										 "distribution key",
+										 format_type_be(typeOid))));
+						}
+
+						found = true;
+						break;
+					}
+				}
+			}
+
+			/*
+			 * In the ALTER TABLE case, don't complain about index keys
+			 * not created in the command; they may well exist already.
+			 * DefineIndex will complain about them if not, and will also
+			 * take care of marking them NOT NULL.
+			 */
+			if (!found && !cxt->isalter)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" named in 'DISTRIBUTED BY' clause does not exist",
+							 key)));
+
+			policykeys = lappend_int(policykeys, colindex);
 		}
 	}
 
+	Assert(policykeys != NIL);
 
-	*policyp = policy;
+	policy = createHashPartitionedPolicy(NULL, policykeys);
 
-
-	if (cxt && cxt->pkey)		/* Primary key	specified.	Make sure
+	if (cxt && cxt->pkey)	/* Primary key	specified.	Make sure
 								 * distribution columns match */
 	{
 		int			i = 0;
@@ -2201,7 +2216,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 		}
 	}
 
-	if (uniqueindex)			/* UNIQUE specified.  Make sure distribution
+	if (uniqueindex) /* UNIQUE specified.  Make sure distribution
 								 * columns match */
 	{
 		int			i = 0;
@@ -2296,6 +2311,8 @@ transformDistributedBy(CreateStmtContext *cxt,
 			}
 		}
 	}
+
+	return policy;
 }
 
 /*
@@ -4145,43 +4162,44 @@ setSchemaName(char *context_schema, char **stmt_schema_name)
  * the same distribution as the first LIKE table, unless
  * we also have INHERITS
  */
-static List *
+static DistributedBy *
 getLikeDistributionPolicy(InhRelation* e)
 {
-	List*			likeDistributedBy = NIL;
+	DistributedBy		*likeDistributedBy = NULL;
 	Oid				relId;
 	GpPolicy*		oldTablePolicy;
 
 	relId = RangeVarGetRelid(e->relation, false);
 	oldTablePolicy = GpPolicyFetch(CurrentMemoryContext, relId);
 
-	if (oldTablePolicy != NULL &&
-		oldTablePolicy->ptype == POLICYTYPE_PARTITIONED)
+	if (oldTablePolicy != NULL && oldTablePolicy->ptype != POLICYTYPE_ENTRY)
 	{
-		int ia;
+		likeDistributedBy = makeNode(DistributedBy);
 
-		if (oldTablePolicy->nattrs > 0)
+		if (GpPolicyIsReplicated(oldTablePolicy))
 		{
+			likeDistributedBy->ptype = POLICYTYPE_REPLICATED;
+			likeDistributedBy->keys = NIL;
+		}
+		else
+		{
+			int ia;
+			List *keys = NIL;
+
 			for (ia = 0 ; ia < oldTablePolicy->nattrs ; ia++)
 			{
 				char *attname = get_attname(relId, oldTablePolicy->attrs[ia]);
 
-				if (likeDistributedBy)
-					likeDistributedBy = lappend(likeDistributedBy, (Node *) makeString(attname));
-				else
-					likeDistributedBy = list_make1((Node *) makeString(attname));
+				keys = lappend(keys, (Node *) makeString(attname));
 			}
-		}
-		else
-		{	/* old table is distributed randomly. */
-			likeDistributedBy = list_make1((Node *) NULL);
+
+			likeDistributedBy->ptype = POLICYTYPE_PARTITIONED;
+			likeDistributedBy->keys = keys;
 		}
 	}
 
 	return likeDistributedBy;
 }
-
-
 
 /*
  * Transform and validate the actual encoding clauses.

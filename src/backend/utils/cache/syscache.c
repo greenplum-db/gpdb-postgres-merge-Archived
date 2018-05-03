@@ -60,6 +60,7 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
+#include "catalog/pg_resgroup.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -439,6 +440,17 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		128
 	},
+	{GpPolicyRelationId,	/* GPPOLICYID */
+		GpPolicyLocalOidIndexId,
+		1,
+		{
+			Anum_gp_policy_localoid,
+			0,
+			0,
+			0
+		},
+		1024
+	},
 	{IndexRelationId,			/* INDEXRELID */
 		IndexRelidIndexId,
 		1,
@@ -603,6 +615,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		1024
+	},
+	{ResGroupRelationId,		/* RESGROUPOID */
+		ResGroupOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		128
+	},
+	{ResGroupRelationId,		/* RESGROUPNAME */
+		ResGroupRsgnameIndexId,
+		1,
+		{
+			Anum_pg_resgroup_rsgname,
+			0,
+			0,
+			0
+		},
+		128
 	},
 	{RewriteRelationId,			/* RULERELNAME */
 		RewriteRelRulenameIndexId,

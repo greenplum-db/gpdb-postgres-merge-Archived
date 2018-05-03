@@ -156,6 +156,8 @@ InitWalSender(void)
 
 	/* Set up resource owner */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "walsender top-level resource owner");
+
+	SIMPLE_FAULT_INJECTOR(InitializeWalSender);
 }
 
 /*
@@ -858,7 +860,6 @@ InitWalSenderSlot(void)
 			 * Found a free slot. Reserve it for us.
 			 */
 			walsnd->pid = MyProcPid;
-			walsnd->marked_pid_zero_at_time = 0;
 			MemSet(&walsnd->sentPtr, 0, sizeof(XLogRecPtr));
 			walsnd->state = WALSNDSTATE_STARTUP;
 			/* Will be decided in hand-shake */
@@ -915,7 +916,7 @@ WalSndKill(int code, Datum arg)
 			MyWalSnd->xlogCleanUpTo = InvalidXLogRecPtr;
 
 			/* Mark WalSnd struct no longer in use. */
-			MyWalSnd->marked_pid_zero_at_time = (pg_time_t) time(NULL);
+			MyWalSnd->replica_disconnected_at = (pg_time_t) time(NULL);
 			MyWalSnd->pid = 0;
 
 			SpinLockRelease(&MyWalSnd->mutex);
@@ -940,7 +941,7 @@ WalSndKill(int code, Datum arg)
 	 * Mark WalSnd struct no longer in use. Assume that no lock is required
 	 * for this.
 	 */
-	walsnd->marked_pid_zero_at_time = (pg_time_t) time(NULL);
+	walsnd->replica_disconnected_at = (pg_time_t) time(NULL);
 	walsnd->pid = 0;
 }
 
@@ -1355,7 +1356,7 @@ WalSndShmemInit(void)
 
 			SpinLockInit(&walsnd->mutex);
 			InitSharedLatch(&walsnd->latch);
-			walsnd->marked_pid_zero_at_time = (pg_time_t) time(NULL);
+			walsnd->replica_disconnected_at = (pg_time_t) time(NULL);
 		}
 	}
 }
@@ -1389,6 +1390,9 @@ WalSndSetState(WalSndState state)
 	SpinLockAcquire(&walsnd->mutex);
 	walsnd->state = state;
 	SpinLockRelease(&walsnd->mutex);
+
+	if(state == WALSNDSTATE_CATCHUP || state == WALSNDSTATE_STREAMING)
+		walsnd->replica_disconnected_at = 0;
 }
 
 /*

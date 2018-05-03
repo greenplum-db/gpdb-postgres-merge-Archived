@@ -1063,15 +1063,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		if (cstate->on_segment && Gp_role == GP_ROLE_EXECUTE)
 		{
 			/* data needs to get inserted locally */
-			MemoryContext oldcxt;
-			/* GPDB_91_MERGE_FIXME: this is ugly as sin. */
-			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-			rel->rd_cdbpolicy = palloc(sizeof(GpPolicy) + sizeof(AttrNumber) * stmt->nattrs);
-			rel->rd_cdbpolicy->nattrs = stmt->nattrs;
-			rel->rd_cdbpolicy->ptype = stmt->ptype;
-			memcpy(rel->rd_cdbpolicy->attrs, stmt->distribution_attrs, sizeof(AttrNumber) * stmt->nattrs);
-			MemoryContextSwitchTo(oldcxt);
+			rel->rd_cdbpolicy = GpPolicyCopy(CacheMemoryContext, stmt->policy);
 		}
 
 		/* We must be a QE if we received the partitioning config */
@@ -1949,15 +1941,11 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 
 	if (policy)
 	{
-		dispatchStmt->nattrs = policy->nattrs;
-		dispatchStmt->ptype = policy->ptype;
-		dispatchStmt->distribution_attrs = policy->attrs;
+		dispatchStmt->policy = GpPolicyCopy(CurrentMemoryContext, policy);
 	}
 	else
 	{
-		dispatchStmt->nattrs = 0;
-		dispatchStmt->ptype = 0;
-		dispatchStmt->distribution_attrs = NULL;
+		dispatchStmt->policy = createRandomPartitionedPolicy(NULL);
 	}
 
 	CdbDispatchUtilityStatement((Node *) dispatchStmt,
@@ -2354,6 +2342,7 @@ CopyToDispatch(CopyState cstate)
 	cdbCopy = makeCdbCopy(false);
 	cdbCopy->partitions = RelationBuildPartitionDesc(cstate->rel, false);
 	cdbCopy->skip_ext_partition = cstate->skip_ext_partition;
+	cdbCopy->hasReplicatedTable = GpPolicyIsReplicated(cstate->rel->rd_cdbpolicy);
 
 	/* XXX: lock all partitions */
 
@@ -2636,6 +2625,15 @@ CopyTo(CopyState cstate)
 
 	if (cstate->rel)
 	{
+		/* For replicated table, choose only one segment to scan data */
+		if (Gp_role == GP_ROLE_EXECUTE && !cstate->on_segment &&
+				GpPolicyIsReplicated(cstate->rel->rd_cdbpolicy) &&
+				gp_session_id % GpIdentity.numsegments != GpIdentity.segindex)
+		{
+			MemoryContextDelete(cstate->rowcontext);
+			return 0; /* GPDB_91_MERGE_FIXME: does this make sense? */
+		}
+
 		foreach(lc, target_rels)
 		{
 			Relation rel = lfirst(lc);
@@ -3137,6 +3135,7 @@ CopyFrom(CopyState cstate)
 	Datum	   *baseValues;
 	bool	   *baseNulls;
 	PartitionData *partitionData = NULL;
+	GpDistributionData *part_distData = NULL;
 
 	Assert(cstate->rel);
 
@@ -3525,8 +3524,6 @@ CopyFrom(CopyState cstate)
 
 			if (cstate->dispatch_mode == COPY_DISPATCH)
 			{
-				GpDistributionData *part_distData;
-
 				/* lock partition */
 				if (estate->es_result_partitions)
 				{
@@ -3625,16 +3622,23 @@ CopyFrom(CopyState cstate)
 
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
-			/* in the QD, forward the row to the correct segment. */
-
-			SendCopyFromForwardedTuple(cstate, cdbCopy, target_seg,
-									   RelationGetRelid(resultRelInfo->ri_RelationDesc),
-									   cstate->cur_lineno,
-									   cstate->line_buf.data,
-									   cstate->line_buf.len,
-									   loaded_oid,
-									   slot_get_values(slot),
-									   slot_get_isnull(slot));
+			/* GPDB_91_MERGE_FIXME: what do we do? */
+			if (part_distData && GpPolicyIsReplicated(part_distData->policy))
+			{
+				elog(ERROR, "replicated COPY FROM is not yet implemented");
+			}
+			else
+			{
+				/* in the QD, forward the row to the correct segment. */
+				SendCopyFromForwardedTuple(cstate, cdbCopy, target_seg,
+										   RelationGetRelid(resultRelInfo->ri_RelationDesc),
+										   cstate->cur_lineno,
+										   cstate->line_buf.data,
+										   cstate->line_buf.len,
+										   loaded_oid,
+										   slot_get_values(slot),
+										   slot_get_isnull(slot));
+			}
 			skip_tuple = true;
 			processed++;
 			if (cstate->cdbsreh)
@@ -6622,7 +6626,6 @@ InitDistributionData(CopyState cstate, Form_pg_attribute *attr,
 		 * have all column types handy.
 		 */
 		List *cols = NIL;
-		ListCell *lc;
 		HASHCTL hash_ctl;
 
 		partition_get_policies_attrs(estate->es_result_partitions,
@@ -6638,10 +6641,7 @@ InitDistributionData(CopyState cstate, Form_pg_attribute *attr,
 		                      &hash_ctl,
 		                      HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 		p_nattrs = list_length(cols);
-		policy = palloc(sizeof(GpPolicy) + sizeof(AttrNumber) * p_nattrs);
-		i = 0;
-		foreach (lc, cols)
-			policy->attrs[i++] = lfirst_int(lc);
+		policy = createHashPartitionedPolicy(NULL, cols);
 	}
 
 	/*

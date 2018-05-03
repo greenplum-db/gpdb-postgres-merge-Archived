@@ -237,6 +237,7 @@ typedef enum NodeTag
 	T_Flow,
 	T_Grouping,
 	T_GroupId,
+	T_DistributedBy,
 	T_DMLActionExpr,
 	T_PartSelectedExpr,
 	T_PartDefaultExpr,
@@ -563,6 +564,7 @@ typedef enum NodeTag
 
     /* CDB: tags for random other stuff */
     T_CdbExplain_StatHdr = 1000,             /* in cdb/cdbexplain.c */
+	T_GpPolicy,	/* in catalog/gp_policy.h */
 
 } NodeTag;
 

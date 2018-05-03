@@ -283,15 +283,24 @@ get_db_infos(ClusterInfo *cluster)
 	int			i_datname,
 				i_oid,
 				i_spclocation;
+	char		query[QUERY_ALLOC];
 
-	res = executeQueryOrDie(conn,
-							"SELECT d.oid, d.datname, t.spclocation "
-							"FROM pg_catalog.pg_database d "
-							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-							" ON d.dattablespace = t.oid "
-							"WHERE d.datallowconn = true "
+	snprintf(query, sizeof(query),
+			 "SELECT d.oid, d.datname, %s "
+			 "FROM pg_catalog.pg_database d "
+			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+			 " ON d.dattablespace = t.oid "
+			 "WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
-							"ORDER BY 2");
+			 "ORDER BY 2",
+	/*
+	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
+	 * removed in 6.0.0 during then merge of postgres 8.4
+	 */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+
+	res = executeQueryOrDie(conn, "%s", query);
 
 	i_oid = PQfnumber(res, "oid");
 	i_datname = PQfnumber(res, "datname");
@@ -477,7 +486,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "
 			 "  c.relstorage, c.relkind, c.reltablespace, "
-			 "	c.relfilenode, t.spclocation "
+			 "	c.relfilenode, %s "
 			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "	   ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_index i "
@@ -498,10 +507,16 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  AND relname NOT IN ('__gp_localid', '__gp_masterid', '__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') "
 			 " %s "
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode, c.relstorage, c.relkind, "
-			 "			c.reltablespace, t.spclocation, "
+			 "			c.reltablespace, spclocation, "
 			 "			n.nspname "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
+	/*
+	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
+	 * removed in 6.0.0 during the 8.4 merge
+	 */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
 	/* this oid allows us to skip system toast tables */
 			 FirstNormalObjectId,
 	/* does pg_largeobject_metadata need to be migrated? */

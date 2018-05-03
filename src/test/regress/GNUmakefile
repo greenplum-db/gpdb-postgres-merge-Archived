@@ -153,8 +153,8 @@ $(top_builddir)/contrib/dummy_seclabel/dummy_seclabel$(DLSUFFIX): $(top_builddir
 
 .PHONY: tablespace-setup
 tablespace-setup:
-	rm -rf ./testtablespace
-	mkdir ./testtablespace
+	rm -rf ./testtablespace ./testtablespace_otherloc
+	mkdir ./testtablespace ./testtablespace_otherloc
 
 # Check for include files that are not being shipped
 .PHONY: includecheck
@@ -228,6 +228,7 @@ clean distclean maintainer-clean: clean-lib
 # things created by various check targets
 	rm -f $(output_files) $(input_files)
 	rm -rf testtablespace
+	rm -rf testtablespace_otherloc
 	rm -rf $(pg_regress_clean_files)
 	rm -f data/pg_class32.data
 	rm -f gmon.out

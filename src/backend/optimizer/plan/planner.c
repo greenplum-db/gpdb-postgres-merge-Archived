@@ -562,6 +562,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->append_rel_list = NIL;
 	root->rowMarks = NIL;
 	root->hasInheritedTarget = false;
+	root->upd_del_replicated_table = 0;
 
 	Assert(config);
 	root->config = config;
@@ -1120,6 +1121,8 @@ inheritance_planner(PlannerInfo *root)
 					case CdbLocusType_HashedOJ:
 					case CdbLocusType_Strewn:
 						/* MPP-2023: Among subplans, these loci are okay. */
+						break;
+					case CdbLocusType_SegmentGeneral:
 						break;
 					case CdbLocusType_Null:
 					case CdbLocusType_SingleQE:
@@ -2415,13 +2418,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 									   result_plan->total_cost,
 									   current_pathkeys,
 									   dNumDistinctRows);
-
-			/* GPDB_84_MERGE_FIXME: The hash Agg we build for DISTINCT currently
-			 * loses the GROUP_ID() information, so don't use it if there's a
-			 * GROUP_ID().
-			 */
-			if (use_hashed_distinct && contain_group_id((Node *) result_plan->targetlist))
-				use_hashed_distinct = false;
 		}
 
 		/*
@@ -2677,8 +2673,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			{
 				RelOptInfo *brel = root->simple_rel_array[rc->rti];
 
-				if (brel->cdbpolicy &&
-					brel->cdbpolicy->ptype == POLICYTYPE_PARTITIONED)
+				if (GpPolicyIsPartitioned(brel->cdbpolicy))
 				{
 					if (rc->markType == ROW_MARK_EXCLUSIVE)
 						rc->markType = ROW_MARK_TABLE_EXCLUSIVE;
@@ -2713,11 +2708,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if (parse->limitCount || parse->limitOffset)
 	{
-		if (Gp_role == GP_ROLE_DISPATCH && result_plan->flow->flotype == FLOW_PARTITIONED)
+		if (Gp_role == GP_ROLE_DISPATCH &&
+			(result_plan->flow->flotype == FLOW_PARTITIONED ||
+			 result_plan->flow->locustype == CdbLocusType_SegmentGeneral))
 		{
-			/* pushdown the first phase of multi-phase limit (which takes offset into account) */
-			result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, count_est, parse->limitOffset, offset_est);
-			
+			if (result_plan->flow->flotype == FLOW_PARTITIONED)
+			{
+				/* pushdown the first phase of multi-phase limit (which takes offset into account) */
+				result_plan = pushdown_preliminary_limit(result_plan, parse->limitCount, count_est, parse->limitOffset, offset_est);
+			}
+
 			/*
 			 * Focus on QE [merge to preserve order], prior to final LIMIT.
 			 *

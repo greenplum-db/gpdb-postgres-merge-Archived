@@ -508,6 +508,7 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 	 * ProcArray.
 	 */
 	proc->xid = InvalidTransactionId;
+	proc->lxid = InvalidLocalTransactionId;
 	proc->xmin = InvalidTransactionId;
 	proc->recoveryConflictPending = false;
 
@@ -515,23 +516,13 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 
 	/* redundant, but just in case */
 	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
+	proc->inCommit = false;
 	proc->serializableIsoLevel = false;
 	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
 	proc->subxids.nxids = 0;
 	proc->subxids.overflowed = false;
-
-	/* For commit, inCommit and lxid are cleared in CommitTransaction after
-	 * performing PT operations. It's done this way to correctly block
-	 * checkpoint till CommitTransaction completes the persistent table
-	 * updates.
-	 */
-	if (! commit)
-	{
-		proc->lxid = InvalidLocalTransactionId;
-		proc->inCommit = false;
-	}
 }
 
 /*
@@ -2399,16 +2390,6 @@ GetSnapshotData(Snapshot snapshot)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Fill in the distributed snapshot information we received from the the QD.
-	 * Unless we are the QD, in which case we already created a new distributed
-	 * snapshot above.
-	 *
-	 * (We do this after releasing ProcArrayLock, to reduce contention.)
-	 */
-	if (DistributedTransactionContext != DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE)
-		FillInDistributedSnapshot(snapshot);
-
-	/*
 	 * Update globalxmin to include actual process xids.  This is a slightly
 	 * different way of computing it than GetOldestXmin uses, but should give
 	 * the same result.
@@ -2416,21 +2397,41 @@ GetSnapshotData(Snapshot snapshot)
 	if (TransactionIdPrecedes(xmin, globalxmin))
 		globalxmin = xmin;
 
-	/*
-	 * In computing RecentGlobalXmin, also take distributed snapshots into
-	 * account.
-	 */
-	if (snapshot->haveDistribSnapshot)
+	if (DistributedTransactionContext == DTX_CONTEXT_QD_DISTRIBUTED_CAPABLE)
 	{
-		DistributedSnapshot *ds = &snapshot->distribSnapshotWithLocalMapping.ds;
-
-		globalxmin =
-			DistributedLog_AdvanceOldestXmin(globalxmin,
-											 ds->distribTransactionTimeStamp,
-											 ds->xminAllDistributedSnapshots);
+		DistributedLog_AdvanceOldestXminOnQD(globalxmin);
 	}
 	else
-		globalxmin = DistributedLog_GetOldestXmin(globalxmin);
+	{
+		/*
+		 * Fill in the distributed snapshot information we received from the
+		 * the QD.  Unless we are the QD, in which case we already created a
+		 * new distributed snapshot above.
+		 *
+		 * (We do this after releasing ProcArrayLock, to reduce contention.)
+		 */
+		FillInDistributedSnapshot(snapshot);
+
+		/*
+		 * In computing RecentGlobalXmin, also take distributed snapshots into
+		 * account.
+		 */
+		if (snapshot->haveDistribSnapshot)
+		{
+			DistributedSnapshot *ds = &snapshot->distribSnapshotWithLocalMapping.ds;
+
+			globalxmin =
+				DistributedLog_AdvanceOldestXmin(globalxmin,
+												 ds->distribTransactionTimeStamp,
+												 ds->xminAllDistributedSnapshots);
+		}
+		else
+			globalxmin = DistributedLog_GetOldestXmin(globalxmin);
+	}
+
+	if (TransactionIdFollows(globalxmin, xmin))
+		elog(ERROR, "global xmin (%u) is higher than transaction xmin (%u)",
+			globalxmin, xmin);
 
 	/* Update global variables too */
 	RecentGlobalXmin = globalxmin - vacuum_defer_cleanup_age;

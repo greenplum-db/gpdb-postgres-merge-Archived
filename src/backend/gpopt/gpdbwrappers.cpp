@@ -3197,4 +3197,15 @@ gpdb::FAbortRequested
 {
 	return (QueryCancelPending || ProcDiePending);
 }
+
+GpPolicy *
+gpdb::PMakeGpPolicy
+       (
+               MemoryContext mcxt,
+               GpPolicyType ptype,
+               int nattrs
+       )
+{
+       return makeGpPolicy(mcxt, ptype, nattrs);
+}
 // EOF

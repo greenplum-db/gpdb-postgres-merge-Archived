@@ -127,12 +127,7 @@ _copyPlannedStmt(PlannedStmt *from)
 	COPY_SCALAR_FIELD(nMotionNodes);
 	COPY_SCALAR_FIELD(nInitPlans);
 
-	if (from->intoPolicy)
-	{
-		COPY_POINTER_FIELD(intoPolicy,sizeof(GpPolicy) + from->intoPolicy->nattrs*sizeof(from->intoPolicy->attrs[0]));
-	}
-	else
-		newnode->intoPolicy = NULL;
+	COPY_NODE_FIELD(intoPolicy);
 
 	COPY_SCALAR_FIELD(query_mem);
 
@@ -569,7 +564,7 @@ _copyExternalScan(ExternalScan *from)
 	COPY_SCALAR_FIELD(isMasterOnly);
 	COPY_SCALAR_FIELD(rejLimit);
 	COPY_SCALAR_FIELD(rejLimitInRows);
-	COPY_SCALAR_FIELD(fmterrtbl);
+	COPY_SCALAR_FIELD(logErrors);
 	COPY_SCALAR_FIELD(encoding);
 	COPY_SCALAR_FIELD(scancounter);
 
@@ -3121,7 +3116,7 @@ _copyQuery(Query *from)
 
 	if (from->intoPolicy)
 	{
-		COPY_POINTER_FIELD(intoPolicy, sizeof(GpPolicy) + from->intoPolicy->nattrs * sizeof(from->intoPolicy->attrs[0]));
+		COPY_NODE_FIELD(intoPolicy);
 	}
 	else
 		newnode->intoPolicy = NULL;
@@ -3444,9 +3439,7 @@ _copyCopyStmt(CopyStmt *from)
 	COPY_STRING_FIELD(filename);
 	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(sreh);
-	COPY_SCALAR_FIELD(nattrs);
-	COPY_SCALAR_FIELD(ptype);
-	COPY_POINTER_FIELD(distribution_attrs,from->nattrs * sizeof(AttrNumber));
+	COPY_NODE_FIELD(policy);
 	return newnode;
 }
 
@@ -3477,7 +3470,7 @@ CopyCreateStmtFields(CreateStmt *from, CreateStmt *newnode)
 	COPY_SCALAR_FIELD(relStorage);
 	if (from->policy)
 	{
-		COPY_POINTER_FIELD(policy,sizeof(GpPolicy) + from->policy->nattrs*sizeof(from->policy->attrs[0]));
+		COPY_NODE_FIELD(policy);
 	}
 	else
 		newnode->policy = NULL;
@@ -3698,7 +3691,7 @@ _copyCreateExternalStmt(CreateExternalStmt *from)
 	COPY_NODE_FIELD(distributedBy);
 	if (from->policy)
 	{
-		COPY_POINTER_FIELD(policy,sizeof(GpPolicy) + from->policy->nattrs*sizeof(from->policy->attrs[0]));
+		COPY_NODE_FIELD(policy);
 	}
 	else
 		newnode->policy = NULL;
@@ -4277,6 +4270,7 @@ _copyCreateTableSpaceStmt(CreateTableSpaceStmt *from)
 	COPY_STRING_FIELD(tablespacename);
 	COPY_STRING_FIELD(owner);
 	COPY_STRING_FIELD(location);
+	COPY_NODE_FIELD(options);
 
 	return newnode;
 }
@@ -4934,6 +4928,29 @@ _copyCookedConstraint(CookedConstraint *from)
 	COPY_NODE_FIELD(expr);
 	COPY_SCALAR_FIELD(is_local);
 	COPY_SCALAR_FIELD(inhcount);
+
+	return newnode;
+}
+
+static GpPolicy *
+_copyGpPolicy(GpPolicy *from)
+{
+	GpPolicy *newnode = makeNode(GpPolicy);
+
+	COPY_SCALAR_FIELD(ptype);
+	COPY_SCALAR_FIELD(nattrs);
+	COPY_POINTER_FIELD(attrs, from->nattrs * sizeof(AttrNumber));
+
+	return newnode;
+}
+
+static DistributedBy *
+_copyDistributedBy(DistributedBy *from)
+{
+	DistributedBy *newnode = makeNode(DistributedBy);
+
+	COPY_SCALAR_FIELD(ptype);
+	COPY_NODE_FIELD(keys);
 
 	return newnode;
 }
@@ -5946,6 +5963,13 @@ copyObject(void *from)
 
 		case T_CookedConstraint:
 			retval = _copyCookedConstraint(from);
+			break;
+		case T_GpPolicy:
+			retval = _copyGpPolicy(from);
+			break;
+
+		case T_DistributedBy:
+			retval = _copyDistributedBy(from);
 			break;
 
 		default:

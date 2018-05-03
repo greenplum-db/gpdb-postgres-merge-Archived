@@ -395,12 +395,12 @@ static bool QueryHasDistributedRelation(Query *q)
 				&& rte->rtekind == RTE_RELATION)
 		{
 			GpPolicy *policy = GpPolicyFetch(CurrentMemoryContext, rte->relid);
-			bool result = (policy->ptype == POLICYTYPE_PARTITIONED);
-			pfree(policy);
-			if (result)
+			if (GpPolicyIsPartitioned(policy))
 			{
+				pfree(policy);
 				return true;
 			}
+			pfree(policy);
 		}
 	}
 	return false;
@@ -1728,14 +1728,11 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * seem likely in normal usage and their possible effects are complex.
 	 *
 	 * In GPDB, we try a bit harder: Try to demote HAVING to WHERE, in case
-	 * there are no aggregates. If that fails, only then give up. Also, just
-	 * discard any window functions; they shouldn't affect the number of
-	 * rows returned.
-	 *
-	 * GPDB_84_MERGE_FIXME: What about "LIMIT 0"? We can't just ignore it.
-	 * Furthermore, the rule used here, for when it's safe to demote a HAVING
-	 * to WHERE, is different from the one in subquery_planner(). Notably,
-	 * what if there are volatile functions or subplans?
+	 * there are no aggregates or volatile functions. If that fails, only
+	 * then give up. Also, just discard any window functions; they
+	 * shouldn't affect the number of rows returned. If subquery contains
+	 * LIMIT, it is already handled in convert_EXISTS_sublink_to_join()
+	 * before we reach here.
 	 */
 	if (query->commandType != CMD_SELECT ||
 		query->intoClause ||
@@ -1761,8 +1758,15 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 
 	if (query->havingQual)
 	{
-		/* If HAVING has no aggregates, demote it to WHERE. */
-		if (!query->hasAggs)
+		/*
+		 * If HAVING has no aggregates and volatile functions, demote
+		 * it to WHERE.
+		 * Note: In addition to these rules, subquery_planner() also
+		 * checks if HAVING has subplans, which is not relevant here as
+		 * there are not going to be any subplans at this stage.
+		 */
+		if (!contain_aggs_of_level(query->havingQual, 0) &&
+		    !contain_volatile_functions(query->havingQual))
 		{
 			query->jointree->quals = make_and_qual(query->jointree->quals,
 												   query->havingQual);

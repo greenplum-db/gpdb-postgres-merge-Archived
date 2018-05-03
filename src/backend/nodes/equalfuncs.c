@@ -1290,9 +1290,7 @@ _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 	COMPARE_STRING_FIELD(filename);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(sreh);
-	COMPARE_SCALAR_FIELD(nattrs);
-	COMPARE_SCALAR_FIELD(ptype);
-	COMPARE_POINTER_FIELD(distribution_attrs,a->nattrs * sizeof(AttrNumber));
+	COMPARE_NODE_FIELD(policy);
 	return true;
 }
 
@@ -1314,7 +1312,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(distributedBy);
 	COMPARE_SCALAR_FIELD(relKind);
 	COMPARE_SCALAR_FIELD(relStorage);
-	/* policy omitted */
+	COMPARE_NODE_FIELD(policy);
 	/* postCreate omitted */
 	/* deferredStmts omitted */
 	COMPARE_SCALAR_FIELD(is_part_child);
@@ -1860,6 +1858,7 @@ _equalCreateTableSpaceStmt(CreateTableSpaceStmt *a, CreateTableSpaceStmt *b)
 	COMPARE_STRING_FIELD(tablespacename);
 	COMPARE_STRING_FIELD(owner);
 	COMPARE_STRING_FIELD(location);
+	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
@@ -2720,6 +2719,15 @@ _equalAlterTypeStmt(AlterTypeStmt *a, AlterTypeStmt *b)
 }
 
 static bool
+_equalDistributedBy(DistributedBy *a, DistributedBy *b)
+{
+	COMPARE_SCALAR_FIELD(ptype);
+	COMPARE_NODE_FIELD(keys);
+
+	return true;
+}
+
+static bool
 _equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
 {
 	COMPARE_SCALAR_FIELD(xmloption);
@@ -3493,6 +3501,9 @@ equal(void *a, void *b)
 			break;
 		case T_AlterTypeStmt:
 			retval = _equalAlterTypeStmt(a, b);
+			break;
+		case T_DistributedBy:
+			retval = _equalDistributedBy(a, b);
 			break;
 
 		default:
