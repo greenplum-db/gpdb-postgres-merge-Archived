@@ -779,6 +779,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 (32 rows)
 
 select min(f1), max(f1) from minmaxtest;
+INFO:  GPORCA failed to produce a plan, falling back to planner
  min | max 
 -----+-----
   11 |  18
