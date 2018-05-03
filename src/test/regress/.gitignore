@@ -6,6 +6,9 @@
 /results/
 /log/
 
+# Configure-generated files
+/GPTest.pm
+
 data/wet_csv?.tbl
 data/wet_text?.tbl
 data/wet_syntax?.tbl
