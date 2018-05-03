@@ -2435,7 +2435,7 @@ CTranslatorUtils::PdxlnPrElNull
 										pmp,
 										pmdid,
 										IDefaultTypeModifier,
-										OidInvalidCollation,
+										pmda->Pmdtype(pmdid)->OidTypeCollation(),
 										fByValue /*fConstByVal*/,
 										true /*fConstNull*/,
 										NULL, /*pba */
