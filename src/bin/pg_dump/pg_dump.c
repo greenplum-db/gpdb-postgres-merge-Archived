@@ -10906,11 +10906,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &agginfo->aggfn.dobj, labelq->data);
 
-	appendPQExpBuffer(labelq, "AGGREGATE %s", aggsig);
-
-	if (binary_upgrade)
-		binary_upgrade_extension_member(q, &agginfo->aggfn.dobj, labelq->data);
-
 	ArchiveEntry(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 				 aggsig_tag,
 				 agginfo->aggfn.dobj.namespace->dobj.name,
