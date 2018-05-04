@@ -8,15 +8,8 @@ set optimizer_trace_fallback='on';
 
 -- Query 1
 SELECT GROUPING(product.pname) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY GROUPING SETS (sale.pn, product.pname) ORDER BY g1;
--- start_ignore
--- GPDB_91_MERGE_FIXME: disabling the tests with ORCA since the collate UNION fix is incomplete
-set optimizer = off;
--- end_ignore
 -- Query 2
 SELECT GROUPING(product.pname) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY GROUPING SETS (sale.pn, product.pname, sale.pn) ORDER BY g1;
--- start_ignore
-reset optimizer;
--- end_ignore
 -- Query 3
 SELECT GROUPING(product.pname) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY GROUPING SETS ((sale.pn) ,(product.pname, sale.pn)) ORDER BY g1;
 -- Query 4
@@ -27,9 +20,6 @@ SELECT GROUPING(product.pname) as g1 FROM product, sale WHERE product.pn=sale.pn
 SELECT GROUPING(product.pname) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY ROLLUP((sale.pn),(product.pname),(sale.pn)) ORDER BY g1;
 -- Query 7
 SELECT GROUPING(sale.pn) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY GROUPING SETS (sale.pn, product.pname) ORDER BY g1;
--- start_ignore
-set optimizer = off;
--- end_ignore
 -- Query 8
 SELECT GROUPING(sale.pn) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY GROUPING SETS (sale.pn, product.pname, sale.pn) ORDER BY g1;
 -- Query 9
@@ -505,6 +495,3 @@ select 'a', * from ((SELECT SUM(sale.pn) as g1 FROM product, sale WHERE product.
 -- Query 220
 -- order 1
 select 'a', * from ((SELECT SUM(sale.pn) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY ROLLUP((sale.pn),(product.pname),(sale.pn)) ORDER BY g1) UNION (SELECT SUM(sale.pn) as g1 FROM product, sale WHERE product.pn=sale.pn GROUP BY ROLLUP((sale.pn),(product.pname),(sale.pn)) ORDER BY g1))a;
--- start_ignore
-reset optimizer;
--- end_ignore
