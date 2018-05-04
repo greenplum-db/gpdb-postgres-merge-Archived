@@ -195,6 +195,7 @@ static bool CopyGetInt16(CopyState cstate, int16 *val);
 
 static void SendCopyFromForwardedTuple(CopyState cstate,
 						   CdbCopy *cdbCopy,
+						   bool toAll,
 						   int target_seg,
 						   Oid relid,
 						   int64 lineno,
@@ -3622,15 +3623,22 @@ CopyFrom(CopyState cstate)
 
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
-			/* GPDB_91_MERGE_FIXME: what do we do? */
 			if (part_distData && GpPolicyIsReplicated(part_distData->policy))
 			{
-				elog(ERROR, "replicated COPY FROM is not yet implemented");
+				/* in the QD, forward the row to all segments. */
+				SendCopyFromForwardedTuple(cstate, cdbCopy, true, 0,
+										   RelationGetRelid(resultRelInfo->ri_RelationDesc),
+										   cstate->cur_lineno,
+										   cstate->line_buf.data,
+										   cstate->line_buf.len,
+										   loaded_oid,
+										   slot_get_values(slot),
+										   slot_get_isnull(slot));
 			}
 			else
 			{
 				/* in the QD, forward the row to the correct segment. */
-				SendCopyFromForwardedTuple(cstate, cdbCopy, target_seg,
+				SendCopyFromForwardedTuple(cstate, cdbCopy, false, target_seg,
 										   RelationGetRelid(resultRelInfo->ri_RelationDesc),
 										   cstate->cur_lineno,
 										   cstate->line_buf.data,
@@ -4924,6 +4932,7 @@ HandleQDErrorFrame(CopyState cstate)
 static void
 SendCopyFromForwardedTuple(CopyState cstate,
 						   CdbCopy *cdbCopy,
+						   bool toAll,
 						   int target_seg,
 						   Oid relid,
 						   int64 lineno,
@@ -5002,8 +5011,10 @@ SendCopyFromForwardedTuple(CopyState cstate,
 	frame->lineno = lineno;
 	frame->fld_count = num_sent_fields;
 
-	cdbCopySendData(cdbCopy, target_seg, msgbuf->data, msgbuf->len);
-
+	if (toAll)
+		cdbCopySendDataToAll(cdbCopy, msgbuf->data, msgbuf->len);
+	else
+		cdbCopySendData(cdbCopy, target_seg, msgbuf->data, msgbuf->len);
 }
 
 static void
