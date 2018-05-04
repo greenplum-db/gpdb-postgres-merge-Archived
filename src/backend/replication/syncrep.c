@@ -190,7 +190,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * condition but we'll be fetching that cache line anyway so its likely to
 	 * be a low cost check.
 	 */
-	if (!WalSndCtl->sync_standbys_defined ||
+	if (((GpIdentity.segindex != MASTER_CONTENT_ID) && !WalSndCtl->sync_standbys_defined) ||
 		XLByteLE(XactCommitLSN, WalSndCtl->lsn[mode]))
 	{
 		elogif(debug_walrepl_syncrep, LOG,
