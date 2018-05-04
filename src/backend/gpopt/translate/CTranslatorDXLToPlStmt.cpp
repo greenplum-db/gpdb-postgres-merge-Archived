@@ -1259,7 +1259,7 @@ CTranslatorDXLToPlStmt::PplanFunctionScanFromDXLTVF
 
 		pfuncscan->funccoltypes = gpdb::PlAppendOid(pfuncscan->funccoltypes, oidType);
 		pfuncscan->funccoltypmods = gpdb::PlAppendInt(pfuncscan->funccoltypmods, typMod);
-		// GDPB_91_MERGE_FIXME: collation?
+		// GDPB_91_MERGE_FIXME: collation
 		pfuncscan->funccolcollations = gpdb::PlAppendOid(pfuncscan->funccolcollations, typCollation);
 	}
 
@@ -1341,13 +1341,15 @@ CTranslatorDXLToPlStmt::PrteFromDXLTVF
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprFuncArg);
 	}
 
-	// GDPB_91_MERGE_FIXME: collation?
+	// GDPB_91_MERGE_FIXME: collation
 	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
 	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
 
 	prte->funcexpr = (Node *)pfuncexpr;
 	prte->inFromCl = true;
 	prte->eref = palias;
+	// GDPB_91_MERGE_FIXME: collation
+	// set prte->funccoltypemods & prte->funccolcollations?
 
 	return prte;
 }
@@ -1402,6 +1404,8 @@ CTranslatorDXLToPlStmt::PrteFromDXLValueScan
 	CMappingColIdVarPlStmt mapcidvarplstmt = CMappingColIdVarPlStmt(m_pmp, pdxltrctxbt, NULL, pdxltrctxOut, m_pctxdxltoplstmt);
 	const ULONG ulChildren = pdxlnValueScan->UlArity();
 	List *values_lists = NIL;
+	List *values_collations = NIL;
+
 	for (ULONG ulValue = EdxlValIndexConstStart; ulValue < ulChildren; ulValue++)
 	{
 		CDXLNode *pdxlnValueList = (*pdxlnValueScan)[ulValue];
@@ -1411,11 +1415,23 @@ CTranslatorDXLToPlStmt::PrteFromDXLValueScan
 		{
 			Expr *pconst = m_pdxlsctranslator->PexprFromDXLNodeScalar((*pdxlnValueList)[ulCol], &mapcidvarplstmt);
 			value = gpdb::PlAppendElement(value, pconst);
+
 		}
 		values_lists = gpdb::PlAppendElement(values_lists, value);
+
+		// GPDB_91_MERGE_FIXME: collation
+		if (NIL == values_collations)
+		{
+			// Set collation based on the first list of values
+			for (ULONG ulCol = 0; ulCol < ulCols ; ulCol++)
+			{
+				values_collations = gpdb::PlAppendOid(values_collations, gpdb::OidExprCollation((Node *) value));
+			}
+		}
 	}
 
-	prte->values_lists = (List *) values_lists;
+	prte->values_lists = values_lists;
+	prte->values_collations = values_collations;
 	prte->eref = palias;
 
 	return prte;
@@ -1655,6 +1671,10 @@ CTranslatorDXLToPlStmt::PmjFromDXLMJ
 	pplan->righttree = pplanRight;
 	pplan->nMotionNodes = pplanLeft->nMotionNodes + pplanRight->nMotionNodes;
 	SetParamIds(pplan);
+
+	// GDPB_91_MERGE_FIXME: collation
+	// Need to set pmj->mergeCollations, but ORCA does not produce plans with
+	// Merge Joins.
 
 	// cleanup
 	pdrgpdxltrctxWithSiblings->Release();
@@ -5086,6 +5106,9 @@ CTranslatorDXLToPlStmt::PintoclFromCtas
 		pcoldef->colname = szColName;
 		pcoldef->is_local = true;
 
+		// GDPB_91_MERGE_FIXME: collation
+		pcoldef->collClause = NULL;
+		pcoldef->collOid = gpdb::OidTypeCollation(CMDIdGPDB::PmdidConvert(pdxlcd->PmdidType())->OidObjectId());
 		pintocl->colNames = gpdb::PlAppendElement(pintocl->colNames, pcoldef);
 
 	}

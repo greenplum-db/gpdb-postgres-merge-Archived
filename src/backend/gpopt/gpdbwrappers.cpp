@@ -553,7 +553,7 @@ gpdb::OidExprCollation
 	{
 		if (pnodeExpr && IsA(pnodeExpr, List))
 		{
-			// GDPB_91_MERGE_FIXME: collation? doing this is hacky
+			// GDPB_91_MERGE_FIXME: collation
 			List *exprlist = (List *) pnodeExpr;
 			ListCell   *lc;
 
@@ -1899,7 +1899,7 @@ gpdb::PvarMakeVar
 {
 	GP_WRAP_START;
 	{
-		// GPDB_91_MERGE_FIXME: collation?
+		// GPDB_91_MERGE_FIXME: collation
 		Oid collation = OidTypeCollation(vartype);
 		return makeVar(varno, varattno, vartype, vartypmod, collation, varlevelsup);
 	}
@@ -2923,7 +2923,7 @@ gpdb::PexprEvaluate
 {
 	GP_WRAP_START;
 	{
-		// GPDB_91_MERGE_FIXME: collation?
+		// GPDB_91_MERGE_FIXME: collation
 		return evaluate_expr(pexpr, oidResultType, iTypeMod, InvalidOid);
 	}
 	GP_WRAP_END;
