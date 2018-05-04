@@ -1397,12 +1397,6 @@ RecordTransactionCommit(void)
 #endif
 
 		/*
-		 * Now we may update the CLOG, if we wrote COMMIT record above
-		 */
-		if (max_wal_senders > 0)
-			WalSndWakeup();
-
-		/*
 		 * Wake up all walsenders to send WAL up to the COMMIT record
 		 * immediately if replication is enabled
 		 */
