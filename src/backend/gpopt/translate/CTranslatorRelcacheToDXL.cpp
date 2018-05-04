@@ -800,7 +800,6 @@ CTranslatorRelcacheToDXL::Pdrgpmdcol
 										att->attnum,
 										pmdidCol,
 										att->atttypmod,
-										att->attcollation,
 										!att->attnotnull,
 										att->attisdropped,
 										pdxlnDefault /* default value */,
@@ -1020,7 +1019,6 @@ CTranslatorRelcacheToDXL::AddSystemColumns
 										attno, 
 										CTranslatorUtils::PmdidSystemColType(pmp, attno),
 										IDefaultTypeModifier,
-										OidInvalidCollation,
 										false,	// fNullable
 										false,	// fDropped
 										NULL,	// default value
@@ -1633,7 +1631,6 @@ CTranslatorRelcacheToDXL::Pmdtype
 
 	BOOL fRedistributable = gpdb::FGreenplumDbHashable(oidType);
 
-	OID oidTypeDefaultCollation = gpdb::OidTypeCollation(oidType);
 	pmdid->AddRef();
 
 	return GPOS_NEW(pmp) CMDTypeGenericGPDB
@@ -1661,8 +1658,7 @@ CTranslatorRelcacheToDXL::Pmdtype
 						 fComposite,
 						 pmdidTypeRelid,
 						 pmdidTypeArray,
-						 ptce->typlen,
-						 oidTypeDefaultCollation
+						 ptce->typlen
 						 );
 }
 
@@ -2095,7 +2091,6 @@ CTranslatorRelcacheToDXL::Pmdcheckconstraint
 										pmdcol->IAttno(),
 										pmdidColType,
 										pmdcol->ITypeModifier(),
-										pmdcol->OidCollation(),
 										false /* fColDropped */
 										);
 		pdrgpdxlcd->Append(pdxlcd);
@@ -3426,7 +3421,6 @@ CTranslatorRelcacheToDXL::PmdpartcnstrIndex
 										pmdcol->IAttno(),
 										pmdidColType,
 										pmdcol->ITypeModifier(),
-										pmdcol->OidCollation(),
 										false // fColDropped
 										);
 		pdrgpdxlcd->Append(pdxlcd);
@@ -3516,7 +3510,6 @@ CTranslatorRelcacheToDXL::PmdpartcnstrRelation
 											pmdcol->IAttno(),
 											pmdidColType,
 											pmdcol->ITypeModifier(),
-											pmdcol->OidCollation(),
 											false // fColDropped
 											);
 			pdrgpdxlcd->Append(pdxlcd);

@@ -435,7 +435,6 @@ namespace gpdxl
 				IMemoryPool *pmp,
 				const IMDType *pmdtype,
 				INT iTypeModifier,
-				OID oidCollation,
 				BOOL fNull,
 				ULONG ulLen,
 				Datum datum
@@ -550,7 +549,6 @@ namespace gpdxl
 				IMemoryPool *pmp,
 				const IMDType *pmdtype,
 				INT iTypeModifier,
-				OID oidCollation,
 				BOOL fNull,
 				ULONG ulLen,
 				Datum datum

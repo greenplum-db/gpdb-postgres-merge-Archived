@@ -233,7 +233,6 @@ CMappingColIdVarPlStmt::PvarFromDXLNodeScId
 						attno,
 						CMDIdGPDB::PmdidConvert(pdxlop->PmdidType())->OidObjectId(),
 						pdxlop->ITypeModifier(),
-						pdxlop->OidCollation(),
 						0	// varlevelsup
 						);
 

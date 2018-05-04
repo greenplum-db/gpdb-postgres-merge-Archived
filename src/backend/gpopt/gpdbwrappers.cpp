@@ -585,7 +585,12 @@ gpdb::OidTypeCollation
 {
 	GP_WRAP_START;
 	{
-		return get_typcollation(type);
+		Oid collation = InvalidOid;
+		if (type_is_collatable(type))
+		{
+			collation = DEFAULT_COLLATION_OID;
+		}
+		return collation;
 	}
 	GP_WRAP_END;
 	return 0;
@@ -1889,13 +1894,14 @@ gpdb::PvarMakeVar
 	AttrNumber varattno,
 	Oid vartype,
 	int32 vartypmod,
-	Oid varcollid,
 	Index varlevelsup
 	)
 {
 	GP_WRAP_START;
 	{
-		return makeVar(varno, varattno, vartype, vartypmod, varcollid, varlevelsup);
+		// GPDB_91_MERGE_FIXME: collation?
+		Oid collation = OidTypeCollation(vartype);
+		return makeVar(varno, varattno, vartype, vartypmod, collation, varlevelsup);
 	}
 	GP_WRAP_END;
 	return NULL;
@@ -2912,14 +2918,13 @@ gpdb::PexprEvaluate
 	(
 	Expr *pexpr,
 	Oid oidResultType,
-	int32 iTypeMod,
-	Oid oidCollation
+	int32 iTypeMod
 	)
 {
 	GP_WRAP_START;
 	{
 		// GPDB_91_MERGE_FIXME: collation?
-		return evaluate_expr(pexpr, oidResultType, iTypeMod, oidCollation);
+		return evaluate_expr(pexpr, oidResultType, iTypeMod, InvalidOid);
 	}
 	GP_WRAP_END;
 	return NULL;

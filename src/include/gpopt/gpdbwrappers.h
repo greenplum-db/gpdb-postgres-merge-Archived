@@ -422,7 +422,7 @@ namespace gpdb {
 	TargetEntry *PteMakeTargetEntry(Expr *expr, AttrNumber resno, char *resname, bool resjunk);
 
 	// create a new var node
-	Var *PvarMakeVar(Index varno, AttrNumber varattno, Oid vartype, int32 vartypmod, Oid varcollid, Index varlevelsup);
+	Var *PvarMakeVar(Index varno, AttrNumber varattno, Oid vartype, int32 vartypmod, Index varlevelsup);
 
 	// memory allocation functions
 	void *PvMemoryContextAllocImpl(MemoryContext context, Size size, const char* file, const char * func, int line);
@@ -618,7 +618,7 @@ namespace gpdb {
 
 	// returns the result of evaluating 'pexpr' as an Expr. Caller keeps ownership of 'pexpr'
 	// and takes ownership of the result 
-	Expr *PexprEvaluate(Expr *pexpr, Oid oidResultType, int32 iTypeMod, Oid oidCollation);
+	Expr *PexprEvaluate(Expr *pexpr, Oid oidResultType, int32 iTypeMod);
 	
 	// interpret the value of "With oids" option from a list of defelems
 	bool FInterpretOidsOption(List *plOptions);

@@ -73,9 +73,7 @@ CConstExprEvaluatorProxy::PdxlnEvaluateExpr
 	// Evaluate the expression
 	Expr *pexprResult = gpdb::PexprEvaluate(pexpr,
 						gpdb::OidExprType((Node *)pexpr),
-						gpdb::IExprTypeMod((Node *)pexpr),
-						gpdb::OidExprCollation((Node *)pexpr)
-	);
+						gpdb::IExprTypeMod((Node *)pexpr));
 
 	if (!IsA(pexprResult, Const))
 	{

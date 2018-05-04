@@ -192,7 +192,6 @@ namespace gpdxl
 						CIdGenerator *pidgtor,
 						IMDId *pmdidRetType,
 						INT iTypeModifier,
-						OID oidCollation,
 						CMDName *pmdName
 						);
 
@@ -240,7 +239,6 @@ namespace gpdxl
 					List *plTargetList,
 					DrgPmdid *pdrgpmdidInput,
 					DrgPul *pdrgpulInput,
-					DrgPul *pdrgpulInputOidCollation,
 					BOOL *pfOuterRef,
 					CIdGenerator *pidgtorColId
 					);

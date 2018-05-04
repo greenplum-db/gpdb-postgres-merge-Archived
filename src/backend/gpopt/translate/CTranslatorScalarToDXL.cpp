@@ -181,8 +181,7 @@ CTranslatorScalarToDXL::PdxlnScIdFromVar
 												pmdname,
 												ulId,
 												GPOS_NEW(m_pmp) CMDIdGPDB(pvar->vartype),
-												pvar->vartypmod,
-												pvar->varcollid
+												pvar->vartypmod
 												);
 
 	// create the scalar ident operator
@@ -428,14 +427,11 @@ CTranslatorScalarToDXL::PdxlnScOpExprFromExpr
 		return PdxlnScCmpFromOpExpr(pexpr, pmapvarcolid);
 	}
 
-	OID oidOpCollation = popexpr->opcollid;
-	OID oidInputCollation = popexpr->inputcollid;
-
 	// get operator name and id
 	IMDId *pmdid = GPOS_NEW(m_pmp) CMDIdGPDB(popexpr->opno);
 	const CWStringConst *pstr = PstrOpName(pmdid);
 
-	CDXLScalarOpExpr *pdxlop = GPOS_NEW(m_pmp) CDXLScalarOpExpr(m_pmp, pmdid, pmdidReturnType, oidOpCollation, oidInputCollation, GPOS_NEW(m_pmp) CWStringConst(pstr->Wsz()));
+	CDXLScalarOpExpr *pdxlop = GPOS_NEW(m_pmp) CDXLScalarOpExpr(m_pmp, pmdid, pmdidReturnType, GPOS_NEW(m_pmp) CWStringConst(pstr->Wsz()));
 
 	// create the DXL node holding the scalar opexpr
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
@@ -465,14 +461,7 @@ CTranslatorScalarToDXL::PdxlnScNullIfFromExpr
 
 	GPOS_ASSERT(2 == gpdb::UlListLength(pnullifexpr->args));
 
-	CDXLScalarNullIf *pdxlop = GPOS_NEW(m_pmp) CDXLScalarNullIf
-		(
-		m_pmp,
-		GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opno),
-		GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opresulttype),
-		pnullifexpr->opcollid,
-		pnullifexpr->inputcollid
-		);
+	CDXLScalarNullIf *pdxlop = GPOS_NEW(m_pmp) CDXLScalarNullIf(m_pmp, GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opno), GPOS_NEW(m_pmp) CMDIdGPDB(pnullifexpr->opresulttype));
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
 
@@ -613,7 +602,7 @@ CTranslatorScalarToDXL::Pdxldatum
 	pmdid->Release();
 
  	// translate gpdb datum into a DXL datum
-	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, pconst->consttypmod, pconst->constcollid, pconst->constisnull,
+	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, pconst->consttypmod, pconst->constisnull,
 															 pconst->constlen,
 															 pconst->constvalue);
 
@@ -813,8 +802,7 @@ CTranslatorScalarToDXL::PdxlnScCoalesceFromExpr
 	CDXLScalarCoalesce *pdxlop = GPOS_NEW(m_pmp) CDXLScalarCoalesce
 											(
 											m_pmp,
-											GPOS_NEW(m_pmp) CMDIdGPDB(pcoalesceexpr->coalescetype),
-											pcoalesceexpr->coalescecollid
+											GPOS_NEW(m_pmp) CMDIdGPDB(pcoalesceexpr->coalescetype)
 											);
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
@@ -858,9 +846,7 @@ CTranslatorScalarToDXL::PdxlnScMinMaxFromExpr
 											(
 											m_pmp,
 											GPOS_NEW(m_pmp) CMDIdGPDB(pminmaxexpr->minmaxtype),
-											emmt,
-											pminmaxexpr->minmaxcollid,
-											pminmaxexpr->inputcollid
+											emmt
 											);
 
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
@@ -957,8 +943,7 @@ CTranslatorScalarToDXL::PdxlnScSwitchFromCaseExpr
 	CDXLScalarSwitch *pdxlop = GPOS_NEW(m_pmp) CDXLScalarSwitch
 												(
 												m_pmp,
-												GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype),
-												pcaseexpr->casecollid
+												GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype)
 												);
 	CDXLNode *pdxlnSwitch = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
 
@@ -1020,8 +1005,7 @@ CTranslatorScalarToDXL::PdxlnScCaseTestFromExpr
 	CDXLScalarCaseTest *pdxlop = GPOS_NEW(m_pmp) CDXLScalarCaseTest
 												(
 												m_pmp,
-												GPOS_NEW(m_pmp) CMDIdGPDB(pcasetestexpr->typeId),
-												pcasetestexpr->collation
+												GPOS_NEW(m_pmp) CMDIdGPDB(pcasetestexpr->typeId)
 												);
 
 	return GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlop);
@@ -1052,8 +1036,7 @@ CTranslatorScalarToDXL::PdxlnScIfStmtFromCaseExpr
 		CDXLScalarIfStmt *pdxlopIfstmtNew = GPOS_NEW(m_pmp) CDXLScalarIfStmt
 															(
 															m_pmp,
-															GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype),
-															pcaseexpr->casecollid
+															GPOS_NEW(m_pmp) CMDIdGPDB(pcaseexpr->casetype)
 															);
 
 		CDXLNode *pdxlnIfStmtNew = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlopIfstmtNew);
@@ -1123,9 +1106,7 @@ CTranslatorScalarToDXL::PdxlnScCastFromRelabelType
 												(
 												m_pmp,
 												GPOS_NEW(m_pmp) CMDIdGPDB(prelabeltype->resulttype),
-												GPOS_NEW(m_pmp) CMDIdGPDB(0),// casting function oid
-												prelabeltype->resultcollid,
-												OidInvalidCollation /* input collation is only needed when a cast is created from a function expression */
+												GPOS_NEW(m_pmp) CMDIdGPDB(0) // casting function oid
 												)
 									);
 	pdxln->AddChild(pdxlnChild);
@@ -1168,8 +1149,7 @@ CTranslatorScalarToDXL::PdxlnScCoerceFromCoerce
                                                                                                 GPOS_NEW(m_pmp) CMDIdGPDB(pcoerce->resulttype),
                                                                                                pcoerce->resulttypmod,
                                                                                                (EdxlCoercionForm) pcoerce->coercionformat,
-                                                                                               pcoerce->location,
-                                                                                               pcoerce->resultcollid
+                                                                                               pcoerce->location
                                                                                                 )
                                                                         );
         pdxln->AddChild(pdxlnChild);
@@ -1212,8 +1192,7 @@ CTranslatorScalarToDXL::PdxlnScCoerceFromCoerceViaIO
                                                                                                 GPOS_NEW(m_pmp) CMDIdGPDB(pcoerce->resulttype),
                                                                                                -1,
                                                                                                (EdxlCoercionForm) pcoerce->coerceformat,
-                                                                                               pcoerce->location,
-                                                                                               pcoerce->resultcollid
+                                                                                               pcoerce->location
                                                                                                 )
                                                                         );
         pdxln->AddChild(pdxlnChild);
@@ -1255,9 +1234,7 @@ CTranslatorScalarToDXL::PdxlnScArrayCoerceExprFromExpr
 							parraycoerce->resulttypmod,
 							parraycoerce->isExplicit,
 							(EdxlCoercionForm) parraycoerce->coerceformat,
-							parraycoerce->location,
-							parraycoerce->resultcollid,
-							InvalidOid /* input collation is only needed when a cast is created from a function expression */
+							parraycoerce->location
 							)
 					);
 	
@@ -1286,8 +1263,6 @@ CTranslatorScalarToDXL::PdxlnScFuncExprFromFuncExpr
 	GPOS_ASSERT(IsA(pexpr, FuncExpr));
 	const FuncExpr *pfuncexpr = (FuncExpr *) pexpr;
 	int32 iTypeModifier = gpdb::IExprTypeMod((Node *) pexpr);
-	OID oidFuncCollation = pfuncexpr->funccollid; /* result collation ID */
-	OID oidInputCollation = pfuncexpr->inputcollid;
 
 	CMDIdGPDB *pmdidFunc = GPOS_NEW(m_pmp) CMDIdGPDB(pfuncexpr->funcid);
 
@@ -1301,8 +1276,6 @@ CTranslatorScalarToDXL::PdxlnScFuncExprFromFuncExpr
 												pmdidFunc,
 												GPOS_NEW(m_pmp) CMDIdGPDB(pfuncexpr->funcresulttype),
 												iTypeModifier,
-												oidFuncCollation,
-												oidInputCollation,
 												pfuncexpr->funcretset
 												)
 									);
@@ -1406,7 +1379,7 @@ CTranslatorScalarToDXL::PdxlnScAggrefFromAggref
 		pmdidResolvedRetType = GPOS_NEW(m_pmp) CMDIdGPDB(paggref->aggtype);
 	}
 
-	CDXLScalarAggref *pdxlopAggref = GPOS_NEW(m_pmp) CDXLScalarAggref(m_pmp, pmdidAgg, pmdidResolvedRetType, aggDistinct, edxlaggstage, paggref->aggcollid, paggref->inputcollid);
+	CDXLScalarAggref *pdxlopAggref = GPOS_NEW(m_pmp) CDXLScalarAggref(m_pmp, pmdidAgg, pmdidResolvedRetType, aggDistinct, edxlaggstage);
 
 	// create the DXL node holding the scalar aggref
 	CDXLNode *pdxln = GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlopAggref);
@@ -1545,8 +1518,7 @@ CTranslatorScalarToDXL::PdxlnWindowFrameEdgeVal
 																GPOS_NEW(m_pmp) CMDName(m_pmp, &strUnnamedCol),
 																ulPrElId,
 																GPOS_NEW(m_pmp) CMDIdGPDB(gpdb::OidExprType(const_cast<Node*>(pnode))),
-																gpdb::IExprTypeMod(const_cast<Node*>(pnode)),
-																gpdb::OidExprCollation(const_cast<Node*>(pnode))
+																gpdb::IExprTypeMod(const_cast<Node*>(pnode))
 																)
 													);
 
@@ -2120,7 +2092,6 @@ CTranslatorScalarToDXL::Pdxldatum
 	IMemoryPool *pmp,
 	const IMDType *pmdtype,
 	INT iTypeModifier,
-	OID oidCollation,
 	BOOL fNull,
 	ULONG ulLen,
 	Datum datum
@@ -2151,7 +2122,7 @@ CTranslatorScalarToDXL::Pdxldatum
 	if (NULL == pf)
 	{
 		// generate a datum of generic type
-		return PdxldatumGeneric(pmp, pmdtype, iTypeModifier, oidCollation, fNull, ulLen, datum);
+		return PdxldatumGeneric(pmp, pmdtype, iTypeModifier, fNull, ulLen, datum);
 	}
 	else
 	{
@@ -2172,7 +2143,6 @@ CTranslatorScalarToDXL::PdxldatumGeneric
 	IMemoryPool *pmp,
 	const IMDType *pmdtype,
 	INT iTypeModifier,
-	OID oidCollation,
 	BOOL fNull,
 	ULONG ulLen,
 	Datum datum
@@ -2201,7 +2171,7 @@ CTranslatorScalarToDXL::PdxldatumGeneric
 		lValue = LValue(pmdid, fNull, pba, ulLength);
 	}
 
-	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, oidCollation, fConstByVal, fNull, pba, ulLength, lValue, dValue);
+	return CMDTypeGenericGPDB::Pdxldatum(pmp, pmdid, iTypeModifier, fConstByVal, fNull, pba, ulLength, lValue, dValue);
 }
 
 
@@ -2528,7 +2498,7 @@ CTranslatorScalarToDXL::Pdatum
 	}
 	GPOS_ASSERT(fNull || ulLength > 0);
 
-	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, gpmd::IDefaultTypeModifier, gpmd::OidInvalidCollation, fNull, ulLength, datum);
+	CDXLDatum *pdxldatum = CTranslatorScalarToDXL::Pdxldatum(pmp, pmdtype, gpmd::IDefaultTypeModifier, fNull, ulLength, datum);
 	IDatum *pdatum = pmdtype->Pdatum(pmp, pdxldatum);
 	pdxldatum->Release();
 	return pdatum;
