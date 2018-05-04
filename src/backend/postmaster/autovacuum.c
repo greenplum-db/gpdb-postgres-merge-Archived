@@ -2702,6 +2702,14 @@ autovacuum_do_vac_analyze(autovac_table *tab,
 	MemSet(&vacstmt, 0, sizeof(vacstmt));
 	MemSet(&rangevar, 0, sizeof(rangevar));
 
+	/*
+	 * GPDB_91_MERGE_FIXME
+	 * In GPDB, vacuumStatement_Relation() is called to vacuum relation,
+	 * which will copy VacuumStmt as its first operation.
+	 * We need a valid NodeTag to make copyObject() work.
+	 */
+	rangevar.type = T_RangeVar;
+
 	rangevar.schemaname = tab->at_nspname;
 	rangevar.relname = tab->at_relname;
 	rangevar.location = -1;
