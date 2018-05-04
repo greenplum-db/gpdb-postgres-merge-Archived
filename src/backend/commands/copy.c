@@ -3623,30 +3623,19 @@ CopyFrom(CopyState cstate)
 
 		if (cstate->dispatch_mode == COPY_DISPATCH)
 		{
-			if (part_distData && GpPolicyIsReplicated(part_distData->policy))
-			{
-				/* in the QD, forward the row to all segments. */
-				SendCopyFromForwardedTuple(cstate, cdbCopy, true, 0,
-										   RelationGetRelid(resultRelInfo->ri_RelationDesc),
-										   cstate->cur_lineno,
-										   cstate->line_buf.data,
-										   cstate->line_buf.len,
-										   loaded_oid,
-										   slot_get_values(slot),
-										   slot_get_isnull(slot));
-			}
-			else
-			{
-				/* in the QD, forward the row to the correct segment. */
-				SendCopyFromForwardedTuple(cstate, cdbCopy, false, target_seg,
-										   RelationGetRelid(resultRelInfo->ri_RelationDesc),
-										   cstate->cur_lineno,
-										   cstate->line_buf.data,
-										   cstate->line_buf.len,
-										   loaded_oid,
-										   slot_get_values(slot),
-										   slot_get_isnull(slot));
-			}
+			bool send_to_all = part_distData &&
+							   GpPolicyIsReplicated(part_distData->policy);
+
+			/* in the QD, forward the row to the correct segment(s). */
+			SendCopyFromForwardedTuple(cstate, cdbCopy, send_to_all,
+									   send_to_all ? 0 : target_seg,
+									   RelationGetRelid(resultRelInfo->ri_RelationDesc),
+									   cstate->cur_lineno,
+									   cstate->line_buf.data,
+									   cstate->line_buf.len,
+									   loaded_oid,
+									   slot_get_values(slot),
+									   slot_get_isnull(slot));
 			skip_tuple = true;
 			processed++;
 			if (cstate->cdbsreh)
