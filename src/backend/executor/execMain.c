@@ -2198,6 +2198,25 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 							RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_VIEW:
+			/*
+			 * GPDB_91_MERGE_FIXME: In Greenplum, views are treated as non
+			 * partitioned relations, gp_distribution_policy contains no entry
+			 * for views.  Consequently, flow of a ModifyTable node for a view
+			 * is determined such that it is not dispatched to segments.
+			 * Things get confused if the DML statement has a where clause that
+			 * results in a direct dispatch to one segment.  Underlying scan
+			 * nodes have direct dispatch set but when it's time to commit, the
+			 * direct dispatch information is not passed on to the DTM and it
+			 * sends PREPARE to all segments, causing "Distributed transaction
+			 * ... not found" error.  Until this is fixed, INSTEAD OF triggers
+			 * and DML on views need to be disabled.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+					 errmsg("cannot change view \"%s\"",
+							RelationGetRelationName(resultRel)),
+					 errhint("changing views is not supported in Greenplum")));
+
 			switch (operation)
 			{
 				case CMD_INSERT:

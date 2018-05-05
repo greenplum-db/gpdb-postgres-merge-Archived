@@ -169,6 +169,15 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	else if (rel->rd_rel->relkind == RELKIND_VIEW)
 	{
 		/*
+		 * Greenplum cannot support INSTEAD OF triggers, see merge fixme in
+		 * CheckValidResultRel().
+		 */
+		if (stmt->timing == TRIGGER_TYPE_INSTEAD)
+			ereport(ERROR,
+					(errcode(ERRCODE_GP_FEATURE_NOT_YET),
+					 errmsg("INSTEAD OF triggers are not supported in Greenplum")));
+
+		/*
 		 * Views can have INSTEAD OF triggers (which we check below are
 		 * row-level), or statement-level BEFORE/AFTER triggers.
 		 */

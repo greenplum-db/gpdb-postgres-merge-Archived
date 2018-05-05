@@ -134,6 +134,8 @@ CONTEXT:  PL/Perl function "trigger_data"
 DROP TRIGGER show_trigger_data_trig on trigger_test;
 insert into trigger_test values(1,'insert', '("(1)")');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
+--start_ignore
+-- INSTEAD OF triggers are not yet supported in Greenplum
 CREATE TRIGGER show_trigger_data_trig
 INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
@@ -208,6 +210,7 @@ NOTICE:  $_TD->{table_schema} = 'public'
 CONTEXT:  PL/Perl function "trigger_data"
 NOTICE:  $_TD->{when} = 'INSTEAD OF'
 CONTEXT:  PL/Perl function "trigger_data"
+--end_ignore
 DROP VIEW trigger_test_view;
 delete from trigger_test;
 DROP FUNCTION trigger_data();

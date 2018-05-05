@@ -106,6 +106,8 @@ DROP TRIGGER show_trigger_data_trig_after on trigger_test;
 insert into trigger_test values(1,'insert');
 CREATE VIEW trigger_test_view AS SELECT * FROM trigger_test;
 
+--start_ignore
+-- INSTEAD OF triggers are not yet supported in Greenplum
 CREATE TRIGGER show_trigger_data_trig
 INSTEAD OF INSERT OR UPDATE OR DELETE ON trigger_test_view
 FOR EACH ROW EXECUTE PROCEDURE trigger_data(24,'skidoo view');
@@ -115,6 +117,7 @@ update trigger_test_view set v = 'update' where i = 1;
 delete from trigger_test_view;
 
 DROP FUNCTION trigger_data() CASCADE;
+--end_ignore
 DROP VIEW trigger_test_view;
 delete from trigger_test;
 
