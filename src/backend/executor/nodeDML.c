@@ -86,6 +86,16 @@ ExecDML(DMLState *node)
 	/* remove 'junk' columns from tuple */
 	node->cleanedUpSlot = ExecFilterJunk(node->junkfilter, projectedSlot);
 
+	/* GPDB_91_MERGE_FIXME:
+	 * This kind of node is used by ORCA only. If in the future ORCA still uses
+	 * DML node, canSetTag should be saved in DML plan node and init-ed by
+	 * copying canSetTag value from the parse tree.
+	 *
+	 * For !isUpdate case, ExecInsert() and ExecDelete() should use canSetTag
+	 * value from parse tree, however for isUpdate case, it seems that
+	 * ExecInsert() is run after ExecDelete() so canSetTag should be set
+	 * properly in ExecInsert().
+	 */
 	if (DML_INSERT == action)
 	{
 		/* Respect any given tuple Oid when updating a tuple. */
