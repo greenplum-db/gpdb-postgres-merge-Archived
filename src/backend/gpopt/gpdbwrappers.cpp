@@ -2757,6 +2757,20 @@ gpdb::IFindNodes
 	return -1;
 }
 
+int
+gpdb::ICheckCollation
+	(
+	Node *node
+	)
+{
+	GP_WRAP_START;
+	{
+		return check_collation(node);
+	}
+	GP_WRAP_END;
+	return -1;
+}
+
 Node *
 gpdb::PnodeCoerceToCommonType
 	(

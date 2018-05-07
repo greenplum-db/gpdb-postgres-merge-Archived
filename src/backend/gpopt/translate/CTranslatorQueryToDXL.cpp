@@ -318,6 +318,14 @@ CTranslatorQueryToDXL::CheckUnsupportedNodeTypes
 	{
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, rgUnsupported[iUnsupported].m_wsz);
 	}
+
+	// GDPB_91_MERGE_FIXME: collation
+	INT iNonDefaultCollation = gpdb::ICheckCollation((Node *) pquery);
+
+	if (0 < iNonDefaultCollation)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Non-default collation"));
+	}
 }
 
 //---------------------------------------------------------------------------

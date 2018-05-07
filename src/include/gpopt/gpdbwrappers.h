@@ -593,6 +593,10 @@ namespace gpdb {
 	// the first one found, or -1 if there are none
 	int IFindNodes(Node *node, List *nodeTags);
 
+	// GDPB_91_MERGE_FIXME: collation
+	// look for nodes with non-default collation; returns 1 if any exist, -1 otherwise
+	int ICheckCollation(Node *node);
+
 	Node *PnodeCoerceToCommonType(ParseState *pstate, Node *pnode, Oid oidTargetType, const char *context);
 
 	// replace any polymorphic type with correct data type deduced from input arguments
