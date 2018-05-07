@@ -188,7 +188,8 @@ ExecHashJoin(HashJoinState *node)
 				hashtable = ExecHashTableCreate(hashNode,
 												node,
 												node->hj_HashOperators,
-												HJ_FILL_INNER(node),
+				/* GPDB_91_MERGE_FIXME: do we need to get rid of hs_keepnull? */
+												HJ_FILL_INNER(node) || hashNode->hs_keepnull,
 												PlanStateOperatorMemKB((PlanState *) hashNode));
 				node->hj_HashTable = hashtable;
 
