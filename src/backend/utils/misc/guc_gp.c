@@ -47,6 +47,7 @@
 #include "utils/resgroup.h"
 #include "utils/resource_manager.h"
 #include "utils/vmem_tracker.h"
+#include "utils/gdd.h"
 
 /*
  * These constants are copied from guc.c. They should not bitrot when we
@@ -3234,7 +3235,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			NULL
 		},
 		&memory_spill_ratio,
-		20, 0, INT_MAX,
+		20, 0, 100,
 		NULL, NULL, NULL
 	},
 
@@ -4201,6 +4202,16 @@ struct config_int ConfigureNamesInt_gp[] =
 		&gp_resgroup_memory_policy_auto_fixed_mem,
 		100, 50, INT_MAX,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"gp_global_deadlock_detector_period", PGC_SIGHUP, LOCK_MANAGEMENT,
+			gettext_noop("Sets the executing period of global deadlock detector backend."),
+			NULL,
+			GUC_UNIT_S
+		},
+		&gp_global_deadlock_detector_period,
+		120, 5, INT_MAX, NULL, NULL
 	},
 
 	{
