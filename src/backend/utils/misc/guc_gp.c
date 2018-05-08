@@ -79,9 +79,9 @@ static bool check_dispatch_log_stats(bool *newval, void **extra, GucSource sourc
 static bool check_gp_hashagg_default_nbatches(int *newval, void **extra, GucSource source);
 
 /* Helper function for guc setter */
-extern const char *gpvars_assign_gp_resqueue_priority_default_value(const char *newval,
-												 bool doit,
-								   GucSource source __attribute__((unused)));
+bool gpvars_check_gp_resqueue_priority_default_value(char **newval,
+													void **extra,
+													GucSource source);
 
 static bool check_gp_default_storage_options(char **newval, void **extra, GucSource source);
 static void assign_gp_default_storage_options(const char *newval, void *extra);
@@ -4726,7 +4726,7 @@ struct config_string ConfigureNamesString_gp[] =
 		},
 		&gp_resqueue_priority_default_value,
 		"MEDIUM",
-		NULL, gpvars_assign_gp_resqueue_priority_default_value, NULL
+		gpvars_check_gp_resqueue_priority_default_value, NULL, NULL
 	},
 
 	{
