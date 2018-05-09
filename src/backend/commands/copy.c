@@ -926,6 +926,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	TupleDesc	tupDesc;
 	List	   *options;
+	/* save relationOid for auto-stats */
+	Oid         relationOid = InvalidOid;
 
 	glob_cstate = NULL;
 	glob_copystmt = (CopyStmt *) stmt;
@@ -981,6 +983,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		/* Open and lock the relation, using the appropriate lock type. */
 		rel = heap_openrv(stmt->relation,
 						  (is_from ? RowExclusiveLock : AccessShareLock));
+
+		/* save relation oid for auto-stats call later */
+		relationOid = RelationGetRelid(rel);
 
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
@@ -1148,8 +1153,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		heap_close(rel, (is_from ? NoLock : AccessShareLock));
 
 	/* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
-	if (Gp_role == GP_ROLE_DISPATCH && is_from && rel)
-		auto_stats(AUTOSTATS_CMDTYPE_COPY, RelationGetRelid(rel), processed, false /* inFunction */);
+	if (Gp_role == GP_ROLE_DISPATCH && is_from)
+		auto_stats(AUTOSTATS_CMDTYPE_COPY, relationOid, processed, false /* inFunction */);
 
 	return processed;
 }
