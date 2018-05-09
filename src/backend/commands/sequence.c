@@ -486,6 +486,7 @@ gp_alter_sequence_internal(Oid relid, List *options)
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
 	List	   *owned_by;
+	bool        bSeqIsTemp = false;
 	int			numopts;
 	char	   *alter_subtype = "";		/* metadata tracking: kind of
 										   redundant to say "role" */
@@ -546,6 +547,8 @@ gp_alter_sequence_internal(Oid relid, List *options)
 	if (owned_by)
 		process_owned_by(seqrel, owned_by);
 
+	bSeqIsTemp = (seqrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP);
+
 	relation_close(seqrel, NoLock);
 
 	numopts = list_length(options);
@@ -557,8 +560,7 @@ gp_alter_sequence_internal(Oid relid, List *options)
 	{
 		alter_subtype = "0 OPTIONS";
 	}
-	else if (Gp_role == GP_ROLE_DISPATCH &&
-			 seqrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
+	else if (Gp_role == GP_ROLE_DISPATCH && !bSeqIsTemp)
 	{
 		ListCell		*option = list_head(options);
 		DefElem			*defel	= (DefElem *) lfirst(option);
@@ -573,8 +575,7 @@ gp_alter_sequence_internal(Oid relid, List *options)
 		alter_subtype = tempo;
 	}
 
-	else if (Gp_role == GP_ROLE_DISPATCH &&
-			 seqrel->rd_rel->relpersistence != RELPERSISTENCE_TEMP)
+	if (Gp_role == GP_ROLE_DISPATCH && !bSeqIsTemp)
 	{
 		/* MPP-6929: metadata tracking */
 		MetaTrackUpdObject(RelationRelationId,
