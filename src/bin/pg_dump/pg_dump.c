@@ -1994,6 +1994,15 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 	/* Skip FOREIGN TABLEs (no data to dump) */
 	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 		return;
+	/* Skip SEQUENCEs */
+	/*
+	 * Note in the future pg version, this branch is gone since
+	 * there is a new function dumpSequenceData() to dump sequence
+	 * data by calling sql pg_catalog.setval(); dumpSequence() will
+	 * not dump sequence data any more.
+	 */
+	if (tbinfo->relkind == RELKIND_SEQUENCE)
+		return;
 	/* Skip EXTERNAL TABLEs */
 	if (tbinfo->relstorage == RELSTORAGE_EXTERNAL)
 		return;
