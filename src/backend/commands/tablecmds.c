@@ -5178,22 +5178,22 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 		case AT_PartAddForSplit:		/* Add, as part of a Split */
 			ATPExecPartAdd(tab, rel, (AlterPartitionCmd *) cmd->def,
 						   cmd->subtype);
-            break;
+			break;
 		case AT_PartAlter:				/* Alter */
-            ATPExecPartAlter(wqueue, tab, rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			ATPExecPartAlter(wqueue, tab, rel, (AlterPartitionCmd *) cmd->def);
+			break;
 		case AT_PartDrop:				/* Drop */
-            ATPExecPartDrop(rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			ATPExecPartDrop(rel, (AlterPartitionCmd *) cmd->def);
+			break;
 		case AT_PartExchange:			/* Exchange */
-            ATPExecPartExchange(tab, rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			ATPExecPartExchange(tab, rel, (AlterPartitionCmd *) cmd->def);
+			break;
 		case AT_PartRename:				/* Rename */
-            ATPExecPartRename(rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			ATPExecPartRename(rel, (AlterPartitionCmd *) cmd->def);
+			break;
 		case AT_PartSetTemplate:		/* Set Subpartition Template */
 			ATPExecPartSetTemplate(tab, rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			break;
 		case AT_PartSplit:				/* Split */
 			/*
 			 * We perform heap_open and heap_close several times on
@@ -5201,12 +5201,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 			 * method. After the method returns, we expect to
 			 * reference a valid relcache object through rel.
 			 */
-            ATPExecPartSplit(&rel, (AlterPartitionCmd *) cmd->def);
+			ATPExecPartSplit(&rel, (AlterPartitionCmd *) cmd->def);
 			*rel_p = rel;
-            break;
+			break;
 		case AT_PartTruncate:			/* Truncate */
 			ATPExecPartTruncate(rel, (AlterPartitionCmd *) cmd->def);
-            break;
+			break;
 		case AT_PartAddInternal:
 			ATExecPartAddInternal(rel, cmd->def);
 			break;
@@ -5289,7 +5289,7 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 
 			indexIds = RelationGetIndexList(OldHeap);
 			hasIndexes = (indexIds != NIL);
-            list_free(indexIds);
+			list_free(indexIds);
 		}
 
 		/*
@@ -5345,7 +5345,7 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			Oid         OIDNewHeap;
 
 			/* Create transient table that will receive the modified data */
-            OIDNewHeap = make_new_heap(tab->relid, newTableSpace, hasIndexes);
+			OIDNewHeap = make_new_heap(tab->relid, newTableSpace, hasIndexes);
 
 			/*
 			 * Copy the heap data into the new table with the desired
@@ -12662,12 +12662,12 @@ reloptions_list(Oid relid)
 	tuple = SearchSysCache1(RELOID,
 							ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
-        elog(ERROR, "cache lookup failed for relation %u", relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 
-    reloptions = SysCacheGetAttr(RELOID, tuple,
+	reloptions = SysCacheGetAttr(RELOID, tuple,
 								 Anum_pg_class_reloptions,
 								 &isNull);
-    if (!isNull)
+	if (!isNull)
 		opts = untransformRelOptions(reloptions);
 
 	ReleaseSysCache(tuple);
@@ -13113,7 +13113,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List
 static char *
 make_distro_str(List *lwith, DistributedBy *ldistro)
 {
-    char       *distro_str = "SET WITH DISTRIBUTED BY";
+	char       *distro_str = "SET WITH DISTRIBUTED BY";
 
 	if (lwith && ldistro)
 		distro_str = "SET WITH DISTRIBUTED BY";
@@ -15179,8 +15179,8 @@ ATPExecPartSetTemplate(AlteredTableInfo *tab,
 		return;
 
 	/* set template for top level table */
-    if (pid && (pid->idtype != AT_AP_IDName))
-    {
+	if (pid && (pid->idtype != AT_AP_IDName))
+	{
 		Assert((pid->idtype == AT_AP_IDRule) && IsA(pid->partiddef, List));
 
 		/* MPP-5941: work correctly with many levels of templates */
@@ -15371,13 +15371,13 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 	TupleTableSlot *slotT = MakeSingleTupleTableSlot(tupdescT);
 	HeapScanDesc heapscan = NULL;
 	AppendOnlyScanDesc aoscan = NULL;
-    AOCSScanDesc aocsscan = NULL;
-    bool *aocsproj = NULL;
+	AOCSScanDesc aocsscan = NULL;
+	bool *aocsproj = NULL;
 	MemoryContext oldCxt;
 	AppendOnlyInsertDesc aoinsertdesc_a = NULL;
 	AppendOnlyInsertDesc aoinsertdesc_b = NULL;
-    AOCSInsertDesc aocsinsertdesc_a = NULL;
-    AOCSInsertDesc aocsinsertdesc_b = NULL;
+	AOCSInsertDesc aocsinsertdesc_a = NULL;
+	AOCSInsertDesc aocsinsertdesc_b = NULL;
 	ExprState *achk = NULL;
 	ExprState *bchk = NULL;
 
@@ -16005,7 +16005,7 @@ ATPExecPartSplit(Relation *rel,
 		/* 1) Create temp table */
 		rv = makeRangeVar(nspname, relname, -1);
 		inh->relation = copyObject(rv);
-        inh->options = CREATE_TABLE_LIKE_DEFAULTS
+		inh->options = CREATE_TABLE_LIKE_DEFAULTS
 			| CREATE_TABLE_LIKE_CONSTRAINTS
 			| CREATE_TABLE_LIKE_INDEXES;
 		ct->tableElts = list_make1(inh);
