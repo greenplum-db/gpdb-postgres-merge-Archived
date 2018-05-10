@@ -308,7 +308,7 @@ GlobalDeadLockDetectorMain(int argc, char *argv[])
 	MyProcPort = (Port *) calloc(1, sizeof(Port));
 	if (MyProcPort == NULL)
 		elog(FATAL, "Lack of memory for MyProcPort allocation in global deadlock detector backend.");
-	MyProcPort->user_name = strdup(ddtUser);
+	MyProcPort->user_name = MemoryContextStrdup(TopMemoryContext, ddtUser);
 	MyProcPort->database_name = knownDatabase;
 
 	/* close the transaction we started above */
