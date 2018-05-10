@@ -14234,7 +14234,6 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation *rel,
 	AlterPartitionCmd 	*pc2		   = NULL;
 	bool				 bPartitionCmd = true;	/* true if a "partition" cmd */
 	Relation			 rel2		   = NULL;
-	Relation			*rel_p		   = NULL;
 	bool				prepCmd		= false;	/* true if the sub command of ALTER PARTITION is a SPLIT PARTITION */
 
 	while (1)
@@ -14397,14 +14396,9 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation *rel,
 		bPartitionCmd = false;
 	}
 
-	if (rel2 == NULL)
-		rel_p = rel;
-	else
-		rel_p = &rel2;
-
 	/* execute the command */
 	/* GPDB_91_MERGE_FIXME: is this lock mode right? */
-	ATExecCmd(wqueue, tab, rel_p, atc, AccessExclusiveLock);
+	ATExecCmd(wqueue, tab, (rel2 ? &rel2 : rel), atc, AccessExclusiveLock);
 
 	if (!bPartitionCmd)
 	{
