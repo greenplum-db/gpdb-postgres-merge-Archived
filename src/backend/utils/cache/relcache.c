@@ -844,13 +844,10 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	 */
 	relid = HeapTupleGetOid(pg_class_tuple);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
-	if (relid != targetRelId)
-	{
-		elog(PANIC, "relid %d != targetRelId %d", relid, targetRelId);
-	}
+	Assert(relid == targetRelId);
 
 	/*
-	 * Allocate storage for the relation descriptor, and copy pg_class_tuple
+	 * allocate storage for the relation descriptor, and copy pg_class_tuple
 	 * to relation->rd_rel and new fields into relation->rd_newfields.
 	 */
 	relation = AllocateRelationDesc(relp);
