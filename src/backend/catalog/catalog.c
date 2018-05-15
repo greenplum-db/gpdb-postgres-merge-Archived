@@ -863,6 +863,44 @@ GetNewSequenceRelationOid(Relation relation)
 	return newOid;
 }
 
+static bool
+GpCheckRelFileCollision(RelFileNodeBackend rnode)
+{
+	char	   *rpath;
+	int			fd;
+	bool		collides;
+
+	/* Check for existing file of same name */
+	rpath = relpath(rnode, MAIN_FORKNUM);
+	fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
+
+	if (fd >= 0)
+	{
+		/* definite collision */
+		gp_retry_close(fd);
+		collides = true;
+	}
+	else
+	{
+		/*
+		 * Here we have a little bit of a dilemma: if errno is something
+		 * other than ENOENT, should we declare a collision and loop? In
+		 * particular one might think this advisable for, say, EPERM.
+		 * However there really shouldn't be any unreadable files in a
+		 * tablespace directory, and if the EPERM is actually complaining
+		 * that we can't read the directory itself, we'd be in an infinite
+		 * loop.  In practice it seems best to go ahead regardless of the
+		 * errno.  If there is a colliding file we will get an smgr
+		 * failure when we attempt to create the new relation file.
+		 */
+		collides = false;
+	}
+
+	pfree(rpath);
+
+	return collides;
+}
+
 /*
  * GetNewRelFileNode
  *		Generate a new relfilenode number that is unique within the given
@@ -885,8 +923,6 @@ Oid
 GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 {
 	RelFileNodeBackend rnode;
-	char	   *rpath;
-	int			fd;
 	bool		collides = true;
 	BackendId	backend;
 
@@ -925,33 +961,37 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 		if (!IsOidAcceptable(rnode.node.relNode))
 			continue;
 
-		/* Check for existing file of same name */
-		rpath = relpath(rnode, MAIN_FORKNUM);
-		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
+		collides = GpCheckRelFileCollision(rnode);
 
-		if (fd >= 0)
-		{
-			/* definite collision */
-			gp_retry_close(fd);
-			collides = true;
-		}
-		else
+		if (!collides && rnode.node.spcNode != GLOBALTABLESPACE_OID)
 		{
 			/*
-			 * Here we have a little bit of a dilemma: if errno is something
-			 * other than ENOENT, should we declare a collision and loop? In
-			 * particular one might think this advisable for, say, EPERM.
-			 * However there really shouldn't be any unreadable files in a
-			 * tablespace directory, and if the EPERM is actually complaining
-			 * that we can't read the directory itself, we'd be in an infinite
-			 * loop.  In practice it seems best to go ahead regardless of the
-			 * errno.  If there is a colliding file we will get an smgr
-			 * failure when we attempt to create the new relation file.
+			 * GPDB_91_MERGE_FIXME: check again for a collision with a temp
+			 * table (if this is a normal relation) or a normal table (if this
+			 * is a temp relation).
+			 *
+			 * The shared buffer manager currently assumes that relfilenodes of
+			 * relations stored in shared buffers can't conflict, which is
+			 * trivially true in upstream because temp tables don't use shared
+			 * buffers at all. We have to make this additional check to make
+			 * sure of that.
 			 */
-			collides = false;
-		}
+			rnode.backend = (backend == InvalidBackendId) ? TempRelBackendId
+														  : InvalidBackendId;
+			collides = GpCheckRelFileCollision(rnode);
 
-		pfree(rpath);
+			/*
+			 * GPDB_91_MERGE_FIXME: remove this error once we're sure it's the
+			 * culprit for disappearing catalog entries.
+			 */
+			if (collides)
+			{
+				elog(ERROR, "%s relation with relfilenode %d has collided with %s relation",
+					 (backend == InvalidBackendId) ? "permanent" : "temporary",
+					 rnode.node.relNode,
+					 (backend == InvalidBackendId) ? "temporary" : "permanent");
+			}
+		}
 	} while (collides);
 
 	elog(DEBUG1, "Calling GetNewRelFileNode returns new relfilenode = %d", rnode.node.relNode);
