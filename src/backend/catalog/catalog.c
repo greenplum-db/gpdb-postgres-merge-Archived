@@ -979,18 +979,6 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 			rnode.backend = (backend == InvalidBackendId) ? TempRelBackendId
 														  : InvalidBackendId;
 			collides = GpCheckRelFileCollision(rnode);
-
-			/*
-			 * GPDB_91_MERGE_FIXME: remove this error once we're sure it's the
-			 * culprit for disappearing catalog entries.
-			 */
-			if (collides)
-			{
-				elog(ERROR, "%s relation with relfilenode %d has collided with %s relation",
-					 (backend == InvalidBackendId) ? "permanent" : "temporary",
-					 rnode.node.relNode,
-					 (backend == InvalidBackendId) ? "temporary" : "permanent");
-			}
 		}
 	} while (collides);
 
