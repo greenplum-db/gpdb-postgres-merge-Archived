@@ -78,6 +78,9 @@ smgropen(RelFileNode rnode, BackendId backend)
 	SMgrRelation reln;
 	bool		found;
 
+	/* GPDB: don't support MyBackendId as a possible backend. */
+	Assert(backend == InvalidBackendId || backend == TempRelBackendId);
+
 	if (SMgrRelationHash == NULL)
 	{
 		/* First time through: initialize the hash table */
