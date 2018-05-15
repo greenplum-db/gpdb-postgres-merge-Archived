@@ -1025,7 +1025,12 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 					 errmsg("COPY single row error handling only available for distributed user tables")));
 
 		/* check read-only transaction */
-		if (XactReadOnly && rel->rd_backend != MyBackendId)
+		/*
+		 * GPDB_91_MERGE_FIXME: is it possible to get to this point in the code
+		 * with a temporary relation that belongs to another session? If so, the
+		 * following code doesn't function as expected.
+		 */
+		if (XactReadOnly && rel->rd_backend != TempRelBackendId)
 			PreventCommandIfReadOnly("COPY FROM");
 
 		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,

@@ -1,0 +1,25 @@
+--
+-- Transactions (GPDB-specific tests)
+--
+CREATE TEMPORARY TABLE temptest (a int);
+INSERT INTO temptest VALUES (generate_series(1, 10));
+SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+-- Make sure COPY works with temp tables during a READ ONLY transaction.
+COPY temptest TO '@abs_builddir@/results/xacttemp.data';
+DELETE FROM temptest;
+COPY temptest FROM '@abs_builddir@/results/xacttemp.data';
+SELECT * from temptest;
+ a  
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+
