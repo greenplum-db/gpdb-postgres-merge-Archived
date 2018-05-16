@@ -62,6 +62,12 @@ typedef bits16 BufFlags;
  * relation is visible yet (its xact may have started before the xact that
  * created the rel).  The storage manager must be able to cope anyway.
  *
+ * GPDB_91_MERGE_FIXME: The argument in the previous note doesn't quite hold in
+ * GPDB.  Temp tables in GPDB use shared buffers.  But there is no way to
+ * distinguish a temp relation's buffers from a non-temp relation's buffers
+ * from buffer tag.  The flag BM_TEMP from buffer header is used to identify a
+ * temp relation's bufffers.
+ *
  * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
  * to be fixed to zero them, since this struct is used as a hash key.
  */
