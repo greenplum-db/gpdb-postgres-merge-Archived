@@ -300,6 +300,7 @@ extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						 Datum *values, bool *nulls, Oid *tupleOid);
 extern bool NextCopyFromRawFields(CopyState cstate,
 					  char ***fields, int *nfields);
+extern void CopyFromErrorCallback(void *arg);
 
 extern DestReceiver *CreateCopyDestReceiver(void);
 

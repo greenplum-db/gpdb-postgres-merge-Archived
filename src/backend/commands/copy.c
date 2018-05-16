@@ -216,7 +216,6 @@ static bool NextCopyFromX(CopyState cstate, ExprContext *econtext,
 static void HandleCopyError(CopyState cstate);
 static void HandleQDErrorFrame(CopyState cstate);
 
-static void CopyFromErrorCallback(void *arg);
 static void CopyInitPartitioningState(EState *estate);
 static void CopyInitDataParser(CopyState cstate);
 
