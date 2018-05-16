@@ -867,19 +867,12 @@ static bool
 GpCheckRelFileCollision(RelFileNodeBackend rnode)
 {
 	char	   *rpath;
-	int			fd;
 	bool		collides;
 
 	/* Check for existing file of same name */
 	rpath = relpath(rnode, MAIN_FORKNUM);
-	fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
-
-	if (fd >= 0)
-	{
-		/* definite collision */
-		gp_retry_close(fd);
+	if (access(rpath, F_OK) == 0)
 		collides = true;
-	}
 	else
 	{
 		/*
