@@ -261,6 +261,9 @@ CREATE SCHEMA foreign_schema;
 CREATE SERVER sc FOREIGN DATA WRAPPER dummy;
 CREATE FOREIGN TABLE ft1 ();                                    -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
+-- GPDB_91_MERGE_FIXME: forien tables are disabled until foreign data
+-- wrappers are correctly implemented in GPDB.
+--start_ignore
 CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
 CREATE FOREIGN TABLE ft1 () SERVER sc WITH OIDS;                -- ERROR
 CREATE FOREIGN TABLE ft1 (
@@ -435,6 +438,7 @@ RESET ROLE;
 DROP FOREIGN TABLE no_table;                                    -- ERROR
 DROP FOREIGN TABLE IF EXISTS no_table;
 DROP FOREIGN TABLE foreign_schema.foreign_table_1;
+--end_ignore
 
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;

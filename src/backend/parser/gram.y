@@ -6202,6 +6202,17 @@ CreateForeignTableStmt:
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
+					/*
+					 * GPDB_91_MERGE_FIXME: Although CERATE FOREIGN TABLE
+					 * command currently works, select on a foreign table fails
+					 * with assertion failure
+					 * (!cdbpathlocus_is_valid(new_path->locus)).  Let's
+					 * properly reconcile foreign data wrappers and support
+					 * foreign tables at some point.
+					 */
+					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+									errmsg("foreign tables are not yet "
+										   "supported in Greenplum")));
 					$4->relpersistence = RELPERSISTENCE_PERMANENT;
 					n->base.relation = $4;
 					n->base.tableElts = $5;
@@ -6217,6 +6228,9 @@ CreateForeignTableStmt:
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
+					ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
+									errmsg("foreign tables are not yet "
+										   "supported in Greenplum")));
 					$7->relpersistence = RELPERSISTENCE_PERMANENT;
 					n->base.relation = $7;
 					n->base.tableElts = $8;
