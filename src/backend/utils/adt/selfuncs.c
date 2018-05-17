@@ -4644,6 +4644,20 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
 						 ATTSTATSSLOT_VALUES))
 	{
+		/*
+		 * GPDB: GPDB allows users to modify pg_statistics.stavalues with
+		 * UPDATEs (PostgreSQL complaints about the table row type not
+		 * matching). So just in case that the type of the values in
+		 * pg_statistics isn't what we'd expect, give an error rather than
+		 * crash. That shouldn't happen, but better safe than sorry.
+		 *
+		 * GPDB_91_MERGE_FIXME: this is the second place we've added this. Does
+		 * it need to be pulled into get_attstatsslot() itself?
+		 */
+		if (!IsBinaryCoercible(sslot.valuetype, vardata->atttype))
+			elog(ERROR, "invalid MCV array of type %s, for attribute of type %s",
+				 format_type_be(sslot.valuetype), format_type_be(vardata->atttype));
+
 		if (sslot.nvalues > 0)
 		{
 			tmin = datumCopy(sslot.values[0], typByVal, typLen);
@@ -4677,11 +4691,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		fmgr_info(get_opcode(sortop), &opproc);
 
 		/*
-		 * GPDB: Some extra paranoia. GPDB allows users to modify
-		 * pg_statistics.stavalues with UPDATEs (PostgreSQL complaints about
-		 * the table row type not matching). So just in case that the type of
-		 * the values in pg_statistics isn't what we'd expect, give an error
-		 * rather than crash. That shouldn't happen, but better safe than sorry.
+		 * GPDB: See the identical check, above, for histogram data.
 		 */
 		if (!IsBinaryCoercible(sslot.valuetype, vardata->atttype))
 			elog(ERROR, "invalid MCV array of type %s, for attribute of type %s",
