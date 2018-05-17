@@ -2717,6 +2717,22 @@ RelationBuildLocalRelation(const char *relname,
 
 	rel->rd_rel->reltablespace = reltablespace;
 
+	/*
+	 * GPDB_91_MERGE_FIXME: there is a potential collision here between
+	 * temporary and permanent relations, if the relid selected for use is also
+	 * an ID that can be returned by GetNewRelFileNode. If two backends select
+	 * the same ID concurrently, there will be nothing preventing them from
+	 * creating their own relfiles on disk, since one will have the temporary
+	 * 't_' prefix and the other will not. The BufferTags for the two separate
+	 * relations will be identical, and writes to one will effectively corrupt
+	 * the other.
+	 *
+	 * Our current front-runner for a fix is to get rid of the TempRelBackendId,
+	 * revert to the upstream method for identifying temporary relations that
+	 * belong to a "session", and add that same session identifier to the
+	 * BufferTag so that it can distinguish between temp and permanent relations
+	 * that share a relnode number.
+	 */
 	if (mapped_relation)
 	{
 		rel->rd_rel->relfilenode = InvalidOid;
