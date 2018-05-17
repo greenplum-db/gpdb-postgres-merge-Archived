@@ -6975,7 +6975,7 @@ StartupXLOG(void)
 	 * Hence it's okay to do the following only once on the segments as there
 	 * will be only one checkpoint to be analyzed.
 	 */
-	if (GpIdentity.segindex != MASTER_CONTENT_ID)
+	if (!IS_QUERY_DISPATCHER())
 	{
 		CheckpointExtendedRecord ckptExtended;
 		UnpackCheckPointRecord(record, &ckptExtended);
@@ -7792,7 +7792,7 @@ StartupXLOG(void)
 	 * apply to a mirror (standby of a GPDB segment) because it is
 	 * managed by FTS.
 	 */
-	bool needToPromoteCatalog = (GpIdentity.segindex == MASTER_CONTENT_ID &&
+	bool needToPromoteCatalog = (IS_QUERY_DISPATCHER() &&
 								 ControlFile->state == DB_IN_STANDBY_PROMOTED);
 
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);

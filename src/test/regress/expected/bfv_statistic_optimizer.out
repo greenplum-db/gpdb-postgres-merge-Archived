@@ -57,6 +57,9 @@ set allow_system_table_mods=DML;
 update pg_statistic set stavalues1='{6,3,1,5,4,2}'::int[] where starelid='bfv_statistics_foo2'::regclass;
 -- excercise the translator
 explain select a from bfv_statistics_foo2 where a > 1 order by a;
+NOTICE:  The number of most common values and frequencies do not match on column a of table bfv_statistics_foo2.
+NOTICE:  One or more columns in the following table(s) do not have statistics: bfv_statistics_foo2
+HINT:  For non-partitioned tables, run analyze <table_name>(<column_list>). For partitioned tables, run analyze rootpartition <table_name>(<column_list>). See log for columns missing statistics.
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=8 width=4)
@@ -440,35 +443,20 @@ INSERT INTO test_broken_stats VALUES(1, 'abc'), (2, 'cde'), (3, 'efg'), (3, 'efg
 ANALYZE test_broken_stats;
 SET allow_system_table_mods='DML';
 -- Simulate broken stats by changing the data type of MCV slot to a different type than in pg_attribute 
-UPDATE pg_statistic SET stavalues1='{1,2,3}'::int[] WHERE starelid ='bfv_statistic.test_broken_stats'::regclass AND staattnum=2;
--- GPDB_91_MERGE_FIXME: Use FULL JOIN here to avoid the check for type
--- of pg_statistics.stavalues when scanning selectivity of merge join.
--- As pg_statistics.stavalues has been updated with a different type (allowed
--- in GPDB but disallowed in Postgres), the check for type will error out.
--- This issue also exists in GPDB if enable_mergejoin=on (off by default).
--- GUC enable_mergejoin works differently in GPDB and Postgres. When it is
--- set to off, GPDB will not consider merge join during planning, so GPDB
--- will not encounter the type check error.
--- In Postgres, when enable_mergejoin is set off, merge join is still considered
--- by planner, but with a huge constant cost.
-SELECT * FROM test_broken_stats t1 FULL JOIN good_tab t2 ON t1.b = t2.b;
- a |  b  | a | b 
----+-----+---+---
- 2 | cde |   | 
- 2 | cde |   | 
- 1 | abc |   | 
- 1 | abc |   | 
- 3 | efg |   | 
- 3 | efg |   | 
- 3 | efg |   | 
-(7 rows)
-
+-- Broken MCVs
+UPDATE pg_statistic SET stavalues1='{1,2,3}'::int[] WHERE starelid ='test_broken_stats'::regclass AND staattnum=2;
+-- Broken histogram
+UPDATE pg_statistic SET stakind2=2 WHERE starelid ='test_broken_stats'::regclass AND staattnum=2;
+UPDATE pg_statistic SET stavalues2='{1,2,3}'::int[] WHERE starelid ='test_broken_stats'::regclass AND staattnum=2 and stakind2=2;
 -- start_matchsubs
 -- m/ERROR:  invalid MCV array of type integer, for attribute of type text \(selfuncs\.c\:\d+\)/
 -- s/\(selfuncs\.c:\d+\)//
 -- end_matchsubs
--- expect to error out with type check error.
 SELECT * FROM test_broken_stats t1, good_tab t2 WHERE t1.b = t2.b;
+NOTICE:  Type mismatch between attribute b of table test_broken_stats having type 25 and statistic having type 23, please ANALYZE the table again
+NOTICE:  Type mismatch between attribute b of table test_broken_stats having type 25 and statistic having type 23, please ANALYZE the table again
+NOTICE:  One or more columns in the following table(s) do not have statistics: test_broken_stats
+HINT:  For non-partitioned tables, run analyze <table_name>(<column_list>). For partitioned tables, run analyze rootpartition <table_name>(<column_list>). See log for columns missing statistics.
  a | b | a | b 
 ---+---+---+---
 (0 rows)

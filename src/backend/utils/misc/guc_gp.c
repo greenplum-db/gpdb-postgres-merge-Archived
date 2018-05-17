@@ -3724,17 +3724,6 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"gp_segment", PGC_BACKEND, GP_WORKER_IDENTITY,
-			gettext_noop("Segment id of the segment db which is local to this worker process."),
-			gettext_noop("-1 for a session's entry process (qDisp) or a worker on the entry db."),
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&Gp_segment,
-		-999, INT_MIN, INT_MAX,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_qd_port", PGC_BACKEND, GP_WORKER_IDENTITY,
 			gettext_noop("Shows the Master Postmaster port."),
 			gettext_noop("0 for a session's entry process (qDisp)"),
@@ -5173,6 +5162,15 @@ struct config_enum ConfigureNamesEnum_gp[] =
 		&gp_resqueue_memory_policy,
 		RESMANAGER_MEMORY_POLICY_NONE, gp_resqueue_memory_policies,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"gp_resgroup_memory_policy", PGC_SUSET, RESOURCES_MGM,
+			gettext_noop("Sets the policy for memory allocation of queries."),
+			gettext_noop("Valid values are AUTO, EAGER_FREE.")
+		},
+		&gp_resgroup_memory_policy,
+		RESMANAGER_MEMORY_POLICY_EAGER_FREE, gp_resqueue_memory_policies, NULL, NULL
 	},
 
 	{

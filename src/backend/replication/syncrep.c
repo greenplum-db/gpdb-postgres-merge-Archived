@@ -145,7 +145,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
 	Assert(MyProc->syncRepState == SYNC_REP_NOT_WAITING);
 
-	if (GpIdentity.segindex == MASTER_CONTENT_ID)
+	if (IS_QUERY_DISPATCHER())
 	{
 		/*
 		 * There could be a better way to figure out if there is any active
@@ -190,7 +190,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * condition but we'll be fetching that cache line anyway so its likely to
 	 * be a low cost check.
 	 */
-	if (((GpIdentity.segindex != MASTER_CONTENT_ID) && !WalSndCtl->sync_standbys_defined) ||
+	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
 		XLByteLE(XactCommitLSN, WalSndCtl->lsn[mode]))
 	{
 		elogif(debug_walrepl_syncrep, LOG,

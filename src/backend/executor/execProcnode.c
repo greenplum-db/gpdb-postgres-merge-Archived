@@ -246,7 +246,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	 * gathering stats from all slices.
 	 */
 	bool isAlienPlanNode = !((localMotionId == parentMotionId) || (parentMotionId == UNSET_SLICE_ID) ||
-			(nodeTag(node) == T_Motion && ((Motion*)node)->motionID == localMotionId) || Gp_segment == -1);
+							 (nodeTag(node) == T_Motion && ((Motion*)node)->motionID == localMotionId) || IS_QUERY_DISPATCHER());
 
 	/* We cannot have alien nodes if we are eliminating aliens */
 	AssertImply(estate->eliminateAliens, !isAlienPlanNode);
@@ -894,7 +894,7 @@ ExecProcNode(PlanState *node)
 		return NULL;
 
 	if (node->plan)
-		TRACE_POSTGRESQL_EXECPROCNODE_ENTER(Gp_segment, currentSliceId, nodeTag(node), node->plan->plan_node_id);
+		TRACE_POSTGRESQL_EXECPROCNODE_ENTER(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 
 	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node);		/* let ReScan handle this */
@@ -1117,7 +1117,7 @@ ExecProcNode(PlanState *node)
 		INSTR_STOP_NODE(node->instrument, TupIsNull(result) ? 0 : 1);
 
 	if (node->plan)
-		TRACE_POSTGRESQL_EXECPROCNODE_EXIT(Gp_segment, currentSliceId, nodeTag(node), node->plan->plan_node_id);
+		TRACE_POSTGRESQL_EXECPROCNODE_EXIT(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 
 	/*
 	 * Eager free and squelch the subplans, unless it's a nested subplan.
@@ -1173,7 +1173,7 @@ MultiExecProcNode(PlanState *node)
 
 	START_MEMORY_ACCOUNT(node->plan->memoryAccountId);
 {
-	TRACE_POSTGRESQL_EXECPROCNODE_ENTER(Gp_segment, currentSliceId, nodeTag(node), node->plan->plan_node_id);
+	TRACE_POSTGRESQL_EXECPROCNODE_ENTER(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 
 	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node);		/* let ReScan handle this */
@@ -1210,7 +1210,7 @@ MultiExecProcNode(PlanState *node)
 			break;
 	}
 
-	TRACE_POSTGRESQL_EXECPROCNODE_EXIT(Gp_segment, currentSliceId, nodeTag(node), node->plan->plan_node_id);
+	TRACE_POSTGRESQL_EXECPROCNODE_EXIT(GpIdentity.segindex, currentSliceId, nodeTag(node), node->plan->plan_node_id);
 }
 	END_MEMORY_ACCOUNT();
 	return result;

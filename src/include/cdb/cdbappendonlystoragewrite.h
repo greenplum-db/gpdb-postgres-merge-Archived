@@ -175,11 +175,11 @@ typedef struct AppendOnlyStorageWrite
 } AppendOnlyStorageWrite;
 
 extern void AppendOnlyStorageWrite_Init(AppendOnlyStorageWrite *storageWrite,
-							MemoryContext memoryContext,
-							int32 maxBufferLen,
-							char *relationName,
-							char *title,
-							AppendOnlyStorageAttributes *storageAttributes);
+										MemoryContext memoryContext,
+										int32 maxBufferLen,
+										char *relationName,
+										char *title,
+										AppendOnlyStorageAttributes *storageAttributes);
 extern void AppendOnlyStorageWrite_FinishSession(AppendOnlyStorageWrite *storageWrite);
 
 extern void AppendOnlyStorageWrite_TransactionCreateFile(AppendOnlyStorageWrite *storageWrite,

@@ -166,7 +166,7 @@ open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc,
 										blksz,
 										attr,
 										RelationGetRelationName(rel),
-										 /* title */ titleBuf.data);
+										/* title */ titleBuf.data);
 
 	}
 }

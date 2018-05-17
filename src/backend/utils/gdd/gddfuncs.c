@@ -37,7 +37,7 @@ struct GddWaitStatusCtx
 
 static bool isGranted(PROCLOCK *proclock);
 static bool lockEqual(LOCK *lock1, LOCK *lock2);
-static bool lockIsPersistent(LOCK *lock);
+static bool lockIsHoldTillEndXact(LOCK *lock);
 
 static bool
 isGranted(PROCLOCK *proclock)
@@ -55,11 +55,11 @@ lockEqual(LOCK *lock1, LOCK *lock2)
 }
 
 static bool
-lockIsPersistent(LOCK *lock)
+lockIsHoldTillEndXact(LOCK *lock)
 {
 	LOCKTAG		*tag = &lock->tag;
 
-	if (lock->persistent)
+	if (lock->holdTillEndXact)
 		return true;
 
 	if (tag->locktag_type == LOCKTAG_TRANSACTION)
@@ -107,7 +107,7 @@ pg_dist_wait_status(PG_FUNCTION_ARGS)
 						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "holder_dxid",
 						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "persistent",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "holdTillEndXact",
 						   BOOLOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -258,10 +258,10 @@ pg_dist_wait_status(PG_FUNCTION_ARGS)
 				h_dxid = h_proc->localDistribXactData.distribXid;
 			}
 
-			values[0] = Int32GetDatum(Gp_segment);
+			values[0] = Int32GetDatum(GpIdentity.segindex);
 			values[1] = TransactionIdGetDatum(w_dxid);
 			values[2] = TransactionIdGetDatum(h_dxid);
-			values[3] = BoolGetDatum(lockIsPersistent(w_lock));
+			values[3] = BoolGetDatum(lockIsHoldTillEndXact(w_lock));
 
 			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 			result = HeapTupleGetDatum(tuple);
