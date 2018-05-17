@@ -4655,7 +4655,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 		 * it need to be pulled into get_attstatsslot() itself?
 		 */
 		if (!IsBinaryCoercible(sslot.valuetype, vardata->atttype))
-			elog(ERROR, "invalid MCV array of type %s, for attribute of type %s",
+			elog(ERROR, "invalid histogram of type %s, for attribute of type %s",
 				 format_type_be(sslot.valuetype), format_type_be(vardata->atttype));
 
 		if (sslot.nvalues > 0)
