@@ -3774,7 +3774,7 @@ CopyFrom(CopyState cstate)
 	 */
 	if (cstate->dispatch_mode == COPY_DISPATCH)
 	{
-		int			total_completed_from_qes;
+		int64			total_completed_from_qes;
 		int			total_rejected_from_qes;
 
 		total_rejected_from_qes = cdbCopyEndAndFetchRejectNum(cdbCopy, &total_completed_from_qes, NULL);

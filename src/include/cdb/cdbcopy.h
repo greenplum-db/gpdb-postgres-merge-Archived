@@ -70,6 +70,10 @@ extern void cdbCopySendData(CdbCopy *c, int target_seg, const char *buffer, int 
 extern bool cdbCopyGetData(CdbCopy *c, bool cancel, uint64 *rows_processed);
 extern int cdbCopyEnd(CdbCopy *c);
 extern int cdbCopyAbort(CdbCopy *c);
-extern int cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed, char *abort_msg);
+/*
+ * GPDB_91_MERGE_FIXME: let's consistently use uint64 as type for counting rows
+ * of any kind.
+ */
+extern int cdbCopyEndAndFetchRejectNum(CdbCopy *c, int64 *total_rows_completed, char *abort_msg);
 
 #endif   /* CDBCOPY_H */

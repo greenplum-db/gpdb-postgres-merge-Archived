@@ -281,7 +281,7 @@ ReportSrehResults(CdbSreh *cdbsreh, int total_rejected)
 }
 
 static void
-sendnumrows_internal(int numrejected, int numcompleted)
+sendnumrows_internal(int numrejected, int64 numcompleted)
 {
 	StringInfoData buf;
 
@@ -292,7 +292,7 @@ sendnumrows_internal(int numrejected, int numcompleted)
 	pq_sendint(&buf, numrejected, 4);
 	if (numcompleted > 0)		/* optional send completed num for COPY FROM
 								 * ON SEGMENT */
-		pq_sendint(&buf, numcompleted, 4);
+		pq_sendint64(&buf, numcompleted);
 	pq_endmessage(&buf);
 }
 
@@ -315,7 +315,7 @@ SendNumRowsRejected(int numrejected)
  * of rows that were rejected and completed in this last data load
  */
 void
-SendNumRows(int numrejected, int numcompleted)
+SendNumRows(int numrejected, int64 numcompleted)
 {
 	sendnumrows_internal(numrejected, numcompleted);
 }

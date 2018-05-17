@@ -390,7 +390,7 @@ processCopyEndResults(CdbCopy *c,
 					  bool *err_header,
 					  int *failed_count,
 					  int *total_rows_rejected,
-					  int *total_rows_completed)
+					  int64 *total_rows_completed)
 {
 	SegmentDatabaseDescriptor *q;
 	int			seg;
@@ -619,9 +619,12 @@ cdbCopyAbort(CdbCopy *c)
 /*
  * End the copy command on all segment databases,
  * and fetch the total number of rows completed by all QEs
+ * 
+ * GPDB_91_MERGE_FIXME: we allow % value to be specified as segment reject
+ * limit, however, the total rejected rows is not allowed to be > INT_MAX.
  */
 int
-cdbCopyEndAndFetchRejectNum(CdbCopy *c, int *total_rows_completed, char *abort_msg)
+cdbCopyEndAndFetchRejectNum(CdbCopy *c, int64 *total_rows_completed, char *abort_msg)
 {
 	SegmentDatabaseDescriptor *q;
 	SegmentDatabaseDescriptor **failedSegDBs;
