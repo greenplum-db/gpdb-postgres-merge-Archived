@@ -24,11 +24,15 @@
 #include <signal.h>
 
 #include "access/xlog_internal.h"
+#include "postmaster/startup.h"
 #include "replication/walreceiver.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
+<<<<<<< HEAD
 #include "utils/guc.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 WalRcvData *WalRcv = NULL;
 
@@ -279,7 +283,33 @@ GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart)
 int
 GetReplicationApplyDelay(void)
 {
+<<<<<<< HEAD
 	return 0;
+=======
+	/* use volatile pointer to prevent code rearrangement */
+	volatile WalRcvData *walrcv = WalRcv;
+
+	XLogRecPtr	receivePtr;
+	XLogRecPtr	replayPtr;
+
+	long		secs;
+	int			usecs;
+
+	SpinLockAcquire(&walrcv->mutex);
+	receivePtr = walrcv->receivedUpto;
+	SpinLockRelease(&walrcv->mutex);
+
+	replayPtr = GetXLogReplayRecPtr(NULL);
+
+	if (XLByteLE(receivePtr, replayPtr))
+		return 0;
+
+	TimestampDifference(GetCurrentChunkReplayStartTime(),
+						GetCurrentTimestamp(),
+						&secs, &usecs);
+
+	return (((int) secs * 1000) + (usecs / 1000));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*

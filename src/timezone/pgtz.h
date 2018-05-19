@@ -6,7 +6,11 @@
  * Note: this file contains only definitions that are private to the
  * timezone library.  Public definitions are in pgtime.h.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * IDENTIFICATION
  *	  src/timezone/pgtz.h

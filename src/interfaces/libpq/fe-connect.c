@@ -3,7 +3,10 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -282,6 +285,9 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
 		"SSL-Compression", "", 1,
 	offsetof(struct pg_conn, sslcompression)},
+
+	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
+	"SSL-Compression", "", 1},
 
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 		"SSL-Client-Cert", "", 64,
@@ -722,9 +728,69 @@ PQconnectStart(const char *conninfo)
 static bool
 fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
+<<<<<<< HEAD
 	const internalPQconninfoOption *option;
 
 	for (option = PQconninfoOptions; option->keyword; option++)
+=======
+	const char *tmp;
+
+	/*
+	 * Move option values into conn structure
+	 *
+	 * Don't put anything cute here --- intelligence should be in
+	 * connectOptions2 ...
+	 *
+	 * XXX: probably worth checking strdup() return value here...
+	 */
+	tmp = conninfo_getval(connOptions, "hostaddr");
+	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "host");
+	conn->pghost = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "port");
+	conn->pgport = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "tty");
+	conn->pgtty = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "options");
+	conn->pgoptions = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "application_name");
+	conn->appname = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "fallback_application_name");
+	conn->fbappname = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "dbname");
+	conn->dbName = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "user");
+	conn->pguser = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "password");
+	conn->pgpass = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "connect_timeout");
+	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "client_encoding");
+	conn->client_encoding_initial = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives");
+	conn->keepalives = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_idle");
+	conn->keepalives_idle = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_interval");
+	conn->keepalives_interval = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "keepalives_count");
+	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslmode");
+	conn->sslmode = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcompression");
+	conn->sslcompression = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslkey");
+	conn->sslkey = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcert");
+	conn->sslcert = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslrootcert");
+	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcrl");
+	conn->sslcrl = tmp ? strdup(tmp) : NULL;
+#ifdef USE_SSL
+	tmp = conninfo_getval(connOptions, "requiressl");
+	if (tmp && tmp[0] == '1')
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (option->connofs >= 0)
 		{
@@ -2255,6 +2321,9 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 				}
@@ -2366,6 +2435,9 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2432,6 +2504,9 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2448,6 +2523,9 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
+						/* Discard any unread/unsent data */
+						conn->inStart = conn->inCursor = conn->inEnd = 0;
+						conn->outCount = 0;
 						goto keep_going;
 					}
 #endif
@@ -2808,7 +2886,12 @@ makeEmptyPGconn(void)
 	/* Zero all pointers and booleans */
 	MemSet(conn, 0, sizeof(PGconn));
 
+<<<<<<< HEAD
 	/* install default notice hooks */
+=======
+	/* install default row processor and notice hooks */
+	PQsetRowProcessor(conn, NULL, NULL);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
 	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
 
@@ -4229,6 +4312,7 @@ static PQconninfoOption *
 conninfo_init(PQExpBuffer errorMessage)
 {
 	PQconninfoOption *options;
+<<<<<<< HEAD
 	PQconninfoOption *opt_dest;
 	const internalPQconninfoOption *cur_opt;
 
@@ -4237,12 +4321,17 @@ conninfo_init(PQExpBuffer errorMessage)
 	 * end up being filtered out.
 	 */
 	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOption) * sizeof(PQconninfoOptions) / sizeof(PQconninfoOptions[0]));
+=======
+
+	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOptions));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (options == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
 						  libpq_gettext("out of memory\n"));
 		return NULL;
 	}
+<<<<<<< HEAD
 	opt_dest = options;
 
 	for (cur_opt = PQconninfoOptions; cur_opt->keyword; cur_opt++)
@@ -4252,6 +4341,9 @@ conninfo_init(PQExpBuffer errorMessage)
 		opt_dest++;
 	}
 	MemSet(opt_dest, 0, sizeof(PQconninfoOption));
+=======
+	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return options;
 }
@@ -4685,6 +4777,7 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		}
 
 		/*
+<<<<<<< HEAD
 		 * Interpret the deprecated PGREQUIRESSL environment variable.  Per
 		 * tradition, translate values starting with "1" to sslmode=require,
 		 * and ignore other values.  Given both PGREQUIRESSL=1 and PGSSLMODE,
@@ -4709,6 +4802,8 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		}
 
 		/*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 * No environment variable specified or the variable isn't set - try
 		 * compiled-in default
 		 */
@@ -4889,14 +4984,22 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (!*p)
 		{
 			printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 							  libpq_gettext("end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"),
+=======
+							  libpq_gettext("end of string reached when looking for matching ']' in IPv6 host address in URI: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							  uri);
 			goto cleanup;
 		}
 		if (p == host)
 		{
 			printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 							  libpq_gettext("IPv6 host address may not be empty in URI: \"%s\"\n"),
+=======
+			libpq_gettext("IPv6 host address may not be empty in URI: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							  uri);
 			goto cleanup;
 		}
@@ -4911,7 +5014,11 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (*p && *p != ':' && *p != '/' && *p != '?')
 		{
 			printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 							  libpq_gettext("unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"),
+=======
+							  libpq_gettext("unexpected '%c' at position %d in URI (expecting ':' or '/'): %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							  *p, (int) (p - buf + 1), uri);
 			goto cleanup;
 		}
@@ -5025,7 +5132,11 @@ conninfo_uri_parse_params(char *params,
 				if (value != NULL)
 				{
 					printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 									  libpq_gettext("extra key/value separator \"=\" in URI query parameter: \"%s\"\n"),
+=======
+									  libpq_gettext("extra key/value separator '=' in URI query parameter: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 									  params);
 					return false;
 				}
@@ -5045,7 +5156,11 @@ conninfo_uri_parse_params(char *params,
 				if (value == NULL)
 				{
 					printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 									  libpq_gettext("missing key/value separator \"=\" in URI query parameter: \"%s\"\n"),
+=======
+									  libpq_gettext("missing key/value separator '=' in URI query parameter: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 									  params);
 					return false;
 				}
@@ -5116,6 +5231,7 @@ conninfo_uri_parse_params(char *params,
 
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext(
+<<<<<<< HEAD
 									"invalid URI query parameter: \"%s\"\n"),
 							  keyword);
 			if (malloced)
@@ -5123,6 +5239,10 @@ conninfo_uri_parse_params(char *params,
 				free(keyword);
 				free(value);
 			}
+=======
+									 "invalid URI query parameter \"%s\"\n"),
+							  keyword);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			return false;
 		}
 		if (malloced)
@@ -5186,7 +5306,11 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			if (!(get_hexdigit(*q++, &hi) && get_hexdigit(*q++, &lo)))
 			{
 				printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 					libpq_gettext("invalid percent-encoded token: \"%s\"\n"),
+=======
+						libpq_gettext("invalid percent-encoded token: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								  str);
 				free(buf);
 				return NULL;
@@ -5196,7 +5320,11 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			if (c == 0)
 			{
 				printfPQExpBuffer(errorMessage,
+<<<<<<< HEAD
 								  libpq_gettext("forbidden value %%00 in percent-encoded value: \"%s\"\n"),
+=======
+								  libpq_gettext("forbidden value %%00 in percent-encoded value: %s\n"),
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								  str);
 				free(buf);
 				return NULL;
@@ -5272,6 +5400,7 @@ conninfo_storeval(PQconninfoOption *connOptions,
 	PQconninfoOption *option;
 	char	   *value_copy;
 
+<<<<<<< HEAD
 	/*
 	 * For backwards compatibility, requiressl=1 gets translated to
 	 * sslmode=require, and requiressl=0 gets translated to sslmode=prefer
@@ -5286,6 +5415,8 @@ conninfo_storeval(PQconninfoOption *connOptions,
 			value = "prefer";
 	}
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	option = conninfo_find(connOptions, keyword);
 	if (option == NULL)
 	{
@@ -5848,12 +5979,15 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		ret = strdup(t);
 		fclose(fp);
 
+<<<<<<< HEAD
 		if (!ret)
 		{
 			/* Out of memory. XXX: an error message would be nice. */
 			return NULL;
 		}
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* De-escape password. */
 		for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
 		{

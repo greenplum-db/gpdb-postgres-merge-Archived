@@ -3,9 +3,13 @@
  * schemacmds.c
  *	  schema creation/manipulation commands
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,7 +19,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -30,7 +33,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 #include "cdb/cdbdisp_query.h"
@@ -125,6 +128,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
+<<<<<<< HEAD
 	if (shouldDispatch || Gp_role != GP_ROLE_EXECUTE)
 	{
 		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
@@ -158,6 +162,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	{
 		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 	}
+=======
+	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -209,6 +216,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	SetUserIdAndSecContext(saved_uid, save_sec_context);
 }
 
+<<<<<<< HEAD
 
 /*
  *	RemoveSchemas
@@ -303,6 +311,8 @@ RemoveSchemas(DropStmt *drop)
 }
 
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Guts of schema deletion.
  */

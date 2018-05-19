@@ -4,7 +4,7 @@
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -21,9 +21,6 @@
 #include <getopt.h>
 #endif
 
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -32,18 +29,19 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/startup.h"
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
-#include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/rel.h"
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
 
@@ -328,6 +326,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case BgWriterProcess:
 				statmsg = "writer process";
 				break;
+			case CheckpointerProcess:
+				statmsg = "checkpointer process";
+				break;
 			case WalWriterProcess:
 				statmsg = "wal writer process";
 				break;
@@ -432,6 +433,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case CheckpointerProcess:
+<<<<<<< HEAD
 			/* don't set signals, checkpointer is similar to bgwriter and has its own agenda */
 			CheckpointerMain();
 			proc_exit(1);		/* should never return */
@@ -441,6 +443,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			WalReceiverMain();
 			proc_exit(1);		/* should never return */
 
+=======
+			/* don't set signals, checkpointer has its own agenda */
+			CheckpointerMain();
+			proc_exit(1);		/* should never return */
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case WalWriterProcess:
 			/* don't set signals, walwriter has its own agenda */
 			InitXLOGAccess();
@@ -834,7 +842,7 @@ InsertOneValue(char *value, int i)
 	Oid			typoutput;
 	char	   *prt;
 
-	AssertArg(i >= 0 || i < MAXATTR);
+	AssertArg(i >= 0 && i < MAXATTR);
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
@@ -859,7 +867,7 @@ void
 InsertOneNull(int i)
 {
 	elog(DEBUG4, "inserting column %d NULL", i);
-	Assert(i >= 0 || i < MAXATTR);
+	Assert(i >= 0 && i < MAXATTR);
 	values[i] = PointerGetDatum(NULL);
 	Nulls[i] = true;
 }

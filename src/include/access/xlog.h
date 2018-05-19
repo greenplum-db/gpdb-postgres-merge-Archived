@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlog.h
@@ -13,6 +13,7 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
+<<<<<<< HEAD
 #include "catalog/gp_segment_config.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"
@@ -22,6 +23,12 @@
 #include "utils/timestamp.h"
 #include "cdb/cdbpublic.h"
 #include "replication/walsender.h"
+=======
+#include "datatype/timestamp.h"
+#include "lib/stringinfo.h"
+#include "storage/buf.h"
+#include "utils/pg_crc.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * The overall layout of an XLOG record is:
@@ -33,7 +40,7 @@
  *		backup block data
  *		...
  *
- * where there can be zero to three backup blocks (as signaled by xl_info flag
+ * where there can be zero to four backup blocks (as signaled by xl_info flag
  * bits).  XLogRecord structs always start on MAXALIGN boundaries in the WAL
  * files, and we round up SizeOfXLogRecord so that the rmgr data is also
  * guaranteed to begin on a MAXALIGN boundary.	However, no padding is added
@@ -81,24 +88,16 @@ typedef struct XLogRecord
 
 /*
  * If we backed up any disk blocks with the XLOG record, we use flag bits in
- * xl_info to signal it.  We support backup of up to 3 disk blocks per XLOG
+ * xl_info to signal it.  We support backup of up to 4 disk blocks per XLOG
  * record.
  */
-#define XLR_BKP_BLOCK_MASK		0x0E	/* all info bits used for bkp blocks */
-#define XLR_MAX_BKP_BLOCKS		3
+#define XLR_BKP_BLOCK_MASK		0x0F	/* all info bits used for bkp blocks */
+#define XLR_MAX_BKP_BLOCKS		4
 #define XLR_SET_BKP_BLOCK(iblk) (0x08 >> (iblk))
 #define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
 #define XLR_BKP_BLOCK_2			XLR_SET_BKP_BLOCK(1)	/* 0x04 */
 #define XLR_BKP_BLOCK_3			XLR_SET_BKP_BLOCK(2)	/* 0x02 */
-
-/*
- * Bit 0 of xl_info is set if the backed-up blocks could safely be removed
- * from a compressed version of XLOG (that is, they are backed up only to
- * prevent partial-page-write problems, and not to ensure consistency of PITR
- * recovery).  The compression algorithm would need to extract data from the
- * blocks to create an equivalent non-full-page XLOG record.
- */
-#define XLR_BKP_REMOVABLE		0x01
+#define XLR_BKP_BLOCK_4			XLR_SET_BKP_BLOCK(3)	/* 0x01 */
 
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
@@ -205,6 +204,8 @@ typedef enum
 
 extern XLogRecPtr XactLastRecEnd;
 
+extern bool reachedConsistency;
+
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;
 extern int	wal_keep_segments;
@@ -213,12 +214,16 @@ extern int	XLogArchiveTimeout;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
+<<<<<<< HEAD
 extern bool gp_keep_all_xlog;
 extern int keep_wal_segments;
 
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 
+=======
+extern bool fullPageWrites;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern bool log_checkpoints;
 
 /* WAL levels */
@@ -301,7 +306,7 @@ extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern XLogRecPtr XLogInsert_OverrideXid(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId overrideXid);
 extern XLogRecPtr XLogLastInsertBeginLoc(void);
 extern void XLogFlush(XLogRecPtr RecPtr);
-extern void XLogBackgroundFlush(void);
+extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int XLogFileInit(uint32 log, uint32 seg,
 			 bool *use_existent, bool use_lock);
@@ -323,7 +328,18 @@ extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
+<<<<<<< HEAD
 extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);
+=======
+extern XLogRecPtr GetXLogReplayRecPtr(XLogRecPtr *restoreLastRecPtr);
+extern XLogRecPtr GetStandbyFlushRecPtr(void);
+extern XLogRecPtr GetXLogInsertRecPtr(void);
+extern XLogRecPtr GetXLogWriteRecPtr(void);
+extern bool RecoveryIsPaused(void);
+extern void SetRecoveryPause(bool recoveryPause);
+extern TimestampTz GetLatestXTime(void);
+extern TimestampTz GetCurrentChunkReplayStartTime(void);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
@@ -341,12 +357,14 @@ extern bool CreateRestartPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
 extern void XLogPutNextRelfilenode(Oid nextRelfilenode);
 extern XLogRecPtr XLogRestorePoint(const char *rpName);
+extern void UpdateFullPageWrites(void);
 extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetInsertRecPtr(void);
 extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern TimeLineID GetRecoveryTargetTLI(void);
 
+<<<<<<< HEAD
 extern void XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint);
 extern char *XLogLocationToString(XLogRecPtr *loc);
 extern char *XLogLocationToString2(XLogRecPtr *loc);
@@ -362,7 +380,11 @@ extern char *XLogLocationToString5_Long(XLogRecPtr *loc);
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 extern bool CheckPromoteSignal(bool do_unlink);
+=======
+extern bool CheckPromoteSignal(void);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void WakeupRecovery(void);
+extern void SetWalWriterSleeping(bool sleeping);
 
 /*
  * Starting/stopping a base backup

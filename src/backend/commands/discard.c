@@ -3,7 +3,7 @@
  * discard.c
  *	  The implementation of the DISCARD command
  *
- * Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -18,9 +18,13 @@
 #include "commands/async.h"
 #include "commands/discard.h"
 #include "commands/prepare.h"
+<<<<<<< HEAD
 #include "commands/variable.h"
 #include "storage/lock.h"
 #include "utils/plancache.h"
+=======
+#include "utils/guc.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/portal.h"
 
 static void DiscardAll(bool isTopLevel);

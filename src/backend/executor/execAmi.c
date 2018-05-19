@@ -3,7 +3,7 @@
  * execAmi.c
  *	  miscellaneous executor access method routines
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/executor/execAmi.c
@@ -13,7 +13,6 @@
 #include "postgres.h"
 
 #include "executor/execdebug.h"
-#include "executor/instrument.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeBitmapAnd.h"
@@ -26,6 +25,7 @@
 #include "executor/nodeFunctionscan.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
+#include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeLimit.h"
 #include "executor/nodeLockRows.h"
@@ -58,6 +58,7 @@
 #include "executor/nodeBitmapAppendOnlyscan.h"
 #include "executor/nodeShareInputScan.h"
 #include "nodes/nodeFuncs.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
@@ -171,6 +172,7 @@ ExecReScan(PlanState *node)
 			ExecReScanIndexScan((IndexScanState *) node);
 			break;
 
+<<<<<<< HEAD
 		case T_ExternalScanState:
 			ExecReScanExternal((ExternalScanState *) node);
 			break;			
@@ -189,6 +191,10 @@ ExecReScan(PlanState *node)
 
 		case T_DynamicIndexScanState:
 			ExecReScanDynamicIndex((DynamicIndexScanState *) node);
+=======
+		case T_IndexOnlyScanState:
+			ExecReScanIndexOnlyScan((IndexOnlyScanState *) node);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 
 		case T_BitmapIndexScanState:
@@ -345,9 +351,15 @@ ExecMarkPos(PlanState *node)
 			ExecIndexMarkPos((IndexScanState *) node);
 			break;
 
+<<<<<<< HEAD
 		case T_ExternalScanState:
 			elog(ERROR, "Marking scan position for external relation is not supported");
 			break;			
+=======
+		case T_IndexOnlyScanState:
+			ExecIndexOnlyMarkPos((IndexOnlyScanState *) node);
+			break;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		case T_TidScanState:
 			ExecTidMarkPos((TidScanState *) node);
@@ -419,9 +431,15 @@ ExecRestrPos(PlanState *node)
 			ExecIndexRestrPos((IndexScanState *) node);
 			break;
 
+<<<<<<< HEAD
 		case T_ExternalScanState:
 			elog(ERROR, "Restoring scan position is not yet supported for external relation scan");
 			break;			
+=======
+		case T_IndexOnlyScanState:
+			ExecIndexOnlyRestrPos((IndexOnlyScanState *) node);
+			break;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		case T_TidScanState:
 			ExecTidRestrPos((TidScanState *) node);
@@ -478,6 +496,7 @@ ExecSupportsMarkRestore(NodeTag plantype)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
+		case T_IndexOnlyScan:
 		case T_TidScan:
 		case T_ValuesScan:
 		case T_Material:
@@ -549,6 +568,10 @@ ExecSupportsBackwardScan(Plan *node)
 
 		case T_IndexScan:
 			return IndexSupportsBackwardScan(((IndexScan *) node)->indexid) &&
+				TargetListSupportsBackwardScan(node->targetlist);
+
+		case T_IndexOnlyScan:
+			return IndexSupportsBackwardScan(((IndexOnlyScan *) node)->indexid) &&
 				TargetListSupportsBackwardScan(node->targetlist);
 
 		case T_SubqueryScan:
@@ -848,7 +871,8 @@ TargetListSupportsBackwardScan(List *targetlist)
 }
 
 /*
- * An IndexScan node supports backward scan only if the index's AM does.
+ * An IndexScan or IndexOnlyScan node supports backward scan only if the
+ * index's AM does.
  */
 static bool
 IndexSupportsBackwardScan(Oid indexid)

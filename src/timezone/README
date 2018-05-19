@@ -2,6 +2,7 @@ src/timezone/README
 
 This is a PostgreSQL adapted version of the IANA timezone library from
 
+<<<<<<< HEAD
 	https://www.iana.org/time-zones
 
 The latest version of the timezone data and library source code is
@@ -9,6 +10,22 @@ available right from that page.  It's best to get the merged file
 tzdb-NNNNX.tar.lz, since the other archive formats omit tzdata.zi.
 Historical versions, as well as release announcements, can be found
 elsewhere on the site.
+=======
+This is a PostgreSQL adapted version of the timezone library from
+http://www.iana.org/time-zones
+
+The source code can be found at:
+
+	ftp://ftp.iana.org/tz/releases/tzcode*.tar.gz
+
+The code is currently synced with release 2010c.  There are many cosmetic
+(and not so cosmetic) differences from the original tzcode library, but
+diffs in the upstream version should usually be propagated to our version.
+
+The data files under data/ are an exact copy of the latest data set from:
+
+	ftp://ftp.iana.org/tz/releases/tzdata*.tar.gz
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 Since time zone rules change frequently in some parts of the world,
 we should endeavor to update the data files before each PostgreSQL

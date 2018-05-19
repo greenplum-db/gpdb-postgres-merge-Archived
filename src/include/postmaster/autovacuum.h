@@ -4,7 +4,7 @@
  *	  header file for integrated autovacuum daemon
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/postmaster/autovacuum.h
@@ -14,8 +14,11 @@
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
+<<<<<<< HEAD
 #include "storage/lock.h"
 #include "tcop/utility.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* GUC variables */
 extern bool autovacuum_start_daemon;

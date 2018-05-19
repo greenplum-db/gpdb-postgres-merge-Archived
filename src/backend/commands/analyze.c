@@ -3,7 +3,7 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,15 +16,14 @@
 
 #include <math.h>
 
-#include "access/heapam.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "access/tuptoaster.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
@@ -32,9 +31,14 @@
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"
 #include "commands/dbcommands.h"
+#include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
+<<<<<<< HEAD
 #include "executor/spi.h"
+=======
+#include "foreign/fdwapi.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_oper.h"
@@ -53,8 +57,9 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
+#include "utils/sortsupport.h"
 #include "utils/syscache.h"
-#include "utils/tuplesort.h"
+#include "utils/timestamp.h"
 #include "utils/tqual.h"
 
 /*
@@ -104,14 +109,13 @@ typedef struct RowIndexes
 int			default_statistics_target = 100;
 
 /* A few variables that don't seem worth passing around as parameters */
-static int	elevel = -1;
-
 static MemoryContext anl_context = NULL;
-
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh);
+static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -122,6 +126,7 @@ static void compute_index_stats(Relation onerel, double totalrows,
 					MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 				  Node *index_expr);
+<<<<<<< HEAD
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
 					int targrows, double *totalrows, double *totaldeadrows);
 static int acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, HeapTuple **rows,
@@ -132,6 +137,13 @@ static double get_next_S(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
 #if 0
 static int acquire_inherited_sample_rows(Relation onerel,
+=======
+static int acquire_sample_rows(Relation onerel, int elevel,
+					HeapTuple *rows, int targrows,
+					double *totalrows, double *totaldeadrows);
+static int	compare_rows(const void *a, const void *b);
+static int acquire_inherited_sample_rows(Relation onerel, int elevel,
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows);
 #endif
@@ -140,6 +152,7 @@ static void update_attstats(Oid relid, bool inh,
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
+<<<<<<< HEAD
 static bool std_typanalyze(VacAttrStats *stats);
 
 static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly);
@@ -147,6 +160,8 @@ static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNum
 
 static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 BufferAccessStrategy bstrategy);
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -185,13 +200,17 @@ static void
 analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
+	int			elevel;
+	AcquireSampleRowsFunc acquirefunc = NULL;
+	BlockNumber relpages = 0;
 
-	/* Set up static variables */
+	/* Select logging level */
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
 
+	/* Set up static variables */
 	vac_strategy = bstrategy;
 
 	/*
@@ -249,6 +268,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Check that it's a plain table; we used to do this in get_rel_oids() but
 	 * seems safer to check after we've locked the relation.
 	 */
@@ -264,6 +284,8 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	}
 
 	/*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Silently ignore tables that are temp tables of other backends ---
 	 * trying to analyze these is rather pointless, since their contents are
 	 * probably not up-to-date on disk.  (We don't throw a warning here; it
@@ -285,10 +307,58 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	}
 
 	/*
+	 * Check that it's a plain table or foreign table; we used to do this in
+	 * get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
+	 */
+	if (onerel->rd_rel->relkind == RELKIND_RELATION)
+	{
+		/* Regular table, so we'll use the regular row acquisition function */
+		acquirefunc = acquire_sample_rows;
+		/* Also get regular table's size */
+		relpages = RelationGetNumberOfBlocks(onerel);
+	}
+	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * For a foreign table, call the FDW's hook function to see whether it
+		 * supports analysis.
+		 */
+		FdwRoutine *fdwroutine;
+		bool		ok = false;
+
+		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(onerel));
+
+		if (fdwroutine->AnalyzeForeignTable != NULL)
+			ok = fdwroutine->AnalyzeForeignTable(onerel,
+												 &acquirefunc,
+												 &relpages);
+
+		if (!ok)
+		{
+			ereport(WARNING,
+			 (errmsg("skipping \"%s\" --- cannot analyze this foreign table",
+					 RelationGetRelationName(onerel))));
+			relation_close(onerel, ShareUpdateExclusiveLock);
+			return;
+		}
+	}
+	else
+	{
+		/* No need for a WARNING if we already complained during VACUUM */
+		if (!(vacstmt->options & VACOPT_VACUUM))
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
+							RelationGetRelationName(onerel))));
+		relation_close(onerel, ShareUpdateExclusiveLock);
+		return;
+	}
+
+	/*
 	 * OK, let's do it.  First let other backends know I'm in ANALYZE.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	MyProc->vacuumFlags |= PROC_IN_ANALYZE;
+	MyPgXact->vacuumFlags |= PROC_IN_ANALYZE;
 	LWLockRelease(ProcArrayLock);
 
 	/*
@@ -297,15 +367,19 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
+<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
 		do_analyze_rel(onerel, vacstmt, false);
+=======
+	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, true);
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, true, elevel);
 
 	/* MPP-6929: metadata tracking */
 	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
@@ -332,19 +406,26 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	relation_close(onerel, NoLock);
 
 	/*
-	 * Reset my PGPROC flag.  Note: we need this here, and not in vacuum_rel,
+	 * Reset my PGXACT flag.  Note: we need this here, and not in vacuum_rel,
 	 * because the vacuum flag is cleared by the end-of-xact code.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-	MyProc->vacuumFlags &= ~PROC_IN_ANALYZE;
+	MyPgXact->vacuumFlags &= ~PROC_IN_ANALYZE;
 	LWLockRelease(ProcArrayLock);
 }
 
 /*
  *	do_analyze_rel() -- analyze one relation, recursively or not
+ *
+ * Note that "acquirefunc" is only relevant for the non-inherited case.
+ * If we supported foreign tables in inheritance trees,
+ * acquire_inherited_sample_rows would need to determine the appropriate
+ * acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
+do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, int elevel)
 {
 	int			attr_cnt,
 				tcnt,
@@ -512,8 +593,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	/*
 	 * Determine how many rows we need to sample, using the worst case from
 	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
+<<<<<<< HEAD
 	 * possible overflow in Vitter's algorithm.  (Note: that will also be
 	 * the target in the corner case where there are no analyzable columns.)
+=======
+	 * possible overflow in Vitter's algorithm.  (Note: that will also be the
+	 * target in the corner case where there are no analyzable columns.)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	targrows = 100;
 	for (i = 0; i < attr_cnt; i++)
@@ -554,14 +640,21 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	// GPDB_90_MERGE_FIXME: Need to implement 'acuire_inherited_sample_rows_by_query'
 #if 0
 	if (inh)
-		numrows = acquire_inherited_sample_rows(onerel, rows, targrows,
+		numrows = acquire_inherited_sample_rows(onerel, elevel,
+												rows, targrows,
 												&totalrows, &totaldeadrows);
 	else
+<<<<<<< HEAD
 #endif
 		numrows = acquire_sample_rows_by_query(onerel, attr_cnt, vacattrstats, &rows, targrows,
 											   &totalrows, &totaldeadrows, &totalpages,
 											   (vacstmt->options & VACOPT_ROOTONLY) != 0,
 											   colLargeRowIndexes);
+=======
+		numrows = (*acquirefunc) (onerel, elevel,
+								  rows, targrows,
+								  &totalrows, &totaldeadrows);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* change the privilige back to the table owner */
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
@@ -588,6 +681,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
+<<<<<<< HEAD
 			RowIndexes *rowIndexes = colLargeRowIndexes[i];
 			int validRowsLength = numrows - rowIndexes->toowide_cnt;
 
@@ -614,6 +708,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 			}
 			AttributeOpts *aopt =
 			get_attribute_options(onerel->rd_id, stats->attr->attnum);
+=======
+			AttributeOpts *aopt;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			stats->tupDesc = onerel->rd_att;
 
@@ -640,11 +737,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 			 * If the appropriate flavor of the n_distinct option is
 			 * specified, override with the corresponding value.
 			 */
+			aopt = get_attribute_options(onerel->rd_id, stats->attr->attnum);
 			if (aopt != NULL)
 			{
-				float8		n_distinct =
-				inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+				float8		n_distinct;
 
+				n_distinct = inh ? aopt->n_distinct_inherited : aopt->n_distinct;
 				if (n_distinct != 0.0)
 					stats->stadistinct = n_distinct;
 			}
@@ -692,6 +790,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
+<<<<<<< HEAD
 							totalpages,
 							totalrows,
 							hasindex,
@@ -706,6 +805,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 							InvalidTransactionId,
 							false /* isvacuum */);
 	}
+=======
+							relpages,
+							totalrows,
+							visibilitymap_count(onerel),
+							hasindex,
+							InvalidTransactionId);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -745,9 +851,17 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
+<<<<<<< HEAD
 								estimatedIndexPages,
 								totalindexrows, false, InvalidTransactionId,
 								false /* isvacuum */);
+=======
+								RelationGetNumberOfBlocks(Irel[ind]),
+								totalindexrows,
+								0,
+								false,
+								InvalidTransactionId);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -1041,13 +1155,18 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		stats->attrtypmod = attr->atttypmod;
 	}
 
-	typtuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(stats->attrtypid));
+	typtuple = SearchSysCacheCopy1(TYPEOID,
+								   ObjectIdGetDatum(stats->attrtypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
+<<<<<<< HEAD
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
 	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
 	stats->relstorage = RelationGetForm(onerel)->relstorage;
 	ReleaseSysCache(typtuple);
+=======
+	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -1140,8 +1259,8 @@ BlockSampler_Next(BlockSampler bs)
 	 * Knuth says to skip the current block with probability 1 - k/K.
 	 * If we are to skip, we should advance t (hence decrease K), and
 	 * repeat the same probabilistic test for the next block.  The naive
-	 * implementation thus requires a random_fract() call for each block
-	 * number.	But we can reduce this to one random_fract() call per
+	 * implementation thus requires an anl_random_fract() call for each block
+	 * number.	But we can reduce this to one anl_random_fract() call per
 	 * selected block, by noting that each time the while-test succeeds,
 	 * we can reinterpret V as a uniform random number in the range 0 to p.
 	 * Therefore, instead of choosing a new V, we just adjust p to be
@@ -1156,7 +1275,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * less than k, which means that we cannot fail to select enough blocks.
 	 *----------
 	 */
-	V = random_fract();
+	V = anl_random_fract();
 	p = 1.0 - (double) k / (double) K;
 	while (V < p)
 	{
@@ -1212,8 +1331,14 @@ BlockSampler_Next(BlockSampler bs)
  * GPDB: Not used in Greenplum currently. Instead, we acquire the sample
  * rows by issuing an SPI query, see acquire_sample_rows_by_query
  */
+<<<<<<< HEAD
 static int pg_attribute_unused()
 acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
+=======
+static int
+acquire_sample_rows(Relation onerel, int elevel,
+					HeapTuple *rows, int targrows,
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
@@ -1236,7 +1361,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	/* Prepare for sampling block numbers */
 	BlockSampler_Init(&bs, totalblocks, targrows);
 	/* Prepare for sampling rows */
-	rstate = init_selection_state(targrows);
+	rstate = anl_init_selection_state(targrows);
 
 	/* Outer loop over blocks to sample */
 	while (BlockSampler_HasMore(&bs))
@@ -1384,7 +1509,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 					 * t.
 					 */
 					if (rowstoskip < 0)
-						rowstoskip = get_next_S(samplerows, targrows, &rstate);
+						rowstoskip = anl_get_next_S(samplerows, targrows,
+													&rstate);
 
 					if (rowstoskip <= 0)
 					{
@@ -1392,7 +1518,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 						 * Found a suitable tuple, so save it, replacing one
 						 * old tuple at random
 						 */
-						int			k = (int) (targrows * random_fract());
+						int			k = (int) (targrows * anl_random_fract());
 
 						Assert(k >= 0 && k < targrows);
 						heap_freetuple(rows[k]);
@@ -1452,8 +1578,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 }
 
 /* Select a random value R uniformly distributed in (0 - 1) */
-static double
-random_fract(void)
+double
+anl_random_fract(void)
 {
 	return ((double) random() + 1) / ((double) MAX_RANDOM_VALUE + 2);
 }
@@ -1466,21 +1592,21 @@ random_fract(void)
  * It is computed primarily based on t, the number of records already read.
  * The only extra state needed between calls is W, a random state variable.
  *
- * init_selection_state computes the initial W value.
+ * anl_init_selection_state computes the initial W value.
  *
- * Given that we've already read t records (t >= n), get_next_S
+ * Given that we've already read t records (t >= n), anl_get_next_S
  * determines the number of records to skip before the next record is
  * processed.
  */
-static double
-init_selection_state(int n)
+double
+anl_init_selection_state(int n)
 {
 	/* Initial value of W (for use when Algorithm Z is first applied) */
-	return exp(-log(random_fract()) / n);
+	return exp(-log(anl_random_fract()) / n);
 }
 
-static double
-get_next_S(double t, int n, double *stateptr)
+double
+anl_get_next_S(double t, int n, double *stateptr)
 {
 	double		S;
 
@@ -1491,7 +1617,7 @@ get_next_S(double t, int n, double *stateptr)
 		double		V,
 					quot;
 
-		V = random_fract();		/* Generate V */
+		V = anl_random_fract(); /* Generate V */
 		S = 0;
 		t += 1;
 		/* Note: "num" in Vitter's code is always equal to t - n */
@@ -1523,7 +1649,7 @@ get_next_S(double t, int n, double *stateptr)
 						tmp;
 
 			/* Generate U and X */
-			U = random_fract();
+			U = anl_random_fract();
 			X = t * (W - 1.0);
 			S = floor(X);		/* S is tentatively set to floor(X) */
 			/* Test if U <= h(S)/cg(X) in the manner of (6.3) */
@@ -1552,7 +1678,7 @@ get_next_S(double t, int n, double *stateptr)
 				y *= numer / denom;
 				denom -= 1;
 			}
-			W = exp(-log(random_fract()) / n);	/* Generate W in advance */
+			W = exp(-log(anl_random_fract()) / n);		/* Generate W in advance */
 			if (exp(log(y) / n) <= (t + X) / t)
 				break;
 		}
@@ -1567,8 +1693,8 @@ get_next_S(double t, int n, double *stateptr)
 static int
 compare_rows(const void *a, const void *b)
 {
-	HeapTuple	ha = *(HeapTuple *) a;
-	HeapTuple	hb = *(HeapTuple *) b;
+	HeapTuple	ha = *(const HeapTuple *) a;
+	HeapTuple	hb = *(const HeapTuple *) b;
 	BlockNumber ba = ItemPointerGetBlockNumber(&ha->t_self);
 	OffsetNumber oa = ItemPointerGetOffsetNumber(&ha->t_self);
 	BlockNumber bb = ItemPointerGetBlockNumber(&hb->t_self);
@@ -2023,7 +2149,8 @@ analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPa
  * We fail and return zero if there are no inheritance children.
  */
 static int
-acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
+acquire_inherited_sample_rows(Relation onerel, int elevel,
+							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows)
 {
 	List	   *tableOIDs;
@@ -2045,14 +2172,15 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	/*
 	 * Check that there's at least one descendant, else fail.  This could
 	 * happen despite analyze_rel's relhassubclass check, if table once had a
-	 * child but no longer does.
+	 * child but no longer does.  In that case, we can clear the
+	 * relhassubclass field so as not to make the same mistake again later.
+	 * (This is safe because we hold ShareUpdateExclusiveLock.)
 	 */
 	if (list_length(tableOIDs) < 2)
 	{
-		/*
-		 * XXX It would be desirable to clear relhassubclass here, but we
-		 * don't have adequate lock to do that safely.
-		 */
+		/* CCI because we already updated the pg_class row in this command */
+		CommandCounterIncrement();
+		SetRelationHasSubclass(RelationGetRelid(onerel), false);
 		return 0;
 	}
 
@@ -2116,6 +2244,7 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 
 				/* Fetch a random sample of the child's rows */
 				childrows = acquire_sample_rows(childrel,
+												elevel,
 												rows + numrows,
 												childtargrows,
 												&trows,
@@ -2223,21 +2352,23 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 			replaces[i] = true;
 		}
 
-		i = 0;
-		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
-		values[i++] = Int16GetDatum(stats->attr->attnum);		/* staattnum */
-		values[i++] = BoolGetDatum(inh);		/* stainherit */
-		values[i++] = Float4GetDatum(stats->stanullfrac);		/* stanullfrac */
-		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
-		values[i++] = Float4GetDatum(stats->stadistinct);		/* stadistinct */
+		values[Anum_pg_statistic_starelid - 1] = ObjectIdGetDatum(relid);
+		values[Anum_pg_statistic_staattnum - 1] = Int16GetDatum(stats->attr->attnum);
+		values[Anum_pg_statistic_stainherit - 1] = BoolGetDatum(inh);
+		values[Anum_pg_statistic_stanullfrac - 1] = Float4GetDatum(stats->stanullfrac);
+		values[Anum_pg_statistic_stawidth - 1] = Int32GetDatum(stats->stawidth);
+		values[Anum_pg_statistic_stadistinct - 1] = Float4GetDatum(stats->stadistinct);
+		i = Anum_pg_statistic_stakind1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
 			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
 		}
+		i = Anum_pg_statistic_staop1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
 			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
 		}
+		i = Anum_pg_statistic_stanumbers1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
 			int			nnum = stats->numnumbers[k];
@@ -2261,6 +2392,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 				values[i++] = (Datum) 0;
 			}
 		}
+		i = Anum_pg_statistic_stavalues1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
 			if (stats->numvalues[k] > 0)
@@ -2385,8 +2517,7 @@ typedef struct
 
 typedef struct
 {
-	FmgrInfo   *cmpFn;
-	int			cmpFlags;
+	SortSupport ssup;
 	int		   *tupnoLink;
 } CompareScalarsContext;
 
@@ -2410,7 +2541,7 @@ static int	compare_mcvs(const void *a, const void *b);
 /*
  * std_typanalyze -- the default type-specific typanalyze function
  */
-static bool
+bool
 std_typanalyze(VacAttrStats *stats)
 {
 	Form_pg_attribute attr = stats->attr;
@@ -2928,9 +3059,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 	bool		is_varwidth = (!stats->attrtype->typbyval &&
 							   stats->attrtype->typlen < 0);
 	double		corr_xysum;
-	Oid			cmpFn;
-	int			cmpFlags;
-	FmgrInfo	f_cmpfn;
+	SortSupportData ssup;
 	ScalarItem *values;
 	int			values_cnt = 0;
 	int		   *tupnoLink;
@@ -2944,8 +3073,13 @@ compute_scalar_stats(VacAttrStatsP stats,
 	tupnoLink = (int *) palloc(samplerows * sizeof(int));
 	track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
 
-	SelectSortFunction(mystats->ltopr, false, &cmpFn, &cmpFlags);
-	fmgr_info(cmpFn, &f_cmpfn);
+	memset(&ssup, 0, sizeof(ssup));
+	ssup.ssup_cxt = CurrentMemoryContext;
+	/* We always use the default collation for statistics */
+	ssup.ssup_collation = DEFAULT_COLLATION_OID;
+	ssup.ssup_nulls_first = false;
+
+	PrepareSortSupportFromOrderingOp(mystats->ltopr, &ssup);
 
 	/* Initial scan to find sortable values */
 	for (i = 0; i < samplerows; i++)
@@ -3013,8 +3147,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		CompareScalarsContext cxt;
 
 		/* Sort the collected values */
-		cxt.cmpFn = &f_cmpfn;
-		cxt.cmpFlags = cmpFlags;
+		cxt.ssup = &ssup;
 		cxt.tupnoLink = tupnoLink;
 		qsort_arg((void *) values, values_cnt, sizeof(ScalarItem),
 				  compare_scalars, (void *) &cxt);
@@ -3430,17 +3563,14 @@ compute_scalar_stats(VacAttrStatsP stats,
 static int
 compare_scalars(const void *a, const void *b, void *arg)
 {
-	Datum		da = ((ScalarItem *) a)->value;
-	int			ta = ((ScalarItem *) a)->tupno;
-	Datum		db = ((ScalarItem *) b)->value;
-	int			tb = ((ScalarItem *) b)->tupno;
+	Datum		da = ((const ScalarItem *) a)->value;
+	int			ta = ((const ScalarItem *) a)->tupno;
+	Datum		db = ((const ScalarItem *) b)->value;
+	int			tb = ((const ScalarItem *) b)->tupno;
 	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
-	int32		compare;
+	int			compare;
 
-	/* We always use the default collation for statistics */
-	compare = ApplySortFunction(cxt->cmpFn, cxt->cmpFlags,
-								DEFAULT_COLLATION_OID,
-								da, false, db, false);
+	compare = ApplySortComparator(da, false, db, false, cxt->ssup);
 	if (compare != 0)
 		return compare;
 
@@ -3464,8 +3594,8 @@ compare_scalars(const void *a, const void *b, void *arg)
 static int
 compare_mcvs(const void *a, const void *b)
 {
-	int			da = ((ScalarMCVItem *) a)->first;
-	int			db = ((ScalarMCVItem *) b)->first;
+	int			da = ((const ScalarMCVItem *) a)->first;
+	int			db = ((const ScalarMCVItem *) b)->first;
 
 	return da - db;
 }

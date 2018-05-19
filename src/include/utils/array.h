@@ -46,7 +46,7 @@
  * only work with varlena arrays.
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/array.h
@@ -289,7 +289,14 @@ extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
 extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 
+<<<<<<< HEAD
 /* MPP Additions: */
 extern Datum array_int4_add(PG_FUNCTION_ARGS);
+=======
+/*
+ * prototypes for functions defined in array_typanalyze.c
+ */
+extern Datum array_typanalyze(PG_FUNCTION_ARGS);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* ARRAY_H */

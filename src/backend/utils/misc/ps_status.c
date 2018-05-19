@@ -7,9 +7,13 @@
  *
  * src/backend/utils/misc/ps_status.c
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2011, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * various details abducted from various places
  *--------------------------------------------------------------------
  */
@@ -71,7 +75,11 @@ bool		update_process_title = true;
 #define PS_USE_PS_STRINGS
 #elif (defined(BSD) || defined(__hurd__)) && !defined(__darwin__)
 #define PS_USE_CHANGE_ARGV
+<<<<<<< HEAD
 #elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(__svr5__) || defined(__darwin__)
+=======
+#elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__svr5__) || defined(__darwin__)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #define PS_USE_CLOBBER_ARGV
 #elif defined(WIN32)
 #define PS_USE_WIN32
@@ -81,7 +89,7 @@ bool		update_process_title = true;
 
 
 /* Different systems want the buffer padded differently */
-#if defined(_AIX) || defined(__linux__) || defined(__svr4__) || defined(__darwin__)
+#if defined(_AIX) || defined(__linux__) || defined(__darwin__)
 #define PS_PADDING '\0'
 #else
 #define PS_PADDING ' '

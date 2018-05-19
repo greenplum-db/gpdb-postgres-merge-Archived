@@ -3,9 +3,13 @@
  * tid.c
  *	  Functions for the built-in type tuple id
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -325,7 +329,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 				Var		   *var = (Var *) tle->expr;
 				RangeTblEntry *rte;
 
-				if (var->varno > 0 && var->varno < INNER &&
+				if (!IS_SPECIAL_VARNO(var->varno) &&
 					var->varattno == SelfItemPointerAttributeNumber)
 				{
 					rte = rt_fetch(var->varno, query->rtable);

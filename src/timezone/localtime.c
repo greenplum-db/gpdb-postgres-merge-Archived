@@ -16,11 +16,16 @@
 
 #include <fcntl.h>
 
+<<<<<<< HEAD
 /*
  * GPDB_92_MERGE_FIXME: Remove timestamp.h and include datatype/timestamp.h
  * instead when a7801b62f21bd051444bd1119cd3745ecc8e14ec has been merged.
  */
 #include "timestamp.h"
+=======
+#include "datatype/timestamp.h"
+#include "private.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "pgtz.h"
 
 #include "private.h"
@@ -925,8 +930,19 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			stdlen = (sizeof sp->chars) - 1;
 		charcnt = stdlen + 1;
 		stdoffset = 0;
+<<<<<<< HEAD
 		sp->goback = sp->goahead = false;	/* simulate failed tzload() */
 		load_ok = false;
+=======
+
+		/*
+		 * Unlike the original zic library, do NOT invoke tzload() here; we
+		 * can't assume pg_open_tzfile() is sane yet, and we don't care about
+		 * leap seconds anyway.
+		 */
+		sp->goback = sp->goahead = FALSE;
+		load_result = -1;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 	{
@@ -1540,11 +1556,19 @@ increment_overflow_time(pg_time_t *tp, int32 j)
 }
 
 /*
+<<<<<<< HEAD
  * Find the next DST transition time in the given zone after the given time
+=======
+ * Find the next DST transition time after the given time
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * *timep and *tz are input arguments, the other parameters are output values.
  *
+<<<<<<< HEAD
  * When the function result is 1, *boundary is set to the pg_time_t
+=======
+ * When the function result is 1, *boundary is set to the time_t
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * representation of the next DST transition time after *timep,
  * *before_gmtoff and *before_isdst are set to the GMT offset and isdst
  * state prevailing just before that boundary (in particular, the state

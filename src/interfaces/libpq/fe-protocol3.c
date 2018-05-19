@@ -3,7 +3,10 @@
  * fe-protocol3.c
  *	  functions that are specific to frontend/backend protocol version 3
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -76,6 +79,9 @@ static int build_startup_packet(const PGconn *conn, char *packet,
  * parseInput: if appropriate, parse input data from backend
  * until input is exhausted or a stopping state is reached.
  * Note that this function will NOT attempt to read more data from the backend.
+ *
+ * Note: callers of parseInput must be prepared for a longjmp exit when we are
+ * in PGASYNC_BUSY state, since an external row processor might do that.
  */
 void
 pqParseInput3(PGconn *conn)
@@ -567,6 +573,13 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
  * Returns: 0 if processed message successfully, EOF to suspend parsing
  * (the latter case is not actually used currently).
  * In either case, conn->inStart has been advanced past the message.
+<<<<<<< HEAD
+=======
+ *
+ * Note: the row processor could also choose to longjmp out of libpq,
+ * in which case the library's state must allow for resumption at the
+ * next message.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 static int
 getRowDescriptions(PGconn *conn, int msgLength)
@@ -680,6 +693,7 @@ getRowDescriptions(PGconn *conn, int msgLength)
 
 	/* Success! */
 	conn->result = result;
+<<<<<<< HEAD
 
 	/* Advance inStart to show that the "T" message has been processed. */
 	conn->inStart = conn->inCursor;
@@ -702,6 +716,45 @@ getRowDescriptions(PGconn *conn, int msgLength)
 	/* And we're done. */
 	return 0;
 
+=======
+
+	/*
+	 * Advance inStart to show that the "T" message has been processed.  We
+	 * must do this before calling the row processor, in case it longjmps.
+	 */
+	conn->inStart = conn->inCursor;
+
+	/*
+	 * If we're doing a Describe, we're done, and ready to pass the result
+	 * back to the client.
+	 */
+	if (conn->queryclass == PGQUERY_DESCRIBE)
+	{
+		conn->asyncStatus = PGASYNC_READY;
+		return 0;
+	}
+
+	/* Give the row processor a chance to initialize for new result set */
+	errmsg = NULL;
+	switch ((*conn->rowProcessor) (result, NULL, &errmsg,
+								   conn->rowProcessorParam))
+	{
+		case 1:
+			/* everything is good */
+			return 0;
+
+		case -1:
+			/* error, report the errmsg below */
+			break;
+
+		default:
+			/* unrecognized return code */
+			errmsg = libpq_gettext("unrecognized return value from row processor");
+			break;
+	}
+	goto set_error_result;
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 advance_and_error:
 	/* Discard unsaved result, if any */
 	if (result && result != conn->result)
@@ -710,6 +763,11 @@ advance_and_error:
 	/* Discard the failed message by pretending we read it */
 	conn->inStart += 5 + msgLength;
 
+<<<<<<< HEAD
+=======
+set_error_result:
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * Replace partially constructed result with an error result. First
 	 * discard the old result to try to win back some memory.
@@ -717,10 +775,15 @@ advance_and_error:
 	pqClearAsyncResult(conn);
 
 	/*
+<<<<<<< HEAD
 	 * If preceding code didn't provide an error message, assume "out of
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.
+=======
+	 * If row processor didn't provide an error message, assume "out of
+	 * memory" was meant.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	if (!errmsg)
 		errmsg = libpq_gettext("out of memory for query result");
@@ -797,6 +860,13 @@ failure:
  * Returns: 0 if processed message successfully, EOF to suspend parsing
  * (the latter case is not actually used currently).
  * In either case, conn->inStart has been advanced past the message.
+<<<<<<< HEAD
+=======
+ *
+ * Note: the row processor could also choose to longjmp out of libpq,
+ * in which case the library's state must allow for resumption at the
+ * next message.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 static int
 getAnotherTuple(PGconn *conn, int msgLength)
@@ -876,6 +946,7 @@ getAnotherTuple(PGconn *conn, int msgLength)
 		goto advance_and_error;
 	}
 
+<<<<<<< HEAD
 	/* Advance inStart to show that the "D" message has been processed. */
 	conn->inStart = conn->inCursor;
 
@@ -885,6 +956,33 @@ getAnotherTuple(PGconn *conn, int msgLength)
 		return 0;				/* normal, successful exit */
 
 	goto set_error_result;		/* pqRowProcessor failed, report it */
+=======
+	/*
+	 * Advance inStart to show that the "D" message has been processed.  We
+	 * must do this before calling the row processor, in case it longjmps.
+	 */
+	conn->inStart = conn->inCursor;
+
+	/* Pass the completed row values to rowProcessor */
+	errmsg = NULL;
+	switch ((*conn->rowProcessor) (result, rowbuf, &errmsg,
+								   conn->rowProcessorParam))
+	{
+		case 1:
+			/* everything is good */
+			return 0;
+
+		case -1:
+			/* error, report the errmsg below */
+			break;
+
+		default:
+			/* unrecognized return code */
+			errmsg = libpq_gettext("unrecognized return value from row processor");
+			break;
+	}
+	goto set_error_result;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 advance_and_error:
 	/* Discard the failed message by pretending we read it */
@@ -899,7 +997,11 @@ set_error_result:
 	pqClearAsyncResult(conn);
 
 	/*
+<<<<<<< HEAD
 	 * If preceding code didn't provide an error message, assume "out of
+=======
+	 * If row processor didn't provide an error message, assume "out of
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.

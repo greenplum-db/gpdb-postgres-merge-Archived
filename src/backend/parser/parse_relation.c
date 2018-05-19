@@ -3,9 +3,13 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18,7 +22,6 @@
 
 #include <ctype.h>
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
@@ -36,6 +39,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
@@ -279,11 +283,18 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	 * If it's an unqualified name, check for possible CTE matches. A CTE
 	 * hides any real relation matches.  If no CTE, look for a matching
 	 * relation.
+	 *
+	 * NB: It's not critical that RangeVarGetRelid return the correct answer
+	 * here in the face of concurrent DDL.	If it doesn't, the worst case
+	 * scenario is a less-clear error message.	Also, the tables involved in
+	 * the query are already locked, which reduces the number of cases in
+	 * which surprising behavior can occur.  So we do the name lookup
+	 * unlocked.
 	 */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);
 	if (!cte)
-		relId = RangeVarGetRelid(relation, true);
+		relId = RangeVarGetRelid(relation, NoLock, true);
 
 	/* Now look for RTEs matching either the relation/CTE or the alias */
 	for (levelsup = 0;
@@ -840,10 +851,15 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	Oid			relid;
 
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
+<<<<<<< HEAD
 
 	/* Look up the appropriate relation using namespace search */
 	relid = RangeVarGetRelid(relation, true);
 	if (relid == InvalidOid)
+=======
+	rel = heap_openrv_extended(relation, lockmode, true);
+	if (rel == NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (relation->schemaname)
 			ereport(ERROR,

@@ -3,9 +3,11 @@
  *
  *	file system operations
  *
- *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/file.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
@@ -20,12 +22,6 @@
 static int	copy_file(const char *fromfile, const char *tofile, bool force);
 #else
 static int	win32_pghardlink(const char *src, const char *dst);
-#endif
-
-#ifndef HAVE_SCANDIR
-static int pg_scandir_internal(const char *dirname,
-					struct dirent *** namelist,
-					int (*selector) (const struct dirent *));
 #endif
 
 
@@ -74,12 +70,12 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 			const char *msg = NULL;
 
 			if ((src_fd = open(src, O_RDONLY, 0)) < 0)
-				return "can't open source file";
+				return "could not open source file";
 
 			if ((dstfd = open(dst, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) < 0)
 			{
 				close(src_fd);
-				return "can't create destination file";
+				return "could not create destination file";
 			}
 
 			while ((bytesRead = read(src_fd, buf, BLCKSZ)) == BLCKSZ)
@@ -90,7 +86,7 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 #endif
 				if (write(dstfd, buf, BLCKSZ) != BLCKSZ)
 				{
-					msg = "can't write new page to destination";
+					msg = "could not write new page to destination";
 					break;
 				}
 			}
@@ -209,7 +205,7 @@ linkAndUpdateFile(pageCnvCtx *pageConverter,
 				  const char *src, const char *dst)
 {
 	if (pageConverter != NULL)
-		return "Can't in-place update this cluster, page-by-page conversion is required";
+		return "Cannot in-place update this cluster, page-by-page conversion is required";
 
 	if (pg_link_file(src, dst) == -1)
 		return getErrorText(errno);
@@ -317,45 +313,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 
 /*
- * pg_scandir()
- *
- * Wrapper for portable scandir functionality
- */
-int
-pg_scandir(const char *dirname,
-		   struct dirent *** namelist,
-		   int (*selector) (const struct dirent *))
-{
-#ifndef HAVE_SCANDIR
-	return pg_scandir_internal(dirname, namelist, selector);
-
-	/*
-	 * scandir() is originally from BSD 4.3, which had the third argument as
-	 * non-const. Linux and other C libraries have updated it to use a const.
-	 * http://unix.derkeiler.com/Mailing-Lists/FreeBSD/questions/2005-12/msg002
-	 * 14.html
-	 *
-	 * Here we try to guess which libc's need const, and which don't. The net
-	 * goal here is to try to suppress a compiler warning due to a prototype
-	 * mismatch of const usage. Ideally we would do this via autoconf, but
-	 * autoconf doesn't have a suitable builtin test and it seems overkill to
-	 * add one just to avoid a warning.
-	 */
-#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__darwin__) || defined(__OpenBSD__)
-	/* no const */
-	return scandir(dirname, namelist, (int (*) (struct dirent *)) selector, NULL);
-#else
-	/* use const */
-	return scandir(dirname, namelist, selector, NULL);
-#endif
-}
-
-
-#ifndef HAVE_SCANDIR
-/*
- * pg_scandir_internal()
- *
- * Implement our own scandir() on platforms that don't have it.
+ * load_directory()
  *
  * Returns count of files that meet the selection criteria coded in
  * the function pointed to by selector.  Creates an array of pointers
@@ -363,13 +321,10 @@ pg_scandir(const char *dirname,
  *
  * Note that the number of dirent structures needed is dynamically
  * allocated using realloc.  Realloc can be inefficient if invoked a
- * large number of times.  Its use in pg_upgrade is to find filesystem
- * filenames that have extended beyond the initial segment (file.1,
- * .2, etc.) and should therefore be invoked a small number of times.
+ * large number of times.
  */
-static int
-pg_scandir_internal(const char *dirname,
-		 struct dirent *** namelist, int (*selector) (const struct dirent *))
+int
+load_directory(const char *dirname, struct dirent *** namelist)
 {
 	DIR		   *dirdesc;
 	struct dirent *direntry;
@@ -378,41 +333,37 @@ pg_scandir_internal(const char *dirname,
 	size_t		entrysize;
 
 	if ((dirdesc = opendir(dirname)) == NULL)
-		pg_log(PG_FATAL, "could not open directory \"%s\": %m\n", dirname);
+		pg_log(PG_FATAL, "could not open directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	*namelist = NULL;
 
 	while (errno = 0, (direntry = readdir(dirdesc)) != NULL)
 	{
-		/* Invoke the selector function to see if the direntry matches */
-		if ((*selector) (direntry))
-		{
-			count++;
+		count++;
 
-			*namelist = (struct dirent **) realloc((void *) (*namelist),
+		*namelist = (struct dirent **) realloc((void *) (*namelist),
 						(size_t) ((name_num + 1) * sizeof(struct dirent *)));
 
-			if (*namelist == NULL)
-			{
-				closedir(dirdesc);
-				return -1;
-			}
-
-			entrysize = sizeof(struct dirent) - sizeof(direntry->d_name) +
-				strlen(direntry->d_name) + 1;
-
-			(*namelist)[name_num] = (struct dirent *) malloc(entrysize);
-
-			if ((*namelist)[name_num] == NULL)
-			{
-				closedir(dirdesc);
-				return -1;
-			}
-
-			memcpy((*namelist)[name_num], direntry, entrysize);
-
-			name_num++;
+		if (*namelist == NULL)
+		{
+			closedir(dirdesc);
+			return -1;
 		}
+
+		entrysize = sizeof(struct dirent) - sizeof(direntry->d_name) +
+			strlen(direntry->d_name) + 1;
+
+		(*namelist)[name_num] = (struct dirent *) malloc(entrysize);
+
+		if ((*namelist)[name_num] == NULL)
+		{
+			closedir(dirdesc);
+			return -1;
+		}
+
+		memcpy((*namelist)[name_num], direntry, entrysize);
+
+		name_num++;
 	}
 
 #ifdef WIN32
@@ -429,23 +380,6 @@ pg_scandir_internal(const char *dirname,
 
 	return count;
 }
-#endif
-
-
-/*
- *	dir_matching_filenames
- *
- *	Return only matching file names during directory scan
- */
-int
-dir_matching_filenames(const struct dirent * scan_ent)
-{
-	/* we only compare for string length because the number suffix varies */
-	if (!strncmp(scandir_file_pattern, scan_ent->d_name, strlen(scandir_file_pattern)))
-		return 1;
-
-	return 0;
-}
 
 
 void
@@ -461,7 +395,7 @@ check_hard_link(void)
 	if (pg_link_file(existing_file, new_link_file) == -1)
 	{
 		pg_log(PG_FATAL,
-			   "Could not create hard link between old and new data directories:  %s\n"
+			   "Could not create hard link between old and new data directories: %s\n"
 			   "In link mode the old and new data directories must be on the same file system volume.\n",
 			   getErrorText(errno));
 	}
@@ -481,5 +415,18 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
-
 #endif
+
+
+/* fopen() file with no group/other permissions */
+FILE *
+fopen_priv(const char *path, const char *mode)
+{
+	mode_t		old_umask = umask(S_IRWXG | S_IRWXO);
+	FILE	   *fp;
+
+	fp = fopen(path, mode);
+	umask(old_umask);
+
+	return fp;
+}

@@ -4,9 +4,13 @@
  *	  definitions for run-time statistics collection
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2011, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2001-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * src/include/executor/instrument.h
  *
@@ -26,22 +30,32 @@ typedef struct BufferUsage
 {
 	long		shared_blks_hit;	/* # of shared buffer hits */
 	long		shared_blks_read;		/* # of shared disk blocks read */
+	long		shared_blks_dirtied;	/* # of shared blocks dirtied */
 	long		shared_blks_written;	/* # of shared disk blocks written */
 	long		local_blks_hit; /* # of local buffer hits */
 	long		local_blks_read;	/* # of local disk blocks read */
+	long		local_blks_dirtied;		/* # of shared blocks dirtied */
 	long		local_blks_written;		/* # of local disk blocks written */
 	long		temp_blks_read; /* # of temp blocks read */
 	long		temp_blks_written;		/* # of temp blocks written */
+	instr_time	blk_read_time;	/* time spent reading */
+	instr_time	blk_write_time; /* time spent writing */
 } BufferUsage;
 
 /* Flag bits included in InstrAlloc's instrument_options bitmask */
 typedef enum InstrumentOption
 {
+<<<<<<< HEAD
 	INSTRUMENT_NONE = 0,
 	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage (not implemented yet) */
 	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
 	INSTRUMENT_CDB = 0x40000000,	/* needs cdb statistics */
+=======
+	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
+	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
+	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	INSTRUMENT_ALL = 0x7FFFFFFF
 } InstrumentOption;
 
@@ -49,11 +63,14 @@ typedef struct Instrumentation
 {
 	/* Parameters set at node creation: */
 	bool		need_timer;		/* TRUE if we need timer data */
+<<<<<<< HEAD
 	bool		need_cdb;		/* TRUE if we need cdb statistics */
 
+=======
+	bool		need_bufusage;	/* TRUE if we need buffer usage data */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Info about current plan cycle: */
 	bool		running;		/* TRUE if we've completed first tuple */
-	bool		needs_bufusage; /* TRUE if we need buffer usage */
 	instr_time	starttime;		/* Start time of current iteration of node */
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
@@ -62,6 +79,7 @@ typedef struct Instrumentation
 	/* Accumulated statistics across all completed cycles: */
 	double		startup;		/* Total startup time (in seconds) */
 	double		total;			/* Total total time (in seconds) */
+<<<<<<< HEAD
 	uint64		ntuples;		/* Total tuples produced */
 	uint64		nloops;			/* # of run cycles for this node */
 	BufferUsage	bufusage;		/* Total buffer usage */
@@ -77,6 +95,13 @@ typedef struct Instrumentation
 	const char *sortSpaceType;	/* CDB: Sort space type (Memory / Disk) */
 	long		sortSpaceUsed;	/* CDB: Memory / Disk used by sort(KBytes) */
 	struct CdbExplain_NodeSummary *cdbNodeSummary;	/* stats from all qExecs */
+=======
+	double		ntuples;		/* Total tuples produced */
+	double		nloops;			/* # of run cycles for this node */
+	double		nfiltered1;		/* # tuples removed by scanqual or joinqual */
+	double		nfiltered2;		/* # tuples removed by "other" quals */
+	BufferUsage bufusage;		/* Total buffer usage */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } Instrumentation;
 
 extern PGDLLIMPORT BufferUsage pgBufferUsage;

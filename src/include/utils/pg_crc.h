@@ -18,6 +18,7 @@
  * COMP_<variant>(crc, data, len)
  *		Accumulate some (more) bytes into a CRC
  *
+<<<<<<< HEAD
  * FIN_<variant>(crc)
  *		Finish a CRC calculation
  *
@@ -27,6 +28,9 @@
  * The CRC-32C variant is in port/pg_crc32c.h.
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc.h
@@ -62,6 +66,7 @@ do {															  \
 	} \
 } while (0)
 
+<<<<<<< HEAD
 /*
  * The CRC algorithm used for WAL et al in pre-9.5 versions.
  *
@@ -88,6 +93,11 @@ do {															  \
  */
 #define COMP_CRC32_REFLECTED_TABLE(crc, data, len, table) \
 do {															  \
+=======
+/* Accumulate some (more) bytes into a CRC */
+#define COMP_CRC32(crc, data, len)	\
+do { \
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	const unsigned char *__data = (const unsigned char *) (data); \
 	uint32		__len = (len); \
 \

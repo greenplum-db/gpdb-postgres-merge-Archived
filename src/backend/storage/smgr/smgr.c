@@ -6,9 +6,13 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,10 +23,13 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "commands/tablespace.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
@@ -277,7 +284,68 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 }
 
 /*
+<<<<<<< HEAD
  *	smgrcreate_ao() -- Create a new AO relation segment.
+=======
+ *	smgrdounlink() -- Immediately unlink all forks of a relation.
+ *
+ *		All forks of the relation are removed from the store.  This should
+ *		not be used during transactional operations, since it can't be undone.
+ *
+ *		If isRedo is true, it is okay for the underlying file(s) to be gone
+ *		already.
+ *
+ *		This is equivalent to calling smgrdounlinkfork for each fork, but
+ *		it's significantly quicker so should be preferred when possible.
+ */
+void
+smgrdounlink(SMgrRelation reln, bool isRedo)
+{
+	RelFileNodeBackend rnode = reln->smgr_rnode;
+	int			which = reln->smgr_which;
+	ForkNumber	forknum;
+
+	/* Close the forks at smgr level */
+	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		(*(smgrsw[which].smgr_close)) (reln, forknum);
+
+	/*
+	 * Get rid of any remaining buffers for the relation.  bufmgr will just
+	 * drop them without bothering to write the contents.
+	 */
+	DropRelFileNodeAllBuffers(rnode);
+
+	/*
+	 * It'd be nice to tell the stats collector to forget it immediately, too.
+	 * But we can't because we don't know the OID (and in cases involving
+	 * relfilenode swaps, it's not always clear which table OID to forget,
+	 * anyway).
+	 */
+
+	/*
+	 * Send a shared-inval message to force other backends to close any
+	 * dangling smgr references they may have for this rel.  We should do this
+	 * before starting the actual unlinking, in case we fail partway through
+	 * that step.  Note that the sinval message will eventually come back to
+	 * this backend, too, and thereby provide a backstop that we closed our
+	 * own smgr rel.
+	 */
+	CacheInvalidateSmgr(rnode);
+
+	/*
+	 * Delete the physical file(s).
+	 *
+	 * Note: smgr_unlink must treat deletion failure as a WARNING, not an
+	 * ERROR, because we've already decided to commit or abort the current
+	 * xact.
+	 */
+	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
+}
+
+/*
+ *	smgrdounlinkfork() -- Immediately unlink one fork of a relation.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  *		Given a RelFileNode, cause the underlying disk file for the
  *		AO segment to be created.
@@ -286,6 +354,7 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  *		already because we are in a WAL replay sequence.
  */
 void
+<<<<<<< HEAD
 smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 {
 	mdcreate_ao(rnode, segmentFileNum, isRedo);
@@ -294,15 +363,23 @@ smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
 
 void
 smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+=======
+smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
 
+<<<<<<< HEAD
 	/* Close the fork */
 	mdclose(reln, forknum);
+=======
+	/* Close the fork at smgr level */
+	(*(smgrsw[which].smgr_close)) (reln, forknum);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
-	 * Get rid of any remaining buffers for the relation.  bufmgr will just
-	 * drop them without bothering to write the contents.
+	 * Get rid of any remaining buffers for the fork.  bufmgr will just drop
+	 * them without bothering to write the contents.
 	 */
 	DropRelFileNodeBuffers(rnode, forknum, 0);
 

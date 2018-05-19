@@ -9,9 +9,13 @@
  * storage management for portals (but doesn't run any queries in them).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -159,7 +163,11 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
+<<<<<<< HEAD
 	PortalStart(portal, params, GetActiveSnapshot(), NULL);
+=======
+	PortalStart(portal, params, 0, true);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -262,7 +270,7 @@ PerformPortalClose(const char *name)
 	}
 
 	/*
-	 * Note: PortalCleanup is called as a side-effect
+	 * Note: PortalCleanup is called as a side-effect, if not already done.
 	 */
 	PortalDrop(portal, false);
 }
@@ -272,6 +280,10 @@ PerformPortalClose(const char *name)
  *
  * Clean up a portal when it's dropped.  This is the standard cleanup hook
  * for portals.
+ *
+ * Note: if portal->status is PORTAL_FAILED, we are probably being called
+ * during error abort, and must be careful to avoid doing anything that
+ * is likely to fail again.
  */
 void
 PortalCleanup(Portal portal)
@@ -516,7 +528,7 @@ PersistHoldablePortal(Portal portal)
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* GPDB: cleanup dispatch and teardown interconnect */
 		if (portal->queryDesc)

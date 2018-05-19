@@ -300,9 +300,9 @@ LINE 4:                where sum(distinct a.four + b.four) = b.four)...
 select
   (select max((select i.unique2 from tenk1 i where i.unique1 = o.unique1)))
 from tenk1 o;
- ?column? 
-----------
-     9999
+ max  
+------
+ 9999
 (1 row)
 
 --
@@ -449,17 +449,23 @@ analyze tenk1;		-- ensure we get consistent plans here
 -- Basic cases
 explain (costs off)
   select min(unique1) from tenk1;
-                      QUERY PLAN                       
--------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique1
                  ->  Index Scan using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan using tenk1_unique1 on tenk1
+                 Index Cond: (unique1 IS NOT NULL)
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select min(unique1) from tenk1;
  min 
@@ -469,17 +475,23 @@ select min(unique1) from tenk1;
 
 explain (costs off)
   select max(unique1) from tenk1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique1
                  ->  Index Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: (unique1 IS NOT NULL)
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select max(unique1) from tenk1;
  max  
@@ -494,12 +506,18 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique1
                  ->  Index Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 < 42
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 < 42))
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select max(unique1) from tenk1 where unique1 < 42;
  max 
@@ -514,12 +532,18 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique1
                  ->  Index Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 > 42
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42))
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select max(unique1) from tenk1 where unique1 > 42;
  max  
@@ -536,12 +560,18 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique1
                  ->  Index Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 > 42000
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan Backward using tenk1_unique1 on tenk1
+                 Index Cond: ((unique1 IS NOT NULL) AND (unique1 > 42000))
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select max(unique1) from tenk1 where unique1 > 42000;
  max 
@@ -553,17 +583,23 @@ reset enable_seqscan;
 -- multi-column index (uses tenk1_thous_tenthous)
 explain (costs off)
   select max(tenthous) from tenk1 where thousand = 33;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.tenthous
                  ->  Index Scan Backward using tenk1_thous_tenthous on tenk1
                        Index Cond: thousand = 33 AND tenthous IS NOT NULL
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1
+                 Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select max(tenthous) from tenk1 where thousand = 33;
  max  
@@ -578,12 +614,18 @@ explain (costs off)
  Result
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.tenthous
                  ->  Index Scan using tenk1_thous_tenthous on tenk1
                        Index Cond: thousand = 33 AND tenthous IS NOT NULL
  Optimizer: legacy query optimizer
 (8 rows)
+=======
+           ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+                 Index Cond: ((thousand = 33) AND (tenthous IS NOT NULL))
+(5 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select min(tenthous) from tenk1 where thousand = 33;
  min 
@@ -597,6 +639,7 @@ select min(tenthous) from tenk1 where thousand = 33;
 explain (costs off)
   select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
     from int4_tbl;
+<<<<<<< HEAD
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
@@ -610,6 +653,18 @@ explain (costs off)
                                    ->  Seq Scan on tenk1
  Optimizer: legacy query optimizer
 (10 rows)
+=======
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Seq Scan on int4_tbl
+   SubPlan 2
+     ->  Result
+           InitPlan 1 (returns $1)
+             ->  Limit
+                   ->  Index Only Scan using tenk1_unique1 on tenk1
+                         Index Cond: ((unique1 IS NOT NULL) AND (unique1 > int4_tbl.f1))
+(7 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
   from int4_tbl;
@@ -625,16 +680,21 @@ select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
 -- check some cases that were handled incorrectly in 8.3.0
 explain (costs off)
   select distinct max(unique2) from tenk1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  HashAggregate
    Group Key: $0
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique2
                  ->  Index Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
+=======
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
    ->  Result
  Optimizer: legacy query optimizer
 (10 rows)
@@ -647,16 +707,21 @@ select distinct max(unique2) from tenk1;
 
 explain (costs off)
   select max(unique2) from tenk1 order by 1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: ($0)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique2
                  ->  Index Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
+=======
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
    ->  Result
  Optimizer: legacy query optimizer
 (10 rows)
@@ -669,16 +734,21 @@ select max(unique2) from tenk1 order by 1;
 
 explain (costs off)
   select max(unique2) from tenk1 order by max(unique2);
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: ($0)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique2
                  ->  Index Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
+=======
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
    ->  Result
  Optimizer: legacy query optimizer
 (10 rows)
@@ -691,16 +761,21 @@ select max(unique2) from tenk1 order by max(unique2);
 
 explain (costs off)
   select max(unique2) from tenk1 order by max(unique2)+1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: ($0 + 1)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique2
                  ->  Index Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
+=======
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
    ->  Result
  Optimizer: legacy query optimizer
 (10 rows)
@@ -713,16 +788,21 @@ select max(unique2) from tenk1 order by max(unique2)+1;
 
 explain (costs off)
   select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Sort
    Sort Key: (generate_series(1, 3))
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.tenk1.unique2
                  ->  Index Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
+=======
+           ->  Index Only Scan Backward using tenk1_unique2 on tenk1
+                 Index Cond: (unique2 IS NOT NULL)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
    ->  Result
  Optimizer: legacy query optimizer
 (10 rows)
@@ -751,11 +831,17 @@ insert into minmaxtest3 values(17), (18);
 set enable_seqscan=off;
 explain (costs off)
   select min(f1), max(f1) from minmaxtest;
+<<<<<<< HEAD
                                          QUERY PLAN                                         
 --------------------------------------------------------------------------------------------
+=======
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  Result
    InitPlan 1 (returns $0)  (slice3)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.minmaxtest.f1
                  ->  Merge Append
@@ -786,6 +872,31 @@ explain (costs off)
                              Index Cond: f1 IS NOT NULL
  Optimizer: legacy query optimizer
 (32 rows)
+=======
+           ->  Merge Append
+                 Sort Key: public.minmaxtest.f1
+                 ->  Index Only Scan using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: public.minmaxtest.f1
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+(25 rows)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 select min(f1), max(f1) from minmaxtest;
  min | max 
@@ -1124,6 +1235,7 @@ select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -
  a,ab,abcd
 (1 row)
 
+<<<<<<< HEAD
 -- FILTER tests
 select min(unique1) filter (where unique1 > 100) from tenk1;
  min 
@@ -1485,3 +1597,40 @@ select least_agg(variadic array[q1,q2]) from int8_tbl;
  -4567890123456789
 (1 row)
 
+=======
+-- string_agg bytea tests
+create table bytea_test_table(v bytea);
+select string_agg(v, '') from bytea_test_table;
+ string_agg 
+------------
+ 
+(1 row)
+
+insert into bytea_test_table values(decode('ff','hex'));
+select string_agg(v, '') from bytea_test_table;
+ string_agg 
+------------
+ \xff
+(1 row)
+
+insert into bytea_test_table values(decode('aa','hex'));
+select string_agg(v, '') from bytea_test_table;
+ string_agg 
+------------
+ \xffaa
+(1 row)
+
+select string_agg(v, NULL) from bytea_test_table;
+ string_agg 
+------------
+ \xffaa
+(1 row)
+
+select string_agg(v, decode('ee', 'hex')) from bytea_test_table;
+ string_agg 
+------------
+ \xffeeaa
+(1 row)
+
+drop table bytea_test_table;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

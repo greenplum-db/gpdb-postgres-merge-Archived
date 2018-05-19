@@ -2,11 +2,17 @@
  *
  * bgwriter.h
  *	  Exports from postmaster/bgwriter.c and postmaster/checkpointer.c.
+<<<<<<< HEAD
+ *
+ * The bgwriter process used to handle checkpointing duties too.  Now
+ * there is a separate process, but we did not bother to split this header.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * The bgwriter process used to handle checkpointing duties too.  Now
  * there is a separate process, but we did not bother to split this header.
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  * src/include/postmaster/bgwriter.h
  *

@@ -57,10 +57,18 @@ static int	getNotify(PGconn *conn);
 PostgresPollingStatusType
 pqSetenvPoll(PGconn *conn)
 {
+	PostgresPollingStatusType result;
 	PGresult   *res;
+	PQrowProcessor savedRowProcessor;
+	void	   *savedRowProcessorParam;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return PGRES_POLLING_FAILED;
+
+	/* Ensure the standard row processor is used to collect any results */
+	savedRowProcessor = conn->rowProcessor;
+	savedRowProcessorParam = conn->rowProcessorParam;
+	PQsetRowProcessor(conn, NULL, NULL);
 
 	/* Check whether there are any data for us */
 	switch (conn->setenv_state)
@@ -77,7 +85,10 @@ pqSetenvPoll(PGconn *conn)
 				if (n < 0)
 					goto error_return;
 				if (n == 0)
-					return PGRES_POLLING_READING;
+				{
+					result = PGRES_POLLING_READING;
+					goto normal_return;
+				}
 
 				break;
 			}
@@ -91,7 +102,8 @@ pqSetenvPoll(PGconn *conn)
 
 			/* Should we raise an error if called when not active? */
 		case SETENV_STATE_IDLE:
-			return PGRES_POLLING_OK;
+			result = PGRES_POLLING_OK;
+			goto normal_return;
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
@@ -188,7 +200,10 @@ pqSetenvPoll(PGconn *conn)
 			case SETENV_STATE_CLIENT_ENCODING_WAIT:
 				{
 					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
+					{
+						result = PGRES_POLLING_READING;
+						goto normal_return;
+					}
 
 					res = PQgetResult(conn);
 
@@ -213,7 +228,10 @@ pqSetenvPoll(PGconn *conn)
 			case SETENV_STATE_OPTION_WAIT:
 				{
 					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
+					{
+						result = PGRES_POLLING_READING;
+						goto normal_return;
+					}
 
 					res = PQgetResult(conn);
 
@@ -252,13 +270,17 @@ pqSetenvPoll(PGconn *conn)
 						goto error_return;
 
 					conn->setenv_state = SETENV_STATE_QUERY1_WAIT;
-					return PGRES_POLLING_READING;
+					result = PGRES_POLLING_READING;
+					goto normal_return;
 				}
 
 			case SETENV_STATE_QUERY1_WAIT:
 				{
 					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
+					{
+						result = PGRES_POLLING_READING;
+						goto normal_return;
+					}
 
 					res = PQgetResult(conn);
 
@@ -335,13 +357,17 @@ pqSetenvPoll(PGconn *conn)
 						goto error_return;
 
 					conn->setenv_state = SETENV_STATE_QUERY2_WAIT;
-					return PGRES_POLLING_READING;
+					result = PGRES_POLLING_READING;
+					goto normal_return;
 				}
 
 			case SETENV_STATE_QUERY2_WAIT:
 				{
 					if (PQisBusy(conn))
-						return PGRES_POLLING_READING;
+					{
+						result = PGRES_POLLING_READING;
+						goto normal_return;
+					}
 
 					res = PQgetResult(conn);
 
@@ -388,7 +414,8 @@ pqSetenvPoll(PGconn *conn)
 					{
 						/* Query finished, so we're done */
 						conn->setenv_state = SETENV_STATE_IDLE;
-						return PGRES_POLLING_OK;
+						result = PGRES_POLLING_OK;
+						goto normal_return;
 					}
 					break;
 				}
@@ -406,7 +433,12 @@ pqSetenvPoll(PGconn *conn)
 
 error_return:
 	conn->setenv_state = SETENV_STATE_IDLE;
-	return PGRES_POLLING_FAILED;
+	result = PGRES_POLLING_FAILED;
+
+normal_return:
+	conn->rowProcessor = savedRowProcessor;
+	conn->rowProcessorParam = savedRowProcessorParam;
+	return result;
 }
 
 
@@ -414,6 +446,9 @@ error_return:
  * parseInput: if appropriate, parse input data from backend
  * until input is exhausted or a stopping state is reached.
  * Note that this function will NOT attempt to read more data from the backend.
+ *
+ * Note: callers of parseInput must be prepared for a longjmp exit when we are
+ * in PGASYNC_BUSY state, since an external row processor might do that.
  */
 void
 pqParseInput2(PGconn *conn)
@@ -718,6 +753,7 @@ getRowDescriptions(PGconn *conn)
 
 	/* Success! */
 	conn->result = result;
+<<<<<<< HEAD
 
 	/* Advance inStart to show that the "T" message has been processed. */
 	conn->inStart = conn->inCursor;
@@ -730,6 +766,35 @@ getRowDescriptions(PGconn *conn)
 	/* And we're done. */
 	return 0;
 
+=======
+
+	/*
+	 * Advance inStart to show that the "T" message has been processed.  We
+	 * must do this before calling the row processor, in case it longjmps.
+	 */
+	conn->inStart = conn->inCursor;
+
+	/* Give the row processor a chance to initialize for new result set */
+	errmsg = NULL;
+	switch ((*conn->rowProcessor) (result, NULL, &errmsg,
+								   conn->rowProcessorParam))
+	{
+		case 1:
+			/* everything is good */
+			return 0;
+
+		case -1:
+			/* error, report the errmsg below */
+			break;
+
+		default:
+			/* unrecognized return code */
+			errmsg = libpq_gettext("unrecognized return value from row processor");
+			break;
+	}
+	goto set_error_result;
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 advance_and_error:
 
 	/*
@@ -739,6 +804,11 @@ advance_and_error:
 	 */
 	conn->inStart = conn->inEnd;
 
+<<<<<<< HEAD
+=======
+set_error_result:
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * Replace partially constructed result with an error result. First
 	 * discard the old result to try to win back some memory.
@@ -746,7 +816,11 @@ advance_and_error:
 	pqClearAsyncResult(conn);
 
 	/*
+<<<<<<< HEAD
 	 * If preceding code didn't provide an error message, assume "out of
+=======
+	 * If row processor didn't provide an error message, assume "out of
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.
@@ -893,6 +967,7 @@ getAnotherTuple(PGconn *conn, bool binary)
 		free(bitmap);
 	bitmap = NULL;
 
+<<<<<<< HEAD
 	/* Advance inStart to show that the "D" message has been processed. */
 	conn->inStart = conn->inCursor;
 
@@ -902,6 +977,33 @@ getAnotherTuple(PGconn *conn, bool binary)
 		return 0;				/* normal, successful exit */
 
 	goto set_error_result;		/* pqRowProcessor failed, report it */
+=======
+	/*
+	 * Advance inStart to show that the "D" message has been processed.  We
+	 * must do this before calling the row processor, in case it longjmps.
+	 */
+	conn->inStart = conn->inCursor;
+
+	/* Pass the completed row values to rowProcessor */
+	errmsg = NULL;
+	switch ((*conn->rowProcessor) (result, rowbuf, &errmsg,
+								   conn->rowProcessorParam))
+	{
+		case 1:
+			/* everything is good */
+			return 0;
+
+		case -1:
+			/* error, report the errmsg below */
+			break;
+
+		default:
+			/* unrecognized return code */
+			errmsg = libpq_gettext("unrecognized return value from row processor");
+			break;
+	}
+	goto set_error_result;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 advance_and_error:
 
@@ -921,7 +1023,11 @@ set_error_result:
 	pqClearAsyncResult(conn);
 
 	/*
+<<<<<<< HEAD
 	 * If preceding code didn't provide an error message, assume "out of
+=======
+	 * If row processor didn't provide an error message, assume "out of
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.

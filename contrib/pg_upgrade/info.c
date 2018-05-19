@@ -3,10 +3,16 @@
  *
  *	information support functions
  *
+<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
+=======
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *	contrib/pg_upgrade/info.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
@@ -70,6 +76,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		&new_db->rel_arr.rels[new_relnum] : NULL;
 		RelType		reltype;
 
+<<<<<<< HEAD
 		/* check for mismatched OID */
 		if (old_rel->reloid < new_rel->reloid)
 		{
@@ -105,6 +112,27 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 				   "old name \"%s.%s\", new name \"%s.%s\"\n",
 				   old_rel->reloid, old_db->db_name,
 				   old_rel->nspname, old_rel->relname,
+=======
+		if (old_rel->reloid != new_rel->reloid)
+			pg_log(PG_FATAL, "Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
+				   old_db->db_name, old_rel->reloid, new_rel->reloid);
+
+		/*
+		 * TOAST table names initially match the heap pg_class oid. In
+		 * pre-8.4, TOAST table names change during CLUSTER; in pre-9.0, TOAST
+		 * table names change during ALTER TABLE ALTER COLUMN SET TYPE. In >=
+		 * 9.0, TOAST relation names always use heap table oids, hence we
+		 * cannot check relation names when upgrading from pre-9.0. Clusters
+		 * upgraded to 9.0 will get matching TOAST names.
+		 */
+		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
+			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
+			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
+			 strcmp(old_rel->relname, new_rel->relname) != 0))
+			pg_log(PG_FATAL, "Mismatch of relation names in database \"%s\": "
+				   "old name \"%s.%s\", new name \"%s.%s\"\n",
+				   old_db->db_name, old_rel->nspname, old_rel->relname,
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				   new_rel->nspname, new_rel->relname);
 			all_matched = false;
 			old_relnum++;
@@ -222,19 +250,19 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 void
 print_maps(FileNameMap *maps, int n_maps, const char *db_name)
 {
-	if (log_opts.debug)
+	if (log_opts.verbose)
 	{
 		int			mapnum;
 
-		pg_log(PG_DEBUG, "mappings for db %s:\n", db_name);
+		pg_log(PG_VERBOSE, "mappings for database \"%s\":\n", db_name);
 
 		for (mapnum = 0; mapnum < n_maps; mapnum++)
-			pg_log(PG_DEBUG, "%s.%s: %u to %u\n",
+			pg_log(PG_VERBOSE, "%s.%s: %u to %u\n",
 				   maps[mapnum].nspname, maps[mapnum].relname,
 				   maps[mapnum].old_relfilenode,
 				   maps[mapnum].new_relfilenode);
 
-		pg_log(PG_DEBUG, "\n\n");
+		pg_log(PG_VERBOSE, "\n\n");
 	}
 }
 
@@ -258,11 +286,9 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
-	if (log_opts.debug)
-	{
-		pg_log(PG_DEBUG, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	pg_log(PG_VERBOSE, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	if (log_opts.verbose)
 		print_db_infos(&cluster->dbarr);
-	}
 }
 
 
@@ -293,11 +319,16 @@ get_db_infos(ClusterInfo *cluster)
 			 "WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
 			 "ORDER BY 2",
+<<<<<<< HEAD
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during then merge of postgres 8.4
 	 */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
+=======
+	/* 9.2 removed the spclocation column */
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
@@ -391,7 +422,7 @@ get_numeric_types(PGconn *conn)
 /*
  * get_rel_infos()
  *
- * gets the relinfos for all the user tables of the database refered
+ * gets the relinfos for all the user tables of the database referred
  * by "db".
  *
  * NOTE: we assume that relations/entities with oids greater than
@@ -418,8 +449,12 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				i_relkind,
 				i_oid,
 				i_relfilenode,
+<<<<<<< HEAD
 				i_reltablespace,
 				i_segrelid;
+=======
+				i_reltablespace;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	char		query[QUERY_ALLOC];
 	bool		bitmaphack_created = false;
 	Oid		   *numeric_types;
@@ -485,20 +520,32 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "
+<<<<<<< HEAD
 			 "  c.relstorage, c.relkind, c.reltablespace, "
 			 "	c.relfilenode, %s "
+=======
+			 "	c.relfilenode, c.reltablespace, %s "
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "	   ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_index i "
 			 "	   ON c.oid = i.indexrelid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	   ON c.reltablespace = t.oid "
+<<<<<<< HEAD
 			 "WHERE "
 			 /* exclude possible orphaned temp tables */
 			 "  ((n.nspname !~ '^pg_temp_' AND "
 			 "    n.nspname !~ '^pg_toast_temp_' AND "
 			 "    n.nspname NOT IN ('gp_toolkit', 'pg_catalog', 'information_schema', 'binary_upgrade', 'pg_aoseg', 'pg_bitmapindex') AND "
 			 "    c.relkind <> 'i' AND " // GPDB TODO: Indexes not supported
+=======
+			 "WHERE relkind IN ('r','t', 'i'%s) AND "
+	/* exclude possible orphaned temp tables */
+			 "  ((n.nspname !~ '^pg_temp_' AND "
+			 "    n.nspname !~ '^pg_toast_temp_' AND "
+			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') AND "
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 "	  c.oid >= %u) "
 			 "  OR (n.nspname = 'pg_catalog' AND "
 	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
@@ -511,10 +558,17 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "			n.nspname "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
+<<<<<<< HEAD
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during the 8.4 merge
 	 */
+=======
+	/* 9.2 removed the spclocation column */
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
+	/* see the comment at the top of old_8_3_create_sequence_script() */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
 	/* this oid allows us to skip system toast tables */
@@ -534,7 +588,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "" : " AND i.indisvalid IS DISTINCT FROM false AND i.indisready IS DISTINCT FROM false "
 		);
 
-	res = executeQueryOrDie(conn, query);
+	res = executeQueryOrDie(conn, "%s", query);
 
 	ntups = PQntuples(res);
 
@@ -978,9 +1032,9 @@ print_db_infos(DbInfoArr *db_arr)
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 	{
-		pg_log(PG_DEBUG, "Database: %s\n", db_arr->dbs[dbnum].db_name);
+		pg_log(PG_VERBOSE, "Database: %s\n", db_arr->dbs[dbnum].db_name);
 		print_rel_infos(&db_arr->dbs[dbnum].rel_arr);
-		pg_log(PG_DEBUG, "\n\n");
+		pg_log(PG_VERBOSE, "\n\n");
 	}
 }
 
@@ -991,7 +1045,7 @@ print_rel_infos(RelInfoArr *arr)
 	int			relnum;
 
 	for (relnum = 0; relnum < arr->nrels; relnum++)
-		pg_log(PG_DEBUG, "relname: %s.%s: reloid: %u reltblspace: %s\n",
+		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
 			   arr->rels[relnum].nspname, arr->rels[relnum].relname,
 			   arr->rels[relnum].reloid, arr->rels[relnum].tablespace);
 }

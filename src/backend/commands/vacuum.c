@@ -9,9 +9,13 @@
  * in cluster.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -147,7 +151,7 @@ static void vacuum_appendonly_index(Relation indexRelation,
  * tables separately.
  *
  * for_wraparound is used by autovacuum to let us know when it's forcing
- * a vacuum for wraparound, which should not be auto-cancelled.
+ * a vacuum for wraparound, which should not be auto-canceled.
  *
  * bstrategy is normally given as NULL, but in autovacuum it can be passed
  * in to use the same buffer strategy object across multiple vacuum() calls.
@@ -310,6 +314,9 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 		VacuumCostActive = (VacuumCostDelay > 0);
 		VacuumCostBalance = 0;
+		VacuumPageHit = 0;
+		VacuumPageMiss = 0;
+		VacuumPageDirty = 0;
 
 		if (vacstmt->options & VACOPT_VACUUM)
 		{
@@ -1045,10 +1052,23 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			Oid			relid;
 			List	   *prels = NIL;
 
+<<<<<<< HEAD
 			/* the caller should've separated VACUUMs and ANALYZEs into separate
 			 * commands before getting here.
 			 */
 			relid = RangeVarGetRelid(vacstmt->relation, false);
+=======
+		/*
+		 * Since we don't take a lock here, the relation might be gone, or the
+		 * RangeVar might no longer refer to the OID we look up here.  In the
+		 * former case, VACUUM will do nothing; in the latter case, it will
+		 * process the OID we looked up here, rather than the new one.
+		 * Neither is ideal, but there's little practical alternative, since
+		 * we're going to commit this transaction and begin a new one between
+		 * now and then.
+		 */
+		relid = RangeVarGetRelid(vacrel, NoLock, false);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			if (rel_is_partitioned(relid))
 			{
@@ -1422,7 +1442,12 @@ vac_update_relstats_from_list(List *updated_stats)
 void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
+<<<<<<< HEAD
 					bool hasindex, TransactionId frozenxid, bool isvacuum)
+=======
+					BlockNumber num_all_visible_pages,
+					bool hasindex, TransactionId frozenxid)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;
@@ -1507,6 +1532,11 @@ vac_update_relstats(Relation relation,
 	if (pgcform->reltuples != (float4) num_tuples)
 	{
 		pgcform->reltuples = (float4) num_tuples;
+		dirty = true;
+	}
+	if (pgcform->relallvisible != (int32) num_all_visible_pages)
+	{
+		pgcform->relallvisible = (int32) num_all_visible_pages;
 		dirty = true;
 	}
 	if (pgcform->relhasindex != hasindex)
@@ -1795,7 +1825,84 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+<<<<<<< HEAD
 	MemoryContext oldcontext;
+=======
+
+	/* Begin a transaction for vacuuming this relation */
+	StartTransactionCommand();
+
+	/*
+	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
+	 * ensures that RecentGlobalXmin is kept truly recent.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	if (!(vacstmt->options & VACOPT_FULL))
+	{
+		/*
+		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
+		 * other concurrent VACUUMs know that they can ignore this one while
+		 * determining their OldestXmin.  (The reason we don't set it during a
+		 * full VACUUM is exactly that we may have to run user-defined
+		 * functions for functional indexes, and we want to make sure that if
+		 * they use the snapshot set above, any tuples it requires can't get
+		 * removed from other tables.  An index function that depends on the
+		 * contents of other tables is arguably broken, but we won't break it
+		 * here by violating transaction semantics.)
+		 *
+		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
+		 * autovacuum; it's used to avoid canceling a vacuum that was invoked
+		 * in an emergency.
+		 *
+		 * Note: these flags remain set until CommitTransaction or
+		 * AbortTransaction.  We don't want to clear them until we reset
+		 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
+		 * which is probably Not Good.
+		 */
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
+		if (for_wraparound)
+			MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+		LWLockRelease(ProcArrayLock);
+	}
+
+	/*
+	 * Check for user-requested abort.	Note we want this to be inside a
+	 * transaction, so xact.c doesn't issue useless WARNING.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
+	/*
+	 * Determine the type of lock we want --- hard exclusive lock for a FULL
+	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
+	 * way, we can be sure that no other backend is vacuuming the same table.
+	 */
+	lmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
+
+	/*
+	 * Open the relation and get the appropriate lock on it.
+	 *
+	 * There's a race condition here: the rel may have gone away since the
+	 * last time we saw it.  If so, we don't need to vacuum it.
+	 *
+	 * If we've been asked not to wait for the relation lock, acquire it first
+	 * in non-blocking mode, before calling try_relation_open().
+	 */
+	if (!(vacstmt->options & VACOPT_NOWAIT))
+		onerel = try_relation_open(relid, lmode);
+	else if (ConditionalLockRelationOid(relid, lmode))
+		onerel = try_relation_open(relid, NoLock);
+	else
+	{
+		onerel = NULL;
+		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
+			ereport(LOG,
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+				   errmsg("skipping vacuum of \"%s\" --- lock not available",
+						  vacstmt->relation->relname)));
+	}
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (!onerel)
 	{

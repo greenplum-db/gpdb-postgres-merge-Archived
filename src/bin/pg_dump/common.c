@@ -1,12 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * common.c
- *	  common routines between pg_dump and pg4_dump
+ *	Catalog routines used by pg_dump; long ago these were shared
+ *	by another dump tool, but not anymore.
  *
- * Since pg4_dump is long-dead code, there is no longer any useful distinction
- * between this file and pg_dump.c.
- *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,13 +13,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres_fe.h"
+#include "pg_backup_archiver.h"
 
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
-
-#include "pg_backup_archiver.h"
+#include "dumpmem.h"
+#include "dumputils.h"
 
 #include "dumputils.h"
 
@@ -47,12 +45,27 @@ static int	numCatalogIds = 0;
  * arrays themselves would be simpler, but it doesn't work because pg_dump.c
  * may have already established pointers between items.)
  */
+<<<<<<< HEAD
+=======
+static TableInfo *tblinfo;
+static TypeInfo *typinfo;
+static FuncInfo *funinfo;
+static OprInfo *oprinfo;
+static NamespaceInfo *nspinfo;
+static int	numTables;
+static int	numTypes;
+static int	numFuncs;
+static int	numOperators;
+static int	numCollations;
+static int	numNamespaces;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
+<<<<<<< HEAD
 static DumpableObject **extinfoindex;
 static int	numTables;
 static int	numTypes;
@@ -62,6 +75,8 @@ static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
 static int  numTypeStorageOptions;
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -84,7 +99,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-getSchemaData(int *numTablesPtr)
+getSchemaData(Archive *fout, int *numTablesPtr)
 {
 	TableInfo  *tblinfo;
 	TypeInfo   *typinfo;
@@ -94,6 +109,11 @@ getSchemaData(int *numTablesPtr)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
+<<<<<<< HEAD
+=======
+	CollInfo   *collinfo;
+	int			numExtensions;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -111,6 +131,7 @@ getSchemaData(int *numTablesPtr)
 	int			numForeignServers;
 	int			numDefaultACLs;
 
+<<<<<<< HEAD
 	/*
 	 * We must read extensions and extension membership info first, because
 	 * extension membership needs to be consultable during decisions about
@@ -140,16 +161,40 @@ getSchemaData(int *numTablesPtr)
 		write_msg(NULL, "reading user-defined tables\n");
 	tblinfo = getTables(&numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
+=======
+	if (g_verbose)
+		write_msg(NULL, "reading schemas\n");
+	nspinfo = getNamespaces(fout, &numNamespaces);
+	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
+
+	/*
+	 * getTables should be done as soon as possible, so as to minimize the
+	 * window between starting our transaction and acquiring per-table locks.
+	 * However, we have to do getNamespaces first because the tables get
+	 * linked to their containing namespaces during getTables.
+	 */
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined tables\n");
+	tblinfo = getTables(fout, &numTables);
+	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
+
+	/* Do this after we've built tblinfoindex */
+	getOwnedSeqs(fout, tblinfo, numTables);
+
+	if (g_verbose)
+		write_msg(NULL, "reading extensions\n");
+	extinfo = getExtensions(fout, &numExtensions);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
-	funinfo = getFuncs(&numFuncs);
+	funinfo = getFuncs(fout, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
-	/* this must be after getFuncs */
+	/* this must be after getTables and getFuncs */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined types\n");
-	typinfo = getTypes(&numTypes);
+	typinfo = getTypes(fout, &numTypes);
 	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 	/* this must be after getFuncs */
@@ -160,15 +205,15 @@ getSchemaData(int *numTablesPtr)
 	/* this must be after getFuncs, too */
 	if (g_verbose)
 		write_msg(NULL, "reading procedural languages\n");
-	getProcLangs(&numProcLangs);
+	getProcLangs(fout, &numProcLangs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
-	getAggregates(&numAggregates);
+	getAggregates(fout, &numAggregates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operators\n");
-	oprinfo = getOperators(&numOperators);
+	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
 	if (testExtProtocolSupport())
@@ -180,56 +225,60 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");
-	getOpclasses(&numOpclasses);
+	getOpclasses(fout, &numOpclasses);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");
-	getOpfamilies(&numOpfamilies);
+	getOpfamilies(fout, &numOpfamilies);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search parsers\n");
-	getTSParsers(&numTSParsers);
+	getTSParsers(fout, &numTSParsers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search templates\n");
-	getTSTemplates(&numTSTemplates);
+	getTSTemplates(fout, &numTSTemplates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search dictionaries\n");
-	getTSDictionaries(&numTSDicts);
+	getTSDictionaries(fout, &numTSDicts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search configurations\n");
-	getTSConfigurations(&numTSConfigs);
+	getTSConfigurations(fout, &numTSConfigs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
-	getForeignDataWrappers(&numForeignDataWrappers);
+	getForeignDataWrappers(fout, &numForeignDataWrappers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
-	getForeignServers(&numForeignServers);
+	getForeignServers(fout, &numForeignServers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	getDefaultACLs(&numDefaultACLs);
+	getDefaultACLs(fout, &numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
-	collinfo = getCollations(&numCollations);
+	collinfo = getCollations(fout, &numCollations);
 	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
-	getConversions(&numConversions);
+	getConversions(fout, &numConversions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
+<<<<<<< HEAD
 	getCasts(&numCasts);
+=======
+	getCasts(fout, &numCasts);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");
-	inhinfo = getInherits(&numInherits);
+	inhinfo = getInherits(fout, &numInherits);
 
 	/* Identify extension configuration tables that should be dumped */
 	if (g_verbose)
@@ -238,8 +287,20 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading rewrite rules\n");
-	getRules(&numRules);
+	getRules(fout, &numRules);
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Identify extension member objects and mark them as not to be dumped.
+	 * This must happen after reading all objects that can be direct members
+	 * of extensions, but before we begin to process table subsidiary objects.
+	 */
+	if (g_verbose)
+		write_msg(NULL, "finding extension members\n");
+	getExtensionMembership(fout, extinfo, numExtensions);
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
 		write_msg(NULL, "finding inheritance relationships\n");
@@ -247,7 +308,7 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
-	getTableAttrs(tblinfo, numTables);
+	getTableAttrs(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "flagging inherited columns in subtables\n");
@@ -255,15 +316,15 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading indexes\n");
-	getIndexes(tblinfo, numTables);
+	getIndexes(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading constraints\n");
-	getConstraints(tblinfo, numTables);
+	getConstraints(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading triggers\n");
-	getTriggers(tblinfo, numTables);
+	getTriggers(fout, tblinfo, numTables);
 
 	*numTablesPtr = numTables;
 	return tblinfo;
@@ -378,6 +439,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				{
 					foundNotNull |= parent->notnull[inhAttrInd];
 					foundDefault |= (parent->attrdefs[inhAttrInd] != NULL);
+<<<<<<< HEAD
 				}
 			}
 
@@ -407,6 +469,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				{
 					attrDef->separate = false;
 					/* No dependency needed: NULL cannot have dependencies */
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 				else
 				{
@@ -423,6 +487,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 	}
 }
 
+<<<<<<< HEAD
 /*
  * MPP-1890
  *
@@ -483,6 +548,45 @@ DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 								  fmtId(pconstr->dobj.name));
 
 				constr_on_child = false;
+=======
+			/* Remember if we found inherited NOT NULL */
+			tbinfo->inhNotNull[j] = foundNotNull;
+
+			/* Manufacture a DEFAULT NULL clause if necessary */
+			if (foundDefault && tbinfo->attrdefs[j] == NULL)
+			{
+				AttrDefInfo *attrDef;
+
+				attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
+				attrDef->dobj.objType = DO_ATTRDEF;
+				attrDef->dobj.catId.tableoid = 0;
+				attrDef->dobj.catId.oid = 0;
+				AssignDumpId(&attrDef->dobj);
+				attrDef->dobj.name = pg_strdup(tbinfo->dobj.name);
+				attrDef->dobj.namespace = tbinfo->dobj.namespace;
+				attrDef->dobj.dump = tbinfo->dobj.dump;
+
+				attrDef->adtable = tbinfo;
+				attrDef->adnum = j + 1;
+				attrDef->adef_expr = pg_strdup("NULL");
+
+				/* Will column be dumped explicitly? */
+				if (shouldPrintColumn(tbinfo, j))
+				{
+					attrDef->separate = false;
+					/* No dependency needed: NULL cannot have dependencies */
+				}
+				else
+				{
+					/* column will be suppressed, print default separately */
+					attrDef->separate = true;
+					/* ensure it comes out after the table */
+					addObjectDependency(&attrDef->dobj,
+										tbinfo->dobj.dumpId);
+				}
+
+				tbinfo->attrdefs[j] = attrDef;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			}
 		}
 	}
@@ -674,7 +778,7 @@ buildIndexArray(void *objArray, int numObjs, Size objSize)
 	DumpableObject **ptrs;
 	int			i;
 
-	ptrs = (DumpableObject **) malloc(numObjs * sizeof(DumpableObject *));
+	ptrs = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
 	for (i = 0; i < numObjs; i++)
 		ptrs[i] = (DumpableObject *) ((char *) objArray + i * objSize);
 
@@ -692,8 +796,8 @@ buildIndexArray(void *objArray, int numObjs, Size objSize)
 static int
 DOCatalogIdCompare(const void *p1, const void *p2)
 {
-	DumpableObject *obj1 = *(DumpableObject **) p1;
-	DumpableObject *obj2 = *(DumpableObject **) p2;
+	const DumpableObject *obj1 = *(DumpableObject *const *) p1;
+	const DumpableObject *obj2 = *(DumpableObject *const *) p2;
 	int			cmpval;
 
 	/*
@@ -841,6 +945,7 @@ findNamespaceByOid(Oid oid)
 	return (NamespaceInfo *) findObjectByOid(oid, nspinfoindex, numNamespaces);
 }
 
+<<<<<<< HEAD
 /*
  * findExtensionByOid
  *	  finds the entry (in extinfo) of the extension with the given oid
@@ -928,6 +1033,8 @@ ExtensionMemberIdCompare(const void *p1, const void *p2)
 	return cmpval;
 }
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * findParentsByOid
@@ -969,7 +1076,7 @@ findParentsByOid(TableInfo *self,
 							  inhinfo[i].inhparent,
 							  self->dobj.name,
 							  oid);
-					exit_nicely();
+					exit_nicely(1);
 				}
 				self->parents[j++] = parent;
 			}
@@ -1008,7 +1115,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 				if (argNum >= arraysize)
 				{
 					write_msg(NULL, "could not parse numeric array \"%s\": too many numbers\n", str);
-					exit_nicely();
+					exit_nicely(1);
 				}
 				temp[j] = '\0';
 				array[argNum++] = atooid(temp);
@@ -1023,7 +1130,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 				j >= sizeof(temp) - 1)
 			{
 				write_msg(NULL, "could not parse numeric array \"%s\": invalid character in number\n", str);
-				exit_nicely();
+				exit_nicely(1);
 			}
 			temp[j++] = s;
 		}
@@ -1118,6 +1225,7 @@ simple_string_list_member(SimpleStringList *list, const char *val)
 	}
 	return false;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -1217,3 +1325,5 @@ pg_realloc(void *ptr, size_t size)
 		exit_horribly(NULL, NULL, "out of memory\n");
 	return tmp;
 }
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

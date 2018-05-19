@@ -35,7 +35,12 @@ typedef struct WalSnd
 	pid_t		pid;			/* this walsender's process id, or 0 */
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
+<<<<<<< HEAD
 	bool		sendKeepalive;	/* do we send keepalives on this connection? */
+=======
+	bool		needreload;		/* does currently-open file need to be
+								 * reloaded? */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * The xlog locations that have been written, flushed, and applied by
@@ -46,6 +51,7 @@ typedef struct WalSnd
 	XLogRecPtr	flush;
 	XLogRecPtr	apply;
 
+<<<<<<< HEAD
 	/*
 	 * This boolean indicates if this WAL sender has caught up within the
 	 * range defined by user (guc). This helps the backends to decide if they
@@ -65,6 +71,8 @@ typedef struct WalSnd
 	 */
 	XLogRecPtr	xlogCleanUpTo;
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Protects shared variables shown above. */
 	slock_t		mutex;
 
@@ -80,6 +88,7 @@ typedef struct WalSnd
 	 * SyncRepLock.
 	 */
 	int			sync_standby_priority;
+<<<<<<< HEAD
 
 	bool		synchronous;
 
@@ -88,16 +97,21 @@ typedef struct WalSnd
 	 * This helps to detect time passed since mirror didn't connect.
 	 */
 	pg_time_t   replica_disconnected_at;
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } WalSnd;
 
 extern WalSnd *MyWalSnd;
 
+<<<<<<< HEAD
 typedef enum
 {
 	WALSNDERROR_NONE = 0,
 	WALSNDERROR_WALREAD
 } WalSndError;
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* There is one WalSndCtl struct for the whole database cluster */
 typedef struct
 {
@@ -120,6 +134,7 @@ typedef struct
 	 */
 	bool		sync_standbys_defined;
 
+<<<<<<< HEAD
 	/*
 	 * xlog location upto which xlog seg file cleanup is allowed.
 	 * Checkpoint creation cleans old non-required xlog files. We have to
@@ -147,6 +162,8 @@ typedef struct
 	 */
 	WalSndError error;
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WalSnd		walsnds[1];		/* VARIABLE LENGTH ARRAY */
 } WalSndCtlData;
 

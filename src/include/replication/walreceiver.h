@@ -29,6 +29,9 @@ extern bool hot_standby_feedback;
  */
 #define MAXCONNINFO		1024
 
+/* Can we allow the standby to accept replication connection from another standby? */
+#define AllowCascadeReplication() (EnableHotStandby && max_wal_senders > 0)
+
 /*
  * Values for WalRcv->walRcvState.
  */
@@ -83,12 +86,15 @@ typedef struct
 	TimestampTz lastMsgReceiptTime;
 
 	/*
+<<<<<<< HEAD
 	 * Latest reported end of WAL on the sender
 	 */
 	XLogRecPtr	latestWalEnd;
 	TimestampTz latestWalEndTime;
 
 	/*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * connection string; is used for walreceiver to connect with the primary.
 	 */
 	char		conninfo[MAXCONNINFO];
@@ -117,7 +123,10 @@ extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
+<<<<<<< HEAD
 extern const char *WalRcvGetStateString(WalRcvState state);
 extern XLogRecPtr WaitNextXLogAvailable(XLogRecPtr recptr, bool *finished);
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* _WALRECEIVER_H */

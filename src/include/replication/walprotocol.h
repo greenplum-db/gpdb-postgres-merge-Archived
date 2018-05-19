@@ -13,7 +13,21 @@
 #define _WALPROTOCOL_H
 
 #include "access/xlogdefs.h"
-#include "utils/timestamp.h"
+#include "datatype/timestamp.h"
+
+
+/*
+ * All messages from WalSender must contain these fields to allow us to
+ * correctly calculate the replication delay.
+ */
+typedef struct
+{
+	/* Current end of WAL on the sender */
+	XLogRecPtr	walEnd;
+
+	/* Sender's system clock at the time of transmission */
+	TimestampTz sendTime;
+} WalSndrMessage;
 
 
 /*

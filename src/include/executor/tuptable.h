@@ -4,7 +4,7 @@
  *	  tuple table support stuff
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/tuptable.h
@@ -15,9 +15,12 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
+<<<<<<< HEAD
 #include "access/tupdesc.h"
 #include "access/heapam.h"
 #include "access/memtup.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/buf.h"
 
 /*----------

@@ -3,7 +3,7 @@
  * conversioncmds.c
  *	  conversion creation command support code
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,14 +20,12 @@
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_conversion_fn.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/conversioncmds.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -134,6 +132,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 }
 
 /*
+<<<<<<< HEAD
  * DROP CONVERSION
  */
 void
@@ -196,6 +195,8 @@ DropConversionsCommand(DropStmt *drop)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Rename conversion
  */
 void

@@ -25,11 +25,13 @@ SUBDIRS = \
 		pg_standby	\
 		pg_stat_statements \
 		pg_test_fsync	\
+		pg_test_timing	\
 		pg_trgm		\
 		pg_upgrade	\
 		pg_upgrade_support \
 		pgbench		\
 		pgcrypto	\
+<<<<<<< HEAD
 		test_parser
 
 # Greenplum-specific additions (to ease merge pain).
@@ -44,21 +46,41 @@ SUBDIRS += \
 		gp_cancel_query \
 		gp_sparse_vector \
 		indexscan \
+=======
+		pgrowlocks	\
+		pgstattuple	\
+		seg		\
+		spi		\
+		tablefunc	\
+		tcn		\
+		test_parser	\
+		tsearch2	\
+		unaccent	\
+		vacuumlo
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo
+else
+ALWAYS_SUBDIRS += sslinfo
 endif
 
 ifeq ($(with_ossp_uuid),yes)
 SUBDIRS += uuid-ossp
+else
+ALWAYS_SUBDIRS += uuid-ossp
 endif
 
 ifeq ($(with_libxml),yes)
 SUBDIRS += xml2
+else
+ALWAYS_SUBDIRS += xml2
 endif
 
 ifeq ($(with_selinux),yes)
 SUBDIRS += sepgsql
+else
+ALWAYS_SUBDIRS += sepgsql
 endif
 
 ifeq ($(enable_orca),yes)
@@ -72,3 +94,4 @@ SUBDIRS += gp_replica_check
 
 
 $(recurse)
+$(recurse_always)

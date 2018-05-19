@@ -3,9 +3,13 @@
  * sequence.c
  *	  PostgreSQL sequences support code.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,10 +20,12 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/bufmask.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/transam.h"
-#include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -32,7 +38,6 @@
 #include "miscadmin.h"
 #include "storage/smgr.h"               /* RelationCloseSmgr -> smgrclose */
 #include "nodes/makefuncs.h"
-#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
@@ -329,7 +334,11 @@ ResetSequence(Oid seq_relid)
 	 * indeed a sequence.
 	 */
 	init_sequence(seq_relid, &elm, &seq_rel);
+<<<<<<< HEAD
 	(void) read_seq_tuple(elm, seq_rel, &buf, &seqtuple);
+=======
+	read_info(elm, seq_rel, &buf);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Copy the existing sequence tuple.
@@ -455,8 +464,22 @@ AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
 
+<<<<<<< HEAD
 	/* find sequence */
 	relid = RangeVarGetRelid(stmt->sequence, false);
+=======
+	/* Open and lock sequence. */
+	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
+	if (relid == InvalidOid)
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+						stmt->sequence->relname)));
+		return;
+	}
+
+	init_sequence(relid, &elm, &seqrel);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* allow ALTER to sequence owner only */
 	/* if you change this, see also callers of AlterSequenceInternal! */
@@ -599,7 +622,16 @@ nextval(PG_FUNCTION_ARGS)
 	Oid			relid;
 
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
-	relid = RangeVarGetRelid(sequence, false);
+
+	/*
+	 * XXX: This is not safe in the presence of concurrent DDL, but acquiring
+	 * a lock here is more expensive than letting nextval_internal do it,
+	 * since the latter maintains a cache that keeps us from hitting the lock
+	 * manager more than once per transaction.	It's not clear whether the
+	 * performance penalty is material in practice, but for now, we do it this
+	 * way.
+	 */
+	relid = RangeVarGetRelid(sequence, NoLock, false);
 
 	PG_RETURN_INT64(nextval_internal(relid));
 }
@@ -1724,6 +1756,7 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	Buffer		buffer;
 	Page		page;
+	Page		localpage;
 	char	   *item;
 	Size		itemsz;
 	xl_seq_rec *xlrec = (xl_seq_rec *) XLogRecGetData(record);
@@ -1739,22 +1772,46 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
-	/* Always reinit the page and reinstall the magic number */
-	/* See comments in DefineSequence */
-	PageInit((Page) page, BufferGetPageSize(buffer), sizeof(sequence_magic));
-	sm = (sequence_magic *) PageGetSpecialPointer(page);
+	/*
+	 * We must always reinit the page and reinstall the magic number (see
+	 * comments in fill_seq_with_data).  However, since this WAL record type
+	 * is also used for updating sequences, it's possible that a hot-standby
+	 * backend is examining the page concurrently; so we mustn't transiently
+	 * trash the buffer.  The solution is to build the correct new page
+	 * contents in local workspace and then memcpy into the buffer.  Then only
+	 * bytes that are supposed to change will change, even transiently. We
+	 * must palloc the local page for alignment reasons.
+	 */
+	localpage = (Page) palloc(BufferGetPageSize(buffer));
+
+	PageInit(localpage, BufferGetPageSize(buffer), sizeof(sequence_magic));
+	sm = (sequence_magic *) PageGetSpecialPointer(localpage);
 	sm->magic = SEQ_MAGIC;
 
 	item = (char *) xlrec + sizeof(xl_seq_rec);
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
+<<<<<<< HEAD
 
 	if (PageAddItem(page, (Item) item, itemsz,
 					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "seq_redo: failed to add item to page");
 
 	PageSetLSN(page, lsn);
+=======
+	itemsz = MAXALIGN(itemsz);
+	if (PageAddItem(localpage, (Item) item, itemsz,
+					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
+		elog(PANIC, "seq_redo: failed to add item to page");
+
+	PageSetLSN(localpage, lsn);
+	PageSetTLI(localpage, ThisTimeLineID);
+
+	memcpy(page, localpage, BufferGetPageSize(buffer));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
+
+	pfree(localpage);
 }
 
 void

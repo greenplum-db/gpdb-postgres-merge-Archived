@@ -462,6 +462,7 @@ rloop:
 					break;
 			}
 		}
+<<<<<<< HEAD
 		else if (n == 0)
 		{
 			/*
@@ -474,6 +475,8 @@ rloop:
 			"\tThis probably means the server terminated abnormally\n"
 					 "\tbefore or while processing the request.\n"));
 		}
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* ensure we return the intended errno to caller */
@@ -983,9 +986,12 @@ init_ssl_system(PGconn *conn)
 			return -1;
 		}
 
+<<<<<<< HEAD
 		/* Disable old protocol versions */
 		SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/*
 		 * Disable OpenSSL's moving-write-buffer sanity check, because it
 		 * causes unnecessary failures in nonblocking send cases.

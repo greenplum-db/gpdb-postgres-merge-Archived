@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/psql
 #
-# Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/bin/psql/Makefile
@@ -35,7 +35,7 @@ OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	sql_help.o \
 	$(WIN32RES)
 
-FLEXFLAGS = -Cfe
+FLEXFLAGS = -Cfe -b -p -p
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
@@ -62,7 +62,12 @@ mainloop.o: psqlscan.c
 
 psqlscan.c: psqlscan.l
 ifdef FLEX
+<<<<<<< HEAD
 	$(FLEX) $(FLEXFLAGS) -o'$(srcdir)/psqlscan.c' $<
+=======
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
+	@if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup, see lex.backup."; exit 1; fi
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 else
 	@$(missing) flex $< $@
 endif
@@ -81,7 +86,11 @@ uninstall:
 
 # psqlscan.c is in the distribution tarball, so is not cleaned here
 clean distclean:
+<<<<<<< HEAD
 	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c psqlscan.o
+=======
+	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c lex.backup
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 maintainer-clean: distclean
 	rm -f sql_help.h sql_help.c psqlscan.c

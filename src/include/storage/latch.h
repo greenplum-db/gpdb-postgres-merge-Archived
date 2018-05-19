@@ -33,8 +33,13 @@
  * ResetLatch	- Clears the latch, allowing it to be set again
  * WaitLatch	- Waits for the latch to become set
  *
+<<<<<<< HEAD
  * WaitLatch includes a provision for timeouts (which should be avoided
  * when possible, as they incur extra overhead) and a provision for
+=======
+ * WaitLatch includes a provision for timeouts (which should hopefully not
+ * be necessary once the code is fully latch-ified) and a provision for
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * postmaster child processes to wake up immediately on postmaster death.
  * See unix_latch.c for detailed specifications for the exported functions.
  *
@@ -64,15 +69,25 @@
  * will be lifted in future by inserting suitable memory barriers into
  * SetLatch and ResetLatch.
  *
+<<<<<<< HEAD
  * On some platforms, signals will not interrupt the latch wait primitive
  * by themselves.  Therefore, it is critical that any signal handler that
  * is meant to terminate a WaitLatch wait calls SetLatch.
  *
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Note that use of the process latch (PGPROC.procLatch) is generally better
  * than an ad-hoc shared latch for signaling auxiliary processes.  This is
  * because generic signal handlers will call SetLatch on the process latch
  * only, so using any latch other than the process latch effectively precludes
+<<<<<<< HEAD
  * use of any generic handler.
+=======
+ * ever registering a generic handler.	Since signals have the potential to
+ * invalidate the latch timeout on some platforms, resulting in a
+ * denial-of-service, it is important to verify that all signal handlers
+ * within all WaitLatch-calling processes call SetLatch.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group

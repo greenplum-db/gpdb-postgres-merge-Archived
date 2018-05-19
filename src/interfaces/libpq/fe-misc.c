@@ -19,7 +19,10 @@
  * routines.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -864,7 +867,10 @@ pqSendSome(PGconn *conn, int len)
 	while (len > 0)
 	{
 		int			sent;
+<<<<<<< HEAD
 		char sebuf[256];
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);
@@ -880,11 +886,7 @@ pqSendSome(PGconn *conn, int len)
 
 		if (sent < 0)
 		{
-			/*
-			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If it's
-			 * EPIPE or ECONNRESET, assume we've lost the backend connection
-			 * permanently.
-			 */
+			/* Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble */
 			switch (SOCK_ERRNO)
 			{
 #ifdef EAGAIN
@@ -898,15 +900,8 @@ pqSendSome(PGconn *conn, int len)
 				case EINTR:
 					continue;
 
-				case EPIPE:
-#ifdef ECONNRESET
-				case ECONNRESET:
-#endif
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-					"\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+				default:
+					/* pqsecure_write set the error message for us */
 
 					/*
 					 * We used to close the socket here, but that's a bad idea
@@ -916,14 +911,6 @@ pqSendSome(PGconn *conn, int len)
 					 * pqReadData finds no more data can be read.  But abandon
 					 * attempt to send data.
 					 */
-					conn->outCount = 0;
-					return -1;
-
-				default:
-					printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not send data to server: %s\n"),
-							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-					/* We don't assume it's a fatal error... */
 					conn->outCount = 0;
 					return -1;
 			}

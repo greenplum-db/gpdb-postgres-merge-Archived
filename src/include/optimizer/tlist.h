@@ -4,9 +4,13 @@
  *	  prototypes for tlist.c.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/tlist.h
@@ -23,6 +27,7 @@
 extern TargetEntry *tlist_member(Node *node, List *targetlist);
 extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
 
+<<<<<<< HEAD
 // return a list a target entries that match the node expression
 extern List *tlist_members(Node *node, List *targetlist);
 
@@ -31,6 +36,10 @@ extern TargetEntry *tlist_member_ignoring_RelabelType(Expr *expr, List *targetli
 extern List *flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
 			  PVCPlaceHolderBehavior phbehavior);
 extern List *add_to_flat_tlist_junk(List *tlist, List *exprs, bool resjunk);
+=======
+extern List *flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
+			  PVCPlaceHolderBehavior phbehavior);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
 extern List *get_tlist_exprs(List *tlist, bool includeJunk);

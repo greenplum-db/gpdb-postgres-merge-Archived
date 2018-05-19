@@ -4,9 +4,13 @@
  *	  POSTGRES error reporting/logging definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/elog.h
@@ -257,6 +261,12 @@ errdetail(const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
+errdetail_internal(const char *fmt,...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+
+extern int
 errdetail_log(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
@@ -486,6 +496,7 @@ extern void EmitErrorReport(void);
 extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
+<<<<<<< HEAD
 extern void ReThrowError(ErrorData *edata)  __attribute__((__noreturn__));
 extern void pg_re_throw(void) __attribute__((noreturn));
 
@@ -539,6 +550,14 @@ bool        elog_dismiss(int downgrade_to_elevel);
 int         elog_geterrcode(void);      
 int         elog_getelevel(void);      
 char        *elog_message(void);
+=======
+extern void ReThrowError(ErrorData *edata) __attribute__((noreturn));
+extern void pg_re_throw(void) __attribute__((noreturn));
+
+/* Hook for intercepting messages before they are sent to the server log */
+typedef void (*emit_log_hook_type) (ErrorData *edata);
+extern PGDLLIMPORT emit_log_hook_type emit_log_hook;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* GUC-configurable parameters */

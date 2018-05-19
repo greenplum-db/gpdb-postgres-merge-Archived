@@ -4,7 +4,7 @@
  *	  header file for postgres vacuum cleaner and statistics analyzer
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/vacuum.h
@@ -62,6 +62,11 @@ typedef struct VacAttrStats *VacAttrStatsP;
 typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
 												   bool *isNull);
 
+typedef void (*AnalyzeAttrComputeStatsFunc) (VacAttrStatsP stats,
+											  AnalyzeAttrFetchFunc fetchfunc,
+														 int samplerows,
+														 double totalrows);
+
 typedef struct VacAttrStats
 {
 	/*
@@ -85,10 +90,7 @@ typedef struct VacAttrStats
 	 * These fields must be filled in by the typanalyze routine, unless it
 	 * returns FALSE.
 	 */
-	void		(*compute_stats) (VacAttrStatsP stats,
-											  AnalyzeAttrFetchFunc fetchfunc,
-											  int samplerows,
-											  double totalrows);
+	AnalyzeAttrComputeStatsFunc compute_stats;	/* function pointer */
 	int			minrows;		/* Minimum # of rows wanted for stats */
 	void	   *extra_data;		/* for extra type-specific data */
 
@@ -163,6 +165,7 @@ extern double vac_estimate_reltuples(Relation relation, bool is_analyze,
 extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
+					BlockNumber num_all_visible_pages,
 					bool hasindex,
 					TransactionId frozenxid,
 					bool isvacuum);
@@ -189,7 +192,14 @@ extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
+<<<<<<< HEAD
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
+=======
+extern bool std_typanalyze(VacAttrStats *stats);
+extern double anl_random_fract(void);
+extern double anl_init_selection_state(int n);
+extern double anl_get_next_S(double t, int n, double *stateptr);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* VACUUM_H */

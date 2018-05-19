@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 # ISO 3166 alpha-2 country codes
 #
+=======
+# <pre>
+# @(#)iso3166.tab	8.11
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
@@ -20,6 +25,9 @@
 # This table is intended as an aid for users, to help them select time
 # zone data appropriate for their practical needs.  It is not intended
 # to take or endorse any position on legal or territorial claims.
+#
+# From Arthur David Olson (2011-08-17):
+# Resynchronized today with the ISO 3166 site (adding SS for South Sudan).
 #
 #country-
 #code	name of country, territory, area, or subdivision
@@ -52,7 +60,11 @@ BL	St Barthelemy
 BM	Bermuda
 BN	Brunei
 BO	Bolivia
+<<<<<<< HEAD
 BQ	Caribbean Netherlands
+=======
+BQ	Bonaire Sint Eustatius & Saba
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 BR	Brazil
 BS	Bahamas
 BT	Bhutan
@@ -233,7 +245,11 @@ SR	Suriname
 SS	South Sudan
 ST	Sao Tome & Principe
 SV	El Salvador
+<<<<<<< HEAD
 SX	St Maarten (Dutch part)
+=======
+SX	Sint Maarten
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 SY	Syria
 SZ	Swaziland
 TC	Turks & Caicos Is

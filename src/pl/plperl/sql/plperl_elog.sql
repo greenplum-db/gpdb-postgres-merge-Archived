@@ -46,6 +46,7 @@ select uses_global();
 
 -- make sure we don't choke on readonly values
 do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
+<<<<<<< HEAD
 
 -- test recovery after "die"
 
@@ -91,3 +92,5 @@ create or replace function error_with_nbsp() returns void language plperl as $$
 $$;
 
 select error_with_nbsp();
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

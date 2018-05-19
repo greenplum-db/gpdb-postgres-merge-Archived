@@ -3,9 +3,13 @@
  * planner.c
  *	  The query optimizer external interface.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,12 +23,14 @@
 
 #include <limits.h>
 
-#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/execHHashagg.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#ifdef OPTIMIZER_DEBUG
+#include "nodes/print.h"
+#endif
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/orca.h"
@@ -37,11 +43,8 @@
 #include "optimizer/subselect.h"
 #include "optimizer/transform.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
-#ifdef OPTIMIZER_DEBUG
-#include "nodes/print.h"
-#endif
 #include "parser/analyze.h"
+<<<<<<< HEAD
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
@@ -49,6 +52,11 @@
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
+=======
+#include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
+#include "utils/rel.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #include "catalog/pg_proc.h"
 #include "cdb/cdbllize.h"
@@ -97,7 +105,12 @@ static bool choose_hashed_distinct(PlannerInfo *root,
 					   List *sorted_pathkeys,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
+<<<<<<< HEAD
 					   AttrNumber **groupColIdx, Oid **groupOperators, bool *need_tlist_eval);
+=======
+					   AttrNumber **groupColIdx, bool *need_tlist_eval);
+static int	get_grouping_column_index(Query *parse, TargetEntry *tle);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void locate_grouping_columns(PlannerInfo *root,
 						List *stlist,
 						List *sub_tlist,
@@ -186,6 +199,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	PlannerInfo *root;
 	Plan	   *top_plan;
 	ListCell   *lp,
+<<<<<<< HEAD
 			   *lrt,
 			   *lrm;
 	PlannerConfig *config;
@@ -240,6 +254,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 */
 	START_MEMORY_ACCOUNT(MemoryAccounting_CreateAccount(0, MEMORY_OWNER_TYPE_Planner));
 	{
+=======
+			   *lr;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
 	if (parse->utilityStmt &&
@@ -262,8 +279,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->boundParams = boundParams;
 	glob->paramlist = NIL;
 	glob->subplans = NIL;
-	glob->subrtables = NIL;
-	glob->subrowmarks = NIL;
+	glob->subroots = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
 	glob->finalrowmarks = NIL;
@@ -356,25 +372,22 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrtable == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
+<<<<<<< HEAD
 	Assert(parse == root->parse);
 	top_plan = set_plan_references(glob, top_plan,
 								   root->parse->rtable,
 								   root->rowMarks);
+=======
+	top_plan = set_plan_references(root, top_plan);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* ... and the subplans (both regular subplans and initplans) */
-	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
-	Assert(list_length(glob->subplans) == list_length(glob->subrowmarks));
-	lrt = list_head(glob->subrtables);
-	lrm = list_head(glob->subrowmarks);
-	foreach(lp, glob->subplans)
+	Assert(list_length(glob->subplans) == list_length(glob->subroots));
+	forboth(lp, glob->subplans, lr, glob->subroots)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lrt);
-		List	   *subrowmark = (List *) lfirst(lrm);
+		PlannerInfo *subroot = (PlannerInfo *) lfirst(lr);
 
-		lfirst(lp) = set_plan_references(glob, subplan,
-										 subrtable, subrowmark);
-		lrt = lnext(lrt);
-		lrm = lnext(lrm);
+		lfirst(lp) = set_plan_references(subroot, subplan);
 	}
 
 	/* walk plan and remove unused initplans and their params */
@@ -436,6 +449,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result = makeNode(PlannedStmt);
 
 	result->commandType = parse->commandType;
+	result->queryId = parse->queryId;
 	result->hasReturning = (parse->returningList != NIL);
 	result->hasModifyingCTE = parse->hasModifyingCTE;
 	result->canSetTag = parse->canSetTag;
@@ -445,7 +459,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->rtable = glob->finalrtable;
 	result->resultRelations = glob->resultRelations;
 	result->utilityStmt = parse->utilityStmt;
-	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->result_partitions = root->result_partitions;
@@ -824,22 +837,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			List	   *rowMarks;
 
 			/*
-			 * Deal with the RETURNING clause if any.  It's convenient to pass
-			 * the returningList through setrefs.c now rather than at top
-			 * level (if we waited, handling inherited UPDATE/DELETE would be
-			 * much harder).
+			 * Set up the RETURNING list-of-lists, if needed.
 			 */
 			if (parse->returningList)
-			{
-				List	   *rlist;
-
-				Assert(parse->resultRelation);
-				rlist = set_returning_clause_references(root->glob,
-														parse->returningList,
-														plan,
-													  parse->resultRelation);
-				returningLists = list_make1(rlist);
-			}
+				returningLists = list_make1(parse->returningList);
 			else
 				returningLists = NIL;
 
@@ -1050,57 +1051,158 @@ static Plan *
 inheritance_planner(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
+<<<<<<< HEAD
 	Index		parentRTindex = parse->resultRelation;
+=======
+	int			parentRTindex = parse->resultRelation;
+	List	   *final_rtable = NIL;
+	int			save_rel_array_size = 0;
+	RelOptInfo **save_rel_array = NULL;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	List	   *subplans = NIL;
 	List	   *resultRelations = NIL;
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
-	List	   *tlist;
-	PlannerInfo subroot;
-	ListCell   *l;
+	ListCell   *lc;
 
+<<<<<<< HEAD
 	/* MPP */
 	Plan	   *plan;
 	CdbLocusType append_locustype = CdbLocusType_Null;
 	bool		locus_ok = TRUE;
 
 	foreach(l, root->append_rel_list)
+=======
+	/*
+	 * We generate a modified instance of the original Query for each target
+	 * relation, plan that, and put all the plans into a list that will be
+	 * controlled by a single ModifyTable node.  All the instances share the
+	 * same rangetable, but each instance must have its own set of subquery
+	 * RTEs within the finished rangetable because (1) they are likely to get
+	 * scribbled on during planning, and (2) it's not inconceivable that
+	 * subqueries could get planned differently in different cases.  We need
+	 * not create duplicate copies of other RTE kinds, in particular not the
+	 * target relations, because they don't have either of those issues.  Not
+	 * having to duplicate the target relations is important because doing so
+	 * (1) would result in a rangetable of length O(N^2) for N targets, with
+	 * at least O(N^3) work expended here; and (2) would greatly complicate
+	 * management of the rowMarks list.
+	 */
+	foreach(lc, root->append_rel_list)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(lc);
+		PlannerInfo subroot;
 		Plan	   *subplan;
+		Index		rti;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
 			continue;
 
 		/*
-		 * Generate modified query with this rel as target.
+		 * We need a working copy of the PlannerInfo so that we can control
+		 * propagation of information back to the main copy.
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
+
+		/*
+		 * Generate modified query with this rel as target.  We first apply
+		 * adjust_appendrel_attrs, which copies the Query and changes
+		 * references to the parent RTE to refer to the current child RTE,
+		 * then fool around with subquery RTEs.
+		 */
 		subroot.parse = (Query *)
+<<<<<<< HEAD
 			adjust_appendrel_attrs(&subroot, (Node *) parse,
+=======
+			adjust_appendrel_attrs(root,
+								   (Node *) parse,
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								   appinfo);
-		subroot.init_plans = NIL;
-		subroot.hasInheritedTarget = true;
+
+		/*
+		 * The rowMarks list might contain references to subquery RTEs, so
+		 * make a copy that we can apply ChangeVarNodes to.  (Fortunately, the
+		 * executor doesn't need to see the modified copies --- we can just
+		 * pass it the original rowMarks list.)
+		 */
+		subroot.rowMarks = (List *) copyObject(root->rowMarks);
+
+		/*
+		 * Add placeholders to the child Query's rangetable list to fill the
+		 * RT indexes already reserved for subqueries in previous children.
+		 * These won't be referenced, so there's no need to make them very
+		 * valid-looking.
+		 */
+		while (list_length(subroot.parse->rtable) < list_length(final_rtable))
+			subroot.parse->rtable = lappend(subroot.parse->rtable,
+											makeNode(RangeTblEntry));
+
+		/*
+		 * If this isn't the first child Query, generate duplicates of all
+		 * subquery RTEs, and adjust Var numbering to reference the
+		 * duplicates. To simplify the loop logic, we scan the original rtable
+		 * not the copy just made by adjust_appendrel_attrs; that should be OK
+		 * since subquery RTEs couldn't contain any references to the target
+		 * rel.
+		 */
+		if (final_rtable != NIL)
+		{
+			ListCell   *lr;
+
+			rti = 1;
+			foreach(lr, parse->rtable)
+			{
+				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
+
+				if (rte->rtekind == RTE_SUBQUERY)
+				{
+					Index		newrti;
+
+					/*
+					 * The RTE can't contain any references to its own RT
+					 * index, so we can save a few cycles by applying
+					 * ChangeVarNodes before we append the RTE to the
+					 * rangetable.
+					 */
+					newrti = list_length(subroot.parse->rtable) + 1;
+					ChangeVarNodes((Node *) subroot.parse, rti, newrti, 0);
+					ChangeVarNodes((Node *) subroot.rowMarks, rti, newrti, 0);
+					rte = copyObject(rte);
+					subroot.parse->rtable = lappend(subroot.parse->rtable,
+													rte);
+				}
+				rti++;
+			}
+		}
+
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot.placeholder_list == NIL);
+		/* hack to mark target relation as an inheritance partition */
+		subroot.hasInheritedTarget = true;
 
 		/* Generate plan */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );
 
 		/*
 		 * If this child rel was excluded by constraint exclusion, exclude it
+<<<<<<< HEAD
 		 * from the plan.
 		 *
 		 * MPP-1544: perform this check before testing for loci compatibility
 		 * we might have inserted a dummy table with incorrect locus
+=======
+		 * from the result plan.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 */
 		if (is_dummy_plan(subplan))
 			continue;
 
+<<<<<<< HEAD
 		/* MPP needs target loci to match. */
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -1153,25 +1255,50 @@ inheritance_planner(PlannerInfo *root)
 		 */
 		parse->rtable = subroot.parse->rtable;
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		subplans = lappend(subplans, subplan);
 
+		/*
+		 * If this is the first non-excluded child, its post-planning rtable
+		 * becomes the initial contents of final_rtable; otherwise, append
+		 * just its modified subquery RTEs to final_rtable.
+		 */
+		if (final_rtable == NIL)
+			final_rtable = subroot.parse->rtable;
+		else
+			final_rtable = list_concat(final_rtable,
+									   list_copy_tail(subroot.parse->rtable,
+												 list_length(final_rtable)));
+
+		/*
+		 * We need to collect all the RelOptInfos from all child plans into
+		 * the main PlannerInfo, since setrefs.c will need them.  We use the
+		 * last child's simple_rel_array (previous ones are too short), so we
+		 * have to propagate forward the RelOptInfos that were already built
+		 * in previous children.
+		 */
+		Assert(subroot.simple_rel_array_size >= save_rel_array_size);
+		for (rti = 1; rti < save_rel_array_size; rti++)
+		{
+			RelOptInfo *brel = save_rel_array[rti];
+
+			if (brel)
+				subroot.simple_rel_array[rti] = brel;
+		}
+		save_rel_array_size = subroot.simple_rel_array_size;
+		save_rel_array = subroot.simple_rel_array;
+
 		/* Make sure any initplans from this rel get into the outer list */
-		root->init_plans = list_concat(root->init_plans, subroot.init_plans);
+		root->init_plans = subroot.init_plans;
 
 		/* Build list of target-relation RT indexes */
 		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
 
 		/* Build list of per-relation RETURNING targetlists */
 		if (parse->returningList)
-		{
-			List	   *rlist;
-
-			rlist = set_returning_clause_references(root->glob,
-												subroot.parse->returningList,
-													subplan,
-													appinfo->child_relid);
-			returningLists = lappend(returningLists, rlist);
-		}
+			returningLists = lappend(returningLists,
+									 subroot.parse->returningList);
 	}
 
 	/* Mark result as unordered (probably unnecessary) */
@@ -1184,6 +1311,8 @@ inheritance_planner(PlannerInfo *root)
 	if (subplans == NIL)
 	{
 		/* although dummy, it must have a valid tlist for executor */
+		List	   *tlist;
+
 		tlist = preprocess_targetlist(root, parse->targetList);
 		plan = (Plan *) make_result(root,
 									tlist,
@@ -1198,6 +1327,16 @@ inheritance_planner(PlannerInfo *root)
 	}
 
 	/*
+<<<<<<< HEAD
+=======
+	 * Put back the final adjusted rtable into the master copy of the Query.
+	 */
+	parse->rtable = final_rtable;
+	root->simple_rel_array_size = save_rel_array_size;
+	root->simple_rel_array = save_rel_array;
+
+	/*
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will have
 	 * dealt with fetching non-locked marked rows, else we need to have
 	 * ModifyTable do that.
@@ -1821,18 +1960,30 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				need_sort_for_grouping = true;
 
 				/*
+<<<<<<< HEAD
 				 * Always override create_plan's tlist, so that we don't
 				 * sort useless data from a "physical" tlist.
+=======
+				 * Always override create_plan's tlist, so that we don't sort
+				 * useless data from a "physical" tlist.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				 */
 				need_tlist_eval = true;
 			}
 
 			/*
+<<<<<<< HEAD
 			 * create_plan returns a plan with just a "flat" tlist of
 			 * required Vars.  Usually we need to insert the sub_tlist as the
 			 * tlist of the top plan node.	However, we can skip that if we
 			 * determined that whatever create_plan chose to return will be
 			 * good enough.
+=======
+			 * create_plan returns a plan with just a "flat" tlist of required
+			 * Vars.  Usually we need to insert the sub_tlist as the tlist of
+			 * the top plan node.  However, we can skip that if we determined
+			 * that whatever create_plan chose to return will be good enough.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 */
 			if (need_tlist_eval)
 			{
@@ -2120,7 +2271,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 *
 			 * Note: it's essential here to use PVC_INCLUDE_AGGREGATES so that
 			 * Vars mentioned only in aggregate expressions aren't pulled out
+<<<<<<< HEAD
 			 * as separate targetlist entries.  Otherwise we could be putting
+=======
+			 * as separate targetlist entries.	Otherwise we could be putting
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 * ungrouped Vars directly into an Agg node's tlist, resulting in
 			 * undefined behavior.
 			 */
@@ -2804,6 +2959,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  * Detect whether a plan node is a "dummy" plan created when a relation
  * is deemed not to need scanning due to constraint exclusion.
  *
+<<<<<<< HEAD
  * At bottom, such dummy plans are Result nodes with constant FALSE
  * filter quals.  However, we also recognize simple plans that are
  * known to return no rows because they contain a dummy.
@@ -2813,6 +2969,15 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  */
 static bool
 is_dummy_plan_walker(Node *node, bool *context)
+=======
+ * Currently, such dummy plans are Result nodes with constant FALSE
+ * filter quals (see set_dummy_rel_pathlist and create_append_plan).
+ *
+ * XXX this probably ought to be somewhere else, but not clear where.
+ */
+bool
+is_dummy_plan(Plan *plan)
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	/*
 	 * We are only interested in Plan nodes.
@@ -3772,14 +3937,9 @@ choose_hashed_distinct(PlannerInfo *root,
  * For example, given a query like
  *		SELECT a+b,SUM(c+d) FROM table GROUP BY a+b;
  * we want to pass this targetlist to the subplan:
- *		a,b,c,d,a+b
+ *		a+b,c,d
  * where the a+b target will be used by the Sort/Group steps, and the
- * other targets will be used for computing the final results.	(In the
- * above example we could theoretically suppress the a and b targets and
- * pass down only c,d,a+b, but it's not really worth the trouble to
- * eliminate simple var references from the subplan.  We will avoid doing
- * the extra computation to recompute a+b at the outer level; see
- * fix_upper_expr() in setrefs.c.)
+ * other targets will be used for computing the final results.
  *
  * If we are grouping or aggregating, *and* there are no non-Var grouping
  * expressions, then the returned tlist is effectively dummy; we do not
@@ -3792,8 +3952,11 @@ choose_hashed_distinct(PlannerInfo *root,
  * 'tlist' is the query's target list.
  * 'groupColIdx' receives an array of column numbers for the GROUP BY
  *			expressions (if there are any) in the returned target list.
+<<<<<<< HEAD
  * 'groupOperators' receives an array of equality operators corresponding
  *			the GROUP BY expressions.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * 'need_tlist_eval' is set true if we really need to evaluate the
  *			returned tlist as-is.
  *
@@ -3808,7 +3971,8 @@ make_subplanTargetList(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	List	   *sub_tlist;
-	List	   *extravars;
+	List	   *non_group_cols;
+	List	   *non_group_vars;
 	int			numCols;
 
 	*groupColIdx = NULL;
@@ -3825,6 +3989,7 @@ make_subplanTargetList(PlannerInfo *root,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Otherwise, start with a "flattened" tlist (having just the Vars
 	 * mentioned in the targetlist and HAVING qual).  Note this includes Vars
 	 * used in resjunk items, so we are covering the needs of ORDER BY and
@@ -3881,10 +4046,27 @@ make_subplanTargetList(PlannerInfo *root,
 	 */
 	numCols = num_distcols_in_grouplist(parse->groupClause);
 
+=======
+	 * Otherwise, we must build a tlist containing all grouping columns, plus
+	 * any other Vars mentioned in the targetlist and HAVING qual.
+	 */
+	sub_tlist = NIL;
+	non_group_cols = NIL;
+	*need_tlist_eval = false;	/* only eval if not flat tlist */
+
+	numCols = list_length(parse->groupClause);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (numCols > 0)
 	{
-		int			keyno = 0;
+		/*
+		 * If grouping, create sub_tlist entries for all GROUP BY columns, and
+		 * make an array showing where the group columns are in the sub_tlist.
+		 *
+		 * Note: with this implementation, the array entries will always be
+		 * 1..N, but we don't want callers to assume that.
+		 */
 		AttrNumber *grpColIdx;
+<<<<<<< HEAD
 		Oid		   *grpOperators;
 		List	   *grouptles;
 		List	   *sortops;
@@ -3894,9 +4076,15 @@ make_subplanTargetList(PlannerInfo *root,
 
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		grpOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+=======
+		ListCell   *tl;
+
+		grpColIdx = (AttrNumber *) palloc0(sizeof(AttrNumber) * numCols);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		*groupColIdx = grpColIdx;
 		*groupOperators = grpOperators;
 
+<<<<<<< HEAD
 		get_sortgroupclauses_tles(parse->groupClause, tlist,
 								  &grouptles, &sortops, &eqops);
 		Assert(numCols == list_length(grouptles) &&
@@ -3939,11 +4127,110 @@ make_subplanTargetList(PlannerInfo *root,
 			if (!OidIsValid(grpOperators[keyno]))           /* shouldn't happen */
 				elog(ERROR, "could not find equality operator for grouping column");
 			keyno++;
+=======
+		foreach(tl, tlist)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			int			colno;
+
+			colno = get_grouping_column_index(parse, tle);
+			if (colno >= 0)
+			{
+				/*
+				 * It's a grouping column, so add it to the result tlist and
+				 * remember its resno in grpColIdx[].
+				 */
+				TargetEntry *newtle;
+
+				newtle = makeTargetEntry(tle->expr,
+										 list_length(sub_tlist) + 1,
+										 NULL,
+										 false);
+				sub_tlist = lappend(sub_tlist, newtle);
+
+				Assert(grpColIdx[colno] == 0);	/* no dups expected */
+				grpColIdx[colno] = newtle->resno;
+
+				if (!(newtle->expr && IsA(newtle->expr, Var)))
+					*need_tlist_eval = true;	/* tlist contains non Vars */
+			}
+			else
+			{
+				/*
+				 * Non-grouping column, so just remember the expression for
+				 * later call to pull_var_clause.  There's no need for
+				 * pull_var_clause to examine the TargetEntry node itself.
+				 */
+				non_group_cols = lappend(non_group_cols, tle->expr);
+			}
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		Assert(keyno == numCols);
 	}
+	else
+	{
+		/*
+		 * With no grouping columns, just pass whole tlist to pull_var_clause.
+		 * Need (shallow) copy to avoid damaging input tlist below.
+		 */
+		non_group_cols = list_copy(tlist);
+	}
+
+	/*
+	 * If there's a HAVING clause, we'll need the Vars it uses, too.
+	 */
+	if (parse->havingQual)
+		non_group_cols = lappend(non_group_cols, parse->havingQual);
+
+	/*
+	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
+	 * add them to the result tlist if not already present.  (A Var used
+	 * directly as a GROUP BY item will be present already.)  Note this
+	 * includes Vars used in resjunk items, so we are covering the needs of
+	 * ORDER BY and window specifications.	Vars used within Aggrefs will be
+	 * pulled out here, too.
+	 */
+	non_group_vars = pull_var_clause((Node *) non_group_cols,
+									 PVC_RECURSE_AGGREGATES,
+									 PVC_INCLUDE_PLACEHOLDERS);
+	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
+
+	/* clean up cruft */
+	list_free(non_group_vars);
+	list_free(non_group_cols);
 
 	return sub_tlist;
+}
+
+/*
+ * get_grouping_column_index
+ *		Get the GROUP BY column position, if any, of a targetlist entry.
+ *
+ * Returns the index (counting from 0) of the TLE in the GROUP BY list, or -1
+ * if it's not a grouping column.  Note: the result is unique because the
+ * parser won't make multiple groupClause entries for the same TLE.
+ */
+static int
+get_grouping_column_index(Query *parse, TargetEntry *tle)
+{
+	int			colno = 0;
+	Index		ressortgroupref = tle->ressortgroupref;
+	ListCell   *gl;
+
+	/* No need to search groupClause if TLE hasn't got a sortgroupref */
+	if (ressortgroupref == 0)
+		return -1;
+
+	foreach(gl, parse->groupClause)
+	{
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
+
+		if (grpcl->tleSortGroupRef == ressortgroupref)
+			return colno;
+		colno++;
+	}
+
+	return -1;
 }
 
 /*
@@ -4420,13 +4707,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);
 
-	/* ... and insert it into PlannerInfo */
-	root->simple_rel_array_size = 2;
-	root->simple_rel_array = (RelOptInfo **)
-		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
-	root->simple_rte_array = (RangeTblEntry **)
-		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
-	root->simple_rte_array[1] = rte;
+	/* Set up RTE/RelOptInfo arrays */
+	setup_simple_rel_arrays(root);
 
 	/* Build RelOptInfo */
 	rel = build_simple_rel(root, 1, RELOPT_BASEREL);
@@ -4469,15 +4751,16 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	comparisonCost = 2.0 * (indexExprCost.startup + indexExprCost.per_tuple);
 
 	/* Estimate the cost of seq scan + sort */
-	seqScanPath = create_seqscan_path(root, rel);
+	seqScanPath = create_seqscan_path(root, rel, NULL);
 	cost_sort(&seqScanAndSortPath, root, NIL,
 			  seqScanPath->total_cost, rel->tuples, rel->width,
 			  comparisonCost, maintenance_work_mem, -1.0);
 
 	/* Estimate the cost of index scan */
 	indexScanPath = create_index_path(root, indexInfo,
-									  NIL, NIL, NIL,
-									  ForwardScanDirection, NULL);
+									  NIL, NIL, NIL, NIL, NIL,
+									  ForwardScanDirection, false,
+									  NULL, 1.0);
 
 	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
 }

@@ -3,8 +3,12 @@
  *
  *	main source file
  *
+<<<<<<< HEAD
  *	Portions Copyright (c) 2016, Pivotal Software Inc
  *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
+=======
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *	contrib/pg_upgrade/pg_upgrade.c
  */
 
@@ -16,7 +20,7 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	FYI, while pg_class.oid and pg_class.relfilenode are intially the same
+ *	FYI, while pg_class.oid and pg_class.relfilenode are initially the same
  *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
  *	FULL.  The new cluster will have matching pg_class.oid and
  *	pg_class.relfilenode values and be based on the old oid value.	This can
@@ -30,11 +34,13 @@
  *	We control all assignments of pg_enum.oid because these oids are stored
  *	in user tables as enum values.
  *
- *	We control all assignments of pg_auth.oid because these oids are stored
+ *	We control all assignments of pg_authid.oid because these oids are stored
  *	in pg_largeobject_metadata.
  */
 
 
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
@@ -44,7 +50,6 @@
 #include <langinfo.h>
 #endif
 
-static void disable_old_cluster(void);
 static void prepare_new_cluster(void);
 static void prepare_new_databases(void);
 static void create_new_objects(void);
@@ -64,23 +69,39 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 static char *restrict_env;
 #endif
 
-/* This is the database used by pg_dumpall to restore global tables */
-#define GLOBAL_DUMP_DB	"postgres"
-
 ClusterInfo old_cluster,
 			new_cluster;
 OSInfo		os_info;
+
+char	   *output_files[] = {
+	SERVER_LOG_FILE,
+#ifdef WIN32
+	/* unique file for pg_ctl start */
+	SERVER_START_LOG_FILE,
+#endif
+	RESTORE_LOG_FILE,
+	UTILITY_LOG_FILE,
+	INTERNAL_LOG_FILE,
+	NULL
+};
+
 
 int
 main(int argc, char **argv)
 {
 	char	   *sequence_script_file_name = NULL;
+	char	   *analyze_script_file_name = NULL;
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
 	parseCommandLine(argc, argv);
 
+<<<<<<< HEAD
 	get_restricted_token(os_info.progname);
+=======
+	adjust_data_dir(&old_cluster);
+	adjust_data_dir(&new_cluster);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	output_check_banner(&live_check);
 
@@ -102,7 +123,6 @@ main(int argc, char **argv)
 	pg_log(PG_REPORT, "\nPerforming Upgrade\n");
 	pg_log(PG_REPORT, "------------------\n");
 
-	disable_old_cluster();
 	prepare_new_cluster();
 
 	stop_postmaster(false);
@@ -125,6 +145,15 @@ main(int argc, char **argv)
 
 	stop_postmaster(false);
 
+	/*
+	 * Most failures happen in create_new_objects(), which has completed at
+	 * this point.	We do this here because it is just before linking, which
+	 * will link the old and new cluster data files, preventing the old
+	 * cluster from being safely started once the new cluster is started.
+	 */
+	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
+		disable_old_cluster();
+
 	transfer_all_new_dbs(&old_cluster.dbarr, &new_cluster.dbarr,
 						 old_cluster.pgdata, new_cluster.pgdata);
 
@@ -134,24 +163,40 @@ main(int argc, char **argv)
 	 * the old system, but we do it anyway just in case.  We do it late here
 	 * because there is no need to have the schema load use new oids.
 	 */
+<<<<<<< HEAD
 	prep_status("Setting next oid for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -o %u \"%s\" > "
 			  DEVNULL SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid, new_cluster.pgdata);
+=======
+	prep_status("Setting next OID for new cluster");
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE,
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
+	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
 	issue_warnings(sequence_script_file_name);
 
-	pg_log(PG_REPORT, "\nUpgrade complete\n");
+	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
 
+<<<<<<< HEAD
 	report_progress(NULL, DONE, "Upgrade complete");
 	close_progress();
 
 	output_completion_banner(deletion_script_file_name);
+=======
+	output_completion_banner(analyze_script_file_name,
+							 deletion_script_file_name);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
+	pg_free(analyze_script_file_name);
 	pg_free(deletion_script_file_name);
 	pg_free(sequence_script_file_name);
 
@@ -342,20 +387,12 @@ setup(char *argv0, bool live_check)
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
-		pg_log(PG_FATAL, "Could not get pathname to pg_upgrade: %s\n", getErrorText(errno));
+		pg_log(PG_FATAL, "Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
 
 	/* Trim off program name and keep just path */
 	*last_dir_separator(exec_path) = '\0';
 	canonicalize_path(exec_path);
 	os_info.exec_path = pg_strdup(exec_path);
-}
-
-
-static void
-disable_old_cluster(void)
-{
-	/* rename pg_control so old server cannot be accidentally started */
-	rename_old_pg_control();
 }
 
 
@@ -368,6 +405,7 @@ prepare_new_cluster(void)
 	 * --analyze so autovacuum doesn't update statistics later
 	 */
 	prep_status("Analyzing all rows in the new cluster");
+<<<<<<< HEAD
 	exec_prog(true,
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
@@ -378,6 +416,13 @@ prepare_new_cluster(void)
 	  DEVNULL
 #endif
 	  );
+=======
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  "--all --analyze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
 	/*
@@ -387,6 +432,7 @@ prepare_new_cluster(void)
 	 * later.
 	 */
 	prep_status("Freezing all rows on the new cluster");
+<<<<<<< HEAD
 	exec_prog(true,
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
@@ -397,6 +443,13 @@ prepare_new_cluster(void)
 	  DEVNULL
 #endif
 	  );
+=======
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
+			  "--all --freeze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -417,10 +470,12 @@ prepare_new_databases(void)
 	prep_status("Creating databases in the new cluster");
 
 	/*
-	 * Install support functions in the global-restore database to preserve
-	 * pg_authid.oid.
+	 * Install support functions in the global-object restore database to
+	 * preserve pg_authid.oid.	pg_dumpall uses 'template0' as its template
+	 * database so objects we add into 'template1' are not propogated.	They
+	 * are removed on pg_upgrade exit.
 	 */
-	install_support_functions_in_new_db(GLOBAL_DUMP_DB);
+	install_support_functions_in_new_db("template1");
 
 	/*
 	 * We have to create the databases first so we can install support
@@ -428,6 +483,7 @@ prepare_new_databases(void)
 	 * support functions in template1 but pg_dumpall creates database using
 	 * the template0 template.
 	 */
+<<<<<<< HEAD
 	exec_prog(true,
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/psql\" --set ON_ERROR_STOP=on "
 	/* --no-psqlrc prevents AUTOCOMMIT=off */
@@ -441,6 +497,16 @@ prepare_new_databases(void)
 			  DEVNULL
 #endif
 			  );
+=======
+	exec_prog(true, true, RESTORE_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
+			  "--set ON_ERROR_STOP=on "
+	/* --no-psqlrc prevents AUTOCOMMIT=off */
+			  "--no-psqlrc --port %d --username \"%s\" "
+			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  GLOBALS_DUMP_FILE, RESTORE_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
 	/* we load this to get a current list of databases */
@@ -459,12 +525,13 @@ create_new_objects(void)
 		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
 
 		/* skip db we already installed */
-		if (strcmp(new_db->db_name, GLOBAL_DUMP_DB) != 0)
+		if (strcmp(new_db->db_name, "template1") != 0)
 			install_support_functions_in_new_db(new_db->db_name);
 	}
 	check_ok();
 
 	prep_status("Restoring database schema to new cluster");
+<<<<<<< HEAD
 	exec_prog(true,
 			  SYSTEMQUOTE "PGOPTIONS='-c gp_session_role=utility' \"%s/psql\" --set ON_ERROR_STOP=on "
 			  "--no-psqlrc --port %d --username \"%s\" "
@@ -477,6 +544,15 @@ create_new_objects(void)
 			  DEVNULL
 #endif
 			  );
+=======
+	exec_prog(true, true, RESTORE_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
+			  "--set ON_ERROR_STOP=on "
+			  "--no-psqlrc --port %d --username \"%s\" "
+			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  DB_DUMP_FILE, RESTORE_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
 	/* Restore contents of AO auxiliary tables */
@@ -552,29 +628,41 @@ copy_clog_xlog_xid(void)
 	snprintf(old_clog_path, sizeof(old_clog_path), "%s/pg_clog", old_cluster.pgdata);
 	snprintf(new_clog_path, sizeof(new_clog_path), "%s/pg_clog", new_cluster.pgdata);
 	if (!rmtree(new_clog_path, true))
-		pg_log(PG_FATAL, "unable to delete directory %s\n", new_clog_path);
+		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_clog_path);
 	check_ok();
 
 	prep_status("Copying old commit clogs to new server");
+	exec_prog(true, false, UTILITY_LOG_FILE,
 #ifndef WIN32
-	exec_prog(true, SYSTEMQUOTE "%s \"%s\" \"%s\"" SYSTEMQUOTE,
+			  SYSTEMQUOTE "%s \"%s\" \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "cp -Rf",
 #else
 	/* flags: everything, no confirm, quiet, overwrite read-only */
-	exec_prog(true, SYSTEMQUOTE "%s \"%s\" \"%s\\\"" SYSTEMQUOTE,
+			  SYSTEMQUOTE "%s \"%s\" \"%s\\\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "xcopy /e /y /q /r",
 #endif
-			  old_clog_path, new_clog_path);
+			  old_clog_path, new_clog_path, UTILITY_LOG_FILE);
 	check_ok();
 
 	/* set the next transaction id of the new cluster */
+<<<<<<< HEAD
 	prep_status("Setting next transaction id for new cluster");
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid, new_cluster.pgdata);
+=======
+	prep_status("Setting next transaction ID for new cluster");
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE
+			  "\"%s/pg_resetxlog\" -f -x %u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE, new_cluster.bindir,
+			  old_cluster.controldata.chkpnt_nxtxid,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
+<<<<<<< HEAD
 	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -y -l 1,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir,
 			old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
@@ -585,6 +673,16 @@ copy_clog_xlog_xid(void)
 			  DEVNULL
 #endif
 			  );
+=======
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE
+			  "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE, new_cluster.bindir,
+			  old_cluster.controldata.chkpnt_tli,
+			  old_cluster.controldata.logid,
+			  old_cluster.controldata.nxtlogseg,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	check_ok();
 }
 
@@ -699,14 +797,15 @@ set_frozenxids(void)
 static void
 cleanup(void)
 {
-	char		filename[MAXPGPATH];
 
-	if (log_opts.fd)
-		fclose(log_opts.fd);
+	fclose(log_opts.internal);
 
-	if (log_opts.debug_fd)
-		fclose(log_opts.debug_fd);
+	/* Remove dump and log files? */
+	if (!log_opts.retain)
+	{
+		char	  **filename;
 
+<<<<<<< HEAD
 	if (log_opts.debug)
 		return;
 
@@ -716,6 +815,16 @@ cleanup(void)
 	unlink(filename);
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
 	unlink(filename);
+=======
+		for (filename = output_files; *filename != NULL; filename++)
+			unlink(*filename);
+
+		/* remove SQL files */
+		unlink(ALL_DUMP_FILE);
+		unlink(GLOBALS_DUMP_FILE);
+		unlink(DB_DUMP_FILE);
+	}
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 #ifdef WIN32

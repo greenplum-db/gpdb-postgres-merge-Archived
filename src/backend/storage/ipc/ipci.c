@@ -3,7 +3,7 @@
  * ipci.c
  *	  POSTGRES inter-process communication initialization code.
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -154,6 +154,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
+<<<<<<< HEAD
+=======
+		size = add_size(size, CheckpointerShmemSize());
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, WalSndShmemSize());
 		size = add_size(size, WalRcvShmemSize());
@@ -248,7 +252,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	CLOGShmemInit();
 	DistributedLog_ShmemInit();
 	SUBTRANSShmemInit();
-	TwoPhaseShmemInit();
 	MultiXactShmemInit();
     FtsShmemInit();
     tmShmemInit();
@@ -288,6 +291,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 
 	CreateSharedProcArray();
 	CreateSharedBackendStatus();
+<<<<<<< HEAD
 	
 	/*
 	 * Set up Shared snapshot slots
@@ -298,6 +302,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 *		 know who we are.  
 	 */
 	CreateSharedSnapshotArray();
+=======
+	TwoPhaseShmemInit();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Set up shared-inval messaging
@@ -310,6 +317,10 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
 	CheckpointerShmemInit();
+<<<<<<< HEAD
+=======
+	AutoVacuumShmemInit();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WalSndShmemInit();
 	WalRcvShmemInit();
 	AutoVacuumShmemInit();

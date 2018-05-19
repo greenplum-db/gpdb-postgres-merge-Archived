@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 # tz zone descriptions (deprecated version)
 #
+=======
+# <pre>
+# @(#)zone.tab	8.55
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
@@ -116,7 +121,11 @@ CA	+4901-08816	America/Nipigon	Eastern Time - Ontario & Quebec - places that did
 CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
 CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut - most locations
 CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
+<<<<<<< HEAD
 CA	+744144-0944945	America/Resolute	Central Time - Resolute, Nunavut
+=======
+CA	+744144-0944945	America/Resolute	Central Standard Time - Resolute, Nunavut
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario and Southampton I, Nunavut
 CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
@@ -330,7 +339,11 @@ RU	+5443+02030	Europe/Kaliningrad	Moscow-01 - Kaliningrad
 RU	+554521+0373704	Europe/Moscow	Moscow+00 - west Russia
 RU	+4457+03406	Europe/Simferopol	Moscow+00 - Crimea
 RU	+4844+04425	Europe/Volgograd	Moscow+00 - Caspian Sea
+<<<<<<< HEAD
 RU	+5312+05009	Europe/Samara	Moscow+00 (Moscow+01 after 2014-10-26) - Samara, Udmurtia
+=======
+RU	+5312+05009	Europe/Samara	Moscow+00 - Samara, Udmurtia
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 RU	+5651+06036	Asia/Yekaterinburg	Moscow+02 - Urals
 RU	+5500+07324	Asia/Omsk	Moscow+03 - west Siberia
 RU	+5502+08255	Asia/Novosibirsk	Moscow+03 - Novosibirsk

@@ -20,7 +20,7 @@
  * step 2 ...
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_resetxlog/pg_resetxlog.c
@@ -587,6 +587,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.redo.xlogid = 0;
 	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
+	ControlFile.checkPointCopy.fullPageWrites = false;
 	ControlFile.checkPointCopy.nextXidEpoch = 0;
 	ControlFile.checkPointCopy.nextXid = FirstNormalTransactionId;
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
@@ -602,7 +603,7 @@ GuessControlValues(void)
 	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 
-	/* minRecoveryPoint and backupStartPoint can be left zero */
+	/* minRecoveryPoint, backupStartPoint and backupEndPoint can be left zero */
 
 	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
 	ControlFile.MaxConnections = 100;
@@ -669,6 +670,8 @@ PrintControlValues(bool guessed)
 		   sysident_str);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
+	printf(_("Latest checkpoint's full_page_writes: %s\n"),
+		   ControlFile.checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),
 		   ControlFile.checkPointCopy.nextXidEpoch,
 		   ControlFile.checkPointCopy.nextXid);
@@ -741,6 +744,11 @@ RewriteControlFile(void)
 	ControlFile.minRecoveryPoint.xrecoff = 0;
 	ControlFile.backupStartPoint.xlogid = 0;
 	ControlFile.backupStartPoint.xrecoff = 0;
+<<<<<<< HEAD
+=======
+	ControlFile.backupEndPoint.xlogid = 0;
+	ControlFile.backupEndPoint.xrecoff = 0;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	ControlFile.backupEndRequired = false;
 
 	/*
@@ -1124,6 +1132,7 @@ usage(void)
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
+<<<<<<< HEAD
 	printf(_("  -e XIDEPOCH     set next transaction ID epoch\n"));
 	printf(_("  -f              force update to be done\n"));
 	printf(_("  -k data_checksum_version     set data_checksum_version\n"));
@@ -1138,4 +1147,17 @@ usage(void)
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
+	printf(_("  -f               force update to be done\n"));
+	printf(_("  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -m XID           set next multitransaction ID\n"));
+	printf(_("  -n               no update, just show extracted control values (for testing)\n"));
+	printf(_("  -o OID           set next OID\n"));
+	printf(_("  -O OFFSET        set next multitransaction offset\n"));
+	printf(_("  -x XID           set next transaction ID\n"));
+	printf(_("  --help           show this help, then exit\n"));
+	printf(_("  --version        output version information, then exit\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }

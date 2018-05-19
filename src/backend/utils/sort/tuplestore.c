@@ -43,9 +43,13 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum Inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -61,10 +65,14 @@
 #include "storage/buffile.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+<<<<<<< HEAD
 #include "utils/tuplestore.h"
 #include "cdb/cdbvars.h"
 #include "access/memtup.h"
 #include "executor/instrument.h"        /* struct Instrumentation */
+=======
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Possible states of a Tuplestore object.  These denote the states that
@@ -629,7 +637,11 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	/*
+<<<<<<< HEAD
 	 * Copy the tuple.  (Must do this even in WRITEFILE case.  Note that
+=======
+	 * Copy the tuple.	(Must do this even in WRITEFILE case.  Note that
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * COPYTUP includes USEMEM, so we needn't do that here.)
 	 */
 	tuple = COPYTUP(state, tuple);
@@ -649,6 +661,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 {
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
+<<<<<<< HEAD
 	if (!state->mt_bind)
 	{
 		state->mt_bind = create_memtuple_binding(tdesc);
@@ -657,6 +670,9 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 
 	MemTuple tuple = memtuple_form_to(state->mt_bind, values, isnull, NULL, NULL, false);
 
+=======
+	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, (void *) tuple);

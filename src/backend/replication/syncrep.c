@@ -22,6 +22,10 @@
  * Replication is either synchronous or not synchronous (async). If it is
  * async, we just fastpath out of here. If it is sync, then we wait for
  * the write or flush location on the standby before releasing the waiting backend.
+<<<<<<< HEAD
+=======
+ * Further complexity in that interaction is expected in later releases.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * The best performing way to manage the waiting backends is to have a
  * single ordered queue of waiting backends, so that we can avoid
@@ -45,22 +49,20 @@
 #include <unistd.h>
 
 #include "access/xact.h"
-#include "access/xlog_internal.h"
 #include "miscadmin.h"
-#include "postmaster/autovacuum.h"
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
+<<<<<<< HEAD
 #include "storage/latch.h"
 #include "storage/ipc.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
-#include "utils/guc_tables.h"
-#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/faultinjector.h"
 #include "pgstat.h"
@@ -74,7 +76,11 @@ char	   *SyncRepStandbyNames;
 
 static bool announce_next_takeover = true;
 
+<<<<<<< HEAD
 static int	SyncRepWaitMode = SYNC_REP_WAIT_FLUSH;
+=======
+static int	SyncRepWaitMode = SYNC_REP_NO_WAIT;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 static void SyncRepQueueInsert(int mode);
 static void SyncRepCancelWait(void);
@@ -106,8 +112,11 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	char	   *new_status = NULL;
 	const char *old_status;
 	int			mode = SyncRepWaitMode;
+<<<<<<< HEAD
 	bool		syncStandbyPresent = false;
 	int			i = 0;
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * SIGUSR1 is used to wake us up, cannot wait from inside SIGUSR1 handler
@@ -190,7 +199,11 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * condition but we'll be fetching that cache line anyway so its likely to
 	 * be a low cost check.
 	 */
+<<<<<<< HEAD
 	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
+=======
+	if (!WalSndCtl->sync_standbys_defined ||
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		XLByteLE(XactCommitLSN, WalSndCtl->lsn[mode]))
 	{
 		elogif(debug_walrepl_syncrep, LOG,
@@ -320,9 +333,16 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		{
 			QueryCancelPending = false;
 			ereport(WARNING,
+<<<<<<< HEAD
 					(errmsg("ignoring query cancel request for synchronous replication to ensure cluster consistency."),
 					 errdetail("The transaction has already changed locally, it has to be replicated to standby.")));
 			SIMPLE_FAULT_INJECTOR(SyncRepQueryCancel);
+=======
+					(errmsg("canceling wait for synchronous replication due to user request"),
+					 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.")));
+			SyncRepCancelWait();
+			break;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/*
@@ -330,7 +350,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * acknowledgement, because all the wal sender processes will exit. So
 		 * just bail out.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 		{
 			ProcDiePending = true;
 			whereToSendOutput = DestNone;
@@ -338,9 +358,12 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 			break;
 		}
 
+<<<<<<< HEAD
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wait -- This backend's syncrep state is still 'waiting'. "
 				"Hence it will wait on a latch until awakend.")
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/*
 		 * Wait on latch.  Any condition that should wake us up will set the
 		 * latch, so no need for timeout.
@@ -420,7 +443,7 @@ SyncRepCancelWait(void)
 }
 
 void
-SyncRepCleanupAtProcExit(int code, Datum arg)
+SyncRepCleanupAtProcExit(void)
 {
 	if (!SHMQueueIsDetached(&(MyProc->syncRepLinks)))
 	{
@@ -546,8 +569,12 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
+<<<<<<< HEAD
 	elogif(debug_walrepl_syncrep, LOG,
 		"syncrep release -- Released %d processe(s) up to write %X/%X, %d processe(s) up to flush %X/%X",
+=======
+	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 numwrite,
 		 MyWalSnd->write.xlogid,
 		 MyWalSnd->write.xrecoff,
@@ -580,12 +607,63 @@ SyncRepReleaseWaiters(void)
 static int
 SyncRepGetStandbyPriority(void)
 {
+<<<<<<< HEAD
 	/* Currently set the priority to 1 */
 	return 1;
 }
 
 /*
  * Walk the specified queue from head.  Set the state of any backends that
+=======
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	int			priority = 0;
+	bool		found = false;
+
+	/*
+	 * Since synchronous cascade replication is not allowed, we always set the
+	 * priority of cascading walsender to zero.
+	 */
+	if (am_cascading_walsender)
+		return 0;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(SyncRepStandbyNames);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		pfree(rawstring);
+		list_free(elemlist);
+		/* GUC machinery will have already complained - no need to do again */
+		return 0;
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *standby_name = (char *) lfirst(l);
+
+		priority++;
+
+		if (pg_strcasecmp(standby_name, application_name) == 0 ||
+			pg_strcasecmp(standby_name, "*") == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	return (found ? priority : 0);
+}
+
+/*
+ * Walk the specified queue from head.	Set the state of any backends that
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * need to be woken, remove them from the queue, and then wake them.
  * Pass all = true to wake whole queue; otherwise, just wake up to
  * the walsender's LSN.
@@ -639,12 +717,15 @@ SyncRepWakeQueue(bool all, int mode)
 		 * Wake only when we have set state and removed from queue.
 		 */
 		SetLatch(&(thisproc->procLatch));
+<<<<<<< HEAD
 
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wakeup queue -- %d procid was removed from syncrep queue. "
 				"Its state is changed to 'Wait Complete' and "
 				"its latch is now set",
 				thisproc->pid);
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		numprocs++;
 	}
@@ -767,4 +848,21 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 	list_free(elemlist);
 
 	return true;
+}
+
+void
+assign_synchronous_commit(int newval, void *extra)
+{
+	switch (newval)
+	{
+		case SYNCHRONOUS_COMMIT_REMOTE_WRITE:
+			SyncRepWaitMode = SYNC_REP_WAIT_WRITE;
+			break;
+		case SYNCHRONOUS_COMMIT_REMOTE_FLUSH:
+			SyncRepWaitMode = SYNC_REP_WAIT_FLUSH;
+			break;
+		default:
+			SyncRepWaitMode = SYNC_REP_NO_WAIT;
+			break;
+	}
 }

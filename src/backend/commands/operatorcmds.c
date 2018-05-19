@@ -4,7 +4,7 @@
  *
  *	  Routines for operator manipulation commands
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -37,10 +37,12 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+<<<<<<< HEAD
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_operator.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
 #include "commands/defrem.h"
@@ -48,7 +50,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
-#include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -79,6 +81,7 @@ DefineOperator(List *names, List *parameters)
 	TypeName   *typeName2 = NULL;		/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
+	Oid			rettype;
 	List	   *commutatorName = NIL;	/* optional commutator operator name */
 	List	   *negatorName = NIL;		/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
@@ -183,6 +186,22 @@ DefineOperator(List *names, List *parameters)
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 		   errmsg("at least one of leftarg or rightarg must be specified")));
 
+	if (typeName1)
+	{
+		aclresult = pg_type_aclcheck(typeId1, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TYPE,
+						   format_type_be(typeId1));
+	}
+
+	if (typeName2)
+	{
+		aclresult = pg_type_aclcheck(typeId2, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TYPE,
+						   format_type_be(typeId2));
+	}
+
 	/*
 	 * Look up the operator's underlying function.
 	 */
@@ -213,6 +232,12 @@ DefineOperator(List *names, List *parameters)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC,
 					   NameListToString(functionName));
+
+	rettype = get_func_rettype(functionOid);
+	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(rettype));
 
 	/*
 	 * Look up restriction estimator if specified
@@ -315,6 +340,7 @@ DefineOperator(List *names, List *parameters)
 
 
 /*
+<<<<<<< HEAD
  * RemoveOperator
  *		Deletes an operator.
  */
@@ -375,6 +401,8 @@ RemoveOperator(RemoveFuncStmt *stmt)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of operator deletion.
  */
 void

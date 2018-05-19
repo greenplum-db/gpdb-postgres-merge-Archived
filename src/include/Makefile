@@ -17,7 +17,7 @@ all: pg_config.h pg_config_os.h check_oids
 
 
 # Subdirectories containing headers for server-side dev
-SUBDIRS = access bootstrap catalog commands executor foreign lib libpq mb \
+SUBDIRS = access bootstrap catalog commands datatype executor foreign lib libpq mb \
 	nodes optimizer parser postmaster regex replication rewrite storage \
 	tcop snowball snowball/libstemmer tsearch tsearch/dicts utils \
 	port port/atomics port/win32 port/win32_msvc port/win32_msvc/sys \
@@ -52,7 +52,11 @@ install: all installdirs
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$dir/*.h  || exit; \
 	done
 ifeq ($(vpath_build),yes)
+<<<<<<< HEAD
 	for file in dynloader.h parser/gram.h utils/probes.h; do \
+=======
+	for file in dynloader.h catalog/schemapg.h parser/gram.h utils/probes.h; do \
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done

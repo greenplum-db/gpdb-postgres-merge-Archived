@@ -61,15 +61,27 @@ SELECT '    '::json;			-- ERROR, no value
 -- array_to_json
 
 SELECT array_to_json(array(select 1 as a));
+<<<<<<< HEAD
 
 -- FIXME: deleted some tests that call array_agg(RECORD), as it is not currently supported
 
+=======
+SELECT array_to_json(array_agg(q),false) from (select x as b, x * 2 as c from generate_series(1,3) x) q;
+SELECT array_to_json(array_agg(q),true) from (select x as b, x * 2 as c from generate_series(1,3) x) q;
+SELECT array_to_json(array_agg(q),false)
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
+              generate_series(4,5) y) q;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 SELECT array_to_json(array_agg(x),false) from generate_series(5,10) x;
 SELECT array_to_json('{{1,5},{99,100}}'::int[]);
 
 -- row_to_json
 SELECT row_to_json(row(1,'foo'));
 
+<<<<<<< HEAD
 -- FIXME: deleted some tests that call array_agg(RECORD), as it is not currently supported
 
 CREATE TEMP TABLE _rows AS
@@ -78,6 +90,30 @@ FROM generate_series(1,3) AS x;
 
 SELECT row_to_json(q,true) 
 FROM _rows q ORDER BY x;
+=======
+SELECT row_to_json(q)
+FROM (SELECT $$a$$ || x AS b,
+         y AS c,
+         ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+      FROM generate_series(1,2) x,
+           generate_series(4,5) y) q;
+
+SELECT row_to_json(q,true)
+FROM (SELECT $$a$$ || x AS b,
+         y AS c,
+         ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+      FROM generate_series(1,2) x,
+           generate_series(4,5) y) q;
+
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+
+SELECT row_to_json(q,true)
+FROM rows q;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
 
@@ -94,6 +130,7 @@ FROM (SELECT '-Infinity'::float8 AS "float8field") q;
 -- json input
 SELECT row_to_json(q)
 FROM (SELECT '{"a":1,"b": [2,3,4,"d","e","f"],"c":{"p":1,"q":2}}'::json AS "jsonfield") q;
+<<<<<<< HEAD
 
 
 -- json extraction functions
@@ -271,3 +308,5 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,3
 select '[{"a":1}]'::json->0->'b';
 select '[{"a":1}]'::json->1;
 select '[{"a":1}]'::json->1->'a';
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

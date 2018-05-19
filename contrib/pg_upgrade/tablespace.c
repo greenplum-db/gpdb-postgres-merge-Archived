@@ -3,9 +3,11 @@
  *
  *	tablespace functions
  *
- *	Copyright (c) 2010-2011, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/tablespace.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
@@ -42,20 +44,30 @@ get_tablespace_paths(void)
 	PGresult   *res;
 	int			tblnum;
 	int			i_spclocation;
-
 	char		query[QUERY_ALLOC];
 
+<<<<<<< HEAD
+	char		query[QUERY_ALLOC];
+
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	snprintf(query, sizeof(query),
 			 "SELECT	%s "
 			 "FROM	pg_catalog.pg_tablespace "
 			 "WHERE	spcname != 'pg_default' AND "
 			 "		spcname != 'pg_global'",
+<<<<<<< HEAD
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during the 8.4 merge
 	 */
 			(GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			"spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
+=======
+	/* 9.2 removed the spclocation column */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
+	"spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	res = executeQueryOrDie(conn, "%s", query);
 

@@ -1,4 +1,5 @@
 SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
+<<<<<<< HEAD
        name        | setting 
 -------------------+---------
  enable_bitmapscan | on
@@ -12,6 +13,21 @@ SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
  enable_seqscan    | on
  enable_sort       | on
  enable_tidscan    | on
+=======
+         name         | setting 
+----------------------+---------
+ enable_bitmapscan    | on
+ enable_hashagg       | on
+ enable_hashjoin      | on
+ enable_indexonlyscan | on
+ enable_indexscan     | on
+ enable_material      | on
+ enable_mergejoin     | on
+ enable_nestloop      | on
+ enable_seqscan       | on
+ enable_sort          | on
+ enable_tidscan       | on
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 (11 rows)
 
 CREATE TABLE foo2(fooid int, f2 int);

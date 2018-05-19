@@ -4,7 +4,7 @@
  *
  *	  Routines for tsearch manipulation commands
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,7 +22,6 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_namespace.h"
@@ -39,11 +38,8 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -278,7 +274,8 @@ DefineTSParser(List *names, List *parameters)
 	makeParserDependencies(tup);
 
 	/* Post creation hook for new text search parser */
-	InvokeObjectAccessHook(OAT_POST_CREATE, TSParserRelationId, prsOid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TSParserRelationId, prsOid, 0, NULL);
 
 	heap_freetuple(tup);
 
@@ -304,6 +301,7 @@ DefineTSParser(List *names, List *parameters)
 }
 
 /*
+<<<<<<< HEAD
  * DROP TEXT SEARCH PARSER
  */
 void
@@ -364,6 +362,8 @@ RemoveTSParsers(DropStmt *drop)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of TS parser deletion.
  */
 void
@@ -650,7 +650,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 	/* Post creation hook for new text search dictionary */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TSDictionaryRelationId, dictOid, 0);
+						   TSDictionaryRelationId, dictOid, 0, NULL);
 
 	heap_freetuple(tup);
 
@@ -773,6 +773,7 @@ AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid)
 }
 
 /*
+<<<<<<< HEAD
  * DROP TEXT SEARCH DICTIONARY
  */
 void
@@ -844,6 +845,8 @@ RemoveTSDictionaries(DropStmt *drop)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of TS dictionary deletion.
  */
 void
@@ -1216,7 +1219,8 @@ DefineTSTemplate(List *names, List *parameters)
 	makeTSTemplateDependencies(tup);
 
 	/* Post creation hook for new text search template */
-	InvokeObjectAccessHook(OAT_POST_CREATE, TSTemplateRelationId, dictOid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TSTemplateRelationId, dictOid, 0, NULL);
 
 	heap_freetuple(tup);
 
@@ -1330,6 +1334,7 @@ AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid)
 }
 
 /*
+<<<<<<< HEAD
  * DROP TEXT SEARCH TEMPLATE
  */
 void
@@ -1390,6 +1395,8 @@ RemoveTSTemplates(DropStmt *drop)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of TS template deletion.
  */
 void
@@ -1675,7 +1682,8 @@ DefineTSConfiguration(List *names, List *parameters)
 	makeConfigurationDependencies(tup, false, mapRel);
 
 	/* Post creation hook for new text search configuration */
-	InvokeObjectAccessHook(OAT_POST_CREATE, TSConfigRelationId, cfgOid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   TSConfigRelationId, cfgOid, 0, NULL);
 
 	heap_freetuple(tup);
 
@@ -1799,6 +1807,7 @@ AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid)
 }
 
 /*
+<<<<<<< HEAD
  * DROP TEXT SEARCH CONFIGURATION
  */
 void
@@ -1866,6 +1875,8 @@ RemoveTSConfigurations(DropStmt *drop)
 }
 
 /*
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of TS configuration deletion.
  */
 void

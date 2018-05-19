@@ -4,7 +4,7 @@
  *	  include file for the bootstrapping code
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/bootstrap/bootstrap.h
@@ -17,6 +17,22 @@
 #include "catalog/index.h"
 #include "nodes/execnodes.h"
 
+<<<<<<< HEAD
+=======
+typedef enum
+{
+	CheckerProcess,
+	BootstrapProcess,
+	StartupProcess,
+	BgWriterProcess,
+	CheckpointerProcess,
+	WalWriterProcess,
+	WalReceiverProcess,
+
+	NUM_AUXPROCTYPES			/* Must be last! */
+} AuxProcType;
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).

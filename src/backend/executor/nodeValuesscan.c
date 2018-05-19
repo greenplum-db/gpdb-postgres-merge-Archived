@@ -4,9 +4,13 @@
  *	  Support routines for scanning Values lists
  *	  ("VALUES (...), (...), ..." in rangetable).
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,9 +32,13 @@
 #include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
+<<<<<<< HEAD
 #include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
 #include "utils/memutils.h"
+=======
+#include "parser/parsetree.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -204,6 +212,8 @@ ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
 	ValuesScanState *scanstate;
+	RangeTblEntry *rte = rt_fetch(node->scan.scanrelid,
+								  estate->es_range_table);
 	TupleDesc	tupdesc;
 	ListCell   *vtl;
 	int			i;
@@ -258,7 +268,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * get info about values list
 	 */
-	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
+	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists),
+								   rte->eref->colnames);
 
 	ExecAssignScanType(&scanstate->ss, tupdesc);
 

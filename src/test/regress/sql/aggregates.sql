@@ -442,6 +442,7 @@ select string_agg(distinct f1::text, ',' order by f1) from varchar_tbl;  -- not 
 select string_agg(distinct f1, ',' order by f1::text) from varchar_tbl;  -- not ok
 select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -- ok
 
+<<<<<<< HEAD
 -- FILTER tests
 
 select min(unique1) filter (where unique1 > 100) from tenk1;
@@ -591,3 +592,21 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
+=======
+-- string_agg bytea tests
+create table bytea_test_table(v bytea);
+
+select string_agg(v, '') from bytea_test_table;
+
+insert into bytea_test_table values(decode('ff','hex'));
+
+select string_agg(v, '') from bytea_test_table;
+
+insert into bytea_test_table values(decode('aa','hex'));
+
+select string_agg(v, '') from bytea_test_table;
+select string_agg(v, NULL) from bytea_test_table;
+select string_agg(v, decode('ee', 'hex')) from bytea_test_table;
+
+drop table bytea_test_table;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

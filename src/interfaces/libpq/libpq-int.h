@@ -9,7 +9,10 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -375,6 +378,10 @@ struct pg_conn
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 
+	/* Callback procedure for per-row processing */
+	PQrowProcessor rowProcessor;	/* function pointer */
+	void	   *rowProcessorParam;		/* passthrough argument */
+
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;
 
@@ -460,7 +467,10 @@ struct pg_conn
 
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
+<<<<<<< HEAD
 	PGresult   *next_result;	/* next result (used in single-row mode) */
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Assorted state for SSL, GSS, etc */
 

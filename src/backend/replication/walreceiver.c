@@ -26,6 +26,10 @@
  * dynamically to avoid linking the server with libpq.
  *
  * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * IDENTIFICATION
  *	  src/backend/replication/walreceiver.c
@@ -37,7 +41,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -47,12 +50,14 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
-#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
+<<<<<<< HEAD
 #include "utils/faultinjector.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* GUC variables */
@@ -230,7 +235,11 @@ WalReceiverMain(void)
 	startpoint = walrcv->receiveStart;
 
 	/* Initialise to a sanish value */
+<<<<<<< HEAD
 	walrcv->lastMsgSendTime = walrcv->lastMsgReceiptTime = walrcv->latestWalEndTime = GetCurrentTimestamp();
+=======
+	walrcv->lastMsgSendTime = walrcv->lastMsgReceiptTime = GetCurrentTimestamp();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	SpinLockRelease(&walrcv->mutex);
 
@@ -345,7 +354,7 @@ WalReceiverMain(void)
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			exit(1);
 
 		/*
@@ -565,15 +574,17 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				/* memcpy is required here for alignment reasons */
 				memcpy(&msghdr, buf, sizeof(WalDataMessageHeader));
 
+<<<<<<< HEAD
 				elogif(debug_walrepl_rcv, LOG,
 					   "walrcv msg metadata -- datastart %s, buflen %d",
 					    XLogLocationToString(&(msghdr.dataStart)),(int)len);
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				ProcessWalSndrMessage(msghdr.walEnd, msghdr.sendTime);
 
 				buf += sizeof(WalDataMessageHeader);
 				len -= sizeof(WalDataMessageHeader);
-
 				XLogWalRcvWrite(buf, len, msghdr.dataStart);
 				break;
 			}
@@ -584,8 +595,12 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				if (len != sizeof(PrimaryKeepaliveMessage))
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+<<<<<<< HEAD
 							 errmsg_internal("invalid keepalive message received from primary"),
 							 errSendAlert(true)));
+=======
+							 errmsg_internal("invalid keepalive message received from primary")));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				/* memcpy is required here for alignment reasons */
 				memcpy(&keepalive, buf, sizeof(PrimaryKeepaliveMessage));
 
@@ -738,8 +753,10 @@ XLogWalRcvFlush(bool dying)
 		}
 		SpinLockRelease(&walrcv->mutex);
 
-		/* Signal the startup process that new WAL has arrived */
+		/* Signal the startup process and walsender that new WAL has arrived */
 		WakeupRecovery();
+		if (AllowCascadeReplication())
+			WalSndWakeup();
 
 		/* Report XLOG streaming progress in PS display */
 		if (update_process_title)
@@ -950,6 +967,7 @@ XLogWalRcvSendHSFeedback(void)
 	walrcv_send(buf, sizeof(StandbyHSFeedbackMessage) + 1);
 }
 
+<<<<<<< HEAD
 
 /*
  * Return a string constant representing the state.
@@ -969,4 +987,29 @@ WalRcvGetStateString(WalRcvState state)
 			return "stopping";
 	}
 	return "UNKNOWN";
+=======
+/*
+ * Keep track of important messages from primary.
+ */
+static void
+ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile WalRcvData *walrcv = WalRcv;
+
+	TimestampTz lastMsgReceiptTime = GetCurrentTimestamp();
+
+	/* Update shared-memory status */
+	SpinLockAcquire(&walrcv->mutex);
+	walrcv->lastMsgSendTime = sendTime;
+	walrcv->lastMsgReceiptTime = lastMsgReceiptTime;
+	SpinLockRelease(&walrcv->mutex);
+
+	if (log_min_messages <= DEBUG2)
+		elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
+			 timestamptz_to_str(sendTime),
+			 timestamptz_to_str(lastMsgReceiptTime),
+			 GetReplicationApplyDelay(),
+			 GetReplicationTransferLatency());
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }

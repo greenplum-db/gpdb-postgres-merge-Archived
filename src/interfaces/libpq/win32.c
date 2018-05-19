@@ -319,7 +319,11 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 	}
 
 	if (!success)
+<<<<<<< HEAD
 		sprintf(strerrbuf, libpq_gettext("unrecognized socket error: 0x%08X/%d"), err, err);
+=======
+		sprintf(strerrbuf, libpq_gettext("Unknown socket error (0x%08X/%d)"), err, err);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	else
 	{
 		strerrbuf[buflen - 1] = '\0';

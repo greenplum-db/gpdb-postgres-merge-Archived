@@ -41,9 +41,13 @@
 #include <signal.h>
 #include <unistd.h>
 
+<<<<<<< HEAD
 #include "access/transam.h"
 #include "access/xlog_internal.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/transam.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
@@ -52,7 +56,10 @@
 #include "miscadmin.h"
 #include "nodes/replnodes.h"
 #include "replication/basebackup.h"
+<<<<<<< HEAD
 #include "replication/replnodes.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "replication/syncrep.h"
 #include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
@@ -70,8 +77,11 @@
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
+<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "cdb/cdbvars.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* Array of WalSnds in shared memory */
@@ -82,10 +92,18 @@ WalSnd	   *MyWalSnd = NULL;
 
 /* Global state */
 bool		am_walsender = false;		/* Am I a walsender process ? */
+<<<<<<< HEAD
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 
 /* User-settable parameters for walsender */
 int			WalSndDelay = 1000; /* max sleep time between some actions */
+=======
+bool		am_cascading_walsender = false;		/* Am I cascading WAL to
+												 * another standby ? */
+
+/* User-settable parameters for walsender */
+int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 int			replication_timeout = 60 * 1000;	/* maximum time to send one
 												 * WAL data message */
 int			repl_catchup_within_range = XLogSegsPerFile;
@@ -139,25 +157,68 @@ static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
 static void ProcessStandbyHSFeedbackMessage(void);
 static void ProcessRepliesIfAny(void);
+<<<<<<< HEAD
 static const char *WalSndGetStateString(WalSndState state);
 static void WalSndKeepalive(char *msgbuf);
 
 static void WalSndSetSync(bool sync);
 static void WalSndSetCaughtupWithinRange(bool catchup_within_range);
 static bool WalSndIsCatchupWithinRange(XLogRecPtr currRecPtr, XLogRecPtr catchupRecPtr);
+=======
+static void WalSndKeepalive(char *msgbuf);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* Main entry point for walsender process */
 void
 InitWalSender(void)
 {
+<<<<<<< HEAD
+=======
+	MemoryContext walsnd_context;
+
+	am_cascading_walsender = RecoveryInProgress();
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Create a per-walsender data structure in shared memory */
 	InitWalSenderSlot();
 
 	/* Set up resource owner */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "walsender top-level resource owner");
 
+<<<<<<< HEAD
 	SIMPLE_FAULT_INJECTOR(InitializeWalSender);
+=======
+	/* Unblock signals (they were blocked when the postmaster forked us) */
+	PG_SETMASK(&UnBlockSig);
+
+	/*
+	 * Use the recovery target timeline ID during recovery
+	 */
+	if (am_cascading_walsender)
+		ThisTimeLineID = GetRecoveryTargetTLI();
+
+	/* Tell the standby that walsender is ready for receiving commands */
+	ReadyForQuery(DestRemote);
+
+	/* Handle handshake messages before streaming */
+	WalSndHandshake();
+
+	/* Initialize shared memory status */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile WalSnd *walsnd = MyWalSnd;
+
+		SpinLockAcquire(&walsnd->mutex);
+		walsnd->sentPtr = sentPtr;
+		SpinLockRelease(&walsnd->mutex);
+	}
+
+	SyncRepInitConfig();
+
+	/* Main loop of walsender */
+	return WalSndLoop();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -172,8 +233,77 @@ WalSndErrorCleanup(void)
 {
 	if (sendFile >= 0)
 	{
+<<<<<<< HEAD
 		close(sendFile);
 		sendFile = -1;
+=======
+		int			firstchar;
+
+		WalSndSetState(WALSNDSTATE_STARTUP);
+		set_ps_display("idle", false);
+
+		/* Wait for a command to arrive */
+		firstchar = pq_getbyte();
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
+		 */
+		if (!PostmasterIsAlive())
+			exit(1);
+
+		/*
+		 * Check for any other interesting events that happened while we
+		 * slept.
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
+		if (firstchar != EOF)
+		{
+			/*
+			 * Read the message contents. This is expected to be done without
+			 * blocking because we've been able to get message type code.
+			 */
+			if (pq_getmessage(&input_message, 0))
+				firstchar = EOF;	/* suitable message already logged */
+		}
+
+		/* Handle the very limited subset of commands expected in this phase */
+		switch (firstchar)
+		{
+			case 'Q':			/* Query message */
+				{
+					const char *query_string;
+
+					query_string = pq_getmsgstring(&input_message);
+					pq_getmsgend(&input_message);
+
+					if (HandleReplicationCommand(query_string))
+						replication_started = true;
+				}
+				break;
+
+			case 'X':
+				/* standby is closing the connection */
+				proc_exit(0);
+
+			case EOF:
+				/* standby disconnected unexpectedly */
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("unexpected EOF on standby connection")));
+				proc_exit(0);
+
+			default:
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid standby handshake message type %d", firstchar)));
+		}
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
@@ -206,7 +336,7 @@ IdentifySystem(void)
 			 GetSystemIdentifier());
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
-	logptr = GetInsertRecPtr();
+	logptr = am_cascading_walsender ? GetStandbyFlushRecPtr() : GetInsertRecPtr();
 
 	snprintf(xpos, sizeof(xpos), "%X/%X",
 			 logptr.xlogid, logptr.xrecoff);
@@ -284,8 +414,48 @@ StartReplication(StartReplicationCmd *cmd)
 	MarkPostmasterChildWalSender();
 	replication_started = true;
 
+<<<<<<< HEAD
 	elogif(debug_walrepl_snd, LOG,
 			"walsnd startreplication -- Marked this Postmaster child process type as WAL sender process.");
+=======
+	/*
+	 * When promoting a cascading standby, postmaster sends SIGUSR2 to any
+	 * cascading walsenders to kill them. But there is a corner-case where
+	 * such walsender fails to receive SIGUSR2 and survives a standby
+	 * promotion unexpectedly. This happens when postmaster sends SIGUSR2
+	 * before the walsender marks itself as a WAL sender, because postmaster
+	 * sends SIGUSR2 to only the processes marked as a WAL sender.
+	 *
+	 * To avoid this corner-case, if recovery is NOT in progress even though
+	 * the walsender is cascading one, we do the same thing as SIGUSR2 signal
+	 * handler does, i.e., set walsender_ready_to_stop to true. Which causes
+	 * the walsender to end later.
+	 *
+	 * When terminating cascading walsenders, usually postmaster writes the
+	 * log message announcing the terminations. But there is a race condition
+	 * here. If there is no walsender except this process before reaching
+	 * here, postmaster thinks that there is no walsender and suppresses that
+	 * log message. To handle this case, we always emit that log message here.
+	 * This might cause duplicate log messages, but which is less likely to
+	 * happen, so it's not worth writing some code to suppress them.
+	 */
+	if (am_cascading_walsender && !RecoveryInProgress())
+	{
+		ereport(LOG,
+		   (errmsg("terminating walsender process to force cascaded standby "
+				   "to update timeline and reconnect")));
+		walsender_ready_to_stop = true;
+	}
+
+	/*
+	 * We assume here that we're logging enough information in the WAL for
+	 * log-shipping, since this is checked in PostmasterMain().
+	 *
+	 * NOTE: wal_level can only change at shutdown, so in most cases it is
+	 * difficult for there to be WAL data that we can still see that was
+	 * written at wal_level='minimal'.
+	 */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * When we first start replication the standby will be behind the primary.
@@ -464,8 +634,12 @@ ProcessRepliesIfAny(void)
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("invalid standby message type \"%c\"",
+<<<<<<< HEAD
 								firstchar),
 						 errSendAlert(true)));
+=======
+								firstchar)));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -502,8 +676,12 @@ ProcessStandbyMessage(void)
 		default:
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+<<<<<<< HEAD
 					 errmsg("unexpected message type \"%c\"", msgtype),
 					 errSendAlert(true)));
+=======
+					 errmsg("unexpected message type \"%c\"", msgtype)));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			proc_exit(0);
 	}
 }
@@ -540,6 +718,7 @@ ProcessStandbyReplyMessage(void)
 		SpinLockRelease(&walsnd->mutex);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Set xlogCleanUpTo to flush point so that the old
 	 * xlog seg files can be cleaned up-to this point
@@ -548,6 +727,10 @@ ProcessStandbyReplyMessage(void)
 	WalSndSetXLogCleanUpTo(reply.flush);
 
 	SyncRepReleaseWaiters();
+=======
+	if (!am_cascading_walsender)
+		SyncRepReleaseWaiters();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -557,76 +740,67 @@ static void
 ProcessStandbyHSFeedbackMessage(void)
 {
 	StandbyHSFeedbackMessage reply;
-	TransactionId newxmin = InvalidTransactionId;
+	TransactionId nextXid;
+	uint32		nextEpoch;
 
-	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyHSFeedbackMessage));
+	/* Decipher the reply message */
+	pq_copymsgbytes(&reply_message, (char *) &reply,
+					sizeof(StandbyHSFeedbackMessage));
 
 	elog(DEBUG2, "hot standby feedback xmin %u epoch %u",
 		 reply.xmin,
 		 reply.epoch);
 
-	/*
-	 * Update the WalSender's proc xmin to allow it to be visible to
-	 * snapshots. This will hold back the removal of dead rows and thereby
-	 * prevent the generation of cleanup conflicts on the standby server.
-	 */
-	if (TransactionIdIsValid(reply.xmin))
-	{
-		TransactionId nextXid;
-		uint32		nextEpoch;
-		bool		epochOK = false;
-
-		GetNextXidAndEpoch(&nextXid, &nextEpoch);
-
-		/*
-		 * Epoch of oldestXmin should be same as standby or if the counter has
-		 * wrapped, then one less than reply.
-		 */
-		if (reply.xmin <= nextXid)
-		{
-			if (reply.epoch == nextEpoch)
-				epochOK = true;
-		}
-		else
-		{
-			if (nextEpoch > 0 && reply.epoch == nextEpoch - 1)
-				epochOK = true;
-		}
-
-		/*
-		 * Feedback from standby must not go backwards, nor should it go
-		 * forwards further than our most recent xid.
-		 */
-		if (epochOK && TransactionIdPrecedesOrEquals(reply.xmin, nextXid))
-		{
-			if (!TransactionIdIsValid(MyProc->xmin))
-			{
-				TransactionId oldestXmin = GetOldestXmin(true, true);
-
-				if (TransactionIdPrecedes(oldestXmin, reply.xmin))
-					newxmin = reply.xmin;
-				else
-					newxmin = oldestXmin;
-			}
-			else
-			{
-				if (TransactionIdPrecedes(MyProc->xmin, reply.xmin))
-					newxmin = reply.xmin;
-				else
-					newxmin = MyProc->xmin;		/* stay the same */
-			}
-		}
-	}
+	/* Ignore invalid xmin (can't actually happen with current walreceiver) */
+	if (!TransactionIdIsNormal(reply.xmin))
+		return;
 
 	/*
-	 * Grab the ProcArrayLock to set xmin, or invalidate for bad reply
+	 * Check that the provided xmin/epoch are sane, that is, not in the future
+	 * and not so far back as to be already wrapped around.  Ignore if not.
+	 *
+	 * Epoch of nextXid should be same as standby, or if the counter has
+	 * wrapped, then one greater than standby.
 	 */
-	if (MyProc->xmin != newxmin)
+	GetNextXidAndEpoch(&nextXid, &nextEpoch);
+
+	if (reply.xmin <= nextXid)
 	{
-		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		MyProc->xmin = newxmin;
-		LWLockRelease(ProcArrayLock);
+		if (reply.epoch != nextEpoch)
+			return;
 	}
+	else
+	{
+		if (reply.epoch + 1 != nextEpoch)
+			return;
+	}
+
+	if (!TransactionIdPrecedesOrEquals(reply.xmin, nextXid))
+		return;					/* epoch OK, but it's wrapped around */
+
+	/*
+	 * Set the WalSender's xmin equal to the standby's requested xmin, so that
+	 * the xmin will be taken into account by GetOldestXmin.  This will hold
+	 * back the removal of dead rows and thereby prevent the generation of
+	 * cleanup conflicts on the standby server.
+	 *
+	 * There is a small window for a race condition here: although we just
+	 * checked that reply.xmin precedes nextXid, the nextXid could have gotten
+	 * advanced between our fetching it and applying the xmin below, perhaps
+	 * far enough to make reply.xmin wrap around.  In that case the xmin we
+	 * set here would be "in the future" and have no effect.  No point in
+	 * worrying about this since it's too late to save the desired data
+	 * anyway.	Assuming that the standby sends us an increasing sequence of
+	 * xmins, this could only happen during the first reply cycle, else our
+	 * own xmin would prevent nextXid from advancing so far.
+	 *
+	 * We don't bother taking the ProcArrayLock here.  Setting the xmin field
+	 * is assumed atomic, and there's no real need to prevent a concurrent
+	 * GetOldestXmin.  (If we're moving our xmin forward, this is obviously
+	 * safe, and if we're moving it backwards, well, the data is at risk
+	 * already since a VACUUM could have just finished calling GetOldestXmin.)
+	 */
+	MyPgXact->xmin = reply.xmin;
 }
 
 /* Main loop of walsender process that streams the WAL over Copy messages. */
@@ -656,8 +830,11 @@ WalSndLoop(void)
 	/* Loop forever, unless we get an error */
 	for (;;)
 	{
+<<<<<<< HEAD
 		SIMPLE_FAULT_INJECTOR(WalSenderLoop);
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyWalSnd->latch);
 
@@ -665,7 +842,7 @@ WalSndLoop(void)
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			exit(1);
 
 		/* Process any requests or signals received recently */
@@ -676,7 +853,19 @@ WalSndLoop(void)
 			SyncRepInitConfig();
 		}
 
+<<<<<<< HEAD
 		CHECK_FOR_INTERRUPTS();
+=======
+		/* Normal exit from the walsender is here */
+		if (walsender_shutdown_requested)
+		{
+			/* Inform the standby that XLOG streaming is done */
+			pq_puttextmessage('C', "COPY 0");
+			pq_flush();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
+		/* Check for input from the client */
+		ProcessRepliesIfAny();
 
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
@@ -688,6 +877,7 @@ WalSndLoop(void)
 		 * caught up.
 		 */
 		if (!pq_is_send_pending())
+<<<<<<< HEAD
 			XLogSend(output_message, &caughtup, &caughtup_within_range);
 		else
 			caughtup = false;
@@ -701,6 +891,12 @@ WalSndLoop(void)
 
 		Assert(!caughtup || caughtup_within_range);
 
+=======
+			XLogSend(output_message, &caughtup);
+		else
+			caughtup = false;
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* Try to flush pending output to the client */
 		if (pq_flush_if_writable() != 0)
 			break;
@@ -718,20 +914,31 @@ WalSndLoop(void)
 			 */
 			if (MyWalSnd->state == WALSNDSTATE_CATCHUP)
 			{
+<<<<<<< HEAD
 				ereport(LOG,
 					 (errmsg("standby has now caught up with primary")));
+=======
+				ereport(DEBUG1,
+					 (errmsg("standby \"%s\" has now caught up with primary",
+							 application_name)));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				WalSndSetState(WALSNDSTATE_STREAMING);
 			}
 
 			/*
 			 * When SIGUSR2 arrives, we send any outstanding logs up to the
+<<<<<<< HEAD
 			 * shutdown checkpoint record (i.e., the latest record), wait
 			 * for them to be replicated to the standby, and exit.
+=======
+			 * shutdown checkpoint record (i.e., the latest record) and exit.
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 * This may be a normal termination at shutdown, or a promotion,
 			 * the walsender is not sure which.
 			 */
 			if (walsender_ready_to_stop)
 			{
+<<<<<<< HEAD
 				elogif(debug_walrepl_snd, LOG,
 						"walsnd -- This WAL sender has been requested to stop, hence "
 						"flushing out every before performing shutdown.");
@@ -746,6 +953,14 @@ WalSndLoop(void)
 					pq_flush();
 
 					proc_exit(0);
+=======
+				/* ... let's just be real sure we're caught up ... */
+				XLogSend(output_message, &caughtup);
+				if (caughtup && !pq_is_send_pending())
+				{
+					walsender_shutdown_requested = true;
+					continue;	/* don't want to wait more */
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 			}
 		}
@@ -768,7 +983,11 @@ WalSndLoop(void)
 
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
+<<<<<<< HEAD
 			else if (MyWalSnd->sendKeepalive)
+=======
+			else
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				WalSndKeepalive(output_message);
 				/* Try to flush pending output to the client */
@@ -785,11 +1004,16 @@ WalSndLoop(void)
 			}
 
 			/* Sleep until something happens or replication timeout */
+<<<<<<< HEAD
 			ImmediateInterruptOK = true;
 			CHECK_FOR_INTERRUPTS();
 			WaitLatchOrSocket(&MyWalSnd->latch, wakeEvents,
 							  MyProcPort->sock, sleeptime);
 			ImmediateInterruptOK = false;
+=======
+			WaitLatchOrSocket(&MyWalSnd->latch, wakeEvents,
+							  MyProcPort->sock, sleeptime);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			/*
 			 * Check for replication timeout.  Note we ignore the corner case
@@ -967,6 +1191,10 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 	uint32		log;
 	uint32		seg;
 
+<<<<<<< HEAD
+=======
+retry:
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	p = buf;
 	recptr = startptr;
 	nbytes = count;
@@ -1082,7 +1310,35 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 						filename)));
 	}
 
+<<<<<<< HEAD
 	WalSndCtl->error = WALSNDERROR_NONE;
+=======
+	/*
+	 * During recovery, the currently-open WAL file might be replaced with the
+	 * file of the same name retrieved from archive. So we always need to
+	 * check what we read was valid after reading into the buffer. If it's
+	 * invalid, we try to open and read the file again.
+	 */
+	if (am_cascading_walsender)
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile WalSnd *walsnd = MyWalSnd;
+		bool		reload;
+
+		SpinLockAcquire(&walsnd->mutex);
+		reload = walsnd->needreload;
+		walsnd->needreload = false;
+		SpinLockRelease(&walsnd->mutex);
+
+		if (reload && sendFile >= 0)
+		{
+			close(sendFile);
+			sendFile = -1;
+
+			goto retry;
+		}
+	}
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -1109,7 +1365,19 @@ XLogSend(char *msgbuf, bool *caughtup, bool *caughtup_within_range)
 	Size		nbytes;
 	WalDataMessageHeader msghdr;
 
+<<<<<<< HEAD
 	SendRqstPtr = GetFlushRecPtr();
+=======
+	/*
+	 * Attempt to send all data that's already been written out and fsync'd to
+	 * disk.  We cannot go further than what's been written out given the
+	 * current implementation of XLogRead().  And in any case it's unsafe to
+	 * send WAL that is not securely down to disk on the master: if the master
+	 * subsequently crashes and restarts, slaves must not have applied any WAL
+	 * that gets lost on the master.
+	 */
+	SendRqstPtr = am_cascading_walsender ? GetStandbyFlushRecPtr() : GetFlushRecPtr();
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Quick exit if nothing to do */
 	if (XLByteLE(SendRqstPtr, sentPtr))
@@ -1241,6 +1509,28 @@ XLogSend(char *msgbuf, bool *caughtup, bool *caughtup_within_range)
 	return;
 }
 
+/*
+ * Request walsenders to reload the currently-open WAL file
+ */
+void
+WalSndRqstFileReload(void)
+{
+	int			i;
+
+	for (i = 0; i < max_wal_senders; i++)
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
+
+		if (walsnd->pid == 0)
+			continue;
+
+		SpinLockAcquire(&walsnd->mutex);
+		walsnd->needreload = true;
+		SpinLockRelease(&walsnd->mutex);
+	}
+}
+
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 WalSndSigHupHandler(SIGNAL_ARGS)
@@ -1250,8 +1540,65 @@ WalSndSigHupHandler(SIGNAL_ARGS)
 	got_SIGHUP = true;
 	if (MyWalSnd)
 		SetLatch(&MyWalSnd->latch);
+<<<<<<< HEAD
 
 	errno = save_errno;
+=======
+
+	errno = save_errno;
+}
+
+/* SIGTERM: set flag to shut down */
+static void
+WalSndShutdownHandler(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	walsender_shutdown_requested = true;
+	if (MyWalSnd)
+		SetLatch(&MyWalSnd->latch);
+
+	/*
+	 * Set the standard (non-walsender) state as well, so that we can abort
+	 * things like do_pg_stop_backup().
+	 */
+	InterruptPending = true;
+	ProcDiePending = true;
+
+	errno = save_errno;
+}
+
+/*
+ * WalSndQuickDieHandler() occurs when signalled SIGQUIT by the postmaster.
+ *
+ * Some backend has bought the farm,
+ * so we need to stop what we're doing and exit.
+ */
+static void
+WalSndQuickDieHandler(SIGNAL_ARGS)
+{
+	PG_SETMASK(&BlockSig);
+
+	/*
+	 * We DO NOT want to run proc_exit() callbacks -- we're here because
+	 * shared memory may be corrupted, so we don't want to try to clean up our
+	 * transaction.  Just nail the windows shut and get out of town.  Now that
+	 * there's an atexit callback to prevent third-party code from breaking
+	 * things by calling exit() directly, we have to reset the callbacks
+	 * explicitly to make this work as intended.
+	 */
+	on_exit_reset();
+
+	/*
+	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
+	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+	 * backend.  This is necessary precisely because we don't clean up our
+	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
+	 */
+	exit(2);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* SIGUSR1: set flag to send WAL records */
@@ -1276,6 +1623,7 @@ WalSndLastCycleHandler(SIGNAL_ARGS)
 		SetLatch(&MyWalSnd->latch);
 
 	errno = save_errno;
+<<<<<<< HEAD
 }
 
 static void
@@ -1283,6 +1631,8 @@ WalSndCrashHandler(SIGNAL_ARGS)
 {
 	StandardHandlerForSigillSigsegvSigbus_OnMainThread("walsender",
 														PASS_SIGNAL_ARGS);
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* Set up signal handlers */
@@ -1754,6 +2104,10 @@ WalSndKeepalive(char *msgbuf)
 	/* Construct a new message */
 	keepalive_message.walEnd = sentPtr;
 	keepalive_message.sendTime = GetCurrentTimestamp();
+<<<<<<< HEAD
+=======
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	elog(DEBUG2, "sending replication keepalive");
 
 	/* Prepend with the message type and send it. */

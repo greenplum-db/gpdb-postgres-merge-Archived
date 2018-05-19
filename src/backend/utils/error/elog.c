@@ -43,9 +43,13 @@
  * overflow.)
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -141,6 +145,15 @@ sigjmp_buf *PG_exception_stack = NULL;
 
 extern bool redirection_done;
 
+/*
+ * Hook for intercepting messages before they are sent to the server log.
+ * Note that the hook will not get called for messages that are suppressed
+ * by log_min_messages.  Also note that logging hooks implemented in preload
+ * libraries will miss any log messages that are generated before the
+ * library is loaded.
+ */
+emit_log_hook_type emit_log_hook = NULL;
+
 /* GUC parameters */
 int			Log_error_verbosity = PGERROR_VERBOSE;
 char	   *Log_line_prefix = NULL;		/* format for extra log line info */
@@ -151,11 +164,12 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
- * added by syslog itself.	On many implementations it seems that the hard
- * limit is approximately 2K bytes including both those prefixes.
+ * added by syslog itself.	Solaris and sysklogd truncate the final message
+ * at 1024 bytes, so this value leaves 124 bytes for those prefixes.  (Most
+ * other syslog implementations seem to have limits of 2KB or so.)
  */
 #ifndef PG_SYSLOG_LIMIT
-#define PG_SYSLOG_LIMIT 1024
+#define PG_SYSLOG_LIMIT 900
 #endif
 
 static bool openlog_done = false;
@@ -168,6 +182,7 @@ static void write_syslog(int level, const char *line);
 static void write_console(const char *line, int len);
 
 #ifdef WIN32
+extern char *event_source;
 static void write_eventlog(int level, const char *line, int len);
 #endif
 
@@ -1147,8 +1162,58 @@ errdetail(const char *fmt,...)
 
 	EVALUATE_MESSAGE(detail, false, true);
 
+<<<<<<< HEAD
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
+=======
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errdetail_internal --- add a detail error message text to the current error
+ *
+ * This is exactly like errdetail() except that strings passed to
+ * errdetail_internal are not translated, and are customarily left out of the
+ * internationalization message dictionary.  This should be used for detail
+ * messages that seem not worth translating for one reason or another
+ * (typically, that they don't seem to be useful to average users).
+ */
+int
+errdetail_internal(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail, false, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errdetail_log --- add a detail_log error message text to the current error
+ */
+int
+errdetail_log(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail_log, false, true);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1631,6 +1696,7 @@ EmitErrorReport(void)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
+<<<<<<< HEAD
 	/* CDB: Tidy up the message */
 	/*
 	 * TODO Why do we want to do this?  it seems pointless
@@ -1639,6 +1705,24 @@ EmitErrorReport(void)
 	if (edata->output_to_server ||
 		edata->output_to_client)
 		cdb_tidy_message(edata);
+=======
+	/*
+	 * Call hook before sending message to log.  The hook function is allowed
+	 * to turn off edata->output_to_server, so we must recheck that afterward.
+	 * Making any other change in the content of edata is not considered
+	 * supported.
+	 *
+	 * Note: the reason why the hook can only turn off output_to_server, and
+	 * not turn it on, is that it'd be unreliable: we will never get here at
+	 * all if errstart() deems the message uninteresting.  A hook that could
+	 * make decisions in that direction would have to hook into errstart(),
+	 * where it would have much less information available.  emit_log_hook is
+	 * intended for custom log filtering and custom log message transmission
+	 * mechanisms.
+	 */
+	if (edata->output_to_server && emit_log_hook)
+		(*emit_log_hook) (edata);
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
@@ -1847,15 +1931,9 @@ pg_re_throw(void)
 		errfinish(0);
 	}
 
-	/* We mustn't return... */
+	/* Doesn't return ... */
 	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
 						 __FILE__, __LINE__);
-
-	/*
-	 * Since ExceptionalCondition isn't declared noreturn because of
-	 * TrapMacro(), we need this to keep gcc from complaining.
-	 */
-	abort();
 }
 
 
@@ -2216,7 +2294,7 @@ write_eventlog(int level, const char *line, int len)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "PostgreSQL");
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -2420,10 +2498,12 @@ cdb_tidy_message(ErrorData *edata)
 static void
 write_console(const char *line, int len)
 {
+	int			rc;
+
 #ifdef WIN32
 
 	/*
-	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
+	 * WriteConsoleW() will fail if stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
 	 *
 	 * Since we palloc the structure required for conversion, also fall
@@ -2461,13 +2541,18 @@ write_console(const char *line, int len)
 #else
 
 	/*
-	 * Conversion on non-win32 platform is not implemented yet. It requires
+	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
 	 * unconvertable characters to '?' without errors.
 	 */
 #endif
 
-	write(fileno(stderr), line, len);
+	/*
+	 * We ignore any error from write() here.  We have no useful way to report
+	 * it ... certainly whining on stderr isn't likely to be productive.
+	 */
+	rc = write(fileno(stderr), line, len);
+	(void) rc;
 }
 
 /*
@@ -2484,6 +2569,7 @@ setup_formatted_log_time(void)
 	stamp_time = (pg_time_t) tv.tv_sec;
 
 	/*
+<<<<<<< HEAD
 	 * Note: we expect that guc.c will ensure that log_timezone is set up
 	 * (at least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
@@ -2491,6 +2577,15 @@ setup_formatted_log_time(void)
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 				/* leave room for microseconds... */
 				"%Y-%m-%d %H:%M:%S        %Z",
+=======
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
+	 * nonempty or CSV mode can be selected.
+	 */
+	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
+	/* leave room for milliseconds... */
+				"%Y-%m-%d %H:%M:%S     %Z",
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				pg_localtime(&stamp_time, log_timezone));
 
 	/* 'paste' microseconds into place... */
@@ -2507,8 +2602,13 @@ setup_formatted_start_time(void)
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 
 	/*
+<<<<<<< HEAD
 	 * Note: we expect that guc.c will ensure that log_timezone is set up
 	 * (at least with a minimal GMT value) before Log_line_prefix can become
+=======
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
@@ -3986,13 +4086,30 @@ send_message_to_server_log(ErrorData *edata)
 
 /*
  * Send data to the syslogger using the chunked protocol
+ *
+ * Note: when there are multiple backends writing into the syslogger pipe,
+ * it's critical that each write go into the pipe indivisibly, and not
+ * get interleaved with data from other processes.	Fortunately, the POSIX
+ * spec requires that writes to pipes be atomic so long as they are not
+ * more than PIPE_BUF bytes long.  So we divide long messages into chunks
+ * that are no more than that length, and send one chunk per write() call.
+ * The collector process knows how to reassemble the chunks.
+ *
+ * Because of the atomic write requirement, there are only two possible
+ * results from write() here: -1 for failure, or the requested number of
+ * bytes.  There is not really anything we can do about a failure; retry would
+ * probably be an infinite loop, and we can't even report the error usefully.
+ * (There is noplace else we could send it!)  So we might as well just ignore
+ * the result from write().  However, on some platforms you get a compiler
+ * warning from ignoring write()'s result, so do a little dance with casting
+ * rc to void to shut up the compiler.
  */
 static void
 write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
-
 	int			fd = fileno(stderr);
+	int			rc;
 
 	Assert(len > 0);
 
@@ -4008,6 +4125,7 @@ write_pipe_chunks(char *data, int len, int dest)
 	/* write all but the last chunk */
 	while (len > PIPE_MAX_PAYLOAD)
 	{
+<<<<<<< HEAD
 		p.hdr.is_last = 'f';
 		p.hdr.len = PIPE_MAX_PAYLOAD;
 		memcpy(p.data, data, PIPE_MAX_PAYLOAD);
@@ -4018,6 +4136,13 @@ write_pipe_chunks(char *data, int len, int dest)
 				Assert(p.hdr.thid != 0);
 #endif
 		write(fd, &p, PIPE_CHUNK_SIZE);
+=======
+		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
+		p.proto.len = PIPE_MAX_PAYLOAD;
+		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
+		rc = write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
+		(void) rc;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		data += PIPE_MAX_PAYLOAD;
 		len -= PIPE_MAX_PAYLOAD;
 
@@ -4025,6 +4150,7 @@ write_pipe_chunks(char *data, int len, int dest)
 	}
 
 	/* write the last chunk */
+<<<<<<< HEAD
 	p.hdr.is_last = 't';
 	p.hdr.len = len;
 
@@ -4036,6 +4162,13 @@ write_pipe_chunks(char *data, int len, int dest)
 #endif
 	memcpy(p.data, data, len);
 	write(fd, &p, PIPE_HEADER_SIZE + len);
+=======
+	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
+	p.proto.len = len;
+	memcpy(p.proto.data, data, len);
+	rc = write(fd, &p, PIPE_HEADER_SIZE + len);
+	(void) rc;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 

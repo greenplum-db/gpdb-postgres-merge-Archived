@@ -26,9 +26,13 @@
  *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
  *	which should also omit ExecutorRun.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -39,15 +43,18 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/aosegfiles.h"
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
 #include "access/reloptions.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "catalog/heap.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
 #include "catalog/toasting.h"
 #include "catalog/aoseg.h"
@@ -59,19 +66,23 @@
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h" /* XXX: temp for get_parts() */
 #include "commands/tablespace.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
+<<<<<<< HEAD
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
 #include "libpq/pqformat.h"
+=======
+#include "mb/pg_wchar.h"
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
-#include "storage/smgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
@@ -132,14 +143,10 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			ScanDirection direction,
 			DestReceiver *dest);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
+static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
+							  int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
-static void OpenIntoRel(QueryDesc *queryDesc);
-static void CloseIntoRel(QueryDesc *queryDesc);
-static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
-static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
-static void intorel_shutdown(DestReceiver *self);
-static void intorel_destroy(DestReceiver *self);
 
 static void FillSliceTable(EState *estate, PlannedStmt *stmt);
 
@@ -375,11 +382,9 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		case CMD_SELECT:
 
 			/*
-			 * SELECT INTO, SELECT FOR UPDATE/SHARE and modifying CTEs need to
-			 * mark tuples
+			 * SELECT FOR UPDATE/SHARE and modifying CTEs need to mark tuples
 			 */
-			if (queryDesc->plannedstmt->intoClause != NULL ||
-				queryDesc->plannedstmt->rowMarks != NIL ||
+			if (queryDesc->plannedstmt->rowMarks != NIL ||
 				queryDesc->plannedstmt->hasModifyingCTE)
 				estate->es_output_cid = GetCurrentCommandId(true);
 
@@ -1252,6 +1257,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
      */
 	ExecEndPlan(queryDesc->planstate, estate);
 
+<<<<<<< HEAD
 	WorkfileQueryspace_ReleaseEntry();
 
 	/*
@@ -1277,6 +1283,8 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 		CloseIntoRel(queryDesc);
 	}
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* do away with our snapshots */
 	UnregisterSnapshot(estate->es_snapshot);
 	UnregisterSnapshot(estate->es_crosscheck_snapshot);
@@ -1576,6 +1584,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	ListCell   *l;
     int         rti;
 
+<<<<<<< HEAD
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
 	 *
@@ -1591,6 +1600,8 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
 	}
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Fail if write permissions are requested on any non-temp table */
     rti = 0;
 	foreach(l, plannedstmt->rtable)
@@ -1983,23 +1994,12 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Detect whether we're doing SELECT INTO.  If so, set the es_into_oids
-	 * flag appropriately so that the plan tree will be initialized with the
-	 * correct tuple descriptors.  (Other SELECT INTO stuff comes later.)
-	 */
-	estate->es_select_into = false;
-	if (operation == CMD_SELECT && plannedstmt->intoClause != NULL)
-	{
-		estate->es_select_into = true;
-		estate->es_into_oids = interpretOidsOption(plannedstmt->intoClause->options);
-	}
-
-	/*
 	 * Initialize the executor's tuple table to empty.
 	 */
 	estate->es_tupleTable = NIL;
 	estate->es_trig_tuple_slot = NULL;
 	estate->es_trig_oldtup_slot = NULL;
+	estate->es_trig_newtup_slot = NULL;
 
 	/* mark EvalPlanQual not active */
 	estate->es_epqTuple = NULL;
@@ -2097,9 +2097,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		return;
 
 	/*
-	 * Get the tuple descriptor describing the type of tuples to return. (this
-	 * is especially important if we are creating a relation with "SELECT
-	 * INTO")
+	 * Get the tuple descriptor describing the type of tuples to return.
 	 */
 	tupType = ExecGetResultType(planstate);
 
@@ -2138,6 +2136,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	queryDesc->tupDesc = tupType;
+<<<<<<< HEAD
 
 	/*
 	 * If doing SELECT INTO, initialize the "into" relation.  We must wait
@@ -2163,6 +2162,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 						break;
 				}
 			}
+=======
+	queryDesc->planstate = planstate;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -2580,7 +2582,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 /*
  *		ExecContextForcesOids
  *
- * This is pretty grotty: when doing INSERT, UPDATE, or SELECT INTO,
+ * This is pretty grotty: when doing INSERT, UPDATE, or CREATE TABLE AS,
  * we need to ensure that result tuples have space for an OID iff they are
  * going to be stored into a relation that has OIDs.  In other contexts
  * we are free to choose whether to leave space for OIDs in result tuples
@@ -2605,9 +2607,9 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
  * the ModifyTable node, so ModifyTable has to set es_result_relation_info
  * while initializing each subplan.
  *
- * SELECT INTO is even uglier, because we don't have the INTO relation's
- * descriptor available when this code runs; we have to look aside at a
- * flag set by InitPlan().
+ * CREATE TABLE AS is even uglier, because we don't have the target relation's
+ * descriptor available when this code runs; we have to look aside at the
+ * flags passed to ExecutorStart().
  */
 bool
 ExecContextForcesOids(PlanState *planstate, bool *hasoids)
@@ -2634,9 +2636,14 @@ ExecContextForcesOids(PlanState *planstate, bool *hasoids)
 		}
 	}
 
-	if (planstate->state->es_select_into)
+	if (planstate->state->es_top_eflags & EXEC_FLAG_WITH_OIDS)
 	{
-		*hasoids = planstate->state->es_into_oids;
+		*hasoids = true;
+		return true;
+	}
+	if (planstate->state->es_top_eflags & EXEC_FLAG_WITHOUT_OIDS)
+	{
+		*hasoids = false;
 		return true;
 	}
 
@@ -3049,7 +3056,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
+						  NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
+						 errdetail("Failing row contains %s.",
+								   ExecBuildSlotValueDescription(slot, 64))));
 		}
 	}
 
@@ -3061,8 +3070,69 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
-							RelationGetRelationName(rel), failed)));
+							RelationGetRelationName(rel), failed),
+					 errdetail("Failing row contains %s.",
+							   ExecBuildSlotValueDescription(slot, 64))));
 	}
+}
+
+/*
+ * ExecBuildSlotValueDescription -- construct a string representing a tuple
+ *
+ * This is intentionally very similar to BuildIndexValueDescription, but
+ * unlike that function, we truncate long field values.  That seems necessary
+ * here since heap field values could be very long, whereas index entries
+ * typically aren't so wide.
+ */
+static char *
+ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
+{
+	StringInfoData buf;
+	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
+	int			i;
+
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
+
+	initStringInfo(&buf);
+
+	appendStringInfoChar(&buf, '(');
+
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		char	   *val;
+		int			vallen;
+
+		if (slot->tts_isnull[i])
+			val = "null";
+		else
+		{
+			Oid			foutoid;
+			bool		typisvarlena;
+
+			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+							  &foutoid, &typisvarlena);
+			val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
+		}
+
+		if (i > 0)
+			appendStringInfoString(&buf, ", ");
+
+		/* truncate if needed */
+		vallen = strlen(val);
+		if (vallen <= maxfieldlen)
+			appendStringInfoString(&buf, val);
+		else
+		{
+			vallen = pg_mbcliplen(val, vallen, maxfieldlen);
+			appendBinaryStringInfo(&buf, val, vallen);
+			appendStringInfoString(&buf, "...");
+		}
+	}
+
+	appendStringInfoChar(&buf, ')');
+
+	return buf.data;
 }
 
 
@@ -3699,8 +3769,6 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_rowMarks = parentestate->es_rowMarks;
 	estate->es_top_eflags = parentestate->es_top_eflags;
 	estate->es_instrument = parentestate->es_instrument;
-	estate->es_select_into = parentestate->es_select_into;
-	estate->es_into_oids = parentestate->es_into_oids;
 	/* es_auxmodifytables must NOT be copied */
 
 	/*
@@ -3756,11 +3824,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
 	 * SubPlans might not be used in the part of the plan tree we intend to
 	 * run, but since it's not easy to tell which, we just initialize them
-	 * all.  (However, if the subplan is headed by a ModifyTable node, then it
-	 * must be a data-modifying CTE, which we will certainly not need to
-	 * re-run, so we can skip initializing it.	This is just an efficiency
-	 * hack; it won't skip data-modifying CTEs for which the ModifyTable node
-	 * is not at the top.)
+	 * all.
 	 */
 	Assert(estate->es_subplanstates == NIL);
 	foreach(l, parentestate->es_plannedstmt->subplans)
@@ -3768,12 +3832,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 		Plan	   *subplan = (Plan *) lfirst(l);
 		PlanState  *subplanstate;
 
-		/* Don't initialize ModifyTable subplans, per comment above */
-		if (IsA(subplan, ModifyTable))
-			subplanstate = NULL;
-		else
-			subplanstate = ExecInitNode(subplan, estate, 0);
-
+		subplanstate = ExecInitNode(subplan, estate, 0);
 		estate->es_subplanstates = lappend(estate->es_subplanstates,
 										   subplanstate);
 	}
@@ -3841,6 +3900,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->planstate = NULL;
 	epqstate->origslot = NULL;
 }
+<<<<<<< HEAD
 
 /*
  * Support for SELECT INTO (a/k/a CREATE TABLE AS)
@@ -5121,3 +5181,5 @@ intoRelIsReplicatedTable(QueryDesc *queryDesc)
 
 	return false;
 }
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

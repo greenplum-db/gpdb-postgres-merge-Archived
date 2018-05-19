@@ -145,7 +145,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		{
 			char		fullpath[MAXPGPATH];
 			char		linkpath[MAXPGPATH];
+<<<<<<< HEAD
 			char	   *relpath = NULL;
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			int			rllen;
 
 			/* Skip special stuff */
@@ -171,6 +174,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				continue;
 			}
 			linkpath[rllen] = '\0';
+<<<<<<< HEAD
 
 			/*
 			 * Relpath holds the relative path of the tablespace directory
@@ -181,6 +185,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				strncmp(linkpath, DataDir, datadirpathlen) == 0 &&
 				IS_DIR_SEP(linkpath[datadirpathlen]))
 				relpath = linkpath + datadirpathlen + 1;
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
@@ -189,6 +195,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
+<<<<<<< HEAD
+=======
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			/*
 			 * If the platform does not have symbolic links, it should not be
 			 * possible to have tablespaces - clearly somebody else created
@@ -196,7 +206,11 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			 */
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+<<<<<<< HEAD
 					 errmsg("tablespaces are not supported on this platform")));
+=======
+				  errmsg("tablespaces are not supported on this platform")));
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 		}
 
@@ -240,6 +254,22 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			}
 			else
 				sendTablespace(ti->path, false);
+
+			/* In the main tar, include pg_control last. */
+			if (ti->path == NULL)
+			{
+				struct stat statbuf;
+
+				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
+				{
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not stat control file \"%s\": %m",
+									XLOG_CONTROL_FILE)));
+				}
+
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf);
+			}
 
 			/*
 			 * If we're including WAL, and this is the main data directory we
@@ -462,7 +492,7 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	dir = AllocateDir("pg_tblspc");
 	if (!dir)
 		ereport(ERROR,
-				(errmsg("unable to open directory pg_tblspc: %m")));
+				(errmsg("could not open directory \"%s\": %m", "pg_tblspc")));
 
 	perform_base_backup(&opt, dir);
 
@@ -797,10 +827,13 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			continue;			/* don't recurse into pg_xlog */
 		}
 
+<<<<<<< HEAD
 		/* Skip if client does not want */
 		if (match_exclude_list(pathbuf, exclude))
 			continue;
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* Allow symbolic links in pg_tblspc only */
 		if (strcmp(path, "./pg_tblspc") == 0 &&
 #ifndef WIN32

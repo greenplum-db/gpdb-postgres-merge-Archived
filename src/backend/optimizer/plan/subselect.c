@@ -3,9 +3,13 @@
  * subselect.c
  *	  Planning routines for subselects and parameters.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -32,8 +36,11 @@
 #include "optimizer/subselect.h"
 #include "optimizer/var.h"
 #include "parser/parse_relation.h"
+<<<<<<< HEAD
 #include "parser/parsetree.h"
 #include "parser/parse_oper.h"
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -64,8 +71,7 @@ typedef struct finalize_primnode_context
 } finalize_primnode_context;
 
 
-static Node *build_subplan(PlannerInfo *root, Plan *plan,
-			  List *rtable, List *rowmarks,
+static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
@@ -179,7 +185,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
  * the Var to be local to the current query level.
  */
 Param *
-assign_nestloop_param(PlannerInfo *root, Var *var)
+assign_nestloop_param_var(PlannerInfo *root, Var *var)
 {
 	Param	   *retval;
 	int			i;
@@ -247,6 +253,114 @@ replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
 		/* i is already the correct index for the new item */
 	}
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = i;
+	retval->paramtype = exprType((Node *) phv->phexpr);
+	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
+	retval->paramcollid = exprCollation((Node *) phv->phexpr);
+	retval->location = -1;
+
+	return retval;
+}
+
+/*
+ * Select a PARAM_EXEC number to identify the given PlaceHolderVar.
+ * If the PlaceHolderVar already has a param slot, return that one.
+ *
+ * This is just like assign_param_for_var, except for PlaceHolderVars.
+ */
+static int
+assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
+{
+	ListCell   *ppl;
+	PlannerParamItem *pitem;
+	Index		abslevel;
+	int			i;
+
+	abslevel = root->query_level - phv->phlevelsup;
+
+	/* If there's already a paramlist entry for this same PHV, just use it */
+	i = 0;
+	foreach(ppl, root->glob->paramlist)
+	{
+		pitem = (PlannerParamItem *) lfirst(ppl);
+		if (pitem->abslevel == abslevel && IsA(pitem->item, PlaceHolderVar))
+		{
+			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
+
+			/* We assume comparing the PHIDs is sufficient */
+			if (pphv->phid == phv->phid)
+				return i;
+		}
+		i++;
+	}
+
+	/* Nope, so make a new one */
+	phv = (PlaceHolderVar *) copyObject(phv);
+	if (phv->phlevelsup != 0)
+	{
+		IncrementVarSublevelsUp((Node *) phv, -((int) phv->phlevelsup), 0);
+		Assert(phv->phlevelsup == 0);
+	}
+
+	pitem = makeNode(PlannerParamItem);
+	pitem->item = (Node *) phv;
+	pitem->abslevel = abslevel;
+
+	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+
+	/* i is already the correct list index for the new item */
+	return i;
+}
+
+/*
+ * Generate a Param node to replace the given PlaceHolderVar,
+ * which is expected to have phlevelsup > 0 (ie, it is not local).
+ *
+ * This is just like replace_outer_var, except for PlaceHolderVars.
+ */
+static Param *
+replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
+{
+	Param	   *retval;
+	int			i;
+
+	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
+
+	/*
+	 * Find the PlaceHolderVar in root->glob->paramlist, or add it if not
+	 * present.
+	 */
+	i = assign_param_for_placeholdervar(root, phv);
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = i;
+	retval->paramtype = exprType((Node *) phv->phexpr);
+	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
+	retval->paramcollid = exprCollation((Node *) phv->phexpr);
+	retval->location = -1;
+
+	return retval;
+}
+
+/*
+ * Generate a Param node to replace the given PlaceHolderVar, which will be
+ * supplied from an upper NestLoop join node.
+ *
+ * This is just like assign_nestloop_param_var, except for PlaceHolderVars.
+ */
+Param *
+assign_nestloop_param_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
+{
+	Param	   *retval;
+	int			i;
+
+	Assert(phv->phlevelsup == 0);
+
+	i = assign_param_for_placeholdervar(root, phv);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
@@ -602,8 +716,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 							config);
 
 	/* And convert to SubPlan or InitPlan format. */
-	result = build_subplan(root, plan,
-						   subroot->parse->rtable, subroot->rowMarks,
+	result = build_subplan(root, plan, subroot,
 						   subLinkType, testexpr, true, isTopQual);
 
 	/*
@@ -645,9 +758,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				AlternativeSubPlan *asplan;
 
 				/* OK, convert to SubPlan format. */
-				hashplan = (SubPlan *) build_subplan(root, plan,
-													 subroot->parse->rtable,
-													 subroot->rowMarks,
+				hashplan = (SubPlan *) build_subplan(root, plan, subroot,
 													 ANY_SUBLINK, newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
@@ -675,7 +786,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
  * as explained in the comments for make_subplan.
  */
 static Node *
-build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
+build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse)
 {
@@ -880,11 +991,10 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 	AssertEquivalent(splan->is_initplan, !splan->is_multirow && splan->parParam == NIL);
 
 	/*
-	 * Add the subplan and its rtable to the global lists.
+	 * Add the subplan and its PlannerInfo to the global lists.
 	 */
 	root->glob->subplans = lappend(root->glob->subplans, plan);
-	root->glob->subrtables = lappend(root->glob->subrtables, rtable);
-	root->glob->subrowmarks = lappend(root->glob->subrowmarks, rowmarks);
+	root->glob->subroots = lappend(root->glob->subroots, subroot);
 	splan->plan_id = list_length(root->glob->subplans);
 
 	if (splan->is_initplan)
@@ -1275,13 +1385,10 @@ SS_process_ctes(PlannerInfo *root)
 		splan->setParam = list_make1_int(prm->paramid);
 
 		/*
-		 * Add the subplan and its rtable to the global lists.
+		 * Add the subplan and its PlannerInfo to the global lists.
 		 */
 		root->glob->subplans = lappend(root->glob->subplans, plan);
-		root->glob->subrtables = lappend(root->glob->subrtables,
-										 subroot->parse->rtable);
-		root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-										  subroot->rowMarks);
+		root->glob->subroots = lappend(root->glob->subroots, subroot);
 		splan->plan_id = list_length(root->glob->subplans);
 
 		root->init_plans = lappend(root->init_plans, splan);
@@ -1735,7 +1842,6 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * before we reach here.
 	 */
 	if (query->commandType != CMD_SELECT ||
-		query->intoClause ||
 		query->setOperations ||
 #if 0
 		query->hasAggs ||
@@ -2043,21 +2149,22 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
  * Uplevel PlaceHolderVars and aggregates are replaced, too.
  *
  * Note: it is critical that this runs immediately after SS_process_sublinks.
- * Since we do not recurse into the arguments of uplevel aggregates, they will
- * get copied to the appropriate subplan args list in the parent query with
- * uplevel vars not replaced by Params, but only adjusted in level (see
- * replace_outer_agg).	That's exactly what we want for the vars of the parent
- * level --- but if an aggregate's argument contains any further-up variables,
- * they have to be replaced with Params in their turn.	That will happen when
- * the parent level runs SS_replace_correlation_vars.  Therefore it must do
- * so after expanding its sublinks to subplans.  And we don't want any steps
- * in between, else those steps would never get applied to the aggregate
- * argument expressions, either in the parent or the child level.
+ * Since we do not recurse into the arguments of uplevel PHVs and aggregates,
+ * they will get copied to the appropriate subplan args list in the parent
+ * query with uplevel vars not replaced by Params, but only adjusted in level
+ * (see replace_outer_placeholdervar and replace_outer_agg).  That's exactly
+ * what we want for the vars of the parent level --- but if a PHV's or
+ * aggregate's argument contains any further-up variables, they have to be
+ * replaced with Params in their turn. That will happen when the parent level
+ * runs SS_replace_correlation_vars.  Therefore it must do so after expanding
+ * its sublinks to subplans.  And we don't want any steps in between, else
+ * those steps would never get applied to the argument expressions, either in
+ * the parent or the child level.
  *
  * Another fairly tricky thing going on here is the handling of SubLinks in
- * the arguments of uplevel aggregates.  Those are not touched inside the
- * intermediate query level, either.  Instead, SS_process_sublinks recurses
- * on them after copying the Aggref expression into the parent plan level
+ * the arguments of uplevel PHVs/aggregates.  Those are not touched inside the
+ * intermediate query level, either.  Instead, SS_process_sublinks recurses on
+ * them after copying the PHV or Aggref expression into the parent plan level
  * (this is actually taken care of in build_subplan).
  */
 Node *
@@ -2142,8 +2249,13 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Don't recurse into the arguments of an outer PHV or aggregate here.
 	 * Any SubLinks in the arguments have to be dealt with at the outer query
+=======
+	 * Don't recurse into the arguments of an outer PHV or aggregate here. Any
+	 * SubLinks in the arguments have to be dealt with at the outer query
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * level; they'll be handled when build_subplan collects the PHV or Aggref
 	 * into the arguments to be passed down to the current subplan.
 	 */
@@ -2436,6 +2548,18 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
+		case T_IndexOnlyScan:
+			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexqual,
+							  &context);
+			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexorderby,
+							  &context);
+
+			/*
+			 * we need not look at indextlist, since it cannot contain Params.
+			 */
+			context.paramids = bms_add_members(context.paramids, scan_params);
+			break;
+
 		case T_BitmapIndexScan:
 			finalize_primnode((Node *) ((BitmapIndexScan *) plan)->indexqual,
 							  &context);
@@ -2552,6 +2676,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			break;
 
 		case T_ForeignScan:
+			finalize_primnode((Node *) ((ForeignScan *) plan)->fdw_exprs,
+							  &context);
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
@@ -2921,14 +3047,10 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	SS_finalize_plan(root, plan, false);
 
 	/*
-	 * Add the subplan and its rtable to the global lists.
+	 * Add the subplan and its PlannerInfo to the global lists.
 	 */
-	root->glob->subplans = lappend(root->glob->subplans,
-								   plan);
-	root->glob->subrtables = lappend(root->glob->subrtables,
-									 root->parse->rtable);
-	root->glob->subrowmarks = lappend(root->glob->subrowmarks,
-									  root->rowMarks);
+	root->glob->subplans = lappend(root->glob->subplans, plan);
+	root->glob->subroots = lappend(root->glob->subroots, root);
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans. Note

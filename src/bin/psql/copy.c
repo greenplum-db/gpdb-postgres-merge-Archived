@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2011, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2012, PostgreSQL Global Development Group
  *
  * src/bin/psql/copy.c
  */
@@ -321,8 +321,9 @@ do_copy(const char *args)
 {
 	PQExpBufferData query;
 	FILE	   *copystream;
+	FILE	   *save_file;
+	FILE	  **override_file;
 	struct copy_options *options;
-	PGresult   *result;
 	bool		success;
 	struct stat st;
 
@@ -344,6 +345,8 @@ do_copy(const char *args)
 
 	if (options->from)
 	{
+		override_file = &pset.cur_cmd_source;
+
 		if (options->file)
 		{
 			if (options->program)
@@ -363,6 +366,8 @@ do_copy(const char *args)
 	}
 	else
 	{
+		override_file = &pset.queryFout;
+
 		if (options->file)
 		{
 			if (options->program)
@@ -421,9 +426,14 @@ do_copy(const char *args)
 	if (options->after_tofrom)
 		appendPQExpBufferStr(&query, options->after_tofrom);
 
-	result = PSQLexec(query.data, true);
+	/* Run it like a user command, interposing the data source or sink. */
+	save_file = *override_file;
+	*override_file = copystream;
+	success = SendQuery(query.data);
+	*override_file = save_file;
 	termPQExpBuffer(&query);
 
+<<<<<<< HEAD
 	switch (PQresultStatus(result))
 	{
 		case PGRES_COPY_OUT:
@@ -472,6 +482,8 @@ do_copy(const char *args)
 		PQclear(result);
 	}
 
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (options->file != NULL)
 	{
 		if (options->program)
@@ -568,8 +580,30 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		OK = false;
 	}
 
-	/* Check command status and return to normal libpq state */
-	res = PQgetResult(conn);
+	/*
+	 * Check command status and return to normal libpq state.  After a
+	 * client-side error, the server will remain ready to deliver data.  The
+	 * cleanest thing is to fully drain and discard that data.	If the
+	 * client-side error happened early in a large file, this takes a long
+	 * time.  Instead, take advantage of the fact that PQexec() will silently
+	 * end any ongoing PGRES_COPY_OUT state.  This does cause us to lose the
+	 * results of any commands following the COPY in a single command string.
+	 * It also only works for protocol version 3.  XXX should we clean up
+	 * using the slow way when the connection is using protocol version 2?
+	 *
+	 * We must not ever return with the status still PGRES_COPY_OUT.  Our
+	 * caller is unable to distinguish that situation from reaching the next
+	 * COPY in a command string that happened to contain two consecutive COPY
+	 * TO STDOUT commands.	We trust that no condition can make PQexec() fail
+	 * indefinitely while retaining status PGRES_COPY_OUT.
+	 */
+	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_OUT)
+	{
+		OK = false;
+		PQclear(res);
+
+		PQexec(conn, "-- clear PGRES_COPY_OUT state");
+	}
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		psql_error("%s", PQerrorMessage(conn));
@@ -614,13 +648,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 		/* Terminate data transfer */
 		PQputCopyEnd(conn, _("canceled by user"));
 
-		/* Check command status and return to normal libpq state */
-		res = PQgetResult(conn);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			psql_error("%s", PQerrorMessage(conn));
-		PQclear(res);
-
-		return false;
+		OK = false;
+		goto copyin_cleanup;
 	}
 
 	/* Prompt if interactive input */
@@ -743,8 +772,25 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 					 OK ? NULL : _("aborted because of read failure")) <= 0)
 		OK = false;
 
-	/* Check command status and return to normal libpq state */
-	res = PQgetResult(conn);
+copyin_cleanup:
+
+	/*
+	 * Check command status and return to normal libpq state
+	 *
+	 * We must not ever return with the status still PGRES_COPY_IN.  Our
+	 * caller is unable to distinguish that situation from reaching the next
+	 * COPY in a command string that happened to contain two consecutive COPY
+	 * FROM STDIN commands.  XXX if something makes PQputCopyEnd() fail
+	 * indefinitely while retaining status PGRES_COPY_IN, we get an infinite
+	 * loop.  This is more realistic than handleCopyOut()'s counterpart risk.
+	 */
+	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_IN)
+	{
+		OK = false;
+		PQclear(res);
+
+		PQputCopyEnd(pset.db, _("trying to exit copy mode"));
+	}
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		psql_error("%s", PQerrorMessage(conn));
