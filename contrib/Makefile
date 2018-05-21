@@ -31,8 +31,16 @@ SUBDIRS = \
 		pg_upgrade_support \
 		pgbench		\
 		pgcrypto	\
-<<<<<<< HEAD
-		test_parser
+		pgrowlocks	\
+		pgstattuple	\
+		seg		\
+		spi		\
+		tablefunc	\
+		tcn		\
+		test_parser	\
+		tsearch2	\
+		unaccent	\
+		vacuumlo
 
 # Greenplum-specific additions (to ease merge pain).
 SUBDIRS += \
@@ -46,18 +54,6 @@ SUBDIRS += \
 		gp_cancel_query \
 		gp_sparse_vector \
 		indexscan \
-=======
-		pgrowlocks	\
-		pgstattuple	\
-		seg		\
-		spi		\
-		tablefunc	\
-		tcn		\
-		test_parser	\
-		tsearch2	\
-		unaccent	\
-		vacuumlo
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += sslinfo

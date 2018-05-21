@@ -40,11 +40,7 @@ ALL_PO_FILES = $(addprefix po/, $(addsuffix .po, $(AVAIL_LANGUAGES)))
 MO_FILES = $(addprefix po/, $(addsuffix .mo, $(LANGUAGES)))
 
 ifdef XGETTEXT
-<<<<<<< HEAD
-XGETTEXT += -ctranslator --copyright-holder='Greenplum Project' --msgid-bugs-address=bugs@greenplum.org
-=======
-XGETTEXT += -ctranslator --copyright-holder='PostgreSQL Global Development Group' --msgid-bugs-address=pgsql-bugs@postgresql.org --no-wrap --sort-by-file --package-name='$(CATALOG_NAME) (PostgreSQL)' --package-version='$(MAJORVERSION)'
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+XGETTEXT += -ctranslator --copyright-holder='Greenplum Projec' --msgid-bugs-address=bugs@greenplum.org --no-wrap --sort-by-file --package-name='$(CATALOG_NAME) (Greenplum)' --package-version='$(MAJORVERSION)'
 endif
 
 ifdef MSGMERGE

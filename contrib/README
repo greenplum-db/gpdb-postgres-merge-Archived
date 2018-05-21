@@ -26,8 +26,6 @@ you can simply do
 
 See the PostgreSQL documentation for more information about this
 procedure.
-<<<<<<< HEAD
-
 
 Index:
 ------
@@ -217,5 +215,3 @@ vacuumlo -
 xml2 -
 	Storing XML in PostgreSQL
 	by John Gray <jgray@azuli.co.uk>
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
