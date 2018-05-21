@@ -17,28 +17,18 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=9.1beta2]
+[PG_PACKAGE_VERSION=9.2beta2]
 AC_SUBST(PG_PACKAGE_VERSION)
 
-dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
+dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2011, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [9.2beta2], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.63], [], [m4_fatal([Autoconf version 2.63 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2012, PostgreSQL Global Development Group])
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
@@ -614,7 +604,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
-<<<<<<< HEAD
   # Disable loop optimizations that get confused by variable-length struct
   # declarations in gcc 4.8+
   PGAC_PROG_CC_CFLAGS_OPT([-fno-aggressive-loop-optimizations])
@@ -631,8 +620,6 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Optimization flags for specific files that benefit from vectorization
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-funroll-loops])
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-ftree-vectorize])
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
@@ -1393,11 +1380,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h kernel/OS.h kernel/image.h SupportDefs.h])
-=======
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h ])
 
 # On BSD, cpp test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1557,7 +1540,6 @@ if test "$with_rt" = yes; then
 			 [AC_MSG_ERROR([header file <time.h> is required for realtime library support])])
 fi
 
-<<<<<<< HEAD
 if test "$enable_mapreduce" = yes; then
   if test "$with_perl" = no; then
     AC_MSG_ERROR([Greenplum Mapreduce requires Perl, reconfigure with --with-perl])
@@ -1569,10 +1551,10 @@ fi
 if test "$enable_orca" = yes; then
   PGAC_CHECK_ORCA_HEADERS
   PGAC_CHECK_ORCA_VERSION
-=======
+fi
+
 if test "$PORTNAME" = "win32" ; then
    AC_CHECK_HEADERS(crtdefs.h)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 fi
 
 ##
@@ -1690,7 +1672,6 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-<<<<<<< HEAD
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending
 # acquisition of a clue by those developers, ignore libedit (including its
@@ -1702,9 +1683,6 @@ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
 AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeerucred getrlimit memmove poll pstat readlink scandir setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs wcstombs_l])
-=======
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink towlower utime utimes waitpid wcstombs wcstombs_l])
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -1818,16 +1796,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-<<<<<<< HEAD
-AC_REPLACE_FUNCS([crypt erand48 getopt getpeereid getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
-=======
-# Some versions of libedit contain strlcpy(); so disregard that library while
-# checking for these standard libc functions.
-pgac_save_LIBS="$LIBS"
-LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
-
 AC_REPLACE_FUNCS([crypt fls getopt getrusage inet_aton random rint srandom strerror strlcat strlcpy])
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 case $host_os in
 
@@ -2419,7 +2388,6 @@ else
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
 fi
 
-<<<<<<< HEAD
 # Many of the autoconf tests produce warnings, or even compiler errors, on
 # purpose as they run through the conftest programs. So, treating warning as
 # error should be last step after all autoconf checks are performed, otherwise
@@ -2481,8 +2449,6 @@ AC_DEFINE_UNQUOTED(GP_VERSION,
 AC_SUBST(GP_MAJORVERSION)
 AC_DEFINE_UNQUOTED(GP_MAJORVERSION, "$GP_MAJORVERSION", [Greenplum major version as a string])
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
   cc_string=`${CC} --version | sed q`
