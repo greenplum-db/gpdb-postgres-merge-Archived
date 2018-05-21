@@ -166,8 +166,6 @@
 #define MAX_RANDOM_VALUE  (0x7FFFFFFF)
 
 /*
-<<<<<<< HEAD
-=======
  * Set the format style used by gcc to check printf type functions. We really
  * want the "gnu_printf" style set, which includes what glibc uses, such
  * as %m for error strings and %lld for 64 bit long longs. But not all gcc
@@ -210,7 +208,6 @@
 #endif
 
 /*
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *------------------------------------------------------------------------
  * The following symbols are for enabling debugging code, not for
  * controlling user-visible features or resource limits.
