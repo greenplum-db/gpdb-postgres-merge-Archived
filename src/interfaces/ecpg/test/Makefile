@@ -5,14 +5,9 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := \
-<<<<<<< HEAD
-	-I$(top_builddir)/src/port \
-	-I$(top_srcdir)/src/test/regress \
-	-Wno-error \
-=======
 	'-I$(top_builddir)/src/port' \
 	'-I$(top_srcdir)/src/test/regress' \
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	-Wno-error \
 	'-DHOST_TUPLE="$(host_tuple)"' \
 	'-DMAKEPROG="$(MAKE)"' \
 	'-DSHELLPROG="$(SHELL)"' \

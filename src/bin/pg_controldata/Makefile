@@ -15,14 +15,11 @@ subdir = src/bin/pg_controldata
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 OBJS= pg_controldata.o $(WIN32RES)
 
 all: pg_controldata

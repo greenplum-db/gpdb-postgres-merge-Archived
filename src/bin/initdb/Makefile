@@ -18,14 +18,11 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
 
-<<<<<<< HEAD
-=======
 # use system timezone data?
 ifneq (,$(with_system_tzdata))
 override CPPFLAGS += '-DSYSTEMTZDIR="$(with_system_tzdata)"'
 endif
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 OBJS=	initdb.o findtimezone.o localtime.o encnames.o pqsignal.o $(WIN32RES)
 
 all: initdb

@@ -62,12 +62,7 @@ mainloop.o: psqlscan.c
 
 psqlscan.c: psqlscan.l
 ifdef FLEX
-<<<<<<< HEAD
 	$(FLEX) $(FLEXFLAGS) -o'$(srcdir)/psqlscan.c' $<
-=======
-	$(FLEX) $(FLEXFLAGS) -o'$@' $<
-	@if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup, see lex.backup."; exit 1; fi
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 else
 	@$(missing) flex $< $@
 endif
@@ -86,11 +81,7 @@ uninstall:
 
 # psqlscan.c is in the distribution tarball, so is not cleaned here
 clean distclean:
-<<<<<<< HEAD
 	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c psqlscan.o
-=======
-	rm -f psql$(X) $(OBJS) dumputils.c keywords.c kwlookup.c lex.backup
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 maintainer-clean: distclean
 	rm -f sql_help.h sql_help.c psqlscan.c
