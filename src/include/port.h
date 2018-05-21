@@ -225,22 +225,13 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 #endif
 #endif   /* USE_REPL_SNPRINTF */
 
-<<<<<<< HEAD
-=======
 #if defined(WIN32)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Versions of libintl >= 0.18? try to replace setlocale() with a macro
  * to their own versions.  Remove the macro, if it exists, because it
  * ends up calling the wrong version when the backend and libintl use
  * different versions of msvcrt.
  */
-<<<<<<< HEAD
-#if defined(setlocale) && defined(WIN32)
-#undef setlocale
-#endif
-
-=======
 #if defined(setlocale)
 #undef setlocale
 #endif
@@ -254,7 +245,6 @@ extern char *pgwin32_setlocale(int category, const char *locale);
 #define setlocale(a,b) pgwin32_setlocale(a,b)
 #endif   /* WIN32 */
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 

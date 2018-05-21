@@ -55,10 +55,6 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
-<<<<<<< HEAD
-/* float4 values are passed by value if 'true', by reference if 'false'
-   (always true in GPDB) */
-=======
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like `struct s { int n; double
    d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
@@ -68,8 +64,8 @@
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
 
-/* float4 values are passed by value if 'true', by reference if 'false' */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+/* float4 values are passed by value if 'true', by reference if 'false'
+   (always true in GPDB) */
 #undef FLOAT4PASSBYVAL
 
 /* float8, int8, and related values are passed by value if 'true', by
@@ -98,12 +94,8 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <apr_getopt.h> header file. */
 #undef HAVE_APR_GETOPT_H
-
-/* Define to 1 if you have the `atexit' function. */
-#undef HAVE_ATEXIT
 
 /* Define to 1 if you want to use atomics. */
 #undef HAVE_ATOMICS
@@ -111,8 +103,6 @@
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
@@ -179,24 +169,12 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
 
-<<<<<<< HEAD
-/* Define to 1 if you have the <endian.h> header file. */
-#undef HAVE_ENDIAN_H
-
-/* Define to 1 if you have the `erand48' function. */
-#undef HAVE_ERAND48
-
-/* Define to 1 if you have the `ERR_set_mark' function. */
-#undef HAVE_ERR_SET_MARK
-
 /* Define to 1 if you have the <event.h> header file. */
 #undef HAVE_EVENT_H
 
 /* Define to 1 if you have the `fcvt' function. */
 #undef HAVE_FCVT
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
@@ -227,7 +205,6 @@
 /* Define to 1 if you have __sync_lock_test_and_set(int *) and friends. */
 #undef HAVE_GCC_INT_ATOMICS
 
-<<<<<<< HEAD
 /* Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int). */
 #undef HAVE_GCC__ATOMIC_INT32_CAS
 
@@ -247,8 +224,6 @@
 /* Define to 1 if you have __sync_compare_and_swap(int64 *, int64, int64). */
 #undef HAVE_GCC__SYNC_INT64_CAS
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
@@ -342,17 +317,7 @@
 /* Define to 1 if you have isinf(). */
 #undef HAVE_ISINF
 
-<<<<<<< HEAD
-/* Define to 1 if you have the <kernel/image.h> header file. */
-#undef HAVE_KERNEL_IMAGE_H
-
-/* Define to 1 if you have the <kernel/OS.h> header file. */
-#undef HAVE_KERNEL_OS_H
-
 /* Define to 1 if `e_data' is a member of `krb5_error'. */
-=======
-/* Define to 1 if `e_data' is member of `krb5_error'. */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #undef HAVE_KRB5_ERROR_E_DATA
 
 /* Define to 1 if `text.data' is a member of `krb5_error'. */
@@ -379,10 +344,6 @@
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
 
-<<<<<<< HEAD
-/* Define to 1 if you have the `eay32' library (-leay32). */
-#undef HAVE_LIBEAY32
-
 /* Define to 1 if you have the `gpdbcost' library (-lgpdbcost). */
 #undef HAVE_LIBGPDBCOST
 
@@ -392,8 +353,6 @@
 /* Define to 1 if you have the `gpos' library (-lgpos). */
 #undef HAVE_LIBGPOS
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* Define to 1 if you have the `ldap' library (-lldap). */
 #undef HAVE_LIBLDAP
 
@@ -485,19 +444,14 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <net-snmp/net-snmp-config.h> header file. */
 #undef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
 
 /* Define to 1 if you have the <numa.h> header file. */
 #undef HAVE_NUMA_H
 
-/* Define to 1 if you have the `on_exit' function. */
-#undef HAVE_ON_EXIT
-=======
 /* Define to 1 if you have the <ossp/uuid.h> header file. */
 #undef HAVE_OSSP_UUID_H
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 #undef HAVE_PAM_PAM_APPL_H
@@ -650,14 +604,7 @@
 /* Define to 1 if `__ss_len' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN
 
-<<<<<<< HEAD
-/* Define to 1 if the system has the type `struct sockaddr_un'. */
-#undef HAVE_STRUCT_SOCKADDR_UN
-
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
-=======
-/* Define to 1 if `tm_zone' is member of `struct tm'. */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #undef HAVE_STRUCT_TM_TM_ZONE
 
 /* Define to 1 if you have the `symlink' function. */
@@ -766,6 +713,9 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
+/* Define to 1 if you have the <uuid.h> header file. */
+#undef HAVE_UUID_H
+
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
@@ -787,9 +737,11 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
-<<<<<<< HEAD
 /* Define to 1 if you have the <winsock2.h> header file. */
 #undef HAVE_WINSOCK2_H
+
+/* Define to 1 if your libxml has xmlStructuredErrorContext. */
+#undef HAVE_XMLSTRUCTUREDERRORCONTEXT
 
 /* Define to 1 if you have the <yaml.h> header file. */
 #undef HAVE_YAML_H
@@ -814,10 +766,6 @@
 
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #undef HAVE__VA_ARGS
-=======
-/* Define to 1 if your libxml has xmlStructuredErrorContext. */
-#undef HAVE_XMLSTRUCTUREDERRORCONTEXT
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Define to the appropriate snprintf format for 64-bit ints. */
 #undef INT64_FORMAT

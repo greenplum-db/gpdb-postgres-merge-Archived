@@ -9,13 +9,9 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -873,11 +869,7 @@ typedef NameData *Name;
 #ifdef USE_ASSERT_CHECKING
 #define PG_USED_FOR_ASSERTS_ONLY
 #else
-<<<<<<< HEAD
 #define PG_USED_FOR_ASSERTS_ONLY pg_attribute_unused()
-=======
-#define PG_USED_FOR_ASSERTS_ONLY __attribute__((unused))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 
 
