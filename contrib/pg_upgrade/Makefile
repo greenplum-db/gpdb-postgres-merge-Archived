@@ -15,14 +15,10 @@ OBJS += aotable.o gpdb4_heap_convert.o version_old_gpdb4.o oid_dump.o
 PG_CPPFLAGS  = -DFRONTEND -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir)
 PG_LIBS = $(libpq_pgport)
 
-<<<<<<< HEAD
 # We don't need to add tmp_check to the EXTRA_CLEAN since it's a default name
 # and thus already handled by PGXS "make clean"
 EXTRA_CLEAN = clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
-              hostfile
-=======
-EXTRA_CLEAN = delete_old_cluster.sh log/ tmp_check/
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+              hostfile delete_old_cluster.sh
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -34,17 +30,8 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-<<<<<<< HEAD
 installcheck: test_gpdb.sh all
 	bash $< -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
 
 check: test_gpdb.sh all
 	bash $< -C -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
-=======
-check: test.sh all
-	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $< --install
-
-# disabled because it upsets the build farm
-#installcheck: test.sh
-#	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $<
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
