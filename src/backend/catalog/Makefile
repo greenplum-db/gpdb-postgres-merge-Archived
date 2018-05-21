@@ -52,7 +52,6 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
 	pg_foreign_table.h \
-<<<<<<< HEAD
 	pg_default_acl.h pg_seclabel.h pg_collation.h \
 	pg_resqueue.h pg_resqueuecapability.h pg_resourcetype.h \
 	pg_resgroup.h pg_resgroupcapability.h \
@@ -68,9 +67,7 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_partition_encoding.h \
 	pg_type_encoding.h \
 	pg_stat_last_operation.h pg_stat_last_shoperation.h \
-=======
-	pg_default_acl.h pg_seclabel.h pg_shseclabel.h pg_collation.h pg_range.h \
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	pg_range.h \
 	toasting.h indexing.h \
     )
 
@@ -90,7 +87,6 @@ postgres.shdescription: postgres.bki ;
 
 schemapg.h: postgres.bki ;
 
-<<<<<<< HEAD
 # In Greenplum, contents of the pg_proc catalog is in two files, pg_proc.h
 # and pg_proc_gp.h. Combine them into a single file, so that genbki.pl can
 # process it.
@@ -100,17 +96,13 @@ pg_proc_combined.h: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/sr
 $(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
 	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
 
-postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
-	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(PG_MAJORVERSION) $(POSTGRES_BKI_SRCS)
-=======
 # Technically, this should depend on Makefile.global, but then
 # postgres.bki would need to be rebuilt after every configure run,
 # even in distribution tarballs.  So this is cheating a bit, but it
 # will achieve the goal of updating the version number when it
 # changes.
 postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(top_srcdir)/configure
-	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(PG_MAJORVERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs
