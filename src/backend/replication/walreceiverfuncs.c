@@ -29,10 +29,7 @@
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
-<<<<<<< HEAD
 #include "utils/guc.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 WalRcvData *WalRcv = NULL;
 
@@ -283,9 +280,6 @@ GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart)
 int
 GetReplicationApplyDelay(void)
 {
-<<<<<<< HEAD
-	return 0;
-=======
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
 
@@ -309,7 +303,6 @@ GetReplicationApplyDelay(void)
 						&secs, &usecs);
 
 	return (((int) secs * 1000) + (usecs / 1000));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
