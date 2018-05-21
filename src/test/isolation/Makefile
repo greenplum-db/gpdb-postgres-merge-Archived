@@ -83,7 +83,6 @@ clean distclean:
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
-<<<<<<< HEAD
 installcheck: all gpdiff.pl gpstringsubs.pl
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
@@ -92,11 +91,6 @@ installcheck: all gpdiff.pl gpstringsubs.pl
 # via the postgresql.conf.
 installcheck-prepared-txns: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
-
-=======
-installcheck: all
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 check: all
 	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule

@@ -173,11 +173,7 @@ query_info_hook_test:
 ## Run tests
 ##
 
-<<<<<<< HEAD
-REGRESS_OPTS = --dlpath=. --init-file=$(srcdir)/init_file
-=======
-REGRESS_OPTS = --dlpath=. $(EXTRA_REGRESS_OPTS)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+REGRESS_OPTS = --dlpath=. --init-file=$(srcdir)/init_file $(EXTRA_REGRESS_OPTS)
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)
