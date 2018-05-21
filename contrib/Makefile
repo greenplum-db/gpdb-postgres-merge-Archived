@@ -33,13 +33,17 @@ SUBDIRS = \
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\
-		seg		\
 		spi		\
-		tablefunc	\
 		tcn		\
 		test_parser	\
 		tsearch2	\
-		unaccent	\
+		unaccent
+
+
+# GPDB_92_MERGE_FIXME: Why some files (especially Makefile) are missing under
+# these directories?
+#       seg         \
+		tablefunc	\
 		vacuumlo
 
 # Greenplum-specific additions (to ease merge pain).
