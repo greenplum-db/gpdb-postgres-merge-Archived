@@ -225,15 +225,10 @@ join_path_components(char *ret_path,
 	{
 		/* only separate with slash if head wasn't empty */
 		snprintf(ret_path + strlen(ret_path), MAXPGPATH - strlen(ret_path),
-<<<<<<< HEAD
 				 "%s%s",
 				 (*(skip_drive(head)) != '\0') ? "/" : "",
 				 tail);
 	}
-=======
-		/* only add slash if there is something already in head */
-				 "%s%s", head[0] ? "/" : "", tail);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 
