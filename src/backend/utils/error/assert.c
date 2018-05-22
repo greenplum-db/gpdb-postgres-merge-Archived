@@ -3,13 +3,9 @@
  * assert.c
  *	  Assert code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -68,8 +64,4 @@ ExceptionalCondition(const char *conditionName,
 #endif
 
 	abort();
-<<<<<<< HEAD
-	return 0;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }

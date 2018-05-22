@@ -43,13 +43,9 @@
  * overflow.)
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1162,12 +1158,11 @@ errdetail(const char *fmt,...)
 
 	EVALUATE_MESSAGE(detail, false, true);
 
-<<<<<<< HEAD
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
-=======
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
+	errno = edata->saved_errno; /*CDB*/
 	return 0;					/* return value does not matter */
 }
 
@@ -1197,30 +1192,6 @@ errdetail_internal(const char *fmt,...)
 	recursion_depth--;
 	return 0;					/* return value does not matter */
 }
-
-
-/*
- * errdetail_log --- add a detail_log error message text to the current error
- */
-int
-errdetail_log(const char *fmt,...)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
-
-	recursion_depth++;
-	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
-
-	EVALUATE_MESSAGE(detail_log, false, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
-	MemoryContextSwitchTo(oldcontext);
-	recursion_depth--;
-	errno = edata->saved_errno; /*CDB*/
-	return 0;					/* return value does not matter */
-}
-
 
 /*
  * errdetail_plural --- add a detail error message text to the current error,
@@ -1696,7 +1667,6 @@ EmitErrorReport(void)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-<<<<<<< HEAD
 	/* CDB: Tidy up the message */
 	/*
 	 * TODO Why do we want to do this?  it seems pointless
@@ -1705,7 +1675,7 @@ EmitErrorReport(void)
 	if (edata->output_to_server ||
 		edata->output_to_client)
 		cdb_tidy_message(edata);
-=======
+
 	/*
 	 * Call hook before sending message to log.  The hook function is allowed
 	 * to turn off edata->output_to_server, so we must recheck that afterward.
@@ -1722,7 +1692,6 @@ EmitErrorReport(void)
 	 */
 	if (edata->output_to_server && emit_log_hook)
 		(*emit_log_hook) (edata);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
@@ -2569,15 +2538,6 @@ setup_formatted_log_time(void)
 	stamp_time = (pg_time_t) tv.tv_sec;
 
 	/*
-<<<<<<< HEAD
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
-	 * nonempty or CSV mode can be selected.
-	 */
-	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-				/* leave room for microseconds... */
-				"%Y-%m-%d %H:%M:%S        %Z",
-=======
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
 	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
@@ -2585,7 +2545,6 @@ setup_formatted_log_time(void)
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 	/* leave room for milliseconds... */
 				"%Y-%m-%d %H:%M:%S     %Z",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				pg_localtime(&stamp_time, log_timezone));
 
 	/* 'paste' microseconds into place... */
@@ -2602,13 +2561,8 @@ setup_formatted_start_time(void)
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 
 	/*
-<<<<<<< HEAD
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
-=======
 	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
 	 * least with a minimal GMT value) before Log_line_prefix can become
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
@@ -4125,7 +4079,6 @@ write_pipe_chunks(char *data, int len, int dest)
 	/* write all but the last chunk */
 	while (len > PIPE_MAX_PAYLOAD)
 	{
-<<<<<<< HEAD
 		p.hdr.is_last = 'f';
 		p.hdr.len = PIPE_MAX_PAYLOAD;
 		memcpy(p.data, data, PIPE_MAX_PAYLOAD);
@@ -4136,13 +4089,6 @@ write_pipe_chunks(char *data, int len, int dest)
 				Assert(p.hdr.thid != 0);
 #endif
 		write(fd, &p, PIPE_CHUNK_SIZE);
-=======
-		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
-		p.proto.len = PIPE_MAX_PAYLOAD;
-		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
-		rc = write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
-		(void) rc;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		data += PIPE_MAX_PAYLOAD;
 		len -= PIPE_MAX_PAYLOAD;
 
@@ -4150,7 +4096,6 @@ write_pipe_chunks(char *data, int len, int dest)
 	}
 
 	/* write the last chunk */
-<<<<<<< HEAD
 	p.hdr.is_last = 't';
 	p.hdr.len = len;
 
@@ -4162,13 +4107,6 @@ write_pipe_chunks(char *data, int len, int dest)
 #endif
 	memcpy(p.data, data, len);
 	write(fd, &p, PIPE_HEADER_SIZE + len);
-=======
-	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
-	p.proto.len = len;
-	memcpy(p.proto.data, data, len);
-	rc = write(fd, &p, PIPE_HEADER_SIZE + len);
-	(void) rc;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 
