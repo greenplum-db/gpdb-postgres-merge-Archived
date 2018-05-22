@@ -4,13 +4,9 @@
  *	  definitions for executor state nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/execnodes.h
@@ -25,16 +21,8 @@
 #include "executor/instrument.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
-<<<<<<< HEAD
-#include "nodes/relation.h"
-#include "nodes/tidbitmap.h"
-#include "utils/hsearch.h"
-#include "utils/rel.h"
-#include "utils/snapshot.h"
-=======
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/tuplestore.h"
 
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
@@ -1400,11 +1388,7 @@ typedef struct PlanState
 								 * nodes point to one EState for the whole
 								 * top-level plan */
 
-<<<<<<< HEAD
 	bool		fHadSentGpmon;
-=======
-	Instrumentation *instrument;	/* Optional runtime stats for this node */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Common structural data for all Plan types.  These links to subsidiary

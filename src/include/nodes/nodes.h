@@ -4,13 +4,9 @@
  *	  Definitions for tagged nodes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -79,11 +75,8 @@ typedef enum NodeTag
 	T_TableScan,
 	T_DynamicTableScan,
 	T_IndexScan,
-<<<<<<< HEAD
 	T_DynamicIndexScan,
-=======
 	T_IndexOnlyScan,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	T_BitmapIndexScan,
 	T_DynamicBitmapIndexScan,
 	T_BitmapHeapScan,
@@ -97,11 +90,6 @@ typedef enum NodeTag
 	T_CteScan,
 	T_WorkTableScan,
 	T_ForeignScan,
-<<<<<<< HEAD
-	T_FdwPlan,
-=======
-	T_Join,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -155,11 +143,8 @@ typedef enum NodeTag
 	T_DynamicTableScanState,
 	T_ExternalScanState,
 	T_IndexScanState,
-<<<<<<< HEAD
 	T_DynamicIndexScanState,
-=======
 	T_IndexOnlyScanState,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	T_BitmapIndexScanState,
 	T_DynamicBitmapIndexScanState,
 	T_BitmapHeapScanState,

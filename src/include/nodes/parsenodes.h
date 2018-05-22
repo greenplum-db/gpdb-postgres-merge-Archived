@@ -10,13 +10,9 @@
  * the location.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -539,11 +535,8 @@ typedef struct ColumnDef
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */
-<<<<<<< HEAD
 	List	   *encoding;		/* ENCODING clause */
-=======
 	List	   *fdwoptions;		/* per-column FDW options */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } ColumnDef;
 
 /*
@@ -1376,7 +1369,6 @@ typedef enum AlterTableType
 	AT_DropInherit,				/* NO INHERIT parent */
 	AT_AddOf,					/* OF <type_name> */
 	AT_DropOf,					/* NOT OF */
-<<<<<<< HEAD
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	/* CDB: Partitioned Tables */
@@ -1390,9 +1382,6 @@ typedef enum AlterTableType
 	AT_PartSplit,				/* Split */
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal			/* CREATE TABLE time partition addition */
-=======
-	AT_GenericOptions			/* OPTIONS (...) */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -1499,11 +1488,8 @@ typedef enum GrantObjectType
 	ACL_OBJECT_RELATION,		/* table, view */
 	ACL_OBJECT_SEQUENCE,		/* sequence */
 	ACL_OBJECT_DATABASE,		/* database */
-<<<<<<< HEAD
 	ACL_OBJECT_EXTPROTOCOL,		/* external table protocol */
-=======
 	ACL_OBJECT_DOMAIN,			/* domain */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	ACL_OBJECT_FDW,				/* foreign-data wrapper */
 	ACL_OBJECT_FOREIGN_SERVER,	/* foreign server */
 	ACL_OBJECT_FUNCTION,		/* function */
@@ -1867,15 +1853,11 @@ typedef struct Constraint
 
 	/* Fields used for constraints that allow a NOT VALID specification */
 	bool		skip_validation;	/* skip validation of existing rows? */
-<<<<<<< HEAD
 	bool		initially_valid;	/* start the new constraint as valid */
 	Oid			trig1Oid;
 	Oid			trig2Oid;
 	Oid			trig3Oid;
 	Oid			trig4Oid;
-=======
-	bool		initially_valid;	/* mark the new constraint as valid? */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } Constraint;
 
 /* ----------
@@ -2407,11 +2389,8 @@ typedef struct DropStmt
 	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if object is missing? */
-<<<<<<< HEAD
 	bool		bAllowPartn;	/* allow action on a partition */
-=======
 	bool		concurrent;		/* drop index concurrently? */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } DropStmt;
 
 /* ----------------------
@@ -2543,11 +2522,8 @@ typedef struct IndexStmt
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	Oid			indexOid;		/* OID of an existing index, if any */
-<<<<<<< HEAD
 	bool		is_part_child;	/* in service of a part of a partition? */
-=======
 	Oid			oldNode;		/* relfilenode of my former self */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -2637,12 +2613,9 @@ typedef struct RenameStmt
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-<<<<<<< HEAD
 
 	bool		bAllowPartn;	/* allow action on a partition */
-=======
 	bool		missing_ok;		/* skip error if missing? */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } RenameStmt;
 
 /* ----------------------
@@ -2899,12 +2872,8 @@ typedef enum VacuumOption
 	VACOPT_VERBOSE = 1 << 2,	/* print progress info */
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
-<<<<<<< HEAD
-	VACOPT_NOWAIT = 1 << 5,
+	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
 	VACOPT_ROOTONLY = 1 << 6	/* only ANALYZE root partition tables */
-=======
-	VACOPT_NOWAIT = 1 << 5		/* don't wait to get lock (autovacuum only) */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } VacuumOption;
 
 typedef enum AOVacuumPhase

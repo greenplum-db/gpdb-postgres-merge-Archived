@@ -5,13 +5,9 @@
  *	  definitions for query plan nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/plannodes.h
@@ -69,11 +65,9 @@ typedef struct PlannedStmt
 
 	CmdType		commandType;	/* select|insert|update|delete */
 
-<<<<<<< HEAD
 	PlanGenerator	planGen;		/* optimizer generation */
-=======
+
 	uint32		queryId;		/* query identifier (copied from Query) */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	bool		hasReturning;	/* is it insert|update|delete RETURNING? */
 

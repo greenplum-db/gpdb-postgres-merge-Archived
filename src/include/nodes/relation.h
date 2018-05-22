@@ -4,13 +4,9 @@
  *	  Definitions for planner's internal data structures.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/relation.h
@@ -562,14 +558,11 @@ typedef struct RelOptInfo
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
-<<<<<<< HEAD
     struct GpPolicy   *cdbpolicy;      /* distribution of stored tuples */
 	char		relstorage;		/* from pg_class.relstorage */
     bool        cdb_default_stats_used; /* true if ANALYZE needed */
-=======
 	double		allvisfrac;
 	/* use "struct Plan" to avoid including plannodes.h here */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
@@ -921,7 +914,6 @@ typedef struct Path
 	Relids		sameslice_relids;
 } Path;
 
-<<<<<<< HEAD
 /* 
  * AppendOnlyPath is used for append-only table scans. 
  */
@@ -967,11 +959,9 @@ typedef struct PartitionSelectorPath
 	List	   *partKeyAttnos;
 } PartitionSelectorPath;
 
-=======
 /* Macro for extracting a path's parameterization relids; beware double eval */
 #define PATH_REQ_OUTER(path)  \
 	((path)->param_info ? (path)->param_info->ppi_req_outer : (Relids) NULL)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*----------
  * IndexPath represents an index scan over a single index.
@@ -1037,8 +1027,6 @@ typedef struct IndexPath
 	ScanDirection indexscandir;
 	Cost		indextotalcost;
 	Selectivity indexselectivity;
-<<<<<<< HEAD
-	double		rows;			/* estimated number of result tuples */
     int         num_leading_eq; /* CDB: number of leading key columns matched by
                                  * equality predicates in indexquals.  If equal
                                  * to indexinfo->ncolumns, at most one distinct
@@ -1046,8 +1034,6 @@ typedef struct IndexPath
                                  * Further if the index is unique, we can assume
                                  * at most one visible row satisfies the quals.
                                  */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } IndexPath;
 
 /*
@@ -1133,7 +1119,6 @@ typedef struct TidPath
 } TidPath;
 
 /*
-<<<<<<< HEAD
  * CdbMotionPath represents transmission of the child Path results
  * from a set of sending processes to a set of receiving processes.
  */
@@ -1144,8 +1129,6 @@ typedef struct CdbMotionPath
 } CdbMotionPath;
 
 /*
- * ForeignPath represents a scan of a foreign table
-=======
  * ForeignPath represents a potential scan of a foreign table
  *
  * fdw_private stores FDW private data about the scan.	While fdw_private is
@@ -1153,7 +1136,6 @@ typedef struct CdbMotionPath
  * generally a good idea to use a representation that can be dumped by
  * nodeToString(), so that you can examine the structure during debugging
  * with tools like pprint().
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 typedef struct ForeignPath
 {
@@ -1252,16 +1234,12 @@ typedef struct UniquePath
 	UniquePathMethod umethod;
 	List	   *in_operators;	/* equality operators of the IN clause */
 	List	   *uniq_exprs;		/* expressions to be made unique */
-<<<<<<< HEAD
-	double		rows;			/* estimated number of result tuples */
     Relids      distinct_on_rowid_relids;
                                 /* CDB: set of relids whose row ids are to be
                                  * uniqueified.
                                  */
     bool        must_repartition;
                                 /* CDB: true => add Motion atop subpath  */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } UniquePath;
 
 /*
@@ -1514,16 +1492,14 @@ typedef struct RestrictInfo
 	/* The set of relids required to evaluate the clause: */
 	Relids		required_relids;
 
-<<<<<<< HEAD
 	/*
 	 * The set of relids required to evaluate the clause because this is an outer
 	 * join clause. required_relids is a union of this and clause_relids.
 	 */
 	Relids		ojscope_relids;
-=======
+
 	/* If an outer-join clause, the outer-side relations, else NULL: */
 	Relids		outer_relids;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* The relids used in the clause that are nullable by lower outer joins: */
 	Relids		nullable_relids;
@@ -1854,11 +1830,7 @@ typedef struct MinMaxAggInfo
  * value in the Var will always be zero.
  *
  * A PlaceHolderVar: this works much like the Var case, except that the
-<<<<<<< HEAD
- * entry is a PlaceHolderVar node with a contained expression.  The PHV
-=======
  * entry is a PlaceHolderVar node with a contained expression.	The PHV
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * will have phlevelsup = 0, and the contained expression is adjusted
  * to match in level.
  *
@@ -1871,15 +1843,6 @@ typedef struct MinMaxAggInfo
  * for that subplan).  The absolute level shown for such items corresponds
  * to the parent query of the subplan.
  *
-<<<<<<< HEAD
- * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce them into one slot,
- * but we do not bother to do this for Aggrefs, and it would be incorrect
- * to do so for Param slots.  Duplicate detection is actually *necessary*
- * in the case of NestLoop parameters since it serves to match up the usage
- * of a Param (in the inner scan) with the assignment of the value (in the
- * NestLoop node).	This might result in the same PARAM_EXEC slot being used
- * by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
-=======
  * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce
  * them into one slot, but we do not bother to do this for Aggrefs, and it
  * would be incorrect to do so for Param slots.  Duplicate detection is
@@ -1887,7 +1850,6 @@ typedef struct MinMaxAggInfo
  * the usage of a Param (in the inner scan) with the assignment of the value
  * (in the NestLoop node). This might result in the same PARAM_EXEC slot being
  * used by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * the same value would be assigned anyway.
  */
 typedef struct PlannerParamItem
@@ -1899,7 +1861,6 @@ typedef struct PlannerParamItem
 } PlannerParamItem;
 
 /*
-<<<<<<< HEAD
  * Partitioning meta data
  */
 
@@ -1980,7 +1941,8 @@ typedef struct SegfileMapNode
 	Oid			relid;
 	int			segno;
 } SegfileMapNode;
-=======
+
+/*
  * When making cost estimates for a SEMI or ANTI join, there are some
  * correction factors that are needed in both nestloop and hash joins
  * to account for the fact that the executor can stop scanning inner rows
@@ -2039,6 +2001,5 @@ typedef struct JoinCostWorkspace
 	int			numbuckets;
 	int			numbatches;
 } JoinCostWorkspace;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* RELATION_H */
