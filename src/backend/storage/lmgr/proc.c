@@ -3,13 +3,9 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -59,15 +55,8 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
-<<<<<<< HEAD
-#include "executor/execdesc.h"
-#include "utils/resscheduler.h"
-#include "utils/timestamp.h"
-#include "utils/portal.h"
-=======
 #include "storage/spin.h"
 #include "utils/timestamp.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #include "utils/sharedsnapshot.h"  /*SharedLocalSnapshotSlot*/
 
@@ -238,20 +227,7 @@ InitProcGlobal(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
-<<<<<<< HEAD
-	MemSet(procs, 0, MaxConnections * sizeof(PGPROC));
-	for (i = 0; i < MaxConnections; i++)
-	{
-		PGSemaphoreCreate(&(procs[i].sem));
-		InitSharedLatch(&(procs[i].procLatch));
-		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
-		ProcGlobal->freeProcs = &procs[i];
-	}
-	ProcGlobal->procs = procs;
-	ProcGlobal->numFreeProcs = MaxConnections;
-=======
 	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Also allocate a separate array of PGXACT structures.  This is separate
@@ -267,12 +243,6 @@ InitProcGlobal(void)
 
 	for (i = 0; i < TotalProcs; i++)
 	{
-<<<<<<< HEAD
-		PGSemaphoreCreate(&(procs[i].sem));
-		InitSharedLatch(&(procs[i].procLatch));
-		procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
-		ProcGlobal->autovacFreeProcs = &procs[i];
-=======
 		/* Common initialization for all PGPROCs, regardless of type. */
 
 		/*
@@ -312,25 +282,14 @@ InitProcGlobal(void)
 		/* Initialize myProcLocks[] shared memory queues. */
 		for (j = 0; j < NUM_LOCK_PARTITIONS; j++)
 			SHMQueueInit(&(procs[i].myProcLocks[j]));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
 	 * Save pointers to the blocks of PGPROC structures reserved for auxiliary
 	 * processes and prepared transactions.
 	 */
-<<<<<<< HEAD
-	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
-	for (i = 0; i < NUM_AUXILIARY_PROCS; i++)
-	{
-		AuxiliaryProcs[i].pid = 0;		/* marks auxiliary proc as not in use */
-		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
-		InitSharedLatch(&(AuxiliaryProcs[i].procLatch));
-	}
-=======
 	AuxiliaryProcs = &procs[MaxBackends];
 	PreparedXactProcs = &procs[MaxBackends + NUM_AUXILIARY_PROCS];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Create ProcStructLock spinlock, too */
 	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
@@ -394,10 +353,6 @@ InitProcess(void)
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
 		else
 			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
-
-		procglobal->numFreeProcs--;		/* we removed an entry from the list. */
-		Assert(procglobal->numFreeProcs >= 0);
-
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -449,16 +404,11 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
-<<<<<<< HEAD
-	MyProc->xid = InvalidTransactionId;
-	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-	MyProc->xmin = InvalidTransactionId;
-	MyProc->serializableIsoLevel = false;
-	MyProc->inDropTransaction = false;
-=======
 	MyPgXact->xid = InvalidTransactionId;
 	MyPgXact->xmin = InvalidTransactionId;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
+	MyProc->serializableIsoLevel = false;
+	MyProc->inDropTransaction = false;
 	MyProc->pid = MyProcPid;
 	/* backendId, databaseId and roleId will be filled in later */
 	MyProc->backendId = InvalidBackendId;
@@ -474,11 +424,7 @@ InitProcess(void)
 	MyProc->lwWaitLink = NULL;
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
-<<<<<<< HEAD
 	MyProc->resSlot = NULL;
-	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		SHMQueueInit(&(MyProc->myProcLocks[i]));
-	MyProc->recoveryConflictPending = false;
 
     /* 
      * mppLocalProcessSerial uniquely identifies this backend process among
@@ -509,7 +455,6 @@ InitProcess(void)
 	}
     
 	/* Initialise for sync rep */
-=======
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled)
 	{
@@ -523,7 +468,6 @@ InitProcess(void)
 	MyProc->recoveryConflictPending = false;
 
 	/* Initialize fields for sync rep */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	MyProc->waitLSN.xlogid = 0;
 	MyProc->waitLSN.xrecoff = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
@@ -658,11 +602,8 @@ InitAuxiliaryProcess(void)
 	((volatile PGPROC *) auxproc)->pid = MyProcPid;
 
 	MyProc = auxproc;
-<<<<<<< HEAD
 	lockHolderProcPtr = auxproc;
-=======
 	MyPgXact = &ProcGlobal->allPgXact[auxproc->pgprocno];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	SpinLockRelease(ProcStructLock);
 
@@ -673,28 +614,19 @@ InitAuxiliaryProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
-<<<<<<< HEAD
-	MyProc->xid = InvalidTransactionId;
+	MyPgXact->xid = InvalidTransactionId;
+	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
-	MyProc->xmin = InvalidTransactionId;
 	MyProc->serializableIsoLevel = false;
 	MyProc->inDropTransaction = false;
+	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
     MyProc->mppLocalProcessSerial = 0;
     MyProc->mppSessionId = 0;
     MyProc->mppIsWriter = false;
-	MyProc->inCommit = false;
-	MyProc->vacuumFlags = 0;
-=======
-	MyPgXact->xid = InvalidTransactionId;
-	MyPgXact->xmin = InvalidTransactionId;
-	MyProc->backendId = InvalidBackendId;
-	MyProc->databaseId = InvalidOid;
-	MyProc->roleId = InvalidOid;
 	MyPgXact->inCommit = false;
 	MyPgXact->vacuumFlags = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
 	MyProc->lwWaitLink = NULL;
@@ -943,7 +875,6 @@ ProcKill(int code, Datum arg)
 	Assert(MyProc != NULL);
 
 	/* Make sure we're out of the sync rep lists */
-<<<<<<< HEAD
 	SyncRepCleanupAtProcExit(0, 0);
 
 	/* 
@@ -976,7 +907,7 @@ ProcKill(int code, Datum arg)
 		}
 		SharedLocalSnapshotSlot = NULL;
 	}
-=======
+
 	SyncRepCleanupAtProcExit();
 
 #ifdef USE_ASSERT_CHECKING
@@ -989,7 +920,6 @@ ProcKill(int code, Datum arg)
 			Assert(SHMQueueEmpty(&(MyProc->myProcLocks[i])));
 	}
 #endif
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Release any LW locks I am holding.  There really shouldn't be any, but
@@ -998,7 +928,6 @@ ProcKill(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 
-<<<<<<< HEAD
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
     MyProc->mppLocalProcessSerial = 0;
     MyProc->mppSessionId = 0;
@@ -1013,10 +942,6 @@ ProcKill(int code, Datum arg)
 	proc = MyProc;
 	MyProc = NULL;
 	DisownLatch(&proc->procLatch);
-=======
-	/* Release ownership of the process's latch, too */
-	DisownLatch(&MyProc->procLatch);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	SpinLockAcquire(ProcStructLock);
 
@@ -1365,7 +1290,6 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				StringInfoData locktagbuf;
 				StringInfoData logbuf;		/* errdetail for server log */
 
-<<<<<<< HEAD
 				initStringInfo(&locktagbuf);
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
@@ -1375,10 +1299,6 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 						 GetLockmodeName(lock->tag.locktag_lockmethodid,
 										 lockmode),
 						 locktagbuf.data);
-=======
-				elog(DEBUG2, "sending cancel to blocking autovacuum PID %d",
-					 pid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 				/* release lock as quickly as possible */
 				LWLockRelease(ProcArrayLock);
@@ -2011,12 +1931,8 @@ handle_sig_alarm(SIGNAL_ARGS)
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
-<<<<<<< HEAD
 	/* don't joggle the elbow of proc_exit */
 	if (!proc_exit_inprogress)
-=======
-	if (deadlock_timeout_active)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		/*
 		 * Idle session timeout shares with the deadlock timeout.

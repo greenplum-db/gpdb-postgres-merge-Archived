@@ -4,13 +4,9 @@
  *	  per-process shared memory data structures
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/proc.h
@@ -26,14 +22,11 @@
 #include "storage/lock.h"
 #include "storage/spin.h"
 #include "storage/pg_sema.h"
-<<<<<<< HEAD
 #include "utils/timestamp.h"
 #include "access/xlog.h"
 
 #include "cdb/cdblocaldistribxact.h"  /* LocalDistribXactData */
 #include "cdb/cdbtm.h"  /* TMGXACT */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -101,16 +94,6 @@ struct PGPROC
 	LocalTransactionId lxid;	/* local id of top-level transaction currently
 								 * being executed by this proc, if running;
 								 * else InvalidLocalTransactionId */
-<<<<<<< HEAD
-
-	TransactionId xid;			/* id of top-level transaction currently being
-								 * executed by this proc, if running and XID
-								 * is assigned; else InvalidTransactionId */
-
-	TransactionId xmin;			/* minimal running XID as it was when we were
-								 * starting our xact, excluding LAZY VACUUM:
-								 * vacuum must not remove tuples deleted by
-								 * xid >= xmin ! */
 
 	/*
 	 * Distributed transaction information. This is only maintained on QE's
@@ -122,8 +105,6 @@ struct PGPROC
 	 */
 	LocalDistribXactData localDistribXactData;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			pid;			/* Backend's process ID; 0 if prepared xact */
 	int			pgprocno;
 
@@ -176,7 +157,6 @@ struct PGPROC
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
-<<<<<<< HEAD
 	/*
 	 * Info for Resource Scheduling, what portal (i.e statement) we might
 	 * be waiting on.
@@ -201,7 +181,7 @@ struct PGPROC
    							 * NULL indicates the resource group is
 							 * locked for drop. */
 	TMGXACT		gxact;
-=======
+
 	/* Per-backend LWLock.	Protects fields below. */
 	LWLockId	backendLock;	/* protects the fields below */
 
@@ -211,7 +191,6 @@ struct PGPROC
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
@@ -219,11 +198,9 @@ struct PGPROC
 extern PGDLLIMPORT PGPROC *MyProc;
 extern PGDLLIMPORT struct PGXACT *MyPgXact;
 
-<<<<<<< HEAD
 /* Special for MPP reader gangs */
 extern PGDLLIMPORT PGPROC *lockHolderProcPtr;
 
-=======
 /*
  * Prior to PostgreSQL 9.2, the fields below were stored as part of the
  * PGPROC.	However, benchmarking revealed that packing these particular
@@ -249,24 +226,18 @@ typedef struct PGXACT
 
 	uint8		nxids;
 } PGXACT;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
  */
 typedef struct PROC_HDR
 {
-<<<<<<< HEAD
-	/* The PGPROC structures */
-	PGPROC *procs;
-=======
 	/* Array of PGPROC structures (not including dummies for prepared txns) */
 	PGPROC	   *allProcs;
 	/* Array of PGXACT structures (not including dummies for prepared txns) */
 	PGXACT	   *allPgXact;
 	/* Length of allProcs array */
 	uint32		allProcCount;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Head of list of free PGPROC structures */
 	PGPROC	   *freeProcs;
 	/* Head of list of autovacuum's free PGPROC structures */
@@ -299,22 +270,14 @@ extern PGPROC *PreparedXactProcs;
  * We set aside some extra PGPROC structures for auxiliary processes,
  * ie things that aren't full-fledged backends but need shmem access.
  *
-<<<<<<< HEAD
- * Background writer and WAL writer run during normal operation. Startup
- * process and WAL receiver also consume 2 slots, but WAL writer is
- * launched only after startup has exited, so we only need 3 slots.
+ * Background writer, checkpointer and WAL writer run during normal operation.
+ * Startup process and WAL receiver also consume 2 slots, but WAL writer is
+ * launched only after startup has exited, so we only need 4 slots.
  *
  * In GPDB, we have some extra processes.
  * GDPB_90_MERGE_FIXME: count them correctly. 10 is an exaggeration.
  */
-#define NUM_AUXILIARY_PROCS		(/* PG */ 3 + /* GPDB */ 10)
-=======
- * Background writer, checkpointer and WAL writer run during normal operation.
- * Startup process and WAL receiver also consume 2 slots, but WAL writer is
- * launched only after startup has exited, so we only need 4 slots.
- */
-#define NUM_AUXILIARY_PROCS		4
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+#define NUM_AUXILIARY_PROCS		(/* PG */ 4 + /* GPDB */ 10)
 
 
 /* configurable options */
