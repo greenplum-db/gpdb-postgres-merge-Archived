@@ -14,12 +14,10 @@
 #define LSYSCACHE_H
 
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "catalog/gp_policy.h"
 #include "nodes/pg_list.h"
 #include "utils/relcache.h"
 #include "parser/parse_coerce.h"
-=======
 
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation
@@ -29,7 +27,6 @@ typedef struct OpBtreeInterpretation
 	Oid			oplefttype;		/* declared left input datatype */
 	Oid			oprighttype;	/* declared right input datatype */
 } OpBtreeInterpretation;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* I/O function selector for get_type_io_data */
 typedef enum IOFuncSelector
@@ -141,16 +138,13 @@ extern Oid	get_func_variadictype(Oid funcid);
 extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);
-<<<<<<< HEAD
 extern char func_data_access(Oid funcid);
 extern char func_exec_location(Oid funcid);
 extern Oid get_agg_transtype(Oid aggid);
 extern bool is_agg_ordered(Oid aggid);
 extern bool has_agg_prelimfunc(Oid aggid);
 extern bool agg_has_prelim_or_invprelim_func(Oid aggid);
-=======
 extern bool get_func_leakproof(Oid funcid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern float4 get_func_cost(Oid funcid);
 extern float4 get_func_rows(Oid funcid);
 extern Oid	get_relname_relid(const char *relname, Oid relnamespace);

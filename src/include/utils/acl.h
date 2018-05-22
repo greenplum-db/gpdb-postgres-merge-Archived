@@ -284,13 +284,10 @@ extern AclMode pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 								AclMode mask, AclMaskHow how);
 extern AclMode pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 						  AclMode mask, AclMaskHow how);
-<<<<<<< HEAD
 extern AclMode pg_extprotocol_aclmask(Oid ptc_oid, Oid roleid,
 					   AclMode mask, AclMaskHow how);
-=======
 extern AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
 				AclMode mask, AclMaskHow how);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern AclResult pg_attribute_aclcheck(Oid table_oid, AttrNumber attnum,
 					  Oid roleid, AclMode mode);
@@ -306,11 +303,8 @@ extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
 extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode);
 extern AclResult pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mode);
-<<<<<<< HEAD
 extern AclResult pg_extprotocol_aclcheck(Oid ptc_oid, Oid roleid, AclMode mode);
-=======
 extern AclResult pg_type_aclcheck(Oid type_oid, Oid roleid, AclMode mode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 			   const char *objectname);

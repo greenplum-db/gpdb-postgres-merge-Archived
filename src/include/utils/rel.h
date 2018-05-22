@@ -4,13 +4,9 @@
  *	  POSTGRES relation descriptor (a/k/a relcache entry) definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/rel.h
@@ -213,7 +209,6 @@ typedef struct StdRdOptions
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
-<<<<<<< HEAD
 
 	bool		appendonly;		/* is this an appendonly relation? */
 	int			blocksize;		/* max varblock size (AO rels only) */
@@ -222,9 +217,7 @@ typedef struct StdRdOptions
 	bool		checksum;		/* checksum (AO rels only) */
 	bool 		columnstore;	/* columnstore (AO only) */
 	char		orientation[NAMEDATALEN]; /* orientation (AO only) */
-=======
 	bool		security_barrier;		/* for views */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

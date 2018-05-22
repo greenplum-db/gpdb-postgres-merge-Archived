@@ -3,11 +3,7 @@
  * json.h
  *	  Declarations for JSON data type support.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/json.h
@@ -21,10 +17,7 @@
 #include "fmgr.h"
 #include "lib/stringinfo.h"
 
-<<<<<<< HEAD
 /* functions in json.c */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern Datum json_in(PG_FUNCTION_ARGS);
 extern Datum json_out(PG_FUNCTION_ARGS);
 extern Datum json_recv(PG_FUNCTION_ARGS);
@@ -33,7 +26,6 @@ extern Datum array_to_json(PG_FUNCTION_ARGS);
 extern Datum array_to_json_pretty(PG_FUNCTION_ARGS);
 extern Datum row_to_json(PG_FUNCTION_ARGS);
 extern Datum row_to_json_pretty(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum to_json(PG_FUNCTION_ARGS);
 
 extern Datum json_agg_transfn(PG_FUNCTION_ARGS);
@@ -56,8 +48,6 @@ extern Datum json_array_elements(PG_FUNCTION_ARGS);
 extern Datum json_populate_record(PG_FUNCTION_ARGS);
 extern Datum json_populate_recordset(PG_FUNCTION_ARGS);
 
-=======
 extern void escape_json(StringInfo buf, const char *str);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif   /* JSON_H */

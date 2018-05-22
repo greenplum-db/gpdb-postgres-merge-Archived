@@ -11,9 +11,6 @@
  * A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS, available from
  * http://www.ross.net/crc/download/crc_v3.txt or several other net sites.
  *
-<<<<<<< HEAD:src/backend/utils/hash/pg_crc.c
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
  * We use a normal (not "reflected", in Williams' terms) CRC, using initial
  * all-ones register contents and a final bit inversion.
  *
@@ -22,22 +19,14 @@
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56:src/include/utils/pg_crc_tables.h
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc_tables.h
  *
  *-------------------------------------------------------------------------
  */
-<<<<<<< HEAD:src/backend/utils/hash/pg_crc.c
-
-#include "c.h"
-
-#include "utils/pg_crc.h"
-=======
 #ifndef PG_CRC_TABLES_H
 #define PG_CRC_TABLES_H
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56:src/include/utils/pg_crc_tables.h
 
 /*
  * Lookup table for calculating CRC-32 using Sarwate's algorithm.
@@ -113,8 +102,6 @@ const uint32 pg_crc32_table[256] = {
 	0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
 	0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
-<<<<<<< HEAD:src/backend/utils/hash/pg_crc.c
-=======
 
 
 #ifdef PROVIDE_64BIT_CRC
@@ -530,4 +517,3 @@ const uint64 pg_crc64_table[256] = {
 #endif   /* PROVIDE_64BIT_CRC */
 
 #endif   /* PG_CRC_TABLES_H */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56:src/include/utils/pg_crc_tables.h

@@ -4,13 +4,9 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2011, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * src/include/utils/guc.h
@@ -696,7 +692,6 @@ extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *va
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern ArrayType *GUCArrayReset(ArrayType *array);
 
-<<<<<<< HEAD
 extern void pg_timezone_abbrev_initialize(void);
 
 extern List *gp_guc_list_show(GucSource excluding, List *guclist);
@@ -712,8 +707,6 @@ extern void set_gp_replication_config(const char *name, const char *value);
 
 extern bool parse_real(const char *value, double *result);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #ifdef EXEC_BACKEND
 extern void write_nondefault_variables(GucContext context);
 extern void read_nondefault_variables(void);

@@ -42,14 +42,12 @@ extern void AtSubCommit_Snapshot(int level);
 extern void AtSubAbort_Snapshot(int level);
 extern void AtEOXact_Snapshot(bool isCommit);
 
-<<<<<<< HEAD
 extern void LogDistributedSnapshotInfo(Snapshot snapshot, const char *prefix);
 extern DistributedSnapshotWithLocalMapping *GetCurrentDistributedSnapshotWithLocalMapping(void);
-=======
+
 extern Datum pg_export_snapshot(PG_FUNCTION_ARGS);
 extern void ImportSnapshot(const char *idstr);
 extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* SNAPMGR_H */

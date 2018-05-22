@@ -107,16 +107,13 @@ extern Datum timestamp_recv(PG_FUNCTION_ARGS);
 extern Datum timestamp_send(PG_FUNCTION_ARGS);
 extern Datum timestamptypmodin(PG_FUNCTION_ARGS);
 extern Datum timestamptypmodout(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum timestamp_interval_bound(PG_FUNCTION_ARGS);
 extern Datum timestamp_interval_bound_shift(PG_FUNCTION_ARGS);
 extern Datum timestamp_interval_bound_shift_reg(PG_FUNCTION_ARGS);
 extern Datum timestamptz_interval_bound(PG_FUNCTION_ARGS);
 extern Datum timestamptz_interval_bound_shift(PG_FUNCTION_ARGS);
 extern Datum timestamptz_interval_bound_shift_reg(PG_FUNCTION_ARGS);
-=======
 extern Datum timestamp_transform(PG_FUNCTION_ARGS);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern Datum timestamp_scale(PG_FUNCTION_ARGS);
 extern Datum timestamp_eq(PG_FUNCTION_ARGS);
 extern Datum timestamp_ne(PG_FUNCTION_ARGS);

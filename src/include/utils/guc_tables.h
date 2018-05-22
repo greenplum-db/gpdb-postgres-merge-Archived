@@ -5,13 +5,9 @@
  *
  * See src/backend/utils/misc/README for design notes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  *	  src/include/utils/guc_tables.h
  *
@@ -203,7 +199,6 @@ struct config_generic
 	int			sourceline;		/* line in source file */
 };
 
-<<<<<<< HEAD
 /* bit values in flags field are defined in guc.h */
 
 #define GUC_NOT_WHILE_SEC_REST	0x8000	/* can't set if security restricted */
@@ -212,8 +207,6 @@ struct config_generic
 
 #define GUC_DISALLOW_USER_SET  0x20000 /* Do not allow this GUC to be set by the user */
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* bit values in status field */
 #define GUC_IS_IN_FILE		0x0001		/* found it in config file */
 /*

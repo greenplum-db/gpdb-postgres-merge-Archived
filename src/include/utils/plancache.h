@@ -130,36 +130,7 @@ extern void ResetPlanCache(void);
 
 extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
-<<<<<<< HEAD
 				 NodeTag sourceTag,
-				 const char *commandTag,
-				 Oid *param_types,
-				 int num_params,
-				 int cursor_options,
-				 List *stmt_list,
-				 bool fully_planned,
-				 bool fixed_result);
-extern CachedPlanSource *FastCreateCachedPlan(Node *raw_parse_tree,
-					 char *query_string,
-					 NodeTag sourceTag,
-					 const char *commandTag,
-					 Oid *param_types,
-					 int num_params,
-					 int cursor_options,
-					 List *stmt_list,
-					 bool fully_planned,
-					 bool fixed_result,
-					 MemoryContext context);
-extern void CachedPlanSetParserHook(CachedPlanSource *plansource,
-						ParserSetupHook parserSetup,
-						void *parserSetupArg);
-extern void DropCachedPlan(CachedPlanSource *plansource);
-extern CachedPlan *RevalidateCachedPlan(CachedPlanSource *plansource,
-					 bool useResOwner);
-extern CachedPlan *RevalidateCachedPlanWithParams(CachedPlanSource *plansource,
-							   bool useResOwner, ParamListInfo boundParams, IntoClause *intoClause);
-extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
-=======
 				 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
 				   List *querytree_list,
@@ -179,7 +150,6 @@ extern void CachedPlanSetParentContext(CachedPlanSource *plansource,
 
 extern CachedPlanSource *CopyCachedPlan(CachedPlanSource *plansource);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern bool CachedPlanIsValid(CachedPlanSource *plansource);
 
 extern List *CachedPlanGetTargetList(CachedPlanSource *plansource);
