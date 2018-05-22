@@ -67,13 +67,6 @@ extern bool pg_interpret_timezone_abbrev(const char *abbrev,
 extern size_t pg_strftime(char *s, size_t max, const char *format,
 			const struct pg_tm * tm);
 
-<<<<<<< HEAD
-extern void pg_timezone_initialize(void);
-extern pg_tz *pg_tzset(const char *tzname);
-extern pg_tz *pg_tzset_offset(long gmtoffset);
-extern bool pg_tz_acceptable(pg_tz *tz);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
 extern bool pg_tz_acceptable(pg_tz *tz);
@@ -90,9 +83,6 @@ extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
 extern void pg_tzenumerate_end(pg_tzenum *dir);
 
-<<<<<<< HEAD
-extern pg_tz *session_timezone;
-extern pg_tz *log_timezone;
 /*
  * GPDB_92_MERGE_FIXME: Remove when commit ca4af308c32 has been merged.
  * gmt_timezone has been made obsolete with log_timezone being set by
@@ -188,6 +178,4 @@ gp_get_elapsed_ms(GpMonotonicTime *time)
     return gp_get_elapsed_us(time) / (USECS_PER_SECOND / MSECS_PER_SECOND);
 }
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif   /* _PGTIME_H */
