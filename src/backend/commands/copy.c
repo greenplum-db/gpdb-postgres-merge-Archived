@@ -4201,7 +4201,8 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 					  nBufferedTuples,
 					  mycid,
 					  hi_options,
-					  bistate);
+					  bistate,
+					  GetCurrentTransactionId());
 	MemoryContextSwitchTo(oldcontext);
 
 	/*

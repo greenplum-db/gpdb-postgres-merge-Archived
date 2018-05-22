@@ -274,14 +274,10 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
 				recptr = log_heap_visible(rel->rd_node, heapBlk, buf,
 										  cutoff_xid);
 			PageSetLSN(page, recptr);
-<<<<<<< HEAD
-		MarkBufferDirty(*buf);
-=======
 			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);

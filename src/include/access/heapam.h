@@ -57,25 +57,15 @@ extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode, 
 								  bool noWait);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
-<<<<<<< HEAD
-extern Relation try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode,
-									bool noWait);
-
-=======
 extern Relation relation_openrv_extended(const RangeVar *relation,
 						 LOCKMODE lockmode, bool missing_ok);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void relation_close(Relation relation, LOCKMODE lockmode);
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
-<<<<<<< HEAD
 extern Relation try_heap_open(Oid relationId, LOCKMODE lockmode, bool noWait);
-extern Relation try_heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
-=======
 extern Relation heap_openrv_extended(const RangeVar *relation,
 					 LOCKMODE lockmode, bool missing_ok);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #define heap_close(r,l)  relation_close(r,l)
 
@@ -127,13 +117,9 @@ extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
 
 extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-<<<<<<< HEAD
 					   int options, BulkInsertState bistate, TransactionId xid);
-=======
-			int options, BulkInsertState bistate);
 extern void heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid);
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
 			ItemPointer ctid, TransactionId *update_xmax,
 			CommandId cid, Snapshot crosscheck, bool wait);
@@ -188,7 +174,6 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 				TransactionId cutoff_xid,
 				OffsetNumber *offsets, int offcnt);
-<<<<<<< HEAD
 
 extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
 								  Page page);
@@ -196,12 +181,11 @@ extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber 
 extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
 										  ForkNumber forkNum,
 										  BlockNumber blkno, Page page);
-=======
+
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, Page page);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

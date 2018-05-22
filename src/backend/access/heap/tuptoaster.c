@@ -76,14 +76,10 @@ do { \
 #define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
 
 static void toast_delete_datum(Relation rel, Datum value);
-<<<<<<< HEAD
-static Datum toast_save_datum(Relation rel, Datum value, bool isFrozen, int options);
-=======
 static Datum toast_save_datum(Relation rel, Datum value,
-				 struct varlena * oldexternal, int options);
+				 struct varlena * oldexternal, bool isFrozen, int options);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static struct varlena *toast_fetch_datum(struct varlena * attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
 						int32 sliceoffset, int32 length);
@@ -772,7 +768,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	 * ----------
 	 */
 
-<<<<<<< HEAD
 	if (!ismemtuple)
 	{
 		/* compute header overhead --- this should match heap_form_tuple() */
@@ -790,17 +785,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		maxDataLen = toast_tuple_target;
 		hoff = -1; /* keep compiler quiet about using 'hoff' uninitialized */
 	}
-=======
-	/* compute header overhead --- this should match heap_form_tuple() */
-	hoff = offsetof(HeapTupleHeaderData, t_bits);
-	if (has_nulls)
-		hoff += BITMAPLEN(numAttrs);
-	if (newtup->t_data->t_infomask & HEAP_HASOID)
-		hoff += sizeof(Oid);
-	hoff = MAXALIGN(hoff);
-	/* now convert to a limit on the tuple data size */
-	maxDataLen = TOAST_TUPLE_TARGET - hoff;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress.  Also find large
@@ -882,12 +866,8 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		{
 			old_value = toast_values[i];
 			toast_action[i] = 'p';
-<<<<<<< HEAD
-			toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
-=======
 			toast_values[i] = toast_save_datum(rel, toast_values[i],
-											   toast_oldexternal[i], options);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+											   toast_oldexternal[i], isFrozen, options);
 			if (toast_free[i])
 				pfree(DatumGetPointer(old_value));
 			toast_free[i] = true;
@@ -937,12 +917,8 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
-=======
 		toast_values[i] = toast_save_datum(rel, toast_values[i],
-										   toast_oldexternal[i], options);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+										   toast_oldexternal[i], isFrozen, options);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1063,12 +1039,8 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-<<<<<<< HEAD
-		toast_values[i] = toast_save_datum(rel, toast_values[i], isFrozen, options);
-=======
 		toast_values[i] = toast_save_datum(rel, toast_values[i],
-										   toast_oldexternal[i], options);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+										   toast_oldexternal[i], isFrozen, options);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 		toast_free[i] = true;
@@ -1089,7 +1061,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 	 */
 	if (need_change)
 	{
-<<<<<<< HEAD
 		if(ismemtuple)
 		{
 			result_gtuple = (GenericTuple) memtuple_form_to(pbind, toast_values, toast_isnull, NULL, NULL, false);
@@ -1158,61 +1129,6 @@ toast_insert_or_update_generic(Relation rel, GenericTuple newtup, GenericTuple o
 							has_nulls ? new_data->t_bits : NULL);
 			result_gtuple = (GenericTuple) result_tuple;
 		}
-=======
-		HeapTupleHeader olddata = newtup->t_data;
-		HeapTupleHeader new_data;
-		int32		new_header_len;
-		int32		new_data_len;
-		int32		new_tuple_len;
-
-		/*
-		 * Calculate the new size of the tuple.
-		 *
-		 * Note: we used to assume here that the old tuple's t_hoff must equal
-		 * the new_header_len value, but that was incorrect.  The old tuple
-		 * might have a smaller-than-current natts, if there's been an ALTER
-		 * TABLE ADD COLUMN since it was stored; and that would lead to a
-		 * different conclusion about the size of the null bitmap, or even
-		 * whether there needs to be one at all.
-		 */
-		new_header_len = offsetof(HeapTupleHeaderData, t_bits);
-		if (has_nulls)
-			new_header_len += BITMAPLEN(numAttrs);
-		if (olddata->t_infomask & HEAP_HASOID)
-			new_header_len += sizeof(Oid);
-		new_header_len = MAXALIGN(new_header_len);
-		new_data_len = heap_compute_data_size(tupleDesc,
-											  toast_values, toast_isnull);
-		new_tuple_len = new_header_len + new_data_len;
-
-		/*
-		 * Allocate and zero the space needed, and fill HeapTupleData fields.
-		 */
-		result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_tuple_len);
-		result_tuple->t_len = new_tuple_len;
-		result_tuple->t_self = newtup->t_self;
-		result_tuple->t_tableOid = newtup->t_tableOid;
-		new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
-		result_tuple->t_data = new_data;
-
-		/*
-		 * Copy the existing tuple header, but adjust natts and t_hoff.
-		 */
-		memcpy(new_data, olddata, offsetof(HeapTupleHeaderData, t_bits));
-		HeapTupleHeaderSetNatts(new_data, numAttrs);
-		new_data->t_hoff = new_header_len;
-		if (olddata->t_infomask & HEAP_HASOID)
-			HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
-
-		/* Copy over the data, and fill the null bitmap if needed */
-		heap_fill_tuple(tupleDesc,
-						toast_values,
-						toast_isnull,
-						(char *) new_data + new_header_len,
-						new_data_len,
-						&(new_data->t_infomask),
-						has_nulls ? new_data->t_bits : NULL);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 		result_gtuple = newtup;
@@ -1636,12 +1552,8 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-<<<<<<< HEAD
-toast_save_datum(Relation rel, Datum value, bool isFrozen, int options)
-=======
 toast_save_datum(Relation rel, Datum value,
-				 struct varlena * oldexternal, int options)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+				 struct varlena * oldexternal, bool isFrozen, int options)
 {
 	Relation	toastrel;
 	Relation	toastidx;

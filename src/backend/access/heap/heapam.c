@@ -87,7 +87,7 @@ static HeapScanDesc heap_beginscan_internal(Relation relation,
 						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan);
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
-					TransactionId xid, CommandId cid, int options);
+					TransactionId xid, CommandId cid, int options, bool isFrozen);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 				ItemPointerData from, Buffer newbuf, HeapTuple newtup,
 				bool all_visible_cleared, bool new_all_visible_cleared);
@@ -230,15 +230,9 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Be sure to check for interrupts at least once per page.  Checks at
-	 * higher code levels won't be able to stop a seqscan that encounters
-	 * many pages' worth of consecutive dead tuples.
-=======
 	 * Be sure to check for interrupts at least once per page.	Checks at
 	 * higher code levels won't be able to stop a seqscan that encounters many
 	 * pages' worth of consecutive dead tuples.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -877,8 +871,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 }
 
 
-<<<<<<< HEAD
-=======
 #if defined(DISABLE_COMPLEX_MACRO)
 /*
  * This is formatted so oddly so that the correspondence to the macro
@@ -925,7 +917,6 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 #endif   /* defined(DISABLE_COMPLEX_MACRO) */
 
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* ----------------------------------------------------------------
  *					 heap access method interface
  * ----------------------------------------------------------------
@@ -1197,13 +1188,12 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, false);
 
-<<<<<<< HEAD
 	/* 
 	 * use try_relation_open instead of relation_open so that we can
 	 * throw a more graceful error message if the relation was dropped
 	 * between the RangeVarGetRelid and when we try to open the relation.
 	 */
-	rel = try_relation_open(relOid, lockmode, false);
+	rel = try_relation_open(relOid, NoLock, false);
 
 	if (!RelationIsValid(rel))
 	{
@@ -1224,10 +1214,6 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	}
 
 	return rel;
-=======
-	/* Let relation_open do the rest */
-	return relation_open(relOid, NoLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* ----------------
@@ -1240,12 +1226,8 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
  * ----------------
  */
 Relation
-<<<<<<< HEAD
-try_relation_openrv(const RangeVar *relation, LOCKMODE lockmode, bool noWait)
-=======
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	Oid			relOid;
 
@@ -1256,12 +1238,8 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 	if (!OidIsValid(relOid))
 		return NULL;
 
-	/* Let relation_open do the rest */
-<<<<<<< HEAD
+	/* Let try_relation_open do the rest */
 	return try_relation_open(relOid, lockmode, noWait);
-=======
-	return relation_open(relOid, NoLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* ----------------
@@ -1406,11 +1384,7 @@ heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 {
 	Relation	r;
 
-<<<<<<< HEAD
-	r = try_relation_openrv(relation, lockmode, false);
-=======
 	r = relation_openrv_extended(relation, lockmode, missing_ok);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (r)
 	{
@@ -1504,8 +1478,6 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	 */
 	scan->rs_pageatatime = IsMVCCSnapshot(snapshot);
 
-<<<<<<< HEAD
-=======
 	/*
 	 * For a seqscan in a serializable transaction, acquire a predicate lock
 	 * on the entire relation. This is required not only to lock all the
@@ -1523,7 +1495,6 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also calls
 	 * initscan() and we don't want to allocate memory again
@@ -1958,16 +1929,10 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;
 		}
 
-<<<<<<< HEAD
-		heapTuple.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
-		heapTuple.t_len = ItemIdGetLength(lp);
-		heapTuple.t_self = *tid;
-=======
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
 		heapTuple->t_tableOid = relation->rd_id;
 		heapTuple->t_self = *tid;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
@@ -1984,12 +1949,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 								 HeapTupleHeaderGetXmin(heapTuple->t_data)))
 			break;
 
-<<<<<<< HEAD
-		/* If it's visible per the snapshot, we must return it */
-		valid = HeapTupleSatisfiesVisibility(relation, &heapTuple, snapshot, buffer);
-		CheckForSerializableConflictOut(valid, relation, &heapTuple, buffer);
-		if (valid)
-=======
 		/*
 		 * When first_call is true (and thus, skip is initially false) we'll
 		 * return the first tuple we find.	But on later passes, heapTuple
@@ -1998,7 +1957,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * we skip it and return the next match we find.
 		 */
 		if (!skip)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			/* If it's visible per the snapshot, we must return it */
 			valid = HeapTupleSatisfiesVisibility(heapTuple, snapshot, buffer);
@@ -2021,12 +1979,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * transactions.
 		 */
 		if (all_dead && *all_dead &&
-<<<<<<< HEAD
-			HeapTupleSatisfiesVacuum(relation, heapTuple.t_data, RecentGlobalXmin,
-									 buffer) != HEAPTUPLE_DEAD)
-=======
 			!HeapTupleIsSurelyDead(heapTuple->t_data, RecentGlobalXmin))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			*all_dead = false;
 
 		/*
@@ -2172,13 +2125,8 @@ heap_get_latest_tid(Relation relation,
 		 * Check time qualification of tuple; if visible, set it as the new
 		 * result candidate.
 		 */
-<<<<<<< HEAD
 		valid = HeapTupleSatisfiesVisibility(relation, &tp, snapshot, buffer);
-		CheckForSerializableConflictOut(valid, relation, &tp, buffer);
-=======
-		valid = HeapTupleSatisfiesVisibility(&tp, snapshot, buffer);
 		CheckForSerializableConflictOut(valid, relation, &tp, buffer, snapshot);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (valid)
 			*tid = ctid;
 
@@ -2290,61 +2238,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		all_visible_cleared = false;
 
-<<<<<<< HEAD
-	Insist(RelationIsHeap(relation));
-
-	if (relation->rd_rel->relhasoids)
-	{
-#ifdef NOT_USED
-		/* this is redundant with an Assert in HeapTupleSetOid */
-		Assert(tup->t_data->t_infomask & HEAP_HASOID);
-#endif
-
-		/*
-		 * If the object id of this tuple has already been assigned, trust the
-		 * caller.	There are a couple of ways this can happen.  At initial db
-		 * creation, the backend program sets oids for tuples. When we define
-		 * an index, we set the oid.  Finally, in the future, we may allow
-		 * users to set their own object ids in order to support a persistent
-		 * object store (objects need to contain pointers to one another).
-		 */
-		if (!OidIsValid(HeapTupleGetOid(tup)))
-		{
-			Oid			oid = InvalidOid;
-
-			if ((Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade) && IsSystemRelation(relation))
-				oid = GetPreassignedOidForTuple(relation, tup);
-
-			if (!OidIsValid(oid))
-				oid = GetNewOid(relation);
-
-			HeapTupleSetOid(tup, oid);
-		}
-	}
-	else
-	{
- 		/* Check there is not space for an OID, since pgclass.relhasoids says
- 		 * there shouldn't be one.  The hidden "escape hatch" GUC is here so 
- 		 * that we can revert to the old (no error) behavior in the unlikely
- 		 * event of an emergency in the field.
-		 */
- 		if ( tup->t_data->t_infomask & HEAP_HASOID && gp_heap_require_relhasoids_match )
- 		{
- 			elog(ERROR, "tuple has oid, but schema does not");
- 		}
-	}
-
-	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
-	if (isFrozen)
-		tup->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
-	tup->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
-	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
-	HeapTupleHeaderSetXmin(tup->t_data, xid);
-	HeapTupleHeaderSetCmin(tup->t_data, cid);
-	HeapTupleHeaderSetXmax(tup->t_data, 0);		/* for cleanliness */
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * Fill in tuple header fields, assign an OID, and toast the tuple if
 	 * necessary.
@@ -2352,22 +2245,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-<<<<<<< HEAD
-	if (relation->rd_rel->relkind != RELKIND_RELATION)
-	{
-		/* toast table entries should never be recursively toasted */
-		Assert(!HeapTupleHasExternal(tup));
-		heaptup = tup;
-	}
-	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
-		heaptup = toast_insert_or_update(relation, tup, NULL,
-										 TOAST_TUPLE_TARGET, isFrozen,
-										 options);
-	else
-		heaptup = tup;
-=======
-	heaptup = heap_prepare_insert(relation, tup, xid, cid, options);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	heaptup = heap_prepare_insert(relation, tup, xid, cid, options, isFrozen);
 
 	/*
 	 * We're about to do the actual insert -- but check for conflict first, to
@@ -2488,7 +2366,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * the heaptup data structure is all in local memory, not in the shared
 	 * buffer.
 	 */
-<<<<<<< HEAD
 	if (IsSystemRelation(relation))
 	{
 		/*
@@ -2498,11 +2375,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		if (Gp_role == GP_ROLE_DISPATCH && relation->rd_rel->relhasoids)
 			AddDispatchOidFromTuple(relation, heaptup);
 
-		CacheInvalidateHeapTuple(relation, heaptup);
+		CacheInvalidateHeapTuple(relation, heaptup, NULL);
 	}
-=======
-	CacheInvalidateHeapTuple(relation, heaptup, NULL);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	pgstat_count_heap_insert(relation, 1);
 
@@ -2528,8 +2402,10 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
  */
 static HeapTuple
 heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
-					CommandId cid, int options)
+					CommandId cid, int options, bool isFrozen)
 {
+	Insist(RelationIsHeap(relation));
+
 	if (relation->rd_rel->relhasoids)
 	{
 #ifdef NOT_USED
@@ -2546,21 +2422,39 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		 * object store (objects need to contain pointers to one another).
 		 */
 		if (!OidIsValid(HeapTupleGetOid(tup)))
-			HeapTupleSetOid(tup, GetNewOid(relation));
+		{
+			Oid         oid = InvalidOid;
+
+			if ((Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade) && IsSystemRelation(relation))
+				oid = GetPreassignedOidForTuple(relation, tup);
+
+			if (!OidIsValid(oid))
+				oid = GetNewOid(relation);
+
+			HeapTupleSetOid(tup, oid);
+		}
 	}
 	else
 	{
-		/* check there is not space for an OID */
-		Assert(!(tup->t_data->t_infomask & HEAP_HASOID));
+		/* Check there is not space for an OID, since pgclass.relhasoids says
+		 * there shouldn't be one.  The hidden "escape hatch" GUC is here so
+		 * that we can revert to the old (no error) behavior in the unlikely
+		 * event of an emergency in the field.
+		 */
+		if ( tup->t_data->t_infomask & HEAP_HASOID && gp_heap_require_relhasoids_match )
+		{
+			elog(ERROR, "tuple has oid, but schema does not");
+		}
 	}
 
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
+	if (isFrozen)
+		tup->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 	tup->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	HeapTupleHeaderSetXmin(tup->t_data, xid);
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	HeapTupleHeaderSetXmax(tup->t_data, 0);		/* for cleanliness */
-	tup->t_tableOid = RelationGetRelid(relation);
 
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
@@ -2573,7 +2467,9 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		return tup;
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
-		return toast_insert_or_update(relation, tup, NULL, options);
+		return toast_insert_or_update(relation, tup, NULL,
+									  TOAST_TUPLE_TARGET, isFrozen,
+									  options);
 	else
 		return tup;
 }
@@ -2591,9 +2487,9 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
  */
 void
 heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
-				  CommandId cid, int options, BulkInsertState bistate)
+				  CommandId cid, int options, BulkInsertState bistate, TransactionId xid)
 {
-	TransactionId xid = GetCurrentTransactionId();
+	bool        isFrozen = (xid == FrozenTransactionId);
 	HeapTuple  *heaptuples;
 	int			i;
 	int			ndone;
@@ -3268,16 +3164,11 @@ heap_update_internal(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Page		page;
 	BlockNumber block;
 	Buffer		buffer,
-<<<<<<< HEAD
-				newbuf;
-	bool		need_toast;
-=======
 				newbuf,
 				vmbuffer = InvalidBuffer,
 				vmbuffer_new = InvalidBuffer;
 	bool		need_toast,
 				already_marked;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	Size		newtupsize,
 				pagefree;
 	bool		have_tuple_lock = false;
