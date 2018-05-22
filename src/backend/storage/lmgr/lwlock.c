@@ -91,9 +91,6 @@ NON_EXEC_STATIC LWLockPadded *LWLockArray = NULL;
 #define MAX_SIMUL_LWLOCKS	100
 #define MAX_FRAME_DEPTH  	64
 
-/* LW lock object id current PGPPROC is sleeping on (valid when PGPROC->lwWaiting = true) */
-static LWLockId lwWaitingLockId = NullLock;
-
 static int	num_held_lwlocks = 0;
 static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
 static bool held_lwlocks_exclusive[MAX_SIMUL_LWLOCKS];
@@ -438,25 +435,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 #ifdef LWLOCK_STATS
 	/* Set up local count state first time through in a given process */
 	if (counts_for_pid != MyProcPid)
-<<<<<<< HEAD
-	{
-		int		   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
-		int			numLocks = LWLockCounter[1];
-
-		sh_acquire_counts = calloc(numLocks, sizeof(int));
-		ex_acquire_counts = calloc(numLocks, sizeof(int));
-		block_counts = calloc(numLocks, sizeof(int));
-
-		if(!sh_acquire_counts || !ex_acquire_counts || !block_counts)
-			ereport(ERROR, errcode(ERRCODE_OUT_OF_MEMORY),
-				errmsg("LWLockAcquire failed: out of memory"));
-
-		counts_for_pid = MyProcPid;
-		on_shmem_exit(print_lwlock_stats, 0);
-	}
-=======
 		init_lwlock_stats();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Count lock acquisition attempts */
 	if (mode == LW_EXCLUSIVE)
 		ex_acquire_counts[lockid]++;
@@ -550,12 +529,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 			elog(PANIC, "cannot wait without a PGPROC structure");
 
 		proc->lwWaiting = true;
-<<<<<<< HEAD
-		proc->lwExclusive = (mode == LW_EXCLUSIVE);
-		lwWaitingLockId = lockid;
-=======
 		proc->lwWaitMode = mode;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		proc->lwWaitLink = NULL;
 		if (lock->head == NULL)
 			lock->head = proc;
@@ -963,35 +937,16 @@ LWLockRelease(LWLockId lockid)
 			if (proc->lwWaitMode != LW_EXCLUSIVE)
 			{
 				while (proc->lwWaitLink != NULL &&
-<<<<<<< HEAD
-					   !proc->lwWaitLink->lwExclusive)
-				{
-					proc = proc->lwWaitLink;
-					if (proc->pid != 0)
-					{
-						lock->releaseOK = false;
-					}					
-=======
 					   proc->lwWaitLink->lwWaitMode != LW_EXCLUSIVE)
 				{
 					if (proc->lwWaitMode != LW_WAIT_UNTIL_FREE)
 						releaseOK = false;
 					proc = proc->lwWaitLink;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 			}
 			/* proc is now the last PGPROC to be released */
 			lock->head = proc->lwWaitLink;
 			proc->lwWaitLink = NULL;
-<<<<<<< HEAD
-			
-			/* proc->pid can be 0 if process exited while waiting for lock */
-			if (proc->pid != 0)
-			{
-				/* prevent additional wakeups until retryer gets to run */
-				lock->releaseOK = false;
-			}
-=======
 
 			/*
 			 * Prevent additional wakeups until retryer gets to run. Backends
@@ -1002,7 +957,6 @@ LWLockRelease(LWLockId lockid)
 				releaseOK = false;
 
 			lock->releaseOK = releaseOK;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		else
 		{

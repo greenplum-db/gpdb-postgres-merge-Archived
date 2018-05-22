@@ -38,12 +38,8 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-<<<<<<< HEAD
-#include "storage/lmgr.h"
-=======
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -278,16 +274,10 @@ HTAB *LockMethodProcLockHash;
 HTAB *LockMethodLocalHash;
 
 
-<<<<<<< HEAD
-/* private state for GrantAwaitedLock */
-LOCALLOCK *awaitedLock;
-ResourceOwner awaitedOwner;
-=======
 /* private state for error cleanup */
 static LOCALLOCK *StrongLockInProgress;
-static LOCALLOCK *awaitedLock;
-static ResourceOwner awaitedOwner;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+LOCALLOCK *awaitedLock;
+ResourceOwner awaitedOwner;
 
 
 #ifdef LOCK_DEBUG
@@ -369,22 +359,15 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 
 
 static uint32 proclock_hash(const void *key, Size keysize);
-<<<<<<< HEAD
 void RemoveLocalLock(LOCALLOCK *locallock);
-=======
-static void RemoveLocalLock(LOCALLOCK *locallock);
 static PROCLOCK *SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 				 const LOCKTAG *locktag, uint32 hashcode, LOCKMODE lockmode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner);
 static void BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode);
 static void FinishStrongLockAcquire(void);
 static void WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner);
 static void ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock);
-<<<<<<< HEAD
 static void LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 			PROCLOCK *proclock, LockMethod lockMethodTable);
 static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
@@ -847,69 +830,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	/*
-<<<<<<< HEAD
-	 * Find or create a lock with this tag.
-	 *
-	 * Note: if the locallock object already existed, it might have a pointer
-	 * to the lock already ... but we probably should not assume that that
-	 * pointer is valid, since a lock object with no locks can go away
-	 * anytime.
-	 */
-	lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
-												(void *) locktag,
-												hashcode,
-												HASH_ENTER_NULL,
-												&found);
-	if (!lock)
-	{
-		LWLockRelease(partitionLock);
-		if (reportMemoryError)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory"),
-					 errhint("You might need to increase max_locks_per_transaction.")));
-		else
-			return LOCKACQUIRE_NOT_AVAIL;
-	}
-	locallock->lock = lock;
-
-	/*
-	 * if it's a new lock object, initialize it
-	 */
-	if (!found)
-	{
-		lock->grantMask = 0;
-		lock->waitMask = 0;
-		SHMQueueInit(&(lock->procLocks));
-		ProcQueueInit(&(lock->waitProcs));
-		lock->nRequested = 0;
-		lock->nGranted = 0;
-		lock->holdTillEndXact = false;
-		MemSet(lock->requested, 0, sizeof(int) * MAX_LOCKMODES);
-		MemSet(lock->granted, 0, sizeof(int) * MAX_LOCKMODES);
-		LOCK_PRINT("LockAcquire: new", lock, lockmode);
-		if (MyProc != lockHolderProcPtr)
-			elog(DEBUG1,"Reader trying to get new lock writer never saw");
-	}
-	else
-	{
-		LOCK_PRINT("LockAcquire: found", lock, lockmode);
-		Assert((lock->nRequested >= 0) && (lock->requested[lockmode] >= 0));
-		Assert((lock->nGranted >= 0) && (lock->granted[lockmode] >= 0));
-		Assert(lock->nGranted <= lock->nRequested);
-	}
-
-	/*
-	 * Create the hash key for the proclock table.
-	 */
-	proclocktag.myLock = lock;
-	proclocktag.myProc = MyProc;
-
-	proclock_hashcode = ProcLockHashCode(&proclocktag, hashcode);
-
-	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Find or create a proclock entry with this tag
 	 */
 	proclock = SetupLockInTable(lockMethodTable, MyProc, locktag,
@@ -927,72 +847,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			return LOCKACQUIRE_NOT_AVAIL;
 	}
 	locallock->proclock = proclock;
-<<<<<<< HEAD
-
-	/*
-	 * If new, initialize the new entry
-	 */
-	if (!found)
-	{
-		proclock->holdMask = 0;
-		proclock->releaseMask = 0;
-		/* Add proclock to appropriate lists */
-		SHMQueueInsertBefore(&lock->procLocks, &proclock->lockLink);
-		SHMQueueInsertBefore(&(MyProc->myProcLocks[partition]),
-							 &proclock->procLink);
-		PROCLOCK_PRINT("LockAcquire: new", proclock);
-	}
-	else
-	{
-		PROCLOCK_PRINT("LockAcquire: found", proclock);
-		Assert((proclock->holdMask & ~lock->grantMask) == 0);
-
-#ifdef CHECK_DEADLOCK_RISK
-
-		/*
-		 * Issue warning if we already hold a lower-level lock on this object
-		 * and do not hold a lock of the requested level or higher. This
-		 * indicates a deadlock-prone coding practice (eg, we'd have a
-		 * deadlock if another backend were following the same code path at
-		 * about the same time).
-		 *
-		 * This is not enabled by default, because it may generate log entries
-		 * about user-level coding practices that are in fact safe in context.
-		 * It can be enabled to help find system-level problems.
-		 *
-		 * XXX Doing numeric comparison on the lockmodes is a hack; it'd be
-		 * better to use a table.  For now, though, this works.
-		 */
-		{
-			int			i;
-
-			for (i = lockMethodTable->numLockModes; i > 0; i--)
-			{
-				if (proclock->holdMask & LOCKBIT_ON(i))
-				{
-					if (i >= (int) lockmode)
-						break;	/* safe: we have a lock >= req level */
-					elog(LOG, "deadlock risk: raising lock level"
-						 " from %s to %s on object %u/%u/%u",
-						 lockMethodTable->lockModeNames[i],
-						 lockMethodTable->lockModeNames[lockmode],
-						 lock->tag.locktag_field1, lock->tag.locktag_field2,
-						 lock->tag.locktag_field3);
-					break;
-				}
-			}
-		}
-#endif   /* CHECK_DEADLOCK_RISK */
-	}
-
-	/*
-	 * lock->nRequested and lock->requested[] count the total number of
-	 * requests, whether granted or waiting, so increment those immediately.
-	 * The other counts don't increment till we get the lock.
-	 */
-	lock->nRequested++;
-	lock->requested[lockmode]++;
-	Assert((lock->nRequested > 0) && (lock->requested[lockmode] > 0));
+	lock = proclock->tag.myLock;
+	locallock->lock = lock;
 
 	/*
 	 * We shouldn't already hold the desired lock; else locallock table is
@@ -1032,8 +888,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		}
 		
 	}
-	else
-	if (proclock->holdMask & LOCKBIT_ON(lockmode))
+	else if (proclock->holdMask & LOCKBIT_ON(lockmode))
 	{
 		elog(LOG, "lock %s on object %u/%u/%u is already held",
 			 lockMethodTable->lockModeNames[lockmode],
@@ -1041,10 +896,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			 lock->tag.locktag_field3);
 		Insist(false);
 	}
-=======
-	lock = proclock->tag.myLock;
-	locallock->lock = lock;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (MyProc == lockHolderProcPtr)
 	{
@@ -1409,16 +1260,6 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 	lock->nRequested++;
 	lock->requested[lockmode]++;
 	Assert((lock->nRequested > 0) && (lock->requested[lockmode] > 0));
-
-	/*
-	 * We shouldn't already hold the desired lock; else locallock table is
-	 * broken.
-	 */
-	if (proclock->holdMask & LOCKBIT_ON(lockmode))
-		elog(ERROR, "lock %s on object %u/%u/%u is already held",
-			 lockMethodTable->lockModeNames[lockmode],
-			 lock->tag.locktag_field1, lock->tag.locktag_field2,
-			 lock->tag.locktag_field3);
 
 	return proclock;
 }
@@ -2177,7 +2018,6 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	return TRUE;
 }
 
-<<<<<<< HEAD
 void
 LockSetHoldTillEndXact(const LOCKTAG *locktag)
 {
@@ -2217,8 +2057,6 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 	}
 }
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * LockReleaseAll -- Release all locks of the specified lock method that
  *		are held by the current process.
@@ -2522,26 +2360,17 @@ LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	}
 	else
 	{
-<<<<<<< HEAD
 		int                     i;
 
 		for (i = nlocks - 1; i >= 0; i--)
 			ReleaseLockIfHeld(locallocks[i], false);
-=======
-		ReleaseLockIfHeld(locallock, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 }
 
 /*
  * ReleaseLockIfHeld
-<<<<<<< HEAD
- *              Release any session-level locks on this lockable object if sessionLock
- *              is true; else, release any locks held by CurrentResourceOwner.
-=======
  *		Release any session-level locks on this lockable object if sessionLock
  *		is true; else, release any locks held by CurrentResourceOwner.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * It is tempting to pass this a ResourceOwner pointer (or NULL for session
  * locks), but without refactoring LockRelease() we cannot support releasing
@@ -2632,7 +2461,6 @@ LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	{
 		int			i;
 
-<<<<<<< HEAD
 		for (i = nlocks - 1; i >= 0; i--)
 			LockReassignOwner(locallocks[i], parent);
 	}
@@ -2662,20 +2490,6 @@ LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent)
 		else if (lockOwners[i].owner == parent)
 			ip = i;
 	}
-=======
-		/*
-		 * Scan to see if there are any locks belonging to current owner or
-		 * its parent
-		 */
-		lockOwners = locallock->lockOwners;
-		for (i = locallock->numLockOwners - 1; i >= 0; i--)
-		{
-			if (lockOwners[i].owner == CurrentResourceOwner)
-				ic = i;
-			else if (lockOwners[i].owner == parent)
-				ip = i;
-		}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (ic < 0)
 		return;					/* no current locks */
@@ -2698,8 +2512,6 @@ LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent)
 	ResourceOwnerForgetLock(CurrentResourceOwner, locallock);
 }
 
-<<<<<<< HEAD
-=======
 /*
  * FastPathGrantRelationLock
  *		Grant lock using per-backend fast-path array, if there is space.
@@ -2930,7 +2742,6 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 	return proclock;
 }
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * GetLockConflicts
  *		Get an array of VirtualTransactionIds of xacts currently holding locks
@@ -3297,7 +3108,6 @@ AtPrepare_Locks(void)
 				haveXactLock = true;
 		}
 
-<<<<<<< HEAD
 		/* gp-change 
 		 *
 		 * We allow 2PC commit transactions to include temp objects.  
@@ -3314,7 +3124,6 @@ AtPrepare_Locks(void)
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
 
-=======
 		/* Ignore it if we have only session lock */
 		if (!haveXactLock)
 			continue;
@@ -3356,7 +3165,6 @@ AtPrepare_Locks(void)
 		 */
 		locallock->holdsStrongLockCount = FALSE;
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/*
 		 * Create a 2PC record.
 		 */
@@ -3417,14 +3225,12 @@ PostPrepare_Locks(TransactionId xid)
 
 	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
 	{
-<<<<<<< HEAD
-		locallock->preparable = false;
-=======
 		LOCALLOCKOWNER *lockOwners = locallock->lockOwners;
 		bool		haveSessionLock;
 		bool		haveXactLock;
 		int			i;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
+		locallock->preparable = false;
 
 		if (locallock->proclock == NULL || locallock->lock == NULL)
 		{
@@ -3441,14 +3247,13 @@ PostPrepare_Locks(TransactionId xid)
 		if (locallock->tag.lock.locktag_type == LOCKTAG_VIRTUALTRANSACTION)
 			continue;
 
-<<<<<<< HEAD
 		/* MPP change for temp objects in 2PC.  we skip over temp
 		 * objects. MPP-1094: NOTE THIS CALL MAY ADD LOCKS TO OUR
 		 * TABLE!
 		 */
 		if (LockTagIsTemp(&locallock->tag.lock))
 			continue;
-=======
+
 		/* Scan to see whether we hold it at session or transaction level */
 		haveSessionLock = haveXactLock = false;
 		for (i = locallock->numLockOwners - 1; i >= 0; i--)
@@ -3468,7 +3273,6 @@ PostPrepare_Locks(TransactionId xid)
 			ereport(PANIC,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot PREPARE while holding both session-level and transaction-level locks on the same object")));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* since our temp-check may be modifying our lock table, we
 		 * just mark these as requiring more work */
@@ -3522,7 +3326,6 @@ PostPrepare_Locks(TransactionId xid)
 
 			lock = proclock->tag.myLock;
 
-<<<<<<< HEAD
 			/* MPP change for support of temp objects in 2PC.
 			 *
 			 * The case where the releaseMask is different than the holdMask is only
@@ -3537,8 +3340,6 @@ PostPrepare_Locks(TransactionId xid)
 			if (!LockMethods[LOCK_LOCKMETHOD(*lock)]->transactional)
 				goto next_item;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			/* Ignore VXID locks */
 			if (lock->tag.locktag_type == LOCKTAG_VIRTUALTRANSACTION)
 				goto next_item;
