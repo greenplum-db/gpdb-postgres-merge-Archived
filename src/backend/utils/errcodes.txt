@@ -2,13 +2,9 @@
 # errcodes.txt
 #      PostgreSQL error codes
 #
-<<<<<<< HEAD
 # Portions Copyright (c) 2005-2008, Greenplum inc.
 # Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-# Copyright (c) 2003-2011, PostgreSQL Global Development Group
-=======
 # Copyright (c) 2003-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #
 # This list serves as the basis for generating source files containing error
 # codes. It is kept in a common format to make sure all these source files have
@@ -402,11 +398,8 @@ Section: Class 53 - Insufficient Resources
 53100    E    ERRCODE_DISK_FULL                                              disk_full
 53200    E    ERRCODE_OUT_OF_MEMORY                                          out_of_memory
 53300    E    ERRCODE_TOO_MANY_CONNECTIONS                                   too_many_connections
-<<<<<<< HEAD
-53400    E    ERRCODE_GP_MEMPROT_KILL                                        gp_memprot_kill
-=======
 53400    E    ERRCODE_CONFIGURATION_LIMIT_EXCEEDED                           configuration_limit_exceeded
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+53500    E    ERRCODE_GP_MEMPROT_KILL                                        gp_memprot_kill
 
 Section: Class 54 - Program Limit Exceeded
 
@@ -433,10 +426,7 @@ Section: Class 57 - Operator Intervention
 57P02    E    ERRCODE_CRASH_SHUTDOWN                                         crash_shutdown
 57P03    E    ERRCODE_CANNOT_CONNECT_NOW                                     cannot_connect_now
 57P04    E    ERRCODE_DATABASE_DROPPED                                       database_dropped
-<<<<<<< HEAD
 57M02    E    ERRCODE_MIRROR_READY                                           mirror_ready
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 Section: Class 58 - System Error (errors external to PostgreSQL itself)
 
