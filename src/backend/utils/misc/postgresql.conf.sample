@@ -58,11 +58,7 @@
 
 #listen_addresses = '*'			# what IP address(es) to listen on;
 					# comma-separated list of addresses;
-<<<<<<< HEAD
 					# defaults to '*', '*' = all
-=======
-					# defaults to 'localhost'; use '*' for all
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					# (change requires restart)
 
 #port = 5432				# sets the database listener port for 
@@ -158,95 +154,6 @@ max_prepared_transactions = 250		# can be 0 or more
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 
-<<<<<<< HEAD
-=======
-
-#------------------------------------------------------------------------------
-# WRITE AHEAD LOG
-#------------------------------------------------------------------------------
-
-# - Settings -
-
-#wal_level = minimal			# minimal, archive, or hot_standby
-					# (change requires restart)
-#fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# synchronization level;
-					# off, local, remote_write, or on
-#wal_sync_method = fsync		# the default is the first option
-					# supported by the operating system:
-					#   open_datasync
-					#   fdatasync (default on Linux)
-					#   fsync
-					#   fsync_writethrough
-					#   open_sync
-#full_page_writes = on			# recover from partial page writes
-#wal_buffers = -1			# min 32kB, -1 sets based on shared_buffers
-					# (change requires restart)
-#wal_writer_delay = 200ms		# 1-10000 milliseconds
-
-#commit_delay = 0			# range 0-100000, in microseconds
-#commit_siblings = 5			# range 1-1000
-
-# - Checkpoints -
-
-#checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
-#checkpoint_timeout = 5min		# range 30s-1h
-#checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
-#checkpoint_warning = 30s		# 0 disables
-
-# - Archiving -
-
-#archive_mode = off		# allows archiving to be done
-				# (change requires restart)
-#archive_command = ''		# command to use to archive a logfile segment
-				# placeholders: %p = path of file to archive
-				#               %f = file name only
-				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
-#archive_timeout = 0		# force a logfile segment switch after this
-				# number of seconds; 0 disables
-
-
-#------------------------------------------------------------------------------
-# REPLICATION
-#------------------------------------------------------------------------------
-
-# - Sending Server(s) -
-
-# Set these on the master and on any standby that will send replication data.
-
-#max_wal_senders = 0		# max number of walsender processes
-				# (change requires restart)
-#wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
-#replication_timeout = 60s	# in milliseconds; 0 disables
-
-# - Master Server -
-
-# These settings are ignored on a standby server.
-
-#synchronous_standby_names = ''	# standby servers that provide sync rep
-				# comma-separated list of application_name
-				# from standby(s); '*' = all
-#vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
-
-# - Standby Servers -
-
-# These settings are ignored on a master server.
-
-#hot_standby = off			# "on" allows queries during recovery
-					# (change requires restart)
-#max_standby_archive_delay = 30s	# max delay before canceling queries
-					# when reading WAL from archive;
-					# -1 allows indefinite delay
-#max_standby_streaming_delay = 30s	# max delay before canceling queries
-					# when reading streaming WAL;
-					# -1 allows indefinite delay
-#wal_receiver_status_interval = 10s	# send replies at least this often
-					# 0 disables
-#hot_standby_feedback = off		# send info from standby to prevent
-					# query conflicts
-
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #------------------------------------------------------------------------------
 # QUERY TUNING
 #------------------------------------------------------------------------------
@@ -328,16 +235,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 					# happen after that much log output.
 					# 0 disables.
 
-<<<<<<< HEAD
-=======
-# These are relevant when logging to syslog:
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-
-# This is only relevant when logging to eventlog (win32):
-#event_source = 'PostgreSQL'
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 # - When to Log -
 
 #client_min_messages = notice		# values in order of decreasing detail:
@@ -399,35 +296,6 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 #log_duration = off
 #log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
-<<<<<<< HEAD
-=======
-#log_line_prefix = ''			# special values:
-					#   %a = application name
-					#   %u = user name
-					#   %d = database name
-					#   %r = remote host and port
-					#   %h = remote host
-					#   %p = process ID
-					#   %t = timestamp without milliseconds
-					#   %m = timestamp with milliseconds
-					#   %i = command tag
-					#   %e = SQL state
-					#   %c = session ID
-					#   %l = session line number
-					#   %s = session start timestamp
-					#   %v = virtual transaction ID
-					#   %x = transaction ID (0 if none)
-					#   %q = stop here in non-session
-					#        processes
-					#   %% = '%'
-					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
-#log_statement = 'none'			# none, ddl, mod, all
-#log_temp_files = -1			# log temporary files equal or larger
-					# than the specified size in kilobytes;
-					# -1 disables, 0 logs all temp files
-#log_timezone = 'GMT'
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #log_statement = 'none'			# none, mod, ddl, all
 #log_temp_files = -1			# Log temporary files equal or larger
@@ -516,12 +384,8 @@ optimizer_analyze_root_partition = on # stats collection on root partitions
 # - Query/Index Statistics Collector -
 
 #track_activities = on
-<<<<<<< HEAD
 #track_counts = off
-=======
-#track_counts = on
 #track_io_timing = off
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #track_functions = none			# none, pl, all
 #track_activity_query_size = 1024 	# (change requires restart)
 #update_process_title = on
@@ -638,7 +502,6 @@ log_autostats=off	# print additional autostats information
 #max_pred_locks_per_transaction = 64	# min 10
 					# (change requires restart)
 
-<<<<<<< HEAD
 #---------------------------------------------------------------------------
 # RESOURCE SCHEDULING
 #---------------------------------------------------------------------------
@@ -662,9 +525,6 @@ gp_resqueue_memory_policy = 'eager_free'	# memory request based queueing.
 #gp_safefswritesize = 0   # minimum size for safe AO writes in a non-mature fs
 max_appendonly_tables = 10000 # Maximum number of append only tables that can 
 							  # participate in writing data concurrently.
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #------------------------------------------------------------------------------
 # VERSION/PLATFORM COMPATIBILITY
 #------------------------------------------------------------------------------

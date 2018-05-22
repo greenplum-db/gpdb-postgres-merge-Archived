@@ -6,13 +6,9 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2011, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -911,20 +907,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
-		{"silent_mode", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Runs the server silently."),
-			gettext_noop("If this parameter is set, the server will automatically run in the "
-				 "background and any controlling terminals are dissociated."),
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&SilentMode,
-		false,
-		NULL, NULL, NULL
-	},
-	{
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{"log_checkpoints", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Logs each checkpoint."),
 			NULL
@@ -2131,17 +2113,10 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"replication_timeout", PGC_SUSET, WAL_REPLICATION,
+		{"replication_timeout", PGC_SUSET, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
 			NULL,
 			GUC_UNIT_MS | GUC_SUPERUSER_ONLY
-=======
-		{"replication_timeout", PGC_SIGHUP, REPLICATION_SENDING,
-			gettext_noop("Sets the maximum time to wait for WAL replication."),
-			NULL,
-			GUC_UNIT_MS
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		},
 		&replication_timeout,
 		60 * 1000, 0, INT_MAX,
@@ -2382,16 +2357,10 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Minimum number of tuple inserts, updates or deletes prior to analyze."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-=======
-		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
-			gettext_noop("Minimum number of tuple inserts, updates, or deletes prior to analyze."),
-			NULL
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		},
 		&autovacuum_anl_thresh,
 		50, 0, INT_MAX,
@@ -2674,16 +2643,10 @@ static struct config_real ConfigureNamesReal[] =
 		NULL, NULL, NULL
 	},
 	{
-<<<<<<< HEAD
 		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, DEFUNCT_OPTIONS,
 			gettext_noop("Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-=======
-		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
-			gettext_noop("Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples."),
-			NULL
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		},
 		&autovacuum_anl_scale,
 		0.1, 0.0, 100.0,
@@ -4552,13 +4515,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 
 	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install
-<<<<<<< HEAD
-	 * the default value.  We do it this way because we can't safely install
-	 * a "real" value until my_exec_path is set, which may not have happened
-=======
 	 * the default value.  We do it this way because we can't safely install a
 	 * "real" value until my_exec_path is set, which may not have happened
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * when InitializeGUCOptions runs, so the bootstrap default value cannot
 	 * be the real desired default.
 	 */
@@ -5566,10 +5524,8 @@ set_config_option(const char *name, const char *value,
 	{
 		ereport(elevel,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-<<<<<<< HEAD
-			   errmsg("unrecognized configuration parameter \"%s\"", name),
-			   errSendAlert(false)));
-		return false;
+			   errmsg("unrecognized configuration parameter \"%s\"", name)));
+		return 0;
 	}
 
 	/*
@@ -5585,22 +5541,6 @@ set_config_option(const char *name, const char *value,
 	}  /* end if (record->flags & GUC_DISALLOW_USER_SET) */
 
 	/*
-	 * If source is postgresql.conf, mark the found record with
-	 * GUC_IS_IN_FILE. This is for the convenience of ProcessConfigFile.  Note
-	 * that we do it even if changeVal is false, since ProcessConfigFile wants
-	 * the marking to occur during its testing pass.
-	 */
-	if (source == PGC_S_FILE)
-		record->status |= GUC_IS_IN_FILE;
-
-	/*
-=======
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-		return 0;
-	}
-
-	/*
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Check if the option can be set at this time. See guc.h for the precise
 	 * rules.
 	 */
@@ -6622,15 +6562,6 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 	{
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
-<<<<<<< HEAD
-			set_config_option(stmt->name,
-							  ExtractSetVariableArgs(stmt),
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION,
-							  action,
-							  true);
-			DispatchSetPGVariable(stmt->name, stmt->args, stmt->is_local);
-=======
 			(void) set_config_option(stmt->name,
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
@@ -6638,7 +6569,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 									 action,
 									 true,
 									 0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+			DispatchSetPGVariable(stmt->name, stmt->args, stmt->is_local);
 			break;
 		case VAR_SET_MULTI:
 
@@ -6805,13 +6736,13 @@ SetPGVariableOptDispatch(const char *name, List *args, bool is_local, bool gp_di
 	char	   *argstring = flatten_set_variable_args(name, args);
 
 	/* Note SET DEFAULT (argstring == NULL) is equivalent to RESET */
-<<<<<<< HEAD
-	set_config_option(name,
-					  argstring,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
-					  PGC_S_SESSION,
-					  is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-					  true);
+	(void) set_config_option(name,
+							 argstring,
+							 (superuser() ? PGC_SUSET : PGC_USERSET),
+							 PGC_S_SESSION,
+							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
+							 true,
+							 0);
 
 	if (gp_dispatch)
 		DispatchSetPGVariable(name, args, is_local);
@@ -6883,15 +6814,6 @@ DispatchSetPGVariable(const char *name, List *args, bool is_local)
 	}
 
 	CdbDispatchSetCommand(buffer.data, false);
-=======
-	(void) set_config_option(name,
-							 argstring,
-							 (superuser() ? PGC_SUSET : PGC_USERSET),
-							 PGC_S_SESSION,
-							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
-							 true,
-							 0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*

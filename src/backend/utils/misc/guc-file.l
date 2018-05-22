@@ -35,12 +35,6 @@ void GUC_yyset_debug (int  bdebug );
 int GUC_yylex_destroy  (void);
 #endif
 
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * flex emits a yy_fatal_error() function that it calls in response to
  * critical errors like malloc failure, file I/O errors, and detection of
@@ -141,10 +135,6 @@ ProcessConfigFile(GucContext context)
 	ConfigVariable *item,
 				   *head,
 				   *tail;
-<<<<<<< HEAD
-	char	   *cvc = NULL;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			i;
 
 	/*
@@ -168,15 +158,12 @@ ProcessConfigFile(GucContext context)
 		/* Syntax error(s) detected in the file, so bail out */
 		error = true;
 		goto cleanup_list;
-<<<<<<< HEAD
+	}
 
 	Assert(gp_replication_config_filename);
 
 	if (!ParseConfigFile(gp_replication_config_filename, NULL, 0, elevel, &head, &tail))
 		goto cleanup_list;
-=======
-	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Mark all extant GUC variables as not present in the config file.
@@ -214,39 +201,6 @@ ProcessConfigFile(GucContext context)
 
 		if (record)
 		{
-<<<<<<< HEAD
-			/*
-			 * We have to consider three cases for custom variables:
-			 *
-			 * 1. The class name is not valid according to the (new) setting
-			 * of custom_variable_classes.  If so, reject.  We don't care
-			 * which side is at fault.
-			 */
-#if 0
-			if (!is_custom_class(item->name, sep - item->name, cvc))
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("unrecognized configuration parameter \"%s\"",
-								item->name)));
-				goto cleanup_list;
-			}
-#endif
-			/*
-			 * 2. There is no GUC entry.  If we called set_config_option then
-			 * it would make a placeholder, which we don't want to do yet,
-			 * since we could still fail further down the list.  Do nothing
-			 * (assuming that making the placeholder will succeed later).
-			 */
-			if (find_option(item->name, false, elevel) == NULL)
-				continue;
-			/*
-			 * 3. There is already a GUC entry (either real or placeholder) for
-			 * the variable.  In this case we should let set_config_option
-			 * check it, since the assignment could well fail if it's a real
-			 * entry.
-			 */
-=======
 			/* Found, so mark it as present in file */
 			record->status |= GUC_IS_IN_FILE;
 		}
@@ -259,7 +213,6 @@ ProcessConfigFile(GucContext context)
 							item->name,
 							item->filename, item->sourceline)));
 			error = true;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -431,33 +384,12 @@ ProcessConfigFile(GucContext context)
 }
 
 /*
-<<<<<<< HEAD
- * Flex fatal errors bring us here.  Stash the error message and jump back to
- * ParseConfigFp().  Assume all msg arguments point to string constants; this
- * holds for flex 2.5.31 (earliest we support) and flex 2.5.35 (latest as of
- * this writing).  Otherwise, we would need to copy the message.
- *
- * We return "int" since this takes the place of calls to fprintf().
-*/
-static int
-GUC_flex_fatal(const char *msg)
-{
-	GUC_flex_fatal_errmsg = msg;
-	siglongjmp(*GUC_flex_fatal_jmp, 1);
-	return 0;	/* keep compiler quiet */
-}
-
-/*
- * See next function for details. This one will just work with a config_file
- * name rather than an already opened File Descriptor
-=======
  * Read and parse a single configuration file.  This function recurses
  * to handle "include" directives.
  *
  * See ParseConfigFp for details.  This one merely adds opening the
  * file rather than working from a caller-supplied file descriptor,
  * and absolute-ifying the path name if necessary.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 bool
 ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
@@ -581,10 +513,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
 	sigjmp_buf	flex_fatal_jmp;
 	volatile YY_BUFFER_STATE lex_buffer = NULL;
-<<<<<<< HEAD
-=======
 	int			errorcount;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			token;
 
 	if (sigsetjmp(flex_fatal_jmp, 1) == 0)
@@ -598,24 +527,16 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		 */
 		elog(elevel, "%s at file \"%s\" line %u",
 			 GUC_flex_fatal_errmsg, config_file, ConfigFileLineno);
-<<<<<<< HEAD
-		OK = false;
-		goto cleanup_exit;
-=======
 
 		OK = false;
 		goto cleanup;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
 	 * Parse
 	 */
 	ConfigFileLineno = 1;
-<<<<<<< HEAD
-=======
 	errorcount = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE);
 	yy_switch_to_buffer(lex_buffer);
@@ -683,11 +604,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			 * An include directive isn't a variable and should be processed
 			 * immediately.
 			 */
-<<<<<<< HEAD
-			if (!ParseConfigFile(opt_value, config_file,
-=======
 			if (!ParseConfigFile(opt_value, config_file, true,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
