@@ -32,16 +32,12 @@ typedef uint8 RmgrId;
 #define RM_GIN_ID				13
 #define RM_GIST_ID				14
 #define RM_SEQ_ID				15
-<<<<<<< HEAD
-#define RM_BITMAP_ID			16
-#define RM_DISTRIBUTEDLOG_ID	17
-
-#define RM_APPEND_ONLY_ID		18
-#define RM_MAX_ID				RM_APPEND_ONLY_ID
-=======
 #define RM_SPGIST_ID			16
 
-#define RM_MAX_ID				RM_SPGIST_ID
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+/* GPDB specific */
+#define RM_BITMAP_ID			17
+#define RM_DISTRIBUTEDLOG_ID	18
+#define RM_APPEND_ONLY_ID		19
+#define RM_MAX_ID				RM_APPEND_ONLY_ID
 
 #endif   /* RMGR_H */
