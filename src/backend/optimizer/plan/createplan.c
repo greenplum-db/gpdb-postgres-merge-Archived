@@ -2858,7 +2858,6 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 <<<<<<< HEAD
-	scan_plan = make_subqueryscan(root, tlist,
 =======
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->param_info)
@@ -2867,8 +2866,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
-	scan_plan = make_subqueryscan(tlist,
 >>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan);
@@ -3003,7 +3002,7 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-	scan_plan = make_subqueryscan(root, tlist,
+	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan,
@@ -4718,8 +4717,7 @@ make_tidscan(List *qptlist,
 }
 
 SubqueryScan *
-make_subqueryscan(PlannerInfo *root,
-				  List *qptlist,
+make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
 				  Plan *subplan)

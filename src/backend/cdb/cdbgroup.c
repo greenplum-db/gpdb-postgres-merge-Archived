@@ -4612,7 +4612,7 @@ add_subqueryscan(PlannerInfo *root, List **p_pathkeys,
 	subplan_tlist = generate_subquery_tlist(varno, subquery->targetList,
 											false, &resno_map);
 
-	subplan = (Plan *) make_subqueryscan(root, subplan_tlist,
+	subplan = (Plan *) make_subqueryscan(subplan_tlist,
 										 NIL,
 										 varno, /* scanrelid (= varno) */
 										 subplan,

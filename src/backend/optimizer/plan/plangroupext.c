@@ -1697,7 +1697,7 @@ plan_append_aggs_with_rewrite(PlannerInfo *root,
 			final_query->rtable = lappend(final_query->rtable, newrte);
 			subquery_tlist = generate_subquery_tlist(list_length(final_query->rtable),
 													 agg_plan->targetlist, true, &resno_map);
-			agg_plan = (Plan *)make_subqueryscan(root, subquery_tlist,
+			agg_plan = (Plan *)make_subqueryscan(subquery_tlist,
 												 NIL,
 												 list_length(final_query->rtable),
 												 agg_plan,
@@ -2328,7 +2328,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 			final_query->rtable = lappend(final_query->rtable, newrte);
 			subquery_tlist = generate_subquery_tlist(list_length(final_query->rtable),
 													 rollup_plan->targetlist, true, &resno_map);
-			rollup_plan = (Plan *) make_subqueryscan(root, subquery_tlist,
+			rollup_plan = (Plan *) make_subqueryscan(subquery_tlist,
 													 NIL,
 													 list_length(final_query->rtable),
 													 rollup_plan,

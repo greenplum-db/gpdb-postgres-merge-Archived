@@ -304,7 +304,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * Add a SubqueryScan with the caller-requested targetlist
 		 */
 		plan = (Plan *)
-			make_subqueryscan(root, generate_setop_tlist(colTypes, colCollations,
+			make_subqueryscan(generate_setop_tlist(colTypes, colCollations,
 												   flag,
 												   rtr->rtindex,
 												   true,
