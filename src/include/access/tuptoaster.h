@@ -14,11 +14,7 @@
 #define TUPTOASTER_H
 
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "access/memtup.h"
-#include "storage/bufpage.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/relcache.h"
 
 #ifndef VARSIZE_TO_SHORT
