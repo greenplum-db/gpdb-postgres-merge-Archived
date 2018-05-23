@@ -172,7 +172,6 @@ ExecReScan(PlanState *node)
 			ExecReScanIndexScan((IndexScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_ExternalScanState:
 			ExecReScanExternal((ExternalScanState *) node);
 			break;			
@@ -191,10 +190,9 @@ ExecReScan(PlanState *node)
 
 		case T_DynamicIndexScanState:
 			ExecReScanDynamicIndex((DynamicIndexScanState *) node);
-=======
+
 		case T_IndexOnlyScanState:
 			ExecReScanIndexOnlyScan((IndexOnlyScanState *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 
 		case T_BitmapIndexScanState:
@@ -351,15 +349,13 @@ ExecMarkPos(PlanState *node)
 			ExecIndexMarkPos((IndexScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_ExternalScanState:
 			elog(ERROR, "Marking scan position for external relation is not supported");
 			break;			
-=======
+
 		case T_IndexOnlyScanState:
 			ExecIndexOnlyMarkPos((IndexOnlyScanState *) node);
 			break;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		case T_TidScanState:
 			ExecTidMarkPos((TidScanState *) node);
@@ -431,15 +427,13 @@ ExecRestrPos(PlanState *node)
 			ExecIndexRestrPos((IndexScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_ExternalScanState:
 			elog(ERROR, "Restoring scan position is not yet supported for external relation scan");
 			break;			
-=======
+
 		case T_IndexOnlyScanState:
 			ExecIndexOnlyRestrPos((IndexOnlyScanState *) node);
 			break;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		case T_TidScanState:
 			ExecTidRestrPos((TidScanState *) node);
