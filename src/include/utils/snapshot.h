@@ -57,6 +57,7 @@ typedef struct SnapshotData
 	bool		suboverflowed;	/* has the subxip array overflowed? */
 	bool		takenDuringRecovery;	/* recovery-shaped snapshot? */
 	bool		copied;			/* false if it's a static snapshot */
+	bool		haveDistribSnapshot; /* True if this snapshot is distributed. */
 
 	/*
 	 * note: all ids in subxip[] are >= xmin, but we don't bother filtering
@@ -65,9 +66,6 @@ typedef struct SnapshotData
 	CommandId	curcid;			/* in my xact, CID < curcid are visible */
 	uint32		active_count;	/* refcount on ActiveSnapshot stack */
 	uint32		regd_count;		/* refcount on RegisteredSnapshotList */
-	bool		copied;			/* false if it's a static snapshot */
-
-	bool		haveDistribSnapshot; /* True if this snapshot is distributed. */
 
 	/*
 	 * GP: Global information about which transactions are visible for a
