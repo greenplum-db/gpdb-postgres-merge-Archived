@@ -18,12 +18,12 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "executor/instrument.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
 #include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
+#include "nodes/parsenodes.h"
 
 #include "gpmon/gpmon.h"                /* gpmon_packet_t */
 
@@ -352,7 +352,7 @@ typedef struct ResultRelInfo
 	TriggerDesc *ri_TrigDesc;
 	FmgrInfo   *ri_TrigFunctions;
 	List	  **ri_TrigWhenExprs;
-	Instrumentation *ri_TrigInstrument;
+	struct Instrumentation *ri_TrigInstrument;
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 	ProjectionInfo *ri_projectReturning;
