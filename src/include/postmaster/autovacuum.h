@@ -14,11 +14,7 @@
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
-<<<<<<< HEAD
-#include "storage/lock.h"
 #include "tcop/utility.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* GUC variables */
 extern bool autovacuum_start_daemon;
