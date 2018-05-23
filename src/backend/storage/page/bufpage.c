@@ -15,13 +15,10 @@
 #include "postgres.h"
 
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "storage/bufpage.h"
 #include "access/xlog.h"
 #include "storage/checksum.h"
 #include "utils/memutils.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* GUC variable */
 bool		ignore_checksum_failure = false;
