@@ -290,6 +290,7 @@ tas(volatile slock_t *lock)
 #endif /* __INTEL_COMPILER */
 #endif	 /* __ia64__ || __ia64 */
 
+
 /*
  * On ARM, we use __sync_lock_test_and_set(int *, int) if available, and if
  * not fall back on the SWPB instruction.  SWPB does not work on ARMv6 or
@@ -320,11 +321,19 @@ typedef unsigned char slock_t;
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	return __sync_lock_test_and_set(lock, 1);
+	register slock_t _res = 1;
+
+	__asm__ __volatile__(
+		"	swpb 	%0, %0, [%2]	\n"
+:		"+r"(_res), "+m"(*lock)
+:		"r"(lock)
+:		"memory");
+	return (int) _res;
 }
 
 #endif	 /* HAVE_GCC_INT_ATOMICS */
 #endif	 /* __arm__ */
+
 
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
 #if defined(__s390__) || defined(__s390x__)
@@ -994,12 +1003,14 @@ extern int	tas_sema(volatile slock_t *lock);
 #if !defined(TAS)
 extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 												 * s_lock.c */
+
 #define TAS(lock)		tas(lock)
 #endif	 /* TAS */
 
 #if !defined(TAS_SPIN)
 #define TAS_SPIN(lock)	TAS(lock)
 #endif	 /* TAS_SPIN */
+
 
 /*
  * Platform-independent out-of-line support routines
@@ -1011,5 +1022,6 @@ extern void s_lock(volatile slock_t *lock, const char *file, int line);
 
 extern void set_spins_per_delay(int shared_spins_per_delay);
 extern int	recompute_spins_per_delay(int shared_spins_per_delay);
+extern int	update_spins_per_delay(int shared_spins_per_delay);
 
 #endif	 /* S_LOCK_H */
