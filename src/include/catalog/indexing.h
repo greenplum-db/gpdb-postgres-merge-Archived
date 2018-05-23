@@ -5,13 +5,9 @@
  *	  on system catalogs
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/indexing.h
@@ -316,7 +312,6 @@ DECLARE_UNIQUE_INDEX(pg_extension_oid_index, 3080, on pg_extension using btree(o
 DECLARE_UNIQUE_INDEX(pg_extension_name_index, 3081, on pg_extension using btree(extname name_ops));
 #define ExtensionNameIndexId 3081
 
-<<<<<<< HEAD
 DECLARE_UNIQUE_INDEX(gp_policy_localoid_index, 6103, on gp_distribution_policy using btree(localoid oid_ops));
 #define GpPolicyLocalOidIndexId  6103
 
@@ -422,10 +417,8 @@ DECLARE_UNIQUE_INDEX(pg_compression_oid_index, 7058, on pg_compression using btr
 #define CompressionOidIndexId	7058
 DECLARE_UNIQUE_INDEX(pg_compression_compname_index, 7059, on pg_compression using btree(compname name_ops));
 #define CompressionCompnameIndexId	7059
-=======
 DECLARE_UNIQUE_INDEX(pg_range_rngtypid_index, 3542, on pg_range using btree(rngtypid oid_ops));
 #define RangeTypidIndexId					3542
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

@@ -306,7 +306,6 @@ void
 smgrdounlink(SMgrRelation reln, bool isRedo)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
-	int			which = reln->smgr_which;
 	ForkNumber	forknum;
 
 	/* Close the forks at smgr level */
