@@ -13,7 +13,6 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
-<<<<<<< HEAD
 #include "catalog/gp_segment_config.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"
@@ -23,12 +22,7 @@
 #include "utils/timestamp.h"
 #include "cdb/cdbpublic.h"
 #include "replication/walsender.h"
-=======
 #include "datatype/timestamp.h"
-#include "lib/stringinfo.h"
-#include "storage/buf.h"
-#include "utils/pg_crc.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * The overall layout of an XLOG record is:
@@ -214,16 +208,13 @@ extern int	XLogArchiveTimeout;
 extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
-<<<<<<< HEAD
 extern bool gp_keep_all_xlog;
 extern int keep_wal_segments;
 
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 
-=======
 extern bool fullPageWrites;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern bool log_checkpoints;
 
 /* WAL levels */
@@ -328,9 +319,7 @@ extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
-<<<<<<< HEAD
-extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);
-=======
+
 extern XLogRecPtr GetXLogReplayRecPtr(XLogRecPtr *restoreLastRecPtr);
 extern XLogRecPtr GetStandbyFlushRecPtr(void);
 extern XLogRecPtr GetXLogInsertRecPtr(void);
@@ -339,7 +328,6 @@ extern bool RecoveryIsPaused(void);
 extern void SetRecoveryPause(bool recoveryPause);
 extern TimestampTz GetLatestXTime(void);
 extern TimestampTz GetCurrentChunkReplayStartTime(void);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
@@ -364,7 +352,6 @@ extern XLogRecPtr GetFlushRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 extern TimeLineID GetRecoveryTargetTLI(void);
 
-<<<<<<< HEAD
 extern void XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint);
 extern char *XLogLocationToString(XLogRecPtr *loc);
 extern char *XLogLocationToString2(XLogRecPtr *loc);
@@ -380,9 +367,6 @@ extern char *XLogLocationToString5_Long(XLogRecPtr *loc);
 extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void);
 extern bool CheckPromoteSignal(bool do_unlink);
-=======
-extern bool CheckPromoteSignal(void);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void WakeupRecovery(void);
 extern void SetWalWriterSleeping(bool sleeping);
 
