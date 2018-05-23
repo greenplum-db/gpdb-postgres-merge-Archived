@@ -55,11 +55,8 @@ extern RunningTransactions GetRunningTransactionData(void);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
 extern TransactionId GetOldestXmin(bool allDbs, bool ignoreVacuum);
-<<<<<<< HEAD
 extern TransactionId GetLocalOldestXmin(bool allDbs, bool ignoreVacuum);
-=======
 extern TransactionId GetOldestActiveTransactionId(void);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids);
 extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids);
