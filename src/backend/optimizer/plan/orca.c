@@ -102,7 +102,7 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	 */
 	glob = makeNode(PlannerGlobal);
 	glob->paramlist = NIL;
-	glob->subrtables = NIL;
+	glob->subroots = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->transientPlan = false;
 	glob->oneoffPlan = false;

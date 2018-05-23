@@ -359,10 +359,13 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 *
 	 * apply_shareinput will fix shared_id, and change the DAG to a tree.
 	 */
-	forboth(lp, glob->subplans, lrt, glob->subrtables)
+	forboth(lp, glob->subplans, lr, glob->subroots)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
-		List	   *subrtable = (List *) lfirst(lrt);
+		PlannerInfo	   *subroot = (PlannerInfo *) lfirst(lr);
+		List       *subrtable;
+
+		List       *subrtable= subroot->parse->rtable;
 
 		lfirst(lp) = apply_shareinput_dag_to_tree(glob, subplan, subrtable);
 	}
