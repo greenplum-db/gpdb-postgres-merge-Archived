@@ -1146,7 +1146,7 @@ CdbOpenRelationRv(const RangeVar *relation, LOCKMODE reqmode, bool noWait,
 	Relation	rel;
 
 	/* Look up the appropriate relation using namespace search */
-	relid = RangeVarGetRelid(relation, false);
+	relid = RangeVarGetRelid(relation, NoLock, false);
 	rel = CdbTryOpenRelation(relid, reqmode, noWait, lockUpgraded);
 
 	if (!RelationIsValid(rel))
@@ -1227,7 +1227,7 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
  */
 Relation
 relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
-						 bool missing_ok)
+						 bool missing_ok, bool noWait)
 {
 	Oid			relOid;
 
@@ -1384,7 +1384,7 @@ heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 {
 	Relation	r;
 
-	r = relation_openrv_extended(relation, lockmode, missing_ok);
+	r = relation_openrv_extended(relation, lockmode, missing_ok, false);
 
 	if (r)
 	{
@@ -1492,8 +1492,14 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	if (!is_bitmapscan)
 		PredicateLockRelation(relation, snapshot);
 
+#if 0
+	/*
+	 * GPDB removes t_tableOid from HeapTupleData.
+	 */
+
 	/* we only need to set this up once */
 	scan->rs_ctup.t_tableOid = RelationGetRelid(relation);
+#endif
 
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also calls
@@ -1931,7 +1937,9 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
+#if 0
 		heapTuple->t_tableOid = relation->rd_id;
+#endif
 		heapTuple->t_self = *tid;
 
 		/*
@@ -1959,7 +1967,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		if (!skip)
 		{
 			/* If it's visible per the snapshot, we must return it */
-			valid = HeapTupleSatisfiesVisibility(heapTuple, snapshot, buffer);
+			valid = HeapTupleSatisfiesVisibility(relation, heapTuple, snapshot, buffer);
 			CheckForSerializableConflictOut(valid, relation, heapTuple,
 											buffer, snapshot);
 			if (valid)
@@ -2506,7 +2514,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	heaptuples = palloc(ntuples * sizeof(HeapTuple));
 	for (i = 0; i < ntuples; i++)
 		heaptuples[i] = heap_prepare_insert(relation, tuples[i],
-											xid, cid, options);
+											xid, cid, options, isFrozen);
 
 	/*
 	 * Allocate some memory to use for constructing the WAL record. Using
@@ -2669,7 +2677,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			recptr = XLogInsert(RM_HEAP2_ID, info, rdata);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -3167,8 +3174,7 @@ heap_update_internal(Relation relation, ItemPointer otid, HeapTuple newtup,
 				newbuf,
 				vmbuffer = InvalidBuffer,
 				vmbuffer_new = InvalidBuffer;
-	bool		need_toast,
-				already_marked;
+	bool		need_toast;
 	Size		newtupsize,
 				pagefree;
 	bool		have_tuple_lock = false;
@@ -5757,7 +5763,6 @@ heap_xlog_multi_insert(XLogRecPtr lsn, XLogRecord *record)
 	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 
 	if (xlrec->all_visible_cleared)
 		PageClearAllVisible(page);

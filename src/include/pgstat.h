@@ -1010,7 +1010,6 @@ extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 		}																\
 	} while (0)
 	
-extern void pgstat_count_heap_insert(Relation rel);
 extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);

@@ -18,6 +18,7 @@
 #include "access/skey.h"
 #include "access/xlog.h"
 #include "nodes/primnodes.h"
+#include "storage/bufpage.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
@@ -58,7 +59,7 @@ extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode,
 								  bool noWait);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern Relation relation_openrv_extended(const RangeVar *relation,
-						 LOCKMODE lockmode, bool missing_ok);
+						 LOCKMODE lockmode, bool missing_ok, bool noWait);
 extern void relation_close(Relation relation, LOCKMODE lockmode);
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);

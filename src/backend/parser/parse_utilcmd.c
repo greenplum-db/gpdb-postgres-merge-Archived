@@ -3711,7 +3711,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 * In GPDB, we release the lock early if this command is part of a
 	 * partitioned CREATE TABLE.
 	 */
-	rel = relation_openrv_extended(stmt->relation, lockmode, stmt->missing_ok);
+	rel = relation_openrv_extended(stmt->relation, lockmode, stmt->missing_ok, false /*GPDB_92_MERGE_FIXME*/);
 	if (rel == NULL)
 	{
 		/* this message is consistent with relation_openrv */
