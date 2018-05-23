@@ -3,13 +3,9 @@
  * bufmgr.c
  *	  buffer manager interface routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -54,7 +50,6 @@
 #include "storage/standby.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
 #include "pgstat.h"
 #include "access/heapam.h"
@@ -62,9 +57,7 @@
 #include "access/aosegfiles.h"
 #include "access/aocssegfiles.h"
 #include "cdb/cdbappendonlyam.h"
-=======
 #include "utils/timestamp.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* Note: these two macros only work on shared buffers, not local ones! */
@@ -1629,13 +1622,8 @@ BgBufferSync(void)
 	/*
 	 * If recent_alloc remains at zero for many cycles, smoothed_alloc will
 	 * eventually underflow to zero, and the underflows produce annoying
-<<<<<<< HEAD
-	 * kernel warnings on some platforms.  Once upcoming_alloc_est has gone
-	 * to zero, there's no point in tracking smaller and smaller values of
-=======
 	 * kernel warnings on some platforms.  Once upcoming_alloc_est has gone to
 	 * zero, there's no point in tracking smaller and smaller values of
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * smoothed_alloc, so just reset it to exactly zero to avoid this
 	 * syndrome.  It will pop back up as soon as recent_alloc increases.
 	 */
@@ -2036,14 +2024,11 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 {
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcontext;
-<<<<<<< HEAD
 	XLogRecPtr GistXLogRecPtrForTemp = {1, 1};	/* Magic GIST value */
 	Block		bufBlock;
 	char		*bufToWrite;
-=======
 	instr_time	io_start,
 				io_time;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Acquire the buffer's io_in_progress lock.  If StartBufferIO returns
@@ -2115,15 +2100,12 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	 */
 	bufToWrite = PageSetChecksumCopy((Page) bufBlock, buf->tag.blockNum);
 
-<<<<<<< HEAD
 	/*
 	 * bufToWrite is either the shared buffer or a copy, as appropriate.
 	 */
-=======
 	if (track_io_timing)
 		INSTR_TIME_SET_CURRENT(io_start);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	smgrwrite(reln,
 			  buf->tag.forkNum,
 			  buf->tag.blockNum,
@@ -2188,7 +2170,6 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 }
 
 /*
-<<<<<<< HEAD
  * BufferGetLSNAtomic
  *		Retrieves the LSN of the buffer atomically using a buffer header lock.
  *		This is necessary for some callers who may not have an exclusive lock
@@ -2206,7 +2187,23 @@ BufferGetLSNAtomic(Buffer buffer)
 	 */
 	if (!DataChecksumsEnabled() || BufferIsLocal(buffer))
 		return PageGetLSN(page);
-=======
+
+	/* Make sure we've got a real buffer, and that we hold a pin on it. */
+	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
+
+	/* Caller should hold share lock on the buffer contents. */
+	bufHdr = &BufferDescriptors[buffer - 1];
+	Assert(LWLockHeldByMe(bufHdr->content_lock));
+
+	LockBufHdr(bufHdr);
+	lsn = PageGetLSN(page);
+	UnlockBufHdr(bufHdr);
+
+	return lsn;
+}
+
+/*
  * BufferIsPermanent
  *		Determines whether a buffer will potentially still be around after
  *		a crash.  Caller must hold a buffer pin.
@@ -2219,23 +2216,11 @@ BufferIsPermanent(Buffer buffer)
 	/* Local buffers are used only for temp relations. */
 	if (BufferIsLocal(buffer))
 		return false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Make sure we've got a real buffer, and that we hold a pin on it. */
 	Assert(BufferIsValid(buffer));
 	Assert(BufferIsPinned(buffer));
 
-<<<<<<< HEAD
-	/* Caller should hold share lock on the buffer contents. */
-	bufHdr = &BufferDescriptors[buffer - 1];
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
-
-	LockBufHdr(bufHdr);
-	lsn = PageGetLSN(page);
-	UnlockBufHdr(bufHdr);
-
-	return lsn;
-=======
 	/*
 	 * BM_PERMANENT can't be changed while we hold a pin on the buffer, so we
 	 * need not bother with the buffer header spinlock.  Even if someone else
@@ -2245,8 +2230,8 @@ BufferIsPermanent(Buffer buffer)
 	 */
 	bufHdr = &BufferDescriptors[buffer - 1];
 	return (bufHdr->flags & BM_PERMANENT) != 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
+
 
 /* ---------------------------------------------------------------------
  *		DropRelFileNodeBuffers
@@ -2280,15 +2265,10 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 {
 	int			i;
 
-<<<<<<< HEAD
 /* Temp tables use shared buffers in Greenplum */
 #if 0
 	/* If it's a local relation, it's localbuf.c's problem. */
-	if (RelFileNodeBackendIsTemp(rnode))
-=======
-	/* If it's a local relation, it's localbuf.c's problem. */
 	if (rnode.backend != InvalidBackendId)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (rnode.backend == MyBackendId)
 			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
@@ -2706,21 +2686,12 @@ MarkBufferDirtyHint(Buffer buffer)
 	/*
 	 * This routine might get called many times on the same page, if we are
 	 * making the first scan after commit of an xact that added/deleted many
-<<<<<<< HEAD
-	 * tuples. So, be as quick as we can if the buffer is already dirty.  We do
-	 * this by not acquiring spinlock if it looks like the status bits are
-	 * already set.  Since we make this test unlocked, there's a chance we
-	 * might fail to notice that the flags have just been cleared, and failed
-	 * to reset them, due to memory-ordering issues.  But since this function
-	 * is only intended to be used in cases where failing to write out the data
-=======
 	 * tuples.	So, be as quick as we can if the buffer is already dirty.  We
 	 * do this by not acquiring spinlock if it looks like the status bits are
 	 * already.  Since we make this test unlocked, there's a chance we might
 	 * fail to notice that the flags have just been cleared, and failed to
 	 * reset them, due to memory-ordering issues.  But since this function is
 	 * only intended to be used in cases where failing to write out the data
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * would be harmless anyway, it doesn't really matter.
 	 */
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
@@ -2786,7 +2757,6 @@ MarkBufferDirtyHint(Buffer buffer)
 		Assert(bufHdr->refcount > 0);
 		if (!(bufHdr->flags & BM_DIRTY))
 		{
-<<<<<<< HEAD
 			dirtied = true;		/* Means "will be dirtied by this action" */
 
 			/*
@@ -2804,12 +2774,10 @@ MarkBufferDirtyHint(Buffer buffer)
 			 */
 			if (!XLogRecPtrIsInvalid(lsn))
 				PageSetLSN(page, lsn);
-=======
 			/* Do vacuum cost accounting */
 			VacuumPageDirty++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 		UnlockBufHdr(bufHdr);
