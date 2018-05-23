@@ -290,17 +290,6 @@ tas(volatile slock_t *lock)
 #endif /* __INTEL_COMPILER */
 #endif	 /* __ia64__ || __ia64 */
 
-<<<<<<< HEAD
-/*
- * On ARM and ARM64, we use __sync_lock_test_and_set(int *, int) if available.
- *
- * We use the int-width variant of the builtin because it works on more chips
- * than other widths.
- */
-#if defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(__aarch64)
-#ifdef HAVE_GCC_INT_ATOMICS
-=======
-
 /*
  * On ARM, we use __sync_lock_test_and_set(int *, int) if available, and if
  * not fall back on the SWPB instruction.  SWPB does not work on ARMv6 or
@@ -308,15 +297,10 @@ tas(volatile slock_t *lock)
  * the int-width variant of the builtin works on more chips than other widths.
  */
 #if defined(__arm__) || defined(__arm)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #define HAS_TEST_AND_SET
 
 #define TAS(lock) tas(lock)
 
-<<<<<<< HEAD
-typedef int slock_t;
-
-=======
 #ifdef HAVE_GCC_INT_ATOMICS
 
 typedef int slock_t;
@@ -333,19 +317,14 @@ tas(volatile slock_t *lock)
 
 typedef unsigned char slock_t;
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static __inline__ int
 tas(volatile slock_t *lock)
 {
 	return __sync_lock_test_and_set(lock, 1);
 }
 
-<<<<<<< HEAD
-#define S_UNLOCK(lock) __sync_lock_release(lock)
-=======
 #endif	 /* HAVE_GCC_INT_ATOMICS */
 #endif	 /* __arm__ */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* HAVE_GCC_INT_ATOMICS */
 #endif   /* __arm__ || __arm || __aarch64__ || __aarch64 */
@@ -1018,18 +997,12 @@ extern int	tas_sema(volatile slock_t *lock);
 #if !defined(TAS)
 extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 												 * s_lock.c */
-
 #define TAS(lock)		tas(lock)
 #endif	 /* TAS */
 
-<<<<<<< HEAD
-extern slock_t dummy_spinlock;
-=======
 #if !defined(TAS_SPIN)
 #define TAS_SPIN(lock)	TAS(lock)
 #endif	 /* TAS_SPIN */
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Platform-independent out-of-line support routines

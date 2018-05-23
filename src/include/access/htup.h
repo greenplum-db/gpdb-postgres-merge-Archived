@@ -4,13 +4,9 @@
  *	  POSTGRES heap tuple definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/htup.h
@@ -925,10 +921,9 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
  *		number of the column (field) caller wants.	<tupleDesc> is a
  *		pointer to the structure describing the row and all its fields.
  *
- *      CDB:  Implemented as inline function instead of macro.
+ *      GPDB:  Implemented as inline function instead of macro.
  * ----------------
  */
-<<<<<<< HEAD
 static inline Datum
 heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
@@ -948,23 +943,6 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
     return result;
 }                               /* heap_getattr */
-=======
-#define heap_getattr(tup, attnum, tupleDesc, isnull) \
-	( \
-		((attnum) > 0) ? \
-		( \
-			((attnum) > (int) HeapTupleHeaderGetNatts((tup)->t_data)) ? \
-			( \
-				(*(isnull) = true), \
-				(Datum)NULL \
-			) \
-			: \
-				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
-		) \
-		: \
-			heap_getsysattr((tup), (attnum), (tupleDesc), (isnull)) \
-	)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* prototypes for functions in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
