@@ -3,13 +3,9 @@
  * relcache.c
  *	  POSTGRES relation descriptor cache code
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1446,10 +1442,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 
 	relation->rd_rel->relpages = 0;
 	relation->rd_rel->reltuples = 0;
-<<<<<<< HEAD
-=======
 	relation->rd_rel->relallvisible = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relstorage = RELSTORAGE_HEAP;
 	relation->rd_rel->relhasoids = hasoids;
@@ -2715,21 +2708,14 @@ RelationBuildLocalRelation(const char *relname,
 
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
-<<<<<<< HEAD
-	 * places.	Note that the physical ID (relfilenode) is initially the same
-	 * as the logical ID (OID); except that for a mapped relation, we set
-	 * relfilenode to zero and rely on RelationInitPhysicalAddr to consult the
-	 * map.
+	 * places.	For a mapped relation, we set relfilenode to zero and rely on
+	 * RelationInitPhysicalAddr to consult the map.
 	 *
 	 * In GPDB, the table's logical OID is allocated in the master, and might
 	 * already be in use as a relfilenode of an existing relation in a segment.
 	 *
 	 * In binary upgrade mode, however, use the OID also as the relfilenode.
 	 * pg_upgrade gets confused if they don't match.
-=======
-	 * places.	For a mapped relation, we set relfilenode to zero and rely on
-	 * RelationInitPhysicalAddr to consult the map.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	rel->rd_rel->relisshared = shared_relation;
 
@@ -2763,22 +2749,22 @@ RelationBuildLocalRelation(const char *relname,
 		RelationMapUpdateMap(relid, relfilenode, shared_relation, true);
 	}
 	else
-<<<<<<< HEAD
 	{
-		if (relid < FirstNormalObjectId /* bootstrap only */
+		/*
+		 * GPDB_92_MERGE_FIXME: need to revisit this code to make sure
+		 * we are not mixing 'relid' with 'relfilenode'.
+		 */
+		if (relfilenode < FirstNormalObjectId /* bootstrap only */
 			|| (Gp_role != GP_ROLE_EXECUTE && relkind == RELKIND_SEQUENCE)
 			|| IsBinaryUpgrade)
-			rel->rd_rel->relfilenode = relid;
+			rel->rd_rel->relfilenode = relfilenode;
 		else
 		{
 			rel->rd_rel->relfilenode = GetNewRelFileNode(reltablespace, NULL, relpersistence);
 			if (Gp_role == GP_ROLE_EXECUTE)
-				AdvanceObjectId(relid);
+				AdvanceObjectId(relfilenode);
 		}
 	}
-=======
-		rel->rd_rel->relfilenode = relfilenode;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
@@ -4779,13 +4765,8 @@ RelationCacheInitFilePreInvalidate(void)
 		/*
 		 * The file might not be there if no backend has been started since
 		 * the last removal.  But complain about failures other than ENOENT.
-<<<<<<< HEAD
-		 * Fortunately, it's not too late to abort the transaction if we
-		 * can't get rid of the would-be-obsolete init file.
-=======
 		 * Fortunately, it's not too late to abort the transaction if we can't
 		 * get rid of the would-be-obsolete init file.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 */
 		if (errno != ENOENT)
 			ereport(ERROR,

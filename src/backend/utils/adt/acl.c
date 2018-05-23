@@ -785,16 +785,13 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
-<<<<<<< HEAD
 		case ACL_OBJECT_EXTPROTOCOL:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_EXTPROTOCOL;
-=======
 		case ACL_OBJECT_DOMAIN:
 		case ACL_OBJECT_TYPE:
 			world_default = ACL_USAGE;
 			owner_default = ACL_ALL_RIGHTS_TYPE;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
@@ -2042,12 +2039,8 @@ try_convert_table_name(text *tablename)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
 
-<<<<<<< HEAD
-	return RangeVarGetRelid(relrv, true);
-=======
 	/* We might not even have permissions on this relation; don't lock it. */
 	return RangeVarGetRelid(relrv, NoLock, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
