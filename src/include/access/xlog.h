@@ -396,7 +396,6 @@ extern void XLogReadRecoveryCommandFile(int emode);
 
 extern List *XLogReadTimeLineHistory(TimeLineID targetTLI);
 
-extern XLogRecPtr GetStandbyFlushRecPtr(TimeLineID *targetTLI);
 extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern bool IsStandbyMode(void);

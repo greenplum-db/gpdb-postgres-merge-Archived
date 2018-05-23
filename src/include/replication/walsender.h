@@ -15,18 +15,11 @@
 #include <signal.h>
 
 #include "fmgr.h"
-<<<<<<< HEAD
 #include "access/xlogdefs.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* global state */
 extern bool am_walsender;
 extern bool am_cascading_walsender;
-<<<<<<< HEAD
-=======
-extern volatile sig_atomic_t walsender_shutdown_requested;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern volatile sig_atomic_t walsender_ready_to_stop;
 
 /* user-settable parameters */
@@ -43,12 +36,8 @@ extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
 extern void WalSndWakeup(void);
 extern void WalSndRqstFileReload(void);
-<<<<<<< HEAD
 extern XLogRecPtr WalSndCtlGetXLogCleanUpTo(void);
 extern void WalSndSetXLogCleanUpTo(XLogRecPtr xlogPtr);
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern Datum pg_stat_get_wal_senders(PG_FUNCTION_ARGS);
 
 #endif   /* _WALSENDER_H */

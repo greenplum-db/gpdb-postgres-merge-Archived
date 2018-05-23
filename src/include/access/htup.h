@@ -18,7 +18,6 @@
 
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
-#include "storage/bufpage.h"
 #include "storage/itemptr.h"
 #include "storage/relfilenode.h"
 #include "access/sysattr.h"
