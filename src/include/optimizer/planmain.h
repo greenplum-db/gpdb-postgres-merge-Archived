@@ -4,13 +4,9 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/planmain.h
@@ -127,17 +123,11 @@ extern bool contain_group_id(Node *node);
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
-<<<<<<< HEAD
 extern Plan *create_plan_recurse(PlannerInfo *root, Path *best_path);
-extern SubqueryScan *make_subqueryscan(PlannerInfo *root, List *qptlist, List *qpqual,
-				  Index scanrelid, Plan *subplan,
-				  List *subrtable, List *subrowmark);
-=======
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
 				 Index scanrelid, List *fdw_exprs, List *fdw_private);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern Append *make_append(List *appendplans, List *tlist);
 extern RecursiveUnion *make_recursive_union(List *tlist,
 					 Plan *lefttree, Plan *righttree, int wtParam,
@@ -277,19 +267,7 @@ extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
 /*
  * prototypes for plan/setrefs.c
  */
-<<<<<<< HEAD
-extern Plan *set_plan_references(PlannerGlobal *glob,
-					Plan *plan,
-					List *rtable,
-					List *rowmarks);
-extern List *set_returning_clause_references(PlannerGlobal *glob,
-								List *rlist,
-								Plan *topplan,
-								Index resultRelation);
-
-=======
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);

@@ -4,13 +4,9 @@
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/cost.h
@@ -94,20 +90,6 @@ extern bool gp_enable_predicate_propagation;
 
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 					double index_pages, PlannerInfo *root);
-<<<<<<< HEAD
-extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
-extern void cost_externalscan(ExternalPath *path, PlannerInfo *root, RelOptInfo *baserel);
-extern void cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root, RelOptInfo *baserel);
-extern void cost_aocsscan(AOCSPath *path, PlannerInfo *root, RelOptInfo *baserel);
-extern void cost_index(IndexPath *path, PlannerInfo *root, IndexOptInfo *index,
-		   List *indexQuals, List *indexOrderBys, RelOptInfo *outer_rel);
-extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel);
-extern void cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel);
-extern void cost_bitmap_table_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel);
-=======
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 			 ParamPathInfo *param_info);
 extern void cost_index(IndexPath *path, PlannerInfo *root,
@@ -115,7 +97,14 @@ extern void cost_index(IndexPath *path, PlannerInfo *root,
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 					  ParamPathInfo *param_info,
 					  Path *bitmapqual, double loop_count);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+/* GDPB_92_MERGE_FIXME: Suspect we need to add ParamPathInfo for some scans below. */
+extern void cost_externalscan(ExternalPath *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_aocsscan(AOCSPath *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+					  Path *bitmapqual, RelOptInfo *outer_rel);
+extern void cost_bitmap_table_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+					  Path *bitmapqual, RelOptInfo *outer_rel);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
@@ -157,15 +146,8 @@ extern void cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
-<<<<<<< HEAD
+/* GDPB_92_MERGE_FIXME: parameterized path for shared input scan? */
 extern void cost_shareinputscan(Path *path, PlannerInfo *root, Cost sharecost, double ntuples, int width);
-extern void cost_nestloop(NestPath *path, PlannerInfo *root,
-			  SpecialJoinInfo *sjinfo);
-extern void cost_mergejoin(MergePath *path, PlannerInfo *root,
-			   SpecialJoinInfo *sjinfo);
-extern void cost_hashjoin(HashPath *path, PlannerInfo *root,
-			  SpecialJoinInfo *sjinfo);
-=======
 extern void initial_cost_nestloop(PlannerInfo *root,
 					  JoinCostWorkspace *workspace,
 					  JoinType jointype,
@@ -197,7 +179,6 @@ extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 					JoinCostWorkspace *workspace,
 					SpecialJoinInfo *sjinfo,
 					SemiAntiJoinFactors *semifactors);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);

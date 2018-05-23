@@ -26,13 +26,9 @@ extern RestrictInfo *make_restrictinfo(Expr *clause,
 				  bool outerjoin_delayed,
 				  bool pseudoconstant,
 				  Relids required_relids,
-<<<<<<< HEAD
+				  Relids outer_relids,
 				  Relids nullable_relids,
 				  Relids ojscope_relids);
-=======
-				  Relids outer_relids,
-				  Relids nullable_relids);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern List *make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 								  bool is_pushed_down,
 								  bool include_predicates);
