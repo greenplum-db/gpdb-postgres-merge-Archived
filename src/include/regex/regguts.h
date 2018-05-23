@@ -196,18 +196,11 @@ union tree
 struct colordesc
 {
 	uchr		nchrs;			/* number of chars of this color */
-<<<<<<< HEAD
-	color		sub;			/* open subcolor (if any); free chain ptr */
-#define  NOSUB	 COLORLESS
-	struct arc *arcs;			/* color chain */
-	chr			firstchr;		/* char first assigned to this color */
-	int			flags;
-=======
 	color		sub;			/* open subcolor, if any; or free-chain ptr */
 #define  NOSUB	 COLORLESS		/* value of "sub" when no open subcolor */
 	struct arc *arcs;			/* chain of all arcs of this color */
+	chr			firstchr;		/* char first assigned to this color */
 	int			flags;			/* bit values defined next */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #define  FREECOL 01				/* currently free */
 #define  PSEUDO  02				/* pseudocolor, no real chars */
 #define  UNUSEDCOLOR(cd) ((cd)->flags&FREECOL)

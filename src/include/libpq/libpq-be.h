@@ -176,15 +176,9 @@ typedef struct Port
 	 * locations of other fields)
 	 */
 #ifdef USE_SSL
-<<<<<<< HEAD
-	SSL		*ssl;
-	X509	   	*peer;
-	char		*peer_cn;
-=======
 	SSL		   *ssl;
 	X509	   *peer;
 	char	   *peer_cn;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	unsigned long count;
 #endif
 } Port;
