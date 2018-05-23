@@ -6,13 +6,9 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,13 +19,10 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "commands/tablespace.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
@@ -284,9 +277,20 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 }
 
 /*
-<<<<<<< HEAD
- *	smgrcreate_ao() -- Create a new AO relation segment.
-=======
+ *		smgrcreate_ao() -- Create a new AO relation segment.
+ *		Given a RelFileNode, cause the underlying disk file for the
+ *		AO segment to be created.
+ *
+ *		If isRedo is true, it is okay for the underlying file to exist
+ *		already because we are in a WAL replay sequence.
+ */
+void
+smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
+{
+	mdcreate_ao(rnode, segmentFileNum, isRedo);
+}
+
+/*
  *	smgrdounlink() -- Immediately unlink all forks of a relation.
  *
  *		All forks of the relation are removed from the store.  This should
@@ -307,7 +311,7 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 
 	/* Close the forks at smgr level */
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		(*(smgrsw[which].smgr_close)) (reln, forknum);
+		mdclose(reln, forknum);
 
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
@@ -340,42 +344,28 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	 * xact.
 	 */
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
+		mdunlink(rnode, forknum, isRedo);
 }
 
 /*
  *	smgrdounlinkfork() -- Immediately unlink one fork of a relation.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
- *		Given a RelFileNode, cause the underlying disk file for the
- *		AO segment to be created.
+ *		The specified fork of the relation is removed from the store.  This
+ *		should not be used during transactional operations, since it can't be
+ *		undone.
  *
- *		If isRedo is true, it is okay for the underlying file to exist
- *		already because we are in a WAL replay sequence.
+ *		If isRedo is true, it is okay for the underlying file to be gone
+ *		already.
  */
-void
-<<<<<<< HEAD
-smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
-{
-	mdcreate_ao(rnode, segmentFileNum, isRedo);
-}
 
 
 void
-smgrdounlink(SMgrRelation reln, ForkNumber forknum, bool isRedo)
-=======
 smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
 
-<<<<<<< HEAD
 	/* Close the fork */
 	mdclose(reln, forknum);
-=======
-	/* Close the fork at smgr level */
-	(*(smgrsw[which].smgr_close)) (reln, forknum);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Get rid of any remaining buffers for the fork.  bufmgr will just drop

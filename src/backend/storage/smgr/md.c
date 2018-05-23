@@ -43,11 +43,7 @@
 /*
  * Special values for the segno arg to RememberFsyncRequest.
  *
-<<<<<<< HEAD
- * Note that CompactCheckpointerRequestQueue assumes that it's OK to remove an
-=======
  * Note that CompactcheckpointerRequestQueue assumes that it's OK to remove an
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * fsync request from the queue if an identical, subsequent request is found.
  * See comments there before making changes here.
  */
@@ -206,12 +202,8 @@ mdinit(void)
 	/*
 	 * Create pending-operations hashtable if we need it.  Currently, we need
 	 * it if we are standalone (not under a postmaster) OR if we are a
-<<<<<<< HEAD
-	 * startup or checkpointer auxiliary process).
-=======
 	 * bootstrap-mode subprocess of a postmaster (that is, a startup or
 	 * checkpointer process).
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
 	{
@@ -383,7 +375,6 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  * number until it's safe, because relfilenode assignment skips over any
  * existing file.
  *
-<<<<<<< HEAD
  * We do not need to go through this dance for temp relations, though, because
  * we never make WAL entries for temp rels, and so a temp rel poses no threat
  * to the health of a regular rel that has taken over its relfilenode number.
@@ -393,11 +384,6 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
  * relfilenode number from being recycled.  Also, we do not carefully
-=======
- * All the above applies only to the relation's main fork; other forks can
- * just be removed immediately, since they are not needed to prevent the
- * relfilenode number from being recycled.	Also, we do not carefully
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * track whether other forks have been created or not, but just attempt to
  * unlink them unconditionally; so we should never complain about ENOENT.
  *
@@ -1662,13 +1648,8 @@ ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 
 		/*
-<<<<<<< HEAD
-		 * Note we don't wait for the checkpointer to actually absorb the revoke
-		 * message; see mdsync() for the implications.
-=======
 		 * Note we don't wait for the checkpointer to actually absorb the
 		 * revoke message; see mdsync() for the implications.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 */
 	}
 }
