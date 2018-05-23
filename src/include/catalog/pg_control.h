@@ -20,7 +20,6 @@
 #include "port/pg_crc32c.h"
 
 
-<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
@@ -28,11 +27,6 @@
  * four digits indicates the GPDB version.
  */
 #define PG_CONTROL_VERSION	9220600
-=======
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	922
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
  * a copy of the latest one in pg_control for possible disaster recovery.
@@ -74,12 +68,9 @@ typedef struct CheckPoint
 #define XLOG_BACKUP_END					0x50
 #define XLOG_PARAMETER_CHANGE			0x60
 #define XLOG_RESTORE_POINT				0x70
-<<<<<<< HEAD
-#define XLOG_NEXTRELFILENODE			0x80
-#define XLOG_HINT						0xA0
-=======
 #define XLOG_FPW_CHANGE				0x80
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+#define XLOG_NEXTRELFILENODE			0x90
+#define XLOG_HINT						0xA0
 
 
 /*
@@ -159,15 +150,12 @@ typedef struct ControlFileData
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
 	 *
-<<<<<<< HEAD
-=======
 	 * backupEndPoint is the backup end location, if we are recovering from an
 	 * online backup which was taken from the standby and haven't reached the
 	 * end of backup yet. It is initialized to the minimum recovery point in
 	 * pg_control which was backed up last. It is reset to zero when the end
 	 * of backup is reached, and we mustn't start up before that.
 	 *
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
 	 * start up. If it's false, but backupStartPoint is set, a backup_label
@@ -176,10 +164,7 @@ typedef struct ControlFileData
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
-<<<<<<< HEAD
-=======
 	XLogRecPtr	backupEndPoint;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	bool		backupEndRequired;
 
 	/*
