@@ -96,7 +96,7 @@ typedef FormData_pg_proc *Form_pg_proc;
  *		compiler constants for pg_proc
  * ----------------
  */
-#define Natts_pg_proc					27
+#define Natts_pg_proc					29
 #define Anum_pg_proc_proname			1
 #define Anum_pg_proc_pronamespace		2
 #define Anum_pg_proc_proowner			3
@@ -1299,11 +1299,11 @@ DESCR("transform an interval length coercion");
 DATA(insert OID = 1200 (  interval			PGNSP PGUID 12 1 0 0 interval_transform f f f f t f i 2 0 1186 "1186 23" _null_ _null_ _null_ _null_ interval_scale _null_ _null_ _null_ ));
 DESCR("adjust interval precision");
 
-DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 100 0 0 f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" _null_ _null_ _null_ ));
+DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 100 0 0 0 f f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" _null_ _null_ _null_ ));
 DESCR("get description for object id and catalog name");
-DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 100 0 0 f f f t f s 2 0 25 "26 23" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = ''pg_catalog.pg_class''::pg_catalog.regclass and objsubid = $2" _null_ _null_ _null_ ));
+DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 100 0 0 0 f f f f t f s 2 0 25 "26 23" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = ''pg_catalog.pg_class''::pg_catalog.regclass and objsubid = $2" _null_ _null_ _null_ ));
 DESCR("get description for table column");
-DATA(insert OID = 1993 ( shobj_description	PGNSP PGUID 14 100 0 0 f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP)" _null_ _null_ _null_ ));
+DATA(insert OID = 1993 ( shobj_description	PGNSP PGUID 14 100 0 0 0 f f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP)" _null_ _null_ _null_ ));
 GPDB_EXTRA_COL(prodataaccess = c);
 DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 100 0 0 0 f f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" _null_ _null_ _null_ ));
 DESCR("get description for object id and catalog name");
@@ -2328,7 +2328,7 @@ DATA(insert OID = 1783 ( int2					PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 21 "1
 DESCR("convert numeric to int2");
 
 /* Complex Number type */
-DATA(insert OID = 7057 ( complex_cmp			PGNSP PGUID 12 1 0 0 f f f t f i 2 0 23 "7198 7198" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
+DATA(insert OID = 7057 ( complex_cmp			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "7198 7198" _null_ _null_ _null_ _null_ complex_cmp _null_ _null_ _null_ ));
 DESCR("compare two complex numbers");
 
 /* formatting */
