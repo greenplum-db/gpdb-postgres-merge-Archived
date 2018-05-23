@@ -16,10 +16,6 @@
 
 #include "nodes/primnodes.h"
 #include "storage/lock.h"
-<<<<<<< HEAD
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  *	This structure holds a list of possible functions or operators
@@ -53,16 +49,10 @@ typedef struct OverrideSearchPath
 typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
 										   Oid oldRelId, void *callback_arg);
 
-<<<<<<< HEAD
-extern Oid	get_namespace_oid(const char *nspname, bool missing_ok);
-extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
-extern Oid  RangeVarGetRelidExtended(const RangeVar *relation,
-=======
 #define RangeVarGetRelid(relation, lockmode, missing_ok) \
 	RangeVarGetRelidExtended(relation, lockmode, missing_ok, false, NULL, NULL)
 
 extern Oid RangeVarGetRelidExtended(const RangeVar *relation,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						 LOCKMODE lockmode, bool missing_ok, bool nowait,
 						 RangeVarGetRelidCallback callback,
 						 void *callback_arg);

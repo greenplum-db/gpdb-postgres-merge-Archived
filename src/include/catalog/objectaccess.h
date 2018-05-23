@@ -26,12 +26,8 @@
  */
 typedef enum ObjectAccessType
 {
-<<<<<<< HEAD
-	OAT_POST_CREATE
-=======
 	OAT_POST_CREATE,
 	OAT_DROP,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } ObjectAccessType;
 
 /*

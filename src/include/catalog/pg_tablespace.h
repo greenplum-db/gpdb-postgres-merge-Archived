@@ -32,13 +32,8 @@ CATALOG(pg_tablespace,1213) BKI_SHARED_RELATION
 {
 	NameData	spcname;		/* tablespace name */
 	Oid			spcowner;		/* owner of tablespace */
-<<<<<<< HEAD
-	aclitem		spcacl[1];		/* access permissions (VAR LENGTH) */
-=======
-
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		spcacl[1];		/* access permissions */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	text		spcoptions[1];	/* per-tablespace options */
 #endif
 } FormData_pg_tablespace;
