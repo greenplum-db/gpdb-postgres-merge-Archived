@@ -705,14 +705,11 @@ typedef enum BackendState
  * ----------
  */
 
-<<<<<<< HEAD
 /* Definitions of waiting reason */
 #define PGBE_WAITING_LOCK			'l'
 #define PGBE_WAITING_REPLICATION	'r'
 #define PGBE_WAITING_RESGROUP		'g'
 #define PGBE_WAITING_NONE			'\0'
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* ----------
  * PgBackendStatus
@@ -743,12 +740,9 @@ typedef struct PgBackendStatus
 	TimestampTz st_proc_start_timestamp;
 	TimestampTz st_xact_start_timestamp;
 	TimestampTz st_activity_start_timestamp;
-<<<<<<< HEAD
 	/* the start time of queueing on resource group */
 	TimestampTz	st_resgroup_queue_start_timestamp;
-=======
 	TimestampTz st_state_start_timestamp;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Database OID, owning user's OID, connection client address */
 	Oid			st_databaseid;
@@ -863,18 +857,14 @@ extern void pgstat_report_deadlock(void);
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
-<<<<<<< HEAD
-extern void pgstat_report_activity(const char *cmd_str);
 extern void pgstat_report_txn_timestamp(TimestampTz tstamp);
 #if 0
 extern void pgstat_report_waiting(bool waiting);
 #endif
 extern void gpstat_report_waiting(char reason);
 
-=======
 extern void pgstat_report_activity(BackendState state, const char *cmd_str);
 extern void pgstat_report_tempfile(size_t filesize);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern const char *pgstat_get_backend_current_activity(int pid, bool checkUser);
@@ -949,7 +939,11 @@ extern PgStat_StatPortalEntry *pgstat_getportalentry(uint32 portalid,
 		if ((rel)->pgstat_info != NULL)								\
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
 	} while (0)
-<<<<<<< HEAD
+#define pgstat_count_buffer_read_time(n)							\
+	(pgStatBlockReadTime += (n))
+#define pgstat_count_buffer_write_time(n)							\
+	(pgStatBlockWriteTime += (n))
+
 /* Resource queue statistics: */
 #define pgstat_count_queue_exec(p, q) 									\
 	do {																\
@@ -1036,12 +1030,6 @@ extern void pgstat_twophase_postcommit(TransactionId xid, uint16 info,
 						   void *recdata, uint32 len);
 extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 						  void *recdata, uint32 len);
-=======
-#define pgstat_count_buffer_read_time(n)							\
-	(pgStatBlockReadTime += (n))
-#define pgstat_count_buffer_write_time(n)							\
-	(pgStatBlockWriteTime += (n))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void pgstat_count_heap_insert(Relation rel, int n);
 extern void pgstat_count_heap_update(Relation rel, bool hot);
