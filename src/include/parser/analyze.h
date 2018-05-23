@@ -29,16 +29,12 @@ extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
-<<<<<<< HEAD
 				  LockingClause *lockclause_from_parent);
 
 extern List *analyzeCreateSchemaStmt(CreateSchemaStmt *stmt);
 
-=======
-				  bool locked_from_parent);
 
 extern Query *transformTopLevelStmt(ParseState *pstate, Node *parseTree);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool analyze_requires_snapshot(Node *parseTree);
