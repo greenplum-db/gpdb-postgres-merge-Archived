@@ -14,11 +14,7 @@
 #ifndef ALTER_H
 #define ALTER_H
 
-<<<<<<< HEAD
 #include "catalog/dependency.h"
-#include "nodes/parsenodes.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/acl.h"
 #include "utils/relcache.h"
 

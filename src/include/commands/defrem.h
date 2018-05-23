@@ -17,12 +17,10 @@
 #include "nodes/parsenodes.h"
 #include "utils/array.h"
 
-<<<<<<< HEAD
 struct HTAB;  /* utils/hsearch.h */
-=======
+
 /* commands/dropcmds.c */
 extern void RemoveObjects(DropStmt *stmt);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* commands/indexcmds.c */
 extern Oid DefineIndex(RangeVar *heapRelation,
@@ -107,12 +105,7 @@ extern Oid	AlterOperatorNamespace_oid(Oid operOid, Oid newNspOid);
 
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *name, List *args, bool oldstyle,
-<<<<<<< HEAD
 							List *parameters, bool ordered, const char *queryString);
-extern void RemoveAggregate(RemoveFuncStmt *stmt);
-=======
-				List *parameters);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void RenameAggregate(List *name, List *args, const char *newname);
 extern void AlterAggregateOwner(List *name, List *args, Oid newOwnerId);
 

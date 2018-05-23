@@ -208,16 +208,12 @@ extern bool RI_Initial_Check(Trigger *trigger,
 
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
-<<<<<<< HEAD
 extern HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
  					int tgindx,
  					FmgrInfo *finfo,
  					Instrumentation *instr,
  					MemoryContext per_tuple_context);
  
-
-=======
 extern Datum pg_trigger_depth(PG_FUNCTION_ARGS);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* TRIGGER_H */

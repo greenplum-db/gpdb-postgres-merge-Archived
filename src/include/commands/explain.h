@@ -31,11 +31,8 @@ typedef struct ExplainState
 	bool		analyze;		/* print actual times */
 	bool		costs;			/* print costs */
 	bool		buffers;		/* print buffer usage */
-<<<<<<< HEAD
 	bool		dxl;			/* CDB: print DXL */
-=======
 	bool		timing;			/* print timing */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	ExplainFormat format;		/* output format */
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */

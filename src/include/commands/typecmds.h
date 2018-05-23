@@ -14,11 +14,8 @@
 #ifndef TYPECMDS_H
 #define TYPECMDS_H
 
-<<<<<<< HEAD
 #include "catalog/dependency.h"
-=======
 #include "access/htup.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "nodes/parsenodes.h"
 
 
@@ -48,8 +45,7 @@ extern void RenameType(RenameStmt *stmt);
 extern void AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);
-<<<<<<< HEAD
-extern void AlterTypeNamespace(List *names, const char *newschema);
+extern void AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
 extern Oid  AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved);
 extern Oid  AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									   bool isImplicitArray,
@@ -57,12 +53,5 @@ extern Oid  AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									   ObjectAddresses *objsMoved);
 extern void AlterType(AlterTypeStmt *stmt);
 extern void AlterType(AlterTypeStmt *stmt);
-=======
-extern void AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
-extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid);
-extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
-						   bool isImplicitArray,
-						   bool errorOnTableType);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* TYPECMDS_H */

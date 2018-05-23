@@ -45,18 +45,7 @@ extern void ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into,
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
-<<<<<<< HEAD
-					   Node *raw_parse_tree,
-					   const char *query_string,
-					   NodeTag	   sourceTag, /* GPDB */
-					   const char *commandTag,
-					   Oid *param_types,
-					   int num_params,
-					   int cursor_options,
-					   List *stmt_list,
-=======
 					   CachedPlanSource *plansource,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					   bool from_sql);
 extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
 					   bool throwError);

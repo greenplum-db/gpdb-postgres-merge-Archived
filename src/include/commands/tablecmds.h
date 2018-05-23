@@ -14,16 +14,13 @@
 #ifndef TABLECMDS_H
 #define TABLECMDS_H
 
-<<<<<<< HEAD
 #include "access/attnum.h"
 #include "catalog/dependency.h"
 #include "catalog/gp_policy.h"
 #include "executor/executor.h"
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
-=======
 #include "access/htup.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 #include "parser/parse_node.h"
@@ -60,15 +57,11 @@ extern void EvaluateDeferredStatements(List *deferredStmts);
 
 extern void RemoveRelations(DropStmt *drop);
 
-<<<<<<< HEAD
 extern bool RelationToRemoveIsTemp(const RangeVar *relation, DropBehavior behavior);
 
-extern void AlterTable(AlterTableStmt *stmt);
-=======
 extern Oid	AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode);
 
 extern void AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern LOCKMODE AlterTableGetLockLevel(List *cmds);
 
@@ -92,18 +85,11 @@ extern void ExecuteTruncate(TruncateStmt *stmt);
 
 extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
-<<<<<<< HEAD
-extern void RenameRelation(Oid myrelid,
-			   const char *newrelname,
-			   ObjectType reltype,
-			   RenameStmt *stmt /* MPP */);
-=======
 extern void renameatt(RenameStmt *stmt);
 
 extern void RenameConstraint(RenameStmt *stmt);
 
 extern void RenameRelation(RenameStmt *stmt);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void RenameRelationInternal(Oid myrelid,
 					   const char *newrelname);
@@ -123,7 +109,6 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 							  SubTransactionId mySubid,
 							  SubTransactionId parentSubid);
 
-<<<<<<< HEAD
 extern bool rel_needs_long_lock(Oid relid);
 extern Oid  rel_partition_get_master(Oid relid);
 
@@ -137,9 +122,8 @@ extern DistributedBy *make_dist_clause(Relation rel);
 extern Oid transformFkeyCheckAttrs(Relation pkrel,
 								   int numattrs, int16 *attnums,
 								   Oid *opclasses);
-=======
+
 extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 						  Oid relId, Oid oldRelId, void *arg);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* TABLECMDS_H */

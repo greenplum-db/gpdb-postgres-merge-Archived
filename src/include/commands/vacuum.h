@@ -192,14 +192,12 @@ extern void vacuum_aocs_rel(Relation aorel, void *vacrelstats, bool isVacFull);
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
-<<<<<<< HEAD
 extern void analyzeStatement(VacuumStmt *vacstmt, List *relids, BufferAccessStrategy start, bool isTopLevel);
 //extern void analyzeStmt(VacuumStmt *vacstmt, List *relids);
-=======
+
 extern bool std_typanalyze(VacAttrStats *stats);
 extern double anl_random_fract(void);
 extern double anl_init_selection_state(int n);
 extern double anl_get_next_S(double t, int n, double *stateptr);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* VACUUM_H */
