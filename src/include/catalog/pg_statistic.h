@@ -5,13 +5,9 @@
  *	  along with the relation's initial contents.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_statistic.h
@@ -123,8 +119,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 #endif
 } FormData_pg_statistic;
 
-<<<<<<< HEAD
-#define STATISTIC_NUM_SLOTS  4
+#define STATISTIC_NUM_SLOTS  5
 
 /* GPDB added foreign key definitions for gpcheckcat. */
 FOREIGN_KEY(starelid REFERENCES pg_attribute(attrelid));
@@ -132,11 +127,6 @@ FOREIGN_KEY(staop1 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop2 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop3 REFERENCES pg_operator(oid));
 FOREIGN_KEY(staop4 REFERENCES pg_operator(oid));
-
-#undef anyarray
-=======
-#define STATISTIC_NUM_SLOTS  5
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 /* ----------------
@@ -274,9 +264,6 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_MCELEM  4
 
-<<<<<<< HEAD
-
-=======
 /*
  * A "distinct elements count histogram" slot describes the distribution of
  * the number of distinct element values present in each row of an array-type
@@ -289,6 +276,5 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * The first of these is the minimum observed count, and the last the maximum.
  */
 #define STATISTIC_KIND_DECHIST	5
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* PG_STATISTIC_H */

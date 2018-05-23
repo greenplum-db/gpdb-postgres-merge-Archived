@@ -27,7 +27,7 @@
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	9030600
+#define PG_CONTROL_VERSION	9220600
 =======
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	922
