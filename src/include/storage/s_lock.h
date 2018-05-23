@@ -326,9 +326,6 @@ tas(volatile slock_t *lock)
 #endif	 /* HAVE_GCC_INT_ATOMICS */
 #endif	 /* __arm__ */
 
-#endif   /* HAVE_GCC_INT_ATOMICS */
-#endif   /* __arm__ || __arm || __aarch64__ || __aarch64 */
-
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
 #if defined(__s390__) || defined(__s390x__)
 #define HAS_TEST_AND_SET
