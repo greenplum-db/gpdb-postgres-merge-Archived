@@ -355,35 +355,6 @@ TypeCreateWithOptions(Oid newTypeOid,
 	 * insert data values
 	 */
 	namestrcpy(&name, typeName);
-<<<<<<< HEAD
-	values[i++] = NameGetDatum(&name);	/* typname */
-	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(ownerId);	/* typowner */
-	values[i++] = Int16GetDatum(internalSize);	/* typlen */
-	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
-	values[i++] = CharGetDatum(typeType);		/* typtype */
-	values[i++] = CharGetDatum(typeCategory);	/* typcategory */
-	values[i++] = BoolGetDatum(typePreferred);	/* typispreferred */
-	values[i++] = BoolGetDatum(true);	/* typisdefined */
-	values[i++] = CharGetDatum(typDelim);		/* typdelim */
-	values[i++] = ObjectIdGetDatum(relationOid);		/* typrelid */
-	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
-	values[i++] = ObjectIdGetDatum(arrayType);			/* typarray */
-	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
-	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
-	values[i++] = ObjectIdGetDatum(receiveProcedure);	/* typreceive */
-	values[i++] = ObjectIdGetDatum(sendProcedure);		/* typsend */
-	values[i++] = ObjectIdGetDatum(typmodinProcedure);	/* typmodin */
-	values[i++] = ObjectIdGetDatum(typmodoutProcedure); /* typmodout */
-	values[i++] = ObjectIdGetDatum(analyzeProcedure);	/* typanalyze */
-	values[i++] = CharGetDatum(alignment);		/* typalign */
-	values[i++] = CharGetDatum(storage);		/* typstorage */
-	values[i++] = BoolGetDatum(typeNotNull);	/* typnotnull */
-	values[i++] = ObjectIdGetDatum(baseType);	/* typbasetype */
-	values[i++] = Int32GetDatum(typeMod);		/* typtypmod */
-	values[i++] = Int32GetDatum(typNDims);		/* typndims */
-	values[i++] = ObjectIdGetDatum(typeCollation);		/* typcollation */
-=======
 	values[Anum_pg_type_typname - 1] = NameGetDatum(&name);
 	values[Anum_pg_type_typnamespace - 1] = ObjectIdGetDatum(typeNamespace);
 	values[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(ownerId);
@@ -411,7 +382,6 @@ TypeCreateWithOptions(Oid newTypeOid,
 	values[Anum_pg_type_typtypmod - 1] = Int32GetDatum(typeMod);
 	values[Anum_pg_type_typndims - 1] = Int32GetDatum(typNDims);
 	values[Anum_pg_type_typcollation - 1] = ObjectIdGetDatum(typeCollation);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * initialize the default binary value for this type.  Check for nulls of
@@ -672,11 +642,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
-<<<<<<< HEAD
 		/* dependency on extension */
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		recordDependencyOnCurrentExtension(&myself, rebuild);
 	}
 

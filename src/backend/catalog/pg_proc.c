@@ -14,11 +14,8 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/heapam.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -108,12 +105,8 @@ ProcedureCreate(const char *procedureName,
 	Oid			retval;
 	int			parameterCount;
 	int			allParamCount;
-<<<<<<< HEAD
-	const Oid  *allParams;
-=======
 	Oid		   *allParams;
 	char	   *paramModes = NULL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	bool		genericInParam = false;
 	bool		genericOutParam = false;
 	bool		anyrangeInParam = false;

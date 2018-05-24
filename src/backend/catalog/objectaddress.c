@@ -15,11 +15,8 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/heapam.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/sysattr.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
@@ -727,18 +724,11 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		address.objectSubId = 0;
 
 		/*
-<<<<<<< HEAD
-		 * Caller is expecting to get back the relation, even though we
-		 * didn't end up using it to find the rule.
-		 */
-		relation = heap_open(reloid, AccessShareLock);
-=======
 		 * Caller is expecting to get back the relation, even though we didn't
 		 * end up using it to find the rule.
 		 */
 		if (OidIsValid(address.objectId))
 			relation = heap_open(reloid, AccessShareLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 	{

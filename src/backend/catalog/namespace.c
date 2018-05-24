@@ -22,12 +22,9 @@
 #include "access/genam.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
-<<<<<<< HEAD
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
@@ -278,28 +275,6 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		if (relation->schemaname &&
-			(!TempNamespaceValid(false) || strcmp(relation->schemaname, get_namespace_name(myTempNamespace)) != 0))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("temporary tables cannot specify a schema name")));
-		if (OidIsValid(myTempNamespace))
-			relId = get_relname_relid(relation->relname, myTempNamespace);
-		else	/* this probably can't happen? */
-			relId = InvalidOid;
-	}
-	else if (relation->schemaname)
-	{
-		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(relation->schemaname);
-		relId = get_relname_relid(relation->relname, namespaceId);
-	}
-	else
-	{
-		/* search the namespace path */
-		relId = RelnameGetRelid(relation->relname);
-=======
 		/*
 		 * Remember this value, so that, after looking up the relation name
 		 * and locking its OID, we can check whether any invalidation messages
@@ -427,7 +402,6 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		 */
 		retry = true;
 		oldRelId = relId;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	if (!OidIsValid(relId) && !missing_ok)
@@ -647,27 +621,6 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 							newRelation->relname)));
 	}
 
-<<<<<<< HEAD
-	if (newRelation->relpersistence == RELPERSISTENCE_TEMP)
-	{
-		/* TEMP tables are created in our backend-local temp namespace */
-		if (Gp_role != GP_ROLE_EXECUTE && newRelation->schemaname)
-		{
-			char		namespaceName[NAMEDATALEN];
-			snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", gp_session_id);
-			if (strcmp(newRelation->schemaname,namespaceName)!=0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("temporary tables cannot specify a schema name")));
-		}
-		/* Initialize temp namespace if first time through */
-		if (!TempNamespaceValid(false))
-			InitTempTableNamespace();
-		return myTempNamespace;
-	}
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (newRelation->schemaname)
 	{
 		/* check for pg_temp alias */
@@ -3875,28 +3828,6 @@ InitTempTableNamespace(void)
 	 */
 	if (OidIsValid(namespaceId))
 	{
-<<<<<<< HEAD
-=======
-		/*
-		 * First use of this temp namespace in this database; create it. The
-		 * temp namespaces are always owned by the superuser.  We leave their
-		 * permissions at default --- i.e., no access except to superuser ---
-		 * to ensure that unprivileged users can't peek at other backends'
-		 * temp tables.  This works because the places that access the temp
-		 * namespace for my own backend skip permissions checks on it.
-		 */
-		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
-									  true);
-		/* Advance command counter to make namespace visible */
-		CommandCounterIncrement();
-	}
-	else
-	{
-		/*
-		 * If the namespace already exists, clean it out (in case the former
-		 * owner crashed without doing so).
-		 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		RemoveTempRelations(namespaceId);
 		RemoveSchemaById(namespaceId);
 		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
@@ -3931,16 +3862,10 @@ InitTempTableNamespace(void)
 	toastspaceId = get_namespace_oid(namespaceName, true);
 	if (OidIsValid(toastspaceId))
 	{
-<<<<<<< HEAD
 		RemoveSchemaById(toastspaceId);
 		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
 			 namespaceId);
 		toastspaceId = InvalidOid;
-=======
-		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
-									   true);
-		/* Advance command counter to make namespace visible */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		CommandCounterIncrement();
 	}
 	toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
@@ -4278,7 +4203,6 @@ check_search_path(char **newval, void **extra, GucSource source)
 	 * here and so can't consult the system catalogs anyway.  So now, the only
 	 * requirement is syntactic validity of the identifier list.
 	 */
-<<<<<<< HEAD
 	if (IsTransactionState())
 	{
 		/*
@@ -4320,8 +4244,6 @@ check_search_path(char **newval, void **extra, GucSource source)
 			}
 		}
 	}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	pfree(rawname);
 	list_free(namelist);

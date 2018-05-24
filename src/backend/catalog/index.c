@@ -3,13 +3,9 @@
  * index.c
  *	  code to create and destroy POSTGRES index relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -40,12 +36,9 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-<<<<<<< HEAD
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"
@@ -129,7 +122,6 @@ static void validate_index_heapscan(Relation heapRelation,
 						IndexInfo *indexInfo,
 						Snapshot snapshot,
 						v_i_state *state);
-<<<<<<< HEAD
 static double IndexBuildHeapScan(Relation heapRelation,
 								 Relation indexRelation,
 								 struct IndexInfo *indexInfo,
@@ -154,8 +146,6 @@ static double IndexBuildAppendOnlyColScan(Relation parentRelation,
 										  IndexBuildCallback callback,
 										  void *callback_state);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);
 static void ResetReindexProcessing(void);
@@ -1397,15 +1387,12 @@ index_drop(Oid indexId, bool concurrent)
 	Relation	indexRelation;
 	HeapTuple	tuple;
 	bool		hasexprs;
-<<<<<<< HEAD
 	bool		need_long_lock;
-=======
 	LockRelId	heaprelid,
 				indexrelid;
 	LOCKTAG		heaplocktag;
 	VirtualTransactionId *old_lockholders;
 	Form_pg_index indexForm;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
@@ -1612,10 +1599,8 @@ index_drop(Oid indexId, bool concurrent)
 	/*
 	 * Close owning rel, but keep lock
 	 */
-<<<<<<< HEAD
 	heap_close(userHeapRelation, need_long_lock ? NoLock : AccessExclusiveLock);
-=======
-	heap_close(userHeapRelation, NoLock);
+
 
 	/*
 	 * Release the session locks before we go.
@@ -1625,7 +1610,6 @@ index_drop(Oid indexId, bool concurrent)
 		UnlockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 		UnlockRelationIdForSession(&indexrelid, ShareUpdateExclusiveLock);
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* ----------------------------------------------------------------
@@ -1902,14 +1886,7 @@ index_update_stats(Relation rel,
 		}
 	}
 
-<<<<<<< HEAD
-	if (Gp_role != GP_ROLE_DISPATCH)
-	{
-		/**
-		 * Do not overwrite relpages, reltuples in QD.
-		 */
-=======
-	if (reltuples >= 0)
+	if (reltuples >= 0 && Gp_role != GP_ROLE_DISPATCH)
 	{
 		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
 		BlockNumber relallvisible;
@@ -1924,30 +1901,18 @@ index_update_stats(Relation rel,
 			rd_rel->relpages = (int32) relpages;
 			dirty = true;
 		}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (rd_rel->reltuples != (float4) reltuples)
 		{
 			rd_rel->reltuples = (float4) reltuples;
 			dirty = true;
 		}
-<<<<<<< HEAD
-
-		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
-=======
 		if (rd_rel->relallvisible != (int32) relallvisible)
 		{
 			rd_rel->relallvisible = (int32) relallvisible;
 			dirty = true;
 		}
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
-		if (rd_rel->relpages != (int32) relpages)
-		{
-			rd_rel->relpages = (int32) relpages;
-			dirty = true;
-		}
-	}
 	/*
 	 * If anything changed, write out the tuple
 	 */
@@ -3421,11 +3386,7 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
  * relation it is an index on.	Uses the system cache.
  */
 Oid
-<<<<<<< HEAD
-IndexGetRelation(Oid indexId)
-=======
 IndexGetRelation(Oid indexId, bool missing_ok)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	HeapTuple	tuple;
 	Form_pg_index index;
