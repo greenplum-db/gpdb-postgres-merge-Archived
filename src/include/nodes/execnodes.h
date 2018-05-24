@@ -18,6 +18,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "executor/instrument.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
@@ -1426,7 +1427,7 @@ typedef struct PlanState
 	/*
 	 * EXPLAIN ANALYZE statistics collection
 	 */
-	struct Instrumentation *instrument;     /* runtime stats for this node */
+	Instrumentation *instrument;     /* runtime stats for this node */
 	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
 	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
 	/* callback before ExecutorEnd */

@@ -47,17 +47,12 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * worktable.  Therefore, we don't need a private read pointer for the
 	 * tuplestore, nor do we need to tell tuplestore_gettupleslot to copy.
 	 */
-<<<<<<< HEAD
-	estate = node->ss.ps.state;
 
 	/*
 	 * RECURSIVE_CTE_FIXME: Double check we don't have backward scan required by
 	 * plan (both planner and ORCA).
 	 */
-	Assert(ScanDirectionIsForward(estate->es_direction));
-=======
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	tuplestorestate = node->rustate->working_table;
 

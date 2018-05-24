@@ -3,13 +3,9 @@
  * nodeMaterial.c
  *	  Routines to handle materialization nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -88,7 +84,6 @@ ExecMaterial(MaterialState *node)
 		 */
 		if(ma->share_type == SHARE_MATERIAL_XSLICE)
 		{
-<<<<<<< HEAD
 			char rwfile_prefix[100];
 
 			if(ma->driver_slice != currentSliceId)
@@ -96,13 +91,6 @@ ExecMaterial(MaterialState *node)
 				elog(LOG, "Material Exec on CrossSlice, current slice %d", currentSliceId);
 				return NULL;
 			}
-=======
-			/*
-			 * Allocate a second read pointer to serve as the mark. We know it
-			 * must have index 1, so needn't store that.
-			 */
-			int ptrno	PG_USED_FOR_ASSERTS_ONLY;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			shareinput_create_bufname_prefix(rwfile_prefix, sizeof(rwfile_prefix), ma->share_id);
 			elog(DEBUG1, "Material node creates shareinput rwfile %s", rwfile_prefix);

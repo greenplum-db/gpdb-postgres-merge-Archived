@@ -3,13 +3,9 @@
  * nodeMergejoin.c
  *	  routines supporting merge joins
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -99,11 +95,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
-<<<<<<< HEAD
-#include "catalog/pg_amop.h"
 #include "cdb/cdbvars.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "executor/execdebug.h"
 #include "executor/nodeMergejoin.h"
 #include "utils/lsyscache.h"
@@ -144,19 +136,14 @@ typedef struct MergeJoinClauseData
 	bool		risnull;
 
 	/*
-<<<<<<< HEAD
 	 * CDB: Remember whether the mergejoin operation was actually an "is
 	 *      not distinct from" predicate.
 	 */
 	bool		notdistinct;
 
 	/*
-	 * The comparison strategy in use, and the lookup info to let us call the
-	 * btree comparison support function, and the collation to use.
-=======
 	 * Everything we need to know to compare the left and right values is
 	 * stored here.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	SortSupportData ssup;
 }	MergeJoinClauseData;
@@ -448,43 +435,7 @@ MJCompare(MergeJoinState *mergestate)
 		 */
 		if (clause->lisnull && clause->risnull)
 		{
-<<<<<<< HEAD
-			if (clause->risnull)
-			{
-				nulleqnull = !clause->notdistinct;	/* NULL "=" NULL */
-				continue;
-			}
-			if (clause->nulls_first)
-				result = -1;	/* NULL "<" NOT_NULL */
-			else
-				result = 1;		/* NULL ">" NOT_NULL */
-			break;
-		}
-		if (clause->risnull)
-		{
-			if (clause->nulls_first)
-				result = 1;		/* NOT_NULL ">" NULL */
-			else
-				result = -1;	/* NOT_NULL "<" NULL */
-			break;
-		}
-
-		/*
-		 * OK to call the comparison function.
-		 */
-		InitFunctionCallInfoData(fcinfo, &(clause->cmpfinfo), 2,
-								 clause->collation, NULL, NULL);
-		fcinfo.arg[0] = clause->ldatum;
-		fcinfo.arg[1] = clause->rdatum;
-		fcinfo.argnull[0] = false;
-		fcinfo.argnull[1] = false;
-		fresult = FunctionCallInvoke(&fcinfo);
-		if (fcinfo.isnull)
-		{
-			nulleqnull = true;	/* treat like NULL = NULL */
-=======
 			nulleqnull = true;	/* NULL "=" NULL */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			continue;
 		}
 
