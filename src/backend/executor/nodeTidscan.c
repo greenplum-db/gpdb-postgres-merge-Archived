@@ -32,11 +32,7 @@
 #include "optimizer/clauses.h"
 #include "storage/bufmgr.h"
 #include "utils/array.h"
-<<<<<<< HEAD
-#include "parser/parsetree.h"
-=======
 #include "utils/rel.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 #define IsCTIDVar(node)  \

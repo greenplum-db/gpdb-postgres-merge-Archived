@@ -138,18 +138,7 @@ InitPlanCache(void)
 CachedPlanSource *
 CreateCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
-<<<<<<< HEAD
-				 NodeTag sourceTag,
-				 const char *commandTag,
-				 Oid *param_types,
-				 int num_params,
-				 int cursor_options,
-				 List *stmt_list,
-				 bool fully_planned,
-				 bool fixed_result)
-=======
 				 const char *commandTag)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	CachedPlanSource *plansource;
 	MemoryContext source_context;

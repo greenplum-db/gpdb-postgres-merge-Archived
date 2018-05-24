@@ -130,7 +130,6 @@ extern void ResetPlanCache(void);
 
 extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
-				 NodeTag sourceTag,
 				 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
 				   List *querytree_list,
