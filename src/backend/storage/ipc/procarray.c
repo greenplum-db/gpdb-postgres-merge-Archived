@@ -407,7 +407,7 @@ ProcArrayEndGxact(void)
 bool
 ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 {
-<<<<<<< HEAD
+	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 	bool needNotifyCommittedDtxTransaction;
 
 	/*
@@ -450,11 +450,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 		needNotifyCommittedDtxTransaction = true;
 	else
 		needNotifyCommittedDtxTransaction = false;
-	
-=======
-	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (TransactionIdIsValid(latestXid))
 	{
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -464,43 +460,25 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 		 * else is taking a snapshot.  See discussion in
 		 * src/backend/access/transam/README.
 		 */
-<<<<<<< HEAD
-		Assert(TransactionIdIsValid(proc->xid) ||
+		Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid) ||
 			   (IsBootstrapProcessingMode() && latestXid == BootstrapTransactionId));
-=======
-		Assert(TransactionIdIsValid(allPgXact[proc->pgprocno].xid));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		if (! needNotifyCommittedDtxTransaction)
 		{
-			proc->xid = InvalidTransactionId;
+			pgxact->xid = InvalidTransactionId;
 			proc->lxid = InvalidLocalTransactionId;
-			proc->xmin = InvalidTransactionId;
+			pgxact->xmin = InvalidTransactionId;
 			/* must be cleared with xid/xmin: */
-			proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-			proc->inCommit = false; /* be sure this is cleared in abort */
+			pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
+			pgxact->inCommit = false;		/* be sure this is cleared in abort */
 			proc->recoveryConflictPending = false;
 			proc->serializableIsoLevel = false;
 			proc->inDropTransaction = false;
 
-<<<<<<< HEAD
 			/* Clear the subtransaction-XID cache too while holding the lock */
-			proc->subxids.nxids = 0;
-			proc->subxids.overflowed = false;
+			pgxact->nxids = 0;
+			pgxact->overflowed = false;
 		}
-=======
-		pgxact->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		pgxact->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->inCommit = false;		/* be sure this is cleared in abort */
-		proc->recoveryConflictPending = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		pgxact->nxids = 0;
-		pgxact->overflowed = false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* Also advance global latestCompletedXid while holding the lock */
 		/*
@@ -548,12 +526,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
  * This is used after successfully preparing a 2-phase transaction.  We are
  * not actually reporting the transaction's XID as no longer running --- it
  * will still appear as running because the 2PC's gxact is in the ProcArray
-<<<<<<< HEAD
- * too.  We just have to clear out our own PGPROC.
- *
-=======
  * too.  We just have to clear out our own PGXACT.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 void
 ProcArrayClearTransaction(PGPROC *proc, bool commit)
@@ -574,15 +547,10 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 	proc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
 
 	/* redundant, but just in case */
-<<<<<<< HEAD
-	proc->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-	proc->inCommit = false;
-	proc->serializableIsoLevel = false;
-	proc->inDropTransaction = false;
-=======
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	pgxact->inCommit = false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	proc->serializableIsoLevel = false;
+	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
@@ -1279,14 +1247,6 @@ HasSerializableBackends(bool allDbs)
  * when it does set the snapshot it cannot set xmin less than what we compute.
  * See notes in src/backend/access/transam/README.
  *
-<<<<<<< HEAD
- * GPDB: This also needs to deal with distributed snapshots. We keep track of
- * the oldest local XID that is still visible to any distributed snapshot,
- * in the DistributedLog subsystem. DistributedLog doesn't distinguish between
- * different databases, nor vacuums, however. So in GPDB, the 'allDbs' and
- * 'ignoreVacuum' arguments don't do much, because the value from the
- * distributed log will include everything.
-=======
  * Note: despite the above, it's possible for the calculated value to move
  * backwards on repeated calls. The calculated value is conservative, so that
  * anything older is definitely not considered as running by anyone anymore,
@@ -1308,7 +1268,13 @@ HasSerializableBackends(bool allDbs)
  * The return value is also adjusted with vacuum_defer_cleanup_age, so
  * increasing that setting on the fly is another easy way to make
  * GetOldestXmin() move backwards, with no consequences for data integrity.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+ *
+ * GPDB: This also needs to deal with distributed snapshots. We keep track of
+ * the oldest local XID that is still visible to any distributed snapshot,
+ * in the DistributedLog subsystem. DistributedLog doesn't distinguish between
+ * different databases, nor vacuums, however. So in GPDB, the 'allDbs' and
+ * 'ignoreVacuum' arguments don't do much, because the value from the
+ * distributed log will include everything.
  */
 TransactionId
 GetOldestXmin(bool allDbs, bool ignoreVacuum)
@@ -1367,12 +1333,8 @@ GetLocalOldestXmin(bool allDbs, bool ignoreVacuum)
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
-<<<<<<< HEAD
 #if 0
-		if (ignoreVacuum && (proc->vacuumFlags & PROC_IN_VACUUM))
-=======
 		if (ignoreVacuum && (pgxact->vacuumFlags & PROC_IN_VACUUM))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			continue;
 #endif
 
@@ -1562,7 +1524,6 @@ GetDistributedSnapshotMaxCount(void)
 }
 
 /*
-<<<<<<< HEAD
  * Fill in the array of in-progress distributed XIDS in 'snapshot' from the
  * information that the QE sent us (if any).
  */
@@ -1951,7 +1912,6 @@ CreateDistributedSnapshot(DistributedSnapshot *ds)
 }
 
 /*----------
-=======
  * GetMaxSnapshotXidCount -- get max size for snapshot XID array
  *
  * We have to export this for use by snapmgr.c.
@@ -1974,7 +1934,6 @@ GetMaxSnapshotSubxidCount(void)
 }
 
 /*
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * GetSnapshotData -- returns information about running transactions.
  *
  * The returned snapshot includes xmin (lowest still-running xact ID),
@@ -2511,8 +2470,7 @@ GetSnapshotData(Snapshot snapshot)
 			suboverflowed = true;
 	}
 
-<<<<<<< HEAD
-	if (!TransactionIdIsValid(MyProc->xmin))
+	if (!TransactionIdIsValid(MyPgXact->xmin))
 	{
 		/* Not that these values are not set atomically. However,
 		 * each of these assignments is itself assumed to be atomic. */
@@ -2524,13 +2482,9 @@ GetSnapshotData(Snapshot snapshot)
 
 		ereport((Debug_print_snapshot_dtm ? LOG : DEBUG3),
 				(errmsg("Got serializable snapshot: database %d, pid %d, xid %d, xmin %d",
-						MyProc->databaseId, MyProc->pid, MyProc->xid, MyProc->xmin)));
+						MyProc->databaseId, MyProc->pid, MyPgXact->xid, MyPgXact->xmin)));
 	}
 
-=======
-	if (!TransactionIdIsValid(MyPgXact->xmin))
-		MyPgXact->xmin = TransactionXmin = xmin;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	LWLockRelease(ProcArrayLock);
 
 	/*
@@ -2831,13 +2785,6 @@ GetRunningTransactionData(void)
 }
 
 /*
-<<<<<<< HEAD
- * GetVirtualXIDsDelayingChkpt -- Get the VXIDs of transactions that are
- * delaying checkpoint because they have critical actions in progress.
- *
- * Constructs an array of VXIDs of transactions that are currently in commit
- * critical sections, as shown by having inCommit set in their PGXACT.
-=======
  * GetOldestActiveTransactionId()
  *
  * Similar to GetSnapshotData but returns just oldestActiveXid. We include
@@ -2903,11 +2850,11 @@ GetOldestActiveTransactionId(void)
 }
 
 /*
- * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
+ * GetVirtualXIDsDelayingChkpt -- Get the VXIDs of transactions that are
+ * delaying checkpoint because they have critical actions in progress.
  *
- * Constructs an array of XIDs of transactions that are currently in commit
- * critical sections, as shown by having inCommit set in their PGXACT entries.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+ * Constructs an array of VXIDs of transactions that are currently in commit
+ * critical sections, as shown by having inCommit set in their PGXACT.
  *
  * Returns a palloc'd array that should be freed by the caller.
  * *nvxids is the number of valid entries.
@@ -2937,11 +2884,11 @@ GetVirtualXIDsDelayingChkpt(int *nvxids)
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId pxid;
 
-<<<<<<< HEAD
-		if (proc->inCommit)
+		if (pgxact->inCommit)
 		{
 			VirtualTransactionId vxid;
 
@@ -2949,13 +2896,6 @@ GetVirtualXIDsDelayingChkpt(int *nvxids)
 			if (VirtualTransactionIdIsValid(vxid))
 				vxids[count++] = vxid;
 		}
-=======
-		/* Fetch xid just once - see GetNewTransactionId */
-		pxid = pgxact->xid;
-
-		if (pgxact->inCommit && TransactionIdIsValid(pxid))
-			xids[nxids++] = pxid;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	LWLockRelease(ProcArrayLock);
@@ -2984,23 +2924,14 @@ HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-<<<<<<< HEAD
-		volatile PGPROC *proc = arrayP->procs[index];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		VirtualTransactionId vxid;
 
 		GET_VXID_FROM_PGPROC(vxid, *proc);
 
-		if (proc->inCommit && VirtualTransactionIdIsValid(vxid))
-=======
-		int			pgprocno = arrayP->pgprocnos[index];
-		volatile PGXACT *pgxact = &allPgXact[pgprocno];
-		TransactionId pxid;
-
-		/* Fetch xid just once - see GetNewTransactionId */
-		pxid = pgxact->xid;
-
-		if (pgxact->inCommit && TransactionIdIsValid(pxid))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		if (pgxact->inCommit && VirtualTransactionIdIsValid(vxid))
 		{
 			int			i;
 
@@ -4661,7 +4592,6 @@ KnownAssignedXidsDisplay(int trace_level)
 	pfree(buf.data);
 }
 
-<<<<<<< HEAD
 /* This function returns a list of all valid distributedTransaction Ids. */
 List *
 ListAllGxid(void)
@@ -4714,7 +4644,8 @@ GetPidByGxid(DistributedTransactionId gxid)
 	LWLockRelease(ProcArrayLock);
 
 	return pid;
-=======
+}
+
 /*
  * KnownAssignedXidsReset
  *		Resets KnownAssignedXids to be empty
@@ -4732,5 +4663,4 @@ KnownAssignedXidsReset(void)
 	pArray->headKnownAssignedXids = 0;
 
 	LWLockRelease(ProcArrayLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }

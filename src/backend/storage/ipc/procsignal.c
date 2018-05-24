@@ -20,16 +20,10 @@
 #include "cdb/cdbvars.h"
 #include "commands/async.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
-#include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
-=======
-#include "storage/latch.h"
-#include "storage/ipc.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 
