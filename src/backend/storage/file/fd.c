@@ -3,13 +3,9 @@
  * fd.c
  *	  Virtual file descriptor code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -167,12 +163,8 @@ typedef struct vfd
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
-<<<<<<< HEAD
-	int64		seekPos;		/* current logical file position */
-=======
 	off_t		seekPos;		/* current logical file position */
 	off_t		fileSize;		/* current size of file (0 if not temporary) */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	char	   *fileName;		/* name of file, or NULL for unused VFD */
 	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
 	int			fileFlags;		/* open(2) flags for (re)opening the file */
@@ -738,11 +730,7 @@ LruInsert(File file)
 		/* seek to the right position */
 		if (vfdP->seekPos != INT64CONST(0))
 		{
-<<<<<<< HEAD
-			int64		returnValue;
-=======
 			off_t returnValue PG_USED_FOR_ASSERTS_ONLY;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			returnValue = pg_lseek64(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != INT64CONST(-1));
@@ -953,12 +941,8 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 	/* Saved flags are adjusted to be OK for re-opening file */
 	vfdP->fileFlags = fileFlags & ~(O_CREAT | O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
-<<<<<<< HEAD
-	vfdP->seekPos = INT64CONST(0);
-=======
 	vfdP->seekPos = 0;
 	vfdP->fileSize = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	vfdP->fdstate = 0x0;
 	vfdP->resowner = NULL;
 
@@ -1477,7 +1461,6 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode < 0)
 		return returnCode;
 
-<<<<<<< HEAD
 #ifdef FAULT_INJECTOR
 	if (! strcmp(VfdCache[file].fileName, "global/pg_control"))
 	{
@@ -1503,7 +1486,7 @@ FileWrite(File file, char *buffer, int amount)
 		}
 	}
 #endif
-=======
+
 	/*
 	 * If enforcing temp_file_limit and it's a temp file, check to see if the
 	 * write would overrun temp_file_limit, and throw error if so.	Note: it's
@@ -1528,7 +1511,6 @@ FileWrite(File file, char *buffer, int amount)
 						temp_file_limit)));
 		}
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 retry:
 	errno = 0;
@@ -1744,10 +1726,9 @@ FileTruncate(File file, int64 offset)
 	 */
 	returnCode = ftruncate(VfdCache[file].fd, offset);
 
-<<<<<<< HEAD
 	/* Assume we don't know the file position anymore */
 	VfdCache[file].seekPos = FileUnknownPos;
-=======
+
 	if (returnCode == 0 && VfdCache[file].fileSize > offset)
 	{
 		/* adjust our state for truncation of a temp file */
@@ -1755,7 +1736,6 @@ FileTruncate(File file, int64 offset)
 		temporary_files_size -= VfdCache[file].fileSize - offset;
 		VfdCache[file].fileSize = offset;
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return returnCode;
 }
