@@ -4,13 +4,9 @@
  *	 functions for instrumentation of plan execution
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2001-2011, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2001-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * IDENTIFICATION
  *	  src/backend/executor/instrument.c
@@ -31,20 +27,17 @@ BufferUsage pgBufferUsage;
 static void BufferUsageAccumDiff(BufferUsage *dst,
 					 const BufferUsage *add, const BufferUsage *sub);
 
-<<<<<<< HEAD
+/* GPDB specific */
 static bool shouldPickInstrInShmem(NodeTag tag);
 static Instrumentation *pickInstrFromShmem(const Plan *plan, int instrument_options);
 static void instrShmemRecycleCallback(ResourceReleasePhase phase, bool isCommit,
 						  bool isTopLevel, void *arg);
 
 InstrumentationHeader *InstrumentGlobal = NULL;
-
 static int  scanNodeCounter = 0;
 static int  shmemNumSlots = -1;
 static bool instrumentResownerCallbackRegistered = false;
 static InstrumentationResownerSet *slotsOccupied = NULL;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Allocate new instrumentation structure(s) */
 Instrumentation *
@@ -54,29 +47,18 @@ InstrAlloc(int n, int instrument_options)
 
 	/* initialize all fields to zeroes, then modify as needed */
 	instr = palloc0(n * sizeof(Instrumentation));
-<<<<<<< HEAD
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_CDB))
-=======
-	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
-		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
-		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
-		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
 		int			i;
 		bool		need_buffers = instrument_options & INSTRUMENT_BUFFERS;
 		bool		need_timer = instrument_options & INSTRUMENT_TIMER;
+		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
 
 		for (i = 0; i < n; i++)
 		{
-<<<<<<< HEAD
 			instr[i].needs_bufusage = need_buffers;
 			instr[i].need_timer = need_timer;
 			instr[i].need_cdb = need_cdb;
-=======
-			instr[i].need_bufusage = need_buffers;
-			instr[i].need_timer = need_timer;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 

@@ -7,13 +7,9 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -974,13 +970,11 @@ ExecProcNode(PlanState *node)
 			result = ExecIndexScan((IndexScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_DynamicIndexScanState:
 			result = ExecDynamicIndexScan((DynamicIndexScanState *) node);
-=======
+
 		case T_IndexOnlyScanState:
 			result = ExecIndexOnlyScan((IndexOnlyScanState *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 
 			/* BitmapIndexScanState does not yield tuples */
@@ -1436,17 +1430,15 @@ ExecEndNode(PlanState *node)
 			ExecEndIndexScan((IndexScanState *) node);
 			break;
 
-<<<<<<< HEAD
 		case T_DynamicIndexScanState:
 			ExecEndDynamicIndexScan((DynamicIndexScanState *) node);
 			break;
 
 		case T_ExternalScanState:
 			ExecEndExternalScan((ExternalScanState *) node);
-=======
+
 		case T_IndexOnlyScanState:
 			ExecEndIndexOnlyScan((IndexOnlyScanState *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 
 		case T_BitmapIndexScanState:

@@ -18,22 +18,14 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
-#include "commands/trigger.h"
 #include "executor/executor.h"          /* ExecutorStart, ExecutorRun, etc */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "executor/functions.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
-<<<<<<< HEAD
-#include "tcop/tcopprot.h"
-=======
 #include "parser/parse_func.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"

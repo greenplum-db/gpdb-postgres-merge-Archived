@@ -43,14 +43,11 @@
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 #include "miscadmin.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h" /* gp_select_invisible */
 #include "nodes/tidbitmap.h"
-=======
 #include "utils/rel.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
@@ -125,14 +122,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	Node  		*tbm;
 	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
-<<<<<<< HEAD
-	GenericBMIterator *prefetch_iterator;
-=======
-
 #ifdef USE_PREFETCH
 	TBMIterator *prefetch_iterator;
 #endif
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
 	bool		more = true;
