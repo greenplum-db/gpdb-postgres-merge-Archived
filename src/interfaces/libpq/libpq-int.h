@@ -9,10 +9,7 @@
  *	  more likely to break across PostgreSQL releases than code that uses
  *	  only the official API.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -318,17 +315,6 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;
 
-/* PGdataValue represents a data field value being passed to a row processor.
- * It could be either text or binary data; text data is not zero-terminated.
- * A SQL NULL is represented by len < 0; then value is still valid but there
- * are no data bytes there.
- */
-typedef struct pgDataValue
-{
-	int			len;			/* data length in bytes, or <0 if NULL */
-	const char *value;			/* data value, without zero-termination */
-} PGdataValue;
-
 /*
  * PGconn stores all the state data associated with a single connection
  * to a backend.
@@ -467,10 +453,7 @@ struct pg_conn
 
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
-<<<<<<< HEAD
 	PGresult   *next_result;	/* next result (used in single-row mode) */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Assorted state for SSL, GSS, etc */
 

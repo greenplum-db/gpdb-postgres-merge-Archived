@@ -1165,7 +1165,9 @@ HasDropTransaction(bool allDbs)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC *proc = arrayP->procs[index];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
 
@@ -1175,7 +1177,7 @@ HasDropTransaction(bool allDbs)
 			{
 				ereport((Debug_print_snapshot_dtm ? LOG : DEBUG3),
 						(errmsg("Found drop transaction: database %d, pid %d, xid %d, xmin %d",
-								proc->databaseId, proc->pid, proc->xid, proc->xmin)));
+								proc->databaseId, proc->pid, pgxact->xid, pgxact->xmin)));
 				result = true;
 			}
 		}
@@ -1204,7 +1206,9 @@ HasSerializableBackends(bool allDbs)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC *proc = arrayP->procs[index];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
 
@@ -1214,7 +1218,7 @@ HasSerializableBackends(bool allDbs)
 			{
 				ereport((Debug_print_snapshot_dtm ? LOG : DEBUG3),
 						(errmsg("Found serializable transaction: database %d, pid %d, xid %d, xmin %d",
-								proc->databaseId, proc->pid, proc->xid, proc->xmin)));
+								proc->databaseId, proc->pid, pgxact->xid, pgxact->xmin)));
 				result = true;
 			}
 		}
@@ -1644,7 +1648,7 @@ getAllDistributedXactStatus(TMGALLXACTSTATUS **allDistributedXactStatus)
 			palloc(MAXALIGN(count * sizeof(TMGXACTSTATUS)));
 		for (i = 0; i < count; i++)
 		{
-			PGPROC *proc = arrayP->procs[i];
+			PGPROC *proc = &allProcs[arrayP->pgprocnos[i]];
 			TMGXACT *gxact = &proc->gxact;
 
 			all->statusArray[i].gxid = gxact->gxid;
@@ -1723,7 +1727,7 @@ getDtxCheckPointInfo(char **result, int *result_size)
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
 		TMGXACT_LOG *gxact_log;
-		PGPROC  *proc = arrayP->procs[i];
+		PGPROC  *proc = &allProcs[arrayP->pgprocnos[i]];
 		TMGXACT *gxact = &proc->gxact;
 
 		if (!includeInCheckpointIsNeeded(gxact))
@@ -1813,7 +1817,7 @@ CreateDistributedSnapshot(DistributedSnapshot *ds)
 	 */
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		PGPROC	*proc = arrayP->procs[i];
+		PGPROC  *proc = &allProcs[arrayP->pgprocnos[i]];
 		TMGXACT	*gxact_candidate = &proc->gxact;
 		volatile DistributedTransactionId gxid;
 		DistributedTransactionId dxid;
@@ -2474,7 +2478,7 @@ GetSnapshotData(Snapshot snapshot)
 	{
 		/* Not that these values are not set atomically. However,
 		 * each of these assignments is itself assumed to be atomic. */
-		MyProc->xmin = TransactionXmin = xmin;
+		MyPgXact->xmin = TransactionXmin = xmin;
 	}
 	if (IsolationUsesXactSnapshot())
 	{
@@ -2601,9 +2605,11 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
 
+#if 0
 		/* Ignore procs running LAZY VACUUM */
 		if (pgxact->vacuumFlags & PROC_IN_VACUUM)
 			continue;
+#endif
 
 		xid = pgxact->xid;		/* fetch just once */
 		if (xid != sourcexid)
@@ -2886,7 +2892,6 @@ GetVirtualXIDsDelayingChkpt(int *nvxids)
 		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
-		TransactionId pxid;
 
 		if (pgxact->inCommit)
 		{
@@ -3688,7 +3693,7 @@ FindProcByGpSessionId(long gp_session_id)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		PGPROC	   *proc = &allProcs[arrayP->pgprocnos[index]];
 			
 		if (proc->pid == MyProc->pid)
 			continue;
@@ -3726,7 +3731,7 @@ FindAndSignalProcess(int sessionId, int commandId)
 
 	for (int index = 0; index < procArray->numProcs; index++)
 	{
-		PGPROC *proc = procArray->procs[index];
+		PGPROC *proc = &allProcs[procArray->pgprocnos[index]];
 		
 		if (proc->mppSessionId == sessionId &&
 			proc->queryCommandId == commandId)
@@ -4605,7 +4610,7 @@ ListAllGxid(void)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		volatile PGPROC	*proc = arrayP->procs[index];
+		volatile PGPROC *proc = &allProcs[arrayP->pgprocnos[index]];
 
 		gxid = proc->gxact.gxid;
 		if (gxid == InvalidDistributedTransactionId)
@@ -4633,7 +4638,7 @@ GetPidByGxid(DistributedTransactionId gxid)
 
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		volatile PGPROC *proc = arrayP->procs[i];
+		volatile PGPROC *proc = &allProcs[arrayP->pgprocnos[i]];
 		if (proc->gxact.gxid == gxid)
 		{
 			pid = proc->pid;
