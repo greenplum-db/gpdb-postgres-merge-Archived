@@ -348,16 +348,14 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 * We recheck the qual conditions for every tuple, since the bitmap
 		 * may contain invalid entries from deleted tuples.
 		 */
-		econtext->ecxt_scantuple = slot;
-		ResetExprContext(econtext);
-
-<<<<<<< HEAD
-		if (!ExecQual(node->bitmapqualorig, econtext, false))
+		/*
+		 * GPDB_92_MERGE_FIXME:
+		 * PG check "if (tbmres->recheck)" here. Do we really not want this?
+		 */
 		{
-			/* Fails recheck, so drop it and loop back for another */
-			ExecClearTuple(slot);
-			continue;
-=======
+			econtext->ecxt_scantuple = slot;
+			ResetExprContext(econtext);
+
 			if (!ExecQual(node->bitmapqualorig, econtext, false))
 			{
 				/* Fails recheck, so drop it and loop back for another */
@@ -365,7 +363,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				ExecClearTuple(slot);
 				continue;
 			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/* OK to return this tuple */
@@ -466,15 +463,10 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 				continue;
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 			loctup.t_len = ItemIdGetLength(lp);
-<<<<<<< HEAD
-			if (HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer))
-=======
-			loctup.t_tableOid = scan->rs_rd->rd_id;
 			ItemPointerSet(&loctup.t_self, page, offnum);
-			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+			valid = HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer);
 			if (valid)
 			{
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				scan->rs_vistuples[ntup++] = offnum;
 				PredicateLockTuple(scan->rs_rd, &loctup, snapshot);
 			}
