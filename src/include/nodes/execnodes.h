@@ -18,7 +18,11 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "executor/instrument.h"
+/*
+ * Removed executor/instrument.h to prevent some comiple errors due to
+ * possible circular dependency of header files. Probably there's a better
+ * design, but it does not deserve more effort at this moment.
+ */
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
