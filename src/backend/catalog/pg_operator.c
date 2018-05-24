@@ -858,10 +858,6 @@ makeOperatorDependencies(HeapTuple tuple)
 	recordDependencyOnOwner(OperatorRelationId, HeapTupleGetOid(tuple),
 							oper->oprowner);
 
-<<<<<<< HEAD
-	/* dependency on extension */
-=======
 	/* Dependency on extension */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	recordDependencyOnCurrentExtension(&myself, true);
 }

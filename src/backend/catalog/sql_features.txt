@@ -424,17 +424,12 @@ T174	Identity columns			NO
 T175	Generated columns			NO	
 T176	Sequence generator support			NO	
 T177	Sequence generator support: simple restart option			NO	
-T178	Identity columns:  simple restart option			NO	
-<<<<<<< HEAD
-T191	Referential action RESTRICT			NO	
-T201	Comparable data types for referential constraints			NO	
-=======
+T178	Identity columns:  simple restart option			NO
 T180	System-versioned tables			NO	
 T181	Application-time period tables			NO	
-T191	Referential action RESTRICT			YES	
-T201	Comparable data types for referential constraints			YES	
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-T211	Basic trigger capability			NO	
+T191	Referential action RESTRICT			NO
+T201	Comparable data types for referential constraints			NO
+T211	Basic trigger capability			NO
 T211	Basic trigger capability	01	Triggers activated on UPDATE, INSERT, or DELETE of one base table	NO	
 T211	Basic trigger capability	02	BEFORE triggers	NO	
 T211	Basic trigger capability	03	AFTER triggers	NO	
@@ -480,15 +475,11 @@ T441	ABS and MOD functions			YES
 T461	Symmetric BETWEEN predicate			YES	
 T471	Result sets return value			NO	
 T472	DESCRIBE CURSOR			NO	
-T491	LATERAL derived table			NO	
-<<<<<<< HEAD
-T501	Enhanced EXISTS predicate			NO	
-=======
+T491	LATERAL derived table			NO
 T495	Combined data change and retrieval			NO	different syntax
-T501	Enhanced EXISTS predicate			YES	
+T501	Enhanced EXISTS predicate			NO
 T502	Period predicates			NO	
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-T511	Transaction counts			NO	
+T511	Transaction counts			NO
 T521	Named arguments in CALL statement			NO	
 T522	Default values for IN parameters of SQL-invoked procedures			NO	
 T541	Updatable table references			NO	

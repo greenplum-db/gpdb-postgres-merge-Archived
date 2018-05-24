@@ -1292,9 +1292,10 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 {
 	if (object->classId == RelationRelationId)
 	{
-<<<<<<< HEAD
-		LockRelationOid(object->objectId, AccessExclusiveLock);
-
+		if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
+			LockRelationOid(object->objectId, ShareUpdateExclusiveLock);
+		else
+			LockRelationOid(object->objectId, AccessExclusiveLock);
 		/*
 		 * GPDB: If this was a partition, or some other object for which
 		 * we are careful to always lock the parent object, we don't need
@@ -1308,12 +1309,6 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 		 */
 		if (!rel_needs_long_lock(object->objectId))
 			UnlockRelationOid(object->objectId, AccessExclusiveLock);
-=======
-		if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
-			LockRelationOid(object->objectId, ShareUpdateExclusiveLock);
-		else
-			LockRelationOid(object->objectId, AccessExclusiveLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 		/* assume we should lock the whole object not a sub-object */

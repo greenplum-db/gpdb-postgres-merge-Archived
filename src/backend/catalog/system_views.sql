@@ -1,13 +1,9 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * src/backend/catalog/system_views.sql
  */
@@ -558,12 +554,8 @@ CREATE VIEW pg_stat_activity AS
     SELECT
             S.datid AS datid,
             D.datname AS datname,
-<<<<<<< HEAD
-            S.procpid,
-            S.sess_id,
-=======
             S.pid,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+            S.sess_id,
             S.usesysid,
             U.rolname AS usename,
             S.application_name,
@@ -575,17 +567,13 @@ CREATE VIEW pg_stat_activity AS
             S.query_start,
             S.state_change,
             S.waiting,
-<<<<<<< HEAD
-            S.current_query,
+            S.query,
+            S.state
 
             S.waiting_reason,
             S.rsgid,
             S.rsgname,
-            S.rsgqueueduration
-=======
-            S.state,
-            S.query
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+            S.rsgqueueduration,
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;

@@ -358,14 +358,8 @@ smgrDoPendingDeletes(bool isCommit)
 				SMgrRelation srel;
 
 				srel = smgropen(pending->relnode, pending->backend);
-<<<<<<< HEAD
-				for (i = 0; i <= MAX_FORKNUM; i++)
-				{
-					smgrdounlink(srel, i, false);
-				}
-=======
+
 				smgrdounlink(srel, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				smgrclose(srel);
 			}
 			/* must explicitly free the list entry */

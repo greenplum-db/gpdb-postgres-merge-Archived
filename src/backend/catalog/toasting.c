@@ -64,7 +64,6 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child, boo
 	Relation	rel;
 
 	/*
-<<<<<<< HEAD
 	 * Grab a DDL-exclusive lock on the target table, since we'll update the
 	 * pg_class tuple.	This is redundant for all present users.  Tuple
 	 * toasting behaves safely in the face of a concurrent TOAST table add.
@@ -80,15 +79,6 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_part_child, boo
 		rel = heap_open(relOid, AccessExclusiveLock);
 	else
 		rel = heap_open(relOid, ShareUpdateExclusiveLock);
-=======
-	 * Grab an exclusive lock on the target table, since we'll update its
-	 * pg_class tuple. This is redundant for all present uses, since caller
-	 * will have such a lock already.  But the lock is needed to ensure that
-	 * concurrent readers of the pg_class tuple won't have visibility issues,
-	 * so let's be safe.
-	 */
-	rel = heap_open(relOid, AccessExclusiveLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, is_part_child);
@@ -316,11 +306,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	coloptions[0] = 0;
 	coloptions[1] = 0;
 
-<<<<<<< HEAD
-	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid,
-=======
-	index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	toast_idxid = index_create(toast_rel, toast_idxname, toastIndexOid, InvalidOid,
 				 indexInfo,
 				 list_make2("chunk_id", "chunk_seq"),
 				 BTREE_AM_OID,

@@ -3,13 +3,9 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -82,12 +78,9 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "utils/memutils.h"             /* CDB: GetMemoryChunkContext */
 #include "utils/relcache.h"
-=======
 #include "utils/rel.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -135,13 +128,9 @@ static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_no_inherit);
 static void StoreConstraints(Relation rel, List *cooked_constraints);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
-<<<<<<< HEAD
-							bool allow_merge, bool is_local);
-=======
 							bool allow_merge, bool is_local,
 							bool is_no_inherit);
 static void SetRelationNumChecks(Relation rel, int numchecks);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
 			   char *relname);
@@ -1195,7 +1184,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 			/* The relation is real, but as yet empty */
 			new_rel_reltup->relpages = 0;
 			new_rel_reltup->reltuples = 0;
-<<<<<<< HEAD
 
 			/* estimated stats for external tables */
 			/* NOTE: look at cdb_estimate_rel_size() if changing these values */
@@ -1204,9 +1192,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 				new_rel_reltup->relpages = 1000;
 				new_rel_reltup->reltuples = 1000000;
 			}
-=======
 			new_rel_reltup->relallvisible = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case RELKIND_SEQUENCE:
 			/* Sequences always have a known size */
@@ -1706,13 +1692,9 @@ heap_create_with_catalog(const char *relname,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
-<<<<<<< HEAD
-		recordDependencyOnCurrentExtension(&myself, false);
-=======
 
 		if (relpersistence != RELPERSISTENCE_TEMP)
 			recordDependencyOnCurrentExtension(&myself, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		if (reloftypeid)
 		{
@@ -1754,7 +1736,6 @@ heap_create_with_catalog(const char *relname,
 	if (oncommit != ONCOMMIT_NOOP)
 		register_on_commit_action(relid, oncommit);
 
-<<<<<<< HEAD
 	/*
 	 * CDB: If caller gave us a distribution policy, store the distribution
 	 * key column list in the gp_distribution_policy catalog and attach a
@@ -1832,8 +1813,6 @@ heap_create_with_catalog(const char *relname,
 	 * no guarantee that this will hit the disk before the next checkpoint
 	 * moves the redo pointer.
 	 */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
 		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE);
