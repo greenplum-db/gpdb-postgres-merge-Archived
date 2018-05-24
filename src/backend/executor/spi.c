@@ -1326,17 +1326,13 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	/*
 	 * Start portal execution.
 	 */
-<<<<<<< HEAD
-	PortalStart(portal, paramLI, snapshot, NULL);
-=======
 	if (read_only)
-		PortalStart(portal, paramLI, 0, true);
+		PortalStart(portal, paramLI, 0, true, NULL);
 	else
 	{
 		CommandCounterIncrement();
-		PortalStart(portal, paramLI, 0, false);
+		PortalStart(portal, paramLI, 0, false, NULL);
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
@@ -1770,7 +1766,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 											   plan->argtypes,
 											   plan->nargs);
 		}
-<<<<<<< HEAD
+
 
 		{
 			ListCell *lc;
@@ -1789,10 +1785,6 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 				}
 			}
 		}
-
-		stmt_list = pg_plan_queries(stmt_list, cursor_options, boundParams);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* Finish filling in the CachedPlanSource */
 		CompleteCachedPlan(plansource,
@@ -2671,29 +2663,7 @@ _SPI_save_plan(SPIPlanPtr plan)
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
 
-<<<<<<< HEAD
-		/* Note: we assume we don't need to revalidate the plan */
-		cplan = plansource->plan;
-
-		newsource = CreateCachedPlan(plansource->raw_parse_tree,
-									 plansource->query_string,
-									 plansource->sourceTag,
-									 plansource->commandTag,
-									 newplan->argtypes,
-									 newplan->nargs,
-									 newplan->cursor_options,
-									 cplan->stmt_list,
-									 true,
-									 false);
-		if (newplan->parserSetup != NULL)
-			CachedPlanSetParserHook(newsource,
-									newplan->parserSetup,
-									newplan->parserSetupArg);
-
-		newplan->plancache_list = lappend(newplan->plancache_list, newsource);
-=======
 		SaveCachedPlan(plansource);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	return newplan;
