@@ -56,7 +56,7 @@ InstrAlloc(int n, int instrument_options)
 
 		for (i = 0; i < n; i++)
 		{
-			instr[i].needs_bufusage = need_buffers;
+			instr[i].need_bufusage = need_buffers;
 			instr[i].need_timer = need_timer;
 			instr[i].need_cdb = need_cdb;
 		}

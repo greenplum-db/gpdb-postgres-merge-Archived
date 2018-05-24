@@ -1427,7 +1427,7 @@ typedef struct PlanState
 	/*
 	 * EXPLAIN ANALYZE statistics collection
 	 */
-	Instrumentation *instrument;     /* runtime stats for this node */
+	struct Instrumentation *instrument;     /* runtime stats for this node */
 	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
 	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
 	/* callback before ExecutorEnd */
