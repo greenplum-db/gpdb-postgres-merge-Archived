@@ -18,11 +18,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-/*
- * Removed executor/instrument.h to prevent some comiple errors due to
- * possible circular dependency of header files. Probably there's a better
- * design, but it does not deserve more effort at this moment.
- */
+#include "executor/instrument.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
@@ -357,7 +353,7 @@ typedef struct ResultRelInfo
 	TriggerDesc *ri_TrigDesc;
 	FmgrInfo   *ri_TrigFunctions;
 	List	  **ri_TrigWhenExprs;
-	struct Instrumentation *ri_TrigInstrument;
+	Instrumentation *ri_TrigInstrument;
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
 	ProjectionInfo *ri_projectReturning;
@@ -1431,7 +1427,7 @@ typedef struct PlanState
 	/*
 	 * EXPLAIN ANALYZE statistics collection
 	 */
-	struct Instrumentation *instrument;     /* runtime stats for this node */
+	Instrumentation *instrument;     /* runtime stats for this node */
 	struct StringInfoData  *cdbexplainbuf;  /* EXPLAIN ANALYZE report buf */
 	void      (*cdbexplainfun)(struct PlanState *planstate, struct StringInfoData *buf);
 	/* callback before ExecutorEnd */
