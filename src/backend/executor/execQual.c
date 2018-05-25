@@ -1072,11 +1072,8 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 
 	/*
 	 * GPDB_92_MERGE_FIXME: Previous code does not have the code block below, 
-	 * but in theory this is needed. Or we do not support INNER_VAR and
-	 * OUTER_VAR ? If we support, why there is not test failure on gpdb master?
-	 * If we do not support maybe we should still keep the code logic and
-	 * comment out them to benefit code merge. Besides, we should consider
-	 * to follow pg to use ExecEvalVar() for Var code entrance.
+	 * but in theory this is needed. So why there is not test failure on gpdb master?
+	 * Besides, we should consider to follow pg to use ExecEvalVar() for Var code entrance.
 	 */
 
 	/* Get the input slot we want */
