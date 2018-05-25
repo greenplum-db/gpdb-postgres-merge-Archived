@@ -569,16 +569,12 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 			RelationMapInvalidate(false);
 	}
 	else
-<<<<<<< HEAD
 	{
 #ifdef USE_ASSERT_CHECKING
 		elog(NOTICE, "invalid SI message: %s", si_to_str(msg));
 #endif
-		elog(FATAL, "unrecognized SI message id: %d", msg->id);
-	}
-=======
 		elog(FATAL, "unrecognized SI message ID: %d", msg->id);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	}
 }
 
 /*
@@ -615,108 +611,6 @@ InvalidateSystemCaches(void)
 	}
 }
 
-<<<<<<< HEAD
-/*
- * PrepareForTupleInvalidation
- *		Detect whether invalidation of this tuple implies invalidation
- *		of catalog/relation cache entries; if so, register inval events.
- */
-static void
-PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
-{
-	Oid			tupleRelId;
-	Oid			databaseId;
-	Oid			relationId;
-
-	/* Do nothing during bootstrap */
-	if (IsBootstrapProcessingMode())
-		return;
-
-	/*
-	 * We only need to worry about invalidation for tuples that are in system
-	 * relations; user-relation tuples are never in catcaches and can't affect
-	 * the relcache either.
-	 */
-	if (!IsSystemRelation(relation))
-		return;
-
-	/*
-	 * TOAST tuples can likewise be ignored here. Note that TOAST tables are
-	 * considered system relations so they are not filtered by the above test.
-	 */
-	if (IsToastRelation(relation))
-		return;
-
-	/*
-	 * First let the catcache do its thing
-	 */
-	PrepareToInvalidateCacheTuple(relation, tuple,
-								  RegisterCatcacheInvalidation);
-
-	/*
-	 * Now, is this tuple one of the primary definers of a relcache entry?
-	 */
-	tupleRelId = RelationGetRelid(relation);
-
-	if (tupleRelId == RelationRelationId)
-	{
-		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
-
-		relationId = HeapTupleGetOid(tuple);
-		if (classtup->relisshared)
-			databaseId = InvalidOid;
-		else
-			databaseId = MyDatabaseId;
-	}
-	else if (tupleRelId == AttributeRelationId)
-	{
-		Form_pg_attribute atttup = (Form_pg_attribute) GETSTRUCT(tuple);
-
-		relationId = atttup->attrelid;
-
-		/*
-		 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
-		 * even if the rel in question is shared (which we can't easily tell).
-		 * This essentially means that only backends in this same database
-		 * will react to the relcache flush request.  This is in fact
-		 * appropriate, since only those backends could see our pg_attribute
-		 * change anyway.  It looks a bit ugly though.	(In practice, shared
-		 * relations can't have schema changes after bootstrap, so we should
-		 * never come here for a shared rel anyway.)
-		 */
-		databaseId = MyDatabaseId;
-	}
-	else if (tupleRelId == GpPolicyRelationId)
-	{
-		FormData_gp_policy *gptup = (FormData_gp_policy *) GETSTRUCT(tuple);
-
-		relationId = gptup->localoid;
-		databaseId = MyDatabaseId;
-	}
-	else if (tupleRelId == IndexRelationId)
-	{
-		Form_pg_index indextup = (Form_pg_index) GETSTRUCT(tuple);
-
-		/*
-		 * When a pg_index row is updated, we should send out a relcache inval
-		 * for the index relation.	As above, we don't know the shared status
-		 * of the index, but in practice it doesn't matter since indexes of
-		 * shared catalogs can't have such updates.
-		 */
-		relationId = indextup->indexrelid;
-		databaseId = MyDatabaseId;
-	}
-	else
-		return;
-
-	/*
-	 * Yes.  We need to register a relcache invalidation event.
-	 */
-	RegisterRelcacheInvalidation(databaseId, relationId);
-}
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* ----------------------------------------------------------------
  *					  public functions

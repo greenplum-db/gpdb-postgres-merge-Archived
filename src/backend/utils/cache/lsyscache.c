@@ -3,13 +3,9 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -26,6 +22,7 @@
 #include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/heap.h"                   /* SystemAttributeDefinition() */
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_collation.h"
@@ -36,12 +33,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
-#include "catalog/pg_aggregate.h"
-#include "catalog/pg_constraint.h"
-=======
 #include "catalog/pg_range.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -2055,10 +2047,6 @@ func_volatile(Oid funcid)
 }
 
 /*
-<<<<<<< HEAD
- * func_data_access
- *		Given procedure id, return the function's data access flag.
-=======
  * get_func_leakproof
  *	   Given procedure id, return the function's leakproof field.
  */
@@ -2078,9 +2066,8 @@ get_func_leakproof(Oid funcid)
 }
 
 /*
- * get_func_cost
- *		Given procedure id, return the function's procost field.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+ * func_data_access
+ *		Given procedure id, return the function's data access flag.
  */
 char
 func_data_access(Oid funcid)
@@ -3505,7 +3492,33 @@ get_namespace_name(Oid nspid)
 		return NULL;
 }
 
-<<<<<<< HEAD
+/*				---------- PG_RANGE CACHE ----------				 */
+
+/*
+ * get_range_subtype
+ *		Returns the subtype of a given range type
+ *
+ * Returns InvalidOid if the type is not a range type.
+ */
+Oid
+get_range_subtype(Oid rangeOid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_range rngtup = (Form_pg_range) GETSTRUCT(tp);
+		Oid			result;
+
+		result = rngtup->rngsubtype;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
 /*
  * relation_oids
  *	  Extract all relation oids from the catalog.
@@ -3820,35 +3833,12 @@ get_check_constraint_relid(Oid oidCheckconstraint)
 		Oid			result;
 
 		result = contup->conrelid;
-=======
-/*				---------- PG_RANGE CACHE ----------				 */
-
-/*
- * get_range_subtype
- *		Returns the subtype of a given range type
- *
- * Returns InvalidOid if the type is not a range type.
- */
-Oid
-get_range_subtype(Oid rangeOid)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_range rngtup = (Form_pg_range) GETSTRUCT(tp);
-		Oid			result;
-
-		result = rngtup->rngsubtype;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		ReleaseSysCache(tp);
 		return result;
 	}
 	else
 		return InvalidOid;
 }
-<<<<<<< HEAD
 
 /*
  * get_check_constraint_oids
@@ -4361,5 +4351,3 @@ child_triggers(Oid relationId, int32 triggerType)
 	/* no child triggers matching the given type */
 	return found;
 }
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

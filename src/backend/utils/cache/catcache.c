@@ -445,25 +445,6 @@ CatalogCacheIdInvalidate(int cacheId, uint32 hashValue)
 {
 	CatCache   *ccp;
 
-<<<<<<< HEAD
-	/*
-	 * sanity checks
-	 */
-#ifdef USE_ASSERT_CHECKING
-	/* Add some debug info for MPP-5739 */
-	if (!ItemPointerIsValid(pointer))
-	{
-		elog(LOG, "CatalogCacheIdInvalidate: cacheId %d, hash %u IP %p", cacheId, hashValue, pointer);
-		if (pointer != NULL)
-		{
-			elog(LOG, "CatalogCacheIdInvalidate: bogus item (?): (blkid.hi %d blkid.lo %d posid %d)",
-				 pointer->ip_blkid.bi_hi, pointer->ip_blkid.bi_lo, pointer->ip_posid);
-		}
-	}
-#endif
-	Assert(ItemPointerIsValid(pointer));
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: called");
 
 	/*
@@ -1716,13 +1697,8 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 	/*
 	 * If there are any out-of-line toasted fields in the tuple, expand them
-<<<<<<< HEAD
-	 * in-line.  This saves cycles during later use of the catcache entry,
-	 * and also protects us against the possibility of the toast tuples being
-=======
 	 * in-line.  This saves cycles during later use of the catcache entry, and
 	 * also protects us against the possibility of the toast tuples being
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * freed before we attempt to fetch them, in case of something using a
 	 * slightly stale catcache entry.
 	 */
