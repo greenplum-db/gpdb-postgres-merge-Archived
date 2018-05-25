@@ -315,15 +315,10 @@ help(const char *progname)
 	printf(_("  -S WORK-MEM        set amount of memory for sorts (in kB)\n"));
 	printf(_("  --NAME=VALUE       set run-time parameter\n"));
 	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
-<<<<<<< HEAD
-	printf(_("  --help          show this help, then exit\n"));
-	printf(_("  --version       output version information, then exit\n"));
-	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
-	printf(_("  --catalog-version output the catalog version, then exit\n"));
-=======
 	printf(_("  --help             show this help, then exit\n"));
 	printf(_("  --version          output version information, then exit\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	printf(_("  --gp-version       output Greenplum version information, then exit\n"));
+	printf(_("  --catalog-version  output the catalog version, then exit\n"));
 
 	printf(_("\nDeveloper options:\n"));
 	printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));
