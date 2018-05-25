@@ -412,7 +412,6 @@ TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn)
 }
 
 /*
-<<<<<<< HEAD
  * Find the next lowest transaction with a logged or recorded status.
  * I.e. One that does not have a status of default (0) -- i.e: in-progress.
  */
@@ -520,7 +519,9 @@ CLOGTransactionIsOld(TransactionId xid)
 	 * before the window.
 	 */
 	return (pagesBack > NUM_CLOG_BUFFERS/2);
-=======
+}
+
+/*
  * Number of shared CLOG buffers.
  *
  * Testing during the PostgreSQL 9.2 development cycle revealed that on a
@@ -547,7 +548,6 @@ Size
 CLOGShmemBuffers(void)
 {
 	return Min(32, Max(4, NBuffers / 512));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*

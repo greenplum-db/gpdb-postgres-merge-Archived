@@ -22,11 +22,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-<<<<<<< HEAD
-#include "utils/builtins.h"
 #include "utils/guc.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/syscache.h"
 
 #include "access/distributedlog.h"
@@ -64,10 +60,6 @@ GetNewTransactionId(bool isSubXact)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
-<<<<<<< HEAD
-=======
-		MyPgXact->xid = BootstrapTransactionId;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		return BootstrapTransactionId;
 	}
 

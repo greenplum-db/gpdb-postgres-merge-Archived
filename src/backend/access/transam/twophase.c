@@ -452,14 +452,10 @@ MarkAsPreparing(TransactionId xid,
                 , XLogRecPtr *xlogrecptr)
 {
 	GlobalTransaction gxact;
-<<<<<<< HEAD
 	int	i;
 	int	idlen = strlen(gid);
-=======
 	PGPROC	   *proc;
 	PGXACT	   *pgxact;
-	int			i;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* on first call, register the exit hook */
 	if (!twophaseExitRegistered)
@@ -483,30 +479,6 @@ MarkAsPreparing(TransactionId xid,
 
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * First, find and recycle any gxacts that failed during prepare. We do
-	 * this partly to ensure we don't mistakenly say their GIDs are still
-	 * reserved, and partly so we don't fail on out-of-slots unnecessarily.
-	 */
-	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
-	{
-		gxact = TwoPhaseState->prepXacts[i];
-		if (!gxact->valid && !TransactionIdIsActive(gxact->locking_xid))
-		{
-			/* It's dead Jim ... remove from the active array */
-			TwoPhaseState->numPrepXacts--;
-			TwoPhaseState->prepXacts[i] = TwoPhaseState->prepXacts[TwoPhaseState->numPrepXacts];
-			/* and put it back in the freelist */
-			gxact->next = TwoPhaseState->freeGXacts;
-			TwoPhaseState->freeGXacts = gxact;
-			/* Back up index count too, so we don't miss scanning one */
-			i--;
-		}
-	}
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Check for conflicting GID */
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
 	{
@@ -539,27 +511,6 @@ MarkAsPreparing(TransactionId xid,
 	SHMQueueElemInit(&(proc->links));
 	proc->waitStatus = STATUS_OK;
 	/* We set up the gxact's VXID as InvalidBackendId/XID */
-<<<<<<< HEAD
-	gxact->proc.lxid = (LocalTransactionId) xid;
-	gxact->proc.xid = xid;
-	gxact->proc.xmin = InvalidTransactionId;
-	gxact->proc.pid = 0;
-	gxact->proc.backendId = InvalidBackendId;
-	gxact->proc.databaseId = databaseid;
-	gxact->proc.roleId = owner;
-	gxact->proc.inCommit = false;
-	gxact->proc.vacuumFlags = 0;
-	gxact->proc.serializableIsoLevel = false;
-	gxact->proc.inDropTransaction = false;
-	gxact->proc.lwWaiting = false;
-	gxact->proc.lwExclusive = false;
-	gxact->proc.lwWaitLink = NULL;
-	gxact->proc.waitLock = NULL;
-	gxact->proc.waitProcLock = NULL;
-
-	gxact->proc.localDistribXactData = *localDistribXactRef;
-
-=======
 	proc->lxid = (LocalTransactionId) xid;
 	pgxact->xid = xid;
 	pgxact->xmin = InvalidTransactionId;
@@ -574,7 +525,11 @@ MarkAsPreparing(TransactionId xid,
 	proc->lwWaitLink = NULL;
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	proc->serializableIsoLevel = false;
+	proc->inDropTransaction = false;
+
+	proc->localDistribXactData = *localDistribXactRef;
+
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		SHMQueueInit(&(proc->myProcLocks[i]));
 	/* subxid data must be filled later by GXactLoadSubxactData */
@@ -724,11 +679,7 @@ LockGXact(const char *gid, Oid user, bool raiseErrorIfNotFound)
 		 * there may be some other issues as well.	Hence disallow until
 		 * someone gets motivated to make it work.
 		 */
-<<<<<<< HEAD
-		if (MyDatabaseId != gxact->proc.databaseId &&  (Gp_role != GP_ROLE_EXECUTE))
-=======
-		if (MyDatabaseId != proc->databaseId)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		if (MyDatabaseId != proc->databaseId &&  (Gp_role != GP_ROLE_EXECUTE))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("prepared transaction belongs to another database"),
@@ -793,44 +744,6 @@ RemoveGXact(GlobalTransaction gxact)
 
 	elog(ERROR, "failed to find %p in GlobalTransaction array", gxact);
 }
-
-<<<<<<< HEAD
-=======
-/*
- * TransactionIdIsPrepared
- *		True iff transaction associated with the identifier is prepared
- *		for two-phase commit
- *
- * Note: only gxacts marked "valid" are considered; but notice we do not
- * check the locking status.
- *
- * This is not currently exported, because it is only needed internally.
- */
-static bool
-TransactionIdIsPrepared(TransactionId xid)
-{
-	bool		result = false;
-	int			i;
-
-	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
-
-	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
-	{
-		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
-		PGXACT	   *pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
-
-		if (gxact->valid && pgxact->xid == xid)
-		{
-			result = true;
-			break;
-		}
-	}
-
-	LWLockRelease(TwoPhaseStateLock);
-
-	return result;
-}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Returns an array of all prepared transactions for the user-level
@@ -1429,8 +1342,11 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
 	 * try to commit the same GID at once.
 	 */
-<<<<<<< HEAD
 	gxact = LockGXact(gid, GetUserId(), raiseErrorIfNotFound);
+	proc = &ProcGlobal->allProcs[gxact->pgprocno];
+	pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
+	xid = pgxact->xid;
+
 	if (!raiseErrorIfNotFound && gxact == NULL)
 	{
 		return false;
@@ -1474,12 +1390,6 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	}
 
 	buf = XLogRecGetData(tfRecord);
-=======
-	gxact = LockGXact(gid, GetUserId());
-	proc = &ProcGlobal->allProcs[gxact->pgprocno];
-	pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
-	xid = pgxact->xid;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (buf == NULL)
 		ereport(ERROR,
@@ -1525,12 +1435,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 		RecordTransactionAbortPrepared(xid,
 									   hdr->nsubxacts, children,
 									   hdr->nabortrels, abortrels);
-<<<<<<< HEAD
-	ProcArrayRemove(&gxact->proc, latestXid);
-=======
 
 	ProcArrayRemove(proc, latestXid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * In case we fail while running the callbacks, mark the gxact invalid so
@@ -1563,14 +1469,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	{
 		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
 
-<<<<<<< HEAD
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
-			smgrdounlink(srel, fork, false);
-		}
-=======
 		smgrdounlink(srel, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		smgrclose(srel);
 	}
 
@@ -1687,75 +1586,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 * We have already attached all the prepared transactions to
 	 * the checkpoint record. For now, just return from this.
 	 */
-<<<<<<< HEAD
 	return;
-=======
-	if (max_prepared_xacts <= 0)
-		return;					/* nothing to do */
-
-	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_START();
-
-	xids = (TransactionId *) palloc(max_prepared_xacts * sizeof(TransactionId));
-	nxids = 0;
-
-	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
-
-	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
-	{
-		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
-		PGXACT	   *pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
-
-		if (gxact->valid &&
-			XLByteLE(gxact->prepare_lsn, redo_horizon))
-			xids[nxids++] = pgxact->xid;
-	}
-
-	LWLockRelease(TwoPhaseStateLock);
-
-	for (i = 0; i < nxids; i++)
-	{
-		TransactionId xid = xids[i];
-		int			fd;
-
-		TwoPhaseFilePath(path, xid);
-
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0);
-		if (fd < 0)
-		{
-			if (errno == ENOENT)
-			{
-				/* OK if gxact is no longer valid */
-				if (!TransactionIdIsPrepared(xid))
-					continue;
-				/* Restore errno in case it was changed */
-				errno = ENOENT;
-			}
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not open two-phase state file \"%s\": %m",
-							path)));
-		}
-
-		if (pg_fsync(fd) != 0)
-		{
-			close(fd);
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not fsync two-phase state file \"%s\": %m",
-							path)));
-		}
-
-		if (close(fd) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not close two-phase state file \"%s\": %m",
-							path)));
-	}
-
-	pfree(xids);
-
-	TRACE_POSTGRESQL_TWOPHASE_CHECKPOINT_DONE();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
