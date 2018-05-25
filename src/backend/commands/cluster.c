@@ -6,13 +6,9 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -35,14 +31,11 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"

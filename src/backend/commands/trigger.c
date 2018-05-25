@@ -386,12 +386,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * Find and validate the trigger function.
 	 */
 	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes, false);
-<<<<<<< HEAD
-	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_PROC,
-					   NameListToString(stmt->funcname));
-=======
 	if (!isInternal)
 	{
 		aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
@@ -399,7 +393,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   NameListToString(stmt->funcname));
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
 	{

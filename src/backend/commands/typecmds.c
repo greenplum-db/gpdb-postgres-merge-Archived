@@ -708,7 +708,6 @@ DefineType(List *names, List *parameters)
 	}
 }
 
-<<<<<<< HEAD
 
 /*
  *	RemoveTypes
@@ -807,8 +806,6 @@ RemoveTypes(DropStmt *drop)
 }
 
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Guts of type deletion.
  */

@@ -306,7 +306,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
  *		Rename an aggregate.
  */
 void
-<<<<<<< HEAD
 RemoveAggregate(RemoveFuncStmt *stmt)
 {
 	List	   *aggName = stmt->name;
@@ -366,8 +365,6 @@ RemoveAggregate(RemoveFuncStmt *stmt)
 
 
 void
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 RenameAggregate(List *name, List *args, const char *newname)
 {
 	Oid			procOid;

@@ -132,7 +132,6 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 }
 
 /*
-<<<<<<< HEAD
  * DROP CONVERSION
  */
 void
@@ -195,8 +194,6 @@ DropConversionsCommand(DropStmt *drop)
 }
 
 /*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Rename conversion
  */
 void
