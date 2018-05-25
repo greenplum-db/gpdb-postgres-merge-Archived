@@ -118,6 +118,4 @@ extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
 extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
 
-extern Oid IndexGetRelation(Oid indexId);
-
 #endif   /* INDEX_H */
