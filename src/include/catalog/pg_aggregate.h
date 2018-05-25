@@ -256,15 +256,9 @@ DATA(insert ( 2828	n 0 float8_regr_accum		- float8_regr_amalg	- float8_covar_sam
 DATA(insert ( 2829	n 0 float8_regr_accum		- float8_regr_amalg	- float8_corr				f 0	1022	"{0,0,0,0,0,0}"));
 
 /* boolean-and and boolean-or */
-<<<<<<< HEAD
-DATA(insert ( 2517	n 0 booland_statefunc	- booland_statefunc	- -			f 0	16		_null_));
-DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 0	16		_null_));
-DATA(insert ( 2519	n 0 booland_statefunc	- booland_statefunc	- -			f 0	16		_null_));
-=======
-DATA(insert ( 2517	booland_statefunc	-			58	16		_null_ ));
-DATA(insert ( 2518	boolor_statefunc	-			59	16		_null_ ));
-DATA(insert ( 2519	booland_statefunc	-			58	16		_null_ ));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+DATA(insert ( 2517	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
+DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 58	16		_null_));
+DATA(insert ( 2519	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
 
 /* bitwise integer */
 DATA(insert ( 2236 n 0 int2and		  - int2and		  - -					f 0	21		_null_));

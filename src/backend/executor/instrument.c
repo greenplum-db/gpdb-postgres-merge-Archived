@@ -21,6 +21,8 @@
 #include "storage/spin.h"
 #include "executor/instrument.h"
 #include "utils/memutils.h"
+#include "gpmon/gpmon.h"
+#include "miscadmin.h"
 
 BufferUsage pgBufferUsage;
 

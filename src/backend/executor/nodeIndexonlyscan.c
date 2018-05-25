@@ -168,8 +168,8 @@ static void
 StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup, TupleDesc itupdesc)
 {
 	int			nindexatts = itupdesc->natts;
-	Datum	   *values = slot->tts_values;
-	bool	   *isnull = slot->tts_isnull;
+	Datum	   *values = slot->PRIVATE_tts_values;
+	bool	   *isnull = slot->PRIVATE_tts_isnull;
 	int			i;
 
 	/*
