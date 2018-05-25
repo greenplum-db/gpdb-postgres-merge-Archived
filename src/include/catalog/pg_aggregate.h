@@ -319,7 +319,7 @@ DATA(insert ( 6130	o 1 ordered_set_transition	- - -		percentile_cont_timestamptz
 DATA(insert ( 3538	n 0 string_agg_transfn - - - string_agg_finalfn f 0 2281 _null_));
 
 /* bytea */
-DATA(insert ( 3545	bytea_string_agg_transfn	bytea_string_agg_finalfn		0	2281	_null_ ));
+DATA(insert ( 3545	n 0 bytea_string_agg_transfn - - - 	bytea_string_agg_finalfn	f	0	2281	_null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c

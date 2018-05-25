@@ -148,7 +148,7 @@ DATA(insert OID = 4000 (  spgist	0 5 f f f f f t f t f f f 0 spginsert spgbegins
 DESCR("SP-GiST index access method");
 #define SPGIST_AM_OID 4000
 
-DATA(insert OID = 7013 (  bitmap	5 1 f f f t t t f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbuildempty bmbulkdelete bmvacuumcleanup bmcostestimate bmoptions ));
+DATA(insert OID = 7013 (  bitmap	5 1 f f f t t t f f f f f 0 bminsert bmbeginscan bmgettuple bmgetbitmap bmrescan bmendscan bmmarkpos bmrestrpos bmbuild bmbuildempty bmbulkdelete bmvacuumcleanup - bmcostestimate bmoptions ));
 DESCR("bitmap index access method");
 #define BITMAP_AM_OID 7013
 
