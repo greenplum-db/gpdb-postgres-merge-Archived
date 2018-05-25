@@ -335,9 +335,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case WalReceiverProcess:
 				statmsg = "wal receiver process";
 				break;
-			case CheckpointerProcess:
-				statmsg = "checkpointer process";
-				break;
 			default:
 				statmsg = "??? process";
 				break;
@@ -433,27 +430,20 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);		/* should never return */
 
 		case CheckpointerProcess:
-<<<<<<< HEAD
 			/* don't set signals, checkpointer is similar to bgwriter and has its own agenda */
 			CheckpointerMain();
 			proc_exit(1);		/* should never return */
 
-		case WalReceiverProcess:
-			/* don't set signals, walreceiver has its own agenda */
-			WalReceiverMain();
-			proc_exit(1);		/* should never return */
-
-=======
-			/* don't set signals, checkpointer has its own agenda */
-			CheckpointerMain();
-			proc_exit(1);		/* should never return */
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case WalWriterProcess:
 			/* don't set signals, walwriter has its own agenda */
 			InitXLOGAccess();
 			WalWriterMain();
 			proc_exit(1);		/* should never return */
+
+		case WalReceiverProcess:
+			/* don't set signals, walreceiver has its own agenda */
+			WalReceiverMain();
+			proc_exit(1);
 
 		default:
 			elog(PANIC, "unrecognized process type: %d", MyAuxProcType);
