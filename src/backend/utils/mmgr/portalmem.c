@@ -8,13 +8,9 @@
  * doesn't actually run the executor for them.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -30,13 +26,10 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-<<<<<<< HEAD
 #include "utils/resscheduler.h"
 
 #include "cdb/ml_ipc.h"
-=======
 #include "utils/timestamp.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Estimate of the maximum number of open portals a user would have,
@@ -812,21 +805,14 @@ AtAbort_Portals(void)
 		 * AtSubAbort_Portals.
 		 */
 		if (portal->status == PORTAL_READY)
-<<<<<<< HEAD
-			portal->status = PORTAL_FAILED;
-#endif
-
-		/* let portalcmds.c clean up the state it knows about */
-		if (portal->cleanup)
-=======
 			MarkPortalFailed(portal);
+#endif
 
 		/*
 		 * Allow portalcmds.c to clean up the state it knows about, if we
 		 * haven't already.
 		 */
 		if (PointerIsValid(portal->cleanup))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			(*portal->cleanup) (portal);
 			portal->cleanup = NULL;

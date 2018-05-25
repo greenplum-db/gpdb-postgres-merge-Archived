@@ -9,13 +9,9 @@
  * context's MemoryContextMethods struct.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -220,27 +216,7 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	MemoryContextSetParent(context, NULL);
 
-<<<<<<< HEAD
-		if (context == parent->firstchild)
-			parent->firstchild = context->nextchild;
-		else
-		{
-			MemoryContext child;
-
-			for (child = parent->firstchild; child; child = child->nextchild)
-			{
-				if (context == child->nextchild)
-				{
-					child->nextchild = context->nextchild;
-					break;
-				}
-			}
-		}
-	}
-	(*context->methods.delete_context)(context);
-=======
 	(*context->methods->delete_context) (context);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	pfree(context);
 }
 

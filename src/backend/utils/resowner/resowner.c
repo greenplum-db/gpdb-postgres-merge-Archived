@@ -21,11 +21,8 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "storage/bufmgr.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"

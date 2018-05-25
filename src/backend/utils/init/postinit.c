@@ -787,7 +787,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		Assert(!bootstrap);
 
-<<<<<<< HEAD
 		/*
 		 * must have authenticated as a replication role
 		 *
@@ -796,10 +795,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		 * is_authenticated_user_replication_role() performs a syscache lookup,
 		 * which cannot happen on mirror/standby.
 		 */
-		if (am_walsender && !is_authenticated_user_replication_role())
-=======
-		if (!superuser() && !is_authenticated_user_replication_role())
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		if (am_walsender && !superuser() && !is_authenticated_user_replication_role())
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser or replication role to start walsender")));

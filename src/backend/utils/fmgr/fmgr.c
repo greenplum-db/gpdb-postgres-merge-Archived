@@ -411,13 +411,8 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 
 	/*
 	 * Look up the language's call handler function, ignoring any attributes
-<<<<<<< HEAD
-	 * that would normally cause insertion of fmgr_security_definer.  We
-	 * need to get back a bare pointer to the actual C-language function.
-=======
 	 * that would normally cause insertion of fmgr_security_definer.  We need
 	 * to get back a bare pointer to the actual C-language function.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	fmgr_info_cxt_security(languageStruct->lanplcallfoid, &plfinfo,
 						   CurrentMemoryContext, true);

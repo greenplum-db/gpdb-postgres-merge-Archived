@@ -1322,8 +1322,6 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple, TransactionId
 	return HEAPTUPLE_DEAD;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * HeapTupleIsSurelyDead
  *
@@ -1365,7 +1363,6 @@ HeapTupleIsSurelyDead(HeapTupleHeader tuple, TransactionId OldestXmin)
 	return TransactionIdPrecedes(HeapTupleHeaderGetXmax(tuple), OldestXmin);
 }
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * XidInMVCCSnapshot
  *		Is the given XID still-in-progress according to the distributed
