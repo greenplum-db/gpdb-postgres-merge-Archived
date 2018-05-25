@@ -8,13 +8,9 @@
  * None of this code is used during normal system operation.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlogutils.c
@@ -23,14 +19,11 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-=======
 #include "access/xlog.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "storage/smgr.h"
@@ -109,25 +102,7 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	 * something about the XLOG record that generated the reference).
 	 */
 	if (log_min_messages <= DEBUG1 || client_min_messages <= DEBUG1)
-<<<<<<< HEAD
-	{
-		char	   *path = relpathperm(node, forkno);
-
-		if (present)
-		{
-			elog(DEBUG1, "page %u of relation %s is uninitialized",
-				 blkno, path);
-		}
-		else
-		{
-			elog(DEBUG1, "page %u of relation %s does not exist",
-				 blkno, path);
-		}
-		pfree(path);
-	}
-=======
 		report_invalid_page(DEBUG1, node, forkno, blkno, present);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (invalid_page_tab == NULL)
 	{
@@ -231,7 +206,6 @@ forget_invalid_pages_db(Oid dbid)
 	}
 }
 
-<<<<<<< HEAD
 /* Forget an invalid AO/AOCO segment file */
 static void
 forget_invalid_segment_file(RelFileNode rnode, uint32 segmentFileNum)
@@ -255,7 +229,8 @@ forget_invalid_segment_file(RelFileNode rnode, uint32 segmentFileNum)
 					(void *) &key,
 					HASH_REMOVE, &found) == NULL)
 		elog(ERROR, "hash table corrupted");
-=======
+}
+
 /* Are there any unresolved references to invalid pages? */
 bool
 XLogHaveInvalidPages(void)
@@ -264,7 +239,6 @@ XLogHaveInvalidPages(void)
 		hash_get_num_entries(invalid_page_tab) > 0)
 		return true;
 	return false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /* Complain about any remaining invalid-page entries */

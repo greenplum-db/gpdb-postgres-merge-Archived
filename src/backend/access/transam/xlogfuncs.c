@@ -30,13 +30,10 @@
 #include "utils/guc.h"
 #include "utils/timestamp.h"
 
-<<<<<<< HEAD
-=======
 
 static void validate_xlog_location(char *str);
 
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * pg_start_backup: set up for taking an on-line backup dump
  *
@@ -45,16 +42,12 @@ static void validate_xlog_location(char *str);
  * contains the user-supplied label string (typically this would be used
  * to tell where the backup dump will be stored) and the starting time and
  * starting WAL location for the dump.
-<<<<<<< HEAD
  *
  * **Note :- Currently this functionality is not supported.**
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	XLogRecPtr	startpoint = {0,0};
 	char		startxlogstr[MAXFNAMELEN];
 
@@ -62,17 +55,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_start_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	text	   *backupid = PG_GETARG_TEXT_P(0);
-	bool		fast = PG_GETARG_BOOL(1);
-	char	   *backupidstr;
-	XLogRecPtr	startpoint;
-	char		startxlogstr[MAXFNAMELEN];
-
-	backupidstr = text_to_cstring(backupid);
-
-	startpoint = do_pg_start_backup(backupidstr, fast, NULL);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
 			 startpoint.xlogid, startpoint.xrecoff);
@@ -91,16 +73,12 @@ pg_start_backup(PG_FUNCTION_ARGS)
  * record for that and the file is for informational and debug purposes only.
  *
  * Note: different from CancelBackup which just cancels online backup mode.
-<<<<<<< HEAD
  *
  * **Note :- Currently this functionality is not supported.**
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	XLogRecPtr	stoppoint = {0,0};
 	char		stopxlogstr[MAXFNAMELEN];
 
@@ -108,19 +86,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_stop_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	XLogRecPtr	stoppoint;
-	char		stopxlogstr[MAXFNAMELEN];
-
-	stoppoint = do_pg_stop_backup(NULL, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
 			 stoppoint.xlogid, stoppoint.xrecoff);
 	PG_RETURN_TEXT_P(cstring_to_text(stopxlogstr));
 }
-<<<<<<< HEAD
-=======
 
 /*
  * pg_switch_xlog: switch to next xlog file
@@ -598,4 +568,3 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NUMERIC(result);
 }
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
