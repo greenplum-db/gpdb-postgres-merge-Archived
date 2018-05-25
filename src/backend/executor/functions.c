@@ -186,7 +186,8 @@ querytree_safe_for_qe_walker(Node *expr, void *context)
 				
 				if (!allow_segment_DML &&
 					(q->commandType != CMD_SELECT
-					 || q->intoClause != NULL
+					 || (q->utilityStmt != NULL &&
+					     IsA(q->utilityStmt, CreateTableAsStmt)) /* GPDB_92_MERGE_FIXME: Test it when gpdb could run. */
 					 || q->resultRelation > 0))
 				{
 					ereport(ERROR,
@@ -453,8 +454,7 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 		param = ParseFuncOrColumn(pstate,
 								  list_make1(subfield),
 								  list_make1(param),
-								  NIL, false, false, false,
-								  NULL, true, cref->location);
+								  NULL, cref->location);
 	}
 
 	return param;
