@@ -3,13 +3,9 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -144,12 +140,8 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-<<<<<<< HEAD
 #ifndef COMPILING_BINARY_FUNCS
-static void _outNode(StringInfo str, void *obj);
-=======
 static void _outNode(StringInfo str, const void *obj);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * _outToken
@@ -299,11 +291,8 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_TYPE("PLANNEDSTMT");
 
 	WRITE_ENUM_FIELD(commandType, CmdType);
-<<<<<<< HEAD
 	WRITE_ENUM_FIELD(planGen, PlanGenerator);
-=======
 	WRITE_UINT_FIELD(queryId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WRITE_BOOL_FIELD(hasReturning);
 	WRITE_BOOL_FIELD(hasModifyingCTE);
 	WRITE_BOOL_FIELD(canSetTag);
@@ -482,7 +471,6 @@ _outAppend(StringInfo str, const Append *node)
 }
 
 static void
-<<<<<<< HEAD
 _outSequence(StringInfo str, Sequence *node)
 {
 	WRITE_NODE_TYPE("SEQUENCE");
@@ -492,10 +480,7 @@ _outSequence(StringInfo str, Sequence *node)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-_outMergeAppend(StringInfo str, MergeAppend *node)
-=======
 _outMergeAppend(StringInfo str, const MergeAppend *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	int			i;
 
@@ -587,15 +572,10 @@ _outSeqScan(StringInfo str, const SeqScan *node)
 }
 
 static void
-<<<<<<< HEAD
 _outAppendOnlyScan(StringInfo str, AppendOnlyScan *node)
-=======
-_outIndexScan(StringInfo str, const IndexScan *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("APPENDONLYSCAN");
 
-<<<<<<< HEAD
 	_outScanInfo(str, (Scan *) node);
 }
 
@@ -662,12 +642,9 @@ outLogicalIndexInfo(StringInfo str, LogicalIndexInfo *node)
 #endif /* COMPILING_BINARY_FUNCS */
 
 static void
-outIndexScanFields(StringInfo str, IndexScan *node)
+outIndexScanFields(StringInfo str, const IndexScan *node)
 {
-	_outScanInfo(str, (Scan *) node);
-=======
 	_outScanInfo(str, (const Scan *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	WRITE_OID_FIELD(indexid);
 	WRITE_NODE_FIELD(indexqual);
@@ -678,8 +655,7 @@ outIndexScanFields(StringInfo str, IndexScan *node)
 }
 
 static void
-<<<<<<< HEAD
-_outIndexScan(StringInfo str, IndexScan *node)
+_outIndexScan(StringInfo str, const IndexScan *node)
 {
 	WRITE_NODE_TYPE("INDEXSCAN");
 
@@ -687,32 +663,6 @@ _outIndexScan(StringInfo str, IndexScan *node)
 }
 
 static void
-_outDynamicIndexScan(StringInfo str, DynamicIndexScan *node)
-{
-	WRITE_NODE_TYPE("DYNAMICINDEXSCAN");
-
-	outIndexScanFields(str, &node->indexscan);
-	outLogicalIndexInfo(str, node->logicalIndexInfo);
-}
-
-static void
-_outBitmapIndexScanFields(StringInfo str, BitmapIndexScan *node)
-{
-	_outScanInfo(str, (Scan *) node);
-
-	WRITE_OID_FIELD(indexid);
-	WRITE_NODE_FIELD(indexqual);
-	WRITE_NODE_FIELD(indexqualorig);
-}
-
-static void
-_outBitmapIndexScan(StringInfo str, BitmapIndexScan *node)
-{
-	WRITE_NODE_TYPE("BITMAPINDEXSCAN");
-
-	_outBitmapIndexScanFields(str, node);
-}
-=======
 _outIndexOnlyScan(StringInfo str, const IndexOnlyScan *node)
 {
 	WRITE_NODE_TYPE("INDEXONLYSCAN");
@@ -727,13 +677,31 @@ _outIndexOnlyScan(StringInfo str, const IndexOnlyScan *node)
 }
 
 static void
+_outDynamicIndexScan(StringInfo str, DynamicIndexScan *node)
+{
+	WRITE_NODE_TYPE("DYNAMICINDEXSCAN");
+
+	outIndexScanFields(str, &node->indexscan);
+	outLogicalIndexInfo(str, node->logicalIndexInfo);
+}
+
+static void
+_outBitmapIndexScanFields(StringInfo str, const BitmapIndexScan *node)
+{
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_OID_FIELD(indexid);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexqualorig);
+}
+
+static void
 _outBitmapIndexScan(StringInfo str, const BitmapIndexScan *node)
 {
 	WRITE_NODE_TYPE("BITMAPINDEXSCAN");
 
-	_outScanInfo(str, (const Scan *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
+	_outBitmapIndexScanFields(str, node);
+}
 
 static void
 _outDynamicBitmapIndexScan(StringInfo str, DynamicBitmapIndexScan *node)
@@ -755,7 +723,6 @@ _outBitmapHeapScan(StringInfo str, const BitmapHeapScan *node)
 }
 
 static void
-<<<<<<< HEAD
 _outBitmapAppendOnlyScan(StringInfo str, BitmapAppendOnlyScan *node)
 {
 	WRITE_NODE_TYPE("BITMAPAPPENDONLYSCAN");
@@ -777,10 +744,7 @@ _outBitmapTableScan(StringInfo str, BitmapTableScan *node)
 }
 
 static void
-_outTidScan(StringInfo str, TidScan *node)
-=======
 _outTidScan(StringInfo str, const TidScan *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("TIDSCAN");
 
@@ -1000,31 +964,11 @@ _outWindowAgg(StringInfo str, const WindowAgg *node)
 #endif /* COMPILING_BINARY_FUNCS */
 
 static void
-<<<<<<< HEAD
 _outTableFunctionScan(StringInfo str, TableFunctionScan *node)
-=======
-_outGroup(StringInfo str, const Group *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("TABLEFUNCTIONSCAN");
 
-<<<<<<< HEAD
 	_outScanInfo(str, (Scan *) node);
-=======
-	WRITE_NODE_TYPE("GROUP");
-
-	_outPlanInfo(str, (const Plan *) node);
-
-	WRITE_INT_FIELD(numCols);
-
-	appendStringInfo(str, " :grpColIdx");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %d", node->grpColIdx[i]);
-
-	appendStringInfo(str, " :grpOperators");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %u", node->grpOperators[i]);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 static void
@@ -1032,7 +976,6 @@ _outMaterial(StringInfo str, const Material *node)
 {
 	WRITE_NODE_TYPE("MATERIAL");
 
-<<<<<<< HEAD
     WRITE_BOOL_FIELD(cdb_strict);
 
 	WRITE_ENUM_FIELD(share_type, ShareType);
@@ -1054,9 +997,6 @@ _outShareInputScan(StringInfo str, ShareInputScan *node)
 	WRITE_INT_FIELD(driver_slice);
 
 	_outPlanInfo(str, (Plan *) node);
-=======
-	_outPlanInfo(str, (const Plan *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -2079,11 +2019,7 @@ _outIndexPath(StringInfo str, const IndexPath *node)
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
 	WRITE_FLOAT_FIELD(indextotalcost, "%.2f");
 	WRITE_FLOAT_FIELD(indexselectivity, "%.4f");
-<<<<<<< HEAD
-	WRITE_FLOAT_FIELD(rows, "%.0f");
     WRITE_INT_FIELD(num_leading_eq);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 static void
@@ -2097,7 +2033,6 @@ _outBitmapHeapPath(StringInfo str, const BitmapHeapPath *node)
 }
 
 static void
-<<<<<<< HEAD
 _outBitmapAppendOnlyPath(StringInfo str, BitmapAppendOnlyPath *node)
 {
 	WRITE_NODE_TYPE("BITMAPAPPENDONLYPATH");
@@ -2111,10 +2046,7 @@ _outBitmapAppendOnlyPath(StringInfo str, BitmapAppendOnlyPath *node)
 }
 
 static void
-_outBitmapAndPath(StringInfo str, BitmapAndPath *node)
-=======
 _outBitmapAndPath(StringInfo str, const BitmapAndPath *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("BITMAPANDPATH");
 
@@ -2177,7 +2109,6 @@ _outMergeAppendPath(StringInfo str, const MergeAppendPath *node)
 }
 
 static void
-<<<<<<< HEAD
 _outAppendOnlyPath(StringInfo str, AppendOnlyPath *node)
 {
 	WRITE_NODE_TYPE("APPENDONLYPATH");
@@ -2194,10 +2125,7 @@ _outAOCSPath(StringInfo str, AOCSPath *node)
 }
 
 static void
-_outResultPath(StringInfo str, ResultPath *node)
-=======
 _outResultPath(StringInfo str, const ResultPath *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("RESULTPATH");
 
@@ -2211,12 +2139,8 @@ _outMaterialPath(StringInfo str, const MaterialPath *node)
 {
 	WRITE_NODE_TYPE("MATERIALPATH");
 
-<<<<<<< HEAD
-	_outPathInfo(str, (Path *) node);
-    WRITE_BOOL_FIELD(cdb_strict);
-=======
 	_outPathInfo(str, (const Path *) node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+    WRITE_BOOL_FIELD(cdb_strict);
 
 	WRITE_NODE_FIELD(subpath);
 }
@@ -2226,24 +2150,15 @@ _outUniquePath(StringInfo str, const UniquePath *node)
 {
 	WRITE_NODE_TYPE("UNIQUEPATH");
 
-<<<<<<< HEAD
-	_outPathInfo(str, (Path *) node);
-	WRITE_ENUM_FIELD(umethod, UniquePathMethod);
-	WRITE_NODE_FIELD(in_operators);
-	WRITE_NODE_FIELD(uniq_exprs);
-	WRITE_FLOAT_FIELD(rows, "%.0f");
-    WRITE_BOOL_FIELD(must_repartition);                 /*CDB*/
-    WRITE_BITMAPSET_FIELD(distinct_on_rowid_relids);    /*CDB*/
-
-	WRITE_NODE_FIELD(subpath);
-=======
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_NODE_FIELD(subpath);
 	WRITE_ENUM_FIELD(umethod, UniquePathMethod);
 	WRITE_NODE_FIELD(in_operators);
 	WRITE_NODE_FIELD(uniq_exprs);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
+    WRITE_BOOL_FIELD(must_repartition);                 /*CDB*/
+    WRITE_BITMAPSET_FIELD(distinct_on_rowid_relids);    /*CDB*/
 }
 
 static void
@@ -2279,7 +2194,6 @@ _outHashPath(StringInfo str, const HashPath *node)
 }
 
 static void
-<<<<<<< HEAD
 _outCdbMotionPath(StringInfo str, CdbMotionPath *node)
 {
     WRITE_NODE_TYPE("MOTIONPATH");
@@ -2291,10 +2205,7 @@ _outCdbMotionPath(StringInfo str, CdbMotionPath *node)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-_outPlannerGlobal(StringInfo str, PlannerGlobal *node)
-=======
 _outPlannerGlobal(StringInfo str, const PlannerGlobal *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("PLANNERGLOBAL");
 
@@ -2370,19 +2281,10 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_INT_FIELD(width);
 	WRITE_NODE_FIELD(reltargetlist);
-<<<<<<< HEAD
 	/* Skip writing Path ptrs to avoid endless recursion */
 	/* WRITE_NODE_FIELD(pathlist);              */
 	/* WRITE_NODE_FIELD(cheapest_startup_path); */
 	/* WRITE_NODE_FIELD(cheapest_total_path);   */
-=======
-	WRITE_NODE_FIELD(pathlist);
-	WRITE_NODE_FIELD(ppilist);
-	WRITE_NODE_FIELD(cheapest_startup_path);
-	WRITE_NODE_FIELD(cheapest_total_path);
-	WRITE_NODE_FIELD(cheapest_unique_path);
-	WRITE_NODE_FIELD(cheapest_parameterized_paths);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WRITE_UINT_FIELD(relid);
 	WRITE_UINT_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
@@ -2393,23 +2295,11 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_FLOAT_FIELD(allvisfrac, "%.6f");
 	WRITE_NODE_FIELD(subplan);
-<<<<<<< HEAD
-	/* no output function for ExtTableEntry */
-	WRITE_NODE_FIELD(subrtable);
-	WRITE_NODE_FIELD(subrowmark);
-	WRITE_NODE_FIELD(baserestrictinfo);
-	WRITE_NODE_FIELD(joininfo);
-	WRITE_BOOL_FIELD(has_eclass_joins);
-	WRITE_BITMAPSET_FIELD(index_outer_relids);
-	/* Skip writing Path ptrs to avoid endless recursion */
-	/* WRITE_NODE_FIELD(index_inner_paths);     */
-=======
 	WRITE_NODE_FIELD(subroot);
 	/* we don't try to print fdwroutine or fdw_private */
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -2443,12 +2333,8 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_BOOL_FIELD(nulls_first);
 
 	WRITE_OID_FIELD(relam);
-<<<<<<< HEAD
 	WRITE_OID_FIELD(amcostestimate);
-	WRITE_NODE_FIELD(indexprs);
-=======
 	/* indexprs is redundant since we print indextlist */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WRITE_NODE_FIELD(indpred);
 	WRITE_NODE_FIELD(indextlist);
 	WRITE_BOOL_FIELD(predOK);
@@ -2635,15 +2521,10 @@ _outPlannerParamItem(StringInfo str, const PlannerParamItem *node)
  *
  *****************************************************************************/
 
-<<<<<<< HEAD
-static void _outCreateStmt(StringInfo str, CreateStmt *node);
-
 #ifndef COMPILING_BINARY_FUNCS
-=======
 /*
  * print the basic stuff of all nodes that inherit from CreateStmt
  */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void
 _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 {
@@ -3450,7 +3331,6 @@ _outDeclareCursorStmt(StringInfo str, const DeclareCursorStmt *node)
 }
 
 static void
-<<<<<<< HEAD
 _outSingleRowErrorDesc(StringInfo str, SingleRowErrorDesc *node)
 {
 	WRITE_NODE_TYPE("SINGLEROWERRORDESC");
@@ -3546,10 +3426,7 @@ _outConstraintsSetStmt(StringInfo str, ConstraintsSetStmt *node)
  * out/read support.
  */
 static void
-_outSelectStmt(StringInfo str, SelectStmt *node)
-=======
 _outSelectStmt(StringInfo str, const SelectStmt *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("SELECT");
 
@@ -3637,9 +3514,6 @@ _outDefElem(StringInfo str, const DefElem *node)
 }
 
 static void
-<<<<<<< HEAD
-_outLockingClause(StringInfo str, LockingClause *node)
-=======
 _outTableLikeClause(StringInfo str, const TableLikeClause *node)
 {
 	WRITE_NODE_TYPE("TABLELIKECLAUSE");
@@ -3650,7 +3524,6 @@ _outTableLikeClause(StringInfo str, const TableLikeClause *node)
 
 static void
 _outLockingClause(StringInfo str, const LockingClause *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("LOCKINGCLAUSE");
 
@@ -3671,7 +3544,6 @@ _outXmlSerialize(StringInfo str, const XmlSerialize *node)
 }
 
 static void
-<<<<<<< HEAD
 _outDMLActionExpr(StringInfo str, DMLActionExpr *node)
 {
 	WRITE_NODE_TYPE("DMLACTIONEXPR");
@@ -3743,10 +3615,7 @@ _outPartListNullTestExpr(StringInfo str, PartListNullTestExpr *node)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-_outColumnDef(StringInfo str, ColumnDef *node)
-=======
 _outColumnDef(StringInfo str, const ColumnDef *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("COLUMNDEF");
 
@@ -3756,22 +3625,15 @@ _outColumnDef(StringInfo str, const ColumnDef *node)
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
 	WRITE_BOOL_FIELD(is_from_type);
-<<<<<<< HEAD
 	WRITE_INT_FIELD(attnum);
 	WRITE_INT_FIELD(storage);
-=======
-	WRITE_CHAR_FIELD(storage);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
 	WRITE_NODE_FIELD(collClause);
 	WRITE_OID_FIELD(collOid);
 	WRITE_NODE_FIELD(constraints);
-<<<<<<< HEAD
 	WRITE_NODE_FIELD(encoding);
-=======
 	WRITE_NODE_FIELD(fdwoptions);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -3827,7 +3689,6 @@ _outIndexElem(StringInfo str, const IndexElem *node)
 }
 
 static void
-<<<<<<< HEAD
 _outVariableSetStmt(StringInfo str, VariableSetStmt *node)
 {
 	WRITE_NODE_TYPE("VARIABLESETSTMT");
@@ -3840,10 +3701,7 @@ _outVariableSetStmt(StringInfo str, VariableSetStmt *node)
 
 #ifndef COMPILING_BINARY_FUNCS
 static void
-_outQuery(StringInfo str, Query *node)
-=======
 _outQuery(StringInfo str, const Query *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("QUERY");
 
@@ -3978,7 +3836,6 @@ _outSortGroupClause(StringInfo str, const SortGroupClause *node)
 }
 
 static void
-<<<<<<< HEAD
 _outGroupingClause(StringInfo str, GroupingClause *node)
 {
 	WRITE_NODE_TYPE("GROUPINGCLAUSE");
@@ -4009,10 +3866,7 @@ _outGroupId(StringInfo str, GroupId *node __attribute__((unused)))
 }
 
 static void
-_outWindowClause(StringInfo str, WindowClause *node)
-=======
 _outWindowClause(StringInfo str, const WindowClause *node)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	WRITE_NODE_TYPE("WINDOWCLAUSE");
 
@@ -4413,12 +4267,8 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		case CONSTR_CHECK:
-<<<<<<< HEAD
 			appendStringInfoLiteral(str, "CHECK");
-=======
-			appendStringInfo(str, "CHECK");
 			WRITE_BOOL_FIELD(is_no_inherit);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			break;
@@ -4880,13 +4730,11 @@ _outNode(StringInfo str, const void *obj)
 			case T_IndexScan:
 				_outIndexScan(str, obj);
 				break;
-<<<<<<< HEAD
 			case T_DynamicIndexScan:
 				_outDynamicIndexScan(str,obj);
-=======
+				break;
 			case T_IndexOnlyScan:
 				_outIndexOnlyScan(str, obj);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				break;
 			case T_BitmapIndexScan:
 				_outBitmapIndexScan(str, obj);

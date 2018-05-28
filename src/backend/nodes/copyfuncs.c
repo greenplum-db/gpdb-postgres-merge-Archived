@@ -11,13 +11,9 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -103,11 +99,8 @@ _copyPlannedStmt(const PlannedStmt *from)
 	PlannedStmt *newnode = makeNode(PlannedStmt);
 
 	COPY_SCALAR_FIELD(commandType);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(planGen);
-=======
 	COPY_SCALAR_FIELD(queryId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	COPY_SCALAR_FIELD(hasReturning);
 	COPY_SCALAR_FIELD(hasModifyingCTE);
 	COPY_SCALAR_FIELD(canSetTag);
@@ -580,7 +573,7 @@ _copyExternalScan(ExternalScan *from)
 static void
 CopyIndexScanFields(const IndexScan *from, IndexScan *newnode)
 {
-	CopyScanFields((Scan *) from, (Scan *) newnode);
+	CopyScanFields((const Scan *) from, (Scan *) newnode);
 
 	/*
 	 * copy remainder of node
@@ -601,14 +594,7 @@ _copyIndexScan(const IndexScan *from)
 {
 	IndexScan  *newnode = makeNode(IndexScan);
 
-<<<<<<< HEAD
 	CopyIndexScanFields(from, newnode);
-=======
-	/*
-	 * copy node superclass fields
-	 */
-	CopyScanFields((const Scan *) from, (Scan *) newnode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return newnode;
 }
@@ -659,7 +645,7 @@ _copyIndexOnlyScan(const IndexOnlyScan *from)
 static void
 CopyBitmapIndexScanFields(BitmapIndexScan *from, BitmapIndexScan *newnode)
 {
-	CopyScanFields((Scan *) from, (Scan *) newnode);
+	CopyScanFields((const Scan *) from, (Scan *) newnode);
 
 	COPY_SCALAR_FIELD(indexid);
 	COPY_NODE_FIELD(indexqual);
@@ -671,14 +657,7 @@ _copyBitmapIndexScan(const BitmapIndexScan *from)
 {
 	BitmapIndexScan *newnode = makeNode(BitmapIndexScan);
 
-<<<<<<< HEAD
 	CopyBitmapIndexScanFields(from, newnode);
-=======
-	/*
-	 * copy node superclass fields
-	 */
-	CopyScanFields((const Scan *) from, (Scan *) newnode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return newnode;
 }
@@ -993,13 +972,6 @@ _copyMergeJoin(const MergeJoin *from)
 	 */
 	COPY_NODE_FIELD(mergeclauses);
 	numCols = list_length(from->mergeclauses);
-<<<<<<< HEAD
-	COPY_POINTER_FIELD(mergeFamilies, numCols * sizeof(Oid));
-	COPY_POINTER_FIELD(mergeCollations, numCols * sizeof(Oid));
-	COPY_POINTER_FIELD(mergeStrategies, numCols * sizeof(int));
-	COPY_POINTER_FIELD(mergeNullsFirst, numCols * sizeof(bool));
-	COPY_SCALAR_FIELD(unique_outer);
-=======
 	if (numCols > 0)
 	{
 		COPY_POINTER_FIELD(mergeFamilies, numCols * sizeof(Oid));
@@ -1007,7 +979,7 @@ _copyMergeJoin(const MergeJoin *from)
 		COPY_POINTER_FIELD(mergeStrategies, numCols * sizeof(int));
 		COPY_POINTER_FIELD(mergeNullsFirst, numCols * sizeof(bool));
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	COPY_SCALAR_FIELD(unique_outer);
 
 	return newnode;
 }
@@ -1063,17 +1035,13 @@ _copyMaterial(const Material *from)
 	/*
 	 * copy node superclass fields
 	 */
-<<<<<<< HEAD
-	CopyPlanFields((Plan *) from, (Plan *) newnode);
+	CopyPlanFields((const Plan *) from, (Plan *) newnode);
     COPY_SCALAR_FIELD(cdb_strict);
 	COPY_SCALAR_FIELD(share_type);
 	COPY_SCALAR_FIELD(share_id);
 	COPY_SCALAR_FIELD(driver_slice);
 	COPY_SCALAR_FIELD(nsharer);
 	COPY_SCALAR_FIELD(nsharer_xslice);
-=======
-	CopyPlanFields((const Plan *) from, (Plan *) newnode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
     return newnode;
 }
@@ -1098,7 +1066,6 @@ _copySort(const Sort *from)
 	COPY_POINTER_FIELD(collations, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
 
-<<<<<<< HEAD
     /* CDB */
 	COPY_SCALAR_FIELD(noduplicates);
 
@@ -1107,7 +1074,6 @@ _copySort(const Sort *from)
 	COPY_SCALAR_FIELD(driver_slice);
 	COPY_SCALAR_FIELD(nsharer);
 	COPY_SCALAR_FIELD(nsharer_xslice);
-=======
 	return newnode;
 }
 
@@ -2970,7 +2936,7 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_NODE_FIELD(collClause);
 	COPY_SCALAR_FIELD(collOid);
 	COPY_NODE_FIELD(constraints);
-<<<<<<< HEAD
+	COPY_NODE_FIELD(fdwoptions);
 	COPY_NODE_FIELD(encoding);
 
 	return newnode;
@@ -2985,9 +2951,6 @@ _copyColumnReferenceStorageDirective(ColumnReferenceStorageDirective *from)
 	COPY_STRING_FIELD(column);
 	COPY_SCALAR_FIELD(deflt);
 	COPY_NODE_FIELD(encoding);
-=======
-	COPY_NODE_FIELD(fdwoptions);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return newnode;
 }
@@ -3792,20 +3755,13 @@ _copyDropStmt(const DropStmt *from)
 {
 	DropStmt   *newnode = makeNode(DropStmt);
 
-<<<<<<< HEAD
-=======
 	COPY_NODE_FIELD(objects);
 	COPY_NODE_FIELD(arguments);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	COPY_SCALAR_FIELD(removeType);
-	COPY_NODE_FIELD(objects);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(bAllowPartn);
-=======
 	COPY_SCALAR_FIELD(concurrent);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	COPY_SCALAR_FIELD(bAllowPartn);
 
 	return newnode;
 }
@@ -5122,13 +5078,10 @@ copyObject(const void *from)
 		case T_IndexScan:
 			retval = _copyIndexScan(from);
 			break;
-<<<<<<< HEAD
 		case T_DynamicIndexScan:
 			retval = _copyDynamicIndexScan(from);
-=======
 		case T_IndexOnlyScan:
 			retval = _copyIndexOnlyScan(from);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_BitmapIndexScan:
 			retval = _copyBitmapIndexScan(from);
@@ -5502,7 +5455,6 @@ copyObject(const void *from)
 		case T_CreateStmt:
 			retval = _copyCreateStmt(from);
 			break;
-<<<<<<< HEAD
 		case T_PartitionBy:
 			retval = _copyPartitionBy(from);
 			break;
@@ -5539,12 +5491,8 @@ copyObject(const void *from)
 		case T_CreateExternalStmt:
 			retval = _copyCreateExternalStmt(from);
 			break;
-		case T_InhRelation:
-			retval = _copyInhRelation(from);
-=======
 		case T_TableLikeClause:
 			retval = _copyTableLikeClause(from);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_DefineStmt:
 			retval = _copyDefineStmt(from);

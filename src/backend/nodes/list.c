@@ -382,13 +382,8 @@ list_truncate(List *list, int new_size)
  * Locate the n'th cell (counting from 0) of the list.  It is an assertion
  * failure if there is no such cell.
  */
-<<<<<<< HEAD
 ListCell *
-list_nth_cell(List *list, int n)
-=======
-static ListCell *
 list_nth_cell(const List *list, int n)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	ListCell   *match;
 
@@ -1244,8 +1239,6 @@ list_copy_tail(const List *oldlist, int nskip)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * pg_list.h defines inline versions of these functions if allowed by the
  * compiler; in which case the definitions below are skipped.
  */
@@ -1271,7 +1264,6 @@ list_length(const List *l)
 #endif   /* ! USE_INLINE */
 
 /*
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Temporary compatibility functions
  *
  * In order to avoid warnings for these function definitions, we need

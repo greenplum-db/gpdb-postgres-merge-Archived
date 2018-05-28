@@ -1176,11 +1176,7 @@ tbm_lossify(TIDBitmap *tbm)
 	 *
 	 * Since we are called as soon as nentries exceeds maxentries, we should
 	 * push nentries down to significantly less than maxentries, or else we'll
-<<<<<<< HEAD
-	 * just end up doing this again very soon.  We shoot for maxentries/2.
-=======
 	 * just end up doing this again very soon.	We shoot for maxentries/2.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	Assert(!tbm->iterating);
 	Assert(tbm->status == TBM_HASH);
@@ -1216,16 +1212,6 @@ tbm_lossify(TIDBitmap *tbm)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * With a big bitmap and small work_mem, it's possible that we cannot
-	 * get under maxentries.  Again, if that happens, we'd end up uselessly
-	 * calling tbm_lossify over and over.  To prevent this from becoming a
-	 * performance sink, force maxentries up to at least double the current
-	 * number of entries.  (In essence, we're admitting inability to fit
-	 * within work_mem when we do this.)  Note that this test will not fire
-	 * if we broke out of the loop early; and if we didn't, the current
-	 * number of entries is simply not reducible any further.
-=======
 	 * With a big bitmap and small work_mem, it's possible that we cannot get
 	 * under maxentries.  Again, if that happens, we'd end up uselessly
 	 * calling tbm_lossify over and over.  To prevent this from becoming a
@@ -1234,7 +1220,6 @@ tbm_lossify(TIDBitmap *tbm)
 	 * within work_mem when we do this.)  Note that this test will not fire if
 	 * we broke out of the loop early; and if we didn't, the current number of
 	 * entries is simply not reducible any further.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	if (tbm->nentries > tbm->maxentries / 2)
 		tbm->maxentries = Min(tbm->nentries, (INT_MAX - 1) / 2) * 2;

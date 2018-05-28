@@ -18,13 +18,9 @@
  * "x" to be considered equal() to another reference to "x" in the query.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1103,7 +1099,6 @@ _equalAlterTableCmd(const AlterTableCmd *a, const AlterTableCmd *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalSetDistributionCmd(SetDistributionCmd *a, SetDistributionCmd *b)
 {
 	COMPARE_SCALAR_FIELD(backendId);
@@ -1174,10 +1169,7 @@ _equalAlterPartitionId(AlterPartitionId *a, AlterPartitionId *b)
 }
 
 static bool
-_equalAlterDomainStmt(AlterDomainStmt *a, AlterDomainStmt *b)
-=======
 _equalAlterDomainStmt(const AlterDomainStmt *a, const AlterDomainStmt *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_SCALAR_FIELD(subtype);
 	COMPARE_NODE_FIELD(typeName);
@@ -1281,7 +1273,6 @@ _equalClusterStmt(const ClusterStmt *a, const ClusterStmt *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalSingleRowErrorDesc(SingleRowErrorDesc *a, SingleRowErrorDesc *b)
 {
 	COMPARE_SCALAR_FIELD(rejectlimit);
@@ -1292,10 +1283,7 @@ _equalSingleRowErrorDesc(SingleRowErrorDesc *a, SingleRowErrorDesc *b)
 }
 
 static bool
-_equalCopyStmt(CopyStmt *a, CopyStmt *b)
-=======
 _equalCopyStmt(const CopyStmt *a, const CopyStmt *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(query);
@@ -1893,9 +1881,6 @@ _equalAlterTableSpaceOptionsStmt(const AlterTableSpaceOptionsStmt *a,
 }
 
 static bool
-<<<<<<< HEAD
-_equalCreateFdwStmt(CreateFdwStmt *a, CreateFdwStmt *b)
-=======
 _equalCreateExtensionStmt(const CreateExtensionStmt *a, const CreateExtensionStmt *b)
 {
 	COMPARE_STRING_FIELD(extname);
@@ -1928,7 +1913,6 @@ _equalAlterExtensionContentsStmt(const AlterExtensionContentsStmt *a, const Alte
 
 static bool
 _equalCreateFdwStmt(const CreateFdwStmt *a, const CreateFdwStmt *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_STRING_FIELD(fdwname);
 	COMPARE_NODE_FIELD(func_options);
@@ -2056,7 +2040,6 @@ _equalCreateRoleStmt(const CreateRoleStmt *a, const CreateRoleStmt *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalDenyLoginInterval(DenyLoginInterval *a, DenyLoginInterval *b)
 {
 	COMPARE_NODE_FIELD(start);
@@ -2075,10 +2058,7 @@ _equalDenyLoginPoint(DenyLoginPoint *a, DenyLoginPoint *b)
 }
 
 static bool
-_equalAlterRoleStmt(AlterRoleStmt *a, AlterRoleStmt *b)
-=======
 _equalAlterRoleStmt(const AlterRoleStmt *a, const AlterRoleStmt *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_STRING_FIELD(role);
 	COMPARE_NODE_FIELD(options);
@@ -2504,11 +2484,8 @@ _equalColumnDef(const ColumnDef *a, const ColumnDef *b)
 	COMPARE_NODE_FIELD(collClause);
 	COMPARE_SCALAR_FIELD(collOid);
 	COMPARE_NODE_FIELD(constraints);
-<<<<<<< HEAD
 	/* GPDB_90_MERGE_FIXME: should we be comparing encoding? */
-=======
 	COMPARE_NODE_FIELD(fdwoptions);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return true;
 }
@@ -2618,7 +2595,6 @@ _equalSortGroupClause(const SortGroupClause *a, const SortGroupClause *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalGroupingClause(GroupingClause *a, GroupingClause *b)
 {
 	COMPARE_SCALAR_FIELD(groupType);
@@ -2650,10 +2626,7 @@ _equalGroupId(GroupId *a __attribute__((unused)), GroupId *b __attribute__((unus
 }
 
 static bool
-_equalWindowClause(WindowClause *a, WindowClause *b)
-=======
 _equalWindowClause(const WindowClause *a, const WindowClause *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_STRING_FIELD(refname);
@@ -2707,7 +2680,6 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 }
 
 static bool
-<<<<<<< HEAD
 _equalTableValueExpr(TableValueExpr *a, TableValueExpr *b)
 {
 	COMPARE_NODE_FIELD(subquery);
@@ -2734,10 +2706,7 @@ _equalDistributedBy(DistributedBy *a, DistributedBy *b)
 }
 
 static bool
-_equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
-=======
 _equalXmlSerialize(const XmlSerialize *a, const XmlSerialize *b)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	COMPARE_SCALAR_FIELD(xmloption);
 	COMPARE_NODE_FIELD(expr);
@@ -3109,7 +3078,6 @@ equal(const void *a, const void *b)
 		case T_CreateStmt:
 			retval = _equalCreateStmt(a, b);
 			break;
-<<<<<<< HEAD
 		case T_ColumnReferenceStorageDirective:
 			retval = _equalColumnReferenceStorageDirective(a, b);
 			break;
@@ -3122,12 +3090,8 @@ equal(const void *a, const void *b)
 		case T_CreateExternalStmt:
 			retval = _equalCreateExternalStmt(a, b);
 			break;
-		case T_InhRelation:
-			retval = _equalInhRelation(a, b);
-=======
 		case T_TableLikeClause:
 			retval = _equalTableLikeClause(a, b);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_DefineStmt:
 			retval = _equalDefineStmt(a, b);

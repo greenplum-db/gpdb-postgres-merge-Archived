@@ -1474,12 +1474,9 @@ exprLocation(const Node *expr)
 			/* just use argument's location (ignore operator, if any) */
 			loc = exprLocation(((const SortBy *) expr)->node);
 			break;
-<<<<<<< HEAD
-=======
 		case T_WindowDef:
 			loc = ((const WindowDef *) expr)->location;
 			break;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_TypeName:
 			loc = ((const TypeName *) expr)->location;
 			break;
