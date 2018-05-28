@@ -3,13 +3,9 @@
  * copy.c
  *		Implements the COPY utility command
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -83,149 +79,6 @@
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
 
-<<<<<<< HEAD
-=======
-/*
- * Represents the different source/dest cases we need to worry about at
- * the bottom level
- */
-typedef enum CopyDest
-{
-	COPY_FILE,					/* to/from file */
-	COPY_OLD_FE,				/* to/from frontend (2.0 protocol) */
-	COPY_NEW_FE					/* to/from frontend (3.0 protocol) */
-} CopyDest;
-
-/*
- *	Represents the end-of-line terminator type of the input
- */
-typedef enum EolType
-{
-	EOL_UNKNOWN,
-	EOL_NL,
-	EOL_CR,
-	EOL_CRNL
-} EolType;
-
-/*
- * This struct contains all the state variables used throughout a COPY
- * operation. For simplicity, we use the same struct for all variants of COPY,
- * even though some fields are used in only some cases.
- *
- * Multi-byte encodings: all supported client-side encodings encode multi-byte
- * characters by having the first byte's high bit set. Subsequent bytes of the
- * character can have the high bit not set. When scanning data in such an
- * encoding to look for a match to a single-byte (ie ASCII) character, we must
- * use the full pg_encoding_mblen() machinery to skip over multibyte
- * characters, else we might find a false match to a trailing byte. In
- * supported server encodings, there is no possibility of a false match, and
- * it's faster to make useless comparisons to trailing bytes than it is to
- * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is TRUE
- * when we have to do it the hard way.
- */
-typedef struct CopyStateData
-{
-	/* low-level state data */
-	CopyDest	copy_dest;		/* type of copy source/destination */
-	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
-								 * dest == COPY_NEW_FE in COPY FROM */
-	bool		fe_eof;			/* true if detected end of copy data */
-	EolType		eol_type;		/* EOL type of input */
-	int			file_encoding;	/* file or remote side's character encoding */
-	bool		need_transcoding;		/* file encoding diff from server? */
-	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
-
-	/* parameters from the COPY command */
-	Relation	rel;			/* relation to copy to or from */
-	QueryDesc  *queryDesc;		/* executable query to copy from */
-	List	   *attnumlist;		/* integer list of attnums to copy */
-	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
-	bool		binary;			/* binary format? */
-	bool		oids;			/* include OIDs? */
-	bool		csv_mode;		/* Comma Separated Value format? */
-	bool		header_line;	/* CSV header line? */
-	char	   *null_print;		/* NULL marker string (server encoding!) */
-	int			null_print_len; /* length of same */
-	char	   *null_print_client;		/* same converted to file encoding */
-	char	   *delim;			/* column delimiter (must be 1 byte) */
-	char	   *quote;			/* CSV quote char (must be 1 byte) */
-	char	   *escape;			/* CSV escape char (must be 1 byte) */
-	List	   *force_quote;	/* list of column names */
-	bool		force_quote_all;	/* FORCE QUOTE *? */
-	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
-	List	   *force_notnull;	/* list of column names */
-	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
-
-	/* these are just for error messages, see CopyFromErrorCallback */
-	const char *cur_relname;	/* table name for error messages */
-	int			cur_lineno;		/* line number for error messages */
-	const char *cur_attname;	/* current att for error messages */
-	const char *cur_attval;		/* current att value for error messages */
-
-	/*
-	 * Working state for COPY TO/FROM
-	 */
-	MemoryContext copycontext;	/* per-copy execution context */
-
-	/*
-	 * Working state for COPY TO
-	 */
-	FmgrInfo   *out_functions;	/* lookup info for output functions */
-	MemoryContext rowcontext;	/* per-row evaluation context */
-
-	/*
-	 * Working state for COPY FROM
-	 */
-	AttrNumber	num_defaults;
-	bool		file_has_oids;
-	FmgrInfo	oid_in_function;
-	Oid			oid_typioparam;
-	FmgrInfo   *in_functions;	/* array of input functions for each attrs */
-	Oid		   *typioparams;	/* array of element types for in_functions */
-	int		   *defmap;			/* array of default att numbers */
-	ExprState **defexprs;		/* array of default att expressions */
-	bool		volatile_defexprs;		/* is any of defexprs volatile? */
-
-	/*
-	 * These variables are used to reduce overhead in textual COPY FROM.
-	 *
-	 * attribute_buf holds the separated, de-escaped text for each field of
-	 * the current line.  The CopyReadAttributes functions return arrays of
-	 * pointers into this buffer.  We avoid palloc/pfree overhead by re-using
-	 * the buffer on each cycle.
-	 */
-	StringInfoData attribute_buf;
-
-	/* field raw data pointers found by COPY FROM */
-
-	int			max_fields;
-	char	  **raw_fields;
-
-	/*
-	 * Similarly, line_buf holds the whole input line being processed. The
-	 * input cycle is first to read the whole line into line_buf, convert it
-	 * to server encoding there, and then extract the individual attribute
-	 * fields into attribute_buf.  line_buf is preserved unmodified so that we
-	 * can display it in error messages if appropriate.
-	 */
-	StringInfoData line_buf;
-	bool		line_buf_converted;		/* converted to server encoding? */
-
-	/*
-	 * Finally, raw_buf holds raw data read from the data source (file or
-	 * client connection).	CopyReadLine parses this data sufficiently to
-	 * locate line boundaries, then transfers the data to line_buf and
-	 * converts it.  Note: we guarantee that there is a \0 at
-	 * raw_buf[raw_buf_len].
-	 */
-#define RAW_BUF_SIZE 65536		/* we palloc RAW_BUF_SIZE+1 bytes */
-	char	   *raw_buf;
-	int			raw_buf_index;	/* next byte to process */
-	int			raw_buf_len;	/* total # of bytes stored */
-} CopyStateData;
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* DestReceiver for COPY (SELECT) TO */
 typedef struct
 {
@@ -315,9 +168,7 @@ static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyToDispatch(CopyState cstate);
 static uint64 CopyTo(CopyState cstate);
 static uint64 CopyFrom(CopyState cstate);
-<<<<<<< HEAD
 static uint64 CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt);
-=======
 static void CopyFromInsertBatch(CopyState cstate, EState *estate,
 					CommandId mycid, int hi_options,
 					ResultRelInfo *resultRelInfo, TupleTableSlot *myslot,
@@ -680,10 +531,9 @@ CopySendEndOfRow(CopyState cstate)
 #endif
 			}
 
-<<<<<<< HEAD
-			(void) fwrite(fe_msgbuf->data, fe_msgbuf->len,
-						  1, cstate->copy_file);
-			if (ferror(cstate->copy_file))
+			if (fwrite(fe_msgbuf->data, fe_msgbuf->len, 1,
+					   cstate->copy_file) != 1 ||
+				ferror(cstate->copy_file))
 			{
 				if (cstate->is_program)
 				{
@@ -710,12 +560,6 @@ CopySendEndOfRow(CopyState cstate)
 				}
 				else
 					ereport(ERROR,
-=======
-			if (fwrite(fe_msgbuf->data, fe_msgbuf->len, 1,
-					   cstate->copy_file) != 1 ||
-				ferror(cstate->copy_file))
-				ereport(ERROR,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						(errcode_for_file_access(),
 						 errmsg("could not write to COPY file: %m")));
 			}
@@ -1183,14 +1027,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	{
 		Assert(rel);
 
-<<<<<<< HEAD
 		if (stmt->sreh && Gp_role != GP_ROLE_EXECUTE && !rel->rd_cdbpolicy)
 			ereport(ERROR,
 					(errcode(ERRCODE_GP_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY single row error handling only available for distributed user tables")));
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* check read-only transaction */
 		/*
 		 * GPDB_91_MERGE_FIXME: is it possible to get to this point in the code
@@ -1922,7 +1763,6 @@ BeginCopy(bool is_from,
 			elog(ERROR, "unexpected rewrite result");
 
 		query = (Query *) linitial(rewritten);
-<<<<<<< HEAD
 
 		/* Query mustn't use INTO, either */
 		if (query->intoClause)
@@ -1933,19 +1773,6 @@ BeginCopy(bool is_from,
 		Assert(query->commandType == CMD_SELECT);
 		Assert(query->utilityStmt == NULL);
 
-=======
-
-		/* The grammar allows SELECT INTO, but we don't support that */
-		if (query->utilityStmt != NULL &&
-			IsA(query->utilityStmt, CreateTableAsStmt))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY (SELECT INTO) is not supported")));
-
-		Assert(query->commandType == CMD_SELECT);
-		Assert(query->utilityStmt == NULL);
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* plan the query */
 		plan = planner(query, 0, NULL);
 
@@ -3324,20 +3151,16 @@ CopyFrom(CopyState cstate)
 	bool		is_check_distkey;
 	GpDistributionData	*distData = NULL; /* distribution data used to compute target seg */
 	uint64		processed = 0;
-<<<<<<< HEAD
+    bool		useHeapMultiInsert;
+    int			nBufferedTuples = 0;
+#define MAX_BUFFERED_TUPLES 1000
+    HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
+    Size		bufferedTuplesSize = 0;
 	int			i;
 	Datum	   *baseValues;
 	bool	   *baseNulls;
 	PartitionData *partitionData = NULL;
 	GpDistributionData *part_distData = NULL;
-=======
-	bool		useHeapMultiInsert;
-	int			nBufferedTuples = 0;
-
-#define MAX_BUFFERED_TUPLES 1000
-	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
-	Size		bufferedTuplesSize = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	Assert(cstate->rel);
 
@@ -3469,8 +3292,13 @@ CopyFrom(CopyState cstate)
 	}
 	else
 	{
-		useHeapMultiInsert = true;
-		bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
+		useHeapMultiInsert = false;
+		char relstorage = RelinfoGetStorage(resultRelInfo);
+		if (relstorage != RELSTORAGE_AOROWS &&
+			relstorage != RELSTORAGE_AOCOLS &&
+			relstorage != RELSTORAGE_EXTERNAL)
+			useHeapMultiInsert = true;
+		    bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
 	}
 
 	/* Prepare to catch AFTER triggers. */
@@ -3892,73 +3720,22 @@ CopyFrom(CopyState cstate)
 
 		if (!skip_tuple)
 		{
-<<<<<<< HEAD
 			char		relstorage = RelinfoGetStorage(resultRelInfo);
-			List	   *recheckIndexes = NIL;
 			ItemPointerData insertedTid;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			/* Check the constraints of the tuple */
 			if (resultRelInfo->ri_RelationDesc->rd_att->constr)
 				ExecConstraints(resultRelInfo, slot, estate);
 
-<<<<<<< HEAD
 			/* OK, store the tuple and create index entries for it */
-			if (relstorage == RELSTORAGE_AOROWS)
-			{
-				MemTuple	mtuple;
-
-				mtuple = ExecFetchSlotMemTuple(slot, false);
-
-				/* inserting into an append only relation */
-				appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, loaded_oid,
-								  (AOTupleId *) &insertedTid);
-			}
-			else if (relstorage == RELSTORAGE_AOCOLS)
-			{
-				aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
-				insertedTid = *slot_get_ctid(slot);
-			}
-			else if (relstorage == RELSTORAGE_EXTERNAL)
-			{
+			if (useHeapMultiInsert) {
 				HeapTuple tuple;
-
 				tuple = ExecFetchSlotHeapTuple(slot);
-				external_insert(resultRelInfo->ri_extInsertDesc, tuple);
-				ItemPointerSetInvalid(&insertedTid);
-			}
-			else
-			{
-				HeapTuple tuple;
 
-				tuple = ExecFetchSlotHeapTuple(slot);
-				if (cstate->file_has_oids)
-					HeapTupleSetOid(tuple, loaded_oid);
-				heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, hi_options, bistate,
-							GetCurrentTransactionId());
-				insertedTid = tuple->t_self;
-			}
+				if (bufferedTuples == NULL)
 
-			if (resultRelInfo->ri_NumIndices > 0)
-				recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid,
-													   estate);
-
-			/* AFTER ROW INSERT Triggers */
-			if (resultRelInfo->ri_TrigDesc &&
-				resultRelInfo->ri_TrigDesc->trig_insert_after_row)
-			{
-				HeapTuple tuple;
-
-				tuple = ExecFetchSlotHeapTuple(slot);
-				ExecARInsertTriggers(estate, resultRelInfo, tuple,
-									 recheckIndexes);
-			}
-=======
-			if (useHeapMultiInsert)
-			{
-				/* Add this tuple to the tuple buffer */
-				bufferedTuples[nBufferedTuples++] = tuple;
+					/* Add this tuple to the tuple buffer */
+					bufferedTuples[nBufferedTuples++] = tuple;
 				bufferedTuplesSize += tuple->t_len;
 
 				/*
@@ -3971,27 +3748,64 @@ CopyFrom(CopyState cstate)
 					bufferedTuplesSize > 65535)
 				{
 					CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-										resultRelInfo, myslot, bistate,
+										resultRelInfo, slot, bistate,
 										nBufferedTuples, bufferedTuples);
 					nBufferedTuples = 0;
 					bufferedTuplesSize = 0;
 				}
-			}
-			else
-			{
+			} else {
 				List	   *recheckIndexes = NIL;
 
-				/* OK, store the tuple and create index entries for it */
-				heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+				if (relstorage == RELSTORAGE_AOROWS)
+				{
+					MemTuple	mtuple;
+
+					mtuple = ExecFetchSlotMemTuple(slot, false);
+
+					/* inserting into an append only relation */
+					appendonly_insert(resultRelInfo->ri_aoInsertDesc, mtuple, loaded_oid,
+									  (AOTupleId *) &insertedTid);
+				}
+				else if (relstorage == RELSTORAGE_AOCOLS)
+				{
+					aocs_insert(resultRelInfo->ri_aocsInsertDesc, slot);
+					insertedTid = *slot_get_ctid(slot);
+				}
+				else if (relstorage == RELSTORAGE_EXTERNAL)
+				{
+					HeapTuple tuple;
+
+					tuple = ExecFetchSlotHeapTuple(slot);
+					external_insert(resultRelInfo->ri_extInsertDesc, tuple);
+					ItemPointerSetInvalid(&insertedTid);
+				}
+				else
+				{
+
+					HeapTuple tuple;
+					tuple = ExecFetchSlotHeapTuple(slot);
+
+					/* OK, store the tuple and create index entries for it */
+					heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
+					if (cstate->file_has_oids)
+						HeapTupleSetOid(tuple, loaded_oid);
+					insertedTid = tuple->t_self;
+				}
 
 				if (resultRelInfo->ri_NumIndices > 0)
-					recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
+					recheckIndexes = ExecInsertIndexTuples(slot, &insertedTid,
 														   estate);
 
 				/* AFTER ROW INSERT Triggers */
-				ExecARInsertTriggers(estate, resultRelInfo, tuple,
-									 recheckIndexes);
+				if (resultRelInfo->ri_TrigDesc &&
+					resultRelInfo->ri_TrigDesc->trig_insert_after_row)
+				{
+					HeapTuple tuple;
+
+					tuple = ExecFetchSlotHeapTuple(slot);
+					ExecARInsertTriggers(estate, resultRelInfo, tuple,
+										 recheckIndexes);
+				}
 
 				list_free(recheckIndexes);
 			}
@@ -4013,8 +3827,7 @@ CopyFrom(CopyState cstate)
 		}
 	}
 
-<<<<<<< HEAD
-	/*
+ d	/*
 	 * After processed data from QD, which is empty and just for workflow, now
 	 * to process the data on segment, only one shot if cstate->on_segment &&
 	 * Gp_role == GP_ROLE_DISPATCH
@@ -4024,13 +3837,11 @@ CopyFrom(CopyState cstate)
 		CopyInitDataParser(cstate);
 	}
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, processed);
-=======
 	/* Flush any remaining buffered tuples */
 	if (nBufferedTuples > 0)
 		CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-							resultRelInfo, myslot, bistate,
+							resultRelInfo, baseSlot, bistate,
 							nBufferedTuples, bufferedTuples);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Done, clean up */
 	error_context_stack = errcontext.previous;
