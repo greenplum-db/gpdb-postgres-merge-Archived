@@ -818,7 +818,7 @@ _equalFromExpr(const FromExpr *a, const FromExpr *b)
 }
 
 static bool
-_equalFlow(Flow *a, Flow *b)
+_equalFlow(const Flow *a, const Flow *b)
 {
 	COMPARE_SCALAR_FIELD(flotype);
 	COMPARE_SCALAR_FIELD(req_move);
@@ -1099,7 +1099,7 @@ _equalAlterTableCmd(const AlterTableCmd *a, const AlterTableCmd *b)
 }
 
 static bool
-_equalSetDistributionCmd(SetDistributionCmd *a, SetDistributionCmd *b)
+_equalSetDistributionCmd(const SetDistributionCmd *a, const SetDistributionCmd *b)
 {
 	COMPARE_SCALAR_FIELD(backendId);
 	COMPARE_NODE_FIELD(relids);
@@ -1110,39 +1110,7 @@ _equalSetDistributionCmd(SetDistributionCmd *a, SetDistributionCmd *b)
 }
 
 static bool
-_equalCreateExtensionStmt(const CreateExtensionStmt *a, const CreateExtensionStmt *b)
-{
-	COMPARE_STRING_FIELD(extname);
-	COMPARE_SCALAR_FIELD(if_not_exists);
-	COMPARE_NODE_FIELD(options);
-	COMPARE_SCALAR_FIELD(create_ext_state);
-
-	return true;
-}
-
-static bool
-_equalAlterExtensionStmt(AlterExtensionStmt *a, AlterExtensionStmt *b)
-{
-	COMPARE_STRING_FIELD(extname);
-	COMPARE_NODE_FIELD(options);
-
-	return true;
-}
-
-static bool
-_equalAlterExtensionContentsStmt(AlterExtensionContentsStmt *a, AlterExtensionContentsStmt *b)
-{
-	COMPARE_STRING_FIELD(extname);
-	COMPARE_SCALAR_FIELD(action);
-	COMPARE_SCALAR_FIELD(objtype);
-	COMPARE_NODE_FIELD(objname);
-	COMPARE_NODE_FIELD(objargs);
-
-	return true;
-}
-
-static bool
-_equalInheritPartitionCmd(InheritPartitionCmd *a, InheritPartitionCmd *b)
+_equalInheritPartitionCmd(const InheritPartitionCmd *a, const InheritPartitionCmd *b)
 {
 	COMPARE_NODE_FIELD(parent);
 
@@ -1150,7 +1118,7 @@ _equalInheritPartitionCmd(InheritPartitionCmd *a, InheritPartitionCmd *b)
 }
 
 static bool
-_equalAlterPartitionCmd(AlterPartitionCmd *a, AlterPartitionCmd *b)
+_equalAlterPartitionCmd(const AlterPartitionCmd *a, const AlterPartitionCmd *b)
 {
 	COMPARE_NODE_FIELD(partid);
 	COMPARE_NODE_FIELD(arg1);
@@ -1160,7 +1128,7 @@ _equalAlterPartitionCmd(AlterPartitionCmd *a, AlterPartitionCmd *b)
 }
 
 static bool
-_equalAlterPartitionId(AlterPartitionId *a, AlterPartitionId *b)
+_equalAlterPartitionId(const AlterPartitionId *a, const AlterPartitionId *b)
 {
 	COMPARE_SCALAR_FIELD(idtype);
 	COMPARE_NODE_FIELD(partiddef);
@@ -1273,7 +1241,7 @@ _equalClusterStmt(const ClusterStmt *a, const ClusterStmt *b)
 }
 
 static bool
-_equalSingleRowErrorDesc(SingleRowErrorDesc *a, SingleRowErrorDesc *b)
+_equalSingleRowErrorDesc(const SingleRowErrorDesc *a, const SingleRowErrorDesc *b)
 {
 	COMPARE_SCALAR_FIELD(rejectlimit);
 	COMPARE_SCALAR_FIELD(is_limit_in_rows);
@@ -1330,8 +1298,8 @@ _equalCreateStmt(const CreateStmt *a, const CreateStmt *b)
 }
 
 static bool
-_equalColumnReferenceStorageDirective(ColumnReferenceStorageDirective *a,
-									   ColumnReferenceStorageDirective *b)
+_equalColumnReferenceStorageDirective(const ColumnReferenceStorageDirective *a,
+									   const ColumnReferenceStorageDirective *b)
 {
 	COMPARE_STRING_FIELD(column);
 	COMPARE_SCALAR_FIELD(deflt);
@@ -1341,7 +1309,7 @@ _equalColumnReferenceStorageDirective(ColumnReferenceStorageDirective *a,
 }
 
 static bool
-_equalPartitionRangeItem(PartitionRangeItem *a, PartitionRangeItem *b)
+_equalPartitionRangeItem(const PartitionRangeItem *a, const PartitionRangeItem *b)
 {
 	COMPARE_NODE_FIELD(partRangeVal);
 	COMPARE_SCALAR_FIELD(partedge);
@@ -1351,7 +1319,7 @@ _equalPartitionRangeItem(PartitionRangeItem *a, PartitionRangeItem *b)
 }
 
 static bool
-_equalExtTableTypeDesc(ExtTableTypeDesc *a, ExtTableTypeDesc *b)
+_equalExtTableTypeDesc(const ExtTableTypeDesc *a, const ExtTableTypeDesc *b)
 {
 	COMPARE_SCALAR_FIELD(exttabletype);
 	COMPARE_NODE_FIELD(location_list);
@@ -1362,7 +1330,7 @@ _equalExtTableTypeDesc(ExtTableTypeDesc *a, ExtTableTypeDesc *b)
 }
 
 static bool
-_equalCreateExternalStmt(CreateExternalStmt *a, CreateExternalStmt *b)
+_equalCreateExternalStmt(const CreateExternalStmt *a, const CreateExternalStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(tableElts);
@@ -1886,6 +1854,7 @@ _equalCreateExtensionStmt(const CreateExtensionStmt *a, const CreateExtensionStm
 	COMPARE_STRING_FIELD(extname);
 	COMPARE_SCALAR_FIELD(if_not_exists);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(create_ext_state);
 
 	return true;
 }
@@ -2040,7 +2009,7 @@ _equalCreateRoleStmt(const CreateRoleStmt *a, const CreateRoleStmt *b)
 }
 
 static bool
-_equalDenyLoginInterval(DenyLoginInterval *a, DenyLoginInterval *b)
+_equalDenyLoginInterval(const DenyLoginInterval *a, const DenyLoginInterval *b)
 {
 	COMPARE_NODE_FIELD(start);
 	COMPARE_NODE_FIELD(end);
@@ -2049,7 +2018,7 @@ _equalDenyLoginInterval(DenyLoginInterval *a, DenyLoginInterval *b)
 }
 
 static bool
-_equalDenyLoginPoint(DenyLoginPoint *a, DenyLoginPoint *b)
+_equalDenyLoginPoint(const DenyLoginPoint *a, const DenyLoginPoint *b)
 {
 	COMPARE_NODE_FIELD(day);
 	COMPARE_NODE_FIELD(time);
@@ -2191,7 +2160,7 @@ _equalDropOwnedStmt(const DropOwnedStmt *a, const DropOwnedStmt *b)
 
 
 static bool
-_equalCreateQueueStmt(CreateQueueStmt *a, CreateQueueStmt *b)
+_equalCreateQueueStmt(const CreateQueueStmt *a, const CreateQueueStmt *b)
 {
 	COMPARE_STRING_FIELD(queue);
 	COMPARE_NODE_FIELD(options);
@@ -2199,7 +2168,7 @@ _equalCreateQueueStmt(CreateQueueStmt *a, CreateQueueStmt *b)
 }
 
 static bool
-_equalAlterQueueStmt(AlterQueueStmt *a, AlterQueueStmt *b)
+_equalAlterQueueStmt(const AlterQueueStmt *a, const AlterQueueStmt *b)
 {
 	COMPARE_STRING_FIELD(queue);
 	COMPARE_NODE_FIELD(options);
@@ -2207,14 +2176,14 @@ _equalAlterQueueStmt(AlterQueueStmt *a, AlterQueueStmt *b)
 }
 
 static bool
-_equalDropQueueStmt(DropQueueStmt *a, DropQueueStmt *b)
+_equalDropQueueStmt(const DropQueueStmt *a, const DropQueueStmt *b)
 {
 	COMPARE_STRING_FIELD(queue);
 	return true;
 }
 
 static bool
-_equalCreateResourceGroupStmt(CreateResourceGroupStmt *a, CreateResourceGroupStmt *b)
+_equalCreateResourceGroupStmt(const CreateResourceGroupStmt *a, const CreateResourceGroupStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(options);
@@ -2222,14 +2191,14 @@ _equalCreateResourceGroupStmt(CreateResourceGroupStmt *a, CreateResourceGroupStm
 }
 
 static bool
-_equalDropResourceGroupStmt(DropResourceGroupStmt *a, DropResourceGroupStmt *b)
+_equalDropResourceGroupStmt(const DropResourceGroupStmt *a, const DropResourceGroupStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	return true;
 }
 
 static bool
-_equalAlterResourceGroupStmt(AlterResourceGroupStmt *a, AlterResourceGroupStmt *b)
+_equalAlterResourceGroupStmt(const AlterResourceGroupStmt *a, const AlterResourceGroupStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(options);
@@ -2595,7 +2564,7 @@ _equalSortGroupClause(const SortGroupClause *a, const SortGroupClause *b)
 }
 
 static bool
-_equalGroupingClause(GroupingClause *a, GroupingClause *b)
+_equalGroupingClause(const GroupingClause *a, const GroupingClause *b)
 {
 	COMPARE_SCALAR_FIELD(groupType);
 	COMPARE_NODE_FIELD(groupsets);
@@ -2604,7 +2573,7 @@ _equalGroupingClause(GroupingClause *a, GroupingClause *b)
 }
 
 static bool
-_equalGroupingFunc(GroupingFunc *a, GroupingFunc *b)
+_equalGroupingFunc(const GroupingFunc *a, const GroupingFunc *b)
 {
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(ngrpcols);
@@ -2613,14 +2582,14 @@ _equalGroupingFunc(GroupingFunc *a, GroupingFunc *b)
 }
 
 static bool
-_equalGrouping(Grouping *a __attribute__((unused)), Grouping *b __attribute__((unused)))
+_equalGrouping(const Grouping *a __attribute__((unused)), const Grouping *b __attribute__((unused)))
 
 {
 	return true;
 }
 
 static bool
-_equalGroupId(GroupId *a __attribute__((unused)), GroupId *b __attribute__((unused)))
+_equalGroupId(const GroupId *a __attribute__((unused)), const GroupId *b __attribute__((unused)))
 {
 	return true;
 }
@@ -2680,7 +2649,7 @@ _equalCommonTableExpr(const CommonTableExpr *a, const CommonTableExpr *b)
 }
 
 static bool
-_equalTableValueExpr(TableValueExpr *a, TableValueExpr *b)
+_equalTableValueExpr(const TableValueExpr *a, const TableValueExpr *b)
 {
 	COMPARE_NODE_FIELD(subquery);
 
@@ -2688,7 +2657,7 @@ _equalTableValueExpr(TableValueExpr *a, TableValueExpr *b)
 }
 
 static bool
-_equalAlterTypeStmt(AlterTypeStmt *a, AlterTypeStmt *b)
+_equalAlterTypeStmt(const AlterTypeStmt *a, const AlterTypeStmt *b)
 {
 	COMPARE_NODE_FIELD(typeName);
 	COMPARE_NODE_FIELD(encoding);
@@ -2697,7 +2666,7 @@ _equalAlterTypeStmt(AlterTypeStmt *a, AlterTypeStmt *b)
 }
 
 static bool
-_equalDistributedBy(DistributedBy *a, DistributedBy *b)
+_equalDistributedBy(const DistributedBy *a, const DistributedBy *b)
 {
 	COMPARE_SCALAR_FIELD(ptype);
 	COMPARE_NODE_FIELD(keys);
