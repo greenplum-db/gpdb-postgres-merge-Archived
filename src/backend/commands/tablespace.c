@@ -44,13 +44,9 @@
  * and munge the system catalogs of the new database.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010 Greenplum Inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1397,16 +1393,6 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			}
 
 			/*
-<<<<<<< HEAD
-			 * In an interactive SET command, we ereport for bad info.  When
-			 * source == PGC_S_TEST, we are checking the argument of an ALTER
-			 * DATABASE SET or ALTER USER SET command.  pg_dumpall dumps all
-			 * roles before tablespaces, so if we're restoring a pg_dumpall
-			 * script the tablespace might not yet exist, but will be created
-			 * later.  Because of that, issue a NOTICE if source == PGC_S_TEST,
-			 * but accept the value anyway.  Otherwise, silently ignore any
-			 * bad list elements.
-=======
 			 * In an interactive SET command, we ereport for bad info.	When
 			 * source == PGC_S_TEST, we are checking the argument of an ALTER
 			 * DATABASE SET or ALTER USER SET command.	pg_dumpall dumps all
@@ -1415,7 +1401,6 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			 * later.  Because of that, issue a NOTICE if source ==
 			 * PGC_S_TEST, but accept the value anyway.  Otherwise, silently
 			 * ignore any bad list elements.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 */
 			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
 			if (curoid == InvalidOid)

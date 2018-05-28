@@ -18,10 +18,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
-<<<<<<< HEAD
 #include "catalog/oid_dispatch.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_authid.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -544,62 +541,6 @@ PLTemplateExists(const char *languageName)
 	return (find_language_template(languageName) != NULL);
 }
 
-<<<<<<< HEAD
-
-/* ---------------------------------------------------------------------
- * DROP PROCEDURAL LANGUAGE
- * ---------------------------------------------------------------------
- */
-void
-DropProceduralLanguage(DropPLangStmt *stmt)
-{
-	char	   *languageName;
-	Oid			oid;
-	ObjectAddress object;
-
-	/*
-	 * Translate the language name, check that the language exists
-	 */
-	languageName = case_translate_language_name(stmt->plname);
-
-	oid = get_language_oid(languageName, stmt->missing_ok);
-	if (!OidIsValid(oid))
-	{
-		ereport(NOTICE,
-				(errmsg("language \"%s\" does not exist, skipping",
-						languageName)));
-		return;
-	}
-
-	/*
-	 * Check permission
-	 */
-	if (!pg_language_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_LANGUAGE,
-					   languageName);
-
-	object.classId = LanguageRelationId;
-	object.objectId = oid;
-	object.objectSubId = 0;
-
-	/*
-	 * Do the deletion
-	 */
-	performDeletion(&object, stmt->behavior);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-	}
-}
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Guts of language dropping.
  */

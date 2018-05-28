@@ -23,12 +23,9 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-=======
 #include "utils/syscache.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait);
 static AclResult LockTableAclCheck(Oid relid, LOCKMODE lockmode);
@@ -155,31 +152,15 @@ LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait)
 				continue;		/* child concurrently dropped, just skip it */
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					 errmsg("could not obtain lock on relation \"%s\"",
-							relname)));
+							errmsg("could not obtain lock on relation \"%s\"",
+								   relname)));
 		}
 
-<<<<<<< HEAD
-	/*
-	 * Now that we have the lock, check to see if the relation really exists
-	 * or not.
-	 */
-	rel = try_relation_open(reloid, NoLock, false);
-
-	if (!rel)
-	{
-		/* Release useless lock */
-		UnlockRelationOid(reloid, lockmode);
-
-		/* At top level, throw error; otherwise, ignore this child rel */
-		if (rv)
-=======
 		/*
 		 * Even if we got the lock, child might have been concurrently
 		 * dropped. If so, we can skip it.
 		 */
 		if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(childreloid)))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			/* Release useless lock */
 			UnlockRelationOid(childreloid, lockmode);

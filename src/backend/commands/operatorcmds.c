@@ -37,11 +37,7 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-<<<<<<< HEAD
-#include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
@@ -340,69 +336,6 @@ DefineOperator(List *names, List *parameters)
 
 
 /*
-<<<<<<< HEAD
- * RemoveOperator
- *		Deletes an operator.
- */
-void
-RemoveOperator(RemoveFuncStmt *stmt)
-{
-	List	   *operatorName = stmt->name;
-	TypeName   *typeName1 = (TypeName *) linitial(stmt->args);
-	TypeName   *typeName2 = (TypeName *) lsecond(stmt->args);
-	Oid			operOid;
-	HeapTuple	tup;
-	ObjectAddress object;
-
-	Assert(list_length(stmt->args) == 2);
-	operOid = LookupOperNameTypeNames(NULL, operatorName,
-									  typeName1, typeName2,
-									  stmt->missing_ok, -1);
-
-	if (stmt->missing_ok && !OidIsValid(operOid))
-	{
-		ereport(NOTICE,
-				(errmsg("operator %s does not exist, skipping",
-						NameListToString(operatorName))));
-		return;
-	}
-
-	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for operator %u", operOid);
-
-	/* Permission check: must own operator or its namespace */
-	if (!pg_oper_ownercheck(operOid, GetUserId()) &&
-		!pg_namespace_ownercheck(((Form_pg_operator) GETSTRUCT(tup))->oprnamespace,
-								 GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
-					   NameListToString(operatorName));
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = OperatorRelationId;
-	object.objectId = operOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, stmt->behavior);
-	
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-	}
-}
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Guts of operator deletion.
  */
 void
