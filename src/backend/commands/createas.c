@@ -47,6 +47,12 @@ typedef struct
 	CommandId	output_cid;		/* cmin to insert in output tuples */
 	int			hi_options;		/* heap_insert performance options */
 	BulkInsertState bistate;	/* bulk insert state */
+
+	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
+	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
+
+	/* GPDB_92_MERGE_FIXME: Seems to be uselss? */
+	ItemPointerData last_heap_tid;
 } DR_intorel;
 
 static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
@@ -197,6 +203,10 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
 	self->into = intoClause;
+
+	self->ao_insertDesc = NULL;
+	self->aocs_insertDes = NULL;
+
 	/* other private fields will be set during intorel_startup */
 
 	return (DestReceiver *) self;
@@ -218,6 +228,9 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	ListCell   *lc;
 	int			attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+	StdRdOptions *stdRdOptions;
+	int         relstorage;
+	bool		validate_reloptions;
 
 	Assert(into != NULL);		/* else somebody forgot to set it */
 
@@ -300,10 +313,38 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("CREATE TABLE AS specifies too many column names")));
 
-	/*
-	 * Actually create the target table
+	/* Parse and validate any reloptions */
+	reloptions = transformRelOptions((Datum) 0,
+									 into->options,
+									 NULL,
+									 validnsps,
+									 true,
+									 false);
+
+	/* get the relstorage (heap or AO tables) */
+	if (queryDesc->ddesc)
+		validate_reloptions = queryDesc->ddesc->validate_reloptions;
+	else
+		validate_reloptions = true;
+
+	/* GPDB_92_MERGE_FIXME for CTAS
+	 * 1) Fill more create->*
+	 * 2) MPP
+	 * 3) Double-check the logic.
 	 */
-	intoRelationId = DefineRelation(create, RELKIND_RELATION, InvalidOid);
+	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
+	if(stdRdOptions->appendonly)
+		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
+	else
+		relstorage = RELSTORAGE_HEAP;
+	create->relStorage = relstorage;
+
+	/*
+	 * Actually create the target table.
+	 * Don't dispatch it yet, as we haven't created the toast and other
+	 * auxiliary tables yet.
+	 */
+	intoRelationId = DefineRelation(create, RELKIND_RELATION, InvalidOid, relstorage, false);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -373,25 +414,49 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_intorel *myState = (DR_intorel *) self;
 	HeapTuple	tuple;
 
-	/*
-	 * get the heap tuple out of the tuple table slot, making sure we have a
-	 * writable copy
-	 */
-	tuple = ExecMaterializeSlot(slot);
+	Assert(myState->estate->es_result_partitions == NULL);
 
-	/*
-	 * force assignment of new OID (see comments in ExecInsert)
-	 */
-	if (myState->rel->rd_rel->relhasoids)
-		HeapTupleSetOid(tuple, InvalidOid);
+	if (RelationIsAoRows(into_rel))
+	{
+		AOTupleId	aoTupleId;
 
-	heap_insert(myState->rel,
-				tuple,
-				myState->output_cid,
-				myState->hi_options,
-				myState->bistate);
+		tuple = ExecCopySlotMemTuple(slot);
+		if (myState->ao_insertDesc == NULL)
+			myState->ao_insertDesc = appendonly_insert_init(into_rel, RESERVED_SEGNO, false);
 
-	/* We know this is a newly created relation, so there are no indexes */
+		appendonly_insert(myState->ao_insertDesc, tuple, InvalidOid, &aoTupleId);
+		pfree(tuple);
+	}
+	else if (RelationIsAoCols(into_rel))
+	{
+		if(myState->aocs_insertDes == NULL)
+			myState->aocs_insertDes = aocs_insert_init(into_rel, RESERVED_SEGNO, false);
+
+		aocs_insert(myState->aocs_insertDes, slot);
+	}
+	else
+	{
+
+		/*
+		 * get the heap tuple out of the tuple table slot, making sure we have a
+		 * writable copy
+		 */
+		tuple = ExecMaterializeSlot(slot);
+
+		/*
+		 * force assignment of new OID (see comments in ExecInsert)
+		 */
+		if (myState->rel->rd_rel->relhasoids)
+			HeapTupleSetOid(tuple, InvalidOid);
+
+		heap_insert(myState->rel,
+					tuple,
+					myState->output_cid,
+					myState->hi_options,
+					myState->bistate);
+
+		/* We know this is a newly created relation, so there are no indexes */
+	}
 }
 
 /*
@@ -401,6 +466,7 @@ static void
 intorel_shutdown(DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
+	Relation	into_rel = myState->rel;
 
 	FreeBulkInsertState(myState->bistate);
 
@@ -408,9 +474,15 @@ intorel_shutdown(DestReceiver *self)
 	if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
 		heap_sync(myState->rel);
 
+	if (RelationIsAoRows(into_rel) && myState->ao_insertDesc)
+		appendonly_insert_finish(myState->ao_insertDesc);
+	else if (RelationIsAoCols(into_rel) && myState->aocs_insertDes)
+        aocs_insert_finish(myState->aocs_insertDes);
+
 	/* close rel, but keep lock until commit */
-	heap_close(myState->rel, NoLock);
+	heap_close(into_rel, NoLock);
 	myState->rel = NULL;
+
 }
 
 /*

@@ -39,20 +39,14 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/aosegfiles.h"
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
-#include "access/reloptions.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
-#include "catalog/toasting.h"
 #include "catalog/aoseg.h"
 #include "catalog/aoblkdir.h"
 #include "catalog/aovisimap.h"
@@ -61,19 +55,13 @@
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
 #include "commands/tablecmds.h" /* XXX: temp for get_parts() */
-#include "commands/tablespace.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
-<<<<<<< HEAD
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
 #include "libpq/pqformat.h"
-=======
 #include "mb/pg_wchar.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
@@ -81,13 +69,13 @@
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/builtins.h" /* dumpDynamicTableScanPidIndex() */
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 #include "utils/metrics_utils.h"
 
-#include "utils/builtins.h"
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 #include "utils/typcache.h"
@@ -149,7 +137,6 @@ static void FillSliceTable(EState *estate, PlannedStmt *stmt);
 static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
 static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
 static void AdjustReplicatedTableCounts(EState *estate);
-static bool intoRelIsReplicatedTable(QueryDesc *queryDesc);
 
 /*
  * For a partitioned insert target only:  
@@ -480,32 +467,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 		/* set our global sliceid variable for elog. */
 		currentSliceId = LocallyExecutingSliceIndex(estate);
-
-		/* Determine OIDs for into relation, if any */
-		if (queryDesc->plannedstmt->intoClause != NULL)
-		{
-			IntoClause *intoClause = queryDesc->plannedstmt->intoClause;
-			Oid         reltablespace;
-
-			cdb_sync_oid_to_segments();
-
-			/* MPP-10329 - must always dispatch the tablespace */
-			if (intoClause->tableSpaceName)
-			{
-				reltablespace = get_tablespace_oid(intoClause->tableSpaceName, false);
-				ddesc->intoTableSpaceName = intoClause->tableSpaceName;
-			}
-			else
-			{
-				reltablespace = GetDefaultTablespace(intoClause->rel->relpersistence);
-
-				/* Need the real tablespace id for dispatch */
-				if (!OidIsValid(reltablespace))
-					reltablespace = MyDatabaseTableSpace;
-
-				ddesc->intoTableSpaceName = get_tablespace_name(reltablespace);
-			}
-		}
 	}
 	else if (Gp_role == GP_ROLE_EXECUTE)
 	{
@@ -1253,7 +1214,6 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
      */
 	ExecEndPlan(queryDesc->planstate, estate);
 
-<<<<<<< HEAD
 	WorkfileQueryspace_ReleaseEntry();
 
 	/*
@@ -1267,20 +1227,6 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	 */
 	RemoveMotionLayer(estate->motionlayer_context, true);
 
-	/*
-	 * Adjust SELECT INTO count
-	 * Close the SELECT INTO relation if any
-	 */
-	if (estate->es_select_into)
-	{
-		if (Gp_role == GP_ROLE_DISPATCH &&
-			intoRelIsReplicatedTable(queryDesc))
-			estate->es_processed = estate->es_processed / getgpsegmentCount();
-		CloseIntoRel(queryDesc);
-	}
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* do away with our snapshots */
 	UnregisterSnapshot(estate->es_snapshot);
 	UnregisterSnapshot(estate->es_crosscheck_snapshot);
@@ -1580,24 +1526,6 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	ListCell   *l;
     int         rti;
 
-<<<<<<< HEAD
-	/*
-	 * CREATE TABLE AS or SELECT INTO?
-	 *
-	 * XXX should we allow this if the destination is temp?  Considering that
-	 * it would still require catalog changes, probably not.
-	 */
-	if (plannedstmt->intoClause != NULL)
-	{
-		Assert(plannedstmt->intoClause->rel);
-		if (plannedstmt->intoClause->rel->relpersistence == RELPERSISTENCE_TEMP)
-			ExecutorMarkTransactionDoesWrites();
-		else
-			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
-	}
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Fail if write permissions are requested on any non-temp table */
     rti = 0;
 	foreach(l, plannedstmt->rtable)
@@ -2132,20 +2060,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	queryDesc->tupDesc = tupType;
-<<<<<<< HEAD
-
-	/*
-	 * If doing SELECT INTO, initialize the "into" relation.  We must wait
-	 * till now so we have the "clean" result tuple type to create the new
-	 * table from.
-	 *
-	 * If EXPLAIN, skip creating the "into" relation.
-	 */
-	if (estate->es_select_into && !(eflags & EXEC_FLAG_EXPLAIN_ONLY) &&
-			/* Only create the table if root slice */
-	        (Gp_role != GP_ROLE_EXECUTE || Gp_is_writer) )
-		OpenIntoRel(queryDesc);
-
 
 	if (DEBUG1 >= log_min_messages)
 			{
@@ -2158,9 +2072,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 						break;
 				}
 			}
-=======
-	queryDesc->planstate = planstate;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -3099,7 +3010,7 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 		char	   *val;
 		int			vallen;
 
-		if (slot->tts_isnull[i])
+		if (slot->PRIVATE_tts_isnull[i])
 			val = "null";
 		else
 		{
@@ -3108,7 +3019,7 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 
 			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
 							  &foutoid, &typisvarlena);
-			val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
+			val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
 		}
 
 		if (i > 0)
@@ -3896,452 +3807,6 @@ EvalPlanQualEnd(EPQState *epqstate)
 	epqstate->planstate = NULL;
 	epqstate->origslot = NULL;
 }
-<<<<<<< HEAD
-
-/*
- * Support for SELECT INTO (a/k/a CREATE TABLE AS)
- *
- * We implement SELECT INTO by diverting SELECT's normal output with
- * a specialized DestReceiver type.
- */
-
-typedef struct
-{
-	DestReceiver pub;			/* publicly-known function pointers */
-	EState	   *estate;			/* EState we are working with */
-	Relation	rel;			/* Relation to write to */
-	int			hi_options;		/* heap_insert performance options */
-	BulkInsertState bistate;	/* bulk insert state */
-
-	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
-	struct AOCSInsertDescData *aocs_ins;           /* descriptor for aocs */
-
-	ItemPointerData last_heap_tid;
-
-} DR_intorel;
-
-/*
- * OpenIntoRel --- actually create the SELECT INTO target relation
- *
- * This also replaces QueryDesc->dest with the special DestReceiver for
- * SELECT INTO.  We assume that the correct result tuple type has already
- * been placed in queryDesc->tupDesc.
- */
-static void
-OpenIntoRel(QueryDesc *queryDesc)
-{
-	IntoClause *into = queryDesc->plannedstmt->intoClause;
-	EState	   *estate = queryDesc->estate;
-	Relation	intoRelationDesc;
-	char	   *intoName;
-	char		relkind = RELKIND_RELATION;
-	char		relstorage;
-	Oid			namespaceId;
-	Oid			tablespaceId;
-	Datum		reloptions;
-	StdRdOptions *stdRdOptions;
-	Oid			intoRelationId;
-	TupleDesc	tupdesc;
-	DR_intorel *myState;
-	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-	char	   *intoTableSpaceName;
-    GpPolicy   *targetPolicy;
-	bool		use_wal;
-	bool		validate_reloptions;
-
-	RelFileNode relFileNode;
-	
-	targetPolicy = queryDesc->plannedstmt->intoPolicy;
-
-	Assert(into);
-
-	/*
-	 * XXX This code needs to be kept in sync with DefineRelation(). Maybe we
-	 * should try to use that function instead.
-	 */
-
-	/*
-	 * Check consistency of arguments
-	 */
-	if (into->onCommit != ONCOMMIT_NOOP
-		&& into->rel->relpersistence != RELPERSISTENCE_TEMP)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("ON COMMIT can only be used on temporary tables")));
-
-	/*
-	 * Security check: disallow creating temp tables from security-restricted
-	 * code.  This is needed because calling code might not expect untrusted
-	 * tables to appear in pg_temp at the front of its search path.
-	 */
-	if (into->rel->relpersistence == RELPERSISTENCE_TEMP
-		&& InSecurityRestrictedOperation())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot create temporary table within security-restricted operation")));
-
-	/*
-	 * Find namespace to create in, check its permissions
-	 */
-	intoName = into->rel->relname;
-	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel);
-
-	/*
-	 * Select tablespace to use.  If not specified, use default tablespace
-	 * (which may in turn default to database's default).
-	 *
-	 * In PostgreSQL, we resolve default tablespace here. In GPDB, that's
-	 * done earlier, because we need to dispatch the final tablespace name,
-	 * after resolving any defaults, to the segments. (Otherwise, we would
-	 * rely on the assumption that default_tablespace GUC is kept in sync
-	 * in all segment connections. That actually seems to be the case, as of
-	 * this writing, but better to not rely on it.) So usually, we already
-	 * have the fully-resolved tablespace name stashed in queryDesc->ddesc->
-	 * intoTableSpaceName. In the dispatcher, we filled it in earlier, and
-	 * in executor nodes, we received it from the dispatcher along with the
-	 * query. In utility mode, however, queryDesc->ddesc is not set at all,
-	 * and we follow the PostgreSQL codepath, resolving the defaults here.
-	 */
-	if (queryDesc->ddesc)
-		intoTableSpaceName = queryDesc->ddesc->intoTableSpaceName;
-	else
-		intoTableSpaceName = into->tableSpaceName;
-
-	if (intoTableSpaceName)
-	{
-		tablespaceId = get_tablespace_oid(intoTableSpaceName, false);
-	}
-	else
-	{
-		tablespaceId = GetDefaultTablespace(into->rel->relpersistence);
-		/* note InvalidOid is OK in this case */
-	}
-
-	/* Check permissions except when using the database's default space */
-	if (OidIsValid(tablespaceId) && tablespaceId != MyDatabaseTableSpace)
-	{
-		AclResult	aclresult;
-
-		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
-										   ACL_CREATE);
-
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-						   get_tablespace_name(tablespaceId));
-	}
-
-	/* In all cases disallow placing user relations in pg_global */
-	if (tablespaceId == GLOBALTABLESPACE_OID)
-		ereport(ERROR,
-		        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		         errmsg("only shared relations can be placed in pg_global tablespace")));
-
-	/* Parse and validate any reloptions */
-	reloptions = transformRelOptions((Datum) 0,
-									 into->options,
-									 NULL,
-									 validnsps,
-									 true,
-									 false);
-
-	/* get the relstorage (heap or AO tables) */
-	if (queryDesc->ddesc)
-		validate_reloptions = queryDesc->ddesc->validate_reloptions;
-	else
-		validate_reloptions = true;
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(relkind, reloptions, validate_reloptions);
-	if(stdRdOptions->appendonly)
-		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
-	else
-		relstorage = RELSTORAGE_HEAP;
-
-	/* Copy the tupdesc because heap_create_with_catalog modifies it */
-	tupdesc = CreateTupleDescCopy(queryDesc->tupDesc);
-
-	/* MPP-8405: disallow OIDS on partitioned tables */
-	if (tupdesc->tdhasoid && IsNormalProcessingMode() && Gp_role == GP_ROLE_DISPATCH)
-	{
-		if (relstorage == RELSTORAGE_AOCOLS)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("OIDS=TRUE is not allowed on tables that use column-oriented storage. Use OIDS=FALSE")));
-		else
-			ereport(NOTICE,
-					(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
-	}
-
-	/*
-	 * We can skip WAL-logging the insertions for FileRep on segments, but not on
-	 * master since we are using the WAL based physical replication.
-	 *
-	 * GPDP does not support PITR.
-	 */
-	use_wal = XLogIsNeeded();
-
-	/* Now we can actually create the new relation */
-	intoRelationId = heap_create_with_catalog(intoName,
-											  namespaceId,
-											  tablespaceId,
-											  InvalidOid,
-											  InvalidOid,
-											  InvalidOid,
-											  GetUserId(),
-											  tupdesc,
-											  NIL,
-											  /* relam */ InvalidOid,
-											  relkind,
-											  into->rel->relpersistence,
-											  relstorage,
-											  false,
-											  false,
-											  true,
-											  0,
-											  into->onCommit,
-											  targetPolicy,  	/* MPP */
-											  reloptions,
-											  true,
-											  allowSystemTableModsDDL,
-											  /* valid_opts */ !validate_reloptions);
-	Assert(intoRelationId != InvalidOid);
-
-	FreeTupleDesc(tupdesc);
-
-	/*
-	 * Advance command counter so that the newly-created relation's catalog
-	 * tuples will be visible to heap_open.
-	 */
-	CommandCounterIncrement();
-
-	/*
-	 * If necessary, create a TOAST table for the new relation, or an Append
-	 * Only segment table. Note that AlterTableCreateXXXTable ends with
-	 * CommandCounterIncrement(), so that the new tables will be visible for
-	 * insertion.
-	 */
-	reloptions = transformRelOptions((Datum) 0,
-									 into->options,
-									 "toast",
-									 validnsps,
-									 true,
-									 false);
-
-	(void) heap_reloptions(RELKIND_TOASTVALUE, reloptions, true);
-	AlterTableCreateToastTable(intoRelationId, reloptions, false, true);
-	AlterTableCreateAoSegTable(intoRelationId, false);
-	AlterTableCreateAoVisimapTable(intoRelationId, false);
-
-    /* don't create AO block directory here, it'll be created when needed */
-	/*
-	 * And open the constructed table for writing.
-	 */
-	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
-	
-	/*
-	 * Add column encoding entries based on the WITH clause.
-	 *
-	 * NOTE:  we could also do this expansion during parse analysis, by
-	 * expanding the IntoClause options field into some attr_encodings field
-	 * (cf. CreateStmt and transformCreateStmt()). As it stands, there's no real
-	 * benefit for doing that from a code complexity POV. In fact, it would mean
-	 * more code. If, however, we supported column encoding syntax during CTAS,
-	 * it would be a good time to relocate this code.
-	 */
-	AddDefaultRelationAttributeOptions(intoRelationDesc,
-									   into->options);
-
-	/*
-	 * Now replace the query's DestReceiver with one for SELECT INTO
-	 */
-	queryDesc->dest = CreateDestReceiver(DestIntoRel);
-	myState = (DR_intorel *) queryDesc->dest;
-	Assert(myState->pub.mydest == DestIntoRel);
-	myState->estate = estate;
-	myState->rel = intoRelationDesc;
-
-	/*
-	 * We can skip WAL-logging the insertions, unless PITR or streaming
-	 * replication is in use. We can skip the FSM in any case.
-	 */
-	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-		(use_wal ? 0 : HEAP_INSERT_SKIP_WAL);
-	myState->bistate = GetBulkInsertState();
-
-	/* Not using WAL requires smgr_targblock be initially invalid */
-	Assert(RelationGetTargetBlock(intoRelationDesc) == InvalidBlockNumber);
-
-	relFileNode.spcNode = tablespaceId;
-	relFileNode.dbNode = MyDatabaseId;
-	relFileNode.relNode = intoRelationId;
-}
-
-/*
- * CloseIntoRel --- clean up SELECT INTO at ExecutorEnd time
- */
-static void
-CloseIntoRel(QueryDesc *queryDesc)
-{
-	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
-
-	/* Partition with SELECT INTO is not supported */
-	Assert(!PointerIsValid(queryDesc->estate->es_result_partitions));
-
-	/* OpenIntoRel might never have gotten called */
-	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
-	{
-		Relation	rel = myState->rel;
-
-		FreeBulkInsertState(myState->bistate);
-
-		/*
-		 * APPEND_ONLY is closed in the intorel_shutdown.
-		 * If we skipped using WAL, must heap_sync before commit.
-		 */
-		if (RelationIsHeap(rel) && (myState->hi_options & HEAP_INSERT_SKIP_WAL) != 0)
-		{
-			FlushRelationBuffers(rel);
-			/* FlushRelationBuffers will have opened rd_smgr */
-			smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
-		}
-
-		/* close rel, but keep lock until commit */
-		heap_close(rel, NoLock);
-
-		myState->rel = NULL;
-	}
-}
-
-/*
- * Get the OID of the relation created for SELECT INTO or CREATE TABLE AS.
- *
- * To be called between ExecutorStart and ExecutorEnd.
- */
-Oid
-GetIntoRelOid(QueryDesc *queryDesc)
-{
-	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
-
-	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
-		return RelationGetRelid(myState->rel);
-	else
-		return InvalidOid;
-}
-
-/*
- * CreateIntoRelDestReceiver -- create a suitable DestReceiver object
- */
-DestReceiver *
-CreateIntoRelDestReceiver(void)
-{
-	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
-
-	self->pub.receiveSlot = intorel_receive;
-	self->pub.rStartup = intorel_startup;
-	self->pub.rShutdown = intorel_shutdown;
-	self->pub.rDestroy = intorel_destroy;
-	self->pub.mydest = DestIntoRel;
-
-	self->estate = NULL;
-	self->ao_insertDesc = NULL;
-	self->aocs_ins = NULL;
-
-	/* private fields will be set by OpenIntoRel */
-
-	return (DestReceiver *) self;
-}
-
-/*
- * intorel_startup --- executor startup
- */
-static void
-intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
-{
-	/* no-op */
-}
-
-/*
- * intorel_receive --- receive one tuple
- */
-static void
-intorel_receive(TupleTableSlot *slot, DestReceiver *self)
-{
-	DR_intorel *myState = (DR_intorel *) self;
-	Relation	into_rel = myState->rel;
-
-	Assert(myState->estate->es_result_partitions == NULL);
-
-	if (RelationIsAoRows(into_rel))
-	{
-		MemTuple	tuple = ExecCopySlotMemTuple(slot);
-		AOTupleId	aoTupleId;
-
-		if (myState->ao_insertDesc == NULL)
-			myState->ao_insertDesc = appendonly_insert_init(into_rel, RESERVED_SEGNO, false);
-
-		appendonly_insert(myState->ao_insertDesc, tuple, InvalidOid, &aoTupleId);
-		pfree(tuple);
-	}
-	else if (RelationIsAoCols(into_rel))
-	{
-		if(myState->aocs_ins == NULL)
-			myState->aocs_ins = aocs_insert_init(into_rel, RESERVED_SEGNO, false);
-
-		aocs_insert(myState->aocs_ins, slot);
-	}
-	else
-	{
-		HeapTuple	tuple;
-
-		/*
-		 * get the heap tuple out of the tuple table slot, making sure we have a
-		 * writable copy
-		 */
-		tuple = ExecMaterializeSlot(slot);
-
-		/*
-		 * force assignment of new OID (see comments in ExecInsert)
-		 */
-		if (myState->rel->rd_rel->relhasoids)
-			HeapTupleSetOid(tuple, InvalidOid);
-
-		heap_insert(into_rel,
-					tuple,
-					myState->estate->es_output_cid,
-					myState->hi_options,
-					myState->bistate,
-					GetCurrentTransactionId());
-
-		myState->last_heap_tid = tuple->t_self;
-	}
-
-	/* We know this is a newly created relation, so there are no indexes */
-}
-
-/*
- * intorel_shutdown --- executor end
- */
-static void
-intorel_shutdown(DestReceiver *self)
-{
-	/* If target was append only, finalise */
-	DR_intorel *myState = (DR_intorel *) self;
-	Relation	into_rel = myState->rel;
-
-
-	if (RelationIsAoRows(into_rel) && myState->ao_insertDesc)
-		appendonly_insert_finish(myState->ao_insertDesc);
-	else if (RelationIsAoCols(into_rel) && myState->aocs_ins)
-        aocs_insert_finish(myState->aocs_ins);
-}
-
-/*
- * intorel_destroy --- release DestReceiver object
- */
-static void
-intorel_destroy(DestReceiver *self)
-{
-	pfree(self);
-}
 
 /*
  * Calculate the part to use for the given key, then find or calculate
@@ -4984,7 +4449,8 @@ FillSliceTable(EState *estate, PlannedStmt *stmt)
 	cxt.estate = estate;
 	cxt.currentSliceId = 0;
 
-	if (stmt->intoClause)
+	/*  GPDB_92_MERGE_FIXME: Do we still need this or it is correct? */
+	if (IsA(stmt, CreateTableAsStmt))
 	{
 		Slice	   *currentSlice = (Slice *) linitial(sliceTable->slices);
 
@@ -5165,17 +4631,3 @@ AdjustReplicatedTableCounts(EState *estate)
 	if (containReplicatedTable)
 		estate->es_processed = estate->es_processed / getgpsegmentCount();
 }
-
-static bool
-intoRelIsReplicatedTable(QueryDesc *queryDesc)
-{
-	DR_intorel *into = (DR_intorel *) queryDesc->dest;
-
-	if (into && into->pub.mydest == DestIntoRel &&
-		into->rel && GpPolicyIsReplicated(into->rel->rd_cdbpolicy))
-		return true;
-
-	return false;
-}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
