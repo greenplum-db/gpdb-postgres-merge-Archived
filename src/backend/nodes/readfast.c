@@ -522,20 +522,6 @@ _readDropStmt(void)
 	READ_DONE();
 }
 
-static DropPropertyStmt *
-_readDropPropertyStmt(void)
-{
-	READ_LOCALS(DropPropertyStmt);
-
-	READ_NODE_FIELD(relation);
-	READ_STRING_FIELD(property);
-	READ_ENUM_FIELD(removeType,ObjectType);
-	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-
 static DropOwnedStmt *
 _readDropOwnedStmt(void)
 {
@@ -1343,19 +1329,6 @@ _readCreateExternalStmt(void)
 	READ_DONE();
 }
 
-static DropPLangStmt *
-_readDropPLangStmt(void)
-{
-	READ_LOCALS(DropPLangStmt);
-
-	READ_STRING_FIELD(plname);
-	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-
-}
-
 static AlterDomainStmt *
 _readAlterDomainStmt(void)
 {
@@ -1377,19 +1350,6 @@ _readAlterDefaultPrivilegesStmt(void)
 
 	READ_NODE_FIELD(options);
 	READ_NODE_FIELD(action);
-
-	READ_DONE();
-}
-
-static RemoveFuncStmt *
-_readRemoveFuncStmt(void)
-{
-	READ_LOCALS(RemoveFuncStmt);
-	READ_ENUM_FIELD(kind,ObjectType); Assert(local_node->kind <= OBJECT_VIEW);
-	READ_NODE_FIELD(name);
-	READ_NODE_FIELD(args);
-	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
-	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }
@@ -3488,9 +3448,6 @@ readNodeBinary(void)
 			case T_FunctionParameter:
 				return_value = _readFunctionParameter();
 				break;
-			case T_RemoveFuncStmt:
-				return_value = _readRemoveFuncStmt();
-				break;
 			case T_AlterFunctionStmt:
 				return_value = _readAlterFunctionStmt();
 				break;
@@ -3526,9 +3483,6 @@ readNodeBinary(void)
 			case T_AlterOpFamilyStmt:
 				return_value = _readAlterOpFamilyStmt();
 				break;
-			case T_RemoveOpClassStmt:
-				return_value = _readRemoveOpClassStmt();
-				break;
 			case T_RemoveOpFamilyStmt:
 				return_value = _readRemoveOpFamilyStmt();
 				break;
@@ -3545,9 +3499,6 @@ readNodeBinary(void)
 				break;
 			case T_DropStmt:
 				return_value = _readDropStmt();
-				break;
-			case T_DropPropertyStmt:
-				return_value = _readDropPropertyStmt();
 				break;
 
 			case T_DropOwnedStmt:
@@ -3765,9 +3716,6 @@ readNodeBinary(void)
 				break;
 			case T_CreatePLangStmt:
 				return_value = _readCreatePLangStmt();
-				break;
-			case T_DropPLangStmt:
-				return_value = _readDropPLangStmt();
 				break;
 			case T_VacuumStmt:
 				return_value = _readVacuumStmt();

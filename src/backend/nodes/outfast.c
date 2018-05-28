@@ -1874,9 +1874,6 @@ _outNode(StringInfo str, void *obj)
 			case T_FunctionParameter:
 				_outFunctionParameter(str, obj);
 				break;
-			case T_RemoveFuncStmt:
-				_outRemoveFuncStmt(str, obj);
-				break;
 			case T_AlterFunctionStmt:
 				_outAlterFunctionStmt(str, obj);
 				break;
@@ -1912,9 +1909,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AlterOpFamilyStmt:
 				_outAlterOpFamilyStmt(str,obj);
-				break;
-			case T_RemoveOpClassStmt:
-				_outRemoveOpClassStmt(str,obj);
 				break;
 			case T_RemoveOpFamilyStmt:
 				_outRemoveOpFamilyStmt(str,obj);
@@ -2145,9 +2139,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CreatePLangStmt:
 				_outCreatePLangStmt(str, obj);
-				break;
-			case T_DropPLangStmt:
-				_outDropPLangStmt(str, obj);
 				break;
 			case T_VacuumStmt:
 				_outVacuumStmt(str, obj);

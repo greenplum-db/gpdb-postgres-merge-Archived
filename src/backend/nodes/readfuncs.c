@@ -920,22 +920,6 @@ _readDropStmt(void)
 #endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
-static DropPropertyStmt *
-_readDropPropertyStmt(void)
-{
-	READ_LOCALS(DropPropertyStmt);
-
-	READ_NODE_FIELD(relation);
-	READ_STRING_FIELD(property);
-	READ_ENUM_FIELD(removeType,ObjectType);
-	READ_ENUM_FIELD(behavior,DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
-#ifndef COMPILING_BINARY_FUNCS
 static TruncateStmt *
 _readTruncateStmt(void)
 {
@@ -2532,22 +2516,6 @@ _readFunctionParameter(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-static RemoveFuncStmt *
-_readRemoveFuncStmt(void)
-{
-	READ_LOCALS(RemoveFuncStmt);
-
-	READ_ENUM_FIELD(kind,ObjectType);
-	READ_NODE_FIELD(name);
-	READ_NODE_FIELD(args);
-	READ_ENUM_FIELD(behavior, DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 static AlterFunctionStmt *
 _readAlterFunctionStmt(void)
 {
@@ -2610,19 +2578,6 @@ _readCreateCastStmt(void)
 	READ_DONE();
 }
 
-static DropCastStmt *
-_readDropCastStmt(void)
-{
-	READ_LOCALS(DropCastStmt);
-
-	READ_NODE_FIELD(sourcetype);
-	READ_NODE_FIELD(targettype);
-	READ_ENUM_FIELD(behavior, DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-
 static CreateOpClassStmt *
 _readCreateOpClassStmt(void)
 {
@@ -2670,30 +2625,6 @@ _readAlterOpFamilyStmt(void)
 	READ_STRING_FIELD(amname);
 	READ_BOOL_FIELD(isDrop);
 	READ_NODE_FIELD(items);
-
-	READ_DONE();
-}
-
-static RemoveOpClassStmt *
-_readRemoveOpClassStmt(void)
-{
-	READ_LOCALS(RemoveOpClassStmt);
-	READ_NODE_FIELD(opclassname);
-	READ_STRING_FIELD(amname);
-	READ_ENUM_FIELD(behavior, DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-
-static RemoveOpFamilyStmt *
-_readRemoveOpFamilyStmt(void)
-{
-	READ_LOCALS(RemoveOpFamilyStmt);
-	READ_NODE_FIELD(opfamilyname);
-	READ_STRING_FIELD(amname);
-	READ_ENUM_FIELD(behavior, DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }
