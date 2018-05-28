@@ -39,6 +39,7 @@
 
 #include "nodes/parsenodes.h"
 #include "nodes/readfuncs.h"
+#include "nodes/relation.h"
 #include "cdb/cdbgang.h"
 
 /*
@@ -2392,20 +2393,6 @@ _readCreatePLangStmt(void)
 	READ_DONE();
 }
 
-#ifndef COMPILING_BINARY_FUNCS
-static DropPLangStmt *
-_readDropPLangStmt(void)
-{
-	READ_LOCALS(DropPLangStmt);
-
-	READ_STRING_FIELD(plname);
-	READ_ENUM_FIELD(behavior,DropBehavior);
-	READ_BOOL_FIELD(missing_ok);
-
-	READ_DONE();
-}
-#endif /* COMPILING_BINARY_FUNCS */
-
 static CreateSeqStmt *
 _readCreateSeqStmt(void)
 {
@@ -3067,14 +3054,8 @@ parseNodeString(void)
 		return_value = _readDenyLoginInterval();
 	else if (MATCHX("DENYLOGINPOINT"))
 		return_value = _readDenyLoginPoint();
-	else if (MATCHX("DROPCAST"))
-		return_value = _readDropCastStmt();
 	else if (MATCHX("DROPDBSTMT"))
 		return_value = _readDropdbStmt();
-	else if (MATCHX("DROPPLANGSTMT"))
-		return_value = _readDropPLangStmt();
-	else if (MATCHX("DROPPROPSTMT"))
-		return_value = _readDropPropertyStmt();
 	else if (MATCHX("DROPROLESTMT"))
 		return_value = _readDropRoleStmt();
 	else if (MATCHX("DROPSTMT"))
@@ -3119,12 +3100,6 @@ parseNodeString(void)
 		return_value = _readPrivGrantee();
 	else if (MATCHX("REINDEXSTMT"))
 		return_value = _readReindexStmt();
-	else if (MATCHX("REMOVEFUNCSTMT"))
-		return_value = _readRemoveFuncStmt();
-	else if (MATCHX("REMOVEOPCLASS"))
-		return_value = _readRemoveOpClassStmt();
-	else if (MATCHX("REMOVEOPFAMILY"))
-		return_value = _readRemoveOpFamilyStmt();
 	else if (MATCHX("RENAMESTMT"))
 		return_value = _readRenameStmt();
 	else if (MATCHX("RULESTMT"))

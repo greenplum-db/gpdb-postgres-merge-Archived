@@ -227,7 +227,6 @@ _readQuery(void)
 	READ_BOOL_FIELD(canSetTag);
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);
-	READ_NODE_FIELD(intoClause);
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasWindowFuncs);
 	READ_BOOL_FIELD(hasSubLinks);
@@ -1433,7 +1432,6 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(resultRelations);
 	READ_NODE_FIELD(utilityStmt);
-	READ_NODE_FIELD(intoClause);
 	READ_NODE_FIELD(subplans);
 	READ_BITMAPSET_FIELD(rewindPlanIDs);
 
@@ -1875,8 +1873,6 @@ _readSubqueryScan(void)
 	readScanInfo((Scan *)local_node);
 
 	READ_NODE_FIELD(subplan);
-	/* Planner-only: subrtable -- don't serialize. */
-	READ_NODE_FIELD(subrowmark);
 
 	READ_DONE();
 }
@@ -2794,18 +2790,6 @@ _readAlterFdwStmt(void)
 	READ_DONE();
 }
 
-static DropFdwStmt *
-_readDropFdwStmt(void)
-{
-	READ_LOCALS(DropFdwStmt);
-
-	READ_STRING_FIELD(fdwname);
-	READ_BOOL_FIELD(missing_ok);
-	READ_ENUM_FIELD(behavior, DropBehavior);
-
-	READ_DONE();
-}
-
 static CreateForeignServerStmt *
 _readCreateForeignServerStmt(void)
 {
@@ -2829,18 +2813,6 @@ _readAlterForeignServerStmt(void)
 	READ_STRING_FIELD(version);
 	READ_NODE_FIELD(options);
 	READ_BOOL_FIELD(has_version);
-
-	READ_DONE();
-}
-
-static DropForeignServerStmt *
-_readDropForeignServerStmt(void)
-{
-	READ_LOCALS(DropForeignServerStmt);
-
-	READ_STRING_FIELD(servername);
-	READ_BOOL_FIELD(missing_ok);
-	READ_ENUM_FIELD(behavior, DropBehavior);
 
 	READ_DONE();
 }
@@ -3468,9 +3440,6 @@ readNodeBinary(void)
 			case T_CreateCastStmt:
 				return_value = _readCreateCastStmt();
 				break;
-			case T_DropCastStmt:
-				return_value = _readDropCastStmt();
-				break;
 			case T_CreateOpClassStmt:
 				return_value = _readCreateOpClassStmt();
 				break;
@@ -3482,9 +3451,6 @@ readNodeBinary(void)
 				break;
 			case T_AlterOpFamilyStmt:
 				return_value = _readAlterOpFamilyStmt();
-				break;
-			case T_RemoveOpFamilyStmt:
-				return_value = _readRemoveOpFamilyStmt();
 				break;
 			case T_CreateConversionStmt:
 				return_value = _readCreateConversionStmt();
@@ -3824,17 +3790,11 @@ readNodeBinary(void)
 			case T_CreateUserMappingStmt:
 				return_value = _readCreateUserMappingStmt();
 				break;
-			case T_DropForeignServerStmt:
-				return_value = _readDropForeignServerStmt();
-				break;
 			case T_AlterForeignServerStmt:
 				return_value = _readAlterForeignServerStmt();
 				break;
 			case T_CreateForeignServerStmt:
 				return_value = _readCreateForeignServerStmt();
-				break;
-			case T_DropFdwStmt:
-				return_value = _readDropFdwStmt();
 				break;
 			case T_AlterFdwStmt:
 				return_value = _readAlterFdwStmt();

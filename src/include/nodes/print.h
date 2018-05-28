@@ -21,8 +21,8 @@
 #define nodeDisplay(x)		pprint(x)
 
 extern char *plannode_type(Plan *p);
-extern void print(void *obj);
-extern void pprint(void *obj);
+extern void print(const void *obj);
+extern void pprint(const void *obj);
 extern void elog_node_display(int lev, const char *title,
 				  const void *obj, bool pretty);
 extern char *format_node_dump(const char *dump);

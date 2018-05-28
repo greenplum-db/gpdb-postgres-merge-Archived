@@ -275,7 +275,7 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
  * print the basic stuff of all nodes that inherit from Plan
  */
 static void
-_outPlanInfo(StringInfo str, Plan *node)
+_outPlanInfo(StringInfo str, const Plan *node)
 {
 	WRITE_INT_FIELD(plan_node_id);
 
@@ -340,7 +340,6 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(utilityStmt);
-	WRITE_NODE_FIELD(intoClause);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 
@@ -365,7 +364,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 }
 
 static void
-outLogicalIndexInfo(StringInfo str, LogicalIndexInfo *node)
+outLogicalIndexInfo(StringInfo str, const LogicalIndexInfo *node)
 {
 	WRITE_OID_FIELD(logicalIndexOid);
 	WRITE_INT_FIELD(nColumns);
@@ -403,8 +402,6 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(subplan);
-	/* Planner-only: subrtable -- don't serialize. */
-	WRITE_NODE_FIELD(subrowmark);
 }
 
 static void
@@ -881,7 +878,6 @@ _outQuery(StringInfo str, Query *node)
 
 	WRITE_NODE_FIELD(utilityStmt);
 	WRITE_INT_FIELD(resultRelation);
-	WRITE_NODE_FIELD(intoClause);
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);
@@ -1268,16 +1264,6 @@ _outAlterFdwStmt(StringInfo str, AlterFdwStmt *node)
 }
 
 static void
-_outDropFdwStmt(StringInfo str, DropFdwStmt *node)
-{
-	WRITE_NODE_TYPE("DROPFDWSTMT");
-
-	WRITE_STRING_FIELD(fdwname);
-	WRITE_BOOL_FIELD(missing_ok);
-	WRITE_ENUM_FIELD(behavior, DropBehavior);
-}
-
-static void
 _outCreateForeignServerStmt(StringInfo str, CreateForeignServerStmt *node)
 {
 	WRITE_NODE_TYPE("CREATEFOREIGNSERVERSTMT");
@@ -1298,16 +1284,6 @@ _outAlterForeignServerStmt(StringInfo str, AlterForeignServerStmt *node)
 	WRITE_STRING_FIELD(version);
 	WRITE_NODE_FIELD(options);
 	WRITE_BOOL_FIELD(has_version);
-}
-
-static void
-_outDropForeignServerStmt(StringInfo str, DropForeignServerStmt *node)
-{
-	WRITE_NODE_TYPE("DROPFOREIGNSERVERSTMT");
-
-	WRITE_STRING_FIELD(servername);
-	WRITE_BOOL_FIELD(missing_ok);
-	WRITE_ENUM_FIELD(behavior, DropBehavior);
 }
 
 static void
@@ -1451,14 +1427,14 @@ _outNode(StringInfo str, void *obj)
 			case T_ForeignScan:
 				_outForeignScan(str, obj);
 				break;
-			case T_FdwPlan:
-				_outFdwPlan(str, obj);
-				break;
 			case T_ExternalScan:
 				_outExternalScan(str, obj);
 				break;
 			case T_IndexScan:
 				_outIndexScan(str, obj);
+				break;
+			case T_IndexOnlyScan:
+				_outIndexOnlyScan(str, obj);
 				break;
 			case T_DynamicIndexScan:
 				_outDynamicIndexScan(str, obj);
@@ -1770,11 +1746,11 @@ _outNode(StringInfo str, void *obj)
 			case T_PathKey:
 				_outPathKey(str, obj);
 				break;
+			case T_ParamPathInfo:
+				_outParamPathInfo(str, obj);
+				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
-				break;
-			case T_InnerIndexscanInfo:
-				_outInnerIndexscanInfo(str, obj);
 				break;
 			case T_SpecialJoinInfo:
 				_outSpecialJoinInfo(str, obj);
@@ -1895,9 +1871,6 @@ _outNode(StringInfo str, void *obj)
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str,obj);
 				break;
-			case T_DropCastStmt:
-				_outDropCastStmt(str,obj);
-				break;
 			case T_CreateOpClassStmt:
 				_outCreateOpClassStmt(str,obj);
 				break;
@@ -1909,9 +1882,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AlterOpFamilyStmt:
 				_outAlterOpFamilyStmt(str,obj);
-				break;
-			case T_RemoveOpFamilyStmt:
-				_outRemoveOpFamilyStmt(str,obj);
 				break;
 			case T_CreateConversionStmt:
 				_outCreateConversionStmt(str,obj);
@@ -1926,9 +1896,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DropStmt:
 				_outDropStmt(str, obj);
-				break;
-			case T_DropPropertyStmt:
-				_outDropPropertyStmt(str, obj);
 				break;
 			case T_DropOwnedStmt:
 				_outDropOwnedStmt(str, obj);
@@ -2127,6 +2094,9 @@ _outNode(StringInfo str, void *obj)
 			case T_DefElem:
 				_outDefElem(str, obj);
 				break;
+			case T_TableLikeClause:
+				_outTableLikeClause(str, obj);
+				break;
 			case T_LockingClause:
 				_outLockingClause(str, obj);
 				break;
@@ -2282,17 +2252,11 @@ _outNode(StringInfo str, void *obj)
 			case T_CreateUserMappingStmt:
 				_outCreateUserMappingStmt(str, obj);
 				break;
-			case T_DropForeignServerStmt:
-				_outDropForeignServerStmt(str, obj);
-				break;
 			case T_AlterForeignServerStmt:
 				_outAlterForeignServerStmt(str, obj);
 				break;
 			case T_CreateForeignServerStmt:
 				_outCreateForeignServerStmt(str, obj);
-				break;
-			case T_DropFdwStmt:
-				_outDropFdwStmt(str, obj);
 				break;
 			case T_AlterFdwStmt:
 				_outAlterFdwStmt(str, obj);
