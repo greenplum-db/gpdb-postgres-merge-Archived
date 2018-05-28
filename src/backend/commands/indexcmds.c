@@ -3,13 +3,9 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -43,11 +39,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
-<<<<<<< HEAD
-#include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -89,7 +81,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexNameAddition(List *colnames);
-<<<<<<< HEAD
 static bool relationHasUniqueIndex(Relation rel);
 
 
@@ -179,10 +170,8 @@ cdb_sync_indcheckxmin_with_segments(Oid indexRelationId)
 		heap_close(pg_index, RowExclusiveLock);
 	}
 }
-=======
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 								Oid relId, Oid oldRelId, void *arg);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * CheckIndexCompatible
@@ -412,14 +401,11 @@ CheckIndexCompatible(Oid oldId,
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
  * 'concurrent': avoid blocking writers to the table while building.
-<<<<<<< HEAD
  * 'stmt': the IndexStmt for this index.  Many other arguments are just values
  *		of fields in here.  
  *		XXX One day it might pay to eliminate the redundancy.
-=======
  *
  * Returns the OID of the created index.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 Oid
 DefineIndex(RangeVar *heapRelation,
@@ -846,16 +832,11 @@ DefineIndex(RangeVar *heapRelation,
 		}
 
 		/* Close the heap and we're done, in the non-concurrent case */
-<<<<<<< HEAD
 		if (need_longlock)
 			heap_close(rel, NoLock);
 		else
 			heap_close(rel, heap_lockmode);
 		return;
-=======
-		heap_close(rel, NoLock);
-		return indexRelationId;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* save lockrelid and locktag for below, then close rel */
@@ -2038,31 +2019,11 @@ ReindexIndex(ReindexStmt *stmt)
 	Oid			indOid;
 	Oid			heapOid = InvalidOid;
 
-<<<<<<< HEAD
-	indOid = RangeVarGetRelid(stmt->relation, false);
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(indOid));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "cache lookup failed for relation %u", indOid);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						stmt->relation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(indOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   stmt->relation->relname);
-
-	ReleaseSysCache(tuple);
-=======
 	/* lock level used here should match index lock reindex_index() */
 	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
 									  false, false,
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	reindex_index(indOid, false);
 
@@ -2217,22 +2178,22 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 void
 ReindexTable(ReindexStmt *stmt)
 {
-<<<<<<< HEAD
 	Oid			relid;
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
 	ListCell   *lc;
 
-	/*
-	 * QE simply performs reindex work.  All other work has been done in QD.
-	 */
+	Oid			heapOid;
+
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		reindex_relation(stmt->relid, REINDEX_REL_PROCESS_TOAST);
 		return;
 	}
 
-	relid = RangeVarGetRelid(stmt->relation, false);
+	/* The lock level used here should match reindex_relation(). */
+	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
+									   RangeVarCallbackOwnsTable, NULL);
 
 	/*
 	 * Gather child partition relations.
@@ -2265,7 +2226,7 @@ ReindexTable(ReindexStmt *stmt)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* various checks on each partition */
-	foreach (lc, relids)
+	foreach (lc, prels)
 	{
 		Oid			heapOid = lfirst_oid(lc);
 		HeapTuple	tuple;
@@ -2280,8 +2241,8 @@ ReindexTable(ReindexStmt *stmt)
 			pg_class_tuple->relkind != RELKIND_TOASTVALUE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table",
-							NameStr(pg_class_tuple->relname))));
+							errmsg("\"%s\" is not a table",
+								   NameStr(pg_class_tuple->relname))));
 
 		/*
 		 * Check appropriate permissions
@@ -2296,18 +2257,6 @@ ReindexTable(ReindexStmt *stmt)
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
-=======
-	Oid			heapOid;
-
-	/* The lock level used here should match reindex_relation(). */
-	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
-									   RangeVarCallbackOwnsTable, NULL);
-
-	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*

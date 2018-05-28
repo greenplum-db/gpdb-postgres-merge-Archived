@@ -854,61 +854,6 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 
 
 /*
-<<<<<<< HEAD
- * Drop foreign-data wrapper
- */
-void
-RemoveForeignDataWrapper(DropFdwStmt *stmt)
-{
-	Oid			fdwId;
-	ObjectAddress object;
-
-	fdwId = get_foreign_data_wrapper_oid(stmt->fdwname, true);
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  errmsg("permission denied to drop foreign-data wrapper \"%s\"",
-					 stmt->fdwname),
-			  errhint("Must be superuser to drop a foreign-data wrapper.")));
-
-	if (!OidIsValid(fdwId))
-	{
-		if (!stmt->missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("foreign-data wrapper \"%s\" does not exist",
-							stmt->fdwname)));
-
-		/* IF EXISTS specified, just note it */
-		ereport(NOTICE,
-			  (errmsg("foreign-data wrapper \"%s\" does not exist, skipping",
-					  stmt->fdwname)));
-		return;
-	}
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = ForeignDataWrapperRelationId;
-	object.objectId = fdwId;
-	object.objectSubId = 0;
-
-	performDeletion(&object, stmt->behavior);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-	}
-}
-
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Drop foreign-data wrapper by OID
  */
 void
@@ -1154,56 +1099,6 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 
 
 /*
-<<<<<<< HEAD
- * Drop foreign server
- */
-void
-RemoveForeignServer(DropForeignServerStmt *stmt)
-{
-	Oid			srvId;
-	ObjectAddress object;
-
-	srvId = get_foreign_server_oid(stmt->servername, true);
-
-	if (!OidIsValid(srvId))
-	{
-		/* Server not found, complain or notice */
-		if (!stmt->missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				  errmsg("server \"%s\" does not exist", stmt->servername)));
-
-		/* IF EXISTS specified, just note it */
-		ereport(NOTICE,
-				(errmsg("server \"%s\" does not exist, skipping",
-						stmt->servername)));
-		return;
-	}
-
-	/* Only allow DROP if the server is owned by the user. */
-	if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
-					   stmt->servername);
-
-	object.classId = ForeignServerRelationId;
-	object.objectId = srvId;
-	object.objectSubId = 0;
-
-	performDeletion(&object, stmt->behavior);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_WITH_SNAPSHOT | DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE,
-									NIL,
-									NULL);
-	}
-}
-
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Drop foreign server by OID
  */
 void
@@ -1517,8 +1412,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 	object.objectId = umId;
 	object.objectSubId = 0;
 
-<<<<<<< HEAD
-	performDeletion(&object, DROP_CASCADE);
+	performDeletion(&object, DROP_CASCADE, 0);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1527,9 +1421,6 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	performDeletion(&object, DROP_CASCADE, 0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 
