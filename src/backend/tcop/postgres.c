@@ -199,12 +199,6 @@ static bool ignore_till_sync = false;
  */
 static CachedPlanSource *unnamed_stmt_psrc = NULL;
 
-<<<<<<< HEAD
-/* workspace for building a new unnamed statement in */
-static MemoryContext unnamed_stmt_context = NULL;
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* assorted command-line switches */
 static const char *userDoption = NULL;	/* -D switch */
 
@@ -1764,15 +1758,11 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		 * end up being able to do this, keeping the parse/plan snapshot
 		 * around until after we start the portal doesn't cost much.
 		 */
-<<<<<<< HEAD
-		PortalStart(portal, NULL, InvalidSnapshot, NULL);
-=======
 		PortalStart(portal, NULL, 0, snapshot_set);
 
 		/* Done with the snapshot used for parsing/planning */
 		if (snapshot_set)
 			PopActiveSnapshot();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Select the appropriate output format: text unless we are doing a
@@ -2081,32 +2071,13 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 		querytree_list = pg_rewrite_query(query);
 
-<<<<<<< HEAD
 		if (parsetree_list)
 		{
 			Node	   *parsetree = (Node *) linitial(parsetree_list);
 			sourceTag = nodeTag(parsetree);
 		}
 
-		/*
-		 * If this is the unnamed statement and it has parameters, defer query
-		 * planning until Bind.  Otherwise do it now.
-		 */
-		if (!is_named && numParams > 0)
-		{
-			stmt_list = querytree_list;
-			fully_planned = false;
-		}
-		else
-		{
-			stmt_list = pg_plan_queries(querytree_list, 0, NULL);
-			fully_planned = true;
-		}
-
-		/* Done with the snapshot used for parsing/planning */
-=======
 		/* Done with the snapshot used for parsing */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (snapshot_set)
 			PopActiveSnapshot();
 	}
@@ -2132,6 +2103,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	CompleteCachedPlan(psrc,
 					   querytree_list,
 					   unnamed_stmt_context,
+					   sourceTag,
 					   paramTypes,
 					   numParams,
 					   NULL,
@@ -2144,57 +2116,18 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (is_named)
 	{
-<<<<<<< HEAD
-		StorePreparedStatement(stmt_name,
-							   raw_parse_tree,
-							   query_string,
-							   sourceTag,
-							   commandTag,
-							   paramTypes,
-							   numParams,
-							   0,		/* default cursor options */
-							   stmt_list,
-							   false);
-=======
 		/*
 		 * Store the query as a prepared statement.
 		 */
 		StorePreparedStatement(stmt_name, psrc, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 	{
 		/*
 		 * We just save the CachedPlanSource into unnamed_stmt_psrc.
 		 */
-<<<<<<< HEAD
-		Oid		   *newParamTypes;
-
-		if (numParams > 0)
-		{
-			newParamTypes = (Oid *) palloc(numParams * sizeof(Oid));
-			memcpy(newParamTypes, paramTypes, numParams * sizeof(Oid));
-		}
-		else
-			newParamTypes = NULL;
-
-		unnamed_stmt_psrc = FastCreateCachedPlan(raw_parse_tree,
-												 pstrdup(query_string),
-												 sourceTag,
-												 commandTag,
-												 newParamTypes,
-												 numParams,
-												 0,		/* cursor options */
-												 stmt_list,
-												 fully_planned,
-												 true,
-												 unnamed_stmt_context);
-		/* context now belongs to the plancache entry */
-		unnamed_stmt_context = NULL;
-=======
 		SaveCachedPlan(psrc);
 		unnamed_stmt_psrc = psrc;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2588,14 +2521,6 @@ exec_bind_message(StringInfo input_message)
 		PopActiveSnapshot();
 
 	/*
-<<<<<<< HEAD
-	 * And we're ready to start portal execution.
-	 */
-	PortalStart(portal, params, InvalidSnapshot, NULL);
-
-	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Apply the result format requests to the portal.
 	 */
 	PortalSetResultFormat(portal, numRFormats, rformats);
@@ -3866,30 +3791,19 @@ ProcessInterrupts(const char* filename, int lineno)
 						 errmsg("terminating connection due to administrator command")));
 		}
 	}
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (ClientConnectionLost)
 	{
 		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
-<<<<<<< HEAD
 		DisableClientWaitTimeoutInterrupt();
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* don't send to client, we already know the connection to be dead. */
 		whereToSendOutput = DestNone;
 		ereport(FATAL,
 				(errcode(ERRCODE_CONNECTION_FAILURE),
 				 errmsg("connection to client lost")));
 	}
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (QueryCancelPending)
 	{
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
@@ -4194,11 +4108,7 @@ check_stack_depth(void)
 	long		stack_depth;
 
 	/*
-<<<<<<< HEAD
-	 * Compute distance from reference point to to my local variables
-=======
 	 * Compute distance from reference point to my local variables
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	stack_depth = (long) (stack_base_ptr - &stack_top_loc);
 
@@ -4434,11 +4344,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
-	while ((flag = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:m:lN:nOo:Pp:r:S:sTt:Uv:W:y:-:")) != -1)
-=======
-	while ((flag = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	while ((flag = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:m:lN:nOo:Pp:r:S:sTt:Uv:W:y:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -4649,10 +4555,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 				errs++;
 				break;
 		}
-<<<<<<< HEAD
-=======
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (errs)
 			break;
 	}
@@ -4660,15 +4563,8 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	/*
 	 * Optional database name should be there only if *dbname is NULL.
 	 */
-<<<<<<< HEAD
 	if (!errs && dbname && *dbname == NULL && argc - optind >= 1)
 		*dbname = strdup(argv[optind++]);
-=======
-	if (!errs && secure && argc - optind >= 1)
-		dbname = strdup(argv[optind++]);
-	else
-		dbname = NULL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (errs || argc != optind)
 	{
@@ -4677,11 +4573,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 		/* spell the error message a bit differently depending on context */
 		if (IsUnderPostmaster)
-<<<<<<< HEAD
-		ereport(FATAL,
-=======
 			ereport(FATAL,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid command-line argument for server process: %s", argv[optind]),
 			  errhint("Try \"%s --help\" for more information.", progname)));
@@ -4835,15 +4727,12 @@ PostgresMain(int argc, char *argv[],
 	{
 		if (!SelectConfigFiles(userDoption, progname))
 			proc_exit(1);
-<<<<<<< HEAD
 
         /*
 	     * Remember stand-alone backend startup time.
          * CDB: Moved this up from below for use in error message headers.
          */
 	    PgStartTime = GetCurrentTimestamp();
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*

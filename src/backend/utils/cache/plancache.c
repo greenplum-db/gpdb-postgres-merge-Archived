@@ -244,6 +244,7 @@ void
 CompleteCachedPlan(CachedPlanSource *plansource,
 				   List *querytree_list,
 				   MemoryContext querytree_context,
+				   NodeTag sourceTag,
 				   Oid *param_types,
 				   int num_params,
 				   ParserSetupHook parserSetup,

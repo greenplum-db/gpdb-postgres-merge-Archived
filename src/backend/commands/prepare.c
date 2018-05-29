@@ -164,6 +164,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	CompleteCachedPlan(plansource,
 					   query_list,
 					   NULL,
+					   srctag,
 					   argtypes,
 					   nargs,
 					   NULL,
@@ -499,36 +500,15 @@ InitQueryHashTable(void)
 
 /*
  * Store all the data pertaining to a query in the hash table using
-<<<<<<< HEAD
- * the specified key.  All the given data is copied into either the hashtable
- * entry or the underlying plancache entry, so the caller can dispose of its
- * copy.
- *
- * Exception: commandTag is presumed to be a pointer to a constant string,
- * or possibly NULL, so it need not be copied.	Note that commandTag should
- * be NULL only if the original query (before rewriting) was empty.
+ * the specified key.  The passed CachedPlanSource should be "unsaved"
+ * in case we get an error here; we'll save it once we've created the hash
+ * table entry.
  * The original query nodetag is saved as well, only used if resource
  * scheduling is enabled.
  */
 void
 StorePreparedStatement(const char *stmt_name,
-					   Node *raw_parse_tree,
-					   const char *query_string,
-					   NodeTag	   sourceTag,
-					   const char *commandTag,
-					   Oid *param_types,
-					   int num_params,
-					   int cursor_options,
-					   List *stmt_list,
-=======
- * the specified key.  The passed CachedPlanSource should be "unsaved"
- * in case we get an error here; we'll save it once we've created the hash
- * table entry.
- */
-void
-StorePreparedStatement(const char *stmt_name,
 					   CachedPlanSource *plansource,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					   bool from_sql)
 {
 	PreparedStatement *entry;
@@ -539,32 +519,7 @@ StorePreparedStatement(const char *stmt_name,
 	if (!prepared_queries)
 		InitQueryHashTable();
 
-<<<<<<< HEAD
-	/* Check for pre-existing entry of same name */
-	hash_search(prepared_queries, stmt_name, HASH_FIND, &found);
-
-	if (found)
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_PSTATEMENT),
-				 errmsg("prepared statement \"%s\" already exists",
-						stmt_name)));
-
-	/* Create a plancache entry */
-	plansource = CreateCachedPlan(raw_parse_tree,
-								  query_string,
-								  sourceTag,
-								  commandTag,
-								  param_types,
-								  num_params,
-								  cursor_options,
-								  stmt_list,
-								  true,
-								  true);
-
-	/* Now we can add entry to hash table */
-=======
 	/* Add entry to hash table */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	entry = (PreparedStatement *) hash_search(prepared_queries,
 											  stmt_name,
 											  HASH_ENTER,
