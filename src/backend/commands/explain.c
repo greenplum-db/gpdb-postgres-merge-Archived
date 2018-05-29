@@ -3,13 +3,9 @@
  * explain.c
  *	  Explain query execution plans
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
@@ -24,12 +20,8 @@
 #include "commands/createas.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
-<<<<<<< HEAD
-#include "commands/trigger.h"
 #include "commands/queue.h"
 #include "executor/execUtils.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "executor/hashjoin.h"
 #include "foreign/fdwapi.h"
 #include "optimizer/clauses.h"
@@ -39,12 +31,8 @@
 #include "utils/builtins.h"
 #include "utils/json.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "utils/metrics_utils.h"
-#include "utils/tuplesort.h"
-=======
 #include "utils/rel.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/snapmgr.h"
 #include "utils/tuplesort.h"
 #include "utils/xml.h"
@@ -487,7 +475,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	int			eflags;
 	int			instrument_option = 0;
 
-<<<<<<< HEAD
 	if (es->analyze)
 	{
 		/*
@@ -496,13 +483,6 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 		 */
 		instrument_option |= (INSTRUMENT_ALL & ~INSTRUMENT_BUFFERS);
 	}
-=======
-	if (es->analyze && es->timing)
-		instrument_option |= INSTRUMENT_TIMER;
-	else if (es->analyze)
-		instrument_option |= INSTRUMENT_ROWS;
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
@@ -1064,13 +1044,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_IndexScan:
 			pname = sname = "Index Scan";
 			break;
-<<<<<<< HEAD
 		case T_DynamicIndexScan:
 			pname = "Dynamic Index Scan";
-=======
 		case T_IndexOnlyScan:
 			pname = sname = "Index Only Scan";
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_BitmapIndexScan:
 			pname = sname = "Bitmap Index Scan";
@@ -1630,13 +1607,12 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 			show_scan_qual(bitmapqualorig,
 						   "Recheck Cond", planstate, ancestors, es);
-<<<<<<< HEAD
-		}
-=======
-			if (((BitmapHeapScan *) plan)->bitmapqualorig)
+
+			if (bitmapqualorig)
 				show_instrumentation_count("Rows Removed by Index Recheck", 2,
 										   planstate, es);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		}
+
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_ExternalScan:
@@ -1737,7 +1713,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		}
 		case T_Agg:
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
-<<<<<<< HEAD
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
 			show_grouping_keys(planstate,
 						       ((Agg *) plan)->numCols,
 						       ((Agg *) plan)->grpColIdx,
@@ -1758,12 +1736,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						     ((Unique *) plan)->uniqColIdx,
 						     "Group Key",
 						     ancestors, es);
-=======
-			if (plan->qual)
-				show_instrumentation_count("Rows Removed by Filter", 1,
-										   planstate, es);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-			break;
 		case T_Sort:
 			show_sort_keys((SortState *) planstate, ancestors, es);
 			show_sort_info((SortState *) planstate, es);

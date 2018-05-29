@@ -3,13 +3,9 @@
  * sequence.c
  *	  PostgreSQL sequences support code.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,11 +16,7 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/heapam.h"
 #include "access/bufmask.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "access/transam.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
@@ -334,11 +326,7 @@ ResetSequence(Oid seq_relid)
 	 * indeed a sequence.
 	 */
 	init_sequence(seq_relid, &elm, &seq_rel);
-<<<<<<< HEAD
 	(void) read_seq_tuple(elm, seq_rel, &buf, &seqtuple);
-=======
-	read_info(elm, seq_rel, &buf);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Copy the existing sequence tuple.
@@ -464,12 +452,8 @@ AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
 
-<<<<<<< HEAD
-	/* find sequence */
-	relid = RangeVarGetRelid(stmt->sequence, false);
-=======
 	/* Open and lock sequence. */
-	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
+	relid = RangeVarGetRelid(stmt->sequence, NoLock, stmt->missing_ok);
 	if (relid == InvalidOid)
 	{
 		ereport(NOTICE,
@@ -477,9 +461,6 @@ AlterSequence(AlterSeqStmt *stmt)
 						stmt->sequence->relname)));
 		return;
 	}
-
-	init_sequence(relid, &elm, &seqrel);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* allow ALTER to sequence owner only */
 	/* if you change this, see also callers of AlterSequenceInternal! */
@@ -1790,24 +1771,12 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 
 	item = (char *) xlrec + sizeof(xl_seq_rec);
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
-<<<<<<< HEAD
 
 	if (PageAddItem(page, (Item) item, itemsz,
 					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "seq_redo: failed to add item to page");
 
 	PageSetLSN(page, lsn);
-=======
-	itemsz = MAXALIGN(itemsz);
-	if (PageAddItem(localpage, (Item) item, itemsz,
-					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
-		elog(PANIC, "seq_redo: failed to add item to page");
-
-	PageSetLSN(localpage, lsn);
-	PageSetTLI(localpage, ThisTimeLineID);
-
-	memcpy(page, localpage, BufferGetPageSize(buffer));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 

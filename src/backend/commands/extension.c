@@ -42,11 +42,6 @@
 #include "commands/comment.h"
 #include "commands/extension.h"
 #include "commands/schemacmds.h"
-<<<<<<< HEAD
-#include "commands/trigger.h"
-#include "executor/executor.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -827,19 +822,11 @@ execute_extension_script(CreateExtensionStmt *stmt,
 	if (client_min_messages < WARNING)
 		(void) set_config_option("client_min_messages", "warning",
 								 PGC_USERSET, PGC_S_SESSION,
-<<<<<<< HEAD
-								 GUC_ACTION_SAVE, true);
-	if (log_min_messages < WARNING)
-		(void) set_config_option("log_min_messages", "warning",
-								 PGC_SUSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true);
-=======
 								 GUC_ACTION_SAVE, true, 0);
 	if (log_min_messages < WARNING)
 		(void) set_config_option("log_min_messages", "warning",
 								 PGC_SUSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Set up the search path to contain the target schema, then the schemas
@@ -918,13 +905,8 @@ execute_extension_script(CreateExtensionStmt *stmt,
 		{
 			t_sql = DirectFunctionCall3(replace_text,
 										t_sql,
-<<<<<<< HEAD
-										CStringGetTextDatum("MODULE_PATHNAME"),
-							CStringGetTextDatum(control->module_pathname));
-=======
 									  CStringGetTextDatum("MODULE_PATHNAME"),
 							  CStringGetTextDatum(control->module_pathname));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/* And now back to C string */
@@ -972,7 +954,6 @@ execute_extension_script(CreateExtensionStmt *stmt,
 	 * Restore the GUC variables we set above.
 	 */
 	AtEOXact_GUC(true, save_nestlevel);
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH && stmt != NULL)
 	{
 		/* We must reset QE CurrentExtensionObject to InvalidOid */
@@ -982,8 +963,6 @@ execute_extension_script(CreateExtensionStmt *stmt,
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
