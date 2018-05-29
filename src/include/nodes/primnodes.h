@@ -96,6 +96,7 @@ typedef struct IntoClause
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
 	bool		skipData;		/* true for WITH NO DATA */
+	Node       *distributedBy;  /* GPDB: columns to distribubte the data on. */
 } IntoClause;
 
 

@@ -357,7 +357,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	create->distributedBy = into->distributedBy;
 	create->partitionBy = NULL; /* CTAS does not seem to support partition. */
 
-    create->policy = into->policy;
+    create->policy = NULL; /* TODO: Get referrring from transformDistributedBy(). */
 	create->postCreate = NULL;
 	create->deferredStmts = NULL;
 	create->is_part_child = false;
