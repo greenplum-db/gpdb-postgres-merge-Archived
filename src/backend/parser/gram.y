@@ -15360,9 +15360,9 @@ unreserved_keyword:
 			| SHARE
 			| SHOW
 			| SIMPLE
+			| SNAPSHOT
 			| SPLIT
 			| SQL
-			| SNAPSHOT
 			| STABLE
 			| STANDALONE_P
 			| START
@@ -15390,7 +15390,6 @@ unreserved_keyword:
 			| TRUSTED
 			| TYPE_P
 			| TYPES_P
-			| UNBOUNDED
 			| UNCOMMITTED
 			| UNENCRYPTED
 			| UNKNOWN

@@ -957,7 +957,6 @@ transformGroupedWindows(ParseState *pstate, Query *qry)
 	subq->canSetTag = true;
 	subq->utilityStmt = NULL;
 	subq->resultRelation = 0;
-	subq->intoClause = NULL;
 	subq->hasAggs = qry->hasAggs;
 	subq->hasWindowFuncs = false; /* reevaluate later */
 	subq->hasSubLinks = qry->hasSubLinks; /* reevaluate later */
@@ -2055,7 +2054,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
-	qry->intoClause = NULL;
 	if (leftmostSelect->intoClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2115,7 +2113,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Assert(leftmostQuery != NULL);
 
 	/* Copy transformed distribution policy to query */
-	if (qry->intoClause)
+//	if (qry->intoClause) /* GPDB_92_MERGE_FIXME */
 		qry->intoPolicy = leftmostQuery->intoPolicy;
 
 	/*
