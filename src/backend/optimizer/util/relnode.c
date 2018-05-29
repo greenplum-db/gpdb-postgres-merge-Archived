@@ -3,13 +3,9 @@
  * relnode.c
  *	  Relation-node lookup/construction routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -29,12 +25,8 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"                  /* contain_vars_of_level_or_above */
-#include "parser/parsetree.h"
 #include "parser/parse_expr.h"              /* exprType(), exprTypmod() */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 
@@ -119,14 +111,11 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->reltargetlist = NIL;
 	rel->pathlist = NIL;
 	rel->ppilist = NIL;
+    rel->onerow = false;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
-<<<<<<< HEAD
-    rel->onerow = false;
-=======
 	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
@@ -135,15 +124,10 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->tuples = 0;
 	rel->allvisfrac = 0;
 	rel->subplan = NULL;
-<<<<<<< HEAD
-	rel->subrtable = NIL;
-	rel->subrowmark = NIL;
 	rel->extEntry = NULL;
-=======
 	rel->subroot = NULL;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
@@ -406,14 +390,11 @@ build_join_rel(PlannerInfo *root,
 	joinrel->reltargetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->ppilist = NIL;
+    joinrel->onerow = false;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
-<<<<<<< HEAD
-    joinrel->onerow = false;
-=======
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;
@@ -750,7 +731,6 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 	return new_joininfo;
 }
 
-<<<<<<< HEAD
 /*
  * cdb_define_pseudo_column
  *
@@ -913,7 +893,6 @@ cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno)
     Insist(rci->pseudoattno == attno);
     return rci;
 }                               /* cdb_rte_find_pseudo_column */
-=======
 
 /*
  * find_childrel_appendrelinfo
@@ -1206,4 +1185,3 @@ get_appendrel_parampathinfo(RelOptInfo *appendrel, Relids required_outer)
 
 	return ppi;
 }
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
