@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -133,13 +129,9 @@ static void check_qualified_name(List *names, core_yyscan_t yyscanner);
 static List *check_func_name(List *names, core_yyscan_t yyscanner);
 static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
-<<<<<<< HEAD
 static List *extractAggrArgTypes(List *aggrargs);
 static List *makeOrderedSetArgs(List *directargs, List *orderedargs,
 								core_yyscan_t yyscanner);
-static SelectStmt *findLeftmostSelect(SelectStmt *node);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount,
@@ -431,12 +423,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <istmt>	insert_rest
 
-<<<<<<< HEAD
-%type <vsetstmt> set_rest SetResetClause
-=======
 %type <vsetstmt> set_rest set_rest_more SetResetClause FunctionSetResetClause
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
 				ForeignTableElement
 %type <node>	columnDef columnOptions
@@ -555,15 +543,10 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
 
-<<<<<<< HEAD
 %type <node>	func_application func_expr_common_subexpr
 %type <node>	func_expr func_expr_windowless
 %type <node> 	common_table_expr
 %type <with> 	with_clause opt_with_clause
-=======
-%type <node>	common_table_expr
-%type <with>	with_clause opt_with_clause
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 %type <list>	cte_list
 
 %type <list>	within_group_clause
@@ -3979,7 +3962,6 @@ TypedTableElement:
 			| TableConstraint					{ $$ = $1; }
 		;
 
-<<<<<<< HEAD
 column_reference_storage_directive:
 			COLUMN ColId ENCODING definition
 				{
@@ -4002,17 +3984,14 @@ column_reference_storage_directive:
 				}
 		;
 
-columnDef:	ColId Typename ColQualList opt_storage_encoding
-=======
-columnDef:	ColId Typename create_generic_options ColQualList
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+columnDef:	ColId Typename create_generic_options ColQualList opt_storage_encoding
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typeName = $2;
 					n->inhcount = 0;
 					n->is_local = true;
-					n->encoding = $4;
+					n->encoding = $5;
 					n->is_not_null = false;
 					n->is_from_type = false;
 					n->storage = 0;
@@ -5072,11 +5051,7 @@ CreateAsStmt:
 					ctas->is_select_into = false;
 					/* cram additional flags into the IntoClause */
 					$4->rel->relpersistence = $2;
-<<<<<<< HEAD
-					n->intoClause = $4;
-					/* Implement WITH NO DATA by forcing top-level LIMIT 0 */
-					if (!$7)
-						((SelectStmt *) $6)->limitCount = makeIntConst(0, -1);
+
 					n->distributedBy = $8;
 
 					if ($9)
@@ -5085,11 +5060,8 @@ CreateAsStmt:
 								 errmsg("Cannot create a partitioned table using CREATE TABLE AS SELECT"),
                                  errhint("Use CREATE TABLE...LIKE (followed by INSERT...SELECT) instead")));
 
-					$$ = $6;
-=======
 					$4->skipData = !($7);
 					$$ = (Node *) ctas;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 		;
 
@@ -8014,7 +7986,6 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
-<<<<<<< HEAD
 			| PROTOCOL name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -8023,7 +7994,6 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}			
-=======
 			| TYPE_P any_name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -8032,7 +8002,6 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			| ALL TABLES IN_P SCHEMA name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -8863,17 +8832,10 @@ RemoveFuncStmt:
 RemoveAggrStmt:
 			DROP AGGREGATE func_name aggr_args opt_drop_behavior
 				{
-<<<<<<< HEAD
-					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
-					n->kind = OBJECT_AGGREGATE;
-					n->name = $3;
-					n->args = extractAggrArgTypes($4);
-=======
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($3);
 					n->arguments = list_make1($4);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					n->behavior = $5;
 					n->missing_ok = false;
 					n->concurrent = false;
@@ -8881,17 +8843,10 @@ RemoveAggrStmt:
 				}
 			| DROP AGGREGATE IF_P EXISTS func_name aggr_args opt_drop_behavior
 				{
-<<<<<<< HEAD
-					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
-					n->kind = OBJECT_AGGREGATE;
-					n->name = $5;
-					n->args = extractAggrArgTypes($6);
-=======
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($5);
 					n->arguments = list_make1($6);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					n->behavior = $7;
 					n->missing_ok = true;
 					n->concurrent = false;
@@ -13517,7 +13472,6 @@ func_application: func_name '(' ')'
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
 		;
 
 /*
@@ -13583,22 +13537,6 @@ func_expr_windowless:
  */
 func_expr_common_subexpr:
 			CURRENT_DATE
-=======
-			| COLLATION FOR '(' a_expr ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("pg_collation_for");
-					n->args = list_make1($4);
-					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->over = NULL;
-					n->location = @1;
-					$$ = (Node *)n;
-				}
-			| CURRENT_DATE
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				{
 					/*
 					 * Translate as "'now'::text::date".
@@ -15422,12 +15360,9 @@ unreserved_keyword:
 			| SHARE
 			| SHOW
 			| SIMPLE
-<<<<<<< HEAD
 			| SPLIT
 			| SQL
-=======
 			| SNAPSHOT
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			| STABLE
 			| STANDALONE_P
 			| START
@@ -15454,11 +15389,8 @@ unreserved_keyword:
 			| TRUNCATE
 			| TRUSTED
 			| TYPE_P
-<<<<<<< HEAD
-=======
 			| TYPES_P
 			| UNBOUNDED
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			| UNCOMMITTED
 			| UNENCRYPTED
 			| UNKNOWN
@@ -16279,19 +16211,6 @@ extractArgTypes(List *parameters)
 	return result;
 }
 
-<<<<<<< HEAD
-/* findLeftmostSelect()
- * Find the leftmost component SelectStmt in a set-operation parsetree.
- */
-static SelectStmt *
-findLeftmostSelect(SelectStmt *node)
-{
-	while (node && node->op != SETOP_NONE)
-		node = node->larg;
-	Assert(node && IsA(node, SelectStmt) && node->larg == NULL);
-	return node;
-}
-
 /* extractAggrArgTypes()
  * As above, but work from the output of the aggr_args production.
  */
@@ -16342,8 +16261,6 @@ makeOrderedSetArgs(List *directargs, List *orderedargs,
 					  makeInteger(ndirectargs));
 }
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* insertSelectOptions()
  * Insert ORDER BY, etc into an already-constructed SelectStmt.
  *
