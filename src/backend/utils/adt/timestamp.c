@@ -5321,12 +5321,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	struct pg_tm tt,
 			   *tm = &tt;
-<<<<<<< HEAD
-	fsec_t		fsec = 0;
-	char	   *tzn;
-=======
 	fsec_t		fsec;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
