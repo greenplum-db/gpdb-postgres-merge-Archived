@@ -953,11 +953,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		list_length(a->name) == 1 &&
 		strcmp(strVal(linitial(a->name)), "=") == 0 &&
 		(exprIsNullConstant(lexpr) || exprIsNullConstant(rexpr)) &&
-<<<<<<< HEAD
-		(!IsA(lexpr, CaseTestExpr) && !IsA(rexpr, CaseTestExpr)))
-=======
 		(!IsA(lexpr, CaseTestExpr) &&!IsA(rexpr, CaseTestExpr)))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		NullTest   *n = makeNode(NullTest);
 
@@ -1947,20 +1943,16 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 static Node *
 transformRowExpr(ParseState *pstate, RowExpr *r)
 {
-<<<<<<< HEAD
 	RowExpr    *newr;
+	char		fname[16];
+	int			fnum;
+	ListCell   *lc;
 
 	/* If we already transformed this node, do nothing */
 	if (OidIsValid(r->row_typeid))
 		return (Node *) r;
 
 	newr = makeNode(RowExpr);
-=======
-	RowExpr    *newr = makeNode(RowExpr);
-	char		fname[16];
-	int			fnum;
-	ListCell   *lc;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Transform the field expressions */
 	newr->args = transformExpressionList(pstate, r->args, pstate->p_expr_kind);

@@ -1076,15 +1076,9 @@ func_select_candidate(int nargs,
 	 * Having completed this examination, remove candidates that accept the
 	 * wrong category at any unknown position.	Also, if at least one
 	 * candidate accepted a preferred type at a position, remove candidates
-<<<<<<< HEAD
-	 * that accept non-preferred types.  If just one candidate remains,
-	 * return that one.  However, if this rule turns out to reject all
-	 * candidates, keep them all instead.
-=======
 	 * that accept non-preferred types.  If just one candidate remains, return
 	 * that one.  However, if this rule turns out to reject all candidates,
 	 * keep them all instead.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
@@ -1209,11 +1203,7 @@ func_select_candidate(int nargs,
 	 * type, and see if that gives us a unique match.  If so, use that match.
 	 *
 	 * NOTE: for a binary operator with one unknown and one non-unknown input,
-<<<<<<< HEAD
-	 * we already tried this heuristic in binary_oper_exact().  However, that
-=======
 	 * we already tried this heuristic in binary_oper_exact().	However, that
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * code only finds exact matches, whereas here we will handle matches that
 	 * involve coercion, polymorphic type resolution, etc.
 	 */

@@ -3,13 +3,9 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -851,15 +847,10 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	Oid			relid;
 
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
-<<<<<<< HEAD
 
 	/* Look up the appropriate relation using namespace search */
 	relid = RangeVarGetRelid(relation, true);
 	if (relid == InvalidOid)
-=======
-	rel = heap_openrv_extended(relation, lockmode, true);
-	if (rel == NULL)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (relation->schemaname)
 			ereport(ERROR,

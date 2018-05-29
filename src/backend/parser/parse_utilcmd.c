@@ -62,12 +62,8 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
-<<<<<<< HEAD
 #include "utils/memutils.h"
-#include "utils/relcache.h"
-=======
 #include "utils/rel.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -98,11 +94,8 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 						  ColumnDef *column);
 static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
-<<<<<<< HEAD
-=======
 static void transformTableLikeClause(CreateStmtContext *cxt,
 						 TableLikeClause *table_like_clause);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
@@ -162,7 +155,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	List	   *save_alist;
 	ListCell   *elements;
 	Oid			namespaceid;
-<<<<<<< HEAD
+	Oid			existing_relid;
 	DistributedBy *likeDistributedBy = NULL;
 	bool		bQuiet = false;		/* shut up transformDistributedBy messages */
 	List	   *stenc = NIL;		/* column reference storage encoding clauses */
@@ -183,9 +176,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
-=======
-	Oid			existing_relid;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -309,30 +299,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				transformTableConstraint(&cxt, (Constraint *) element);
 				break;
 
-<<<<<<< HEAD
-			case T_InhRelation:
-			{
-				bool            isBeginning = (cxt.columns == NIL);
-
-				transformInhRelation(&cxt, (InhRelation *) element, false);
-
-				if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
-					stmt->distributedBy == NULL &&
-					stmt->inhRelations == NIL &&
-					stmt->policy == NULL)
-				{
-					likeDistributedBy = getLikeDistributionPolicy((InhRelation *) element);
-				}
-				break;
-			}
-
-			case T_ColumnReferenceStorageDirective:
-				/* processed below in transformAttributeEncoding() */
-				stenc = lappend(stenc, element);
-=======
 			case T_TableLikeClause:
 				transformTableLikeClause(&cxt, (TableLikeClause *) element);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				break;
 
 			default:
@@ -803,20 +771,10 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  *
  * Change the LIKE <srctable> portion of a CREATE TABLE statement into
  * column definitions which recreate the user defined column portions of
-<<<<<<< HEAD
- * <subtable>.
- *
- * if forceBareCol is true we disallow inheriting any indexes/constr/defaults.
- */
-void
-transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation,
-					 bool forceBareCol)
-=======
  * <srctable>.
  */
 static void
 transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -827,13 +785,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	char	   *comment;
 	ParseCallbackState pcbstate;
 
-<<<<<<< HEAD
-	relation = parserOpenTable(cxt->pstate, inhRelation->relation,
-							   AccessShareLock,
-							   false, NULL);
-=======
 	setup_parser_errposition_callback(&pcbstate, cxt->pstate, table_like_clause->relation->location);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
 

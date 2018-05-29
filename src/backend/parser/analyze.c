@@ -14,13 +14,9 @@
  * contain optimizable statements, which we should transform.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/parser/analyze.c
@@ -446,20 +442,12 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
 	qry->hasAggs = pstate->p_hasAggs;
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
-	if (pstate->p_hasWindowFuncs)
-		parseCheckWindowFuncs(pstate, qry);
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	assign_query_collations(pstate, qry);
 
@@ -1733,18 +1721,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												   pstate->p_windowdefs,
 												   &qry->targetList);
 
-<<<<<<< HEAD
 	processExtendedGrouping(pstate, qry->havingQual, qry->windowClause, qry->targetList);
-
-	/* handle any SELECT INTO/CREATE TABLE AS spec */
-	qry->intoClause = NULL;
-	if (stmt->intoClause)
-	{
-		qry->intoClause = stmt->intoClause;
-		if (stmt->intoClause->colNames)
-			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
-		/* XXX XXX:		qry->partitionBy = stmt->partitionBy; */
-	}
 
 	/*
 	 * Generally, we'll only have a distributedBy clause if stmt->into is set,
@@ -1754,14 +1731,11 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
 		setQryDistributionPolicy(stmt, qry);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
@@ -1769,13 +1743,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
-	if (pstate->p_hasWindowFuncs)
-		parseCheckWindowFuncs(pstate, qry);
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	foreach(l, stmt->lockingClause)
 	{
@@ -1994,21 +1961,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
 
-<<<<<<< HEAD
-	/* handle any CREATE TABLE AS spec */
-	qry->intoClause = NULL;
-	if (stmt->intoClause)
-	{
-		qry->intoClause = stmt->intoClause;
-		if (stmt->intoClause->colNames)
-			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
-	}
-
 	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
 		setQryDistributionPolicy(stmt, qry);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * There mustn't have been any table references in the expressions, else
 	 * strange things would happen, like Cartesian products of those tables
@@ -2278,7 +2233,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	qry->hasAggs = pstate->p_hasAggs;
@@ -2287,13 +2241,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	if (pstate->p_hasTblValueExpr)
 		parseCheckTableFunctions(pstate, qry);
-=======
-	if (pstate->p_hasWindowFuncs)
-		parseCheckWindowFuncs(pstate, qry);
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	foreach(l, lockingClause)
 	{
