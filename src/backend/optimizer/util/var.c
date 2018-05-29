@@ -30,7 +30,7 @@
 #include "optimizer/walkers.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-
+#include "utils/lsyscache.h"
 
 typedef struct
 {
@@ -71,13 +71,7 @@ typedef struct
 	bool		inserted_sublink;		/* have we inserted a SubLink? */
 } flatten_join_alias_vars_context;
 
-<<<<<<< HEAD
-static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
-=======
-static bool pull_varnos_walker(Node *node,
-				   pull_varnos_context *context);
 static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
