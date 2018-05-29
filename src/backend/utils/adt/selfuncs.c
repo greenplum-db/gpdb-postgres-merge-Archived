@@ -10,13 +10,9 @@
  *	  Index cost functions are registered in the pg_am catalog
  *	  in the "amcostestimate" attribute.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -178,13 +174,8 @@ static void convert_bytea_to_scalar(Datum value,
 						double *scaledhibound);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-<<<<<<< HEAD
-=======
-static char *convert_string_datum(Datum value, Oid typid);
-static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 						VariableStatData *vardata);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				   Oid sortop, Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
@@ -357,11 +348,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 * all the not-common values share this remaining fraction
 			 * equally, so we divide by the number of other distinct values.
 			 */
-<<<<<<< HEAD
-			otherdistinct = get_variable_numdistinct(vardata) - sslot.nnumbers;
-=======
-			otherdistinct = get_variable_numdistinct(vardata, &isdefault) - nnumbers;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+			otherdistinct = get_variable_numdistinct(vardata, &isdefault) - sslot.nnumbers;
 			if (otherdistinct > 1)
 				selec /= otherdistinct;
 
@@ -1873,21 +1860,12 @@ scalararraysel(PlannerInfo *root,
 													  Int16GetDatum(jointype),
 													  PointerGetDatum(sjinfo)));
 			else
-<<<<<<< HEAD
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
 													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int32GetDatum(varRelid)));
-=======
-				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int32GetDatum(varRelid)));
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			if (useOr)
 			{
 				s1 = s1 + s2 - s1 * s2;
@@ -1948,21 +1926,12 @@ scalararraysel(PlannerInfo *root,
 													  Int16GetDatum(jointype),
 													  PointerGetDatum(sjinfo)));
 			else
-<<<<<<< HEAD
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
 													  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int32GetDatum(varRelid)));
-=======
-				s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
-												  PointerGetDatum(root),
-												  ObjectIdGetDatum(operator),
-												  PointerGetDatum(args),
-												  Int32GetDatum(varRelid)));
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			if (useOr)
 			{
 				s1 = s1 + s2 - s1 * s2;
@@ -2175,9 +2144,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			break;
 		case JOIN_SEMI:
 		case JOIN_ANTI:
-<<<<<<< HEAD
 		case JOIN_LASJ_NOTIN:
-=======
 
 			/*
 			 * Look up the join's inner relation.  min_righthand is sufficient
@@ -2187,7 +2154,6 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			 */
 			inner_rel = find_join_input_rel(root, sjinfo->min_righthand);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			if (!join_is_reversed)
 				selec = eqjoinsel_semi(operator, &vardata1, &vardata2,
 									   inner_rel);
@@ -2515,16 +2481,11 @@ eqjoinsel_semi(Oid operator,
 		 * compare to only the first nd2 members of the MCV list.  Of course
 		 * this is frequently wrong, but it's the best bet we can make.
 		 */
-		clamped_nvalues2 = Min(nvalues2, nd2);
+		clamped_nvalues2 = Min(sslot2.nvalues, nd2);
 
 		fmgr_info(get_opcode(operator), &eqproc);
-<<<<<<< HEAD
 		hasmatch1 = (bool *) palloc0(sslot1.nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(sslot2.nvalues * sizeof(bool));
-=======
-		hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
-		hasmatch2 = (bool *) palloc0(clamped_nvalues2 * sizeof(bool));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
@@ -2537,11 +2498,7 @@ eqjoinsel_semi(Oid operator,
 		{
 			int			j;
 
-<<<<<<< HEAD
 			for (j = 0; j < sslot2.nvalues; j++)
-=======
-			for (j = 0; j < clamped_nvalues2; j++)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				if (hasmatch2[j])
 					continue;
@@ -3441,22 +3398,14 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 				stanullfrac,
 				mcvfreq,
 				avgfreq;
-<<<<<<< HEAD
 	AttStatsSlot sslot;
-=======
 	bool		isdefault;
-	float4	   *numbers;
-	int			nnumbers;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	examine_variable(root, hashkey, 0, &vardata);
 
 	/* Get number of distinct values */
 	ndistinct = get_variable_numdistinct(&vardata, &isdefault);
 
-<<<<<<< HEAD
-	if (HeapTupleIsValid(getStatsTuple(&vardata)))
-=======
 	/* If ndistinct isn't real, punt and return 0.1, per comments above */
 	if (isdefault)
 	{
@@ -3464,9 +3413,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 		return (Selectivity) 0.1;
 	}
 
-	/* Get fraction that are null */
-	if (HeapTupleIsValid(vardata.statsTuple))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	if (HeapTupleIsValid(getStatsTuple(&vardata)))
 	{
 		HeapTuple tp = getStatsTuple(&vardata);
 		Form_pg_statistic stats;
@@ -4421,110 +4368,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		vardata->atttypmod = var->vartypmod;
 		vardata->isunique = has_unique_index(vardata->rel, var->varattno);
 
-<<<<<<< HEAD
-		rte = rt_fetch(var->varno, root->parse->rtable);
-
-		/*
-		 * If this attribute has a foreign key relationship, then first look
-		 * at primary key statistics. If there exist stats on that attribute,
-		 * we utilize those. If not, continue.
-		 */
-
-		if (gp_statistics_use_fkeys)
-		{
-			Oid         pkrelid = InvalidOid;
-			AttrNumber  pkattno = -1;
-
-			if (ConstraintGetPrimaryKeyOf(rte->relid, var->varattno, &pkrelid, &pkattno))
-			{
-				HeapTuple	pkStatsTuple;
-
-				/* SELECT reltuples FROM pg_class */
-
-				pkStatsTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(pkrelid));
-				if (HeapTupleIsValid(pkStatsTuple))
-				{
-					Form_pg_class classForm = (Form_pg_class) GETSTRUCT(pkStatsTuple);
-					if (classForm->reltuples > 0)
-					{
-						vardata->numdistinctFromPrimaryKey = classForm->reltuples;
-					}
-				}
-
-				ReleaseSysCache(pkStatsTuple);
-			}
-		}
-
-		if (get_relation_stats_hook &&
-			(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
-		{
-			/*
-			 * The hook took control of acquiring a stats tuple.  If it did
-			 * supply a tuple, it'd better have supplied a freefunc.
-			 */
-			if (HeapTupleIsValid(vardata->statsTuple) &&
-				!vardata->freefunc)
-				elog(ERROR, "no function provided to release variable stats with");
-		}
-		else if (rte->inh)
-		{
-			/*
-			 * If gp_statistics_pullup_from_child_partition is set, we attempt to pull up statistics from
-			 * the largest child partition in an inherited or a partitioned table.
-			 */
-			if (gp_statistics_pullup_from_child_partition  &&
-				vardata->rel->cheapest_total_path != NULL)
-			{
-				RelOptInfo *childrel = largest_child_relation(root, vardata->rel);
-				vardata->statsTuple = NULL;
-
-				if (childrel)
-				{
-					RangeTblEntry *child_rte = NULL;
-
-					child_rte = rt_fetch(childrel->relid, root->parse->rtable);
-
-					Assert(child_rte != NULL);
-
-					/*
-					 * Get statistics from the child partition.
-					 */
-					vardata->statsTuple = SearchSysCache3(STATRELATTINH,
-														  ObjectIdGetDatum(child_rte->relid),
-														  Int16GetDatum(var->varattno),
-														  BoolGetDatum(rte->inh));
-
-					if (vardata->statsTuple != NULL)
-					{
-						adjust_partition_table_statistic_for_parent(vardata->statsTuple, childrel->tuples);
-					}
-					vardata->freefunc = ReleaseSysCache;
-				}
-			}
-		}
-		else if (rte->rtekind == RTE_RELATION)
-		{
-			vardata->statsTuple = SearchSysCache3(STATRELATTINH,
-												ObjectIdGetDatum(rte->relid),
-												Int16GetDatum(var->varattno),
-												  BoolGetDatum(rte->inh));
-			vardata->freefunc = ReleaseSysCache;
-		}
-		else
-		{
-			/*
-			 * XXX This means the Var comes from a JOIN or sub-SELECT. Later
-			 * add code to dig down into the join etc and see if we can trace
-			 * the variable to something with stats.  (But beware of
-			 * sub-SELECTs with DISTINCT/GROUP BY/etc.	Perhaps there are no
-			 * cases where this would really be useful, because we'd have
-			 * flattened the subselect if it is??)
-			 */
-		}
-=======
 		/* Try to locate some stats */
 		examine_simple_variable(root, var, vardata);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		return;
 	}
@@ -4679,9 +4524,40 @@ static void
 examine_simple_variable(PlannerInfo *root, Var *var,
 						VariableStatData *vardata)
 {
-	RangeTblEntry *rte = root->simple_rte_array[var->varno];
+	RangeTblEntry *rte = rt_fetch(var->varno, root->parse->rtable);
 
 	Assert(IsA(rte, RangeTblEntry));
+
+	/*
+	 * If this attribute has a foreign key relationship, then first look
+	 * at primary key statistics. If there exist stats on that attribute,
+	 * we utilize those. If not, continue.
+	 */
+
+	if (gp_statistics_use_fkeys)
+	{
+		Oid         pkrelid = InvalidOid;
+		AttrNumber  pkattno = -1;
+
+		if (ConstraintGetPrimaryKeyOf(rte->relid, var->varattno, &pkrelid, &pkattno))
+		{
+			HeapTuple	pkStatsTuple;
+
+			/* SELECT reltuples FROM pg_class */
+
+			pkStatsTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(pkrelid));
+			if (HeapTupleIsValid(pkStatsTuple))
+			{
+				Form_pg_class classForm = (Form_pg_class) GETSTRUCT(pkStatsTuple);
+				if (classForm->reltuples > 0)
+				{
+					vardata->numdistinctFromPrimaryKey = classForm->reltuples;
+				}
+			}
+
+			ReleaseSysCache(pkStatsTuple);
+		}
+	} 
 
 	if (get_relation_stats_hook &&
 		(*get_relation_stats_hook) (root, rte, var->varattno, vardata))
@@ -4693,6 +4569,42 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		if (HeapTupleIsValid(vardata->statsTuple) &&
 			!vardata->freefunc)
 			elog(ERROR, "no function provided to release variable stats with");
+	}
+	else if (rte->inh)
+	{
+		/*
+		 * If gp_statistics_pullup_from_child_partition is set, we attempt to pull up statistics from
+		 * the largest child partition in an inherited or a partitioned table.
+		 */
+		if (gp_statistics_pullup_from_child_partition  &&
+			vardata->rel->cheapest_total_path != NULL)
+		{
+			RelOptInfo *childrel = largest_child_relation(root, vardata->rel);
+			vardata->statsTuple = NULL;
+
+			if (childrel)
+			{
+				RangeTblEntry *child_rte = NULL;
+
+				child_rte = rt_fetch(childrel->relid, root->parse->rtable);
+
+				Assert(child_rte != NULL);
+
+				/*
+				 * Get statistics from the child partition.
+				 */
+				vardata->statsTuple = SearchSysCache3(STATRELATTINH,
+													  ObjectIdGetDatum(child_rte->relid),
+													  Int16GetDatum(var->varattno),
+													  BoolGetDatum(rte->inh));
+
+				if (vardata->statsTuple != NULL)
+				{
+					adjust_partition_table_statistic_for_parent(vardata->statsTuple, childrel->tuples);
+				}
+				vardata->freefunc = ReleaseSysCache;
+			}
+		}
 	}
 	else if (rte->rtekind == RTE_RELATION)
 	{
@@ -4830,7 +4742,8 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 	double		stadistinct;
 	double		ntuples;
 
-<<<<<<< HEAD
+	*isdefault = false;
+
 	/**
 	 * If we have an estimate from the primary key, then that is the most accurate value.
 	 */
@@ -4839,9 +4752,6 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 	{
 		return vardata->numdistinctFromPrimaryKey;
 	}
-=======
-	*isdefault = false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Determine the stadistinct value to use.	There are cases where we can
