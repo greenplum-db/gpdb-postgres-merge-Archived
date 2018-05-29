@@ -1820,12 +1820,7 @@ ident_inet(hbaPort *port)
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-<<<<<<< HEAD
 	pgsocket	sock_fd = PGINVALID_SOCKET;		/* for talking to Ident server */
-=======
-	pgsocket	sock_fd;		/* File descriptor for socket on which we talk
-								 * to Ident */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];

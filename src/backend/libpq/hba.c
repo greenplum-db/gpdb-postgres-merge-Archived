@@ -86,12 +86,7 @@ static List *ident_lines = NIL;
 static List *ident_line_nums = NIL;
 static MemoryContext ident_context = NULL;
 
-<<<<<<< HEAD
-static void tokenize_file(const char *filename, FILE *file,
-=======
-
 static MemoryContext tokenize_file(const char *filename, FILE *file,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			  List **lines, List **line_nums);
 static List *tokenize_inc_file(List *tokens, const char *outer_filename,
 				  const char *inc_filename);
@@ -1298,53 +1293,9 @@ parse_hba_line(List *line, int line_num)
 
 			token = lfirst(tokencell);
 
-<<<<<<< HEAD
-		c = strchr(token, '=');
-		if (c == NULL)
-		{
-			/*
-			 * Got something that's not a name=value pair.
-			 */
-			ereport(LOG,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("authentication option not in name=value format: %s", token),
-					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
-			
-			if (parsedline->auth_method == uaIdent && strcmp(token,"sameuser")==0)
-			{
-				if (strcmp(parsedline->database,"all")==0)
-					parsedline->database = pstrdup("sameuser");
-				continue;
-			}
-			else if (parsedline->auth_method == uaIdent)
-			{
-				parsedline->usermap = pstrdup(token);
-				continue;
-			}
-			
-			return false;
-		}
-		else
-		{
-			*c++ = '\0';		/* token now holds "name", c holds "value" */
-			if (strcmp(token, "map") == 0)
-			{
-				if (parsedline->auth_method != uaIdent &&
-					parsedline->auth_method != uaPeer &&
-					parsedline->auth_method != uaKrb5 &&
-					parsedline->auth_method != uaGSS &&
-					parsedline->auth_method != uaSSPI &&
-					parsedline->auth_method != uaCert)
-					INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, krb5, gssapi, sspi and cert"));
-				parsedline->usermap = pstrdup(c);
-			}
-			else if (strcmp(token, "clientcert") == 0)
-=======
 			str = pstrdup(token->string);
 			val = strchr(str, '=');
 			if (val == NULL)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				/*
 				 * Got something that's not a name=value pair.
@@ -1354,6 +1305,21 @@ parse_hba_line(List *line, int line_num)
 						 errmsg("authentication option not in name=value format: %s", token->string),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
+
+				/* GPDB_92_MERGE_FIXME: Is the code below needed? */
+				if (parsedline->auth_method == uaIdent && strcmp(token->string,"sameuser")==0)
+				{
+					if (list_length(parsedline->databases) == 1 &&
+						strcmp(linitial(parsedline->databases), "all")==0)
+						linitial(parsedline->databases) = pstrdup("sameuser");
+					continue;
+				}
+				else if (parsedline->auth_method == uaIdent)
+				{
+					parsedline->usermap = pstrdup(token->string);
+					continue;
+				}
+	
 				return NULL;
 			}
 

@@ -879,32 +879,9 @@ initialize_SSL(void)
 #endif
 			}
 			else
-<<<<<<< HEAD
-			{
-				/* Not fatal - we do not require CRL */
-				ereport(LOG,
-						(errmsg("SSL certificate revocation list file \"%s\" not found, skipping: %s",
-								ROOT_CRL_FILE, SSLerrmessage()),
-					 errdetail("Certificates will not be checked against revocation list.")));
-			}
-
-			/*
-			 * Always ask for SSL client cert, but don't fail if it's not
-			 * presented.  We might fail such connections later, depending on
-			 * what we find in pg_hba.conf.
-			 */
-			SSL_CTX_set_verify(SSL_context,
-							   (SSL_VERIFY_PEER |
-								SSL_VERIFY_CLIENT_ONCE),
-							   verify_cb);
-
-			/* Set flag to remember CA store is successfully loaded */
-			ssl_loaded_verify_locations = true;
-=======
 				ereport(FATAL,
 						(errmsg("could not load SSL certificate revocation list file \"%s\": %s",
 								ssl_crl_file, SSLerrmessage())));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -1017,21 +994,6 @@ aloop:
 	port->peer_cn = NULL;
 	if (port->peer != NULL)
 	{
-<<<<<<< HEAD
-		int len;
-
-		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-						NID_commonName, NULL, 0);
-
-		if (len != -1)
-		{
-			char *peer_cn;
-
-			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
-			r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-						      NID_commonName, peer_cn, len+1);
-
-=======
 		int			len;
 
 		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
@@ -1043,16 +1005,12 @@ aloop:
 			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
 			r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
 										  NID_commonName, peer_cn, len + 1);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			peer_cn[len] = '\0';
 			if (r != len)
 			{
 				/* shouldn't happen */
 				pfree(peer_cn);
-<<<<<<< HEAD
-=======
 				close_SSL(port);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				return -1;
 			}
 
@@ -1063,16 +1021,10 @@ aloop:
 			if (len != strlen(peer_cn))
 			{
 				ereport(COMMERROR,
-<<<<<<< HEAD
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("SSL certificate's common name contains embedded null")));
-				pfree(peer_cn);
-=======
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL certificate's common name contains embedded null")));
 				pfree(peer_cn);
 				close_SSL(port);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				return -1;
 			}
 
@@ -1081,13 +1033,8 @@ aloop:
 	}
 
 	ereport(DEBUG2,
-<<<<<<< HEAD
-			(errmsg("SSL connection from \"%s\"", 
-				port->peer_cn ? port->peer_cn : "(anonymous)")));
-=======
 			(errmsg("SSL connection from \"%s\"",
 					port->peer_cn ? port->peer_cn : "(anonymous)")));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);
