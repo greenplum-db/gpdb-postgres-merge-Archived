@@ -37,6 +37,15 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
+#include "access/appendonlywriter.h"
+#include "catalog/aoseg.h"
+#include "catalog/aovisimap.h"
+#include "catalog/oid_dispatch.h"
+#include "cdb/cdbappendonlyam.h"
+#include "cdb/cdbaocsam.h"
+#include "cdb/cdbdisp_query.h"
+#include "cdb/cdbvars.h"
+
 
 typedef struct
 {
@@ -51,7 +60,7 @@ typedef struct
 	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
 	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
 
-	/* GPDB_92_MERGE_FIXME: Seems to be uselss? */
+	/* GPDB_92_MERGE_FIXME: Seems to be useless? */
 	ItemPointerData last_heap_tid;
 } DR_intorel;
 
@@ -152,7 +161,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* save the rowcount if we're given a completionTag to fill */
 	if (completionTag)
 		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				 "SELECT %u", queryDesc->estate->es_processed);
+				 "SELECT " UINT64_FORMAT, queryDesc->estate->es_processed);
 
 	/* and clean up */
 	ExecutorFinish(queryDesc);
@@ -229,6 +238,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	int			attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 	StdRdOptions *stdRdOptions;
+	Datum       reloptions;
 	int         relstorage;
 	bool		validate_reloptions;
 
@@ -246,6 +256,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	create->constraints = NIL;
 	create->options = into->options;
 	create->oncommit = into->onCommit;
+ 	/* TODO: tablespacename setting is wrong? Refer the original code change. */
 	create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
 
@@ -322,22 +333,38 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 									 false);
 
 	/* get the relstorage (heap or AO tables) */
+#if 0
 	if (queryDesc->ddesc)
 		validate_reloptions = queryDesc->ddesc->validate_reloptions;
 	else
 		validate_reloptions = true;
+#else
+		validate_reloptions = true;
+#endif
 
-	/* GPDB_92_MERGE_FIXME for CTAS
-	 * 1) Fill more create->*
-	 * 2) MPP
-	 * 3) Double-check the logic.
+	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug when the pg 9.2 code could run.
+	 * 1) Need to Change for build_ctas_with_dist(), prebuild_temp_table()?
+	 * 2) Refer the old ctas implementation and CreateStmt change in standard_ProcessUtility().
+	 * 3) TODO in this file.
 	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
 		relstorage = RELSTORAGE_HEAP;
-	create->relStorage = relstorage;
+
+	/* Add distributedBy and policy to IntoClause? */
+	create->distributedBy = into->distributedBy;
+	create->partitionBy = NULL; /* CTAS does not seem to support partition. */
+
+    create->policy = into->policy;
+	create->postCreate = NULL;
+	create->deferredStmts = NULL;
+	create->is_part_child = false;
+	create->is_add_part = false;
+	create->is_split_part = false;
+	create->buildAoBlkdir = false;
+	create->attr_encodings = NULL; /* TODO: Fill refer transformCreateStmt() */
 
 	/*
 	 * Actually create the target table.
@@ -362,7 +389,17 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-	AlterTableCreateToastTable(intoRelationId, toast_options);
+	AlterTableCreateToastTable(intoRelationId, toast_options, false, true);
+	AlterTableCreateAoSegTable(intoRelationId, false);
+	/* don't create AO block directory here, it'll be created when needed. */
+	AlterTableCreateAoVisimapTable(intoRelationId, false);
+
+	/* TODO: We seem to need to dispatch since this function is now called
+	 * in standard_ExecutorStart(), not in InitPlan(). */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) create, DF_CANCEL_ON_ERROR |
+									DF_NEED_TWO_PHASE | DF_WITH_SNAPSHOT,
+									GetAssignedOidsForDispatch(), NULL);
 
 	/*
 	 * Finally we can open the target table
@@ -412,13 +449,14 @@ static void
 intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
-	HeapTuple	tuple;
+	Relation    into_rel = myState->rel;
 
-	Assert(myState->estate->es_result_partitions == NULL);
+	//Assert(myState->estate->es_result_partitions == NULL);
 
 	if (RelationIsAoRows(into_rel))
 	{
 		AOTupleId	aoTupleId;
+		MemTuple	tuple;
 
 		tuple = ExecCopySlotMemTuple(slot);
 		if (myState->ao_insertDesc == NULL)
@@ -436,6 +474,7 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	}
 	else
 	{
+		HeapTuple	tuple;
 
 		/*
 		 * get the heap tuple out of the tuple table slot, making sure we have a
@@ -453,7 +492,8 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 					tuple,
 					myState->output_cid,
 					myState->hi_options,
-					myState->bistate);
+					myState->bistate,
+					GetCurrentTransactionId());
 
 		/* We know this is a newly created relation, so there are no indexes */
 	}
