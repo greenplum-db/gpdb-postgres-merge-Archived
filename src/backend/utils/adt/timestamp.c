@@ -2654,7 +2654,6 @@ static inline TimestampTz
 timestamptz_offset_internal(TimestampTz timestamp, Interval *span)
 {
 	int			tz;
-	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		return timestamp;
@@ -2665,7 +2664,7 @@ timestamptz_offset_internal(TimestampTz timestamp, Interval *span)
 		*tm = &tt;
 		fsec_t		fsec = 0;
 
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -2701,7 +2700,7 @@ timestamptz_offset_internal(TimestampTz timestamp, Interval *span)
 		fsec_t		fsec = 0;
 		int			julian;
 
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3231,79 +3230,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-<<<<<<< HEAD
 	TimestampTz result = timestamptz_offset_internal(timestamp, span);
-=======
-	TimestampTz result;
-	int			tz;
-
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		result = timestamp;
-	else
-	{
-		if (span->month != 0)
-		{
-			struct pg_tm tt,
-					   *tm = &tt;
-			fsec_t		fsec;
-
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-
-			tm->tm_mon += span->month;
-			if (tm->tm_mon > MONTHS_PER_YEAR)
-			{
-				tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
-				tm->tm_mon = ((tm->tm_mon - 1) % MONTHS_PER_YEAR) + 1;
-			}
-			else if (tm->tm_mon < 1)
-			{
-				tm->tm_year += tm->tm_mon / MONTHS_PER_YEAR - 1;
-				tm->tm_mon = tm->tm_mon % MONTHS_PER_YEAR + MONTHS_PER_YEAR;
-			}
-
-			/* adjust for end of month boundary problems... */
-			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
-
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
-
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-
-		if (span->day != 0)
-		{
-			struct pg_tm tt,
-					   *tm = &tt;
-			fsec_t		fsec;
-			int			julian;
-
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-
-			/* Add days by converting to and from julian */
-			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
-			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-
-			tz = DetermineTimeZoneOffset(tm, session_timezone);
-
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-		}
-
-		timestamp += span->time;
-		result = timestamp;
-	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -4274,12 +4201,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				val;
 	bool		redotz = false;
 	char	   *lowunits;
-<<<<<<< HEAD
-	fsec_t		fsec = 0;
-	char	   *tzn;
-=======
 	fsec_t		fsec;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	struct pg_tm tt,
 			   *tm = &tt;
 
@@ -4909,12 +4831,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	double		dummy;
-<<<<<<< HEAD
-	fsec_t		fsec = 0;
-	char	   *tzn;
-=======
 	fsec_t		fsec;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	struct pg_tm tt,
 			   *tm = &tt;
 

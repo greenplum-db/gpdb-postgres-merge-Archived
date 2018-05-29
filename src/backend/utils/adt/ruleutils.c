@@ -4027,14 +4027,10 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 		tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
 		if (!tle)
-<<<<<<< HEAD
 		{
-			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
 			return NULL;
 		}
-=======
-			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		Assert(netlevelsup == 0);
 		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
@@ -4246,10 +4242,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 							 quote_identifier(schemaname));
 
 		appendStringInfoString(buf, quote_identifier(refname));
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		appendStringInfoChar(buf, '.');
 	}
 	if (attname)
@@ -4374,14 +4366,10 @@ get_name_for_var_field(Var *var, int fieldno,
 
 		tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
 		if (!tle)
-<<<<<<< HEAD
 		{
-			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
 			return NULL;
 		}
-=======
-			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		Assert(netlevelsup == 0);
 		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);

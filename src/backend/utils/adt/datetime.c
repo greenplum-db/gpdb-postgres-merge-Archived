@@ -2839,11 +2839,7 @@ DecodeTimezone(char *str, int *tzp)
 	else
 		min = 0;
 
-<<<<<<< HEAD
-	/* Range-check the values; see notes in utils/timestamp.h */
-=======
 	/* Range-check the values; see notes in datatype/timestamp.h */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (hr < 0 || hr > MAX_TZDISP_HOUR)
 		return DTERR_TZDISP_OVERFLOW;
 	if (min < 0 || min >= MINS_PER_HOUR)

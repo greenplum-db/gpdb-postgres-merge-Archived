@@ -17,11 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
-<<<<<<< HEAD
 #include "catalog/pg_type.h"
-#include "fmgr.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"

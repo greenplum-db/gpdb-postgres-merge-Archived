@@ -59,7 +59,7 @@ typedef struct
 } PG_Lock_Status;
 
 /* Number of columns in pg_locks output */
-#define NUM_LOCK_STATUS_COLUMNS		15
+#define NUM_LOCK_STATUS_COLUMNS		18
 
 /*
  * VXIDGetDatum - Construct a text representation of a VXID
@@ -107,11 +107,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in system_views.sql */
-<<<<<<< HEAD
-		tupdesc = CreateTemplateTupleDesc(17, false);
-=======
 		tupdesc = CreateTemplateTupleDesc(NUM_LOCK_STATUS_COLUMNS, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -140,20 +136,17 @@ pg_lock_status(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "granted",
 						   BOOLOID, -1, 0);
-<<<<<<< HEAD
+		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "fastpath",
+						   BOOLOID, -1, 0);
 		/*
 		 * These next columns are specific to GPDB
 		 */
-		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "mppSessionId",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "mppSessionId",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "mppIsWriter",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "mppIsWriter",
 						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "gp_segment_id",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "gp_segment_id",
 						   INT4OID, -1, 0);
-=======
-		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "fastpath",
-						   BOOLOID, -1, 0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -289,13 +282,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
-<<<<<<< HEAD
-		Datum		values[17];
-		bool		nulls[17];
-=======
 		Datum		values[NUM_LOCK_STATUS_COLUMNS];
 		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		HeapTuple	tuple;
 		Datum		result;
 		LockInstanceData *instance;
@@ -365,11 +353,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		}
 		values[0] = CStringGetTextDatum(locktypename);
 
-<<<<<<< HEAD
-		switch (lock->tag.locktag_type)
-=======
 		switch ((LockTagType) instance->locktag.locktag_type)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			case LOCKTAG_RELATION:
 			case LOCKTAG_RELATION_EXTEND:
@@ -474,13 +458,13 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			nulls[11] = true;
 		values[12] = CStringGetTextDatum(GetLockmodeName(instance->locktag.locktag_lockmethodid, mode));
 		values[13] = BoolGetDatum(granted);
-<<<<<<< HEAD
+		values[14] = BoolGetDatum(instance->fastpath);
 		
-		values[14] = Int32GetDatum(proc->mppSessionId);
+		values[15] = Int32GetDatum(proc->mppSessionId);
 
-		values[15] = BoolGetDatum(proc->mppIsWriter);
+		values[16] = BoolGetDatum(proc->mppIsWriter);
 
-		values[16] = Int32GetDatum(GpIdentity.segindex);
+		values[17] = Int32GetDatum(GpIdentity.segindex);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -575,9 +559,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		{
 			nulls[i] = PQgetisnull(mystatus->segresults[whichresultset], whichrow, i);
 		}
-=======
-		values[14] = BoolGetDatum(instance->fastpath);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -595,13 +576,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		PREDICATELOCKTARGETTAG *predTag = &(predLockData->locktags[mystatus->predLockIdx]);
 		SERIALIZABLEXACT *xact = &(predLockData->xacts[mystatus->predLockIdx]);
-<<<<<<< HEAD
-		Datum		values[17];
-		bool		nulls[17];
-=======
 		Datum		values[NUM_LOCK_STATUS_COLUMNS];
 		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		HeapTuple	tuple;
 		Datum		result;
 

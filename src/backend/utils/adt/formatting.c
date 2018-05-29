@@ -4712,11 +4712,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			 */
 			if (Np->last_relevant && Np->Num->zero_end > Np->num_pre)
 			{
-<<<<<<< HEAD
-				char   *last_zero;
-=======
 				char	   *last_zero;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 				last_zero = Np->number + (Np->Num->zero_end - Np->num_pre);
 				if (Np->last_relevant < last_zero)

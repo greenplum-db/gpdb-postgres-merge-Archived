@@ -23,11 +23,8 @@
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/float_utils.h"
-=======
 #include "utils/sortsupport.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 
 #ifndef M_PI
