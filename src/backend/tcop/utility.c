@@ -251,12 +251,8 @@ check_xact_readonly(Node *parsetree)
 		case T_RuleStmt:
 		case T_CreateSchemaStmt:
 		case T_CreateSeqStmt:
-<<<<<<< HEAD
 		case T_CreateExternalStmt:
-=======
-		case T_CreateStmt:
 		case T_CreateTableAsStmt:
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_CreateTableSpaceStmt:
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
@@ -264,18 +260,10 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateRangeStmt:
 		case T_AlterEnumStmt:
 		case T_ViewStmt:
-<<<<<<< HEAD
-		case T_DropCastStmt:
 		case T_DropdbStmt:
 		case T_DropTableSpaceStmt:
-		case T_RemoveFuncStmt:
 		case T_DropQueueStmt:
 		case T_DropResourceGroupStmt:
-=======
-		case T_DropStmt:
-		case T_DropdbStmt:
-		case T_DropTableSpaceStmt:
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_DropRoleStmt:
 		case T_GrantStmt:
 		case T_GrantRoleStmt:
@@ -885,9 +873,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropStmt:
-			switch (((DropStmt *) parsetree)->removeType)
 			{
-<<<<<<< HEAD
 				DropStmt   *stmt = (DropStmt *) parsetree;
 				ListCell   *arg;
 				List	   *objects;
@@ -898,59 +884,25 @@ standard_ProcessUtility(Node *parsetree,
 
 				switch (stmt->removeType)
 				{
+					case OBJECT_INDEX:
+						if (((DropStmt *) parsetree)->concurrent)
+						PreventTransactionChain(isTopLevel,
+											"DROP INDEX CONCURRENTLY");
+						/* fall through */
+
 					case OBJECT_EXTTABLE:
 					case OBJECT_TABLE:
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
-					case OBJECT_INDEX:
 					case OBJECT_FOREIGN_TABLE:
-						RemoveRelations(stmt);
+						RemoveRelations((DropStmt *) parsetree);
 						break;
-
-					case OBJECT_TYPE:
-					case OBJECT_DOMAIN:
-						RemoveTypes(stmt);
-						break;
-
-					case OBJECT_COLLATION:
-						DropCollationsCommand(stmt);
-						break;
-
-					case OBJECT_CONVERSION:
-						DropConversionsCommand(stmt);
-						break;
-
-					case OBJECT_SCHEMA:
-						RemoveSchemas(stmt);
-						break;
-
-					case OBJECT_TSPARSER:
-						RemoveTSParsers(stmt);
-						break;
-
-					case OBJECT_TSDICTIONARY:
-						RemoveTSDictionaries(stmt);
-						break;
-
-					case OBJECT_TSTEMPLATE:
-						RemoveTSTemplates(stmt);
-						break;
-
-					case OBJECT_TSCONFIGURATION:
-						RemoveTSConfigurations(stmt);
-						break;
-
-					case OBJECT_EXTENSION:
-						RemoveExtensions(stmt);
-						break;
-
 					case OBJECT_EXTPROTOCOL:
+						/* GPDB_92_MERGE_FIXME: Could we move it to RemoveObjects()? */
 						RemoveExtProtocols(stmt);
 						break;
-
 					default:
-						elog(ERROR, "unrecognized drop object type: %d",
-							 (int) stmt->removeType);
+						RemoveObjects((DropStmt *) parsetree);
 						break;
 				}
 
@@ -977,23 +929,6 @@ standard_ProcessUtility(Node *parsetree,
 													NIL,
 													NULL);
 				}
-=======
-				case OBJECT_INDEX:
-					if (((DropStmt *) parsetree)->concurrent)
-						PreventTransactionChain(isTopLevel,
-												"DROP INDEX CONCURRENTLY");
-					/* fall through */
-
-				case OBJECT_TABLE:
-				case OBJECT_SEQUENCE:
-				case OBJECT_VIEW:
-				case OBJECT_FOREIGN_TABLE:
-					RemoveRelations((DropStmt *) parsetree);
-					break;
-				default:
-					RemoveObjects((DropStmt *) parsetree);
-					break;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			}
 			break;
 
@@ -1060,17 +995,6 @@ standard_ProcessUtility(Node *parsetree,
 				ListCell   *l;
 				LOCKMODE	lockmode;
 
-<<<<<<< HEAD
-				/* Run parse analysis ... */
-				/*
-				 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
-				 */
-				if (Gp_role == GP_ROLE_EXECUTE)
-					stmts = list_make1(parsetree);
-				else
-					stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
-													queryString);
-=======
 				/*
 				 * Figure out lock mode, and acquire lock.	This also does
 				 * basic permissions checks, so that we won't wait for a lock
@@ -1079,12 +1003,17 @@ standard_ProcessUtility(Node *parsetree,
 				 */
 				lockmode = AlterTableGetLockLevel(atstmt->cmds);
 				relid = AlterTableLookupRelation(atstmt, lockmode);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 				if (OidIsValid(relid))
 				{
-					/* Run parse analysis ... */
-					stmts = transformAlterTableStmt(atstmt, queryString);
+					/*
+					 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
+					 */
+					if (Gp_role == GP_ROLE_EXECUTE)
+						stmts = list_make1(parsetree);
+					else
+						/* Run parse analysis ... */
+						stmts = transformAlterTableStmt(atstmt, queryString);
 
 					/* ... and do it */
 					foreach(l, stmts)
@@ -1527,45 +1456,6 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
-<<<<<<< HEAD
-		case T_DropPropertyStmt:
-			{
-				DropPropertyStmt *stmt = (DropPropertyStmt *) parsetree;
-				Oid			relId;
-
-				relId = RangeVarGetRelid(stmt->relation, false);
-
-				switch (stmt->removeType)
-				{
-					case OBJECT_RULE:
-						/* RemoveRewriteRule checks permissions */
-						RemoveRewriteRule(relId, stmt->property,
-										  stmt->behavior, stmt->missing_ok);
-						break;
-					case OBJECT_TRIGGER:
-						/* DropTrigger checks permissions */
-						DropTrigger(relId, stmt->property,
-									stmt->behavior, stmt->missing_ok);
-						break;
-					default:
-						elog(ERROR, "unrecognized object type: %d",
-							 (int) stmt->removeType);
-						break;
-				}
-				if (Gp_role == GP_ROLE_DISPATCH)
-				{
-					CdbDispatchUtilityStatement((Node *) parsetree,
-												DF_CANCEL_ON_ERROR|
-												DF_WITH_SNAPSHOT|
-												DF_NEED_TWO_PHASE,
-												NIL,
-												NULL);
-				}
-			}
-			break;
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_CreatePLangStmt:
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
 			break;
@@ -1743,21 +1633,10 @@ standard_ProcessUtility(Node *parsetree,
 			AlterOpFamily((AlterOpFamilyStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
-		case T_RemoveOpClassStmt:
-			RemoveOpClass((RemoveOpClassStmt *) parsetree);
-			break;
-
-		case T_RemoveOpFamilyStmt:
-			RemoveOpFamily((RemoveOpFamilyStmt *) parsetree);
-			break;
-
 		case T_AlterTypeStmt:
 			AlterType((AlterTypeStmt *) parsetree);
 			break;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_AlterTSDictionaryStmt:
 			AlterTSDictionary((AlterTSDictionaryStmt *) parsetree);
 			break;
@@ -2585,11 +2464,6 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE LANGUAGE";
 			break;
 
-<<<<<<< HEAD
-		case T_DropPLangStmt:
-			tag = "DROP LANGUAGE";
-			break;
-
 		case T_CreateQueueStmt:
 			tag = "CREATE QUEUE";
 			break;
@@ -2614,8 +2488,6 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER RESOURCE GROUP";
 			break;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_CreateRoleStmt:
 			tag = "CREATE ROLE";
 			break;
@@ -2765,16 +2637,11 @@ CreateCommandTag(Node *parsetree)
 						 * will be useful for complaints about read-only
 						 * statements
 						 */
-<<<<<<< HEAD
-						if (stmt->intoClause != NULL)
-							tag = "SELECT INTO";
-=======
 						if (stmt->utilityStmt != NULL)
 						{
 							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
 							tag = "DECLARE CURSOR";
 						}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						else if (stmt->rowMarks != NIL)
 						{
 							/* not 100% but probably close enough */
