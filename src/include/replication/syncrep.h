@@ -13,10 +13,7 @@
 #ifndef _SYNCREP_H
 #define _SYNCREP_H
 
-<<<<<<< HEAD
 #include "access/xlogdefs.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/guc.h"
 
 #define SyncRepRequested() \
@@ -41,11 +38,7 @@ extern char *SyncRepStandbyNames;
 extern void SyncRepWaitForLSN(XLogRecPtr XactCommitLSN);
 
 /* called at backend exit */
-<<<<<<< HEAD
-extern void SyncRepCleanupAtProcExit(int code, Datum arg);
-=======
 extern void SyncRepCleanupAtProcExit(void);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* called by wal sender */
 extern void SyncRepInitConfig(void);
@@ -55,12 +48,8 @@ extern void SyncRepReleaseWaiters(void);
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
-<<<<<<< HEAD
-extern int     SyncRepWakeQueue(bool all, int mode);
-=======
 extern int	SyncRepWakeQueue(bool all, int mode);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
 extern void assign_synchronous_commit(int newval, void *extra);
 
