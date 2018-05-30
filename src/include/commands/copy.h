@@ -184,6 +184,7 @@ typedef struct CopyStateData
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
+	bool		volatile_defexprs;		/* is any of defexprs volatile? */
 	List	   *range_table;
 
 	StringInfo	dispatch_msgbuf; /* used in COPY_DISPATCH mode, to construct message

@@ -188,7 +188,7 @@ DropConversionsCommand(DropStmt *drop)
 		ReleaseSysCache(tuple);
 	}
 
-	performMultipleDeletions(objects, drop->behavior);
+	performMultipleDeletions(objects, drop->behavior, 0);
 
 	free_object_addresses(objects);
 }

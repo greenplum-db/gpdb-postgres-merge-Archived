@@ -102,7 +102,7 @@ typedef struct RowIndexes
 	int toowide_cnt;
 } RowIndexes;
 
-typedef int (*AcquireSampleRowsByQueryFunc) (Relation onerel, int nattrs,
+typedef int (*AcquireSampleRowsByQueryFunc) (Relation onerel, int elevel, int nattrs,
 											 VacAttrStats **attrstats,
 											 HeapTuple **rows,
 											 int targrows, double *totalrows,
@@ -135,7 +135,7 @@ static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 static int acquire_sample_rows(Relation onerel, int elevel,
 							   HeapTuple *rows, int targrows,
 							   double *totalrows, double *totaldeadrows);
-static int acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, HeapTuple **rows,
+static int acquire_sample_rows_by_query(Relation onerel, int elevel, int nattrs, VacAttrStats **attrstats, HeapTuple **rows,
 										int targrows, double *totalrows, double *totaldeadrows, BlockNumber *totalpages, bool rootonly,  RowIndexes **colLargeRowIndexes /* Maintain information if the row of a column exceeds WIDTH_THRESHOLD */);
 static int	compare_rows(const void *a, const void *b);
 #if 0
@@ -148,8 +148,8 @@ static void update_attstats(Oid relid, bool inh,
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
-static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly);
-static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages);
+static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly, int elevel);
+static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages, int elevel);
 
 static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 BufferAccessStrategy bstrategy);
@@ -619,7 +619,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 												&totalrows, &totaldeadrows);
 	else
 #endif
-		numrows = (*acquirefunc) (onerel, attr_cnt, vacattrstats, &rows, targrows,
+		numrows = (*acquirefunc) (onerel, elevel, attr_cnt, vacattrstats, &rows, targrows,
 								  &totalrows, &totaldeadrows, &totalpages,
 								  (vacstmt->options & VACOPT_ROOTONLY) != 0,
 								  colLargeRowIndexes);
@@ -802,7 +802,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 				 * This does not hold for partial indexes. The number of tuples matching will be
 				 * derived in selfuncs.c using the base table statistics.
 				 */
-				analyzeEstimateIndexpages(onerel, Irel[ind], &estimatedIndexPages);
+				analyzeEstimateIndexpages(onerel, Irel[ind], &estimatedIndexPages, elevel);
 				elog(elevel, "ANALYZE estimated relpages=%u for index %s",
 					 estimatedIndexPages, RelationGetRelationName(Irel[ind]));
 			}
@@ -1664,7 +1664,7 @@ compare_rows(const void *a, const void *b)
  * where fetching extra columns is expensive.)
  */
 static int
-acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats,
+acquire_sample_rows_by_query(Relation onerel, int elevel, int nattrs, VacAttrStats **attrstats,
 							 HeapTuple **rows, int targrows,
 							 double *totalrows, double *totaldeadrows, BlockNumber *totalblocks, bool rootonly, RowIndexes **colLargeRowIndexes)
 {
@@ -1687,7 +1687,7 @@ acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrsta
 	Assert(targrows > 0.0);
 
 	analyzeEstimateReltuplesRelpages(RelationGetRelid(onerel), &relTuples, &relPages,
-									 rootonly);
+									 rootonly, elevel);
 	*totalrows = relTuples;
 	*totaldeadrows = 0;
 	*totalblocks = relPages;
@@ -1913,7 +1913,7 @@ acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrsta
  * 	relPages  - estimated number of pages
  */
 static void
-analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly)
+analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly, int elevel)
 {
 	*relPages = 0.0;
 	*relTuples = 0.0;
@@ -2014,7 +2014,7 @@ analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *rel
  * 	indexPages - number of pages in the index
  */
 static void
-analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages)
+analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages, int elevel)
 {
 	StringInfoData 	sqlstmt;
 	int			ret;

@@ -2020,7 +2020,7 @@ ReindexIndex(ReindexStmt *stmt)
 	Oid			heapOid = InvalidOid;
 
 	/* lock level used here should match index lock reindex_index() */
-	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
+	indOid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
 									  false, false,
 									  RangeVarCallbackForReindexIndex,
 									  (void *) &heapOid);
@@ -2178,7 +2178,6 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 void
 ReindexTable(ReindexStmt *stmt)
 {
-	Oid			relid;
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
 	ListCell   *lc;
@@ -2192,22 +2191,22 @@ ReindexTable(ReindexStmt *stmt)
 	}
 
 	/* The lock level used here should match reindex_relation(). */
-	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
+	heapOid = RangeVarGetRelidExtended(stmt->relation, ShareLock, false, false,
 									   RangeVarCallbackOwnsTable, NULL);
 
 	/*
 	 * Gather child partition relations.
 	 */
-	if (rel_is_partitioned(relid))
+	if (rel_is_partitioned(heapOid))
 	{
 		PartitionNode *pn;
 
-		pn = get_parts(relid, 0 /* level */, 0 /* parent */, false /* inctemplate */,
+		pn = get_parts(heapOid, 0 /* level */, 0 /* parent */, false /* inctemplate */,
 					   true /* includesubparts */);
 		prels = all_partition_relids(pn);
 	}
-	else if (rel_is_child_partition(relid))
-		prels = find_all_inheritors(relid, NoLock, NULL);
+	else if (rel_is_child_partition(heapOid))
+		prels = find_all_inheritors(heapOid, NoLock, NULL);
 
 	/*
 	 * Create a memory context that will survive forced transaction commits we
@@ -2221,7 +2220,7 @@ ReindexTable(ReindexStmt *stmt)
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
 	oldcontext = MemoryContextSwitchTo(private_context);
-	relids = lappend_oid(relids, relid);
+	relids = lappend_oid(relids, heapOid);
 	relids = list_concat_unique_oid(relids, prels);
 	MemoryContextSwitchTo(oldcontext);
 

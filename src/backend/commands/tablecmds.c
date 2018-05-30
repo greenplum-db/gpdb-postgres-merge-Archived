@@ -1244,7 +1244,7 @@ RemoveRelations(DropStmt *drop)
 		{
 			if (Gp_role == GP_ROLE_DISPATCH)
 			{
-				Oid again= RangeVarGetRelid(rel, true);
+				Oid again= RangeVarGetRelid(rel, NoLock, true);
 
 				/* Not there? */
 				if (!OidIsValid(again))
@@ -1279,7 +1279,7 @@ RemoveRelations(DropStmt *drop)
 		{
 			PartStatus pstat;
 
-			pstat = rel_part_status(IndexGetRelation(relOid));
+			pstat = rel_part_status(IndexGetRelation(relOid, false));
 
 			if ( pstat == PART_STATUS_ROOT || pstat == PART_STATUS_INTERIOR )
 			{
@@ -1337,7 +1337,7 @@ RelationToRemoveIsTemp(const RangeVar *relation, DropBehavior behavior)
 
 	// UNDONE: Not sure how to interpret 'behavior'...
 
-	relOid = RangeVarGetRelid(relation, false);
+	relOid = RangeVarGetRelid(relation, NoLock, false);
 
 	/*
 	 * Lock down the object to stablize it before we examine its
@@ -1357,7 +1357,7 @@ RelationToRemoveIsTemp(const RangeVar *relation, DropBehavior behavior)
 	 * When we got the relOid lock, it is possible that the relation has gone away.
 	 * this will throw Error if the relation is already deleted.
 	 */
-	recheckoid = RangeVarGetRelid(relation, false);
+	recheckoid = RangeVarGetRelid(relation, NoLock, false);
 
 	/* if we got here then we should proceed. */
 
@@ -1485,7 +1485,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   rel->relname);
 
-	if (!allowSystemTableMods && IsSystemClass(classform))
+	if (!allowSystemTableModsDDL && IsSystemClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
@@ -2785,7 +2785,7 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   NameStr(classform->relname));
-	if (!allowSystemTableMods && IsSystemClass(classform))
+	if (!allowSystemTableModsDDL && IsSystemClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",
@@ -8022,7 +8022,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * operation when the user asked for a drop.
 	 */
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
-					  newDefault == NULL ? false : true);
+					  colDef->raw_default == NULL ? false : true);
 
 	Assert(!colDef->cooked_default);
 	if (colDef->raw_default)
@@ -8586,6 +8586,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	DefineIndex(stmt->relation, /* relation */
 				stmt->idxname,	/* index name */
 				InvalidOid,		/* no predefined OID */
+				stmt->oldNode,
 				stmt->accessMethod,		/* am name */
 				stmt->tableSpace,
 				stmt->indexParams,		/* parameters */
@@ -12309,7 +12310,8 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		MetaTrackUpdObject(RelationRelationId,
 						   RelationGetRelid(rel),
 						   GetUserId(),
-						   "ALTER", isReset ? "RESET" : "SET" 
+						   "ALTER",
+						   operation == AT_ResetRelOptions ? "RESET" : "SET"
 				);
 }
 
@@ -14642,7 +14644,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	 * Note: ATExecChangeOwner does NOT dispatch, so this does not
 	 * belong in the dispatch block above (MPP-9663).
 	 */
-	ATExecChangeOwner(RangeVarGetRelid(tmprv, false),
+	ATExecChangeOwner(RangeVarGetRelid(tmprv, NoLock, false),
 					  rel->rd_rel->relowner, true, AccessExclusiveLock);
 	CommandCounterIncrement(); /* see the effects of the command */
 
@@ -14664,7 +14666,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	nattr = RelationGetNumberOfAttributes(rel);
 	heap_close(rel, NoLock);
 	rel = NULL;
-	tmprelid = RangeVarGetRelid(tmprv, false);
+	tmprelid = RangeVarGetRelid(tmprv, NoLock, false);
 	swap_relation_files(tarrelid, tmprelid,
 						false, /* target_is_pg_class */
 						false, /* swap_toast_by_content */
@@ -14758,7 +14760,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		object.objectId = tmprelid;
 		object.objectSubId = 0;
 
-		performDeletion(&object, DROP_RESTRICT);
+		performDeletion(&object, DROP_RESTRICT, 0);
 	}
 
 l_distro_fini:
@@ -15652,7 +15654,7 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 							prule->relname
 							 )));
 
-		newrelid = RangeVarGetRelid(newrelrv, false);
+		newrelid = RangeVarGetRelid(newrelrv, NoLock, false);
 		Assert(OidIsValid(newrelid));
 
 		orig_pid_type = pid->idtype;
@@ -15707,8 +15709,8 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 		Assert(IsA(pc->arg1, RangeVar));
 		oldrelrv = (RangeVar *)pc->partid;
 		newrelrv = (RangeVar *)pc->arg1;
-		oldrelid = RangeVarGetRelid(oldrelrv, false);
-		newrelid = RangeVarGetRelid(newrelrv, false);
+		oldrelid = RangeVarGetRelid(oldrelrv, NoLock, false);
+		newrelid = RangeVarGetRelid(newrelrv, NoLock, false);
 		pc2 = (AlterPartitionCmd *)pc->arg2;
 		pcols = (List *)pc2->arg2;
 	}
@@ -15800,7 +15802,7 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 		heap_close(oldrel, NoLock);
 
 		/* RenameRelation renames the type too */
-		RenameRelation(oldrelid, tmpname1, OBJECT_TABLE, NULL);
+		RenameRelationInternal(oldrelid, tmpname1);
 		CommandCounterIncrement();
 		RelationForgetRelation(oldrelid);
 
@@ -15823,7 +15825,7 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 			 * collision.  It would be nice to have an atomic
 			 * operation to rename and renamespace a relation... 
 			 */
-			RenameRelation(newrelid, tmpname2, OBJECT_TABLE, NULL);
+			RenameRelationInternal(newrelid, tmpname2);
 			CommandCounterIncrement();
 			RelationForgetRelation(newrelid);
 
@@ -15836,11 +15838,11 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 			free_object_addresses(objsMoved);
 		}
 
-		RenameRelation(newrelid, oldname, OBJECT_TABLE, NULL);
+		RenameRelationInternal(newrelid, oldname);
 		CommandCounterIncrement();
 		RelationForgetRelation(newrelid);
 
-		RenameRelation(oldrelid, newname, OBJECT_TABLE, NULL);
+		RenameRelationInternal(oldrelid, newname);
 		CommandCounterIncrement();
 		RelationForgetRelation(oldrelid);
 
@@ -17532,7 +17534,7 @@ ATPExecPartSplit(Relation *rel,
 		addr.objectId = temprelid;
 		addr.objectSubId = 0;
 
-		performDeletion(&addr, DROP_RESTRICT);
+		performDeletion(&addr, DROP_RESTRICT, 0);
 	}
 
 	heap_close(intoa, NoLock);
@@ -18133,7 +18135,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
 		/*
 		 * Note: currently, the index will not have its own dependency on the
 		 * namespace, so we don't need to do changeDependencyFor(). There's no
- d d		 * rowtype in pg_type, either.
+		 * rowtype in pg_type, either.
 		 *
 		 * XXX this objsMoved test may be pointless -- surely we have a single
 		 * dependency link from a relation to each index?
@@ -18784,7 +18786,7 @@ CheckDropRelStorage(RangeVar *rel, ObjectType removeType)
 	HeapTuple tuple;
 	char relstorage;
 
-	relOid = RangeVarGetRelid(rel, true);
+	relOid = RangeVarGetRelid(rel, NoLock, true);
 
 	if (!OidIsValid(relOid))
 		elog(ERROR, "Oid %u is invalid", relOid);
@@ -18894,7 +18896,7 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, rv->relname);
 
 	/* No system table modifications unless explicitly allowed. */
-	if (!allowSystemTableMods && IsSystemClass(classform))
+	if (!allowSystemTableModsDDL && IsSystemClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied: \"%s\" is a system catalog",

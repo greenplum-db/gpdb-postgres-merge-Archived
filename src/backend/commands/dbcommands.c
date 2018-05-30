@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "access/transam.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xact.h"

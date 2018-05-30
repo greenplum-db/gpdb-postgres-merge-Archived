@@ -174,8 +174,6 @@ static void CopyFromInsertBatch(CopyState cstate, EState *estate,
 					ResultRelInfo *resultRelInfo, TupleTableSlot *myslot,
 					BulkInsertState bistate,
 					int nBufferedTuples, HeapTuple *bufferedTuples);
-static bool CopyReadLine(CopyState cstate);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate);
 static int	CopyReadAttributesCSV(CopyState cstate);
@@ -1765,7 +1763,8 @@ BeginCopy(bool is_from,
 		query = (Query *) linitial(rewritten);
 
 		/* Query mustn't use INTO, either */
-		if (query->intoClause)
+		if (query->utilityStmt != NULL &&
+			IsA(query->utilityStmt, CreateTableAsStmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT INTO) is not supported")));
@@ -3786,7 +3785,8 @@ CopyFrom(CopyState cstate)
 					tuple = ExecFetchSlotHeapTuple(slot);
 
 					/* OK, store the tuple and create index entries for it */
-					heap_insert(cstate->rel, tuple, mycid, hi_options, bistate);
+					heap_insert(cstate->rel, tuple, mycid, hi_options, bistate,
+								GetCurrentTransactionId());
 					if (cstate->file_has_oids)
 						HeapTupleSetOid(tuple, loaded_oid);
 					insertedTid = tuple->t_self;
@@ -3827,7 +3827,7 @@ CopyFrom(CopyState cstate)
 		}
 	}
 
- d	/*
+	/*
 	 * After processed data from QD, which is empty and just for workflow, now
 	 * to process the data on segment, only one shot if cstate->on_segment &&
 	 * Gp_role == GP_ROLE_DISPATCH
