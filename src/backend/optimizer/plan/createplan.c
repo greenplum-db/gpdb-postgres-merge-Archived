@@ -5,13 +5,9 @@
  *	  Planning is complete, we just need to convert the selected
  *	  Path into a Plan.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -75,7 +71,6 @@ static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
 static Plan *create_motion_plan(PlannerInfo *root, CdbMotionPath *path);
 static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
-<<<<<<< HEAD
 static ExternalScan *create_externalscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static AppendOnlyScan *create_appendonlyscan_plan(PlannerInfo *root, Path *best_path,
@@ -84,10 +79,8 @@ static AOCSScan *create_aocsscan_plan(PlannerInfo *root, Path *best_path,
 					 List *tlist, List *scan_clauses);
 static IndexScan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
-=======
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
 						BitmapHeapPath *best_path,
 						List *tlist, List *scan_clauses);
@@ -196,16 +189,10 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 						   AttrNumber **p_sortColIdx,
 						   Oid **p_sortOperators,
 						   Oid **p_collations,
-<<<<<<< HEAD
 						   bool **p_nullsFirst, bool add_keys_to_targetlist);
-=======
-						   bool **p_nullsFirst);
 static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   TargetEntry *tle,
 					   Relids relids);
-static Material *make_material(Plan *lefttree);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
 
 /*
  * create_plan
@@ -279,13 +266,10 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
-<<<<<<< HEAD
 		case T_ExternalScan:
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
-=======
 		case T_IndexOnlyScan:
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case T_BitmapHeapScan:
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
@@ -1254,11 +1238,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	}
 
 	/* Adjust output size estimate (other fields should be OK already) */
-<<<<<<< HEAD
-	plan->plan_rows = cdbpath_rows(root, (Path *) best_path);
-=======
-	plan->plan_rows = best_path->path.rows;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	plan->plan_rows = cdbpath_rows(root, &best_path->path);
 
 	return plan;
 }
@@ -2334,11 +2314,7 @@ create_indexscan_plan(PlannerInfo *root,
 											indexorderbys,
 											best_path->indexscandir);
 
-<<<<<<< HEAD
 	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
-=======
-	copy_path_costsize(&scan_plan->plan, &best_path->path);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return scan_plan;
 }
@@ -2435,12 +2411,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
 
 	/*
-<<<<<<< HEAD
-	 * Copy the finished bitmapqualorig to make sure we have an independent
-	 * copy --- needed in case there are subplans in the index quals
-	 */
-	bitmapqualorig = copyObject(bitmapqualorig);
-=======
 	 * We have to replace any outer-relation variables with nestloop params in
 	 * the qpqual and bitmapqualorig expressions.  (This was already done for
 	 * expressions attached to plan nodes in the bitmapqualplan tree.)
@@ -2452,7 +2422,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 		bitmapqualorig = (List *)
 			replace_nestloop_params(root, (Node *) bitmapqualorig);
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_heapscan(tlist,
@@ -2461,7 +2430,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 									 bitmapqualorig,
 									 baserelid);
 
-<<<<<<< HEAD
 	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
 
 	return scan_plan;
@@ -2569,9 +2537,6 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 										   best_path->isAORow);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
-=======
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return scan_plan;
 }
@@ -2857,8 +2822,6 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-<<<<<<< HEAD
-=======
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->param_info)
 	{
@@ -2866,7 +2829,6 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
@@ -3138,17 +3100,6 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 		}
 	}
 
-<<<<<<< HEAD
-	scan_plan = make_foreignscan(tlist,
-								 scan_clauses,
-								 scan_relid,
-								 fsSystemCol,
-								 best_path->fdwplan);
-
-	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	return scan_plan;
 }
 
@@ -3229,7 +3180,6 @@ create_nestloop_plan(PlannerInfo *root,
 	ListCell   *prev;
 	ListCell   *next;
 
-<<<<<<< HEAD
 	bool		prefetch = false;
 
 	/*
@@ -3299,8 +3249,6 @@ create_nestloop_plan(PlannerInfo *root,
 										 joinrestrictclauses,
 										 best_path->innerjoinpath);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);
 
@@ -3318,11 +3266,11 @@ create_nestloop_plan(PlannerInfo *root,
 		otherclauses = NIL;
 	}
 
-<<<<<<< HEAD
 	if (best_path->jointype == JOIN_LASJ_NOTIN)
 	{
 		joinclauses = remove_isnotfalse(joinclauses);
-=======
+	}
+
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->path.param_info)
 	{
@@ -3330,7 +3278,6 @@ create_nestloop_plan(PlannerInfo *root,
 			replace_nestloop_params(root, (Node *) joinclauses);
 		otherclauses = (List *)
 			replace_nestloop_params(root, (Node *) otherclauses);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
@@ -4428,11 +4375,7 @@ copy_path_costsize(PlannerInfo *root, Plan *dest, Path *src)
 	{
 		dest->startup_cost = src->startup_cost;
 		dest->total_cost = src->total_cost;
-<<<<<<< HEAD
 		dest->plan_rows = cdbpath_rows(root, src);
-=======
-		dest->plan_rows = src->rows;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		dest->plan_width = src->parent->width;
 	}
 	else
@@ -5504,13 +5447,6 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 		numsortkeys++;
 	}
 
-<<<<<<< HEAD
-	Assert(numsortkeys > 0 || !add_keys_to_targetlist);
-	if (numsortkeys == 0)
-		return NULL;
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Return results */
 	*p_numsortkeys = numsortkeys;
 	*p_sortColIdx = sortColIdx;
@@ -5692,7 +5628,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 	bool	   *nullsFirst;
 	List	   *flat_groupcls;
 
-<<<<<<< HEAD
 	/*
 	 * We will need at most list_length(groupcls) sort columns; possibly less
 	 */
@@ -5701,24 +5636,16 @@ make_sort_from_groupcols(PlannerInfo *root,
 	if (appendGrouping)
 		numsortkeys++;
 
-=======
-	/* Convert list-ish representation to arrays wanted by executor */
-	numsortkeys = list_length(groupcls);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
 	collations = (Oid *) palloc(numsortkeys * sizeof(Oid));
 	nullsFirst = (bool *) palloc(numsortkeys * sizeof(bool));
 
 	numsortkeys = 0;
-<<<<<<< HEAD
 
 	flat_groupcls = flatten_grouping_list(groupcls);
 
 	foreach(l, flat_groupcls)
-=======
-	foreach(l, groupcls)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		SortGroupClause *grpcl = (SortGroupClause *) lfirst(l);
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[numsortkeys]);
@@ -5730,7 +5657,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 		numsortkeys++;
 	}
 
-<<<<<<< HEAD
 	if (appendGrouping)
 	{
 		Oid			lt_opr;
@@ -5752,8 +5678,6 @@ make_sort_from_groupcols(PlannerInfo *root,
 
 	Assert(numsortkeys > 0);
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators, collations,
 					 nullsFirst, -1.0);

@@ -4,13 +4,9 @@
  *	  Post-processing of a completed plan tree: fix references to subplan
  *	  vars, compute regproc values for operators, etc
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -25,19 +21,14 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "optimizer/clauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_relation.h"
-#include "parser/parsetree.h"
-=======
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "tcop/utility.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "cdb/cdbhash.h"
@@ -140,7 +131,6 @@ static List *fix_join_expr(PlannerInfo *root,
 			  Index acceptable_rel, int rtoffset);
 static Node *fix_join_expr_mutator(Node *node,
 					  fix_join_expr_context *context);
-<<<<<<< HEAD
 static List *fix_hashclauses(PlannerGlobal *glob,
 				List *clauses,
 				indexed_tlist *outer_itlist,
@@ -152,10 +142,7 @@ static List *fix_child_hashclauses(PlannerGlobal *glob,
 					  indexed_tlist *inner_itlist,
 					  Index acceptable_rel, int rtoffset,
 					  Index child);
-static Node *fix_upper_expr(PlannerGlobal *glob,
-=======
 static Node *fix_upper_expr(PlannerInfo *root,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
 			   Index newvarno,
@@ -174,13 +161,9 @@ static Plan *cdb_insert_result_node(PlannerGlobal *glob,
 									int rtoffset);
 
 static bool extract_query_dependencies_walker(Node *node,
-<<<<<<< HEAD
-								  PlannerGlobal *context);
+								  PlannerInfo *context);
 static bool cdb_extract_plan_dependencies_walker(Node *node,
 									 cdb_extract_plan_dependencies_context *context);
-=======
-								  PlannerInfo *context);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifdef USE_ASSERT_CHECKING
 #include "cdb/cdbplan.h"
@@ -466,20 +449,16 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	}
 
 	/* Now fix the Plan tree */
-<<<<<<< HEAD
-	Plan *retPlan = set_plan_refs(glob, plan, rtoffset);
+	Plan *retPlan = set_plan_refs(root, plan, rtoffset);
 
 #ifdef USE_ASSERT_CHECKING
 	/**
 	 * Ensuring that the output of setrefs behaves as expected.
 	 */
-	set_plan_references_output_asserts(glob, retPlan);
+	set_plan_references_output_asserts(root, retPlan);
 #endif
 
 	return retPlan;
-=======
-	return set_plan_refs(root, plan, rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -785,13 +764,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_NestLoop:
 		case T_MergeJoin:
 		case T_HashJoin:
-<<<<<<< HEAD
 			if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
 				return cdb_insert_result_node(glob, plan, rtoffset);
-			set_join_references(glob, (Join *) plan, rtoffset);
-=======
 			set_join_references(root, (Join *) plan, rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_Plan:
 			/*
@@ -930,12 +905,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			break;
 		case T_Agg:
-<<<<<<< HEAD
 			set_upper_references(glob, plan, rtoffset);
-=======
-		case T_Group:
-			set_upper_references(root, plan, rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			break;
 		case T_WindowAgg:
 			{
@@ -952,26 +922,19 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 * in GPDB, we allow the ROWS/RANGE expressions to contain
 				 * references to the subplan, so we have to use fix_upper_expr.
 				 */
-<<<<<<< HEAD
 				if (wplan->startOffset || wplan->endOffset)
 				{
 					subplan_itlist =
 						build_tlist_index(plan->lefttree->targetlist);
 
 					wplan->startOffset =
-						fix_upper_expr(glob, wplan->startOffset,
+						fix_upper_expr(root, wplan->startOffset,
 									   subplan_itlist, rtoffset);
 					wplan->endOffset =
-						fix_upper_expr(glob, wplan->endOffset,
+						fix_upper_expr(root, wplan->endOffset,
 									   subplan_itlist, rtoffset);
 					pfree(subplan_itlist);
 				}
-=======
-				wplan->startOffset =
-					fix_scan_expr(root, wplan->startOffset, rtoffset);
-				wplan->endOffset =
-					fix_scan_expr(root, wplan->endOffset, rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			}
 			break;
 		case T_Result:
@@ -983,13 +946,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				 * like a scan node than an upper node.
 				 */
 				if (splan->plan.lefttree != NULL)
-<<<<<<< HEAD
-				{
-					set_upper_references(glob, plan, rtoffset);
-				}
-=======
 					set_upper_references(root, plan, rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				else
 				{
 					splan->plan.targetlist =
@@ -1504,13 +1461,7 @@ fix_expr_common(PlannerInfo *root, Node *node)
  *
  * This consists of incrementing all Vars' varnos by rtoffset,
  * looking up operator opcode info for OpExpr and related nodes,
-<<<<<<< HEAD
- * and adding OIDs from regclass Const nodes into glob->relationOids.
- *
- * TODO: rename to reflect functionality more accurately.
-=======
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 static Node *
 fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
@@ -1520,7 +1471,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	context.root = root;
 	context.rtoffset = rtoffset;
 
-<<<<<<< HEAD
 	/*
 	 * Postgres has an optimization to mutate the expression tree only if
 	 * rtoffset is non-zero. However, this optimization does not work for
@@ -1531,25 +1481,6 @@ fix_scan_expr(PlannerInfo *root, Node *node, int rtoffset)
 	 * using mutation. Therefore, in GPDB we need to unconditionally mutate the tree.
 	 */
 	return fix_scan_expr_mutator(node, &context);
-=======
-	if (rtoffset != 0 || root->glob->lastPHId != 0)
-	{
-		return fix_scan_expr_mutator(node, &context);
-	}
-	else
-	{
-		/*
-		 * If rtoffset == 0, we don't need to change any Vars, and if there
-		 * are no placeholders anywhere we won't need to remove them.  Then
-		 * it's OK to just scribble on the input node tree instead of copying
-		 * (since the only change, filling in any unset opfuncid fields, is
-		 * harmless).  This saves just enough cycles to be noticeable on
-		 * trivial queries.
-		 */
-		(void) fix_scan_expr_walker(node, &context);
-		return node;
-	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 static Node *
@@ -1624,17 +1555,8 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 	if (node == NULL)
 		return false;
 	Assert(!IsA(node, PlaceHolderVar));
-<<<<<<< HEAD
 
-	/*
-	 * fix_expr_common will look up and set operator opcodes in the
-	 * nodes. That's not needed, as ORCA has set those already, but
-	 * shouldn't do any harm either.
-	 */
-	fix_expr_common(context->glob, node);
-=======
 	fix_expr_common(context->root, node);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
 }
@@ -1714,11 +1636,7 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 	{
 		HashJoin   *hj = (HashJoin *) join;
 
-<<<<<<< HEAD
-		hj->hashclauses = fix_hashclauses(glob,
-=======
 		hj->hashclauses = fix_join_expr(root,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 										hj->hashclauses,
 										outer_itlist,
 										inner_itlist,

@@ -3,13 +3,9 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -220,15 +216,10 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 		else if (IsA(node, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
-<<<<<<< HEAD
-			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
-			
-=======
 			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
 															create_new_ph);
 
 			/* Always adjust ph_needed */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			phinfo->ph_needed = bms_add_members(phinfo->ph_needed,
 												where_needed);
 
@@ -1158,13 +1149,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									 outerjoin_delayed,
 									 pseudoconstant,
 									 relids,
-<<<<<<< HEAD
+									 outerjoin_nonnullable,
 									 nullable_relids,
 									 ojscope);
-=======
-									 outerjoin_nonnullable,
-									 nullable_relids);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * If it's a join clause (either naturally, or because delayed by
@@ -1669,15 +1656,10 @@ build_implied_join_equality(Oid opno,
 									 true,		/* is_pushed_down */
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
-<<<<<<< HEAD
 									 qualscope,	/* required_relids */
+									 NULL,		/* outer_relids */
 									 nullable_relids,	/* nullable_relids */
 									 qualscope); /* ojscope_relids */
-=======
-									 qualscope, /* required_relids */
-									 NULL,		/* outer_relids */
-									 NULL);		/* nullable_relids */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);
