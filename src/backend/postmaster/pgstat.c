@@ -2490,12 +2490,8 @@ pgstat_bestart(void)
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
 	beentry->st_clientaddr = clientaddr;
 	beentry->st_clienthostname[0] = '\0';
-<<<<<<< HEAD
 	beentry->st_waiting = PGBE_WAITING_NONE;
-=======
-	beentry->st_waiting = false;
 	beentry->st_state = STATE_UNDEFINED;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
