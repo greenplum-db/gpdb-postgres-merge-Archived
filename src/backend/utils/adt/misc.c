@@ -32,12 +32,8 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
-<<<<<<< HEAD
 #include "utils/backend_cancel.h"
-#include "utils/builtins.h"
-=======
 #include "utils/lsyscache.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
@@ -87,16 +83,11 @@ current_query(PG_FUNCTION_ARGS)
  * be emitted. For permission errors, doing that is the responsibility of
  * the caller.
  */
-<<<<<<< HEAD
-static bool
-pg_signal_backend(int pid, int sig, char *msg)
-=======
 #define SIGNAL_BACKEND_SUCCESS 0
 #define SIGNAL_BACKEND_ERROR 1
 #define SIGNAL_BACKEND_NOPERMISSION 2
 static int
-pg_signal_backend(int pid, int sig)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+pg_signal_backend(int pid, int sig, char *msg)
 {
 	PGPROC	   *proc;
 
@@ -130,7 +121,6 @@ pg_signal_backend(int pid, int sig)
 		return SIGNAL_BACKEND_ERROR;
 	}
 
-<<<<<<< HEAD
 	/* If the user supplied a message to the signalled backend */
 	if (msg != NULL)
 	{
@@ -142,7 +132,6 @@ pg_signal_backend(int pid, int sig)
 			ereport(NOTICE,
 					(errmsg("message is too long and has been truncated")));
 	}
-=======
 	/*
 	 * Can the process we just validated above end, followed by the pid being
 	 * recycled for a new process, before reaching here?  Then we'd be trying
@@ -151,7 +140,6 @@ pg_signal_backend(int pid, int sig)
 	 * where pid re-use is randomized.	That race condition possibility seems
 	 * too unlikely to worry about.
 	 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* If we have setsid(), signal the backend's whole process group */
 #ifdef HAVE_SETSID
@@ -168,19 +156,21 @@ pg_signal_backend(int pid, int sig)
 	return SIGNAL_BACKEND_SUCCESS;
 }
 
-<<<<<<< HEAD
-static bool
-pg_cancel_backend_internal(pid_t pid, char *msg)
-{
-    bool         r = pg_signal_backend(pid, SIGINT, msg);
-
-    return r;
-}
-
+/*
+ * Signal to cancel a backend process.	This is allowed if you are superuser or
+ * have the same role as the process being canceled.
+ */
 Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL(pg_cancel_backend_internal(PG_GETARG_INT32(0), NULL));
+	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGINT, NULL);
+
+	if (r == SIGNAL_BACKEND_NOPERMISSION)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser or have the same role to cancel queries running in other server processes"))));
+
+	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
 
 Datum
@@ -189,24 +179,7 @@ pg_cancel_backend_msg(PG_FUNCTION_ARGS)
 	pid_t		pid = PG_GETARG_INT32(0);
 	char 	   *msg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-	PG_RETURN_BOOL(pg_cancel_backend_internal(pid, msg));
-}
-
-static bool
-pg_terminate_backend_internal(pid_t pid, char *msg)
-{
-    bool	r = pg_signal_backend(pid, SIGTERM, msg);
-
-    return r;
-=======
-/*
- * Signal to cancel a backend process.	This is allowed if you are superuser or
- * have the same role as the process being canceled.
- */
-Datum
-pg_cancel_backend(PG_FUNCTION_ARGS)
-{
-	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGINT);
+	int			r = pg_signal_backend(pid, SIGINT, msg);
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
@@ -214,7 +187,6 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 				 (errmsg("must be superuser or have the same role to cancel queries running in other server processes"))));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -223,8 +195,13 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	PG_RETURN_BOOL(pg_terminate_backend_internal(PG_GETARG_INT32(0), NULL));
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 errmsg("must be superuser to terminate other server processes"),
+				 errhint("You can cancel your own processes with pg_cancel_backend().")));
+
+	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM, NULL) == SIGNAL_BACKEND_SUCCESS);
 }
 
 Datum
@@ -233,7 +210,13 @@ pg_terminate_backend_msg(PG_FUNCTION_ARGS)
 	pid_t		pid = PG_GETARG_INT32(0);
 	char 	   *msg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-	PG_RETURN_BOOL(pg_terminate_backend_internal(pid, msg));
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 errmsg("must be superuser to terminate other server processes"),
+				 errhint("You can cancel your own processes with pg_cancel_backend().")));
+
+	PG_RETURN_BOOL(pg_signal_backend(pid, SIGTERM, msg) == SIGNAL_BACKEND_SUCCESS);
 }
 
 /*
@@ -288,15 +271,6 @@ gp_cancel_query(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_BOOL(gp_cancel_query_internal(PG_GETARG_INT32(0),
 											PG_GETARG_INT32(1)));
-=======
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to terminate other server processes"),
-				 errhint("You can cancel your own processes with pg_cancel_backend().")));
-
-	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM) == SIGNAL_BACKEND_SUCCESS);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -452,15 +426,6 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 Datum
 pg_tablespace_location(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	Oid		tablespaceOid = PG_GETARG_OID(0);
-	char	sourcepath[MAXPGPATH];
-	char	targetpath[MAXPGPATH];
-	int		rllen;
-
-	/*
-	 * Return empty string for our two default tablespace
-=======
 	Oid			tablespaceOid = PG_GETARG_OID(0);
 	char		sourcepath[MAXPGPATH];
 	char		targetpath[MAXPGPATH];
@@ -476,24 +441,12 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 
 	/*
 	 * Return empty string for the cluster's default tablespaces
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
 		tablespaceOid == GLOBALTABLESPACE_OID)
 		PG_RETURN_TEXT_P(cstring_to_text(""));
 
 #if defined(HAVE_READLINK) || defined(WIN32)
-<<<<<<< HEAD
-	/*
-	 * Find the location of the tablespace by reading the symbolic link that is
-	 * in pg_tblspc/<oid>.
-	 */
-	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
-	rllen =readlink(sourcepath, targetpath, sizeof(targetpath));
-	if (rllen < 0 || rllen >= sizeof(targetpath))
-		ereport(ERROR,
-				(errmsg("could not read symbolic link \"%s\": %m", sourcepath)));
-=======
 
 	/*
 	 * Find the location of the tablespace by reading the symbolic link that
@@ -510,7 +463,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errmsg("symbolic link \"%s\" target is too long",
 						sourcepath)));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	targetpath[rllen] = '\0';
 
 	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
@@ -518,10 +470,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
-<<<<<<< HEAD
-=======
 	PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 }
 
