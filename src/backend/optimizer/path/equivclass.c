@@ -1930,7 +1930,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 			{
 				/* Yes, generate transformed child version */
 				Expr	   *child_expr;
-<<<<<<< HEAD
 				Relids		new_nullable_relids;
 
 				child_expr = (Expr *)
@@ -1952,26 +1951,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 
 				(void) add_eq_member(cur_ec, child_expr,
 									 child_rel->relids, new_nullable_relids,
-=======
-				Relids		new_relids;
-
-				child_expr = (Expr *)
-					adjust_appendrel_attrs(root,
-										   (Node *) cur_em->em_expr,
-										   appinfo);
-
-				/*
-				 * Transform em_relids to match.  Note we do *not* do
-				 * pull_varnos(child_expr) here, as for example the
-				 * transformation might have substituted a constant, but we
-				 * don't want the child member to be marked as constant.
-				 */
-				new_relids = bms_difference(cur_em->em_relids,
-											parent_rel->relids);
-				new_relids = bms_add_members(new_relids, child_rel->relids);
-
-				(void) add_eq_member(cur_ec, child_expr, new_relids,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 									 true, cur_em->em_datatype);
 			}
 		}

@@ -7,13 +7,9 @@
  * the nature and use of path keys.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -32,13 +28,10 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
 #include "parser/parse_oper.h" /* for compatible_oper_opid() */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/lsyscache.h"
 
 #include "cdb/cdbpullup.h"		/* cdbpullup_expr(), cdbpullup_make_var() */
@@ -832,7 +825,6 @@ build_index_pathkeys(PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
  * Find or make a Var node for the specified attribute of the rel.
  *
  * We first look for the var in the rel's target list, because that's
@@ -868,8 +860,6 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 }
 
 /*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * convert_subquery_pathkeys
  *	  Build a pathkeys list that describes the ordering of a subquery's
  *	  result, in the terms of the outer query.	This is essentially a
@@ -1046,12 +1036,8 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 														sub_expr_type,
 														sub_expr_coll,
 														0,
-<<<<<<< HEAD
-														true); /* create_it */
-=======
 														rel->relids,
-														false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+														true); /* create_it */
 
 					/*
 					 * If we don't find a matching EC, this sub-pathkey isn't

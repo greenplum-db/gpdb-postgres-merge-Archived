@@ -3,13 +3,9 @@
  * joinrels.c
  *	  Routines to determine which relations should be joined
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -207,59 +203,13 @@ join_search_one_level(PlannerInfo *root, int level)
 	 * never fail, and so the following sanity check is useful.
 	 *----------
 	 */
-<<<<<<< HEAD
-	if (joinrels[level] == NIL)
-	{
-		/*
-		 * This loop is just like the first one, except we always call
-		 * make_rels_by_clauseless_joins().
-		 */
-		foreach(r, joinrels[level - 1])
-		{
-			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-			ListCell   *other_rels;
-
-			if (level == 2)
-				other_rels = lnext(r);	/* only consider remaining initial
-										 * rels */
-			else
-				other_rels = list_head(joinrels[1]);	/* consider all initial
-														 * rels */
-
-			make_rels_by_clauseless_joins(root,
-										  old_rel,
-										  other_rels);
-		}
-
-		/*----------
-		 * When special joins are involved, there may be no legal way
-		 * to make an N-way join for some values of N.	For example consider
-		 *
-		 * SELECT ... FROM t1 WHERE
-		 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
-		 *	 y IN (SELECT ... FROM t4,t5 WHERE ...)
-		 *
-		 * We will flatten this query to a 5-way join problem, but there are
-		 * no 4-way joins that join_is_legal() will consider legal.  We have
-		 * to accept failure at level 4 and go on to discover a workable
-		 * bushy plan at level 5.
-		 *
-		 * However, if there are no special joins then join_is_legal() should
-		 * never fail, and so the following sanity check is useful.
-		 *----------
-		 */
-		if (joinrels[level] == NIL && root->join_info_list == NIL)
-		{
-			if (root->config->mpp_trying_fallback_plan)
-				elog(ERROR, "failed to build any %d-way joins", level);
-			else
-				elog(DEBUG1, "failed to build any %d-way joins", level);
-		}
-	}
-=======
 	if (joinrels[level] == NIL && root->join_info_list == NIL)
-		elog(ERROR, "failed to build any %d-way joins", level);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	{
+		if (root->config->mpp_trying_fallback_plan)
+			elog(ERROR, "failed to build any %d-way joins", level);
+		else
+			elog(DEBUG1, "failed to build any %d-way joins", level);
+	}
 }
 
 /*
@@ -1020,17 +970,10 @@ mark_dummy_rel(PlannerInfo *root, RelOptInfo *rel)
 	rel->pathlist = NIL;
 
 	/* Set up the dummy path */
-<<<<<<< HEAD
 	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
 	/* Set or update cheapest_total_path */
 	set_cheapest(root, rel);
-=======
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL));
-
-	/* Set or update cheapest_total_path and related fields */
-	set_cheapest(rel);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	MemoryContextSwitchTo(oldcontext);
 }
