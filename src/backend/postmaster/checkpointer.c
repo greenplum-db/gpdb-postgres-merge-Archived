@@ -52,6 +52,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
@@ -177,7 +178,6 @@ static void UpdateSharedMemoryConfig(void);
 
 /* Signal handlers */
 
-static void chkpt_quickdie(SIGNAL_ARGS);
 static void ChkptSigHupHandler(SIGNAL_ARGS);
 static void ReqCheckpointHandler(SIGNAL_ARGS);
 static void chkpt_sigusr1_handler(SIGNAL_ARGS);
