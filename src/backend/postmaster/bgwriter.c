@@ -10,22 +10,12 @@
  * still empowered to issue writes if the bgwriter fails to maintain enough
  * clean shared buffers.
  *
-<<<<<<< HEAD
- * Previously, the background writer use to do this duty.  But we ended up with
- * a deadlock with the new FileRep functionality, so this functionality was split out into its
- * own server.
-=======
  * As of Postgres 9.2 the bgwriter no longer handles checkpoints.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * The bgwriter is started by the postmaster as soon as the startup subprocess
  * finishes, or as soon as recovery begins if we are doing archive recovery.
  * It remains alive until the postmaster commands it to terminate.
-<<<<<<< HEAD
- * Normal termination is by SIGUSR2, which instructs the bgwriter to exit(0).
-=======
  * Normal termination is by SIGTERM, which instructs the bgwriter to exit(0).
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Emergency termination is by SIGQUIT; like any backend, the bgwriter will
  * simply abort and exit on SIGQUIT.
  *
@@ -67,24 +57,18 @@
 #include "utils/resowner.h"
 #include "utils/faultinjector.h"
 
-<<<<<<< HEAD
 #include "tcop/tcopprot.h" /* quickdie() */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * GUC parameters
  */
 int			BgWriterDelay = 200;
-<<<<<<< HEAD
-=======
 
 /*
  * Multiplier to apply to BgWriterDelay when we decide to hibernate.
  * (Perhaps this needs to be configurable?)
  */
 #define HIBERNATE_FACTOR			50
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
@@ -92,16 +76,10 @@ int			BgWriterDelay = 200;
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
-<<<<<<< HEAD
-/* Prototypes for private functions */
-
-static void BgWriterNap(void);
-=======
 /*
  * Private state
  */
 static bool am_bg_writer = false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Signal handlers */
 
@@ -122,11 +100,8 @@ BackgroundWriterMain(void)
 	MemoryContext bgwriter_context;
 	bool		prev_hibernate;
 
-<<<<<<< HEAD
-=======
 	am_bg_writer = true;
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
 	 * can signal any child processes too.  (bgwriter probably never has any
@@ -147,17 +122,10 @@ BackgroundWriterMain(void)
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, ReqShutdownHandler);		/* shutdown */
-<<<<<<< HEAD
 	pqsignal(SIGQUIT, quickdie);		/* hard crash time: nothing bg-writer specific, just use the standard */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* reserve for ProcSignal */
-=======
-	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
-	pqsignal(SIGALRM, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, bgwriter_sigusr1_handler);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	pqsignal(SIGUSR2, SIG_IGN);
 
 	/*
@@ -276,34 +244,20 @@ BackgroundWriterMain(void)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive(true))
-			exit(1);
+		bool		can_hibernate;
+		int			rc;
 
 #ifdef USE_ASSERT_CHECKING
 		SIMPLE_FAULT_INJECTOR(FaultInBackgroundWriterMain);
 #endif
-=======
-		bool		can_hibernate;
-		int			rc;
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyProc->procLatch);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-<<<<<<< HEAD
-			/* update global shmem state for sync rep */
-			SyncRepUpdateSyncStandbysDefined();
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		if (shutdown_requested)
 		{
@@ -312,15 +266,6 @@ BackgroundWriterMain(void)
 			 * control back to the sigsetjmp block above
 			 */
 			ExitOnAnyError = true;
-<<<<<<< HEAD
-
-			/* Normal exit from the bgwriter server is here */
-			proc_exit(0);		/* done */
-		}
-
-		/* Perform a cycle of dirty buffer writing. */
-		BgBufferSync();
-=======
 			/* Normal exit from the bgwriter is here */
 			proc_exit(0);		/* done */
 		}
@@ -329,7 +274,6 @@ BackgroundWriterMain(void)
 		 * Do one cycle of dirty-buffer writing.
 		 */
 		can_hibernate = BgBufferSync();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Send off activity statistics to the stats collector
@@ -345,47 +289,6 @@ BackgroundWriterMain(void)
 			smgrcloseall();
 		}
 
-<<<<<<< HEAD
-		/* Nap for the configured time. */
-		BgWriterNap();
-	}
-}
-
-/*
- * BgWriterNap -- Nap for the configured time or until a signal is received.
- */
-static void
-BgWriterNap(void)
-{
-	long		udelay;
-
-	/*
-	 * Nap for the configured time, or sleep for 10 seconds if there is no
-	 * bgwriter activity configured.
-	 *
-	 * On some platforms, signals won't interrupt the sleep.  To ensure we
-	 * respond reasonably promptly when someone signals us, break down the
-	 * sleep into 1-second increments, and check for interrupts after each
-	 * nap.
-	 */
-	if (bgwriter_lru_maxpages > 0)
-		udelay = BgWriterDelay * 1000L;
-	else
-		udelay = 10000000L;		/* Ten seconds */
-
-	while (udelay > 999999L)
-	{
-		if (got_SIGHUP || shutdown_requested)
-			break;
-		pg_usleep(1000000L);
-		udelay -= 1000000L;
-	}
-
-	if (!(got_SIGHUP || shutdown_requested))
-		pg_usleep(udelay);
-}
-
-=======
 		/*
 		 * Sleep until we are signaled or BgWriterDelay has elapsed.
 		 *
@@ -442,7 +345,6 @@ BgWriterNap(void)
 }
 
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* --------------------------------
  *		signal handler routines
  * --------------------------------
@@ -458,12 +360,9 @@ BgSigHupHandler(SIGNAL_ARGS)
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
-<<<<<<< HEAD
-=======
 	errno = save_errno;
 }
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /* SIGTERM: set flag to shutdown and exit */
 static void
 ReqShutdownHandler(SIGNAL_ARGS)
@@ -471,8 +370,6 @@ ReqShutdownHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	shutdown_requested = true;
-<<<<<<< HEAD
-=======
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
@@ -488,5 +385,4 @@ bgwriter_sigusr1_handler(SIGNAL_ARGS)
 	latch_sigusr1_handler();
 
 	errno = save_errno;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
