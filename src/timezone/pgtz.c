@@ -3,11 +3,7 @@
  * pgtz.c
  *	  Timezone Library Integration Functions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * IDENTIFICATION
  *	  src/timezone/pgtz.c
@@ -38,10 +34,6 @@ pg_tz	   *session_timezone = NULL;
 /* Current log timezone (controlled by log_timezone GUC) */
 pg_tz	   *log_timezone = NULL;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static bool scan_directory_ci(const char *dirname,
 				  const char *fname, int fnamelen,
 				  char *canonname, int canonnamelen);
@@ -291,19 +283,6 @@ pg_tzset(const char *name)
 	 * "GMT" is always sent to tzparse(), as per discussion above.
 	 */
 	if (strcmp(uppername, "GMT") == 0)
-<<<<<<< HEAD
-=======
-	{
-		if (tzparse(uppername, &tzstate, TRUE) != 0)
-		{
-			/* This really, really should not happen ... */
-			elog(ERROR, "could not initialize GMT time zone");
-		}
-		/* Use uppercase name as canonical */
-		strcpy(canonname, uppername);
-	}
-	else if (tzload(uppername, canonname, &tzstate, TRUE) != 0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (!tzparse(uppername, &tzstate, true))
 		{
@@ -338,7 +317,6 @@ pg_tzset(const char *name)
 }
 
 /*
-<<<<<<< HEAD
  * Load a fixed-GMT-offset timezone.
  * This is used for SQL-spec SET TIME ZONE INTERVAL 'foo' cases.
  * It's otherwise equivalent to pg_tzset().
@@ -382,18 +360,12 @@ pg_tzset_offset(long gmtoffset)
 }
 
 /*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Initialize timezone library
  *
  * This is called before GUC variable initialization begins.  Its purpose
  * is to ensure that log_timezone has a valid value before any logging GUC
  * variables could become set to values that require elog.c to provide
-<<<<<<< HEAD
  * timestamps (e.g., log_line_prefix).  We may as well initialize
-=======
- * timestamps (e.g., log_line_prefix).	We may as well initialize
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * session_timestamp to something valid, too.
  */
 void
