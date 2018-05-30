@@ -173,27 +173,17 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-<<<<<<< HEAD
-	bool		scan_all;		/* should we scan all pages? */
-	bool		scanned_all;	/* did we actually scan all pages? */
-	TransactionId freezeTableLimit;
-	BlockNumber new_rel_pages;
-	double		new_rel_tuples;
-	TransactionId new_frozen_xid;
-
-	pg_rusage_init(&ru0);
-=======
 	long		secs;
 	int			usecs;
 	double		read_rate,
 				write_rate;
 	bool		scan_all;
+	bool		scanned_all;	/* did we actually scan all pages? */
 	TransactionId freezeTableLimit;
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
 	BlockNumber new_rel_allvisible;
 	TransactionId new_frozen_xid;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* measure elapsed time iff autovacuum logging requires it */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -272,21 +262,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/*
-	 * Compute whether we actually scanned the whole relation. If we did, we
-	 * can adjust relfrozenxid.
-	 *
-	 * NB: We need to check this before truncating the relation, because that
-	 * will change ->rel_pages.
-	 */
-	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
-	{
-		Assert(!scan_all);
-		scanned_all = false;
-	}
-	else
-		scanned_all = true;
-
-	/*
 	 * Optionally truncate the relation.
 	 *
 	 * Don't even think about it unless we have a shot at releasing a goodly
@@ -306,15 +281,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 *
 	 * A corner case here is that if we scanned no pages at all because every
 	 * page is all-visible, we should not update relpages/reltuples, because
-<<<<<<< HEAD
-	 * we have no new information to contribute.  In particular this keeps
-	 * us from replacing relpages=reltuples=0 (which means "unknown tuple
-	 * density") with nonzero relpages and reltuples=0 (which means "zero
-	 * tuple density") unless there's some actual evidence for the latter.
-	 *
-	 * Also, don't change relfrozenxid if we skipped any pages, since then
-	 * we don't know for certain that all tuples have a newer xmin.
-=======
 	 * we have no new information to contribute.  In particular this keeps us
 	 * from replacing relpages=reltuples=0 (which means "unknown tuple
 	 * density") with nonzero relpages and reltuples=0 (which means "zero
@@ -326,7 +292,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 *
 	 * Also, don't change relfrozenxid if we skipped any pages, since then we
 	 * don't know for certain that all tuples have a newer xmin.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	new_rel_pages = vacrelstats->rel_pages;
 	new_rel_tuples = vacrelstats->new_rel_tuples;
@@ -336,7 +301,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		new_rel_tuples = vacrelstats->old_rel_tuples;
 	}
 
-<<<<<<< HEAD
 	new_frozen_xid = scanned_all ? FreezeLimit : InvalidTransactionId;
 
 	vac_update_relstats(onerel,
@@ -344,7 +308,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						vacrelstats->hasindex,
 						new_frozen_xid,
 						true /* isvacuum */);
-=======
 	new_rel_allvisible = visibilitymap_count(onerel);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
@@ -359,7 +322,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
 						new_frozen_xid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -855,11 +817,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			{
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
-<<<<<<< HEAD
-=======
 				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
 								  InvalidTransactionId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			}
 
 			UnlockReleaseBuffer(buf);
@@ -1084,10 +1043,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* mark page all-visible, if appropriate */
 		if (all_visible)
 		{
-<<<<<<< HEAD
-			PageSetAllVisible(page);
-			MarkBufferDirty(buf);
-=======
 			if (!PageIsAllVisible(page))
 			{
 				PageSetAllVisible(page);
@@ -1121,7 +1076,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
 				 relname, blkno);
 			visibilitymap_clear(onerel, blkno, vmbuffer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/*
@@ -1143,29 +1097,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 relname, blkno);
 			PageClearAllVisible(page);
 			MarkBufferDirty(buf);
-<<<<<<< HEAD
-
-			/*
-			 * Normally, we would drop the lock on the heap page before
-			 * updating the visibility map, but since this case shouldn't
-			 * happen anyway, don't worry about that.
-			 */
-			visibilitymap_clear(onerel, blkno);
-		}
-
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-		/* Update the visibility map */
-		if (!all_visible_according_to_vm && all_visible)
-		{
-			visibilitymap_pin(onerel, blkno, &vmbuffer);
-			LockBuffer(buf, BUFFER_LOCK_SHARE);
-			if (PageIsAllVisible(page))
-				visibilitymap_set(onerel, blkno, PageGetLSN(page), &vmbuffer);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-=======
 			visibilitymap_clear(onerel, blkno, vmbuffer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		UnlockReleaseBuffer(buf);
@@ -1474,17 +1406,12 @@ lazy_cleanup_index(Relation indrel,
 	 */
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,
-<<<<<<< HEAD
-							stats->num_pages, stats->num_index_tuples,
-							false, InvalidTransactionId,
-							true /* isvacuum */);
-=======
 							stats->num_pages,
 							stats->num_index_tuples,
 							0,
 							false,
-							InvalidTransactionId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+							InvalidTransactionId,
+							true /* isvacuum */);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
