@@ -512,9 +512,12 @@ index_fetch_heap(IndexScanDesc scan)
 		/*
 		 * Prune page, but only if we weren't already on this page
 		 */
-		if (prev_buf != scan->xs_cbuf)
+		if (prev_buf != scan->xs_cbuf &&
+			TransactionIdIsValid(RecentGlobalXmin))
+		{
 			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf,
 								RecentGlobalXmin);
+		}
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */
@@ -595,177 +598,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			/* If we're out of index entries, we're done */
 			if (tid == NULL)
 				break;
-<<<<<<< HEAD
-
-			pgstat_count_index_tuples(scan->indexRelation, 1);
-
-			/* Switch to correct buffer if we don't have it already */
-			prev_buf = scan->xs_cbuf;
-			scan->xs_cbuf = ReleaseAndReadBuffer(scan->xs_cbuf,
-												 scan->heapRelation,
-											 ItemPointerGetBlockNumber(tid));
-
-			/*
-			 * Prune page, but only if we weren't already on this page
-			 */
-			if (prev_buf != scan->xs_cbuf &&
-				TransactionIdIsValid(RecentGlobalXmin))
-			{
-				heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf,
-									RecentGlobalXmin);
-			}
-
-			/* Prepare to scan HOT chain starting at index-referenced offnum */
-			offnum = ItemPointerGetOffsetNumber(tid);
-			at_chain_start = true;
-
-			/* We don't know what the first tuple's xmin should be */
-			scan->xs_prev_xmax = InvalidTransactionId;
-
-			/* Initialize flag to detect if all entries are dead */
-			scan->xs_hot_dead = true;
-		}
-
-		/* Obtain share-lock on the buffer so we can examine visibility */
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-
-		dp = (Page) BufferGetPage(scan->xs_cbuf);
-
-		/* Scan through possible multiple members of HOT-chain */
-		for (;;)
-		{
-			ItemId		lp;
-			ItemPointer ctid;
-			bool		valid;
-
-			/* check for bogus TID */
-			if (offnum < FirstOffsetNumber ||
-				offnum > PageGetMaxOffsetNumber(dp))
-				break;
-
-			lp = PageGetItemId(dp, offnum);
-
-			/* check for unused, dead, or redirected items */
-			if (!ItemIdIsNormal(lp))
-			{
-				/* We should only see a redirect at start of chain */
-				if (ItemIdIsRedirected(lp) && at_chain_start)
-				{
-					/* Follow the redirect */
-					offnum = ItemIdGetRedirect(lp);
-					at_chain_start = false;
-					continue;
-				}
-				/* else must be end of chain */
-				break;
-			}
-
-			/*
-			 * We must initialize all of *heapTuple (ie, scan->xs_ctup) since
-			 * it is returned to the executor on success.
-			 */
-			heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
-			heapTuple->t_len = ItemIdGetLength(lp);
-			ItemPointerSetOffsetNumber(tid, offnum);
-			ctid = &heapTuple->t_data->t_ctid;
-
-			/*
-			 * Shouldn't see a HEAP_ONLY tuple at chain start.  (This test
-			 * should be unnecessary, since the chain root can't be removed
-			 * while we have pin on the index entry, but let's make it
-			 * anyway.)
-			 */
-			if (at_chain_start && HeapTupleIsHeapOnly(heapTuple))
-				break;
-
-			/*
-			 * The xmin should match the previous xmax value, else chain is
-			 * broken.	(Note: this test is not optional because it protects
-			 * us against the case where the prior chain member's xmax aborted
-			 * since we looked at it.)
-			 */
-			if (TransactionIdIsValid(scan->xs_prev_xmax) &&
-				!TransactionIdEquals(scan->xs_prev_xmax,
-								  HeapTupleHeaderGetXmin(heapTuple->t_data)))
-				break;
-
-			/* If it's visible per the snapshot, we must return it */
-			valid = HeapTupleSatisfiesVisibility(scan->heapRelation,
-												 heapTuple, scan->xs_snapshot,
-												 scan->xs_cbuf);
-
-			CheckForSerializableConflictOut(valid, scan->heapRelation,
-											heapTuple, scan->xs_cbuf);
-
-			if (valid)
-			{
-				/*
-				 * If the snapshot is MVCC, we know that it could accept at
-				 * most one member of the HOT chain, so we can skip examining
-				 * any more members.  Otherwise, check for continuation of the
-				 * HOT-chain, and set state for next time.
-				 */
-				if (IsMVCCSnapshot(scan->xs_snapshot))
-					scan->xs_next_hot = InvalidOffsetNumber;
-				else if (HeapTupleIsHotUpdated(heapTuple))
-				{
-					Assert(ItemPointerGetBlockNumber(ctid) ==
-						   ItemPointerGetBlockNumber(tid));
-					scan->xs_next_hot = ItemPointerGetOffsetNumber(ctid);
-					scan->xs_prev_xmax = HeapTupleHeaderGetXmax(heapTuple->t_data);
-				}
-				else
-					scan->xs_next_hot = InvalidOffsetNumber;
-
-				PredicateLockTuple(scan->heapRelation, heapTuple);
-
-				LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-
-				pgstat_count_heap_fetch(scan->indexRelation);
-
-				return heapTuple;
-			}
-
-			/*
-			 * If we can't see it, maybe no one else can either.  Check to see
-			 * if the tuple is dead to all transactions.  If we find that all
-			 * the tuples in the HOT chain are dead, we'll signal the index AM
-			 * to not return that TID on future indexscans.
-			 */
-			if (scan->xs_hot_dead &&
-				HeapTupleSatisfiesVacuum(scan->heapRelation, heapTuple->t_data,
-										 RecentGlobalXmin, scan->xs_cbuf) != HEAPTUPLE_DEAD)
-				scan->xs_hot_dead = false;
-
-			/*
-			 * Check to see if HOT chain continues past this tuple; if so
-			 * fetch the next offnum (we don't bother storing it into
-			 * xs_next_hot, but must store xs_prev_xmax), and loop around.
-			 */
-			if (HeapTupleIsHotUpdated(heapTuple))
-			{
-				Assert(ItemPointerGetBlockNumber(ctid) ==
-					   ItemPointerGetBlockNumber(tid));
-				offnum = ItemPointerGetOffsetNumber(ctid);
-				at_chain_start = false;
-				scan->xs_prev_xmax = HeapTupleHeaderGetXmax(heapTuple->t_data);
-			}
-			else
-				break;			/* end of chain */
-		}						/* loop over a single HOT chain */
-
-		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-
-		/* Loop around to ask index AM for another TID */
-		scan->xs_next_hot = InvalidOffsetNumber;
-	}
-
-	/* Release any held pin on a heap page */
-	if (BufferIsValid(scan->xs_cbuf))
-	{
-		ReleaseBuffer(scan->xs_cbuf);
-		scan->xs_cbuf = InvalidBuffer;
-=======
 		}
 
 		/*
@@ -776,7 +608,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		heapTuple = index_fetch_heap(scan);
 		if (heapTuple != NULL)
 			return heapTuple;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	return NULL;				/* failure exit */

@@ -21,11 +21,7 @@
 #include "access/nbtree.h"
 #include "access/relscan.h"
 #include "catalog/index.h"
-<<<<<<< HEAD
 #include "catalog/pg_namespace.h"
-#include "catalog/storage.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "commands/vacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
@@ -581,7 +577,6 @@ btgetbitmap(PG_FUNCTION_ARGS)
 	int64		ntids = 0;
 	ItemPointer heapTid;
 
-<<<<<<< HEAD
 	if (n == NULL)
 	{
 		/* XXX should we use less than work_mem for this? */
@@ -609,18 +604,6 @@ btgetbitmap(PG_FUNCTION_ARGS)
 		}
 		else
 			PG_RETURN_POINTER(tbm);
-=======
-	/*
-	 * If we have any array keys, initialize them.
-	 */
-	if (so->numArrayKeys)
-	{
-		/* punt if we have any unsatisfiable array keys */
-		if (so->numArrayKeys < 0)
-			PG_RETURN_INT64(ntids);
-
-		_bt_start_array_keys(scan, ForwardScanDirection);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* This loop handles advancing to the next array elements, if any */

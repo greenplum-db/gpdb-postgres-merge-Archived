@@ -25,19 +25,6 @@
 #include "utils/rel.h"
 
 /* non-export function prototypes */
-<<<<<<< HEAD
-static void gistbuildCallback(Relation index,
-				  ItemPointer tupleId,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive,
-				  void *state);
-static void gistdoinsert(Relation r,
-			 IndexTuple itup,
-			 Size freespace,
-			 GISTSTATE *GISTstate);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void gistfixsplit(GISTInsertState *state, GISTSTATE *giststate);
 static bool gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
 			 GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
@@ -79,140 +66,6 @@ createTempGistContext(void)
 }
 
 /*
-<<<<<<< HEAD
- * Routine to build an index.  Basically calls insert over and over.
- *
- * XXX: it would be nice to implement some sort of bulk-loading
- * algorithm, but it is not clear how to do that.
- */
-Datum
-gistbuild(PG_FUNCTION_ARGS)
-{
-	Relation	heap = (Relation) PG_GETARG_POINTER(0);
-	Relation	index = (Relation) PG_GETARG_POINTER(1);
-	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
-	IndexBuildResult *result;
-	double		reltuples;
-	GISTBuildState buildstate;
-	Buffer		buffer;
-	Page		page;
-
-	/*
-	 * We expect to be called exactly once for any index relation. If that's
-	 * not the case, big trouble's what we have.
-	 */
-	if (RelationGetNumberOfBlocks(index) != 0)
-		elog(ERROR, "index \"%s\" already contains data",
-			 RelationGetRelationName(index));
-
-	/* no locking is needed */
-	initGISTstate(&buildstate.giststate, index);
-
-	/* initialize the root page */
-	buffer = gistNewBuffer(index);
-	Assert(BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO);
-	page = BufferGetPage(buffer);
-
-	START_CRIT_SECTION();
-
-	GISTInitBuffer(buffer, F_LEAF);
-
-	MarkBufferDirty(buffer);
-
-	if (RelationNeedsWAL(index))
-	{
-		XLogRecPtr	recptr;
-		XLogRecData rdata;
-
-		rdata.data = (char *) &(index->rd_node);
-		rdata.len = sizeof(RelFileNode);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
-
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX, &rdata);
-		PageSetLSN(page, recptr);
-	}
-	else
-		PageSetLSN(page, GetXLogRecPtrForTemp());
-
-	UnlockReleaseBuffer(buffer);
-
-	END_CRIT_SECTION();
-
-	/* build the index */
-	buildstate.numindexattrs = indexInfo->ii_NumIndexAttrs;
-	buildstate.indtuples = 0;
-
-	/*
-	 * create a temporary memory context that is reset once for each tuple
-	 * inserted into the index
-	 */
-	buildstate.tmpCtx = createTempGistContext();
-
-	/* do the heap scan */
-	reltuples = IndexBuildScan(heap, index, indexInfo, true,
-							   gistbuildCallback, (void *) &buildstate);
-
-	/* okay, all heap tuples are indexed */
-	MemoryContextDelete(buildstate.tmpCtx);
-
-	freeGISTstate(&buildstate.giststate);
-
-	/*
-	 * Return statistics
-	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
-
-	result->heap_tuples = reltuples;
-	result->index_tuples = buildstate.indtuples;
-
-	PG_RETURN_POINTER(result);
-}
-
-/*
- * Per-tuple callback from IndexBuildHeapScan
- */
-static void
-gistbuildCallback(Relation index,
-				  ItemPointer tupleId,
-				  Datum *values,
-				  bool *isnull,
-				  bool tupleIsAlive __attribute__((unused)),
-				  void *state)
-{
-	GISTBuildState *buildstate = (GISTBuildState *) state;
-	IndexTuple	itup;
-	MemoryContext oldCtx;
-
-	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
-
-	/* form an index tuple and point it at the heap tuple */
-	itup = gistFormTuple(&buildstate->giststate, index,
-						 values, isnull, true /* size is currently bogus */ );
-	itup->t_tid = *tupleId;
-
-	/*
-	 * Since we already have the index relation locked, we call gistdoinsert
-	 * directly.  Normal access method calls dispatch through gistinsert,
-	 * which locks the relation for write.	This is the right thing to do if
-	 * you're inserting single tups, but not when you're initializing the
-	 * whole index at once.
-	 *
-	 * In this path we respect the fillfactor setting, whereas insertions
-	 * after initial build do not.
-	 */
-	gistdoinsert(index, itup,
-			  RelationGetTargetPageFreeSpace(index, GIST_DEFAULT_FILLFACTOR),
-				 &buildstate->giststate);
-
-	buildstate->indtuples += 1;
-	MemoryContextSwitchTo(oldCtx);
-	MemoryContextReset(buildstate->tmpCtx);
-}
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *	gistbuildempty() -- build an empty gist index in the initialization fork
  */
 Datum
@@ -925,13 +778,8 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		{
 			/*
 			 * Page was split while we looked elsewhere. We didn't see the
-<<<<<<< HEAD
-			 * downlink to the right page when we scanned the parent, so
-			 * add it to the queue now.
-=======
 			 * downlink to the right page when we scanned the parent, so add
 			 * it to the queue now.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 *
 			 * Put the right page ahead of the queue, so that we visit it
 			 * next. That's important, because if this is the lowest internal
@@ -941,19 +789,10 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			 */
 			ptr = (GISTInsertStack *) palloc0(sizeof(GISTInsertStack));
 			ptr->blkno = GistPageGetOpaque(page)->rightlink;
-<<<<<<< HEAD
-			ptr->childoffnum = InvalidOffsetNumber;
-			ptr->parent = top->parent;
-			ptr->next = top->next;
-			top->next = ptr;
-			if (tail == top)
-				tail = ptr;
-=======
 			ptr->downlinkoffnum = InvalidOffsetNumber;
 			ptr->parent = top->parent;
 
 			fifo = lcons(ptr, fifo);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		maxoff = PageGetMaxOffsetNumber(page);
@@ -987,11 +826,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 
 	elog(ERROR, "failed to re-find parent of a page in index \"%s\", block %u",
 		 RelationGetRelationName(r), child);
-<<<<<<< HEAD
-	return NULL; /* keep compiler quiet */
-=======
 	return NULL;				/* keep compiler quiet */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -1062,11 +897,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 		}
 
 		/* ok, find new path */
-<<<<<<< HEAD
-		ptr = parent = gistFindPath(r, child->blkno);
-=======
 		ptr = parent = gistFindPath(r, child->blkno, &child->downlinkoffnum);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* read all buffers as expected by caller */
 		/* note we don't lock them or gistcheckpage them here! */
