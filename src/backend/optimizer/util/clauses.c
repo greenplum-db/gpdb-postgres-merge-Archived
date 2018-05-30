@@ -3,13 +3,9 @@
  * clauses.c
  *	  routines to manipulate qualification clauses
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -119,28 +115,15 @@ static List *simplify_and_arguments(List *args,
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
-<<<<<<< HEAD
-				  Oid result_collid, Oid input_collid, List **args,
-				  bool funcvariadic, 
-				  bool has_named_args,
-				  bool allow_inline,
-				  eval_const_expressions_context *context);
-static bool large_const(Expr *expr, Size max_size);
-static List *reorder_function_arguments(List *args, Oid result_type,
-						   HeapTuple func_tuple,
-						   eval_const_expressions_context *context);
-static List *add_function_defaults(List *args, Oid result_type,
-					  HeapTuple func_tuple,
-					  eval_const_expressions_context *context);
-=======
 				  Oid result_collid, Oid input_collid, List **args_p,
+				  bool funcvariadic, 
 				  bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context);
+static bool large_const(Expr *expr, Size max_size);
 static List *expand_function_arguments(List *args, Oid result_type,
 						  HeapTuple func_tuple);
 static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
 static List *add_function_defaults(List *args, HeapTuple func_tuple);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
 						   HeapTuple func_tuple);
@@ -4674,18 +4657,12 @@ simplify_boolean_equality(Oid opno, List *args)
  * will be done even if simplification of the function call itself is not
  * possible.
  */
-static Expr *
-simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
-<<<<<<< HEAD
-				  Oid result_collid, Oid input_collid, List **args,
-				  bool funcvariadic,
-				  bool has_named_args,
-				  bool allow_inline,
-=======
+static Expr *simplify_function(Oid funcid,
+				  Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
+				  bool funcvariadic, 
 				  bool process_args, bool allow_non_const,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-				  eval_const_expressions_context *context)
+				  eval_const_expressions_context *context);
 {
 	List	   *args = *args_p;
 	HeapTuple	func_tuple;

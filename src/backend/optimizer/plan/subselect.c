@@ -3,13 +3,9 @@
  * subselect.c
  *	  Planning routines for subselects and parameters.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -36,11 +32,8 @@
 #include "optimizer/subselect.h"
 #include "optimizer/var.h"
 #include "parser/parse_relation.h"
-<<<<<<< HEAD
 #include "parser/parsetree.h"
 #include "parser/parse_oper.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -201,66 +194,6 @@ assign_nestloop_param_var(PlannerInfo *root, Var *var)
 	retval->paramtypmod = var->vartypmod;
 	retval->paramcollid = var->varcollid;
 	retval->location = var->location;
-
-	return retval;
-}
-
-/*
- * Generate a Param node to replace the given PlaceHolderVar,
- * which is expected to have phlevelsup > 0 (ie, it is not local).
- *
- * This is just like replace_outer_var, except for PlaceHolderVars.
- */
-static Param *
-replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
-{
-	Param	   *retval;
-	ListCell   *ppl;
-	PlannerParamItem *pitem;
-	Index		abslevel;
-	int			i;
-
-	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
-	abslevel = root->query_level - phv->phlevelsup;
-
-	/* If there's already a paramlist entry for this same PHV, just use it */
-	i = 0;
-	foreach(ppl, root->glob->paramlist)
-	{
-		pitem = (PlannerParamItem *) lfirst(ppl);
-		if (pitem->abslevel == abslevel && IsA(pitem->item, PlaceHolderVar))
-		{
-			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
-
-			/* We assume comparing the PHIDs is sufficient */
-			if (pphv->phid == phv->phid)
-				break;
-		}
-		i++;
-	}
-
-	if (!ppl)
-	{
-		/* Nope, so make a new one */
-		phv = (PlaceHolderVar *) copyObject(phv);
-		IncrementVarSublevelsUp((Node *) phv, -((int) phv->phlevelsup), 0);
-		Assert(phv->phlevelsup == 0);
-
-		pitem = makeNode(PlannerParamItem);
-		pitem->item = (Node *) phv;
-		pitem->abslevel = abslevel;
-
-		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
-		/* i is already the correct index for the new item */
-	}
-
-	retval = makeNode(Param);
-	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
-	retval->paramtype = exprType((Node *) phv->phexpr);
-	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
-	retval->paramcollid = exprCollation((Node *) phv->phexpr);
-	retval->location = -1;
 
 	return retval;
 }
@@ -2249,13 +2182,8 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Don't recurse into the arguments of an outer PHV or aggregate here.
-	 * Any SubLinks in the arguments have to be dealt with at the outer query
-=======
 	 * Don't recurse into the arguments of an outer PHV or aggregate here. Any
 	 * SubLinks in the arguments have to be dealt with at the outer query
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * level; they'll be handled when build_subplan collects the PHV or Aggref
 	 * into the arguments to be passed down to the current subplan.
 	 */
