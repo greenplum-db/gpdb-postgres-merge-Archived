@@ -4,13 +4,9 @@
  *	   routines for accessing the system catalogs
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -67,12 +63,12 @@ static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 
 static void
 cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
-                      Relation      baserel,
                       Relation      rel,
                       int32        *attr_widths,
 				      BlockNumber  *pages,
                       double       *tuples,
-                      bool         *default_stats_used);
+                      bool         *default_stats_used,
+					  double       *allvisfrac);
 
 static void
 cdb_default_stats_warning_for_index(Oid reloid, Oid indexoid);
@@ -154,22 +150,17 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * calculation.
 	 */
 	if (!inhparent)
-<<<<<<< HEAD
 	{
 		cdb_estimate_rel_size(
 			rel,
 			relation,
-			relation,
 			rel->attr_widths - rel->min_attr,
 			&rel->pages,
 			&rel->tuples,
-			&rel->cdb_default_stats_used
+			&rel->cdb_default_stats_used,
+			&rel->allvisfrac
 			);
 	}
-=======
-		estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
-						  &rel->pages, &rel->tuples, &rel->allvisfrac);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
@@ -214,6 +205,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			IndexOptInfo *info;
 			int			ncolumns;
 			int			i;
+			double		allvisfrac; /* dummy */
 
 			/*
 			 * Extract info from the relation descriptor for the index.
@@ -393,29 +385,16 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			 * than the table.
 			 */
 			cdb_estimate_rel_size(rel,
-                                  relation,
                                   indexRelation,
                                   NULL,
                                   &info->pages,
                                   &info->tuples,
-                                  &info->cdb_default_stats_used);
+                                  &info->cdb_default_stats_used,
+                                  &allvisfrac);
 
 			if (!info->indpred ||
 				info->tuples > rel->tuples)
 				info->tuples = rel->tuples;
-<<<<<<< HEAD
-=======
-			}
-			else
-			{
-				double		allvisfrac; /* dummy */
-
-				estimate_rel_size(indexRelation, NULL,
-								  &info->pages, &info->tuples, &allvisfrac);
-				if (info->tuples > rel->tuples)
-					info->tuples = rel->tuples;
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
             if (info->cdb_default_stats_used &&
                 !rel->cdb_default_stats_used)
@@ -469,15 +448,16 @@ get_external_relation_info(Relation relation, RelOptInfo *rel)
  */
 void
 cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
-                      Relation      baserel,
                       Relation      rel,
                       int32        *attr_widths,
 				      BlockNumber  *pages,
                       double       *tuples,
-                      bool         *default_stats_used)
+                      bool         *default_stats_used,
+					  double       *allvisfrac)
 {
 	BlockNumber relpages;
 	double		reltuples;
+	BlockNumber relallvisible;
 	double		density;
     BlockNumber curpages = 0;
 
@@ -487,7 +467,7 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
     if (!relOptInfo->cdbpolicy ||
         relOptInfo->cdbpolicy->ptype == POLICYTYPE_ENTRY)
     {
-        estimate_rel_size(rel, attr_widths, pages, tuples);
+        estimate_rel_size(rel, attr_widths, pages, tuples, allvisfrac);
         return;
     }
 
@@ -495,6 +475,7 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 	/* coerce values in pg_class to more desirable types */
 	relpages = (BlockNumber) rel->rd_rel->relpages;
 	reltuples = (double) rel->rd_rel->reltuples;
+	relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
 
 	/*
 	 * Asking the QE for the size of the relation is a bit expensive.
@@ -562,7 +543,15 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 		/* note: integer division is intentional here */
 		density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 	}
-	*tuples = ceil(density * curpages);
+	*tuples = rint(density * (double) curpages);
+
+	/* See estimate_rel_size() */
+	if (relallvisible == 0 || curpages <= 0)
+		*allvisfrac = 0;
+	else if ((double) relallvisible >= curpages)
+		*allvisfrac = 1;
+	else
+		*allvisfrac = (double) relallvisible / curpages;
 
 	elog(DEBUG2,"cdb_estimate_rel_size  estimated %g tuples and %d pages",*tuples,(int)*pages);
 
@@ -713,9 +702,6 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				/* note: integer division is intentional here */
 				density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 			}
-<<<<<<< HEAD
-			*tuples = ceil(density * curpages);
-=======
 			*tuples = rint(density * (double) curpages);
 
 			/*
@@ -730,7 +716,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				*allvisfrac = 1;
 			else
 				*allvisfrac = (double) relallvisible / curpages;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
 			break;
 		case RELKIND_SEQUENCE:
 			/* Sequences always have a known size */

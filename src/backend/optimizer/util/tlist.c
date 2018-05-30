@@ -20,6 +20,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "utils/lsyscache.h" /* get_typavgwidth() */
 
 typedef struct maxSortGroupRef_context
 {

@@ -4,12 +4,8 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2017, Pivotal Software Inc
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -27,11 +23,6 @@
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
 #include "parser/parse_expr.h"
-
-/* Local functions */
-static Relids find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
-static void find_placeholders_in_qual(PlannerInfo *root, Node *expr,
-									  Relids relids);
 
 /* Local functions */
 static Relids find_placeholders_recurse(PlannerInfo *root, Node *jtnode);
@@ -222,11 +213,7 @@ mark_placeholders_in_expr(PlannerInfo *root, Node *expr, Relids relids)
 	 * pull_var_clause does more than we need here, but it'll do and it's
 	 * convenient to use.
 	 */
-<<<<<<< HEAD
-	vars = pull_var_clause(qual,
-=======
 	vars = pull_var_clause(expr,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						   PVC_RECURSE_AGGREGATES,
 						   PVC_INCLUDE_PLACEHOLDERS);
 	foreach(vl, vars)

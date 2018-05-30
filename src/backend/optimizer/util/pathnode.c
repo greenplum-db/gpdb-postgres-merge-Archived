@@ -3,13 +3,9 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,14 +18,11 @@
 
 #include <math.h>
 
-<<<<<<< HEAD
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "foreign/fdwapi.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -39,11 +32,8 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
 #include "utils/memutils.h"
 #include "utils/selfuncs.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 
@@ -637,15 +627,13 @@ add_path(PlannerInfo *root, RelOptInfo *parent_rel, Path *new_path)
 	 */
 	CHECK_FOR_INTERRUPTS();
 
-<<<<<<< HEAD
 	if (!new_path)
 		return;
 
 	Assert(cdbpathlocus_is_valid(new_path->locus));
-=======
+
 	/* Pretend parameterized paths have no pathkeys, per comment above */
 	new_path_pathkeys = new_path->param_info ? NIL : new_path->pathkeys;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Loop to check proposed new path against old paths.  Note it is possible
@@ -1108,16 +1096,13 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 													 required_outer);
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
 
-<<<<<<< HEAD
 	pathnode->locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->motionHazard = false;
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = rel->relids;
 
 	cost_seqscan(pathnode, root, rel);
-=======
 	cost_seqscan(pathnode, root, rel, pathnode->param_info);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return pathnode;
 }
@@ -1500,11 +1485,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
  * Note that we must handle subpaths = NIL, representing a dummy access path.
  */
 AppendPath *
-<<<<<<< HEAD
-create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths)
-=======
-create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
 
@@ -2082,11 +2063,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	pathnode->path.pathtype = T_Unique;
 	pathnode->path.parent = rel;
-<<<<<<< HEAD
 	pathnode->path.locus = locus;
-=======
 	pathnode->path.param_info = subpath->param_info;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Assume the output is unsorted, since we don't necessarily have pathkeys
@@ -2723,12 +2701,8 @@ distinct_col_search(int colno, List *colnos, List *opids)
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
-create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
-=======
 create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 List *pathkeys, Relids required_outer)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -2738,16 +2712,12 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->pathkeys = pathkeys;
 
-<<<<<<< HEAD
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
 	pathnode->motionHazard = true;          /* better safe than sorry */
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
-	cost_subqueryscan(pathnode, rel);
-=======
 	cost_subqueryscan(pathnode, root, rel, pathnode->param_info);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return pathnode;
 }
@@ -3123,16 +3093,15 @@ create_nestloop_path(PlannerInfo *root,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-<<<<<<< HEAD
 					 List *mergeclause_list,    /*CDB*/
-					 List *pathkeys)
+					 List *pathkeys,
+					 Relids required_outer)
+<<<<<<< HEAD
 {
 	NestPath   *pathnode;
 	CdbPathLocus join_locus;
 	bool		inner_must_be_local = false;
 =======
-					 List *pathkeys,
-					 Relids required_outer)
 {
 	NestPath   *pathnode = makeNode(NestPath);
 	Relids		inner_req_outer = PATH_REQ_OUTER(inner_path);

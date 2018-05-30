@@ -182,20 +182,21 @@ static Path *
 create_bitmap_scan_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-						RelOptInfo *outer_rel)
+						Relids required_outer,
+						double loop_count)
 {
 	Path	   *path = NULL;
 
 	switch (rel->relstorage)
 	{
 		case RELSTORAGE_HEAP:
-			path = (Path *) create_bitmap_heap_path(root, rel, bitmapqual, outer_rel);
+			path = (Path *) create_bitmap_heap_path(root, rel, bitmapqual, required_outer);
 			break;
 		case RELSTORAGE_AOROWS:
-			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, outer_rel, true);
+			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, true);
 			break;
 		case RELSTORAGE_AOCOLS:
-			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, outer_rel, false);
+			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, false);
 			break;
 		default:
 			elog(ERROR, "unrecognized relstorage type %d for using bitmap scan path",

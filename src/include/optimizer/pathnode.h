@@ -32,25 +32,18 @@ extern int compare_path_costs(Path *path1, Path *path2,
 				   CostSelector criterion);
 extern int compare_fractional_path_costs(Path *path1, Path *path2,
 							  double fraction);
-<<<<<<< HEAD
 extern void set_cheapest(PlannerInfo *root, RelOptInfo *parent_rel);    /*CDB*/
 extern void add_path(PlannerInfo *root, RelOptInfo *parent_rel, Path *new_path);
 extern void cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_jointype, JoinPath *new_path);
-
-extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
+					Relids required_outer);
 extern ExternalPath *create_external_path(PlannerInfo *root, RelOptInfo *rel);
 extern AppendOnlyPath *create_appendonly_path(PlannerInfo *root, RelOptInfo *rel);
 extern AOCSPath *create_aocs_path(PlannerInfo *root, RelOptInfo *rel);
-=======
-extern void set_cheapest(RelOptInfo *parent_rel);
-extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 extern bool add_path_precheck(RelOptInfo *parent_rel,
 				  Cost startup_cost, Cost total_cost,
 				  List *pathkeys, Relids required_outer);
 
-extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-					Relids required_outer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *indexclauses,
@@ -65,21 +58,19 @@ extern IndexPath *create_index_path(PlannerInfo *root,
 extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-<<<<<<< HEAD
-						RelOptInfo *outer_rel);
+						Relids required_outer,
+						double loop_count);
 extern BitmapAppendOnlyPath *create_bitmap_appendonly_path(PlannerInfo *root,
 														   RelOptInfo *rel,
 														   Path *bitmapqual,
-														   RelOptInfo *outer_rel,
-														   bool isAORow);
+														   Relids required_outer,
+														   bool isAORow,
+														   double loop_count);
 extern BitmapTableScanPath *create_bitmap_table_scan_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-						RelOptInfo *outer_rel);
-=======
 						Relids required_outer,
 						double loop_count);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern BitmapAndPath *create_bitmap_and_path(PlannerInfo *root,
 					   RelOptInfo *rel,
 					   List *bitmapquals);
@@ -88,12 +79,9 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals);
-<<<<<<< HEAD
-extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths);
-=======
-extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
-				   Relids required_outer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+extern AppendPath *create_append_path(PlannerInfo *root, RelOptInfo *rel,
+					List *subpaths,
+					Relids required_outer);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
@@ -103,25 +91,17 @@ extern ResultPath *create_result_path(List *quals);
 extern MaterialPath *create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
-<<<<<<< HEAD
 extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
 						 RelOptInfo *rel,
                          Path        *subpath,
                          Relids       distinct_relids);
-extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
+extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
+						 List *pathkeys, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus);
-extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel);
-=======
-extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
-						 List *pathkeys, Relids required_outer);
-extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
-extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
-extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
-extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,
@@ -130,7 +110,6 @@ extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 
 extern Relids calc_nestloop_required_outer(Path *outer_path, Path *inner_path);
 extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern bool path_contains_inner_index(Path *path);
 extern NestPath *create_nestloop_path(PlannerInfo *root,
@@ -142,13 +121,9 @@ extern NestPath *create_nestloop_path(PlannerInfo *root,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-<<<<<<< HEAD
 					 List *mergeclause_list,    /*CDB*/
-					 List *pathkeys);
-=======
 					 List *pathkeys,
 					 Relids required_outer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern MergePath *create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
@@ -174,11 +149,8 @@ extern HashPath *create_hashjoin_path(PlannerInfo *root,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-<<<<<<< HEAD
                      List *mergeclause_list,    /*CDB*/
-=======
 					 Relids required_outer,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					 List *hashclauses);
 
 extern Path *reparameterize_path(PlannerInfo *root, Path *path,
@@ -199,10 +171,7 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 			   RelOptInfo *inner_rel,
 			   SpecialJoinInfo *sjinfo,
 			   List **restrictlist_ptr);
-<<<<<<< HEAD
 extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel, List *input_tlist);
-
-extern List *build_relation_tlist(RelOptInfo *rel);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
                          RelOptInfo    *rel,
@@ -213,7 +182,7 @@ extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
 extern CdbRelColumnInfo *cdb_find_pseudo_column(PlannerInfo *root, Var *var);
 
 extern CdbRelColumnInfo *cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno);
-=======
+
 extern AppendRelInfo *find_childrel_appendrelinfo(PlannerInfo *root,
 							RelOptInfo *rel);
 extern ParamPathInfo *get_baserel_parampathinfo(PlannerInfo *root,
@@ -228,6 +197,5 @@ extern ParamPathInfo *get_joinrel_parampathinfo(PlannerInfo *root,
 						  List **restrict_clauses);
 extern ParamPathInfo *get_appendrel_parampathinfo(RelOptInfo *appendrel,
 							Relids required_outer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* PATHNODE_H */
