@@ -394,7 +394,6 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2, bool strict)
 			return false;
 		if (attr1->attalign != attr2->attalign)
 			return false;
-<<<<<<< HEAD
 
 		if (strict)
 		{
@@ -412,21 +411,6 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2, bool strict)
 				return false;
 			/* attacl and attoptions are not even present... */
 		}
-=======
-		if (attr1->attnotnull != attr2->attnotnull)
-			return false;
-		if (attr1->atthasdef != attr2->atthasdef)
-			return false;
-		if (attr1->attisdropped != attr2->attisdropped)
-			return false;
-		if (attr1->attislocal != attr2->attislocal)
-			return false;
-		if (attr1->attinhcount != attr2->attinhcount)
-			return false;
-		if (attr1->attcollation != attr2->attcollation)
-			return false;
-		/* attacl, attoptions and attfdwoptions are not even present... */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	if (!strict)
