@@ -34,11 +34,8 @@
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
-<<<<<<< HEAD
 #include "executor/spi.h"
-=======
 #include "foreign/fdwapi.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_oper.h"
@@ -105,6 +102,15 @@ typedef struct RowIndexes
 	int toowide_cnt;
 } RowIndexes;
 
+typedef int (*AcquireSampleRowsByQueryFunc) (Relation onerel, int nattrs,
+											 VacAttrStats **attrstats,
+											 HeapTuple **rows,
+											 int targrows, double *totalrows,
+											 double *totaldeadrows,
+											 BlockNumber *totalpages,
+											 bool rootonly,
+											 RowIndexes **colLargeRowIndexes /* Maintain information if the row of a column exceeds WIDTH_THRESHOLD */);
+
 /* Default statistics target (GUC parameter) */
 int			default_statistics_target = 100;
 
@@ -114,7 +120,7 @@ static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
 			   bool inh, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
@@ -126,24 +132,14 @@ static void compute_index_stats(Relation onerel, double totalrows,
 					MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 				  Node *index_expr);
-<<<<<<< HEAD
-static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
-					int targrows, double *totalrows, double *totaldeadrows);
+static int acquire_sample_rows(Relation onerel, int elevel,
+							   HeapTuple *rows, int targrows,
+							   double *totalrows, double *totaldeadrows);
 static int acquire_sample_rows_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, HeapTuple **rows,
 										int targrows, double *totalrows, double *totaldeadrows, BlockNumber *totalpages, bool rootonly,  RowIndexes **colLargeRowIndexes /* Maintain information if the row of a column exceeds WIDTH_THRESHOLD */);
-static double random_fract(void);
-static double init_selection_state(int n);
-static double get_next_S(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
 #if 0
-static int acquire_inherited_sample_rows(Relation onerel,
-=======
-static int acquire_sample_rows(Relation onerel, int elevel,
-					HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows);
-static int	compare_rows(const void *a, const void *b);
 static int acquire_inherited_sample_rows(Relation onerel, int elevel,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows);
 #endif
@@ -152,16 +148,11 @@ static void update_attstats(Oid relid, bool inh,
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
-<<<<<<< HEAD
-static bool std_typanalyze(VacAttrStats *stats);
-
 static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *relPages, bool rootonly);
 static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages);
 
 static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 BufferAccessStrategy bstrategy);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -201,7 +192,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 {
 	Relation	onerel;
 	int			elevel;
-	AcquireSampleRowsFunc acquirefunc = NULL;
+	AcquireSampleRowsByQueryFunc acquirefunc = NULL;
 	BlockNumber relpages = 0;
 
 	/* Select logging level */
@@ -268,24 +259,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Check that it's a plain table; we used to do this in get_rel_oids() but
-	 * seems safer to check after we've locked the relation.
-	 */
-	if (onerel->rd_rel->relkind != RELKIND_RELATION || RelationIsExternal(onerel))
-	{
-		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
-							RelationGetRelationName(onerel))));
-		relation_close(onerel, ShareUpdateExclusiveLock);
-		return;
-	}
-
-	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Silently ignore tables that are temp tables of other backends ---
 	 * trying to analyze these is rather pointless, since their contents are
 	 * probably not up-to-date on disk.  (We don't throw a warning here; it
@@ -311,14 +284,23 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * get_rel_oids() but seems safer to check after we've locked the
 	 * relation.
 	 */
-	if (onerel->rd_rel->relkind == RELKIND_RELATION)
+	if (onerel->rd_rel->relkind == RELKIND_RELATION &&
+		!RelationIsExternal(onerel))
 	{
 		/* Regular table, so we'll use the regular row acquisition function */
-		acquirefunc = acquire_sample_rows;
+		acquirefunc = acquire_sample_rows_by_query;
 		/* Also get regular table's size */
 		relpages = RelationGetNumberOfBlocks(onerel);
 	}
-	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	/*
+	 * GPDB_92_MERGE_FIXME: do_analyze_rel add a param AcquireSampleRowsFunc
+	 * to get a function to acquire sample rows. But gpdb function
+	 * acquire_sample_rows_by_query has a different param list to the origin
+	 * function acquire_sample_rows and AcquireSampleRowsFunc.
+	 */
+#if 0
+	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE &&
+			 !RelationIsExternal(onerel))
 	{
 		/*
 		 * For a foreign table, call the FDW's hook function to see whether it
@@ -343,6 +325,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 			return;
 		}
 	}
+#endif
 	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
@@ -367,13 +350,9 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
-<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
-		do_analyze_rel(onerel, vacstmt, false);
-=======
-	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -424,7 +403,7 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
  */
 static void
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
 			   bool inh, int elevel)
 {
 	int			attr_cnt,
@@ -593,13 +572,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	/*
 	 * Determine how many rows we need to sample, using the worst case from
 	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
-<<<<<<< HEAD
-	 * possible overflow in Vitter's algorithm.  (Note: that will also be
-	 * the target in the corner case where there are no analyzable columns.)
-=======
 	 * possible overflow in Vitter's algorithm.  (Note: that will also be the
 	 * target in the corner case where there are no analyzable columns.)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	targrows = 100;
 	for (i = 0; i < attr_cnt; i++)
@@ -644,17 +618,11 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 												rows, targrows,
 												&totalrows, &totaldeadrows);
 	else
-<<<<<<< HEAD
 #endif
-		numrows = acquire_sample_rows_by_query(onerel, attr_cnt, vacattrstats, &rows, targrows,
-											   &totalrows, &totaldeadrows, &totalpages,
-											   (vacstmt->options & VACOPT_ROOTONLY) != 0,
-											   colLargeRowIndexes);
-=======
-		numrows = (*acquirefunc) (onerel, elevel,
-								  rows, targrows,
-								  &totalrows, &totaldeadrows);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		numrows = (*acquirefunc) (onerel, attr_cnt, vacattrstats, &rows, targrows,
+								  &totalrows, &totaldeadrows, &totalpages,
+								  (vacstmt->options & VACOPT_ROOTONLY) != 0,
+								  colLargeRowIndexes);
 
 	/* change the privilige back to the table owner */
 	SetUserIdAndSecContext(onerel->rd_rel->relowner,
@@ -681,7 +649,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
-<<<<<<< HEAD
 			RowIndexes *rowIndexes = colLargeRowIndexes[i];
 			int validRowsLength = numrows - rowIndexes->toowide_cnt;
 
@@ -708,9 +675,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 			}
 			AttributeOpts *aopt =
 			get_attribute_options(onerel->rd_id, stats->attr->attnum);
-=======
-			AttributeOpts *aopt;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			stats->tupDesc = onerel->rd_att;
 
@@ -790,9 +754,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
-<<<<<<< HEAD
 							totalpages,
 							totalrows,
+							visibilitymap_count(onerel),
 							hasindex,
 							InvalidTransactionId,
 							false /* isvacuum */);
@@ -801,17 +765,11 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		vac_update_relstats(onerel,
 							totalpages,
 							totalrows,
+							visibilitymap_count(onerel),
 							onerel->rd_rel->relhasindex,
 							InvalidTransactionId,
 							false /* isvacuum */);
 	}
-=======
-							relpages,
-							totalrows,
-							visibilitymap_count(onerel),
-							hasindex,
-							InvalidTransactionId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -851,17 +809,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
-<<<<<<< HEAD
 								estimatedIndexPages,
-								totalindexrows, false, InvalidTransactionId,
+								totalindexrows, 0, false, InvalidTransactionId,
 								false /* isvacuum */);
-=======
-								RelationGetNumberOfBlocks(Irel[ind]),
-								totalindexrows,
-								0,
-								false,
-								InvalidTransactionId);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -1159,14 +1109,8 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 								   ObjectIdGetDatum(stats->attrtypid));
 	if (!HeapTupleIsValid(typtuple))
 		elog(ERROR, "cache lookup failed for type %u", stats->attrtypid);
-<<<<<<< HEAD
-	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
-	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
-	stats->relstorage = RelationGetForm(onerel)->relstorage;
-	ReleaseSysCache(typtuple);
-=======
 	stats->attrtype = (Form_pg_type) GETSTRUCT(typtuple);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	stats->relstorage = RelationGetForm(onerel)->relstorage;
 	stats->anl_context = anl_context;
 	stats->tupattnum = attnum;
 
@@ -1331,14 +1275,9 @@ BlockSampler_Next(BlockSampler bs)
  * GPDB: Not used in Greenplum currently. Instead, we acquire the sample
  * rows by issuing an SPI query, see acquire_sample_rows_by_query
  */
-<<<<<<< HEAD
-static int pg_attribute_unused()
-acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
-=======
 static int
 acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
