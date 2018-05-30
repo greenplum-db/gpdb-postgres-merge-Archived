@@ -176,18 +176,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	 * Save the results.
 	 */
 	StorePreparedStatement(stmt->name,
-<<<<<<< HEAD
-						   stmt->query,
-						   queryString,
-						   srctag,
-						   CreateCommandTag((Node *) query),
-						   argtypes,
-						   nargs,
-						   0,	/* default cursor options */
-						   plan_list,
-=======
 						   plansource,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						   true);
 }
 
@@ -256,7 +245,6 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	plan_list = cplan->stmt_list;
 
 	/*
-<<<<<<< HEAD
 	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
 	 * so that we can modify its destination (yech, but this has always been
 	 * ugly).  For regular EXECUTE we can just use the cached query, since the
@@ -275,36 +263,11 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	 * case all the output rows will be fetched into the master. Because of
 	 * that, we also have to pass the into-clause to
 	 * RevalidateCachedPlanWithParams. (MPP-8135)
-=======
-	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
-	 * statement is one that produces tuples.  Currently we insist that it be
-	 * a plain old SELECT.	In future we might consider supporting other
-	 * things such as INSERT ... RETURNING, but there are a couple of issues
-	 * to be settled first, notably how WITH NO DATA should be handled in such
-	 * a case (do we really want to suppress execution?) and how to pass down
-	 * the OID-determining eflags (PortalStart won't handle them in such a
-	 * case, and for that matter it's not clear the executor will either).
-	 *
-	 * For CREATE TABLE ... AS EXECUTE, we also have to ensure that the proper
-	 * eflags and fetch count are passed to PortalStart/PortalRun.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	if (intoClause)
 	{
 		PlannedStmt *pstmt;
 
-<<<<<<< HEAD
-		/* Replan if needed, and increment plan refcount transiently */
-		cplan = RevalidateCachedPlanWithParams(entry->plansource, true,
-											   paramLI, stmt->into);
-
-		/* Copy plan into portal's context, and modify */
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-		plan_list = copyObject(cplan->stmt_list);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (list_length(plan_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -328,15 +291,9 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	}
 	else
 	{
-<<<<<<< HEAD
-		/* Replan if needed, and increment plan refcount for portal */
-		cplan = RevalidateCachedPlanWithParams(entry->plansource, false, paramLI, NULL);
-		plan_list = cplan->stmt_list;
-=======
 		/* Plain old EXECUTE */
 		eflags = 0;
 		count = FETCH_ALL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	PortalDefineQuery(portal,
@@ -350,11 +307,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	/*
 	 * Run the portal as appropriate.
 	 */
-<<<<<<< HEAD
-	PortalStart(portal, paramLI, GetActiveSnapshot(), NULL);
-=======
-	PortalStart(portal, paramLI, eflags, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	PortalStart(portal, paramLI, eflags, true, NULL);
 
 	(void) PortalRun(portal, count, false, dest, dest, completionTag);
 
@@ -725,11 +678,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 
 	query_string = entry->plansource->query_string;
 
-<<<<<<< HEAD
-	/* Replan if needed, and acquire a transient refcount */
-	cplan = RevalidateCachedPlanWithParams(entry->plansource, true,
-										   paramLI, execstmt->into);
-=======
 	/* Evaluate parameters, if any */
 	if (entry->plansource->num_params)
 	{
@@ -747,7 +695,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 
 	/* Replan if needed, and acquire a transient refcount */
 	cplan = GetCachedPlan(entry->plansource, paramLI, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	plan_list = cplan->stmt_list;
 
