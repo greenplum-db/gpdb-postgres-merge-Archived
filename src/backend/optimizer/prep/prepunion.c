@@ -17,13 +17,9 @@
  * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -60,19 +56,6 @@
 #include "cdb/cdbvars.h"
 #include "cdb/cdbsetop.h"
 
-/*
- * In PostgreSQL, adjust_appendrel_attrs_mutator() uses AppendRelInfo as the
- * 'context'. But in GPDB, we need the PlannerInfo as well, so we pass this
- * struct instead.
- * Struct to enable adjusting for partitioned tables.
- */
-typedef struct AppendRelInfoContext
-{
-	PlannerInfo *root;
-	AppendRelInfo *appinfo;
-} AppendRelInfoContext;
-
-static Node *adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx);
 
 typedef struct
 {
@@ -129,11 +112,8 @@ static void make_inh_translation_list(Relation oldrelation,
 						  List **translated_vars);
 static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
 					List *translated_vars);
-<<<<<<< HEAD
-=======
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *apprelinfo);
@@ -250,12 +230,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
 		RangeTblEntry *rte = root->simple_rte_array[rtr->rtindex];
 		Query	   *subquery = rte->subquery;
-<<<<<<< HEAD
-		PlannerInfo *subroot = NULL;
-=======
 		RelOptInfo *rel;
 		PlannerInfo *subroot;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		Plan	   *subplan,
 				   *plan;
 
@@ -312,14 +288,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 												   refnames_tlist),
 							  NIL,
 							  rtr->rtindex,
-<<<<<<< HEAD
-							  subplan,
-							  subroot->parse->rtable,
-							  subroot->rowMarks);
-		mark_passthru_locus(plan, FALSE, FALSE); /* CDB: no hash/sort keys */
-=======
 							  subplan);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		mark_passthru_locus(plan, FALSE, FALSE); /* CDB: no hash/sort keys */
 
 		/*
 		 * We don't bother to determine the subquery's output ordering since
@@ -1742,16 +1712,10 @@ Node *
 adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 {
 	Node	   *result;
-<<<<<<< HEAD
-	AppendRelInfoContext ctx;
-	ctx.root = root;
-	ctx.appinfo = appinfo;
-=======
 	adjust_appendrel_attrs_context context;
 
 	context.root = root;
 	context.appinfo = appinfo;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree.
@@ -1762,11 +1726,7 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
-<<<<<<< HEAD
-									 (void *) &ctx,
-=======
 									 (void *) &context,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 									 QTW_IGNORE_RC_SUBQUERIES);
 		if (newnode->resultRelation == appinfo->parent_relid)
 		{
@@ -1780,11 +1740,7 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 		result = (Node *) newnode;
 	}
 	else
-<<<<<<< HEAD
-		result = adjust_appendrel_attrs_mutator(node, &ctx);
-=======
 		result = adjust_appendrel_attrs_mutator(node, &context);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return result;
 }
@@ -1794,18 +1750,10 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
  * for a child partition.
  */
 static Node *
-<<<<<<< HEAD
-adjust_appendrel_attrs_mutator(Node *node, AppendRelInfoContext *ctx)
-{
-	Assert(ctx);
-	AppendRelInfo *appinfo = ctx->appinfo;
-	Assert(appinfo);
-=======
 adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context)
 {
 	AppendRelInfo *appinfo = context->appinfo;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (node == NULL)
 		return NULL;
@@ -1873,11 +1821,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 					List	   *fields;
 					RangeTblEntry *rte;
 
-<<<<<<< HEAD
-=======
 					rte = rt_fetch(appinfo->parent_relid,
 								   context->root->parse->rtable);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					fields = (List *) copyObject(appinfo->translated_vars);
 					rowexpr = makeNode(RowExpr);
 					rowexpr->args = fields;
@@ -1971,12 +1916,9 @@ adjust_appendrel_attrs_mutator(Node *node,
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
 													appinfo->parent_relid,
 													appinfo->child_relid);
-<<<<<<< HEAD
-=======
 		newinfo->outer_relids = adjust_relid_set(oldinfo->outer_relids,
 												 appinfo->parent_relid,
 												 appinfo->child_relid);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
 													appinfo->parent_relid,
 													appinfo->child_relid);
