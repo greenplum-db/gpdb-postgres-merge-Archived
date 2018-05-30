@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -250,17 +246,13 @@ bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
 
-<<<<<<< HEAD
+char	   *output_config_variable = NULL;
+
 /*
  * PIDs of special child processes; 0 when not running. When adding a new PID
  * to the list, remember to add the process title to GetServerProcessTitle()
  * as well.
  */
-=======
-char	   *output_config_variable = NULL;
-
-/* PIDs of special child processes; 0 when not running */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
@@ -335,15 +327,10 @@ typedef enum
 	PM_RUN,						/* normal "database is alive" state */
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
-<<<<<<< HEAD
 	PM_WAIT_REGULAR_BACKENDS,	/* waiting for live backends to exit, but not seqserver (GPDB-specific) */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit (including seqserver) */
-	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
-=======
-	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
 	PM_SHUTDOWN,				/* waiting for checkpointer to do shutdown
 								 * ckpt */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
 								 * finish */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
@@ -446,11 +433,7 @@ static DNSServiceRef bonjour_sdref = NULL;
  */
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
-<<<<<<< HEAD
 static void checkPgDir(const char *dir);
-static void pmdaemonize(void);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 
@@ -521,10 +504,6 @@ typedef struct
 	HANDLE		procHandle;
 	DWORD		procId;
 } win32_deadchild_waitinfo;
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 
 static pid_t backend_forkexec(Port *port);
@@ -606,11 +585,7 @@ static void ShmemBackendArrayRemove(Backend *bn);
 
 #define StartupDataBase()		StartChildProcess(StartupProcess)
 #define StartBackgroundWriter() StartChildProcess(BgWriterProcess)
-<<<<<<< HEAD
-#define StartCheckpointer()     StartChildProcess(CheckpointerProcess)
-=======
 #define StartCheckpointer()		StartChildProcess(CheckpointerProcess)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #define StartWalWriter()		StartChildProcess(WalWriterProcess)
 #define StartWalReceiver()		StartChildProcess(WalReceiverProcess)
 
@@ -619,13 +594,10 @@ static void ShmemBackendArrayRemove(Backend *bn);
 #define EXIT_STATUS_1(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 1)
 #define EXIT_STATUS_2(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 2)
 
-<<<<<<< HEAD
 /* if we are a QD postmaster or not */
 extern bool Gp_entry_postmaster;
 bool Gp_entry_postmaster = false;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #ifndef WIN32
 /*
  * File descriptors for pipe used to monitor if postmaster is alive.
@@ -697,11 +669,7 @@ PostmasterMain(int argc, char *argv[])
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-<<<<<<< HEAD
-	while ((opt = getopt(argc, argv, "A:B:bc:D:d:EeFf:h:ijk:lN:mM:nOo:Pp:r:S:sTt:UW:-:")) != -1)
-=======
-	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	while ((opt = getopt(argc, argv, "A:B:bc:C:D:d:EeFf:h:ijk:lN:mM:nOo:Pp:r:S:sTt:UW:-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -930,7 +898,6 @@ PostmasterMain(int argc, char *argv[])
 	if (!SelectConfigFiles(userDoption, progname))
 		ExitPostmaster(2);
 
-<<<<<<< HEAD
 	/*
 	 * CDB/MPP/GPDB: Set the processor affinity (may be a no-op on
 	 * some platforms). The port number is nice to use because we know
@@ -943,7 +910,7 @@ PostmasterMain(int argc, char *argv[])
  	 */
 	if (gp_set_proc_affinity)
 		setProcAffinity(PostPortNumber);
-=======
+
 	if (output_config_variable != NULL)
 	{
 		/*
@@ -953,7 +920,6 @@ PostmasterMain(int argc, char *argv[])
 		puts(GetConfigOption(output_config_variable, false, false));
 		ExitPostmaster(0);
 	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
@@ -1082,15 +1048,12 @@ PostmasterMain(int argc, char *argv[])
 	CreateDataDirLockFile(true);
 
 	/*
-<<<<<<< HEAD
 	 * Remember postmaster startup time
      * CDB: Moved this code up from below for use in error message headers.
 	 */
 	PgStartTime = GetCurrentTimestamp();
 
 	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Initialize SSL library, if specified.
 	 */
 #ifdef USE_SSL
@@ -1569,105 +1532,6 @@ checkPgDir(const char *dir)
 	}
 }
 
-<<<<<<< HEAD
-
-/*
- * Fork away from the controlling terminal (silent_mode option)
- *
- * Since this requires disconnecting from stdin/stdout/stderr (in case they're
- * linked to the terminal), we re-point stdin to /dev/null and stdout/stderr
- * to "postmaster.log" in the data directory, where we're already chdir'd.
- */
-static void
-pmdaemonize(void)
-{
-#ifndef WIN32
-	const char *pmlogname = "postmaster.log";
-	int			dvnull;
-	int			pmlog;
-	pid_t		pid;
-	int			res;
-
-	/*
-	 * Make sure we can open the files we're going to redirect to.  If this
-	 * fails, we want to complain before disconnecting.  Mention the full path
-	 * of the logfile in the error message, even though we address it by
-	 * relative path.
-	 */
-	dvnull = open(DEVNULL, O_RDONLY, 0);
-	if (dvnull < 0)
-	{
-		write_stderr("%s: could not open file \"%s\": %s\n",
-					 progname, DEVNULL, strerror(errno));
-		ExitPostmaster(1);
-	}
-	pmlog = open(pmlogname, O_CREAT | O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR);
-	if (pmlog < 0)
-	{
-		write_stderr("%s: could not open log file \"%s/%s\": %s\n",
-					 progname, DataDir, pmlogname, strerror(errno));
-		ExitPostmaster(1);
-	}
-
-	/*
-	 * Okay to fork.
-	 */
-	pid = fork_process();
-	if (pid == (pid_t) -1)
-	{
-		write_stderr("%s: could not fork background process: %s\n",
-					 progname, strerror(errno));
-		ExitPostmaster(1);
-	}
-	else if (pid)
-	{							/* parent */
-		/* Parent should just exit, without doing any atexit cleanup */
-		_exit(0);
-	}
-
-	MyProcPid = PostmasterPid = getpid();		/* reset PID vars to child */
-
-	MyStartTime = time(NULL);
-
-	/*
-	 * Some systems use setsid() to dissociate from the TTY's process group,
-	 * while on others it depends on stdin/stdout/stderr.  Do both if
-	 * possible.
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-	{
-		write_stderr("%s: could not dissociate from controlling TTY: %s\n",
-					 progname, strerror(errno));
-		ExitPostmaster(1);
-	}
-#endif
-
-	/*
-	 * Reassociate stdin/stdout/stderr.  fork_process() cleared any pending
-	 * output, so this should be safe.	The only plausible error is EINTR,
-	 * which just means we should retry.
-	 */
-	do
-	{
-		res = dup2(dvnull, 0);
-	} while (res < 0 && errno == EINTR);
-	close(dvnull);
-	do
-	{
-		res = dup2(pmlog, 1);
-	} while (res < 0 && errno == EINTR);
-	do
-	{
-		res = dup2(pmlog, 2);
-	} while (res < 0 && errno == EINTR);
-	close(pmlog);
-#else							/* WIN32 */
-	/* not supported */
-	elog(FATAL, "silent_mode is not supported under Windows");
-#endif   /* WIN32 */
-}
-
 static bool
 ServiceStartable(PMSubProc *subProc)
 {
@@ -1693,8 +1557,6 @@ ServiceStartable(PMSubProc *subProc)
 	return result;
 }
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Main idle loop of postmaster
  */
@@ -2827,16 +2689,9 @@ pmdie(SIGNAL_ARGS)
 			if (pmState == PM_RECOVERY)
 			{
 				/*
-<<<<<<< HEAD
-				 * Only startup, bgwriter, walreceiver,
-				 * and/or checkpointer should be active in this state; we just
-				 * signaled the first four, and we don't want to kill
-				 * checkpointer yet.
-=======
 				 * Only startup, bgwriter, and checkpointer should be active
 				 * in this state; we just signaled the first two, and we don't
 				 * want to kill checkpointer yet.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				 */
 				pmState = PM_WAIT_BACKENDS;
 			}
@@ -2993,15 +2848,10 @@ reaper(SIGNAL_ARGS)
 			 */
 			if (!EXIT_STATUS_0(exitstatus))
 			{
-<<<<<<< HEAD
-				RecoveryError = true;
-				HandleChildCrash(pid, exitstatus, _("startup process"));
-=======
 				if (!FatalError)
 					RecoveryError = true;
 				HandleChildCrash(pid, exitstatus,
 								 _("startup process"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				continue;
 			}
 
@@ -3080,7 +2930,6 @@ reaper(SIGNAL_ARGS)
 		}
 
 		/*
-<<<<<<< HEAD
 		 * MPP: Was it one of our servers? If so, just try to start a new one;
 		 * no need to force reset of the rest of the system. (If fail, we'll
 		 * try again in future cycles of the main loop.)
@@ -3130,8 +2979,6 @@ reaper(SIGNAL_ARGS)
 			continue;
 
 		/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 * Was it the bgwriter?  Normal exit can be ignored; we'll start a new
 		 * one at the next iteration of the postmaster's main loop, if
 		 * necessary.  Any other exit condition is treated as a crash.
@@ -3156,11 +3003,7 @@ reaper(SIGNAL_ARGS)
 				/*
 				 * OK, we saw normal exit of the checkpointer after it's been
 				 * told to shut down.  We expect that it wrote a shutdown
-<<<<<<< HEAD
-				 * checkpoint.  (If for some reason it didn't, recovery will
-=======
 				 * checkpoint.	(If for some reason it didn't, recovery will
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				 * occur on next postmaster start.)
 				 *
 				 * At this point we should have no normal backend children
@@ -3524,17 +3367,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		signal_child(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
-<<<<<<< HEAD
-    /* Take care of the checkpoint too */
-	if (pid == CheckpointerPID)
-    {
-        CheckpointerPID = 0;
-    }
-=======
 	/* Take care of the checkpointer too */
 	if (pid == CheckpointerPID)
 		CheckpointerPID = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	else if (CheckpointerPID != 0 && !FatalError)
 	{
 		ereport(DEBUG2,
@@ -3706,15 +3541,9 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-<<<<<<< HEAD
-			    (errmsg("%s (PID %d) was terminated by signal %d: %s",
-						procname, pid, WTERMSIG(exitstatus), signalName)));
-	}
-=======
 				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus)),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 	else
 		ereport(lev,
@@ -3849,15 +3678,9 @@ PostmasterStateMachine(void)
 				{
 					/*
 					 * If we failed to fork a checkpointer, just shut down.
-<<<<<<< HEAD
-					 * required cleanup will happen at next restart. We set
-					 * FatalError so that an "abnormal shutdown" message gets
-					 * logged when we exit.
-=======
 					 * Any required cleanup will happen at next restart. We
 					 * set FatalError so that an "abnormal shutdown" message
 					 * gets logged when we exit.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					 */
 					FatalError = true;
 					pmState = PM_WAIT_DEAD_END;
@@ -5508,11 +5331,7 @@ StartChildProcess(AuxProcType type)
 				break;
 			case CheckpointerProcess:
 				ereport(LOG,
-<<<<<<< HEAD
-				   (errmsg("could not fork background checkpoint process: %m")));
-=======
 						(errmsg("could not fork checkpointer process: %m")));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				break;
 			case WalWriterProcess:
 				ereport(LOG,
@@ -5682,11 +5501,7 @@ MaxLivePostmasterChildren(void)
  */
 extern slock_t *ShmemLock;
 extern LWLock *LWLockArray;
-<<<<<<< HEAD
 extern PROC_HDR *ProcGlobal;
-=======
-extern slock_t *ProcStructLock;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
 extern pgsocket pgStatSock;
@@ -6149,7 +5964,6 @@ InitPostmasterDeathWatchHandle(void)
 				(errmsg_internal("could not duplicate postmaster handle: error code %lu",
 								 GetLastError())));
 #endif   /* WIN32 */
-<<<<<<< HEAD
 
 #if defined(HAVE_NUMA_H) && defined(HAVE_LIBNUMA)
 /* LINUX */
@@ -6185,6 +5999,3 @@ setProcAffinity(int id)
 	elog(LOG, "gp_set_proc_affinity setting ignored; feature not configured");
 }
 #endif
-=======
-}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
