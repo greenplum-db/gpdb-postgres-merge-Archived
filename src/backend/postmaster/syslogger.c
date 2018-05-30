@@ -94,7 +94,6 @@ static FILE *csvlogFile = NULL;
 NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
 static char *last_file_name = NULL;
 static char *last_csv_file_name = NULL;
-<<<<<<< HEAD
 // Store only those logs the severe of that are at least WARNING level to
 // speed up the access for it when log files become very huge.
 static FILE *alertLogFile = NULL;
@@ -104,9 +103,7 @@ static const char *alert_file_pattern = "gpdb-alert-%Y-%m-%d_%H%M%S.csv";
 static char *alert_last_file_name = NULL;
 static bool alert_log_level_opened = false;
 static bool write_to_alert_log = false;
-=======
 static Latch sysLoggerLatch;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* An err msg may break into several pipe chunks, so we need a buffer to assemble them.
  * We fix the number of buffers.  Generally a relative small number should suffice.
@@ -141,14 +138,12 @@ static PipeProtoChunk *find_unused_chunk()
             return &saved_chunks[i];
     }
 
-<<<<<<< HEAD
     /* oops, all used.  */
     return NULL;
 }
-=======
+
 #define NBUFFER_LISTS 256
 static List *buffer_lists[NBUFFER_LISTS];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
@@ -299,15 +294,6 @@ SysLoggerMain(int argc, char *argv[])
         elog(FATAL, "setsid() failed: %m");
 #endif
 
-<<<<<<< HEAD
-    /*
-     * Properly accept or ignore signals the postmaster might send us
-     *
-     * Note: we ignore all termination signals, and instead exit only when all
-     * upstream processes are gone, to ensure we don't miss any dying gasps of
-     * broken backends...
-     */
-=======
 	/* Initialize private latch for use by signal handlers */
 	InitLatch(&sysLoggerLatch);
 
@@ -318,7 +304,6 @@ SysLoggerMain(int argc, char *argv[])
 	 * upstream processes are gone, to ensure we don't miss any dying gasps of
 	 * broken backends...
 	 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
     pqsignal(SIGHUP, sigHupHandler);	/* set flag to read config file */
     pqsignal(SIGINT, SIG_IGN);
