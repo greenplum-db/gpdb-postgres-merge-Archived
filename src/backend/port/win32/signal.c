@@ -296,12 +296,8 @@ pg_signal_thread(LPVOID param)
 				 * a small race window in that case. There is nothing else we can do other than
 				 * abort the whole process which will be even worse.
 				 */
-<<<<<<< HEAD
-				write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
-=======
 				write_stderr("could not create signal listener pipe: error code %lu; retrying\n", GetLastError());
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				/*
 				 * Keep going so we at least dispatch this signal. Hopefully, the call will succeed
 				 * when retried in the loop soon after.
