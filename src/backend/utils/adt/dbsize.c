@@ -31,13 +31,10 @@
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/int8.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-=======
 #include "utils/numeric.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/relmapper.h"
@@ -45,7 +42,7 @@
 
 #include "cdb/cdbvars.h"
 
-static int64 calculate_total_relation_size(Oid Relid);
+static int64 calculate_total_relation_size(Relation rel);
 
 static int64
 get_size_from_segDBs(const char * cmd)
@@ -214,9 +211,9 @@ calculate_database_size(Oid dbOid)
 Datum
 pg_database_size_oid(PG_FUNCTION_ARGS)
 {
-	int64		size = 0;
+	int64		size;
 	Oid			dbOid = PG_GETARG_OID(0);
-<<<<<<< HEAD
+
 	size = calculate_database_size(dbOid);
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
@@ -229,14 +226,9 @@ pg_database_size_oid(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
-	int64		size;
-
-	size = calculate_database_size(dbOid);
 
 	if (size == 0)
 		PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_INT64(size);
 }
@@ -244,10 +236,9 @@ pg_database_size_oid(PG_FUNCTION_ARGS)
 Datum
 pg_database_size_name(PG_FUNCTION_ARGS)
 {
-	int64		size = 0;
+	int64		size;
 	Name		dbName = PG_GETARG_NAME(0);
 	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
-<<<<<<< HEAD
 						
 	size = calculate_database_size(dbOid);
 	
@@ -261,14 +252,9 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
-	int64		size;
-
-	size = calculate_database_size(dbOid);
 
 	if (size == 0)
 		PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_INT64(size);
 }
@@ -350,12 +336,10 @@ calculate_tablespace_size(Oid tblspcOid)
 Datum
 pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
-	int64		size = 0;
 	Oid			tblspcOid = PG_GETARG_OID(0);
 	int64		size;
 
 	size = calculate_tablespace_size(tblspcOid);
-<<<<<<< HEAD
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -367,11 +351,9 @@ pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
 
 	if (size < 0)
 		PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_INT64(size);
 }
@@ -379,13 +361,11 @@ pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 Datum
 pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
-	int64		size = 0;
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
 	int64		size;
 
 	size = calculate_tablespace_size(tblspcOid);
-<<<<<<< HEAD
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -397,11 +377,9 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
 
 	if (size < 0)
 		PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_INT64(size);
 }
@@ -481,7 +459,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	Relation	rel;
 	int64		size = 0;
 
-<<<<<<< HEAD
 	/**
 	 * This function is peculiar in that it does its own dispatching.
 	 * It does not work on entry db since we do not support dispatching
@@ -489,8 +466,8 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	 */
 	if (Gp_role == GP_ROLE_EXECUTE && IS_QUERY_DISPATCHER())
 		elog(ERROR, "This query is not currently supported by GPDB.");
-=======
-	rel = try_relation_open(relOid, AccessShareLock);
+
+	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	/*
 	 * Before 9.2, we used to throw an error if the relation didn't exist, but
@@ -501,9 +478,6 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	 */
 	if (rel == NULL)
 		PG_RETURN_NULL();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
-	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	/*
 	 * While we scan pg_class with an MVCC snapshot,
@@ -588,22 +562,14 @@ calculate_table_size(Relation rel)
 	int64		size = 0;
 	ForkNumber	forkNum;
 
-<<<<<<< HEAD
-	rel = try_relation_open(relOid, AccessShareLock, false);
-
 	if (!RelationIsValid(rel))
 		return 0;
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * heap size, including FSM and VM
 	 */
-	if (rel->rd_node.relNode == 0)
-		size = 0;
-	else
+	if (rel->rd_node.relNode != 0)
 	{
-		size = 0;
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
 			size += calculate_relation_size(rel, forkNum);
 	}
@@ -614,27 +580,30 @@ calculate_table_size(Relation rel)
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
 		size += calculate_toast_table_size(rel->rd_rel->reltoastrelid);
 
-<<<<<<< HEAD
 	if (RelationIsAppendOptimized(rel))
 	{
+		Relation ao_rel;
+
 		Assert(OidIsValid(rel->rd_appendonly->segrelid));
-		size += calculate_total_relation_size(rel->rd_appendonly->segrelid);
+		ao_rel = try_relation_open(rel->rd_appendonly->segrelid, AccessShareLock, false);
+		size += calculate_total_relation_size(ao_rel);
+		relation_close(ao_rel, AccessShareLock);
 
         /* block directory may not exist, post upgrade or new table that never has indexes */
    		if (OidIsValid(rel->rd_appendonly->blkdirrelid))
         {
-     		size += calculate_total_relation_size(rel->rd_appendonly->blkdirrelid);
+			ao_rel = try_relation_open(rel->rd_appendonly->blkdirrelid, AccessShareLock, false);
+     		size += calculate_total_relation_size(ao_rel);
+			relation_close(ao_rel, AccessShareLock);
         }
 		if (OidIsValid(rel->rd_appendonly->visimaprelid))
 		{
-			size += calculate_total_relation_size(rel->rd_appendonly->visimaprelid);
+			ao_rel = try_relation_open(rel->rd_appendonly->visimaprelid, AccessShareLock, false);
+			size += calculate_total_relation_size(ao_rel);
+			relation_close(ao_rel, AccessShareLock);
 		}
 	}
 
-	relation_close(rel, AccessShareLock);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	return size;
 }
 
@@ -686,7 +655,7 @@ pg_table_size(PG_FUNCTION_ARGS)
 	Relation	rel;
 	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	if (rel == NULL)
 		PG_RETURN_NULL();
@@ -705,7 +674,7 @@ pg_indexes_size(PG_FUNCTION_ARGS)
 	Relation	rel;
 	int64		size;
 
-	rel = try_relation_open(relOid, AccessShareLock);
+	rel = try_relation_open(relOid, AccessShareLock, false);
 
 	if (rel == NULL)
 		PG_RETURN_NULL();
@@ -743,9 +712,9 @@ calculate_total_relation_size(Relation rel)
 Datum
 pg_total_relation_size(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	int64		size = 0;
 	Oid			relOid = PG_GETARG_OID(0);
+	Relation	rel;
+	int64		size;
 
 	/*
 	 * While we scan pg_class with an MVCC snapshot,
@@ -755,7 +724,12 @@ pg_total_relation_size(PG_FUNCTION_ARGS)
 	if (!OidIsValid(get_rel_name(relOid)))
 		PG_RETURN_NULL();
 
-	size = calculate_total_relation_size(relOid);
+	rel = try_relation_open(relOid, AccessShareLock, false);
+
+	if (rel == NULL)
+		PG_RETURN_NULL();
+
+	size = calculate_total_relation_size(rel);
 	
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -782,20 +756,8 @@ pg_total_relation_size(PG_FUNCTION_ARGS)
 
 		size += get_size_from_segDBs(buffer.data);
 	}
-=======
-	Oid			relOid = PG_GETARG_OID(0);
-	Relation	rel;
-	int64		size;
-
-	rel = try_relation_open(relOid, AccessShareLock);
-
-	if (rel == NULL)
-		PG_RETURN_NULL();
-
-	size = calculate_total_relation_size(rel);
 
 	relation_close(rel, AccessShareLock);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PG_RETURN_INT64(size);
 }
