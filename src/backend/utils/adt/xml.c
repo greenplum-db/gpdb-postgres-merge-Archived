@@ -89,11 +89,8 @@ int xmloption;
 /* random number to identify PgXmlErrorContext */
 #define ERRCXT_MAGIC	68275028
 
-<<<<<<< HEAD
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 				  xmlParserCtxtPtr ctxt);
-static void xml_errorHandler(void *ctxt, const char *msg,...);
-=======
 struct PgXmlErrorContext
 {
 	int			magic;
@@ -108,7 +105,6 @@ struct PgXmlErrorContext
 };
 
 static void xml_errorHandler(void *data, xmlErrorPtr error);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
 static void chopStringInfoNewlines(StringInfo str);
@@ -903,20 +899,6 @@ pg_xml_init_library(void)
 					 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
 							   (int) sizeof(char), (int) sizeof(xmlChar))));
 
-<<<<<<< HEAD
-		/* create error buffer in permanent context */
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		xml_err_buf = makeStringInfo();
-		MemoryContextSwitchTo(oldcontext);
-
-		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
-		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-
-		/* set up our entity loader, too */
-		xmlSetExternalEntityLoader(xmlPgEntityLoader);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #ifdef USE_LIBXMLCONTEXT
 		/* Set up libxml's memory allocation our way */
 		xml_memory_init();
@@ -927,26 +909,6 @@ pg_xml_init_library(void)
 
 		first_time = false;
 	}
-<<<<<<< HEAD
-	else
-	{
-		/* Reset pre-existing buffer to empty */
-		Assert(xml_err_buf != NULL);
-		resetStringInfo(xml_err_buf);
-
-		/*
-		 * We re-establish the error callback function every time.  This makes
-		 * it safe for other subsystems (PL/Perl, say) to also use libxml with
-		 * their own callbacks ... so long as they likewise set up the
-		 * callbacks on every use. It's cheap enough to not be worth worrying
-		 * about, anyway.
-		 */
-		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-
-		/* set up our entity loader, too */
-		xmlSetExternalEntityLoader(xmlPgEntityLoader);
-	}
-=======
 }
 
 /*
@@ -1560,33 +1522,10 @@ xml_ereport(PgXmlErrorContext *errcxt, int level, int sqlcode, const char *msg)
 	else
 		detail = NULL;
 
-<<<<<<< HEAD
-	if (detail)
-	{
-		size_t		len;
-
-		/* libxml error messages end in '\n'; get rid of it */
-		len = strlen(detail);
-		if (len > 0 && detail[len - 1] == '\n')
-			detail[len - 1] = '\0';
-
-		ereport(level,
-				(errcode(sqlcode),
-				 errmsg_internal("%s", msg),
-				 errdetail("%s", detail)));
-	}
-	else
-	{
-		ereport(level,
-				(errcode(sqlcode),
-				 errmsg_internal("%s", msg)));
-	}
-=======
 	ereport(level,
 			(errcode(sqlcode),
 			 errmsg_internal("%s", msg),
 			 detail ? errdetail_internal("%s", detail) : 0));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 

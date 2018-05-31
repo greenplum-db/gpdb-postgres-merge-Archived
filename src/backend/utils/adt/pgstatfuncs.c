@@ -14,12 +14,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "storage/lock.h"
 #include "commands/resgroupcmds.h"
-=======
 #include "catalog/pg_type.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "funcapi.h"
 #include "libpq/ip.h"
 #include "miscadmin.h"
@@ -28,13 +25,9 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/inet.h"
-<<<<<<< HEAD
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "libpq/ip.h"
-=======
 #include "utils/timestamp.h"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
@@ -549,17 +542,13 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext;
 		TupleDesc	tupdesc;
-		int			nattr = 17;
+		int			nattr = 19;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-<<<<<<< HEAD
 		tupdesc = CreateTemplateTupleDesc(nattr, false);
-=======
-		tupdesc = CreateTemplateTupleDesc(14, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "pid",
@@ -589,20 +578,20 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "client_port",
 						   INT4OID, -1, 0);
 
-		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "sess_id",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "sess_id",
 						   INT4OID, -1, 0);  /* GPDB */
 
-		if (nattr > 12)
-			TupleDescInitEntry(tupdesc, (AttrNumber) 14, "waiting_reason",
+		if (nattr > 14)
+			TupleDescInitEntry(tupdesc, (AttrNumber) 16, "waiting_reason",
 							   TEXTOID, -1, 0);
 
-		if (nattr > 13)
+		if (nattr > 15)
 		{
-			TupleDescInitEntry(tupdesc, (AttrNumber) 15, "rsgid",
+			TupleDescInitEntry(tupdesc, (AttrNumber) 17, "rsgid",
 							   OIDOID, -1, 0);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 16, "rsgname",
+			TupleDescInitEntry(tupdesc, (AttrNumber) 18, "rsgname",
 							   TEXTOID, -1, 0);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 17, "rsgqueueduration",
+			TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgqueueduration",
 							   INTERVALOID, -1, 0);
 		}
 
@@ -656,15 +645,11 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-<<<<<<< HEAD
-		Datum		values[17];
-		bool		nulls[17];
-=======
-		Datum		values[14];
-		bool		nulls[14];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		Datum		values[19];
+		bool		nulls[19];
 		HeapTuple	tuple;
 		PgBackendStatus *beentry;
+		SockAddr	zero_clientaddr;
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
@@ -705,13 +690,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		/* Values only available to same user or superuser */
 		if (superuser() || beentry->st_userid == GetUserId())
 		{
-<<<<<<< HEAD
-			SockAddr	zero_clientaddr;
-
-			if (*(beentry->st_activity) == '\0')
-=======
 			switch (beentry->st_state)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				case STATE_IDLE:
 					values[4] = CStringGetTextDatum("idle");
@@ -769,7 +748,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			/* A zeroed client addr means we don't know */
 			memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
 			if (memcmp(&(beentry->st_clientaddr), &zero_clientaddr,
-					   sizeof(zero_clientaddr)) == 0)
+					   sizeof(zero_clientaddr) == 0))
 			{
 				nulls[11] = true;
 				nulls[12] = true;
@@ -778,10 +757,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			else
 			{
 				if (beentry->st_clientaddr.addr.ss_family == AF_INET
-#ifdef HAVE_IPV6
+					#ifdef HAVE_IPV6
 					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
 #endif
-					)
+						)
 				{
 					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
@@ -798,7 +777,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[11] = DirectFunctionCall1(inet_in,
-											   CStringGetDatum(remote_host));
+														 CStringGetDatum(remote_host));
 						if (beentry->st_clienthostname)
 							values[12] = CStringGetTextDatum(beentry->st_clienthostname);
 						else
@@ -832,9 +811,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[13] = true;
 				}
 			}
-			values[12] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
+			values[14] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (funcctx->tuple_desc->natts > 12)
+			if (funcctx->tuple_desc->natts > 14)
 			{
 				char	st_waiting = beentry->st_waiting;
 				char   *reason;
@@ -842,28 +821,28 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				reason = pgstat_waiting_string(st_waiting);
 
 				if (reason != NULL)
-					values[13] = CStringGetTextDatum(reason);
+					values[15] = CStringGetTextDatum(reason);
 				else
-					nulls[13] = true;
+					nulls[15] = true;
 			}
 
-			if (funcctx->tuple_desc->natts > 13)
+			if (funcctx->tuple_desc->natts > 15)
 			{
 				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
 
-				values[14] = ObjectIdGetDatum(beentry->st_rsgid);
+				values[16] = ObjectIdGetDatum(beentry->st_rsgid);
 
 				if (groupName != NULL)
-					values[15] = CStringGetTextDatum(groupName);
+					values[17] = CStringGetTextDatum(groupName);
 				else
-					nulls[15] = true;
+					nulls[17] = true;
 
 				if (beentry->st_waiting == PGBE_WAITING_RESGROUP)
-					values[16] = DirectFunctionCall2(timestamptz_age, now,
+					values[18] = DirectFunctionCall2(timestamptz_age, now,
 													 TimestampTzGetDatum(beentry->st_resgroup_queue_start_timestamp));
 				else
-					nulls[16] = true;
+					nulls[18] = true;
 			}
 		}
 		else
@@ -877,21 +856,18 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[9] = true;
 			nulls[10] = true;
 			nulls[11] = true;
-<<<<<<< HEAD
-
-			values[12] = Int32GetDatum(beentry->st_session_id);
-			if (funcctx->tuple_desc->natts > 12)
-				nulls[13] = true;
-			if (funcctx->tuple_desc->natts > 13)
-			{
-				nulls[14] = true;
-				nulls[15] = true;
-				nulls[16] = true;
-			}
-=======
 			nulls[12] = true;
 			nulls[13] = true;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
+			values[14] = Int32GetDatum(beentry->st_session_id);
+			if (funcctx->tuple_desc->natts > 14)
+				nulls[13] = true;
+			if (funcctx->tuple_desc->natts > 15)
+			{
+				nulls[16] = true;
+				nulls[17] = true;
+				nulls[18] = true;
+			}
 		}
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
