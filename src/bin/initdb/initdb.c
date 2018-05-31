@@ -64,11 +64,9 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
-<<<<<<< HEAD
-
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (Greenplum Database) " PG_VERSION "\n"
-=======
+
 static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
 	"gss",
@@ -97,7 +95,6 @@ static const char *auth_methods_local[] = {"trust", "reject", "md5", "password",
 	"ldap",
 #endif
 NULL};
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * these values are passed in by makefile defines
