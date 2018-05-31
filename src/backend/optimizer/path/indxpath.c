@@ -4,13 +4,9 @@
  *	  Routines to determine which indexes are usable for scanning a
  *	  given relation, and create Paths accordingly.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -173,6 +169,10 @@ static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily,
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 
+static void cdb_transform_appendrel_var(PlannerInfo *root,
+										RelOptInfo *rel,
+										List **index_pathkeys);
+
 /*
  * create_bitmap_scan_path()
  *   Create either BitmapHeapScan, or BitmapAppendOnlyScan path based
@@ -190,7 +190,7 @@ create_bitmap_scan_path(PlannerInfo *root,
 	switch (rel->relstorage)
 	{
 		case RELSTORAGE_HEAP:
-			path = (Path *) create_bitmap_heap_path(root, rel, bitmapqual, required_outer);
+			path = (Path *) create_bitmap_heap_path(root, rel, bitmapqual, required_outer, loop_count);
 			break;
 		case RELSTORAGE_AOROWS:
 			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, true);
@@ -285,7 +285,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * bitmap paths are added to bitindexpaths to be handled below.
 		 */
 		get_index_paths(root, rel, index, &rclauseset,
-						&bitindexpaths);
+						&bitindexpaths, pindexpathlist);
 
 		/*
 		 * Identify the join clauses that can match the index.	For the moment
@@ -347,8 +347,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		BitmapHeapPath *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, NULL, 1.0);
-		add_path(rel, (Path *) bpath);
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
+		*pbitmappathlist = lappend(*pbitmappathlist, bpath);
 	}
 
 	/*
@@ -369,9 +369,9 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
 		required_outer = get_bitmap_tree_required_outer(bitmapqual);
 		loop_count = get_loop_count(root, required_outer);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual,
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
 										required_outer, loop_count);
-		add_path(rel, (Path *) bpath);
+		*pbitmappathlist = lappend(*pbitmappathlist, bpath);
 	}
 }
 
@@ -570,7 +570,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 static void
 get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths)
+				List **bitindexpaths, List **pindexpathlist)
 {
 	List	   *indexpaths;
 	ListCell   *lc;
@@ -600,27 +600,17 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	{
 		IndexPath  *ipath = (IndexPath *) lfirst(lc);
 
-<<<<<<< HEAD
 		/* CDB: Flag RelOptInfo if at most one row can satisfy index quals. */
 		if (ipath->num_leading_eq > 0 &&
 			ipath->num_leading_eq == ipath->indexinfo->ncolumns &&
 			ipath->indexinfo->unique)
 			rel->onerow = true;
 
-		/* Add index path to caller's list. */
-		if (ipath->indexinfo->amhasgettuple)
-			*pindexpathlist = lappend(*pindexpathlist, ipath);
-
-		if (ipath->indexinfo->amhasgetbitmap &&
-			(!root->config->enable_seqscan ||
-			 ipath->path.pathkeys == NIL ||
-=======
 		if (index->amhasgettuple)
-			add_path(rel, (Path *) ipath);
+			*pindexpathlist = lappend(*pindexpathlist, ipath);
 
 		if (index->amhasgetbitmap &&
 			(ipath->path.pathkeys == NIL ||
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 ipath->indexselectivity < 1.0))
 			*bitindexpaths = lappend(*bitindexpaths, ipath);
 	}
@@ -736,14 +726,6 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	outer_relids = NULL;
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
-<<<<<<< HEAD
-		Path	   *bitmapqual;
-		Path	   *path = NULL;
-
-		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths, NULL);
-		path = create_bitmap_scan_path(root, rel, bitmapqual, NULL);
-		*pbitmappathlist = lappend(*pbitmappathlist, path);
-=======
 		ListCell   *lc;
 
 		foreach(lc, clauses->indexclauses[indexcol])
@@ -801,6 +783,14 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	{
 		index_pathkeys = build_index_pathkeys(root, index,
 											  ForwardScanDirection);
+
+		/*
+		 * CDB: For appendrel child, pathkeys contain Var nodes in terms
+		 * of the child's baserel.  Transform the pathkey list to refer to
+		 * columns of the appendrel.
+		 */
+		cdb_transform_appendrel_var(root, rel, &index_pathkeys);
+
 		useful_pathkeys = truncate_useless_pathkeys(root, rel,
 													index_pathkeys);
 		orderbyclauses = NIL;
@@ -822,7 +812,6 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		useful_pathkeys = NIL;
 		orderbyclauses = NIL;
 		orderbyclausecols = NIL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
@@ -980,80 +969,7 @@ build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Add "other" restriction clauses to the clauseset.
 		 */
-<<<<<<< HEAD
-		index_is_ordered = (index->sortopfamily != NULL);
-		if (index_is_ordered && possibly_useful_pathkeys &&
-			istoplevel && outer_rel == NULL)
-		{
-			index_pathkeys = build_index_pathkeys(root, index,
-												  ForwardScanDirection);
-
-			/*
-			 * CDB: For appendrel child, pathkeys contain Var nodes in terms
-			 * of the child's baserel.  Transform the pathkey list to refer to
-			 * columns of the appendrel.
-			 */
-			if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL && index_pathkeys)
-			{
-				AppendRelInfo *appinfo = NULL;
-				RelOptInfo *appendrel = NULL;
-				ListCell   *appcell;
-				CdbPathLocus notalocus;
-
-				/* Find the appendrel of which this baserel is a child. */
-				foreach(appcell, root->append_rel_list)
-				{
-					appinfo = (AppendRelInfo *) lfirst(appcell);
-					if (appinfo->child_relid == rel->relid)
-						break;
-				}
-				Assert(appinfo);
-				appendrel = find_base_rel(root, appinfo->parent_relid);
-
-				/*
-				 * The pathkey list happens to have the same format as the
-				 * partitioning key of a Hashed locus, so by disguising it we
-				 * can use cdbpathlocus_pull_above_projection() to do the
-				 * transformation.
-				 */
-				CdbPathLocus_MakeHashed(&notalocus, index_pathkeys);
-				notalocus =
-					cdbpathlocus_pull_above_projection(root,
-													   notalocus,
-													   rel->relids,
-													   rel->reltargetlist,
-													appendrel->reltargetlist,
-													   appendrel->relid);
-				if (CdbPathLocus_IsHashed(notalocus))
-					index_pathkeys = truncate_useless_pathkeys(root, appendrel,
-														notalocus.partkey_h);
-				else
-					index_pathkeys = NULL;
-			}
-
-			useful_pathkeys = truncate_useless_pathkeys(root, rel,
-														index_pathkeys);
-			orderbyclauses = NIL;
-		}
-		else if (index->amcanorderbyop && possibly_useful_pathkeys &&
-				 istoplevel && outer_rel == NULL && scantype != ST_BITMAPSCAN)
-		{
-			/* see if we can generate ordering operators for query_pathkeys */
-			orderbyclauses = match_index_to_pathkeys(index,
-													 root->query_pathkeys);
-			if (orderbyclauses)
-				useful_pathkeys = root->query_pathkeys;
-			else
-				useful_pathkeys = NIL;
-		}
-		else
-		{
-			useful_pathkeys = NIL;
-			orderbyclauses = NIL;
-		}
-=======
 		match_clauses_to_index(index, other_clauses, &clauseset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Construct paths if possible.
@@ -2526,86 +2442,8 @@ bool
 eclass_member_matches_indexcol(EquivalenceClass *ec, EquivalenceMember *em,
 							   IndexOptInfo *index, int indexcol)
 {
-<<<<<<< HEAD
-	ListCell   *l;
-
-	foreach(l, rel->indexlist)
-	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
-		int			indexcol;
-
-		for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
-		{
-			Oid			curFamily = index->opfamily[indexcol];
-			Oid			curCollation = index->indexcollations[indexcol];
-
-			/*
-			 * If it's a btree index, we can reject it if its opfamily isn't
-			 * compatible with the EC, since no clause generated from the EC
-			 * could be used with the index.  For non-btree indexes, we can't
-			 * easily tell whether clauses generated from the EC could be used
-			 * with the index, so only check for expression match.	This might
-			 * mean we return "true" for a useless index, but that will just
-			 * cause some wasted planner cycles; it's better than ignoring
-			 * useful indexes.
-			 *
-			 * We insist on collation match for all index types, though.
-			 */
-			if ((index->relam != BTREE_AM_OID ||
-				 list_member_oid(ec->ec_opfamilies, curFamily)) &&
-				ec->ec_collation == curCollation &&
-				match_index_to_operand((Node *) em->em_expr, indexcol, index))
-				return true;
-		}
-	}
-
-	return false;
-}
-
-
-/*
- * best_inner_indexscan
- *	  Finds the best available inner indexscans for a nestloop join
- *	  with the given rel on the inside and the given outer_rel outside.
- *
- * *cheapest_startup gets the path with least startup cost
- * *cheapest_total gets the path with least total cost (often the same path)
- * Both are set to NULL if there are no possible inner indexscans.
- *
- * We ignore ordering considerations, since a nestloop's inner scan's order
- * is uninteresting.  Hence startup cost and total cost are the only figures
- * of merit to consider.
- *
- * Note: create_index_paths() must have been run previously for this rel,
- * else the results will always be NULL.
- */
-void
-best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
-					 RelOptInfo *outer_rel, JoinType jointype,
-					 Path **cheapest_startup, Path **cheapest_total)
-{
-	Relids		outer_relids;
-	bool		isouterjoin;
-	List	   *clause_list;
-	List	   *indexpaths;
-	List	   *bitindexpaths;
-	List	   *allindexpaths;
-	ListCell   *l;
-	InnerIndexscanInfo *info;
-	MemoryContext oldcontext;
-	RangeTblEntry *rte;
-
-	Assert(rel->rtekind == RTE_RELATION);
-
-	/* Initialize results for failure returns */
-	*cheapest_startup = *cheapest_total = NULL;
-
-	/* Initialize results for failure returns */
-	*cheapest_startup = *cheapest_total = NULL;
-=======
 	Oid			curFamily = index->opfamily[indexcol];
 	Oid			curCollation = index->indexcollations[indexcol];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * If it's a btree index, we can reject it if its opfamily isn't
@@ -2617,248 +2455,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * generate_implied_equalities_for_indexcol; see
 	 * match_eclass_clauses_to_index.
 	 */
-<<<<<<< HEAD
-	switch (jointype)
-	{
-		case JOIN_INNER:
-		case JOIN_SEMI:
-			isouterjoin = false;
-			break;
-		case JOIN_LEFT:
-		case JOIN_ANTI:
-			isouterjoin = true;
-			break;
-		default:
-			return;
-	}
-
-	/*
-	 * If there are no indexable joinclauses for this rel, exit quickly.
-	 */
-	if (bms_is_empty(rel->index_outer_relids))
-		return;
-
-	/*
-	 * Otherwise, we have to do path selection in the main planning context,
-	 * so that any created path can be safely attached to the rel's cache of
-	 * best inner paths.  (This is not currently an issue for normal planning,
-	 * but it is an issue for GEQO planning.)
-	 */
-	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
-
-	/*
-	 * Intersect the given outer relids with index_outer_relids to find the
-	 * set of outer relids actually relevant for this rel. If there are none,
-	 * again we can fail immediately.
-	 */
-	outer_relids = bms_intersect(rel->index_outer_relids, outer_rel->relids);
-	if (bms_is_empty(outer_relids))
-	{
-		bms_free(outer_relids);
-		MemoryContextSwitchTo(oldcontext);
-		return;
-	}
-
-	/*
-	 * Look to see if we already computed the result for this set of relevant
-	 * outerrels.  (We include the isouterjoin status in the cache lookup key
-	 * for safety.	In practice I suspect this is not necessary because it
-	 * should always be the same for a given combination of rels.)
-	 *
-	 * NOTE: because we cache on outer_relids rather than outer_rel->relids,
-	 * we will report the same paths and hence path cost for joins with
-	 * different sets of irrelevant rels on the outside.  Now that cost_index
-	 * is sensitive to outer_rel->rows, this is not really right.  However the
-	 * error is probably not large.  Is it worth establishing a separate cache
-	 * entry for each distinct outer_rel->relids set to get this right?
-	 */
-	foreach(l, rel->index_inner_paths)
-	{
-		info = (InnerIndexscanInfo *) lfirst(l);
-		if (bms_equal(info->other_relids, outer_relids) &&
-			info->isouterjoin == isouterjoin)
-		{
-			bms_free(outer_relids);
-			MemoryContextSwitchTo(oldcontext);
-			*cheapest_startup = info->cheapest_startup_innerpath;
-			*cheapest_total = info->cheapest_total_innerpath;
-			return;
-		}
-	}
-
-	/*
-	 * Find all the relevant restriction and join clauses.
-	 *
-	 * Note: because we include restriction clauses, we will find indexscans
-	 * that could be plain indexscans, ie, they don't require the join context
-	 * at all.	This may seem redundant, but we need to include those scans in
-	 * the input given to choose_bitmap_and() to be sure we find optimal AND
-	 * combinations of join and non-join scans.  Also, even if the "best inner
-	 * indexscan" is just a plain indexscan, it will have a different cost
-	 * estimate because of cache effects.
-	 */
-	clause_list = find_clauses_for_join(root, rel, outer_relids, isouterjoin);
-
-	/*
-	 * Find all the index paths that are usable for this join, except for
-	 * stuff involving OR and ScalarArrayOpExpr clauses.
-	 */
-	allindexpaths = find_usable_indexes(root, rel,
-										clause_list, NIL,
-										false, outer_rel,
-										SAOP_FORBID,
-										ST_ANYSCAN);
-
-	/*
-	 * Include the ones that are usable as plain indexscans in indexpaths, and
-	 * include the ones that are usable as bitmap scans in bitindexpaths.
-	 */
-	indexpaths = bitindexpaths = NIL;
-	foreach(l, allindexpaths)
-	{
-		IndexPath  *ipath = (IndexPath *) lfirst(l);
-
-		if (ipath->indexinfo->amhasgettuple)
-			indexpaths = lappend(indexpaths, ipath);
-
-		if (ipath->indexinfo->amhasgetbitmap)
-			bitindexpaths = lappend(bitindexpaths, ipath);
-	}
-
-	/*
-	 * Generate BitmapOrPaths for any suitable OR-clauses present in the
-	 * clause list.
-	 */
-	bitindexpaths = list_concat(bitindexpaths,
-								generate_bitmap_or_paths(root, rel,
-														 clause_list, NIL,
-														 outer_rel));
-
-	/*
-	 * Likewise, generate paths using ScalarArrayOpExpr clauses; these can't
-	 * be simple indexscans but they can be used in bitmap scans.
-	 */
-	bitindexpaths = list_concat(bitindexpaths,
-								find_saop_paths(root, rel,
-												clause_list, NIL,
-												false, outer_rel));
-
-	rte = rt_fetch(rel->relid, root->parse->rtable);
-	Assert(rel->relstorage != '\0');
-
-	/* Exclude plain index paths if user doesn't want them. */
-	if (!root->config->enable_indexscan && !root->config->mpp_trying_fallback_plan)
-		indexpaths = NIL;
-
-	/* Exclude plain index paths if the relation is an append-only relation. */
-	if (rel->relstorage == RELSTORAGE_AOROWS ||
-		rel->relstorage == RELSTORAGE_AOCOLS)
-		indexpaths = NIL;
-
-	/*
-	 * If we found anything usable, generate a BitmapHeapPath for the most
-	 * promising combination of bitmap index paths.
-	 */
-	if (bitindexpaths != NIL &&
-		(root->config->enable_bitmapscan || root->config->mpp_trying_fallback_plan))
-	{
-		Path	   *bitmapqual;
-		Path	   *bpath;
-
-		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths, outer_rel);
-		bpath = create_bitmap_scan_path(root, rel, bitmapqual, outer_rel);
-		indexpaths = lappend(indexpaths, bpath);
-	}
-
-	/*
-	 * Now choose the cheapest members of indexpaths.
-	 */
-	if (indexpaths != NIL)
-	{
-		*cheapest_startup = *cheapest_total = (Path *) linitial(indexpaths);
-
-		for_each_cell(l, lnext(list_head(indexpaths)))
-		{
-			Path	   *path = (Path *) lfirst(l);
-
-			if (compare_path_costs(path, *cheapest_startup, STARTUP_COST) < 0)
-				*cheapest_startup = path;
-			if (compare_path_costs(path, *cheapest_total, TOTAL_COST) < 0)
-				*cheapest_total = path;
-		}
-	}
-
-	/* Cache the results --- whether positive or negative */
-	info = makeNode(InnerIndexscanInfo);
-	info->other_relids = outer_relids;
-	info->isouterjoin = isouterjoin;
-	info->cheapest_startup_innerpath = *cheapest_startup;
-	info->cheapest_total_innerpath = *cheapest_total;
-	rel->index_inner_paths = lcons(info, rel->index_inner_paths);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * find_clauses_for_join
- *	  Generate a list of clauses that are potentially useful for
- *	  scanning rel as the inner side of a nestloop join.
- *
- * We consider both join and restriction clauses.  Any joinclause that uses
- * only otherrels in the specified outer_relids is fair game.  But there must
- * be at least one such joinclause in the final list, otherwise we return NIL
- * indicating that there isn't any potential win here.
- */
-static List *
-find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
-					  Relids outer_relids, bool isouterjoin)
-{
-	List	   *clause_list = NIL;
-	Relids		join_relids;
-	ListCell   *l;
-
-	/*
-	 * Look for joinclauses that are usable with given outer_relids.  Note
-	 * we'll take anything that's applicable to the join whether it has
-	 * anything to do with an index or not; since we're only building a list,
-	 * it's not worth filtering more finely here.
-	 */
-	join_relids = bms_union(rel->relids, outer_relids);
-
-	foreach(l, rel->joininfo)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		/* Can't use pushed-down join clauses in outer join */
-		if (isouterjoin && rinfo->is_pushed_down)
-			continue;
-		if (!bms_is_subset(rinfo->required_relids, join_relids))
-			continue;
-
-		clause_list = lappend(clause_list, rinfo);
-	}
-
-	bms_free(join_relids);
-
-	/*
-	 * Also check to see if any EquivalenceClasses can produce a relevant
-	 * joinclause.	Since all such clauses are effectively pushed-down, this
-	 * doesn't apply to outer joins.
-	 */
-	if (!isouterjoin && rel->has_eclass_joins)
-		clause_list = list_concat(clause_list,
-								  find_eclass_clauses_for_index_join(root,
-																	 rel,
-															  outer_relids));
-
-	/* If no join clause was matched then forget it, per comments above */
-	if (clause_list == NIL)
-		return NIL;
-=======
 	if (index->relam == BTREE_AM_OID &&
 		!list_member_oid(ec->ec_opfamilies, curFamily))
 		return false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* We insist on collation match for all index types, though */
 	if (!IndexCollMatchesExprColl(curCollation, ec->ec_collation))
@@ -4186,4 +3785,48 @@ string_to_const(const char *str, Oid datatype)
 
 	return makeConst(datatype, -1, collation, constlen,
 					 conval, false, false);
+}
+
+static void
+cdb_transform_appendrel_var(PlannerInfo *root, RelOptInfo *rel, List **index_pathkeys)
+{
+	if (index_pathkeys == NULL ||
+		*index_pathkeys == NULL ||
+		rel->reloptkind != RELOPT_OTHER_MEMBER_REL)
+		return;
+
+	AppendRelInfo *appinfo = NULL;
+	RelOptInfo *appendrel = NULL;
+	ListCell   *appcell;
+	CdbPathLocus notalocus;
+
+	/* Find the appendrel of which this baserel is a child. */
+	foreach(appcell, root->append_rel_list)
+	{
+		appinfo = (AppendRelInfo *) lfirst(appcell);
+		if (appinfo->child_relid == rel->relid)
+			break;
+	}
+	Assert(appinfo);
+	appendrel = find_base_rel(root, appinfo->parent_relid);
+
+	/*
+	 * The pathkey list happens to have the same format as the
+	 * partitioning key of a Hashed locus, so by disguising it we
+	 * can use cdbpathlocus_pull_above_projection() to do the
+	 * transformation.
+	 */
+	CdbPathLocus_MakeHashed(&notalocus, *index_pathkeys);
+	notalocus =
+		cdbpathlocus_pull_above_projection(root,
+										   notalocus,
+										   rel->relids,
+										   rel->reltargetlist,
+										appendrel->reltargetlist,
+										   appendrel->relid);
+	if (CdbPathLocus_IsHashed(notalocus))
+		*index_pathkeys = truncate_useless_pathkeys(root, appendrel,
+											notalocus.partkey_h);
+	else
+		*index_pathkeys = NULL;
 }
