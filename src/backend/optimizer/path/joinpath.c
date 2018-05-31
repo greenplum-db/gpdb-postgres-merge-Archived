@@ -3,13 +3,9 @@
  * joinpath.c
  *	  Routines to find all possible paths for processing a set of joins
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -46,14 +42,9 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist,
 					 JoinType jointype, SpecialJoinInfo *sjinfo,
-<<<<<<< HEAD
-					 List *mergeclause_list /*CDB*/ );
-static Path *best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
-						 RelOptInfo *outer_rel, JoinType jointype);
-=======
 					 SemiAntiJoinFactors *semifactors,
-					 Relids param_source_rels);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+					 Relids param_source_rels,
+					 List *mergeclause_list /*CDB*/);
 static List *select_mergejoin_clauses(PlannerInfo *root,
 						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
@@ -228,12 +219,9 @@ add_paths_to_joinrel(PlannerInfo *root,
 		root->config->mpp_trying_fallback_plan)
 	{
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
-<<<<<<< HEAD
-							 restrictlist, jointype, sjinfo,
-							 mergeclause_list);
-=======
 							 restrictlist, jointype,
-							 sjinfo, &semifactors, param_source_rels);
+							 sjinfo, &semifactors, param_source_rels,
+							 mergeclause_list);
 }
 
 /*
@@ -244,6 +232,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 static void
 try_nestloop_path(PlannerInfo *root,
 				  RelOptInfo *joinrel,
+				  JoinType orig_jointype,
 				  JoinType jointype,
 				  SpecialJoinInfo *sjinfo,
 				  SemiAntiJoinFactors *semifactors,
@@ -287,7 +276,7 @@ try_nestloop_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		add_path(joinrel, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
 				 create_nestloop_path(root,
 									  joinrel,
 									  jointype,
@@ -315,6 +304,7 @@ try_nestloop_path(PlannerInfo *root,
 static void
 try_mergejoin_path(PlannerInfo *root,
 				   RelOptInfo *joinrel,
+				   JoinType orig_jointype,
 				   JoinType jointype,
 				   SpecialJoinInfo *sjinfo,
 				   Relids param_source_rels,
@@ -366,7 +356,7 @@ try_mergejoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		add_path(joinrel, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
 				 create_mergejoin_path(root,
 									   joinrel,
 									   jointype,
@@ -396,6 +386,7 @@ try_mergejoin_path(PlannerInfo *root,
 static void
 try_hashjoin_path(PlannerInfo *root,
 				  RelOptInfo *joinrel,
+				  JoinType orig_jointype,
 				  JoinType jointype,
 				  SpecialJoinInfo *sjinfo,
 				  SemiAntiJoinFactors *semifactors,
@@ -403,6 +394,7 @@ try_hashjoin_path(PlannerInfo *root,
 				  Path *outer_path,
 				  Path *inner_path,
 				  List *restrict_clauses,
+				  List *mergeclause_list,    /*CDB*/
 				  List *hashclauses)
 {
 	Relids		required_outer;
@@ -434,7 +426,7 @@ try_hashjoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  NIL, required_outer))
 	{
-		add_path(joinrel, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
 				 create_hashjoin_path(root,
 									  joinrel,
 									  jointype,
@@ -445,13 +437,13 @@ try_hashjoin_path(PlannerInfo *root,
 									  inner_path,
 									  restrict_clauses,
 									  required_outer,
+									  mergeclause_list,
 									  hashclauses));
 	}
 	else
 	{
 		/* Waste no memory when we reject a path here */
 		bms_free(required_outer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 }
 
@@ -527,10 +519,6 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * assuming here that a sort is required.  We will consider
 	 * cheapest-startup-cost input paths later, and only if they don't need a
 	 * sort.
-<<<<<<< HEAD
-	 * If unique-ification is requested, do it and then handle as a plain inner
-	 * join.
-=======
 	 *
 	 * This function intentionally does not consider parameterized input paths
 	 * (implicit in the fact that it only looks at cheapest_total_path, which
@@ -541,7 +529,6 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * If unique-ification is requested, do it and then handle as a plain
 	 * inner join.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	outer_path = outerrel->cheapest_total_path;
 	inner_path = innerrel->cheapest_total_path;
@@ -633,23 +620,9 @@ sort_inner_and_outer(PlannerInfo *root,
 		 * properly.  try_mergejoin_path will detect that case and suppress an
 		 * explicit sort step, so we needn't do so here.
 		 */
-<<<<<<< HEAD
-		cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-				 create_mergejoin_path(root,
-									   joinrel,
-									   jointype,
-									   sjinfo,
-									   outer_path,
-									   inner_path,
-									   restrictlist,
-									   merge_pathkeys,
-									   cur_mergeclauses,
-                                       mergeclause_list,
-									   outerkeys,
-									   innerkeys));
-=======
 		try_mergejoin_path(root,
 						   joinrel,
+						   save_jointype,
 						   jointype,
 						   sjinfo,
 						   param_source_rels,
@@ -660,7 +633,6 @@ sort_inner_and_outer(PlannerInfo *root,
 						   cur_mergeclauses,
 						   outerkeys,
 						   innerkeys);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 }
 
@@ -782,28 +754,7 @@ match_unsorted_outer(PlannerInfo *root,
 		if (enable_material &&
 			!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
-<<<<<<< HEAD
 				create_material_path(root, innerrel, inner_cheapest_total);
-
-		/*
-		 * Get the best innerjoin indexpaths (if any) for this outer rel.
-		 * They're the same for all outer paths.
-		 */
-		if (innerrel->reloptkind != RELOPT_JOINREL)
-		{
-			if (IsA(inner_cheapest_total, AppendPath))
-				index_cheapest_total = best_appendrel_indexscan(root,
-																innerrel,
-																outerrel,
-																jointype);
-			else if (innerrel->rtekind == RTE_RELATION)
-				best_inner_indexscan(root, innerrel, outerrel, jointype,
-									 &index_cheapest_startup,
-									 &index_cheapest_total);
-		}
-=======
-				create_material_path(innerrel, inner_cheapest_total);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	foreach(lc1, outerrel->pathlist)
@@ -846,78 +797,15 @@ match_unsorted_outer(PlannerInfo *root,
 		merge_pathkeys = build_join_pathkeys(root, joinrel, jointype,
 											 outerpath->pathkeys);
 
-<<<<<<< HEAD
-        /*
-         * Consider nested joins.
-         */
-		if (nestjoinOK)
-=======
 		if (save_jointype == JOIN_UNIQUE_INNER)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			/*
 			 * Consider nestloop join, but only with the unique-ified cheapest
 			 * inner path
 			 */
-<<<<<<< HEAD
-	        cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-					 create_nestloop_path(root,
-										  joinrel,
-										  jointype,
-										  sjinfo,
-										  outerpath,
-										  inner_cheapest_total,
-										  restrictlist,
-                                          mergeclause_list,         /*CDB*/
-										  merge_pathkeys));
-			if (matpath != NULL)
-				cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-						 create_nestloop_path(root,
-											  joinrel,
-											  jointype,
-											  sjinfo,
-											  outerpath,
-											  matpath,
-											  restrictlist,
-                                              mergeclause_list,     /*CDB*/
-											  merge_pathkeys));
-			if (inner_cheapest_startup != inner_cheapest_total)
-				cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-						 create_nestloop_path(root,
-											  joinrel,
-											  jointype,
-											  sjinfo,
-											  outerpath,
-											  inner_cheapest_startup,
-											  restrictlist,
-                                              mergeclause_list,     /*CDB*/
-											  merge_pathkeys));
-			if (index_cheapest_total != NULL)
-				cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-						 create_nestloop_path(root,
-											  joinrel,
-											  jointype,
-											  sjinfo,
-											  outerpath,
-											  index_cheapest_total,
-											  restrictlist,
-                                              mergeclause_list,     /*CDB*/
-											  merge_pathkeys));
-			if (index_cheapest_startup != NULL &&
-				index_cheapest_startup != index_cheapest_total)
-				cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-						 create_nestloop_path(root,
-											  joinrel,
-											  jointype,
-											  sjinfo,
-											  outerpath,
-											  index_cheapest_startup,
-											  restrictlist,
-                                              mergeclause_list,
-											  merge_pathkeys));
-=======
 			try_nestloop_path(root,
 							  joinrel,
+							  save_jointype,
 							  jointype,
 							  sjinfo,
 							  semifactors,
@@ -943,6 +831,7 @@ match_unsorted_outer(PlannerInfo *root,
 
 				try_nestloop_path(root,
 								  joinrel,
+								  save_jointype,
 								  jointype,
 								  sjinfo,
 								  semifactors,
@@ -957,6 +846,7 @@ match_unsorted_outer(PlannerInfo *root,
 			if (matpath != NULL)
 				try_nestloop_path(root,
 								  joinrel,
+								  save_jointype,
 								  jointype,
 								  sjinfo,
 								  semifactors,
@@ -965,7 +855,6 @@ match_unsorted_outer(PlannerInfo *root,
 								  matpath,
 								  restrictlist,
 								  merge_pathkeys);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/* Can't do anything else if outer path needs to be unique'd */
@@ -1015,23 +904,9 @@ match_unsorted_outer(PlannerInfo *root,
 		 * try_mergejoin_path will do the right thing if inner_cheapest_total
 		 * is already correctly sorted.)
 		 */
-<<<<<<< HEAD
-		cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-				 create_mergejoin_path(root,
-									   joinrel,
-									   jointype,
-									   sjinfo,
-									   outerpath,
-									   inner_cheapest_total,
-									   restrictlist,
-									   merge_pathkeys,
-									   mergeclauses,
-                                       mergeclause_list,    /*CDB*/
-									   NIL,
-									   innersortkeys));
-=======
 		try_mergejoin_path(root,
 						   joinrel,
+						   save_jointype,
 						   jointype,
 						   sjinfo,
 						   param_source_rels,
@@ -1042,7 +917,6 @@ match_unsorted_outer(PlannerInfo *root,
 						   mergeclauses,
 						   NIL,
 						   innersortkeys);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* Can't do anything else if inner path needs to be unique'd */
 		if (save_jointype == JOIN_UNIQUE_INNER)
@@ -1129,24 +1003,9 @@ match_unsorted_outer(PlannerInfo *root,
 				}
 				else
 					newclauses = mergeclauses;
-<<<<<<< HEAD
-
-				cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-						 create_mergejoin_path(root,
-											   joinrel,
-											   jointype,
-											   sjinfo,
-											   outerpath,
-											   innerpath,
-											   restrictlist,
-											   merge_pathkeys,
-											   newclauses,
-                                               mergeclause_list,    /*CDB*/
-											   NIL,
-											   NIL));
-=======
 				try_mergejoin_path(root,
 								   joinrel,
+								   save_jointype,
 								   jointype,
 								   sjinfo,
 								   param_source_rels,
@@ -1157,7 +1016,6 @@ match_unsorted_outer(PlannerInfo *root,
 								   newclauses,
 								   NIL,
 								   NIL);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				cheapest_total_inner = innerpath;
 			}
 			/* Same on the basis of cheapest startup cost ... */
@@ -1191,24 +1049,9 @@ match_unsorted_outer(PlannerInfo *root,
 						else
 							newclauses = mergeclauses;
 					}
-<<<<<<< HEAD
-
-					cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-							 create_mergejoin_path(root,
-												   joinrel,
-												   jointype,
-												   sjinfo,
-												   outerpath,
-												   innerpath,
-												   restrictlist,
-												   merge_pathkeys,
-												   newclauses,
-                                                   mergeclause_list,    /*CDB*/
-												   NIL,
-												   NIL));
-=======
 					try_mergejoin_path(root,
 									   joinrel,
+									   save_jointype,
 									   jointype,
 									   sjinfo,
 									   param_source_rels,
@@ -1219,7 +1062,6 @@ match_unsorted_outer(PlannerInfo *root,
 									   newclauses,
 									   NIL,
 									   NIL);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 				cheapest_startup_inner = innerpath;
 			}
@@ -1256,13 +1098,9 @@ hash_inner_and_outer(PlannerInfo *root,
 					 List *restrictlist,
 					 JoinType jointype,
 					 SpecialJoinInfo *sjinfo,
-<<<<<<< HEAD
-                     List *mergeclause_list     /*CDB*/
-	)
-=======
 					 SemiAntiJoinFactors *semifactors,
-					 Relids param_source_rels)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+					 Relids param_source_rels,
+					 List *mergeclause_list     /*CDB*/)
 {
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *hashclauses;
@@ -1315,10 +1153,7 @@ hash_inner_and_outer(PlannerInfo *root,
 		hashclauses = lappend(hashclauses, restrictinfo);
 	}
 
-<<<<<<< HEAD
-=======
 	/* If we found any usable hashclauses, make paths */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (hashclauses)
 	{
 		/*
@@ -1340,6 +1175,7 @@ hash_inner_and_outer(PlannerInfo *root,
 			jointype = JOIN_INNER;
 			try_hashjoin_path(root,
 							  joinrel,
+							  save_jointype,
 							  jointype,
 							  sjinfo,
 							  semifactors,
@@ -1359,6 +1195,7 @@ hash_inner_and_outer(PlannerInfo *root,
 			jointype = JOIN_INNER;
 			try_hashjoin_path(root,
 							  joinrel,
+							  save_jointype,
 							  jointype,
 							  sjinfo,
 							  semifactors,
@@ -1370,6 +1207,7 @@ hash_inner_and_outer(PlannerInfo *root,
 			if (cheapest_startup_outer != cheapest_total_outer)
 				try_hashjoin_path(root,
 								  joinrel,
+								  save_jointype,
 								  jointype,
 								  sjinfo,
 								  semifactors,
@@ -1391,12 +1229,9 @@ hash_inner_and_outer(PlannerInfo *root,
 			ListCell   *lc1;
 			ListCell   *lc2;
 
-<<<<<<< HEAD
-		cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-				 create_hashjoin_path(root,
-=======
 			try_hashjoin_path(root,
 							  joinrel,
+							  save_jointype,
 							  jointype,
 							  sjinfo,
 							  semifactors,
@@ -1434,8 +1269,8 @@ hash_inner_and_outer(PlannerInfo *root,
 						continue;		/* already tried it */
 
 					try_hashjoin_path(root,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 									  joinrel,
+									  save_jointype,
 									  jointype,
 									  sjinfo,
 									  semifactors,
@@ -1443,102 +1278,14 @@ hash_inner_and_outer(PlannerInfo *root,
 									  outerpath,
 									  innerpath,
 									  restrictlist,
-<<<<<<< HEAD
-									  mergeclause_list,
-									  hashclauses));
-		if (cheapest_startup_outer != cheapest_total_outer)
-			cdb_add_join_path(root, joinrel, save_jointype, (JoinPath *)
-					 create_hashjoin_path(root,
-										  joinrel,
-										  jointype,
-										  sjinfo,
-										  cheapest_startup_outer,
-										  cheapest_total_inner,
-										  restrictlist,
-										  mergeclause_list,
-										  hashclauses));
-=======
 									  hashclauses);
 				}
 			}
 		}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 }
 
 /*
-<<<<<<< HEAD
- * best_appendrel_indexscan
- *	  Finds the best available set of inner indexscans for a nestloop join
- *	  with the given append relation on the inside and the given outer_rel
- *	  outside.	Returns an AppendPath comprising the best inner scans, or
- *	  NULL if there are no possible inner indexscans.
- *
- * Note that we currently consider only cheapest-total-cost.  It's not
- * very clear what cheapest-startup-cost might mean for an AppendPath.
- */
-static Path *
-best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
-						 RelOptInfo *outer_rel, JoinType jointype)
-{
-	int			parentRTindex = rel->relid;
-	List	   *append_paths = NIL;
-	bool		found_indexscan = false;
-	ListCell   *l;
-
-	foreach(l, root->append_rel_list)
-	{
-		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
-		int			childRTindex;
-		RelOptInfo *childrel;
-		Path	   *index_cheapest_startup;
-		Path	   *index_cheapest_total;
-
-		/* append_rel_list contains all append rels; ignore others */
-		if (appinfo->parent_relid != parentRTindex)
-			continue;
-
-		childRTindex = appinfo->child_relid;
-		childrel = find_base_rel(root, childRTindex);
-		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
-
-		/*
-		 * Check to see if child was rejected by constraint exclusion. If so,
-		 * it will have a cheapest_total_path that's a "dummy" path.
-		 */
-		if (IS_DUMMY_PATH(childrel->cheapest_total_path))
-			continue;			/* OK, we can ignore it */
-
-		/*
-		 * Get the best innerjoin indexpaths (if any) for this child rel.
-		 */
-		best_inner_indexscan(root, childrel, outer_rel, jointype,
-							 &index_cheapest_startup, &index_cheapest_total);
-
-		/*
-		 * If no luck on an indexpath for this rel, we'll still consider an
-		 * Append substituting the cheapest-total inner path.  However we must
-		 * find at least one indexpath, else there's not going to be any
-		 * improvement over the base path for the appendrel.
-		 */
-		if (index_cheapest_total)
-			found_indexscan = true;
-		else
-			index_cheapest_total = childrel->cheapest_total_path;
-
-		append_paths = lappend(append_paths, index_cheapest_total);
-	}
-
-	if (!found_indexscan)
-		return NULL;
-
-	/* Form and return the completed Append path. */
-	return (Path *) create_append_path(root, rel, append_paths);
-}
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * select_mergejoin_clauses
  *	  Select mergejoin clauses that are usable for a particular join.
  *	  Returns a list of RestrictInfo nodes for those clauses.
