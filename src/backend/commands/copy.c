@@ -4026,7 +4026,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 		{
 			List	   *recheckIndexes;
 
-			ExecStoreTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
+			ExecStoreHeapTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
 			recheckIndexes =
 				ExecInsertIndexTuples(myslot, &(bufferedTuples[i]->t_self),
 									  estate);

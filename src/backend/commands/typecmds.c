@@ -708,104 +708,6 @@ DefineType(List *names, List *parameters)
 	}
 }
 
-
-/*
- *	RemoveTypes
- *		Implements DROP TYPE and DROP DOMAIN
- *
- * Note: if DOMAIN is specified, we enforce that each type is a domain, but
- * we don't enforce the converse for DROP TYPE
- */
-void
-RemoveTypes(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-
-	/*
-	 * First we identify all the types, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the types depends on another.
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *names = (List *) lfirst(cell);
-		TypeName   *typename;
-		Oid			typeoid;
-		HeapTuple	tup;
-		ObjectAddress object;
-		Form_pg_type typ;
-
-		/* Make a TypeName so we can use standard type lookup machinery */
-		typename = makeTypeNameFromNameList(names);
-
-		/* Use LookupTypeName here so that shell types can be removed. */
-		tup = LookupTypeName(NULL, typename, NULL);
-		if (tup == NULL)
-		{
-			if (!drop->missing_ok)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("type \"%s\" does not exist",
-								TypeNameToString(typename))));
-			}
-			else
-			{
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport(NOTICE,
-							(errmsg("type \"%s\" does not exist, skipping",
-									TypeNameToString(typename))));
-			}
-			continue;
-		}
-
-		typeoid = typeTypeId(tup);
-		typ = (Form_pg_type) GETSTRUCT(tup);
-
-		/* Permission check: must own type or its namespace */
-		if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-			!pg_namespace_ownercheck(typ->typnamespace, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-						   format_type_be(typeoid));
-
-		if (drop->removeType == OBJECT_DOMAIN)
-		{
-			/* Check that this is actually a domain */
-			if (typ->typtype != TYPTYPE_DOMAIN)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is not a domain",
-								TypeNameToString(typename))));
-		}
-
-		/*
-		 * Remove any storage encoding
-		 */
-		remove_type_encoding(typeoid);
-
-		/*
-		 * Note: we need no special check for array types here, as the normal
-		 * treatment of internal dependencies handles it just fine
-		 */
-
-		object.classId = TypeRelationId;
-		object.objectId = typeoid;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-
-		ReleaseSysCache(tup);
-	}
-
-	performMultipleDeletions(objects, drop->behavior);
-
-	free_object_addresses(objects);
-}
-
-
 /*
  * Guts of type deletion.
  */
@@ -1742,6 +1644,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								  BOOTSTRAP_SUPERUSERID,		/* proowner */
 								  INTERNALlanguageId,	/* language */
 								  F_FMGR_INTERNAL_VALIDATOR,	/* language validator */
+								  InvalidOid,
 								  prosrc[i],	/* prosrc */
 								  NULL, /* probin */
 								  false,		/* isAgg */
@@ -1757,7 +1660,9 @@ makeRangeConstructors(const char *name, Oid namespace,
 								  NIL,	/* parameterDefaults */
 								  PointerGetDatum(NULL),		/* proconfig */
 								  1.0,	/* procost */
-								  0.0); /* prorows */
+								  0.0,
+								  PRODATAACCESS_NONE,
+								  PROEXECLOCATION_ANY); /* prorows */
 
 		/*
 		 * Make the constructors internally-dependent on the range type so

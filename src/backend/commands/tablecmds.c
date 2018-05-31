@@ -8583,27 +8583,27 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	/* The IndexStmt has already been through transformIndexStmt */
 
-	DefineIndex(stmt->relation, /* relation */
-				stmt->idxname,	/* index name */
-				InvalidOid,		/* no predefined OID */
-				stmt->oldNode,
-				stmt->accessMethod,		/* am name */
-				stmt->tableSpace,
-				stmt->indexParams,		/* parameters */
-				(Expr *) stmt->whereClause,
-				stmt->options,
-				stmt->excludeOpNames,
-				stmt->unique,
-				stmt->primary,
-				stmt->isconstraint,
-				stmt->deferrable,
-				stmt->initdeferred,
-				true,			/* is_alter_table */
-				check_rights,
-				skip_build,
-				quiet,
-				false,
-				stmt);
+	new_index = DefineIndex(stmt->relation, /* relation */
+							stmt->idxname,	/* index name */
+							InvalidOid,		/* no predefined OID */
+							stmt->oldNode,
+							stmt->accessMethod,		/* am name */
+							stmt->tableSpace,
+							stmt->indexParams,		/* parameters */
+							(Expr *) stmt->whereClause,
+							stmt->options,
+							stmt->excludeOpNames,
+							stmt->unique,
+							stmt->primary,
+							stmt->isconstraint,
+							stmt->deferrable,
+							stmt->initdeferred,
+							true,			/* is_alter_table */
+							check_rights,
+							skip_build,
+							quiet,
+							false,
+							stmt);
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
@@ -9946,7 +9946,7 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+		ExecStoreHeapTuple(tuple, slot, InvalidBuffer, false);
 
 		if (!ExecQual(exprstate, econtext, true))
 			ereport(ERROR,
@@ -16648,7 +16648,7 @@ ATPExecPartSplit(Relation *rel,
 	{
 		CreateStmt *ct = makeNode(CreateStmt);
 		char tmpname[NAMEDATALEN];
-		InhRelation *inh = makeNode(InhRelation);
+		TableLikeClause *inh = makeNode(TableLikeClause);
 		DestReceiver *dest = None_Receiver;
 		Node *at = lsecond((List *)pc->arg1);
 		AlterPartitionCmd *pc2 = (AlterPartitionCmd *)pc->arg2;
@@ -17955,7 +17955,6 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	Oid			oldNspOid;
 	Oid			nspOid;
 	ObjectAddresses *objsMoved;
-	Relation	classRel;
 	RangeVar   *newrv;
 
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
@@ -18670,6 +18669,10 @@ char *alterTableCmdString(AlterTableType subtype)
 			cmdstring = pstrdup("validate constraint of");
 			break;
 
+		case AT_ValidateConstraintRecurse:
+			cmdstring = pstrdup("validate constraint recurse of");
+			break;
+
 		case AT_ProcessedConstraint: /* pre-processed add constraint (local in parser/analyze.c) */
 			break;
 
@@ -18683,7 +18686,9 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_AlterColumnType: /* alter column type */
 			cmdstring = pstrdup("alter a column datatype of");
 			break;
-			
+		case AT_AlterColumnGenericOptions: /* alter column options */
+			cmdstring = pstrdup("alter a column option of");
+			break;
 		case AT_ChangeOwner: /* change owner */
 			cmdstring = pstrdup("alter the owner of");
 			break;
@@ -18699,6 +18704,7 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_SetTableSpace: /* SET TABLESPACE */
 		case AT_SetRelOptions: /* SET (...) -- AM specific parameters */
 		case AT_ResetRelOptions: /* RESET (...) -- AM specific parameters */
+		case AT_ReplaceRelOptions: /* REPLACE (...) -- AM specific parameters */
 			break;
 			
 		case AT_EnableTrig: /* ENABLE TRIGGER name */

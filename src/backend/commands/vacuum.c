@@ -29,6 +29,7 @@
 #include "access/heapam.h"
 #include "access/appendonlywriter.h"
 #include "access/appendonlytid.h"
+#include "access/visibilitymap.h"
 #include "catalog/heap.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -1087,7 +1088,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			 */
 			Oid relationOid = InvalidOid;
 
-			relationOid = RangeVarGetRelid(vacstmt->relation, false);
+			relationOid = RangeVarGetRelid(vacstmt->relation, NoLock, false);
 			PartStatus ps = rel_part_status(relationOid);
 
 			if (ps != PART_STATUS_ROOT && (vacstmt->options & VACOPT_ROOTONLY))
@@ -1393,6 +1394,7 @@ vac_update_relstats_from_list(List *updated_stats)
 		 */
 		vac_update_relstats(rel,
 							stats->rel_pages, stats->rel_tuples,
+							visibilitymap_count(rel),
 							rel->rd_rel->relhasindex, InvalidTransactionId,
 							false /* isvacuum */);
 		relation_close(rel, AccessShareLock);
@@ -1860,7 +1862,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 			MyProc->vacuumFlags |= PROC_IN_VACUUM;
 #endif
 			if (for_wraparound)
-				MyProc->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
+				MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 			LWLockRelease(ProcArrayLock);
 		}
 
@@ -2448,6 +2450,7 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
+							visibilitymap_count(indrel),
 							false, InvalidTransactionId,
 							true /* isvacuum */);
 
@@ -2528,6 +2531,7 @@ vacuum_appendonly_index(Relation indexRelation,
 	if (!stats->estimated_count)
 		vac_update_relstats(indexRelation,
 							stats->num_pages, stats->num_index_tuples,
+							visibilitymap_count(indexRelation),
 							false, InvalidTransactionId,
 							true /* isvacuum */);
 

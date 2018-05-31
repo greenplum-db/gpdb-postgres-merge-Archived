@@ -836,7 +836,7 @@ DefineIndex(RangeVar *heapRelation,
 			heap_close(rel, NoLock);
 		else
 			heap_close(rel, heap_lockmode);
-		return;
+		return indexRelationId;
 	}
 
 	/* save lockrelid and locktag for below, then close rel */

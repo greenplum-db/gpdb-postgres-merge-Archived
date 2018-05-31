@@ -178,7 +178,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	double		read_rate,
 				write_rate;
 	bool		scan_all;
-	bool		scanned_all;	/* did we actually scan all pages? */
 	TransactionId freezeTableLimit;
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
@@ -301,13 +300,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		new_rel_tuples = vacrelstats->old_rel_tuples;
 	}
 
-	new_frozen_xid = scanned_all ? FreezeLimit : InvalidTransactionId;
-
-	vac_update_relstats(onerel,
-						new_rel_pages, new_rel_tuples,
-						vacrelstats->hasindex,
-						new_frozen_xid,
-						true /* isvacuum */);
 	new_rel_allvisible = visibilitymap_count(onerel);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
@@ -317,11 +309,19 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		new_frozen_xid = InvalidTransactionId;
 
 	vac_update_relstats(onerel,
+						new_rel_pages, new_rel_tuples,
+						visibilitymap_count(onerel),
+						vacrelstats->hasindex,
+						new_frozen_xid,
+						true /* isvacuum */);
+
+	vac_update_relstats(onerel,
 						new_rel_pages,
 						new_rel_tuples,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
-						new_frozen_xid);
+						new_frozen_xid,
+						true);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -471,6 +471,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 		vac_update_relstats(onerel,
 							vacrelstats->rel_pages,
 							vacrelstats->new_rel_tuples,
+							visibilitymap_count(onerel),
 							vacrelstats->hasindex,
 							FreezeLimit,
 							true /* isvacuum */);
