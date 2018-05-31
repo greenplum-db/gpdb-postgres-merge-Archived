@@ -3,13 +3,9 @@
  * allpaths.c
  *	  Routines to find possible search paths for processing a query
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -75,13 +71,10 @@ static void set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 					Index rti, RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
-<<<<<<< HEAD
 static bool has_multiple_baserels(PlannerInfo *root);
-=======
 static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 						   List *live_childrels,
 						   List *all_child_pathkeys);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static List *accumulate_append_subpath(List *subpaths, Path *path);
 static void set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -402,30 +395,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void
 set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	List	   *pathlist = NIL;
-	List	   *indexpathlist = NIL;
-	List	   *bitmappathlist = NIL;
-	List	   *tidpathlist = NIL;
-	Path	   *seqpath = NULL;
-	ListCell   *cell;
-
 	/*
-<<<<<<< HEAD
-	 * If we can prove we don't need to scan the rel via constraint exclusion,
-	 * set up a single dummy path for it.  We only need to check for regular
-	 * baserels; if it's an otherrel, CE was already checked in
-	 * set_append_rel_pathlist().
-	 */
-	if (rel->reloptkind == RELOPT_BASEREL &&
-		relation_excluded_by_constraints(root, rel, rte))
-	{
-		set_dummy_rel_pathlist(root, rel);
-		return;
-	}
-
-	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Test any partial indexes of rel for applicability.  We must do this
 	 * first since partial unique indexes can affect size estimates.
 	 */
@@ -446,7 +416,13 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	}
 }
 
-<<<<<<< HEAD
+/*
+ * set_plain_rel_pathlist
+ *	  Build access paths for a plain relation (no subquery, no inheritance)
+ */
+static void
+set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
 	/*
 	 * Generate paths and add them to the rel's pathlist.
 	 *
@@ -498,17 +474,6 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider sequential scan */
 	if (root->config->enable_seqscan)
 		pathlist = lappend(pathlist, seqpath);
-=======
-/*
- * set_plain_rel_pathlist
- *	  Build access paths for a plain relation (no subquery, no inheritance)
- */
-static void
-set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-{
-	/* Consider sequential scan */
-	add_path(rel, create_seqscan_path(root, rel, NULL));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Consider index and bitmap scans */
 	create_index_paths(root, rel,
@@ -682,12 +647,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * reconstitute the RestrictInfo layer.
 		 */
 		childquals = get_all_actual_clauses(rel->baserestrictinfo);
-<<<<<<< HEAD
-		childquals = (List *) adjust_appendrel_attrs(root, (Node *) childquals,
-=======
 		childquals = (List *) adjust_appendrel_attrs(root,
 													 (Node *) childquals,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 													 appinfo);
 		childqual = eval_const_expressions(root, (Node *)
 										   make_ands_explicit(childquals));
@@ -727,19 +688,12 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * while constructing attr_widths estimates below, though.
 		 */
 		childrel->joininfo = (List *)
-<<<<<<< HEAD
-			adjust_appendrel_attrs(root, (Node *) rel->joininfo,
-								   appinfo);
-		childrel->reltargetlist = (List *)
-			adjust_appendrel_attrs(root, (Node *) rel->reltargetlist,
-=======
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->joininfo,
 								   appinfo);
 		childrel->reltargetlist = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->reltargetlist,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								   appinfo);
 
 		/*
@@ -785,17 +739,12 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			width_avg += cdbpath_rows(root, childrel->cheapest_total_path) * childrel->width;
 
 			/*
-<<<<<<< HEAD
-			 * Accumulate per-column estimates too.  Whole-row Vars and
-			 * PlaceHolderVars can be ignored here.
-=======
 			 * Accumulate per-column estimates too.  We need not do anything
 			 * for PlaceHolderVars in the parent list.	If child expression
 			 * isn't a Var, or we didn't record a width estimate for it, we
 			 * have to fall back on a datatype-based estimate.
 			 *
 			 * By construction, child's reltargetlist is 1-to-1 with parent's.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 */
 			forboth(parentvars, rel->reltargetlist,
 					childvars, childrel->reltargetlist)
@@ -989,11 +938,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * Build unparameterized MergeAppend paths based on the collected list of
 	 * child pathkeys.
 	 */
-<<<<<<< HEAD
 	add_path(root, rel, (Path *) create_append_path(root, rel, subpaths));
-=======
 	generate_mergeappend_paths(root, rel, live_childrels, all_child_pathkeys);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Build Append paths for each parameterization seen among the child rels.
@@ -1147,12 +1093,6 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 															pathkeys,
 															NULL));
 	}
-<<<<<<< HEAD
-
-	/* Select cheapest path */
-	set_cheapest(root, rel);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -1192,14 +1132,10 @@ set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
 	rel->rows = 0;
 	rel->width = 0;
 
-<<<<<<< HEAD
-	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
-=======
 	/* Discard any pre-existing paths; no further need for them */
 	rel->pathlist = NIL;
 
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(root, rel);
@@ -1255,38 +1191,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	forceDistRand = rte->forceDistRandom;
 
-<<<<<<< HEAD
 	/* CDB: Could be a preplanned subquery from window_planner. */
 	if (rte->subquery_plan == NULL)
-=======
-	/*
-	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become WHERE or HAVING
-	 * quals of the subquery itself.  This transformation is useful because it
-	 * may allow us to generate a better plan for the subquery than evaluating
-	 * all the subquery output rows and then filtering them.
-	 *
-	 * There are several cases where we cannot push down clauses. Restrictions
-	 * involving the subquery are checked by subquery_is_pushdown_safe().
-	 * Restrictions on individual clauses are checked by
-	 * qual_is_pushdown_safe().  Also, we don't want to push down
-	 * pseudoconstant clauses; better to have the gating node above the
-	 * subquery.
-	 *
-	 * Also, if the sub-query has "security_barrier" flag, it means the
-	 * sub-query originated from a view that must enforce row-level security.
-	 * We must not push down quals in order to avoid information leaks, either
-	 * via side-effects or error output.
-	 *
-	 * Non-pushed-down clauses will get evaluated as qpquals of the
-	 * SubqueryScan node.
-	 *
-	 * XXX Are there any cases where we want to make a policy decision not to
-	 * push down a pushable qual, because it'd result in a worse plan?
-	 */
-	if (rel->baserestrictinfo != NIL &&
-		subquery_is_pushdown_safe(subquery, subquery, differentTypes))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		/*
 		 * push down quals if possible. Note subquery might be
@@ -1315,25 +1221,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Const	   *cnst = (Const *) subquery->limitCount;
 
-<<<<<<< HEAD
 			if (cnst->consttype == INT8OID &&
 				DatumGetInt64(cnst->constvalue) <= 1)
 				rel->onerow = true;
-=======
-			if (!rinfo->pseudoconstant &&
-				(!rte->security_barrier ||
-				 !contain_leaky_functions(clause)) &&
-				qual_is_pushdown_safe(subquery, rti, clause, differentTypes))
-			{
-				/* Push it down */
-				subquery_push_qual(subquery, rte, rti, clause);
-			}
-			else
-			{
-				/* Keep it in the upper query */
-				upperrestrictlist = lappend(upperrestrictlist, rinfo);
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		/*
@@ -1359,22 +1249,17 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		rel->subplan = subquery_planner(root->glob, subquery,
 									root,
 									false, tuple_fraction,
-<<<<<<< HEAD
 									&subroot,
 									config);
-		rel->subrtable = subroot->parse->rtable;
-		rel->subrowmark = subroot->rowMarks;
 	}
 	else
 	{
 		/* This is a preplanned sub-query RTE. */
 		rel->subplan = rte->subquery_plan;
-		rel->subrtable = rte->subquery_rtable;
-		rel->subrowmark = NULL; /* GPDB_90_MERGE_FIXME: do we need to get rowmarks from somewhere? */
 		subroot = root;
 		/* XXX rel->onerow = ??? */
-=======
-									&subroot);
+	}
+
 	rel->subroot = subroot;
 
 	/*
@@ -1386,7 +1271,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	{
 		set_dummy_rel_pathlist(rel);
 		return;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* Mark rel with estimated output rows, width, etc */
@@ -1396,16 +1280,12 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
 	subquery_path = create_subqueryscan_path(root, rel, pathkeys);
 
 	if (forceDistRand)
 		CdbPathLocus_MakeStrewn(&subquery_path->locus);
 
 	add_path(root, rel, subquery_path);
-=======
-	add_path(rel, create_subqueryscan_path(root, rel, pathkeys, NULL));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(root, rel);
@@ -1418,15 +1298,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void
 set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-<<<<<<< HEAD
 	/* CDB: Could the function return more than one row? */
 	rel->onerow = !expression_returns_set(rte->funcexpr);
 
-	/* Mark rel with estimated output rows, width, etc */
-	set_function_size_estimates(root, rel);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Generate appropriate path */
 	add_path(root, rel, create_functionscan_path(root, rel, rte));
 
@@ -1496,16 +1370,10 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 static void
 set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-<<<<<<< HEAD
-	/* Mark rel with estimated output rows, width, etc */
-	set_values_size_estimates(root, rel);
-
 	/* CDB: Just one row? */
 	rel->onerow = (rel->tuples <= 1 &&
 				   !expression_returns_set((Node *) rte->values_lists));
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Generate appropriate path */
 	add_path(root, rel, create_valuesscan_path(root, rel, rte));
 
@@ -1515,14 +1383,10 @@ set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 /*
  * set_cte_pathlist
-<<<<<<< HEAD
- *		Build the (single) access path for a CTE RTE.
-=======
  *		Build the (single) access path for a non-self-reference CTE RTE
  *
  * There's no need for a separate set_cte_size phase, since we don't
  * support parameterized paths for CTEs.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 static void
 set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1766,26 +1630,6 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
-<<<<<<< HEAD
- * set_foreign_pathlist
- *		Build the (single) access path for a foreign table RTE
- */
-static void
-set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-{
-	/* Mark rel with estimated output rows, width, etc */
-	set_foreign_size_estimates(root, rel);
-
-	/* Generate appropriate path */
-	add_path(root, rel, (Path *) create_foreignscan_path(root, rel));
-
-	/* Select cheapest path (pretty easy in this case...) */
-	set_cheapest(root, rel);
-}
-
-/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * make_rel_from_joinlist
  *	  Build access paths using a "joinlist" to guide the join path search.
  *
@@ -2346,11 +2190,7 @@ qual_is_pushdown_safe(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual
 
 	/*
 	 * It would be unsafe to push down window function calls, but at least for
-<<<<<<< HEAD
-	 * the moment we could never see any in a qual anyhow.  (The same applies
-=======
 	 * the moment we could never see any in a qual anyhow.	(The same applies
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * to aggregates, which we check for in pull_var_clause below.)
 	 */
 	if (NULL != subquery->setOperations &&
