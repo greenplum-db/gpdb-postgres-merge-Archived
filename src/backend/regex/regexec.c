@@ -597,15 +597,8 @@ cdissect(struct vars * v,
 	{
 		case '=':				/* terminal node */
 			assert(t->left == NULL && t->right == NULL);
-<<<<<<< HEAD
-			return REG_OKAY;	/* no action, parent did the work */
-		case '|':				/* alternation */
-			assert(t->left != NULL);
-			return caltdissect(v, t, begin, end);
-=======
 			er = REG_OKAY;		/* no action, parent did the work */
 			break;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		case 'b':				/* back reference */
 			assert(t->left == NULL && t->right == NULL);
 			er = cbrdissect(v, t, begin, end);
@@ -844,30 +837,6 @@ cbrdissect(struct vars * v,
 			return REG_OKAY;
 		}
 		return REG_NOMATCH;
-<<<<<<< HEAD
-	v->mem[t->retry] = 1;
-
-	/* special cases for zero-length strings */
-	if (brlen == 0)
-	{
-		/*
-		 * matches only if target is zero length, but any number of
-		 * repetitions can be considered to be present
-		 */
-		if (begin == end && min <= max)
-=======
-	}
-	if (begin == end)
-	{
-		/* matches only if zero repetitions are okay */
-		if (min == 0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-		{
-			MDEBUG(("cbackref matched trivially\n"));
-			return REG_OKAY;
-		}
-<<<<<<< HEAD
-		return REG_NOMATCH;
 	}
 	if (begin == end)
 	{
@@ -877,8 +846,6 @@ cbrdissect(struct vars * v,
 			MDEBUG(("cbackref matched trivially\n"));
 			return REG_OKAY;
 		}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		return REG_NOMATCH;
 	}
 

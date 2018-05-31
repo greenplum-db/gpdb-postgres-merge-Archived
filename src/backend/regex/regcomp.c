@@ -1096,34 +1096,9 @@ parseqatom(struct vars * v,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * It's quantifier time.  If the atom is just a BACKREF, we'll let it deal
-	 * with quantifiers internally.  Otherwise, the first step is to turn
-	 * x{0,...} into x{1,...}|empty
-	 */
-	if (m == 0 && atomtype != BACKREF)
-	{
-		EMPTYARC(s2, atom->end);	/* the bypass */
-		assert(PREF(qprefer) != 0);
-		f = COMBINE(qprefer, atom->flags);
-		t = subre(v, '|', f, lp, atom->end);
-		NOERR();
-		t->left = atom;
-		t->right = subre(v, '|', PREF(f), s2, atom->end);
-		NOERR();
-		t->right->left = subre(v, '=', 0, s2, atom->end);
-		NOERR();
-		*atomp = t;
-		atomp = &t->left;
-		m = 1;
-	}
-
-	/* deal with the rest of the quantifier */
-=======
 	 * It's quantifier time.  If the atom is just a backref, we'll let it deal
 	 * with quantifiers internally.
 	 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (atomtype == BACKREF)
 	{
 		/* special case:  backrefs have internal quantifiers */
