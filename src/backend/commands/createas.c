@@ -342,10 +342,11 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		validate_reloptions = true;
 #endif
 
-	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug when the pg 9.2 code could run.
+	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug and further fix when the pg 9.2 code could run.
 	 * 1) Need to Change for build_ctas_with_dist(), prebuild_temp_table()?
 	 * 2) Refer the old ctas implementation and CreateStmt change in standard_ProcessUtility().
-	 * 3) TODO in this file.
+	 * 3) TODO in this file. Note this function run at the executor RUN stage.
+	 *    Dispatcher does not seem to be able to run here. Need to think and design.
 	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)

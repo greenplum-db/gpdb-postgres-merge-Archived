@@ -5051,8 +5051,7 @@ CreateAsStmt:
 					ctas->is_select_into = false;
 					/* cram additional flags into the IntoClause */
 					$4->rel->relpersistence = $2;
-
-					n->distributedBy = $8;
+					$4>into->distributedBy = $8;
 
 					if ($9)
 						ereport(ERROR,
