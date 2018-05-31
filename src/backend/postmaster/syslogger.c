@@ -354,32 +354,7 @@ SysLoggerMain(int argc, char *argv[])
     {
         bool		time_based_rotation = false;
 		int			size_rotation_for = 0;
-<<<<<<< HEAD
 		bool		size_rotation_for_alert = false;
-
-#ifndef WIN32
-        int			bytesRead = 0;
-        int			rc;
-        fd_set		rfds;
-        struct timeval timeout;
-#endif
-
-        if (got_SIGHUP)
-        {
-            got_SIGHUP = false;
-            ProcessConfigFile(PGC_SIGHUP);
-
-            /*
-             * Check if the log directory or filename pattern changed in
-             * postgresql.conf. If so, force rotation to make sure we're
-             * writing the logfiles in the right place.
-             */
-            if (strcmp(Log_directory, currentLogDir) != 0)
-            {
-                pfree(currentLogDir);
-                currentLogDir = pstrdup(Log_directory);
-                rotation_requested = true;
-=======
 		long		cur_timeout;
 		int			cur_flags;
 
@@ -408,38 +383,27 @@ SysLoggerMain(int argc, char *argv[])
 				pfree(currentLogDir);
 				currentLogDir = pstrdup(Log_directory);
 				rotation_requested = true;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 				/*
 				 * Also, create new directory if not present; ignore errors
 				 */
 				mkdir(Log_directory, S_IRWXU);
-<<<<<<< HEAD
-=======
 			}
 			if (strcmp(Log_filename, currentLogFilename) != 0)
 			{
 				pfree(currentLogFilename);
 				currentLogFilename = pstrdup(Log_filename);
 				rotation_requested = true;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-			}
-            if (strcmp(Log_filename, currentLogFilename) != 0)
-            {
-                pfree(currentLogFilename);
-                currentLogFilename = pstrdup(Log_filename);
-                rotation_requested = true;
-            }
 
-            /*
-             * If rotation time parameter changed, reset next rotation time,
-             * but don't immediately force a rotation.
-             */
-            if (currentLogRotationAge != Log_RotationAge)
-            {
-                currentLogRotationAge = Log_RotationAge;
-                set_next_rotation_time();
-            }
+			/*
+			 * If rotation time parameter changed, reset next rotation time,
+			 * but don't immediately force a rotation.
+			 */
+			if (currentLogRotationAge != Log_RotationAge)
+			{
+				currentLogRotationAge = Log_RotationAge;
+				set_next_rotation_time();
+			}
 
 			/*
 			 * If we had a rotation-disabling failure, re-enable rotation
@@ -450,10 +414,9 @@ SysLoggerMain(int argc, char *argv[])
 				rotation_disabled = false;
 				rotation_requested = true;
 			}
-<<<<<<< HEAD
-        }
+		}
 
-        if (!rotation_requested && Log_RotationAge > 0 && !rotation_disabled)
+		if (Log_RotationAge > 0 && !rotation_disabled)
         {
             /* Do a logfile rotation if it's time */
             pg_time_t	now = (pg_time_t) time(NULL);
@@ -472,32 +435,6 @@ SysLoggerMain(int argc, char *argv[])
         {
             /* Do a rotation if file is too big */
             if (ftell(syslogFile) >= Log_RotationSize * 1024L)
-=======
-
-			/*
-			 * If we had a rotation-disabling failure, re-enable rotation
-			 * attempts after SIGHUP, and force one immediately.
-			 */
-			if (rotation_disabled)
-			{
-				rotation_disabled = false;
-				rotation_requested = true;
-			}
-		}
-
-		if (Log_RotationAge > 0 && !rotation_disabled)
-		{
-			/* Do a logfile rotation if it's time */
-			now = (pg_time_t) time(NULL);
-			if (now >= next_rotation_time)
-				rotation_requested = time_based_rotation = true;
-		}
-
-		if (!rotation_requested && Log_RotationSize > 0 && !rotation_disabled)
-		{
-			/* Do a rotation if file is too big */
-			if (ftell(syslogFile) >= Log_RotationSize * 1024L)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_STDERR;
@@ -887,15 +824,9 @@ SysLogger_Start(void)
 	 * is a bit klugy but we have little choice.
 	 */
 #ifndef WIN32
-<<<<<<< HEAD
-    if (syslogPipe[0] < 0)
-    {
-        if (pgpipe(syslogPipe) < 0)
-=======
 	if (syslogPipe[0] < 0)
 	{
 		if (pipe(syslogPipe) < 0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			ereport(FATAL,
 					(errcode_for_socket_access(),
 					 (errmsg("could not create pipe for syslog: %m"))));
@@ -1005,16 +936,6 @@ SysLogger_Start(void)
 						ereport(FATAL,
 							(errcode_for_file_access(),
 							 errmsg("could not redirect stderr: %m")));
-<<<<<<< HEAD
-                    close(fd);
-                    _setmode(_fileno(stderr),_O_BINARY);
-					/*
-					 * Now we are done with the write end of the pipe.
-					 * CloseHandle() must not be called because the preceding
-					 * close() closes the underlying handle.
-					 */
-                    syslogPipe[1] = 0;
-=======
 				close(fd);
 				_setmode(_fileno(stderr), _O_BINARY);
 
@@ -1024,7 +945,6 @@ SysLogger_Start(void)
 				 * close() closes the underlying handle.
 				 */
 				syslogPipe[1] = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
                     redirection_done = true;
                 }
