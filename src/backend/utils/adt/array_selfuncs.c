@@ -133,34 +133,26 @@ scalararraysel_containment(PlannerInfo *root,
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
 		Form_pg_statistic stats;
-		Datum	   *values;
-		int			nvalues;
-		float4	   *numbers;
-		int			nnumbers;
+		AttStatsSlot sslot;
+		AttStatsSlot sslot_hist;
 		float4	   *hist;
 		int			nhist;
 
 		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
 
 		/* MCELEM will be an array of same type as element */
-		if (get_attstatsslot(vardata.statsTuple,
-							 elemtype, vardata.atttypmod,
+		if (get_attstatsslot(&sslot, vardata.statsTuple,
 							 STATISTIC_KIND_MCELEM, InvalidOid,
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers))
+							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 		{
 			/* For ALL case, also get histogram of distinct-element counts */
 			if (useOr ||
-				!get_attstatsslot(vardata.statsTuple,
-								  elemtype, vardata.atttypmod,
+				!get_attstatsslot(&sslot, vardata.atttypmod,
 								  STATISTIC_KIND_DECHIST, InvalidOid,
-								  NULL,
-								  NULL, NULL,
-								  &hist, &nhist))
+								  ATTSTATSSLOT_NUMBERS))
 			{
-				hist = NULL;
-				nhist = 0;
+				sslot_hist.numbers = NULL;
+				sslot_hist.nnumbers = 0;
 			}
 
 			/*
@@ -169,22 +161,27 @@ scalararraysel_containment(PlannerInfo *root,
 			 * For = ALL, estimate as var <@ ARRAY[const].
 			 */
 			if (useOr)
-				selec = mcelem_array_contain_overlap_selec(values, nvalues,
-														   numbers, nnumbers,
-														   &constval, 1,
-													   OID_ARRAY_CONTAINS_OP,
+				selec = mcelem_array_contain_overlap_selec(sslot.values,
+														   sslot.nvalues,
+														   sslot.numbers,
+														   sslot.numbers,
+														   &constval,
+														   1,
+														   OID_ARRAY_CONTAINS_OP,
 														   cmpfunc);
 			else
-				selec = mcelem_array_contained_selec(values, nvalues,
-													 numbers, nnumbers,
+				selec = mcelem_array_contained_selec(sslot.values,
+													 sslot.nvalues,
+													 sslot.numbers,
+													 sslot.nnumbers,
 													 &constval, 1,
-													 hist, nhist,
+													 sslot_hist.numbers,
+													 sslot_hist.nnumbers,
 													 OID_ARRAY_CONTAINED_OP,
 													 cmpfunc);
-
-			if (hist)
-				free_attstatsslot(elemtype, NULL, 0, hist, nhist);
-			free_attstatsslot(elemtype, values, nvalues, numbers, nnumbers);
+			if (sslot_hist.numbers)
+				free_attstatsslot(&sslot_hist);
+			free_attstatsslot(&sslot);
 		}
 		else
 		{
