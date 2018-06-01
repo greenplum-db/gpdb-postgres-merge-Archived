@@ -1221,7 +1221,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	 */
 
 	/* Replan if needed, and increment plan refcount for portal */
-	cplan = GetCachedPlan(plansource, paramLI, false);
+	cplan = GetCachedPlan(plansource, paramLI, false, NULL);
 	stmt_list = cplan->stmt_list;
 
 	if (!plan->saved)
@@ -1790,6 +1790,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		CompleteCachedPlan(plansource,
 						   stmt_list,
 						   NULL,
+						   nodeTag(parsetree),
 						   plan->argtypes,
 						   plan->nargs,
 						   plan->parserSetup,
@@ -1888,7 +1889,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		 * Replan if needed, and increment plan refcount.  If it's a saved
 		 * plan, the refcount must be backed by the CurrentResourceOwner.
 		 */
-		cplan = GetCachedPlan(plansource, paramLI, plan->saved);
+		cplan = GetCachedPlan(plansource, paramLI, plan->saved, NULL);
 		stmt_list = cplan->stmt_list;
 
 		/*

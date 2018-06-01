@@ -156,7 +156,8 @@ extern List *CachedPlanGetTargetList(CachedPlanSource *plansource);
 
 extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
 			  ParamListInfo boundParams,
-			  bool useResOwner);
+			  bool useResOwner,
+			  IntoClause *intoClause);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
 
 #endif   /* PLANCACHE_H */

@@ -74,23 +74,21 @@
 static CachedPlanSource *first_saved_plan = NULL;
 
 static void ReleaseGenericPlan(CachedPlanSource *plansource);
-static List *RevalidateCachedQuery(CachedPlanSource *plansource);
+static List *RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause);
 static bool CheckCachedPlan(CachedPlanSource *plansource);
 static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
-				ParamListInfo boundParams);
+				ParamListInfo boundParams, IntoClause *intoClause);
 static bool choose_custom_plan(CachedPlanSource *plansource,
-				   ParamListInfo boundParams);
+				   ParamListInfo boundParams,
+				   IntoClause *intoClause);
 static double cached_plan_cost(CachedPlan *plan);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);
 static bool ScanQueryWalker(Node *node, bool *acquire);
 static bool plan_list_is_transient(List *stmt_list);
-<<<<<<< HEAD
 static bool plan_list_is_oneoff(List *stmt_list);
-=======
 static TupleDesc PlanCacheComputeResultDesc(List *stmt_list);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void PlanCacheRelCallback(Datum arg, Oid relid);
 static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
@@ -134,6 +132,7 @@ InitPlanCache(void)
  * raw_parse_tree: output of raw_parser()
  * query_string: original query text
  * commandTag: compile-time-constant tag for query, or NULL if empty query
+ * sourceTag: GPDB specific.
  */
 CachedPlanSource *
 CreateCachedPlan(Node *raw_parse_tree,
@@ -169,10 +168,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
 	plansource->query_string = pstrdup(query_string);
-<<<<<<< HEAD
-	plansource->sourceTag = sourceTag;
-	plansource->commandTag = commandTag;		/* no copying needed */
-=======
+	/* sourceTag is filled in CompleteCachedPlan(). */
 	plansource->commandTag = commandTag;
 	plansource->param_types = NULL;
 	plansource->num_params = 0;
@@ -300,7 +296,6 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 	 */
 	MemoryContextSwitchTo(source_context);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (num_params > 0)
 	{
 		plansource->param_types = (Oid *) palloc(num_params * sizeof(Oid));
@@ -308,153 +303,8 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 	}
 	else
 		plansource->param_types = NULL;
-	plansource->num_params = num_params;
-<<<<<<< HEAD
-	/* these can be set later with CachedPlanSetParserHook: */
-	plansource->parserSetup = NULL;
-	plansource->parserSetupArg = NULL;
-	plansource->cursor_options = cursor_options;
-	plansource->fully_planned = fully_planned;
-	plansource->fixed_result = fixed_result;
-	plansource->search_path = search_path;
-	plansource->generation = 0; /* StoreCachedPlan will increment */
-	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
-	plansource->plan = NULL;
-	plansource->context = source_context;
-	plansource->orig_plan = NULL;
-
-	/*
-	 * Copy the current output plans into the plancache entry.
-	 */
-	StoreCachedPlan(plansource, stmt_list, NULL);
-
-	/*
-	 * Now we can add the entry to the list of cached plans.  The List nodes
-	 * live in CacheMemoryContext.
-	 */
-	MemoryContextSwitchTo(CacheMemoryContext);
-
-	cached_plans_list = lappend(cached_plans_list, plansource);
-
-	MemoryContextSwitchTo(oldcxt);
-
-	return plansource;
-}
-
-/*
- * FastCreateCachedPlan: create a plan cache entry with minimal data copying.
- *
- * For plans that aren't expected to live very long, the copying overhead of
- * CreateCachedPlan is annoying.  We provide this variant entry point in which
- * the caller has already placed all the data in a suitable memory context.
- * The source data and completed plan are in the same context, since this
- * avoids extra copy steps during plan construction.  If the query ever does
- * need replanning, we'll generate a separate new CachedPlan at that time, but
- * the CachedPlanSource and the initial CachedPlan share the caller-provided
- * context and go away together when neither is needed any longer.	(Because
- * the parser and planner generate extra cruft in addition to their real
- * output, this approach means that the context probably contains a bunch of
- * useless junk as well as the useful trees.  Hence, this method is a
- * space-for-time tradeoff, which is worth making for plans expected to be
- * short-lived.)
- *
- * raw_parse_tree, query_string, param_types, and stmt_list must reside in the
- * given context, which must have adequate lifespan (recommendation: make it a
- * child of CacheMemoryContext).  Otherwise the API is the same as
- * CreateCachedPlan.
- */
-CachedPlanSource *
-FastCreateCachedPlan(Node *raw_parse_tree,
-					 char *query_string,
-					 NodeTag sourceTag,
-					 const char *commandTag,
-					 Oid *param_types,
-					 int num_params,
-					 int cursor_options,
-					 List *stmt_list,
-					 bool fully_planned,
-					 bool fixed_result,
-					 MemoryContext context)
-{
-	CachedPlanSource *plansource;
-	OverrideSearchPath *search_path;
-	MemoryContext oldcxt;
-
-	Assert(query_string != NULL);		/* required as of 8.4 */
-
-	/*
-	 * Fetch current search_path into given context, but do any recalculation
-	 * work required in caller's context.
-	 */
-	search_path = GetOverrideSearchPath(context);
-
-	/*
-	 * Create and fill the CachedPlanSource struct within the given context.
-	 */
-	oldcxt = MemoryContextSwitchTo(context);
-	plansource = (CachedPlanSource *) palloc(sizeof(CachedPlanSource));
-	plansource->raw_parse_tree = raw_parse_tree;
-	plansource->query_string = query_string;
 	plansource->sourceTag = sourceTag;
-	plansource->commandTag = commandTag;		/* no copying needed */
-	plansource->param_types = param_types;
 	plansource->num_params = num_params;
-	/* these can be set later with CachedPlanSetParserHook: */
-	plansource->parserSetup = NULL;
-	plansource->parserSetupArg = NULL;
-	plansource->cursor_options = cursor_options;
-	plansource->fully_planned = fully_planned;
-	plansource->fixed_result = fixed_result;
-	plansource->search_path = search_path;
-	plansource->generation = 0; /* StoreCachedPlan will increment */
-	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
-	plansource->plan = NULL;
-	plansource->context = context;
-	plansource->orig_plan = NULL;
-
-	/*
-	 * Store the current output plans into the plancache entry.
-	 */
-	StoreCachedPlan(plansource, stmt_list, context);
-
-	/*
-	 * Since the context is owned by the CachedPlan, advance its refcount.
-	 */
-	plansource->orig_plan = plansource->plan;
-	plansource->orig_plan->refcount++;
-
-	/*
-	 * Now we can add the entry to the list of cached plans.  The List nodes
-	 * live in CacheMemoryContext.
-	 */
-	MemoryContextSwitchTo(CacheMemoryContext);
-
-	cached_plans_list = lappend(cached_plans_list, plansource);
-
-	MemoryContextSwitchTo(oldcxt);
-
-	return plansource;
-}
-
-/*
- * CachedPlanSetParserHook: set up to use parser callback hooks
- *
- * Use this when a caller wants to manage parameter information via parser
- * callbacks rather than a fixed parameter-types list.	Beware that the
- * information pointed to by parserSetupArg must be valid for as long as
- * the cached plan might be replanned!
- */
-void
-CachedPlanSetParserHook(CachedPlanSource *plansource,
-						ParserSetupHook parserSetup,
-						void *parserSetupArg)
-{
-	/* Must not have specified a fixed parameter-types list */
-	Assert(plansource->param_types == NULL);
-	Assert(plansource->num_params == 0);
-	/* OK, save hook info */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	plansource->parserSetup = parserSetup;
 	plansource->parserSetupArg = parserSetupArg;
 	plansource->cursor_options = cursor_options;
@@ -594,9 +444,11 @@ ReleaseGenericPlan(CachedPlanSource *plansource)
  * The result value is the transient analyzed-and-rewritten query tree if we
  * had to do re-analysis, and NIL otherwise.  (This is returned just to save
  * a tree copying step in a subsequent BuildCachedPlan call.)
+ *
+ * GPDB: See GetCachedPlan() for why intoClause is added here.
  */
 static List *
-RevalidateCachedQuery(CachedPlanSource *plansource)
+RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 {
 	bool		snapshot_set;
 	Node	   *rawtree;
@@ -685,11 +537,32 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	}
 
 	/*
+	 * If this is a CREATE TABLE AS, pass information about the
+	 * target table's distribution key to the planner.
+	 */
+	if (intoClause)
+	{
+		CreateTableAsStmt *ctas_stmt;
+
+		if (!IsA(plansource->raw_parse_tree, CreateTableAsStmt))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("prepared statement is not a CreateTableAs Statement.")));
+
+		ctas_stmt = (CreateTableAsStmt *) copyObject(plansource->raw_parse_tree);
+
+		ctas_stmt->into = copyObject(intoClause);
+
+		rawtree = (Node *) ctas_stmt;
+	}
+	else
+		rawtree = copyObject(plansource->raw_parse_tree);
+
+	/*
 	 * Run parse analysis and rule rewriting.  The parser tends to scribble on
 	 * its input, so we must copy the raw parse tree to prevent corruption of
 	 * the cache.
 	 */
-	rawtree = copyObject(plansource->raw_parse_tree);
 	if (plansource->parserSetup != NULL)
 		tlist = pg_analyze_and_rewrite_params(rawtree,
 											  plansource->query_string,
@@ -720,8 +593,12 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	{
 		/* OK, doesn't return tuples */
 	}
+	else if (intoClause)
+	{
+		/* OK */
+	}
 	else if (resultDesc == NULL || plansource->resultDesc == NULL ||
-			 !equalTupleDescs(resultDesc, plansource->resultDesc))
+			 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
 	{
 		/* can we give a better error message? */
 		if (plansource->fixed_result)
@@ -864,10 +741,12 @@ CheckCachedPlan(CachedPlanSource *plansource)
  *
  * Planning work is done in the caller's memory context.  The finished plan
  * is in a child memory context, which typically should get reparented.
+ *
+ * GPDB: See GetCachedPlan() for why intoClause is added here.
  */
 static CachedPlan *
 BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
-				ParamListInfo boundParams)
+				ParamListInfo boundParams, IntoClause *intoClause)
 {
 	CachedPlan *plan;
 	List	   *plist;
@@ -890,7 +769,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * safety, let's treat it as real and redo the RevalidateCachedQuery call.
 	 */
 	if (!plansource->is_valid)
-		qlist = RevalidateCachedQuery(plansource);
+		qlist = RevalidateCachedQuery(plansource, intoClause);
 
 	/*
 	 * If we don't already have a copy of the querytree list that can be
@@ -970,20 +849,13 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * Create and fill the CachedPlan struct within the new context.
 	 */
 	plan = (CachedPlan *) palloc(sizeof(CachedPlan));
-<<<<<<< HEAD
-	plan->stmt_list = stmt_list;
-	plan->fully_planned = plansource->fully_planned;
-	plan->dead = false;
-	if (plansource->fully_planned && plan_list_is_oneoff(stmt_list))
+	plan->magic = CACHEDPLAN_MAGIC;
+	plan->stmt_list = plist;
+	if (plan_list_is_oneoff(plist))
 	{
 		plan->saved_xmin = BootstrapTransactionId;
 	}
-	else if (plansource->fully_planned && plan_list_is_transient(stmt_list))
-=======
-	plan->magic = CACHEDPLAN_MAGIC;
-	plan->stmt_list = plist;
-	if (plan_list_is_transient(plist))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	else if (plan_list_is_transient(plist))
 	{
 		Assert(TransactionIdIsNormal(TransactionXmin));
 		plan->saved_xmin = TransactionXmin;
@@ -1009,9 +881,12 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
  * This defines the policy followed by GetCachedPlan.
  */
 static bool
-choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams)
+choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams, IntoClause *intoClause)
 {
 	double		avg_custom_cost;
+
+	if (intoClause && !(plansource->cursor_options & CURSOR_OPT_GENERIC_PLAN))
+		return true;
 
 	/* Never any point in a custom plan if there's no parameters */
 	if (boundParams == NULL)
@@ -1084,12 +959,8 @@ cached_plan_cost(CachedPlan *plan)
  * Note: if any replanning activity is required, the caller's memory context
  * is used for that work.
  *
- * In GPDB, this function has two extra parameters: boundParams and intoClause.
- * If boundParams is set, the parameter values are used to generate the plan.
- * That makes the plan specific to the given values, and cannot be reused when
- * the query is executed with different params (RevalidateCachedPlanWithParams
- * will mark the plan so that it will be automatically re-planned on next
- * call). If 'intoClause' is given, the plan is to be used as part of a
+ * In GPDB, this function has one extra parameters: intoClause.
+ * If 'intoClause' is given, the plan is to be used as part of a
  * CREATE TABLE AS statement. That affects the distribution of the output rows:
  * we cannot reuse a generic plan that fetches all the output rows into master.
  * They should be distributed to the correct segments according to the
@@ -1097,13 +968,8 @@ cached_plan_cost(CachedPlan *plan)
  * therefore also forces the plan to be re-planned on next call.
  */
 CachedPlan *
-<<<<<<< HEAD
-RevalidateCachedPlanWithParams(CachedPlanSource *plansource, bool useResOwner,
-							   ParamListInfo boundParams, IntoClause *intoClause)
-=======
 GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
-			  bool useResOwner)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+			  bool useResOwner, IntoClause *intoClause)
 {
 	CachedPlan *plan;
 	List	   *qlist;
@@ -1116,31 +982,13 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 	if (useResOwner && !plansource->is_saved)
 		elog(ERROR, "cannot apply ResourceOwner to non-saved cached plan");
 
-<<<<<<< HEAD
-	/*
-	 * If the plan currently appears valid, acquire locks on the referenced
-	 * objects; then check again.  We need to do it this way to cover the race
-	 * condition that an invalidation message arrives before we get the lock.
-	 */
-	plan = plansource->plan;
-
-	/*
-	 * If we are to use the parameter values in the plan, or this is a
-	 * CREATE TABLE AS EXECUTE, we cannot re-use a generic plan.
-	 */
-	if (plan && (boundParams || intoClause))
-		plan->dead = true;
-
-	if (plan && !plan->dead)
-=======
 	/* Make sure the querytree list is valid and we have parse-time locks */
-	qlist = RevalidateCachedQuery(plansource);
+	qlist = RevalidateCachedQuery(plansource, intoClause);
 
 	/* Decide whether to use a custom plan */
-	customplan = choose_custom_plan(plansource, boundParams);
+	customplan = choose_custom_plan(plansource, boundParams, intoClause);
 
 	if (!customplan)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		if (CheckCachedPlan(plansource))
 		{
@@ -1151,7 +999,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		else
 		{
 			/* Build a new generic plan */
-			plan = BuildCachedPlan(plansource, qlist, NULL);
+			plan = BuildCachedPlan(plansource, qlist, NULL, intoClause);
 			/* Just make real sure plansource->gplan is clear */
 			ReleaseGenericPlan(plansource);
 			/* Link the new generic plan into the plansource */
@@ -1173,70 +1021,6 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 			/* Update generic_cost whenever we make a new generic plan */
 			plansource->generic_cost = cached_plan_cost(plan);
 
-<<<<<<< HEAD
-		/*
-		 * Restore the search_path that was in use when the plan was made. See
-		 * comments for PushOverrideSearchPath about limitations of this.
-		 *
-		 * (XXX is there anything else we really need to restore?)
-		 */
-		PushOverrideSearchPath(plansource->search_path);
-
-		/*
-		 * If a snapshot is already set (the normal case), we can just use
-		 * that for parsing/planning.  But if it isn't, install one.  Note: no
-		 * point in checking whether parse analysis requires a snapshot;
-		 * utility commands don't have invalidatable plans, so we'd not get
-		 * here for such a command.
-		 */
-		if (!ActiveSnapshotSet())
-		{
-			PushActiveSnapshot(GetTransactionSnapshot());
-			snapshot_set = true;
-		}
-
-		/*
-		 * If this is a CREATE TABLE AS, pass information about the
-		 * target table's distribution key to the planner.
-		 */
-		if (intoClause)
-		{
-			SelectStmt *select;
-
-			if (!IsA(plansource->raw_parse_tree, SelectStmt))
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("prepared statement is not a SELECT")));
-
-			select = (SelectStmt *) copyObject(plansource->raw_parse_tree);
-
-			select->intoClause = copyObject(intoClause);
-
-			rawtree = (Node *) select;
-		}
-		else
-			rawtree = copyObject(plansource->raw_parse_tree);
-
-		/*
-		 * Run parse analysis and rule rewriting.  The parser tends to
-		 * scribble on its input, so we must copy the raw parse tree to
-		 * prevent corruption of the cache.
-		 */
-		if (plansource->parserSetup != NULL)
-			slist = pg_analyze_and_rewrite_params(rawtree,
-												  plansource->query_string,
-												  plansource->parserSetup,
-												  plansource->parserSetupArg);
-		else
-			slist = pg_analyze_and_rewrite(rawtree,
-										   plansource->query_string,
-										   plansource->param_types,
-										   plansource->num_params);
-
-		if (plansource->fully_planned)
-		{
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			/*
 			 * If, based on the now-known value of generic_cost, we'd not have
 			 * chosen to use a generic plan, then forget it and make a custom
@@ -1246,79 +1030,27 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 			 * find it's a loser, but we don't want to actually execute that
 			 * plan.
 			 */
-			customplan = choose_custom_plan(plansource, boundParams);
+			customplan = choose_custom_plan(plansource, boundParams, intoClause);
 
-<<<<<<< HEAD
-			pushed = SPI_push_conditional();
-
-			slist = pg_plan_queries(slist, plansource->cursor_options,
-									boundParams);
-
-			SPI_pop_conditional(pushed);
-=======
 			/*
 			 * If we choose to plan again, we need to re-copy the query_list,
 			 * since the planner probably scribbled on it.	We can force
 			 * BuildCachedPlan to do that by passing NIL.
 			 */
 			qlist = NIL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
-<<<<<<< HEAD
-		/*
-		 * Check or update the result tupdesc.	XXX should we use a weaker
-		 * condition than equalTupleDescs() here?
-		 */
-		resultDesc = PlanCacheComputeResultDesc(slist);
-		if (resultDesc == NULL && plansource->resultDesc == NULL)
-		{
-			/* OK, doesn't return tuples */
-		}
-		else if (intoClause)
-		{
-			/* OK */
-		}
-		else if (resultDesc == NULL || plansource->resultDesc == NULL ||
-				 !equalTupleDescs(resultDesc, plansource->resultDesc, true))
-=======
 	if (customplan)
 	{
 		/* Build a custom plan */
-		plan = BuildCachedPlan(plansource, qlist, boundParams);
+		plan = BuildCachedPlan(plansource, qlist, boundParams, intoClause);
 		/* Accumulate total costs of custom plans, but 'ware overflow */
 		if (plansource->num_custom_plans < INT_MAX)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			plansource->total_custom_cost += cached_plan_cost(plan);
 			plansource->num_custom_plans++;
 		}
-<<<<<<< HEAD
-
-		/* Release snapshot if we got one */
-		if (snapshot_set)
-			PopActiveSnapshot();
-
-		/* Now we can restore current search path */
-		PopOverrideSearchPath();
-
-		/*
-		 * Store the plans into the plancache entry, advancing the generation
-		 * count.
-		 */
-		StoreCachedPlan(plansource, slist, NULL);
-
-		plan = plansource->plan;
-
-		/*
-		 * If we used the parameter values to create the plan, or this is a
-		 * CREATE TABLE AS, we cannot re-use this plan on subsequent calls.
-		 */
-		if (boundParams || intoClause)
-			plan->saved_xmin = BootstrapTransactionId;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* Flag the plan as in use by caller */
@@ -1341,16 +1073,6 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 	}
 
 	return plan;
-}
-
-/*
- * Compatibility version of RevalidateCachedPlanWithParams, for the simple
- * case of no params and no CREATE TABLE AS.
- */
-CachedPlan *
-RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
-{
-	return RevalidateCachedPlanWithParams(plansource, useResOwner, NULL, NULL);
 }
 
 /*
@@ -1444,6 +1166,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	newsource->magic = CACHEDPLANSOURCE_MAGIC;
 	newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
 	newsource->query_string = pstrdup(plansource->query_string);
+	newsource->sourceTag = plansource->sourceTag;
 	newsource->commandTag = plansource->commandTag;
 	if (plansource->num_params > 0)
 	{
@@ -1533,7 +1256,7 @@ CachedPlanGetTargetList(CachedPlanSource *plansource)
 		return NIL;
 
 	/* Make sure the querytree list is valid and we have parse-time locks */
-	RevalidateCachedQuery(plansource);
+	RevalidateCachedQuery(plansource, NULL);
 
 	/* Get the primary statement and find out what it returns */
 	pstmt = PortalListGetPrimaryStmt(plansource->query_list);
@@ -1790,7 +1513,6 @@ plan_list_is_transient(List *stmt_list)
 }
 
 /*
-<<<<<<< HEAD
  * plan_list_is_oneoff: check if any of the plans in the list are one-off plans
  */
 static bool
@@ -1813,14 +1535,9 @@ plan_list_is_oneoff(List *stmt_list)
 }
 
 /*
- * PlanCacheComputeResultDesc: given a list of either fully-planned statements
- * or Queries, determine the result tupledesc it will produce.	Returns NULL
- * if the execution will not return tuples.
-=======
  * PlanCacheComputeResultDesc: given a list of analyzed-and-rewritten Queries,
  * determine the result tupledesc it will produce.	Returns NULL if the
  * execution will not return tuples.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * Note: the result is created or copied into current memory context.
  */
