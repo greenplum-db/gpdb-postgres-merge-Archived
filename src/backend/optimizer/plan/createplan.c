@@ -5297,6 +5297,9 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			 */
 			Expr	   *sortexpr = NULL;
 
+			if (!add_keys_to_targetlist)
+				break;
+
 			foreach(j, ec->ec_members)
 			{
 				EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
@@ -5344,72 +5347,12 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			if (!adjust_tlist_in_place &&
 				!is_projection_capable_plan(lefttree))
 			{
-<<<<<<< HEAD
-				/* No matching tlist item; look for a computable expression */
-				Expr	   *sortexpr = NULL;
-
-				if (!add_keys_to_targetlist)
-					break;
-
-				foreach(j, ec->ec_members)
-				{
-					EquivalenceMember *em = (EquivalenceMember *) lfirst(j);
-					List	   *exprvars;
-					ListCell   *k;
-
-					if (em->em_is_const)
-						continue;
-					sortexpr = em->em_expr;
-					exprvars = pull_var_clause((Node *) sortexpr,
-											   PVC_RECURSE_AGGREGATES,
-											   PVC_INCLUDE_PLACEHOLDERS);
-					foreach(k, exprvars)
-					{
-						if (!tlist_member_ignore_relabel(lfirst(k), tlist))
-							break;
-					}
-					list_free(exprvars);
-					if (!k)
-					{
-						pk_datatype = em->em_datatype;
-						break;	/* found usable expression */
-					}
-				}
-				if (!j)
-					elog(ERROR, "could not find pathkey item to sort");
-
-				/*
-				 * Do we need to insert a Result node?
-				 */
-				if (!adjust_tlist_in_place &&
-					!is_projection_capable_plan(lefttree))
-				{
-					/* copy needed so we don't modify input's tlist below */
-					tlist = copyObject(tlist);
-					lefttree = (Plan *) make_result(root, tlist, NULL,
-													lefttree);
-					if (lefttree->lefttree->flow)
-						lefttree->flow = pull_up_Flow(lefttree, lefttree->lefttree);
-				}
-
-				/* Don't bother testing is_projection_capable_plan again */
-				adjust_tlist_in_place = true;
-
-				/*
-				 * Add resjunk entry to input's tlist
-				 */
-				tle = makeTargetEntry(sortexpr,
-									  list_length(tlist) + 1,
-									  NULL,
-									  true);
-				tlist = lappend(tlist, tle);
-				lefttree->targetlist = tlist;	/* just in case NIL before */
-=======
 				/* copy needed so we don't modify input's tlist below */
 				tlist = copyObject(tlist);
 				lefttree = (Plan *) make_result(root, tlist, NULL,
 												lefttree);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+				if (lefttree->lefttree->flow)
+					lefttree->flow = pull_up_Flow(lefttree, lefttree->lefttree);
 			}
 
 			/* Don't bother testing is_projection_capable_plan again */
