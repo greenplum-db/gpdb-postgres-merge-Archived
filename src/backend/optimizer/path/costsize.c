@@ -155,9 +155,7 @@ static double page_size(double tuples, int width);
 static Selectivity adjust_selectivity_for_nulltest(Selectivity selec,
 												Selectivity pselec,
 												List *pushed_quals,
-												JoinType jointype,
-												RelOptInfo *left,
-												RelOptInfo *right);
+												JoinType jointype);
 
 /* CDB: The clamp_row_est() function definition has been moved to cost.h */
 
@@ -368,7 +366,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	}
 
 	/*
-	 * GPDB_MERGE_92_FIXME
+	 * GPDB_92_MERGE_FIXME
 	 */
 #if 0
 	if (!enable_indexscan)
@@ -2809,7 +2807,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	Cost		run_cost = workspace->run_cost;
 	int			numbuckets = workspace->numbuckets;
 	int			numbatches = workspace->numbatches;
-	Cost		cpu_per_tuple;
 	QualCost	hash_qual_cost;
 	QualCost	qp_qual_cost;
 	double		hashjointuples;
@@ -3807,9 +3804,7 @@ static Selectivity
 adjust_selectivity_for_nulltest(Selectivity selec,
 								Selectivity pselec,
 								List *pushed_quals,
-								JoinType jointype,
-								RelOptInfo *left,
-								RelOptInfo *right)
+								JoinType jointype)
 {
 	Assert(IS_OUTER_JOIN(jointype));
 
@@ -3845,17 +3840,20 @@ adjust_selectivity_for_nulltest(Selectivity selec,
 
 				if (IsA(basenode, Var))
 				{
-#ifdef USE_ASSERT_CHECKING
-					Var *var = (Var *) basenode;
-#endif /* USE_ASSERT_CHECKING */
 					double	nullfrac = 1 - selec;
 	
+#if 0
+					/*
+					 * GPDB_92_MERGE_FIXME
+					 * Param 'left' and 'right' are not passed in.
+					 */
 					/* 
 					 * a pushed qual must be applied on the inner side only; type implies 
 					 * where to find the var in the inputs
 					 */
 					Assert(!(JOIN_RIGHT == jointype) || bms_is_member(var->varno, left->relids));
 					Assert(!(JOIN_LEFT == jointype) || bms_is_member(var->varno, right->relids));
+#endif
 
 					/* adjust selectivity according to test */
 					switch (((NullTest *) clause)->nulltesttype)
@@ -3910,7 +3908,8 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
 							   allclauses,
 							   rel->relid,		/* do not use 0! */
 							   JOIN_INNER,
-							   NULL);
+							   NULL,
+							   false); /* GPDB_92_MERGE_FIXME: do we need damping? */
 	nrows = clamp_row_est(nrows);
 	/* For safety, make sure result is not more than the base estimate */
 	if (nrows > rel->rows)
@@ -4066,9 +4065,7 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 			pselec = adjust_selectivity_for_nulltest(jselec,
 													 pselec,
 													 pushedquals, 
-													 jointype, 
-													 outer_rel, 
-													 inner_rel);
+													 jointype);
 
 		/* Avoid leaking a lot of ListCells */
 		list_free(joinquals);
@@ -4139,13 +4136,11 @@ calc_joinrel_size_estimate(PlannerInfo *root,
      * which could be very slow if the actual number of rows is > 1.
      * Someday we should improve the join selectivity estimates.
      */
-    adjnrows = Max(10, outer_rel->rows);
-    adjnrows = Max(adjnrows, inner_rel->rows);
+    adjnrows = Max(10, outer_rows);
+    adjnrows = Max(adjnrows, inner_rows);
     adjnrows = LOG2(adjnrows);
     if (nrows < adjnrows)
-        nrows = adjnrows;
-
-    rel->rows = nrows;
+		nrows = adjnrows;
 
 	return clamp_row_est(nrows);
 }

@@ -271,7 +271,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * we don't have a convention for marking a rel as dummy except by
 		 * assigning a dummy path to it.
 		 */
-		set_dummy_rel_pathlist(rel);
+		set_dummy_rel_pathlist(root, rel);
 	}
 	else if (rte->inh)
 	{
@@ -423,6 +423,13 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	List       *pathlist = NIL;
+	List       *indexpathlist = NIL;
+	List       *bitmappathlist = NIL;
+	List       *tidpathlist = NIL;
+	Path       *seqpath = NULL;
+	ListCell   *cell;
+
 	/*
 	 * Generate paths and add them to the rel's pathlist.
 	 *
@@ -458,7 +465,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			break;
 
 		case RELSTORAGE_HEAP:
-			seqpath = create_seqscan_path(root, rel);
+			seqpath = create_seqscan_path(root, rel, NULL);
 			break;
 
 		default:
@@ -557,7 +564,7 @@ set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	rel->fdwroutine->GetForeignPaths(root, rel, rte->relid);
 
 	/* Select cheapest path */
-	set_cheapest(rel);
+	set_cheapest(root, rel);
 }
 
 /*
@@ -788,12 +795,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	else
 		rel->width = 0;			/* attr_widths should be zero already */
 
-	/* CDB: Just one child (or none)?  Set flag if result is at most 1 row. */
-	if (!subpaths)
-		rel->onerow = true;
-	else if (list_length(subpaths) == 1)
-		rel->onerow = ((Path *) linitial(subpaths))->parent->onerow;
-
 	/*
 	 * Set "raw tuples" count equal to "rows" for the appendrel; needed
 	 * because some places assume rel->tuples is valid for any baserel.
@@ -927,18 +928,23 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 	}
 
+	/* CDB: Just one child (or none)?  Set flag if result is at most 1 row. */
+	if (!subpaths)
+		rel->onerow = true;
+	else if (list_length(subpaths) == 1)
+		rel->onerow = ((Path *) linitial(subpaths))->parent->onerow;
+
 	/*
 	 * Next, build an unordered, unparameterized Append path for the rel.
 	 * (Note: this is correct even if we have zero or one live subpath due to
 	 * constraint exclusion.)
 	 */
-	add_path(rel, (Path *) create_append_path(rel, subpaths, NULL));
+	add_path(root, rel, (Path *) create_append_path(root, rel, subpaths, NULL));
 
 	/*
 	 * Build unparameterized MergeAppend paths based on the collected list of
 	 * child pathkeys.
 	 */
-	add_path(root, rel, (Path *) create_append_path(root, rel, subpaths));
 	generate_mergeappend_paths(root, rel, live_childrels, all_child_pathkeys);
 
 	/*
@@ -990,12 +996,12 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		if (ok)
-			add_path(rel, (Path *)
-					 create_append_path(rel, subpaths, required_outer));
+			add_path(root, rel, (Path *)
+					 create_append_path(root, rel, subpaths, required_outer));
 	}
 
 	/* Select cheapest paths */
-	set_cheapest(rel);
+	set_cheapest(root, rel);
 }
 
 /*
@@ -1135,7 +1141,7 @@ set_dummy_rel_pathlist(PlannerInfo *root, RelOptInfo *rel)
 	/* Discard any pre-existing paths; no further need for them */
 	rel->pathlist = NIL;
 
-	add_path(root, rel, (Path *) create_append_path(root, rel, NIL));
+	add_path(root, rel, (Path *) create_append_path(root, rel, NIL, NULL));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(root, rel);
@@ -1269,7 +1275,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (is_dummy_plan(rel->subplan))
 	{
-		set_dummy_rel_pathlist(rel);
+		set_dummy_rel_pathlist(root, rel);
 		return;
 	}
 
@@ -1280,7 +1286,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
 
 	/* Generate appropriate path */
-	subquery_path = create_subqueryscan_path(root, rel, pathkeys);
+	subquery_path = create_subqueryscan_path(root, rel, pathkeys, NULL);
 
 	if (forceDistRand)
 		CdbPathLocus_MakeStrewn(&subquery_path->locus);
@@ -1333,7 +1339,7 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 									0.0, //tuple_fraction
 									& subroot,
 									config);
-	rel->subrtable = subroot->parse->rtable;
+	rel->subroot = subroot;
 
 	/*
 	 * With the subquery planned we now need to clear the subquery from the
@@ -1400,7 +1406,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	double		tuple_fraction = 0.0;
 	CtePlanInfo *cteplaninfo;
 	Plan	   *subplan = NULL;
-	List	   *subrtable = NULL;
 	List	   *pathkeys = NULL;
 	PlannerInfo *subroot = NULL;
 
@@ -1517,7 +1522,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		subplan = subquery_planner(cteroot->glob, subquery, root, cte->cterecursive,
 								   tuple_fraction, &subroot, config);
 
-		subrtable = subroot->parse->rtable;
 		pathkeys = subroot->query_pathkeys;
 
 		/*
@@ -1563,12 +1567,11 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		 * subplan.
 		 */
 		subplan = share_prepared_plan(cteroot, cteplaninfo->shared_plan);
-		subrtable = cteplaninfo->subrtable;
 		pathkeys = cteplaninfo->pathkeys;
 	}
 
 	rel->subplan = subplan;
-	rel->subrtable = subrtable;
+	rel->subroot = subroot;
 
 	/* Mark rel with estimated output rows, width, etc */
 	set_cte_size_estimates(root, rel, rel->subplan);
