@@ -222,6 +222,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 							 restrictlist, jointype,
 							 sjinfo, &semifactors, param_source_rels,
 							 mergeclause_list);
+	}
 }
 
 /*
@@ -232,7 +233,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 static void
 try_nestloop_path(PlannerInfo *root,
 				  RelOptInfo *joinrel,
-				  JoinType orig_jointype,
+				  JoinType orig_jointype,	/* CDB */
 				  JoinType jointype,
 				  SpecialJoinInfo *sjinfo,
 				  SemiAntiJoinFactors *semifactors,
@@ -240,6 +241,7 @@ try_nestloop_path(PlannerInfo *root,
 				  Path *outer_path,
 				  Path *inner_path,
 				  List *restrict_clauses,
+				  List *mergeclause_list,    /*CDB*/
 				  List *pathkeys)
 {
 	Relids		required_outer;
@@ -276,7 +278,7 @@ try_nestloop_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
 				 create_nestloop_path(root,
 									  joinrel,
 									  jointype,
@@ -286,6 +288,7 @@ try_nestloop_path(PlannerInfo *root,
 									  outer_path,
 									  inner_path,
 									  restrict_clauses,
+									  mergeclause_list,
 									  pathkeys,
 									  required_outer));
 	}
@@ -313,6 +316,7 @@ try_mergejoin_path(PlannerInfo *root,
 				   List *restrict_clauses,
 				   List *pathkeys,
 				   List *mergeclauses,
+				   List *mergeclause_list,
 				   List *outersortkeys,
 				   List *innersortkeys)
 {
@@ -356,7 +360,7 @@ try_mergejoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
 				 create_mergejoin_path(root,
 									   joinrel,
 									   jointype,
@@ -368,6 +372,7 @@ try_mergejoin_path(PlannerInfo *root,
 									   pathkeys,
 									   required_outer,
 									   mergeclauses,
+									   mergeclause_list,
 									   outersortkeys,
 									   innersortkeys));
 	}
@@ -426,7 +431,7 @@ try_hashjoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  NIL, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (Path *)
+		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
 				 create_hashjoin_path(root,
 									  joinrel,
 									  jointype,
@@ -631,6 +636,7 @@ sort_inner_and_outer(PlannerInfo *root,
 						   restrictlist,
 						   merge_pathkeys,
 						   cur_mergeclauses,
+						   mergeclause_list,
 						   outerkeys,
 						   innerkeys);
 	}
@@ -813,6 +819,7 @@ match_unsorted_outer(PlannerInfo *root,
 							  outerpath,
 							  inner_cheapest_total,
 							  restrictlist,
+							  mergeclause_list,
 							  merge_pathkeys);
 		}
 		else if (nestjoinOK)
@@ -839,6 +846,7 @@ match_unsorted_outer(PlannerInfo *root,
 								  outerpath,
 								  innerpath,
 								  restrictlist,
+								  mergeclause_list,
 								  merge_pathkeys);
 			}
 
@@ -854,6 +862,7 @@ match_unsorted_outer(PlannerInfo *root,
 								  outerpath,
 								  matpath,
 								  restrictlist,
+								  mergeclause_list,
 								  merge_pathkeys);
 		}
 
@@ -915,6 +924,7 @@ match_unsorted_outer(PlannerInfo *root,
 						   restrictlist,
 						   merge_pathkeys,
 						   mergeclauses,
+						   mergeclause_list,
 						   NIL,
 						   innersortkeys);
 
@@ -1014,6 +1024,7 @@ match_unsorted_outer(PlannerInfo *root,
 								   restrictlist,
 								   merge_pathkeys,
 								   newclauses,
+								   mergeclause_list,
 								   NIL,
 								   NIL);
 				cheapest_total_inner = innerpath;
@@ -1060,6 +1071,7 @@ match_unsorted_outer(PlannerInfo *root,
 									   restrictlist,
 									   merge_pathkeys,
 									   newclauses,
+									   mergeclause_list,
 									   NIL,
 									   NIL);
 				}
@@ -1183,6 +1195,7 @@ hash_inner_and_outer(PlannerInfo *root,
 							  cheapest_total_outer,
 							  cheapest_total_inner,
 							  restrictlist,
+							  mergeclause_list,
 							  hashclauses);
 			/* no possibility of cheap startup here */
 		}
@@ -1203,6 +1216,7 @@ hash_inner_and_outer(PlannerInfo *root,
 							  cheapest_total_outer,
 							  cheapest_total_inner,
 							  restrictlist,
+							  mergeclause_list,
 							  hashclauses);
 			if (cheapest_startup_outer != cheapest_total_outer)
 				try_hashjoin_path(root,
@@ -1215,6 +1229,7 @@ hash_inner_and_outer(PlannerInfo *root,
 								  cheapest_startup_outer,
 								  cheapest_total_inner,
 								  restrictlist,
+								  mergeclause_list,
 								  hashclauses);
 		}
 		else
@@ -1239,6 +1254,7 @@ hash_inner_and_outer(PlannerInfo *root,
 							  cheapest_startup_outer,
 							  cheapest_total_inner,
 							  restrictlist,
+							  mergeclause_list,
 							  hashclauses);
 
 			foreach(lc1, outerrel->cheapest_parameterized_paths)
@@ -1278,6 +1294,7 @@ hash_inner_and_outer(PlannerInfo *root,
 									  outerpath,
 									  innerpath,
 									  restrictlist,
+									  mergeclause_list,
 									  hashclauses);
 				}
 			}

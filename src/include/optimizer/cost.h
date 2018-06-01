@@ -102,7 +102,8 @@ extern void cost_externalscan(ExternalPath *path, PlannerInfo *root, RelOptInfo 
 extern void cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_aocsscan(AOCSPath *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel);
+					  ParamPathInfo *param_info,
+					  Path *bitmapqual, double loop_count);
 extern void cost_bitmap_table_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 					  Path *bitmapqual, RelOptInfo *outer_rel);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);

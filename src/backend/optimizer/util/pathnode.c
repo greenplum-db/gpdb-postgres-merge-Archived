@@ -1235,13 +1235,16 @@ BitmapAppendOnlyPath *
 create_bitmap_appendonly_path(PlannerInfo *root,
 							  RelOptInfo *rel,
 							  Path *bitmapqual,
-							  RelOptInfo *outer_rel,
+							  Relids required_outer,
+							  double loop_count,
 							  bool isAORow)
 {
 	BitmapAppendOnlyPath *pathnode = makeNode(BitmapAppendOnlyPath);
 
 	pathnode->path.pathtype = T_BitmapAppendOnlyScan;
 	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	/* Distribution is same as the base table. */
@@ -1251,7 +1254,7 @@ create_bitmap_appendonly_path(PlannerInfo *root,
 	pathnode->path.sameslice_relids = rel->relids;
 
 	pathnode->bitmapqual = bitmapqual;
-	pathnode->isjoininner = (outer_rel != NULL);
+	pathnode->isjoininner = (required_outer != NULL); /* GPDB_92_MERGE_FIXME */
 	pathnode->isAORow = isAORow;
 
 	if (pathnode->isjoininner)
@@ -1283,7 +1286,9 @@ create_bitmap_appendonly_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_bitmap_appendonly_scan(&pathnode->path, root, rel, bitmapqual, outer_rel);
+	cost_bitmap_appendonly_scan(&pathnode->path, root, rel,
+						  pathnode->path.param_info,
+						  bitmapqual, loop_count);
 
 	return pathnode;
 }

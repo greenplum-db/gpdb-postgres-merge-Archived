@@ -59,6 +59,7 @@
 
 static Plan *create_subplan(PlannerInfo *root, Path *best_path);		/* CDB */
 static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
+static List *build_relation_tlist(RelOptInfo *rel);
 static bool use_physical_tlist(PlannerInfo *root, RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
@@ -77,8 +78,6 @@ static AppendOnlyScan *create_appendonlyscan_plan(PlannerInfo *root, Path *best_
 						   List *tlist, List *scan_clauses);
 static AOCSScan *create_aocsscan_plan(PlannerInfo *root, Path *best_path,
 					 List *tlist, List *scan_clauses);
-static IndexScan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
-					  List *tlist, List *scan_clauses);
 static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
@@ -193,6 +192,15 @@ static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
 static EquivalenceMember *find_ec_member_for_tle(EquivalenceClass *ec,
 					   TargetEntry *tle,
 					   Relids relids);
+
+/*
+ * GPDB_92_MERGE_FIXME: The following functions have been removed in PG 9.2
+ * But GPDB codes are still using them, so keep them here.
+ */
+static int
+add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
+				int numCols, AttrNumber *sortColIdx,
+				Oid *sortOperators, Oid *collations, bool *nullsFirst);
 
 /*
  * create_plan
@@ -537,7 +545,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 /*
  * Build a target list (ie, a list of TargetEntry) for a relation.
  */
-List *
+static List *
 build_relation_tlist(RelOptInfo *rel)
 {
 	List	   *tlist = NIL;
@@ -2314,7 +2322,7 @@ create_indexscan_plan(PlannerInfo *root,
 											indexorderbys,
 											best_path->indexscandir);
 
-	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
+	copy_path_costsize(root, &scan_plan->plan, &best_path->path);
 
 	return scan_plan;
 }
@@ -2452,6 +2460,7 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	List	   *indexquals = NULL;
 	List	   *qpqual;
 	ListCell   *l;
+	List       *indexECs;
 	BitmapAppendOnlyScan *scan_plan;
 
 	/* it should be a base rel... */
@@ -2460,7 +2469,8 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 
 	/* Process the bitmapqual tree into a Plan tree and qual lists */
 	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
-										   &bitmapqualorig, &indexquals);
+										   &bitmapqualorig, &indexquals,
+										   &indexECs);
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
@@ -2503,7 +2513,7 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
-		Node	   *clause = (Node *) lfirst(l);
+		Node       *clause = (Node *) lfirst(l);
 
 		if (list_member(indexquals, clause))
 			continue;
@@ -2888,8 +2898,9 @@ create_tablefunction_plan(PlannerInfo *root,
 {
 	TableFunctionScan *tablefunc;
 	Plan	   *subplan = best_path->parent->subplan;
-	List	   *subrtable = best_path->parent->subrtable;
+	List	   *subrtable = best_path->parent->subroot->parse->rtable;
 	Index		scan_relid = best_path->parent->relid;
+
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
@@ -2967,9 +2978,7 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
-								  best_path->parent->subplan,
-								  best_path->parent->subrtable,
-								  best_path->parent->subrowmark);
+								  best_path->parent->subplan);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
@@ -3068,7 +3077,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 												tlist, scan_clauses);
 
 	/* Copy cost data from Path to Plan; no need to make FDW do this */
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
 
 	/*
 	 * Replace any outer-relation variables with nestloop params in the qual
@@ -3239,6 +3248,7 @@ create_nestloop_plan(PlannerInfo *root,
 		}
 	}
 
+#if  0
 	/*
 	 * If the inner path is a nestloop inner indexscan, it might be using some
 	 * of the join quals as index quals, in which case we don't have to check
@@ -3248,6 +3258,7 @@ create_nestloop_plan(PlannerInfo *root,
 		select_nonredundant_join_clauses(root,
 										 joinrestrictclauses,
 										 best_path->innerjoinpath);
+#endif
 
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);
@@ -5605,7 +5616,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 		Oid			lt_opr;
 
 		/* Grouping will be the last entry in grpColIdx */
-		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
+		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[numsortkeys]);
 
 		if (tle->resname == NULL)
 			tle->resname = "grouping";
@@ -6839,4 +6850,53 @@ flatten_grouping_list(List *groupcls)
 	}
 
 	return result;
+}
+
+/*
+ * add_sort_column --- utility subroutine for building sort info arrays
+ *
+ * We need this routine because the same column might be selected more than
+ * once as a sort key column; if so, the extra mentions are redundant.
+ *
+ * Caller is assumed to have allocated the arrays large enough for the
+ * max possible number of columns.	Return value is the new column count.
+ */
+static int
+add_sort_column(AttrNumber colIdx, Oid sortOp, Oid coll, bool nulls_first,
+				int numCols, AttrNumber *sortColIdx,
+				Oid *sortOperators, Oid *collations, bool *nullsFirst)
+{
+	int			i;
+
+	Assert(OidIsValid(sortOp));
+
+	for (i = 0; i < numCols; i++)
+	{
+		/*
+		 * Note: we check sortOp because it's conceivable that "ORDER BY foo
+		 * USING <, foo USING <<<" is not redundant, if <<< distinguishes
+		 * values that < considers equal.  We need not check nulls_first
+		 * however because a lower-order column with the same sortop but
+		 * opposite nulls direction is redundant.
+		 *
+		 * We could probably consider sort keys with the same sortop and
+		 * different collations to be redundant too, but for the moment treat
+		 * them as not redundant.  This will be needed if we ever support
+		 * collations with different notions of equality.
+		 */
+		if (sortColIdx[i] == colIdx &&
+			sortOperators[numCols] == sortOp &&
+			collations[numCols] == coll)
+		{
+			/* Already sorting by this col, so extra sort key is useless */
+			return numCols;
+		}
+	}
+
+	/* Add the column */
+	sortColIdx[numCols] = colIdx;
+	sortOperators[numCols] = sortOp;
+	collations[numCols] = coll;
+	nullsFirst[numCols] = nulls_first;
+	return numCols + 1;
 }

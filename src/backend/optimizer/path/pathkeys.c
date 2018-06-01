@@ -178,6 +178,7 @@ gen_implied_qual(PlannerInfo *root,
 								  old_rinfo->outerjoin_delayed,
 								  old_rinfo->pseudoconstant,
 								  required_relids,
+								  old_rinfo->outer_relids, /* GPDB_92_MERGE_FIXME */
 								  old_rinfo->nullable_relids,
 								  old_rinfo->ojscope_relids);
 	check_mergejoinable(new_rinfo);
@@ -195,7 +196,7 @@ gen_implied_qual(PlannerInfo *root,
 										   PVC_RECURSE_AGGREGATES,
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, required_relids);
+		add_vars_to_targetlist(root, vars, required_relids, true /* GPDB_92_MERGE_FIXME: what is the expected create_new_ph? */);
 		list_free(vars);
 	}
 
@@ -1192,6 +1193,7 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 									  typeoid,
 									  exprCollation(expr),
 									  0,
+									  NULL, /* GPDB_92_MERGE_FIXME: What is the expected rel here? */
 									  true);
 	if (!canonical)
 		pk = makePathKey(eclass, opfamily, strategy, false);
@@ -1291,6 +1293,7 @@ cdb_pull_up_pathkey(PlannerInfo *root,
 										exprType((Node *) newexpr),
 										exprCollation((Node *) newexpr),
 										0,
+										relids,
 										true);
 
 	/* Find or create the equivalence class for the transformed expr. */

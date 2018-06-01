@@ -851,12 +851,14 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
  */
 void
 cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel)
+					  ParamPathInfo *param_info,
+					  Path *bitmapqual, double loop_count)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexTotalCost;
 	Selectivity indexSelectivity;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	Cost		cost_per_page;
 	double		tuples_fetched;
@@ -869,6 +871,15 @@ cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	Assert(IsA(baserel, RelOptInfo));
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
+
+	if (!enable_bitmapscan)
+		startup_cost += disable_cost;
 
 	/*
 	 * Fetch total cost of obtaining the bitmap, as well as its total
@@ -890,7 +901,7 @@ cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 	T = (baserel->pages > 1) ? (double) baserel->pages : 1.0;
 
-	if (outer_rel != NULL && outer_rel->rows > 1)
+	if (loop_count > 1)
 	{
 		/*
 		 * For repeated bitmap scans, scale up the number of tuples fetched in
@@ -898,13 +909,11 @@ cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 		 * estimate the number of pages fetched by all the scans. Then
 		 * pro-rate for one scan.
 		 */
-		double		num_scans = outer_rel->rows;
-
-		pages_fetched = index_pages_fetched(tuples_fetched * num_scans,
+		pages_fetched = index_pages_fetched(tuples_fetched * loop_count,
 											baserel->pages,
 											get_indexpath_pages(bitmapqual),
 											root);
-		pages_fetched /= num_scans;
+		pages_fetched /= loop_count;
 	}
 	else
 	{
@@ -942,10 +951,13 @@ cost_bitmap_appendonly_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	 * Often the indexquals don't need to be rechecked at each tuple ... but
 	 * not always, especially not if there are enough tuples involved that the
 	 * bitmaps become lossy.  For the moment, just assume they will be
-	 * rechecked always.
+	 * rechecked always.  This means we charge the full freight for all the
+	 * scan clauses.
 	 */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 

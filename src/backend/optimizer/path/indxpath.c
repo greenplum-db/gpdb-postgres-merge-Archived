@@ -87,17 +87,17 @@ static void consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths);
+							List **bitindexpaths, List **pindexpathlist);
 static void expand_eclass_clause_combinations(PlannerInfo *root,
 								  RelOptInfo *rel,
 								  IndexOptInfo *index,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths);
+								  List **bitindexpaths, List **pindexpathlist);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths);
+				List **bitindexpaths, List **pindexpathlist);
 static List *build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				  IndexOptInfo *index, IndexClauseSet *clauses,
 				  bool useful_predicate,
@@ -193,10 +193,10 @@ create_bitmap_scan_path(PlannerInfo *root,
 			path = (Path *) create_bitmap_heap_path(root, rel, bitmapqual, required_outer, loop_count);
 			break;
 		case RELSTORAGE_AOROWS:
-			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, true);
+			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, loop_count, true);
 			break;
 		case RELSTORAGE_AOCOLS:
-			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, false);
+			path = (Path *) create_bitmap_appendonly_path(root, rel, bitmapqual, required_outer, loop_count, false);
 			break;
 		default:
 			elog(ERROR, "unrecognized relstorage type %d for using bitmap scan path",
@@ -313,7 +313,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 										&rclauseset,
 										&jclauseset,
 										&eclauseset,
-										&bitjoinpaths);
+										&bitjoinpaths,
+										pindexpathlist);
 	}
 
 	/*
@@ -344,11 +345,11 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	if (bitindexpaths != NIL)
 	{
 		Path	   *bitmapqual;
-		BitmapHeapPath *bpath;
+		Path *path;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
-		*pbitmappathlist = lappend(*pbitmappathlist, bpath);
+		path = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
+		*pbitmappathlist = lappend(*pbitmappathlist, path);
 	}
 
 	/*
@@ -364,14 +365,14 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *bitmapqual;
 		Relids		required_outer;
 		double		loop_count;
-		BitmapHeapPath *bpath;
+		Path *path;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
 		required_outer = get_bitmap_tree_required_outer(bitmapqual);
 		loop_count = get_loop_count(root, required_outer);
-		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
+		path = create_bitmap_scan_path(root, rel, bitmapqual,
 										required_outer, loop_count);
-		*pbitmappathlist = lappend(*pbitmappathlist, bpath);
+		*pbitmappathlist = lappend(*pbitmappathlist, path);
 	}
 }
 
@@ -399,7 +400,8 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths)
+							List **bitindexpaths,
+							List **pindexpathlist)
 {
 	IndexClauseSet clauseset;
 	int			last_eclass_col;
@@ -471,12 +473,12 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 			expand_eclass_clause_combinations(root, rel, index,
 											  0, last_eclass_col,
 											  &clauseset, eclauseset,
-											  bitindexpaths);
+											  bitindexpaths, pindexpathlist);
 		}
 		else
 		{
 			/* No, consider the newly-enlarged set of simple join clauses */
-			get_index_paths(root, rel, index, &clauseset, bitindexpaths);
+			get_index_paths(root, rel, index, &clauseset, bitindexpaths, pindexpathlist);
 		}
 	}
 }
@@ -501,7 +503,8 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths)
+								  List **bitindexpaths,
+								  List **pindexpathlist)
 {
 	List	   *save_clauses;
 	ListCell   *lc;
@@ -509,7 +512,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 	/* If past last eclass column, end the recursion and generate paths */
 	if (thiscol > lastcol)
 	{
-		get_index_paths(root, rel, index, clauseset, bitindexpaths);
+		get_index_paths(root, rel, index, clauseset, bitindexpaths, pindexpathlist);
 		return;
 	}
 
@@ -520,7 +523,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths);
+										  bitindexpaths, pindexpathlist);
 		return;
 	}
 
@@ -532,7 +535,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths);
+										  bitindexpaths, pindexpathlist);
 
 	/* For each eclass clause alternative ... */
 	foreach(lc, eclauseset->indexclauses[thiscol])
@@ -546,7 +549,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths);
+										  bitindexpaths, pindexpathlist);
 	}
 
 	/* Restore previous list contents */
