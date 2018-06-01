@@ -149,8 +149,8 @@ extern HashPath *create_hashjoin_path(PlannerInfo *root,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-                     List *mergeclause_list,    /*CDB*/
 					 Relids required_outer,
+                     List *mergeclause_list,    /*CDB*/
 					 List *hashclauses);
 
 extern Path *reparameterize_path(PlannerInfo *root, Path *path,
