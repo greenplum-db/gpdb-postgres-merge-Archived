@@ -1505,7 +1505,6 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		if (var->varnoold > 0)
 			var->varnoold += context->rtoffset;
 
-<<<<<<< HEAD
         /* Pseudo column reference? */
         if (var->varattno <= FirstLowInvalidHeapAttributeNumber)
         {
@@ -1529,13 +1528,16 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		{
 			return (Node *) var;
 		}
-=======
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
+
 		Assert(cexpr->cvarno != INNER_VAR);
 		Assert(cexpr->cvarno != OUTER_VAR);
 		if (!IS_SPECIAL_VARNO(cexpr->cvarno))
 			cexpr->cvarno += context->rtoffset;
 		return (Node *) cexpr;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	if (IsA(node, PlaceHolderVar))
 	{
@@ -1692,7 +1694,6 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 		if (IsA(plan, Repeat) &&
 			(IsA(tle->expr, Grouping) || IsA(tle->expr, GroupId)))
 		{
-<<<<<<< HEAD
 			/*
 			 * CDB: group_id() & grouping() rely on Repeat to generate non-zero
 			 * values for repeated grouping columns. So, always compute them, rather
@@ -1718,29 +1719,11 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 			}
 			else
 				newexpr = fix_upper_expr(glob,
-=======
-			newexpr = (Node *)
-				search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
-													  tle->ressortgroupref,
-													  subplan_itlist,
-													  OUTER_VAR);
-			if (!newexpr)
-				newexpr = fix_upper_expr(root,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 										 (Node *) tle->expr,
 										 subplan_itlist,
 										 OUTER_VAR,
 										 rtoffset);
 		}
-<<<<<<< HEAD
-=======
-		else
-			newexpr = fix_upper_expr(root,
-									 (Node *) tle->expr,
-									 subplan_itlist,
-									 OUTER_VAR,
-									 rtoffset);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
 		output_targetlist = lappend(output_targetlist, tle);
