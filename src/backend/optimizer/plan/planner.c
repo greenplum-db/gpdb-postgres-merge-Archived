@@ -3912,7 +3912,6 @@ make_subplanTargetList(PlannerInfo *root,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Otherwise, start with a "flattened" tlist (having just the Vars
 	 * mentioned in the targetlist and HAVING qual).  Note this includes Vars
 	 * used in resjunk items, so we are covering the needs of ORDER BY and
@@ -3969,16 +3968,10 @@ make_subplanTargetList(PlannerInfo *root,
 	 */
 	numCols = num_distcols_in_grouplist(parse->groupClause);
 
-=======
-	 * Otherwise, we must build a tlist containing all grouping columns, plus
-	 * any other Vars mentioned in the targetlist and HAVING qual.
+	/*
+	 * GPDB_MERGE_92_FIXME: The codes below are different from PG 9.2.
+	 * We believe our logic is the same with upstream.
 	 */
-	sub_tlist = NIL;
-	non_group_cols = NIL;
-	*need_tlist_eval = false;	/* only eval if not flat tlist */
-
-	numCols = list_length(parse->groupClause);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (numCols > 0)
 	{
 		/*
@@ -4003,7 +3996,6 @@ make_subplanTargetList(PlannerInfo *root,
 		*groupColIdx = grpColIdx;
 		*groupOperators = grpOperators;
 
-<<<<<<< HEAD
 		get_sortgroupclauses_tles(parse->groupClause, tlist,
 								  &grouptles, &sortops, &eqops);
 		Assert(numCols == list_length(grouptles) &&
@@ -4046,77 +4038,9 @@ make_subplanTargetList(PlannerInfo *root,
 			if (!OidIsValid(grpOperators[keyno]))           /* shouldn't happen */
 				elog(ERROR, "could not find equality operator for grouping column");
 			keyno++;
-=======
-		foreach(tl, tlist)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			int			colno;
-
-			colno = get_grouping_column_index(parse, tle);
-			if (colno >= 0)
-			{
-				/*
-				 * It's a grouping column, so add it to the result tlist and
-				 * remember its resno in grpColIdx[].
-				 */
-				TargetEntry *newtle;
-
-				newtle = makeTargetEntry(tle->expr,
-										 list_length(sub_tlist) + 1,
-										 NULL,
-										 false);
-				sub_tlist = lappend(sub_tlist, newtle);
-
-				Assert(grpColIdx[colno] == 0);	/* no dups expected */
-				grpColIdx[colno] = newtle->resno;
-
-				if (!(newtle->expr && IsA(newtle->expr, Var)))
-					*need_tlist_eval = true;	/* tlist contains non Vars */
-			}
-			else
-			{
-				/*
-				 * Non-grouping column, so just remember the expression for
-				 * later call to pull_var_clause.  There's no need for
-				 * pull_var_clause to examine the TargetEntry node itself.
-				 */
-				non_group_cols = lappend(non_group_cols, tle->expr);
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		Assert(keyno == numCols);
 	}
-	else
-	{
-		/*
-		 * With no grouping columns, just pass whole tlist to pull_var_clause.
-		 * Need (shallow) copy to avoid damaging input tlist below.
-		 */
-		non_group_cols = list_copy(tlist);
-	}
-
-	/*
-	 * If there's a HAVING clause, we'll need the Vars it uses, too.
-	 */
-	if (parse->havingQual)
-		non_group_cols = lappend(non_group_cols, parse->havingQual);
-
-	/*
-	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
-	 * add them to the result tlist if not already present.  (A Var used
-	 * directly as a GROUP BY item will be present already.)  Note this
-	 * includes Vars used in resjunk items, so we are covering the needs of
-	 * ORDER BY and window specifications.	Vars used within Aggrefs will be
-	 * pulled out here, too.
-	 */
-	non_group_vars = pull_var_clause((Node *) non_group_cols,
-									 PVC_RECURSE_AGGREGATES,
-									 PVC_INCLUDE_PLACEHOLDERS);
-	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
-
-	/* clean up cruft */
-	list_free(non_group_vars);
-	list_free(non_group_cols);
 
 	return sub_tlist;
 }
