@@ -87,13 +87,9 @@
  * above.  Nonetheless, with large workMem we can have many tapes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -212,8 +208,7 @@ typedef enum
 #define TAPE_BUFFER_OVERHEAD		(BLCKSZ * 3)
 #define MERGE_BUFFER_SIZE			(BLCKSZ * 32)
 
-<<<<<<< HEAD
-/* 
+/*
  * Current postion of Tuplesort operation.
  */
 struct TuplesortPos
@@ -236,10 +231,8 @@ struct TuplesortPos
 	LogicalTape* 		cur_work_tape;      /* current tape that I am working on */
 };
 
-=======
 typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
 												Tuplesortstate *state);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * Private state of a Tuplesort operation.
@@ -572,10 +565,8 @@ static void readtup_datum(Tuplesortstate *state, TuplesortPos *pos, SortTuple *s
 static void reversedirection_datum(Tuplesortstate *state);
 static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
 
-<<<<<<< HEAD
 static void tuplesort_sorted_insert(Tuplesortstate *state, SortTuple *tuple,
 					  int tupleindex, bool checkIndex);
-=======
 /*
  * Special versions of qsort just for SortTuple objects.  qsort_tuple() sorts
  * any variant of SortTuples, using the appropriate comparetup function.
@@ -585,7 +576,6 @@ static void tuplesort_sorted_insert(Tuplesortstate *state, SortTuple *tuple,
  */
 #include "qsort_tuple.c"
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  *		tuplesort_begin_xxx
@@ -723,15 +713,10 @@ tuplesort_begin_heap(ScanState *ss, TupleDesc tupDesc,
 	state->reversedirection = reversedirection_heap;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
-<<<<<<< HEAD
 	state->mt_bind = create_memtuple_binding(tupDesc);
-
-	state->scanKeys = (ScanKey) palloc0(nkeys * sizeof(ScanKeyData));
-=======
 
 	/* Prepare SortSupport data for each column */
 	state->sortKeys = (SortSupport) palloc0(nkeys * sizeof(SortSupportData));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	for (i = 0; i < nkeys; i++)
 	{
@@ -1395,19 +1380,6 @@ tuplesort_performsort(Tuplesortstate *state)
 			 * We were able to accumulate all the tuples within the allowed
 			 * amount of memory.  Just qsort 'em and we're done.
 			 */
-<<<<<<< HEAD
-			if ((state->memtupcount > 1)
-				&& state->standardsort)
-				qsort_arg((void *) state->memtuples,
-						  state->memtupcount,
-						  sizeof(SortTuple),
-						  (qsort_arg_comparator) state->comparetup,
-						  (void *) state);
-			state->pos.current = 0;
-			state->pos.eof_reached = false;
-			state->pos.markpos.mempos = 0;
-			state->pos.markpos_eof = false;
-=======
 			if (state->memtupcount > 1)
 			{
 				/* Can we use the single-key sort function? */
@@ -1420,11 +1392,10 @@ tuplesort_performsort(Tuplesortstate *state)
 								state->comparetup,
 								state);
 			}
-			state->current = 0;
-			state->eof_reached = false;
-			state->markpos_offset = 0;
-			state->markpos_eof = false;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+			state->pos.current = 0;
+			state->pos.eof_reached = false;
+			state->pos.markpos.mempos = 0;
+			state->pos.markpos_eof = false;
 			state->status = TSS_SORTEDINMEM;
 			break;
 
@@ -3049,8 +3020,7 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 static int
 comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
-<<<<<<< HEAD
-	ScanKey		scanKey = state->scanKeys;
+	SortSupport sortKey = state->sortKeys;
 	int			nkey;
 	int32		compare;
 
@@ -3058,15 +3028,6 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	CHECK_FOR_INTERRUPTS();
 
 	Assert(state->mt_bind);
-=======
-	SortSupport sortKey = state->sortKeys;
-	HeapTupleData ltup;
-	HeapTupleData rtup;
-	TupleDesc	tupDesc;
-	int			nkey;
-	int32		compare;
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Compare the leading sort key */
 	compare = ApplySortComparator(a->datum1, a->isnull1,
 								  b->datum1, b->isnull1,
@@ -3074,19 +3035,8 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	if (compare != 0)
 		return compare;
 
-<<<<<<< HEAD
-	scanKey++;
-	for (nkey = 1; nkey < state->nKeys; nkey++, scanKey++)
-=======
-	/* Compare additional sort keys */
-	ltup.t_len = ((MinimalTuple) a->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	ltup.t_data = (HeapTupleHeader) ((char *) a->tuple - MINIMAL_TUPLE_OFFSET);
-	rtup.t_len = ((MinimalTuple) b->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	rtup.t_data = (HeapTupleHeader) ((char *) b->tuple - MINIMAL_TUPLE_OFFSET);
-	tupDesc = state->tupDesc;
 	sortKey++;
 	for (nkey = 1; nkey < state->nKeys; nkey++, sortKey++)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		AttrNumber	attno = sortKey->ssup_attno;
 		Datum		datum1,
@@ -3097,17 +3047,9 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 		datum1 = memtuple_getattr(a->tuple, state->mt_bind, attno, &isnull1); 
 		datum2 = memtuple_getattr(b->tuple, state->mt_bind, attno, &isnull2);
 
-<<<<<<< HEAD
-		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
-										  scanKey->sk_collation,
-										  datum1, isnull1,
-										  datum2, isnull2);
-
-=======
 		compare = ApplySortComparator(datum1, isnull1,
 									  datum2, isnull2,
 									  sortKey);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (compare != 0)
 			return compare;
 	}
@@ -3126,7 +3068,6 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	 */
 	TupleTableSlot *slot = (TupleTableSlot *) tup;
 
-<<<<<<< HEAD
 	slot_getallattrs(slot);
 	stup->tuple = memtuple_form_to(state->mt_bind, 
 			slot_get_values(slot),
@@ -3136,20 +3077,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	USEMEM(state, GetMemoryChunkSpace(stup->tuple));
 
 	Assert(state->mt_bind);
-	stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->scanKeys[0].sk_attno, &stup->isnull1);
-=======
-	/* copy the tuple into sort storage */
-	tuple = ExecCopySlotMinimalTuple(slot);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	stup->datum1 = heap_getattr(&htup,
-								state->sortKeys[0].ssup_attno,
-								state->tupDesc,
-								&stup->isnull1);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->sortKeys[0].ssup_attno, &stup->isnull1);
 }
 
 static void
@@ -3182,7 +3110,6 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 						 memtuple_size_from_uint32(len) - sizeof(uint32));
 
 	if (state->randomAccess)	/* need trailing length word? */
-<<<<<<< HEAD
 		LogicalTapeReadExact(state->tapeset, lt,
 							 (void *) &tuplen, sizeof(tuplen));
 
@@ -3191,19 +3118,7 @@ readtup_heap(Tuplesortstate *state, TuplesortPos *pos, SortTuple *stup,
 	 */
 	AssertImply(!state->mt_bind, state->status == TSS_SORTEDONTAPE);
 	if(state->mt_bind)
-		stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->scanKeys[0].sk_attno, &stup->isnull1);
-=======
-		LogicalTapeReadExact(state->tapeset, tapenum,
-							 &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	stup->datum1 = heap_getattr(&htup,
-								state->sortKeys[0].ssup_attno,
-								state->tupDesc,
-								&stup->isnull1);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+		stup->datum1 = memtuple_getattr(stup->tuple, state->mt_bind, state->sortKeys[0].ssup_attno, &stup->isnull1);
 }
 
 static void
