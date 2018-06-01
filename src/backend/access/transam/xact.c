@@ -43,12 +43,9 @@
 #include "pgstat.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
-<<<<<<< HEAD
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/procarray.h"
@@ -1258,13 +1255,6 @@ RecordTransactionCommit(void)
 		/*
 		 * Begin commit critical section and insert the commit XLOG record.
 		 */
-<<<<<<< HEAD
-		XLogRecData rdata[5];
-		int			lastrdata = 0;
-		xl_xact_commit xlrec;
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		/* Tell bufmgr and smgr to prepare for commit */
 		if (markXidCommitted)
 			BufmgrCommit();
@@ -1307,9 +1297,13 @@ RecordTransactionCommit(void)
 		/*
 		 * Do we need the long commit record? If not, use the compact format.
 		 */
-		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit)
+		// GPDB_92_MERGE_FIXME_AS_SOON_AS_IT_COMPILES: always use "non
+		// compact" WAL records when in distributed transactions. Can
+		// we use the compact one for non-DDL transactions?
+		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit
+				|| isDtxPrepared)
 		{
-			XLogRecData rdata[4];
+			XLogRecData rdata[5];
 			int			lastrdata = 0;
 			xl_xact_commit xlrec;
 
@@ -1361,7 +1355,52 @@ RecordTransactionCommit(void)
 			}
 			rdata[lastrdata].next = NULL;
 
-			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
+			SIMPLE_FAULT_INJECTOR(OnePhaseTransactionCommit);
+
+			if (isDtxPrepared)
+			{
+				/* add global transaction information */
+				getDtxLogInfo(&gxact_log);
+
+				rdata[lastrdata].next = &(rdata[4]);
+				rdata[4].data = (char *) &gxact_log;
+				rdata[4].len = sizeof(gxact_log);
+				rdata[4].buffer = InvalidBuffer;
+				rdata[4].next = NULL;
+
+				insertingDistributedCommitted();
+
+				/*
+				 * MyPgXact->inCommit flag is already set, checkpointer will
+				 * be able to see this transaction only after distributed
+				 * commit xlog is written and the state is changed.
+				 */
+				recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_DISTRIBUTED_COMMIT, rdata);
+
+				insertedDistributedCommitted();
+			}
+			else
+			{
+				recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
+			}
+
+			/* MPP: If we are the QD and we've used sequences (from the sequence server) then we need
+			 * to make sure that we flush the XLOG entries made by the sequence server.  We do this
+			 * by moving our recptr ahead to where the sequence server is if its later than our own.
+			 *
+			 */
+			if (Gp_role == GP_ROLE_DISPATCH && seqXlogWrite)
+			{
+				LWLockAcquire(SeqServerControlLock, LW_EXCLUSIVE);
+
+				if (XLByteLT(recptr, seqServerCtl->lastXlogEntry))
+				{
+					recptr.xlogid = seqServerCtl->lastXlogEntry.xlogid;
+					recptr.xrecoff = seqServerCtl->lastXlogEntry.xrecoff;
+				}
+
+				LWLockRelease(SeqServerControlLock);
+			}
 		}
 		else
 		{
@@ -1369,53 +1408,6 @@ RecordTransactionCommit(void)
 			int			lastrdata = 0;
 			xl_xact_commit_compact xlrec;
 
-<<<<<<< HEAD
-		SIMPLE_FAULT_INJECTOR(OnePhaseTransactionCommit);
-
-		if (isDtxPrepared)
-		{
-			/* add global transaction information */
-			getDtxLogInfo(&gxact_log);
-
-			rdata[lastrdata].next = &(rdata[4]);
-			rdata[4].data = (char *) &gxact_log;
-			rdata[4].len = sizeof(gxact_log);
-			rdata[4].buffer = InvalidBuffer;
-			rdata[4].next = NULL;
-
-			insertingDistributedCommitted();
-
-			/*
-			 * MyProc->inCommit flag is already set, checkpointer will
-			 * be able to see this transaction only after distributed
-			 * commit xlog is written and the state is changed.
-			 */
-			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_DISTRIBUTED_COMMIT, rdata);
-
-			insertedDistributedCommitted();
-		}
-		else
-		{
-			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
-		}
-
-		/* MPP: If we are the QD and we've used sequences (from the sequence server) then we need
-		 * to make sure that we flush the XLOG entries made by the sequence server.  We do this
-		 * by moving our recptr ahead to where the sequence server is if its later than our own.
-		 *
-		 */
-		if (Gp_role == GP_ROLE_DISPATCH && seqXlogWrite)
-		{
-			LWLockAcquire(SeqServerControlLock, LW_EXCLUSIVE);
-
-			if (XLByteLT(recptr, seqServerCtl->lastXlogEntry))
-			{
-				recptr.xlogid = seqServerCtl->lastXlogEntry.xlogid;
-				recptr.xrecoff = seqServerCtl->lastXlogEntry.xrecoff;
-			}
-
-			LWLockRelease(SeqServerControlLock);
-=======
 			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -1432,8 +1424,11 @@ RecordTransactionCommit(void)
 			}
 			rdata[lastrdata].next = NULL;
 
+			/*
+			 * GPDB_92_MERGE_FIXME_AS_SOON_AS_IT_COMPILES: Can we
+			 * handle distributed transactions in this way too?
+			 */
 			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT, rdata);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
