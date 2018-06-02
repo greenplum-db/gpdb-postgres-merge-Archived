@@ -40,6 +40,7 @@
 #include "optimizer/transform.h"
 #include "optimizer/tlist.h"
 #include "parser/analyze.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
@@ -341,7 +342,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 		PlannerInfo	   *subroot = (PlannerInfo *) lfirst(lr);
-		List       *subrtable;
 
 		List       *subrtable= subroot->parse->rtable;
 
@@ -2455,7 +2455,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	 */
 	if ((parse->distinctClause || parse->sortClause) &&
 		(root->config->honor_order_by || !root->parent_root) &&
-		!parse->intoClause &&
+		/*GPDB_92_MERGE_FIXME: pg92 change a way to implement the SELECT...INTO...*/
+		/*!parse->intoClause &&*/
 		/*
 		 * GPDB_84_MERGE_FIXME: Does this do the right thing, if you have a
 		 * SELECT DISTINCT query as argument to a table function?
@@ -3896,6 +3897,7 @@ make_subplanTargetList(PlannerInfo *root,
 	List	   *sub_tlist;
 	List	   *non_group_cols;
 	List	   *non_group_vars;
+	List	   *extravars;
 	int			numCols;
 
 	*groupColIdx = NULL;
@@ -3974,6 +3976,8 @@ make_subplanTargetList(PlannerInfo *root,
 	 */
 	if (numCols > 0)
 	{
+		int			keyno = 0;
+
 		/*
 		 * If grouping, create sub_tlist entries for all GROUP BY columns, and
 		 * make an array showing where the group columns are in the sub_tlist.

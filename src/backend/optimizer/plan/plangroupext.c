@@ -1700,9 +1700,7 @@ plan_append_aggs_with_rewrite(PlannerInfo *root,
 			agg_plan = (Plan *)make_subqueryscan(subquery_tlist,
 												 NIL,
 												 list_length(final_query->rtable),
-												 agg_plan,
-												 final_query->rtable,
-												 final_query->rowMarks);
+												 agg_plan);
 			mark_passthru_locus(agg_plan, true, true);
 			pfree(resno_map);
 		}
@@ -2331,9 +2329,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 			rollup_plan = (Plan *) make_subqueryscan(subquery_tlist,
 													 NIL,
 													 list_length(final_query->rtable),
-													 rollup_plan,
-													 root->parse->rtable,
-													 root->parse->rowMarks);
+													 rollup_plan);
 			mark_passthru_locus(rollup_plan, true, true);
 			pfree(resno_map);
 		}
@@ -2644,7 +2640,7 @@ add_repeat_node(Plan *result_plan, int repeat_count, uint64 grouping)
 	}
 	else
 	{
-		repeatCountExpr = (Expr *)makeVar(OUTER,
+		repeatCountExpr = (Expr *)makeVar(OUTER_VAR,
 										  repeat_count_resno,
 										  INT4OID,
 										  -1,

@@ -1029,7 +1029,6 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = rel->relids;
 
-	cost_seqscan(pathnode, root, rel);
 	cost_seqscan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
@@ -1271,11 +1270,11 @@ create_bitmap_appendonly_path(PlannerInfo *root,
 		Selectivity indexSelectivity;
 
 		cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
-		pathnode->rows = rel->tuples * indexSelectivity;
-		if (pathnode->rows > rel->rows)
-			pathnode->rows = rel->rows;
+		((Path*)pathnode)->rows = rel->tuples * indexSelectivity;
+		if (((Path*)pathnode)->rows > rel->rows)
+			((Path*)pathnode)->rows = rel->rows;
 		/* Like costsize.c, force estimate to be at least one row */
-		pathnode->rows = clamp_row_est(pathnode->rows);
+		((Path*)pathnode)->rows = clamp_row_est(((Path*)pathnode)->rows);
 	}
 	else
 	{
@@ -1283,7 +1282,7 @@ create_bitmap_appendonly_path(PlannerInfo *root,
 		 * The number of rows is the same as the parent rel's estimate, since
 		 * this isn't a join inner indexscan.
 		 */
-		pathnode->rows = rel->rows;
+		((Path*)pathnode)->rows = rel->rows;
 	}
 
 	cost_bitmap_appendonly_scan(&pathnode->path, root, rel,
@@ -1378,6 +1377,7 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
 AppendPath *
 create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids required_outer)
 {
+	ListCell *l;
 	AppendPath *pathnode = makeNode(AppendPath);
 
 	pathnode->path.pathtype = T_Append;
@@ -2262,7 +2262,7 @@ create_unique_rowid_path(PlannerInfo *root,
 	 * it's going to be two columns.
 	 */
 	numCols	= 2;
-	pathnode->rows = rel->rows;
+	((Path*)pathnode)->rows = rel->rows;
 
 	if (all_btree)
 	{
@@ -2293,12 +2293,12 @@ create_unique_rowid_path(PlannerInfo *root,
 		 */
 		int			hashentrysize = rel->width + 64;
 
-		if (hashentrysize * pathnode->rows > work_mem * 1024L)
+		if (hashentrysize * ((Path*)pathnode)->rows > work_mem * 1024L)
 			all_hash = false;	/* don't try to hash */
 		else
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, 0,
-					 numCols, pathnode->rows,
+					 numCols, ((Path*)pathnode)->rows,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows,
@@ -2827,37 +2827,42 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelo
 	return pathnode;
 }
 
-bool
-path_contains_inner_index(Path *path)
-{
-	if (IsA(path, IndexPath) &&
-		((IndexPath *)path)->isjoininner)
-		return true;
-	else if (IsA(path, BitmapHeapPath) &&
-			 ((BitmapHeapPath *)path)->isjoininner)
-		return true;
-	else if (IsA(path, BitmapAppendOnlyPath) &&
-			 ((BitmapAppendOnlyPath *)path)->isjoininner)
-		return true;
-	else if (IsA(path, AppendPath))
-	{
-		/* MPP-2377: Append paths may conceal inner-index scans, if
-		 * any of the subpaths are indexpaths or bitmapheap-paths we
-		 * have to do more checking */
-		ListCell   *l;
+/*
+ * GPDB_92_MERGE_FIXME:Please check why isjoininner is removed.
+ */
 
-		/* scan the subpaths of the Append */
-		foreach(l, ((AppendPath *)path)->subpaths)
-		{
-			Path	   *subpath = (Path *)lfirst(l);
-
-			if (path_contains_inner_index(subpath))
-				return true;
-		}
-	}
-
-	return false;
-}
+//bool
+//path_contains_inner_index(Path *path)
+//{
+//
+//	if (IsA(path, IndexPath) &&
+//		((IndexPath *)path)->isjoininner)
+//		return true;
+//	else if (IsA(path, BitmapHeapPath) &&
+//			 ((BitmapHeapPath *)path)->isjoininner)
+//		return true;
+//	else if (IsA(path, BitmapAppendOnlyPath) &&
+//			 ((BitmapAppendOnlyPath *)path)->isjoininner)
+//		return true;
+//	else if (IsA(path, AppendPath))
+//	{
+//		/* MPP-2377: Append paths may conceal inner-index scans, if
+//		 * any of the subpaths are indexpaths or bitmapheap-paths we
+//		 * have to do more checking */
+//		ListCell   *l;
+//
+//		/* scan the subpaths of the Append */
+//		foreach(l, ((AppendPath *)path)->subpaths)
+//		{
+//			Path	   *subpath = (Path *)lfirst(l);
+//
+//			if (path_contains_inner_index(subpath))
+//				return true;
+//		}
+//	}
+//
+//	return false;
+//}
 
 /*
  * create_foreignscan_path

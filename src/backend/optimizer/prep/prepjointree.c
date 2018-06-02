@@ -521,6 +521,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 												   available_rels1);
 				if (subst && IsA(subst, JoinExpr))
 				{
+					j = (JoinExpr *) subst;
 					/* Yes; insert the new join node into the join tree */
 					j->larg = *jtlink1;
 					*jtlink1 = (Node *) j;
@@ -552,6 +553,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 												   available_rels2);
 					if (subst && IsA(subst, JoinExpr))
 					{
+						j = (JoinExpr *) subst;
 						/* Yes; insert the new join node into the join tree */
 						j->larg = *jtlink2;
 						*jtlink2 = (Node *) j;
@@ -593,7 +595,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			{
 				sublink->subLinkType = (sublink->subLinkType == ANY_SUBLINK) ? ALL_SUBLINK : ANY_SUBLINK;
 				sublink->testexpr = (Node *) canonicalize_qual(make_notclause((Expr *) sublink->testexpr));
-				return pull_up_sublinks_qual_recurse(root, (Node *) sublink, available_rels, jtlink);
+				return pull_up_sublinks_qual_recurse(root, (Node *) sublink, available_rels1, jtlink1, available_rels2, jtlink2);
 			}
 
 			/*
@@ -608,7 +610,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			/* NOT NOT (expr) => (expr)  */
 			return (Node *) pull_up_sublinks_qual_recurse(root,
 														 (Node *) get_notclausearg((Expr *) arg),
-														 available_rels, jtlink);
+														 available_rels1, jtlink1, available_rels2, jtlink2);
 		}
 		/*
 		 * GPDB_91_MERGE_FIXME: The below enters an infinite recursion with
@@ -685,8 +687,8 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				if (j)
 				{
 					/* Yes, insert the new join node into the join tree */
-					j->larg = *jtlink;
-					*jtlink = (Node *) j;
+					j->larg = *jtlink1;
+					*jtlink1 = (Node *) j;
 				}
 				return node;
 			}

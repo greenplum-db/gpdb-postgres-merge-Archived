@@ -336,7 +336,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 				make_result(root,
 							generate_setop_tlist(colTypes, colCollations,
 												 flag,
-												 OUTER,
+												 OUTER_VAR,
 												 false,
 												 plan->targetlist,
 												 refnames_tlist),
@@ -1189,7 +1189,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 
 		Assert(reftle->resno == resno);
 		Assert(!reftle->resjunk);
-		expr = (Node *) makeVar(OUTER,
+		expr = (Node *) makeVar(OUTER_VAR,
 								resno,
 								colType,
 								colTypmod,
@@ -1206,7 +1206,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 	{
 		/* Add a resjunk flag column */
 		/* flag value is shown as copied up from subplan */
-		expr = (Node *) makeVar(OUTER,
+		expr = (Node *) makeVar(OUTER_VAR,
 								resno,
 								INT4OID,
 								-1,
@@ -1861,7 +1861,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		j = (JoinExpr *) expression_tree_mutator(node,
 											  adjust_appendrel_attrs_mutator,
-												 (void *) ctx);
+												 (void *) context);
 		/* now fix JoinExpr's rtindex (probably never happens) */
 		if (j->rtindex == appinfo->parent_relid)
 			j->rtindex = appinfo->child_relid;
@@ -1874,7 +1874,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
 											  adjust_appendrel_attrs_mutator,
-														 (void *) ctx);
+														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
 			phv->phrels = adjust_relid_set(phv->phrels,
@@ -1903,11 +1903,11 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		/* Recursively fix the clause itself */
 		newinfo->clause = (Expr *)
-				adjust_appendrel_attrs_mutator((Node *) oldinfo->clause, ctx);
+				adjust_appendrel_attrs_mutator((Node *) oldinfo->clause, context);
 
 		/* and the modified version, if an OR clause */
 		newinfo->orclause = (Expr *)
-				adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, ctx);
+				adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, context);
 
 		/* adjust relid sets too */
 		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
@@ -1955,7 +1955,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 	Assert(!IsA(node, Query));
 
 	node = expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
-								   (void *) ctx);
+								   (void *) context);
 
 	/*
 	 * In GPDB, if you have two SubPlans referring to the same initplan, we
@@ -1971,7 +1971,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		if (!sp->is_initplan)
 		{
-			PlannerInfo *root = ctx->root;
+			PlannerInfo *root = context->root;
 			Plan *newsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, sp));
 			List *newsubroot = (List *) copyObject(planner_subplan_get_root(root, sp));
 

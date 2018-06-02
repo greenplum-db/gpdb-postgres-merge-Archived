@@ -2257,12 +2257,13 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
  *
  * Recurses into query tree and folds all constant expressions.
  */
+
 Query *
-fold_constants(PlannerGlobal *glob, Query *q, ParamListInfo boundParams, Size max_size)
+fold_constants(PlannerInfo *root, Query *q, ParamListInfo boundParams, Size max_size)
 {
 	eval_const_expressions_context context;
 
-	context.glob = glob;
+	context.root = root;
 	context.boundParams = boundParams;
 	context.active_fns = NIL;	/* nothing being recursively simplified */
 	context.case_val = NULL;	/* no CASE being examined */
@@ -2493,7 +2494,7 @@ eval_const_expressions_mutator(Node *node,
 							 * win.
 							 */
 							if (!(context->estimate || (prm->pflags & PARAM_FLAG_CONST)))
-								context->glob->oneoffPlan = true;
+								context->root->glob->oneoffPlan = true;
 
 							Assert(prm->ptype == param->paramtype);
 							get_typlenbyval(param->paramtype,
@@ -2541,6 +2542,7 @@ eval_const_expressions_mutator(Node *node,
 										   &args,
 										   true,
 										   true,
+										   true,
 										   context);
 				if (simple)		/* successfully simplified it */
 					return (Node *) simple;
@@ -2584,6 +2586,7 @@ eval_const_expressions_mutator(Node *node,
 										   expr->opcollid,
 										   expr->inputcollid,
 										   &args,
+										   true,
 										   true,
 										   true,
 										   context);
@@ -2687,6 +2690,7 @@ eval_const_expressions_mutator(Node *node,
 											   expr->opcollid,
 											   expr->inputcollid,
 											   &args,
+											   false,
 											   false,
 											   false,
 											   context);
@@ -2892,6 +2896,7 @@ eval_const_expressions_mutator(Node *node,
 										   &args,
 										   true,
 										   true,
+										   true,
 										   context);
 				if (simple)		/* successfully simplified output fn */
 				{
@@ -2922,6 +2927,7 @@ eval_const_expressions_mutator(Node *node,
 											   InvalidOid,
 											   &args,
 											   false,
+											   true,
 											   true,
 											   context);
 					if (simple) /* successfully simplified input fn */
@@ -3813,12 +3819,16 @@ simplify_boolean_equality(Oid opno, List *args)
  * will be done even if simplification of the function call itself is not
  * possible.
  */
+/*
+ * GPDB_92_MERGE_FIXME: please check if the arguments input by whom is
+ * called this function is correct,?
+ */
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
 				  bool funcvariadic, 
 				  bool process_args, bool allow_non_const,
-				  eval_const_expressions_context *context);
+				  eval_const_expressions_context *context)
 {
 	List	   *args = *args_p;
 	HeapTuple	func_tuple;
@@ -4235,10 +4245,10 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 		 /* okay */ ;
 	else if (context->estimate && funcform->provolatile == PROVOLATILE_STABLE)
 		 /* okay */ ;
-	else if (context->glob && funcform->provolatile == PROVOLATILE_STABLE)
+	else if (context->root->glob && funcform->provolatile == PROVOLATILE_STABLE)
 	{
 		 /* okay, but we cannot reuse this plan */
-		context->glob->oneoffPlan = true;
+		context->root->glob->oneoffPlan = true;
 	}
 	else
 		return NULL;
