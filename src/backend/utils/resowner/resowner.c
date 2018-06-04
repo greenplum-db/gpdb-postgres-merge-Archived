@@ -25,6 +25,7 @@
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
