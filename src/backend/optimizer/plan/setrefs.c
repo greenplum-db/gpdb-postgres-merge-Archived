@@ -25,6 +25,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
@@ -156,7 +157,7 @@ static List *set_returning_clause_references(PlannerInfo *root,
 								int rtoffset);
 static bool fix_opfuncids_walker(Node *node, void *context);
 static  bool cdb_expr_requires_full_eval(Node *node);
-static Plan *cdb_insert_result_node(PlannerGlobal *glob, 
+static Plan *cdb_insert_result_node(PlannerInfo *root,
 									Plan *plan, 
 									int rtoffset);
 
@@ -191,7 +192,7 @@ static void set_plan_references_input_asserts(PlannerGlobal *glob, Plan *plan, L
 		 * If shared input node exists, a subquery scan may refer to varnos outside
 		 * its current rtable.
 		 */
-		Assert((var->varno == OUTER
+		Assert((var->varno == OUTER_VAR
 				|| (var->varno > 0 && var->varno <= list_length(rtable) + list_length(glob->finalrtable)))
 				&& "Plan contains var that refer outside the rtable.");
 
@@ -269,8 +270,8 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
 	foreach (lc, allVars)
 	{
 		Var *var = (Var *) lfirst(lc);
-		Assert((var->varno == INNER
-				|| var->varno == OUTER
+		Assert((var->varno == INNER_VAR
+				|| var->varno == OUTER_VAR
 				|| (var->varno > 0 && var->varno <= list_length(glob->finalrtable)))
 				&& "Plan contains var that refer outside the rtable.");
 		Assert(var->varattno > FirstLowInvalidHeapAttributeNumber && "Invalid attribute number in plan");
@@ -374,7 +375,7 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	 * This method formalizes our assumptions about the input to set_plan_references.
 	 * This will hopefully, help us debug any problems.
 	 */
-	set_plan_references_input_asserts(glob, plan, rtable);
+	set_plan_references_input_asserts(glob, plan, root->parse->rtable);
 #endif
 
 	/*
@@ -394,9 +395,9 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 		newrte = copyObject(rte);
 
 		/** Need to fix up some of the references in the newly created newrte */
-		fix_scan_expr(glob, (Node *) newrte->funcexpr, rtoffset);
-		fix_scan_expr(glob, (Node *) newrte->joinaliasvars, rtoffset);
-		fix_scan_expr(glob, (Node *) newrte->values_lists, rtoffset);
+		fix_scan_expr(root, (Node *) newrte->funcexpr, rtoffset);
+		fix_scan_expr(root, (Node *) newrte->joinaliasvars, rtoffset);
+		fix_scan_expr(root, (Node *) newrte->values_lists, rtoffset);
 
 		glob->finalrtable = lappend(glob->finalrtable, newrte);
 
@@ -455,7 +456,7 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	/**
 	 * Ensuring that the output of setrefs behaves as expected.
 	 */
-	set_plan_references_output_asserts(root, retPlan);
+	set_plan_references_output_asserts(glob, retPlan);
 #endif
 
 	return retPlan;
@@ -524,12 +525,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				IndexScan  *splan = (IndexScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 
 #ifdef USE_ASSERT_CHECKING
-				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, glob->finalrtable);
+				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
 				char relstorage = get_rel_relstorage(rte->relid);
 				Assert(relstorage != RELSTORAGE_AOROWS &&
 					   relstorage != RELSTORAGE_AOCOLS);
@@ -575,12 +576,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				BitmapHeapScan *splan = (BitmapHeapScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 
 #ifdef USE_ASSERT_CHECKING
-				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, glob->finalrtable);
+				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
 				char relstorage = get_rel_relstorage(rte->relid);
 				Assert(relstorage != RELSTORAGE_AOROWS &&
 					   relstorage != RELSTORAGE_AOCOLS);
@@ -598,12 +599,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				BitmapAppendOnlyScan *splan = (BitmapAppendOnlyScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 
 #ifdef USE_ASSERT_CHECKING
-				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, glob->finalrtable);
+				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
 				char relstorage = get_rel_relstorage(rte->relid);
 				Assert(relstorage == RELSTORAGE_AOROWS ||
 					   relstorage == RELSTORAGE_AOCOLS);
@@ -622,7 +623,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				BitmapTableScan *splan = (BitmapTableScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 
@@ -639,7 +640,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				TidScan    *splan = (TidScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 
@@ -661,7 +662,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_SubqueryScan:
 
 			if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-				return cdb_insert_result_node(root->glob, plan, rtoffset);
+				return cdb_insert_result_node(root, plan, rtoffset);
 
 			/* Needs special treatment, see comments below */
 			return set_subqueryscan_references(root,
@@ -671,10 +672,9 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			{
 				TableFunctionScan *tplan	   = (TableFunctionScan *) plan;
 				Plan	   *subplan   = tplan->scan.plan.lefttree;
-				List	   *subrtable = tplan->subrtable;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				/* recursively process the subplan */
 				/* GPDB_90_MERGE_FIXME: How about rowmarks here? Do we need to stash them
@@ -698,7 +698,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				FunctionScan *splan = (FunctionScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 				splan->scan.plan.targetlist =
@@ -714,7 +714,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				ValuesScan *splan = (ValuesScan *) plan;
 
 				if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-					return cdb_insert_result_node(root->glob, plan, rtoffset);
+					return cdb_insert_result_node(root, plan, rtoffset);
 
 				splan->scan.scanrelid += rtoffset;
 				splan->scan.plan.targetlist =
@@ -765,7 +765,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_MergeJoin:
 		case T_HashJoin:
 			if (cdb_expr_requires_full_eval((Node *)plan->targetlist))
-				return cdb_insert_result_node(root->glob, plan, rtoffset);
+				return cdb_insert_result_node(root, plan, rtoffset);
 			set_join_references(root, (Join *) plan, rtoffset);
 			break;
 		case T_Plan:
@@ -814,7 +814,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					ShareInputScan *producer;
 
 					Assert(sisc->share_type != SHARE_NOTSHARED);
-					Assert(sisc->share_id >= 0 && sisc->share_id < glob->share.producer_count);
+					Assert(sisc->share_id >= 0 && sisc->share_id < root->glob->share.producer_count);
 					producer = root->glob->share.producers[sisc->share_id];
 					childPlan = producer->scan.plan.lefttree;
 				}
@@ -1450,7 +1450,7 @@ fix_expr_common(PlannerInfo *root, Node *node)
         {
             Assert(var->varlevelsup == 0 &&
                    var->varno > 0 &&
-                   var->varno <= list_length(glob->finalrtable));
+                   var->varno <= list_length(root->glob->finalrtable));
         }
     }
 }
@@ -2654,7 +2654,7 @@ cdb_extract_plan_dependencies_walker(Node *node, cdb_extract_plan_dependencies_c
  *
  * Returns true if expr could call a set-returning function.
  */
-bool
+static bool
 cdb_expr_requires_full_eval(Node *node)
 {
     return expression_returns_set(node);
@@ -2675,8 +2675,8 @@ cdb_expr_requires_full_eval(Node *node)
  * gain when there are no set-returning-functions in the target list,
  * which is the common case.
  */
-Plan *
-cdb_insert_result_node(PlannerGlobal *glob, Plan *plan, int rtoffset)
+static Plan *
+cdb_insert_result_node(PlannerInfo *root, Plan *plan, int rtoffset)
 {
     Plan   *resultplan;
     Flow   *flow;
@@ -2704,7 +2704,7 @@ cdb_insert_result_node(PlannerGlobal *glob, Plan *plan, int rtoffset)
 									 PVC_INCLUDE_PLACEHOLDERS);
 
     /* Fix up the Result node and the Plan tree below it. */
-    resultplan = set_plan_refs(glob, resultplan, rtoffset);
+    resultplan = set_plan_refs(root, resultplan, rtoffset);
 
     /* Reattach the Flow node. */
     resultplan->flow = flow;

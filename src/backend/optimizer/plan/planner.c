@@ -95,7 +95,6 @@ static bool choose_hashed_distinct(PlannerInfo *root,
 					   double dNumDistinctRows);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, Oid **groupOperators, bool *need_tlist_eval);
-static int	get_grouping_column_index(Query *parse, TargetEntry *tle);
 static void locate_grouping_columns(PlannerInfo *root,
 						List *stlist,
 						List *sub_tlist,
@@ -1330,7 +1329,7 @@ grouping_planner_output_asserts(PlannerInfo *root, Plan *plan)
 		Var		   *var = (Var *) lfirst(lc);
 
 		Assert(var->varlevelsup == 0 && "Plan contains vars that refer to outer plan.");
-		Assert((var->varno == OUTER
+		Assert((var->varno == OUTER_VAR
 		|| (var->varno > 0 && var->varno <= list_length(root->parse->rtable)))
 			   && "Plan contains var that refer outside the rtable.");
 		Assert(var->varno == var->varnoold && "Varno and varnoold do not agree!");
@@ -3895,8 +3894,6 @@ make_subplanTargetList(PlannerInfo *root,
 {
 	Query	   *parse = root->parse;
 	List	   *sub_tlist;
-	List	   *non_group_cols;
-	List	   *non_group_vars;
 	List	   *extravars;
 	int			numCols;
 
@@ -3992,7 +3989,6 @@ make_subplanTargetList(PlannerInfo *root,
 		List	   *eqops;
 		ListCell   *lc_tle;
 		ListCell   *lc_eqop;
-		ListCell   *tl;
 
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		grpOperators = (Oid *) palloc(sizeof(Oid) * numCols);
@@ -4047,37 +4043,6 @@ make_subplanTargetList(PlannerInfo *root,
 	}
 
 	return sub_tlist;
-}
-
-/*
- * get_grouping_column_index
- *		Get the GROUP BY column position, if any, of a targetlist entry.
- *
- * Returns the index (counting from 0) of the TLE in the GROUP BY list, or -1
- * if it's not a grouping column.  Note: the result is unique because the
- * parser won't make multiple groupClause entries for the same TLE.
- */
-static int
-get_grouping_column_index(Query *parse, TargetEntry *tle)
-{
-	int			colno = 0;
-	Index		ressortgroupref = tle->ressortgroupref;
-	ListCell   *gl;
-
-	/* No need to search groupClause if TLE hasn't got a sortgroupref */
-	if (ressortgroupref == 0)
-		return -1;
-
-	foreach(gl, parse->groupClause)
-	{
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
-
-		if (grpcl->tleSortGroupRef == ressortgroupref)
-			return colno;
-		colno++;
-	}
-
-	return -1;
 }
 
 /*
