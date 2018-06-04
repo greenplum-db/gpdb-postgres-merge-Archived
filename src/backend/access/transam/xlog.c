@@ -11810,7 +11810,7 @@ HandleStartupProcInterrupts(void)
 	 * Emergency bailout if postmaster has died.  This is to avoid the
 	 * necessity for manual cleanup of all postmaster children.
 	 */
-	if (IsUnderPostmaster && !PostmasterIsAlive(true))
+	if (IsUnderPostmaster && !PostmasterIsAlive())
 		exit(1);
 }
 
