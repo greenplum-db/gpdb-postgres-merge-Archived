@@ -474,6 +474,9 @@ typedef struct LockInstanceData
 	LocalTransactionId lxid;	/* local transaction ID of this PGPROC */
 	int			pid;			/* pid of this PGPROC */
 	bool		fastpath;		/* taken via fastpath? */
+	Oid			databaseId;		/* OID of database this backend is using */
+	int         mppSessionId;   /* serial num of the qDisp process */
+	bool		mppIsWriter;	/* The writer gang member, holder of locks */
 } LockInstanceData;
 
 typedef struct LockData

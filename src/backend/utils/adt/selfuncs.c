@@ -7323,10 +7323,8 @@ Datum
 bmcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
@@ -7347,21 +7345,21 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	 *     value, we adjust the number of index tuples by dividing the
 	 *     value with the number of distinct values.
 	 */
-	if (index->indpred != NIL)
+	if (path->indexinfo->indpred != NIL)
 	{
 		List	   *strippedQuals;
 		List	   *predExtraQuals;
 
-		strippedQuals = get_actual_clauses(indexQuals);
-		predExtraQuals = list_difference(index->indpred, strippedQuals);
-		selectivityQuals = list_concat(predExtraQuals, indexQuals);
+		strippedQuals = get_actual_clauses(path->indexquals);
+		predExtraQuals = list_difference(path->indexinfo->indpred, strippedQuals);
+		selectivityQuals = list_concat(predExtraQuals, path->indexquals);
 	}
 	else
-		selectivityQuals = indexQuals;
+		selectivityQuals = path->indexquals;
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   index->rel->relid,
+											   path->indexinfo->rel->relid,
 											   JOIN_INNER,
 											   NULL,
 											   false /* use_damping */);
@@ -7370,28 +7368,28 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	 * Construct a list of index keys, so that we can estimate the number
 	 * of distinct values for those keys.
 	 */
-	for (i = 0; i < index->ncolumns; i ++)
+	for (i = 0; i < path->indexinfo->ncolumns; i ++)
 	{
-		if (index->indexkeys[i] > 0)
+		if (path->indexinfo->indexkeys[i] > 0)
 		{
-			Var *var = find_indexkey_var(root, index->rel, (AttrNumber) index->indexkeys[i]);
+			Var *var = find_indexkey_var(root, path->indexinfo->rel,
+										 (AttrNumber) path->indexinfo->indexkeys[i]);
 
 			groupExprs = lappend(groupExprs, var);
 		}
 	}
-	if (index->indexprs != NULL)
-		groupExprs = list_concat_unique(groupExprs, index->indexprs);
+	if (path->indexinfo->indexprs != NULL)
+		groupExprs = list_concat_unique(groupExprs, path->indexinfo->indexprs);
 
 	Assert(groupExprs != NULL);
-	numDistinctValues = estimate_num_groups(root, groupExprs, index->rel->rows);
+	numDistinctValues = estimate_num_groups(root, groupExprs, path->indexinfo->rel->rows);
 	if (numDistinctValues == 0)
 		numDistinctValues = 1;
 
-	numIndexTuples = *indexSelectivity * index->rel->tuples;
+	numIndexTuples = *indexSelectivity * path->indexinfo->rel->tuples;
 	numIndexTuples = rint(numIndexTuples / numDistinctValues);
 
-	genericcostestimate(root, index, indexQuals, indexOrderBys,
-						outer_rel, numIndexTuples,
+	genericcostestimate(root, path, loop_count, numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 

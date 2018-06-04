@@ -2943,7 +2943,7 @@ typedef struct MotionState
 	int			numInputSegs;	/* the number of segments on the sending slice */
 } MotionState;
 
-/*
+/*zx
  * ExecNode for PartitionSelector.
  * This operator contains a Plannode in PlanState.
  */

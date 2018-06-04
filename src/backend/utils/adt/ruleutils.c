@@ -2315,12 +2315,12 @@ deparse_context_for_planstate(Node *planstate, List *ancestors,
 	 * subplans list. Thus, we allow push_plans to assign inner and outer plan
 	 * as usual and then add a check here
 	 */
-	if (dpns->inner_plan && IsA(dpns->inner_plan, PartitionSelector))
+	if (dpns->inner_planstate && IsA(dpns->inner_planstate, PartitionSelectorState))
 	{
 		dpns->inner_planstate = (PlanState *) planstate;
 		dpns->outer_planstate = (PlanState *) planstate;
-		dpns->outer_plan = ((PlanState *) planstate)->plan;
-		dpns->inner_plan = ((PlanState *) planstate)->plan;
+		dpns->outer_tlist = ((PlanState *) planstate)->plan->targetlist;
+		dpns->inner_tlist = ((PlanState *) planstate)->plan->targetlist;
 	}
 
 	/* Return a one-deep namespace stack */

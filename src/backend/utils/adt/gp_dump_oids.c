@@ -170,6 +170,12 @@ gp_dump_query_oids(PG_FUNCTION_ARGS)
 	ctl.hash = oid_hash;
 	dedup_htab = hash_create("funcid hash table", 100, &ctl, HASH_ELEM | HASH_FUNCTION);
 
+	/*
+	 * GDPB_92_MERGE_FIXME: dump query oids
+	 * PlanInvalItem no longer contains tupleId. A hashValue of syscathe replaces it.
+	 * And we have not a funtion getting a tupleId from hashValue.
+	 */
+#if 0
 	foreach (lc, invalidItems)
 	{
 		PlanInvalItem *inval_item = (PlanInvalItem *) lfirst(lc);
@@ -200,6 +206,7 @@ gp_dump_query_oids(PG_FUNCTION_ARGS)
 				ReleaseBuffer(buf);
 		}
 	}
+#endif
 
 	heap_close(procRelation, AccessShareLock);
 

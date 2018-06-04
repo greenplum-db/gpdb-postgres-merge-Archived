@@ -414,9 +414,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_RELATION_APPENDONLY_SEGMENT_FILE:
-				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
-				values[7] = ObjectIdGetDatum(lock->tag.locktag_field3);
+				values[1] = ObjectIdGetDatum(instance->locktag.locktag_field1);
+				values[2] = ObjectIdGetDatum(instance->locktag.locktag_field2);
+				values[7] = ObjectIdGetDatum(instance->locktag.locktag_field3);
 				nulls[3] = true;
 				nulls[4] = true;
 				nulls[5] = true;
@@ -425,8 +425,11 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[9] = true;
 				break;
 			case LOCKTAG_RESOURCE_QUEUE:
+#if 0
 				values[1] = ObjectIdGetDatum(proc->databaseId);
-				values[8] = ObjectIdGetDatum(lock->tag.locktag_field1);
+#endif
+				nulls[1] = true;
+				values[8] = ObjectIdGetDatum(instance->locktag.locktag_field1);
 				nulls[2] = true;
 				nulls[3] = true;
 				nulls[4] = true;
@@ -460,9 +463,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[13] = BoolGetDatum(granted);
 		values[14] = BoolGetDatum(instance->fastpath);
 		
-		values[15] = Int32GetDatum(proc->mppSessionId);
+		values[15] = Int32GetDatum(instance->mppSessionId);
 
-		values[16] = BoolGetDatum(proc->mppIsWriter);
+		values[16] = BoolGetDatum(instance->mppIsWriter);
 
 		values[17] = Int32GetDatum(GpIdentity.segindex);
 

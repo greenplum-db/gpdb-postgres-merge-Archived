@@ -3537,7 +3537,9 @@ GetLockStatusData(void)
 			instance->lxid = proc->lxid;
 			instance->pid = proc->pid;
 			instance->fastpath = true;
-
+			instance->databaseId = proc->databaseId;
+			instance->mppSessionId = proc->mppSessionId;
+			instance->mppIsWriter = proc->mppIsWriter;
 			el++;
 		}
 
@@ -3564,6 +3566,9 @@ GetLockStatusData(void)
 			instance->lxid = proc->lxid;
 			instance->pid = proc->pid;
 			instance->fastpath = true;
+			instance->databaseId = proc->databaseId;
+			instance->mppSessionId = proc->mppSessionId;
+			instance->mppIsWriter = proc->mppIsWriter;
 
 			el++;
 		}
@@ -3615,6 +3620,9 @@ GetLockStatusData(void)
 		instance->lxid = proc->lxid;
 		instance->pid = proc->pid;
 		instance->fastpath = false;
+		instance->databaseId = proc->databaseId;
+		instance->mppSessionId = proc->mppSessionId;
+		instance->mppIsWriter = proc->mppIsWriter;
 
 		el++;
 	}
