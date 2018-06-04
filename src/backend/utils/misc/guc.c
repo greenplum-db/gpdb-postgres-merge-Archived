@@ -196,7 +196,6 @@ static bool check_log_stats(bool *newval, void **extra, GucSource source);
 static bool check_canonical_path(char **newval, void **extra, GucSource source);
 static bool check_timezone_abbreviations(char **newval, void **extra, GucSource source);
 static void assign_timezone_abbreviations(const char *newval, void *extra);
-static void pg_timezone_abbrev_initialize(void);
 static const char *show_archive_command(void);
 static void assign_tcp_keepalives_idle(int newval, void *extra);
 static void assign_tcp_keepalives_interval(int newval, void *extra);
@@ -2507,18 +2506,6 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
-	{
-		{"wal_receiver_status_interval", PGC_SUSET, WAL_REPLICATION,
-			gettext_noop("Sets the maximum interval between WAL receiver "
-						 "status reports to the primary. (Master Mirroring)"),
-			NULL,
-			GUC_UNIT_S
-		},
-		&wal_receiver_status_interval,
-		10, 0, INT_MAX / 1000,
-		NULL, NULL, NULL
-	},
-
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
@@ -3169,17 +3156,6 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"synchronous_standby_names", PGC_SIGHUP, REPLICATION_MASTER,
-			gettext_noop("List of names of potential synchronous standbys."),
-			NULL,
-			GUC_LIST_INPUT
-		},
-		&SyncRepStandbyNames,
-		"",
-		check_synchronous_standby_names, NULL, NULL
-	},
-
-	{
-		{"synchronous_standby_names", PGC_SIGHUP, WAL_REPLICATION,
 			gettext_noop("List of names of potential synchronous standbys."),
 			NULL,
 			GUC_LIST_INPUT
@@ -9190,7 +9166,7 @@ assign_timezone_abbreviations(const char *newval, void *extra)
  * This can also be called from ProcessConfigFile to establish the default
  * value after a postgresql.conf entry for it is removed.
  */
-static void
+void
 pg_timezone_abbrev_initialize(void)
 {
 	SetConfigOption("timezone_abbreviations", "Default",

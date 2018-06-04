@@ -4003,19 +4003,16 @@ get_cast_func(Oid oidSrc, Oid oidDest, bool *is_binary_coercible, Oid *oidCastFu
 CmpType
 get_comparison_type(Oid oidOp, Oid oidLeft, Oid oidRight)
 {
-	List	   *opfamilies;
-	List	   *opstrats;
-	int			opstrat;
+	OpBtreeInterpretation		   *opBti;
+	List						   *opBtis;
 
-	get_op_btree_interpretation(oidOp, &opfamilies, &opstrats);
+	opBtis = get_op_btree_interpretation(oidOp);
 
-	if (opfamilies == NIL)
+	if (opBtis == NIL)
 	{
 		/* The operator does not belong to any B-tree operator family */
 		return CmptOther;
 	}
-
-	Assert(opstrats);
 
 	/*
 	 * XXX: Arbitrarily use the first found operator family. Usually
@@ -4024,9 +4021,9 @@ get_comparison_type(Oid oidOp, Oid oidLeft, Oid oidRight)
 	 * < operator stands for the less than operator of the ascending opfamily,
 	 * or the greater than operator for the descending opfamily.
 	 */
-	opstrat = linitial_int(opstrats);
+	opBti = (OpBtreeInterpretation*)linitial(opBtis);
 
-	switch(opstrat)
+	switch(opBti->strategy)
 	{
 		case BTLessStrategyNumber:
 			return CmptLT;
@@ -4041,7 +4038,7 @@ get_comparison_type(Oid oidOp, Oid oidLeft, Oid oidRight)
 		case ROWCOMPARE_NE:
 			return CmptNEq;
 		default:
-			elog(ERROR, "unknown B-tree strategy: %d", opstrat);
+			elog(ERROR, "unknown B-tree strategy: %d", opBti->strategy);
 			return CmptOther;
 	}
 }

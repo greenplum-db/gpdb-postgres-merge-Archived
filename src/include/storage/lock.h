@@ -477,6 +477,8 @@ typedef struct LockInstanceData
 	Oid			databaseId;		/* OID of database this backend is using */
 	int         mppSessionId;   /* serial num of the qDisp process */
 	bool		mppIsWriter;	/* The writer gang member, holder of locks */
+	DistributedTransactionId 		distribXid;
+	bool		holdTillEndXact;     /* flag for global deadlock detector */
 } LockInstanceData;
 
 typedef struct LockData
