@@ -595,7 +595,9 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			{
 				sublink->subLinkType = (sublink->subLinkType == ANY_SUBLINK) ? ALL_SUBLINK : ANY_SUBLINK;
 				sublink->testexpr = (Node *) canonicalize_qual(make_notclause((Expr *) sublink->testexpr));
-				return pull_up_sublinks_qual_recurse(root, (Node *) sublink, available_rels1, jtlink1, available_rels2, jtlink2);
+				return pull_up_sublinks_qual_recurse(root, (Node *) sublink,
+														jtlink1, available_rels1,
+														jtlink2, available_rels2);
 			}
 
 			/*
@@ -610,7 +612,8 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			/* NOT NOT (expr) => (expr)  */
 			return (Node *) pull_up_sublinks_qual_recurse(root,
 														 (Node *) get_notclausearg((Expr *) arg),
-														 available_rels1, jtlink1, available_rels2, jtlink2);
+														 jtlink1, available_rels1,
+														 jtlink2, available_rels2);
 		}
 		/*
 		 * GPDB_91_MERGE_FIXME: The below enters an infinite recursion with

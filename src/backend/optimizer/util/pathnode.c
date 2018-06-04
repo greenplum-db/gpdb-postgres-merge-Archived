@@ -273,35 +273,6 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 }
 
 /*
- * compare_recursive_path_costs
- *   JoinPath that has WorkTableScan as outer child is always cheaper.
- *   If both paths are JointPath and only path1 has outer WTS return -1.
- *   If both paths are JointPath and only path2 has outer WTS return +1.
- *   Otherwise return 0.
- */
-static int
-compare_recursive_path_costs(Path *path1, Path *path2)
-{
-	bool		isWTpath1;
-	bool		isWTpath2;
-
-	if (!IsJoinPath(path1) || !IsJoinPath(path2))
-		return 0;
-
-	isWTpath1 = ((JoinPath *) path1)->outerjoinpath->pathtype == T_WorkTableScan;
-	isWTpath2 = ((JoinPath *) path2)->outerjoinpath->pathtype == T_WorkTableScan;
-
-	if (isWTpath1 && isWTpath2)
-		return 0;
-	else if (isWTpath1)
-		return -1;
-	else if (isWTpath2)
-		return +1;
-	else
-		return 0;
-}
-
-/*
  * compare_path_fractional_costs
  *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
  *	  or more expensive than path2 for fetching the specified fraction

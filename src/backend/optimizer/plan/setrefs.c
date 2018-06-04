@@ -1636,7 +1636,7 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 	{
 		HashJoin   *hj = (HashJoin *) join;
 
-		hj->hashclauses = fix_join_expr(root,
+		hj->hashclauses = fix_hashclauses(root,
 										hj->hashclauses,
 										outer_itlist,
 										inner_itlist,

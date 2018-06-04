@@ -27,6 +27,7 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"                  /* contain_vars_of_level_or_above */
 #include "parser/parse_expr.h"              /* exprType(), exprTypmod() */
+#include "parser/parsetree.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 
