@@ -4911,7 +4911,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
 
 	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, true);
+	cplan = GetCachedPlan(plansource, NULL, true, NULL);
 	Assert(cplan == plansource->gplan);
 
 	if (cplan->generation != expr->expr_simple_generation)
@@ -5803,7 +5803,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 
 	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, true);
+	cplan = GetCachedPlan(plansource, NULL, true, NULL);
 	Assert(cplan == plansource->gplan);
 
 	/* Share the remaining work with recheck code path */

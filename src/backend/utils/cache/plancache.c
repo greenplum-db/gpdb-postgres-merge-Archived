@@ -593,7 +593,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 	{
 		/* OK, doesn't return tuples */
 	}
-	else if (intoClause)
+	else if (intoClause != NULL)
 	{
 		/* OK */
 	}
@@ -851,7 +851,9 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	plan = (CachedPlan *) palloc(sizeof(CachedPlan));
 	plan->magic = CACHEDPLAN_MAGIC;
 	plan->stmt_list = plist;
-	if (plan_list_is_oneoff(plist))
+	/* GPDB_92_MERGE_FIXME: pg upstream does not set for boundParams, but
+	 * previous gpdb code considers that. Why? */
+	if (plan_list_is_oneoff(plist) || intoClause)
 	{
 		plan->saved_xmin = BootstrapTransactionId;
 	}
@@ -885,7 +887,8 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams, Into
 {
 	double		avg_custom_cost;
 
-	if (intoClause && !(plansource->cursor_options & CURSOR_OPT_GENERIC_PLAN))
+	/* Force to replan for CTAS */
+	if (intoClause != NULL)
 		return true;
 
 	/* Never any point in a custom plan if there's no parameters */
@@ -999,7 +1002,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		else
 		{
 			/* Build a new generic plan */
-			plan = BuildCachedPlan(plansource, qlist, NULL, intoClause);
+			plan = BuildCachedPlan(plansource, qlist, NULL, NULL);
 			/* Just make real sure plansource->gplan is clear */
 			ReleaseGenericPlan(plansource);
 			/* Link the new generic plan into the plansource */
