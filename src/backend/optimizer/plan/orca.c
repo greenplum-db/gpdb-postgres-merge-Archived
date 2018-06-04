@@ -88,6 +88,7 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 {
 	/* flag to check if optimizer unexpectedly failed to produce a plan */
 	bool			fUnexpectedFailure = false;
+	PlannerInfo		*root;
 	PlannerGlobal  *glob;
 	Query		   *pqueryCopy;
 	PlannedStmt    *result;
@@ -119,6 +120,16 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 
+	/*
+	 * GPDB_92_MERGE_FIXME
+	 */
+	root = makeNode(PlannerInfo);
+	root->parse = parse;
+	root->glob = glob;
+	root->query_level = 1;
+	root->planner_cxt = CurrentMemoryContext;
+	root->wt_param_id = -1;
+
 	/* create a local copy to hand to the optimizer */
 	pqueryCopy = (Query *) copyObject(parse);
 
@@ -130,7 +141,7 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	 * glob->invalItems, for any functions that are inlined or eliminated
 	 * away. (We will find dependencies to other objects later, after planning).
 	 */
-	pqueryCopy = preprocess_query_optimizer(glob, pqueryCopy, boundParams);
+	pqueryCopy = preprocess_query_optimizer(root, pqueryCopy, boundParams);
 
 	/* Ok, invoke ORCA. */
 	result = PplstmtOptimize(pqueryCopy, &fUnexpectedFailure);
@@ -213,9 +224,9 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 
-		cdb_extract_plan_dependencies(glob, subplan);
+		cdb_extract_plan_dependencies(root, subplan);
 	}
-	cdb_extract_plan_dependencies(glob, result->planTree);
+	cdb_extract_plan_dependencies(root, result->planTree);
 
 	/*
 	 * Also extract dependencies from the original Query tree. This is needed

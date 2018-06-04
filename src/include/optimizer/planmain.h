@@ -275,7 +275,7 @@ extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void extract_query_dependencies(Node *query,
 						   List **relationOids,
 						   List **invalItems);
-extern void cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan);
+extern void cdb_extract_plan_dependencies(PlannerInfo *root, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
 

@@ -79,10 +79,8 @@ typedef struct
 
 typedef struct
 {
+	PlannerInfo *root;
 	plan_tree_base_prefix base;
-
-	PlannerGlobal *glob;
-
 } cdb_extract_plan_dependencies_context;
 
 /*
@@ -2627,12 +2625,12 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
  * here, as that's a waste of time.)
  */
 void
-cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan)
+cdb_extract_plan_dependencies(PlannerInfo *root, Plan *plan)
 {
 	cdb_extract_plan_dependencies_context context;
 
-	context.base.node = (Node *) glob;
-	context.glob = glob;
+	context.base.node = (Node *) (root->glob);
+	context.root = root;
 
 	(void) cdb_extract_plan_dependencies_walker((Node *) plan, &context);
 }
@@ -2643,7 +2641,7 @@ cdb_extract_plan_dependencies_walker(Node *node, cdb_extract_plan_dependencies_c
 	if (node == NULL)
 		return false;
 	/* Extract function dependencies and check for regclass Consts */
-	fix_expr_common(context->glob, node);
+	fix_expr_common(context->root, node);
 
 	return plan_tree_walker(node, cdb_extract_plan_dependencies_walker,
 								  (void *) context);
