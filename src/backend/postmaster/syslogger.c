@@ -105,14 +105,6 @@ static bool alert_log_level_opened = false;
 static bool write_to_alert_log = false;
 static Latch sysLoggerLatch;
 
-/* An err msg may break into several pipe chunks, so we need a buffer to assemble them.
- * We fix the number of buffers.  Generally a relative small number should suffice.
- * If we run out, we will flush partial message.  The assemble code will make sure we
- * may log partial msg, but we never garble msg.  We also make sure the output is valid
- * csv (except last line, if syslogger is killed before finish writing a line).
- *
- * We loop over the saved chunk, because number of buffers are small.
- */
 /*
  * Buffers for saving partial messages from different backends.
  *
@@ -125,25 +117,10 @@ static Latch sysLoggerLatch;
  * An inactive buffer has pid == 0 and undefined contents of data.
  */
 
-
-PipeProtoChunk saved_chunks[CHUNK_SLOTS];
-
-/* Find an unused chunk */
-static PipeProtoChunk *find_unused_chunk()
-{
-    int i;
-    for(i=0; i<CHUNK_SLOTS; ++i)
-    {
-        if(saved_chunks[i].hdr.pid == 0)
-            return &saved_chunks[i];
-    }
-
-    /* oops, all used.  */
-    return NULL;
-}
-
+#if 0
 #define NBUFFER_LISTS 256
 static List *buffer_lists[NBUFFER_LISTS];
+#endif
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
@@ -199,6 +176,72 @@ static void set_next_rotation_time(void);
 static void sigHupHandler(SIGNAL_ARGS);
 static void sigUsr1Handler(SIGNAL_ARGS);
 
+/*
+ * GPDB_92_MERGE_FIXME_AFTER_RUNNING: This is a ugly hack.
+ * PG 9.2 changes to use dynamic lists for chunk use. It uses the pid of as
+ * index. pid is extracted from the data after pipe read, however our current code
+ * is differnt than upstream pg. PG has a temp buffer. It analyzes the buffer
+ * to get pid and then allocates a chunk if needed using the pid as an index,
+ * and finally copies the buffer to the new chunk. GP code does not do copy
+ * so it is impossible (or ugly hacking needed) to get a new chunk from the
+ * unknown pid information. GP code is faster of course, however given this
+ * code is not hot spot, maybe we should refactor our code to align with pg upstream.
+ * GP seems to have special and better logging for 3rd party module output.
+ * I'm not sure about other reasons of the different GP implmentation, but
+ * We'd better refer pg (9.2 and latest) code and refactor the code after
+ * gp code is running.
+ *
+ * To workaround previous constraint, I temporarily revert to use previous
+ * non-pid indexed chunks but keep the pg9.2 code in this file, some of
+ * which is commented out. Note other changes in pg 9.2 e.g. latch changes
+ * are kept.
+ *
+ */
+PipeProtoChunk saved_chunks[CHUNK_SLOTS];
+
+/* Get an available chunk */
+static PipeProtoChunk *get_avail_chunk()
+{
+	int i;
+
+	for(i=0; i<CHUNK_SLOTS; ++i)
+	{
+		if(saved_chunks[i].hdr.pid == 0)
+			return &saved_chunks[i];
+    }
+
+	syslogger_flush_chunks();
+
+	/* Recheck again. */
+	for(i=0; i<CHUNK_SLOTS; ++i)
+	{
+		if(saved_chunks[i].hdr.pid == 0)
+			return &saved_chunks[i];
+    }
+
+	pg_unreachable();
+#if 0
+	List *buffer_list;
+	ListCell   *cell;
+	PipeProtoChunk *buf;
+
+	buffer_list = buffer_lists[pid % NBUFFER_LISTS];
+	foreach(cell, buffer_list)
+	{
+		buf =  (PipeProtoChunk *) lfirst(cell);
+
+		if (buf->hdr.pid == 0)
+			return buf;
+	}
+
+	buf = palloc(sizeof(PipeProtoChunk));
+	buf->hdr.pid = 0;
+	buffer_list = lappend(buffer_list, buf);
+	buffer_lists[p.pid % NBUFFER_LISTS] = buffer_list;
+
+    return buf;
+#endif
+}
 
 /*
  * Main entry point for syslogger process
@@ -359,6 +402,7 @@ SysLoggerMain(int argc, char *argv[])
 		int			cur_flags;
 
 #ifndef WIN32
+		int			bytesRead = 0;
 		int			rc;
 #endif
 
@@ -394,6 +438,7 @@ SysLoggerMain(int argc, char *argv[])
 				pfree(currentLogFilename);
 				currentLogFilename = pstrdup(Log_filename);
 				rotation_requested = true;
+			}
 
 			/*
 			 * If rotation time parameter changed, reset next rotation time,
@@ -475,7 +520,6 @@ SysLoggerMain(int argc, char *argv[])
 						   &csvlogFile, &last_csv_file_name);
 		}
 
-<<<<<<< HEAD
         if (alert_log_level_opened && alert_rotation_requested)
 		{
 			alert_rotation_requested = false;
@@ -483,7 +527,7 @@ SysLoggerMain(int argc, char *argv[])
 						   NULL, gp_perf_mon_directory, alert_file_pattern,
                            &alertLogFile, &alert_last_file_name);
 		}
-=======
+
 		/*
 		 * Calculate time till next time-based rotation, so that we don't
 		 * sleep longer than that.	We assume the value of "now" obtained
@@ -508,70 +552,21 @@ SysLoggerMain(int argc, char *argv[])
 		/*
 		 * Sleep until there's something to do
 		 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #ifndef WIN32
 		rc = WaitLatchOrSocket(&sysLoggerLatch,
 							   WL_LATCH_SET | WL_SOCKET_READABLE | cur_flags,
 							   syslogPipe[0],
 							   cur_timeout);
 
-<<<<<<< HEAD
-		/*
-		 * Wait for some data, timing out after 1 second
-		 */
-		FD_ZERO(&rfds);
-		FD_SET(syslogPipe[0], &rfds);
-
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-
-        rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, &timeout);
-
-        if (rc < 0)
+		if (rc & WL_SOCKET_READABLE)
         {
-            if (errno != EINTR)
-                ereport(LOG,
-                        (errcode_for_socket_access(),
-                         errmsg("select() failed in logger process: %m")));
-        }
-        else if (rc > 0 && FD_ISSET(syslogPipe[0], &rfds))
-        {
-            PipeProtoChunk *chunk = find_unused_chunk();
+            PipeProtoChunk *chunk = get_avail_chunk();
             int readPos = 0;
 
-            if(chunk == NULL)
-                syslogger_flush_chunks();
-
-            chunk = find_unused_chunk();
-
-			Assert(chunk != NULL);
 
 			/* Read data to fill the buffer up to PIPE_CHUNK_SIZE bytes */
 		next_chunkloop:
 			if (bytesRead < sizeof(PipeProtoHeader))
-=======
-		if (rc & WL_SOCKET_READABLE)
-		{
-			int			bytesRead;
-
-			bytesRead = read(syslogPipe[0],
-							 logbuffer + bytes_in_logbuffer,
-							 sizeof(logbuffer) - bytes_in_logbuffer);
-			if (bytesRead < 0)
-			{
-				if (errno != EINTR)
-					ereport(LOG,
-							(errcode_for_socket_access(),
-							 errmsg("could not read from logger pipe: %m")));
-			}
-			else if (bytesRead > 0)
-			{
-				bytes_in_logbuffer += bytesRead;
-				process_pipe_input(logbuffer, &bytes_in_logbuffer);
-				continue;
-			}
-			else
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			{
 				/*
 				 * We always try to make sure that the buffer has at least sizeof(PipeProtoHeader)
@@ -585,7 +580,7 @@ SysLoggerMain(int argc, char *argv[])
 				 * showing up in the logfile. Hopefully, this is very rare.
 				 */
 				readPos = bytesRead;
-				bytesRead = piperead(syslogPipe[0], (char *)chunk + readPos, PIPE_CHUNK_SIZE - readPos);
+				bytesRead = read(syslogPipe[0], (char *)chunk + readPos, PIPE_CHUNK_SIZE - readPos);
 			}
 			
 			if (bytesRead == 0)
@@ -622,7 +617,7 @@ SysLoggerMain(int argc, char *argv[])
 					 */
 					if (needBytes > 0)
 					{
-						bytesRead =	piperead(syslogPipe[0],
+						bytesRead =	read(syslogPipe[0],
 											 ((char *)chunk) + (bytesRead + readPos),
 											 needBytes);
 
@@ -638,17 +633,10 @@ SysLoggerMain(int argc, char *argv[])
 					if (needBytes < 0)
 					{
 						int moreBytes = bytesRead + readPos - chunk_size;
-						PipeProtoChunk *new_chunk = find_unused_chunk();
+						PipeProtoChunk *new_chunk = get_avail_chunk();
 
 						Assert(moreBytes > 0);
 						
-						if (new_chunk == NULL)
-						{
-							syslogger_flush_chunks();
-							new_chunk = find_unused_chunk();
-							Assert(new_chunk != NULL);
-						}
-
 						memmove((char *)new_chunk, ((char *)chunk) + chunk_size, moreBytes);
 						chunk = new_chunk;
 						bytesRead = moreBytes;
@@ -1738,6 +1726,28 @@ static void syslogger_flush_chunks()
     {
         saved_chunks[i].hdr.pid = 0;
     }
+
+#if 0
+	int			i;
+
+	/* Dump any incomplete protocol messages */
+	for (i = 0; i < NBUFFER_LISTS; i++)
+	{
+		List	   *list = buffer_lists[i];
+		ListCell   *cell;
+
+		foreach(cell, list)
+		{
+			PipeProtoChunk *buf = (PipeProtoChunk *) lfirst(cell);
+			StringInfo	str = &(buf->data);
+
+			if(buf->hdr.pid != 0 && buf->hdr.chunk_no == 0)
+				syslogger_log_chunk_list(buf);
+
+			buf->hdr.pid = 0;
+		}
+	}
+#endif
 }
 
 static void syslogger_handle_chunk(PipeProtoChunk *chunk)
@@ -1884,87 +1894,8 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 			if (count < chunklen)
 				break;
 
-<<<<<<< HEAD
 			dest = (p.log_format == 'c' || p.log_format == 'f') ?
 			 	LOG_DESTINATION_CSVLOG : LOG_DESTINATION_STDERR;
-=======
-			dest = (p.is_last == 'T' || p.is_last == 'F') ?
-				LOG_DESTINATION_CSVLOG : LOG_DESTINATION_STDERR;
-
-			/* Locate any existing buffer for this source pid */
-			buffer_list = buffer_lists[p.pid % NBUFFER_LISTS];
-			foreach(cell, buffer_list)
-			{
-				save_buffer *buf = (save_buffer *) lfirst(cell);
-
-				if (buf->pid == p.pid)
-				{
-					existing_slot = buf;
-					break;
-				}
-				if (buf->pid == 0 && free_slot == NULL)
-					free_slot = buf;
-			}
-
-			if (p.is_last == 'f' || p.is_last == 'F')
-			{
-				/*
-				 * Save a complete non-final chunk in a per-pid buffer
-				 */
-				if (existing_slot != NULL)
-				{
-					/* Add chunk to data from preceding chunks */
-					str = &(existing_slot->data);
-					appendBinaryStringInfo(str,
-										   cursor + PIPE_HEADER_SIZE,
-										   p.len);
-				}
-				else
-				{
-					/* First chunk of message, save in a new buffer */
-					if (free_slot == NULL)
-					{
-						/*
-						 * Need a free slot, but there isn't one in the list,
-						 * so create a new one and extend the list with it.
-						 */
-						free_slot = palloc(sizeof(save_buffer));
-						buffer_list = lappend(buffer_list, free_slot);
-						buffer_lists[p.pid % NBUFFER_LISTS] = buffer_list;
-					}
-					free_slot->pid = p.pid;
-					str = &(free_slot->data);
-					initStringInfo(str);
-					appendBinaryStringInfo(str,
-										   cursor + PIPE_HEADER_SIZE,
-										   p.len);
-				}
-			}
-			else
-			{
-				/*
-				 * Final chunk --- add it to anything saved for that pid, and
-				 * either way write the whole thing out.
-				 */
-				if (existing_slot != NULL)
-				{
-					str = &(existing_slot->data);
-					appendBinaryStringInfo(str,
-										   cursor + PIPE_HEADER_SIZE,
-										   p.len);
-					write_syslogger_file(str->data, str->len, dest);
-					/* Mark the buffer unused, and reclaim string storage */
-					existing_slot->pid = 0;
-					pfree(str->data);
-				}
-				else
-				{
-					/* The whole message was one chunk, evidently. */
-					write_syslogger_file(cursor + PIPE_HEADER_SIZE, p.len,
-										 dest);
-				}
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			/* Finished processing this chunk */
 			cursor += chunklen;
@@ -2010,7 +1941,6 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 static void
 flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 {
-<<<<<<< HEAD
     syslogger_flush_chunks(); 
 }
 #endif
@@ -2018,32 +1948,6 @@ flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 static void write_binary_to_file(const char *buffer, int count, FILE *fh)
 {
     int			rc;
-=======
-	int			i;
-
-	/* Dump any incomplete protocol messages */
-	for (i = 0; i < NBUFFER_LISTS; i++)
-	{
-		List	   *list = buffer_lists[i];
-		ListCell   *cell;
-
-		foreach(cell, list)
-		{
-			save_buffer *buf = (save_buffer *) lfirst(cell);
-
-			if (buf->pid != 0)
-			{
-				StringInfo	str = &(buf->data);
-
-				write_syslogger_file(str->data, str->len,
-									 LOG_DESTINATION_STDERR);
-				/* Mark the buffer unused, and reclaim string storage */
-				buf->pid = 0;
-				pfree(str->data);
-			}
-		}
-	}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifndef WIN32
     rc = fwrite(buffer, 1, count, fh);
@@ -2287,53 +2191,6 @@ logfile_rotate(bool time_based_rotation, bool size_based_rotation,
 		filename = NULL;
 	}
 
-<<<<<<< HEAD
-=======
-	/* Same as above, but for csv file. */
-
-	if (csvlogFile != NULL &&
-		(time_based_rotation || (size_rotation_for & LOG_DESTINATION_CSVLOG)))
-	{
-		if (Log_truncate_on_rotation && time_based_rotation &&
-			last_csv_file_name != NULL &&
-			strcmp(csvfilename, last_csv_file_name) != 0)
-			fh = logfile_open(csvfilename, "w", true);
-		else
-			fh = logfile_open(csvfilename, "a", true);
-
-		if (!fh)
-		{
-			/*
-			 * ENFILE/EMFILE are not too surprising on a busy system; just
-			 * keep using the old file till we manage to get a new one.
-			 * Otherwise, assume something's wrong with Log_directory and stop
-			 * trying to create files.
-			 */
-			if (errno != ENFILE && errno != EMFILE)
-			{
-				ereport(LOG,
-						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
-				rotation_disabled = true;
-			}
-
-			if (filename)
-				pfree(filename);
-			if (csvfilename)
-				pfree(csvfilename);
-			return;
-		}
-
-		fclose(csvlogFile);
-		csvlogFile = fh;
-
-		/* instead of pfree'ing filename, remember it for next time */
-		if (last_csv_file_name != NULL)
-			pfree(last_csv_file_name);
-		last_csv_file_name = csvfilename;
-		csvfilename = NULL;
-	}
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (filename)
 		pfree(filename);
 
