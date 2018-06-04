@@ -324,17 +324,17 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 								if (IsA(target->expr, Var))
 								{
 									new_var = copyObject(target->expr);
-									new_var->varno = OUTER;
+									new_var->varno = OUTER_VAR;
 									new_var->varattno = n;
 								}
 
 								/*
 								 * Make a Var that references the target list
-								 * entry at this offset, using OUTER as the
+								 * entry at this offset, using OUTER_VAR as the
 								 * varno
 								 */
 								else
-									new_var = makeVar(OUTER,
+									new_var = makeVar(OUTER_VAR,
 													  n,
 													  exprType((Node *) target->expr),
 													  exprTypmod((Node *) target->expr),
@@ -1068,7 +1068,7 @@ makeDefaultSegIdxArray(int numSegs)
  * The AttrNumber indexes actually refer to the 1 based index into the
  * target list.
  *
- * The entries have the varno field replaced by references in OUTER.
+ * The entries have the varno field replaced by references in OUTER_VAR.
  * ----------------------------------------------------------------
  */
 List *
@@ -1092,7 +1092,7 @@ getExprListFromTargetList(List *tlist,
 
 		/* After set_plan_references(), make a Var referencing subplan tlist. */
 		if (useExecutorVarFormat)
-			elist = lappend(elist, cdbpullup_make_expr(OUTER, n, target->expr, false));
+			elist = lappend(elist, cdbpullup_make_expr(OUTER_VAR, n, target->expr, false));
 
 		/* Before set_plan_references(), copy the subplan's result expr. */
 		else
@@ -1598,7 +1598,7 @@ create_shareinput_producer_rte(ApplyShareInputContext *ctxt, int share_id,
 		 * We should've filled in tle->resname in shareinput_save_producer().
 		 * Note that it's too late to call get_tle_name() here, because this
 		 * runs after all the varnos in Vars have already been changed to
-		 * INNER/OUTER.
+		 * INNER_VAR/OUTER_VAR.
 		 */
 		resname = tle->resname;
 		if (!resname)
