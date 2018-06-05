@@ -1022,6 +1022,5 @@ extern void s_lock(volatile slock_t *lock, const char *file, int line);
 
 extern void set_spins_per_delay(int shared_spins_per_delay);
 extern int	recompute_spins_per_delay(int shared_spins_per_delay);
-extern int	update_spins_per_delay(int shared_spins_per_delay);
 
 #endif	 /* S_LOCK_H */

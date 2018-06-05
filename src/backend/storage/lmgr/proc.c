@@ -66,6 +66,7 @@
 #include "port/atomics.h"
 #include "utils/session_state.h"
 #include "tcop/idle_resource_cleaner.h"
+#include "utils/resscheduler.h"
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;
@@ -847,7 +848,8 @@ RemoveProcFromArray(int code, Datum arg)
  * update_spins_per_delay
  *   Update spins_per_delay value in ProcGlobal.
  */
-static void update_spins_per_delay()
+static void
+update_spins_per_delay(void)
 {
 	volatile PROC_HDR *procglobal = ProcGlobal;
 	bool casResult = false;
@@ -875,7 +877,7 @@ ProcKill(int code, Datum arg)
 	Assert(MyProc != NULL);
 
 	/* Make sure we're out of the sync rep lists */
-	SyncRepCleanupAtProcExit(0, 0);
+	SyncRepCleanupAtProcExit();
 
 	/* 
 	 * Cleanup for any resource locks on portals - from holdable cursors or

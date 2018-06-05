@@ -18,6 +18,7 @@
 #include "nodes/plannodes.h"
 #include "portability/instr_time.h"
 #include "utils/resowner.h"
+#include "storage/s_lock.h"
 
 struct CdbExplain_NodeSummary;          /* private def in cdb/cdbexplain.c */
 

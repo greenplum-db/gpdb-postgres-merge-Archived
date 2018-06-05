@@ -2747,9 +2747,9 @@ MarkBufferDirtyHint(Buffer buffer)
 			 * essential that CreateCheckpoint waits for virtual transactions
 			 * rather than full transactionids.
 			 */
-			Assert(MyProc);
-			saved_inCommit = MyProc->inCommit;
-			MyProc->inCommit = true;
+			Assert(MyPgXact);
+			saved_inCommit = MyPgXact->inCommit;
+			MyPgXact->inCommit = true;
 			lsn = XLogSaveBufferForHint(buffer);
 		}
 
@@ -2784,8 +2784,8 @@ MarkBufferDirtyHint(Buffer buffer)
 
 		if (!saved_inCommit)
 		{
-			Assert(MyProc);
-			MyProc->inCommit = false;
+			Assert(MyPgXact);
+			MyPgXact->inCommit = false;
 		}
 
 		if (dirtied)

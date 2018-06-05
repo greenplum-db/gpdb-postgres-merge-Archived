@@ -569,7 +569,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 					 * ProcArrayLock.
 					 */
 					if (checkProc == MyProc &&
-						proc->vacuumFlags & PROC_IS_AUTOVACUUM)
+						pgxact->vacuumFlags & PROC_IS_AUTOVACUUM)
 						blocking_autovacuum_proc = proc;
 
 					/* We're done looking at this proclock */

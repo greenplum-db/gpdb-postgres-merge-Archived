@@ -35,19 +35,20 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
+#include "cdb/cdbvars.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+#include "storage/lmgr.h"
+#include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/resscheduler.h"
 #include "utils/resowner.h"
 
-#include "cdb/cdbvars.h"
-#include "storage/procarray.h"
-#include "utils/resscheduler.h"
 
 /* This configuration variable is used to set the lock table size */
 int			max_locks_per_xact; /* set by guc.c */
@@ -150,7 +151,6 @@ const LockMethodData user_lockmethod = {
 
 const LockMethodData resource_lockmethod = {
 	AccessExclusiveLock,        /* highest valid lock mode number */
-	true,
 	LockConflicts,
 	lock_mode_names,
 #ifdef LOCK_DEBUG
@@ -3334,10 +3334,6 @@ PostPrepare_Locks(TransactionId xid)
 			 * skip over it.
 			 */
 			if (proclock->releaseMask != proclock->holdMask)
-				goto next_item;
-
-			/* Ignore nontransactional locks */
-			if (!LockMethods[LOCK_LOCKMETHOD(*lock)]->transactional)
 				goto next_item;
 
 			/* Ignore VXID locks */
