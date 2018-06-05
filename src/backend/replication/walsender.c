@@ -93,8 +93,6 @@ int			repl_catchup_within_range = XLogSegsPerFile;
 
 static bool replication_started = false; 	/* Started streaming yet? */
 
-const XLogRecPtr InvalidXLogRecPtr = {0, 0};
-
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
  * but for walsender to read the XLOG.
