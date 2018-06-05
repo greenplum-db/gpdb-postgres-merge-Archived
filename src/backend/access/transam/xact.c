@@ -844,6 +844,7 @@ bool IsCurrentTransactionIdForReader(TransactionId xid)
 	LWLockAcquire(SharedLocalSnapshotSlot->slotLock, LW_SHARED);
 
 	PGPROC* writer_proc = SharedLocalSnapshotSlot->writer_proc;
+	PGXACT* writer_xact = SharedLocalSnapshotSlot->writer_xact;
 
 	if (!writer_proc)
 	{
@@ -856,8 +857,8 @@ bool IsCurrentTransactionIdForReader(TransactionId xid)
 		elog(ERROR, "writer proc reference shared with reader is invalid");
 	}
 
-	TransactionId writer_xid = writer_proc->xid;
-	bool overflowed = writer_proc->subxids.overflowed;
+	TransactionId writer_xid = writer_xact->xid;
+	bool overflowed = writer_xact->overflowed;
 	bool isCurrent = false;
 
 	if (TransactionIdIsValid(writer_xid))
@@ -876,7 +877,7 @@ bool IsCurrentTransactionIdForReader(TransactionId xid)
 			/*
 			 * Case 2: check cached subtransaction ids from latest to earliest
 			 */
-			int subx_index = writer_proc->subxids.nxids - 1;
+			int subx_index = writer_xact->nxids - 1;
 			while (!isCurrent &&  subx_index >= 0)
 			{
 				isCurrent = TransactionIdEquals(writer_proc->subxids.xids[subx_index], xid);
@@ -2329,6 +2330,7 @@ StartTransaction(void)
 				SharedLocalSnapshotSlot->QDxid = QEDtxContextInfo.distributedXid;
 				SharedLocalSnapshotSlot->pid = MyProc->pid;
 				SharedLocalSnapshotSlot->writer_proc = MyProc;
+				SharedLocalSnapshotSlot->writer_xact = MyPgXact;
 
 				ereportif(Debug_print_full_dtm, LOG,
 						  (errmsg(

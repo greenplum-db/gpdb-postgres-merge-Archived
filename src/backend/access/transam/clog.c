@@ -518,7 +518,7 @@ CLOGTransactionIsOld(TransactionId xid)
 	 * Declare the transaction old if it is in the bottom older half of the hot CLOG cache window, or
 	 * before the window.
 	 */
-	return (pagesBack > NUM_CLOG_BUFFERS/2);
+	return (pagesBack > CLOGShmemBuffers()/2);
 }
 
 /*
