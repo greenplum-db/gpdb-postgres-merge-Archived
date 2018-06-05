@@ -4063,7 +4063,6 @@ write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
 	int			fd = fileno(stderr);
-	int			rc;
 
 	Assert(len > 0);
 

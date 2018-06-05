@@ -162,7 +162,7 @@ ProcessConfigFile(GucContext context)
 
 	Assert(gp_replication_config_filename);
 
-	if (!ParseConfigFile(gp_replication_config_filename, NULL, 0, elevel, &head, &tail))
+	if (!ParseConfigFile(gp_replication_config_filename, NULL, true, 0, elevel, &head, &tail))
 		goto cleanup_list;
 
 	/*

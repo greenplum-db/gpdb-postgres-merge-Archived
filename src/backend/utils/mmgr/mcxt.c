@@ -216,7 +216,7 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	MemoryContextSetParent(context, NULL);
 
-	(*context->methods->delete_context) (context);
+	(*context->methods.delete_context) (context);
 	pfree(context);
 }
 
