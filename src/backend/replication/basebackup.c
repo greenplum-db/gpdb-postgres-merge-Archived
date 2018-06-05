@@ -256,7 +256,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 									XLOG_CONTROL_FILE)));
 				}
 
-				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf);
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
 
 			/*

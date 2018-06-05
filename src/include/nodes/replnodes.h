@@ -47,6 +47,7 @@ typedef struct StartReplicationCmd
 {
 	NodeTag		type;
 	XLogRecPtr	startpoint;
+	bool        sync;
 } StartReplicationCmd;
 
 #endif   /* REPLNODES_H */

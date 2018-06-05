@@ -31,20 +31,6 @@ typedef struct
 
 
 /*
- * All messages from WalSender must contain these fields to allow us to
- * correctly calculate the replication delay.
- */
-typedef struct
-{
-	/* Current end of WAL on the sender */
-	XLogRecPtr	walEnd;
-
-	/* Sender's system clock at the time of transmission */
-	TimestampTz sendTime;
-} WalSndrMessage;
-
-
-/*
  * Header for a WAL data message (message type 'w').  This is wrapped within
  * a CopyData message at the FE/BE protocol level.
  *
