@@ -26,7 +26,7 @@
 #include "utils/snapmgr.h"
 
 /* Handy constant for an invalid xlog recptr */
-static const XLogRecPtr InvalidXLogRecPtr = {0, 0};
+const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 /*
  * Single-item cache for results of TransactionLogFetch.  It's worth having
