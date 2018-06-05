@@ -19,10 +19,7 @@
  * routines.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -867,10 +864,6 @@ pqSendSome(PGconn *conn, int len)
 	while (len > 0)
 	{
 		int			sent;
-<<<<<<< HEAD
-		char sebuf[256];
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifndef WIN32
 		sent = pqsecure_write(conn, ptr, len);

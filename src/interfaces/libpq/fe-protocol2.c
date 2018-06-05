@@ -753,20 +753,6 @@ getRowDescriptions(PGconn *conn)
 
 	/* Success! */
 	conn->result = result;
-<<<<<<< HEAD
-
-	/* Advance inStart to show that the "T" message has been processed. */
-	conn->inStart = conn->inCursor;
-
-	/*
-	 * We could perform additional setup for the new result set here, but for
-	 * now there's nothing else to do.
-	 */
-
-	/* And we're done. */
-	return 0;
-
-=======
 
 	/*
 	 * Advance inStart to show that the "T" message has been processed.  We
@@ -794,7 +780,6 @@ getRowDescriptions(PGconn *conn)
 	}
 	goto set_error_result;
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 advance_and_error:
 
 	/*
@@ -804,11 +789,8 @@ advance_and_error:
 	 */
 	conn->inStart = conn->inEnd;
 
-<<<<<<< HEAD
-=======
 set_error_result:
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * Replace partially constructed result with an error result. First
 	 * discard the old result to try to win back some memory.
@@ -816,11 +798,7 @@ set_error_result:
 	pqClearAsyncResult(conn);
 
 	/*
-<<<<<<< HEAD
-	 * If preceding code didn't provide an error message, assume "out of
-=======
 	 * If row processor didn't provide an error message, assume "out of
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.
@@ -967,17 +945,6 @@ getAnotherTuple(PGconn *conn, bool binary)
 		free(bitmap);
 	bitmap = NULL;
 
-<<<<<<< HEAD
-	/* Advance inStart to show that the "D" message has been processed. */
-	conn->inStart = conn->inCursor;
-
-	/* Process the collected row */
-	errmsg = NULL;
-	if (pqRowProcessor(conn, &errmsg))
-		return 0;				/* normal, successful exit */
-
-	goto set_error_result;		/* pqRowProcessor failed, report it */
-=======
 	/*
 	 * Advance inStart to show that the "D" message has been processed.  We
 	 * must do this before calling the row processor, in case it longjmps.
@@ -1003,7 +970,6 @@ getAnotherTuple(PGconn *conn, bool binary)
 			break;
 	}
 	goto set_error_result;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 advance_and_error:
 
@@ -1023,11 +989,7 @@ set_error_result:
 	pqClearAsyncResult(conn);
 
 	/*
-<<<<<<< HEAD
-	 * If preceding code didn't provide an error message, assume "out of
-=======
 	 * If row processor didn't provide an error message, assume "out of
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * memory" was meant.  The advantage of having this special case is that
 	 * freeing the old result first greatly improves the odds that gettext()
 	 * will succeed in providing a translation.

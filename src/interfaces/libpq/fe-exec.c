@@ -3,10 +3,7 @@
  * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -64,12 +61,8 @@ static bool static_std_strings = false;
 
 static PGEvent *dupEvents(PGEvent *events, int count);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup);
-<<<<<<< HEAD
-=======
 static int pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 				  const char **errmsgp, void *param);
-static bool PQsendQueryStart(PGconn *conn);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static int PQsendQueryGuts(PGconn *conn,
 				const char *command,
 				const char *stmtName,
@@ -742,12 +735,9 @@ pqClearAsyncResult(PGconn *conn)
 	if (conn->result)
 		PQclear(conn->result);
 	conn->result = NULL;
-<<<<<<< HEAD
 	if (conn->next_result)
 		PQclear(conn->next_result);
 	conn->next_result = NULL;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -801,10 +791,6 @@ pqPrepareAsyncResult(PGconn *conn)
 	 * conn->errorMessage.
 	 */
 	res = conn->result;
-<<<<<<< HEAD
-=======
-	conn->result = NULL;		/* handing over ownership to caller */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (!res)
 		res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 	else
@@ -1054,7 +1040,6 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 
 
 /*
-<<<<<<< HEAD
  * pqRowProcessor
  *	  Add the received row to the current async result (conn->result).
  *	  Returns 1 if OK, 0 if error occurred.
@@ -1089,7 +1074,79 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 						   PG_COPYRES_NOTICEHOOKS);
 		if (!res)
 			return 0;
-=======
+	}
+
+	/*
+	 * Basically we just allocate space in the PGresult for each field and
+	 * copy the data over.
+	 *
+	 * Note: on malloc failure, we return 0 leaving *errmsgp still NULL, which
+	 * caller will take to mean "out of memory".  This is preferable to trying
+	 * to set up such a message here, because evidently there's not enough
+	 * memory for gettext() to do anything.
+	 */
+	tup = (PGresAttValue *)
+			pqResultAlloc(res, nfields * sizeof(PGresAttValue), TRUE);
+	if (tup == NULL)
+		goto fail;
+
+	for (i = 0; i < nfields; i++)
+	{
+		int			clen = columns[i].len;
+
+		if (clen < 0)
+		{
+			/* null field */
+			tup[i].len = NULL_LEN;
+			tup[i].value = res->null_field;
+		}
+		else
+		{
+			bool		isbinary = (res->attDescs[i].format != 0);
+			char	   *val;
+
+			val = (char *) pqResultAlloc(res, clen + 1, isbinary);
+			if (val == NULL)
+				goto fail;
+
+			/* copy and zero-terminate the data (even if it's binary) */
+			memcpy(val, columns[i].value, clen);
+			val[clen] = '\0';
+
+			tup[i].len = clen;
+			tup[i].value = val;
+		}
+	}
+
+	/* And add the tuple to the PGresult's tuple array */
+	if (!pqAddTuple(res, tup))
+		goto fail;
+
+	/*
+	 * Success.  In single-row mode, make the result available to the client
+	 * immediately.
+	 */
+	if (conn->singleRowMode)
+	{
+		/* Change result status to special single-row value */
+		res->resultStatus = PGRES_SINGLE_TUPLE;
+		/* Stash old result for re-use later */
+		conn->next_result = conn->result;
+		conn->result = res;
+		/* And mark the result ready to return */
+		conn->asyncStatus = PGASYNC_READY;
+	}
+
+	return 1;
+
+	fail:
+	/* release locally allocated PGresult, if we made one */
+	if (res != conn->result)
+		PQclear(res);
+	return 0;
+}
+
+/*
  * PQsetRowProcessor
  *	  Set function that copies row data out from the network buffer,
  *	  along with a passthrough parameter for it.
@@ -1154,33 +1211,21 @@ pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 	{
 		/* New result set ... we have nothing to do in this function. */
 		return 1;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
 	 * Basically we just allocate space in the PGresult for each field and
 	 * copy the data over.
 	 *
-<<<<<<< HEAD
-	 * Note: on malloc failure, we return 0 leaving *errmsgp still NULL, which
-	 * caller will take to mean "out of memory".  This is preferable to trying
-	 * to set up such a message here, because evidently there's not enough
-	 * memory for gettext() to do anything.
-=======
 	 * Note: on malloc failure, we return -1 leaving *errmsgp still NULL,
 	 * which caller will take to mean "out of memory".	This is preferable to
 	 * trying to set up such a message here, because evidently there's not
 	 * enough memory for gettext() to do anything.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	tup = (PGresAttValue *)
 		pqResultAlloc(res, nfields * sizeof(PGresAttValue), TRUE);
 	if (tup == NULL)
-<<<<<<< HEAD
-		goto fail;
-=======
 		return -1;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	for (i = 0; i < nfields; i++)
 	{
@@ -1199,11 +1244,7 @@ pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 
 			val = (char *) pqResultAlloc(res, clen + 1, isbinary);
 			if (val == NULL)
-<<<<<<< HEAD
-				goto fail;
-=======
 				return -1;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			/* copy and zero-terminate the data (even if it's binary) */
 			memcpy(val, columns[i].value, clen);
@@ -1216,42 +1257,12 @@ pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 
 	/* And add the tuple to the PGresult's tuple array */
 	if (!pqAddTuple(res, tup))
-<<<<<<< HEAD
-		goto fail;
-
-	/*
-	 * Success.  In single-row mode, make the result available to the client
-	 * immediately.
-	 */
-	if (conn->singleRowMode)
-	{
-		/* Change result status to special single-row value */
-		res->resultStatus = PGRES_SINGLE_TUPLE;
-		/* Stash old result for re-use later */
-		conn->next_result = conn->result;
-		conn->result = res;
-		/* And mark the result ready to return */
-		conn->asyncStatus = PGASYNC_READY;
-	}
-
-	return 1;
-
-fail:
-	/* release locally allocated PGresult, if we made one */
-	if (res != conn->result)
-		PQclear(res);
-	return 0;
-}
-
-=======
 		return -1;
 
 	/* Success */
 	return 1;
 }
 
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * PQsendQuery
  *	 Submit a query, but don't wait for it to finish
@@ -1497,13 +1508,10 @@ PQsendQueryStart(PGconn *conn)
 
 	/* initialize async result-accumulation state */
 	conn->result = NULL;
-<<<<<<< HEAD
 	conn->next_result = NULL;
 
 	/* reset single-row processing mode */
 	conn->singleRowMode = false;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* ready to send command message */
 	return true;
