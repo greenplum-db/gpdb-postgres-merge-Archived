@@ -301,7 +301,19 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				break;
 
 			case T_TableLikeClause:
-				transformTableLikeClause(&cxt, (TableLikeClause *) element, false);
+				{
+					bool            isBeginning = (cxt.columns == NIL);
+
+					transformTableLikeClause(&cxt, (TableLikeClause *) element, false);
+
+					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
+						stmt->distributedBy == NULL &&
+						stmt->inhRelations == NIL &&
+						stmt->policy == NULL)
+					{
+						likeDistributedBy = getLikeDistributionPolicy((TableLikeClause*) element);
+					}
+				}
 				break;
 
 			default:
@@ -773,6 +785,8 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  * Change the LIKE <srctable> portion of a CREATE TABLE statement into
  * column definitions which recreate the user defined column portions of
  * <srctable>.
+ *
+ * GPDB: if forceBareCol is true we disallow inheriting any indexes/constr/defaults.
  */
 static void
 transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause,
@@ -4200,7 +4214,7 @@ setSchemaName(char *context_schema, char **stmt_schema_name)
  * we also have INHERITS
  */
 static DistributedBy *
-getLikeDistributionPolicy(TableLikeClause* e)
+getLikeDistributionPolicy(TableLikeClause *e)
 {
 	DistributedBy		*likeDistributedBy = NULL;
 	Oid				relId;

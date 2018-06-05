@@ -6553,14 +6553,14 @@ atpxPartAddList(Relation rel,
 								RelationGetRelationName(par_rel), -1);
 
 	/*
-	 * in analyze.c, fill in tableelts with a list of inhrelation of the
-	 * partition parent table, and fill in inhrelations with copy of rangevar
+	 * in analyze.c, fill in tableelts with a list of TableLikeClause of the
+	 * partition parent table, and fill in TableLikeClauses with copy of rangevar
 	 * for parent table
 	 */
-	InhRelation *inh = makeNode(InhRelation);
+	TableLikeClause *tlc = makeNode(TableLikeClause);
 
-	inh->relation = copyObject(ct->relation);
-	inh->options = CREATE_TABLE_LIKE_DEFAULTS
+	tlc->relation = copyObject(ct->relation);
+	tlc->options = CREATE_TABLE_LIKE_DEFAULTS
 		| CREATE_TABLE_LIKE_CONSTRAINTS
 		| CREATE_TABLE_LIKE_INDEXES;
 
@@ -6568,7 +6568,7 @@ atpxPartAddList(Relation rel,
 	 * fill in remaining fields from parse time (gram.y): the new partition is
 	 * LIKE the parent and it inherits from it
 	 */
-	ct->tableElts = lappend(ct->tableElts, inh);
+	ct->tableElts = lappend(ct->tableElts, tlc);
 	ct->constraints = NIL;
 
 	if (pelem->storeAttr)
@@ -8708,7 +8708,7 @@ fixCreateStmtForPartitionedTable(CreateStmt *stmt)
 					}
 					break;
 				}
-			case T_InhRelation:
+			case T_TableLikeClause:
 				{
 					break;
 				}
