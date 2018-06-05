@@ -155,7 +155,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+		log_newpage_rel(index, INIT_FORKNUM,
 					SPGIST_METAPAGE_BLKNO, page);
 
 	/* Likewise for the root page. */
@@ -164,7 +164,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_ROOT_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+		log_newpage_rel(index, INIT_FORKNUM,
 					SPGIST_ROOT_BLKNO, page);
 
 	/* Likewise for the null-tuples root page. */
@@ -173,7 +173,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_NULL_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+		log_newpage_rel(index, INIT_FORKNUM,
 					SPGIST_NULL_BLKNO, page);
 
 	/*
