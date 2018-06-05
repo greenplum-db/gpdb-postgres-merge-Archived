@@ -1064,7 +1064,7 @@ exec_mpp_query(const char *query_string,
 
 	debug_query_string = query_string;
 
-	pgstat_report_activity(query_string);
+	pgstat_report_activity(STATE_RUNNING, query_string);
 
 	/*
 	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
@@ -1332,7 +1332,7 @@ exec_mpp_query(const char *query_string,
 		/*
 		 * Start the portal.
 		 */
-		PortalStart(portal, paramLI, InvalidSnapshot, ddesc);
+		PortalStart(portal, paramLI, 0, true, ddesc);
 
 		/*
 		 * Select text output format, the default.
@@ -1758,7 +1758,7 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 		 * end up being able to do this, keeping the parse/plan snapshot
 		 * around until after we start the portal doesn't cost much.
 		 */
-		PortalStart(portal, NULL, 0, snapshot_set);
+		PortalStart(portal, NULL, 0, snapshot_set, NULL);
 
 		/* Done with the snapshot used for parsing/planning */
 		if (snapshot_set)
@@ -2514,7 +2514,7 @@ exec_bind_message(StringInfo input_message)
 	 * query execution (currently, reuse will only occur if PORTAL_ONE_SELECT
 	 * mode is chosen).
 	 */
-	PortalStart(portal, params, 0, snapshot_set);
+	PortalStart(portal, params, 0, snapshot_set, NULL);
 
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
 	if (snapshot_set)
@@ -3962,54 +3962,6 @@ ia64_get_bsp(void)
 #endif
 #endif /* IA64 */
 
-
-/*
- * set_stack_base: set up reference point for stack depth checking
- *
- * Returns the old reference point, if any.
- */
-pg_stack_base_t
-set_stack_base(void)
-{
-	char		stack_base;
-	pg_stack_base_t old;
-
-#if defined(__ia64__) || defined(__ia64)
-	old.stack_base_ptr = stack_base_ptr;
-	old.register_stack_base_ptr = register_stack_base_ptr;
-#else
-	old = stack_base_ptr;
-#endif
-
-	/* Set up reference point for stack depth checking */
-	stack_base_ptr = &stack_base;
-#if defined(__ia64__) || defined(__ia64)
-	register_stack_base_ptr = ia64_get_bsp();
-#endif
-
-	return old;
-}
-
-/*
- * restore_stack_base: restore reference point for stack depth checking
- *
- * This can be used after set_stack_base() to restore the old value. This
- * is currently only used in PL/Java. When PL/Java calls a backend function
- * from different thread, the thread's stack is at a different location than
- * the main thread's stack, so it sets the base pointer before the call, and
- * restores it afterwards.
- */
-void
-restore_stack_base(pg_stack_base_t base)
-{
-#if defined(__ia64__) || defined(__ia64)
-	stack_base_ptr = base.stack_base_ptr;
-	register_stack_base_ptr = base.register_stack_base_ptr;
-#else
-	stack_base_ptr = base;
-#endif
-}
-
 /*
  * IA64-specific code to fetch the AR.BSP register for stack depth checks.
  *
@@ -5408,7 +5360,7 @@ PostgresMain(int argc, char *argv[],
 							elog((Debug_print_full_dtm ? LOG : DEBUG5), "PostgresMain explicit %s", query_string);
 
 							// UNDONE: HACK
-							pgstat_report_activity("BEGIN");
+							pgstat_report_activity(STATE_RUNNING, "BEGIN");
 
 							set_ps_display("BEGIN", false);
 
