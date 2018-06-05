@@ -3688,8 +3688,8 @@ deconstruct_agg_info(MppGroupContext *ctx)
 	 * and inner to the respective inputs to a join.
 	 */
 	ctx->final_varno = 1;
-	ctx->outer_varno = OUTER;
-	ctx->inner_varno = INNER;
+	ctx->outer_varno = OUTER_VAR;
+	ctx->inner_varno = INNER_VAR;
 
 	/*---------------------------------------------------------------------
 	 * Target lists used in multi-phase planning at or above the level of
@@ -4615,9 +4615,7 @@ add_subqueryscan(PlannerInfo *root, List **p_pathkeys,
 	subplan = (Plan *) make_subqueryscan(subplan_tlist,
 										 NIL,
 										 varno, /* scanrelid (= varno) */
-										 subplan,
-										 subquery->rtable,
-										 subquery->rowMarks);
+										 subplan);
 
 	mark_passthru_locus(subplan, true, true);
 
