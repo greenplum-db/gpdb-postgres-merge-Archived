@@ -5809,17 +5809,9 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	/* also update distributed commit log */
 	if (distribXid != 0 && distribTimeStamp != 0)
 	{
-		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+		DistributedLog_SetCommittedTree(xid, nsubxacts, sub_xids,
 										distribTimeStamp, distribXid,
 										/* isRedo */ true);
-	}
-
-	/* also update distributed commit log */
-	if (distribXid != 0 && distribTimeStamp != 0)
-	{
-		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
-				distribTimeStamp, distribXid,
-				/* isRedo */ true);
 	}
 
 	if (standbyState == STANDBY_DISABLED)
@@ -5943,7 +5935,9 @@ xact_redo_commit_compact(xl_xact_commit_compact *xlrec,
 							  NULL, 0,	/* relfilenodes */
 							  InvalidOid,		/* dbId */
 							  InvalidOid,		/* tsId */
-							  0);		/* xinfo */
+							  0,		/* xinfo */
+							  0,		/* distribXid */
+							  0);		/* distribTimeStamp */
 }
 
 /*
@@ -6040,10 +6034,8 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			{
 				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, true);
-			}
+			smgrdounlink(srel, true);
 			smgrclose(srel);
 		}
 	}
