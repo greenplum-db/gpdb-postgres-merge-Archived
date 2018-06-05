@@ -1410,10 +1410,15 @@ shareinput_walker(SHAREINPUT_MUTATOR f, Node *node, PlannerGlobal *glob)
 			SubqueryScan *subqscan = (SubqueryScan *) node;
 			List	   *save_rtable;
 
-			save_rtable = glob->share.curr_rtable;
-			glob->share.curr_rtable = subqscan->subrtable;
+			/* GPDB_92_MERGE_FIXME_AFTER_GPDB_COULD_RUN:
+			 * pg upstream changes to not store subratables in
+			 * SubqueryScan. We need to figure out how to fix this later.
+			 * Maybe a new parameter from callers?
+			 * */
+			//save_rtable = glob->share.curr_rtable;
+			//glob->share.curr_rtable = subqscan->subrtable;
 			shareinput_walker(f, (Node *) subqscan->subplan, glob);
-			glob->share.curr_rtable = save_rtable;
+			//glob->share.curr_rtable = save_rtable;
 		}
 		else if (IsA(node, BitmapAnd))
 		{
