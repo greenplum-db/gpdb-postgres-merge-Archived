@@ -1629,7 +1629,7 @@ add_part_to_catalog(Oid relid, PartitionBy *pby,
 	/*
 	 * Get the partitioned table relid.
 	 */
-	rootrelid = RangeVarGetRelid(pby->parentRel, false);
+	rootrelid = RangeVarGetRelid(pby->parentRel, NoLock, false);
 	paroid = get_part_oid(rootrelid, pby->partDepth,
 						  bTemplate_Only /* = false */ );
 
@@ -6842,7 +6842,7 @@ atpxPartAddList(Relation rel,
 			{
 				CreateStmt *t = (CreateStmt *) s;
 
-				skipTableRelid = RangeVarGetRelid(t->relation, true);
+				skipTableRelid = RangeVarGetRelid(t->relation, NoLock, true);
 			}
 		}
 
@@ -6859,7 +6859,7 @@ atpxPartAddList(Relation rel,
 			if (IsA(q, IndexStmt))
 			{
 				IndexStmt  *istmt = (IndexStmt *) q;
-				Oid			idxRelid = RangeVarGetRelid(istmt->relation, true);
+				Oid			idxRelid = RangeVarGetRelid(istmt->relation, NoLock, true);
 
 				if (idxRelid == RelationGetRelid(rel))
 					continue;
@@ -8428,7 +8428,8 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  conbin,
 									  consrc,
 									  con->conislocal,
-									  con->coninhcount);
+									  con->coninhcount,
+									  true);
 				break;
 			}
 
@@ -8481,7 +8482,8 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  NULL,
 									  NULL,
 									  con->conislocal,
-									  con->coninhcount);
+									  con->coninhcount,
+									  true);
 
 				heap_close(frel, AccessExclusiveLock);
 				break;
