@@ -1352,7 +1352,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 		return false;
 	}
 
-	xid = gxact->proc.xid;
+	xid = pgxact->xid;
 	tfXLogRecPtr = gxact->prepare_begin_lsn;
 
 	elog((Debug_print_full_dtm ? LOG : DEBUG5),
@@ -2119,11 +2119,12 @@ getTwoPhasePreparedTransactionData(prepared_transaction_agg_state **ptas, char *
 
 	for (int i = 0; i < numberOfPrepareXacts; i++)
     {
-		if ((globalTransactionArray[i])->valid == false)
+		GlobalTransaction gxact = globalTransactionArray[i];
+		if (gxact->valid == false)
 			/* Skip any invalid prepared transacitons. */
 			continue;
-		xid       = (globalTransactionArray[i])->proc.xid;
-		recordPtr = &(globalTransactionArray[i])->prepare_begin_lsn;
+		xid 	  = ProcGlobal->allPgXact[gxact->pgprocno].xid;
+		recordPtr = &gxact->prepare_begin_lsn;
 
 		TwoPhaseAddPreparedTransaction(ptas,
 									   &maxCount,

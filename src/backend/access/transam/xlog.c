@@ -291,8 +291,6 @@ static uint32 ProcLastRecTotalLen = 0;
 
 static uint32 ProcLastRecDataLen = 0;
 
-static XLogRecPtr InvalidXLogRecPtr = {0, 0};
-
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
  * (which is almost but not quite the same as a pointer to the most recent
@@ -526,13 +524,6 @@ typedef struct XLogCtlData
 	XLogRecPtr	lastFpwDisableRecPtr;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
-
-
-	/*
-	 * timestamp of when we started replaying the current chunk of WAL data,
-	 * only relevant for replication or archive recovery
-	 */
-	TimestampTz currentChunkStartTime;
 } XLogCtlData;
 
 static XLogCtlData *XLogCtl = NULL;
@@ -791,7 +782,6 @@ typedef struct RedoErrorCallBack
 	XLogRecord 	*record;
 } RedoErrorCallBack;
 
-void HandleStartupProcInterrupts(void);
 
 static void GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg);
 static void checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr);
@@ -9628,7 +9618,7 @@ CreateRestartPoint(int flags)
 		XLogRecPtr	endptr;
 
 		/* Get the current (or recent) end of xlog */
-		endptr = GetStandbyFlushRecPtr();
+		endptr = GetStandbyFlushRecPtr(NULL);
 
 		KeepLogSeg(endptr, &_logId, &_logSeg);
 		PrevLogSeg(_logId, _logSeg);
@@ -9853,7 +9843,7 @@ XLogSaveBufferForHint(Buffer buffer)
 	/*
 	 * Ensure no checkpoint can change our view of RedoRecPtr.
 	 */
-	Assert(MyProc->inCommit);
+	Assert(MyPgXact->inCommit);
 
 	/*
 	 * Update RedoRecPtr so XLogCheckBuffer can make the right decision
@@ -11701,196 +11691,6 @@ char *
 XLogLocationToString5_Long(XLogRecPtr *loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer5, loc, true);
-}
-
-
-/* ------------------------------------------------------
- *	Startup Process main entry point and signal handlers
- * ------------------------------------------------------
- */
-
-/*
- * startupproc_quickdie() occurs when signalled SIGQUIT by the postmaster.
- *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
- */
-static void
-startupproc_quickdie(SIGNAL_ARGS)
-{
-	PG_SETMASK(&BlockSig);
-
-	/*
-	 * We DO NOT want to run proc_exit() callbacks -- we're here because
-	 * shared memory may be corrupted, so we don't want to try to clean up our
-	 * transaction.  Just nail the windows shut and get out of town.  Now that
-	 * there's an atexit callback to prevent third-party code from breaking
-	 * things by calling exit() directly, we have to reset the callbacks
-	 * explicitly to make this work as intended.
-	 */
-	on_exit_reset();
-
-	/*
-	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
-	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	exit(2);
-}
-
-/* SIGUSR2: set flag to finish recovery */
-static void
-StartupProcTriggerHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	promote_triggered = true;
-	WakeupRecovery();
-
-	errno = save_errno;
-}
-
-/* SIGUSR1: let latch facility handle the signal */
-static void
-StartupProcSigUsr1Handler(SIGNAL_ARGS)
-{
-	latch_sigusr1_handler();
-}
-
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-StartupProcSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	WakeupRecovery();
-
-	errno = save_errno;
-}
-
-/* SIGTERM: set flag to abort redo and exit */
-static void
-StartupProcShutdownHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	if (in_restore_command)
-		proc_exit(1);
-	else
-		shutdown_requested = true;
-	WakeupRecovery();
-
-	errno = save_errno;
-}
-
-/* Handle SIGHUP and SIGTERM signals of startup process */
-void
-HandleStartupProcInterrupts(void)
-{
-	/*
-	 * Check if we were requested to re-read config file.
-	 */
-	if (got_SIGHUP)
-	{
-		got_SIGHUP = false;
-		ProcessConfigFile(PGC_SIGHUP);
-	}
-
-	/*
-	 * Check if we were requested to exit without finishing recovery.
-	 */
-	if (shutdown_requested)
-		proc_exit(1);
-
-	/*
-	 * Emergency bailout if postmaster has died.  This is to avoid the
-	 * necessity for manual cleanup of all postmaster children.
-	 */
-	if (IsUnderPostmaster && !PostmasterIsAlive())
-		exit(1);
-}
-
-static void
-HandleCrash(SIGNAL_ARGS)
-{
-    /**
-     * Handle crash is registered as a signal handler for SIGILL/SIGBUS/SIGSEGV
-     *
-     * This simply calls the standard handler which will log the signal and reraise the
-     *      signal if needed
-     */
-    StandardHandlerForSigillSigsegvSigbus_OnMainThread("a startup process", PASS_SIGNAL_ARGS);
-}
-
-/* Main entry point for startup process */
-void
-StartupProcessMain(void)
-{
-	am_startup = true;
-	/*
-	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.
-	 */
-#ifdef HAVE_SETSID
-	if (setsid() < 0)
-		elog(FATAL, "setsid() failed: %m");
-#endif
-
-	/*
-	 * Properly accept or ignore signals the postmaster might send us.
-	 *
-	 * Note: ideally we'd not enable handle_standby_sig_alarm unless actually
-	 * doing hot standby, but we don't know that yet.  Rely on it to not do
-	 * anything if it shouldn't.
-	 */
-	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
-	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
-	pqsignal(SIGTERM, StartupProcShutdownHandler);		/* request shutdown */
-	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
-	if (EnableHotStandby)
-		pqsignal(SIGALRM, handle_standby_sig_alarm);	/* ignored unless
-														 * InHotStandby */
-	else
-		pqsignal(SIGALRM, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, StartupProcSigUsr1Handler);
-	pqsignal(SIGUSR2, StartupProcTriggerHandler);
-
-#ifdef SIGBUS
-	pqsignal(SIGBUS, HandleCrash);
-#endif
-#ifdef SIGILL
-    pqsignal(SIGILL, HandleCrash);
-#endif
-#ifdef SIGSEGV
-	pqsignal(SIGSEGV, HandleCrash);
-#endif
-
-	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, SIG_DFL);
-	pqsignal(SIGTTIN, SIG_DFL);
-	pqsignal(SIGTTOU, SIG_DFL);
-	pqsignal(SIGCONT, SIG_DFL);
-	pqsignal(SIGWINCH, SIG_DFL);
-
-	/*
-	 * Unblock signals (they were blocked when the postmaster forked us)
-	 */
-	PG_SETMASK(&UnBlockSig);
-
-	StartupXLOG();
-
-	/*
-	 * Exit normally. Exit code 0 tells postmaster that we completed
-	 * recovery successfully.
-	 */
-	proc_exit(0);
 }
 
 /*
