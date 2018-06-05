@@ -2802,38 +2802,35 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelo
  * GPDB_92_MERGE_FIXME:Please check why isjoininner is removed.
  */
 
-//bool
-//path_contains_inner_index(Path *path)
-//{
-//
-//	if (IsA(path, IndexPath) &&
-//		((IndexPath *)path)->isjoininner)
-//		return true;
-//	else if (IsA(path, BitmapHeapPath) &&
-//			 ((BitmapHeapPath *)path)->isjoininner)
-//		return true;
-//	else if (IsA(path, BitmapAppendOnlyPath) &&
-//			 ((BitmapAppendOnlyPath *)path)->isjoininner)
-//		return true;
-//	else if (IsA(path, AppendPath))
-//	{
-//		/* MPP-2377: Append paths may conceal inner-index scans, if
-//		 * any of the subpaths are indexpaths or bitmapheap-paths we
-//		 * have to do more checking */
-//		ListCell   *l;
-//
-//		/* scan the subpaths of the Append */
-//		foreach(l, ((AppendPath *)path)->subpaths)
-//		{
-//			Path	   *subpath = (Path *)lfirst(l);
-//
-//			if (path_contains_inner_index(subpath))
-//				return true;
-//		}
-//	}
-//
-//	return false;
-//}
+bool
+path_contains_inner_index(Path *path)
+{
+
+	if (IsA(path, IndexPath))
+		return true;
+	else if (IsA(path, BitmapHeapPath))
+		return true;
+	else if (IsA(path, BitmapAppendOnlyPath))
+		return true;
+	else if (IsA(path, AppendPath))
+	{
+		/* MPP-2377: Append paths may conceal inner-index scans, if
+		 * any of the subpaths are indexpaths or bitmapheap-paths we
+		 * have to do more checking */
+		ListCell   *l;
+
+		/* scan the subpaths of the Append */
+		foreach(l, ((AppendPath *)path)->subpaths)
+		{
+			Path	   *subpath = (Path *)lfirst(l);
+
+			if (path_contains_inner_index(subpath))
+				return true;
+		}
+	}
+
+	return false;
+}
 
 /*
  * create_foreignscan_path
