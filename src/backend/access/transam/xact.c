@@ -1556,7 +1556,6 @@ RecordTransactionCommit(void)
 	 * Note that at this stage we have marked clog, but still show as running
 	 * in the procarray and continue to hold locks.
 	 */
-<<<<<<< HEAD
 	if (markXidCommitted || isDtxPrepared)
 	{
 		Assert(recptr.xrecoff != 0);
@@ -1565,10 +1564,9 @@ RecordTransactionCommit(void)
 
 	/* Compute latestXid while we have the child XIDs handy */
 	latestXid = TransactionIdLatest(xid, nchildren, children);
-=======
+
 	if (wrote_xlog)
 		SyncRepWaitForLSN(XactLastRecEnd);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	XactLastRecEnd.xrecoff = 0;
@@ -5778,32 +5776,19 @@ xact_get_distributed_info_from_commit(xl_xact_commit *xlrec)
  * actions for which the order of execution is critical.
  */
 static void
-<<<<<<< HEAD
-xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid, XLogRecPtr lsn,
-				 DistributedTransactionId distribXid,
-				 DistributedTransactionTimeStamp distribTimeStamp)
-=======
 xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 						  TransactionId *sub_xids, int nsubxacts,
 						  SharedInvalidationMessage *inval_msgs, int nmsgs,
 						  RelFileNode *xnodes, int nrels,
 						  Oid dbId, Oid tsId,
-						  uint32 xinfo)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+						  uint32 xinfo,
+						  DistributedTransactionId distribXid,
+						  DistributedTransactionTimeStamp distribTimeStamp)
 {
 	TransactionId max_xid;
 	int			i;
 
-<<<<<<< HEAD
-	/* subxid array follows relfilenodes */
-	sub_xids = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	/* invalidation messages array follows subxids */
-	inval_msgs = (SharedInvalidationMessage *) &(sub_xids[xlrec->nsubxacts]);
-
-	max_xid = TransactionIdLatest(xid, xlrec->nsubxacts, sub_xids);
-=======
 	max_xid = TransactionIdLatest(xid, nsubxacts, sub_xids);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Make sure nextXid is beyond any XID mentioned in the record.
@@ -5827,6 +5812,14 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
 										distribTimeStamp, distribXid,
 										/* isRedo */ true);
+	}
+
+	/* also update distributed commit log */
+	if (distribXid != 0 && distribTimeStamp != 0)
+	{
+		DistributedLog_SetCommittedTree(xid, xlrec->nsubxacts, sub_xids,
+				distribTimeStamp, distribXid,
+				/* isRedo */ true);
 	}
 
 	if (standbyState == STANDBY_DISABLED)
@@ -5883,22 +5876,6 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-<<<<<<< HEAD
-	if (xlrec->nrels > 0)
-	{
-		for (i = 0; i < xlrec->nrels; i++)
-		{
-			SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
-			ForkNumber	fork;
-
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			{
-				XLogDropRelation(xlrec->xnodes[i], fork);
-				smgrdounlink(srel, fork, true);
-			}
-			smgrclose(srel);
-		}
-=======
 	for (i = 0; i < nrels; i++)
 	{
 		SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
@@ -5908,7 +5885,6 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 			XLogDropRelation(xnodes[i], fork);
 		smgrdounlink(srel, true);
 		smgrclose(srel);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
@@ -5933,7 +5909,9 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
  */
 static void
 xact_redo_commit(xl_xact_commit *xlrec,
-				 TransactionId xid, XLogRecPtr lsn)
+				 TransactionId xid, XLogRecPtr lsn,
+				 DistributedTransactionId distribXid,
+				 DistributedTransactionTimeStamp distribTimeStamp)
 {
 	TransactionId *subxacts;
 	SharedInvalidationMessage *inval_msgs;
@@ -5948,7 +5926,9 @@ xact_redo_commit(xl_xact_commit *xlrec,
 							  xlrec->xnodes, xlrec->nrels,
 							  xlrec->dbId,
 							  xlrec->tsId,
-							  xlrec->xinfo);
+							  xlrec->xinfo,
+							  distribXid,
+							  distribTimeStamp);
 }
 
 /*
@@ -6144,15 +6124,8 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-<<<<<<< HEAD
-		{
-			XLogDropRelation(xlrec->xnodes[i], fork);
-			smgrdounlink(srel, fork, true);
-		}
-=======
 			XLogDropRelation(xlrec->xnodes[i], fork);
 		smgrdounlink(srel, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		smgrclose(srel);
 	}
 }
@@ -6238,17 +6211,11 @@ static char*
 xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	int			i;
-<<<<<<< HEAD
-	TransactionId *xacts;
+	TransactionId *subxacts;
 	SharedInvalidationMessage *msgs;
 
-	xacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
-	msgs = (SharedInvalidationMessage *) &xacts[xlrec->nsubxacts];
-=======
-	TransactionId *subxacts;
-
 	subxacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 
@@ -6271,15 +6238,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 	}
 	if (xlrec->nmsgs > 0)
 	{
-<<<<<<< HEAD
-		if (XactCompletionRelcacheInitFileInval(xlrec))
-=======
-		SharedInvalidationMessage *msgs;
-
-		msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
-
 		if (XactCompletionRelcacheInitFileInval(xlrec->xinfo))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 							 xlrec->dbId, xlrec->tsId);
 
@@ -6311,7 +6270,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 }
 
 static void
-<<<<<<< HEAD
 xact_desc_distributed_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	TMGXACT_LOG *gxact_log;
@@ -6333,7 +6291,6 @@ xact_desc_distributed_forget(StringInfo buf, xl_xact_distributed_forget *xlrec)
 
 
 static void
-=======
 xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
 {
 	int			i;
@@ -6349,7 +6306,6 @@ xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
 }
 
 static void
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 {
 	int			i;
