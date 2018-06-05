@@ -2041,7 +2041,6 @@ _outBitmapAppendOnlyPath(StringInfo str, const BitmapAppendOnlyPath *node)
 
 	WRITE_NODE_FIELD(bitmapqual);
 	WRITE_BOOL_FIELD(isjoininner);
-	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_BOOL_FIELD(isAORow);
 }
 
