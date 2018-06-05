@@ -849,7 +849,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 
 	/* Look up the appropriate relation using namespace search */
-	relid = RangeVarGetRelid(relation, true);
+	relid = RangeVarGetRelid(relation, lockmode, true);
 	if (relid == InvalidOid)
 	{
 		if (relation->schemaname)
@@ -927,7 +927,7 @@ addRangeTableEntry(ParseState *pstate,
 		{
 			Oid relid;
 			
-			relid = RangeVarGetRelid(relation, true);
+			relid = RangeVarGetRelid(relation, lockmode, true);
 			if (relid == InvalidOid)
 				elog(ERROR, "Got Invalid RelationId of %s", relation->relname);
 			

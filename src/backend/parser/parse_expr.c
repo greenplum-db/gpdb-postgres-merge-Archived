@@ -2004,7 +2004,8 @@ transformTableValueExpr(ParseState *pstate, TableValueExpr *t)
 		elog(ERROR, "unexpected non-SELECT command in TableValueExpr");
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected non-SELECT command in TableValueExpr");
-	if (query->intoClause != NULL)
+	if (query->utilityStmt != NULL &&
+		IsA(query->utilityStmt, CreateTableAsStmt))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in TABLE value expression cannot have SELECT INTO"),

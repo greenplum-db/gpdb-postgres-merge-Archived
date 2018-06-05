@@ -28,6 +28,7 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 #include "optimizer/walkers.h"
 

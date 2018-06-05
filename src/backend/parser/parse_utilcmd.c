@@ -95,7 +95,8 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
 static void transformTableLikeClause(CreateStmtContext *cxt,
-						 TableLikeClause *table_like_clause);
+						 TableLikeClause *table_like_clause,
+						 bool forceBareCol);
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
@@ -115,7 +116,7 @@ static void transformConstraintAttrs(CreateStmtContext *cxt,
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
 static void setSchemaName(char *context_schema, char **stmt_schema_name);
 
-static DistributedBy *getLikeDistributionPolicy(InhRelation *e);
+static DistributedBy *getLikeDistributionPolicy(TableLikeClause *e);
 static bool co_explicitly_disabled(List *opts);
 static GpPolicy *transformDistributedBy(CreateStmtContext *cxt,
 					   DistributedBy *distributedBy,
@@ -300,7 +301,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				break;
 
 			case T_TableLikeClause:
-				transformTableLikeClause(&cxt, (TableLikeClause *) element);
+				transformTableLikeClause(&cxt, (TableLikeClause *) element, false);
 				break;
 
 			default:
@@ -774,7 +775,8 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  * <srctable>.
  */
 static void
-transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause)
+transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause,
+						 bool forceBareCol)
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -823,7 +825,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;
 
-	if (forceBareCol && inhRelation->options != 0)
+	if (forceBareCol && table_like_clause->options != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("LIKE INCLUDING may not be used with this kind of relation")));
@@ -1576,19 +1578,19 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 					 (int) nodeTag(element));
 				break;
 
-			case T_InhRelation:
+			case T_TableLikeClause:
 				{
 					/* LIKE */
 					bool	isBeginning = (cxt.columns == NIL);
 
-					transformInhRelation(&cxt, (InhRelation *) element, true);
+					transformTableLikeClause(&cxt, (TableLikeClause *) element, true);
 
 					if (Gp_role == GP_ROLE_DISPATCH && isBeginning &&
 						stmt->distributedBy == NULL &&
 						stmt->policy == NULL &&
 						iswritable /* dont bother if readable table */)
 					{
-						likeDistributedBy = getLikeDistributionPolicy((InhRelation *) element);
+						likeDistributedBy = getLikeDistributionPolicy((TableLikeClause *) element);
 					}
 				}
 				break;
@@ -1823,7 +1825,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 		foreach(entry, cxt->inhRelations)
 		{
 			RangeVar   *parent = (RangeVar *) lfirst(entry);
-			Oid			relId = RangeVarGetRelid(parent, false);
+			Oid			relId = RangeVarGetRelid(parent, NoLock, false);
 			GpPolicy  *oldTablePolicy =
 				GpPolicyFetch(CurrentMemoryContext, relId);
 
@@ -3075,7 +3077,7 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	{
 		Oid			relId;
 
-		relId = RangeVarGetRelid(stmt->relation, true);
+		relId = RangeVarGetRelid(stmt->relation, NoLock, true);
 
 		if (relId != InvalidOid && rel_is_partitioned(relId))
 			recurseToPartitions = true;
@@ -4198,13 +4200,13 @@ setSchemaName(char *context_schema, char **stmt_schema_name)
  * we also have INHERITS
  */
 static DistributedBy *
-getLikeDistributionPolicy(InhRelation* e)
+getLikeDistributionPolicy(TableLikeClause* e)
 {
 	DistributedBy		*likeDistributedBy = NULL;
 	Oid				relId;
 	GpPolicy*		oldTablePolicy;
 
-	relId = RangeVarGetRelid(e->relation, false);
+	relId = RangeVarGetRelid(e->relation, NoLock, false);
 	oldTablePolicy = GpPolicyFetch(CurrentMemoryContext, relId);
 
 	if (oldTablePolicy != NULL && oldTablePolicy->ptype != POLICYTYPE_ENTRY)

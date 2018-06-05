@@ -16,6 +16,7 @@
 #ifndef PRINT_H
 #define PRINT_H
 
+#include "nodes/plannodes.h"
 #include "executor/tuptable.h"
 
 #define nodeDisplay(x)		pprint(x)

@@ -1676,11 +1676,13 @@ FigureColnameInternal(Node *node, char **name)
 						}
 					}
 					break;
+
 					/* As with other operator-like nodes, these have no names */
 				case ALL_SUBLINK:
 				case ANY_SUBLINK:
 				case ROWCOMPARE_SUBLINK:
 				case CTE_SUBLINK:
+				case NOT_EXISTS_SUBLINK:
 					break;
 			}
 			break;
