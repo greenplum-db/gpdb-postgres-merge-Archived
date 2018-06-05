@@ -4734,6 +4734,8 @@ reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_map,
 													  em->em_datatype,
 													  exprCollation((Node *) tle->expr),
 													  0,
+ 				/* GPDB_92_MERGE_FIXME_AFTER_GPDB_RUNS: NULL does not look like a correct parameter. */
+													  NULL,
 													  true);
 				new_pathkey = makePathKey(new_eclass, pathkey->pk_opfamily, pathkey->pk_strategy,
 										  pathkey->pk_nulls_first);
