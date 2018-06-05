@@ -123,7 +123,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
 #ifdef USE_PREFETCH
-	TBMIterator *prefetch_iterator;
+	GenericBMIterator *prefetch_iterator;
 #endif
 
 	OffsetNumber targoffset;
