@@ -2486,7 +2486,7 @@ StartTransaction(void)
 					  "isolation level %s, read-only = %d, %s",
 					  DtxContextToString(DistributedTransactionContext),
 					  IsoLevelAsUpperString(XactIsoLevel), XactReadOnly,
-					  LocalDistribXact_DisplayString(MyProc))));
+					  LocalDistribXact_DisplayString(MyProc->pgprocno))));
 }
 
 /*

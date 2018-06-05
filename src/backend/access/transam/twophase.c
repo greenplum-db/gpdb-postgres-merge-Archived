@@ -615,7 +615,7 @@ MarkAsPrepared(GlobalTransaction gxact)
 	elog((Debug_print_full_dtm ? LOG : DEBUG5),"MarkAsPrepared marking GXACT gid = %s as valid (prepared)",
 		 gxact->gid);
 
-	LocalDistribXact_ChangeState(&gxact->proc,
+	LocalDistribXact_ChangeState(gxact->pgprocno,
 								 LOCALDISTRIBXACT_STATE_PREPARED);
 
 	/*

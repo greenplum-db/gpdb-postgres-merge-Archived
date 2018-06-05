@@ -422,7 +422,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 			case DTX_CONTEXT_QE_TWO_PHASE_EXPLICIT_WRITER:
 			case DTX_CONTEXT_QE_TWO_PHASE_IMPLICIT_WRITER:
 			case DTX_CONTEXT_QE_AUTO_COMMIT_IMPLICIT:
-				LocalDistribXact_ChangeState(MyProc,
+				LocalDistribXact_ChangeState(MyProc->pgprocno,
 											 isCommit ?
 											 LOCALDISTRIBXACT_STATE_COMMITTED :
 											 LOCALDISTRIBXACT_STATE_ABORTED);
