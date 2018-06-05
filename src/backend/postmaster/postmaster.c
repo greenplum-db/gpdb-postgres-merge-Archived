@@ -5964,6 +5964,7 @@ InitPostmasterDeathWatchHandle(void)
 				(errmsg_internal("could not duplicate postmaster handle: error code %lu",
 								 GetLastError())));
 #endif   /* WIN32 */
+}
 
 #if defined(HAVE_NUMA_H) && defined(HAVE_LIBNUMA)
 /* LINUX */

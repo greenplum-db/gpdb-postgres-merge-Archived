@@ -196,6 +196,12 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 
 	switch (stmt->commandType)
 	{
+		/*
+		 * GPDB_92_MERGE_FIXME
+		 * 'SELECT INTO' is treated as a CTAS utility in PG 9.2
+		 * and for utility, 'queryDesc->plannedstmt' is NULL.
+		 */
+#if 0
 		case CMD_SELECT:
 			if (stmt->intoClause != NULL)
 			{
@@ -204,6 +210,7 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 				cmdType = AUTOSTATS_CMDTYPE_CTAS;
 			}
 			break;
+#endif
 
 		case CMD_INSERT:
 		case CMD_UPDATE:
