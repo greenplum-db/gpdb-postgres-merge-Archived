@@ -1275,7 +1275,7 @@ BlockSampler_Next(BlockSampler bs)
  * GPDB: Not used in Greenplum currently. Instead, we acquire the sample
  * rows by issuing an SPI query, see acquire_sample_rows_by_query
  */
-static int
+static int pg_attribute_unused()
 acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
 					double *totalrows, double *totaldeadrows)
