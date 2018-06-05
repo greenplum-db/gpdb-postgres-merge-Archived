@@ -19,11 +19,8 @@ extern char *strtokx(const char *s,
 		bool del_quotes,
 		int encoding);
 
-<<<<<<< HEAD
 extern void strip_quotes(char *source, char quote, char escape, int encoding);
-=======
 extern char *quote_if_needed(const char *source, const char *entails_quote,
 				char quote, char escape, int encoding);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* STRINGUTILS_H */

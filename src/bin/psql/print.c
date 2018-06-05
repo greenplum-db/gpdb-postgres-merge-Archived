@@ -200,7 +200,6 @@ additional_numeric_locale_len(const char *my_str)
 static char *
 format_numeric_locale(const char *my_str)
 {
-<<<<<<< HEAD
 	char	   *new_str;
 	int			new_len,
 				int_len,
@@ -227,22 +226,6 @@ format_numeric_locale(const char *my_str)
 
 	/* process sign */
 	if (my_str[0] == '-' || my_str[0] == '+')
-=======
-	int			i,
-				j,
-				int_len = integer_digits(my_str),
-				leading_digits;
-	int			groupdigits = atoi(grouping);
-	int			new_str_start = 0;
-	char	   *new_str = pg_local_malloc(
-									 strlen_with_numeric_locale(my_str) + 1);
-
-	leading_digits = (int_len % groupdigits != 0) ?
-		int_len % groupdigits : groupdigits;
-
-	if (my_str[0] == '-')		/* skip over sign, affects grouping
-								 * calculations */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		new_str[new_str_pos++] = my_str[0];
 		my_str++;

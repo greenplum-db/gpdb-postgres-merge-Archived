@@ -270,24 +270,15 @@ describeTablespaces(const char *pattern, bool verbose)
 	if (pset.sversion >= 90200)
 		printfPQExpBuffer(&buf,
 						  "SELECT spcname AS \"%s\",\n"
-<<<<<<< HEAD
-						  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
-						  "  pg_catalog.pg_tablespace_location(oid) AS \"%s\"",
-=======
 						"  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
 						"  pg_catalog.pg_tablespace_location(oid) AS \"%s\"",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						  gettext_noop("Name"),
 						  gettext_noop("Owner"),
 						  gettext_noop("Location"));
 	else
 		printfPQExpBuffer(&buf,
 						  "SELECT spcname AS \"%s\",\n"
-<<<<<<< HEAD
-						  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
-=======
 						"  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						  "  spclocation AS \"%s\"",
 						  gettext_noop("Name"),
 						  gettext_noop("Owner"),

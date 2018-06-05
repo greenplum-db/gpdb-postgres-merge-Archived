@@ -433,7 +433,6 @@ do_copy(const char *args)
 	*override_file = save_file;
 	termPQExpBuffer(&query);
 
-<<<<<<< HEAD
 	switch (PQresultStatus(result))
 	{
 		case PGRES_COPY_OUT:
@@ -482,8 +481,6 @@ do_copy(const char *args)
 		PQclear(result);
 	}
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (options->file != NULL)
 	{
 		if (options->program)

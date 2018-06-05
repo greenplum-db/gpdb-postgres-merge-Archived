@@ -1,13 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2011, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  *
  * src/bin/psql/tab-complete.c
  */
@@ -1636,16 +1632,10 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 	{
 		static const char *const list_COMMENT[] =
-<<<<<<< HEAD
-		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "EXTENSION", "FOREIGN DATA WRAPPER",
-			"SERVER", "FOREIGN TABLE", "INDEX", "LANGUAGE", "RULE", "SCHEMA",
-			"SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
-=======
 		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "EXTENSION",
 			"FOREIGN DATA WRAPPER", "FOREIGN TABLE",
 			"SERVER", "INDEX", "LANGUAGE", "RULE", "SCHEMA", "SEQUENCE",
 			"TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
 
@@ -2022,7 +2012,6 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_CREATEROLE);
 	}
 
-<<<<<<< HEAD
 /* CREATE/DROP RESOURCE GROUP/QUEUE */
 	else if ((pg_strcasecmp(prev2_wd, "CREATE") == 0 || pg_strcasecmp(prev2_wd, "DROP") == 0) &&
 			 pg_strcasecmp(prev_wd, "RESOURCE") == 0)
@@ -2055,24 +2044,6 @@ psql_completion(char *text, int start, int end)
 		{"CONCURRENCY", "CPU_RATE_LIMIT", "MEMORY_LIMIT", "MEMORY_REDZONE_LIMIT", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATERESOURCEGROUP);
-=======
-/* CREATE ROLE,USER,GROUP <name> WITH */
-	else if ((pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
-			  (pg_strcasecmp(prev3_wd, "ROLE") == 0 ||
-			   pg_strcasecmp(prev3_wd, "GROUP") == 0 ||
-			   pg_strcasecmp(prev3_wd, "USER") == 0) &&
-			  pg_strcasecmp(prev_wd, "WITH") == 0))
-	{
-		/* Similar to the above, but don't complete "WITH" again. */
-		static const char *const list_CREATEROLE_WITH[] =
-		{"ADMIN", "CONNECTION LIMIT", "CREATEDB", "CREATEROLE", "CREATEUSER",
-			"ENCRYPTED", "IN", "INHERIT", "LOGIN", "NOCREATEDB",
-			"NOCREATEROLE", "NOCREATEUSER", "NOINHERIT", "NOLOGIN",
-			"NOREPLICATION", "NOSUPERUSER", "REPLICATION", "ROLE",
-		"SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", NULL};
-
-		COMPLETE_WITH_LIST(list_CREATEROLE_WITH);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/*
