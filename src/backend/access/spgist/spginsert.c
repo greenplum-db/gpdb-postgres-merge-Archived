@@ -103,11 +103,8 @@ spgbuild(PG_FUNCTION_ARGS)
 		recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_CREATE_INDEX, &rdata);
 
 		PageSetLSN(BufferGetPage(metabuffer), recptr);
-		PageSetTLI(BufferGetPage(metabuffer), ThisTimeLineID);
 		PageSetLSN(BufferGetPage(rootbuffer), recptr);
-		PageSetTLI(BufferGetPage(rootbuffer), ThisTimeLineID);
 		PageSetLSN(BufferGetPage(nullbuffer), recptr);
-		PageSetTLI(BufferGetPage(nullbuffer), ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -128,7 +125,7 @@ spgbuild(PG_FUNCTION_ARGS)
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);
 
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+	reltuples = IndexBuildScan(heap, index, indexInfo, true,
 								   spgistBuildCallback, (void *) &buildstate);
 
 	MemoryContextDelete(buildstate.tmpCtx);

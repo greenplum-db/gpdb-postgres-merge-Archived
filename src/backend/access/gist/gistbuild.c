@@ -201,7 +201,6 @@ gistbuild(PG_FUNCTION_ARGS)
 
 		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_CREATE_INDEX, &rdata);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 	else
 		PageSetLSN(page, GetXLogRecPtrForTemp());
@@ -217,7 +216,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	/*
 	 * Do the heap scan.
 	 */
-	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,
+	reltuples = IndexBuildScan(heap, index, indexInfo, true,
 								   gistBuildCallback, (void *) &buildstate);
 
 	/*

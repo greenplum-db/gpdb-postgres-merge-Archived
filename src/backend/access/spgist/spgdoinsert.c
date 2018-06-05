@@ -307,13 +307,11 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 		recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_ADD_LEAF, rdata);
 
 		PageSetLSN(current->page, recptr);
-		PageSetTLI(current->page, ThisTimeLineID);
 
 		/* update parent only if we actually changed it */
 		if (xlrec.blknoParent != InvalidBlockNumber)
 		{
 			PageSetLSN(parent->page, recptr);
-			PageSetTLI(parent->page, ThisTimeLineID);
 		}
 	}
 
@@ -547,11 +545,8 @@ moveLeafs(Relation index, SpGistState *state,
 		recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_MOVE_LEAFS, rdata);
 
 		PageSetLSN(current->page, recptr);
-		PageSetTLI(current->page, ThisTimeLineID);
 		PageSetLSN(npage, recptr);
-		PageSetTLI(npage, ThisTimeLineID);
 		PageSetLSN(parent->page, recptr);
-		PageSetTLI(parent->page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -1400,7 +1395,6 @@ doPickSplit(Relation index, SpGistState *state,
 			Page		page = BufferGetPage(newLeafBuffer);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		if (saveCurrent.buffer != InvalidBuffer)
@@ -1408,16 +1402,13 @@ doPickSplit(Relation index, SpGistState *state,
 			Page		page = BufferGetPage(saveCurrent.buffer);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		PageSetLSN(current->page, recptr);
-		PageSetTLI(current->page, ThisTimeLineID);
 
 		if (parent->buffer != InvalidBuffer)
 		{
 			PageSetLSN(parent->page, recptr);
-			PageSetTLI(parent->page, ThisTimeLineID);
 		}
 	}
 
@@ -1556,7 +1547,6 @@ spgAddNodeAction(Relation index, SpGistState *state,
 			recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_ADD_NODE, rdata);
 
 			PageSetLSN(current->page, recptr);
-			PageSetTLI(current->page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -1666,11 +1656,8 @@ spgAddNodeAction(Relation index, SpGistState *state,
 
 			/* we don't bother to check if any of these are redundant */
 			PageSetLSN(current->page, recptr);
-			PageSetTLI(current->page, ThisTimeLineID);
 			PageSetLSN(parent->page, recptr);
-			PageSetTLI(parent->page, ThisTimeLineID);
 			PageSetLSN(saveCurrent.page, recptr);
-			PageSetTLI(saveCurrent.page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -1830,12 +1817,10 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 		recptr = XLogInsert(RM_SPGIST_ID, XLOG_SPGIST_SPLIT_TUPLE, rdata);
 
 		PageSetLSN(current->page, recptr);
-		PageSetTLI(current->page, ThisTimeLineID);
 
 		if (newBuffer != InvalidBuffer)
 		{
 			PageSetLSN(BufferGetPage(newBuffer), recptr);
-			PageSetTLI(BufferGetPage(newBuffer), ThisTimeLineID);
 		}
 	}
 
