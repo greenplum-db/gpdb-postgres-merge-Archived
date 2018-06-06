@@ -2956,8 +2956,6 @@ typedef struct CreateTableAsStmt
 	Node	   *query;			/* the query (see comments above) */
 	IntoClause *into;			/* destination table */
 	bool		is_select_into; /* it was written as SELECT INTO */
-
-	Node *distributedBy;  /* GPDB: columns to distribute the data on. */
 } CreateTableAsStmt;
 
 /* ----------------------

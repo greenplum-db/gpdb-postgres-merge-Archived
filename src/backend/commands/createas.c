@@ -41,6 +41,7 @@
 #include "catalog/aoseg.h"
 #include "catalog/aovisimap.h"
 #include "catalog/oid_dispatch.h"
+#include "catalog/pg_attribute_encoding.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
@@ -216,8 +217,6 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	self->ao_insertDesc = NULL;
 	self->aocs_insertDes = NULL;
 
-	/* other private fields will be set during intorel_startup */
-
 	return (DestReceiver *) self;
 }
 
@@ -242,7 +241,8 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	int         relstorage;
 	bool		validate_reloptions;
 
-	Assert(into != NULL);		/* else somebody forgot to set it */
+	QueryDesc *queryDesc = NULL;
+	/* MUST_FIXME: Get queryDesc. Via container_of()? Or another interface intorel_init()? */
 
 	/*
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
@@ -256,8 +256,27 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	create->constraints = NIL;
 	create->options = into->options;
 	create->oncommit = into->onCommit;
- 	/* TODO: tablespacename setting is wrong? Refer the original code change. */
-	create->tablespacename = into->tableSpaceName;
+	/*
+	 * Select tablespace to use.  If not specified, use default tablespace
+	 * (which may in turn default to database's default).
+	 *
+	 * In PostgreSQL, we resolve default tablespace here. In GPDB, that's
+	 * done earlier, because we need to dispatch the final tablespace name,
+	 * after resolving any defaults, to the segments. (Otherwise, we would
+	 * rely on the assumption that default_tablespace GUC is kept in sync
+	 * in all segment connections. That actually seems to be the case, as of
+	 * this writing, but better to not rely on it.) So usually, we already
+	 * have the fully-resolved tablespace name stashed in queryDesc->ddesc->
+	 * intoTableSpaceName. In the dispatcher, we filled it in earlier, and
+	 * in executor nodes, we received it from the dispatcher along with the
+	 * query. In utility mode, however, queryDesc->ddesc is not set at all,
+	 * and we follow the PostgreSQL codepath, resolving the defaults here.
+	 */
+
+	if (queryDesc->ddesc)
+		create->tablespacename = queryDesc->ddesc->intoTableSpaceName;
+	else
+		create->tablespacename = into->tableSpaceName;
 	create->if_not_exists = false;
 
 	/*
@@ -333,20 +352,15 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 									 false);
 
 	/* get the relstorage (heap or AO tables) */
-#if 0
 	if (queryDesc->ddesc)
 		validate_reloptions = queryDesc->ddesc->validate_reloptions;
 	else
 		validate_reloptions = true;
-#else
-		validate_reloptions = true;
-#endif
 
 	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug and further fix when the pg 9.2 code could run.
-	 * 1) Need to Change for build_ctas_with_dist(), prebuild_temp_table()?
-	 * 2) Refer the old ctas implementation and CreateStmt change in standard_ProcessUtility().
-	 * 3) TODO in this file. Note this function run at the executor RUN stage.
-	 *    Dispatcher does not seem to be able to run here. Need to think and design.
+	 * 1) Need to Change for build_ctas_with_dist().
+	 * 2) Geneate the new MPP Plan for CreateTableAsStmt.
+	 * 3) Double-check and debug the code.
 	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
@@ -356,16 +370,16 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	/* Add distributedBy and policy to IntoClause? */
 	create->distributedBy = into->distributedBy;
-	create->partitionBy = NULL; /* CTAS does not seem to support partition. */
+	create->partitionBy = NULL; /* CTAS does not seem to support partition. Check it! */
 
-    create->policy = NULL; /* TODO: Get referrring from transformDistributedBy(). */
+    create->policy = queryDesc->plannedstmt->intoPolicy;
 	create->postCreate = NULL;
 	create->deferredStmts = NULL;
 	create->is_part_child = false;
 	create->is_add_part = false;
 	create->is_split_part = false;
 	create->buildAoBlkdir = false;
-	create->attr_encodings = NULL; /* TODO: Fill refer transformCreateStmt() */
+	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
 
 	/*
 	 * Actually create the target table.
@@ -395,8 +409,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/* don't create AO block directory here, it'll be created when needed. */
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
 
-	/* TODO: We seem to need to dispatch since this function is now called
-	 * in standard_ExecutorStart(), not in InitPlan(). */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) create, DF_CANCEL_ON_ERROR |
 									DF_NEED_TWO_PHASE | DF_WITH_SNAPSHOT,
@@ -406,6 +418,19 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * Finally we can open the target table
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
+
+	/*
+	 * Add column encoding entries based on the WITH clause.
+	 *
+	 * NOTE:  we could also do this expansion during parse analysis, by
+	 * expanding the IntoClause options field into some attr_encodings field
+	 * (cf. CreateStmt and transformCreateStmt()). As it stands, there's no real
+	 * benefit for doing that from a code complexity POV. In fact, it would mean
+	 * more code. If, however, we supported column encoding syntax during CTAS,
+	 * it would be a good time to relocate this code.
+	 */
+	AddDefaultRelationAttributeOptions(intoRelationDesc,
+									   into->options);
 
 	/*
 	 * Check INSERT permission on the constructed table.
