@@ -1272,45 +1272,38 @@ init(void)
 	 * versions.  Since pgbench has never pretended to be fully TPC-B
 	 * compliant anyway, we stick with the historical behavior.
 	 */
-<<<<<<< HEAD
-	static char *DDLs[] = {
-		"drop table if exists pgbench_branches",
-		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d, %s) DISTRIBUTED BY (bid)",
-		"drop table if exists pgbench_tellers",
-		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (tid)",
-		"drop table if exists pgbench_accounts",
-		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (aid)",
-		"drop table if exists pgbench_history",
-		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)) with (%s) DISTRIBUTED BY (tid)"
-=======
 	struct ddlinfo
 	{
 		char	   *table;
 		char	   *cols;
 		int			declare_fillfactor;
+		char	   *distributed_col;
 	};
 	struct ddlinfo DDLs[] = {
 		{
 			"pgbench_branches",
 			"bid int not null,bbalance int,filler char(88)",
-			1
+			1,
+			"bid"
 		},
 		{
 			"pgbench_tellers",
 			"tid int not null,bid int,tbalance int,filler char(84)",
-			1
+			1,
+			"tid"
 		},
 		{
 			"pgbench_accounts",
 			"aid int not null,bid int,abalance int,filler char(84)",
-			1
+			1,
+			"aid"
 		},
 		{
 			"pgbench_history",
 			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
-			0
+			0,
+			"tid"
 		}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	};
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
@@ -1347,27 +1340,14 @@ init(void)
 		opts[0] = '\0';
 		if (ddl->declare_fillfactor)
 			snprintf(opts + strlen(opts), 256 - strlen(opts),
-					 " with (fillfactor=%d)", fillfactor);
+					 " with (fillfactor=%d, %s) DISTRIBUTED BY (%s)",
+					 fillfactor, storage_clause, ddl->declare_fillfactor);
+		else
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " with (%s) DISTRIBUTED BY (%s)",
+					 storage_clause, ddl->declare_fillfactor);
 		if (tablespace != NULL)
 		{
-<<<<<<< HEAD
-			char		ddl_stmt[256];
-			snprintf(ddl_stmt, 256, DDLs[i], fillfactor, storage_clause);
-			fprintf(stderr, "%s\n", ddl_stmt); 
-			executeStatement(con, ddl_stmt);
-		}
-		else if (strstr(DDLs[i], "create table pgbench_history") == DDLs[i])
-		{
-			char		ddl_stmt[256];
-			snprintf(ddl_stmt, 256, DDLs[i], storage_clause);
-			fprintf(stderr, "%s\n", ddl_stmt); 
-			executeStatement(con, ddl_stmt);
-		}
-		else
-		{
-			executeStatement(con, DDLs[i]);
-		}
-=======
 			char	   *escape_tablespace;
 
 			escape_tablespace = PQescapeIdentifier(con, tablespace,
@@ -1381,7 +1361,6 @@ init(void)
 				 ddl->table, ddl->cols, opts);
 
 		executeStatement(con, buffer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	executeStatement(con, "begin");
@@ -1445,30 +1424,18 @@ init(void)
 	/*
 	 * create indexes
 	 */
-<<<<<<< HEAD
-	fprintf(stderr, "creating indexes...\n");
-	if (use_unique_key)
-	{
-		for (i = 0; i < lengthof(DDLAFTERs); i++)
-		{
-			fprintf(stderr, "%s\n", DDLAFTERs[i]);
-			executeStatement(con, DDLAFTERs[i]);
-		}
-	}
-	else
-	{
-		for (i = 0; i < lengthof(NON_UNIQUE_INDEX_DDLAFTERs); i++)
-		{
-			fprintf(stderr, "%s\n", NON_UNIQUE_INDEX_DDLAFTERs[i]);
-			executeStatement(con, NON_UNIQUE_INDEX_DDLAFTERs[i]);
-		}
-=======
 	fprintf(stderr, "set primary key...\n");
 	for (i = 0; i < lengthof(DDLAFTERs); i++)
 	{
 		char		buffer[256];
-
-		strncpy(buffer, DDLAFTERs[i], 256);
+		if (use_unique_key)
+		{
+			strncpy(buffer, DDLAFTERs[i], 256);
+		}
+		else
+		{
+			strncpy(buffer, NON_UNIQUE_INDEX_DDLAFTERs[i], 256);
+		}
 
 		if (index_tablespace != NULL)
 		{
@@ -1482,7 +1449,6 @@ init(void)
 		}
 
 		executeStatement(con, buffer);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	/* vacuum */
@@ -1974,11 +1940,7 @@ main(int argc, char **argv)
 	state = (CState *) xmalloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Crs:t:T:U:lf:D:F:M:j:x:q")) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		switch (c)
 		{
