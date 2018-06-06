@@ -433,54 +433,6 @@ do_copy(const char *args)
 	*override_file = save_file;
 	termPQExpBuffer(&query);
 
-	switch (PQresultStatus(result))
-	{
-		case PGRES_COPY_OUT:
-			SetCancelConn();
-			success = handleCopyOut(pset.db, copystream);
-			ResetCancelConn();
-			break;
-		case PGRES_COPY_IN:
-			SetCancelConn();
-			success = handleCopyIn(pset.db, copystream,
-								   PQbinaryTuples(result));
-			ResetCancelConn();
-			break;
-		case PGRES_NONFATAL_ERROR:
-		case PGRES_FATAL_ERROR:
-		case PGRES_BAD_RESPONSE:
-			success = false;
-			psql_error("\\copy: %s", PQerrorMessage(pset.db));
-			break;
-		default:
-			success = false;
-			psql_error("\\copy: unexpected response (%d)\n",
-					   PQresultStatus(result));
-			break;
-	}
-
-	PQclear(result);
-
-	/*
-	 * Make sure we have pumped libpq dry of results; else it may still be in
-	 * ASYNC_BUSY state, leading to false readings in, eg, get_prompt().
-	 */
-	while ((result = PQgetResult(pset.db)) != NULL && PQstatus(pset.db) != CONNECTION_BAD)
-	{
-		success = false;
-		psql_error("\\copy: unexpected response (%d)\n",
-				   PQresultStatus(result));
-		/* if still in COPY IN state, try to get out of it */
-		if (PQresultStatus(result) == PGRES_COPY_IN)
-			PQputCopyEnd(pset.db, _("trying to exit copy mode"));
-		PQclear(result);
-	}
-
-	if (result != NULL)
-	{
-		PQclear(result);
-	}
-
 	if (options->file != NULL)
 	{
 		if (options->program)

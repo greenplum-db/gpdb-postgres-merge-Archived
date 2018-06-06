@@ -1029,7 +1029,6 @@ listDefaultACLs(const char *pattern)
  * their comments displayed by their own backslash commands. The following
  * types of objects will be displayed: constraint, operator class,
  * operator family, rule, and trigger.
- *
  */
 bool
 objectDescription(const char *pattern, bool showSystem)
@@ -1066,7 +1065,6 @@ objectDescription(const char *pattern, bool showSystem)
 		appendPQExpBuffer(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
 						  "      AND n.nspname <> 'information_schema'\n");
 
-<<<<<<< HEAD
 	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern, false,
 						  "n.nspname", "o.oprname", NULL,
 						  "pg_catalog.pg_operator_is_visible(o.oid)");
@@ -1115,10 +1113,6 @@ objectDescription(const char *pattern, bool showSystem)
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,
-=======
-	processSQLNamePattern(pset.db, &buf, pattern, !showSystem && !pattern,
-						  false, "n.nspname", "pgc.conname", NULL,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	/*
@@ -1443,13 +1437,8 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 					  "SELECT relchecks, relkind, relhasindex, relhasrules, "
 						  "reltriggers <> 0, relhasoids, "
-<<<<<<< HEAD
 						  "%s, reltablespace, %s as relstorage\n"
 						  "FROM pg_catalog.pg_class WHERE oid = '%s'",
-=======
-						  "%s, reltablespace\n"
-						  "FROM pg_catalog.pg_class WHERE oid = '%s';",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						  (verbose ?
 					 "pg_catalog.array_to_string(reloptions, E', ')" : "''"),
 						  /* GPDB Only:  relstorage  */
@@ -1533,7 +1522,6 @@ describeOneTableDetails(const char *schemaname,
 		res = NULL;
 	}
 
-<<<<<<< HEAD
 	if (tableinfo.relstorage == 'a' || tableinfo.relstorage == 'c')
 	{
 		PGresult *result = NULL;
@@ -1562,15 +1550,12 @@ describeOneTableDetails(const char *schemaname,
 		res = NULL;
 	}
 
-	/* Get column info */
-=======
 	/*
 	 * Get column info
 	 *
 	 * You need to modify value of "firstvcol" which will be defined below if
 	 * you are adding column(s) preceding to verbose-only columns.
 	 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
 	appendPQExpBuffer(&buf, "\n  pg_catalog.format_type(a.atttypid, a.atttypmod),"
 					  "\n  (SELECT substring(pg_catalog.pg_get_expr(d.adbin, d.adrelid) for 128)"
@@ -1594,7 +1579,6 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBuffer(&buf, ",\n  NULL AS attfdwoptions");
 	if (verbose)
 	{
-<<<<<<< HEAD
 		appendPQExpBuffer(&buf, ",\n  a.attstorage ");
 		if (tableinfo.relstorage == 'c')
 			if (isGE42 == true)
@@ -1607,21 +1591,7 @@ describeOneTableDetails(const char *schemaname,
 	  appendPQExpBuffer(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
 	  appendPQExpBuffer(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
 	}
-=======
-		appendPQExpBuffer(&buf, ",\n  a.attstorage");
-		appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
 
-		/*
-		 * In 9.0+, we have column comments for: relations, views, composite
-		 * types, and foreign tables (c.f. CommentObject() in comment.c).
-		 */
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-			tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
-			appendPQExpBuffer(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
-	}
-
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum;");
 
@@ -1717,7 +1687,6 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
-<<<<<<< HEAD
 		if(tableinfo.relstorage == 'c')
 		{
 		  headers[cols++] = gettext_noop("Compression Type");
@@ -1725,14 +1694,6 @@ describeOneTableDetails(const char *schemaname,
 		  headers[cols++] = gettext_noop("Block Size");
 		}
 		headers[cols++] = gettext_noop("Description");
-=======
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
-			headers[cols++] = gettext_noop("Stats target");
-		/* Column comments, if the relkind supports this feature. */
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-			tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-			headers[cols++] = gettext_noop("Description");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
@@ -1818,12 +1779,8 @@ describeOneTableDetails(const char *schemaname,
 		/* Storage and Description */
 		if (verbose)
 		{
-<<<<<<< HEAD
 			int			firstvcol = (tableinfo.relkind == 'i' ? 7 : 6);
 			int			firstvcol_offset = 0;
-=======
-			int			firstvcol = 8;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* Storage */
@@ -1834,7 +1791,6 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-<<<<<<< HEAD
 			firstvcol_offset = firstvcol_offset + 1;
 
 			if (tableinfo.relstorage == 'c')
@@ -1895,21 +1851,6 @@ describeOneTableDetails(const char *schemaname,
 			/* Description */
 			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + firstvcol_offset),
 							  false, false);
-=======
-
-			/* Statistics target, if the relkind supports this feature */
-			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
-			{
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
-								  false, false);
-			}
-
-			/* Column comments, if the relkind supports this feature. */
-			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
-				tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2),
-								  false, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -3404,11 +3345,7 @@ describeRoles(const char *pattern, bool verbose)
 		printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
 
 		if (verbose && pset.sversion >= 80200)
-<<<<<<< HEAD
-			printTableAddCell(&cont, PQgetvalue(res, i, 8 + 5 /* Greenplum specific attributes */), false, false);
-=======
-			printTableAddCell(&cont, PQgetvalue(res, i, 9), false, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+			printTableAddCell(&cont, PQgetvalue(res, i, 9 + 5 /* Greenplum specific attributes */), false, false);
 	}
 	termPQExpBuffer(&buf);
 
@@ -4921,8 +4858,6 @@ listUserMappings(const char *pattern, bool verbose)
 	return true;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * \det
  *
@@ -4996,7 +4931,6 @@ listForeignTables(const char *pattern, bool verbose)
 	PQclear(res);
 	return true;
 }
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * \dx
@@ -5166,68 +5100,6 @@ listOneExtensionContents(const char *extname, const char *oid)
 	myopt.nullPrint = NULL;
 	snprintf(title, sizeof(title), _("Objects in extension \"%s\""), extname);
 	myopt.title = title;
-	myopt.translate_header = true;
-
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
-
-	PQclear(res);
-	return true;
-}
-
-
-/*
- * \det
- *
- * Describes foreign tables.
- */
-bool
-listForeignTables(const char *pattern, bool verbose)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-
-	if (pset.sversion < 90100)
-	{
-		fprintf(stderr, _("The server (version %d.%d) does not support foreign tables.\n"),
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
-		return true;
-	}
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf,
-					  "SELECT n.nspname AS \"%s\",\n"
-					  "  c.relname AS \"%s\",\n"
-					  "  s.srvname AS \"%s\"",
-					  gettext_noop("Schema"),
-					  gettext_noop("Table"),
-					  gettext_noop("Server"));
-
-	if (verbose)
-		appendPQExpBuffer(&buf,
-						  ",\n  ft.ftoptions AS \"%s\"",
-						  gettext_noop("Options"));
-
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_foreign_table ft,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_class c,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_namespace n,");
-	appendPQExpBuffer(&buf, "\n pg_catalog.pg_foreign_server s\n");
-	appendPQExpBuffer(&buf, "\nWHERE c.oid = ft.ftrelid");
-	appendPQExpBuffer(&buf, "\nAND s.oid = ft.ftserver\n");
-	appendPQExpBuffer(&buf, "\nAND n.oid = c.relnamespace\n");
-
-	processSQLNamePattern(pset.db, &buf, pattern, true, false,
-						  NULL, "n.nspname", "c.relname", NULL);
-
-	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
-
-	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
-	if (!res)
-		return false;
-
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of foreign tables");
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
