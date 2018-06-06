@@ -34,7 +34,7 @@ typedef struct
 
 /* Callback to process one heap tuple during IndexBuildHeapScan */
 static void
-spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
+spgistBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 					bool *isnull, bool tupleIsAlive, void *state)
 {
 	SpGistBuildState *buildstate = (SpGistBuildState *) state;
@@ -43,7 +43,7 @@ spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 	/* Work in temp context, and reset it after each tuple */
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	spgdoinsert(index, &buildstate->spgstate, &htup->t_self, *values, *isnull);
+	spgdoinsert(index, &buildstate->spgstate, tupleId, *values, *isnull);
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);

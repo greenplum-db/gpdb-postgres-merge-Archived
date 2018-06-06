@@ -1408,7 +1408,7 @@ shareinput_walker(SHAREINPUT_MUTATOR f, Node *node, PlannerGlobal *glob)
 		else if (IsA(node, SubqueryScan))
 		{
 			SubqueryScan *subqscan = (SubqueryScan *) node;
-			List	   *save_rtable;
+			//List	   *save_rtable;
 
 			/* GPDB_92_MERGE_FIXME_AFTER_GPDB_COULD_RUN:
 			 * pg upstream changes to not store subratables in
