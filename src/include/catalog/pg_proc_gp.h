@@ -1057,11 +1057,11 @@ DATA(insert OID = 3591 ( cbrt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "71
 DESCR("cube root");
 
 /* numeric2point("numeric") => complex */
-DATA(insert OID = 3592 ( numeric2point  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "1700" _null_ _null_ _null_ _null_ numeric2complex _null_ _null_ _null_ n a ));
+DATA(insert OID = 7597 ( numeric2point  PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 7198 "1700" _null_ _null_ _null_ _null_ numeric2complex _null_ _null_ _null_ n a ));
 DESCR("(internal) type cast from numeric to complex");
 
 /* complex_lt(complex, complex) => bool */
-DATA(insert OID = 3593 ( complex_lt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "7198 7198" _null_ _null_ _null_ _null_ complex_lt _null_ _null_ _null_ n a ));
+DATA(insert OID = 7598 ( complex_lt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "7198 7198" _null_ _null_ _null_ _null_ complex_lt _null_ _null_ _null_ n a ));
 
 /* complex_gt(complex, complex) => bool */
 DATA(insert OID = 3594 ( complex_gt  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "7198 7198" _null_ _null_ _null_ _null_ complex_gt _null_ _null_ _null_ n a ));
