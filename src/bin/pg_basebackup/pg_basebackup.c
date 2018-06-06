@@ -48,15 +48,11 @@ int			compresslevel = 0;
 bool		includewal = false;
 bool		streamwal = false;
 bool		fastcheckpoint = false;
-<<<<<<< HEAD
 bool		writerecoveryconf = false;
 int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 #define MAX_EXCLUDE 255
 int			num_exclude = 0;
 char	   *excludes[MAX_EXCLUDE];
-=======
-int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Progress counters */
 static uint64 totalsize;
@@ -79,12 +75,9 @@ static int	has_xlogendptr = 0;
 #else
 static volatile LONG has_xlogendptr = 0;
 #endif
-<<<<<<< HEAD
 
 /* Contents of recovery.conf to be generated */
 static PQExpBuffer recoveryconfcontents = NULL;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Function headers */
 static void usage(void);
@@ -97,12 +90,8 @@ static void GenerateRecoveryConf(PGconn *conn);
 static void WriteRecoveryConf(void);
 static void BaseBackup(void);
 
-<<<<<<< HEAD
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 					 bool segment_finished);
-=======
-static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finished);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifdef HAVE_LIBZ
 static const char *
@@ -119,10 +108,6 @@ get_gz_error(gzFile gzf)
 }
 #endif
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void
 usage(void)
 {
@@ -131,7 +116,6 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions controlling the output:\n"));
-<<<<<<< HEAD
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
 	printf(_("  -R, --write-recovery-conf\n"
@@ -141,15 +125,6 @@ usage(void)
 			 "                         include required WAL files with specified method\n"));
 	printf(_("  -z, --gzip             compress tar output\n"));
 	printf(_("  -Z, --compress=0-9     compress tar output with given compression level\n"));
-=======
-	printf(_("  -D, --pgdata=DIRECTORY   receive base backup into directory\n"));
-	printf(_("  -F, --format=p|t         output format (plain (default), tar)\n"));
-	printf(_("  -x, --xlog               include required WAL files in backup (fetch mode)\n"));
-	printf(_("  -X, --xlog-method=fetch|stream\n"
-		   "                           include required WAL files with specified method\n"));
-	printf(_("  -z, --gzip               compress tar output\n"));
-	printf(_("  -Z, --compress=0-9       compress tar output with given compression level\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -c, --checkpoint=fast|spread\n"
 			 "                         set fast or spread checkpointing\n"));
@@ -159,7 +134,6 @@ usage(void)
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
-<<<<<<< HEAD
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
 	printf(_("  -h, --host=HOSTNAME    database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT        database server port number\n"));
@@ -170,15 +144,6 @@ usage(void)
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
 	printf(_("  -E, --exclude          exclude path names\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("  -s, --statusint=INTERVAL time between status packets sent to server (in seconds)\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
-	printf(_("  -p, --port=PORT          database server port number\n"));
-	printf(_("  -U, --username=NAME      connect as specified database user\n"));
-	printf(_("  -w, --no-password        never prompt for password\n"));
-	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 
@@ -191,12 +156,7 @@ usage(void)
  * time to stop.
  */
 static bool
-<<<<<<< HEAD
-reached_end_position(XLogRecPtr segendpos, uint32 timeline,
-					 bool segment_finished)
-=======
 reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 {
 	if (!has_xlogendptr)
 	{
@@ -230,12 +190,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finishe
 
 			if (sscanf(xlogend, "%X/%X", &xlogendptr.xlogid, &xlogendptr.xrecoff) != 2)
 			{
-<<<<<<< HEAD
-				fprintf(stderr,
-				  _("%s: could not parse transaction log location \"%s\"\n"),
-=======
 				fprintf(stderr, _("%s: could not parse xlog end position \"%s\"\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						progname, xlogend);
 				exit(1);
 			}
@@ -294,12 +249,7 @@ LogStreamerMain(logstreamer_param *param)
 {
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
-<<<<<<< HEAD
-						   reached_end_position, standby_message_timeout,
-						   true))
-=======
 						reached_end_position, standby_message_timeout, true))
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -329,12 +279,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	/* Convert the starting position */
 	if (sscanf(startpos, "%X/%X", &param->startptr.xlogid, &param->startptr.xrecoff) != 2)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: could not parse transaction log location \"%s\"\n"),
-=======
 		fprintf(stderr, _("%s: invalid format of xlog location: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname, startpos);
 		disconnect_and_exit(1);
 	}
@@ -345,12 +290,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	/* Create our background pipe */
 	if (pipe(bgpipe) < 0)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: could not create pipe for background process: %s\n"),
-=======
 		fprintf(stderr, _("%s: could not create pipe for background process: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname, strerror(errno));
 		disconnect_and_exit(1);
 	}
@@ -479,12 +419,7 @@ progress_report(int tablespacenum, const char *filename)
 	 * translatable strings.  And we only test for INT64_FORMAT availability
 	 * in snprintf, not fprintf.
 	 */
-<<<<<<< HEAD
-	snprintf(totaldone_str, sizeof(totaldone_str), INT64_FORMAT,
-			 totaldone / 1024);
-=======
 	snprintf(totaldone_str, sizeof(totaldone_str), INT64_FORMAT, totaldone / 1024);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	snprintf(totalsize_str, sizeof(totalsize_str), INT64_FORMAT, totalsize);
 
 	if (verbose)
@@ -499,32 +434,20 @@ progress_report(int tablespacenum, const char *filename)
 					ngettext("%s/%s kB (100%%), %d/%d tablespace %35s",
 							 "%s/%s kB (100%%), %d/%d tablespaces %35s",
 							 tablespacecount),
-<<<<<<< HEAD
-					totaldone_str, totalsize_str,
-					tablespacenum, tablespacecount, "");
-=======
 			totaldone_str, totalsize_str, tablespacenum, tablespacecount, "");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		else
 			fprintf(stderr,
 					ngettext("%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)",
 							 "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)",
 							 tablespacecount),
-<<<<<<< HEAD
-					totaldone_str, totalsize_str, percent,
-					tablespacenum, tablespacecount, filename);
-=======
 					totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount, filename);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else
 		fprintf(stderr,
 				ngettext("%s/%s kB (%d%%), %d/%d tablespace",
 						 "%s/%s kB (%d%%), %d/%d tablespaces",
 						 tablespacecount),
-<<<<<<< HEAD
-				totaldone_str, totalsize_str, percent,
-				tablespacenum, tablespacecount);
+	totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount);
 
 	fprintf(stderr, "\r");
 }
@@ -561,11 +484,6 @@ writeTarData(
 			disconnect_and_exit(1);
 		}
 	}
-=======
-				totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount);
-
-	fprintf(stderr, "\r");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 #ifdef HAVE_LIBZ
@@ -615,12 +533,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				if (gzsetparams(ztarfile, compresslevel,
 								Z_DEFAULT_STRATEGY) != Z_OK)
 				{
-<<<<<<< HEAD
-					fprintf(stderr,
-							_("%s: could not set compression level %d: %s\n"),
-=======
 					fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							progname, compresslevel, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
@@ -636,17 +549,9 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				snprintf(filename, sizeof(filename), "%s/base.tar.gz", basedir);
 				ztarfile = gzopen(filename, "wb");
-<<<<<<< HEAD
-				if (gzsetparams(ztarfile, compresslevel,
-								Z_DEFAULT_STRATEGY) != Z_OK)
-				{
-					fprintf(stderr,
-							_("%s: could not set compression level %d: %s\n"),
-=======
 				if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 				{
 					fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							progname, compresslevel, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
@@ -667,22 +572,11 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 		if (compresslevel != 0)
 		{
-<<<<<<< HEAD
-			snprintf(filename, sizeof(filename), "%s/%s.tar.gz", basedir,
-					 PQgetvalue(res, rownum, 0));
-			ztarfile = gzopen(filename, "wb");
-			if (gzsetparams(ztarfile, compresslevel,
-							Z_DEFAULT_STRATEGY) != Z_OK)
-			{
-				fprintf(stderr,
-						_("%s: could not set compression level %d: %s\n"),
-=======
 			snprintf(filename, sizeof(filename), "%s/%s.tar.gz", basedir, PQgetvalue(res, rownum, 0));
 			ztarfile = gzopen(filename, "wb");
 			if (gzsetparams(ztarfile, compresslevel, Z_DEFAULT_STRATEGY) != Z_OK)
 			{
 				fprintf(stderr, _("%s: could not set compression level %d: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 						progname, compresslevel, get_gz_error(ztarfile));
 				disconnect_and_exit(1);
 			}
@@ -690,12 +584,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		else
 #endif
 		{
-<<<<<<< HEAD
-			snprintf(filename, sizeof(filename), "%s/%s.tar", basedir,
-					 PQgetvalue(res, rownum, 0));
-=======
 			snprintf(filename, sizeof(filename), "%s/%s.tar", basedir, PQgetvalue(res, rownum, 0));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			tarfile = fopen(filename, "wb");
 		}
 	}
@@ -706,12 +595,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		if (!ztarfile)
 		{
 			/* Compression is in use */
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("%s: could not create compressed file \"%s\": %s\n"),
-=======
 			fprintf(stderr, _("%s: could not create compressed file \"%s\": %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, filename, get_gz_error(ztarfile));
 			disconnect_and_exit(1);
 		}
@@ -790,41 +674,12 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				if (gzclose(ztarfile) != 0)
 				{
-<<<<<<< HEAD
 					fprintf(stderr,
 					   _("%s: could not close compressed file \"%s\": %s\n"),
 							progname, filename, get_gz_error(ztarfile));
 					disconnect_and_exit(1);
 				}
 			}
-=======
-					fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
-							progname, filename, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
-				}
-			}
-			else
-#endif
-			{
-				if (fwrite(zerobuf, sizeof(zerobuf), 1, tarfile) != 1)
-				{
-					fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-							progname, filename, strerror(errno));
-					disconnect_and_exit(1);
-				}
-			}
-
-#ifdef HAVE_LIBZ
-			if (ztarfile != NULL)
-			{
-				if (gzclose(ztarfile) != 0)
-				{
-					fprintf(stderr, _("%s: could not close compressed file \"%s\": %s\n"),
-							progname, filename, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
-				}
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			else
 #endif
 			{
@@ -832,12 +687,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				{
 					if (fclose(tarfile) != 0)
 					{
-<<<<<<< HEAD
-						fprintf(stderr,
-								_("%s: could not close file \"%s\": %s\n"),
-=======
 						fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								progname, filename, strerror(errno));
 						disconnect_and_exit(1);
 					}
@@ -855,21 +705,12 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (!writerecoveryconf || !basetablespace)
 		{
-<<<<<<< HEAD
 			/*
 			 * When not writing recovery.conf, or when not working on the base
 			 * tablespace, we never have to look for an existing recovery.conf
 			 * file in the stream.
 			 */
 			WRITE_TAR_DATA(copybuf, r);
-=======
-			if (gzwrite(ztarfile, copybuf, r) != r)
-			{
-				fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
-						progname, filename, get_gz_error(ztarfile));
-				disconnect_and_exit(1);
-			}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 		else
 		{
@@ -889,7 +730,6 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 
 			while (rr > 0)
 			{
-<<<<<<< HEAD
 				if (in_tarhdr)
 				{
 					/*
@@ -977,11 +817,6 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 						filesz = 0;
 					}
 				}
-=======
-				fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-						progname, filename, strerror(errno));
-				disconnect_and_exit(1);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			}
 		}
 		totaldone += r;
@@ -1017,11 +852,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (basetablespace)
 		strlcpy(current_path, basedir, sizeof(current_path));
 	else
-<<<<<<< HEAD
 		strlcpy(current_path, PQgetvalue(res, rownum, 1), sizeof(current_path));
-=======
-		strcpy(current_path, PQgetvalue(res, rownum, 1));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * Get the COPY data
@@ -1102,12 +933,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 			/*
 			 * First part of header is zero terminated filename
 			 */
-<<<<<<< HEAD
-			snprintf(filename, sizeof(filename), "%s/%s", current_path,
-					 copybuf);
-=======
 			snprintf(filename, sizeof(filename), "%s/%s", current_path, copybuf);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			if (filename[strlen(filename) - 1] == '/')
 			{
 				/*
@@ -1136,12 +962,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					}
 #ifndef WIN32
 					if (chmod(filename, (mode_t) filemode))
-<<<<<<< HEAD
-						fprintf(stderr,
-								_("%s: could not set permissions on directory \"%s\": %s\n"),
-=======
 						fprintf(stderr, _("%s: could not set permissions on directory \"%s\": %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								progname, filename, strerror(errno));
 #endif
 				}
@@ -1253,7 +1074,6 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 		WriteRecoveryConf();
 }
 
-<<<<<<< HEAD
 /*
  * Escape a parameter value so that it can be used as part of a libpq
  * connection string, e.g. in:
@@ -1477,8 +1297,6 @@ build_exclude_list(char **exclude_list, int num)
 
 	return buf.data;
 }
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 static void
 BaseBackup(void)
@@ -1502,39 +1320,26 @@ BaseBackup(void)
 		exit(1);
 
 	/*
-<<<<<<< HEAD
 	 * Build contents of recovery.conf if requested
 	 */
 	if (writerecoveryconf)
 		GenerateRecoveryConf(conn);
 
 	/*
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * Run IDENTIFY_SYSTEM so we can get the timeline
 	 */
 	res = PQexec(conn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-<<<<<<< HEAD
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
 				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
-=======
-		fprintf(stderr, _("%s: could not identify system: %s"),
-				progname, PQerrorMessage(conn));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		disconnect_and_exit(1);
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) != 3)
 	{
-<<<<<<< HEAD
 		fprintf(stderr,
 				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"),
 				progname, PQntuples(res), PQnfields(res), 1, 3);
-=======
-		fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
-				progname, PQntuples(res), PQnfields(res));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		disconnect_and_exit(1);
 	}
 	sysidentifier = strdup(PQgetvalue(res, 0, 0));
@@ -1632,12 +1437,7 @@ BaseBackup(void)
 	 */
 	if (format == 't' && strcmp(basedir, "-") == 0 && PQntuples(res) > 1)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: can only write single tablespace to stdout, database has %d\n"),
-=======
 		fprintf(stderr, _("%s: can only write single tablespace to stdout, database has %d\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname, PQntuples(res));
 		disconnect_and_exit(1);
 	}
@@ -1678,12 +1478,7 @@ BaseBackup(void)
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-		 _("%s: could not get transaction log end position from server: %s"),
-=======
 		fprintf(stderr, _("%s: could not get WAL end position from server: %s"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
@@ -1717,22 +1512,12 @@ BaseBackup(void)
 #endif
 
 		if (verbose)
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("%s: waiting for background process to finish streaming...\n"), progname);
-=======
 			fprintf(stderr, _("%s: waiting for background process to finish streaming...\n"), progname);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #ifndef WIN32
 		if (write(bgpipe[1], xlogend, strlen(xlogend)) != strlen(xlogend))
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("%s: could not send command to background pipe: %s\n"),
-=======
 			fprintf(stderr, _("%s: could not send command to background pipe: %s\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, strerror(errno));
 			disconnect_and_exit(1);
 		}
@@ -1814,12 +1599,8 @@ BaseBackup(void)
 #endif
 	}
 
-<<<<<<< HEAD
 	/* Free the recovery.conf contents */
 	destroyPQExpBuffer(recoveryconfcontents);
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/*
 	 * End of copy data. Final result is already checked inside the loop.
 	 */
@@ -1852,11 +1633,7 @@ main(int argc, char **argv)
 		{"username", required_argument, NULL, 'U'},
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
-<<<<<<< HEAD
 		{"status-interval", required_argument, NULL, 's'},
-=======
-		{"statusint", required_argument, NULL, 's'},
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{"verbose", no_argument, NULL, 'v'},
 		{"progress", no_argument, NULL, 'P'},
 		{"exclude", required_argument, NULL, 'E'},
@@ -1884,12 +1661,8 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
 	num_exclude = 0;
 	while ((c = getopt_long(argc, argv, "D:F:RxX:l:zZ:d:c:h:p:U:s:wWvPE:",
-=======
-	while ((c = getopt_long(argc, argv, "D:F:xX:l:zZ:c:h:p:U:s:wWvP",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -1916,12 +1689,7 @@ main(int argc, char **argv)
 			case 'x':
 				if (includewal)
 				{
-<<<<<<< HEAD
-					fprintf(stderr,
-					 _("%s: cannot specify both --xlog and --xlog-method\n"),
-=======
 					fprintf(stderr, _("%s: cannot specify both --xlog and --xlog-method\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							progname);
 					exit(1);
 				}
@@ -1932,12 +1700,7 @@ main(int argc, char **argv)
 			case 'X':
 				if (includewal)
 				{
-<<<<<<< HEAD
-					fprintf(stderr,
-					 _("%s: cannot specify both --xlog and --xlog-method\n"),
-=======
 					fprintf(stderr, _("%s: cannot specify both --xlog and --xlog-method\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							progname);
 					exit(1);
 				}
@@ -1951,12 +1714,7 @@ main(int argc, char **argv)
 					streamwal = true;
 				else
 				{
-<<<<<<< HEAD
-					fprintf(stderr,
-							_("%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"),
-=======
 					fprintf(stderr, _("%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream\"\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 							progname, optarg);
 					exit(1);
 				}
@@ -2086,11 +1844,7 @@ main(int argc, char **argv)
 	if (format != 'p' && streamwal)
 	{
 		fprintf(stderr,
-<<<<<<< HEAD
-				_("%s: WAL streaming can only be used in plain mode\n"),
-=======
 				_("%s: wal streaming can only be used in plain mode\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
