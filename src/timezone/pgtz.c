@@ -316,6 +316,10 @@ pg_tzset(const char *name)
 	return &tzp->tz;
 }
 
+#if 0
+/*
+ * GPDB_92_MERGE_FIXME: Cannot find where this function is used.
+ */
 /*
  * Load a fixed-GMT-offset timezone.
  * This is used for SQL-spec SET TIME ZONE INTERVAL 'foo' cases.
@@ -358,6 +362,7 @@ pg_tzset_offset(long gmtoffset)
 
 	return pg_tzset(tzname);
 }
+#endif
 
 /*
  * Initialize timezone library

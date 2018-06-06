@@ -3071,7 +3071,7 @@ timestamptz_to_point(TimestampTz in, authPoint *out)
 	/* from timestamptz_to_char */
 	struct	pg_tm 	tm;
 	fsec_t  fsec;   
-	char	*tzn;
+	const char	*tzn;
 	int 	tzp, thisdate;
 	if (timestamp2tm(in, &tzp, &tm, &fsec, &tzn, NULL) != 0)
 		ereport(FATAL,

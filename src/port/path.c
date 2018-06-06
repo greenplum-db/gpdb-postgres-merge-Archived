@@ -105,11 +105,18 @@ skip_drive(const char *path)
  *	has_drive_prefix
  *
  * Return true if the given pathname has a drive prefix.
+ *
+ * GPDB_92_MERGE_FIXEME: To keep compiler happy, return
+ * false directly if not WIN32.
  */
 bool
 has_drive_prefix(const char *path)
 {
+#ifdef WIN32
 	return skip_drive(path) != path;
+#else
+	return false;
+#endif
 }
 
 /*
