@@ -112,7 +112,8 @@ static void ExplainSubPlans(List *plans, List *ancestors,
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
 static void ExplainPropertyStringInfo(const char *qlabel, ExplainState *es,
-									  const char *fmt,...);
+									  const char *fmt,...)
+									  __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 static void ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es);
 static void ExplainCloseGroup(const char *objtype, const char *labelname,
