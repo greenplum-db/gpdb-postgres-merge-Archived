@@ -58,13 +58,11 @@ extern bool processSQLNamePattern(PGconn *conn, PQExpBuffer buf,
 					  bool have_where, bool force_escape,
 					  const char *schemavar, const char *namevar,
 					  const char *altnamevar, const char *visibilityrule);
-<<<<<<< HEAD
 /* GPDB additions */
 extern char *escape_backslashes(const char *src, bool quotes_too);
 extern char *escape_fmtopts_string(const char *src);
 extern char *custom_fmtopts_string(const char *src);
 
-=======
 extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
 					 uint32 objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
@@ -81,6 +79,5 @@ exit_horribly(const char *modulename, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
 extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
 extern void exit_nicely(int code) __attribute__((noreturn));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 #endif   /* DUMPUTILS_H */
