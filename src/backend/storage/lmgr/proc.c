@@ -295,6 +295,13 @@ InitProcGlobal(void)
 	/* Create ProcStructLock spinlock, too */
 	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
 	SpinLockInit(ProcStructLock);
+
+	/*
+	 * GPDB: numFreeProcs is used to keep track of the
+	 * number of free PGPROC entries in freeProcs list,
+	 * and will accelerate HaveNFreeProcs().
+	 */
+	ProcGlobal->numFreeProcs = MaxConnections;
 }
 
 /*
@@ -351,9 +358,17 @@ InitProcess(void)
 	if (MyProc != NULL)
 	{
 		if (IsAnyAutoVacuumProcess())
+		{
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
+		}
 		else
+		{
 			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
+
+			procglobal->numFreeProcs--;     /* we removed an entry from the list. */
+			Assert(procglobal->numFreeProcs >= 0);
+		}
+
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -957,9 +972,10 @@ ProcKill(int code, Datum arg)
 	{
 		proc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
 		procglobal->freeProcs = proc;
+
+		procglobal->numFreeProcs++;	/* we added an entry */
 	}
 
-	procglobal->numFreeProcs++;	/* we added an entry */
 
 	/* Update shared estimate of spins_per_delay */
 	update_spins_per_delay();

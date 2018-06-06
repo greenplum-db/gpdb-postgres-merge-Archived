@@ -314,7 +314,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	AutoVacuumShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();
-	AutoVacuumShmemInit();
 	SeqServerShmemInit();
 
 #ifdef FAULT_INJECTOR

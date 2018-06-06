@@ -1429,7 +1429,7 @@ RecordTransactionCommit(void)
 			 * GPDB_92_MERGE_FIXME_AS_SOON_AS_IT_COMPILES: Can we
 			 * handle distributed transactions in this way too?
 			 */
-			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT, rdata);
+			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT, rdata);
 		}
 	}
 
