@@ -601,12 +601,8 @@ buildACLCommands(const char *name, const char *subname,
 		if (!parseAclItem(aclitems[i], type, name, subname, remoteVersion,
 						  grantee, grantor, privs, privswgo))
 		{
-<<<<<<< HEAD
 			if (aclitems)
 				free(aclitems);
-=======
-			free(aclitems);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			return false;
 		}
 
@@ -810,12 +806,8 @@ parseAclItem(const char *item, const char *type,
 		slpos = copyAclUserName(grantor, slpos);
 		if (*slpos != '\0')
 		{
-<<<<<<< HEAD
 			if (buf)
 				free(buf);
-=======
-			free(buf);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			return false;
 		}
 	}
@@ -1203,7 +1195,6 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 }
 
 /*
-<<<<<<< HEAD
  * Escape any backslashes in given string (from initdb.c)
  */
 char *
@@ -1292,63 +1283,65 @@ escape_fmtopts_string(const char *src)
 char *
 custom_fmtopts_string(const char *src)
 {
-		int			len = src ? strlen(src) : 0;
-		char	   *result = calloc(1, len * 2 + 2);
-		char	   *srcdup = src ? strdup(src) : NULL;
-		char	   *srcdup_start = srcdup;
-		char       *find_res = NULL;
-		int        last = 0;
+	int len = src ? strlen(src) : 0;
+	char *result = calloc(1, len * 2 + 2);
+	char *srcdup = src ? strdup(src) : NULL;
+	char *srcdup_start = srcdup;
+	char *find_res = NULL;
+	int last = 0;
 
-		if (!srcdup || !result)
+	if (!srcdup || !result)
+	{
+		if (result)
+			free(result);
+		if (srcdup)
+			free(srcdup);
+		return NULL;
+	}
+
+	while (srcdup)
+	{
+		/* find first word (a) */
+		find_res = strchr(srcdup, ' ');
+		if (!find_res)
+			break;
+		strncat(result, srcdup, (find_res - srcdup));
+		/* skip space */
+		srcdup = find_res + 1;
+		/* remove E if E' */
+		if ((strlen(srcdup) > 2) && (srcdup[0] == 'E') && (srcdup[1] == '\''))
+			srcdup++;
+		/* add " = " */
+		strncat(result, " = ", 3);
+		/* find second word (b) until second '
+		   find \' combinations and ignore them */
+		find_res = strchr(srcdup + 1, '\'');
+		while (find_res && (*(find_res - 1) == '\\') /* ignore \' */)
 		{
-			if (result)
-				free(result);
-			if (srcdup)
-				free(srcdup);
-			return NULL;
+			find_res = strchr(find_res + 1, '\'');
 		}
-
-		while (srcdup)
+		if (!find_res)
+			break;
+		strncat(result, srcdup, (find_res - srcdup + 1));
+		srcdup = find_res + 1;
+		/* skip space and add ',' */
+		if (srcdup && srcdup[0] == ' ')
 		{
-			/* find first word (a) */
-			find_res = strchr(srcdup, ' ');
-			if (!find_res)
-				break;
-			strncat(result, srcdup, (find_res - srcdup));
-			/* skip space */
-			srcdup = find_res + 1;
-			/* remove E if E' */
-			if((strlen(srcdup) > 2) && (srcdup[0] == 'E') && (srcdup[1] == '\''))
-				srcdup++;
-			/* add " = " */
-			strncat(result, " = ", 3);
-			/* find second word (b) until second '
-			   find \' combinations and ignore them */
-			find_res = strchr(srcdup + 1, '\'');
-			while (find_res && (*(find_res - 1) == '\\') /* ignore \' */)
-			{
-				find_res = strchr(find_res + 1, '\'');
-			}
-			if (!find_res)
-				break;
-			strncat(result, srcdup, (find_res - srcdup + 1));
-			srcdup = find_res + 1;
-			/* skip space and add ',' */
-			if (srcdup && srcdup[0] == ' ')
-			{
-				srcdup++;
-				strncat(result, ",", 1);
-			}
+			srcdup++;
+			strncat(result, ",", 1);
 		}
+	}
 
-		/* fix string - remove trailing ',' or '=' */
-		last = strlen(result)-1;
-		if(result[last] == ',' || result[last] == '=')
-			result[last]='\0';
+	/* fix string - remove trailing ',' or '=' */
+	last = strlen(result) - 1;
+	if (result[last] == ',' || result[last] == '=')
+		result[last] = '\0';
 
-		free(srcdup_start);
-		return result;
-=======
+	free(srcdup_start);
+	return result;
+}
+
+/*
  * buildShSecLabelQuery
  *
  * Build a query to retrieve security labels for a shared object.
@@ -1503,5 +1496,4 @@ exit_nicely(int code)
 #endif
 
 	exit(code);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
