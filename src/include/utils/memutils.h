@@ -236,7 +236,8 @@ __declspec(noreturn)
 extern void MemoryContextError(int errorcode, MemoryContext context,
                                const char *sfile, int sline,
                                const char *fmt, ...)
-                              __attribute__((__noreturn__));
+                              __attribute__((__noreturn__))
+                              __attribute__((format(PG_PRINTF_ATTRIBUTE, 5, 6)));
 
 /*
  * This routine handles the context-type-independent part of memory

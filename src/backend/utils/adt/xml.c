@@ -89,7 +89,7 @@ static StringInfo xml_err_buf = NULL;
 
 static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 				  xmlParserCtxtPtr ctxt);
-static void xml_errorHandler(void *ctxt, const char *msg,...);
+static void xml_errorHandler(void *ctxt, const char *msg,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
 
