@@ -138,7 +138,6 @@ KRAST   Asia/Krasnoyarsk  # Krasnoyarsk Summer Time (obsolete)
 KRAT    Asia/Krasnoyarsk  # Krasnoyarsk Time (obsolete)
 KST     Asia/Pyongyang    # Korean Standard Time
                  #     (Asia/Pyongyang)
-<<<<<<< HEAD
 KST     32400    # Korean Standard Time
                  #     (Asia/Seoul)
 LKT     Asia/Colombo  # Lanka Time (obsolete)
@@ -155,36 +154,6 @@ ORAT    Asia/Oral  # Oral Time (obsolete)
 PETST   Asia/Kamchatka  # Petropavlovsk-Kamchatski Summer Time (obsolete)
 PETT    Asia/Kamchatka  # Petropavlovsk-Kamchatski Time (obsolete)
 PHT     28800    # Philippine Time (obsolete)
-=======
-LKT     21600    # Lanka Time
-                 #     (Asia/Colombo)
-MAGST   43200 D  # Magadan Summer Time
-                 #     (Asia/Magadan)
-MAGT    39600    # Magadan Time
-                 #     (Asia/Magadan)
-MMT     23400    # Myanmar Time
-                 #     (Asia/Rangoon)
-MYT     28800    # Malaysia Time
-                 #     (Asia/Kuala_Lumpur)
-                 #     (Asia/Kuching)
-NOVST   25200 D  # Novosibirsk Summer Time
-                 #     (Asia/Novosibirsk)
-NOVT    21600    # Novosibirsk Time
-                 #     (Asia/Novosibirsk)
-NPT     20700    # Nepal Time
-                 #     (Asia/Katmandu)
-OMSST   25200 D  # Omsk Summer Time
-                 #     (Asia/Omsk)
-OMST    21600    # Omsk Time
-                 #     (Asia/Omsk)
-ORAT    18000    # Oral Time
-                 #     (Asia/Oral)
-PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
-                 #     (Asia/Kamchatka)
-PETT    43200    # Petropavlovsk-Kamchatski Time
-                 #     (Asia/Kamchatka)
-PHT     28800    # Philippine Time (not in zic)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time

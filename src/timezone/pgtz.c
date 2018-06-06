@@ -314,7 +314,8 @@ pg_tzset(const char *name)
 
 #if 0
 /*
- * GPDB_92_MERGE_FIXME: Cannot find where this function is used.
+ * GPDB_94_MERGE_FIXME: uncomment this code after merging in
+ * 631dc390f49909a5c8ebd6002cfb2bcee5415a9d from 9.4 dev
  */
 /*
  * Load a fixed-GMT-offset timezone.
