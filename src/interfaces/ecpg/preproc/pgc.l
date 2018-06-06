@@ -1227,11 +1227,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 
 					}
 				}
-<<<<<<< HEAD
 <INITIAL>{other}|\n     	{ mmerror(PARSE_ERROR, ET_FATAL, "internal error: unreachable state; please report this to <bugs@greenplum.org>"); }
-=======
-<INITIAL>{other}|\n	{ mmerror(PARSE_ERROR, ET_FATAL, "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"); }
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 %%
 void
 lex_init(void)

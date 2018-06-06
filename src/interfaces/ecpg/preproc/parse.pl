@@ -42,18 +42,10 @@ my %replace_token = (
 );
 
 # or in the block
-<<<<<<< HEAD
-$replace_string{'WITH_CASCADED'} = 'with cascaded';
-$replace_string{'WITH_LOCAL'} = 'with local';
-$replace_string{'WITH_CHECK'} = 'with check';
-$replace_string{'WITH_TIME'} = 'with time';
-$replace_string{'NULLS_FIRST'} = 'nulls first';
-$replace_string{'NULLS_LAST'} = 'nulls last';
-$replace_string{'TYPECAST'} = '::';
-$replace_string{'DOT_DOT'} = '..';
-$replace_string{'COLON_EQUALS'} = ':=';
-=======
 my %replace_string = (
+	'WITH_CASCADED'    => 'with cascaded',
+	'WITH_LOCAL'    => 'with local',
+	'WITH_CHECK'    => 'with check',
 	'WITH_TIME'    => 'with time',
 	'NULLS_FIRST'  => 'nulls first',
 	'NULLS_LAST'   => 'nulls last',
@@ -61,7 +53,6 @@ my %replace_string = (
 	'DOT_DOT'      => '..',
 	'COLON_EQUALS' => ':=',
 );
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types
@@ -82,153 +73,6 @@ my %replace_types = (
 
 # these replace_line commands excise certain keywords from the core keyword
 # lists.  Be sure to account for these in ColLabel and related productions.
-<<<<<<< HEAD
-$replace_line{'unreserved_keywordCONNECTION'} = 'ignore';
-$replace_line{'unreserved_keywordCURRENT_P'} = 'ignore';
-$replace_line{'unreserved_keywordDAY_P'} = 'ignore';
-$replace_line{'unreserved_keywordHOUR_P'} = 'ignore';
-$replace_line{'unreserved_keywordINPUT_P'} = 'ignore';
-$replace_line{'unreserved_keywordMINUTE_P'} = 'ignore';
-$replace_line{'unreserved_keywordMONTH_P'} = 'ignore';
-$replace_line{'unreserved_keywordSECOND_P'} = 'ignore';
-$replace_line{'unreserved_keywordYEAR_P'} = 'ignore';
-$replace_line{'col_name_keywordCHAR_P'} = 'ignore';
-$replace_line{'col_name_keywordINT_P'} = 'ignore';
-$replace_line{'col_name_keywordVALUES'} = 'ignore';
-$replace_line{'reserved_keywordTO'} = 'ignore';
-$replace_line{'reserved_keywordUNION'} = 'ignore';
-
-# some other production rules have to be ignored or replaced
-$replace_line{'fetch_argsFORWARDopt_from_incursor_name'} = 'ignore';
-$replace_line{'fetch_argsBACKWARDopt_from_incursor_name'} = 'ignore';
-$replace_line{"opt_array_boundsopt_array_bounds'['Iconst']'"} = 'ignore';
-$replace_line{'VariableShowStmtSHOWvar_name'} = 'SHOW var_name ecpg_into';
-$replace_line{'VariableShowStmtSHOWTIMEZONE'} = 'SHOW TIME ZONE ecpg_into';
-$replace_line{'VariableShowStmtSHOWTRANSACTIONISOLATIONLEVEL'} = 'SHOW TRANSACTION ISOLATION LEVEL ecpg_into';
-$replace_line{'VariableShowStmtSHOWSESSIONAUTHORIZATION'} = 'SHOW SESSION AUTHORIZATION ecpg_into';
-$replace_line{'returning_clauseRETURNINGtarget_list'} = 'RETURNING target_list ecpg_into';
-$replace_line{'ExecuteStmtEXECUTEnameexecute_param_clause'} = 'EXECUTE prepared_name execute_param_clause execute_rest';
-$replace_line{'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause'} = 'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause';
-$replace_line{'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt'} = 'PREPARE prepared_name prep_type_clause AS PreparableStmt';
-$replace_line{'var_nameColId'} = 'ECPGColId';
-
-line: while (<>) {
-    chomp;	# strip record separator
-    @Fld = split(' ', $_, -1);
-
-    # Dump the action for a rule -
-    # mode indicates if we are processing the 'stmt:' rule (mode==0 means normal,  mode==1 means stmt:)
-    # flds are the fields to use. These may start with a '$' - in which case they are the result of a previous non-terminal
-    #                             if they dont start with a '$' then they are token name
-    #
-    # len is the number of fields in flds...
-    # leadin is the padding to apply at the beginning (just use for formatting)
-
-    if (/ERRCODE_FEATURE_NOT_SUPPORTED/) {
-	$feature_not_supported = 1;
-	next line;
-    }
-
-    if (/^%%/) {
-	$tokenmode = 2;
-	$copymode = 'on';
-	$yaccmode++;
-	$infield = 0;
-	#$fieldcount = 0;
-    }
-
-    $S = $_;
-    $prec = 0;
-    # Make sure any braces are split
-    $s = '{', $S =~ s/$s/ { /g;
-    $s = '}', $S =~ s/$s/ } /g;
-    # Any comments are split
-    $s = '[/][*]', $S =~ s#$s# /* #g;
-    $s = '[*][/]', $S =~ s#$s# */ #g;
-
-    # Now split the line into individual fields
-    $n = (@arr = split(' ', $S));
-
-    if ($arr[1] eq '%token' && $tokenmode == 0) {
-	$tokenmode = 1;
-	&include_stuff('tokens', 'ecpg.tokens', '', 1, 0);
-	#$type = 1;
-    }
-    elsif ($arr[1] eq '%type' && $header_included == 0) {
-	&include_stuff('header', 'ecpg.header', '', 1, 0);
-	&include_stuff('ecpgtype', 'ecpg.type', '', 1, 0);
-	$header_included = 1;
-    }
-
-    if ($tokenmode == 1) {
-	$str = '';
-	for ($a = 1; $a <= $n; $a++) {
-	    if ($arr[$a] eq '/*') {
-		$comment++;
-		next;
-	    }
-	    if ($arr[$a] eq '*/') {
-		$comment--;
-		next;
-	    }
-	    if ($comment) {
-		next;
-	    }
-	    if (substr($arr[$a], 1, 1) eq '<') {
-		next;
-		# its a type
-	    }
-	    $tokens{$arr[$a]} = 1;
-
-	    $str = $str . ' ' . $arr[$a];
-	    if ($arr[$a] eq 'IDENT' && $arr[$a - 1] eq '%nonassoc') {
-	    # add two more tokens to the list
-		$str = $str . "\n%nonassoc CSTRING\n%nonassoc UIDENT";
-	    }
-	}
-	&add_to_buffer('orig_tokens', $str);
-	next line;
-    }
-
-    # Dont worry about anything if we're not in the right section of gram.y
-    if ($yaccmode != 1) {
-	next line;
-    }
-
-    # Go through each field in turn
-    for ($fieldIndexer = 1; $fieldIndexer <= $n; $fieldIndexer++) {
-	if ($arr[$fieldIndexer] eq '*/' && $comment) {
-	    $comment = 0;
-	    next;
-	}
-	elsif ($comment) {
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '/*') {
-	    # start of a multiline comment
-	    $comment = 1;
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '//') {
-	    next line;
-	}
-	elsif ($arr[$fieldIndexer] eq '}') {
-	    $brace_indent--;
-	    next;
-	}
-	elsif ($arr[$fieldIndexer] eq '{') {
-	    $brace_indent++;
-	    next;
-	}
-
-	if ($brace_indent > 0) {
-	    next;
-	}
-	if ($arr[$fieldIndexer] eq ';') {
-	    if ($copymode eq 'on') {
-		if ($infield && $includetype eq '') {
-		    &dump_line($stmt_mode, $fields, $field_count);
-=======
 my %replace_line = (
 	'unreserved_keywordCONNECTION' => 'ignore',
 	'unreserved_keywordCURRENT_P'  => 'ignore',
@@ -285,7 +129,6 @@ sub main
 		{
 			$feature_not_supported = 1;
 			next line;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		chomp; 
@@ -599,43 +442,9 @@ sub include_addon
 	
 	push( @{ $buff{$buffer} }, @{ $rec->{lines} } );
 
-<<<<<<< HEAD
-		while (1) {
-		    if ($z >= $len - 1 || substr($flds{$z + 1}, 1, 1) eq "\$") {
-			# We're at the end...
-			$flds_new{$cnt++} = "mm_strdup(\"" . $str . "\")";
-			last;
-		    }
-		    $z++;
-		    $str = $str . ' ' . $flds{$z};
-		}
-	    }
-
-	    # So - how many fields did we end up with ?
-	    if ($cnt == 1) {
-		# Straight assignement
-		$str = " \$\$ = " . $flds_new{0} . ';';
-		&add_to_buffer('rules', $str);
-	    }
-	    else {
-		# Need to concatenate the results to form
-		# our final string
-		$str = " \$\$ = cat_str(" . $cnt;
-
-		for ($z = 0; $z < $cnt; $z++) {
-		    $str = $str . ',' . $flds_new{$z};
-		}
-		$str = $str . ');';
-		&add_to_buffer('rules', $str);
-	    }
-	    #if ($literal_mode == 0) {
-		&add_to_buffer('rules', '}');
-	    #}
-=======
 	if ( $rec->{type} eq 'addon' ) 
 	{
 		dump_fields( $stmt_mode, $fields, '' );
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 
 

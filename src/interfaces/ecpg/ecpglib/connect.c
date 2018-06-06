@@ -267,12 +267,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-<<<<<<< HEAD
-	int i;
-=======
 	int			i,
 				connect_params = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,
