@@ -2053,7 +2053,13 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 		if (!locallock || locallock->nLocks <= 0)
 			continue;
 
-		locallock->lock->holdTillEndXact = true;
+		/*
+		 * GPDB_92_MERGE_FIXME:
+		 * If the lock is taken via the fast-path, locallock->lock would
+		 * be NULL.
+		 * This code should be revised to make GDD work under fast path.
+		 */
+//		locallock->lock->holdTillEndXact = true;
 	}
 }
 
