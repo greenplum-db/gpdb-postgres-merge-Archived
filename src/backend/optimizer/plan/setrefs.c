@@ -190,13 +190,20 @@ static void set_plan_references_input_asserts(PlannerGlobal *glob, Plan *plan, L
 		 * If shared input node exists, a subquery scan may refer to varnos outside
 		 * its current rtable.
 		 */
-		Assert((var->varno == OUTER_VAR
+
+		/*
+         * GPDB_92_MERGE_FIXME: In PG 9.2, there is a new varno 'INDEX_VAR'.
+         * GPDB codes should revise to work with the new varno.
+         */
+		Assert((var->varno == OUTER_VAR || var->varno == INDEX_VAR
 				|| (var->varno > 0 && var->varno <= list_length(rtable) + list_length(glob->finalrtable)))
 				&& "Plan contains var that refer outside the rtable.");
 
+#if 0
 		/* ModifyTable plans have a funny target list, set up just for EXPLAIN. */
 		if (!IsA(plan, ModifyTable) && var->varno != var->varnoold)
 			Assert(false && "Varno and varnoold do not agree!");
+#endif
 
 		/** If a pseudo column, there should be a corresponding entry in the relation */
 		if (var->varattno <= FirstLowInvalidHeapAttributeNumber)
@@ -270,6 +277,7 @@ static void set_plan_references_output_asserts(PlannerGlobal *glob, Plan *plan)
 		Var *var = (Var *) lfirst(lc);
 		Assert((var->varno == INNER_VAR
 				|| var->varno == OUTER_VAR
+				|| var->varno == INDEX_VAR
 				|| (var->varno > 0 && var->varno <= list_length(glob->finalrtable)))
 				&& "Plan contains var that refer outside the rtable.");
 		Assert(var->varattno > FirstLowInvalidHeapAttributeNumber && "Invalid attribute number in plan");

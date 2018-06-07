@@ -666,12 +666,6 @@ InitAuxiliaryProcess(void)
 	OwnLatch(&MyProc->procLatch);
 
 	/*
-	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
-	 * Note that there's no particular need to do ResetLatch here.
-	 */
-	OwnLatch(&MyProc->procLatch);
-
-	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
 	 * be careful and reinitialize its value here.	(This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)

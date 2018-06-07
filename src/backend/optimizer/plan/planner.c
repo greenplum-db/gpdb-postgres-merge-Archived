@@ -1328,11 +1328,18 @@ grouping_planner_output_asserts(PlannerInfo *root, Plan *plan)
 	{
 		Var		   *var = (Var *) lfirst(lc);
 
+		/*
+		 * GPDB_92_MERGE_FIXME: In PG 9.2, there is a new varno 'INDEX_VAR'.
+		 * GPDB codes should revise to work with the new varno.
+		 */
 		Assert(var->varlevelsup == 0 && "Plan contains vars that refer to outer plan.");
-		Assert((var->varno == OUTER_VAR
+		Assert((var->varno == OUTER_VAR || var->varno == INDEX_VAR
 		|| (var->varno > 0 && var->varno <= list_length(root->parse->rtable)))
 			   && "Plan contains var that refer outside the rtable.");
+
+#if 0
 		Assert(var->varno == var->varnoold && "Varno and varnoold do not agree!");
+#endif
 
 		/** If a pseudo column, there should be a corresponding entry in the relation */
 		if (var->varattno <= FirstLowInvalidHeapAttributeNumber)
