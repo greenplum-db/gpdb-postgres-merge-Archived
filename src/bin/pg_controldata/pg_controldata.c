@@ -245,12 +245,9 @@ main(int argc, char *argv[])
 	printf(_("Backup start location:                %X/%X\n"),
 		   ControlFile.backupStartPoint.xlogid,
 		   ControlFile.backupStartPoint.xrecoff);
-<<<<<<< HEAD
-=======
 	printf(_("Backup end location:                  %X/%X\n"),
 		   ControlFile.backupEndPoint.xlogid,
 		   ControlFile.backupEndPoint.xrecoff);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	printf(_("End-of-backup record required:        %s\n"),
 		   ControlFile.backupEndRequired ? _("yes") : _("no"));
 	printf(_("Current wal_level setting:            %s\n"),

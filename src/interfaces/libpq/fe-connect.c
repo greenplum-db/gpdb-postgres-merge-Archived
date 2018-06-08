@@ -283,9 +283,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"SSL-Compression", "", 1,
 	offsetof(struct pg_conn, sslcompression)},
 
-	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
-	"SSL-Compression", "", 1},
-
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 		"SSL-Client-Cert", "", 64,
 	offsetof(struct pg_conn, sslcert)},

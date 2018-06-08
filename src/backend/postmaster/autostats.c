@@ -201,16 +201,16 @@ autostats_get_cmdtype(QueryDesc *queryDesc, AutoStatsCmdType * pcmdType, Oid *pr
 		 * 'SELECT INTO' is treated as a CTAS utility in PG 9.2
 		 * and for utility, 'queryDesc->plannedstmt' is NULL.
 		 */
-#if 0
 		case CMD_SELECT:
+#if 0
 			if (stmt->intoClause != NULL)
 			{
 				/* CTAS */
 				relationOid = GetIntoRelOid(queryDesc);
 				cmdType = AUTOSTATS_CMDTYPE_CTAS;
 			}
-			break;
 #endif
+			break;
 
 		case CMD_INSERT:
 		case CMD_UPDATE:

@@ -78,7 +78,14 @@ InitializeLatchSupport(void)
 {
 	int			pipefd[2];
 
+	/*
+	 * GPDB_92_MERGE_FIXME:
+	 * Fix latch related codes later.
+	 *
+	 */
+#if 0
 	Assert(selfpipe_readfd == -1);
+#endif
 
 	/*
 	 * Set up the self-pipe that allows a signal handler to wake up the
