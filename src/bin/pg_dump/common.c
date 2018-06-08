@@ -45,27 +45,12 @@ static int	numCatalogIds = 0;
  * arrays themselves would be simpler, but it doesn't work because pg_dump.c
  * may have already established pointers between items.)
  */
-<<<<<<< HEAD
-=======
-static TableInfo *tblinfo;
-static TypeInfo *typinfo;
-static FuncInfo *funinfo;
-static OprInfo *oprinfo;
-static NamespaceInfo *nspinfo;
-static int	numTables;
-static int	numTypes;
-static int	numFuncs;
-static int	numOperators;
-static int	numCollations;
-static int	numNamespaces;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
-<<<<<<< HEAD
 static DumpableObject **extinfoindex;
 static int	numTables;
 static int	numTypes;
@@ -75,8 +60,6 @@ static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
 static int  numTypeStorageOptions;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* This is an array of object identities, not actual DumpableObjects */
 static ExtensionMemberId *extmembers;
@@ -109,11 +92,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
-<<<<<<< HEAD
-=======
-	CollInfo   *collinfo;
-	int			numExtensions;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -122,7 +100,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
-	int			numExtProtocols;
 	int			numTSParsers;
 	int			numTSTemplates;
 	int			numTSDicts;
@@ -131,7 +108,9 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numForeignServers;
 	int			numDefaultACLs;
 
-<<<<<<< HEAD
+	/* GPDB specific variables */
+	int			numExtProtocols;
+
 	/*
 	 * We must read extensions and extension membership info first, because
 	 * extension membership needs to be consultable during decisions about
@@ -139,29 +118,13 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(&numExtensions);
+	extinfo = getExtensions(fout, &numExtensions);
 	extinfoindex = buildIndexArray(extinfo, numExtensions, sizeof(ExtensionInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "identifying extension members\n");
-	getExtensionMembership(extinfo, numExtensions);
+	getExtensionMembership(fout, extinfo, numExtensions);
 
-	if (g_verbose)
-		write_msg(NULL, "reading schemas\n");
-	nspinfo = getNamespaces(&numNamespaces);
-	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
-
-	/*
-	 * getTables should be done as soon as possible, so as to minimize the
-	 * window between starting our transaction and acquiring per-table locks.
-	 * However, we have to do getNamespaces first because the tables get
-	 * linked to their containing namespaces during getTables.
-	 */
-	if (g_verbose)
-		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(&numTables);
-	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
-=======
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
 	nspinfo = getNamespaces(fout, &numNamespaces);
@@ -180,11 +143,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	/* Do this after we've built tblinfoindex */
 	getOwnedSeqs(fout, tblinfo, numTables);
-
-	if (g_verbose)
-		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(fout, &numExtensions);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
@@ -270,11 +228,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
-<<<<<<< HEAD
-	getCasts(&numCasts);
-=======
 	getCasts(fout, &numCasts);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");
@@ -283,7 +237,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	/* Identify extension configuration tables that should be dumped */
 	if (g_verbose)
 		write_msg(NULL, "finding extension tables\n");
-	processExtensionTables(extinfo, numExtensions);
+	processExtensionTables(fout, extinfo, numExtensions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading rewrite rules\n");
