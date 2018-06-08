@@ -3775,13 +3775,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * If type is by-reference, copy the new value (which is
-<<<<<<< HEAD
-				 * probably in the eval_econtext) into the procedure's
-				 * memory context.
-=======
 				 * probably in the eval_econtext) into the procedure's memory
 				 * context.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				 */
 				if (!var->datatype->typbyval && !*isNull)
 					newvalue = datumCopy(newvalue,
@@ -4174,11 +4169,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				*isNull = false;
 				exec_assign_value(estate, target,
 								  PointerGetDatum(newarrayval),
-<<<<<<< HEAD
-								  arraytypeid, isNull);
-=======
 								  arrayelem->arraytypoid, isNull);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				break;
 			}
 
@@ -5376,11 +5367,7 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
  *
  * Note: the estate's eval_econtext is used for temporary storage, and may
  * also contain the result Datum if we have to do a conversion to a pass-
-<<<<<<< HEAD
- * by-reference data type.  Be sure to do an exec_eval_cleanup() call when
-=======
  * by-reference data type.	Be sure to do an exec_eval_cleanup() call when
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * done with the result.
  * ----------
  */
@@ -5726,9 +5713,6 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 {
 	SPIPlanPtr	spi_plan = expr->plan;
 	CachedPlanSource *plansource;
-<<<<<<< HEAD
-	PlannedStmt *stmt = NULL;
-=======
 	Query	   *query;
 	CachedPlan *cplan;
 
@@ -5820,7 +5804,6 @@ static void
 exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 {
 	PlannedStmt *stmt;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	Plan	   *plan;
 	TargetEntry *tle;
 
@@ -5836,36 +5819,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	 */
 	if (list_length(cplan->stmt_list) != 1)
 		return;
-<<<<<<< HEAD
-	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
-	expr->expr_simple_generation = plansource->generation;
-	if (list_length(plansource->plan->stmt_list) != 1)
-		return;
-
-	/*
-	 * MPP-8038: Utility statements get here too, so make sure this is
-	 * planned
-	 */
-	if (list_length(spi_plan->plancache_list) != 1)
-	{
-		CachedPlanSource *cached_ps;
-
-		cached_ps = (CachedPlanSource *) linitial(spi_plan->plancache_list);
-		if (list_length(cached_ps->plan->stmt_list) != 1)
-		{
-			if (IsA(linitial(cached_ps->plan->stmt_list), PlannedStmt))
-				stmt = (PlannedStmt *) linitial(cached_ps->plan->stmt_list);
-		}
-	}
-
-	if (!stmt)
-	{
-		/* This is a utility statement */
-		stmt = (PlannedStmt *) linitial(plansource->plan->stmt_list);
-	}
-=======
 	stmt = (PlannedStmt *) linitial(cplan->stmt_list);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required
