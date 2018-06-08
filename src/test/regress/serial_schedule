@@ -54,11 +54,6 @@ test: create_function_2
 test: create_function_3
 test: copy
 test: copyselect
-<<<<<<< HEAD
-test: constraints
-ignore: triggers
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 test: create_misc
 test: create_operator
 test: create_index
@@ -66,7 +61,7 @@ test: create_view
 test: create_aggregate
 test: create_cast
 test: constraints
-test: triggers
+ignore: triggers
 test: inherit
 test: create_table_like
 test: typed_table

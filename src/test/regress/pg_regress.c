@@ -332,6 +332,17 @@ stop_postmaster(void)
 }
 
 /*
+ * Always exit through here, not through plain exit(), to ensure we make
+ * an effort to shut down a temp postmaster
+ */
+void
+exit_nicely(int code)
+{
+	stop_postmaster();
+	exit(code);
+}
+
+/*
  * Check whether string matches pattern
  *
  * In the original shell script, this function was implemented using expr(1),
@@ -641,11 +652,7 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
  * in the "dest" directory, replacing the ".source" prefix in their names with
  * the given suffix.
  */
-<<<<<<< HEAD
 static int
-=======
-static void
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, char *suffix)
 {
 	char		testtablespace[MAXPGPATH];
@@ -819,15 +826,10 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 static void
 convert_sourcefiles(void)
 {
-<<<<<<< HEAD
 	convert_sourcefiles_in("input", outputdir, "sql", "sql");
 	convert_sourcefiles_in("output", outputdir, "expected", "out");
 
 	convert_sourcefiles_in("yml_in", inputdir, "yml", "yml");
-=======
-	convert_sourcefiles_in("input", inputdir, "sql", "sql");
-	convert_sourcefiles_in("output", outputdir, "expected", "out");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
 
 /*
@@ -2391,20 +2393,14 @@ help(void)
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
-<<<<<<< HEAD
-	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
-	printf(_("  --dlpath=DIR              look for dynamic libraries in DIR\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
 	printf(_("  --use-existing            use an existing installation\n"));
-	printf(_("  --launcher=CMD            use CMD as launcher of psql\n"));
+	/* Please put GPDB speicifc options at the end. */
+	printf(_("  --exclude-tests=TEST      command or space delimited tests to exclude from running\n"));
     printf(_(" --init-file=GPD_INIT_FILE  init file to be used for gpdiff\n"));
 	printf(_("  --ao-dir=DIR              directory name prefix containing generic\n"));
 	printf(_("                            UAO row and column tests\n"));
 	printf(_("  --resgroup-dir=DIR        directory name prefix containing resgroup tests\n"));
-=======
-	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
-	printf(_("  --use-existing            use an existing installation\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
 	printf(_("  --extra-install=DIR       additional directory to install (e.g., contrib)\n"));
