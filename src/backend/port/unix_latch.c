@@ -63,47 +63,10 @@ static int	selfpipe_readfd = -1;
 static int	selfpipe_writefd = -1;
 
 /* Private function prototypes */
-static void sendSelfPipeByte(void);
+static void initSelfPipe(void);
 static void drainSelfPipe(void);
+static void sendSelfPipeByte(void);
 
-
-/*
- * Initialize the process-local latch infrastructure.
- *
- * This must be called once during startup of any process that can wait on
- * latches, before it issues any InitLatch() or OwnLatch() calls.
- */
-void
-InitializeLatchSupport(void)
-{
-	int			pipefd[2];
-
-	/*
-	 * GPDB_92_MERGE_FIXME:
-	 * Fix latch related codes later.
-	 *
-	 */
-#if 0
-	Assert(selfpipe_readfd == -1);
-#endif
-
-	/*
-	 * Set up the self-pipe that allows a signal handler to wake up the
-	 * select() in WaitLatch. Make the write-end non-blocking, so that
-	 * SetLatch won't block if the event has already been set many times
-	 * filling the kernel buffer. Make the read-end non-blocking too, so that
-	 * we can easily clear the pipe by reading until EAGAIN or EWOULDBLOCK.
-	 */
-	if (pipe(pipefd) < 0)
-		elog(FATAL, "pipe() failed: %m");
-	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) < 0)
-		elog(FATAL, "fcntl() failed on read-end of self-pipe: %m");
-	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) < 0)
-		elog(FATAL, "fcntl() failed on write-end of self-pipe: %m");
-
-	selfpipe_readfd = pipefd[0];
-	selfpipe_writefd = pipefd[1];
-}
 
 /*
  * Initialize a backend-local latch.
@@ -111,8 +74,9 @@ InitializeLatchSupport(void)
 void
 InitLatch(volatile Latch *latch)
 {
-	/* Assert InitializeLatchSupport() has been called in this process */
-	Assert(selfpipe_readfd >= 0);
+	/* Initialize the self-pipe if this is our first latch in the process */
+	if (selfpipe_readfd == -1)
+		initSelfPipe();
 
 	latch->is_set = false;
 	latch->owner_pid = MyProcPid;
@@ -156,8 +120,9 @@ OwnLatch(volatile Latch *latch)
 {
 	Assert(latch->is_shared);
 
-	/* Assert InitializeLatchSupport() has been called in this process */
-	Assert(selfpipe_readfd >= 0);
+	/* Initialize the self-pipe if this is our first latch in this process */
+	if (selfpipe_readfd == -1)
+		initSelfPipe();
 
 	/* sanity check */
 	if (latch->owner_pid != 0)
@@ -620,6 +585,30 @@ latch_sigusr1_handler(void)
 	{
 		sendSelfPipeByte();
 	}
+}
+
+/* initialize the self-pipe */
+static void
+initSelfPipe(void)
+{
+	int			pipefd[2];
+
+	/*
+	 * Set up the self-pipe that allows a signal handler to wake up the
+	 * select() in WaitLatch. Make the write-end non-blocking, so that
+	 * SetLatch won't block if the event has already been set many times
+	 * filling the kernel buffer. Make the read-end non-blocking too, so that
+	 * we can easily clear the pipe by reading until EAGAIN or EWOULDBLOCK.
+	 */
+	if (pipe(pipefd) < 0)
+		elog(FATAL, "pipe() failed: %m");
+	if (fcntl(pipefd[0], F_SETFL, O_NONBLOCK) < 0)
+		elog(FATAL, "fcntl() failed on read-end of self-pipe: %m");
+	if (fcntl(pipefd[1], F_SETFL, O_NONBLOCK) < 0)
+		elog(FATAL, "fcntl() failed on write-end of self-pipe: %m");
+
+	selfpipe_readfd = pipefd[0];
+	selfpipe_writefd = pipefd[1];
 }
 
 /* Send one byte to the self-pipe, to wake up WaitLatch */

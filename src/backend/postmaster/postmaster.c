@@ -1272,8 +1272,6 @@ PostmasterMain(int argc, char *argv[])
 						 progname, external_pid_file, strerror(errno));
 	}
 
-	InitializeLatchSupport();
-
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 *
