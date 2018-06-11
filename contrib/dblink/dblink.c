@@ -1307,27 +1307,10 @@ dblink_exec(PG_FUNCTION_ARGS)
 	text	   *volatile sql_cmd_status = NULL;
 	PGconn	   *volatile conn = NULL;
 	volatile bool freeconn = false;
-<<<<<<< HEAD
 
 	DBLINK_INIT;
 
 	PG_TRY();
-	{
-	char	   *msg;
-	PGresult   *res = NULL;
-	char	   *connstr = NULL;
-	char	   *sql = NULL;
-	char	   *conname = NULL;
-	remoteConn *rconn = NULL;
-	bool		fail = true;	/* default to backward compatible behavior */
-
-	if (PG_NARGS() == 3)
-=======
-
-	DBLINK_INIT;
-
-	PG_TRY();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	{
 		char	   *msg;
 		PGresult   *res = NULL;
@@ -1409,17 +1392,6 @@ dblink_exec(PG_FUNCTION_ARGS)
 			PQfinish(conn);
 		PG_RE_THROW();
 	}
-<<<<<<< HEAD
-	}
-	PG_CATCH();
-	{
-		/* if needed, close the connection to the database */
-		if (freeconn)
-			PQfinish(conn);
-		PG_RE_THROW();
-	}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	PG_END_TRY();
 
 	/* if needed, close the connection to the database */
