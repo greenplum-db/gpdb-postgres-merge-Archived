@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 unittest-check:
 	$(MAKE) -C pg_dump/test check
 
-SUBDIRS = initdb pg_ctl pg_dump \
+SUBDIRS = initdb pg_ctl\
 	psql scripts pg_config pg_controldata pg_resetxlog pg_basebackup
 
 ifeq ($(PORTNAME), win32)
