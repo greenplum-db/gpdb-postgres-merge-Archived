@@ -246,10 +246,6 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 				res[nsyns].lexeme = pnstrdup(syn, end - syn);
 				res[nsyns].nvariant = 0;
 				res[nsyns].flags = 0;
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				nsyns++;
 			}
 

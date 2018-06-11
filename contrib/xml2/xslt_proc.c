@@ -59,7 +59,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	text	   *result;
 	text	   *paramstr;
 	const char **params;
-<<<<<<< HEAD
 	xsltStylesheetPtr stylesheet = NULL;
 	xmlDocPtr	doctree;
 	xmlDocPtr	restree;
@@ -70,16 +69,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	xmlChar    *resstr;
 	int			resstat;
 	int			reslen;
-=======
-	PgXmlErrorContext *xmlerrcxt;
-	volatile xsltStylesheetPtr stylesheet = NULL;
-	volatile xmlDocPtr doctree = NULL;
-	volatile xmlDocPtr restree = NULL;
-	volatile xmlDocPtr ssdoc = NULL;
-	volatile int resstat = -1;
-	xmlChar    *resstr = NULL;
-	int			reslen = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (fcinfo->nargs == 3)
 	{
@@ -96,7 +85,6 @@ xslt_process(PG_FUNCTION_ARGS)
 	/* Setup parser */
 	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
 
-<<<<<<< HEAD
 	/* Parse document */
 	doctree = xmlParseMemory((char *) VARDATA(doct),
 							 VARSIZE(doct) - VARHDRSZ);
@@ -122,62 +110,12 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (stylesheet == NULL)
 	{
 		xmlFreeDoc(doctree);
-=======
-	PG_TRY();
-	{
-		/* Check to see if document is a file or a literal */
-
-		if (VARDATA(doct)[0] == '<')
-			doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
-		else
-			doctree = xmlParseFile(text_to_cstring(doct));
-
-		if (doctree == NULL)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-						"error parsing XML document");
-
-		/* Same for stylesheet */
-		if (VARDATA(ssheet)[0] == '<')
-		{
-			ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
-								   VARSIZE(ssheet) - VARHDRSZ);
-			if (ssdoc == NULL)
-				xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-							"error parsing stylesheet as XML document");
-
-			stylesheet = xsltParseStylesheetDoc(ssdoc);
-		}
-		else
-			stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
-
-		if (stylesheet == NULL)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-						"failed to parse stylesheet");
-
-		restree = xsltApplyStylesheet(stylesheet, doctree, params);
-
-		if (restree == NULL)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-						"failed to apply stylesheet");
-
-		resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
-	}
-	PG_CATCH();
-	{
-		if (stylesheet != NULL)
-			xsltFreeStylesheet(stylesheet);
-		if (restree != NULL)
-			xmlFreeDoc(restree);
-		if (doctree != NULL)
-			xmlFreeDoc(doctree);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		xsltCleanupGlobals();
 
 		pg_xml_done(xmlerrcxt, true);
 
 		PG_RE_THROW();
 	}
-<<<<<<< HEAD
 
 	xslt_ctxt = xsltNewTransformContext(stylesheet, doctree);
 
@@ -229,25 +167,15 @@ xslt_process(PG_FUNCTION_ARGS)
 	}
 
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
-=======
-	PG_END_TRY();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	xsltFreeStylesheet(stylesheet);
 	xmlFreeDoc(restree);
 	xmlFreeDoc(doctree);
-<<<<<<< HEAD
 	xsltFreeSecurityPrefs(xslt_sec_prefs);
 	xsltFreeTransformContext(xslt_ctxt);
 
 	xsltCleanupGlobals();
 
-=======
-	xsltCleanupGlobals();
-
-	pg_xml_done(xmlerrcxt, false);
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* XXX this is pretty dubious, really ought to throw error instead */
 	if (resstat < 0)
 		PG_RETURN_NULL();
@@ -258,12 +186,8 @@ xslt_process(PG_FUNCTION_ARGS)
 		xmlFree(resstr);
 
 	PG_RETURN_TEXT_P(result);
-<<<<<<< HEAD
 
 #else /* !USE_LIBXSLT */
-=======
-#else							/* !USE_LIBXSLT */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
