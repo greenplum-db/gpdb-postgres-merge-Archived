@@ -45,17 +45,9 @@ volatile bool time_to_abort = false;
 
 
 static void usage(void);
-<<<<<<< HEAD
-static XLogRecPtr FindStreamingStart(XLogRecPtr currentpos,
-				   uint32 currenttimeline);
-static void StreamLog();
-static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
-			   bool segment_finished);
-=======
 static XLogRecPtr FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline);
 static void StreamLog();
 static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 static void
 usage(void)
@@ -65,22 +57,6 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
-<<<<<<< HEAD
-	printf(_("  -D, --directory=DIR    receive transaction log files into this directory\n"));
-	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
-	printf(_("  -v, --verbose          output verbose messages\n"));
-	printf(_("  -V, --version          output version information, then exit\n"));
-	printf(_("  -?, --help             show this help, then exit\n"));
-	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME    database server host or socket directory\n"));
-	printf(_("  -p, --port=PORT        database server port number\n"));
-	printf(_("  -s, --status-interval=INTERVAL\n"
-			 "                         time between status packets sent to server (in seconds)\n"));
-	printf(_("  -U, --username=NAME    connect as specified database user\n"));
-	printf(_("  -w, --no-password      never prompt for password\n"));
-	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("  -D, --directory=DIR      receive transaction log files into this directory\n"));
 	printf(_("  -n, --noloop             do not loop on connection lost\n"));
 	printf(_("  -v, --verbose            output verbose messages\n"));
@@ -93,8 +69,7 @@ usage(void)
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -w, --no-password        never prompt for password\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
 
 static bool
@@ -146,12 +121,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 					log,
 					seg;
 
-<<<<<<< HEAD
-		if (strcmp(dirent->d_name, ".") == 0 ||
-			strcmp(dirent->d_name, "..") == 0)
-=======
 		if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			continue;
 
 		/* xlog files are always 24 characters */
@@ -177,12 +147,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 		 */
 		if (sscanf(dirent->d_name, "%08X%08X%08X", &tli, &log, &seg) != 3)
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-				 _("%s: could not parse transaction log file name \"%s\"\n"),
-=======
 			fprintf(stderr, _("%s: could not parse xlog filename \"%s\"\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, dirent->d_name);
 			disconnect_and_exit(1);
 		}
@@ -213,12 +178,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 		}
 		else
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-			  _("%s: segment file \"%s\" has incorrect size %d, skipping\n"),
-=======
 			fprintf(stderr, _("%s: segment file '%s' is incorrect size %d, skipping\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, dirent->d_name, (int) statbuf.st_size);
 			continue;
 		}
@@ -270,38 +230,20 @@ StreamLog(void)
 	res = PQexec(conn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-<<<<<<< HEAD
-		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
-				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
-
-=======
 		fprintf(stderr, _("%s: could not identify system: %s\n"),
 				progname, PQerrorMessage(conn));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		disconnect_and_exit(1);
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) != 3)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"),
-				progname, PQntuples(res), PQnfields(res), 1, 3);
-
-=======
 		fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
 				progname, PQntuples(res), PQnfields(res));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		disconnect_and_exit(1);
 	}
 	timeline = atoi(PQgetvalue(res, 0, 1));
 	if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &startpos.xlogid, &startpos.xrecoff) != 2)
 	{
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: could not parse transaction log location \"%s\"\n"),
-=======
 		fprintf(stderr, _("%s: could not parse log start position from value \"%s\"\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				progname, PQgetvalue(res, 0, 2));
 		disconnect_and_exit(1);
 	}
@@ -321,21 +263,12 @@ StreamLog(void)
 	 * Start the replication
 	 */
 	if (verbose)
-<<<<<<< HEAD
-		fprintf(stderr,
-				_("%s: starting log streaming at %X/%X (timeline %u)\n"),
-				progname, startpos.xlogid, startpos.xrecoff, timeline);
-
-	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
-					  stop_streaming, standby_message_timeout, false);
-=======
 		fprintf(stderr, _("%s: starting log streaming at %X/%X (timeline %u)\n"),
 				progname, startpos.xlogid, startpos.xrecoff, timeline);
 
 	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
 					  stop_streaming,
 					  standby_message_timeout, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	PQfinish(conn);
 }
@@ -363,25 +296,15 @@ main(int argc, char **argv)
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
-<<<<<<< HEAD
-		{"no-loop", no_argument, NULL, 'n'},
-		{"no-password", no_argument, NULL, 'w'},
-		{"password", no_argument, NULL, 'W'},
-		{"status-interval", required_argument, NULL, 's'},
-=======
 		{"noloop", no_argument, NULL, 'n'},
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"statusint", required_argument, NULL, 's'},
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
-<<<<<<< HEAD
-=======
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			option_index;
 
 	progname = get_progname(argv[0]);
@@ -394,13 +317,8 @@ main(int argc, char **argv)
 			usage();
 			exit(0);
 		}
-<<<<<<< HEAD
-		else if (strcmp(argv[1], "-V") == 0 ||
-				 strcmp(argv[1], "--version") == 0)
-=======
 		else if (strcmp(argv[1], "-V") == 0
 				 || strcmp(argv[1], "--version") == 0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			puts("pg_receivexlog (PostgreSQL) " PG_VERSION);
 			exit(0);
@@ -494,20 +412,12 @@ main(int argc, char **argv)
 	{
 		StreamLog();
 		if (time_to_abort)
-<<<<<<< HEAD
-		{
-=======
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			/*
 			 * We've been Ctrl-C'ed. That's not an error, so exit without an
 			 * errorcode.
 			 */
 			exit(0);
-<<<<<<< HEAD
-		}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		else if (noloop)
 		{
 			fprintf(stderr, _("%s: disconnected.\n"), progname);
@@ -515,13 +425,7 @@ main(int argc, char **argv)
 		}
 		else
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-					/* translator: check source for value for %d */
-					_("%s: disconnected. Waiting %d seconds to try again.\n"),
-=======
 			fprintf(stderr, _("%s: disconnected. Waiting %d seconds to try again\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, RECONNECT_SLEEP_TIME);
 			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
 		}

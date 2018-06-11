@@ -24,10 +24,7 @@
 #include <string.h>
 
 const char *progname;
-<<<<<<< HEAD
 char	   *connection_string = NULL;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 char	   *dbhost = NULL;
 char	   *dbuser = NULL;
 char	   *dbport = NULL;
@@ -78,19 +75,13 @@ PGconn *
 GetConnection(void)
 {
 	PGconn	   *tmpconn;
-<<<<<<< HEAD
 	int			argcount = 7;	/* dbname, replication, fallback_app_name,
 								 * host, user, port, password */
-=======
-	int			argcount = 4;	/* dbname, replication, fallback_app_name,
-								 * password */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			i;
 	const char **keywords;
 	const char **values;
 	char	   *password = NULL;
 	const char *tmpparam;
-<<<<<<< HEAD
 	PQconninfoOption *conn_opts = NULL;
 	PQconninfoOption *conn_opt;
 	char	   *err_msg = NULL;
@@ -144,26 +135,6 @@ GetConnection(void)
 	values[i] = progname;
 	i++;
 
-=======
-
-	if (dbhost)
-		argcount++;
-	if (dbuser)
-		argcount++;
-	if (dbport)
-		argcount++;
-
-	keywords = xmalloc0((argcount + 1) * sizeof(*keywords));
-	values = xmalloc0((argcount + 1) * sizeof(*values));
-
-	keywords[0] = "dbname";
-	values[0] = "replication";
-	keywords[1] = "replication";
-	values[1] = "true";
-	keywords[2] = "fallback_application_name";
-	values[2] = progname;
-	i = 3;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	if (dbhost)
 	{
 		keywords[i] = "host";
@@ -195,30 +166,19 @@ GetConnection(void)
 			 * meaning this is the call for a second session to the same
 			 * database, so just forcibly reuse that password.
 			 */
-<<<<<<< HEAD
 			keywords[i] = "password";
 			values[i] = dbpassword;
-=======
-			keywords[argcount - 1] = "password";
-			values[argcount - 1] = dbpassword;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			dbgetpassword = -1; /* Don't try again if this fails */
 		}
 		else if (dbgetpassword == 1)
 		{
 			password = simple_prompt(_("Password: "), 100, false);
-<<<<<<< HEAD
 			keywords[i] = "password";
 			values[i] = password;
-=======
-			keywords[argcount - 1] = "password";
-			values[argcount - 1] = password;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		tmpconn = PQconnectdbParams(keywords, values, true);
 
-<<<<<<< HEAD
 		/*
 		 * If there is too little memory even to allocate the PGconn object
 		 * and PQconnectdbParams returns NULL, we call exit(1) directly.
@@ -230,8 +190,6 @@ GetConnection(void)
 			exit(1);
 		}
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (PQstatus(tmpconn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(tmpconn) &&
 			dbgetpassword != -1)
@@ -245,25 +203,19 @@ GetConnection(void)
 		{
 			fprintf(stderr, _("%s: could not connect to server: %s\n"),
 					progname, PQerrorMessage(tmpconn));
-<<<<<<< HEAD
 			PQfinish(tmpconn);
 			free(values);
 			free(keywords);
 			if (conn_opts)
 				PQconninfoFree(conn_opts);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			return NULL;
 		}
 
 		/* Connection ok! */
 		free(values);
 		free(keywords);
-<<<<<<< HEAD
 		if (conn_opts)
 			PQconninfoFree(conn_opts);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/*
 		 * Ensure we have the same value of integer timestamps as the server
@@ -272,12 +224,7 @@ GetConnection(void)
 		tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 		if (!tmpparam)
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-					_("%s: could not determine server setting for integer_datetimes\n"),
-=======
 			fprintf(stderr, _("%s: could not determine server setting for integer_datetimes\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname);
 			PQfinish(tmpconn);
 			exit(1);
@@ -289,12 +236,7 @@ GetConnection(void)
 		if (strcmp(tmpparam, "off") != 0)
 #endif
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-			 _("%s: integer_datetimes compile flag does not match server\n"),
-=======
 			fprintf(stderr, _("%s: integer_datetimes compile flag does not match server\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname);
 			PQfinish(tmpconn);
 			exit(1);

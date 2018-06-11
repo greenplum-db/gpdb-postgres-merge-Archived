@@ -1,10 +1,7 @@
 #include "libpq-fe.h"
 
 extern const char *progname;
-<<<<<<< HEAD
 extern char *connection_string;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern char *dbhost;
 extern char *dbuser;
 extern char *dbport;

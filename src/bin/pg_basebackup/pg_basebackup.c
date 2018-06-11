@@ -1558,24 +1558,14 @@ BaseBackup(void)
 		 */
 		if (sscanf(xlogend, "%X/%X", &xlogendptr.xlogid, &xlogendptr.xrecoff) != 2)
 		{
-<<<<<<< HEAD
-			fprintf(stderr,
-				  _("%s: could not parse transaction log location \"%s\"\n"),
-=======
 			fprintf(stderr, _("%s: could not parse xlog end position \"%s\"\n"),
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					progname, xlogend);
 			disconnect_and_exit(1);
 		}
 		InterlockedIncrement(&has_xlogendptr);
 
 		/* First wait for the thread to exit */
-<<<<<<< HEAD
-		if (WaitForSingleObjectEx((HANDLE) bgchild, INFINITE, FALSE) !=
-			WAIT_OBJECT_0)
-=======
 		if (WaitForSingleObjectEx((HANDLE) bgchild, INFINITE, FALSE) != WAIT_OBJECT_0)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		{
 			_dosmaperr(GetLastError());
 			fprintf(stderr, _("%s: could not wait for child thread: %s\n"),
