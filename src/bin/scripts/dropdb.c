@@ -166,10 +166,6 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
-<<<<<<< HEAD
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
