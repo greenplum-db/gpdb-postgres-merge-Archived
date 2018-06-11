@@ -463,7 +463,7 @@ fileGetForeignPaths(PlannerInfo *root,
 				   &startup_cost, &total_cost);
 
 	/* Create a ForeignPath node and add it as only possible path */
-	add_path(baserel, (Path *)
+	add_path(root, baserel, (Path *)
 			 create_foreignscan_path(root, baserel,
 									 baserel->rows,
 									 startup_cost,
@@ -860,7 +860,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Create CopyState from FDW options.
 	 */
-	cstate = BeginCopyFrom(onerel, filename, NIL, options);
+	/*
+	 * GPDB_92_MERGE_FIXME: what is the expected args?
+	 */
+	cstate = BeginCopyFrom(onerel, filename, false, NULL, NULL, NIL, options, NIL);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
