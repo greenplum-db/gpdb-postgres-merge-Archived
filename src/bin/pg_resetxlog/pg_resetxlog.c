@@ -55,6 +55,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "storage/bufpage.h"
 
 extern int	optind;
 extern char *optarg;
@@ -744,11 +745,8 @@ RewriteControlFile(void)
 	ControlFile.minRecoveryPoint.xrecoff = 0;
 	ControlFile.backupStartPoint.xlogid = 0;
 	ControlFile.backupStartPoint.xrecoff = 0;
-<<<<<<< HEAD
-=======
 	ControlFile.backupEndPoint.xlogid = 0;
 	ControlFile.backupEndPoint.xrecoff = 0;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	ControlFile.backupEndRequired = false;
 
 	/*
@@ -1132,7 +1130,6 @@ usage(void)
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
-<<<<<<< HEAD
 	printf(_("  -e XIDEPOCH     set next transaction ID epoch\n"));
 	printf(_("  -f              force update to be done\n"));
 	printf(_("  -k data_checksum_version     set data_checksum_version\n"));
@@ -1147,17 +1144,4 @@ usage(void)
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
-	printf(_("  -f               force update to be done\n"));
-	printf(_("  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"));
-	printf(_("  -m XID           set next multitransaction ID\n"));
-	printf(_("  -n               no update, just show extracted control values (for testing)\n"));
-	printf(_("  -o OID           set next OID\n"));
-	printf(_("  -O OFFSET        set next multitransaction offset\n"));
-	printf(_("  -x XID           set next transaction ID\n"));
-	printf(_("  --help           show this help, then exit\n"));
-	printf(_("  --version        output version information, then exit\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 }
