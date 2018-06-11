@@ -296,7 +296,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		if (HeapTupleSatisfiesVisibility(tuple, SnapshotNow, scan->rs_cbuf))
+		if (HeapTupleSatisfiesVisibility(rel, tuple, SnapshotNow, scan->rs_cbuf))
 		{
 			stat.tuple_len += tuple->t_len;
 			stat.tuple_count++;

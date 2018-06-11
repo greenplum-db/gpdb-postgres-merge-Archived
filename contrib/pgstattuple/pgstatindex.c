@@ -229,10 +229,6 @@ pgstatindex(PG_FUNCTION_ARGS)
 		values[j] = palloc(32);
 		snprintf(values[j++], 32, INT64_FORMAT, indexStat.deleted_pages);
 		values[j] = palloc(32);
-<<<<<<< HEAD
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		if (indexStat.max_avail > 0)
 			snprintf(values[j++], 32, "%.2f",
 					 100.0 - (double) indexStat.free_space / (double) indexStat.max_avail * 100.0);
