@@ -1565,9 +1565,6 @@ RecordTransactionCommit(void)
 	/* Compute latestXid while we have the child XIDs handy */
 	latestXid = TransactionIdLatest(xid, nchildren, children);
 
-	if (wrote_xlog)
-		SyncRepWaitForLSN(XactLastRecEnd);
-
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	XactLastRecEnd.xrecoff = 0;
 
