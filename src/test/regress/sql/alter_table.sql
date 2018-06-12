@@ -282,9 +282,7 @@ DELETE FROM tmp3 where a=5;
 --start_ignore
 ALTER TABLE tmp3 validate constraint tmpconstr;
 ALTER TABLE tmp3 validate constraint tmpconstr;
-<<<<<<< HEAD
 --end_ignore
-=======
 
 -- Try a non-verified CHECK constraint
 ALTER TABLE tmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10); -- fail
@@ -311,7 +309,6 @@ INSERT INTO tmp7 VALUES (8, 18);
 ALTER TABLE tmp7 ADD CONSTRAINT identity CHECK (b = boo(b));
 ALTER TABLE tmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
 ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
