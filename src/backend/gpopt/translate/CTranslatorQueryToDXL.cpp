@@ -412,11 +412,15 @@ CTranslatorQueryToDXL::CheckSupportedCmdType
 	}
 
 	if (CMD_SELECT == pquery->commandType)
-	{		
-		if (!optimizer_enable_ctas && NULL != pquery->intoClause)
-		{
-			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("CTAS. Set optimizer_enable_ctas to on to enable CTAS with GPORCA"));
-		}
+	{
+		// GPDB_92_MERGE_FIXME: CTAS is a UTILITY statement after upstream
+		// refactoring commit 9dbf2b7d . We are temporarily *always* falling
+		// back. Detect CTAS harder when we get back to it.
+
+//		if (!optimizer_enable_ctas && NULL != pquery->intoClause)
+//		{
+//			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("CTAS. Set optimizer_enable_ctas to on to enable CTAS with GPORCA"));
+//		}
 		
 		// supported: regular select or CTAS when it is enabled
 		return;
@@ -637,12 +641,14 @@ CTranslatorQueryToDXL::PdxlnFromQuery()
 	switch (m_pquery->commandType)
 	{
 		case CMD_SELECT:
-			if (NULL == m_pquery->intoClause)
+			// GPDB_92_MERGE_FIXME: detect CTAS harder after 9dbf2b7d
+//			if (NULL == m_pquery->intoClause)
+			if (true)
 			{
 				return PdxlnFromQueryInternal();
 			}
 
-			return PdxlnCTAS();
+//			return PdxlnCTAS();
 			
 		case CMD_INSERT:
 			return PdxlnInsert();
@@ -765,6 +771,7 @@ CTranslatorQueryToDXL::PdxlnInsert()
 //		Translate a CTAS
 //
 //---------------------------------------------------------------------------
+#if 0
 CDXLNode *
 CTranslatorQueryToDXL::PdxlnCTAS()
 {
@@ -899,6 +906,7 @@ CTranslatorQueryToDXL::PdxlnCTAS()
 
 	return GPOS_NEW(m_pmp) CDXLNode(m_pmp, pdxlopCTAS, pdxlnQuery);
 }
+#endif
 
 //---------------------------------------------------------------------------
 //	@function:

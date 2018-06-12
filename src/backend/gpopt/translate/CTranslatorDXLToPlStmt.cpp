@@ -236,7 +236,8 @@ CTranslatorDXLToPlStmt::PplstmtFromDXL
 	}
 	
 	pplstmt->resultRelations = m_plResultRelations;
-	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
+	// GPDB_92_MERGE_FIXME: make CTAS work
+//	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
 	pplstmt->intoPolicy = m_pctxdxltoplstmt->Pdistrpolicy();
 	
 	SetInitPlanVariables(pplstmt);

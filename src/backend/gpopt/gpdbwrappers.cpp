@@ -2438,12 +2438,13 @@ gpdb::EstimateRelationSize
 	Relation rel,
 	int32 *attr_widths,
 	BlockNumber *pages,
-	double *tuples
+	double *tuples,
+	double *allvisfrac
 	)
 {
 	GP_WRAP_START;
 	{
-		estimate_rel_size(rel, attr_widths, pages, tuples);
+		estimate_rel_size(rel, attr_widths, pages, tuples, allvisfrac);
 		return;
 	}
 	GP_WRAP_END;
@@ -3072,7 +3073,7 @@ static int64 mdcache_invalidation_counter = 0;
 static int64 last_mdcache_invalidation_counter = 0;
 
 static void
-mdsyscache_invalidation_counter_callback(Datum arg, int cacheid,  ItemPointer tuplePtr)
+mdsyscache_invalidation_counter_callback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	mdcache_invalidation_counter++;
 }
