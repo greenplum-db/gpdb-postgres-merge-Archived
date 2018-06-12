@@ -4441,6 +4441,17 @@ add_second_stage_agg(PlannerInfo *root,
 	Plan	   *agg_node;
 
 	/*
+	 * GPDB_92_MERGE_FIXME:
+	 * Construct PlannerInfo for RelOptInfo.
+	 * Seems we only need 'parse' and 'glob'.
+	 */
+	RelOptInfo *rel;
+	PlannerInfo *subroot;
+
+	subroot = makeNode(PlannerInfo);
+	subroot->parse = copyObject(parse);
+	subroot->glob = root->glob;
+	/*
 	 * Add a SubqueryScan node to renumber the range of the query.
 	 *
 	 * The result of the preliminary aggregation (represented by lower_tlist)
@@ -4587,6 +4598,16 @@ add_second_stage_agg(PlannerInfo *root,
 		pfree(root->simple_rte_array);
 
 	rebuild_simple_rel_and_rte(root);
+
+	/*
+	 * GPDB_92_MERGE_FIXME:
+	 * Assign subroot and subplan for rel. They are needed in
+	 * function set_subqueryscan_references().
+	 */
+	Assert(IsA(result_plan, SubqueryScan));
+	rel = find_base_rel(root, 1);
+	rel->subroot = subroot;
+	rel->subplan = ((SubqueryScan *)result_plan)->subplan;
 
 	return agg_node;
 }
