@@ -1140,7 +1140,6 @@ DropErrorMsgWrongType(const char *relname, char wrongkind, char rightkind)
 void
 RemoveRelations(DropStmt *drop)
 {
-	HeapTuple	tuple;
 	ObjectAddresses *objects;
 	char		relkind;
 	ListCell   *cell;
@@ -1206,7 +1205,6 @@ RemoveRelations(DropStmt *drop)
 		Oid			relOid;
 		ObjectAddress obj;
 		struct DropRelationCallbackState state;
-		Form_pg_class classform;
 
 		/*
 		 * These next few steps are a great deal like relation_openrv, but we
@@ -1238,25 +1236,6 @@ RemoveRelations(DropStmt *drop)
 
 		if (drop->removeType == OBJECT_EXTTABLE || drop->removeType == OBJECT_TABLE)
 			CheckDropRelStorage(rel, drop->removeType);
-
-		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
-		if (!HeapTupleIsValid(tuple))
-		{
-			if (Gp_role == GP_ROLE_DISPATCH)
-			{
-				Oid again= RangeVarGetRelid(rel, NoLock, true);
-
-				/* Not there? */
-				if (!OidIsValid(again))
-				{
-					DropErrorMsgNonExistent(rel->relname, relkind, drop->missing_ok);
-					UnlockRelationOid(relOid, AccessExclusiveLock);
-					continue;
-				}
-			}
-			elog(ERROR, "cache lookup failed for relation %u", relOid);
-		}
-		classform = (Form_pg_class) GETSTRUCT(tuple);
 
 		/* Disallow direct DROP TABLE of a partition (MPP-3260) */
 		if (rel_is_child_partition(relOid) && !drop->bAllowPartn)
