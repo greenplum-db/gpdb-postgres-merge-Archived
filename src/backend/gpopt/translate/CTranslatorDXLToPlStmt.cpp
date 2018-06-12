@@ -539,7 +539,7 @@ CTranslatorDXLToPlStmt::FSetIndexVarAttno
 		return false;
 	}
 
-	if (IsA(pnode, Var) && ((Var *)pnode)->varno != OUTER)
+	if (IsA(pnode, Var) && ((Var *)pnode)->varno != OUTER_VAR)
 	{
 		INT iAttno = ((Var *)pnode)->varattno;
 		const IMDRelation *pmdrel = pctxtidxvarattno->m_pmdrel;
@@ -844,7 +844,7 @@ CTranslatorDXLToPlStmt::TranslateIndexConditions
 		GPOS_ASSERT((IsA(pnodeFst, Var) || IsA(pnodeSnd, Var)) && "expected index key in index qual");
 
 		INT iAttno = 0;
-		if (IsA(pnodeFst, Var) && ((Var *) pnodeFst)->varno != OUTER)
+		if (IsA(pnodeFst, Var) && ((Var *) pnodeFst)->varno != OUTER_VAR)
 		{
 			// index key is on the left side
 			iAttno =  ((Var *) pnodeFst)->varattno;
@@ -852,7 +852,7 @@ CTranslatorDXLToPlStmt::TranslateIndexConditions
 		else
 		{
 			// index key is on the right side
-			GPOS_ASSERT(((Var *) pnodeSnd)->varno != OUTER && "unexpected outer reference in index qual");
+			GPOS_ASSERT(((Var *) pnodeSnd)->varno != OUTER_VAR && "unexpected outer reference in index qual");
 			iAttno = ((Var *) pnodeSnd)->varattno;
 		}
 		
@@ -2983,7 +2983,7 @@ CTranslatorDXLToPlStmt::PappendFromDXLAppend
 		CDXLNode *pdxlnExpr = (*pdxlnPrEl)[0];
 		CDXLScalarIdent *pdxlopScIdent = CDXLScalarIdent::PdxlopConvert(pdxlnExpr->Pdxlop());
 
-		Index idxVarno = OUTER;
+		Index idxVarno = OUTER_VAR;
 		AttrNumber attno = (AttrNumber) (ul + 1);
 
 		Var *pvar = gpdb::PvarMakeVar
@@ -3197,7 +3197,7 @@ CTranslatorDXLToPlStmt::PshscanFromDXLCTEProducer
 			GPOS_ASSERT(IsA(pexpr, Var));
 
 			Var *pvar = (Var *) pexpr;
-			Var *pvarNew = gpdb::PvarMakeVar(OUTER, pvar->varattno, pvar->vartype, pvar->vartypmod,	0 /* varlevelsup */);
+			Var *pvarNew = gpdb::PvarMakeVar(OUTER_VAR, pvar->varattno, pvar->vartype, pvar->vartypmod, 0 /* varlevelsup */);
 			pvarNew->varnoold = pvar->varnoold;
 			pvarNew->varoattno = pvar->varoattno;
 
@@ -3388,7 +3388,7 @@ CTranslatorDXLToPlStmt::PshscanFromDXLCTEConsumer
 		CDXLScalarIdent *pdxlopScIdent = CDXLScalarIdent::PdxlopConvert(pdxlnScIdent->Pdxlop());
 		OID oidType = CMDIdGPDB::PmdidConvert(pdxlopScIdent->PmdidType())->OidObjectId();
 
-		Var *pvar = gpdb::PvarMakeVar(OUTER, (AttrNumber) (ul + 1), oidType, pdxlopScIdent->ITypeModifier(),  0	/* varlevelsup */);
+		Var *pvar = gpdb::PvarMakeVar(OUTER_VAR, (AttrNumber) (ul + 1), oidType, pdxlopScIdent->ITypeModifier(),  0	/* varlevelsup */);
 
 		CHAR *szResname = CTranslatorUtils::SzFromWsz(pdxlopPrE->PmdnameAlias()->Pstr()->Wsz());
 		TargetEntry *pte = gpdb::PteMakeTargetEntry((Expr *) pvar, (AttrNumber) (ul + 1), szResname, false /* resjunk */);
@@ -4504,14 +4504,14 @@ CTranslatorDXLToPlStmt::PlTargetListForHashNode
 		}
 		else
 		{
-			idxVarnoold = OUTER;
+			idxVarnoold = OUTER_VAR;
 			attnoOld = pteChild->resno;
 		}
 
 		// create a Var expression for this target list entry expression
 		Var *pvar = gpdb::PvarMakeVar
 					(
-					OUTER,
+					OUTER_VAR,
 					pteChild->resno,
 					oidType,
 					iTypeModifier,
@@ -4868,7 +4868,7 @@ CTranslatorDXLToPlStmt::UlAddTargetEntryForColId
 	INT iTypeModifier = gpdb::IExprTypeMod((Node *) pte->expr);
 	Var *pvar = gpdb::PvarMakeVar
 						(
-						OUTER,
+						OUTER_VAR,
 						pte->resno,
 						oidExpr,
 						iTypeModifier,
