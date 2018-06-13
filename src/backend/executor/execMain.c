@@ -2061,6 +2061,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	queryDesc->tupDesc = tupType;
 
+	/* This is added by GPDB for CTAS/MatView hack. */
+	if (queryDesc->dest->rInitPlan != NULL)
+		queryDesc->dest->rInitPlan(queryDesc, eflags);
+
 	if (DEBUG1 >= log_min_messages)
 			{
 				char		msec_str[32];

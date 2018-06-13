@@ -67,17 +67,17 @@ donothingCleanup(DestReceiver *self)
  */
 static DestReceiver donothingDR = {
 	donothingReceive, donothingStartup, donothingCleanup, donothingCleanup,
-	DestNone
+	DestNone, NULL
 };
 
 static DestReceiver debugtupDR = {
 	debugtup, debugStartup, donothingCleanup, donothingCleanup,
-	DestDebug
+	DestDebug, NULL
 };
 
 static DestReceiver spi_printtupDR = {
 	spi_printtup, spi_dest_startup, donothingCleanup, donothingCleanup,
-	DestSPI
+	DestSPI, NULL
 };
 
 /* Globally available receiver for DestNone */

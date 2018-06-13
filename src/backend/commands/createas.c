@@ -47,7 +47,6 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 
-
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
@@ -65,7 +64,8 @@ typedef struct
 	ItemPointerData last_heap_tid;
 } DR_intorel;
 
-static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
+static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
+static void intorel_initplan(QueryDesc *queryDesc, int eflags);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
@@ -208,10 +208,11 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
 
 	self->pub.receiveSlot = intorel_receive;
-	self->pub.rStartup = intorel_startup;
+	self->pub.rStartup = intorel_startup_dummy;
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
+	self->pub.rInitPlan = intorel_initplan;
 	self->into = intoClause;
 
 	self->ao_insertDesc = NULL;
@@ -221,12 +222,29 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 }
 
 /*
- * intorel_startup --- executor startup
+ * intorel_startup_dummy --- executor startup
  */
 static void
-intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-	DR_intorel *myState = (DR_intorel *) self;
+	/* no-op */
+
+	/* See intorel_initplan() for explanation */
+}
+
+/*
+ * intorel_initplan --- Based on PG intorel_startup().
+ * Parameters are different. We need to run the code earlier before the
+ * executor runs since we want the relation to be created earlier else current
+ * MPP framework will fail. This could be called in InitPlan() as before, but
+ * we could call it just before ExecutorRun() in ExecCreateTableAs(). In the
+ * future if the requirment is general we could add an interface into
+ * DestReceiver but so far that is not needed (Based on PG 11 code.)
+ */
+static void
+intorel_initplan(QueryDesc *queryDesc, int eflags)
+{
+	DR_intorel *myState = (DR_intorel *) (queryDesc->dest);
 	IntoClause *into = myState->into;
 	CreateStmt *create;
 	Oid			intoRelationId;
@@ -240,9 +258,11 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	Datum       reloptions;
 	int         relstorage;
 	bool		validate_reloptions;
+	TupleDesc   typeinfo = queryDesc->tupDesc;
 
-	QueryDesc *queryDesc = NULL;
-	/* MUST_FIXME: Get queryDesc. Via container_of()? Or another interface intorel_init()? */
+	/* If EXPLAIN/QE, skip creating the "into" relation. */
+	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) || Gp_role == GP_ROLE_EXECUTE)
+		return;
 
 	/*
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
@@ -357,10 +377,11 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	else
 		validate_reloptions = true;
 
-	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug and further fix when the pg 9.2 code could run.
-	 * 1) Need to Change for build_ctas_with_dist().
-	 * 2) Geneate the new MPP Plan for CreateTableAsStmt.
-	 * 3) Double-check and debug the code.
+	/* GPDB_92_MERGE_FIXME for CTAS: Need to further debug.
+	 * - Need to change for build_ctas_with_dist().
+	 * - Geneate the new MPP Plan for query in CreateTableAsStmt.
+	 * - Check code that handles DestIntoRel.
+	 * - Double-check (Check all places having intoClause in old gpdb) and debug the code.
 	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
@@ -381,6 +402,9 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	create->buildAoBlkdir = false;
 	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
 
+	/* Save them in CreateStmt for dispatching. */
+	create->relKind = RELKIND_RELATION;
+	create->relStorage = relstorage;
 	/*
 	 * Actually create the target table.
 	 * Don't dispatch it yet, as we haven't created the toast and other

@@ -107,6 +107,9 @@ typedef enum
  */
 typedef struct _DestReceiver DestReceiver;
 
+/* Make compiler happy. */
+typedef struct QueryDesc QueryDesc;
+
 struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
@@ -121,6 +124,8 @@ struct _DestReceiver
 	void		(*rDestroy) (DestReceiver *self);
 	/* CommandDest code for this receiver */
 	CommandDest mydest;
+	/* Code that should be called earlier in InitPlan(). */
+	void (*rInitPlan)(QueryDesc *queryDesc, int eflags);
 	/* Private fields might appear beyond this point... */
 };
 
