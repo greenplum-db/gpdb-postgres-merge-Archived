@@ -671,9 +671,6 @@ WalSndLoop(void)
 		/* Check for input from the client */
 		ProcessRepliesIfAny();
 
-		/* Check for input from the client */
-		ProcessRepliesIfAny();
-
 		/*
 		 * If we don't have any pending data in the output buffer, try to send
 		 * some more.  If there is some, we don't bother to call XLogSend

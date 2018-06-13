@@ -576,50 +576,8 @@ SyncRepReleaseWaiters(void)
 static int
 SyncRepGetStandbyPriority(void)
 {
-	char	   *rawstring;
-	List	   *elemlist;
-	ListCell   *l;
-	int			priority = 0;
-	bool		found = false;
-
-	/*
-	 * Since synchronous cascade replication is not allowed, we always set the
-	 * priority of cascading walsender to zero.
-	 */
-	if (am_cascading_walsender)
-		return 0;
-
-	/* Need a modifiable copy of string */
-	rawstring = pstrdup(SyncRepStandbyNames);
-
-	/* Parse string into list of identifiers */
-	if (!SplitIdentifierString(rawstring, ',', &elemlist))
-	{
-		/* syntax error in list */
-		pfree(rawstring);
-		list_free(elemlist);
-		/* GUC machinery will have already complained - no need to do again */
-		return 0;
-	}
-
-	foreach(l, elemlist)
-	{
-		char	   *standby_name = (char *) lfirst(l);
-
-		priority++;
-
-		if (pg_strcasecmp(standby_name, application_name) == 0 ||
-			pg_strcasecmp(standby_name, "*") == 0)
-		{
-			found = true;
-			break;
-		}
-	}
-
-	pfree(rawstring);
-	list_free(elemlist);
-
-	return (found ? priority : 0);
+	/* Currently set the priority to 1 */
+	return 1;
 }
 
 /*
