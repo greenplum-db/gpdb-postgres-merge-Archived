@@ -3728,14 +3728,14 @@ CopyFrom(CopyState cstate)
 
 			/* OK, store the tuple and create index entries for it */
 			if (useHeapMultiInsert) {
-				HeapTuple tuple;
+				HeapTuple	tuple;
 				tuple = ExecFetchSlotHeapTuple(slot);
 
-				if (bufferedTuples == NULL)
-
-					/* Add this tuple to the tuple buffer */
-					bufferedTuples[nBufferedTuples++] = tuple;
+				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+				/* Add this tuple to the tuple buffer */
+				bufferedTuples[nBufferedTuples++] = heap_copytuple(tuple);
 				bufferedTuplesSize += tuple->t_len;
+				MemoryContextSwitchTo(estate->es_query_cxt);
 
 				/*
 				 * If the buffer filled up, flush it. Also flush if the total
