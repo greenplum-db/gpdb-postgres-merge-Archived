@@ -119,7 +119,7 @@ static Query *transformCreateTableAsStmt(ParseState *pstate,
 static void transformLockingClause(ParseState *pstate, Query *qry,
 					   LockingClause *lc, bool pushedDown);
 
-static void setQryDistributionPolicy(SelectStmt *stmt, Query *qry);
+static void setQryDistributionPolicy(DistributedBy *dist, Query *qry);
 
 static Query *transformGroupedWindows(ParseState *pstate, Query *qry);
 static void init_grouped_window_context(grouped_window_ctx *ctx, Query *qry);
@@ -1723,12 +1723,13 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	processExtendedGrouping(pstate, qry->havingQual, qry->windowClause, qry->targetList);
 
 	/*
+	 * GPDB_92_MERGE_FIXME: Could this code path be called now?
 	 * Generally, we'll only have a distributedBy clause if stmt->into is set,
 	 * with the exception of set op queries, since transformSetOperationStmt()
 	 * sets stmt->into to NULL to avoid complications elsewhere.
 	 */
 	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy(stmt, qry);
+		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
@@ -1961,7 +1962,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
 
 	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy(stmt, qry);
+		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
 
 	/*
 	 * There mustn't have been any table references in the expressions, else
@@ -3246,6 +3247,9 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
+	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
+		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *) stmt->query);
+
 	return result;
 }
 
@@ -3500,65 +3504,57 @@ applyLockingClause(Query *qry, Index rtindex,
 }
 
 static void
-setQryDistributionPolicy(SelectStmt *stmt, Query *qry)
+setQryDistributionPolicy(DistributedBy *dist, Query *qry)
 {
 	ListCell   *keys = NULL;
-
-	DistributedBy	*dist = NULL;
 	int			colindex = 0;
 
-	if (Gp_role != GP_ROLE_DISPATCH)
-		return;
+	Assert(Gp_role != GP_ROLE_DISPATCH);
+	Assert(dist != NULL);
 
-	Assert(stmt->distributedBy);
+	/*
+	 * We have a DISTRIBUTED BY column list specified by the user
+	 * Process it now and set the distribution policy.
+	 */
+	if (list_length(dist->keys) > MaxPolicyAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("number of distributed by columns exceeds limit (%d)",
+						MaxPolicyAttributeNumber)));
 
-	dist = (DistributedBy *)stmt->distributedBy;
-	if (dist)
+	if (dist->ptype == POLICYTYPE_REPLICATED)
+		qry->intoPolicy = createReplicatedGpPolicy(NULL);
+	else
 	{
-		/*
-		 * We have a DISTRIBUTED BY column list specified by the user
-		 * Process it now and set the distribution policy.
-		 */
-		if (list_length(dist->keys) > MaxPolicyAttributeNumber)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_COLUMNS),
-					 errmsg("number of distributed by columns exceeds limit (%d)",
-							MaxPolicyAttributeNumber)));
-
-		if (dist->ptype == POLICYTYPE_REPLICATED)
-			qry->intoPolicy = createReplicatedGpPolicy(NULL);
-		else
+		List	*policykeys = NIL;
+		foreach(keys, dist->keys)
 		{
-			List	*policykeys = NIL;
-			foreach(keys, dist->keys)
+			char	   *key = strVal(lfirst(keys));
+			bool		found = false;
+			AttrNumber	n;
+
+			for (n=1; n <= list_length(qry->targetList); n++)
 			{
-				char	   *key = strVal(lfirst(keys));
-				bool		found = false;
-				AttrNumber	n;
+				TargetEntry *target = get_tle_by_resno(qry->targetList, n);
+				colindex = n;
 
-				for (n=1; n <= list_length(qry->targetList); n++)
+				if (target->resname && strcmp(target->resname, key) == 0)
 				{
-					TargetEntry *target = get_tle_by_resno(qry->targetList, n);
-					colindex = n;
-
-					if (target->resname && strcmp(target->resname, key) == 0)
-					{
-						found = true;
-						break;
-					}
+					found = true;
+					break;
 				}
-
-				if (!found)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" named in DISTRIBUTED BY "
-									"clause does not exist",
-									key)));
-	
-				policykeys = lappend_int(policykeys, colindex);
 			}
 
-			qry->intoPolicy = createHashPartitionedPolicy(NULL, policykeys);
+			if (!found)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" named in DISTRIBUTED BY "
+								"clause does not exist",
+								key)));
+
+			policykeys = lappend_int(policykeys, colindex);
 		}
+
+		qry->intoPolicy = createHashPartitionedPolicy(NULL, policykeys);
 	}
 }

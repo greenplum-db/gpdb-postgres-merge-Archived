@@ -391,7 +391,7 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 
 	/* Add distributedBy and policy to IntoClause? */
 	create->distributedBy = into->distributedBy;
-	create->partitionBy = NULL; /* CTAS does not seem to support partition. Check it! */
+	create->partitionBy = NULL; /* CTAS does not not support partition. */
 
     create->policy = queryDesc->plannedstmt->intoPolicy;
 	create->postCreate = NULL;
