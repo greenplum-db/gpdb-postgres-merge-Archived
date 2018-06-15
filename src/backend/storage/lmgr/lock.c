@@ -3114,22 +3114,6 @@ AtPrepare_Locks(void)
 				haveXactLock = true;
 		}
 
-		/* gp-change 
-		 *
-		 * We allow 2PC commit transactions to include temp objects.  
-		 * After PREPARE we WILL NOT transfer locks on the temp objects
-		 * into our 2PC record.  Instead, we will keep them with the proc which
-		 * will be released at the end of the session.
-		 *
-		 * There doesn't seem to be any reason not to do this.  Once the txn
-		 * is prepared, it will be committed or aborted regardless of the state
-		 * of the temp table.  and quite possibly, the temp table will be
-		 * destroyed at the end of the session, while the transaction will be
-		 * committed from another session.
-		 */
-		if (LockTagIsTemp(&locallock->tag.lock))
-			continue;
-
 		/* Ignore it if we have only session lock */
 		if (!haveXactLock)
 			continue;
@@ -3170,6 +3154,22 @@ AtPrepare_Locks(void)
 		 * committed or rolled back.
 		 */
 		locallock->holdsStrongLockCount = FALSE;
+
+		/* gp-change
+		 *
+		 * We allow 2PC commit transactions to include temp objects.  
+		 * After PREPARE we WILL NOT transfer locks on the temp objects
+		 * into our 2PC record.  Instead, we will keep them with the proc which
+		 * will be released at the end of the session.
+		 *
+		 * There doesn't seem to be any reason not to do this.  Once the txn
+		 * is prepared, it will be committed or aborted regardless of the state
+		 * of the temp table.  and quite possibly, the temp table will be
+		 * destroyed at the end of the session, while the transaction will be
+		 * committed from another session.
+		 */
+		if (LockTagIsTemp(&locallock->tag.lock))
+			continue;
 
 		/*
 		 * Create a 2PC record.
