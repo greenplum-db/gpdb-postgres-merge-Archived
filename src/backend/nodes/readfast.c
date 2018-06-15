@@ -1741,6 +1741,18 @@ readIndexScanFields(IndexScan *local_node)
 	READ_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
+static void
+readIndexOnlyScanFields(IndexOnlyScan *local_node)
+{
+	readScanInfo((Scan *)local_node);
+
+	READ_OID_FIELD(indexid);
+	READ_NODE_FIELD(indexqual);
+	READ_NODE_FIELD(indexorderby);
+	READ_NODE_FIELD(indextlist);
+	READ_ENUM_FIELD(indexorderdir, ScanDirection);
+}
+
 /*
  * _readIndexScan
  */
@@ -1750,6 +1762,16 @@ _readIndexScan(void)
 	READ_LOCALS(IndexScan);
 
 	readIndexScanFields(local_node);
+
+	READ_DONE();
+}
+
+static IndexOnlyScan *
+_readIndexOnlyScan(void)
+{
+	READ_LOCALS(IndexOnlyScan);
+
+	readIndexOnlyScanFields(local_node);
 
 	READ_DONE();
 }
@@ -3092,6 +3114,9 @@ readNodeBinary(void)
 				break;
 			case T_IndexScan:
 				return_value = _readIndexScan();
+				break;
+			case T_IndexOnlyScan:
+				return_value = _readIndexOnlyScan();
 				break;
 			case T_DynamicIndexScan:
 				return_value = _readDynamicIndexScan();

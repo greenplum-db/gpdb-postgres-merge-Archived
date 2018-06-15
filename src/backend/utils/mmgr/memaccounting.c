@@ -1114,6 +1114,8 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_DynamicTableScan";
 	case MEMORY_OWNER_TYPE_Exec_IndexScan:
 		return "X_IndexScan";
+	case MEMORY_OWNER_TYPE_Exec_IndexOnlyScan:
+		return "X_IndexOnlyScan";
 	case MEMORY_OWNER_TYPE_Exec_DynamicIndexScan:
 		return "X_DynamicIndexScan";
 	case MEMORY_OWNER_TYPE_Exec_BitmapIndexScan:

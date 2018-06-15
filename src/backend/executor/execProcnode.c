@@ -421,8 +421,14 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 
 		case T_IndexOnlyScan:
+			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, IndexOnlyScan);
+
+			START_MEMORY_ACCOUNT(curMemoryAccountId);
+			{
 			result = (PlanState *) ExecInitIndexOnlyScan((IndexOnlyScan *) node,
 														 estate, eflags);
+			}
+			END_MEMORY_ACCOUNT();
 			break;
 
 		case T_BitmapIndexScan:

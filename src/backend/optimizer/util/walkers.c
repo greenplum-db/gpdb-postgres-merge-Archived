@@ -269,6 +269,13 @@ plan_tree_walker(Node *node,
 			/* Other fields are lists of basic items, nothing to walk. */
 			break;
 
+		case T_IndexOnlyScan:
+			if (walk_scan_node_fields((Scan *) node, walker, context))
+				return true;
+			if (walker((Node *) ((IndexOnlyScan *) node)->indexqual, context))
+				return true;
+			break;
+
 		case T_BitmapIndexScan:
 		case T_DynamicBitmapIndexScan:
 			if (walk_scan_node_fields((Scan *) node, walker, context))

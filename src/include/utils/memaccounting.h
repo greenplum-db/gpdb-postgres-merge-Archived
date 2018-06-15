@@ -114,6 +114,7 @@ typedef enum MemoryOwnerType
 	MEMORY_OWNER_TYPE_Exec_TableScan,
 	MEMORY_OWNER_TYPE_Exec_DynamicTableScan,
 	MEMORY_OWNER_TYPE_Exec_IndexScan,
+	MEMORY_OWNER_TYPE_Exec_IndexOnlyScan,
 	MEMORY_OWNER_TYPE_Exec_DynamicIndexScan,
 	MEMORY_OWNER_TYPE_Exec_BitmapIndexScan,
 	MEMORY_OWNER_TYPE_Exec_DynamicBitmapIndexScan,
