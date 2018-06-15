@@ -2,6 +2,11 @@ subdir=src/backend/utils
 top_builddir=../../../..
 include $(top_builddir)/src/Makefile.global
 
+# GPDB_92_MERGE_FIXME : IF use -O3, there will be some confusing
+# errors cause by link
+
+CFLAGS += -O0
+
 TARGETS=session_state
 
 include $(top_builddir)/src/backend/mock.mk
