@@ -130,6 +130,8 @@ _copyPlannedStmt(const PlannedStmt *from)
 
 	COPY_SCALAR_FIELD(query_mem);
 
+	COPY_NODE_FIELD(intoClause);
+
 	return newnode;
 }
 
@@ -1521,6 +1523,7 @@ _copyIntoClause(const IntoClause *from)
 	COPY_SCALAR_FIELD(onCommit);
 	COPY_STRING_FIELD(tableSpaceName);
 	COPY_SCALAR_FIELD(skipData);
+	COPY_NODE_FIELD(distributedBy);
 
 	return newnode;
 }
@@ -3129,13 +3132,8 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
-
-	if (from->intoPolicy)
-	{
-		COPY_NODE_FIELD(intoPolicy);
-	}
-	else
-		newnode->intoPolicy = NULL;
+	COPY_NODE_FIELD(intoPolicy);
+	COPY_NODE_FIELD(intoClause);
 
 	return newnode;
 }

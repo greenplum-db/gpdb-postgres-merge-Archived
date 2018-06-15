@@ -180,6 +180,15 @@ typedef struct Query
 	 * policy for SELECT ... INTO and set operations.
 	 */
 	struct GpPolicy *intoPolicy;
+
+	/* GPDB:
+	 * Unlike PG, we need to keep this info so that MPP planning is enforced
+	 * even the query is a simple one that could be run on QD only, also we
+	 * need to tell executor that we do not need to bring tuples to QD unlike
+	 * usual select clause does (See code in apply_motion() and cdbparallelize()),
+	 * and executor needs this info to specifiy correct target also.
+	 * */
+	IntoClause *intoClause;
 } Query;
 
 
@@ -1171,7 +1180,6 @@ typedef struct SelectStmt
 	/* This field used by: SELECT INTO, CTAS */
 	/* GPDB_91_MERGE_FIXME: why is this not a DistributedBy*? */
 	Node *distributedBy;  /* GPDB: columns to distribute the data on. */
-
 } SelectStmt;
 
 

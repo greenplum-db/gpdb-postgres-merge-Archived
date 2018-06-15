@@ -124,8 +124,6 @@ struct _DestReceiver
 	void		(*rDestroy) (DestReceiver *self);
 	/* CommandDest code for this receiver */
 	CommandDest mydest;
-	/* Code that should be called earlier in InitPlan(). */
-	void (*rInitPlan)(QueryDesc *queryDesc, int eflags);
 	/* Private fields might appear beyond this point... */
 };
 

@@ -65,7 +65,6 @@ typedef struct
 } DR_intorel;
 
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
-static void intorel_initplan(QueryDesc *queryDesc, int eflags);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
@@ -159,14 +158,14 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* run the plan */
 	ExecutorRun(queryDesc, dir, 0L);
 
-	/* save the rowcount if we're given a completionTag to fill */
-	if (completionTag)
-		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				 "SELECT " UINT64_FORMAT, queryDesc->estate->es_processed);
-
 	/* and clean up */
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
+
+	/* save the rowcount if we're given a completionTag to fill */
+	if (completionTag)
+		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+				 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
 
 	FreeQueryDesc(queryDesc);
 
@@ -212,7 +211,6 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
-	self->pub.rInitPlan = intorel_initplan;
 	self->into = intoClause;
 
 	self->ao_insertDesc = NULL;
@@ -241,11 +239,12 @@ intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
  * future if the requirment is general we could add an interface into
  * DestReceiver but so far that is not needed (Based on PG 11 code.)
  */
-static void
+void
 intorel_initplan(QueryDesc *queryDesc, int eflags)
 {
-	DR_intorel *myState = (DR_intorel *) (queryDesc->dest);
-	IntoClause *into = myState->into;
+	DR_intorel *myState;
+	/* Get 'into' from the dispatched plan */
+	IntoClause *into = queryDesc->plannedstmt->intoClause;
 	CreateStmt *create;
 	Oid			intoRelationId;
 	Relation	intoRelationDesc;
@@ -261,7 +260,8 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
-	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) || Gp_role == GP_ROLE_EXECUTE)
+	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) ||
+		(Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer))
 		return;
 
 	/*
@@ -379,9 +379,7 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 
 	/* GPDB_92_MERGE_FIXME for CTAS: Need to further debug.
 	 * - Need to change for build_ctas_with_dist().
-	 * - Geneate the new MPP Plan for query in CreateTableAsStmt.
-	 * - Check code that handles DestIntoRel.
-	 * - Double-check (Check all places having intoClause in old gpdb) and debug the code.
+	 * - Double-check (Check all places having intoClause in old gpdb and postgres patch) and debug the code.
 	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
@@ -389,8 +387,7 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	else
 		relstorage = RELSTORAGE_HEAP;
 
-	/* Add distributedBy and policy to IntoClause? */
-	create->distributedBy = into->distributedBy;
+	create->distributedBy = into->distributedBy; /* Seems to be not needed? */
 	create->partitionBy = NULL; /* CTAS does not not support partition. */
 
     create->policy = queryDesc->plannedstmt->intoPolicy;
@@ -405,6 +402,8 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	/* Save them in CreateStmt for dispatching. */
 	create->relKind = RELKIND_RELATION;
 	create->relStorage = relstorage;
+	create->ownerid = GetUserId();
+
 	/*
 	 * Actually create the target table.
 	 * Don't dispatch it yet, as we haven't created the toast and other
@@ -432,11 +431,6 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	AlterTableCreateAoSegTable(intoRelationId, false);
 	/* don't create AO block directory here, it'll be created when needed. */
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		CdbDispatchUtilityStatement((Node *) create, DF_CANCEL_ON_ERROR |
-									DF_NEED_TWO_PHASE | DF_WITH_SNAPSHOT,
-									GetAssignedOidsForDispatch(), NULL);
 
 	/*
 	 * Finally we can open the target table
@@ -477,6 +471,10 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Fill private fields of myState for use by later routines
 	 */
+
+	if (queryDesc->dest->mydest != DestIntoRel)
+		queryDesc->dest = CreateIntoRelDestReceiver(into);
+	myState = (DR_intorel *) queryDesc->dest;
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);
 
@@ -557,6 +555,9 @@ intorel_shutdown(DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	Relation	into_rel = myState->rel;
+
+	if (into_rel == NULL)
+		return;
 
 	FreeBulkInsertState(myState->bistate);
 

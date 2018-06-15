@@ -381,7 +381,8 @@ ChoosePortalStrategy(List *stmts)
 			if (query->canSetTag)
 			{
 				if (query->commandType == CMD_SELECT &&
-					query->utilityStmt == NULL)
+					query->utilityStmt == NULL &&
+					query->intoClause == NULL)
 				{
 					if (query->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -405,7 +406,8 @@ ChoosePortalStrategy(List *stmts)
 			if (pstmt->canSetTag)
 			{
 				if (pstmt->commandType == CMD_SELECT &&
-					pstmt->utilityStmt == NULL)
+					pstmt->utilityStmt == NULL &&
+					pstmt->intoClause == NULL)
 				{
 					if (pstmt->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -508,7 +510,8 @@ FetchStatementTargetList(Node *stmt)
 		Query	   *query = (Query *) stmt;
 
 		if (query->commandType == CMD_UTILITY &&
-			query->utilityStmt != NULL)
+			query->utilityStmt != NULL &&
+			query->intoClause == NULL)
 		{
 			/* transfer attention to utility statement */
 			stmt = query->utilityStmt;
@@ -528,7 +531,8 @@ FetchStatementTargetList(Node *stmt)
 		PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
 		if (pstmt->commandType == CMD_SELECT &&
-			pstmt->utilityStmt == NULL)
+			pstmt->utilityStmt == NULL &&
+			pstmt->intoClause == NULL)
 			return pstmt->planTree->targetlist;
 		if (pstmt->hasReturning)
 			return pstmt->planTree->targetlist;

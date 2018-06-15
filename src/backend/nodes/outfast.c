@@ -357,10 +357,9 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_INT_FIELD(nParamExec);
 	WRITE_INT_FIELD(nMotionNodes);
 	WRITE_INT_FIELD(nInitPlans);
-
 	WRITE_NODE_FIELD(intoPolicy);
-
 	WRITE_UINT64_FIELD(query_mem);
+	WRITE_NODE_FIELD(intoClause);
 }
 
 static void
@@ -904,6 +903,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
+	WRITE_NODE_FIELD(intoClause);
 
 	/* Don't serialize policy */
 }

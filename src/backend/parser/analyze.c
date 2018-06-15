@@ -3247,6 +3247,9 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
+	/* Copy intoClause into the query in CTAS. */
+	((Query*)stmt->query)->intoClause = stmt->into;
+
 	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
 		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *) stmt->query);
 
@@ -3509,7 +3512,7 @@ setQryDistributionPolicy(DistributedBy *dist, Query *qry)
 	ListCell   *keys = NULL;
 	int			colindex = 0;
 
-	Assert(Gp_role != GP_ROLE_DISPATCH);
+	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(dist != NULL);
 
 	/*
