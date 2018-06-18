@@ -143,7 +143,7 @@ $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
 # which probably indicates that we're relying on undefined behavior... we should
 # probably pull anything order-dependent out of recurse() and back into the
 # recipe body).
-$(call recurse,installcheck-world,src/test,installcheck-good)
+$(call recurse,installcheck-world,src/test/regress,installcheck-good)
 $(call recurse,installcheck-world, \
 			   src/test/fsync \
 			   src/test/walrep \
