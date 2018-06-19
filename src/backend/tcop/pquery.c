@@ -370,6 +370,10 @@ ChoosePortalStrategy(List *stmts)
 	 * auxiliary queries to a SELECT or a utility command. PORTAL_ONE_MOD_WITH
 	 * likewise allows only one top-level statement.
 	 */
+	/* Note For CreateTableAs, we still use PORTAL_MULTI_QUERY (not like PG)
+	 * since QE needs to use DestRemote to deliver completionTag to QD and
+	 * use DestIntoRel to insert tuples into the table(s).
+	 */
 	if (list_length(stmts) == 1)
 	{
 		Node	   *stmt = (Node *) linitial(stmts);
