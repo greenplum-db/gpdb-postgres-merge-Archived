@@ -54,7 +54,9 @@
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
+#include "commands/createas.h"
 #include "commands/tablecmds.h" /* XXX: temp for get_parts() */
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
@@ -467,6 +469,32 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 		/* set our global sliceid variable for elog. */
 		currentSliceId = LocallyExecutingSliceIndex(estate);
+
+		/* Determine OIDs for into relation, if any */
+		if (queryDesc->plannedstmt->intoClause != NULL)
+		{
+			IntoClause *intoClause = queryDesc->plannedstmt->intoClause;
+			Oid         reltablespace;
+
+			cdb_sync_oid_to_segments();
+
+			/* MPP-10329 - must always dispatch the tablespace */
+			if (intoClause->tableSpaceName)
+			{
+				reltablespace = get_tablespace_oid(intoClause->tableSpaceName, false);
+				ddesc->intoTableSpaceName = intoClause->tableSpaceName;
+			}
+			else
+			{
+				reltablespace = GetDefaultTablespace(intoClause->rel->relpersistence);
+
+				/* Need the real tablespace id for dispatch */
+				if (!OidIsValid(reltablespace))
+					reltablespace = MyDatabaseTableSpace;
+
+				ddesc->intoTableSpaceName = get_tablespace_name(reltablespace);
+			}
+		}
 	}
 	else if (Gp_role == GP_ROLE_EXECUTE)
 	{
@@ -2060,6 +2088,14 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	queryDesc->tupDesc = tupType;
+
+	/*
+	 * GPDB: Hack for CTAS/MatView:
+	 *   Need to switch to IntoRelDest for CTAS.
+	 *   Also need to create tables in advance.
+	 */
+	if (queryDesc->plannedstmt->intoClause != NULL)
+		intorel_initplan(queryDesc, eflags);
 
 	if (DEBUG1 >= log_min_messages)
 			{
@@ -4449,8 +4485,7 @@ FillSliceTable(EState *estate, PlannedStmt *stmt)
 	cxt.estate = estate;
 	cxt.currentSliceId = 0;
 
-	/*  GPDB_92_MERGE_FIXME: Do we still need this or it is correct? */
-	if (IsA(stmt, CreateTableAsStmt))
+	if (stmt->intoClause != NULL)
 	{
 		Slice	   *currentSlice = (Slice *) linitial(sliceTable->slices);
 

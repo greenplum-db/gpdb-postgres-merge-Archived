@@ -253,6 +253,7 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
+	READ_NODE_FIELD(intoClause);
 
 	/* policy not serialized */
 
@@ -1452,6 +1453,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(intoPolicy);
 
 	READ_UINT64_FIELD(query_mem);
+	READ_NODE_FIELD(intoClause);
 	READ_DONE();
 }
 

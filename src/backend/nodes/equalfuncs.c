@@ -143,6 +143,7 @@ _equalIntoClause(const IntoClause *a, const IntoClause *b)
 	COMPARE_SCALAR_FIELD(onCommit);
 	COMPARE_STRING_FIELD(tableSpaceName);
 	COMPARE_SCALAR_FIELD(skipData);
+	COMPARE_NODE_FIELD(distributedBy);
 
 	return true;
 }
@@ -987,6 +988,8 @@ _equalQuery(const Query *a, const Query *b)
 	 */
 	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
 		return false;
+
+	COMPARE_NODE_FIELD(intoClause);
 
 	return true;
 }

@@ -263,33 +263,8 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			if ((plan->flow->flotype == FLOW_PARTITIONED) ||
-				(plan->flow->flotype == FLOW_SINGLETON &&
-				 plan->flow->locustype == CdbLocusType_SegmentGeneral))
-				bringResultToDispatcher = true;
-
-			needToAssignDirectDispatchContentIds = root->config->gp_enable_direct_dispatch;
-			break;
-
-		case CMD_INSERT:
-			if (query->returningList)
-			{
-				bringResultToDispatcher = true;
-			}
-			break;
-
-		case CMD_UPDATE:
-		case CMD_DELETE:
-			needToAssignDirectDispatchContentIds = root->config->gp_enable_direct_dispatch;
-			if (query->returningList)
-			{
-				bringResultToDispatcher = true;
-			}
-			break;
-
-		case CMD_UTILITY:
-			/* GPDB_92_MERGE_FIXME_AFTER_GPDB_IS_UP: Debug the logic */
-			if (IsA(query->utilityStmt, CreateTableAsStmt))
+			/* If the query comes from 'CREAT TABLE AS' or 'SELECT INTO' */
+			if (query->intoClause)
 			{
 				List	   *hashExpr;
 				ListCell   *exp1;
@@ -494,10 +469,37 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 				}
 
 				Assert(query->intoPolicy->ptype != POLICYTYPE_ENTRY);
-
-				/* Do we need to set needToAssignDirectDispatchContentIds as true for CTAS? */
 			}
 
+			if (query->intoClause == NULL)
+			{
+				if (plan->flow->flotype == FLOW_PARTITIONED ||
+					(plan->flow->flotype == FLOW_SINGLETON &&
+					plan->flow->locustype == CdbLocusType_SegmentGeneral))
+				bringResultToDispatcher = true;
+
+				needToAssignDirectDispatchContentIds = root->config->gp_enable_direct_dispatch;
+			}
+
+			break;
+
+		case CMD_INSERT:
+			if (query->returningList)
+			{
+				bringResultToDispatcher = true;
+			}
+			break;
+
+		case CMD_UPDATE:
+		case CMD_DELETE:
+			needToAssignDirectDispatchContentIds = root->config->gp_enable_direct_dispatch;
+			if (query->returningList)
+			{
+				bringResultToDispatcher = true;
+			}
+			break;
+
+		case CMD_UTILITY:
 			break;
 
 		default:

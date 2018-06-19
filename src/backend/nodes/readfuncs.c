@@ -399,6 +399,7 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
+	READ_NODE_FIELD(intoClause);
 
 	local_node->intoPolicy = NULL;
 
@@ -664,6 +665,7 @@ _readIntoClause(void)
 	READ_ENUM_FIELD(onCommit, OnCommitAction);
 	READ_STRING_FIELD(tableSpaceName);
 	READ_BOOL_FIELD(skipData);
+	READ_NODE_FIELD(distributedBy);
 
 	READ_DONE();
 }

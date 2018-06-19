@@ -13696,13 +13696,17 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	else
 	{
 		Oid tblspc = rel->rd_rel->reltablespace;
+		CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 
-		s->intoClause = makeNode(IntoClause);
-		s->intoClause->rel = tmprel;
-		s->intoClause->options = storage_opts;
-		s->intoClause->tableSpaceName = get_tablespace_name(tblspc);
-		s->distributedBy = (Node *)dist_clause;
-		n = (Node *)s;
+		ctas->into = makeNode(IntoClause);
+		ctas->into->rel = tmprel;
+		ctas->into->options = storage_opts;
+		ctas->into->tableSpaceName = get_tablespace_name(tblspc);
+		ctas->into->distributedBy = (Node *)dist_clause;
+
+		ctas->query = (Node *) s;
+		ctas->is_select_into = false;
+		n = (Node *)ctas;
 	}
 	*tmprv = tmprel;
 
@@ -14518,6 +14522,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		/* Step (c) - run on all nodes */
 		ExecutorStart(queryDesc, 0);
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+		queryDesc->dest->rDestroy(queryDesc->dest);
 		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
 		FreeQueryDesc(queryDesc);

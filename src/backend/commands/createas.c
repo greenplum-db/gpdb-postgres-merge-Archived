@@ -47,7 +47,6 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 
-
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
@@ -65,7 +64,7 @@ typedef struct
 	ItemPointerData last_heap_tid;
 } DR_intorel;
 
-static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
+static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
@@ -159,14 +158,16 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* run the plan */
 	ExecutorRun(queryDesc, dir, 0L);
 
-	/* save the rowcount if we're given a completionTag to fill */
-	if (completionTag)
-		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
-				 "SELECT " UINT64_FORMAT, queryDesc->estate->es_processed);
+	dest->rDestroy(dest);
 
 	/* and clean up */
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
+
+	/* save the rowcount if we're given a completionTag to fill */
+	if (completionTag)
+		snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+				 "SELECT " UINT64_FORMAT, queryDesc->es_processed);
 
 	FreeQueryDesc(queryDesc);
 
@@ -208,7 +209,7 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
 
 	self->pub.receiveSlot = intorel_receive;
-	self->pub.rStartup = intorel_startup;
+	self->pub.rStartup = intorel_startup_dummy;
 	self->pub.rShutdown = intorel_shutdown;
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
@@ -221,13 +222,31 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 }
 
 /*
- * intorel_startup --- executor startup
+ * intorel_startup_dummy --- executor startup
  */
 static void
-intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-	DR_intorel *myState = (DR_intorel *) self;
-	IntoClause *into = myState->into;
+	/* no-op */
+
+	/* See intorel_initplan() for explanation */
+}
+
+/*
+ * intorel_initplan --- Based on PG intorel_startup().
+ * Parameters are different. We need to run the code earlier before the
+ * executor runs since we want the relation to be created earlier else current
+ * MPP framework will fail. This could be called in InitPlan() as before, but
+ * we could call it just before ExecutorRun() in ExecCreateTableAs(). In the
+ * future if the requirment is general we could add an interface into
+ * DestReceiver but so far that is not needed (Based on PG 11 code.)
+ */
+void
+intorel_initplan(QueryDesc *queryDesc, int eflags)
+{
+	DR_intorel *myState;
+	/* Get 'into' from the dispatched plan */
+	IntoClause *into = queryDesc->plannedstmt->intoClause;
 	CreateStmt *create;
 	Oid			intoRelationId;
 	Relation	intoRelationDesc;
@@ -240,9 +259,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	Datum       reloptions;
 	int         relstorage;
 	bool		validate_reloptions;
+	TupleDesc   typeinfo = queryDesc->tupDesc;
 
-	QueryDesc *queryDesc = NULL;
-	/* MUST_FIXME: Get queryDesc. Via container_of()? Or another interface intorel_init()? */
+	/* If EXPLAIN/QE, skip creating the "into" relation. */
+	if ((eflags & EXEC_FLAG_EXPLAIN_ONLY) ||
+		(Gp_role == GP_ROLE_EXECUTE && !Gp_is_writer))
+		return;
 
 	/*
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
@@ -357,20 +379,14 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	else
 		validate_reloptions = true;
 
-	/* GPDB_92_MERGE_FIXME for CTAS: Need to debug and further fix when the pg 9.2 code could run.
-	 * 1) Need to Change for build_ctas_with_dist().
-	 * 2) Geneate the new MPP Plan for CreateTableAsStmt.
-	 * 3) Double-check and debug the code.
-	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
 		relstorage = RELSTORAGE_HEAP;
 
-	/* Add distributedBy and policy to IntoClause? */
-	create->distributedBy = into->distributedBy;
-	create->partitionBy = NULL; /* CTAS does not seem to support partition. Check it! */
+	create->distributedBy = into->distributedBy; /* Seems to be not needed? */
+	create->partitionBy = NULL; /* CTAS does not not support partition. */
 
     create->policy = queryDesc->plannedstmt->intoPolicy;
 	create->postCreate = NULL;
@@ -380,6 +396,11 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	create->is_split_part = false;
 	create->buildAoBlkdir = false;
 	create->attr_encodings = NULL; /* Handle by AddDefaultRelationAttributeOptions() */
+
+	/* Save them in CreateStmt for dispatching. */
+	create->relKind = RELKIND_RELATION;
+	create->relStorage = relstorage;
+	create->ownerid = GetUserId();
 
 	/*
 	 * Actually create the target table.
@@ -408,11 +429,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	AlterTableCreateAoSegTable(intoRelationId, false);
 	/* don't create AO block directory here, it'll be created when needed. */
 	AlterTableCreateAoVisimapTable(intoRelationId, false);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-		CdbDispatchUtilityStatement((Node *) create, DF_CANCEL_ON_ERROR |
-									DF_NEED_TWO_PHASE | DF_WITH_SNAPSHOT,
-									GetAssignedOidsForDispatch(), NULL);
 
 	/*
 	 * Finally we can open the target table
@@ -453,6 +469,10 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Fill private fields of myState for use by later routines
 	 */
+
+	if (queryDesc->dest->mydest != DestIntoRel)
+		queryDesc->dest = CreateIntoRelDestReceiver(into);
+	myState = (DR_intorel *) queryDesc->dest;
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);
 
@@ -533,6 +553,9 @@ intorel_shutdown(DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	Relation	into_rel = myState->rel;
+
+	if (into_rel == NULL)
+		return;
 
 	FreeBulkInsertState(myState->bistate);
 

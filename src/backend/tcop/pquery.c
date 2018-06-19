@@ -370,6 +370,10 @@ ChoosePortalStrategy(List *stmts)
 	 * auxiliary queries to a SELECT or a utility command. PORTAL_ONE_MOD_WITH
 	 * likewise allows only one top-level statement.
 	 */
+	/* Note For CreateTableAs, we still use PORTAL_MULTI_QUERY (not like PG)
+	 * since QE needs to use DestRemote to deliver completionTag to QD and
+	 * use DestIntoRel to insert tuples into the table(s).
+	 */
 	if (list_length(stmts) == 1)
 	{
 		Node	   *stmt = (Node *) linitial(stmts);
@@ -381,7 +385,8 @@ ChoosePortalStrategy(List *stmts)
 			if (query->canSetTag)
 			{
 				if (query->commandType == CMD_SELECT &&
-					query->utilityStmt == NULL)
+					query->utilityStmt == NULL &&
+					query->intoClause == NULL)
 				{
 					if (query->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -405,7 +410,8 @@ ChoosePortalStrategy(List *stmts)
 			if (pstmt->canSetTag)
 			{
 				if (pstmt->commandType == CMD_SELECT &&
-					pstmt->utilityStmt == NULL)
+					pstmt->utilityStmt == NULL &&
+					pstmt->intoClause == NULL)
 				{
 					if (pstmt->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -516,7 +522,8 @@ FetchStatementTargetList(Node *stmt)
 		else
 		{
 			if (query->commandType == CMD_SELECT &&
-				query->utilityStmt == NULL)
+				query->utilityStmt == NULL &&
+				query->intoClause == NULL)
 				return query->targetList;
 			if (query->returningList)
 				return query->returningList;
@@ -528,7 +535,8 @@ FetchStatementTargetList(Node *stmt)
 		PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
 		if (pstmt->commandType == CMD_SELECT &&
-			pstmt->utilityStmt == NULL)
+			pstmt->utilityStmt == NULL &&
+			pstmt->intoClause == NULL)
 			return pstmt->planTree->targetlist;
 		if (pstmt->hasReturning)
 			return pstmt->planTree->targetlist;
