@@ -1723,7 +1723,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	processExtendedGrouping(pstate, qry->havingQual, qry->windowClause, qry->targetList);
 
 	/*
-	 * GPDB_92_MERGE_FIXME: Could this code path be called now?
+	 * GPDB_92_MERGE_FIXME: This code path seems to be not needed now.
 	 * Generally, we'll only have a distributedBy clause if stmt->into is set,
 	 * with the exception of set op queries, since transformSetOperationStmt()
 	 * sets stmt->into to NULL to avoid complications elsewhere.

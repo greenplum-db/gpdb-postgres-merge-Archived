@@ -158,6 +158,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* run the plan */
 	ExecutorRun(queryDesc, dir, 0L);
 
+	dest->rDestroy(dest);
+
 	/* and clean up */
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
@@ -377,10 +379,6 @@ intorel_initplan(QueryDesc *queryDesc, int eflags)
 	else
 		validate_reloptions = true;
 
-	/* GPDB_92_MERGE_FIXME for CTAS: Need to further debug.
-	 * - Need to change for build_ctas_with_dist().
-	 * - Double-check (Check all places having intoClause in old gpdb and postgres patch) and debug the code.
-	 */
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
