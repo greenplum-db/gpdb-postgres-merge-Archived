@@ -122,20 +122,18 @@ WHERE p1.typinput = p2.oid AND
     (p2.oid = 'array_in'::regproc)
 ORDER BY 1;
 
-<<<<<<< HEAD
 -- Make sure typarray points to a varlena array type of our own base
 SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype,
        p2.typelem, p2.typlen
 FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
 WHERE  p1.typarray <> 0 AND
        (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
-=======
+
 -- Composites, domains, enums, ranges should all use the same input routines
 SELECT DISTINCT typtype, typinput
 FROM pg_type AS p1
 WHERE p1.typtype not in ('b', 'p')
 ORDER BY 1;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 -- Check for bogus typoutput routines
 
@@ -359,7 +357,6 @@ WHERE p1.relnatts != (SELECT count(*) FROM pg_attribute AS p2
 -- Cross-check against pg_type entry
 -- NOTE: we allow attstorage to be 'plain' even when typstorage is not;
 -- this is mainly for toast tables.
-<<<<<<< HEAD
 -- UNDONE: Turn this off until we can figure out why the new system columns cause a bunch of rows to be generated here???
 -- SELECT p1.attrelid, p1.attname, p2.oid, p2.typname
 -- FROM pg_attribute AS p1, pg_type AS p2
@@ -368,7 +365,6 @@ WHERE p1.relnatts != (SELECT count(*) FROM pg_attribute AS p2
 --     p1.attalign != p2.typalign OR
 --     p1.attbyval != p2.typbyval OR
 --     (p1.attstorage != p2.typstorage AND p1.attstorage != 'p'));
-=======
 
 SELECT p1.attrelid, p1.attname, p2.oid, p2.typname
 FROM pg_attribute AS p1, pg_type AS p2
@@ -416,4 +412,3 @@ FROM pg_range p1 JOIN pg_proc p ON p.oid = p1.rngsubdiff
 WHERE pronargs != 2
     OR proargtypes[0] != rngsubtype OR proargtypes[1] != rngsubtype
     OR prorettype != 'pg_catalog.float8'::regtype;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
