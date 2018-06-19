@@ -3116,7 +3116,7 @@ create_mergejoin_path(PlannerInfo *root,
 	bool		preserve_inner_ordering;
 
 	/*
-	 * GPDB_MERGE_92_FIXME: Should we keep the pathkeys_contained_in calls?
+	 * GPDB_92_MERGE_FIXME: Should we keep the pathkeys_contained_in calls?
 	 */
 	/*
 	 * Do subpaths have useful ordering?

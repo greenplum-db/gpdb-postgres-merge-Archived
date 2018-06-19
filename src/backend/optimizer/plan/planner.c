@@ -3976,7 +3976,7 @@ make_subplanTargetList(PlannerInfo *root,
 	numCols = num_distcols_in_grouplist(parse->groupClause);
 
 	/*
-	 * GPDB_MERGE_92_FIXME: The codes below are different from PG 9.2.
+	 * GPDB_92_MERGE_FIXME: The codes below are different from PG 9.2.
 	 * We believe our logic is the same with upstream.
 	 */
 	if (numCols > 0)
