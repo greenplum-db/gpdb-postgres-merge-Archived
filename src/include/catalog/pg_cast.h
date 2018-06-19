@@ -374,7 +374,7 @@ DATA(insert (23   7198 3587 i f));
 DATA(insert (21   7198 3588 i f));
 DATA(insert (600  7198 0 e b));
 DATA(insert (7198  600 0 e b));
-DATA(insert (1700 7198 3592 i f));
+DATA(insert (1700 7198 7597 i f));
 
 /*
  * CDB: Allow explicit cast from tid to int8
