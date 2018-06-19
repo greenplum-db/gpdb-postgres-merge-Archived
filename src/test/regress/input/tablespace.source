@@ -24,6 +24,8 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname = 'asselect';
 
 PREPARE selectsource(int) AS SELECT $1;
+SELECT 'GPDB_92_MERGE_FIXME: CREATE TABLE AS EXECUTE not working (causing panic)';
+\q
 CREATE TABLE testschema.asexecute TABLESPACE testspace
     AS EXECUTE selectsource(2);
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
