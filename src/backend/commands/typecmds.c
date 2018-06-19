@@ -1514,8 +1514,21 @@ DefineRange(CreateRangeStmt *stmt)
 	/* alignment must be 'i' or 'd' for ranges */
 	alignment = (subtypalign == 'd') ? 'd' : 'i';
 
-	/* Allocate OID for array type */
-	rangeArrayOid = AssignTypeArrayOid();
+	/*
+	 * Create the array type that goes with it.
+	 */
+	rangeArrayName = makeArrayTypeName(typeName, typeNamespace);
+
+	/* Preassign array type OID so we can insert it in pg_type.typarray */
+	if (Gp_role == GP_ROLE_EXECUTE || IsBinaryUpgrade)
+	{
+		rangeArrayOid = GetPreassignedOidForType(typeNamespace, rangeArrayName,
+												 true);
+	}
+	else
+	{
+		rangeArrayOid = AssignTypeArrayOid();
+	}
 
 	/* Create the pg_type entry */
 	typoid =
@@ -1555,10 +1568,7 @@ DefineRange(CreateRangeStmt *stmt)
 	RangeCreate(typoid, rangeSubtype, rangeCollation, rangeSubOpclass,
 				rangeCanonical, rangeSubtypeDiff);
 
-	/*
-	 * Create the array type that goes with it.
-	 */
-	rangeArrayName = makeArrayTypeName(typeName, typeNamespace);
+
 
 	TypeCreate(rangeArrayOid,	/* force assignment of this type OID */
 			   rangeArrayName,	/* type name */
@@ -1596,6 +1606,14 @@ DefineRange(CreateRangeStmt *stmt)
 
 	/* And create the constructor functions for this range type */
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
+
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
 }
 
 /*

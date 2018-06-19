@@ -3178,6 +3178,15 @@ _outCreateEnumStmt(StringInfo str, const CreateEnumStmt *node)
 }
 
 static void
+_outCreateRangeStmt(StringInfo str, const CreateRangeStmt *node)
+{
+	WRITE_NODE_TYPE("CREATERANGESTMT");
+
+	WRITE_NODE_FIELD(typeName);
+	WRITE_NODE_FIELD(params);
+}
+
+static void
 _outCreateCastStmt(StringInfo str, const CreateCastStmt *node)
 {
 	WRITE_NODE_TYPE("CREATECAST");
@@ -5108,6 +5117,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_CreateEnumStmt:
 				_outCreateEnumStmt(str,obj);
+				break;
+			case T_CreateRangeStmt:
+				_outCreateRangeStmt(str,obj);
 				break;
 			case T_CreateCastStmt:
 				_outCreateCastStmt(str,obj);

@@ -2556,6 +2556,17 @@ _readCreateEnumStmt(void)
 	READ_DONE();
 }
 
+static CreateRangeStmt *
+_readCreateRangeStmt(void)
+{
+	READ_LOCALS(CreateRangeStmt);
+
+	READ_NODE_FIELD(typeName);
+	READ_NODE_FIELD(params);
+
+	READ_DONE();
+}
+
 static CreateCastStmt *
 _readCreateCastStmt(void)
 {

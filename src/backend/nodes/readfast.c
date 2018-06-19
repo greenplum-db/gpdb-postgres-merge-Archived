@@ -3463,6 +3463,9 @@ readNodeBinary(void)
 			case T_CreateEnumStmt:
 				return_value = _readCreateEnumStmt();
 				break;
+			case T_CreateRangeStmt:
+				return_value = _readCreateRangeStmt();
+				break;
 			case T_AlterEnumStmt:
 				return_value = _readAlterEnumStmt();
 				break;
