@@ -2696,10 +2696,12 @@ _outDropStmt(StringInfo str, const DropStmt *node)
 	WRITE_NODE_TYPE("DROPSTMT");
 
 	WRITE_NODE_FIELD(objects);
+	WRITE_NODE_FIELD(arguments);
 	WRITE_ENUM_FIELD(removeType, ObjectType);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
 	WRITE_BOOL_FIELD(missing_ok);
 	WRITE_BOOL_FIELD(bAllowPartn);
+	WRITE_BOOL_FIELD(concurrent);
 }
 
 static void

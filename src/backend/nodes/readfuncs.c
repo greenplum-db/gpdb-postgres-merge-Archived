@@ -911,10 +911,12 @@ _readDropStmt(void)
 	READ_LOCALS(DropStmt);
 
 	READ_NODE_FIELD(objects);
+	READ_NODE_FIELD(arguments);
 	READ_ENUM_FIELD(removeType,ObjectType);
 	READ_ENUM_FIELD(behavior,DropBehavior);
 	READ_BOOL_FIELD(missing_ok);
 	READ_BOOL_FIELD(bAllowPartn);
+	READ_BOOL_FIELD(concurrent);
 	local_node->missing_ok=true;
 
 	READ_DONE();
