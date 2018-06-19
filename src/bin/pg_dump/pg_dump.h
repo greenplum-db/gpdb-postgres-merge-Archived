@@ -3,13 +3,9 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h
@@ -326,15 +322,10 @@ typedef struct _tableInfo
 	bool	   *attislocal;		/* true if attr has local definition */
 	char	  **attoptions;		/* per-attribute options */
 	Oid		   *attcollation;	/* per-attribute collation selection */
-<<<<<<< HEAD
-	bool	   *notnull;		/* NOT NULL constraints on attributes */
-	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
-	char	  **attencoding;	/* the attribute encoding values */
-=======
 	char	  **attfdwoptions;	/* per-attribute fdw options */
 	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	char	  **attencoding;	/* the attribute encoding values */
 	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 
@@ -584,13 +575,10 @@ extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
 extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
-<<<<<<< HEAD
 extern ExtensionInfo *findExtensionByOid(Oid oid);
 
 extern void setExtensionMembership(ExtensionMemberId *extmems, int nextmems);
 extern ExtensionInfo *findOwningExtension(CatalogId catalogId);
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
@@ -598,19 +586,6 @@ extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 extern bool open_file_and_append_to_list(const char *fileName, SimpleStringList *list, const char *reason);
 
-<<<<<<< HEAD
-extern char *pg_strdup(const char *string);
-extern void *pg_malloc(size_t size);
-extern void *pg_calloc(size_t nmemb, size_t size);
-extern void *pg_realloc(void *ptr, size_t size);
-
-extern void check_sql_result(PGresult *res, PGconn *conn, const char *query,
-				 ExecStatusType expected);
-extern void check_conn_and_db(void);
-extern void exit_nicely(void) pg_attribute_noreturn();
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
 extern void sortDumpableObjects(DumpableObject **objs, int numObjs);
@@ -621,42 +596,6 @@ extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
 /*
  * version specific routines
  */
-<<<<<<< HEAD
-extern NamespaceInfo *getNamespaces(int *numNamespaces);
-extern ExtensionInfo *getExtensions(int *numExtensions);
-extern TypeInfo *getTypes(int *numTypes);
-extern TypeStorageOptions *getTypeStorageOptions(int *numTypes);
-extern FuncInfo *getFuncs(int *numFuncs);
-extern AggInfo *getAggregates(int *numAggregates);
-extern ExtProtInfo *getExtProtocols(int *numExtProtocols);
-extern OprInfo *getOperators(int *numOperators);
-extern OpclassInfo *getOpclasses(int *numOpclasses);
-extern OpfamilyInfo *getOpfamilies(int *numOpfamilies);
-extern CollInfo *getCollations(int *numCollations);
-extern ConvInfo *getConversions(int *numConversions);
-extern TableInfo *getTables(int *numTables);
-extern void getOwnedSeqs(TableInfo tblinfo[], int numTables);
-extern InhInfo *getInherits(int *numInherits);
-extern void getIndexes(TableInfo tblinfo[], int numTables);
-extern void getConstraints(TableInfo tblinfo[], int numTables);
-extern RuleInfo *getRules(int *numRules);
-extern void getTriggers(TableInfo tblinfo[], int numTables);
-extern ProcLangInfo *getProcLangs(int *numProcLangs);
-extern CastInfo *getCasts(int *numCasts);
-extern void getTableAttrs(TableInfo *tbinfo, int numTables);
-extern bool shouldPrintColumn(TableInfo *tbinfo, int colno);
-extern TSParserInfo *getTSParsers(int *numTSParsers);
-extern TSDictInfo *getTSDictionaries(int *numTSDicts);
-extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
-extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
-extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
-extern ForeignServerInfo *getForeignServers(int *numForeignServers);
-extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
-extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
-extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
-
-extern bool	testExtProtocolSupport(void);
-=======
 extern NamespaceInfo *getNamespaces(Archive *fout, int *numNamespaces);
 extern ExtensionInfo *getExtensions(Archive *fout, int *numExtensions);
 extern TypeInfo *getTypes(Archive *fout, int *numTypes);
@@ -689,6 +628,13 @@ extern ForeignServerInfo *getForeignServers(Archive *fout,
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+/* START MPP ADDITION */
+// TODO: Needs Archive *fout argument?
+extern TypeStorageOptions *getTypeStorageOptions(int *numTypes);
+extern ExtProtInfo *getExtProtocols(int *numExtProtocols);
+extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
+
+extern bool	testExtProtocolSupport(void);
+/* END MPP ADDITION */
 
 #endif   /* PG_DUMP_H */
