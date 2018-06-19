@@ -1343,15 +1343,13 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * try to commit the same GID at once.
 	 */
 	gxact = LockGXact(gid, GetUserId(), raiseErrorIfNotFound);
-	proc = &ProcGlobal->allProcs[gxact->pgprocno];
-	pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
-	xid = pgxact->xid;
-
-	if (!raiseErrorIfNotFound && gxact == NULL)
+	if (gxact == NULL)
 	{
 		return false;
 	}
 
+	proc = &ProcGlobal->allProcs[gxact->pgprocno];
+	pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
 	xid = pgxact->xid;
 	tfXLogRecPtr = gxact->prepare_begin_lsn;
 
