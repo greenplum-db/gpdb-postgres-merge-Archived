@@ -69,7 +69,6 @@ static void intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
 
-
 /*
  * ExecCreateTableAs -- execute a CREATE TABLE AS command
  */
@@ -84,6 +83,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 	ScanDirection dir;
+
+	Assert(Gp_role == GP_ROLE_DISPATCH);
 
 	/*
 	 * Create the tuple receiver object and insert info it will need
@@ -163,6 +164,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* and clean up */
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
+
+	if (into->distributedBy &&
+		((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
+		queryDesc->es_processed /= getgpsegmentCount();
 
 	/* save the rowcount if we're given a completionTag to fill */
 	if (completionTag)
@@ -496,8 +501,6 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	Relation    into_rel = myState->rel;
-
-	//Assert(myState->estate->es_result_partitions == NULL);
 
 	if (RelationIsAoRows(into_rel))
 	{
