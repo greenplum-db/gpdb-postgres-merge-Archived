@@ -510,8 +510,7 @@ FetchStatementTargetList(Node *stmt)
 		Query	   *query = (Query *) stmt;
 
 		if (query->commandType == CMD_UTILITY &&
-			query->utilityStmt != NULL &&
-			query->intoClause == NULL)
+			query->utilityStmt != NULL)
 		{
 			/* transfer attention to utility statement */
 			stmt = query->utilityStmt;
@@ -519,7 +518,8 @@ FetchStatementTargetList(Node *stmt)
 		else
 		{
 			if (query->commandType == CMD_SELECT &&
-				query->utilityStmt == NULL)
+				query->utilityStmt == NULL &&
+				query->intoClause == NULL)
 				return query->targetList;
 			if (query->returningList)
 				return query->returningList;

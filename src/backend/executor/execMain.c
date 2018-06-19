@@ -2092,7 +2092,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * GPDB: Hack for CTAS/MatView:
 	 *   Need to switch to IntoRelDest for CTAS.
-	 *   Also need to create table in advance.
+	 *   Also need to create tables in advance.
 	 */
 	if (queryDesc->plannedstmt->intoClause != NULL)
 		intorel_initplan(queryDesc, eflags);
