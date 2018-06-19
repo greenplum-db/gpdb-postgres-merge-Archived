@@ -13721,7 +13721,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	Assert(list_length(rewritten) == 1);
 
 	q = (Query *) linitial(rewritten);
-	Assert(q->commandType == CMD_SELECT || q->commandType == CMD_INSERT);
+	Assert(q->commandType == CMD_UTILITY || q->commandType == CMD_INSERT);
 
 	/* plan the query */
 	stmt = planner(q, 0, NULL);
