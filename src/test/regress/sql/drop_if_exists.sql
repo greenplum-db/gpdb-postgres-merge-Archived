@@ -108,7 +108,6 @@ DROP GROUP IF EXISTS tg1, tg2;
 
 DROP GROUP tg1;
 
-<<<<<<< HEAD
 --create a schema with the same name as the logged in user name and try to drop and recreate a table
 drop database if exists drop_table_test;
 create database drop_table_test;
@@ -133,7 +132,7 @@ CREATE TABLE tbl_to_drop(i int);
 DROP SCHEMA :cur_user CASCADE;
 \c regression
 drop database drop_table_test;
-=======
+
 -- collation
 DROP COLLATION IF EXISTS test_collation_exists;
 
@@ -252,4 +251,3 @@ DROP OPERATOR FAMILY IF EXISTS test_operator_family USING no_such_am;
 DROP TABLE IF EXISTS test_exists;
 
 DROP TABLE test_exists;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

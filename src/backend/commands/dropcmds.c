@@ -28,6 +28,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "cdb/cdbvars.h"
 
 static void does_not_exist_skipping(ObjectType objtype,
 						List *objname, List *objargs);
@@ -235,8 +236,11 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 			break;
 	}
 
-	if (!args)
-		ereport(NOTICE, (errmsg(msg, name)));
-	else
-		ereport(NOTICE, (errmsg(msg, name, args)));
+	if (Gp_role != GP_ROLE_EXECUTE)
+	{
+		if (!args)
+			ereport(NOTICE, (errmsg(msg, name)));
+		else
+			ereport(NOTICE, (errmsg(msg, name, args)));
+	}
 }

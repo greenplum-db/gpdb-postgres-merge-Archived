@@ -85,7 +85,6 @@ DROP GROUP IF EXISTS tg1, tg2;
 NOTICE:  role "tg2" does not exist, skipping
 DROP GROUP tg1;
 ERROR:  role "tg1" does not exist
-<<<<<<< HEAD
 --create a schema with the same name as the logged in user name and try to drop and recreate a table
 drop database if exists drop_table_test;
 NOTICE:  database "drop_table_test" does not exist, skipping
@@ -107,7 +106,6 @@ DROP SCHEMA :cur_user CASCADE;
 NOTICE:  drop cascades to table tbl_to_drop
 \c regression
 drop database drop_table_test;
-=======
 -- collation
 DROP COLLATION IF EXISTS test_collation_exists;
 NOTICE:  collation "test_collation_exists" does not exist, skipping
@@ -246,4 +244,3 @@ ERROR:  access method "no_such_am" does not exist
 DROP TABLE IF EXISTS test_exists;
 DROP TABLE test_exists;
 ERROR:  table "test_exists" does not exist
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
