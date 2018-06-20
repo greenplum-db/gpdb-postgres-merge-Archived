@@ -1710,12 +1710,9 @@ setup_description(void)
 				"  FROM tmp_pg_shdescription t, pg_class c "
 				"   WHERE c.relname = t.classname;\n");
 
-	/*
-	 * GPDB_92_MERGE_FIXME: Added 'DISTINCT ON' for a workaround.
-	 */
 	/* Create default descriptions for operator implementation functions */
 	PG_CMD_PUTS("WITH funcdescs AS ( "
-				"SELECT DISTINCT ON (p.oid) p.oid as p_oid, oprname, "
+				"SELECT p.oid as p_oid, oprname, "
 			  "coalesce(obj_description(o.oid, 'pg_operator'),'') as opdesc "
 				"FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid ) "
 				"INSERT INTO pg_description "

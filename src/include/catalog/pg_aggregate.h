@@ -257,7 +257,7 @@ DATA(insert ( 2829	n 0 float8_regr_accum		- float8_regr_amalg	- float8_corr				f
 
 /* boolean-and and boolean-or */
 DATA(insert ( 2517	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
-DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 58	16		_null_));
+DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 59	16		_null_));
 DATA(insert ( 2519	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
 
 /* bitwise integer */

@@ -136,14 +136,10 @@ WHERE p1.oid < p2.oid AND
 -- or when new polymorphic built-in functions are added!
 --
 -- Note: ignore aggregate functions here, since they all point to the same
-<<<<<<< HEAD
 -- dummy built-in function.
 --
 -- Note: ignoring gp_deprecated here since the function ignores its parameters
 -- always errors and never returns a value.
-=======
--- dummy built-in function.  Likewise, ignore range constructor functions.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 SELECT DISTINCT p1.prorettype::regtype, p2.prorettype::regtype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -152,12 +148,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
     (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2; -- order none
 
@@ -168,12 +161,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
     (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2; -- order none
 
@@ -184,12 +174,9 @@ WHERE p1.oid != p2.oid AND
 	p1.prosrc NOT IN ('gp_deprecated') AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-<<<<<<< HEAD
     NOT p1.proiswindow AND NOT p2.proiswindow AND
-=======
     p1.prosrc NOT LIKE E'range\\_constructor_' AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
     (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2; -- order none
 
@@ -289,12 +276,13 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prorettype IN
     ('anyelement'::regtype, 'anyarray'::regtype, 'anynonarray'::regtype,
-     'anyenum'::regtype)
+     'anyenum'::regtype, 'anyrange'::regtype)
   AND NOT
     ('anyelement'::regtype = ANY (p1.proargtypes) OR
      'anyarray'::regtype = ANY (p1.proargtypes) OR
      'anynonarray'::regtype = ANY (p1.proargtypes) OR
-     'anyenum'::regtype = ANY (p1.proargtypes))
+     'anyenum'::regtype = ANY (p1.proargtypes) OR
+     'anyrange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
 
 -- Check for length inconsistencies between the various argument-info arrays.
