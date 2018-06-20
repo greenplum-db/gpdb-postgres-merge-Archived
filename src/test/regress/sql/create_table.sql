@@ -241,7 +241,16 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 	t text
 );
 
-<<<<<<< HEAD
+CREATE UNLOGGED TABLE unlogged1 (a int primary key);			-- OK
+INSERT INTO unlogged1 VALUES (42);
+CREATE UNLOGGED TABLE public.unlogged2 (a int primary key);		-- also OK
+CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int primary key);	-- not OK
+CREATE TABLE pg_temp.implicitly_temp (a int primary key);		-- OK
+CREATE TEMP TABLE explicitly_temp (a int primary key);			-- also OK
+CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
+CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
+DROP TABLE unlogged1, public.unlogged2;
+
 -- large custom format table definitions
 drop external table if exists large_custom_format_definitions;
 create readable external table large_custom_format_definitions (
@@ -2107,14 +2116,3 @@ line_delim=E'\n'
 )
 ;
 drop external table if exists large_custom_format_definitions;
-=======
-CREATE UNLOGGED TABLE unlogged1 (a int primary key);			-- OK
-INSERT INTO unlogged1 VALUES (42);
-CREATE UNLOGGED TABLE public.unlogged2 (a int primary key);		-- also OK
-CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int primary key);	-- not OK
-CREATE TABLE pg_temp.implicitly_temp (a int primary key);		-- OK
-CREATE TEMP TABLE explicitly_temp (a int primary key);			-- also OK
-CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
-CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
-DROP TABLE unlogged1, public.unlogged2;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
