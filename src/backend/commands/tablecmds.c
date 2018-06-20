@@ -13712,6 +13712,13 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	}
 	*tmprv = tmprel;
 
+	/* 
+	 * GPDB_92_MERGE_FIXME_TEMP:
+	 * CTAS stmt is wrongly handled in below code. Refer createas.c.
+	 * Since here there is a branch InsertStmt and there is ongoing CTAS
+	 * experimental code testing. I'm not fixing this at this moment.
+	 */
+
 	q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
 
 	AcquireRewriteLocks(q, false);
