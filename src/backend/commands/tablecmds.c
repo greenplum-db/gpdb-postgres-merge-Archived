@@ -659,6 +659,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	reloptions = transformRelOptions((Datum) 0, stmt->options, NULL, validnsps,
 									 true, false);
 
+	(void) heap_reloptions(relkind, reloptions, true);
+
 	if (stmt->ofTypename)
 	{
 		AclResult	aclresult;
