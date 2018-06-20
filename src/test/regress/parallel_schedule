@@ -125,7 +125,6 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
-<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
@@ -135,9 +134,6 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # 'foreign_key' test is disabled, because it contains several tables with
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
-=======
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 # ----------
 # Another group of parallel tests
