@@ -77,14 +77,9 @@ copy (select t from copyselect_test1 where id = 1) to stdout csv header force qu
 --
 -- Drop everything
 --
-<<<<<<< HEAD
 drop table copyselect_test2;
 drop view v_copyselect_test1;
 drop table copyselect_test1;
-=======
-drop table test2;
-drop view v_test1;
-drop table test1;
 
 -- psql handling of COPY in multi-command strings
 copy (select 1) to stdout\; select 1/0;	-- row, then error
@@ -99,4 +94,3 @@ select 0\; copy test3 from stdin\; copy test3 from stdin\; select 1; -- 1
 \.
 select * from test3;
 drop table test3;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
