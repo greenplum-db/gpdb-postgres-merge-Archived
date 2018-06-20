@@ -8,15 +8,11 @@ CREATE FUNCTION hobbies(person)
 CREATE FUNCTION hobby_construct(text, text)
    RETURNS hobbies_r
    AS 'select $1 as name, $2 as hobby'
-<<<<<<< HEAD
    LANGUAGE SQL READS SQL DATA;
-=======
-   LANGUAGE SQL;
 CREATE FUNCTION hobby_construct_named(name text, hobby text)
    RETURNS hobbies_r
    AS 'select name, hobby'
    LANGUAGE SQL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 CREATE FUNCTION hobbies_by_name(hobbies_r.name%TYPE)
    RETURNS hobbies_r.person%TYPE
    -- GPDB: use an order by to force the later test in 'misc' to return
@@ -28,10 +24,7 @@ NOTICE:  type reference hobbies_r.person%TYPE converted to text
 CREATE FUNCTION equipment(hobbies_r)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where hobby = $1.name'
-<<<<<<< HEAD
    LANGUAGE SQL READS SQL DATA;
-=======
-   LANGUAGE SQL;
 CREATE FUNCTION equipment_named(hobby hobbies_r)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where equipment_r.hobby = equipment_named.hobby.name'
@@ -56,7 +49,6 @@ CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where equipment_r.hobby = hobby'
    LANGUAGE SQL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 CREATE FUNCTION user_relns()
    RETURNS setof name
    AS 'select relname
