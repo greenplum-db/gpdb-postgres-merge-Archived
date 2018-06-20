@@ -163,19 +163,17 @@ insert into insert_tbl values
   (4, '-!NULL-', -4);
 INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
-DETAIL:  Failing row contains (5, check failed, 4).
+DETAIL:  Failing row contains (8, check failed, 4).
 INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
-<<<<<<< HEAD
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
+DETAIL:  Failing row contains (5, check failed, -8).
 -- these fail on GPDB, because we cannot use currval in the z columns' DEFAULT like in upstream.
-=======
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
-DETAIL:  Failing row contains (5, check failed, -5).
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
+DETAIL:  Failing row contains (5, !check failed, -9).
 INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
+DETAIL:  Failing row contains (11, -!NULL-, -11).
 -- GPDB: fix the table contents to match upstream again, so that the subsequent
 -- tests start with the same state as in upstream.
 insert into insert_tbl values
@@ -200,14 +198,9 @@ SELECT 'seven' AS one, nextval('insert_seq');
 
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
-<<<<<<< HEAD
+DETAIL:  Failing row contains (14, Y, -14).
 SELECT 'eight' AS one, nextval('insert_seq');
   one  | nextval 
-=======
-DETAIL:  Failing row contains (8, Y, -8).
-SELECT 'eight' AS one, currval('insert_seq');
-  one  | currval 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 -------+---------
  eight |      16
 (1 row)
@@ -312,15 +305,12 @@ SELECT '' AS three, * FROM INSERT_TBL;
 INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
+DETAIL:  Failing row contains (4, try again, -7).
 INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
-<<<<<<< HEAD
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_check"
+DETAIL:  Failing row contains (5, try again, -8).
 -- GPDB: Fixup
 INSERT INTO INSERT_TBL VALUES (7, 'try again', -7);
-=======
-ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"
-DETAIL:  Failing row contains (8, try again, -8).
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 SELECT '' AS four, * FROM INSERT_TBL;
  four | x |       y       | z  
 ------+---+---------------+----
