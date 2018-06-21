@@ -880,7 +880,11 @@ standard_ProcessUtility(Node *parsetree,
 				bool		if_exists;
 
 				if_exists = stmt->missing_ok;
-				objects = stmt->objects;
+				/* stmt->objects could be modified (e.g.
+				 * CREATE TABLE test_exists(a int, b int);
+				 * DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;)
+				 * so copy for later use. */
+				objects = copyObject(stmt->objects);
 
 				switch (stmt->removeType)
 				{
