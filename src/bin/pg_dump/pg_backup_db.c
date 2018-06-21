@@ -375,8 +375,6 @@ die_on_query_failure(ArchiveHandle *AH, const char *modulename, const char *quer
 	exit_horribly(modulename, "query was: %s\n", query);
 }
 
-<<<<<<< HEAD
-=======
 void
 ExecuteSqlStatement(Archive *AHX, const char *query)
 {
@@ -401,7 +399,6 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 	return res;
 }
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 /*
  * Convenience function to send a query.
  * Monitors result to detect COPY statements

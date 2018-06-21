@@ -628,13 +628,13 @@ extern ForeignServerInfo *getForeignServers(Archive *fout,
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
+extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
+					   int numExtensions);
 /* START MPP ADDITION */
-// TODO: Needs Archive *fout argument?
-extern TypeStorageOptions *getTypeStorageOptions(int *numTypes);
-extern ExtProtInfo *getExtProtocols(int *numExtProtocols);
-extern void processExtensionTables(ExtensionInfo extinfo[], int numExtensions);
+extern TypeStorageOptions *getTypeStorageOptions(Archive *fout, int *numTypes);
+extern ExtProtInfo *getExtProtocols(Archive *fout, int *numExtProtocols);
 
-extern bool	testExtProtocolSupport(void);
+extern bool	testExtProtocolSupport(Archive *fout);
 /* END MPP ADDITION */
 
 #endif   /* PG_DUMP_H */

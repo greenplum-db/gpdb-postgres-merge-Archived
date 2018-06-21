@@ -106,11 +106,7 @@ typedef struct _restoreOptions
 	int			no_security_labels;		/* Skip security label entries */
 	char	   *superuser;		/* Username to use as superuser */
 	char	   *use_role;		/* Issue SET ROLE to this */
-<<<<<<< HEAD
-	int			dataOnly;
 	int			postdataSchemaRestore;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			dropSchema;
 	const char *filename;
 	int			dataOnly;
@@ -160,14 +156,9 @@ extern void ConnectDatabase(Archive *AH,
 				const char *pghost,
 				const char *pgport,
 				const char *username,
-<<<<<<< HEAD
-				enum trivalue prompt_password,
-			   	bool binary_upgrade);
-=======
 				enum trivalue prompt_password);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /* Called to add a TOC entry */
 extern void ArchiveEntry(Archive *AHX,

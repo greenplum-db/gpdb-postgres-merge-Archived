@@ -164,15 +164,9 @@ typedef enum
 
 typedef enum
 {
-<<<<<<< HEAD
-	REQ_SCHEMA = 1,
-	REQ_DATA = 2,
-	REQ_ALL = REQ_SCHEMA + REQ_DATA
-=======
 	REQ_SCHEMA = 0x01,			/* want schema */
 	REQ_DATA = 0x02,			/* want data */
 	REQ_SPECIAL = 0x04			/* for special TOC entries */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 } teReqs;
 
 typedef struct _archiveHandle

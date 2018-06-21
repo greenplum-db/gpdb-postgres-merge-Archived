@@ -158,7 +158,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	/* this must be after getFuncs */
 	if (g_verbose)
 		write_msg(NULL, "reading type storage options\n");
-	getTypeStorageOptions(&numTypeStorageOptions);
+	getTypeStorageOptions(fout, &numTypeStorageOptions);
 
 	/* this must be after getFuncs, too */
 	if (g_verbose)
@@ -174,7 +174,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
-	if (testExtProtocolSupport())
+	if (testExtProtocolSupport(fout))
 	{
 		if (g_verbose)
 			write_msg(NULL, "reading user-defined external protocols\n");
