@@ -804,7 +804,7 @@ main(int argc, char **argv)
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
-	ConnectDatabase(fout, dbname, pghost, pgport, username, prompt_password);
+	ConnectDatabase(fout, dbname, pghost, pgport, username, prompt_password, binary_upgrade);
 	setup_connection(fout, dumpencoding, use_role);
 
 	/*

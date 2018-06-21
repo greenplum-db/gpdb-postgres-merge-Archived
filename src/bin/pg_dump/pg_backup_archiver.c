@@ -677,10 +677,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					}
 					else
 						AH->outputKind = OUTPUT_OTHERDATA;
-<<<<<<< HEAD
-=======
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 					(*AH->PrintTocDataPtr) (AH, te, ropt);
 
 					/*
@@ -724,12 +721,11 @@ NewRestoreOptions(void)
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
 	opts->promptPassword = TRI_DEFAULT;
-<<<<<<< HEAD
+	opts->dumpSections = DUMP_UNSECTIONED;
+
+	/* GPDB_92_MERGE_FIXEME: do we need the following two lines? */
 	opts->suppressDumpWarnings = false;
 	opts->exit_on_error = false;
-=======
-	opts->dumpSections = DUMP_UNSECTIONED;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	return opts;
 }
@@ -839,27 +835,19 @@ ArchiveEntry(Archive *AHX,
 	newToc->dumpId = dumpId;
 	newToc->section = section;
 
-<<<<<<< HEAD
-	newToc->tag = strdup(tag);
-	newToc->namespace = namespace ? strdup(namespace) : NULL;
-	newToc->tablespace = tablespace ? strdup(tablespace) : NULL;
-	newToc->owner = owner ? strdup(owner) : NULL;
-	newToc->withOids = withOids;
-	newToc->desc = strdup(desc);
-	newToc->defn = strdup(defn);
-	newToc->dropStmt = dropStmt ? strdup(dropStmt) : NULL;
-	newToc->copyStmt = copyStmt ? strdup(copyStmt) : NULL;
-=======
+/*
+ * GPDB_92_MERGE_FIXEME: can owner or dropStmt be NULL??  upstream pg_dump
+ * doesn't guard against NULL pointer in owner nor dropStmt
+ */
 	newToc->tag = pg_strdup(tag);
 	newToc->namespace = namespace ? pg_strdup(namespace) : NULL;
 	newToc->tablespace = tablespace ? pg_strdup(tablespace) : NULL;
-	newToc->owner = pg_strdup(owner);
+	newToc->owner = owner ? pg_strdup(owner) : NULL;
 	newToc->withOids = withOids;
 	newToc->desc = pg_strdup(desc);
 	newToc->defn = pg_strdup(defn);
-	newToc->dropStmt = pg_strdup(dropStmt);
+	newToc->dropStmt = dropStmt ? pg_strdup(dropStmt) : NULL;
 	newToc->copyStmt = copyStmt ? pg_strdup(copyStmt) : NULL;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (nDeps > 0)
 	{
@@ -889,18 +877,9 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te;
-<<<<<<< HEAD
-	OutputContext sav =
-	{
-		NULL,					/* OF */
-		0,						/* gzOut */
-	};
-	char	   *fmtName;
-=======
 	teSection	curSection;
 	OutputContext sav;
 	const char *fmtName;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	sav = SaveOutput(AH);
 	if (ropt->filename)
@@ -1349,13 +1328,8 @@ ahprintf(ArchiveHandle *AH, const char *fmt,...)
 
 	/*
 	 * This is paranoid: deal with the possibility that vsnprintf is willing
-<<<<<<< HEAD
-	 * to ignore trailing null or returns > 0 even if string does not fit.
-	 * It may be the case that it returns cnt = bufsize.
-=======
 	 * to ignore trailing null or returns > 0 even if string does not fit. It
 	 * may be the case that it returns cnt = bufsize.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -2019,17 +1993,11 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 {
 	ArchiveHandle *AH;
 
-<<<<<<< HEAD
-	AH = (ArchiveHandle *) calloc(1, sizeof(ArchiveHandle));
-	if (!AH)
-		die_horribly(AH, modulename, "out of memory\n");
-=======
 #if 0
 	write_msg(modulename, "allocating AH for %s, format %d\n", FileSpec, fmt);
 #endif
 
 	AH = (ArchiveHandle *) pg_calloc(1, sizeof(ArchiveHandle));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* AH->debugLevel = 100; */
 
@@ -2061,14 +2029,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		/*
 		 * Not used; maybe later....
 		 *
-<<<<<<< HEAD
-		 * AH->workDir = strdup(FileSpec);
-		 * for(i=strlen(FileSpec) ; i > 0 ; i--)
-		 *     if (AH->workDir[i-1] == '/')
-=======
 		 * AH->workDir = pg_strdup(FileSpec); for(i=strlen(FileSpec) ; i > 0 ;
 		 * i--) if (AH->workDir[i-1] == '/')
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 */
 	}
 	else
@@ -3130,19 +3092,11 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		if (te->namespace)
 			sanitized_schema = replace_line_endings(te->namespace);
 		else
-<<<<<<< HEAD
-			sanitized_schema = strdup("-");
-		if (!ropt->noOwner)
-			sanitized_owner = replace_line_endings(te->owner);
-		else
-			sanitized_owner = strdup("-");
-=======
 			sanitized_schema = pg_strdup("-");
 		if (!ropt->noOwner)
 			sanitized_owner = replace_line_endings(te->owner);
 		else
 			sanitized_owner = pg_strdup("-");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s",
 				 pfx, sanitized_name, te->desc, sanitized_schema,
@@ -3152,15 +3106,9 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		free(sanitized_schema);
 		free(sanitized_owner);
 
-<<<<<<< HEAD
-		if (te->tablespace)
-		{
-			char   *sanitized_tablespace;
-=======
 		if (te->tablespace && !ropt->noTablespace)
 		{
 			char	   *sanitized_tablespace;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			sanitized_tablespace = replace_line_endings(te->tablespace);
 			ahprintf(AH, "; Tablespace: %s", sanitized_tablespace);
@@ -3271,17 +3219,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 static char *
 replace_line_endings(const char *str)
 {
-<<<<<<< HEAD
-	char   *result;
-	char   *s;
-
-	result = strdup(str);
-=======
 	char	   *result;
 	char	   *s;
 
 	result = pg_strdup(str);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	for (s = result; *s != '\0'; s++)
 	{

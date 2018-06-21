@@ -60,20 +60,13 @@ static FILE *newTempFile(void);
 
 #define K_STD_BUF_SIZE 1024
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 typedef struct
 {
 #ifdef HAVE_LIBZ
 	gzFile		zFH;
 #else
-<<<<<<< HEAD
-	FILE		*zFH;
-=======
 	FILE	   *zFH;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 #endif
 	FILE	   *nFH;
 	FILE	   *tarFH;
@@ -771,7 +764,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	 */
 	if (ctx->isSpecialScript)
 	{
-<<<<<<< HEAD
 		if (te->copyStmt)
 		{
 			/* Abort the COPY FROM stdin */
@@ -784,9 +776,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			pos1 = (int) strlen(te->copyStmt) - 13;
 			if (pos1 < 6 || strncmp(te->copyStmt, "COPY ", 5) != 0 ||
 				strcmp(te->copyStmt + pos1, " FROM stdin;\n") != 0)
-				die_horribly(AH, modulename,
-							 "unexpected COPY statement syntax: \"%s\"\n",
-							 te->copyStmt);
+				exit_horribly(modulename,
+							  "unexpected COPY statement syntax: \"%s\"\n",
+							  te->copyStmt);
 
 			/* Emit all but the FROM part ... */
 			ahwrite(te->copyStmt, 1, pos1, AH);
@@ -798,48 +790,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			/* --inserts mode, no worries, just include the data file */
 			ahprintf(AH, "\\i $$PATH$$/%s\n\n", tctx->filename);
 		}
-=======
-		if (!te->copyStmt)
-			return;
-
-		/* Abort the default COPY */
-		ahprintf(AH, "\\.\n");
-
-		/* Get a copy of the COPY statement and clean it up */
-		tmpCopy = pg_strdup(te->copyStmt);
-		for (i = 0; i < strlen(tmpCopy); i++)
-			tmpCopy[i] = pg_tolower((unsigned char) tmpCopy[i]);
-
-		/*
-		 * This is very nasty; we don't know if the archive used WITH OIDS, so
-		 * we search the string for it in a paranoid sort of way.
-		 */
-		if (strncmp(tmpCopy, "copy ", 5) != 0)
-			exit_horribly(modulename,
-						  "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n", tmpCopy);
-
-		pos1 = 5;
-		for (pos1 = 5; pos1 < strlen(tmpCopy); pos1++)
-			if (tmpCopy[pos1] != ' ')
-				break;
-
-		if (tmpCopy[pos1] == '"')
-			pos1 += 2;
-
-		pos1 += strlen(te->tag);
-
-		for (pos2 = pos1; pos2 < strlen(tmpCopy); pos2++)
-			if (strncmp(&tmpCopy[pos2], "from stdin", 10) == 0)
-				break;
-
-		if (pos2 >= strlen(tmpCopy))
-			exit_horribly(modulename,
-						  "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n",
-						  tmpCopy, (unsigned long) pos1);
-
-		ahwrite(tmpCopy, 1, pos2, AH);	/* 'copy "table" [with oids]' */
-		ahprintf(AH, " from '$$PATH$$/%s' %s", tctx->filename, &tmpCopy[pos2 + 10]);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		return;
 	}

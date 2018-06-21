@@ -27,13 +27,7 @@ static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
-<<<<<<< HEAD
 static void notice_processor(void *arg __attribute__((unused)), const char *message);
-
-#define DB_MAX_ERR_STMT 128
-=======
-static void notice_processor(void *arg, const char *message);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 static int
 _parse_version(const char *versionString)
@@ -156,18 +150,9 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-
-		if (!keywords || !values)
-			die_horribly(AH, modulename, "out of memory\n");
-=======
-#define PARAMS_ARRAY_SIZE	7
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		keywords[0] = "host";
 		values[0] = PQhost(AH->connection);
@@ -270,18 +255,9 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-<<<<<<< HEAD
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-
-		if (!keywords || !values)
-			die_horribly(AH, modulename, "out of memory\n");
-=======
-#define PARAMS_ARRAY_SIZE	7
 		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
 		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -471,11 +447,7 @@ ExecuteInsertCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
 
 	for (; qry < eos; qry++)
 	{
-<<<<<<< HEAD
-		char	ch = *qry;
-=======
 		char		ch = *qry;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* For neatness, we skip any newlines between commands */
 		if (!(ch == '\n' && AH->sqlparse.curCmd->len == 0))
@@ -542,13 +514,8 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 		 */
 		if (AH->pgCopyIn &&
 			PQputCopyData(AH->connection, buf, bufLen) <= 0)
-<<<<<<< HEAD
-			die_horribly(AH, modulename, "error returned by PQputCopyData: %s",
-						 PQerrorMessage(AH->connection));
-=======
 			exit_horribly(modulename, "error returned by PQputCopyData: %s",
 						  PQerrorMessage(AH->connection));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	}
 	else if (AH->outputKind == OUTPUT_OTHERDATA)
 	{
@@ -570,15 +537,8 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 			ExecuteSqlCommand(AH, buf, "could not execute query");
 		else
 		{
-<<<<<<< HEAD
-			char   *str = (char *) malloc(bufLen + 1);
-
-			if (!str)
-				die_horribly(AH, modulename, "out of memory\n");
-=======
 			char	   *str = (char *) pg_malloc(bufLen + 1);
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			memcpy(str, buf, bufLen);
 			str[bufLen] = '\0';
 			ExecuteSqlCommand(AH, str, "could not execute query");
@@ -600,24 +560,14 @@ EndDBCopyMode(ArchiveHandle *AH, TocEntry *te)
 		PGresult   *res;
 
 		if (PQputCopyEnd(AH->connection, NULL) <= 0)
-<<<<<<< HEAD
-			die_horribly(AH, modulename, "error returned by PQputCopyEnd: %s",
-						 PQerrorMessage(AH->connection));
-=======
 			exit_horribly(modulename, "error returned by PQputCopyEnd: %s",
 						  PQerrorMessage(AH->connection));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		/* Check command status and return to normal libpq state */
 		res = PQgetResult(AH->connection);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-<<<<<<< HEAD
-			warn_or_die_horribly(AH, modulename, "COPY failed for table \"%s\": %s",
-								 te->tag, PQerrorMessage(AH->connection));
-=======
 			warn_or_exit_horribly(AH, modulename, "COPY failed for table \"%s\": %s",
 								  te->tag, PQerrorMessage(AH->connection));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		PQclear(res);
 
 		AH->pgCopyIn = false;
