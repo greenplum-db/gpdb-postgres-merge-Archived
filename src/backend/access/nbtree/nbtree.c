@@ -591,19 +591,16 @@ btgetbitmap(PG_FUNCTION_ARGS)
 		tbm = (TIDBitmap *)n;
 	}
 
-	/* If we haven't started the scan yet, fetch the first page & tuple. */
-	if (!BTScanPosIsValid(so->currPos))
+	/*
+	 * If we have any array keys, initialize them.
+	 */
+	if (so->numArrayKeys)
 	{
-		/* Fetch the first page & tuple. */
-		if (_bt_first(scan, ForwardScanDirection))
-		{
-			/* Save tuple ID, and continue scanning */
-			heapTid = &scan->xs_ctup.t_self;
-			tbm_add_tuples(tbm, heapTid, 1, false);
-			ntids++;
-		}
-		else
+		/* punt if we have any unsatisfiable array keys */
+		if (so->numArrayKeys < 0)
 			PG_RETURN_POINTER(tbm);
+
+		_bt_start_array_keys(scan, ForwardScanDirection);
 	}
 
 	/* This loop handles advancing to the next array elements, if any */
