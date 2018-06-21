@@ -21,7 +21,6 @@
 #include "dumpmem.h"
 #include "dumputils.h"
 
-#include "dumputils.h"
 
 /*
  * Variables for mapping DumpId to DumpableObject
@@ -178,7 +177,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	{
 		if (g_verbose)
 			write_msg(NULL, "reading user-defined external protocols\n");
-		getExtProtocols(&numExtProtocols);
+		getExtProtocols(fout, &numExtProtocols);
 	}
 
 	if (g_verbose)
@@ -239,22 +238,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		write_msg(NULL, "finding extension tables\n");
 	processExtensionTables(fout, extinfo, numExtensions);
 
-	if (g_verbose)
-		write_msg(NULL, "reading rewrite rules\n");
-	getRules(fout, &numRules);
-
-<<<<<<< HEAD
-=======
-	/*
-	 * Identify extension member objects and mark them as not to be dumped.
-	 * This must happen after reading all objects that can be direct members
-	 * of extensions, but before we begin to process table subsidiary objects.
-	 */
-	if (g_verbose)
-		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(fout, extinfo, numExtensions);
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
 		write_msg(NULL, "finding inheritance relationships\n");
@@ -279,6 +262,10 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading triggers\n");
 	getTriggers(fout, tblinfo, numTables);
+
+	if (g_verbose)
+		write_msg(NULL, "reading rewrite rules\n");
+	getRules(fout, &numRules);
 
 	*numTablesPtr = numTables;
 	return tblinfo;
@@ -393,7 +380,6 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				{
 					foundNotNull |= parent->notnull[inhAttrInd];
 					foundDefault |= (parent->attrdefs[inhAttrInd] != NULL);
-<<<<<<< HEAD
 				}
 			}
 
@@ -423,8 +409,6 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 				{
 					attrDef->separate = false;
 					/* No dependency needed: NULL cannot have dependencies */
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				}
 				else
 				{
@@ -439,112 +423,6 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 			}
 		}
 	}
-}
-
-<<<<<<< HEAD
-/*
- * MPP-1890
- *
- * If the user explicitly DROP'ed a CHECK constraint on a child but it
- * still exists on the parent when they dump and restore that constraint
- * will exist on the child since it will again inherit it from the
- * parent. Therefore we look here for constraints that exist on the
- * parent but not on the child and mark them to be dropped from the
- * child after the child table is defined.
- *
- * Loop through each parent and for each parent constraint see if it
- * exists on the child as well. If it doesn't it means that the child
- * dropped it. Mark it.
- */
-void
-DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
-{
-	TableInfo  *parent;
-	TableInfo **parents = tbinfo->parents;
-	int			j,
-				k,
-				l;
-	int			numParents = tbinfo->numParents;
-
-	for (k = 0; k < numParents; k++)
-	{
-		parent = parents[k];
-
-		/* for each CHECK constraint of this parent */
-		for (l = 0; l < parent->ncheck; l++)
-		{
-			ConstraintInfo *pconstr = &(parent->checkexprs[l]);
-			ConstraintInfo *cconstr;
-			bool		constr_on_child = false;
-
-			/* for each child CHECK constraint */
-			for (j = 0; j < tbinfo->ncheck; j++)
-			{
-				cconstr = &(tbinfo->checkexprs[j]);
-
-				if (strcmp(pconstr->dobj.name, cconstr->dobj.name) == 0)
-				{
-					/* parent constr exists on child. hence wasn't dropped */
-					constr_on_child = true;
-					break;
-				}
-
-			}
-
-			/* this parent constr is not on child, issue a DROP for it */
-			if (!constr_on_child)
-			{
-				appendPQExpBuffer(q, "ALTER TABLE %s.",
-								  fmtId(tbinfo->dobj.namespace->dobj.name));
-				appendPQExpBuffer(q, "%s ",
-								  fmtId(tbinfo->dobj.name));
-				appendPQExpBuffer(q, "DROP CONSTRAINT %s;\n",
-								  fmtId(pconstr->dobj.name));
-
-				constr_on_child = false;
-=======
-			/* Remember if we found inherited NOT NULL */
-			tbinfo->inhNotNull[j] = foundNotNull;
-
-			/* Manufacture a DEFAULT NULL clause if necessary */
-			if (foundDefault && tbinfo->attrdefs[j] == NULL)
-			{
-				AttrDefInfo *attrDef;
-
-				attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
-				attrDef->dobj.objType = DO_ATTRDEF;
-				attrDef->dobj.catId.tableoid = 0;
-				attrDef->dobj.catId.oid = 0;
-				AssignDumpId(&attrDef->dobj);
-				attrDef->dobj.name = pg_strdup(tbinfo->dobj.name);
-				attrDef->dobj.namespace = tbinfo->dobj.namespace;
-				attrDef->dobj.dump = tbinfo->dobj.dump;
-
-				attrDef->adtable = tbinfo;
-				attrDef->adnum = j + 1;
-				attrDef->adef_expr = pg_strdup("NULL");
-
-				/* Will column be dumped explicitly? */
-				if (shouldPrintColumn(tbinfo, j))
-				{
-					attrDef->separate = false;
-					/* No dependency needed: NULL cannot have dependencies */
-				}
-				else
-				{
-					/* column will be suppressed, print default separately */
-					attrDef->separate = true;
-					/* ensure it comes out after the table */
-					addObjectDependency(&attrDef->dobj,
-										tbinfo->dobj.dumpId);
-				}
-
-				tbinfo->attrdefs[j] = attrDef;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-			}
-		}
-	}
-
 }
 
 /*
@@ -899,7 +777,6 @@ findNamespaceByOid(Oid oid)
 	return (NamespaceInfo *) findObjectByOid(oid, nspinfoindex, numNamespaces);
 }
 
-<<<<<<< HEAD
 /*
  * findExtensionByOid
  *	  finds the entry (in extinfo) of the extension with the given oid
@@ -987,8 +864,6 @@ ExtensionMemberIdCompare(const void *p1, const void *p2)
 	return cmpval;
 }
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  * findParentsByOid
@@ -1179,105 +1054,69 @@ simple_string_list_member(SimpleStringList *list, const char *val)
 	}
 	return false;
 }
-<<<<<<< HEAD
-
 
 /*
- * openFileAndAppendToList: Read parameters from file
- * and append values to given list.
- * (Used to read multiple include/exclude tables.)
+ * MPP-1890
  *
- * reason - list name, to be logged.
+ * If the user explicitly DROP'ed a CHECK constraint on a child but it
+ * still exists on the parent when they dump and restore that constraint
+ * will exist on the child since it will again inherit it from the
+ * parent. Therefore we look here for constraints that exist on the
+ * parent but not on the child and mark them to be dropped from the
+ * child after the child table is defined.
  *
- * File format: one value per line.
+ * Loop through each parent and for each parent constraint see if it
+ * exists on the child as well. If it doesn't it means that the child
+ * dropped it. Mark it.
  */
-bool
-open_file_and_append_to_list(const char *fileName, SimpleStringList *list, const char *reason)
+void
+DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 {
+	TableInfo  *parent;
+	TableInfo **parents = tbinfo->parents;
+	int			j,
+				k,
+				l;
+	int			numParents = tbinfo->numParents;
 
-	char buf[1024];
-
-	write_msg(NULL, "Opening file %s for %s\n", fileName, reason);
-
-	FILE* file = fopen(fileName, "r");
-
-	if (file == NULL)
-		return false;
-
-	int lineNum = 0;
-	while (fgets(buf, sizeof(buf), file) != NULL)
+	for (k = 0; k < numParents; k++)
 	{
-		int size = strlen(buf);
-		if (buf[size-1] == '\n')
-			buf[size-1] = '\0'; /* remove new line */
+		parent = parents[k];
 
-		write_msg(NULL, "Line #%d, value: %s\n", ++lineNum, buf);
-		simple_string_list_append(list, buf);
+		/* for each CHECK constraint of this parent */
+		for (l = 0; l < parent->ncheck; l++)
+		{
+			ConstraintInfo *pconstr = &(parent->checkexprs[l]);
+			ConstraintInfo *cconstr;
+			bool		constr_on_child = false;
+
+			/* for each child CHECK constraint */
+			for (j = 0; j < tbinfo->ncheck; j++)
+			{
+				cconstr = &(tbinfo->checkexprs[j]);
+
+				if (strcmp(pconstr->dobj.name, cconstr->dobj.name) == 0)
+				{
+					/* parent constr exists on child. hence wasn't dropped */
+					constr_on_child = true;
+					break;
+				}
+
+			}
+
+			/* this parent constr is not on child, issue a DROP for it */
+			if (!constr_on_child)
+			{
+				appendPQExpBuffer(q, "ALTER TABLE %s.",
+								  fmtId(tbinfo->dobj.namespace->dobj.name));
+				appendPQExpBuffer(q, "%s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, "DROP CONSTRAINT %s;\n",
+								  fmtId(pconstr->dobj.name));
+
+				constr_on_child = false;
+			}
+		}
 	}
-	write_msg(NULL, "Got %d lines from file %s\n", lineNum, fileName);
-	if (fclose(file) != 0)
-		return false;
-
-	write_msg(NULL, "Finished reading file %s successfully\n", fileName);
-
-	return true;
 
 }
-
-
-/*
- * Safer versions of some standard C library functions. If an
- * out-of-memory condition occurs, these functions will bail out
- * safely; therefore, their return value is guaranteed to be non-NULL.
- *
- * XXX need to refactor things so that these can be in a file that can be
- * shared by pg_dumpall and pg_restore as well as pg_dump.
- */
-
-char *
-pg_strdup(const char *string)
-{
-	char	   *tmp;
-
-	if (!string)
-		exit_horribly(NULL, NULL, "cannot duplicate null pointer\n");
-	tmp = strdup(string);
-	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
-	return tmp;
-}
-
-void *
-pg_malloc(size_t size)
-{
-	void	   *tmp;
-
-	tmp = malloc(size);
-	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
-	return tmp;
-}
-
-void *
-pg_calloc(size_t nmemb, size_t size)
-{
-	void	   *tmp;
-
-	tmp = calloc(nmemb, size);
-	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
-	return tmp;
-}
-
-void *
-pg_realloc(void *ptr, size_t size)
-{
-	void	   *tmp;
-
-	tmp = realloc(ptr, size);
-	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
-	return tmp;
-}
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

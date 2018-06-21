@@ -584,7 +584,6 @@ extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
-extern bool open_file_and_append_to_list(const char *fileName, SimpleStringList *list, const char *reason);
 
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 

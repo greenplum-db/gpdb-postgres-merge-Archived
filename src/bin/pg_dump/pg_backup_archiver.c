@@ -121,11 +121,6 @@ static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 static char *replace_line_endings(const char *str);
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
@@ -243,16 +238,7 @@ SetArchiveRestoreOptions(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te;
-<<<<<<< HEAD
-	teReqs		reqs;
-	OutputContext sav =
-	{
-		NULL,					/* OF */
-		0,						/* gzOut */
-	};
-=======
 	teSection	curSection;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	/* Save options for later access */
 	AH->ropt = ropt;

@@ -118,11 +118,7 @@ static bool TopoSort(DumpableObject **objs,
 static void addHeapElement(int val, int *heap, int heapLength);
 static int	removeHeapElement(int *heap, int heapLength);
 static void findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs);
-<<<<<<< HEAD
-static int	findLoop(DumpableObject *obj,
-=======
 static int findLoop(DumpableObject *obj,
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		 DumpId startPoint,
 		 bool *processed,
 		 DumpableObject **workspace,
@@ -531,15 +527,8 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 	bool		fixedloop;
 	int			i;
 
-<<<<<<< HEAD
-	processed = (bool *) calloc(getMaxDumpId() + 1, sizeof(bool));
-	workspace = (DumpableObject **) malloc(totObjs * sizeof(DumpableObject *));
-	if (processed == NULL || workspace == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
-=======
 	processed = (bool *) pg_calloc(getMaxDumpId() + 1, sizeof(bool));
 	workspace = (DumpableObject **) pg_malloc(totObjs * sizeof(DumpableObject *));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	fixedloop = false;
 
 	for (i = 0; i < nObjs; i++)
@@ -563,11 +552,7 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 		{
 			/*
 			 * There's no loop starting at this object, but mark it processed
-<<<<<<< HEAD
 			 * anyway.  This is not necessary for correctness, but saves later
-=======
-			 * anyway.	This is not necessary for correctness, but saves later
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			 * invocations of findLoop() from uselessly chasing references to
 			 * such an object.
 			 */
@@ -609,11 +594,7 @@ findLoop(DumpableObject *obj,
 	int			i;
 
 	/*
-<<<<<<< HEAD
 	 * Reject if obj is already processed.  This test prevents us from finding
-=======
-	 * Reject if obj is already processed.	This test prevents us from finding
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	 * loops that overlap previously-processed loops.
 	 */
 	if (processed[obj->dumpId])
