@@ -577,6 +577,12 @@ spggetbitmap(PG_FUNCTION_ARGS)
 	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
+	if (tbm == NULL)
+		/* XXX should we use less than work_mem for this? */
+		tbm = tbm_create(work_mem * 1024L);
+	else if (!IsA(tbm, TIDBitmap))
+		elog(ERROR, "non hash bitmap");
+
 	/* Copy want_itup to *so so we don't need to pass it around separately */
 	so->want_itup = false;
 
@@ -585,7 +591,7 @@ spggetbitmap(PG_FUNCTION_ARGS)
 
 	spgWalk(scan->indexRelation, so, true, storeBitmap);
 
-	PG_RETURN_INT64(so->ntids);
+	PG_RETURN_POINTER(tbm);
 }
 
 /* storeRes subroutine for gettuple case */

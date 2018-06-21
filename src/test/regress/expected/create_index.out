@@ -375,28 +375,16 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
     ORDER BY (home_base[0])[0];
-<<<<<<< HEAD
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Merge Key: ((home_base[0])[0])
    ->  Sort
          Sort Key: ((home_base[0])[0])
-         ->  Bitmap Heap Scan on fast_emp4000
-               Recheck Cond: home_base @ '(2000,1000),(200,200)'::box
-               ->  Bitmap Index Scan on grect2ind
-                     Index Cond: home_base @ '(2000,1000),(200,200)'::box
+         ->  Index Scan using grect2ind on fast_emp4000
+               Index Cond: home_base @ '(2000,1000),(200,200)'::box
  Optimizer: legacy query optimizer
-(9 rows)
-=======
-                           QUERY PLAN                           
-----------------------------------------------------------------
- Sort
-   Sort Key: ((home_base[0])[0])
-   ->  Index Scan using grect2ind on fast_emp4000
-         Index Cond: (home_base @ '(2000,1000),(200,200)'::box)
-(4 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(7 rows)
 
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
@@ -409,26 +397,15 @@ SELECT * FROM fast_emp4000
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
-<<<<<<< HEAD
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on fast_emp4000
-                     Recheck Cond: home_base && '(1000,1000),(0,0)'::box
-                     ->  Bitmap Index Scan on grect2ind
-                           Index Cond: home_base && '(1000,1000),(0,0)'::box
+               ->  Index Scan using grect2ind on fast_emp4000
+                     Index Cond: home_base && '(1000,1000),(0,0)'::box
  Optimizer: legacy query optimizer
-(8 rows)
-=======
-                         QUERY PLAN                          
--------------------------------------------------------------
- Aggregate
-   ->  Index Scan using grect2ind on fast_emp4000
-         Index Cond: (home_base && '(1000,1000),(0,0)'::box)
-(3 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(6 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
  count 
@@ -438,26 +415,15 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-<<<<<<< HEAD
-                       QUERY PLAN                        
----------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on fast_emp4000
-                     Recheck Cond: home_base IS NULL
-                     ->  Bitmap Index Scan on grect2ind
-                           Index Cond: home_base IS NULL
+               ->  Index Scan using grect2ind on fast_emp4000
+                     Index Cond: home_base IS NULL
  Optimizer: legacy query optimizer
-(8 rows)
-=======
-                    QUERY PLAN                    
---------------------------------------------------
- Aggregate
-   ->  Index Scan using grect2ind on fast_emp4000
-         Index Cond: (home_base IS NULL)
-(3 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(6 rows)
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
  count 
@@ -512,26 +478,15 @@ SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
-<<<<<<< HEAD
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on gpolygon_tbl
-                     Recheck Cond: f1 && '((1000,1000),(0,0))'::polygon
-                     ->  Bitmap Index Scan on ggpolygonind
-                           Index Cond: f1 && '((1000,1000),(0,0))'::polygon
+               ->  Index Scan using ggpolygonind on gpolygon_tbl
+                     Index Cond: f1 && '((1000,1000),(0,0))'::polygon
  Optimizer: legacy query optimizer
-(8 rows)
-=======
-                         QUERY PLAN                         
-------------------------------------------------------------
- Aggregate
-   ->  Index Scan using ggpolygonind on gpolygon_tbl
-         Index Cond: (f1 && '((1000,1000),(0,0))'::polygon)
-(3 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(6 rows)
 
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
  count 
@@ -541,26 +496,15 @@ SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
-<<<<<<< HEAD
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on gcircle_tbl
-                     Recheck Cond: f1 && '<(500,500),500>'::circle
-                     ->  Bitmap Index Scan on ggcircleind
-                           Index Cond: f1 && '<(500,500),500>'::circle
+               ->  Index Scan using ggcircleind on gcircle_tbl
+                     Index Cond: f1 && '<(500,500),500>'::circle
  Optimizer: legacy query optimizer
-(8 rows)
-=======
-                      QUERY PLAN                       
--------------------------------------------------------
- Aggregate
-   ->  Index Scan using ggcircleind on gcircle_tbl
-         Index Cond: (f1 && '<(500,500),500>'::circle)
-(3 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(6 rows)
 
 SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
  count 
@@ -815,12 +759,15 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p IS NULL)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p IS NULL
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
  count 
@@ -830,12 +777,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p IS NOT NULL)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p IS NOT NULL
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
  count 
@@ -845,11 +795,14 @@ SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl;
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-(2 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+ Optimizer: legacy query optimizer
+(5 rows)
 
 SELECT count(*) FROM quad_point_tbl;
  count 
@@ -859,12 +812,15 @@ SELECT count(*) FROM quad_point_tbl;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
  count 
@@ -874,12 +830,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
  count 
@@ -889,12 +848,15 @@ SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p << '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p << '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
  count 
@@ -904,12 +866,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p >> '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p >> '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
  count 
@@ -919,12 +884,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p <^ '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p <^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
  count 
@@ -934,12 +902,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p >^ '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p >^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
  count 
@@ -949,12 +920,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
-                        QUERY PLAN                         
------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: (p ~= '(4585,365)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+                     Index Cond: p ~= '(4585,365)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
  count 
@@ -964,12 +938,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
-                       QUERY PLAN                        
----------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
  count 
@@ -979,12 +956,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
-                       QUERY PLAN                        
----------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
  count 
@@ -994,12 +974,15 @@ SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p << '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p << '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
  count 
@@ -1009,12 +992,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p >> '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p >> '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
  count 
@@ -1024,12 +1010,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p <^ '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p <^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
  count 
@@ -1039,12 +1028,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p >^ '(5000,4000)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p >^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
  count 
@@ -1054,12 +1046,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: (p ~= '(4585,365)'::point)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+                     Index Cond: p ~= '(4585,365)'::point
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
  count 
@@ -1069,12 +1064,15 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
-                         QUERY PLAN                         
-------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = 'P0123456789abcdef'::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t = 'P0123456789abcdef'::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
@@ -1084,12 +1082,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
-                         QUERY PLAN                         
-------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = 'P0123456789abcde'::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t = 'P0123456789abcde'::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
  count 
@@ -1099,12 +1100,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
-                         QUERY PLAN                         
-------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = 'P0123456789abcdefF'::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t = 'P0123456789abcdefF'::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
@@ -1114,12 +1118,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t < 'Aztec                         Ct  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t < 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
@@ -1129,12 +1136,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t ~<~ 'Aztec                         Ct  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t ~<~ 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
@@ -1144,12 +1154,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t <= 'Aztec                         Ct  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t <= 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
@@ -1159,12 +1172,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t ~<=~ 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
@@ -1174,12 +1190,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = 'Aztec                         Ct  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t = 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
  count 
@@ -1189,12 +1208,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = 'Worth                         St  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t = 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
  count 
@@ -1204,12 +1226,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t >= 'Worth                         St  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t >= 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
  count 
@@ -1219,12 +1244,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t ~>=~ 'Worth                         St  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t ~>=~ 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
  count 
@@ -1234,12 +1262,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t > 'Worth                         St  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t > 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
  count 
@@ -1249,12 +1280,15 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  Aggregate
-   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t ~>~ 'Worth                         St  '::text)
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+                     Index Cond: t ~>~ 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
  count 
@@ -1292,14 +1326,17 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
-                  QUERY PLAN                  
-----------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p IS NULL)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p IS NULL)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p IS NULL
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p IS NULL
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
  count 
@@ -1309,14 +1346,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
-                  QUERY PLAN                  
-----------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p IS NOT NULL)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p IS NOT NULL)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p IS NOT NULL
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p IS NOT NULL
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
  count 
@@ -1326,12 +1366,15 @@ SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl;
-                  QUERY PLAN                  
-----------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         ->  Bitmap Index Scan on sp_quad_ind
-(3 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     ->  Bitmap Index Scan on sp_quad_ind
+ Optimizer: legacy query optimizer
+(6 rows)
 
 SELECT count(*) FROM quad_point_tbl;
  count 
@@ -1341,14 +1384,17 @@ SELECT count(*) FROM quad_point_tbl;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
-                          QUERY PLAN                           
----------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p <@ '(1000,1000),(200,200)'::box)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p <@ '(1000,1000),(200,200)'::box
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
  count 
@@ -1358,14 +1404,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: ('(1000,1000),(200,200)'::box @> p)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: ('(1000,1000),(200,200)'::box @> p)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: '(1000,1000),(200,200)'::box @> p
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: '(1000,1000),(200,200)'::box @> p
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
  count 
@@ -1375,14 +1424,17 @@ SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p << '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p << '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p << '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p << '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
  count 
@@ -1392,14 +1444,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p >> '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p >> '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p >> '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p >> '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
  count 
@@ -1409,14 +1464,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p <^ '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p <^ '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p <^ '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p <^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
  count 
@@ -1426,14 +1484,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p >^ '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p >^ '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p >^ '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p >^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
  count 
@@ -1443,14 +1504,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on quad_point_tbl
-         Recheck Cond: (p ~= '(4585,365)'::point)
-         ->  Bitmap Index Scan on sp_quad_ind
-               Index Cond: (p ~= '(4585,365)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on quad_point_tbl
+                     Recheck Cond: p ~= '(4585,365)'::point
+                     ->  Bitmap Index Scan on sp_quad_ind
+                           Index Cond: p ~= '(4585,365)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
  count 
@@ -1460,14 +1524,17 @@ SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
-                          QUERY PLAN                           
----------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p <@ '(1000,1000),(200,200)'::box)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p <@ '(1000,1000),(200,200)'::box)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p <@ '(1000,1000),(200,200)'::box
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p <@ '(1000,1000),(200,200)'::box
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
  count 
@@ -1477,14 +1544,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: ('(1000,1000),(200,200)'::box @> p)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: ('(1000,1000),(200,200)'::box @> p)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: '(1000,1000),(200,200)'::box @> p
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: '(1000,1000),(200,200)'::box @> p
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
  count 
@@ -1494,14 +1564,17 @@ SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p << '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p << '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p << '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p << '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
  count 
@@ -1511,14 +1584,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p >> '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p >> '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p >> '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p >> '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
  count 
@@ -1528,14 +1604,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p <^ '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p <^ '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p <^ '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p <^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
  count 
@@ -1545,14 +1624,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
-                      QUERY PLAN                       
--------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p >^ '(5000,4000)'::point)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p >^ '(5000,4000)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p >^ '(5000,4000)'::point
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p >^ '(5000,4000)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
  count 
@@ -1562,14 +1644,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on kd_point_tbl
-         Recheck Cond: (p ~= '(4585,365)'::point)
-         ->  Bitmap Index Scan on sp_kd_ind
-               Index Cond: (p ~= '(4585,365)'::point)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on kd_point_tbl
+                     Recheck Cond: p ~= '(4585,365)'::point
+                     ->  Bitmap Index Scan on sp_kd_ind
+                           Index Cond: p ~= '(4585,365)'::point
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
  count 
@@ -1579,14 +1664,17 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
-                        QUERY PLAN                         
------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcdef'::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = 'P0123456789abcdef'::text)
-(5 rows)
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t = 'P0123456789abcdef'::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t = 'P0123456789abcdef'::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
@@ -1596,14 +1684,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
-                        QUERY PLAN                        
-----------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcde'::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = 'P0123456789abcde'::text)
-(5 rows)
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t = 'P0123456789abcde'::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t = 'P0123456789abcde'::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
  count 
@@ -1613,14 +1704,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
-                         QUERY PLAN                         
-------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcdefF'::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = 'P0123456789abcdefF'::text)
-(5 rows)
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t = 'P0123456789abcdefF'::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t = 'P0123456789abcdefF'::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
@@ -1630,14 +1724,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t < 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t < 'Aztec                         Ct  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t < 'Aztec                         Ct  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t < 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
@@ -1647,14 +1744,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t ~<~ 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t ~<~ 'Aztec                         Ct  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t ~<~ 'Aztec                         Ct  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t ~<~ 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
@@ -1664,14 +1764,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t <= 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t <= 'Aztec                         Ct  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t <= 'Aztec                         Ct  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t <= 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
@@ -1681,14 +1784,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t ~<=~ 'Aztec                         Ct  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t ~<=~ 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
@@ -1698,14 +1804,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = 'Aztec                         Ct  '::text)
-(5 rows)
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t = 'Aztec                         Ct  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t = 'Aztec                         Ct  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
  count 
@@ -1715,14 +1824,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = 'Worth                         St  '::text)
-(5 rows)
+   ->  Gather Motion 1:1  (slice1; segments: 1)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t = 'Worth                         St  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t = 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
  count 
@@ -1732,14 +1844,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t >= 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t >= 'Worth                         St  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t >= 'Worth                         St  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t >= 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
  count 
@@ -1749,14 +1864,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t ~>=~ 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t ~>=~ 'Worth                         St  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t ~>=~ 'Worth                         St  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t ~>=~ 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
  count 
@@ -1766,14 +1884,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t > 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t > 'Worth                         St  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t > 'Worth                         St  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t > 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
  count 
@@ -1783,14 +1904,17 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                        
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t ~>~ 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t ~>~ 'Worth                         St  '::text)
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on suffix_text_tbl
+                     Recheck Cond: t ~>~ 'Worth                         St  '::text
+                     ->  Bitmap Index Scan on sp_suff_ind
+                           Index Cond: t ~>~ 'Worth                         St  '::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
  count 
@@ -2456,29 +2580,61 @@ Distributed by: (dk)
 -- Try some concurrent index drops
 --
 DROP INDEX CONCURRENTLY "concur_index2";				-- works
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index2";
+                   ^
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
-ERROR:  index "concur_index2" does not exist
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";
+                   ^
 -- failures
 DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
-ERROR:  DROP INDEX CONCURRENTLY does not support dropping multiple objects
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
+                   ^
 BEGIN;
 DROP INDEX CONCURRENTLY "concur_index5";
-ERROR:  DROP INDEX CONCURRENTLY cannot run inside a transaction block
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index5";
+                   ^
 ROLLBACK;
 -- successes
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
+                   ^
 DROP INDEX CONCURRENTLY "concur_index4";
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index4";
+                   ^
 DROP INDEX CONCURRENTLY "concur_index5";
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index5";
+                   ^
 DROP INDEX CONCURRENTLY "concur_index1";
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_index1";
+                   ^
 DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+ERROR:  syntax error at or near "CONCURRENTLY"
+LINE 1: DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+                   ^
 \d concur_heap
 Table "public.concur_heap"
  Column | Type | Modifiers 
 --------+------+-----------
  f1     | text | 
  f2     | text | 
+ dk     | text | 
 Indexes:
+    "concur_index2" UNIQUE, btree (dk, f1)
+    "concur_index3" UNIQUE, btree (dk, f2) INVALID
+    "concur_heap_expr_idx" btree ((f2 || f1))
+    "concur_index1" btree (f2, f1)
+    "concur_index4" btree (f2) WHERE f1 = 'a'::text
+    "concur_index5" btree (f2) WHERE f1 = 'x'::text
     "std_index" btree (f2)
+Distributed by: (dk)
 
 DROP TABLE concur_heap;
 --
@@ -2683,6 +2839,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 DROP INDEX onek_nulltest;
 -- Check initial-positioning logic too
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2);
+ERROR:  UNIQUE index must contain all columns in the distribution key of relation "onek_with_null"
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = OFF;
@@ -2742,21 +2899,27 @@ DROP TABLE onek_with_null;
 --
 -- Check bitmap index path planning
 --
+SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
-                                                               QUERY PLAN                                                                
------------------------------------------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on tenk1
-   Recheck Cond: (((thousand = 42) AND (tenthous = 1)) OR ((thousand = 42) AND (tenthous = 3)) OR ((thousand = 42) AND (tenthous = 42)))
-   ->  BitmapOr
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 1))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 3))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 42))
-(9 rows)
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: (thousand = 42 AND tenthous = 1) OR (thousand = 42 AND tenthous = 3) OR (thousand = 42 AND tenthous = 42)
+         ->  BitmapOr
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: thousand = 42 AND tenthous = 1
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: thousand = 42 AND tenthous = 3
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: thousand = 42 AND tenthous = 42
+ Optimizer: legacy query optimizer
+(11 rows)
 
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
@@ -2768,20 +2931,23 @@ SELECT * FROM tenk1
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on tenk1
-         Recheck Cond: ((hundred = 42) AND ((thousand = 42) OR (thousand = 99)))
-         ->  BitmapAnd
-               ->  Bitmap Index Scan on tenk1_hundred
-                     Index Cond: (hundred = 42)
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = 42)
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = 99)
-(11 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on tenk1
+                     Recheck Cond: hundred = 42 AND (thousand = 42 OR thousand = 99)
+                     ->  BitmapAnd
+                           ->  Bitmap Index Scan on tenk1_hundred
+                                 Index Cond: hundred = 42
+                           ->  BitmapOr
+                                 ->  Bitmap Index Scan on tenk1_thous_tenthous
+                                       Index Cond: thousand = 42
+                                 ->  Bitmap Index Scan on tenk1_thous_tenthous
+                                       Index Cond: thousand = 99
+ Optimizer: legacy query optimizer
+(14 rows)
 
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
@@ -2800,14 +2966,17 @@ ANALYZE dupindexcols;
 EXPLAIN (COSTS OFF)
   SELECT count(*) FROM dupindexcols
     WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Aggregate
-   ->  Bitmap Heap Scan on dupindexcols
-         Recheck Cond: ((f1 > 'WA'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
-         ->  Bitmap Index Scan on dupindexcols_i
-               Index Cond: ((f1 > 'WA'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
-(5 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Bitmap Heap Scan on dupindexcols
+                     Recheck Cond: f1 > 'WA'::text AND id < 1000 AND f1 ~<~ 'YX'::text
+                     ->  Bitmap Index Scan on dupindexcols_i
+                           Index Cond: f1 > 'WA'::text AND id < 1000 AND f1 ~<~ 'YX'::text
+ Optimizer: legacy query optimizer
+(8 rows)
 
 SELECT count(*) FROM dupindexcols
   WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
@@ -2816,3 +2985,7 @@ SELECT count(*) FROM dupindexcols
     97
 (1 row)
 
+RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;

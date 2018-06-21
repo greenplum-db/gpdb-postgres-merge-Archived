@@ -7230,28 +7230,7 @@ DropStmt:	DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP INDEX CONCURRENTLY any_name_list opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_INDEX;
-					n->missing_ok = FALSE;
-					n->objects = $4;
-					n->arguments = NIL;
-					n->behavior = $5;
-					n->concurrent = true;
-					$$ = (Node *)n;
-				}
-			| DROP INDEX CONCURRENTLY IF_P EXISTS any_name_list opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_INDEX;
-					n->missing_ok = FALSE;
-					n->objects = $6;
-					n->arguments = NIL;
-					n->behavior = $7;
-					n->concurrent = true;
-					$$ = (Node *)n;
-				}
+			/*GPDB_92_MERGE_FIXME: remove syntax for DROP INDEX CONCURRENTLY*/	
 		;
 
 

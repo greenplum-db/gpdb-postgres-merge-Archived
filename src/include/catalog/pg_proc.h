@@ -4702,7 +4702,8 @@ DESCR("int8range constructor");
 /* spgist support functions */
 DATA(insert OID = 4001 (  spggettuple	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 16 "2281 2281" _null_ _null_ _null_ _null_	spggettuple _null_ _null_ _null_ ));
 DESCR("spgist(internal)");
-DATA(insert OID = 4002 (  spggetbitmap	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 20 "2281 2281" _null_ _null_ _null_ _null_	spggetbitmap _null_ _null_ _null_ ));
+/* GPDB: spggetbitmap rettype changed from int8 (20) to internal (2281) */
+DATA(insert OID = 4002 (  spggetbitmap	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_	spggetbitmap _null_ _null_ _null_ ));
 DESCR("spgist(internal)");
 DATA(insert OID = 4003 (  spginsert		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 6 0 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	spginsert _null_ _null_ _null_ ));
 DESCR("spgist(internal)");
