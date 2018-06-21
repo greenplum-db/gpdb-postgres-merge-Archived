@@ -1759,6 +1759,11 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	assign_query_collations(pstate, qry);
 
+	/*
+	 * GPDB_92_MERGE_FIXME: For CTAS
+	 */
+	qry->isCtas = stmt->isCtas;
+
 	return qry;
 }
 
@@ -1999,6 +2004,11 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
 
 	assign_query_collations(pstate, qry);
+
+	/*
+	 * GPDB_92_MERGE_FIXME: For CTAS
+	 */
+	qry->isCtas = stmt->isCtas;
 
 	return qry;
 }
@@ -2248,6 +2258,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	assign_query_collations(pstate, qry);
+
+	/*
+	 * GPDB_92_MERGE_FIXME: For CTAS
+	 */
+	qry->isCtas = stmt->isCtas;
 
 	return qry;
 }
@@ -3249,6 +3264,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 	/* Copy intoClause into the query in CTAS. */
 	((Query*)stmt->query)->intoClause = stmt->into;
+	((Query*)stmt->query)->isCtas = true;
 
 	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
 		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *) stmt->query);

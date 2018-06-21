@@ -463,7 +463,10 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 	 * objects; then check again.  We need to do it this way to cover the race
 	 * condition that an invalidation message arrives before we get the locks.
 	 */
-	if (plansource->is_valid)
+	/*
+	 * GPDB_92_MERGE_FIXEME: For CTAS, always replan.
+	 */
+	if (plansource->is_valid && intoClause == NULL)
 	{
 		AcquirePlannerLocks(plansource->query_list, true);
 
@@ -542,18 +545,18 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 	 */
 	if (intoClause)
 	{
-		CreateTableAsStmt *ctas_stmt;
+		SelectStmt *select;
 
-		if (!IsA(plansource->raw_parse_tree, CreateTableAsStmt))
+		if (!IsA(plansource->raw_parse_tree, SelectStmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("prepared statement is not a CreateTableAs Statement.")));
+					 errmsg("prepared statement is not a SELECT")));
 
-		ctas_stmt = (CreateTableAsStmt *) copyObject(plansource->raw_parse_tree);
+		select = (SelectStmt *) copyObject(plansource->raw_parse_tree);
 
-		ctas_stmt->into = copyObject(intoClause);
+		select->isCtas = true;
 
-		rawtree = (Node *) ctas_stmt;
+		rawtree = (Node *) select;
 	}
 	else
 		rawtree = copyObject(plansource->raw_parse_tree);

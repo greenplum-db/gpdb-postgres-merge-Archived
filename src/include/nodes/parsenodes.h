@@ -189,6 +189,12 @@ typedef struct Query
 	 * and executor needs this info to specifiy correct target also.
 	 * */
 	IntoClause *intoClause;
+
+	/*
+	 * GPDB_92_MERGE_FIXME: Used by CTAS to indicate if this query is part of
+	 * CTAS statement.
+	 */
+	bool		isCtas;
 } Query;
 
 
@@ -1180,6 +1186,13 @@ typedef struct SelectStmt
 	/* This field used by: SELECT INTO, CTAS */
 	/* GPDB_91_MERGE_FIXME: why is this not a DistributedBy*? */
 	Node *distributedBy;  /* GPDB: columns to distribute the data on. */
+
+	/*
+	 * GPDB_92_MERGE_FIXME: Used by CTAS.
+	 * Set to true if this select statement is part of CTAS.
+	 * Needed to set query->isCtas.
+	 */
+	bool		isCtas;
 } SelectStmt;
 
 

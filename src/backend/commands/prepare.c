@@ -279,6 +279,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
+		pstmt->intoClause = copyObject(intoClause);
 
 		/* Set appropriate eflags */
 		eflags = GetIntoRelEFlags(intoClause);

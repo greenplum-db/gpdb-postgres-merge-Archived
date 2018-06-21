@@ -16315,6 +16315,8 @@ insertSelectOptions(SelectStmt *stmt,
 					 parser_errposition(exprLocation((Node *) withClause))));
 		stmt->withClause = withClause;
 	}
+
+	stmt->isCtas = false;
 }
 
 static Node *
