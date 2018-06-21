@@ -8834,7 +8834,7 @@ RemoveAggrStmt:
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($3);
-					n->arguments = extractAggrArgTypes($4);
+					n->arguments = list_make1(extractAggrArgTypes($4));
 					n->behavior = $5;
 					n->missing_ok = false;
 					n->concurrent = false;
@@ -8845,7 +8845,7 @@ RemoveAggrStmt:
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($5);
-					n->arguments = extractAggrArgTypes($6);
+					n->arguments = list_make1(extractAggrArgTypes($6));
 					n->behavior = $7;
 					n->missing_ok = true;
 					n->concurrent = false;
