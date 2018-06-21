@@ -142,13 +142,8 @@ main(int argc, char **argv)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-<<<<<<< HEAD
 			puts("pg_restore (Greenplum Database) " PG_VERSION);
-			exit(0);
-=======
-			puts("pg_restore (PostgreSQL) " PG_VERSION);
 			exit_nicely(0);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 	}
 
@@ -421,34 +416,6 @@ usage(const char *progname)
 	printf(_("  --version                output version information, then exit\n"));
 
 	printf(_("\nOptions controlling the restore:\n"));
-<<<<<<< HEAD
-	printf(_("  -a, --data-only          restore only the data, no schema\n"));
-	printf(_("  -c, --clean              clean (drop) database objects before recreating\n"));
-	printf(_("  -C, --create             create the target database\n"));
-	printf(_("  -e, --exit-on-error      exit on error, default is to continue\n"));
-	printf(_("  -I, --index=NAME         restore named index\n"));
-	printf(_("  -j, --jobs=NUM           use this many parallel jobs to restore\n"));
-	printf(_("  -L, --use-list=FILENAME  use table of contents from this file for\n"
-			 "                           selecting/ordering output\n"));
-	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
-	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
-	printf(_("  -P, --function='NAME(args)'\n"
-			 "                           restore named function. name must be exactly\n"
-			 "                           as appears in the TOC, and inside single quotes\n"));
-	printf(_("  -s, --schema-only        restore only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     superuser user name to use for disabling triggers\n"));
-	printf(_("  -t, --table=NAME         restore named table\n"));
-	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
-	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
-	printf(_("  -1, --single-transaction\n"
-			 "                           restore as a single transaction\n"));
-	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
-	printf(_("  --no-data-for-failed-tables\n"
-			 "                           do not restore data of tables that could not be\n"
-			 "                           created\n"));
-	printf(_("  --no-security-labels     do not restore security labels\n"));
-	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
-=======
 	printf(_("  -a, --data-only              restore only the data, no schema\n"));
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 create the target database\n"));
@@ -459,7 +426,9 @@ usage(const char *progname)
 			 "                               selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME            restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
-	printf(_("  -P, --function=NAME(args)    restore named function\n"));
+	printf(_("  -P, --function='NAME(args)'\n"
+			 "                               restore named function. name must be exactly\n"
+			 "                               as appears in the TOC, and inside single quotes\n"));
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"));
 	printf(_("  -t, --table=NAME             restore named table\n"));
@@ -472,7 +441,6 @@ usage(const char *progname)
 	printf(_("  --no-security-labels         do not restore security labels\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
