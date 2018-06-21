@@ -1082,3 +1082,10 @@ create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 ERROR:  cannot determine result data type
 DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.
+--
+-- DISTRIBUTED BY
+--
+create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (id);
+--should fail
+create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (nr);
+ERROR:  type "numrange" can't be a part of a distribution key

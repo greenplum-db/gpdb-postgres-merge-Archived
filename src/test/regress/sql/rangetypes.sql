@@ -394,3 +394,12 @@ create function inoutparam_fail(inout i anyelement, out r anyrange)
 --should fail
 create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
+
+--
+-- DISTRIBUTED BY
+--
+create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (id);
+
+--should fail
+create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (nr);
+
