@@ -449,6 +449,11 @@ _readConstraint(void)
 		break;
 
 		case CONSTR_CHECK:
+			/*
+			 * GPDB: need dispatch skip_validation for statement like 
+			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+			 */
+			READ_BOOL_FIELD(skip_validation);
 		case CONSTR_DEFAULT:
 			READ_NODE_FIELD(raw_expr);
 			READ_STRING_FIELD(cooked_expr);
@@ -1341,6 +1346,7 @@ _readAlterDomainStmt(void)
 	READ_STRING_FIELD(name);
 	READ_NODE_FIELD(def);
 	READ_ENUM_FIELD(behavior, DropBehavior); Assert(local_node->behavior <= DROP_CASCADE);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }

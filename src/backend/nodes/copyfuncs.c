@@ -3889,9 +3889,8 @@ _copyRenameStmt(const RenameStmt *from)
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
 	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
-
 	COPY_SCALAR_FIELD(bAllowPartn);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }

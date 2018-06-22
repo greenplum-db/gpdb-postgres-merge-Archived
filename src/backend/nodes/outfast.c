@@ -822,6 +822,7 @@ _outAlterDomainStmt(StringInfo str, AlterDomainStmt *node)
 	WRITE_STRING_FIELD(name);
 	WRITE_NODE_FIELD(def);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 
 static void
@@ -1098,6 +1099,11 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_CHECK:
+			/*
+			 * GPDB: need dispatch skip_validation for statement like 
+			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+			 */
+			WRITE_BOOL_FIELD(skip_validation);
 		case CONSTR_DEFAULT:
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);

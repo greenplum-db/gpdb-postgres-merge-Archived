@@ -2874,16 +2874,18 @@ _outRenameStmt(StringInfo str, const RenameStmt *node)
 {
 	WRITE_NODE_TYPE("RENAMESTMT");
 
+	WRITE_ENUM_FIELD(renameType, ObjectType);
+	WRITE_ENUM_FIELD(relationType, ObjectType);
 	WRITE_NODE_FIELD(relation);
 	WRITE_OID_FIELD(objid);
 	WRITE_NODE_FIELD(object);
 	WRITE_NODE_FIELD(objarg);
 	WRITE_STRING_FIELD(subname);
 	WRITE_STRING_FIELD(newname);
-	WRITE_ENUM_FIELD(renameType,ObjectType);
 	WRITE_ENUM_FIELD(behavior,DropBehavior);
 
 	WRITE_BOOL_FIELD(bAllowPartn);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 
 static void
@@ -2961,6 +2963,7 @@ _outAlterDomainStmt(StringInfo str, const AlterDomainStmt *node)
 	WRITE_STRING_FIELD(name);
 	WRITE_NODE_FIELD(def);
 	WRITE_ENUM_FIELD(behavior, DropBehavior);
+	WRITE_BOOL_FIELD(missing_ok);
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -4215,6 +4218,11 @@ _outConstraint(StringInfo str, const Constraint *node)
 			WRITE_BOOL_FIELD(is_no_inherit);
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
+			/*
+			 * GPDB: need dispatch skip_validation for statement like 
+			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+			 */
+			WRITE_BOOL_FIELD(skip_validation);
 			break;
 
 		case CONSTR_PRIMARY:

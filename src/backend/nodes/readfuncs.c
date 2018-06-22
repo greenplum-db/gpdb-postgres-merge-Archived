@@ -756,6 +756,11 @@ _readConstraint(void)
 		local_node->contype = CONSTR_CHECK;
 		READ_NODE_FIELD(raw_expr);
 		READ_STRING_FIELD(cooked_expr);
+		/*
+		 * GPDB: need dispatch skip_validation for statement like 
+		 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+		 */
+		READ_BOOL_FIELD(skip_validation);
 	}
 	else if (strncmp(token, "DEFAULT", length)==0)
 	{
@@ -1126,16 +1131,18 @@ _readRenameStmt(void)
 {
 	READ_LOCALS(RenameStmt);
 
+	READ_ENUM_FIELD(renameType, ObjectType);
+	READ_ENUM_FIELD(relationType, ObjectType);
 	READ_NODE_FIELD(relation);
 	READ_OID_FIELD(objid);
 	READ_NODE_FIELD(object);
 	READ_NODE_FIELD(objarg);
 	READ_STRING_FIELD(subname);
 	READ_STRING_FIELD(newname);
-	READ_ENUM_FIELD(renameType,ObjectType);
 	READ_ENUM_FIELD(behavior,DropBehavior);
 
 	READ_BOOL_FIELD(bAllowPartn);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }
@@ -2475,6 +2482,7 @@ _readAlterDomainStmt(void)
 	READ_STRING_FIELD(name);
 	READ_NODE_FIELD(def);
 	READ_ENUM_FIELD(behavior, DropBehavior);
+	READ_BOOL_FIELD(missing_ok);
 
 	READ_DONE();
 }

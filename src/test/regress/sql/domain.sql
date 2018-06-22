@@ -265,7 +265,7 @@ alter domain con drop constraint if exists nonexistent;
 
 -- Test ALTER DOMAIN .. CONSTRAINT .. NOT VALID
 create domain things AS INT;
-CREATE TABLE thethings (stuff things);
+CREATE TABLE thethings (id int, stuff things);
 INSERT INTO thethings (stuff) VALUES (55);
 ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11);
 ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
