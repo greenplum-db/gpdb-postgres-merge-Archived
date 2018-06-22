@@ -382,7 +382,6 @@ select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
 select '1'::text in (select '1'::name union all select '1'::name);
 
 --
-<<<<<<< HEAD
 -- Check sane behavior with nested IN SubLinks
 --
 select * from int4_tbl where
@@ -408,7 +407,8 @@ select (select q from
           select 4,5,6.0 where f1 <= 0
          ) q )
 from int4_tbl;
-=======
+
+--
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b
@@ -416,4 +416,3 @@ where a.thousand = b.thousand
   and exists ( select 1 from tenk1 c where b.hundred = c.hundred
                    and not exists ( select 1 from tenk1 d
                                     where a.thousand = d.thousand ) );
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

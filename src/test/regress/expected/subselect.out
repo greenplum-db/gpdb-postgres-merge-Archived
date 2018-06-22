@@ -55,21 +55,21 @@ SELECT (((SELECT 2)) UNION SELECT 2);
 (1 row)
 
 SELECT (SELECT ARRAY[1,2,3])[1];
- ?column? 
-----------
-        1
+ array 
+-------
+     1
 (1 row)
 
 SELECT ((SELECT ARRAY[1,2,3]))[2];
- ?column? 
-----------
-        2
+ array 
+-------
+     2
 (1 row)
 
 SELECT (((SELECT ARRAY[1,2,3])))[3];
- ?column? 
-----------
-        3
+ array 
+-------
+     3
 (1 row)
 
 -- Set up some simple test tables
@@ -621,7 +621,6 @@ select '1'::text in (select '1'::name union all select '1'::name);
 (1 row)
 
 --
-<<<<<<< HEAD
 -- Check sane behavior with nested IN SubLinks
 --
 select * from int4_tbl where
@@ -669,7 +668,7 @@ select (select q from
           select 4,5,6.0 where f1 <= 0
          ) q )
 from int4_tbl;
- ?column?  
+     q     
 -----------
  (4,5,6.0)
  (1,2,3)
@@ -677,7 +676,8 @@ from int4_tbl;
  (1,2,3)
  (4,5,6.0)
 (5 rows)
-=======
+
+--
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b
@@ -685,8 +685,4 @@ where a.thousand = b.thousand
   and exists ( select 1 from tenk1 c where b.hundred = c.hundred
                    and not exists ( select 1 from tenk1 d
                                     where a.thousand = d.thousand ) );
- thousand 
-----------
-(0 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
-
+ERROR:  correlated subquery with skip-level correlations is not supported
