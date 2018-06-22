@@ -166,6 +166,7 @@ pathnode_walk_kids(Path            *path,
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
 		case T_IndexScan:
+		case T_IndexOnlyScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:

@@ -621,6 +621,7 @@ ExecEagerFree(PlanState *node)
 		case T_TableFunctionState:
 		case T_DynamicTableScanState:
 		case T_DynamicIndexScanState:
+		case T_IndexOnlyScanState:
 		case T_SequenceState:
 		case T_PartitionSelectorState:
 		case T_WorkTableScanState:
