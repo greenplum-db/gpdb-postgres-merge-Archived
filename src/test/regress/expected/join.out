@@ -2495,10 +2495,6 @@ order by c.name;
 
 rollback;
 --
-<<<<<<< HEAD
--- test case where a PlaceHolderVar is propagated into a subquery
---
-=======
 -- test incorrect handling of placeholders that only appear in targetlists,
 -- per bug #6154
 --
@@ -2608,7 +2604,9 @@ order by 1,2;
                        ->  Seq Scan on int8_tbl t3
 (13 rows)
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+--
+-- test case where a PlaceHolderVar is propagated into a subquery
+--
 select * from
   int8_tbl t1 left join
   (select q1 as x, 42 as y from int8_tbl t2) ss
@@ -2677,7 +2675,6 @@ select * from int4_tbl a full join int4_tbl b on false;
 (10 rows)
 
 --
-<<<<<<< HEAD
 -- test handling of potential equivalence clauses above outer joins
 --
 select q1, unique2, thousand, hundred
@@ -2695,7 +2692,7 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
   0 |       0 |    0
 (1 row)
 
-=======
+--
 -- test for ability to use a cartesian join when necessary
 --
 explain (costs off)

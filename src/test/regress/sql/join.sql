@@ -607,10 +607,6 @@ order by c.name;
 rollback;
 
 --
-<<<<<<< HEAD
--- test case where a PlaceHolderVar is propagated into a subquery
---
-=======
 -- test incorrect handling of placeholders that only appear in targetlists,
 -- per bug #6154
 --
@@ -681,7 +677,9 @@ where
   1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
 order by 1,2;
 
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+--
+-- test case where a PlaceHolderVar is propagated into a subquery
+--
 select * from
   int8_tbl t1 left join
   (select q1 as x, 42 as y from int8_tbl t2) ss
@@ -697,7 +695,6 @@ select * from int4_tbl a full join int4_tbl b on true;
 select * from int4_tbl a full join int4_tbl b on false;
 
 --
-<<<<<<< HEAD
 -- test handling of potential equivalence clauses above outer joins
 --
 
@@ -708,7 +705,8 @@ select q1, unique2, thousand, hundred
 select f1, unique2, case when unique2 is null then f1 else 0 end
   from int4_tbl a left join tenk1 b on f1 = unique2
   where (case when unique2 is null then f1 else 0 end) = 0;
-=======
+
+--
 -- test for ability to use a cartesian join when necessary
 --
 
@@ -767,7 +765,6 @@ select b.unique1 from
   join int4_tbl i1 on b.thousand = f1
   right join int4_tbl i2 on i2.f1 = b.tenthous
   order by 1;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 --
 -- test join removal
