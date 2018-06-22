@@ -7325,10 +7325,10 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
 	double		loop_count = PG_GETARG_FLOAT8(2);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
 	List *selectivityQuals;
 	double numIndexTuples;
