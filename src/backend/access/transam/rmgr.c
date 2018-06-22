@@ -46,6 +46,7 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"Gin", gin_redo, gin_desc, gin_xlog_startup, gin_xlog_cleanup, gin_safe_restartpoint, gin_mask},
 	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, NULL, gist_mask},
 	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL, seq_mask},
+	{"SPGist", spg_redo, spg_desc, spg_xlog_startup, spg_xlog_cleanup, NULL},
 	{"Bitmap", bitmap_redo, bitmap_desc, bitmap_xlog_startup, bitmap_xlog_cleanup, bitmap_safe_restartpoint, NULL},
 	{"DistributedLog", DistributedLog_redo, DistributedLog_desc, NULL, NULL, NULL, NULL},
 	{"Appendonly Table Log Records", appendonly_redo, appendonly_desc, NULL, NULL, NULL, NULL}
