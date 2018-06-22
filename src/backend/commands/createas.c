@@ -101,6 +101,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
 
+		elog(ERROR, "Create Table As Execute is known to need some work. Error out temporarily to avoid panic which affects other tests sometimes.");
+
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
 
 		return;
