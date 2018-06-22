@@ -595,6 +595,7 @@ ALTER TYPE test8b ALTER ATTRIBUTE b TYPE testdomain1;
 CREATE TABLE test11b AS (SELECT 1::testdomain1 AS a);
 REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
 WARNING:  no privileges could be revoked for "testtype1"
+NOTICE:  no privileges could be revoked
 \c -
 DROP AGGREGATE testagg1b(testdomain1);
 DROP DOMAIN testdomain2b;
@@ -627,11 +628,7 @@ select has_table_privilege(NULL,'pg_authid','select');
 (1 row)
 
 select has_table_privilege('pg_shad','select');
- has_table_privilege 
----------------------
- 
-(1 row)
-
+ERROR:  relation "pg_shad" does not exist
 select has_table_privilege('nosuchuser','pg_authid','select');
 ERROR:  role "nosuchuser" does not exist
 select has_table_privilege('pg_authid','sel');
