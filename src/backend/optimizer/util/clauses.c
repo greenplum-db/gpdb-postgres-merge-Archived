@@ -4245,7 +4245,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 		 /* okay */ ;
 	else if (context->estimate && funcform->provolatile == PROVOLATILE_STABLE)
 		 /* okay */ ;
-	else if (context->root->glob && funcform->provolatile == PROVOLATILE_STABLE)
+	else if (context->root && context->root->glob && funcform->provolatile == PROVOLATILE_STABLE)
 	{
 		 /* okay, but we cannot reuse this plan */
 		context->root->glob->oneoffPlan = true;
