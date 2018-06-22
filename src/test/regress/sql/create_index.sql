@@ -873,6 +873,11 @@ DROP TABLE onek_with_null;
 -- Check bitmap index path planning
 --
 
+SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
@@ -899,3 +904,8 @@ EXPLAIN (COSTS OFF)
     WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
 SELECT count(*) FROM dupindexcols
   WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
+
+RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
