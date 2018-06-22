@@ -260,7 +260,6 @@ static const char *convertOperatorReference(Archive *fout, const char *opr);
 static const char *convertTSFunction(Archive *fout, Oid funcOid);
 static void selectSourceSchema(Archive *fout, const char *schemaName);
 static char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
-static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(Archive *fout,
 			   const char *schema, const char *id);
 static void getBlobs(Archive *fout);
