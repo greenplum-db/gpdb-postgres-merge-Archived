@@ -1442,6 +1442,7 @@ ExecEndNode(PlanState *node)
 
 		case T_ExternalScanState:
 			ExecEndExternalScan((ExternalScanState *) node);
+			break;
 
 		case T_IndexOnlyScanState:
 			ExecEndIndexOnlyScan((IndexOnlyScanState *) node);
