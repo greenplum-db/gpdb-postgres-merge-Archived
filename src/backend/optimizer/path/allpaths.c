@@ -1526,8 +1526,6 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		subplan = subquery_planner(cteroot->glob, subquery, root, cte->cterecursive,
 								   tuple_fraction, &subroot, config);
 
-		pathkeys = subroot->query_pathkeys;
-
 		/*
 		 * Do not store the subplan in cteplaninfo, since we will not share
 		 * this plan.
@@ -1562,8 +1560,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 									   tuple_fraction, &subroot, config);
 
 			cteplaninfo->shared_plan = prepare_plan_for_sharing(cteroot, subplan);
-			cteplaninfo->subrtable = subroot->parse->rtable;
-			cteplaninfo->pathkeys = subroot->query_pathkeys;
+			cteplaninfo->subroot = subroot;
 		}
 
 		/*
@@ -1571,8 +1568,10 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		 * subplan.
 		 */
 		subplan = share_prepared_plan(cteroot, cteplaninfo->shared_plan);
-		pathkeys = cteplaninfo->pathkeys;
+		subroot = cteplaninfo->subroot;
 	}
+
+	pathkeys = subroot->query_pathkeys;
 
 	rel->subplan = subplan;
 	rel->subroot = subroot;

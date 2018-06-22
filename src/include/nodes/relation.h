@@ -140,31 +140,6 @@ typedef struct PlannerGlobal
 
 } PlannerGlobal;
 
-/*
- * CtePlanInfo
- *    Information for subplans that are associated with a CTE.
- */
-typedef struct CtePlanInfo
-{
-	/*
-	 * A subplan, prepared for sharing among many CTE references by
-	 * prepare_plan_for_sharing(), that implements the CTE. NULL if the
-	 * CTE is not shared among references.
-	 */
-	Plan *shared_plan;
-
-	/*
-	 * The rtable corresponding to the subplan.
-	 */
-	List *subrtable;
-
-	/*
-	 * The pathkeys corresponding to the subplan.
-	 */
-	List *pathkeys;
-} CtePlanInfo;
-
-
 /*----------
  * PlannerInfo
  *		Per-query information for planning/optimization
@@ -315,6 +290,25 @@ typedef struct PlannerInfo
 
 	int		   upd_del_replicated_table;
 } PlannerInfo;
+
+/*
+ * CtePlanInfo
+ *    Information for subplans that are associated with a CTE.
+ */
+typedef struct CtePlanInfo
+{
+	/*
+	 * A subplan, prepared for sharing among many CTE references by
+	 * prepare_plan_for_sharing(), that implements the CTE. NULL if the
+	 * CTE is not shared among references.
+	 */
+	Plan *shared_plan;
+
+	/*
+	 * The subroot corresponding to the subplan.
+	 */
+	PlannerInfo *subroot;
+} CtePlanInfo;
 
 /*----------
  * DynamicScanInfo
