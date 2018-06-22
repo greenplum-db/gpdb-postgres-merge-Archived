@@ -1772,11 +1772,13 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	item = (char *) xlrec + sizeof(xl_seq_rec);
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
 
-	if (PageAddItem(page, (Item) item, itemsz,
+	if (PageAddItem(localpage, (Item) item, itemsz,
 					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "seq_redo: failed to add item to page");
 
-	PageSetLSN(page, lsn);
+	PageSetLSN(localpage, lsn);
+
+	memcpy(page, localpage, BufferGetPageSize(buffer));
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
