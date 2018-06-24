@@ -700,8 +700,6 @@ static void KeepLogSeg(XLogRecPtr recptr, uint32 *logId, uint32 *logSeg);
 static bool XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 							bool wal_check_consistency_enabled,
 							XLogRecPtr *lsn, BkpBlock *bkpb);
-static void RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb,
-				char *blk, bool get_cleanup_lock, bool keep_buffer);
 
 static bool AdvanceXLInsertBuffer(bool new_segment);
 static bool XLogCheckpointNeeded(uint32 logid, uint32 logseg);
@@ -10241,27 +10239,8 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 	}
 	else if (info == XLOG_HINT)
 	{
-		char *data;
-		BkpBlock bkpb;
-
-		/*
-		 * Hint bit records contain a backup block stored "inline" in the normal
-		 * data since the locking when writing hint records isn't sufficient to
-		 * use the normal backup block mechanism, which assumes exclusive lock
-		 * on the buffer supplied.
-		 *
-		 * Since the only change in these backup block are hint bits, there are
-		 * no recovery conflicts generated.
-		 *
-		 * This also means there is no corresponding API call for this,
-		 * so an smgr implementation has no need to implement anything.
-		 * Which means nothing is needed in md.c etc
-		 */
-		data = XLogRecGetData(record);
-		memcpy(&bkpb, data, sizeof(BkpBlock));
-		data += sizeof(BkpBlock);
-
-		RestoreBackupBlockContents(lsn, bkpb, data, false, false);
+		if (record->xl_info & XLR_BKP_BLOCK(0))
+			RestoreBackupBlock(lsn, record, 0, false, false);
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
