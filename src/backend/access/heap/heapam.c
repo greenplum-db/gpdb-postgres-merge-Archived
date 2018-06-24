@@ -5378,6 +5378,8 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 	{
 		Relation	reln;
 		Buffer		vmbuffer = InvalidBuffer;
+		Page		vmpage;
+		XLogRecPtr  vmlsn;
 
 		reln = CreateFakeRelcacheEntry(xlrec->node);
 		visibilitymap_pin(reln, xlrec->block, &vmbuffer);
@@ -5393,7 +5395,14 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		 * we did for the heap page; if this results in a dropped bit, no real
 		 * harm is done; and the next VACUUM will fix it.
 		 */
-		if (!XLByteLE(lsn, PageGetLSN(BufferGetPage(vmbuffer))))
+
+		/*
+		 * GPDB PageGetLSN checks the buffer is locked. But here vmbuffer is locked
+		 * in function visibilitymap_set().
+		 */
+		vmpage = BufferGetPage(vmbuffer);
+		vmlsn = ((PageHeader) vmpage)->pd_lsn;
+		if (!XLByteLE(lsn, vmlsn))
 			visibilitymap_set(reln, xlrec->block, lsn, vmbuffer,
 							  xlrec->cutoff_xid);
 
