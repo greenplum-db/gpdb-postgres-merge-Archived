@@ -398,8 +398,29 @@ create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
 --
 -- DISTRIBUTED BY
 --
-create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (id);
+create table distribute_by_range(nr NUMRANGE) DISTRIBUTED by (nr);
 
---should fail
-create table distribute_range_fail(id int, nr NUMRANGE) DISTRIBUTED by (nr);
+INSERT INTO distribute_by_range VALUES('[, 5)');
+INSERT INTO distribute_by_range VALUES(numrange(1.1, 2.2));
+INSERT INTO distribute_by_range VALUES(numrange(1.1, 2.2));
+INSERT INTO distribute_by_range VALUES(numrange(1.1, 2.2,'()'));
+INSERT INTO distribute_by_range VALUES('empty');
+
+select * from distribute_by_range where nr = 'empty'::numrange;
+select * from distribute_by_range where nr = numrange(1.1, 2.2);
+select * from distribute_by_range where nr = numrange(1.1, 2.3);
+
+create type textrange3 as range (subtype=text, collation="C");
+
+create table distribute_by_text_range(tr textrange3) DISTRIBUTED by (tr);
+
+INSERT INTO distribute_by_text_range VALUES('[aaa,aab]');
+INSERT INTO distribute_by_text_range VALUES('[aaa,aab)');
+INSERT INTO distribute_by_text_range VALUES('[aaa,aac]');
+INSERT INTO distribute_by_text_range VALUES('(,)');
+INSERT INTO distribute_by_text_range VALUES('[aaa,)');
+
+select * from distribute_by_text_range where tr = '(,)'::textrange3;
+select * from distribute_by_text_range where tr = '(aaa,aab)'::textrange3;
+select * from distribute_by_text_range where tr = '[aaa,aab)'::textrange3;
 
