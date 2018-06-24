@@ -594,7 +594,7 @@ DATA(insert OID = 7195 ( bmvacuumcleanup  PGNSP PGUID 12 1 0 0 0 f f f f t f v 2
 DESCR("bitmap(internal)");
 
 /* bmcostestimate(internal, internal, internal, internal, internal, internal, internal, internal) => void */
-DATA(insert OID = 7196 ( bmcostestimate  PGNSP PGUID 12 1 0 0 0 f f f f t f v 8 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ bmcostestimate _null_ _null_ _null_ n a ));
+DATA(insert OID = 7196 ( bmcostestimate  PGNSP PGUID 12 1 0 0 0 f f f f t f v 7 0 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ bmcostestimate _null_ _null_ _null_ n a ));
 DESCR("bitmap(internal)");
 
 /* bmoptions(_text, bool) => bytea */
