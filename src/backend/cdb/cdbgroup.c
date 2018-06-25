@@ -4440,17 +4440,15 @@ add_second_stage_agg(PlannerInfo *root,
 	RangeTblRef *newrtref;
 	Plan	   *agg_node;
 
-	/*
-	 * GPDB_92_MERGE_FIXME:
-	 * Construct PlannerInfo for RelOptInfo.
-	 * Seems we only need 'parse' and 'glob'.
-	 */
 	RelOptInfo *rel;
 	PlannerInfo *subroot;
 
 	subroot = makeNode(PlannerInfo);
+	/* shallow copy from root at first. */
+	memcpy(subroot, root, sizeof(PlannerInfo));
+	/* deep copy if needed. */
 	subroot->parse = copyObject(parse);
-	subroot->glob = root->glob;
+
 	/*
 	 * Add a SubqueryScan node to renumber the range of the query.
 	 *
@@ -4589,18 +4587,14 @@ add_second_stage_agg(PlannerInfo *root,
 	 * Since the rtable has changed, we had better recreate a RelOptInfo entry
 	 * for it. Make a copy of the groupClause since freeing the arrays can
 	 * pull out references still in use from underneath it.
+	 * We do not free root->simple_rel_array and root->simple_rte_array since
+	 * they are used by subroot.
+	 * GPDB_92_MERGE_FIXME: Do we still need to copy groupClause?
 	 */
 	root->parse->groupClause = copyObject(root->parse->groupClause);
-
-	if (root->simple_rel_array)
-		pfree(root->simple_rel_array);
-	if (root->simple_rte_array)
-		pfree(root->simple_rte_array);
-
 	rebuild_simple_rel_and_rte(root);
 
 	/*
-	 * GPDB_92_MERGE_FIXME:
 	 * Assign subroot and subplan for rel. They are needed in
 	 * function set_subqueryscan_references().
 	 */
@@ -4611,7 +4605,6 @@ add_second_stage_agg(PlannerInfo *root,
 
 	return agg_node;
 }
-
 
 /*
  * Add a SubqueryScan node to the input plan and maintain the given
