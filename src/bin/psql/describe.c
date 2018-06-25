@@ -1580,6 +1580,7 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		appendPQExpBuffer(&buf, ",\n  a.attstorage ");
+		appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
 		if (tableinfo.relstorage == 'c')
 			if (isGE42 == true)
 		     appendPQExpBuffer(&buf, ",\n pg_catalog.array_to_string(e.attoptions, ',')");
@@ -1687,12 +1688,17 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
+
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
+			headers[cols++] = gettext_noop("Stats target");
+
 		if(tableinfo.relstorage == 'c')
 		{
 		  headers[cols++] = gettext_noop("Compression Type");
 		  headers[cols++] = gettext_noop("Compression Level");
 		  headers[cols++] = gettext_noop("Block Size");
 		}
+
 		headers[cols++] = gettext_noop("Description");
 	}
 
@@ -1779,8 +1785,8 @@ describeOneTableDetails(const char *schemaname,
 		/* Storage and Description */
 		if (verbose)
 		{
-			int			firstvcol = (tableinfo.relkind == 'i' ? 7 : 6);
-			int			firstvcol_offset = 0;
+			int			firstvcol = 8;
+			int			includeAOCS = 0;
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* Storage */
@@ -1791,7 +1797,13 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
-			firstvcol_offset = firstvcol_offset + 1;
+
+			/* Statistics target, if the relkind supports this feature */
+			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
+			{
+				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
+								  false, false);
+			}
 
 			if (tableinfo.relstorage == 'c')
 			{
@@ -1806,8 +1818,8 @@ describeOneTableDetails(const char *schemaname,
 				char *attributeOptions;
 				if (isGE42 == true)
 				{
-				   attributeOptions = PQgetvalue(res, i, firstvcol + firstvcol_offset); /* pg_catalog.pg_attribute_storage(attoptions) */
-				   firstvcol_offset = firstvcol_offset + 1;
+				   attributeOptions = PQgetvalue(res, i, firstvcol + 2); /* pg_catalog.pg_attribute_storage(attoptions) */
+				   includeAOCS = 1;
 				}
 				else
 					 attributeOptions = pg_malloc_zero(1);  /* Make an empty options string so the reset of the code works correctly. */
@@ -1849,7 +1861,7 @@ describeOneTableDetails(const char *schemaname,
 			}
 
 			/* Description */
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + firstvcol_offset),
+			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2 + includeAOCS),
 							  false, false);
 		}
 	}
