@@ -19,6 +19,7 @@
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
 #include "plpy_subxactobject.h"
+#include "plpy_main.h"
 
 
 HTAB	   *PLy_spi_exceptions = NULL;
@@ -376,6 +377,7 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	char	   *volatile sv;
 	volatile MemoryContext oldcontext;
 
+	PLy_enter_python_intepreter = false;
 	if (PyTuple_Size(args) == 1)
 	{
 		/*
@@ -428,5 +430,6 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 	 * return a legal object so the interpreter will continue on its merry way
 	 */
 	Py_INCREF(Py_None);
+	PLy_enter_python_intepreter = true;
 	return Py_None;
 }

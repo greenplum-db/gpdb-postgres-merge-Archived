@@ -10,7 +10,7 @@
 #include "storage/itemptr.h"
 
 struct PLyDatumToOb;
-typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *, Datum);
+typedef PyObject *(*PLyDatumToObFunc) (struct PLyDatumToOb *arg, Datum val);
 
 typedef struct PLyDatumToOb
 {
@@ -41,7 +41,7 @@ typedef union PLyTypeInput
  * output from Python
  */
 struct PLyObToDatum;
-typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *, int32, PyObject *);
+typedef Datum (*PLyObToDatumFunc) (struct PLyObToDatum *arg, int32 typmod, PyObject *val, bool inarray);
 
 typedef struct PLyObToDatum
 {
@@ -99,9 +99,12 @@ extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
 extern void PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
 /* conversion from Python objects to composite Datums */
-extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv);
+extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv, bool isarray);
 
 /* conversion from heap tuples to Python dictionaries */
 extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
+
+/* conversion from Python objects to C strings */
+extern char *PLyObject_AsString(PyObject *plrv);
 
 #endif   /* PLPY_TYPEIO_H */
