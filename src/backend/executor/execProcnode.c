@@ -978,6 +978,7 @@ ExecProcNode(PlanState *node)
 
 		case T_DynamicIndexScanState:
 			result = ExecDynamicIndexScan((DynamicIndexScanState *) node);
+			break;
 
 		case T_IndexOnlyScanState:
 			result = ExecIndexOnlyScan((IndexOnlyScanState *) node);

@@ -1301,7 +1301,7 @@ cdb_pull_up_pathkey(PlannerInfo *root,
 								  outer_ec,
 								  pathkey->pk_opfamily,
 								  pathkey->pk_strategy,
-								  false);
+								  pathkey->pk_nulls_first);
 }
 
 
