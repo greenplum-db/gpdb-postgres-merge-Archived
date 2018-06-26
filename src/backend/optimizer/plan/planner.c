@@ -1118,7 +1118,21 @@ inheritance_planner(PlannerInfo *root)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
 
-				if (rte->rtekind == RTE_SUBQUERY)
+				/*
+				 * In GPDB CTEs are treated much more like subqueries than in
+				 * upstream. As a result, we will generally plan a separate
+				 * SubqueryScan for each CTE. Unlike in upstream, we will insert
+				 * the plan for a subquery scan into the RelOptInfo for the
+				 * CTE. As of b3aaf9081a1a95c245fd605dcf02c91b3a5c3a29, we
+				 * expect that the every SubqueryScan node that references the
+				 * global RangeTable will match the corresponding entry in the
+				 * rte.
+				 * GPDB_9_2_MERGE_FIXME: Is treating CTE references like
+				 * SubQueries sufficient here? Do we lose an opportunity to use
+				 * shared scan here? Is there a way to treat it similarly with
+				 * gp_cte_sharing turned on?
+				 */
+				if (rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
 				{
 					Index		newrti;
 

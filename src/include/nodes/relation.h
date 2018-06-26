@@ -549,8 +549,8 @@ typedef struct RelOptInfo
     bool        cdb_default_stats_used; /* true if ANALYZE needed */
 	double		allvisfrac;
 	/* use "struct Plan" to avoid including plannodes.h here */
-	struct Plan *subplan;		/* if subquery */
-	PlannerInfo *subroot;		/* if subquery */
+	struct Plan *subplan;		/* if subquery (in GPDB: or CTE) */
+	PlannerInfo *subroot;		/* if subquery (in GPDB: or CTE) */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;		/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
