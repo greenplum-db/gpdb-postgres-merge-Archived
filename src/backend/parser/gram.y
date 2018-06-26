@@ -13514,7 +13514,20 @@ func_expr_windowless:
  * Special expressions that are considered to be functions.
  */
 func_expr_common_subexpr:
-			CURRENT_DATE
+			COLLATION FOR '(' a_expr ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("pg_collation_for");
+					n->args = list_make1($4);
+					n->agg_order = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->over = NULL;
+					n->location = @1;
+					$$ = (Node *)n;
+				}
+			| CURRENT_DATE
 				{
 					/*
 					 * Translate as "'now'::text::date".
