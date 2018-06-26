@@ -2265,16 +2265,15 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 {
 	int			i;
 
-/* Temp tables use shared buffers in Greenplum */
-#if 0
+	/* Temp tables use shared buffers in Greenplum */
 	/* If it's a local relation, it's localbuf.c's problem. */
-	if (rnode.backend != InvalidBackendId)
+	if (rnode.backend != InvalidBackendId &&
+		rnode.backend != TempRelBackendId)
 	{
 		if (rnode.backend == MyBackendId)
 			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
 		return;
 	}
-#endif
 
 	for (i = 0; i < NBuffers; i++)
 	{
@@ -2322,8 +2321,10 @@ DropRelFileNodeAllBuffers(RelFileNodeBackend rnode)
 {
 	int			i;
 
+	/* Temp tables use shared buffers in Greenplum */
 	/* If it's a local relation, it's localbuf.c's problem. */
-	if (rnode.backend != InvalidBackendId)
+	if (rnode.backend != InvalidBackendId &&
+		rnode.backend != TempRelBackendId)
 	{
 		if (rnode.backend == MyBackendId)
 			DropRelFileNodeAllLocalBuffers(rnode.node);
