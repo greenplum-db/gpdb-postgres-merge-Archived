@@ -736,7 +736,7 @@ add_path(PlannerInfo *root, RelOptInfo *parent_rel, Path *new_path)
  */
 void
 cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_jointype,
-				  JoinPath *new_path)
+				  Relids required_outer, JoinPath *new_path)
 {
 	Path	   *path = (Path *) new_path;
 
@@ -762,7 +762,8 @@ cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_joint
 		path = (Path *) create_unique_rowid_path(root,
 												 parent_rel,
 												 (Path *) new_path,
-												 new_path->outerjoinpath->parent->relids);
+												 new_path->outerjoinpath->parent->relids,
+												 required_outer);
 	}
 	else if (orig_jointype == JOIN_DEDUP_SEMI_REVERSE)
 	{
@@ -775,7 +776,8 @@ cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_joint
 		path = (Path *) create_unique_rowid_path(root,
 												 parent_rel,
 												 (Path *) new_path,
-												 new_path->innerjoinpath->parent->relids);
+												 new_path->innerjoinpath->parent->relids,
+												 required_outer);
 	}
 
 	add_path(root, parent_rel, path);
@@ -2181,7 +2183,8 @@ UniquePath *
 create_unique_rowid_path(PlannerInfo *root,
 						 RelOptInfo *rel,
                          Path        *subpath,
-                         Relids       distinct_relids)
+                         Relids       distinct_relids,
+						 Relids       required_outer)
 {
 	UniquePath *pathnode;
 	CdbPathLocus locus;
@@ -2214,6 +2217,8 @@ create_unique_rowid_path(PlannerInfo *root,
 	pathnode->path.parent = rel;
 	pathnode->path.locus = locus;
 
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	/*
 	 * Treat the output as always unsorted, since we don't necessarily have
 	 * pathkeys to represent it.

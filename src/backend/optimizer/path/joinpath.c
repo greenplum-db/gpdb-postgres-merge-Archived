@@ -278,7 +278,7 @@ try_nestloop_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
+		cdb_add_join_path(root, joinrel, orig_jointype, required_outer, (JoinPath *)
 				 create_nestloop_path(root,
 									  joinrel,
 									  jointype,
@@ -360,7 +360,7 @@ try_mergejoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
+		cdb_add_join_path(root, joinrel, orig_jointype, required_outer, (JoinPath *)
 				 create_mergejoin_path(root,
 									   joinrel,
 									   jointype,
@@ -431,7 +431,7 @@ try_hashjoin_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  NIL, required_outer))
 	{
-		cdb_add_join_path(root, joinrel, orig_jointype, (JoinPath *)
+		cdb_add_join_path(root, joinrel, orig_jointype, required_outer, (JoinPath *)
 				 create_hashjoin_path(root,
 									  joinrel,
 									  jointype,
