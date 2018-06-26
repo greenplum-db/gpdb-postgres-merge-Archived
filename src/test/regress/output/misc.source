@@ -553,11 +553,10 @@ SELECT user_relns() AS user_relns
  default_tbl
  defaultexpr_tbl
  dept
-<<<<<<< HEAD
+ distribute_by_range
+ distribute_by_text_range
  dttm_com
-=======
  dupindexcols
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  e_star
  emp
  equipment_r
@@ -619,11 +618,8 @@ SELECT user_relns() AS user_relns
  iexit
  ihighway
  inet_tbl
-<<<<<<< HEAD
-=======
  inhf
  inhx
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  insert_seq
  insert_tbl
  int2_tbl
@@ -631,11 +627,8 @@ SELECT user_relns() AS user_relns
  int8_tbl
  interval_tbl
  iportaltest
-<<<<<<< HEAD
-=======
  kd_point_tbl
  log_table
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  lseg_tbl
  money_data
  num_data
@@ -683,12 +676,8 @@ SELECT user_relns() AS user_relns
  toyemp
  usr_define_type
  varchar_tbl
-<<<<<<< HEAD
-(150 rows)
-=======
  xacttest
-(107 rows)
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(162 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
