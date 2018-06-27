@@ -581,19 +581,15 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "sess_id",
 						   INT4OID, -1, 0);  /* GPDB */
 
-		if (nattr > 14)
-			TupleDescInitEntry(tupdesc, (AttrNumber) 16, "waiting_reason",
-							   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "waiting_reason",
+						   TEXTOID, -1, 0);
 
-		if (nattr > 15)
-		{
-			TupleDescInitEntry(tupdesc, (AttrNumber) 17, "rsgid",
-							   OIDOID, -1, 0);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 18, "rsgname",
-							   TEXTOID, -1, 0);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgqueueduration",
-							   INTERVALOID, -1, 0);
-		}
+		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "rsgid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "rsgname",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgqueueduration",
+						   INTERVALOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
@@ -813,7 +809,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 			values[14] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (funcctx->tuple_desc->natts > 14)
+			if (funcctx->tuple_desc->natts > 15)
 			{
 				char	st_waiting = beentry->st_waiting;
 				char   *reason;
@@ -826,7 +822,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[15] = true;
 			}
 
-			if (funcctx->tuple_desc->natts > 15)
+			if (funcctx->tuple_desc->natts > 16)
 			{
 				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
@@ -860,9 +856,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[13] = true;
 
 			values[14] = Int32GetDatum(beentry->st_session_id);
-			if (funcctx->tuple_desc->natts > 14)
-				nulls[13] = true;
 			if (funcctx->tuple_desc->natts > 15)
+				nulls[15] = true;
+			if (funcctx->tuple_desc->natts > 16)
 			{
 				nulls[16] = true;
 				nulls[17] = true;
