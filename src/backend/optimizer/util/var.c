@@ -234,6 +234,15 @@ pull_varnos(Node *node)
 	return pull_varnos_of_level(node, 0);
 }
 
+/*
+ * CDB
+ */
+Relids
+pull_upper_varnos(Node *node)
+{
+	return pull_varnos_of_level(node, 1);
+}
+
 
 /*
  * pull_varattnos
