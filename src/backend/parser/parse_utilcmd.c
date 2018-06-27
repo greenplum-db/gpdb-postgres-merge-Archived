@@ -316,6 +316,11 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 				}
 				break;
 
+			case T_ColumnReferenceStorageDirective:
+				/* processed below in transformAttributeEncoding() */
+				stenc = lappend(stenc, element);
+				break;
+
 			default:
 				elog(ERROR, "unrecognized node type: %d",
 					 (int) nodeTag(element));
