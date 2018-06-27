@@ -235,7 +235,7 @@ CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 ERROR:  column "a" has a storage parameter conflict
 DETAIL:  MAIN versus EXTENDED
-DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
+DROP TABLE ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctlb, ctla, ctlt1, ctlt2, ctlt3, ctlt4 CASCADE;
 NOTICE:  drop cascades to table inhe
 /* LIKE with other relation kinds */
 CREATE TABLE ctlt4 (a int, b text);
