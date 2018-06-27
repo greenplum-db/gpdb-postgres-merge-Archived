@@ -1393,6 +1393,20 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	cdbsubselect_drop_distinct(subselect);
 
 	/*
+	 * The sub-select must not refer to any Vars of the parent query. (Vars of
+	 * higher levels should be okay, though.)
+	 *
+	 * GPDB_92_MERGE_FIXME: We need to forbid the pullup of ANY sublink
+	 * in the following query:
+	 *
+	 * select * from A where exists
+	 *     (select * from B where A.i in
+	 *             (select C.i from C where C.i = B.i));
+	 */
+	if (contain_vars_of_level((Node *) subselect, 1))
+		return NULL;
+
+	/*
 	 * If subquery returns a set-returning function (SRF) in the targetlist, we
 	 * do not attempt to convert the IN to a join.
 	 */
