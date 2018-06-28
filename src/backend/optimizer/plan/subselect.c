@@ -1379,6 +1379,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
 	Relids		upper_varnos;
+	Relids		upper_varnos_level1;
 	int			rtindex;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
@@ -1392,19 +1393,6 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	cdbsubselect_drop_orderby(subselect);
 	cdbsubselect_drop_distinct(subselect);
 
-	/*
-	 * The sub-select must not refer to any Vars of the parent query. (Vars of
-	 * higher levels should be okay, though.)
-	 *
-	 * GPDB_92_MERGE_FIXME: We need to forbid the pullup of ANY sublink
-	 * in the following query:
-	 *
-	 * select * from A where exists
-	 *     (select * from B where A.i in
-	 *             (select C.i from C where C.i = B.i));
-	 */
-	if (contain_vars_of_level((Node *) subselect, 1))
-		return NULL;
 
 	/*
 	 * If subquery returns a set-returning function (SRF) in the targetlist, we
@@ -1466,6 +1454,28 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * However, it can't refer to anything outside available_rels.
 	 */
 	if (!bms_is_subset(upper_varnos, available_rels))
+		return NULL;
+
+	/*
+	 * Check if the Vars in upper level (upper_varnos_level1) is a
+	 * subset of the Vars in test expression. If not, we cannot do
+	 * pullup.
+	 *
+	 * This prevents the pull up of ANY sublinks
+	 * in the following query:
+	 *
+	 * select * from A where exists
+	 * 		(select * from B where A.i in
+	 * 				(select C.i from C where C.i = B.i));
+	 *
+	 * upper_varnos_level1 would refer to 'B'.
+	 * upper_varnos would refer to 'A'.
+	 *
+	 * If upper_varnos_level1 is NULL, this seems to be uncorrelated,
+	 * and we should do pullup.
+	 */
+	upper_varnos_level1 = pull_upper_varnos(sublink->subselect);
+	if (!bms_is_subset(upper_varnos_level1, upper_varnos))
 		return NULL;
 
 	/*
@@ -1558,6 +1568,12 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (subselect->cteList)
 		return NULL;
+
+	/*
+	 * Copy the subquery so we can modify it safely (see comments in
+	 * make_subplan).
+	 */
+	subselect = (Query *) copyObject(subselect);
 
 
 	if (has_correlation_in_funcexpr_rte(subselect->rtable))
