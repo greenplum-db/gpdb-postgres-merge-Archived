@@ -1457,9 +1457,9 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		return NULL;
 
 	/*
-	 * GPDB_92_MERGE_FIXME:
 	 * Check if the Vars in upper level (upper_varnos_level1) is a
-	 * subset of the Vars in test expression.
+	 * subset of the Vars in test expression. If not, we cannot do
+	 * pullup.
 	 *
 	 * This prevents the pull up of ANY sublinks
 	 * in the following query:
@@ -1473,7 +1473,6 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 *
 	 * If upper_varnos_level1 is NULL, this seems to be uncorrelated,
 	 * and we should do pullup.
-	 *
 	 */
 	upper_varnos_level1 = pull_upper_varnos(sublink->subselect);
 	if (!bms_is_subset(upper_varnos_level1, upper_varnos))
