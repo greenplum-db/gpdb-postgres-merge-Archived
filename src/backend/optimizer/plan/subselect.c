@@ -1458,20 +1458,24 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 	/*
 	 * GPDB_92_MERGE_FIXME:
-	 * Check if the Vars in upper level is a subset of the Vars
-	 * of the parent query. This prevents the pull up of ANY sublinks
+	 * Check if the Vars in upper level (upper_varnos_level1) is a
+	 * subset of the Vars in test expression.
+	 *
+	 * This prevents the pull up of ANY sublinks
 	 * in the following query:
 	 *
 	 * select * from A where exists
 	 * 		(select * from B where A.i in
 	 * 				(select C.i from C where C.i = B.i));
 	 *
+	 * upper_varnos_level1 would refer to 'B'.
+	 * upper_varnos would refer to 'A'.
+	 *
+	 * If upper_varnos_level1 is NULL, this seems to be uncorrelated,
+	 * and we should do pullup.
 	 *
 	 */
 	upper_varnos_level1 = pull_upper_varnos(sublink->subselect);
-	if (bms_is_empty(upper_varnos_level1))
-		return NULL;
-
 	if (!bms_is_subset(upper_varnos_level1, upper_varnos))
 		return NULL;
 
