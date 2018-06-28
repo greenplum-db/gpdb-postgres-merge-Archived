@@ -1570,6 +1570,12 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	if (subselect->cteList)
 		return NULL;
 
+	/*
+	 * Copy the subquery so we can modify it safely (see comments in
+	 * make_subplan).
+	 */
+	subselect = (Query *) copyObject(subselect);
+
 
 	if (has_correlation_in_funcexpr_rte(subselect->rtable))
 		return NULL;
