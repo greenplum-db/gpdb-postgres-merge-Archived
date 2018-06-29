@@ -1419,36 +1419,36 @@ select ( with cte(foo) as ( values(i) )
          select (select foo from cte) )
 from with_test1
 order by 1 limit 10;
- ?column? 
-----------
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
+ foo 
+-----
+   0
+   0
+   0
+   0
+   0
+   0
+   0
+   0
+   0
+   0
 (10 rows)
 
 select ( with cte(foo) as ( values(i) )
          values((select foo from cte)) )
 from with_test1
 order by 1 limit 10;
- ?column? 
-----------
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
-        0
+ column1 
+---------
+       0
+       0
+       0
+       0
+       0
+       0
+       0
+       0
+       0
+       0
 (10 rows)
 
 -- WITH query using Window functions
