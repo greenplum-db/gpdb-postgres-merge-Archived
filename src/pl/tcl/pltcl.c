@@ -477,7 +477,6 @@ pltcl_fetch_interp(bool pltrusted)
 static void
 pltcl_init_load_unknown(Tcl_Interp *interp)
 {
-	Oid			relOid;
 	Relation	pmrel;
 	char	   *pmrelname,
 			   *nspname;
@@ -500,25 +499,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 * this next bit of code is the same as try_relation_openrv(),
 	 * which only exists in 8.4 and up.
 	 ************************************************************/
-<<<<<<< HEAD
-
-	/* Check for shared-cache-inval messages */
-	AcceptInvalidationMessages();
-
-	/* Look up the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(makeRangeVar(NULL, "pltcl_modules", -1), true);
-
-	/* Drop out on not-found */
-	if (!OidIsValid(relOid))
-		return;
-
-	/* Let relation_open do the rest */
-	pmrel = relation_open(relOid, AccessShareLock);
-
-=======
-	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1),
-									 AccessShareLock, true);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1), AccessShareLock, true, true);
 	if (pmrel == NULL)
 		return;
 	/* must be table or view, else ignore */

@@ -41,7 +41,7 @@ OBJS = pltcl.o
 DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
        pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=$(srcdir)/init_file --load-extension=pltcl
 REGRESS = pltcl_setup pltcl_queries
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
