@@ -4250,6 +4250,9 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
+	/* CDB: Could the function return more than one row? */
+	rel->onerow = !expression_returns_set(rte->funcexpr);
+
 	/* Estimate number of rows the function itself will return */
 	rel->tuples = clamp_row_est(expression_returns_set_rows(rte->funcexpr));
 

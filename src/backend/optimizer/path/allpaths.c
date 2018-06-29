@@ -1308,9 +1308,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void
 set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	/* CDB: Could the function return more than one row? */
-	rel->onerow = !expression_returns_set(rte->funcexpr);
-
 	/* Generate appropriate path */
 	add_path(root, rel, create_functionscan_path(root, rel, rte));
 
