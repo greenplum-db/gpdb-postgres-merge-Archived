@@ -183,12 +183,8 @@ typedef struct plperl_call_data
 typedef struct plperl_query_desc
 {
 	char		qname[24];
-<<<<<<< HEAD
 	MemoryContext plan_cxt;		/* context holding this struct */
-	void	   *plan;
-=======
 	SPIPlanPtr	plan;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	int			nargs;
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
@@ -1313,32 +1309,19 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			if (!type_is_rowtype(typid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-<<<<<<< HEAD
-						 errmsg("cannot convert Perl hash to non-composite type %s",
+					errmsg("cannot convert Perl hash to non-composite type %s",
 								format_type_be(typid))));
-=======
-				  errmsg("cannot convert Perl hash to non-composite type %s",
-						 format_type_be(typid))));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 			td = lookup_rowtype_tupdesc_noerror(typid, typmod, true);
 			if (td == NULL)
 			{
 				/* Try to look it up based on our result type */
 				if (fcinfo == NULL ||
-<<<<<<< HEAD
 					get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
-=======
-				get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("function returning record called in context "
-							   "that cannot accept type record")));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+									"that cannot accept type record")));
 			}
 
 			ret = plperl_hash_to_datum(sv, td);
@@ -2216,16 +2199,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	Datum		retval = 0;
 	ReturnSetInfo *rsi;
 	ErrorContextCallback pl_error_context;
-<<<<<<< HEAD
-=======
-
-	/*
-	 * Create the call_data before connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -2339,16 +2312,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	HV		   *hvTD;
 	ErrorContextCallback pl_error_context;
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Create the call_data before connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -3269,19 +3232,10 @@ plperl_spi_cursor_close(char *cursor)
 SV *
 plperl_spi_prepare(char *query, int argc, SV **argv)
 {
-<<<<<<< HEAD
-	void	   *volatile plan = NULL;
+	volatile SPIPlanPtr plan = NULL;
 	volatile MemoryContext plan_cxt = NULL;
 	plperl_query_desc *volatile qdesc = NULL;
 	plperl_query_entry *volatile hash_entry = NULL;
-=======
-	plperl_query_desc *qdesc;
-	plperl_query_entry *hash_entry;
-	bool		found;
-	SPIPlanPtr	plan;
-	int			i;
-
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
 	MemoryContext work_cxt;

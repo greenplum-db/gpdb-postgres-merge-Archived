@@ -10,7 +10,6 @@ static inline char *
 utf_u2e(char *utf8_str, size_t len)
 {
 	int			enc = GetDatabaseEncoding();
-<<<<<<< HEAD
 	char	   *ret;
 
 	/*
@@ -27,18 +26,6 @@ utf_u2e(char *utf8_str, size_t len)
 	else
 		ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str,
 												 len, PG_UTF8, enc);
-=======
-
-	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str, len, PG_UTF8, enc);
-
-	/*
-	 * when we are a PG_UTF8 or SQL_ASCII database pg_do_encoding_conversion()
-	 * will not do any conversion or verification. we need to do it manually
-	 * instead.
-	 */
-	if (enc == PG_UTF8 || enc == PG_SQL_ASCII)
-		pg_verify_mbstr_len(PG_UTF8, utf8_str, len, false);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 	if (ret == utf8_str)
 		ret = pstrdup(ret);
@@ -72,24 +59,13 @@ utf_e2u(const char *str)
 static inline char *
 sv2cstr(SV *sv)
 {
-<<<<<<< HEAD
-	char	   *val, *res;
-=======
 	char	   *val,
 			   *res;
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	STRLEN		len;
 
 	/*
 	 * get a utf8 encoded char * out of perl. *note* it may not be valid utf8!
-	 *
-	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
-	 * readonly objects such as $^V. That's a perl bug - it's not supposed to
-	 * happen. To avoid crashing the backend, we make a copy of the sv before
-	 * passing it to SvPVutf8(). The copy is garbage collected when we're done
-	 * with it.
 	 */
-<<<<<<< HEAD
 
 	/*
 	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
@@ -125,26 +101,6 @@ sv2cstr(SV *sv)
 	 * Now convert to database encoding.  We use perl's length in the event we
 	 * had an embedded null byte to ensure we error out properly.
 	 */
-=======
-	if (SvREADONLY(sv) ||
-		isGV_with_GP(sv) ||
-		(SvTYPE(sv) > SVt_PVLV && SvTYPE(sv) != SVt_PVFM))
-		sv = newSVsv(sv);
-	else
-
-		/*
-		 * increase the reference count so we can just SvREFCNT_dec() it when
-		 * we are done
-		 */
-		SvREFCNT_inc_simple_void(sv);
-
-	val = SvPVutf8(sv, len);
-
-	/*
-	 * we use perl's length in the event we had an embedded null byte to
-	 * ensure we error out properly
-	 */
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 	res = utf_u2e(val, len);
 
 	/* safe now to garbage collect the new SV */

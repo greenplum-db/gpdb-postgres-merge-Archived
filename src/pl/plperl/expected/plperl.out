@@ -650,8 +650,6 @@ CONTEXT:  PL/Perl anonymous code block
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
 ERROR:  Useless use of sort in scalar context at line 1.
 CONTEXT:  PL/Perl anonymous code block
-<<<<<<< HEAD
-=======
 --
 -- Make sure strings are validated
 -- Should fail for all encodings, as nul bytes are never permitted.
@@ -662,7 +660,6 @@ $$ LANGUAGE plperl;
 SELECT perl_zerob();
 ERROR:  invalid byte sequence for encoding "UTF8": 0x00
 CONTEXT:  PL/Perl function "perl_zerob"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 -- make sure functions marked as VOID without an explicit return work
 CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
    $_SHARED{myquote} = sub {
@@ -706,7 +703,6 @@ $$ LANGUAGE plperl;
 SELECT text_scalarref();
 ERROR:  PL/Perl function must return reference to hash or array
 CONTEXT:  PL/Perl function "text_scalarref"
-<<<<<<< HEAD
 -- check safe behavior when a function body is replaced during execution
 CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS $$
    spi_exec_query('CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS \'return $_[0] * 3;\' LANGUAGE plperl;');
@@ -725,5 +721,3 @@ SELECT self_modify(42);
          126
 (1 row)
 
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
