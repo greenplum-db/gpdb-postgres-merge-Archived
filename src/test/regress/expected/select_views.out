@@ -1327,11 +1327,13 @@ NOTICE:  f_leak => hamburger
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_normal WHERE f_leak(passwd);
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Seq Scan on customer
-   Filter: (f_leak(passwd) AND (name = ("current_user"())::text))
-(2 rows)
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Seq Scan on customer
+         Filter: f_leak(passwd) AND name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(4 rows)
 
 SELECT * FROM my_property_secure WHERE f_leak(passwd);
 NOTICE:  f_leak => passwd123
@@ -1341,13 +1343,15 @@ NOTICE:  f_leak => passwd123
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure WHERE f_leak(passwd);
-                    QUERY PLAN                     
----------------------------------------------------
- Subquery Scan on my_property_secure
-   Filter: f_leak(my_property_secure.passwd)
-   ->  Seq Scan on customer
-         Filter: (name = ("current_user"())::text)
-(4 rows)
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on my_property_secure
+         Filter: f_leak(my_property_secure.passwd)
+         ->  Seq Scan on customer
+               Filter: name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(6 rows)
 
 --
 -- scenario: if a qualifier references only one-side of a particular join-
@@ -1383,17 +1387,19 @@ NOTICE:  f_leak => 1111-2222-3333-4444
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
-                          QUERY PLAN                           
----------------------------------------------------------------
- Subquery Scan on my_credit_card_secure
-   Filter: f_leak(my_credit_card_secure.cnum)
-   ->  Hash Join
-         Hash Cond: (r.cid = l.cid)
-         ->  Seq Scan on credit_card r
-         ->  Hash
-               ->  Seq Scan on customer l
-                     Filter: (name = ("current_user"())::text)
-(8 rows)
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on my_credit_card_secure
+         Filter: f_leak(my_credit_card_secure.cnum)
+         ->  Hash Join
+               Hash Cond: r.cid = l.cid
+               ->  Seq Scan on credit_card r
+               ->  Hash
+                     ->  Seq Scan on customer l
+                           Filter: name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(10 rows)
 
 --
 -- scenario: an external qualifier can be pushed-down by in-front-of the

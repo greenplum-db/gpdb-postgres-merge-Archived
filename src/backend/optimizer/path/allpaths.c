@@ -1901,7 +1901,7 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 
 	if (subquery_is_pushdown_safe(subquery, subquery, differentTypes))
 	{
-		/* Ok to consider pushing down individual quals */
+		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
 		ListCell   *l;
 
@@ -1911,6 +1911,8 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 			Node	   *clause = (Node *) rinfo->clause;
 
 			if (!rinfo->pseudoconstant &&
+				(!rte->security_barrier ||
+				 !contain_leaky_functions(clause)) &&
 				qual_is_pushdown_safe(subquery, rte, rti, clause, differentTypes))
 			{
 				/* Push it down */
@@ -2107,7 +2109,7 @@ qual_is_pushdown_safe_set_operation(Query *query, RangeTblEntry *rte, Index rti,
 {
 
 	Query *subquery = NULL;
-	/* 
+	/*
 	 * In case of CTE, cte->query is passed in as query, so the vars
 	 * should be resolved via the input query
 	 */
