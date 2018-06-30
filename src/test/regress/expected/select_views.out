@@ -1368,16 +1368,18 @@ NOTICE:  f_leak => 9801-2345-6789-0123
 (1 row)
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_normal WHERE f_leak(cnum);
-                       QUERY PLAN                        
----------------------------------------------------------
- Hash Join
-   Hash Cond: (r.cid = l.cid)
-   ->  Seq Scan on credit_card r
-         Filter: f_leak(cnum)
-   ->  Hash
-         ->  Seq Scan on customer l
-               Filter: (name = ("current_user"())::text)
-(7 rows)
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Join
+         Hash Cond: r.cid = l.cid
+         ->  Seq Scan on credit_card r
+               Filter: f_leak(cnum)
+         ->  Hash
+               ->  Seq Scan on customer l
+                     Filter: name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
 NOTICE:  f_leak => 1111-2222-3333-4444
@@ -1420,20 +1422,22 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
- Nested Loop
-   Join Filter: (l.cid = r.cid)
-   ->  Seq Scan on credit_usage r
-         Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
-   ->  Materialize
-         ->  Subquery Scan on l
-               Filter: f_leak(l.cnum)
-               ->  Hash Join
-                     Hash Cond: (r.cid = l.cid)
-                     ->  Seq Scan on credit_card r
-                     ->  Hash
-                           ->  Seq Scan on customer l
-                                 Filter: (name = ("current_user"())::text)
-(13 rows)
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Hash Join
+         Hash Cond: r.cid = l.cid
+         ->  Seq Scan on credit_usage r
+               Filter: ymd >= '10-01-2011'::date AND ymd < '11-01-2011'::date
+         ->  Hash
+               ->  Subquery Scan on l
+                     Filter: f_leak(l.cnum)
+                     ->  Hash Join
+                           Hash Cond: r.cid = l.cid
+                           ->  Seq Scan on credit_card r
+                           ->  Hash
+                                 ->  Seq Scan on customer l
+                                       Filter: name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(15 rows)
 
 SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
@@ -1451,20 +1455,22 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
- Subquery Scan on my_credit_card_usage_secure
-   Filter: f_leak(my_credit_card_usage_secure.cnum)
-   ->  Nested Loop
-         Join Filter: (l.cid = r.cid)
-         ->  Seq Scan on credit_usage r
-               Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
-         ->  Materialize
-               ->  Hash Join
-                     Hash Cond: (r.cid = l.cid)
-                     ->  Seq Scan on credit_card r
-                     ->  Hash
-                           ->  Seq Scan on customer l
-                                 Filter: (name = ("current_user"())::text)
-(13 rows)
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on my_credit_card_usage_secure
+         Filter: f_leak(my_credit_card_usage_secure.cnum)
+         ->  Hash Join
+               Hash Cond: r.cid = l.cid
+               ->  Seq Scan on credit_usage r
+                     Filter: ymd >= '10-01-2011'::date AND ymd < '11-01-2011'::date
+               ->  Hash
+                     ->  Hash Join
+                           Hash Cond: r.cid = l.cid
+                           ->  Seq Scan on credit_card r
+                           ->  Hash
+                                 ->  Seq Scan on customer l
+                                       Filter: name = 'regress_alice'::text
+ Optimizer: legacy query optimizer
+(15 rows)
 
 --
 -- Test for the case when security_barrier gets changed between rewriter

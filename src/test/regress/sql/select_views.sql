@@ -37,6 +37,11 @@ CREATE TABLE credit_usage (
        usage    int
 );
 
+-- start_ignore
+-- Force planner to use default stats
+SET gp_autostats_mode = none;
+-- end_ignore
+
 INSERT INTO customer
        VALUES (101, 'regress_alice', '+81-12-3456-7890', 'passwd123'),
               (102, 'regress_bob',   '+01-234-567-8901', 'beafsteak'),
