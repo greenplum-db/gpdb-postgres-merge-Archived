@@ -48,6 +48,8 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
 
+	PLy_enter_python_intepreter = false;
+
 	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
 		return NULL;
 

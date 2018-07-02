@@ -822,6 +822,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 
 	PG_TRY();
 	{
+		PLy_enter_python_intepreter = true;
 #if PY_VERSION_HEX >= 0x03020000
 		rv = PyEval_EvalCode(proc->code,
 							 proc->globals, proc->globals);
@@ -839,6 +840,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	}
 	PG_CATCH();
 	{
+		PLy_enter_python_intepreter = false;
 		PLy_abort_open_subtransactions(save_subxact_level);
 		PG_RE_THROW();
 	}
