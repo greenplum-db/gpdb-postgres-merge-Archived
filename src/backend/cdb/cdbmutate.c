@@ -1822,7 +1822,7 @@ collect_shareinput_producers(PlannerInfo *root, Plan *plan)
 {
 	PlannerGlobal *glob = root->glob;
 
-	glob->share.curr_rtable = root->parse->rtable;
+	glob->share.curr_rtable = glob->finalrtable;
 	shareinput_walker(collect_shareinput_producers_walker, (Node *) plan, root);
 }
 
