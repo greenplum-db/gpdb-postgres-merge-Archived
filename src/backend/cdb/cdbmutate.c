@@ -2563,11 +2563,12 @@ fixup_subplan_walker(Node *node, SubPlanWalkerContext *context)
 			 * there is more than one subplan node which refer to the same
 			 * plan_id. In this case create a duplicate subplan, append it to
 			 * the glob->subplans and update the plan_id of the subplan to
-			 * refer to the new copy of the subplan node
+			 * refer to the new copy of the subplan node. Note since subroot
+			 * is not used there is no need of new subroot.
 			 */
 			PlannerInfo *root = (PlannerInfo *) context->base.node;
-			Plan	   *dupsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, subplan));
-			int			newplan_id = list_length(root->glob->subplans) + 1;
+			Plan	    *dupsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, subplan));
+			int			 newplan_id = list_length(root->glob->subplans) + 1;
 
 			subplan->plan_id = newplan_id;
 			root->glob->subplans = lappend(root->glob->subplans, dupsubplan);

@@ -362,9 +362,9 @@ static inline struct Plan *planner_subplan_get_plan(struct PlannerInfo *root, Su
 /**
  * Fetch the root (PlannerInfo) list for a subplan
  */
-static inline struct List *planner_subplan_get_root(struct PlannerInfo *root, SubPlan *subplan)
+static inline struct PlannerInfo *planner_subplan_get_root(struct PlannerInfo *root, SubPlan *subplan)
 {
-	return (List *) list_nth(root->glob->subroots, subplan->plan_id - 1);
+	return (PlannerInfo *) list_nth(root->glob->subroots, subplan->plan_id - 1);
 }
 
 /*

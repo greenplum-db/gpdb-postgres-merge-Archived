@@ -1973,10 +1973,13 @@ adjust_appendrel_attrs_mutator(Node *node,
 		{
 			PlannerInfo *root = context->root;
 			Plan *newsubplan = (Plan *) copyObject(planner_subplan_get_plan(root, sp));
-			List *newsubroot = (List *) copyObject(planner_subplan_get_root(root, sp));
+			PlannerInfo *newsubroot = makeNode(PlannerInfo);
+
+			/* GPDB_92_MERGE_FIXME: Do we just need a reference or maybe deep copy instead? */
+			memcpy(newsubroot, planner_subplan_get_root(root, sp), sizeof(PlannerInfo));
 
 			/*
-			 * Add the subplan and its rtable to the global lists.
+			 * Add the subplan and its subroot to the global lists.
 			 */
 			root->glob->subplans = lappend(root->glob->subplans, newsubplan);
 			root->glob->subroots = lappend(root->glob->subplans, newsubroot);
