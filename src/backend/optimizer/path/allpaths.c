@@ -305,6 +305,9 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_FUNCTION:
 				set_function_size_estimates(root, rel);
 				break;
+			case RTE_TABLEFUNCTION:
+				set_tablefunction_pathlist(root, rel, rte);
+				break;
 			case RTE_VALUES:
 				set_values_size_estimates(root, rel);
 				break;
@@ -368,7 +371,6 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				break;
 			case RTE_TABLEFUNCTION:
 				/* RangeFunction --- generate a suitable path for it */
-				set_tablefunction_pathlist(root, rel, rte);
 				break;
 			case RTE_VALUES:
 				/* Values list */
