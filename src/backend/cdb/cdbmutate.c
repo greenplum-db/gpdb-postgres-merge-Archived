@@ -1416,13 +1416,23 @@ shareinput_walker(SHAREINPUT_MUTATOR f, Node *node, PlannerInfo *root)
 			List	      *save_rtable;
 			RelOptInfo    *rel;
 
-			rel = find_base_rel(root, subqscan->scan.scanrelid);
-
-			Assert(rel->subplan == subqscan->subplan);
-
-			subroot = rel->subroot;
+			/*
+			 * If glob->finalrtable is not NULL, rtables have been flatten,
+			 * thus we should use glob->finalrtable instead.
+			 */
 			save_rtable = glob->share.curr_rtable;
-			glob->share.curr_rtable = subroot->parse->rtable;
+			if (root->glob->finalrtable == NULL)
+			{
+				rel = find_base_rel(root, subqscan->scan.scanrelid);
+				Assert(rel->subplan == subqscan->subplan);
+				subroot = rel->subroot;
+				glob->share.curr_rtable = subroot->parse->rtable;
+			}
+			else
+			{
+				subroot = root;
+				glob->share.curr_rtable = glob->finalrtable;
+			}
 			shareinput_walker(f, (Node *) subqscan->subplan, subroot);
 			glob->share.curr_rtable = save_rtable;
 		}
