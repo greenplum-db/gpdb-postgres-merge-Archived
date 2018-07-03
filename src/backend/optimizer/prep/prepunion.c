@@ -1982,7 +1982,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 			 * Add the subplan and its subroot to the global lists.
 			 */
 			root->glob->subplans = lappend(root->glob->subplans, newsubplan);
-			root->glob->subroots = lappend(root->glob->subplans, newsubroot);
+			root->glob->subroots = lappend(root->glob->subroots, newsubroot);
 
 			/*
 			 * expression_tree_mutator made a copy of the SubPlan already, so

@@ -360,7 +360,7 @@ static inline struct Plan *planner_subplan_get_plan(struct PlannerInfo *root, Su
 }
 
 /**
- * Fetch the root (PlannerInfo) list for a subplan
+ * Fetch the root (PlannerInfo) for a subplan
  */
 static inline struct PlannerInfo *planner_subplan_get_root(struct PlannerInfo *root, SubPlan *subplan)
 {
