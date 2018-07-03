@@ -1218,12 +1218,6 @@ inheritance_planner(PlannerInfo *root)
 			}
 		}
 
-		/**
-		 * The grouping planner scribbles on the rtable e.g. to add pseudo columns.
-		 * We need to keep track of this.
-		 */
-		parse->rtable = subroot.parse->rtable;
-
 		subplans = lappend(subplans, subplan);
 
 		/*
