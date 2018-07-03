@@ -180,12 +180,12 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 
-		collect_shareinput_producers(glob, subplan, result->rtable);
+		collect_shareinput_producers(root, subplan);
 	}
-	collect_shareinput_producers(glob, result->planTree, result->rtable);
+	collect_shareinput_producers(root, result->planTree);
 
 	/* Post-process ShareInputScan nodes */
-	(void) apply_shareinput_xslice(result->planTree, glob);
+	(void) apply_shareinput_xslice(result->planTree, root);
 
 	/*
 	 * Fix ShareInputScans for EXPLAIN, like in standard_planner(). For all
@@ -195,9 +195,9 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 
-		lfirst(lp) = replace_shareinput_targetlists(glob, subplan, result->rtable);
+		lfirst(lp) = replace_shareinput_targetlists(root, subplan);
 	}
-	result->planTree = replace_shareinput_targetlists(glob, result->planTree, result->rtable);
+	result->planTree = replace_shareinput_targetlists(root, result->planTree);
 
 	/*
 	 * To save on memory, and on the network bandwidth when the plan is
