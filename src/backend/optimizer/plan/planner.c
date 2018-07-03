@@ -342,11 +342,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		Plan	   *subplan = (Plan *) lfirst(lp);
 		PlannerInfo	   *subroot = (PlannerInfo *) lfirst(lr);
 
-		List       *subrtable= subroot->parse->rtable;
-
-		lfirst(lp) = apply_shareinput_dag_to_tree(glob, subplan, subrtable);
+		lfirst(lp) = apply_shareinput_dag_to_tree(subroot, subplan);
 	}
-	top_plan = apply_shareinput_dag_to_tree(glob, top_plan, root->parse->rtable);
+	top_plan = apply_shareinput_dag_to_tree(root, top_plan);
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
@@ -391,7 +389,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		 * input. need to mark material nodes that are split acrossed multi
 		 * slices.
 		 */
-		top_plan = apply_shareinput_xslice(top_plan, glob);
+		top_plan = apply_shareinput_xslice(top_plan, root);
 	}
 
 	/*
@@ -409,9 +407,9 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		Plan	   *subplan = (Plan *) lfirst(lp);
 
-		lfirst(lp) = replace_shareinput_targetlists(glob, subplan, glob->finalrtable);
+		lfirst(lp) = replace_shareinput_targetlists(root, subplan);
 	}
-	top_plan = replace_shareinput_targetlists(glob, top_plan, glob->finalrtable);
+	top_plan = replace_shareinput_targetlists(root, top_plan);
 
 	/*
 	 * To save on memory, and on the network bandwidth when the plan is
