@@ -628,7 +628,6 @@ SELECT user_relns() AS user_relns
  interval_tbl
  iportaltest
  kd_point_tbl
- log_table
  lseg_tbl
  money_data
  num_data
@@ -676,8 +675,7 @@ SELECT user_relns() AS user_relns
  toyemp
  usr_define_type
  varchar_tbl
- xacttest
-(162 rows)
+(160 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
