@@ -623,7 +623,7 @@ LANGUAGE SQL EXECUTE ON ALL SEGMENTS;
 CREATE VIEW gp_stat_replication AS
     SELECT *, pg_catalog.gp_replication_error() AS sync_error
     FROM pg_catalog.gp_stat_get_master_replication() AS R
-    (gp_segment_id integer, procpid integer, usesysid oid,
+    (gp_segment_id integer, pid integer, usesysid oid,
      usename name, application_name text, client_addr inet, client_hostname text,
      client_port integer, backend_start timestamptz, state text,
      sent_location text, write_location text, flush_location text,
@@ -631,7 +631,7 @@ CREATE VIEW gp_stat_replication AS
     UNION ALL
     (
         SELECT G.gp_segment_id
-            , R.procpid, R.usesysid, R.usename, R.application_name, R.client_addr
+            , R.pid, R.usesysid, R.usename, R.application_name, R.client_addr
             , R.client_hostname, R.client_port, R.backend_start, R.state
 	    , R.sent_location, R.write_location, R.flush_location
 	    , R.replay_location, R.sync_priority, R.sync_state, G.sync_error
@@ -644,7 +644,7 @@ CREATE VIEW gp_stat_replication AS
             WHERE C.role = 'm'
         ) G
         LEFT OUTER JOIN pg_catalog.gp_stat_get_segment_replication() AS R
-        (gp_segment_id integer, procpid integer, usesysid oid,
+        (gp_segment_id integer, pid integer, usesysid oid,
          usename name, application_name text, client_addr inet,
 	 client_hostname text, client_port integer, backend_start timestamptz,
 	 state text, sent_location text, write_location text, flush_location text,
