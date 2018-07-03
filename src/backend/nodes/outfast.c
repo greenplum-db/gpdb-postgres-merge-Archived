@@ -1100,10 +1100,12 @@ _outConstraint(StringInfo str, Constraint *node)
 
 		case CONSTR_CHECK:
 			/*
-			 * GPDB: need dispatch skip_validation for statement like 
+			 * GPDB: need dispatch skip_validation and is_no_inherit for statement like:
 			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+			 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 			 */
 			WRITE_BOOL_FIELD(skip_validation);
+			WRITE_BOOL_FIELD(is_no_inherit);
 		case CONSTR_DEFAULT:
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);

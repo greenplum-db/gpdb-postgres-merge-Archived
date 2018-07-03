@@ -3167,6 +3167,14 @@ RenameRelation(RenameStmt *stmt)
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
 
+	if (!OidIsValid(relid))
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+						stmt->relation->relname)));
+		return;
+	}
+
 	/*
 	 * In Postgres, grab an exclusive lock on the target table, index, sequence
 	 * or view, which we will NOT release until end of transaction.
@@ -3197,15 +3205,6 @@ RenameRelation(RenameStmt *stmt)
 								"\"%s\".  To rename it, use ALTER TABLE \"%s\"%s...",
 								get_rel_name(relid), get_rel_name(master),
 								get_rel_name(master), pretty ? pretty : "" )));
-	}
-
-
-	if (!OidIsValid(relid))
-	{
-		ereport(NOTICE,
-				(errmsg("relation \"%s\" does not exist, skipping",
-						stmt->relation->relname)));
-		return;
 	}
 
 	/* Do the work */
@@ -4521,6 +4520,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed except saving recurse flag */
 			if (recurse)
 				cmd->subtype = AT_ValidateConstraintRecurse;
+			pass = AT_PASS_MISC;
+			break;
+		case AT_ValidateConstraintRecurse: /* ADD validate CONSTRAINT internal */
+			/* Parent/Base CHECK constraints apply to child/part tables here.
+			 * No need for ATPartitionCheck
+			 */
+			ATSimplePermissions(rel, ATT_TABLE);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER variants */

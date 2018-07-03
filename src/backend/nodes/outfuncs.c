@@ -2898,6 +2898,7 @@ _outAlterObjectSchemaStmt(StringInfo str, const AlterObjectSchemaStmt *node)
 	WRITE_NODE_FIELD(objarg);
 	WRITE_STRING_FIELD(addname);
 	WRITE_STRING_FIELD(newschema);
+	WRITE_BOOL_FIELD(missing_ok);
 	WRITE_ENUM_FIELD(objectType,ObjectType);
 }
 
@@ -4215,14 +4216,15 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_CHECK:
 			appendStringInfoLiteral(str, "CHECK");
-			WRITE_BOOL_FIELD(is_no_inherit);
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			/*
-			 * GPDB: need dispatch skip_validation for statement like 
+			 * GPDB: need dispatch skip_validation and is_no_inherit for statement like:
 			 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+			 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 			 */
 			WRITE_BOOL_FIELD(skip_validation);
+			WRITE_BOOL_FIELD(is_no_inherit);
 			break;
 
 		case CONSTR_PRIMARY:

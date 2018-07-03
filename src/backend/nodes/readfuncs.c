@@ -757,10 +757,12 @@ _readConstraint(void)
 		READ_NODE_FIELD(raw_expr);
 		READ_STRING_FIELD(cooked_expr);
 		/*
-		 * GPDB: need dispatch skip_validation for statement like 
+		 * GPDB: need dispatch skip_validation and is_no_inherit for statement like:
 		 * ALTER DOMAIN things ADD CONSTRAINT meow CHECK (VALUE < 11) NOT VALID;
+		 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 		 */
 		READ_BOOL_FIELD(skip_validation);
+		READ_BOOL_FIELD(is_no_inherit);
 	}
 	else if (strncmp(token, "DEFAULT", length)==0)
 	{
@@ -1103,6 +1105,7 @@ _readAlterObjectSchemaStmt(void)
 	READ_NODE_FIELD(objarg);
 	READ_STRING_FIELD(addname);
 	READ_STRING_FIELD(newschema);
+	READ_BOOL_FIELD(missing_ok);
 	READ_ENUM_FIELD(objectType,ObjectType);
 
 	READ_DONE();

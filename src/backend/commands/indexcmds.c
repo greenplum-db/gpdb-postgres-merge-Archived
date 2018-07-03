@@ -603,6 +603,7 @@ DefineIndex(RangeVar *heapRelation,
 	/*
 	 * Select name for index if caller didn't specify
 	 */
+	indexRelationName = stmt->idxname;
 	if (indexRelationName == NULL)
 		indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
 											namespaceId,
