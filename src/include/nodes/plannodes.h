@@ -733,7 +733,6 @@ typedef struct FunctionScan
 typedef struct TableFunctionScan
 {
 	Scan		scan;
-	List	   *subrtable;		/* temporary workspace for planner */
 } TableFunctionScan;
 
 /* ----------------

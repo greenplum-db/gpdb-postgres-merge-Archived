@@ -161,7 +161,6 @@ static BitmapAppendOnlyScan *make_bitmap_appendonlyscan(List *qptlist,
 static TableFunctionScan *make_tablefunction(List *tlist,
 				   List *scan_quals,
 				   Plan *subplan,
-				   List *subrtable,
 				   Index scanrelid);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
@@ -2910,8 +2909,7 @@ create_tablefunction_plan(PlannerInfo *root,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Create the TableFunctionScan plan */
-	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, subrtable,
-								   scan_relid);
+	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid);
 
 	/* Cost is determined largely by the cost of the underlying subplan */
 	copy_plan_costsize(&tablefunc->scan.plan, subplan);
@@ -6035,7 +6033,6 @@ static TableFunctionScan *
 make_tablefunction(List *tlist,
 				   List *scan_quals,
 				   Plan *subplan,
-				   List *subrtable,
 				   Index scanrelid)
 {
 	TableFunctionScan *node = makeNode(TableFunctionScan);
@@ -6054,7 +6051,6 @@ make_tablefunction(List *tlist,
 
 	/* Fill in information for the subplan */
 	plan->lefttree		 = subplan;
-	node->subrtable		 = subrtable;
 	node->scan.scanrelid = scanrelid;
 
 	return node;
