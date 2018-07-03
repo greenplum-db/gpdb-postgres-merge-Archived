@@ -2897,7 +2897,6 @@ create_tablefunction_plan(PlannerInfo *root,
 {
 	TableFunctionScan *tablefunc;
 	Plan	   *subplan = best_path->parent->subplan;
-	List	   *subrtable = best_path->parent->subroot->parse->rtable;
 	Index		scan_relid = best_path->parent->relid;
 
 
