@@ -1318,9 +1318,9 @@ SET SESSION AUTHORIZATION regress_alice;
 --           prior to the security policy of the view.
 --
 SELECT * FROM my_property_normal WHERE f_leak(passwd);
-NOTICE:  f_leak => passwd123
-NOTICE:  f_leak => beafsteak
-NOTICE:  f_leak => hamburger
+NOTICE:  f_leak => hamburger  (seg0 slice1 127.0.0.1:25432 pid=890)
+NOTICE:  f_leak => passwd123  (seg2 slice1 127.0.0.1:25434 pid=892)
+NOTICE:  f_leak => beafsteak  (seg2 slice1 127.0.0.1:25434 pid=892)
  cid |     name      |       tel        |  passwd   
 -----+---------------+------------------+-----------
  101 | regress_alice | +81-12-3456-7890 | passwd123
@@ -1359,9 +1359,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure WHERE f_leak(passwd);
 --           possible as we can.
 --
 SELECT * FROM my_credit_card_normal WHERE f_leak(cnum);
-NOTICE:  f_leak => 1111-2222-3333-4444
-NOTICE:  f_leak => 5555-6666-7777-8888
-NOTICE:  f_leak => 9801-2345-6789-0123
+NOTICE:  f_leak => 9801-2345-6789-0123  (seg0 slice1 127.0.0.1:25432 pid=12344)
+NOTICE:  f_leak => 1111-2222-3333-4444  (seg2 slice1 127.0.0.1:25434 pid=12346)
+NOTICE:  f_leak => 5555-6666-7777-8888  (seg2 slice1 127.0.0.1:25434 pid=12346)
  cid |     name      |       tel        |  passwd   |        cnum         | climit 
 -----+---------------+------------------+-----------+---------------------+--------
  101 | regress_alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000
@@ -1441,9 +1441,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
 
 SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
-NOTICE:  f_leak => 1111-2222-3333-4444
-NOTICE:  f_leak => 1111-2222-3333-4444
-NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 1111-2222-3333-4444  (seg2 slice1 127.0.0.1:25434 pid=892)
+NOTICE:  f_leak => 1111-2222-3333-4444  (seg2 slice1 127.0.0.1:25434 pid=892)
+NOTICE:  f_leak => 1111-2222-3333-4444  (seg2 slice1 127.0.0.1:25434 pid=892)
  cid |     name      |       tel        |  passwd   |        cnum         | climit |    ymd     | usage 
 -----+---------------+------------------+-----------+---------------------+--------+------------+-------
  101 | regress_alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-05-2011 |    90
@@ -1479,9 +1479,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
 PREPARE p1 AS SELECT * FROM my_property_normal WHERE f_leak(passwd);
 PREPARE p2 AS SELECT * FROM my_property_secure WHERE f_leak(passwd);
 EXECUTE p1;
-NOTICE:  f_leak => passwd123
-NOTICE:  f_leak => beafsteak
-NOTICE:  f_leak => hamburger
+NOTICE:  f_leak => hamburger  (seg0 slice1 127.0.0.1:25432 pid=890)
+NOTICE:  f_leak => passwd123  (seg2 slice1 127.0.0.1:25434 pid=892)
+NOTICE:  f_leak => beafsteak  (seg2 slice1 127.0.0.1:25434 pid=892)
  cid |     name      |       tel        |  passwd   
 -----+---------------+------------------+-----------
  101 | regress_alice | +81-12-3456-7890 | passwd123
@@ -1506,9 +1506,9 @@ NOTICE:  f_leak => passwd123
 (1 row)
 
 EXECUTE p2;		-- To be perform as a view without security-barrier
-NOTICE:  f_leak => passwd123
-NOTICE:  f_leak => beafsteak
-NOTICE:  f_leak => hamburger
+NOTICE:  f_leak => hamburger  (seg0 slice1 127.0.0.1:25432 pid=890)
+NOTICE:  f_leak => passwd123  (seg2 slice1 127.0.0.1:25434 pid=892)
+NOTICE:  f_leak => beafsteak  (seg2 slice1 127.0.0.1:25434 pid=892)
  cid |     name      |       tel        |  passwd   
 -----+---------------+------------------+-----------
  101 | regress_alice | +81-12-3456-7890 | passwd123
