@@ -483,8 +483,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 	{
 		HeapTuple	tuple;
 		Datum		result;
-		Datum		values[17];
-		bool		nulls[17];
+		Datum		values[NUM_LOCK_STATUS_COLUMNS];
+		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
 		int i;
 		int whichresultset = 0;
 		int whichelement = mystatus->currIdx - lockData->nelements;
@@ -551,14 +551,15 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[11] = UInt32GetDatum(atoi(PQgetvalue(mystatus->segresults[whichresultset], whichrow, 11)));
 		values[12] = CStringGetTextDatum(PQgetvalue(mystatus->segresults[whichresultset], whichrow, 12));
 		values[13] = BoolGetDatum(strncmp(PQgetvalue(mystatus->segresults[whichresultset], whichrow,13),"t",1)==0);
-		values[14] = Int32GetDatum(atoi(PQgetvalue(mystatus->segresults[whichresultset], whichrow,14)));
-		values[15] = BoolGetDatum(strncmp(PQgetvalue(mystatus->segresults[whichresultset], whichrow,15),"t",1)==0);
-		values[16] = Int32GetDatum(atoi(PQgetvalue(mystatus->segresults[whichresultset], whichrow,16)));
+		values[14] = BoolGetDatum(strncmp(PQgetvalue(mystatus->segresults[whichresultset], whichrow,14),"t",1)==0);
+		values[15] = Int32GetDatum(atoi(PQgetvalue(mystatus->segresults[whichresultset], whichrow,15)));
+		values[16] = BoolGetDatum(strncmp(PQgetvalue(mystatus->segresults[whichresultset], whichrow,16),"t",1)==0);
+		values[17] = Int32GetDatum(atoi(PQgetvalue(mystatus->segresults[whichresultset], whichrow,17)));
 
 		/*
 		 * Copy the null info over.  It should all match properly.
 		 */
-		for (i=0; i<17; i++)
+		for (i = 0; i < NUM_LOCK_STATUS_COLUMNS; i++)
 		{
 			nulls[i] = PQgetisnull(mystatus->segresults[whichresultset], whichrow, i);
 		}
