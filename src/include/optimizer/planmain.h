@@ -279,4 +279,7 @@ extern void cdb_extract_plan_dependencies(PlannerInfo *root, Plan *plan);
 
 extern int num_distcols_in_grouplist(List *gc);
 
+extern void add_proc_oids_for_dump(Oid funcid);
+extern void reset_proc_oids_for_dump();
+
 #endif   /* PLANMAIN_H */
