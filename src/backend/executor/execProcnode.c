@@ -564,8 +564,14 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 			break;
 
 		case T_ForeignScan:
+			curMemoryAccountId = CREATE_EXECUTOR_MEMORY_ACCOUNT(isAlienPlanNode, node, ForeignScan);
+
+			START_MEMORY_ACCOUNT(curMemoryAccountId);
+			{
 			result = (PlanState *) ExecInitForeignScan((ForeignScan *) node,
-													   estate, eflags);
+														estate, eflags);
+			}
+			END_MEMORY_ACCOUNT();
 			break;
 
 			/*

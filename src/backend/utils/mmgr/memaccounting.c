@@ -1186,6 +1186,8 @@ MemoryAccounting_GetOwnerName(MemoryOwnerType ownerType)
 		return "X_CteScan";
 	case MEMORY_OWNER_TYPE_Exec_WorkTableScan:
 		return "X_WorkTableScan";
+	case MEMORY_OWNER_TYPE_Exec_ForeignScan:
+		return "X_ForeignScan";
 	default:
 		Assert(false);
 		break;
