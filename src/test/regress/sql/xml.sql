@@ -241,13 +241,6 @@ SELECT xml_is_well_formed('<twoerrors>&idontexist;</unbalanced>');
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
 
-<<<<<<< HEAD
--- External entity references should not leak filesystem information.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
--- This might or might not load the requested DTD, but it mustn't throw error.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
-=======
 -- Since xpath() deals with namespaces, it's a bit stricter about
 -- what's well-formed and what's not. If we don't obey these rules
 -- (i.e. ignore namespace-related errors from libxml), xpath()
@@ -268,4 +261,9 @@ SELECT xpath('/*', '<nosuchprefix:tag/>');
 -- XPath deprecates relative namespaces, but they're not supposed to
 -- throw an error, only a warning.
 SELECT xpath('/*', '<relativens xmlns=''relative''/>');
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+
+-- External entity references should not leak filesystem information.
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
+-- This might or might not load the requested DTD, but it mustn't throw error.
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');

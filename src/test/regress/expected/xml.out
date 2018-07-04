@@ -878,26 +878,6 @@ SELECT xml_is_well_formed('abc');
  t
 (1 row)
 
-<<<<<<< HEAD
--- External entity references should not leak filesystem information.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
-                            xmlparse                             
------------------------------------------------------------------
- <!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>
-(1 row)
-
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
-                               xmlparse                                
------------------------------------------------------------------------
- <!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>
-(1 row)
-
--- This might or might not load the requested DTD, but it mustn't throw error.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
-                                                                       xmlparse                                                                       
-------------------------------------------------------------------------------------------------------------------------------------------------------
- <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>
-=======
 -- Since xpath() deals with namespaces, it's a bit stricter about
 -- what's well-formed and what's not. If we don't obey these rules
 -- (i.e. ignore namespace-related errors from libxml), xpath()
@@ -929,6 +909,25 @@ CONTEXT:  SQL function "xpath" statement 1
                 xpath                 
 --------------------------------------
  {"<relativens xmlns=\"relative\"/>"}
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+(1 row)
+
+-- External entity references should not leak filesystem information.
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
+                            xmlparse                             
+-----------------------------------------------------------------
+ <!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>
+(1 row)
+
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
+                               xmlparse                                
+-----------------------------------------------------------------------
+ <!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>
+(1 row)
+
+-- This might or might not load the requested DTD, but it mustn't throw error.
+SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
+                                                                       xmlparse                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>
 (1 row)
 
