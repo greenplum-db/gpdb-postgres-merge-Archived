@@ -888,6 +888,22 @@ plan_tree_mutator(Node *node,
 			}
 			break;
 
+		case T_ForeignScan:
+			{
+				ForeignScan *fdwscan = (ForeignScan *) node;
+				ForeignScan *newfdwscan;
+
+				FLATCOPY(newfdwscan, fdwscan, ForeignScan);
+				SCANMUTATE(newfdwscan, fdwscan);
+
+				MUTATE(newfdwscan->fdw_exprs, fdwscan->fdw_exprs, List *);
+				MUTATE(newfdwscan->fdw_private, fdwscan->fdw_private, List *);
+				newfdwscan->fsSystemCol = fdwscan->fsSystemCol;
+
+				return (Node *) newfdwscan;
+			}
+			break;
+
 			/*
 			 * The following cases are handled by expression_tree_mutator.	In
 			 * addition, we let expression_tree_mutator handle unrecognized

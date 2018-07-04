@@ -385,6 +385,10 @@ ExecMarkPos(PlanState *node)
 				));
 			break;
 
+		case T_ForeignScanState:
+			elog(ERROR, "Marking scan position for foreign relation is not supported");
+			break;
+
 		default:
 			/* don't make hard error unless caller asks to restore... */
 			elog(DEBUG2, "unrecognized node type: %d", (int) nodeTag(node));
@@ -461,6 +465,10 @@ ExecRestrPos(PlanState *node)
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("unsupported call to restore position of Motion operator")
 				));
+			break;
+
+		case T_ForeignScanState:
+			elog(ERROR, "Restoring scan position is not yet supported for foreign relation scan");
 			break;
 
 		default:
@@ -625,6 +633,7 @@ ExecEagerFree(PlanState *node)
 		case T_SequenceState:
 		case T_PartitionSelectorState:
 		case T_WorkTableScanState:
+		case T_ForeignScanState:
 			break;
 
 		case T_TableScanState:
@@ -806,6 +815,7 @@ ExecEagerFreeChildNodes(PlanState *node, bool subplanDone)
 		case T_SortState:
 		case T_AggState:
 		case T_WindowAggState:
+		case T_ForeignScanState:
 		{
 			planstate_walk_node(outerPlanState(node), EagerFreeWalker, &ctx);
 			break;

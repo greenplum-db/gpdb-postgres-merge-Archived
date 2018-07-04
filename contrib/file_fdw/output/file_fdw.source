@@ -7,7 +7,9 @@ DROP ROLE IF EXISTS file_fdw_superuser, file_fdw_user, no_priv_user;
 RESET client_min_messages;
 CREATE ROLE file_fdw_superuser LOGIN SUPERUSER; -- is a superuser
 CREATE ROLE file_fdw_user LOGIN;                -- has priv and user mapping
+NOTICE:  resource queue required -- using default resource queue "pg_default"
 CREATE ROLE no_priv_user LOGIN;                 -- has priv but no user mapping
+NOTICE:  resource queue required -- using default resource queue "pg_default"
 -- Install file_fdw
 CREATE EXTENSION file_fdw;
 -- file_fdw_superuser owns fdw-related objects
@@ -34,41 +36,41 @@ CREATE USER MAPPING FOR no_priv_user SERVER file_server;
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
 ERROR:  COPY format "xml" not recognized
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', header 'true');      -- ERROR
-ERROR:  COPY HEADER available only in CSV mode
+ERROR:  HEADER available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
-ERROR:  COPY quote available only in CSV mode
+ERROR:  quote available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  escape available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
-ERROR:  COPY HEADER available only in CSV mode
+ERROR:  cannot specify HEADER in BINARY mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', quote ':');        -- ERROR
-ERROR:  COPY quote available only in CSV mode
+ERROR:  quote available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', escape ':');       -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  escape available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');      -- ERROR
-ERROR:  COPY delimiter cannot be "a"
+ERROR:  delimiter cannot be "a"
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape '-');         -- ERROR
-ERROR:  COPY escape available only in CSV mode
+ERROR:  escape available only in CSV mode
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '-', null '=-=');   -- ERROR
 ERROR:  CSV quote character must not appear in the NULL specification
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', null '=-=');    -- ERROR
 ERROR:  COPY delimiter must not appear in the NULL specification
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '-', quote '-');    -- ERROR
-ERROR:  COPY delimiter and quote must be different
+ERROR:  delimiter and quote must be different
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '---');     -- ERROR
 ERROR:  COPY delimiter must be a single one-byte character
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', quote '---');         -- ERROR
-ERROR:  COPY quote must be a single one-byte character
+ERROR:  quote must be a single one-byte character
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', escape '---');        -- ERROR
-ERROR:  COPY escape must be a single one-byte character
+ERROR:  escape in CSV format must be a single character
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '\');       -- ERROR
-ERROR:  COPY delimiter cannot be "\"
+ERROR:  delimiter cannot be "\"
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '.');       -- ERROR
-ERROR:  COPY delimiter cannot be "."
+ERROR:  delimiter cannot be "."
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter '1');       -- ERROR
-ERROR:  COPY delimiter cannot be "1"
+ERROR:  delimiter cannot be "1"
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', delimiter 'a');       -- ERROR
-ERROR:  COPY delimiter cannot be "a"
+ERROR:  delimiter cannot be "a"
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter '
 ');       -- ERROR
 ERROR:  COPY delimiter cannot be newline or carriage return
@@ -100,7 +102,7 @@ CREATE FOREIGN TABLE text_csv (
 ) SERVER file_server
 OPTIONS (format 'text', filename '@abs_srcdir@/data/text.csv', null 'NULL');
 SELECT * FROM text_csv; -- ERROR
-ERROR:  COPY force not null available only in CSV mode
+ERROR:  force not null available only in CSV mode
 ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
 SELECT * FROM text_csv;
  word1 | word2 
@@ -158,6 +160,7 @@ EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
  Foreign Scan on public.agg_csv
    Output: a, b
    Foreign File: @abs_srcdir@/data/agg.csv
+ Optimizer: legacy query optimizer
 
 \t off
 PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
@@ -185,11 +188,11 @@ SELECT tableoid::regclass, b FROM agg_csv;
 
 -- updates aren't supported
 INSERT INTO agg_csv VALUES(1,2.0);
-ERROR:  cannot change foreign table "agg_csv"
+ERROR:  foreign tables are read only. cannot change "agg_csv"
 UPDATE agg_csv SET a = 1;
-ERROR:  cannot change foreign table "agg_csv"
+ERROR:  foreign tables are read only. cannot change "agg_csv"
 DELETE FROM agg_csv WHERE a = 100;
-ERROR:  cannot change foreign table "agg_csv"
+ERROR:  foreign tables are read only. cannot change "agg_csv"
 SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
 ERROR:  SELECT FOR UPDATE/SHARE cannot be used with foreign table "agg_csv"
 LINE 1: SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
@@ -232,8 +235,9 @@ SET ROLE file_fdw_user;
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_text WHERE a > 0;
  Foreign Scan on public.agg_text
    Output: a, b
-   Filter: (agg_text.a > 0)
+   Filter: agg_text.a > 0
    Foreign File: @abs_srcdir@/data/agg.data
+ Optimizer: legacy query optimizer
 
 \t off
 -- privilege tests for object

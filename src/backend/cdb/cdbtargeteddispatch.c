@@ -654,6 +654,11 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 					pushNewDirectDispatchInfo = true;
 					break;
 				}
+			case T_ForeignScan:
+				DisableTargetedDispatch(&dispatchInfo); /* not sure about
+														 * foreign tables ...
+														 * so disable */
+				break;
 			default:
 				elog(ERROR, "Invalid plan node %d", nodeTag(node));
 				break;

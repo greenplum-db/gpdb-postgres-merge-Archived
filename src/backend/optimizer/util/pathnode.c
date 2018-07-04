@@ -163,6 +163,7 @@ pathnode_walk_kids(Path            *path,
 	{
 		case T_SeqScan:
 		case T_ExternalScan:
+		case T_ForeignScan:
 		case T_AppendOnlyScan:
 		case T_AOCSScan:
 		case T_IndexScan:
@@ -2865,6 +2866,7 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.startup_cost = startup_cost;
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
 
 	pathnode->fdw_private = fdw_private;
 
