@@ -849,7 +849,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation,
 	setup_parser_errposition_callback(&pcbstate, pstate, relation->location);
 
 	/* Look up the appropriate relation using namespace search */
-	relid = RangeVarGetRelid(relation, lockmode, true);
+	relid = RangeVarGetRelid(relation, NoLock, true);
 	if (relid == InvalidOid)
 	{
 		if (relation->schemaname)
