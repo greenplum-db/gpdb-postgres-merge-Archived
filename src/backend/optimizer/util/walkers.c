@@ -249,6 +249,7 @@ plan_tree_walker(Node *node,
 		case T_TableFunctionScan:
 		case T_ValuesScan:
 		case T_WorkTableScan:
+		case T_ForeignScan:
 			if (walk_scan_node_fields((Scan *) node, walker, context))
 				return true;
 			break;

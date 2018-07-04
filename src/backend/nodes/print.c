@@ -573,6 +573,8 @@ plannode_type(Plan *p)
 			return "MOTION";
 		case T_Repeat:
 			return "REPEAT";
+		case T_ForeignScan:
+			return "FOREIGNSCAN";
 		default:
 			return "UNKNOWN";
 	}

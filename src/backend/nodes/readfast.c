@@ -1721,6 +1721,20 @@ _readExternalScan(void)
 	READ_DONE();
 }
 
+static ForeignScan *
+_readForeignScan(void)
+{
+	READ_LOCALS(ForeignScan);
+
+	readScanInfo((Scan *)local_node);
+
+	READ_NODE_FIELD(fdw_exprs);
+	READ_NODE_FIELD(fdw_private);
+	READ_BOOL_FIELD(fsSystemCol);
+
+	READ_DONE();
+}
+
 static LogicalIndexInfo *
 readLogicalIndexInfo(void)
 {
@@ -3163,6 +3177,9 @@ readNodeBinary(void)
 				break;
 			case T_ValuesScan:
 				return_value = _readValuesScan();
+				break;
+			case T_ForeignScan:
+				return_value = _readForeignScan();
 				break;
 			case T_Join:
 				return_value = _readJoin();

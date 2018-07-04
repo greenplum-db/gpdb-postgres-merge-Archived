@@ -663,10 +663,7 @@ ERROR:  syntax error at or near ";"
 LINE 1: CREATE FOREIGN TABLE ft1 ();
                                    ^
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
-ERROR:  foreign tables are not yet supported in Greenplum
--- GPDB_91_MERGE_FIXME: forien tables are disabled until foreign data
--- wrappers are correctly implemented in GPDB.
---start_ignore
+ERROR:  server "no_server" does not exist
 CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
 NOTICE:  CREATE FOREIGN TABLE will create implicit sequence "ft1_c1_seq" for serial column "ft1.c1"
 ERROR:  default values on foreign tables are not supported
@@ -1170,7 +1167,6 @@ ERROR:  foreign table "no_table" does not exist
 DROP FOREIGN TABLE IF EXISTS no_table;
 NOTICE:  foreign table "no_table" does not exist, skipping
 DROP FOREIGN TABLE foreign_schema.foreign_table_1;
---end_ignore
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR

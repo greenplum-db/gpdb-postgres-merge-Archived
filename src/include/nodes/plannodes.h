@@ -833,7 +833,6 @@ typedef struct ForeignScan
 	bool		fsSystemCol;	/* true if any "system column" is needed */
 } ForeignScan;
 
-
 /*
  * ==========
  * Join nodes
