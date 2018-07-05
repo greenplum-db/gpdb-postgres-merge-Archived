@@ -1554,6 +1554,21 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	ListCell   *l;
     int         rti;
 
+	/*
+	 * CREATE TABLE AS or SELECT INTO?
+	 *
+	 * XXX should we allow this if the destination is temp?  Considering that
+	 * it would still require catalog changes, probably not.
+	 */
+	if (plannedstmt->intoClause != NULL)
+	{
+		Assert(plannedstmt->intoClause->rel);
+		if (plannedstmt->intoClause->rel->relpersistence == RELPERSISTENCE_TEMP)
+			ExecutorMarkTransactionDoesWrites();
+		else
+			PreventCommandIfReadOnly(CreateCommandTag((Node *) plannedstmt));
+	}
+
 	/* Fail if write permissions are requested on any non-temp table */
     rti = 0;
 	foreach(l, plannedstmt->rtable)
