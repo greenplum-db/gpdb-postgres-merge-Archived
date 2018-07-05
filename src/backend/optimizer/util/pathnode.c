@@ -3066,6 +3066,14 @@ create_nestloop_path(PlannerInfo *root,
 
 	pathnode->path.sameslice_relids = bms_union(inner_path->sameslice_relids, outer_path->sameslice_relids);
 
+	/*
+	 * inner_path & outer_path are possibly modified above. Let's recalculate
+	 * the initial cost.
+	 */
+	initial_cost_nestloop(root, workspace, jointype,
+						  outer_path, inner_path,
+						  sjinfo, semifactors);
+
 	final_cost_nestloop(root, pathnode, workspace, sjinfo, semifactors);
 
 	return pathnode;
@@ -3219,6 +3227,15 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->innersortkeys = innersortkeys;
 	/* pathnode->materialize_inner will be set by final_cost_mergejoin */
 
+	/*
+	 * inner_path & outer_path are possibly modified above. Let's recalculate
+	 * the initial cost.
+	 */
+	initial_cost_mergejoin(root, workspace, jointype, mergeclauses,
+						   outer_path, inner_path,
+						   outersortkeys, innersortkeys,
+						   sjinfo);
+
 	final_cost_mergejoin(root, pathnode, workspace, sjinfo);
 
 	return pathnode;
@@ -3342,6 +3359,14 @@ create_hashjoin_path(PlannerInfo *root,
 	else
 		pathnode->jpath.path.motionHazard = outer_path->motionHazard || inner_path->motionHazard;
 	pathnode->jpath.path.sameslice_relids = bms_union(inner_path->sameslice_relids, outer_path->sameslice_relids);
+
+	/*
+	 * inner_path & outer_path are possibly modified above. Let's recalculate
+	 * the initial cost.
+	 */
+	initial_cost_hashjoin(root, workspace, jointype, hashclauses,
+						  outer_path, inner_path,
+						  sjinfo, semifactors);
 
 	final_cost_hashjoin(root, pathnode, workspace, sjinfo, semifactors);
 
