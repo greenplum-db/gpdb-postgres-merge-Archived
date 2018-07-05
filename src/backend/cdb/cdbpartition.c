@@ -8429,7 +8429,7 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  consrc,
 									  con->conislocal,
 									  con->coninhcount,
-									  true);
+									  false);
 				break;
 			}
 
