@@ -26,6 +26,8 @@ static bool is_proc_oids_valid = false;
 
 Datum gp_dump_query_oids(PG_FUNCTION_ARGS);
 
+List* get_proc_oids_for_dump(void);
+
 PG_FUNCTION_INFO_V1(gp_dump_query_oids);
 
 /*
