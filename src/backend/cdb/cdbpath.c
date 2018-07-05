@@ -276,6 +276,7 @@ cdbpath_create_motion_path(PlannerInfo *root,
 	pathnode->path.pathtype = T_Motion;
 	pathnode->path.parent = subpath->parent;
 	pathnode->path.locus = locus;
+	pathnode->path.rows = subpath->parent->rows;
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 

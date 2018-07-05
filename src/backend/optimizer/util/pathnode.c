@@ -2326,6 +2326,7 @@ create_unique_rowid_path(PlannerInfo *root,
         motionpath.path.type = T_CdbMotionPath;
         motionpath.path.parent = subpath->parent;
         motionpath.path.locus = pathnode->path.locus;
+        motionpath.path.rows = subpath->parent->rows;
         motionpath.subpath = subpath;
         cdbpath_cost_motion(root, &motionpath);
 

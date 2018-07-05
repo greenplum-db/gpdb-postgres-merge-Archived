@@ -31,6 +31,7 @@
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 
+#include "cdb/cdbpath.h"
 
 typedef struct JoinHashEntry
 {
@@ -1126,8 +1127,8 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 
 	/* Estimate the number of rows returned by the parameterized join */
 	rows = get_parameterized_joinrel_size(root, joinrel,
-										  outer_path->rows,
-										  inner_path->rows,
+										  cdbpath_rows(root, outer_path),
+										  cdbpath_rows(root, inner_path),
 										  sjinfo,
 										  *restrict_clauses);
 
