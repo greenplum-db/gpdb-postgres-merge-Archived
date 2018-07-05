@@ -1646,9 +1646,9 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (!contain_vars_of_level_or_above(sublink->subselect, 1))
 	{
-		subselect->limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
-												   sizeof(int64), Int64GetDatum(1),
-												   false, true);
+		((Query*)sublink->subselect)->limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+																      sizeof(int64), Int64GetDatum(1),
+																      false, true);
 		node = make_and_qual(limitqual, (Node *) sublink);
 		if (under_not)
 			return (Node *) make_notclause((Expr *)node);
