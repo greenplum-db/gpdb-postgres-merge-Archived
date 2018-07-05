@@ -13715,13 +13715,13 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 		ctas->query = (Node *) s;
 		ctas->is_select_into = false;
 		n = (Node *)ctas;
+
+		elog(ERROR, "CTAS stmt is wrongly handled in below code in this function."
+			 "Refer createas.c. Since here there is a branch InsertStmt and there "
+			 "is a CTAS experimental code testing. I'm not fixing this at this moment."
+			 " Just error out here temporarily.");
 	}
 	*tmprv = tmprel;
-
-	elog(ERROR, "CTAS stmt is wrongly handled in below code in this function."
-		 "Refer createas.c. Since here there is a branch InsertStmt and there "
-		 "is a CTAS experimental code testing. I'm not fixing this at this moment."
-		 " Just error out here temporarily.");
 
 	q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
 
