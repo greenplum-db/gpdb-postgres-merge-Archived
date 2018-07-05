@@ -55,7 +55,6 @@ EXCL_OBJS+=\
 	src/backend/utils/adt/domains.o \
 	src/backend/utils/adt/enum.o \
 	src/backend/utils/adt/geo_selfuncs.o \
-	src/backend/utils/adt/gp_dump_oids.o \
 	src/backend/utils/adt/gp_optimizer_functions.o \
 	src/backend/utils/adt/interpolate.o \
 	src/backend/utils/adt/jsonfuncs.o \
