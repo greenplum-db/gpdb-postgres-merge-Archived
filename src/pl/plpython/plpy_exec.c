@@ -43,14 +43,38 @@ static void PLy_abort_open_subtransactions(int save_subxact_level);
 Datum
 PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
-	Datum		rv;
-	PyObject   *volatile plargs = NULL;
-	PyObject   *volatile plrv = NULL;
-	ErrorContextCallback plerrcontext;
+
+	Datum						rv;
+	FuncCallContext	*volatile	funcctx		   = NULL;
+	PyObject 		*volatile	plargs		   = NULL;
+	PyObject		*volatile	plrv		   = NULL;
+	bool						bFirstTimeCall = false; 
+	ErrorContextCallback		plerrcontext;
 
 	PG_TRY();
 	{
-		if (!proc->is_setof || proc->setof == NULL)
+		if (fcinfo->flinfo->fn_retset)
+		{
+			/* First Call setup */
+			if (SRF_IS_FIRSTCALL())
+			{
+				funcctx = SRF_FIRSTCALL_INIT();
+				bFirstTimeCall = true;
+
+				/*
+				 * Clear all previous left-over exceptions due to some (unknow) reasons
+				 * so that this call will have a fresh start
+				 */
+				PyErr_Clear();
+			}
+
+			/* Every call setup */
+			funcctx = SRF_PERCALL_SETUP();
+
+			Assert(funcctx != NULL);
+		}
+
+		if (!fcinfo->flinfo->fn_retset || bFirstTimeCall)
 		{
 			/*
 			 * Simple type returning function or first time for SETOF
@@ -62,7 +86,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			{
 				/*
 				 * SETOF function parameters will be deleted when last row is
-				 * returned
+				 * PLySequence_ToTuple
 				 */
 				PLy_function_delete_args(proc);
 			}
@@ -74,12 +98,12 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		 * We stay in the SPI context while doing this, because PyIter_Next()
 		 * calls back into Python code which might contain SPI calls.
 		 */
-		if (proc->is_setof)
+		if (fcinfo->flinfo->fn_retset)
 		{
 			bool		has_error = false;
 			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-			if (proc->setof == NULL)
+			if (funcctx->user_fctx == NULL)
 			{
 				/* first time -- do checks and setup */
 				if (!rsi || !IsA(rsi, ReturnSetInfo) ||
@@ -93,11 +117,12 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				rsi->returnMode = SFRM_ValuePerCall;
 
 				/* Make iterator out of returned object */
-				proc->setof = PyObject_GetIter(plrv);
+				funcctx->user_fctx = (void*) PyObject_GetIter(plrv);
+
 				Py_DECREF(plrv);
 				plrv = NULL;
 
-				if (proc->setof == NULL)
+				if (funcctx->user_fctx == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("returned object cannot be iterated"),
@@ -105,20 +130,21 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 
 			/* Fetch next from iterator */
-			plrv = PyIter_Next(proc->setof);
+			plrv = PyIter_Next((PyObject*) funcctx->user_fctx);
 			if (plrv)
 				rsi->isDone = ExprMultipleResult;
 			else
 			{
 				rsi->isDone = ExprEndResult;
+
 				has_error = PyErr_Occurred() != NULL;
 			}
 
 			if (rsi->isDone == ExprEndResult)
 			{
 				/* Iterator is exhausted or error happened */
-				Py_DECREF(proc->setof);
-				proc->setof = NULL;
+				Py_DECREF( (PyObject*) funcctx->user_fctx);
+				funcctx->user_fctx = NULL;
 
 				Py_XDECREF(plargs);
 				Py_XDECREF(plrv);
@@ -126,14 +152,13 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 				PLy_function_delete_args(proc);
 
 				if (has_error)
-					PLy_elog(ERROR, "error fetching next item from iterator");
+					PLy_elog(ERROR, "function \"%s\" error fetching next item from iterator", proc->proname);
 
 				/* Disconnect from the SPI manager before returning */
 				if (SPI_finish() != SPI_OK_FINISH)
 					elog(ERROR, "SPI_finish failed");
 
-				fcinfo->isnull = true;
-				return (Datum) NULL;
+				SRF_RETURN_DONE(funcctx);
 			}
 		}
 
@@ -176,7 +201,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 									   -1);
 			else
 				/* Tuple as None */
-				rv = (Datum) NULL;
+				rv = (Datum) 0;
 		}
 		else if (proc->result.is_rowtype >= 1)
 		{
@@ -191,13 +216,13 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			desc = lookup_rowtype_tupdesc(proc->result.out.d.typoid,
 										  proc->result.out.d.typmod);
 
-			rv = PLyObject_ToCompositeDatum(&proc->result, desc, plrv);
+			rv = PLyObject_ToCompositeDatum(&proc->result, desc, plrv, false);
 			fcinfo->isnull = (rv == (Datum) NULL);
 		}
 		else
 		{
 			fcinfo->isnull = false;
-			rv = (proc->result.out.d.func) (&proc->result.out.d, -1, plrv);
+			rv = (proc->result.out.d.func) (&proc->result.out.d, -1, plrv, false);
 		}
 	}
 	PG_CATCH();
@@ -210,8 +235,12 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		 * yet. Set it to NULL so the next invocation of the function will
 		 * start the iteration again.
 		 */
-		Py_XDECREF(proc->setof);
-		proc->setof = NULL;
+
+		if (fcinfo->flinfo->fn_retset && funcctx->user_fctx != NULL)
+		{
+			Py_XDECREF( (PyObject*) funcctx->user_fctx);
+			funcctx->user_fctx = NULL;
+		}
 
 		PG_RE_THROW();
 	}
@@ -222,7 +251,10 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	Py_XDECREF(plargs);
 	Py_DECREF(plrv);
 
-	return rv;
+	if (fcinfo->flinfo->fn_retset)
+		SRF_RETURN_NEXT(funcctx, rv);
+	else
+		return rv;
 }
 
 /* trigger subhandler
@@ -717,7 +749,8 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 				modvalues[i] = (att->func) (att,
 											tupdesc->attrs[atti]->atttypmod,
-											plval);
+											plval,
+											false);
 				modnulls[i] = ' ';
 			}
 			else
@@ -789,6 +822,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 
 	PG_TRY();
 	{
+		PLy_enter_python_intepreter = true;
 #if PY_VERSION_HEX >= 0x03020000
 		rv = PyEval_EvalCode(proc->code,
 							 proc->globals, proc->globals);
@@ -806,6 +840,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 	}
 	PG_CATCH();
 	{
+		PLy_enter_python_intepreter = false;
 		PLy_abort_open_subtransactions(save_subxact_level);
 		PG_RE_THROW();
 	}

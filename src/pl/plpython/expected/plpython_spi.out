@@ -148,6 +148,8 @@ CONTEXT:  PL/Python function "result_metadata_test"
 SELECT result_metadata_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 INFO:  True
 CONTEXT:  PL/Python function "result_metadata_test"
+CONTEXT:  SQL statement "CREATE TEMPORARY TABLE foo1 (a int, b text)"
+PL/Python function "result_metadata_test"
 ERROR:  plpy.Error: command did not produce a result set
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "result_metadata_test", line 6, in <module>
@@ -165,6 +167,8 @@ SELECT result_nrows_test($$SELECT 1$$);
 (1 row)
 
 SELECT result_nrows_test($$CREATE TEMPORARY TABLE foo2 (a int, b text)$$);
+CONTEXT:  SQL statement "CREATE TEMPORARY TABLE foo2 (a int, b text)"
+PL/Python function "result_nrows_test"
  result_nrows_test 
 -------------------
                  0
@@ -194,6 +198,8 @@ SELECT result_len_test($$SELECT 1$$);
 (1 row)
 
 SELECT result_len_test($$CREATE TEMPORARY TABLE foo3 (a int, b text)$$);
+CONTEXT:  SQL statement "CREATE TEMPORARY TABLE foo3 (a int, b text)"
+PL/Python function "result_len_test"
  result_len_test 
 -----------------
                0
@@ -213,8 +219,8 @@ SELECT result_len_test($$UPDATE foo3 SET b= '' WHERE a = 2$$);
 
 CREATE FUNCTION result_subscript_test() RETURNS void
 AS $$
-result = plpy.execute("SELECT 1 AS c UNION SELECT 2 "
-                      "UNION SELECT 3 UNION SELECT 4")
+result = plpy.execute("SELECT 1 AS c UNION ALL SELECT 2 "
+                      "UNION ALL SELECT 3 UNION ALL SELECT 4")
 
 plpy.info(result[1]['c'])
 plpy.info(result[-1]['c'])

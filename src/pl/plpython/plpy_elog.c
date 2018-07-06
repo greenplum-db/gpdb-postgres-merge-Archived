@@ -7,6 +7,7 @@
 #include "postgres.h"
 
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
 
 #include "plpython.h"
 
@@ -51,6 +52,15 @@ PLy_elog(int elevel, const char *fmt,...)
 	char	   *hint = NULL;
 	char	   *query = NULL;
 	int			position = 0;
+
+	/*
+	 *  If the error was a KeyboardException that we raised because
+	 *  of query cancellation, then CHECK_FOR_INTERRUPTS() will throw
+	 *  a better error message than we do here, with
+	 *  "canceling statement due to user request" or similar message.
+	 *  Give it a chance.
+	 */
+	CHECK_FOR_INTERRUPTS();
 
 	PyErr_Fetch(&exc, &val, &tb);
 	if (exc != NULL)
