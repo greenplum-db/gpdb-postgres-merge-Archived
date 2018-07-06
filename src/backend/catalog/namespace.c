@@ -4077,7 +4077,7 @@ check_search_path(char **newval, void **extra, GucSource source)
 	pfree(rawname);
 	list_free(namelist);
 
-	return true;
+	return result;
 }
 
 /* assign_hook: do extra actions as needed */
