@@ -13704,26 +13704,27 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	else
 	{
 		Oid tblspc = rel->rd_rel->reltablespace;
-		CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
+		List *q_list, *p_list;
 
-		ctas->into = makeNode(IntoClause);
-		ctas->into->rel = tmprel;
-		ctas->into->options = storage_opts;
-		ctas->into->tableSpaceName = get_tablespace_name(tblspc);
-		ctas->into->distributedBy = (Node *)dist_clause;
+		s->intoClause = makeNode(IntoClause);
+		s->intoClause->rel = tmprel;
+		s->intoClause->options = storage_opts;
+		s->intoClause->tableSpaceName = get_tablespace_name(tblspc);
+		s->distributedBy = (Node *)dist_clause;
 
-		ctas->query = (Node *) s;
-		ctas->is_select_into = false;
-		n = (Node *)ctas;
+		q_list = pg_analyze_and_rewrite((Node *) s, synthetic_sql, NULL, 0);
+		p_list = pg_plan_queries(q_list, 0, NULL);
+		q = (Query *) linitial(p_list);
+		Assert(IsA(q, CreateTableAsStmt));
 
-		elog(ERROR, "CTAS stmt is wrongly handled in below code in this function."
-			 "Refer createas.c. Since here there is a branch InsertStmt and there "
-			 "is a CTAS experimental code testing. I'm not fixing this at this moment."
-			 " Just error out here temporarily.");
+		n = ((CreateTableAsStmt *)q)->query;
 	}
 	*tmprv = tmprel;
 
-	q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
+	if (pre_built)
+		q = parse_analyze((Node *) n, synthetic_sql, NULL, 0);
+	else
+		q = (Query *) n;
 
 	AcquireRewriteLocks(q, false);
 
@@ -13734,13 +13735,10 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	Assert(list_length(rewritten) == 1);
 
 	q = (Query *) linitial(rewritten);
-	Assert(q->commandType == CMD_UTILITY || q->commandType == CMD_INSERT);
+	Assert(q->commandType == CMD_SELECT || q->commandType == CMD_INSERT);
 
 	/* plan the query */
-	if (q->commandType == CMD_UTILITY)
-		stmt = (PlannedStmt *) q->utilityStmt;
-	else
-		stmt = planner(q, 0, NULL);
+	stmt = planner(q, 0, NULL);
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
