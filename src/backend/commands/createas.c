@@ -249,7 +249,7 @@ intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
  * DestReceiver but so far that is not needed (Based on PG 11 code.)
  */
 void
-intorel_initplan(QueryDesc *queryDesc, int eflags)
+intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 {
 	DR_intorel *myState;
 	/* Get 'into' from the dispatched plan */

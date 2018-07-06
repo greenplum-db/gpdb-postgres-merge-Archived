@@ -107,9 +107,6 @@ typedef enum
  */
 typedef struct _DestReceiver DestReceiver;
 
-/* Make compiler happy. */
-typedef struct QueryDesc QueryDesc;
-
 struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
