@@ -613,7 +613,8 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			*pindexpathlist = lappend(*pindexpathlist, ipath);
 
 		if (index->amhasgetbitmap &&
-			(ipath->path.pathkeys == NIL ||
+			(!root->config->enable_seqscan || /*GPDB_92_MERGE_FIXME: is this needed?*/
+			 ipath->path.pathkeys == NIL ||
 			 ipath->indexselectivity < 1.0))
 			*bitindexpaths = lappend(*bitindexpaths, ipath);
 	}
