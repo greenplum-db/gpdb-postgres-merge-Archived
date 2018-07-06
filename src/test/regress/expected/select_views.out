@@ -1280,10 +1280,6 @@ CREATE TABLE credit_usage (
        dist_key int default 1,
        foreign key (dist_key, cid) references customer(dist_key, cid)
 ) DISTRIBUTED BY (dist_key);
-GP_IGNORE:-- start_ignore
-GP_IGNORE:-- Force planner to use default stats
-GP_IGNORE:SET gp_autostats_mode = none;
-GP_IGNORE:-- end_ignore
 INSERT INTO customer
        VALUES (101, 'regress_alice', '+81-12-3456-7890', 'passwd123'),
               (102, 'regress_bob',   '+01-234-567-8901', 'beafsteak'),
