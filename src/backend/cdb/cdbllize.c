@@ -186,11 +186,9 @@ cdbparallelize(PlannerInfo *root,
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			if (query->intoClause != NULL)
-			{
-				/* SELECT INTO / CREATE TABLE AS always created partitioned tables. */
+			/* SELECT INTO / CREATE TABLE AS always created partitioned tables. */
+			if (query->isCTAS)
 				context->resultSegments = true;
-			}
 			break;
 
 		case CMD_INSERT:

@@ -265,7 +265,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 	{
 		case CMD_SELECT:
 			/* If the query comes from 'CREAT TABLE AS' or 'SELECT INTO' */
-			if (query->intoClause)
+			if (query->isCTAS)
 			{
 				List	   *hashExpr;
 				ListCell   *exp1;
@@ -471,8 +471,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 
 				Assert(query->intoPolicy->ptype != POLICYTYPE_ENTRY);
 			}
-
-			if (query->intoClause == NULL)
+			else
 			{
 				if (plan->flow->flotype == FLOW_PARTITIONED ||
 					(plan->flow->flotype == FLOW_SINGLETON &&

@@ -181,14 +181,11 @@ typedef struct Query
 	 */
 	struct GpPolicy *intoPolicy;
 
-	/* GPDB:
-	 * Unlike PG, we need to keep this info so that MPP planning is enforced
-	 * even the query is a simple one that could be run on QD only, also we
-	 * need to tell executor that we do not need to bring tuples to QD unlike
-	 * usual select clause does (See code in apply_motion() and cdbparallelize()),
-	 * and executor needs this info to specifiy correct target also.
-	 * */
-	IntoClause *intoClause;
+	/*
+	 * GPDB: Used to indicate this query is part of CTAS so that its plan would
+	 * always be dispatched in parallel.
+	 */
+	bool		isCTAS;
 } Query;
 
 

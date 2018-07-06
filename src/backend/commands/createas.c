@@ -101,8 +101,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
 
-		elog(ERROR, "Create Table As Execute is known to need some work. Error out temporarily to avoid panic which affects other tests sometimes.");
-
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
 
 		return;
@@ -130,6 +128,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 	/* plan the query */
 	plan = pg_plan_query(query, 0, params);
+
+	/*GPDB: Save the target information in PlannedStmt */
+	plan->intoClause = copyObject(stmt->into);
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
