@@ -989,7 +989,7 @@ _equalQuery(const Query *a, const Query *b)
 	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
 		return false;
 
-	COMPARE_NODE_FIELD(intoClause);
+	COMPARE_SCALAR_FIELD(isCTAS);
 
 	return true;
 }

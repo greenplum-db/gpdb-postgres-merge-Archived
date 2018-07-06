@@ -463,7 +463,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 	 * objects; then check again.  We need to do it this way to cover the race
 	 * condition that an invalidation message arrives before we get the locks.
 	 */
-	if (plansource->is_valid)
+	if (plansource->is_valid && intoClause == NULL)
 	{
 		AcquirePlannerLocks(plansource->query_list, true);
 
@@ -536,27 +536,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 		snapshot_set = true;
 	}
 
-	/*
-	 * If this is a CREATE TABLE AS, pass information about the
-	 * target table's distribution key to the planner.
-	 */
-	if (intoClause)
-	{
-		CreateTableAsStmt *ctas_stmt;
-
-		if (!IsA(plansource->raw_parse_tree, CreateTableAsStmt))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("prepared statement is not a CreateTableAs Statement.")));
-
-		ctas_stmt = (CreateTableAsStmt *) copyObject(plansource->raw_parse_tree);
-
-		ctas_stmt->into = copyObject(intoClause);
-
-		rawtree = (Node *) ctas_stmt;
-	}
-	else
-		rawtree = copyObject(plansource->raw_parse_tree);
+	rawtree = copyObject(plansource->raw_parse_tree);
 
 	/*
 	 * Run parse analysis and rule rewriting.  The parser tends to scribble on
@@ -573,6 +553,14 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 									   plansource->query_string,
 									   plansource->param_types,
 									   plansource->num_params);
+
+	/* GPDB: For CTAS query, set its isCTAS to be true */
+	if (intoClause)
+	{
+		Assert(list_length(tlist) == 1);
+		Query *query = (Query *) linitial(tlist);
+		query->isCTAS = true;
+	}
 
 	/* Release snapshot if we got one */
 	if (snapshot_set)

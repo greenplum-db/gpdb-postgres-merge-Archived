@@ -13646,6 +13646,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	TupleDesc	tupdesc;
 	int			attno;
 	bool		pre_built;
+	IntoClause	*into = NULL;
 
 	tupdesc = RelationGetDescr(rel);
 
@@ -13706,10 +13707,11 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 		Oid tblspc = rel->rd_rel->reltablespace;
 		List *q_list, *p_list;
 
-		s->intoClause = makeNode(IntoClause);
-		s->intoClause->rel = tmprel;
-		s->intoClause->options = storage_opts;
-		s->intoClause->tableSpaceName = get_tablespace_name(tblspc);
+		into = makeNode(IntoClause);
+		into->rel = tmprel;
+		into->options = storage_opts;
+		into->tableSpaceName = get_tablespace_name(tblspc);
+		s->intoClause = into;
 		s->distributedBy = (Node *)dist_clause;
 
 		q_list = pg_analyze_and_rewrite((Node *) s, synthetic_sql, NULL, 0);
@@ -13739,6 +13741,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 
 	/* plan the query */
 	stmt = planner(q, 0, NULL);
+	stmt->intoClause = into;
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any

@@ -130,6 +130,7 @@ static Node *grouped_window_mutator(Node *node, void *context);
 static Alias *make_replacement_alias(Query *qry, const char *aname);
 static char *generate_positional_name(AttrNumber attrno);
 static List*generate_alternate_vars(Var *var, grouped_window_ctx *ctx);
+static void applyColumnNames(List *dst, List *src);
 
 /*
  * parse_analyze
@@ -3247,11 +3248,14 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
-	/* Copy intoClause into the query in CTAS. */
-	((Query*)stmt->query)->intoClause = stmt->into;
+	/* GPDB: Set isCTAS to be true as we know this query is for CTAS */
+	((Query*)stmt->query)->isCTAS = true;
+
+	if (stmt->into->colNames)
+		applyColumnNames(((Query *)stmt->query)->targetList, stmt->into->colNames);
 
 	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *) stmt->query);
+		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *)stmt->query);
 
 	return result;
 }
@@ -3504,6 +3508,44 @@ applyLockingClause(Query *qry, Index rtindex,
 	rc->noWait = noWait;
 	rc->pushedDown = pushedDown;
 	qry->rowMarks = lappend(qry->rowMarks, rc);
+}
+
+/*
+ * Attach column names from a ColumnDef list to a TargetEntry list
+ * (for CREATE TABLE AS)
+ */
+static void
+applyColumnNames(List *dst, List *src)
+{
+	ListCell   *dst_item;
+	ListCell   *src_item;
+
+	src_item = list_head(src);
+
+	foreach(dst_item, dst)
+	{
+		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
+		ColumnDef  *s;
+
+		/* junk targets don't count */
+		if (d->resjunk)
+			continue;
+
+		/* fewer ColumnDefs than target entries is OK */
+		if (src_item == NULL)
+			break;
+
+		s = (ColumnDef *) lfirst(src_item);
+		src_item = lnext(src_item);
+
+		d->resname = pstrdup(s->colname);
+	}
+
+	/* more ColumnDefs than target entries is not OK */
+	if (src_item != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("CREATE TABLE AS specifies too many column names")));
 }
 
 static void

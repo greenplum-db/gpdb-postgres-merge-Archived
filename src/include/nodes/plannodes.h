@@ -141,7 +141,10 @@ typedef struct PlannedStmt
 	/* The overall memory consumption account (i.e., outside of an operator) */
 	MemoryAccountIdType memoryAccountId;
 
-	/* GPDB: Refer Query->intoClause for explanations. */
+	/*
+	 * GPDB: Used to keep target information for CTAS and it is needed
+	 * to be dispatched to QEs.
+	 */
 	IntoClause *intoClause;
 } PlannedStmt;
 

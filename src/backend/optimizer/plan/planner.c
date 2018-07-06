@@ -442,7 +442,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->nMotionNodes = top_plan->nMotionNodes;
 	result->nInitPlans = top_plan->nInitPlans;
 	result->intoPolicy = GpPolicyCopy(CurrentMemoryContext, parse->intoPolicy);
-	result->intoClause = parse->intoClause;
 	result->queryPartOids = NIL;
 	result->queryPartsMetadata = NIL;
 	result->numSelectorsPerScanId = NIL;

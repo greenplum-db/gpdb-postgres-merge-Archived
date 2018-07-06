@@ -904,7 +904,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
-	WRITE_NODE_FIELD(intoClause);
+	WRITE_BOOL_FIELD(isCTAS);
 
 	/* Don't serialize policy */
 }

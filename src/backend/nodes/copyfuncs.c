@@ -3133,7 +3133,7 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
 	COPY_NODE_FIELD(intoPolicy);
-	COPY_NODE_FIELD(intoClause);
+	COPY_SCALAR_FIELD(isCTAS);
 
 	return newnode;
 }
