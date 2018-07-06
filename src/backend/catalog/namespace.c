@@ -4006,11 +4006,8 @@ ResetTempTableNamespace(void)
 bool
 check_search_path(char **newval, void **extra, GucSource source)
 {
-	bool		result = true;
 	char	   *rawname;
 	List	   *namelist;
-	ListCell   *l;
-
 
 	/* Need a modifiable copy of string */
 	rawname = pstrdup(*newval);
@@ -4032,52 +4029,10 @@ check_search_path(char **newval, void **extra, GucSource source)
 	 * here and so can't consult the system catalogs anyway.  So now, the only
 	 * requirement is syntactic validity of the identifier list.
 	 */
-	if (IsTransactionState())
-	{
-		/*
-		 * Verify that all the names are either valid namespace names or
-		 * "$user" or "pg_temp".  We do not require $user to correspond to a
-		 * valid namespace, and pg_temp might not exist yet.  We do not check
-		 * for USAGE rights, either; should we?
-		 *
-		 * When source == PGC_S_TEST, we are checking the argument of an ALTER
-		 * DATABASE SET or ALTER USER SET command.	It could be that the
-		 * intended use of the search path is for some other database, so we
-		 * should not error out if it mentions schemas not present in the
-		 * current database.  We issue a NOTICE instead.
-		 */
-		foreach(l, namelist)
-		{
-			char	   *curname = (char *) lfirst(l);
-
-			if (strcmp(curname, "$user") == 0)
-				continue;
-			if (strcmp(curname, "pg_temp") == 0)
-				continue;
-			if (!SearchSysCacheExists1(NAMESPACENAME,
-									   CStringGetDatum(curname)))
-			{
-			  if (Gp_role != GP_ROLE_EXECUTE)
-			  {
-				if (source == PGC_S_TEST)
-					ereport(NOTICE,
-							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						   errmsg("schema \"%s\" does not exist", curname)));
-				else
-				{
-					GUC_check_errdetail("schema \"%s\" does not exist", curname);
-					result = false;
-					break;
-				}
-			  }
-			}
-		}
-	}
-
 	pfree(rawname);
 	list_free(namelist);
 
-	return result;
+	return true;
 }
 
 /* assign_hook: do extra actions as needed */
