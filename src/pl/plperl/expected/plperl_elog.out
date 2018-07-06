@@ -62,7 +62,6 @@ select uses_global();
 do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
 NOTICE:  0
 CONTEXT:  PL/Perl anonymous code block
-<<<<<<< HEAD
 -- test recovery after "die"
 create or replace function just_die() returns void language plperl AS $$
 die "just die";
@@ -118,5 +117,3 @@ $$;
 select error_with_nbsp();
 ERROR:  this message contains a no-break space at line 2.
 CONTEXT:  PL/Perl function "error_with_nbsp"
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
