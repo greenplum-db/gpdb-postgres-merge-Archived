@@ -210,6 +210,7 @@ ProcessQuery(Portal portal,
 			 char *completionTag)
 {
 	QueryDesc  *queryDesc;
+	int eflag = 0;
 
 	/* auto-stats related */
 	Oid	relationOid = InvalidOid; 	/* relation that is modified */
@@ -280,7 +281,12 @@ ProcessQuery(Portal portal,
 	/*
 	 * Call ExecutorStart to prepare the plan for execution
 	 */
-	ExecutorStart(queryDesc, 0);
+	if (Gp_role == GP_ROLE_EXECUTE &&
+		queryDesc->plannedstmt &&
+		queryDesc->plannedstmt->intoClause)
+		eflag = GetIntoRelEFlags(queryDesc->plannedstmt->intoClause);
+
+	ExecutorStart(queryDesc, eflag);
 
 	/*
 	 * Run the plan to completion.
