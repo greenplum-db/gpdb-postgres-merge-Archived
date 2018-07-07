@@ -75,6 +75,8 @@ ExecRenameStmt(RenameStmt *stmt)
 
 		case OBJECT_EXTPROTOCOL:
 			RenameExtProtocol(stmt->subname, stmt->newname);
+			break;
+
 		case OBJECT_FDW:
 			RenameForeignDataWrapper(stmt->subname, stmt->newname);
 			break;
