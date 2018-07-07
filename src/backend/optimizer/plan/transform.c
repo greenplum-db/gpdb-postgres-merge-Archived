@@ -86,6 +86,7 @@ Query *normalize_query(Query *query)
 #ifdef USE_ASSERT_CHECKING
 	Assert(equal(qcopy, query) && "Normalization should not modify original query object");
 #endif
+	res->isCtas = query->isCtas;
 
 	return res;
 }
