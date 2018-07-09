@@ -697,8 +697,8 @@ alter table atacc1 add constraint atacc_oid1 unique(oid);
 ERROR:  cannot create unique index on system column
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
-ERROR:  cannot alter indexed column
-HINT:  DROP the index first, and recreate it after the ALTER
+ERROR:  could not create unique index "atacc1_test_key"  (seg2 172.17.0.2:25434 pid=389538)
+DETAIL:  Key (test)=(0) is duplicated.
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int ) distributed by (test);
@@ -1755,8 +1755,6 @@ alter table anothertab alter column atcol1 type boolean; -- fails
 ERROR:  column "atcol1" cannot be cast automatically to type boolean
 HINT:  Specify a USING expression to perform the conversion.
 alter table anothertab alter column atcol1 type integer;
-ERROR:  cannot alter indexed column
-HINT:  DROP the index first, and recreate it after the ALTER
 select * from anothertab;
  atcol1 | atcol2 
 --------+--------
