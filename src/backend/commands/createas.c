@@ -266,7 +266,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	StdRdOptions *stdRdOptions;
 	Datum       reloptions;
 	int         relstorage;
-	bool		validate_reloptions;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
@@ -381,13 +380,9 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 									 true,
 									 false);
 
-	/* get the relstorage (heap or AO tables) */
-	if (queryDesc->ddesc)
-		validate_reloptions = queryDesc->ddesc->validate_reloptions;
-	else
-		validate_reloptions = true;
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
+	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
+												   reloptions,
+												   queryDesc->ddesc->useChangedAOOpts);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
@@ -415,7 +410,12 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * Don't dispatch it yet, as we haven't created the toast and other
 	 * auxiliary tables yet.
 	 */
-	intoRelationId = DefineRelation(create, RELKIND_RELATION, InvalidOid, relstorage, false);
+	intoRelationId = DefineRelation(create,
+									RELKIND_RELATION,
+									InvalidOid,
+									relstorage,
+									false,
+									queryDesc->ddesc->useChangedAOOpts);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that

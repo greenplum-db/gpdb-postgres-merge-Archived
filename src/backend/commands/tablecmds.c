@@ -500,7 +500,7 @@ static void inherit_parent(Relation parent_rel, Relation child_rel,
  * ----------------------------------------------------------------
  */
 Oid
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch)
+DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch, bool useChangedOpts)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
@@ -825,7 +825,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 					 errhint("Use OIDS=FALSE.")));
 	}
 
-	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
+	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL || !useChangedOpts);
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
@@ -14533,6 +14533,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		gp_singleton_segindex = 0;
 
 		/* Step (c) - run on all nodes */
+		queryDesc->ddesc = makeNode(QueryDispatchDesc);
+		queryDesc->ddesc->useChangedAOOpts = false;
 		ExecutorStart(queryDesc, 0);
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 		queryDesc->dest->rDestroy(queryDesc->dest);

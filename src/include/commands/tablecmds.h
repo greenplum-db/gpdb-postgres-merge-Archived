@@ -47,7 +47,7 @@ typedef struct NewConstraint
 
 extern const char *synthetic_sql;
 
-extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch);
+extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch, bool useChangedOpts);
 
 extern void	DefineExternalRelation(CreateExternalStmt *stmt);
 
