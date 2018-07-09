@@ -256,7 +256,6 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	GpExecIdentity exec_identity;
 	bool		shouldDispatch;
 	bool		needDtxTwoPhase;
-	QueryDispatchDesc *ddesc;
 
 	/* sanity checks: queryDesc must not be started already */
 	Assert(queryDesc != NULL);
@@ -426,13 +425,11 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && queryDesc->plannedstmt->planTree->dispatch == DISPATCH_PARALLEL)
 	{
-		ddesc = makeNode(QueryDispatchDesc);
-		queryDesc->ddesc = ddesc;
-
-		if (queryDesc->dest->mydest == DestIntoRel)
-			queryDesc->ddesc->validate_reloptions = false;
-		else
-			queryDesc->ddesc->validate_reloptions = true;
+		if (queryDesc->ddesc == NULL)
+		{
+			queryDesc->ddesc = makeNode(QueryDispatchDesc);;
+			queryDesc->ddesc->useChangedAOOpts = true;
+		}
 
 		/*
 		 * If this is an extended query (normally cursor or bind/exec) - before
@@ -482,7 +479,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			if (intoClause->tableSpaceName)
 			{
 				reltablespace = get_tablespace_oid(intoClause->tableSpaceName, false);
-				ddesc->intoTableSpaceName = intoClause->tableSpaceName;
+				queryDesc->ddesc->intoTableSpaceName = intoClause->tableSpaceName;
 			}
 			else
 			{
@@ -492,13 +489,13 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				if (!OidIsValid(reltablespace))
 					reltablespace = MyDatabaseTableSpace;
 
-				ddesc->intoTableSpaceName = get_tablespace_name(reltablespace);
+				queryDesc->ddesc->intoTableSpaceName = get_tablespace_name(reltablespace);
 			}
 		}
 	}
 	else if (Gp_role == GP_ROLE_EXECUTE)
 	{
-		ddesc = queryDesc->ddesc;
+		QueryDispatchDesc *ddesc = queryDesc->ddesc;
 
 		/* qDisp should have sent us a slice table via MPPEXEC */
 		if (ddesc && ddesc->sliceTable != NULL)
@@ -506,13 +503,13 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			SliceTable *sliceTable;
 			Slice	   *slice;
 
-			sliceTable = queryDesc->ddesc->sliceTable;
+			sliceTable = ddesc->sliceTable;
 			Assert(IsA(sliceTable, SliceTable));
 			slice = (Slice *)list_nth(sliceTable->slices, sliceTable->localSlice);
 			Assert(IsA(slice, Slice));
 
 			estate->es_sliceTable = sliceTable;
-			estate->es_cursorPositions = queryDesc->ddesc->cursorPositions;
+			estate->es_cursorPositions = ddesc->cursorPositions;
 
 			estate->currentSliceIdInPlan = slice->rootIndex;
 			estate->currentExecutingSliceId = slice->rootIndex;
@@ -677,9 +674,11 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			dtmPreCommand("ExecutorStart", "(none)", queryDesc->plannedstmt,
 						  needDtxTwoPhase, true /* wantSnapshot */, queryDesc->extended_query );
 
-			queryDesc->ddesc->sliceTable = estate->es_sliceTable;
-
-			queryDesc->ddesc->oidAssignments = GetAssignedOidsForDispatch();
+			if (queryDesc->ddesc != NULL)
+			{
+				queryDesc->ddesc->sliceTable = estate->es_sliceTable;
+				queryDesc->ddesc->oidAssignments = GetAssignedOidsForDispatch();
+			}
 
 			/*
 			 * First, see whether we need to pre-execute any initPlan subplans.

@@ -682,7 +682,7 @@ standard_ProcessUtility(Node *parsetree,
 						relOid = DefineRelation((CreateStmt *) stmt,
 												relKind,
 												((CreateStmt *) stmt)->ownerid,
-												relStorage, false);
+												relStorage, false, true);
 
 						/*
 						 * Let AlterTableCreateToastTable decide if this one
@@ -742,6 +742,7 @@ standard_ProcessUtility(Node *parsetree,
 												RELKIND_FOREIGN_TABLE,
 												((CreateStmt *) stmt)->ownerid,
 												RELSTORAGE_FOREIGN,
+												true,
 												true);
 						CreateForeignTable((CreateForeignTableStmt *) stmt,
 										   relOid);
