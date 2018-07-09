@@ -553,7 +553,7 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 					dispatchInfo = GetContentIdsFromPlanForSingleRelation(data->rtable,
 																		 (Plan *) node,
 																		 ((Scan *) node)->scanrelid,
-																		 (Node *) indexOnlyScan->indexqual);
+																		 (Node *) indexOnlyScan->indexqualorig);
 					/* must use _orig_ qual ! */
 				}
 				break;
