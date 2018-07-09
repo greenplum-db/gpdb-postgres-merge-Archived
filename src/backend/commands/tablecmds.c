@@ -13710,8 +13710,8 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 		into->rel = tmprel;
 		into->options = storage_opts;
 		into->tableSpaceName = get_tablespace_name(tblspc);
+		into->distributedBy = (Node *)dist_clause;
 		s->intoClause = into;
-		s->distributedBy = (Node *)dist_clause;
 
 		q_list = pg_analyze_and_rewrite((Node *) s, synthetic_sql, NULL, 0);
 		p_list = pg_plan_queries(q_list, 0, NULL);
