@@ -163,7 +163,7 @@ drop table base;
 
 create table p1(ff1 int);
 create table p2(f1 text);
-create function p2text(p2) returns text as 'select $1.f1' language sql CONTAINS SQL;
+create function p2text(p2) returns text as 'select $1.f1' language sql;
 create table c1(f3 int) inherits(p1,p2);
 insert into c1 values(123456789, 'hi', 42);
 select p2text(c1.*) from c1;
@@ -310,15 +310,17 @@ analyze patest0;
 analyze patest1;
 analyze patest2;
 
+set enable_seqscan=off;
 explain (costs off)
-select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
-select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
 
 drop index patest2i;
 
 explain (costs off)
-select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
-select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
+reset enable_seqscan;
 
 drop table patest0 cascade;
 
