@@ -662,7 +662,6 @@ _readSelectStmt(void)
 	READ_BOOL_FIELD(all);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
-	READ_NODE_FIELD(distributedBy);
 	READ_DONE();
 }
 

@@ -1723,15 +1723,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	processExtendedGrouping(pstate, qry->havingQual, qry->windowClause, qry->targetList);
 
-	/*
-	 * GPDB_92_MERGE_FIXME: This code path seems to be not needed now.
-	 * Generally, we'll only have a distributedBy clause if stmt->into is set,
-	 * with the exception of set op queries, since transformSetOperationStmt()
-	 * sets stmt->into to NULL to avoid complications elsewhere.
-	 */
-	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
-
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
@@ -1961,9 +1952,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
-
-	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
 
 	/*
 	 * There mustn't have been any table references in the expressions, else

@@ -1173,10 +1173,6 @@ typedef struct SelectStmt
 	struct SelectStmt *larg;	/* left child */
 	struct SelectStmt *rarg;	/* right child */
 	/* Eventually add fields for CORRESPONDING spec here */
-
-	/* This field used by: SELECT INTO, CTAS */
-	/* GPDB_91_MERGE_FIXME: why is this not a DistributedBy*? */
-	Node *distributedBy;  /* GPDB: columns to distribute the data on. */
 } SelectStmt;
 
 
