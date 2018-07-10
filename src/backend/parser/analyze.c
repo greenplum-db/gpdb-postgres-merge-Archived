@@ -3541,7 +3541,6 @@ static void
 setQryDistributionPolicy(IntoClause *into, Query *qry)
 {
 	ListCell   *keys = NULL;
-	int			colindex = 0;
 	DistributedBy *dist;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
