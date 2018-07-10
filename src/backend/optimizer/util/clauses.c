@@ -3177,6 +3177,40 @@ eval_const_expressions_mutator(Node *node,
 				else
 					return copyObject(node);
 			}
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr *saop;
+				Node *scalar;
+				Node *values;
+
+				saop = (ScalarArrayOpExpr *) expression_tree_mutator(node, eval_const_expressions_mutator,
+																	 (void *) context);
+
+				Assert( IsA(saop, ScalarArrayOpExpr));
+				Assert( list_length(saop->args) == 2);
+
+				scalar = (Node *) linitial(saop->args);
+				values = (Node *) lsecond(saop->args);
+
+				if ( IsA(scalar, Const) && IsA(values, Const))
+				{
+					Node *result = (Node *) evaluate_expr( (Expr *) saop, BOOLOID, -1, InvalidOid);
+					Assert(IsA(result, Const));
+					return result;
+				}
+
+				/* note a couple things:
+				 *
+				 * 1) If values is not a constant (it could be an ArrayExpr) then that means
+				 *    the ArrayExpr could not be reduced to a constant ...
+				 * 2) We could further improve this by, for OR scalar array ops, extract only the Const values
+				 *    from the array and make a constant out of those to evaluate.  If it evaluates to true then
+				 *    we can return true, otherwise we can return a new ScalarArrayOpExpr with values being
+				 *    only the non-Const values.  This seems overkill: I think      a in (1,2,3,x,y,z)    is rare
+				 */
+
+				return (Node *) saop; /* this has been walked and is a new one */
+			}
 		case T_ArrayExpr:
 			{
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
