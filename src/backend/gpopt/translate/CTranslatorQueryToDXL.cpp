@@ -3445,6 +3445,13 @@ CTranslatorQueryToDXL::PdxlnFromDerivedTable
 	ULONG ulCurrQueryLevel
 	)
 {
+	if (true == prte->security_barrier)
+	{
+		GPOS_ASSERT(RTE_SUBQUERY == prte->rtekind);
+		// otherwise ORCA most likely pushes potentially leaky filters down
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("views with security_barrier ON"));
+	}
+
 	Query *pqueryDerTbl = prte->subquery;
 	GPOS_ASSERT(NULL != pqueryDerTbl);
 
