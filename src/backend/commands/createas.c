@@ -101,8 +101,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
 
-		elog(ERROR, "Create Table As Execute is known to need some work. Error out temporarily to avoid panic which affects other tests sometimes.");
-
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
 
 		return;
@@ -130,6 +128,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 	/* plan the query */
 	plan = pg_plan_query(query, 0, params);
+
+	/*GPDB: Save the target information in PlannedStmt */
+	plan->intoClause = copyObject(stmt->into);
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
@@ -265,7 +266,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	StdRdOptions *stdRdOptions;
 	Datum       reloptions;
 	int         relstorage;
-	bool		validate_reloptions;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
@@ -380,13 +380,9 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 									 true,
 									 false);
 
-	/* get the relstorage (heap or AO tables) */
-	if (queryDesc->ddesc)
-		validate_reloptions = queryDesc->ddesc->validate_reloptions;
-	else
-		validate_reloptions = true;
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
+	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
+												   reloptions,
+												   queryDesc->ddesc->useChangedAOOpts);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
@@ -414,7 +410,12 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * Don't dispatch it yet, as we haven't created the toast and other
 	 * auxiliary tables yet.
 	 */
-	intoRelationId = DefineRelation(create, RELKIND_RELATION, InvalidOid, relstorage, false);
+	intoRelationId = DefineRelation(create,
+									RELKIND_RELATION,
+									InvalidOid,
+									relstorage,
+									false,
+									queryDesc->ddesc->useChangedAOOpts);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that

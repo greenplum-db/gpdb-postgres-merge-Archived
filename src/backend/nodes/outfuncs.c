@@ -334,7 +334,7 @@ _outQueryDispatchDesc(StringInfo str, const QueryDispatchDesc *node)
 	WRITE_NODE_FIELD(oidAssignments);
 	WRITE_NODE_FIELD(sliceTable);
 	WRITE_NODE_FIELD(cursorPositions);
-	WRITE_BOOL_FIELD(validate_reloptions);
+	WRITE_BOOL_FIELD(useChangedAOOpts);
 }
 
 static void
@@ -3401,7 +3401,6 @@ _outSelectStmt(StringInfo str, const SelectStmt *node)
 	WRITE_BOOL_FIELD(all);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
-	WRITE_NODE_FIELD(distributedBy);
 }
 
 static void
@@ -3765,7 +3764,7 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(constraintDeps);
-	WRITE_NODE_FIELD(intoClause);
+	WRITE_BOOL_FIELD(isCTAS);
 
 	/* Don't serialize policy */
 }

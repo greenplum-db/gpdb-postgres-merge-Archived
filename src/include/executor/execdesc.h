@@ -194,7 +194,7 @@ typedef struct QueryDispatchDesc
 	 * queryDesc->dest, use the original table's reloptions. If DestRemote is
 	 * set, use default reloptions + gp_default_storage_options.
 	 */
-	bool validate_reloptions;
+	bool useChangedAOOpts;
 } QueryDispatchDesc;
 
 /*

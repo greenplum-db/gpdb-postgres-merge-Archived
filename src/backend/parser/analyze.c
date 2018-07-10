@@ -119,7 +119,8 @@ static Query *transformCreateTableAsStmt(ParseState *pstate,
 static void transformLockingClause(ParseState *pstate, Query *qry,
 					   LockingClause *lc, bool pushedDown);
 
-static void setQryDistributionPolicy(DistributedBy *dist, Query *qry);
+static int get_distkey_by_name(char *key, IntoClause *into, Query *qry, bool *found);
+static void setQryDistributionPolicy(IntoClause *into, Query *qry);
 
 static Query *transformGroupedWindows(ParseState *pstate, Query *qry);
 static void init_grouped_window_context(grouped_window_ctx *ctx, Query *qry);
@@ -1722,15 +1723,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	processExtendedGrouping(pstate, qry->havingQual, qry->windowClause, qry->targetList);
 
-	/*
-	 * GPDB_92_MERGE_FIXME: This code path seems to be not needed now.
-	 * Generally, we'll only have a distributedBy clause if stmt->into is set,
-	 * with the exception of set op queries, since transformSetOperationStmt()
-	 * sets stmt->into to NULL to avoid complications elsewhere.
-	 */
-	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
-
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
@@ -1960,9 +1952,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
-
-	if (stmt->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->distributedBy, qry);
 
 	/*
 	 * There mustn't have been any table references in the expressions, else
@@ -3247,11 +3236,11 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
 
-	/* Copy intoClause into the query in CTAS. */
-	((Query*)stmt->query)->intoClause = stmt->into;
+	/* GPDB: Set isCTAS to be true as we know this query is for CTAS */
+	((Query*)stmt->query)->isCTAS = true;
 
 	if (stmt->into->distributedBy && Gp_role == GP_ROLE_DISPATCH)
-		setQryDistributionPolicy((DistributedBy *) stmt->into->distributedBy, (Query *) stmt->query);
+		setQryDistributionPolicy(stmt->into, (Query *)stmt->query);
 
 	return result;
 }
@@ -3506,14 +3495,60 @@ applyLockingClause(Query *qry, Index rtindex,
 	qry->rowMarks = lappend(qry->rowMarks, rc);
 }
 
+/*
+ * Get distribute key by name.
+ *
+ * Find the distribute key in into->colNames if it is not NULL, otherwise
+ * search qry->targetList.
+ */
+static int
+get_distkey_by_name(char *key, IntoClause *into, Query *qry, bool *found)
+{
+	ListCell   *lc;
+	if (into->colNames)
+	{
+		int colindex = 1;
+		foreach(lc, into->colNames)
+		{
+			if (strcmp(strVal(lfirst(lc)), key) == 0)
+			{
+				*found = true;
+				return colindex;
+			}
+
+			colindex++;
+		}
+	}
+	else
+	{
+		foreach(lc, qry->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+			if (tle->resname && strcmp(tle->resname, key) == 0)
+			{
+				*found = true;
+				return tle->resno;
+			}
+		}
+	}
+
+	*found = false;
+	return 0;
+}
+
 static void
-setQryDistributionPolicy(DistributedBy *dist, Query *qry)
+setQryDistributionPolicy(IntoClause *into, Query *qry)
 {
 	ListCell   *keys = NULL;
 	int			colindex = 0;
+	DistributedBy *dist;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
-	Assert(dist != NULL);
+	Assert(into != NULL);
+	Assert(into->distributedBy != NULL);
+
+	dist = (DistributedBy *)into->distributedBy;
 
 	/*
 	 * We have a DISTRIBUTED BY column list specified by the user
@@ -3534,19 +3569,9 @@ setQryDistributionPolicy(DistributedBy *dist, Query *qry)
 		{
 			char	   *key = strVal(lfirst(keys));
 			bool		found = false;
-			AttrNumber	n;
+			int keyindex;
 
-			for (n=1; n <= list_length(qry->targetList); n++)
-			{
-				TargetEntry *target = get_tle_by_resno(qry->targetList, n);
-				colindex = n;
-
-				if (target->resname && strcmp(target->resname, key) == 0)
-				{
-					found = true;
-					break;
-				}
-			}
+			keyindex = get_distkey_by_name(key, into, qry, &found);
 
 			if (!found)
 				ereport(ERROR,
@@ -3555,7 +3580,7 @@ setQryDistributionPolicy(DistributedBy *dist, Query *qry)
 								"clause does not exist",
 								key)));
 
-			policykeys = lappend_int(policykeys, colindex);
+			policykeys = lappend_int(policykeys, keyindex);
 		}
 
 		qry->intoPolicy = createHashPartitionedPolicy(NULL, policykeys);

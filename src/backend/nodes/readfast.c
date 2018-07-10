@@ -253,7 +253,7 @@ _readQuery(void)
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(constraintDeps);
-	READ_NODE_FIELD(intoClause);
+	READ_BOOL_FIELD(isCTAS);
 
 	/* policy not serialized */
 
@@ -662,7 +662,6 @@ _readSelectStmt(void)
 	READ_BOOL_FIELD(all);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
-	READ_NODE_FIELD(distributedBy);
 	READ_DONE();
 }
 
@@ -1486,7 +1485,7 @@ _readQueryDispatchDesc(void)
 	READ_NODE_FIELD(oidAssignments);
 	READ_NODE_FIELD(sliceTable);
 	READ_NODE_FIELD(cursorPositions);
-	READ_BOOL_FIELD(validate_reloptions);
+	READ_BOOL_FIELD(useChangedAOOpts);
 	READ_DONE();
 }
 

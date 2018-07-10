@@ -989,7 +989,7 @@ _equalQuery(const Query *a, const Query *b)
 	if (!GpPolicyEqual(a->intoPolicy, b->intoPolicy))
 		return false;
 
-	COMPARE_NODE_FIELD(intoClause);
+	COMPARE_SCALAR_FIELD(isCTAS);
 
 	return true;
 }
@@ -1053,7 +1053,6 @@ _equalSelectStmt(const SelectStmt *a, const SelectStmt *b)
 	COMPARE_SCALAR_FIELD(all);
 	COMPARE_NODE_FIELD(larg);
 	COMPARE_NODE_FIELD(rarg);
-	COMPARE_NODE_FIELD(distributedBy);
 
 	return true;
 }

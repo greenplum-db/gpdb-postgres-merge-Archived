@@ -248,7 +248,7 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->relKind = RELKIND_SEQUENCE;
 	stmt->ownerid = GetUserId();
 
-	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, RELSTORAGE_HEAP, false);
+	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE, seq->ownerId, RELSTORAGE_HEAP, false, true);
 	Assert(seqoid != InvalidOid);
 
 	/*

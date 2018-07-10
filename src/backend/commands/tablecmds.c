@@ -500,7 +500,7 @@ static void inherit_parent(Relation parent_rel, Relation child_rel,
  * ----------------------------------------------------------------
  */
 Oid
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch)
+DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch, bool useChangedOpts)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
@@ -825,7 +825,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 					 errhint("Use OIDS=FALSE.")));
 	}
 
-	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
+	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL || !useChangedOpts);
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
@@ -13645,6 +13645,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	TupleDesc	tupdesc;
 	int			attno;
 	bool		pre_built;
+	IntoClause	*into = NULL;
 
 	tupdesc = RelationGetDescr(rel);
 
@@ -13705,11 +13706,12 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 		Oid tblspc = rel->rd_rel->reltablespace;
 		List *q_list, *p_list;
 
-		s->intoClause = makeNode(IntoClause);
-		s->intoClause->rel = tmprel;
-		s->intoClause->options = storage_opts;
-		s->intoClause->tableSpaceName = get_tablespace_name(tblspc);
-		s->distributedBy = (Node *)dist_clause;
+		into = makeNode(IntoClause);
+		into->rel = tmprel;
+		into->options = storage_opts;
+		into->tableSpaceName = get_tablespace_name(tblspc);
+		into->distributedBy = (Node *)dist_clause;
+		s->intoClause = into;
 
 		q_list = pg_analyze_and_rewrite((Node *) s, synthetic_sql, NULL, 0);
 		p_list = pg_plan_queries(q_list, 0, NULL);
@@ -13738,6 +13740,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 
 	/* plan the query */
 	stmt = planner(q, 0, NULL);
+	stmt->intoClause = into;
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
@@ -14533,6 +14536,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		gp_singleton_segindex = 0;
 
 		/* Step (c) - run on all nodes */
+		queryDesc->ddesc = makeNode(QueryDispatchDesc);
+		queryDesc->ddesc->useChangedAOOpts = false;
 		ExecutorStart(queryDesc, 0);
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 		queryDesc->dest->rDestroy(queryDesc->dest);
