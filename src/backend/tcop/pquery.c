@@ -30,6 +30,7 @@
 
 #include "cdb/ml_ipc.h"
 #include "commands/queue.h"
+#include "commands/createas.h"
 #include "executor/spi.h"
 #include "postmaster/autostats.h"
 #include "postmaster/backoff.h"
