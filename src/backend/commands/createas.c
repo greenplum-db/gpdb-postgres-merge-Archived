@@ -133,6 +133,11 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	plan = pg_plan_query(query, 0, params);
 
 	/*GPDB: Save the target information in PlannedStmt */
+
+	/*
+	 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
+	 * to correctly set the into-clause and into-policy of the PlannedStmt.
+	 */
 	plan->intoClause = copyObject(stmt->into);
 
 	/*
