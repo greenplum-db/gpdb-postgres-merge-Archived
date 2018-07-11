@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "commands/createas.h"
 #include "commands/prepare.h"
 #include "executor/tstoreReceiver.h"
 #include "miscadmin.h"
