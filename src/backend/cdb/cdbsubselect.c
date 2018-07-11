@@ -649,6 +649,7 @@ safe_to_convert_NOTIN(SubLink *sublink, Relids available_rels)
 {
 	Query	   *subselect = (Query *) sublink->subselect;
 	Relids		left_varnos;
+	Relids		upper_varnos_level1;
 
 	/* cases we don't currently handle are listed below. */
 
@@ -677,6 +678,18 @@ safe_to_convert_NOTIN(SubLink *sublink, Relids available_rels)
 	 * However, it can't refer to anything outside available_rels.
 	 */
 	if (!bms_is_subset(left_varnos, available_rels))
+		return false;
+
+	/*
+	 * GPDB_92_MERGE_FIXME:
+	 * select * from A,B where exists
+	 * 	(select * from E where E.j = A.j and B.i not in (select E.i from E where E.i != 10));
+	 */
+	upper_varnos_level1 = pull_upper_varnos(sublink->subselect);
+	if (bms_is_empty(upper_varnos_level1))
+		return false;
+
+	if (!bms_is_subset(upper_varnos_level1, left_varnos))
 		return false;
 
 	/* Correlation - subquery referencing Vars of parent not handled */
