@@ -133,6 +133,7 @@ int			max_stack_depth = 100;
 /* wait N seconds to allow attach from a debugger */
 int			PostAuthDelay = 0;
 
+
 /*
  * Hook for extensions, to get notified when query cancel or DIE signal is
  * received. This allows the extension to stop whatever it's doing as

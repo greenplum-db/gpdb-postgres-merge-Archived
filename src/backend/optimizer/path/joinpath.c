@@ -214,15 +214,11 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * outer paths.  There's no need to consider any but the
 	 * cheapest-total-cost inner path, however.
 	 */
-	if (root->config->enable_hashjoin ||
-		jointype == JOIN_FULL ||
-		root->config->mpp_trying_fallback_plan)
-	{
+	if (root->config->enable_hashjoin || jointype == JOIN_FULL)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, jointype,
 							 sjinfo, &semifactors, param_source_rels,
 							 mergeclause_list);
-	}
 }
 
 /*
@@ -736,10 +732,6 @@ match_unsorted_outer(PlannerInfo *root,
 			break;
 	}
 
-	if (!root->config->enable_nestloop
-			&& !root->config->mpp_trying_fallback_plan)
-		nestjoinOK = false;
-
 	/*
 	 * If we need to unique-ify the inner path, we will consider only the
 	 * cheapest-total inner.
@@ -885,10 +877,7 @@ match_unsorted_outer(PlannerInfo *root,
 		 * supports FULL JOIN without any join clauses, it's necessary to
 		 * generate a clauseless mergejoin path instead.
 		 */
-		if (mergeclauses == NIL
-				|| (!root->config->enable_mergejoin
-						&& !root->config->mpp_trying_fallback_plan)
-			)
+		if (mergeclauses == NIL)
 		{
 			if (jointype == JOIN_FULL)
 				 /* okay to try for mergejoin */ ;

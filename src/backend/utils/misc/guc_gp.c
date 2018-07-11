@@ -89,6 +89,7 @@ static void assign_gp_default_storage_options(const char *newval, void *extra);
 
 static bool check_pljava_classpath_insecure(bool *newval, void **extra, GucSource source);
 static void assign_pljava_classpath_insecure(bool newval, void *extra);
+static bool check_gp_resource_group_bypass(bool *newval, void **extra, GucSource source);
 
 extern struct config_generic *find_option(const char *name, bool create_placeholders, int elevel);
 
@@ -147,7 +148,6 @@ bool		Debug_appendonly_rezero_quicklz_compress_scratch = false;
 bool		Debug_appendonly_rezero_quicklz_decompress_scratch = false;
 bool		Debug_appendonly_guard_end_quicklz_scratch = false;
 bool		gp_local_distributed_cache_stats = false;
-bool		Debug_xlog_insert_print = false;
 bool		debug_xlog_record_read = false;
 bool		Debug_cancel_print = false;
 bool		Debug_datumstream_write_print_small_varlena_info = false;
@@ -263,6 +263,7 @@ bool		gp_debug_resqueue_priority = false;
 int			gp_resource_group_cpu_priority;
 double		gp_resource_group_cpu_limit;
 double		gp_resource_group_memory_limit;
+bool		gp_resource_group_bypass;
 
 /* Perfmon segment GUCs */
 int			gp_perfmon_segment_interval;
@@ -325,7 +326,6 @@ bool		dml_ignore_target_partition_check = false;
 
 /* Planner gucs */
 bool		gp_enable_hashjoin_size_heuristic = false;
-bool		gp_enable_fallback_plan = true;
 bool		gp_enable_predicate_propagation = false;
 bool		gp_enable_minmax_optimization = true;
 bool		gp_enable_multiphase_agg = true;
@@ -480,6 +480,8 @@ bool		gp_enable_segment_copy_checking = true;
 char	   *gp_default_storage_options = NULL;
 
 int			writable_external_table_bufsize = 64;
+
+bool		gp_external_enable_filter_pushdown = false;
 
 /* Executor */
 bool		gp_enable_mk_sort = true;
@@ -683,17 +685,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_enable_hashjoin_size_heuristic,
 		false,
-		NULL, NULL, NULL
-	},
-	{
-		{"gp_enable_fallback_plan", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Plan types which are not enabled may be used when a "
-						 "query would be infeasible without them."),
-			gettext_noop("If false, planner rejects queries that cannot be "
-						 "satisfied using only the enabled plan types.")
-		},
-		&gp_enable_fallback_plan,
-		true,
 		NULL, NULL, NULL
 	},
 	{
@@ -1609,17 +1600,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"debug_xlog_insert_print", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Print XLOG Insert record debugging information."),
-			NULL,
-			GUC_SUPERUSER_ONLY | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&Debug_xlog_insert_print,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"debug_xlog_record_read", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Print debug information for xlog record read."),
 			NULL,
@@ -1839,7 +1819,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 	{
 		{"gp_enable_query_metrics", PGC_POSTMASTER, UNGROUPED,
 			gettext_noop("Enable all query metrics collection."),
-			NULL	
+			NULL
 		},
 		&gp_enable_query_metrics,
 		false,
@@ -3105,6 +3085,26 @@ struct config_bool ConfigureNamesBool_gp[] =
 		true, check_verify_gpfdists_cert, NULL
 	},
 
+	{
+		{"gp_external_enable_filter_pushdown", PGC_USERSET, EXTERNAL_TABLES,
+			gettext_noop("Enable passing of query constraints to external table providers"),
+			NULL,
+			GUC_GPDB_ADDOPT
+		},
+		&gp_external_enable_filter_pushdown,
+		false, NULL, NULL
+	},
+
+	{
+		{"gp_resource_group_bypass", PGC_USERSET, RESOURCES,
+			gettext_noop("If the value is true, the query in this session will not be limited by resource group."),
+			NULL
+		},
+		&gp_resource_group_bypass,
+		false,
+		check_gp_resource_group_bypass, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -3990,12 +3990,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			NULL,
 		},
 		&gp_vmem_protect_limit,
-#ifdef __darwin__
-		0,
-#else
-		8192,
-#endif
-		0, INT_MAX / 2,
+		8192, 0, INT_MAX / 2,
 		NULL, NULL, NULL
 	},
 
@@ -5244,6 +5239,16 @@ assign_pljava_classpath_insecure(bool newval, void *extra)
 }
 
 static bool
+check_gp_resource_group_bypass(bool *newval, void **extra, GucSource source)
+{
+	if (!ResGroupIsAssigned())
+		return true;
+
+	GUC_check_errmsg("SET gp_resource_group_bypass cannot run inside a transaction block");
+	return false;
+}
+
+static bool
 check_gp_workfile_compress_algorithm(char **newval, void **extra, GucSource source)
 {
 	int			i = bfz_string_to_compression(*newval);
@@ -5268,7 +5273,10 @@ check_optimizer(bool *newval, void **extra, GucSource source)
 {
 #ifndef USE_ORCA
 	if (*newval)
+	{
 		GUC_check_errmsg("ORCA is not supported by this build");
+		return false;
+	}
 #endif
 
 	if (!optimizer_control)
@@ -5288,7 +5296,7 @@ check_verify_gpfdists_cert(bool *newval, void **extra, GucSource source)
 {
 	if (!*newval && Gp_role == GP_ROLE_DISPATCH)
 		elog(WARNING, "verify_gpfdists_cert=off. Greenplum Database will stop validating "
-				"the gpfidsts SSL certificate for connections between segments and gpfdists");
+				"the gpfdists SSL certificate for connections between segments and gpfdists");
 	return true;
 }
 

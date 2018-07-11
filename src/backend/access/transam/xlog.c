@@ -771,14 +771,6 @@ static void SetCurrentChunkStartTime(TimestampTz xtime);
 static int XLogFileReadAnyTLI(uint32 log, uint32 seg, int emode, int sources);
 static void XLogProcessCheckpointRecord(XLogRecord *rec, XLogRecPtr loc);
 
-typedef struct RedoErrorCallBack
-{
-	XLogRecPtr	location;
-
-	XLogRecord 	*record;
-} RedoErrorCallBack;
-
-
 static void GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg);
 static void checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr);
 
@@ -1224,7 +1216,8 @@ begin:;
 	Insert->currpos += SizeOfXLogRecord;
 	freespace -= SizeOfXLogRecord;
 
-	if (Debug_xlog_insert_print)
+#ifdef WAL_DEBUG
+	if (XLOG_DEBUG)
 	{
 		StringInfoData buf;
 		char *contiguousCopy;
@@ -1238,12 +1231,13 @@ begin:;
 
 		contiguousCopy = XLogContiguousCopy(record, rdata);
 		appendStringInfo(&buf, " - ");
-		RmgrTable[record->xl_rmid].rm_desc(&buf, RecPtr, (XLogRecord*)contiguousCopy);
+		RmgrTable[record->xl_rmid].rm_desc(&buf, (XLogRecord*)contiguousCopy);
 		pfree(contiguousCopy);
 
 		elog(LOG, "%s", buf.data);
 		pfree(buf.data);
 	}
+#endif
 
 	/*
 	 * Append the data, including backup blocks if any
@@ -6386,16 +6380,12 @@ ApplyStartupRedo(
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
-	RedoErrorCallBack redoErrorCallBack;
 
 	ErrorContextCallback errcontext;
 
 	/* Setup error traceback support for ereport() */
-	redoErrorCallBack.location = *beginLoc;
-	redoErrorCallBack.record = record;
-
 	errcontext.callback = rm_redo_error_callback;
-	errcontext.arg = (void *) &redoErrorCallBack;
+	errcontext.arg = (void *) record;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
@@ -6951,19 +6941,10 @@ StartupXLOG(void)
 
 	LastRec = RecPtr = checkPointLoc;
 
-	/*
-	 * Currently, standby mode (WAL based replication support) is not provided
-	 * to segments.
-	 * Hence it's okay to do the following only once on the segments as there
-	 * will be only one checkpoint to be analyzed.
-	 */
-	if (!IS_QUERY_DISPATCHER())
-	{
-		CheckpointExtendedRecord ckptExtended;
-		UnpackCheckPointRecord(record, &ckptExtended);
-		if (ckptExtended.ptas)
-			SetupCheckpointPreparedTransactionList(ckptExtended.ptas);
-	}
+	CheckpointExtendedRecord ckptExtended;
+	UnpackCheckPointRecord(record, &ckptExtended);
+	if (ckptExtended.ptas)
+		SetupCheckpointPreparedTransactionList(ckptExtended.ptas);
 
 	/*
 	 * Find Xacts that are distributed committed from the checkpoint record and
@@ -7318,8 +7299,6 @@ StartupXLOG(void)
 			 */
 			do
 			{
-				// GPDB_91_MERGE_FIXME
-#if 0
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG ||
 				 (rmid == RM_XACT_ID && trace_recovery_messages <= DEBUG2) ||
@@ -7333,13 +7312,10 @@ StartupXLOG(void)
 									 EndRecPtr.xlogid, EndRecPtr.xrecoff);
 					xlog_outrec(&buf, record);
 					appendStringInfo(&buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(&buf,
-													   record->xl_info,
-													 XLogRecGetData(record));
+					RmgrTable[record->xl_rmid].rm_desc(&buf, record);
 					elog(LOG, "%s", buf.data);
 					pfree(buf.data);
 				}
-#endif
 #endif
 				/* Handle interrupt signals of startup process */
 				HandleStartupProcInterrupts();
@@ -10399,7 +10375,7 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 }
 
 void
-xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+xlog_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);
@@ -11582,14 +11558,11 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 static void
 rm_redo_error_callback(void *arg)
 {
-	RedoErrorCallBack *redoErrorCallBack = (RedoErrorCallBack*) arg;
+	XLogRecord *record = (XLogRecord *) arg;
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	RmgrTable[redoErrorCallBack->record->xl_rmid].rm_desc(
-												   &buf,
-												   redoErrorCallBack->location,
-												   redoErrorCallBack->record);
+	RmgrTable[record->xl_rmid].rm_desc(&buf, record);
 
 	/* don't bother emitting empty description */
 	if (buf.len > 0)
@@ -12469,4 +12442,18 @@ SetWalWriterSleeping(bool sleeping)
 	SpinLockAcquire(&xlogctl->info_lck);
 	xlogctl->WalWriterSleeping = sleeping;
 	SpinLockRelease(&xlogctl->info_lck);
+}
+
+void
+wait_for_mirror()
+{
+    XLogwrtResult tmpLogwrtResult;
+    /* use volatile pointer to prevent code rearrangement */
+    volatile XLogCtlData *xlogctl = XLogCtl;
+
+    SpinLockAcquire(&xlogctl->info_lck);
+    tmpLogwrtResult = xlogctl->LogwrtResult;
+    SpinLockRelease(&xlogctl->info_lck);
+
+    SyncRepWaitForLSN(tmpLogwrtResult.Flush);
 }

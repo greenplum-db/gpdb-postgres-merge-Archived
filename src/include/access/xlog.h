@@ -315,7 +315,7 @@ extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
 				   bool get_cleanup_lock, bool keep_buffer);
 
 extern void xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribute__((unused)), XLogRecord *record);
-extern void xlog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void xlog_desc(StringInfo buf, XLogRecord *record);
 
 extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
 
@@ -412,4 +412,5 @@ extern bool IsBkpBlockApplied(XLogRecord *record, uint8 block_id);
 extern XLogRecPtr
 last_xlog_replay_location(void);
 
+extern void wait_for_mirror(void);
 #endif   /* XLOG_H */

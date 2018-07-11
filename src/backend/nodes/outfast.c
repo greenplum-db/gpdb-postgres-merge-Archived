@@ -668,7 +668,6 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 	WRITE_BOOL_FIELD(hypothetical);
 
 	WRITE_BOOL_FIELD(amoptionalkey);
-	WRITE_BOOL_FIELD(cdb_default_stats_used);
 }
 
 /*****************************************************************************
@@ -848,6 +847,8 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	WRITE_CHAR_FIELD(storage);
 	WRITE_NODE_FIELD(raw_default);
 	WRITE_NODE_FIELD(cooked_default);
+	WRITE_NODE_FIELD(collClause);
+	WRITE_OID_FIELD(collOid);
 	WRITE_NODE_FIELD(constraints);
 	WRITE_NODE_FIELD(encoding);
 }

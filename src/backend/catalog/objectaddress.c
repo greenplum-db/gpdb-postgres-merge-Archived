@@ -39,6 +39,8 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_resgroup.h"
+#include "catalog/pg_resqueue.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_ts_config.h"
@@ -50,6 +52,8 @@
 #include "commands/defrem.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
+#include "commands/queue.h"
+#include "commands/resgroupcmds.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "foreign/foreign.h"
@@ -1062,6 +1066,8 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
+		case OBJECT_RESQUEUE:
+		case OBJECT_RESGROUP:
 			/* We treat these object types as being owned by superusers */
 			if (!superuser_arg(roleid))
 				ereport(ERROR,

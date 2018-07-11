@@ -19,7 +19,7 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-extern void RelationCreateStorage(RelFileNode rnode, char relpersistence);
+extern void RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage);
 extern void RelationDropStorage(Relation rel);
 extern void RelationPreserveStorage(RelFileNode rnode, bool atCommit);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
@@ -29,7 +29,7 @@ extern void RelationTruncate(Relation rel, BlockNumber nblocks);
  * naming
  */
 extern void smgrDoPendingDeletes(bool isCommit);
-extern int	smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr);
+extern int	smgrGetPendingDeletes(bool forCommit, RelFileNodeWithStorageType **ptr);
 extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);
@@ -37,6 +37,6 @@ extern void PostPrepare_smgr(void);
 extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
 
 extern void smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void smgr_desc(StringInfo buf, XLogRecord *record);
 
 #endif   /* STORAGE_H */

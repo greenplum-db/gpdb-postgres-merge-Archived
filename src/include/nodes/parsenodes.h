@@ -1267,7 +1267,8 @@ typedef enum ObjectType
 	OBJECT_TSTEMPLATE,
 	OBJECT_TYPE,
 	OBJECT_VIEW,
-	OBJECT_RESQUEUE
+	OBJECT_RESQUEUE,
+	OBJECT_RESGROUP
 } ObjectType;
 
 /* ----------------------
@@ -2874,7 +2875,9 @@ typedef enum VacuumOption
 	VACOPT_FREEZE = 1 << 3,		/* FREEZE option */
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
-	VACOPT_ROOTONLY = 1 << 6	/* only ANALYZE root partition tables */
+	VACOPT_ROOTONLY = 1 << 6,	/* only ANALYZE root partition tables */
+	VACOPT_MERGE = 1 << 7,		/* merge stats */
+	VACOPT_FULLSCAN = 1 << 8	/* ANALYZE using full table scan */
 } VacuumOption;
 
 typedef enum AOVacuumPhase

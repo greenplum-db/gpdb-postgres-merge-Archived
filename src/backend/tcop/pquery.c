@@ -1383,7 +1383,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	else
 		active_snapshot_set = false;
 
-	/* check if this utility statement need to be involved into resoure queue
+	/* check if this utility statement need to be involved into resource queue
 	 * mgmt */
 	ResHandleUtilityStmt(portal, utilityStmt);
 

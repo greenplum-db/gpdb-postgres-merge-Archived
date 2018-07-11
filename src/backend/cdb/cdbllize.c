@@ -755,7 +755,9 @@ ParallelizeSubplan(SubPlan *spExpr, PlanProfile *context)
 
 	Plan	   *origPlan = planner_subplan_get_plan(context->root, spExpr);
 
-	bool		containingPlanDistributed = (context->currentPlanFlow && context->currentPlanFlow->flotype == FLOW_PARTITIONED);
+	bool		containingPlanDistributed = (context->currentPlanFlow &&
+											 (context->currentPlanFlow->flotype == FLOW_PARTITIONED ||
+											  context->currentPlanFlow->flotype == FLOW_REPLICATED));
 	bool		subPlanDistributed = (origPlan->flow && origPlan->flow->flotype == FLOW_PARTITIONED);
 	bool		hasParParam = (list_length(spExpr->parParam) > 0);
 
@@ -794,7 +796,19 @@ ParallelizeSubplan(SubPlan *spExpr, PlanProfile *context)
 			focusPlan(newPlan, false /* stable */ , false /* rescannable */ );
 		}
 
-		newPlan = materialize_subplan(context->root, newPlan);
+		if (containingPlanDistributed &&
+			newPlan->flow->flotype == FLOW_SINGLETON &&
+			newPlan->flow->locustype == CdbLocusType_SegmentGeneral)
+		{
+			/*
+			 * Nothing to do, the data is already replicated on segments,
+			 * no need to add a motion or materialize.
+			 */
+		}
+		else
+		{
+			newPlan = materialize_subplan(context->root, newPlan);
+		}
 	}
 
 	/*
@@ -1032,14 +1046,13 @@ focusPlan(Plan *plan, bool stable, bool rescannable)
 {
 	Assert(plan->flow && plan->flow->flotype != FLOW_UNDEFINED);
 
-	/* Already focused and flow is not CdbLocusType_SegmentGeneral, Do nothing. */
+	/*
+	 * Already focused and flow is CdbLocusType_SingleQE, CdbLocusType_Entry,
+	 * do nothing.
+	 */
 	if (plan->flow->flotype == FLOW_SINGLETON &&
 		plan->flow->locustype != CdbLocusType_SegmentGeneral)
 		return true;
-
-	/* TODO How specify deep-six? */
-	if (plan->flow->flotype == FLOW_REPLICATED)
-		return false;
 
 	return adjustPlanFlow(plan, stable, rescannable, MOVEMENT_FOCUS, NIL);
 }
@@ -1051,6 +1064,11 @@ bool
 broadcastPlan(Plan *plan, bool stable, bool rescannable)
 {
 	Assert(plan->flow && plan->flow->flotype != FLOW_UNDEFINED);
+
+	/* Already focused and flow is CdbLocusType_SegmentGeneral, do nothing. */
+	if (plan->flow->flotype == FLOW_SINGLETON &&
+		plan->flow->locustype == CdbLocusType_SegmentGeneral)
+		return true;
 
 	return adjustPlanFlow(plan, stable, rescannable, MOVEMENT_BROADCAST, NIL);
 }

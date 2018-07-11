@@ -233,13 +233,9 @@ create_bitmap_scan_path(PlannerInfo *root,
  * 'rel' is the relation for which we want to generate index paths
  *
  * Note: check_partial_indexes() must have been run previously for this rel.
- *
- * CDB: Instead of handing the paths to add_path(), we append them to a List
- * (*pindexpathlist or *pbitmappathlist) belonging to the caller.
  */
 void
-create_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				   List **pindexpathlist, List **pbitmappathlist)
+create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *indexpaths;
 	List	   *bitindexpaths;
@@ -345,11 +341,11 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	if (bitindexpaths != NIL)
 	{
 		Path	   *bitmapqual;
-		Path *path;
+		Path *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		path = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
-		*pbitmappathlist = lappend(*pbitmappathlist, path);
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
+		add_path(rel, (Path *) bpath);
 	}
 
 	/*
@@ -365,14 +361,14 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *bitmapqual;
 		Relids		required_outer;
 		double		loop_count;
-		Path *path;
+		Path *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
 		required_outer = get_bitmap_tree_required_outer(bitmapqual);
 		loop_count = get_loop_count(root, required_outer);
-		path = create_bitmap_scan_path(root, rel, bitmapqual,
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
 										required_outer, loop_count);
-		*pbitmappathlist = lappend(*pbitmappathlist, path);
+		add_path(rel, (Path *) bpath);
 	}
 }
 
@@ -609,12 +605,19 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			ipath->indexinfo->unique)
 			rel->onerow = true;
 
-		if (index->amhasgettuple)
-			*pindexpathlist = lappend(*pindexpathlist, ipath);
+		/*
+		 * Random access to Append-Only is slow because AO doesn't use the buffer
+		 * pool and we want to avoid decompressing blocks multiple times.  So,
+		 * only consider bitmap paths because they are processed in TID order.
+		 * The appendonlyam.c module will optimize fetches in TID order by keeping
+		 * the last decompressed block between fetch calls.
+		 */
+		if (index->amhasgettuple &&
+			rel->relstorage == RELSTORAGE_HEAP)
+			add_path(root, rel, (Path *) ipath);
 
-		if (index->amhasgetbitmap &&
-			(!root->config->enable_seqscan || /*GPDB_92_MERGE_FIXME: is this needed?*/
-			 ipath->path.pathkeys == NIL ||
+		if (index->amhasgettuple &&
+			(ipath->path.pathkeys == NIL ||
 			 ipath->indexselectivity < 1.0))
 			*bitindexpaths = lappend(*bitindexpaths, ipath);
 	}

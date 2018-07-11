@@ -393,13 +393,6 @@ set_cheapest(PlannerInfo *root, RelOptInfo *parent_rel)
 
 	Assert(IsA(parent_rel, RelOptInfo));
 
-	/* CDB: Empty pathlist is possible if user set some enable_xxx = off. */
-	if (parent_rel->pathlist == NIL)
-	{
-		parent_rel->cheapest_startup_path = parent_rel->cheapest_total_path = NULL;
-		return;
-	}
-
 	cheapest_startup_path = cheapest_total_path = NULL;
 	have_parameterized_paths = false;
 
@@ -3124,7 +3117,7 @@ create_mergejoin_path(PlannerInfo *root,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
-	MergePath  *pathnode;
+	MergePath  *pathnode = makeNode(MergePath);
 	CdbPathLocus join_locus;
 	List	   *outermotionkeys;
 	List	   *innermotionkeys;
@@ -3165,9 +3158,7 @@ create_mergejoin_path(PlannerInfo *root,
 		preserve_inner_ordering = (innersortkeys == NIL);
 	}
 	else
-	{
 		preserve_outer_ordering = preserve_inner_ordering = false;
-	}
 
 	join_locus = cdbpath_motion_for_join(root,
 										 jointype,
@@ -3191,16 +3182,6 @@ create_mergejoin_path(PlannerInfo *root,
 	if (innermotionkeys &&
 		inner_path->pathkeys)
 		innersortkeys = NIL;
-
-	/* If user doesn't want sort, but this MJ requires a sort, fail. */
-	if (!root->config->enable_sort &&
-		!root->config->mpp_trying_fallback_plan)
-	{
-		if (outersortkeys || innersortkeys)
-			return NULL;
-	}
-
-	pathnode = makeNode(MergePath);
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
@@ -3298,8 +3279,7 @@ create_hashjoin_path(PlannerInfo *root,
 	 * input path.
 	 */
 	if (jointype == JOIN_INNER &&
-		root->config->gp_enable_hashjoin_size_heuristic &&
-		!root->config->mpp_trying_fallback_plan)
+		root->config->gp_enable_hashjoin_size_heuristic)
 	{
 		double		outersize;
 		double		innersize;

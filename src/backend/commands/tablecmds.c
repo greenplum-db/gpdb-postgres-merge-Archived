@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/aocs_compaction.h"
+#include "access/aomd.h"
 #include "access/appendonlywriter.h"
 #include "access/bitmap.h"
 #include "access/genam.h"
@@ -422,7 +423,6 @@ static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
 								 Oid oldrelid, void *arg);
 
 
-static void copy_append_only_data(RelFileNode src, RelFileNode dst, BackendId backendid, char relpersistence);
 static void ATExecSetDistributedBy(Relation rel, Node *node,
 								   AlterTableCmd *cmd);
 static void ATPrepExchange(Relation rel, AlterPartitionCmd *pc);
@@ -854,7 +854,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
                                           reloptions,
 										  true,
 										  allowSystemTableModsDDL,
-										  valid_opts);
+										  valid_opts,
+										  stmt->is_part_child);
 
 	/*
 	 * Give a warning if you use OIDS=TRUE on user tables. We do this after calling
@@ -1853,6 +1854,21 @@ ExecuteTruncate(TruncateStmt *stmt)
 	foreach(cell, rels)
 	{
 		Relation	rel = (Relation) lfirst(cell);
+
+		if (RelationIsAppendOptimized(rel) && IS_QUERY_DISPATCHER())
+		{
+			/*
+			 * Drop the shared memory hash table entry for this table if it
+			 * exists. We must do so since before the rewrite we probably have few
+			 * non-zero segfile entries for this table while after the rewrite
+			 * only segno zero will be full and the others will be empty. By
+			 * dropping the hash entry we force refreshing the entry from the
+			 * catalog the next time a write into this AO table comes along.
+			 */
+			LWLockAcquire(AOSegFileLock, LW_EXCLUSIVE);
+			AORelRemoveHashEntry(RelationGetRelid(rel));
+			LWLockRelease(AOSegFileLock);
+		}
 
 		heap_close(rel, NoLock);
 	}
@@ -3894,10 +3910,6 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_PartSplit:
 			case AT_PartTruncate:
 			case AT_PartAddInternal:
-				/*
-				 * GPDB_91_MERGE_FIXME: Is AccessExclusiveLock unnecessarily strict for
-				 * some of these?
-				 */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -7137,76 +7149,6 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 			elog(ERROR, "unexpected ALTER TABLE subtype %d in ADD COLUMN command",
 				 cmd->subtype);
 	}
-
-	/* GPDB_91_MERGE_FIXME: I don't know if this is still needed or not.
-	 * Perhaps not, because of the new way OIDs are dispatched. We'll see when
-	 * we get to test this, I suppose.
-	 */
-#if 0
-	if (recurse)
-	{
-		/*
-		 * We are the master and the table has child(ren):
-		 * 		internally create and execute new AlterTableStmt(s) on child(ren)
-		 * 		before dispatching the original AlterTableStmt
-		 * This is to ensure that pg_constraint oid is consistent across segments for
-		 * 		ALTER TABLE ... ADD COLUMN ... CHECK ...
-		 */
-		if (Gp_role == GP_ROLE_DISPATCH)
-		{
-			List		*children;
-			ListCell	*lchild;
-
-			children = find_inheritance_children(RelationGetRelid(rel), NoLock);
-			DestReceiver *dest = None_Receiver;
-			foreach(lchild, children)
-			{
-				Oid 			childrelid = lfirst_oid(lchild);
-				Relation 		childrel;
-
-				RangeVar 		*rv;
-				AlterTableCmd 	*atc;
-				AlterTableStmt 	*ats;
-
-				if (childrelid == RelationGetRelid(rel))
-					continue;
-
-				childrel = heap_open(childrelid, AccessShareLock);
-				CheckTableNotInUse(childrel, "ALTER TABLE");
-
-				/* Recurse to child */
-				atc = copyObject(cmd);
-				if (cmd->subtype == AT_AddColumn || cmd->subtype == AT_AddColumnRecurse)
-					atc->subtype = AT_AddColumnRecurse;
-				else if (cmd->subtype == AT_AddOids)
-					atc->subtype = AT_AddOidsRecurse;
-				else
-					elog(ERROR, "unexpected ALTER TABLE subtype %d in ADD COLUMN command",
-						 cmd->subtype);
-
-				/* Child should see column as singly inherited */
-				((ColumnDef *) atc->def)->inhcount = 1;
-				((ColumnDef *) atc->def)->is_local = false;
-
-				rv = makeRangeVar(get_namespace_name(RelationGetNamespace(childrel)),
-								  get_rel_name(childrelid), -1);
-
-				ats = makeNode(AlterTableStmt);
-				ats->relation = rv;
-				ats->cmds = list_make1(atc);
-				ats->relkind = OBJECT_TABLE;
-
-				heap_close(childrel, NoLock);
-
-				ProcessUtility((Node *)ats,
-							   synthetic_sql,
-							   NULL,
-							   false, /* not top level */
-							   dest,
-							   NULL);
-			}
-		}
-#endif
 }
 
 static void
@@ -10535,8 +10477,19 @@ ATPrepAlterColumnType(List **wqueue,
 		 * we waste effort, and because we need the expression to be parsed
 		 * against the original table row type.
 		 */
-		/* GPDB: we always need the RTE */
-		/* GPDB_91_MERGE_FIXME: Why do we always need the RTE? */
+		/*
+		 * GPDB: we always need the RTE. The main reason being to support
+		 * unknown to text implicit conversion for queries like
+		 * CREATE TABLE t AS SELECT j AS a, 'abc' AS i FROM
+		 * generate_series(1, 10) j;
+		 *
+		 * Executes autostats internally which runs query to collect the same
+		 * which fails without RTE. More supported examples of unknown to text
+		 * can be found in src/test/regress/sql/strings.sql.
+		 *
+		 * GPDB_10_MERGE_FIXME: Upstream fixes this problem in PG10 hence need
+		 * to live with this code till then.
+		 */
 		{
 			RangeTblEntry *rte;
 
@@ -12420,7 +12373,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	 * NOTE: any conflict in relfilenode value will be caught in
 	 * RelationCreateStorage().
 	 */
-	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence);
+	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence,
+						  rel->rd_rel->relstorage);
 
 	if (RelationIsAppendOptimized(rel))
 	{
@@ -12486,10 +12440,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		ATExecSetTableSpace(reltoastidxid, newTableSpace, lockmode);
 
 	/* Move associated ao subobjects */
-	if (OidIsValid(reltoastrelid))
-		ATExecSetTableSpace(reltoastrelid, newTableSpace, lockmode);
-	if (OidIsValid(reltoastidxid))
-		ATExecSetTableSpace(reltoastidxid, newTableSpace, lockmode);
 	if (OidIsValid(relaosegrelid))
 		ATExecSetTableSpace(relaosegrelid, newTableSpace, lockmode);
 	if (OidIsValid(relaoblkdirrelid))
@@ -12588,128 +12538,6 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 */
 	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		smgrimmedsync(dst, forkNum);
-}
-
-/*
- * Like copy_relation_data(), but for AO tables.
- *
- * Currently, AO tables don't have any extra forks.
- */
-static void
-copy_append_only_data(RelFileNode src, RelFileNode dst, BackendId backendid, char relpersistence)
-{
-	DIR		   *dir;
-	struct dirent *de;
-	char	   *srcdir;
-	char	   *srcfilename;
-	char	   *srcfiledot;
-	char	   *dstpath;
-	char	   *buffer = palloc(BLCKSZ);
-
-	/*
-	 * Get the directory and base filename of the data file.
-	 */
-	reldir_and_filename(src, backendid, MAIN_FORKNUM, &srcdir, &srcfilename);
-	srcfiledot = psprintf("%s.", srcfilename);
-	dstpath = relpathbackend(dst, backendid, MAIN_FORKNUM);
-
-	/*
-	 * Scan the directory, looking for files belonging to this relation.
-	 * This is the same logic as in mdunlink(), see comments there.
-	 */
-	dir = AllocateDir(srcdir);
-	while ((de = ReadDir(dir, srcdir)) != NULL)
-	{
-		char	   *suffix;
-		char		srcsegpath[MAXPGPATH + 12];
-		char		dstsegpath[MAXPGPATH + 12];
-		File		srcFile;
-		File		dstFile;
-		int64		left;
-		off_t		offset;
-		int			segfilenum;
-
-		if (strcmp(de->d_name, ".") == 0 ||
-			strcmp(de->d_name, "..") == 0)
-			continue;
-
-		/* Does it begin with the relfilenode? */
-		if (strlen(de->d_name) <= strlen(srcfiledot) ||
-			strncmp(de->d_name, srcfiledot, strlen(srcfiledot)) != 0)
-			continue;
-
-		/*
-		 * Does it have a digits-only suffix? (This is not really
-		 * necessary to check, but better be conservative.)
-		 */
-		suffix = de->d_name + strlen(srcfiledot);
-		if (strspn(suffix, "0123456789") != strlen(suffix) ||
-			strlen(suffix) > 10)
-			continue;
-
-		/* Looks like a match. Go ahead and copy it. */
-		segfilenum = pg_atoi(suffix, 4, 0);
-
-		snprintf(srcsegpath, sizeof(srcsegpath), "%s/%s.%d", srcdir, srcfilename, segfilenum);
-		snprintf(dstsegpath, sizeof(dstsegpath), "%s.%d", dstpath, segfilenum);
-
-		srcFile = PathNameOpenFile(srcsegpath, O_RDONLY | PG_BINARY, 0600);
-		if (srcFile < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 (errmsg("could not open file %s: %m", srcsegpath))));
-		dstFile = PathNameOpenFile(dstsegpath, O_WRONLY | O_CREAT | O_EXCL | PG_BINARY, 0600);
-		if (dstFile < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 (errmsg("could not create destination file %s: %m", dstsegpath))));
-
-		left = FileSeek(srcFile, 0, SEEK_END);
-		if (left < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 (errmsg("could not seek to end of file %s: %m", srcsegpath))));
-
-		if (FileSeek(srcFile, 0, SEEK_SET) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 (errmsg("could not seek to beginning of file %s: %m", srcsegpath))));
-
-		offset = 0;
-		while(left > 0)
-		{
-			int			len;
-
-			CHECK_FOR_INTERRUPTS();
-
-			len = Min(left, BLCKSZ);
-			if (FileRead(srcFile, buffer, len) != len)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not read %d bytes from file \"%s\": %m",
-								len, srcsegpath)));
-
-			if (FileWrite(dstFile, buffer, len) != len)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not write %d bytes to file \"%s\": %m",
-								len, dstsegpath)));
-
-			xlog_ao_insert(dst, segfilenum, offset, buffer, len);
-
-			offset += len;
-			left -= len;
-		}
-
-		if (FileSync(dstFile) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not fsync file \"%s\": %m",
-							dstsegpath)));
-		FileClose(srcFile);
-		FileClose(dstFile);
-	}
-	FreeDir(dir);
 }
 
 /*
@@ -13820,12 +13648,21 @@ make_temp_table_name(Relation rel, BackendId id)
 {
 	char	   *nspname;
 	char		tmpname[NAMEDATALEN];
+	RangeVar   *tmprel;
 
 	/* temporary enough */
 	snprintf(tmpname, NAMEDATALEN, "pg_temp_%u_%i", RelationGetRelid(rel), id);
 	nspname = get_namespace_name(RelationGetNamespace(rel));
 
-	return makeRangeVar(nspname, pstrdup(tmpname), -1);
+	tmprel = makeRangeVar(nspname, pstrdup(tmpname), -1);
+
+	/*
+	 * Ensure the temp relation has the same persistence setting with the
+	 * original relation.
+	 */
+	tmprel->relpersistence = rel->rd_rel->relpersistence;
+
+	return tmprel;
 }
 
 /*
@@ -14106,6 +13943,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	RangeVar   *tmprv;
 	Oid			tmprelid;
 	Oid			tarrelid = RelationGetRelid(rel);
+	char		tarrelstorage = rel->rd_rel->relstorage;
 	List	   *oid_map = NIL;
 	bool        rand_pol = false;
 	bool        rep_pol = false;
@@ -14149,7 +13987,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SET DISTRIBUTED BY not supported in utility mode")));
 
-	/* we only support partitioned tables */
+	/* we only support partitioned/replicated tables */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		if (GpPolicyIsEntry(rel->rd_cdbpolicy))
@@ -14298,20 +14136,25 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 			}
 
 			policy = createRandomPartitionedPolicy(NULL);
-			rel->rd_cdbpolicy = GpPolicyCopy(GetMemoryChunkContext(rel), policy);
-			GpPolicyReplace(RelationGetRelid(rel), policy);
 
-			/* only need to rebuild if have new storage options */
-			if (!(DatumGetPointer(newOptions) || force_reorg))
+			/* always need to rebuild if changed from replicated policy */
+			if (!GpPolicyIsReplicated(rel->rd_cdbpolicy))
 			{
-				/*
-				 * caller expects ATExecSetDistributedBy() to close rel
-				 * (see the non-random distribution case below for why.
-				 */
-				heap_close(rel, NoLock);
-				lsecond(lprime) = makeNode(SetDistributionCmd);
-				lprime = lappend(lprime, policy);
-				goto l_distro_fini;
+				rel->rd_cdbpolicy = GpPolicyCopy(GetMemoryChunkContext(rel), policy);
+				GpPolicyReplace(RelationGetRelid(rel), policy);
+
+				/* only need to rebuild if have new storage options */
+				if (!(DatumGetPointer(newOptions) || force_reorg))
+				{
+					/*
+					 * caller expects ATExecSetDistributedBy() to close rel
+					 * (see the non-random distribution case below for why.
+					 */
+					heap_close(rel, NoLock);
+					lsecond(lprime) = makeNode(SetDistributionCmd);
+					lprime = lappend(lprime, policy);
+					goto l_distro_fini;
+				}
 			}
 		}
 
@@ -14319,21 +14162,19 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		{
 			rep_pol = true;
 
-			if (!force_reorg)
-			{
-				if (GpPolicyIsReplicated(rel->rd_cdbpolicy))
-					ereport(WARNING,
-							(errcode(ERRCODE_DUPLICATE_OBJECT),
-							 errmsg("distribution policy of relation \"%s\" already set to DISTRIBUTED REPLICATED",
-									RelationGetRelationName(rel)),
-							 errhint("Use ALTER TABLE \"%s\" SET WITH (REORGANIZE=TRUE) DISTRIBUTED REPLICATED to force a replicated redistribution.",
-									 RelationGetRelationName(rel))));
-			}
+			if (GpPolicyIsReplicated(rel->rd_cdbpolicy))
+				ereport(WARNING,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("distribution policy of relation \"%s\" already set to DISTRIBUTED REPLICATED",
+								RelationGetRelationName(rel)),
+						 errhint("Use ALTER TABLE \"%s\" SET WITH (REORGANIZE=TRUE) DISTRIBUTED REPLICATED to force a replicated redistribution.",
+								 RelationGetRelationName(rel))));
 
 			policy = createReplicatedGpPolicy(NULL);
 
-			/* only need to rebuild if have new storage options */
-			if (!(DatumGetPointer(newOptions) || force_reorg))
+			/* rebuild if have new storage options or policy changed */
+			if (!DatumGetPointer(newOptions) &&
+				GpPolicyIsReplicated(rel->rd_cdbpolicy))
 			{
 				/*
 				 * caller expects ATExecSetDistributedBy() to close rel
@@ -14761,6 +14602,25 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		object.objectSubId = 0;
 
 		performDeletion(&object, DROP_RESTRICT, 0);
+	}
+
+	if (relstorage_is_ao(tarrelstorage) && IS_QUERY_DISPATCHER())
+	{
+		/*
+		 * Drop the shared memory hash table entry for this table if it
+		 * exists. We must do so since before the rewrite we probably have few
+		 * non-zero segfile entries for this table while after the rewrite
+		 * only segno zero will be full and the others will be empty. By
+		 * dropping the hash entry we force refreshing the entry from the
+		 * catalog the next time a write into this AO table comes along.
+		 *
+		 * Note that ALTER already took an exclusive lock on the old relation
+		 * so we are guaranteed to not drop the hash entry from under any
+		 * concurrent operation.
+		 */
+		LWLockAcquire(AOSegFileLock, LW_EXCLUSIVE);
+		AORelRemoveHashEntry(tarrelid);
+		LWLockRelease(AOSegFileLock);
 	}
 
 l_distro_fini:
@@ -15302,7 +15162,6 @@ ATPExecPartAlter(List **wqueue, AlteredTableInfo *tab, Relation *rel,
 	}
 
 	/* execute the command */
-	/* GPDB_91_MERGE_FIXME: is this lock mode right? */
 	ATExecCmd(wqueue, tab, (rel2 ? &rel2 : rel), atc, AccessExclusiveLock);
 
 	if (!bPartitionCmd)
@@ -15598,7 +15457,7 @@ exchange_part_inheritance(Oid oldrelid, Oid newrelid)
 	ATExecDropInherit(oldrel,
 			makeRangeVar(get_namespace_name(parent->rd_rel->relnamespace),
 					     RelationGetRelationName(parent), -1),
-					  AccessExclusiveLock, /* GPDB_91_MERGE_FIXME: lock mode? */
+					  AccessExclusiveLock, /* Not used for anything in ATExecDropInherit() */
 					  true);
 
 	inherit_parent(parent, newrel, true /* it's a partition */, NIL);

@@ -451,8 +451,6 @@ standard_ProcessUtility(Node *parsetree,
 												  list_make1(item->arg),
 												  true,
 												  /* gp_dispatch */ false);
-								// GPDB_91_MERGE_FIXME: I just copied gp_dispatch = false to
-								// the new transaction_deferrable case above. Was that right?
 							}
 
 							sendDtxExplicitBegin();
@@ -1169,7 +1167,7 @@ standard_ProcessUtility(Node *parsetree,
 						break;
 					case OBJECT_COLLATION:
 						Assert(stmt->args == NIL);
-						DefineCollation(stmt->defnames, stmt->definition);
+						DefineCollation(stmt->defnames, stmt->definition, false);
 						break;
 					default:
 						elog(ERROR, "unrecognized define stmt type: %d",

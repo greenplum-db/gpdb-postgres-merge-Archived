@@ -559,6 +559,16 @@ SELECT * FROM gp_read_error_log('exttab_basic_1');
 ---------+---------+----------+---------+---------+--------+---------+----------
 (0 rows)
 
+-- test ON MASTER without LOG ERRORS, return empty results for all rows error out
+CREATE EXTERNAL WEB TABLE exttab_basic_error_1( i int )
+EXECUTE E'cat @abs_srcdir@/data/exttab.data' ON MASTER
+FORMAT 'TEXT' (DELIMITER '|')
+SEGMENT REJECT LIMIT 20;
+SELECT * FROM exttab_basic_error_1;
+ i 
+---
+(0 rows)
+
 -- Some errors without exceeding reject limit
 CREATE EXTERNAL TABLE exttab_basic_2( i int, j text )
 LOCATION ('file://@hostname@@abs_srcdir@/data/exttab_few_errors.data') FORMAT 'TEXT' (DELIMITER '|')
@@ -2893,3 +2903,27 @@ PL/pgSQL function "exttab_error_context_callback_func" line 5 at FOR over SELECT
 SET gp_log_gang TO DEFAULT;
 DROP FUNCTION exttab_error_context_callback_func();
 DROP EXTERNAL TABLE exttab_error_context_callback;
+-- --------------------------------------
+-- Encoding
+-- --------------------------------------
+CREATE EXTERNAL TABLE encoding_issue (num int, word text)
+LOCATION ('file://@hostname@@abs_srcdir@/data/latin1_encoding.csv')
+FORMAT 'CSV' ENCODING 'LATIN1';
+SELECT * FROM encoding_issue WHERE num = 4;
+ num |           word            
+-----+---------------------------
+   4 | tá sé seo le tástáil dea-
+(1 row)
+
+COPY (SELECT * FROM encoding_issue) TO '/tmp/latin1_encoding.csv' WITH (FORMAT 'csv', ENCODING 'LATIN1');
+CREATE EXTERNAL TABLE encoding_issue2 (num int, word text)
+LOCATION ('file://@hostname@/tmp/latin1_encoding.csv')
+FORMAT 'CSV' ENCODING 'LATIN1';
+SELECT * FROM encoding_issue2 WHERE num = 5;
+ num |                word                
+-----+------------------------------------
+   5 | minden amire szüksége van a szeret
+(1 row)
+
+DROP EXTERNAL TABLE encoding_issue;
+DROP EXTERNAL TABLE encoding_issue2;
