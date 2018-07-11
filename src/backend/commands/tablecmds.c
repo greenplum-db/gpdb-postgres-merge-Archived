@@ -500,7 +500,7 @@ static void inherit_parent(Relation parent_rel, Relation child_rel,
  * ----------------------------------------------------------------
  */
 Oid
-DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch)
+DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, bool dispatch, bool useChangedOpts)
 {
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
@@ -825,7 +825,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 					 errhint("Use OIDS=FALSE.")));
 	}
 
-	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL);
+	bool valid_opts = (relstorage == RELSTORAGE_EXTERNAL || !useChangedOpts);
 
 	/*
 	 * Create the relation.  Inherited defaults and constraints are passed in
@@ -10249,6 +10249,10 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 					 errmsg("cannot drop inherited constraint \"%s\" of relation \"%s\"",
 							constrName, RelationGetRelationName(rel))));
 
+		/* Right now only CHECK constraints can be inherited */
+		if (con->contype == CONSTRAINT_CHECK)
+			is_check_constraint = true;
+
 		is_no_inherit_constraint = con->connoinherit;
 
 		/*
@@ -11232,23 +11236,20 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 	 */
 	forboth(oid_item, tab->changedConstraintOids,
 			def_item, tab->changedConstraintDefs)
-		/*
-		 * GPDP_92_MERGE_FIXME: it used to error out here to prevent altering
-		 * index column type.
-		 *
-		 * MPP-1318:
-		 * alter table a alter column aa type integer using bit_length(aa);
-		 * ERROR: relation "z_pkey" already exists (seg0 thud1:9002 pid=26229)
-		 * 
-		 * But it seems work now. We need to make sure.
-		 */	
 		ATPostAlterTypeParse(lfirst_oid(oid_item), (char *) lfirst(def_item),
 							 wqueue, lockmode, tab->rewrite);
 
 	forboth(oid_item, tab->changedIndexOids,
 			def_item, tab->changedIndexDefs)
-		ATPostAlterTypeParse(lfirst_oid(oid_item), (char *) lfirst(def_item),
-							 wqueue, lockmode, tab->rewrite);
+		/*
+		 * Temporary workaround for MPP-1318. INDEX CREATE is dispatched
+		 * immediately, which unfortunately breaks the ALTER work queue.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("cannot alter indexed column"),
+						errhint("DROP the index first, and recreate it after the ALTER")));
+		/*ATPostAlterTypeParse((char *) lfirst(l), wqueue, lockmode);*/
 
 	/*
 	 * Now we can drop the existing constraints and indexes --- constraints
@@ -14377,6 +14378,8 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 		gp_singleton_segindex = 0;
 
 		/* Step (c) - run on all nodes */
+		queryDesc->ddesc = makeNode(QueryDispatchDesc);
+		queryDesc->ddesc->useChangedAOOpts = false;
 		ExecutorStart(queryDesc, 0);
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 		queryDesc->dest->rDestroy(queryDesc->dest);

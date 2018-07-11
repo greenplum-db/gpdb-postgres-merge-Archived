@@ -410,7 +410,7 @@ DefineExternalRelation(CreateExternalStmt *createExtStmt)
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_UTILITY)
 		reloid = DefineRelation(createStmt, RELKIND_RELATION, InvalidOid,
-								RELSTORAGE_EXTERNAL, true);
+								RELSTORAGE_EXTERNAL, true, true);
 
 	/*
 	 * Now we take care of pg_exttable.

@@ -680,7 +680,7 @@ standard_ProcessUtility(Node *parsetree,
 						relOid = DefineRelation((CreateStmt *) stmt,
 												relKind,
 												((CreateStmt *) stmt)->ownerid,
-												relStorage, false);
+												relStorage, false, true);
 
 						/*
 						 * Let AlterTableCreateToastTable decide if this one
@@ -740,6 +740,7 @@ standard_ProcessUtility(Node *parsetree,
 												RELKIND_FOREIGN_TABLE,
 												((CreateStmt *) stmt)->ownerid,
 												RELSTORAGE_FOREIGN,
+												true,
 												true);
 						CreateForeignTable((CreateForeignTableStmt *) stmt,
 										   relOid);
@@ -873,16 +874,13 @@ standard_ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				ListCell   *arg;
-				List	   *objects;
-				bool		if_exists;
+				DropStmt   *copyStmt;
 
-				if_exists = stmt->missing_ok;
 				/* stmt->objects could be modified (e.g.
 				 * CREATE TABLE test_exists(a int, b int);
 				 * DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;)
 				 * so copy for later use. */
-				objects = copyObject(stmt->objects);
+				copyStmt = copyObject(stmt);
 
 				switch (stmt->removeType)
 				{
@@ -909,28 +907,13 @@ standard_ProcessUtility(Node *parsetree,
 				}
 
 				/* we modify the object in the loop below, so make a copy */
-				stmt = copyObject(stmt);
-
-				foreach(arg, objects)
-				{
-					List	   *names = (List *) lfirst(arg);
-
-					stmt->objects = NIL;
-					stmt->objects = lappend(stmt->objects, list_copy(names));
-					stmt->missing_ok = if_exists;
-
-					/*
-					 * If we are the QD, dispatch this DROP command to all the
-					 * QEs
-					 */
-					if (Gp_role == GP_ROLE_DISPATCH)
-						CdbDispatchUtilityStatement((Node *) stmt,
-													DF_CANCEL_ON_ERROR|
-													DF_WITH_SNAPSHOT|
-													DF_NEED_TWO_PHASE,
-													NIL,
-													NULL);
-				}
+				if (Gp_role == GP_ROLE_DISPATCH)
+					CdbDispatchUtilityStatement((Node *) copyStmt,
+												DF_CANCEL_ON_ERROR|
+												DF_WITH_SNAPSHOT|
+												DF_NEED_TWO_PHASE,
+												NIL,
+												NULL);
 			}
 			break;
 

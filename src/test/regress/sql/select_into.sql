@@ -75,8 +75,4 @@ DECLARE foo CURSOR FOR SELECT 1 INTO b;
 COPY (SELECT 1 INTO frak UNION SELECT 2) TO 'blob';
 SELECT * FROM (SELECT 1 INTO f) bar;
 CREATE VIEW foo AS SELECT 1 INTO b;
--- pg upstream uses table b which was created in inherit test, however that test
--- is disabled for unknown reason so I'm creating a new table for temp use.
-CREATE TABLE b (bb TEXT) DISTRIBUTED BY (bb);
 INSERT INTO b SELECT 1 INTO f;
-DROP TABLE b;

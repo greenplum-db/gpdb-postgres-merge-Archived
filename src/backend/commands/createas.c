@@ -29,6 +29,7 @@
 #include "commands/prepare.h"
 #include "commands/tablecmds.h"
 #include "parser/parse_clause.h"
+#include "postmaster/autostats.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -83,6 +84,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 	ScanDirection dir;
+	Oid         relationOid = InvalidOid;   /* relation that is modified */
+	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
@@ -150,6 +153,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, GetIntoRelEFlags(into));
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+		autostats_get_cmdtype(queryDesc, &cmdType, &relationOid);
+
 	/*
 	 * Normally, we run the plan to completion; but if skipData is specified,
 	 * just do tuple receiver startup and shutdown.
@@ -171,6 +177,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	if (into->distributedBy &&
 		((DistributedBy *)(into->distributedBy))->ptype == POLICYTYPE_REPLICATED)
 		queryDesc->es_processed /= getgpsegmentCount();
+
+	/* MPP-14001: Running auto_stats */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		auto_stats(cmdType, relationOid, queryDesc->es_processed, false /* inFunction */);
 
 	/* save the rowcount if we're given a completionTag to fill */
 	if (completionTag)
@@ -266,7 +276,6 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	StdRdOptions *stdRdOptions;
 	Datum       reloptions;
 	int         relstorage;
-	bool		validate_reloptions;
 	TupleDesc   typeinfo = queryDesc->tupDesc;
 
 	/* If EXPLAIN/QE, skip creating the "into" relation. */
@@ -381,13 +390,9 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 									 true,
 									 false);
 
-	/* get the relstorage (heap or AO tables) */
-	if (queryDesc->ddesc)
-		validate_reloptions = queryDesc->ddesc->validate_reloptions;
-	else
-		validate_reloptions = true;
-
-	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION, reloptions, validate_reloptions);
+	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
+												   reloptions,
+												   queryDesc->ddesc->useChangedAOOpts);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
@@ -415,7 +420,12 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 * Don't dispatch it yet, as we haven't created the toast and other
 	 * auxiliary tables yet.
 	 */
-	intoRelationId = DefineRelation(create, RELKIND_RELATION, InvalidOid, relstorage, false);
+	intoRelationId = DefineRelation(create,
+									RELKIND_RELATION,
+									InvalidOid,
+									relstorage,
+									false,
+									queryDesc->ddesc->useChangedAOOpts);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -587,4 +597,21 @@ static void
 intorel_destroy(DestReceiver *self)
 {
 	pfree(self);
+}
+
+/*
+ * Get the OID of the relation created for SELECT INTO or CREATE TABLE AS.
+ *
+ * To be called between ExecutorStart and ExecutorEnd.
+ */
+Oid
+GetIntoRelOid(QueryDesc *queryDesc)
+{
+	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
+	Relation    into_rel = myState->rel;
+
+	if (myState && myState->pub.mydest == DestIntoRel && into_rel)
+		return RelationGetRelid(into_rel);
+	else
+		return InvalidOid;
 }
