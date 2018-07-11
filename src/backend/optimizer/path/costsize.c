@@ -1996,10 +1996,6 @@ initial_cost_nestloop(PlannerInfo *root, JoinCostWorkspace *workspace,
 	Cost		inner_run_cost;
 	Cost		inner_rescan_run_cost;
 
-
-	if (!enable_nestloop)
-		startup_cost += disable_cost;
-
 	/* estimate costs to rescan the inner relation */
 	cost_rescan(root, inner_path,
 				&inner_rescan_start_cost,
