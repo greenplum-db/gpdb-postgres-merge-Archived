@@ -163,7 +163,7 @@ static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNum
 
 static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
 					 BufferAccessStrategy bstrategy);
-static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats);
+static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -634,7 +634,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	{
 		if(rel_part_status(RelationGetRelid(onerel)) != PART_STATUS_ROOT)
 		{
-			acquire_hll_by_query(onerel, attr_cnt, vacattrstats);
+			acquire_hll_by_query(onerel, attr_cnt, vacattrstats, elevel);
 
 			elog (LOG,"HLL FULL SCAN ");
 		}
@@ -652,6 +652,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 												&totalrows, &totaldeadrows);
 	else
 #endif
+		elog (LOG,"Needs sample for %s " , RelationGetRelationName(onerel));
+		rows = NULL;
 		numrows = (*acquirefunc) (onerel, elevel, attr_cnt, vacattrstats, &rows, targrows,
 								  &totalrows, &totaldeadrows, &totalpages,
 								  (vacstmt->options & VACOPT_ROOTONLY) != 0,
@@ -666,7 +668,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		float4 relTuples;
 		float4 relPages;
 		analyzeEstimateReltuplesRelpages(RelationGetRelid(onerel), &relTuples, &relPages,
-										 vacstmt->options & VACOPT_ROOTONLY);
+										 vacstmt->options & VACOPT_ROOTONLY, elevel);
 		totalrows = relTuples;
 		totalpages = relPages;
 		totaldeadrows = 0;
@@ -1765,7 +1767,7 @@ compare_rows(const void *a, const void *b)
  * the full table only once.
  */
 static void
-acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats)
+acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel)
 {
 	StringInfoData str, columnStr;
 	int			i;

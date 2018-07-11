@@ -2391,7 +2391,6 @@ Distributed by: (f1)
 
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
-
 --
 -- Test for splitting after dropping a column
 --

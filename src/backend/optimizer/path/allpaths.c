@@ -398,12 +398,7 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	List       *pathlist = NIL;
-	List       *indexpathlist = NIL;
-	List       *bitmappathlist = NIL;
-	List       *tidpathlist = NIL;
 	Path       *seqpath = NULL;
-	ListCell   *cell;
 
 	/*
 	 * Generate paths and add them to the rel's pathlist.

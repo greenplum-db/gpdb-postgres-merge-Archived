@@ -674,7 +674,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %token <keyword>
 	ACTIVE
 
-	CONTAINS CPU_RATE_LIMIT CPUSET
+	CONTAINS CPUSET CPU_RATE_LIMIT
 
 	CREATEEXTTABLE CUBE
 
@@ -809,8 +809,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc CONVERSION_P
 			%nonassoc COPY
 			%nonassoc COST
-			%nonassoc CPU_RATE_LIMIT
 			%nonassoc CPUSET
+			%nonassoc CPU_RATE_LIMIT
 			%nonassoc CREATEEXTTABLE
 			%nonassoc CSV
 			%nonassoc CURRENT_P
@@ -15178,8 +15178,8 @@ unreserved_keyword:
 			| CONVERSION_P
 			| COPY
 			| COST
-			| CPU_RATE_LIMIT
 			| CPUSET
+			| CPU_RATE_LIMIT
 			| CREATEEXTTABLE
 			| CSV
 			| CURRENT_P
@@ -15498,8 +15498,8 @@ PartitionIdentKeyword: ABORT_P
 			| CONVERSION_P
 			| COPY
 			| COST
-			| CPU_RATE_LIMIT
 			| CPUSET
+			| CPU_RATE_LIMIT
 			| CREATEEXTTABLE
 			| CSV
 			| CURSOR

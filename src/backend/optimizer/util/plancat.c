@@ -193,7 +193,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			IndexOptInfo *info;
 			int			ncolumns;
 			int			i;
-			double		allvisfrac; /* dummy */
 
 			/*
 			 * Extract info from the relation descriptor for the index.
@@ -439,13 +438,14 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 	double		reltuples;
 	BlockNumber relallvisible;
 	double		density;
+	double      allvisfrac;
     BlockNumber curpages = 0;
 
     /* Rel not distributed?  RelationGetNumberOfBlocks can get actual #pages. */
     if (!relOptInfo->cdbpolicy ||
         relOptInfo->cdbpolicy->ptype == POLICYTYPE_ENTRY)
     {
-        estimate_rel_size(rel, attr_widths, pages, tuples, allvisfrac);
+        estimate_rel_size(rel, attr_widths, pages, tuples, &allvisfrac);
         return;
     }
 
@@ -524,14 +524,6 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 		density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 	}
 	*tuples = rint(density * (double) curpages);
-
-	/* See estimate_rel_size() */
-	if (relallvisible == 0 || curpages <= 0)
-		*allvisfrac = 0;
-	else if ((double) relallvisible >= curpages)
-		*allvisfrac = 1;
-	else
-		*allvisfrac = (double) relallvisible / curpages;
 
 	elog(DEBUG2, "cdb_estimate_rel_size estimated %g tuples and %d pages",
 		 *tuples, (int) *pages);

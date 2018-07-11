@@ -28,6 +28,7 @@
 #include "utils/snapmgr.h"
 
 #include "cdb/ml_ipc.h"
+#include "commands/createas.h"
 #include "commands/queue.h"
 #include "executor/spi.h"
 #include "postmaster/autostats.h"

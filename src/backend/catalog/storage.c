@@ -224,7 +224,7 @@ RelationPreserveStorage(RelFileNode rnode, bool atCommit)
 	for (pending = pendingDeletes; pending != NULL; pending = next)
 	{
 		next = pending->next;
-		if (RelFileNodeEquals(rnode, pending->relnode)
+		if (RelFileNodeEquals(rnode, pending->relnode.node)
 			&& pending->atCommit == atCommit)
 		{
 			/* unlink and delete list entry */

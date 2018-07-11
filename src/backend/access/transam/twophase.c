@@ -1447,7 +1447,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	}
 	for (i = 0; i < ndelrels; i++)
 	{
-		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
+		SMgrRelation srel = smgropen(delrels[i].node, InvalidBackendId);
 
 		smgrdounlink(srel, false, delrels[i].relstorage);
 		smgrclose(srel);

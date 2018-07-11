@@ -5776,7 +5776,7 @@ static void
 xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 						  TransactionId *sub_xids, int nsubxacts,
 						  SharedInvalidationMessage *inval_msgs, int nmsgs,
-						  RelFileNode *xnodes, int nrels,
+						  RelFileNodeWithStorageType *xnodes, int nrels,
 						  Oid dbId, Oid tsId,
 						  uint32 xinfo,
 						  DistributedTransactionId distribXid,
@@ -5867,12 +5867,12 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i].node, InvalidBackendId);
+		SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xlrec->xnodes[i].node, fork);
-		smgrdounlink(srel, true, xlrec->xnodes[i].relstorage);
+			XLogDropRelation(xnodes[i].node, fork);
+		smgrdounlink(srel, true, xnodes[i].relstorage);
 		smgrclose(srel);
 	}
 

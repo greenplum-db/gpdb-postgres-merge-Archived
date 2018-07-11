@@ -75,6 +75,7 @@
 #include "utils/syscache.h"
 #include "utils/pg_crc.h"
 #include "utils/ps_status.h"
+#include "replication/syncrep.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/backendid.h"

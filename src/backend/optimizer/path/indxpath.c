@@ -87,17 +87,17 @@ static void consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths, List **pindexpathlist);
+							List **bitindexpaths);
 static void expand_eclass_clause_combinations(PlannerInfo *root,
 								  RelOptInfo *rel,
 								  IndexOptInfo *index,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths, List **pindexpathlist);
+								  List **bitindexpaths);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths, List **pindexpathlist);
+				List **bitindexpaths);
 static List *build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				  IndexOptInfo *index, IndexClauseSet *clauses,
 				  bool useful_predicate,
@@ -281,7 +281,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * bitmap paths are added to bitindexpaths to be handled below.
 		 */
 		get_index_paths(root, rel, index, &rclauseset,
-						&bitindexpaths, pindexpathlist);
+						&bitindexpaths);
 
 		/*
 		 * Identify the join clauses that can match the index.	For the moment
@@ -309,8 +309,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 										&rclauseset,
 										&jclauseset,
 										&eclauseset,
-										&bitjoinpaths,
-										pindexpathlist);
+										&bitjoinpaths);
 	}
 
 	/*
@@ -345,7 +344,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
 		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
-		add_path(rel, (Path *) bpath);
+		add_path(root, rel, (Path *) bpath);
 	}
 
 	/*
@@ -368,7 +367,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		loop_count = get_loop_count(root, required_outer);
 		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
 										required_outer, loop_count);
-		add_path(rel, (Path *) bpath);
+		add_path(root, rel, (Path *) bpath);
 	}
 }
 
@@ -396,8 +395,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths,
-							List **pindexpathlist)
+							List **bitindexpaths)
 {
 	IndexClauseSet clauseset;
 	int			last_eclass_col;
@@ -469,12 +467,12 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 			expand_eclass_clause_combinations(root, rel, index,
 											  0, last_eclass_col,
 											  &clauseset, eclauseset,
-											  bitindexpaths, pindexpathlist);
+											  bitindexpaths);
 		}
 		else
 		{
 			/* No, consider the newly-enlarged set of simple join clauses */
-			get_index_paths(root, rel, index, &clauseset, bitindexpaths, pindexpathlist);
+			get_index_paths(root, rel, index, &clauseset, bitindexpaths);
 		}
 	}
 }
@@ -499,8 +497,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths,
-								  List **pindexpathlist)
+								  List **bitindexpaths)
 {
 	List	   *save_clauses;
 	ListCell   *lc;
@@ -508,7 +505,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 	/* If past last eclass column, end the recursion and generate paths */
 	if (thiscol > lastcol)
 	{
-		get_index_paths(root, rel, index, clauseset, bitindexpaths, pindexpathlist);
+		get_index_paths(root, rel, index, clauseset, bitindexpaths);
 		return;
 	}
 
@@ -519,7 +516,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 		return;
 	}
 
@@ -531,7 +528,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 
 	/* For each eclass clause alternative ... */
 	foreach(lc, eclauseset->indexclauses[thiscol])
@@ -545,7 +542,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 	}
 
 	/* Restore previous list contents */
@@ -569,7 +566,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 static void
 get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths, List **pindexpathlist)
+				List **bitindexpaths)
 {
 	List	   *indexpaths;
 	ListCell   *lc;
