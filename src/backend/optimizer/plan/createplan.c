@@ -2529,6 +2529,11 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
 
+	/* GPDB_92_MERGE_FIXME: Move extract_actual_clauses() here, following other
+	 * similar functions? We should double check gpdb specific plan node code
+	 * and change following other pg plan node code change.
+	 */
+
 	/*
 	 * When dealing with special or lossy operators, we will at this point
 	 * have duplicate clauses in qpqual and bitmapqualorig.  We may as well
@@ -2536,6 +2541,19 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	 * tests twice.
 	 */
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
+
+	/*
+	 * We have to replace any outer-relation variables with nestloop params in
+	 * the qpqual and bitmapqualorig expressions.  (This was already done for
+	 * expressions attached to plan nodes in the bitmapqualplan tree.)
+	 */
+	if (best_path->path.param_info)
+	{
+		qpqual = (List *)
+			replace_nestloop_params(root, (Node *) qpqual);
+		bitmapqualorig = (List *)
+			replace_nestloop_params(root, (Node *) bitmapqualorig);
+	}
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_appendonlyscan(tlist,
