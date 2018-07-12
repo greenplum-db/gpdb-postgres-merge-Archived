@@ -1498,6 +1498,7 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 
 	values[Anum_pg_foreign_table_ftrelid - 1] = ObjectIdGetDatum(relid);
 	values[Anum_pg_foreign_table_ftserver - 1] = ObjectIdGetDatum(server->serverid);
+
 	/* Add table generic options */
 	ftoptions = transformGenericOptions(ForeignTableRelationId,
 										PointerGetDatum(NULL),
@@ -1508,6 +1509,33 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 		values[Anum_pg_foreign_table_ftoptions - 1] = ftoptions;
 	else
 		nulls[Anum_pg_foreign_table_ftoptions - 1] = true;
+
+	/* Get the mpp_execute option. */
+	char *mpp_execute = NULL;
+	ListCell *lc = NULL;
+	foreach(lc, stmt->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "mpp_execute") == 0)
+		{
+			mpp_execute = defGetString(def);
+
+			if (strcasecmp(mpp_execute, "any") != 0
+				&& strcasecmp(mpp_execute, "master") != 0
+				&& strcasecmp(mpp_execute, "all segments") != 0)
+			{
+				heap_close(ftrel, RowExclusiveLock);
+
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"%s\" is not a valid mpp_execute value",
+								mpp_execute)));
+			}
+
+			break;
+		}
+	}
 
 	tuple = heap_form_tuple(ftrel->rd_att, values, nulls);
 

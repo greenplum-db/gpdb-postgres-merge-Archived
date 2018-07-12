@@ -281,6 +281,22 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 CREATE INDEX id_ft1_c2 ON ft1 (c2);                             -- ERROR
 SELECT * FROM ft1;                                              -- ERROR
 EXPLAIN SELECT * FROM ft1;                                      -- ERROR
+CREATE FOREIGN TABLE ft2 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'a');           -- ERROR
+CREATE FOREIGN TABLE ft2 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'any');
+\d+ ft2
+CREATE FOREIGN TABLE ft3 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'master');
+CREATE FOREIGN TABLE ft4 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'all segments');
+DROP FOREIGN TABLE ft2;
+DROP FOREIGN TABLE ft3;
+DROP FOREIGN TABLE ft4;
 
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
