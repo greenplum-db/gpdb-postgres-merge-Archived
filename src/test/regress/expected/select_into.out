@@ -78,6 +78,7 @@ DROP TABLE created_table;
 --
 -- Disallowed uses of SELECT ... INTO.  All should fail
 --
+CREATE TABLE b (aa int, bb int);
 DECLARE foo CURSOR FOR SELECT 1 INTO b;
 ERROR:  SELECT ... INTO is not allowed here
 LINE 1: DECLARE foo CURSOR FOR SELECT 1 INTO b;
@@ -90,11 +91,7 @@ LINE 1: SELECT * FROM (SELECT 1 INTO f) bar;
                                      ^
 CREATE VIEW foo AS SELECT 1 INTO b;
 ERROR:  views must not contain SELECT INTO
--- pg upstream uses table b which was created in inherit test, however that test
--- is disabled for unknown reason so I'm creating a new table for temp use.
-CREATE TABLE b (bb TEXT) DISTRIBUTED BY (bb);
 INSERT INTO b SELECT 1 INTO f;
 ERROR:  SELECT ... INTO is not allowed here
 LINE 1: INSERT INTO b SELECT 1 INTO f;
                                     ^
-DROP TABLE b;

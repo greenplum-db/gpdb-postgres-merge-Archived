@@ -303,7 +303,7 @@ smgrcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  *		it's significantly quicker so should be preferred when possible.
  */
 void
-smgrdounlink(SMgrRelation reln, bool isRedo)
+smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 {
 	RelFileNodeBackend rnode = reln->smgr_rnode;
 	ForkNumber	forknum;
@@ -315,8 +315,14 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	/*
 	 * Get rid of any remaining buffers for the relation.  bufmgr will just
 	 * drop them without bothering to write the contents.
+	 *
+	 * Apart from relstorage == RELSTORAGE_HEAP do any other RELSTOARGE type
+	 * expected to have buffers in shared memory ? Can check only for
+	 * RELSTORAGE_HEAP below.
 	 */
-	DropRelFileNodeAllBuffers(rnode);
+	if ((relstorage != RELSTORAGE_AOROWS) &&
+		(relstorage != RELSTORAGE_AOCOLS))
+		DropRelFileNodeAllBuffers(rnode);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -343,7 +349,7 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	 * xact.
 	 */
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		mdunlink(rnode, forknum, isRedo);
+		mdunlink(rnode, forknum, isRedo, relstorage);
 }
 
 /*
@@ -359,18 +365,33 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 
 
 void
-smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo, char relstorage)
 {
+	/*
+	 * AO/CO tables have only MAIN_FORKNUM we should exit early to prevent
+	 * extra work.
+	 */
+	if (relstorage_is_ao(relstorage) &&
+		forknum != MAIN_FORKNUM)
+		return;
+
+
 	RelFileNodeBackend rnode = reln->smgr_rnode;
 
 	/* Close the fork */
 	mdclose(reln, forknum);
 
 	/*
-	 * Get rid of any remaining buffers for the fork.  bufmgr will just drop
-	 * them without bothering to write the contents.
+	 * Get rid of any remaining buffers for the relation.  bufmgr will just
+	 * drop them without bothering to write the contents.
+	 *
+	 * Apart from relstorage == RELSTORAGE_HEAP do any other RELSTOARGE type
+	 * expected to have buffers in shared memory ? Can check only for
+	 * RELSTORAGE_HEAP below.
 	 */
-	DropRelFileNodeBuffers(rnode, forknum, 0);
+	if ((relstorage != RELSTORAGE_AOROWS) &&
+		(relstorage != RELSTORAGE_AOCOLS))
+		DropRelFileNodeBuffers(rnode, forknum, 0);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -396,7 +417,7 @@ smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
-	mdunlink(rnode, forknum, isRedo);
+	mdunlink(rnode, forknum, isRedo, relstorage);
 }
 
 /*

@@ -6253,7 +6253,7 @@ out_target(StringInfo buf, xl_heaptid *target)
 }
 
 void
-heap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+heap_desc(StringInfo buf, XLogRecord *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		xl_info = record->xl_info;
@@ -6394,7 +6394,7 @@ bool heap_getrelfilenode(
 }
 
 void
-heap2_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+heap2_desc(StringInfo buf, XLogRecord *record)
 {
 	char	   *rec = XLogRecGetData(record);
 	uint8		xl_info = record->xl_info;

@@ -1,4 +1,4 @@
-**Concourse Pipeline** [![Concourse Build Status](https://gpdb.data.pivotal.ci/api/v1/teams/gpdb/pipelines/gpdb_master/jobs/gpdb_rc_packaging_centos/badge)](https://gpdb.data.pivotal.ci/teams/gpdb) |
+**Concourse Pipeline** [![Concourse Build Status](https://prod.ci.gpdb.pivotal.io/api/v1/teams/main/pipelines/gpdb_master/badge)](https://prod.ci.gpdb.pivotal.io/teams/main/pipelines/gpdb_master) |
 **Travis Build** [![Travis Build Status](https://travis-ci.org/greenplum-db/gpdb.svg?branch=master)](https://travis-ci.org/greenplum-db/gpdb)
 
 ----------------------------------------------------------------------
@@ -171,7 +171,7 @@ make distclean
 
 PXF is an extension framework for GPDB to enable fast access to external hadoop datasets.
 Refer to [PXF extension](https://github.com/greenplum-db/gpdb/tree/master/gpAux/extensions/pxf) for more information.
-Currently, GPDPB is built with PXF by default (--enable-pxf is on).
+Currently, GPDB is built with PXF by default (--enable-pxf is on).
 In order to build GPDB without pxf, simply invoke `./configure` with additional option `--disable-pxf`.
 PXF requires curl, so `--enable-pxf` is not compatible with the `--without-libcurl` option.
 
@@ -184,6 +184,12 @@ To build with it enabled, change your `configure` to have an additional option
 See [more information about gpperfmon here](gpAux/gpperfmon/README.md)
 
 gpperfmon is dependent on several libraries like apr, apu, and libsigar
+
+### Building GPDB with Python3 enabled
+
+GPDB supports Python3 with plpython3u UDF
+
+See [how to enable Python3](src/pl/plpython/README.md) for details.
 
 ## Development with Docker
 

@@ -25,6 +25,16 @@
 #define MaxResourceGroups 100
 
 /*
+ * The max length of cpuset
+ */
+#define MaxCpuSetLength 1024
+
+/*
+ * Default value of cpuset
+ */
+#define DefaultCpuset "-1"
+
+/*
  * Resource group capability.
  */
 typedef int32 ResGroupCap;
@@ -55,6 +65,7 @@ typedef struct ResGroupCaps
 	ResGroupCap		memSharedQuota;
 	ResGroupCap		memSpillRatio;
 	ResGroupCap		memAuditor;
+	char			cpuset[MaxCpuSetLength];
 } ResGroupCaps;
 
 /*
@@ -68,12 +79,14 @@ extern int						memory_spill_ratio;
 extern int gp_resource_group_cpu_priority;
 extern double gp_resource_group_cpu_limit;
 extern double gp_resource_group_memory_limit;
+extern bool gp_resource_group_bypass;
 
 /*
  * Non-GUC global variables.
  */
 extern bool gp_resource_group_enable_cgroup_memory;
 extern bool gp_resource_group_enable_cgroup_swap;
+extern bool gp_resource_group_enable_cgroup_cpuset;
 
 /*
  * Resource Group assignment hook.
@@ -98,6 +111,19 @@ typedef enum
 	RES_GROUP_STAT_MEM_USAGE,
 } ResGroupStatType;
 
+/*
+ * The context to pass to callback in CREATE/ALTER/DROP resource group
+ */
+typedef struct
+{
+	Oid		groupid;
+	ResGroupLimitType	limittype;
+	ResGroupCaps	caps;
+	ResGroupCaps	oldCaps;	/* last config value, alter operation need to
+								 * check last config for recycling */
+	ResGroupCap		memLimitGap;
+} ResourceGroupCallbackContext;
+
 /* Shared memory and semaphores */
 extern Size ResGroupShmemSize(void);
 extern void ResGroupControlInit(void);
@@ -119,6 +145,8 @@ extern void AssignResGroupOnMaster(void);
 extern void UnassignResGroup(void);
 extern void SwitchResGroupOnSegment(const char *buf, int len);
 
+extern bool ResGroupIsAssigned(void);
+
 /* Retrieve statistic information of type from resource group */
 extern Datum ResGroupGetStat(Oid groupId, ResGroupStatType type);
 
@@ -129,12 +157,10 @@ extern bool ResGroupReserveMemory(int32 memoryChunks, int32 overuseChunks, bool 
 /* Update the memory usage of resource group */
 extern void ResGroupReleaseMemory(int32 memoryChunks);
 
-extern void ResGroupDropFinish(Oid groupId, bool isCommit);
-extern void ResGroupCreateOnAbort(Oid groupId);
-extern void ResGroupAlterOnCommit(Oid groupId,
-								  ResGroupLimitType limittype,
-								  const ResGroupCaps *caps,
-								  ResGroupCap memLimitGap);
+extern void ResGroupDropFinish(const ResourceGroupCallbackContext *callbackCtx,
+							   bool isCommit);
+extern void ResGroupCreateOnAbort(const ResourceGroupCallbackContext *callbackCtx);
+extern void ResGroupAlterOnCommit(const ResourceGroupCallbackContext *callbackCtx);
 extern void ResGroupCheckForDrop(Oid groupId, char *name);
 
 extern int32 ResGroupGetVmemLimitChunks(void);
@@ -149,6 +175,18 @@ extern int64 ResourceGroupGetQueryMemoryLimit(void);
 extern void ResGroupDumpInfo(StringInfo str);
 
 extern int ResGroupGetSegmentNum(void);
+
+extern Bitmapset *CpusetToBitset(const char *cpuset,
+								 int len);
+extern void BitsetToCpuset(const Bitmapset *bms,
+							char *cpuset,
+							int cpusetSize);
+extern int GetMinCore(const char *bitset, size_t size);
+extern void CpusetUnion(char *cpuset1, const char *cpuset2, int len);
+extern void CpusetDifference(char *cpuset1, const char *cpuset2, int len);
+extern bool CpusetIsEmpty(const char *cpuset);
+extern void SetCpusetEmpty(char *cpuset, int cpusetSize);
+extern bool EnsureCpusetIsAvailable(int elevel);
 
 #define LOG_RESGROUP_DEBUG(...) \
 	do {if (Debug_resource_group) elog(__VA_ARGS__); } while(false);

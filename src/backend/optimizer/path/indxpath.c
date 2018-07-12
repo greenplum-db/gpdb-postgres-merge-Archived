@@ -87,17 +87,17 @@ static void consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths, List **pindexpathlist);
+							List **bitindexpaths);
 static void expand_eclass_clause_combinations(PlannerInfo *root,
 								  RelOptInfo *rel,
 								  IndexOptInfo *index,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths, List **pindexpathlist);
+								  List **bitindexpaths);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths, List **pindexpathlist);
+				List **bitindexpaths);
 static List *build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				  IndexOptInfo *index, IndexClauseSet *clauses,
 				  bool useful_predicate,
@@ -233,13 +233,9 @@ create_bitmap_scan_path(PlannerInfo *root,
  * 'rel' is the relation for which we want to generate index paths
  *
  * Note: check_partial_indexes() must have been run previously for this rel.
- *
- * CDB: Instead of handing the paths to add_path(), we append them to a List
- * (*pindexpathlist or *pbitmappathlist) belonging to the caller.
  */
 void
-create_index_paths(PlannerInfo *root, RelOptInfo *rel,
-				   List **pindexpathlist, List **pbitmappathlist)
+create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *indexpaths;
 	List	   *bitindexpaths;
@@ -285,7 +281,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * bitmap paths are added to bitindexpaths to be handled below.
 		 */
 		get_index_paths(root, rel, index, &rclauseset,
-						&bitindexpaths, pindexpathlist);
+						&bitindexpaths);
 
 		/*
 		 * Identify the join clauses that can match the index.	For the moment
@@ -313,8 +309,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 										&rclauseset,
 										&jclauseset,
 										&eclauseset,
-										&bitjoinpaths,
-										pindexpathlist);
+										&bitjoinpaths);
 	}
 
 	/*
@@ -345,11 +340,11 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	if (bitindexpaths != NIL)
 	{
 		Path	   *bitmapqual;
-		Path *path;
+		Path *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		path = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
-		*pbitmappathlist = lappend(*pbitmappathlist, path);
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
+		add_path(root, rel, (Path *) bpath);
 	}
 
 	/*
@@ -365,14 +360,14 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *bitmapqual;
 		Relids		required_outer;
 		double		loop_count;
-		Path *path;
+		Path *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
 		required_outer = get_bitmap_tree_required_outer(bitmapqual);
 		loop_count = get_loop_count(root, required_outer);
-		path = create_bitmap_scan_path(root, rel, bitmapqual,
+		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
 										required_outer, loop_count);
-		*pbitmappathlist = lappend(*pbitmappathlist, path);
+		add_path(root, rel, (Path *) bpath);
 	}
 }
 
@@ -400,8 +395,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *rclauseset,
 							IndexClauseSet *jclauseset,
 							IndexClauseSet *eclauseset,
-							List **bitindexpaths,
-							List **pindexpathlist)
+							List **bitindexpaths)
 {
 	IndexClauseSet clauseset;
 	int			last_eclass_col;
@@ -473,12 +467,12 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 			expand_eclass_clause_combinations(root, rel, index,
 											  0, last_eclass_col,
 											  &clauseset, eclauseset,
-											  bitindexpaths, pindexpathlist);
+											  bitindexpaths);
 		}
 		else
 		{
 			/* No, consider the newly-enlarged set of simple join clauses */
-			get_index_paths(root, rel, index, &clauseset, bitindexpaths, pindexpathlist);
+			get_index_paths(root, rel, index, &clauseset, bitindexpaths);
 		}
 	}
 }
@@ -503,8 +497,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 								  int thiscol, int lastcol,
 								  IndexClauseSet *clauseset,
 								  IndexClauseSet *eclauseset,
-								  List **bitindexpaths,
-								  List **pindexpathlist)
+								  List **bitindexpaths)
 {
 	List	   *save_clauses;
 	ListCell   *lc;
@@ -512,7 +505,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 	/* If past last eclass column, end the recursion and generate paths */
 	if (thiscol > lastcol)
 	{
-		get_index_paths(root, rel, index, clauseset, bitindexpaths, pindexpathlist);
+		get_index_paths(root, rel, index, clauseset, bitindexpaths);
 		return;
 	}
 
@@ -523,7 +516,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 		return;
 	}
 
@@ -535,7 +528,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 
 	/* For each eclass clause alternative ... */
 	foreach(lc, eclauseset->indexclauses[thiscol])
@@ -549,7 +542,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 		expand_eclass_clause_combinations(root, rel, index,
 										  thiscol + 1, lastcol,
 										  clauseset, eclauseset,
-										  bitindexpaths, pindexpathlist);
+										  bitindexpaths);
 	}
 
 	/* Restore previous list contents */
@@ -573,7 +566,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
 static void
 get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
-				List **bitindexpaths, List **pindexpathlist)
+				List **bitindexpaths)
 {
 	List	   *indexpaths;
 	ListCell   *lc;
@@ -609,12 +602,19 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			ipath->indexinfo->unique)
 			rel->onerow = true;
 
-		if (index->amhasgettuple)
-			*pindexpathlist = lappend(*pindexpathlist, ipath);
+		/*
+		 * Random access to Append-Only is slow because AO doesn't use the buffer
+		 * pool and we want to avoid decompressing blocks multiple times.  So,
+		 * only consider bitmap paths because they are processed in TID order.
+		 * The appendonlyam.c module will optimize fetches in TID order by keeping
+		 * the last decompressed block between fetch calls.
+		 */
+		if (index->amhasgettuple &&
+			rel->relstorage == RELSTORAGE_HEAP)
+			add_path(root, rel, (Path *) ipath);
 
-		if (index->amhasgetbitmap &&
-			(!root->config->enable_seqscan || /*GPDB_92_MERGE_FIXME: is this needed?*/
-			 ipath->path.pathkeys == NIL ||
+		if (index->amhasgettuple &&
+			(ipath->path.pathkeys == NIL ||
 			 ipath->indexselectivity < 1.0))
 			*bitindexpaths = lappend(*bitindexpaths, ipath);
 	}

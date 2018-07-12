@@ -236,7 +236,9 @@ CTranslatorDXLToPlStmt::PplstmtFromDXL
 	}
 	
 	pplstmt->resultRelations = m_plResultRelations;
-	// GPDB_92_MERGE_FIXME: make CTAS work
+	// GPDB_92_MERGE_FIXME: we really *should* be handling intoClause
+	// but currently planner cheats (c.f. createas.c)
+	// shift the intoClause handling into planner and re-enable this
 //	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
 	pplstmt->intoPolicy = m_pctxdxltoplstmt->Pdistrpolicy();
 	
@@ -5022,7 +5024,8 @@ CTranslatorDXLToPlStmt::PplanCTAS
 		&(pplan->plan_width)
 		);
 
-	IntoClause *pintocl = PintoclFromCtas(pdxlop);
+//	IntoClause *pintocl = PintoclFromCtas(pdxlop);
+	IntoClause *pintocl = NULL;
 	GpPolicy *pdistrpolicy = PdistrpolicyFromCtas(pdxlop);
 	m_pctxdxltoplstmt->AddCtasInfo(pintocl, pdistrpolicy);
 	

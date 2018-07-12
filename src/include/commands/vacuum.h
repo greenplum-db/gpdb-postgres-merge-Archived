@@ -23,7 +23,6 @@
 #include "utils/relcache.h"
 #include "utils/tqual.h"
 
-
 /*----------
  * ANALYZE builds one of these structs for each attribute (column) that is
  * to be analyzed.	The struct and subsidiary data are in anl_context,
@@ -109,6 +108,8 @@ typedef struct VacAttrStats
 	int			numvalues[STATISTIC_NUM_SLOTS];
 	Datum	   *stavalues[STATISTIC_NUM_SLOTS];
 
+	bytea *stahll;			/* storing hyperloglog counter for sampled data */
+	bytea *stahll_full;			/* storing hyperloglog counter for entire table scan */
 	/*
 	 * These fields describe the stavalues[n] element types. They will be
 	 * initialized to match attrtypid, but a custom typanalyze function might
@@ -130,6 +131,7 @@ typedef struct VacAttrStats
 	Datum	   *exprvals;		/* access info for index fetch function */
 	bool	   *exprnulls;
 	int			rowstride;
+	bool		merge_stats;
 } VacAttrStats;
 
 /*

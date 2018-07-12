@@ -1186,7 +1186,7 @@ RecordTransactionCommit(void)
 	bool		markXidCommitted;
 	TransactionId latestXid = InvalidTransactionId;
 	int			nrels;
-	RelFileNode *rels;
+	RelFileNodeWithStorageType *rels;
 	int			nchildren;
 	TransactionId *children;
 	int			nmsgs = 0;
@@ -1332,7 +1332,7 @@ RecordTransactionCommit(void)
 			{
 				rdata[0].next = &(rdata[1]);
 				rdata[1].data = (char *) rels;
-				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].len = nrels * sizeof(RelFileNodeWithStorageType);
 				rdata[1].buffer = InvalidBuffer;
 				lastrdata = 1;
 			}
@@ -1767,7 +1767,7 @@ RecordTransactionAbort(bool isSubXact)
 	TransactionId xid;
 	TransactionId latestXid;
 	int			nrels;
-	RelFileNode *rels;
+	RelFileNodeWithStorageType *rels;
 	int			nchildren;
 	TransactionId *children;
 	XLogRecData rdata[3];
@@ -1844,7 +1844,7 @@ RecordTransactionAbort(bool isSubXact)
 	{
 		rdata[0].next = &(rdata[1]);
 		rdata[1].data = (char *) rels;
-		rdata[1].len = nrels * sizeof(RelFileNode);
+		rdata[1].len = nrels * sizeof(RelFileNodeWithStorageType);
 		rdata[1].buffer = InvalidBuffer;
 		lastrdata = 1;
 	}
@@ -5776,7 +5776,7 @@ static void
 xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 						  TransactionId *sub_xids, int nsubxacts,
 						  SharedInvalidationMessage *inval_msgs, int nmsgs,
-						  RelFileNode *xnodes, int nrels,
+						  RelFileNodeWithStorageType *xnodes, int nrels,
 						  Oid dbId, Oid tsId,
 						  uint32 xinfo,
 						  DistributedTransactionId distribXid,
@@ -5867,12 +5867,12 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
+		SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xnodes[i], fork);
-		smgrdounlink(srel, true);
+			XLogDropRelation(xnodes[i].node, fork);
+		smgrdounlink(srel, true, xnodes[i].relstorage);
 		smgrclose(srel);
 	}
 
@@ -6027,12 +6027,12 @@ xact_redo_distributed_commit(xl_xact_commit *xlrec, TransactionId xid)
 
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
+			SMgrRelation srel = smgropen(xlrec->xnodes[i].node, InvalidBackendId);
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(xlrec->xnodes[i], fork);
-			smgrdounlink(srel, true);
+				XLogDropRelation(xlrec->xnodes[i].node, fork);
+			smgrdounlink(srel, true, xlrec->xnodes[i].relstorage);
 			smgrclose(srel);
 		}
 	}
@@ -6109,12 +6109,12 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		SMgrRelation srel = smgropen(xlrec->xnodes[i], InvalidBackendId);
+		SMgrRelation srel = smgropen(xlrec->xnodes[i].node, InvalidBackendId);
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xlrec->xnodes[i], fork);
-		smgrdounlink(srel, true);
+			XLogDropRelation(xlrec->xnodes[i].node, fork);
+		smgrdounlink(srel, true, xlrec->xnodes[i].relstorage);
 		smgrclose(srel);
 	}
 }
@@ -6213,7 +6213,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -6305,7 +6305,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -6334,7 +6334,7 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 }
 
 void
-xact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+xact_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

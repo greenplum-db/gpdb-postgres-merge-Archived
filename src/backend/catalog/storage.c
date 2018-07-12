@@ -51,7 +51,7 @@
 
 typedef struct PendingRelDelete
 {
-	RelFileNode relnode;		/* relation that may need to be deleted */
+	RelFileNodeWithStorageType relnode;		/* relation that may need to be deleted */
 	BackendId	backend;		/* InvalidBackendId if not a temp rel */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	int			nestLevel;		/* xact nesting level of request */
@@ -96,7 +96,7 @@ typedef struct xl_smgr_truncate
  * transaction aborts later on, the storage will be destroyed.
  */
 void
-RelationCreateStorage(RelFileNode rnode, char relpersistence)
+RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
 {
 	PendingRelDelete *pending;
 	SMgrRelation srel;
@@ -131,7 +131,8 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = rnode;
+	pending->relnode.node = rnode;
+	pending->relnode.relstorage = relstorage;
 	pending->backend = backend;
 	pending->atCommit = false;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
@@ -174,7 +175,8 @@ RelationDropStorage(Relation rel)
 	/* Add the relation to the list of stuff to delete at commit */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = rel->rd_node;
+	pending->relnode.node = rel->rd_node;
+	pending->relnode.relstorage = rel->rd_rel->relstorage;
 	pending->backend = rel->rd_backend;
 	pending->atCommit = true;	/* delete if commit */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
@@ -222,7 +224,7 @@ RelationPreserveStorage(RelFileNode rnode, bool atCommit)
 	for (pending = pendingDeletes; pending != NULL; pending = next)
 	{
 		next = pending->next;
-		if (RelFileNodeEquals(rnode, pending->relnode)
+		if (RelFileNodeEquals(rnode, pending->relnode.node)
 			&& pending->atCommit == atCommit)
 		{
 			/* unlink and delete list entry */
@@ -357,9 +359,9 @@ smgrDoPendingDeletes(bool isCommit)
 			{
 				SMgrRelation srel;
 
-				srel = smgropen(pending->relnode, pending->backend);
+				srel = smgropen(pending->relnode.node, pending->backend);
 
-				smgrdounlink(srel, false);
+				smgrdounlink(srel, false, pending->relnode.relstorage);
 				smgrclose(srel);
 			}
 			/* must explicitly free the list entry */
@@ -389,19 +391,16 @@ smgrDoPendingDeletes(bool isCommit)
  * Greenplum-specific notes: We *do* include temporary relations in the returned
  * list. Because unlike in Upstream Postgres, Greenplum two-phase commits can
  * involve temporary tables, which necessitates including the temporary
- * relations in the two-phase state files. Otherwise the relation files won't
- * get unlink(2)'d, or the shared buffers won't be dropped.
- *
- * GPDB_91_MERGE_FIXME: do we bother to skip xlog'ging dropping temp relations?
- * Note that it seems a big undertaking to exclude temporary relations from the
- * two-phase state file.
+ * relations in the two-phase state files (PREPARE xlog record). Otherwise the
+ * relation files won't get unlink(2)'d, or the shared buffers won't be
+ * dropped at the end of COMMIT phase.
  */
 int
-smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
+smgrGetPendingDeletes(bool forCommit, RelFileNodeWithStorageType **ptr)
 {
 	int			nestLevel = GetCurrentTransactionNestLevel();
 	int			nrels;
-	RelFileNode *rptr;
+	RelFileNodeWithStorageType *rptr;
 	PendingRelDelete *pending;
 
 	nrels = 0;
@@ -409,7 +408,8 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	{
 		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit
 			/*
-			 * Greenplum uses shared buffer for temp tables
+			 * Greenplum allows transactions that access temporary tables to be
+			 * prepared.
 			 */
 			/* && pending->backend == InvalidBackendId) */
 				)
@@ -420,7 +420,7 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 		*ptr = NULL;
 		return 0;
 	}
-	rptr = (RelFileNode *) palloc(nrels * sizeof(RelFileNode));
+	rptr = (RelFileNodeWithStorageType *) palloc(nrels * sizeof(RelFileNodeWithStorageType));
 	*ptr = rptr;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
@@ -562,7 +562,7 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+smgr_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8           info = record->xl_info & ~XLR_INFO_MASK;
 	char            *rec = XLogRecGetData(record);

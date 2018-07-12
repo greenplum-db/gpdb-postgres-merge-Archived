@@ -1104,7 +1104,7 @@ out_target(StringInfo buf, RelFileNode node)
 }
 
 void
-spg_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+spg_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

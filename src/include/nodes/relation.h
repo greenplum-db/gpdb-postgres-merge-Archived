@@ -546,7 +546,6 @@ typedef struct RelOptInfo
 	double		tuples;
     struct GpPolicy   *cdbpolicy;      /* distribution of stored tuples */
 	char		relstorage;		/* from pg_class.relstorage */
-    bool        cdb_default_stats_used; /* true if ANALYZE needed */
 	double		allvisfrac;
 	/* use "struct Plan" to avoid including plannodes.h here */
 	struct Plan *subplan;		/* if subquery (in GPDB: or CTE) */
@@ -634,7 +633,6 @@ typedef struct IndexOptInfo
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
-    bool        cdb_default_stats_used; /* true if ANALYZE needed */
     int         num_leading_eq; /* CDB: always 0, except amcostestimate proc may
                                  * set it briefly; it is transferred forthwith
                                  * to the IndexPath (q.v.), then reset. Kludge.

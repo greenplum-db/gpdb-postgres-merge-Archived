@@ -29,6 +29,7 @@
 #include "utils/snapmgr.h"
 
 #include "cdb/ml_ipc.h"
+#include "commands/createas.h"
 #include "commands/queue.h"
 #include "commands/createas.h"
 #include "executor/spi.h"
@@ -1385,7 +1386,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	else
 		active_snapshot_set = false;
 
-	/* check if this utility statement need to be involved into resoure queue
+	/* check if this utility statement need to be involved into resource queue
 	 * mgmt */
 	ResHandleUtilityStmt(portal, utilityStmt);
 

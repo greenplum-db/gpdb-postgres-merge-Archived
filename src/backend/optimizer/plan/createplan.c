@@ -1601,7 +1601,7 @@ create_external_scan_uri_list(ExtTableEntry *ext, bool *ismasteronly)
 	/*
 	 * initialize a file-to-segdb mapping. segdb_file_map string array indexes
 	 * segindex and the entries are the external file path is assigned to this
-	 * segment datbase. For example if segdb_file_map[2] has "/tmp/emp.1" then
+	 * segment database. For example if segdb_file_map[2] has "/tmp/emp.1" then
 	 * this file is assigned to primary segdb 2. if an entry has NULL then
 	 * that segdb isn't assigned any file.
 	 */
@@ -2529,6 +2529,11 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
 
+	/* GPDB_92_MERGE_FIXME: Move extract_actual_clauses() here, following other
+	 * similar functions? We should double check gpdb specific plan node code
+	 * and change following other pg plan node code change.
+	 */
+
 	/*
 	 * When dealing with special or lossy operators, we will at this point
 	 * have duplicate clauses in qpqual and bitmapqualorig.  We may as well
@@ -2536,6 +2541,19 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	 * tests twice.
 	 */
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
+
+	/*
+	 * We have to replace any outer-relation variables with nestloop params in
+	 * the qpqual and bitmapqualorig expressions.  (This was already done for
+	 * expressions attached to plan nodes in the bitmapqualplan tree.)
+	 */
+	if (best_path->path.param_info)
+	{
+		qpqual = (List *)
+			replace_nestloop_params(root, (Node *) qpqual);
+		bitmapqualorig = (List *)
+			replace_nestloop_params(root, (Node *) bitmapqualorig);
+	}
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_appendonlyscan(tlist,
@@ -6452,7 +6470,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 	 */
 	ListCell   *lcr,
 			   *lcp;
-	bool		all_subplans_entry = true;
+	bool		all_subplans_entry = true,
+				all_subplans_replicated = true;
 
 	if (node->operation == CMD_INSERT)
 	{
@@ -6473,6 +6492,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
 				all_subplans_entry = false;
+				all_subplans_replicated = false;
 
 				if (gp_enable_fast_sri && IsA(subplan, Result))
 					sri_optimize_for_result(root, subplan, rte, &targetPolicy, &hashExpr);
@@ -6491,6 +6511,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			{
 				/* Master-only table */
 
+				all_subplans_replicated = false;
+
 				/* All's well if query result is already on the QD. */
 				if (!(subplan->flow->flotype == FLOW_SINGLETON &&
 					  subplan->flow->segindex < 0))
@@ -6508,6 +6530,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			else if (targetPolicyType == POLICYTYPE_REPLICATED)
 			{
 				Assert(subplan->flow->flotype != FLOW_REPLICATED);
+
+				all_subplans_entry = false;
 
 				/*
 				 * CdbLocusType_SegmentGeneral is only used by replicated table
@@ -6564,6 +6588,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			if (targetPolicyType == POLICYTYPE_PARTITIONED)
 			{
 				all_subplans_entry = false;
+				all_subplans_replicated = false;
 
 				/*
 				 * The planner does not support updating any of the
@@ -6582,6 +6607,8 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			}
 			else if (targetPolicyType == POLICYTYPE_ENTRY)
 			{
+				all_subplans_replicated = false;
+
 				/* Master-only table */
 				if (subplan->flow->flotype == FLOW_PARTITIONED ||
 					subplan->flow->flotype == FLOW_REPLICATED ||
@@ -6617,6 +6644,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 			else if (targetPolicyType == POLICYTYPE_REPLICATED)
 			{
 				/* Do nothing here, see main work in cdbpath_motion_for_join() */
+				all_subplans_entry = false;
 			}
 			else
 				elog(ERROR, "unrecognized policy type %u", targetPolicyType);
@@ -6637,6 +6665,10 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node)
 	if (all_subplans_entry)
 	{
 		mark_plan_entry((Plan *) node);
+	}
+	else if (all_subplans_replicated)
+	{
+		mark_plan_replicated((Plan *) node);
 	}
 	else
 	{

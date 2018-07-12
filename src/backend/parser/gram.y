@@ -674,13 +674,17 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %token <keyword>
 	ACTIVE
 
-	CONTAINS CPU_RATE_LIMIT CREATEEXTTABLE CUBE
+	CONTAINS CPUSET CPU_RATE_LIMIT
+
+	CREATEEXTTABLE CUBE
 
 	DECODE DENY DISTRIBUTED DXL
 
 	ERRORS EVERY EXCHANGE
 
 	FIELDS FILL FILTER FORMAT
+
+	FULLSCAN
 
 	GROUP_ID GROUPING
 
@@ -691,6 +695,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	LIST LOG_P
 
 	MASTER MEDIAN MISSING MODIFIES
+
+	MERGE
 
 	NEWLINE NOCREATEEXTTABLE NOOVERCOMMIT
 
@@ -803,6 +809,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 			%nonassoc CONVERSION_P
 			%nonassoc COPY
 			%nonassoc COST
+			%nonassoc CPUSET
 			%nonassoc CPU_RATE_LIMIT
 			%nonassoc CREATEEXTTABLE
 			%nonassoc CSV
@@ -1443,6 +1450,10 @@ OptResourceGroupElem:
 			| CPU_RATE_LIMIT SignedIconst
 				{
 					$$ = makeDefElem("cpu_rate_limit", (Node *) makeInteger($2));
+				}
+			| CPUSET Sconst
+				{
+					$$ = makeDefElem("cpuset", (Node *) makeString($2));
 				}
 			| MEMORY_SHARED_QUOTA SignedIconst
 				{
@@ -7474,6 +7485,7 @@ comment_type:
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
 			| FOREIGN DATA_P WRAPPER			{ $$ = OBJECT_FDW; }
 			| RESOURCE QUEUE                    { $$ = OBJECT_RESQUEUE; }
+			| RESOURCE GROUP_P					{ $$ = OBJECT_RESGROUP; }
 		;
 
 comment_text:
@@ -10712,6 +10724,30 @@ AnalyzeStmt:
 					n->freeze_table_age = -1;
 					n->relation = $3;
 					n->va_cols = $4;
+					$$ = (Node *)n;
+				}
+			| analyze_keyword opt_verbose MERGE qualified_name opt_name_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = VACOPT_ANALYZE;
+					if ($2)
+						n->options |= VACOPT_VERBOSE;
+					n->options |= VACOPT_MERGE;
+					n->freeze_min_age = -1;
+					n->relation = $4;
+					n->va_cols = $5;
+					$$ = (Node *)n;
+				}
+			| analyze_keyword opt_verbose FULLSCAN qualified_name opt_name_list
+				{
+					VacuumStmt *n = makeNode(VacuumStmt);
+					n->options = VACOPT_ANALYZE;
+					if ($2)
+						n->options |= VACOPT_VERBOSE;
+					n->options |= VACOPT_FULLSCAN;
+					n->freeze_min_age = -1;
+					n->relation = $4;
+					n->va_cols = $5;
 					$$ = (Node *)n;
 				}
 			| analyze_keyword opt_verbose ROOTPARTITION qualified_name opt_name_list
@@ -15142,6 +15178,7 @@ unreserved_keyword:
 			| CONVERSION_P
 			| COPY
 			| COST
+			| CPUSET
 			| CPU_RATE_LIMIT
 			| CREATEEXTTABLE
 			| CSV
@@ -15190,6 +15227,7 @@ unreserved_keyword:
 			| FORCE
 			| FORMAT
 			| FORWARD
+			| FULLSCAN
 			| FUNCTION
 			| FUNCTIONS
 			| GLOBAL
@@ -15242,6 +15280,7 @@ unreserved_keyword:
 			| MEMORY_LIMIT
 			| MEMORY_SHARED_QUOTA
 			| MEMORY_SPILL_RATIO
+			| MERGE
 			| MINUTE_P
 			| MINVALUE
 			| MISSING
@@ -15459,6 +15498,7 @@ PartitionIdentKeyword: ABORT_P
 			| CONVERSION_P
 			| COPY
 			| COST
+			| CPUSET
 			| CPU_RATE_LIMIT
 			| CREATEEXTTABLE
 			| CSV

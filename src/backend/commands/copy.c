@@ -162,7 +162,7 @@ static CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
 static void EndCopy(CopyState cstate);
 static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
 			const char *filename, bool is_program, List *attnamelist,
-			List *options);
+			List *options, bool skip_ext_partition);
 static void EndCopyTo(CopyState cstate);
 static uint64 DoCopyTo(CopyState cstate);
 static uint64 CopyToDispatch(CopyState cstate);
@@ -204,7 +204,7 @@ static void SendCopyFromForwardedTuple(CopyState cstate,
 						   CdbCopy *cdbCopy,
 						   bool toAll,
 						   int target_seg,
-						   Oid relid,
+						   Relation rel,
 						   int64 lineno,
 						   char *line,
 						   int line_len,
@@ -1136,7 +1136,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		{
 			cstate = BeginCopyTo(rel, stmt->query, queryString,
 								 stmt->filename, stmt->is_program,
-								 stmt->attlist, options);
+								 stmt->attlist, options, stmt->skip_ext_partition);
 
 			cstate->partitions = stmt->partitions;
 
@@ -1909,7 +1909,7 @@ BeginCopy(bool is_from,
 		  pg_database_encoding_max_length() > 1));
 	/* See Multibyte encoding comment above */
 	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->file_encoding);
-	setEncodingConversionProc(cstate, pg_get_client_encoding(), !is_from);
+	setEncodingConversionProc(cstate, cstate->file_encoding, !is_from);
   }
   else
   {
@@ -1956,21 +1956,26 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 	all_relids = list_make1_oid(RelationGetRelid(cstate->rel));
 
 	/* add in AO segno map for dispatch */
-	if (rel_is_partitioned(RelationGetRelid(cstate->rel)))
+	if (dispatchStmt->is_from)
 	{
-		if (gp_enable_segment_copy_checking &&
-			!partition_policies_equal(cstate->rel->rd_cdbpolicy, RelationBuildPartitionDesc(cstate->rel, false)))
+		if (rel_is_partitioned(RelationGetRelid(cstate->rel)))
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY FROM ON SEGMENT doesn't support checking distribution key restriction when the distribution policy of the partition table is different from the main table"),
-					 errhint("\"SET gp_enable_segment_copy_checking=off\" can be used to disable distribution key checking.")));
-		}
-		PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
+			if (gp_enable_segment_copy_checking &&
+				!partition_policies_equal(cstate->rel->rd_cdbpolicy, RelationBuildPartitionDesc(cstate->rel, false)))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("COPY FROM ON SEGMENT doesn't support checking distribution key restriction when the distribution policy of the partition table is different from the main table"),
+						 errhint("\"SET gp_enable_segment_copy_checking=off\" can be used to disable distribution key checking.")));
+			}
+			PartitionNode *pn = RelationBuildPartitionDesc(cstate->rel, false);
 
-		all_relids = list_concat(all_relids, all_partition_relids(pn));
+			all_relids = list_concat(all_relids, all_partition_relids(pn));
+		}
+
+		dispatchStmt->ao_segnos = assignPerRelSegno(all_relids);
 	}
-	dispatchStmt->ao_segnos = assignPerRelSegno(all_relids);
+
 	dispatchStmt->skip_ext_partition = cstate->skip_ext_partition;
 
 	if (policy)
@@ -2083,7 +2088,8 @@ BeginCopyTo(Relation rel,
 			const char *filename,
 			bool is_program,
 			List *attnamelist,
-			List *options)
+			List *options,
+			bool skip_ext_partition)
 {
 	CopyState	cstate;
 	MemoryContext oldcontext;
@@ -2125,6 +2131,8 @@ BeginCopyTo(Relation rel,
 
 	cstate = BeginCopy(false, rel, query, queryString, attnamelist, options);
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
+
+	cstate->skip_ext_partition = skip_ext_partition;
 
 	/* Determine the mode */
 	if (Gp_role == GP_ROLE_DISPATCH && !cstate->on_segment &&
@@ -2719,7 +2727,6 @@ CopyTo(CopyState cstate)
 
 				scandesc = heap_beginscan(rel, GetActiveSnapshot(), 0, NULL);
 
-				processed = 0;
 				while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 				{
 					CHECK_FOR_INTERRUPTS();
@@ -2743,7 +2750,6 @@ CopyTo(CopyState cstate)
 				aoscandesc = appendonly_beginscan(rel, GetActiveSnapshot(),
 												  GetActiveSnapshot(), 0, NULL);
 
-				processed = 0;
 				while ((tuple = appendonly_getnext(aoscandesc, ForwardScanDirection, slot)) != NULL)
 				{
 					CHECK_FOR_INTERRUPTS();
@@ -2784,7 +2790,6 @@ CopyTo(CopyState cstate)
 									  GetActiveSnapshot(),
 									  NULL /* relationTupleDesc */, proj);
 
-				processed = 0;
 				for(;;)
 				{
 				    CHECK_FOR_INTERRUPTS();
@@ -2813,13 +2818,11 @@ CopyTo(CopyState cstate)
 				{
 				    elog(ERROR, "internal error");
 				}
-				processed = 0;
 			}
 			else
 			{
 				/* should never get here */
 				Assert(false);
-				processed = 0;
 			}
 
 			/* partition table, so close */
@@ -3588,17 +3591,19 @@ CopyFrom(CopyState cstate)
 			if (resultRelInfo->ri_partInsertMap)
 			{
 				AttrMap *map = resultRelInfo->ri_partInsertMap;
+				int relnatts;
 
 				if (!resultRelInfo->ri_resultSlot)
 					resultRelInfo->ri_resultSlot =
 						MakeSingleTupleTableSlot(resultRelInfo->ri_RelationDesc->rd_att);
 
+				relnatts = resultRelInfo->ri_RelationDesc->rd_att->natts;
 				slot = resultRelInfo->ri_resultSlot;
 				ExecClearTuple(slot);
 				partValues = slot_get_values(resultRelInfo->ri_resultSlot);
 				partNulls = slot_get_isnull(resultRelInfo->ri_resultSlot);
-				MemSet(partValues, 0, attr_count * sizeof(Datum));
-				MemSet(partNulls, true, attr_count * sizeof(bool));
+				MemSet(partValues, 0, relnatts * sizeof(Datum));
+				MemSet(partNulls, true, relnatts * sizeof(bool));
 
 				reconstructTupleValues(map, baseValues, baseNulls, (int) num_phys_attrs,
 									   partValues, partNulls, (int) attr_count);
@@ -3715,7 +3720,7 @@ CopyFrom(CopyState cstate)
 			/* in the QD, forward the row to the correct segment(s). */
 			SendCopyFromForwardedTuple(cstate, cdbCopy, send_to_all,
 									   send_to_all ? 0 : target_seg,
-									   RelationGetRelid(resultRelInfo->ri_RelationDesc),
+									   resultRelInfo->ri_RelationDesc,
 									   cstate->cur_lineno,
 									   cstate->line_buf.data,
 									   cstate->line_buf.len,
@@ -5121,7 +5126,7 @@ SendCopyFromForwardedTuple(CopyState cstate,
 						   CdbCopy *cdbCopy,
 						   bool toAll,
 						   int target_seg,
-						   Oid relid,
+						   Relation rel,
 						   int64 lineno,
 						   char *line,
 						   int line_len,
@@ -5137,10 +5142,10 @@ SendCopyFromForwardedTuple(CopyState cstate,
 	AttrNumber	num_phys_attrs;
 	int			i;
 
-	if (!OidIsValid(relid))
+	if (!OidIsValid(RelationGetRelid(rel)))
 		elog(ERROR, "invalid target table OID in COPY");
 
-	tupDesc = RelationGetDescr(cstate->rel);
+	tupDesc = RelationGetDescr(rel);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 
@@ -5193,7 +5198,7 @@ SendCopyFromForwardedTuple(CopyState cstate,
 
 	frame = (copy_from_dispatch_row *) msgbuf->data;
 
-	frame->relid = relid;
+	frame->relid = RelationGetRelid(rel);
 	frame->loaded_oid = tuple_oid;
 	frame->lineno = lineno;
 	frame->fld_count = num_sent_fields;
@@ -6733,20 +6738,18 @@ static void CopyInitDataParser(CopyState cstate)
  *
  * The code here mimics a part of SetClientEncoding() in mbutils.c
  */
-void setEncodingConversionProc(CopyState cstate, int client_encoding, bool iswritable)
+void setEncodingConversionProc(CopyState cstate, int encoding, bool iswritable)
 {
 	Oid		conversion_proc;
 	
 	/*
-	 * COPY FROM and RET: convert from client to server
-	 * COPY TO   and WET: convert from server to client
+	 * COPY FROM and RET: convert from file to server
+	 * COPY TO   and WET: convert from server to file
 	 */
 	if (iswritable)
-		conversion_proc = FindDefaultConversionProc(GetDatabaseEncoding(),
-													client_encoding);
+		conversion_proc = FindDefaultConversionProc(GetDatabaseEncoding(), encoding);
 	else		
-		conversion_proc = FindDefaultConversionProc(client_encoding,
-												    GetDatabaseEncoding());
+		conversion_proc = FindDefaultConversionProc(encoding, GetDatabaseEncoding());
 	
 	if (OidIsValid(conversion_proc))
 	{

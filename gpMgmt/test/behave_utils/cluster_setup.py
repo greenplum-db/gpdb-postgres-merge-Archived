@@ -4,20 +4,6 @@ import socket
 import inspect
 from gppylib.commands.base import Command
 
-class GpInitStandby(Command):
-    """This is a wrapper for gpinitstandby."""
-    def __init__(self, standby_host, mdd=None):
-        if not mdd:
-            mdd = os.getenv('MASTER_DATA_DIRECTORY')
-        cmd_str = 'export MASTER_DATA_DIRECTORY=%s; gpinitstandby -a -s  %s' % (mdd, standby_host)
-        Command.__init__(self, 'run gpinitstandby', cmd_str)
-
-    def run(self, validate=True):
-        print "Running gpinitstandby: %s" % self
-        Command.run(self, validateAfter=validate)
-        result = self.get_results()
-        return result
-
 class GpSegInstall(Command):
     """
     This is a wrapper for gpseginstall
@@ -101,8 +87,7 @@ class TestCluster:
         # Whether to do gpinitsystem or not
         self.mirror_enabled = False
         self.number_of_segments = 2
-        self.number_of_hosts = 1
-        self.standby_enabled = False
+        self.number_of_hosts = len(self.hosts)-1
 
         self.number_of_expansion_hosts = 0
         self.number_of_expansion_segments = 0
@@ -151,7 +136,7 @@ class TestCluster:
 
         # run gpinitsystem
         clean_env = 'unset MASTER_DATA_DIRECTORY; unset PGPORT;'
-        gpinitsystem_cmd = clean_env + 'gpinitsystem -a -c  %s' % (self.init_file)
+        gpinitsystem_cmd = clean_env + 'gpinitsystem -a -c  %s ' % (self.init_file)
         res = run_shell_command(gpinitsystem_cmd, 'run gpinitsystem', verbose=True)
         # initsystem returns 1 for warnings and 2 for errors
         if res['rc'] > 1:
@@ -241,4 +226,3 @@ if __name__ == '__main__':
     testcluster = TestCluster([])
     testcluster.reset_cluster()
     testcluster.create_cluster()
-

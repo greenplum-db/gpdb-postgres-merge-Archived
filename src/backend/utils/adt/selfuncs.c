@@ -4589,14 +4589,16 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 				child_rte = rt_fetch(childrel->relid, root->parse->rtable);
 
 				Assert(child_rte != NULL);
+				const char *attname = get_relid_attribute_name(rte->relid, var->varattno);
+				AttrNumber child_attno = get_attnum(child_rte->relid, attname);
 
 				/*
 				 * Get statistics from the child partition.
 				 */
 				vardata->statsTuple = SearchSysCache3(STATRELATTINH,
 													  ObjectIdGetDatum(child_rte->relid),
-													  Int16GetDatum(var->varattno),
-													  BoolGetDatum(rte->inh));
+													  Int16GetDatum(child_attno),
+													  BoolGetDatum(child_rte->inh));
 
 				if (vardata->statsTuple != NULL)
 				{

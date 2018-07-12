@@ -9005,7 +9005,7 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 		templatelevel++;
 	} /* end while pn */
 
-	heap_close(rel, NoLock);
+	heap_close(rel, AccessShareLock);
 
 	return sid1.data;
 } /* end pg_get_partition_template_def_worker */
@@ -9038,7 +9038,7 @@ pg_get_partition_def_worker(Oid relid, int prettyFlags, int bLeafTablename)
 
 	get_partition_recursive(pn, &headc, &bodyc, &leveldone, bLeafTablename);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, AccessShareLock);
 
 	if (strlen(body.data))
 		appendStringInfo(&head, " %s", body.data);

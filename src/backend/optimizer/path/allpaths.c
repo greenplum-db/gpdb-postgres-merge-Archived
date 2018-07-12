@@ -107,7 +107,6 @@ static void recurse_push_qual(Node *setOp, Query *topquery,
 #ifdef _MSC_VER
 __declspec(noreturn)
 #endif
-static void cdb_no_path_for_query(void) __attribute__((__noreturn__));
 
 
 /*
@@ -149,35 +148,9 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 	set_base_rel_pathlists(root);
 
 	/*
-	 * CDB: If join, warn of any tables that need ANALYZE.
-	 */
-	if (has_multiple_baserels(root))
-	{
-		Index		rti;
-		RelOptInfo *brel;
-		RangeTblEntry *brte;
-
-		for (rti = 1; rti < root->simple_rel_array_size; rti++)
-		{
-			brel = root->simple_rel_array[rti];
-			if (brel &&
-				brel->cdb_default_stats_used)
-			{
-				brte = rt_fetch(rti, root->parse->rtable);
-				cdb_default_stats_warning_for_table(brte->relid);
-			}
-		}
-	}
-
-	/*
 	 * Generate access paths for the entire join tree.
 	 */
 	rel = make_rel_from_joinlist(root, joinlist);
-
-	/* CDB: No path might be found if user set enable_xxx = off */
-	if (!rel ||
-		!rel->cheapest_total_path)
-		cdb_no_path_for_query();	/* raise error - no return */
 
 	/*
 	 * The result should join all and only the query's base rels.
@@ -425,12 +398,7 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	List       *pathlist = NIL;
-	List       *indexpathlist = NIL;
-	List       *bitmappathlist = NIL;
-	List       *tidpathlist = NIL;
 	Path       *seqpath = NULL;
-	ListCell   *cell;
 
 	/*
 	 * Generate paths and add them to the rel's pathlist.
@@ -438,13 +406,9 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * Note: add_path() will discard any paths that are dominated by another
 	 * available path, keeping only those paths that are superior along at
 	 * least one dimension of cost or sortedness.
-	 *
-	 * CDB: So that create_index_paths() and create_tidscan_paths() can set
-	 * the rel->onerow flag before it is tested by add_path(), we gather the
-	 * paths in a temporary list, then add them.
 	 */
 
-	/* early exit for external and append only relations */
+	/* Consider sequential scan */
 	switch (rel->relstorage)
 	{
 		case RELSTORAGE_EXTERNAL:
@@ -473,66 +437,27 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 		default:
 
 			/*
-			 * should not be feasible, usually indicates a failure to
+			 * Should not be feasible, usually indicates a failure to
 			 * correctly apply rewrite rules.
 			 */
-			elog(ERROR, "plan contains range table with relstorage='%c'", rel->relstorage);
+			elog(ERROR, "plan contains range table with relstorage='%c'",
+				 rel->relstorage);
 			return;
 	}
 
-	/* Consider sequential scan */
-	if (root->config->enable_seqscan)
-		pathlist = lappend(pathlist, seqpath);
-
 	/* Consider index and bitmap scans */
-	create_index_paths(root, rel,
-					   &indexpathlist, &bitmappathlist);
+	create_index_paths(root, rel);
+
+	/* we can add the seqscan path now */
+	add_path(root, rel, seqpath);
 
 	/*
-	 * Random access to Append-Only is slow because AO doesn't use the buffer
-	 * pool and we want to avoid decompressing blocks multiple times.  So,
-	 * only consider bitmap paths because they are processed in TID order.
-	 * The appendonlyam.c module will optimize fetches in TID order by keeping
-	 * the last decompressed block between fetch calls.
+	 * Consider TID scans
+	 *
+	 * Only heap tables support TidScans, currently. Not AO or CO tables.
 	 */
-	if (rel->relstorage == RELSTORAGE_AOROWS ||
-		rel->relstorage == RELSTORAGE_AOCOLS)
-		indexpathlist = NIL;
-
-	if (indexpathlist && root->config->enable_indexscan)
-		pathlist = list_concat(pathlist, indexpathlist);
-	if (bitmappathlist && root->config->enable_bitmapscan)
-		pathlist = list_concat(pathlist, bitmappathlist);
-
-	/* Consider TID scans */
-	create_tidscan_paths(root, rel, &tidpathlist);
-
-	/*
-	 * AO and CO tables do not currently support TidScans. Disable TidScan
-	 * path for such tables
-	 */
-	if (rel->relstorage == RELSTORAGE_AOROWS ||
-		rel->relstorage == RELSTORAGE_AOCOLS)
-		tidpathlist = NIL;
-
-	if (tidpathlist && root->config->enable_tidscan)
-		pathlist = list_concat(pathlist, tidpathlist);
-
-	/* If no enabled path was found, consider disabled paths. */
-	if (!pathlist)
-	{
-		pathlist = lappend(pathlist, seqpath);
-		if (root->config->gp_enable_fallback_plan)
-		{
-			pathlist = list_concat(pathlist, indexpathlist);
-			pathlist = list_concat(pathlist, bitmappathlist);
-			pathlist = list_concat(pathlist, tidpathlist);
-		}
-	}
-
-	/* Add them, now that we know whether the quals specify a unique key. */
-	foreach(cell, pathlist)
-		add_path(root, rel, (Path *) lfirst(cell));
+	if (rel->relstorage == RELSTORAGE_HEAP)
+		create_tidscan_paths(root, rel);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(root, rel);
@@ -1687,11 +1612,6 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 			thisrel = NULL;		/* keep compiler quiet */
 		}
 
-		/* CDB: Fail if no path could be built due to set enable_xxx = off. */
-		if (!thisrel ||
-			!thisrel->cheapest_total_path)
-			return NULL;
-
 		initial_rels = lappend(initial_rels, thisrel);
 	}
 
@@ -1716,20 +1636,7 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 		if (join_search_hook)
 			return (*join_search_hook) (root, levels_needed, initial_rels);
 		else
-		{
-			RelOptInfo *rel;
-
-			rel = standard_join_search(root, levels_needed, initial_rels, false);
-			if (rel == NULL && root->config->gp_enable_fallback_plan)
-			{
-				elog(DEBUG1, "failed to build a plan; retrying with all plan types enabled");
-				root->join_rel_hash = NULL;
-				root->join_rel_list = NULL;
-				root->join_rel_level = NULL;
-				rel = standard_join_search(root, levels_needed, initial_rels, true);
-			}
-			return rel;
-		}
+			return standard_join_search(root, levels_needed, initial_rels);
 	}
 }
 
@@ -1763,19 +1670,16 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
  * original states of those data structures.  See geqo_eval() for an example.
  */
 RelOptInfo *
-standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, bool fallback)
+standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 {
 	int			lev;
 	RelOptInfo *rel;
-
-	root->config->mpp_trying_fallback_plan = fallback;
 
 	/*
 	 * This function cannot be invoked recursively within any one planning
 	 * problem, so join_rel_level[] can't be in use already.
 	 */
-	if (!fallback)
-		Assert(root->join_rel_level == NULL);
+	Assert(root->join_rel_level == NULL);
 
 	/*
 	 * We employ a simple "dynamic programming" algorithm: we first find all
@@ -1795,9 +1699,6 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 	for (lev = 2; lev <= levels_needed; lev++)
 	{
 		ListCell   *lc;
-		ListCell   *prev;
-		ListCell   *next;
-		List	   *backup;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
@@ -1809,13 +1710,8 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 		/*
 		 * Do cleanup work on each just-processed rel.
 		 */
-		backup = list_copy(root->join_rel_level[lev]);
-		prev = NULL;
-		for (lc = list_head(root->join_rel_level[lev]);
-			 lc != NULL;
-			 lc = next)
+		foreach(lc, root->join_rel_level[lev])
 		{
-			next = lnext(lc);
 			rel = (RelOptInfo *) lfirst(lc);
 
 			/* Find and save the cheapest paths for this rel */
@@ -1824,22 +1720,6 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels, b
 #ifdef OPTIMIZER_DEBUG
 			debug_print_rel(root, rel);
 #endif
-
-			/* CDB: Prune this rel if it has no path. */
-			if (!rel->cheapest_total_path)
-				root->join_rel_level[lev] = list_delete_cell(root->join_rel_level[lev], lc, prev);
-			else
-				prev = lc;
-		}
-
-		/*
-		 * If no paths found because enable_xxx=false, enable all & retry.
-		 */
-		if (!root->join_rel_level[lev] &&
-			root->config->gp_enable_fallback_plan &&
-			!root->config->mpp_trying_fallback_plan)
-		{
-			break;
 		}
 	}
 
@@ -2399,47 +2279,6 @@ recurse_push_qual(Node *setOp, Query *topquery,
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 	}
-}
-
-/*
- * cdb_no_path_for_query
- *
- * Raise error when the set of allowable paths for a query is empty.
- * Does not return.
- */
-static void
-cdb_no_path_for_query(void)
-{
-	List	   *settings;
-	ListCell   *cell;
-	bool		first = true;
-	StringInfoData	str;
-
-	settings = gp_guc_list_show(PGC_S_DEFAULT, gp_guc_list_for_no_plan);
-
-	if (list_length(settings) > 0)
-	{
-		/*
-		 * Both settings and str will allocate memory which isn't freed, but
-		 * since we will error out it will be cleaned up anyways so avoid an
-		 * extra free here.
-		 */
-		initStringInfo(&str);
-		foreach(cell, settings)
-		{
-			char	*option = (char *) lfirst(cell);
-			appendStringInfo(&str, "%s%s", (first ? "" : "; "), option);
-			first = false;
-		}
-
-		ereport(ERROR,
-				(errcode(ERRCODE_GP_FEATURE_NOT_CONFIGURED),
-				 errmsg("Query requires a feature that has been disabled by a configuration setting."),
-				 errdetail("Could not devise a query plan for the given query."),
-				 errhint("Current settings:  %s", str.data)));
-	}
-	else
-		elog(ERROR, "Could not devise a query plan for the given query.");
 }
 
 
