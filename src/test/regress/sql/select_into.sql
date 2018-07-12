@@ -71,6 +71,7 @@ DROP TABLE created_table;
 --
 -- Disallowed uses of SELECT ... INTO.  All should fail
 --
+CREATE TABLE b (aa int, bb int);
 DECLARE foo CURSOR FOR SELECT 1 INTO b;
 COPY (SELECT 1 INTO frak UNION SELECT 2) TO 'blob';
 SELECT * FROM (SELECT 1 INTO f) bar;

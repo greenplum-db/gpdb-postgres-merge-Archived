@@ -78,6 +78,7 @@ DROP TABLE created_table;
 --
 -- Disallowed uses of SELECT ... INTO.  All should fail
 --
+CREATE TABLE b (aa int, bb int);
 DECLARE foo CURSOR FOR SELECT 1 INTO b;
 ERROR:  SELECT ... INTO is not allowed here
 LINE 1: DECLARE foo CURSOR FOR SELECT 1 INTO b;
