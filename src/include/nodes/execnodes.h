@@ -384,16 +384,6 @@ typedef struct ResultRelInfo
 	 */
 	HTAB	   *ri_partition_hash;
 
-	/*
-	 * cdb: CopyFrom() buffers the tuples and flush them all together
-	 * in CopyFromInsertBatch()
-	 * For partition table, each child partition needs a buffer array
-	 * to hold the tuples.
-	 */
-	BulkInsertState biState;
-	int			nBufferedTuples;
-	HeapTuple	*bufferedTuples;
-	Size		bufferedTuplesSize;
 } ResultRelInfo;
 
 typedef struct ShareNodeEntry

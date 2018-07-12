@@ -2345,10 +2345,6 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_deleteDesc = NULL;
 	resultRelInfo->ri_updateDesc = NULL;
 	resultRelInfo->ri_aosegno = InvalidFileSegNumber;
-	resultRelInfo->bufferedTuplesSize = 0;
-	resultRelInfo->nBufferedTuples = 0;
-	resultRelInfo->bufferedTuples = NULL;
-	resultRelInfo->biState = GetBulkInsertState();
 }
 
 
@@ -2399,12 +2395,6 @@ CloseResultRelInfo(ResultRelInfo *resultRelInfo)
 	/* Close indices and then the relation itself */
 	ExecCloseIndices(resultRelInfo);
 	heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-
-	if (resultRelInfo->biState != NULL)
-	{
-		FreeBulkInsertState(resultRelInfo->biState);
-		resultRelInfo->biState = NULL;
-	}
 
 	/* Recurse into partitions */
 	/* Examine each hash table entry. */

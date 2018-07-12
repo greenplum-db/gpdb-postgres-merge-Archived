@@ -242,12 +242,6 @@ static unsigned int
 GetTargetSeg(GpDistributionData *distData, Datum *baseValues, bool *baseNulls);
 static ProgramPipes *open_program_pipes(char *command, bool forwrite);
 static void close_program_pipes(CopyState cstate, bool ifThrow);
-static void cdbFlushInsertBatches(List *resultRels,
-					  CopyState cstate,
-					  EState *estate,
-					  CommandId mycid,
-					  int hi_options,
-					  TupleTableSlot *baseSlot);
 
 /* ==========================================================================
  * The following macros aid in major refactoring of data processing code (in
@@ -3144,35 +3138,6 @@ limit_printout_length(const char *str)
 }
 
 /*
- * Wrapper function of CopyFromInsertBatch
- *
- * Flush all relations have buffered tuples
- */
-static void
-cdbFlushInsertBatches(List *resultRels,
-					  CopyState cstate,
-					  EState *estate,
-					  CommandId mycid,
-					  int hi_options,
-					  TupleTableSlot *baseSlot)
-{
-	ListCell *cell;
-	foreach (cell, resultRels)
-	{
-		ResultRelInfo *relInfo = (ResultRelInfo *)lfirst(cell);
-		if (relInfo->nBufferedTuples > 0)
-			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-					relInfo,
-					baseSlot,
-					relInfo->biState,
-					relInfo->nBufferedTuples,
-					relInfo->bufferedTuples);
-		relInfo->nBufferedTuples = 0;
-		relInfo->bufferedTuplesSize = 0;
-	}
-}
-
-/*
  * Copy FROM file to relation.
  */
 static uint64
@@ -3185,7 +3150,6 @@ CopyFrom(CopyState cstate)
 	bool		*partNulls = NULL;
 	ResultRelInfo *resultRelInfo;
 	ResultRelInfo *parentResultRelInfo;
-	List *resultRelInfoList = NULL;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTableSlot *baseSlot;
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
@@ -3194,14 +3158,16 @@ CopyFrom(CopyState cstate)
 	ErrorContextCallback errcontext;
 	CommandId	mycid = GetCurrentCommandId(true);
 	int			hi_options = 0; /* start with default heap_insert options */
+	BulkInsertState bistate;
 	CdbCopy    *cdbCopy = NULL;
 	bool		is_check_distkey;
 	GpDistributionData	*distData = NULL; /* distribution data used to compute target seg */
 	uint64		processed = 0;
     bool		useHeapMultiInsert;
+    int			nBufferedTuples = 0;
 #define MAX_BUFFERED_TUPLES 1000
-	int			nTotalBufferedTuples;
-	Size		totalBufferedTuplesSize;
+    HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
+    Size		bufferedTuplesSize = 0;
 	int			i;
 	Datum	   *baseValues;
 	bool	   *baseNulls;
@@ -3338,13 +3304,13 @@ CopyFrom(CopyState cstate)
 	}
 	else
 	{
+		useHeapMultiInsert = false;
 		char relstorage = RelinfoGetStorage(resultRelInfo);
 		if (relstorage != RELSTORAGE_AOROWS &&
 			relstorage != RELSTORAGE_AOCOLS &&
 			relstorage != RELSTORAGE_EXTERNAL)
 			useHeapMultiInsert = true;
-		else
-			useHeapMultiInsert = false;
+		    bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
 	}
 
 	/* Prepare to catch AFTER triggers. */
@@ -3358,9 +3324,7 @@ CopyFrom(CopyState cstate)
 	 */
 	ExecBSInsertTriggers(estate, resultRelInfo);
 
-	partValues = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
-	partNulls = (bool *) palloc(num_phys_attrs * sizeof(bool));
-
+	bistate = GetBulkInsertState();
 	econtext = GetPerTupleExprContext(estate);
 
 	/* Set up callback to identify error line number */
@@ -3501,7 +3465,7 @@ CopyFrom(CopyState cstate)
 
 		CHECK_FOR_INTERRUPTS();
 
-		if (nTotalBufferedTuples == 0)
+		if (nBufferedTuples == 0)
 		{
 			/*
 			 * Reset the per-tuple exprcontext. We can only do this if the
@@ -3536,6 +3500,18 @@ CopyFrom(CopyState cstate)
 			 * and stored the tuple in the correct slot.
 			 */
 			resultRelInfo = estate->es_result_relation_info;
+
+			/* GPDB_91_MERGE_FIXME: We should probably keep BulkInsertState in
+			 * ResultRelInfo, so that we could keep one open for each partition
+			 * we insert to.
+			 */
+			if (resultRelInfo != parentResultRelInfo)
+			{
+				MemoryContextSwitchTo(estate->es_query_cxt);
+				FreeBulkInsertState(bistate);
+				bistate = GetBulkInsertState();
+				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+			}
 		}
 		else
 		{
@@ -3578,6 +3554,8 @@ CopyFrom(CopyState cstate)
 					continue;
 
 				estate->es_result_relation_info = resultRelInfo;
+				FreeBulkInsertState(bistate);
+				bistate = GetBulkInsertState();
 			}
 			MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
@@ -3765,20 +3743,10 @@ CopyFrom(CopyState cstate)
 				HeapTuple	tuple;
 				tuple = ExecFetchSlotHeapTuple(slot);
 
-				resultRelInfoList = list_append_unique_ptr(resultRelInfoList, resultRelInfo);
-				if (resultRelInfo->bufferedTuples == NULL)
-				{
-					resultRelInfo->bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
-					resultRelInfo->nBufferedTuples = 0;
-					resultRelInfo->bufferedTuplesSize = 0;
-				}
-
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 				/* Add this tuple to the tuple buffer */
-				resultRelInfo->bufferedTuples[resultRelInfo->nBufferedTuples++] = heap_copytuple(tuple);
-				resultRelInfo->bufferedTuplesSize += tuple->t_len;
-				nTotalBufferedTuples++;
-				totalBufferedTuplesSize += tuple->t_len;
+				bufferedTuples[nBufferedTuples++] = heap_copytuple(tuple);
+				bufferedTuplesSize += tuple->t_len;
 				MemoryContextSwitchTo(estate->es_query_cxt);
 
 				/*
@@ -3787,16 +3755,14 @@ CopyFrom(CopyState cstate)
 				 * avoid using large amounts of memory for the buffers when
 				 * the tuples are exceptionally wide.
 				 */
-				/*
-				 * GPDB_92_MERGE_FIXME: MAX_BUFFERED_TUPLES and 65535 might not be
-				 * the best value for partition table
-				 */
-				if (nTotalBufferedTuples == MAX_BUFFERED_TUPLES ||
-					totalBufferedTuplesSize > 65535)
+				if (nBufferedTuples == MAX_BUFFERED_TUPLES ||
+					bufferedTuplesSize > 65535)
 				{
-					cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, slot);
-					nTotalBufferedTuples = 0;
-					totalBufferedTuplesSize = 0;
+					CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+										resultRelInfo, slot, bistate,
+										nBufferedTuples, bufferedTuples);
+					nBufferedTuples = 0;
+					bufferedTuplesSize = 0;
 				}
 			} else {
 				List	   *recheckIndexes = NIL;
@@ -3826,15 +3792,15 @@ CopyFrom(CopyState cstate)
 				}
 				else
 				{
+
 					HeapTuple tuple;
 					tuple = ExecFetchSlotHeapTuple(slot);
 
+					/* OK, store the tuple and create index entries for it */
+					heap_insert(cstate->rel, tuple, mycid, hi_options, bistate,
+								GetCurrentTransactionId());
 					if (cstate->file_has_oids)
 						HeapTupleSetOid(tuple, loaded_oid);
-					/* OK, store the tuple and create index entries for it */
-					heap_insert(resultRelInfo->ri_RelationDesc, tuple, mycid, hi_options,
-								resultRelInfo->biState,
-								GetCurrentTransactionId());
 					insertedTid = tuple->t_self;
 				}
 
@@ -3884,11 +3850,15 @@ CopyFrom(CopyState cstate)
 	}
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, processed);
 	/* Flush any remaining buffered tuples */
-	if (useHeapMultiInsert)
-		cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, baseSlot);
+	if (nBufferedTuples > 0)
+		CopyFromInsertBatch(cstate, estate, mycid, hi_options,
+							resultRelInfo, baseSlot, bistate,
+							nBufferedTuples, bufferedTuples);
 
 	/* Done, clean up */
 	error_context_stack = errcontext.previous;
+
+	FreeBulkInsertState(bistate);
 
 	MemoryContextSwitchTo(estate->es_query_cxt);
 
@@ -4049,7 +4019,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 	 * before calling it.
 	 */
 	oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-	heap_multi_insert(resultRelInfo->ri_RelationDesc,
+	heap_multi_insert(cstate->rel,
 					  bufferedTuples,
 					  nBufferedTuples,
 					  mycid,
