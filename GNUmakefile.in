@@ -156,7 +156,6 @@ $(call recurse,installcheck-world, \
 			   contrib/formatter_fixedwidth \
 			   contrib/extprotocol \
 			   contrib/dblink \
-			   contrib/file_fdw \
 			   contrib/indexscan \
 			   contrib/hstore \
 			   contrib/pgcrypto \
