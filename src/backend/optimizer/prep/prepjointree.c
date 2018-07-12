@@ -451,6 +451,13 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		}
 		else if (sublink->subLinkType == ALL_SUBLINK)
 		{
+			/*
+			 * GPDB_92_MERGE_FIXME: Should the ALL SUBLINK below be converted?
+			 *
+			 * 	select * from A,B where exists
+			 *     (select * from C where B.i not in (select C.i from C where C.i != 10))
+			 */
+#if 0
 			if ((j = convert_IN_to_antijoin(root, sublink, available_rels1)) != NULL)
 			{
 				/* Yes; insert the new join node into the join tree */
@@ -475,6 +482,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				/* Return NULL representing constant TRUE */
 				return NULL;
 			}
+#endif
 			if (available_rels2 != NULL &&
 				(j = convert_IN_to_antijoin(root, sublink, available_rels2)) != NULL)
 			{
