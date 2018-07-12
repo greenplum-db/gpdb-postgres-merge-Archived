@@ -17,6 +17,7 @@
 
 #include "access/reloptions.h"
 #include "catalog/pg_foreign_table.h"
+#include "cdb/cdbvars.h"
 #include "commands/copy.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
@@ -29,6 +30,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
+#include "storage/fd.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -55,6 +57,7 @@ struct FileFdwOption
 static const struct FileFdwOption valid_options[] = {
 	/* File options */
 	{"filename", ForeignTableRelationId},
+	{"mpp_execute", ForeignTableRelationId},
 
 	/* Format options */
 	/* oids option is not supported */
@@ -259,7 +262,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 			/* Don't care what the value is, as long as it's a legal boolean */
 			(void) defGetBoolean(def);
 		}
-		else
+		else if (strcmp(def->defname, "mpp_execute") != 0)
 			other_options = lappend(other_options, def);
 	}
 
@@ -332,9 +335,29 @@ fileGetOptions(Oid foreigntableid,
 	options = list_concat(options, get_file_fdw_attribute_options(foreigntableid));
 
 	/*
+	 * Separate out the mpp_execute.
+	 */
+	char *mpp_execute = NULL;
+	lc = NULL;
+	prev = NULL;
+	foreach(lc, options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "mpp_execute") == 0)
+		{
+			mpp_execute = defGetString(def);
+			options = list_delete_cell(options, lc, prev);
+			break;
+		}
+		prev = lc;
+	}
+
+	/*
 	 * Separate out the filename.
 	 */
 	*filename = NULL;
+	lc = NULL;
 	prev = NULL;
 	foreach(lc, options)
 	{
@@ -343,6 +366,30 @@ fileGetOptions(Oid foreigntableid,
 		if (strcmp(def->defname, "filename") == 0)
 		{
 			*filename = defGetString(def);
+
+			if (mpp_execute && strcasecmp(mpp_execute, "all segments") == 0)
+			{
+				StringInfoData filepath;
+				initStringInfo(&filepath);
+				appendStringInfoString(&filepath, *filename);
+
+				if (strstr(*filename, "<SEGID>") == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("<SEGID> is required for file name")));
+
+				char segid_buf[8];
+				snprintf(segid_buf, 8, "%d", GpIdentity.segindex);
+				replaceStringInfoString(&filepath, "<SEGID>", segid_buf);
+				*filename = filepath.data;
+			}
+			else if (mpp_execute && strcasecmp(mpp_execute, "any") == 0)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("file_fdw could not execute on any")));
+			}
+
 			options = list_delete_cell(options, lc, prev);
 			break;
 		}
@@ -537,6 +584,56 @@ fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	}
 }
 
+typedef struct FileCallbackExtra {
+	char *filename;
+	FILE *file;
+	bool opened;
+	bool eof;
+} FileCallbackExtra;
+
+static FileCallbackExtra *
+generateCallbackExtra(char *filename)
+{
+	FileCallbackExtra *extra = palloc(sizeof(FileCallbackExtra));
+	extra->filename = filename;
+	extra->opened = false;
+	extra->eof = false;
+
+	return extra;
+}
+
+/* Call copy.c API with this callback. Otherwise it assumes it's copy from
+ * segment to master, hang in the special protocol */
+static int
+FileGetdataCallback(void *outbuf, int datasize, void *extra)
+{
+	int bytesread = 0;
+	FileCallbackExtra *cb_extra = extra;
+
+	if (!cb_extra->opened) {
+		cb_extra->file = AllocateFile(cb_extra->filename, PG_BINARY_R);
+		if (!cb_extra->file) {
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("File %s doesn't exist", cb_extra->filename)));
+		} else {
+			cb_extra->opened = true;
+		}
+	}
+
+	if (!cb_extra->eof)
+	{
+		bytesread = fread(outbuf, 1, datasize, cb_extra->file);
+		if (feof(cb_extra->file))
+		{
+			cb_extra->eof = true;
+			FreeFile(cb_extra->file);
+		}
+	}
+
+	return bytesread;
+}
+
 /*
  * fileBeginForeignScan
  *		Initiate access to the file by creating CopyState
@@ -563,11 +660,12 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 * Create CopyState from FDW options.  We always acquire all columns, so
 	 * as to match the expected ScanTupleSlot signature.
 	 */
+	FileCallbackExtra *extra = generateCallbackExtra(filename);
 	cstate = BeginCopyFrom(node->ss.ss_currentRelation,
-						   filename,
+						   NULL,
 						   false, /* is_program */
-						   NULL,  /* data_source_cb */
-						   NULL,  /* data_source_cb_extra */
+						   FileGetdataCallback,  /* data_source_cb */
+						   extra,  /* data_source_cb_extra */
 						   NIL,   /* attnamelist */
 						   options,
 						   NIL);  /* ao_segnos */
@@ -639,11 +737,12 @@ fileReScanForeignScan(ForeignScanState *node)
 
 	EndCopyFrom(festate->cstate);
 
+	FileCallbackExtra *extra = generateCallbackExtra(festate->filename);
 	festate->cstate = BeginCopyFrom(node->ss.ss_currentRelation,
-									festate->filename,
+									NULL,
 									false, /* is_program */
-									NULL,  /* data_source_cb */
-									NULL,  /* data_source_cb_extra */
+									FileGetdataCallback,  /* data_source_cb */
+									extra,  /* data_source_cb_extra */
 									NIL,   /* attnamelist */
 									festate->options,
 									NIL);  /* ao_segnos */
@@ -863,7 +962,8 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * GPDB_92_MERGE_FIXME: what is the expected args?
 	 */
-	cstate = BeginCopyFrom(onerel, filename, false, NULL, NULL, NIL, options, NIL);
+	FileCallbackExtra *extra = generateCallbackExtra(filename);
+	cstate = BeginCopyFrom(onerel, NULL, false, FileGetdataCallback, extra, NIL, options, NIL);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
