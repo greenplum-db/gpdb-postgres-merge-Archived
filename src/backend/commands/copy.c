@@ -3157,19 +3157,25 @@ cdbFlushInsertBatches(List *resultRels,
 					  TupleTableSlot *baseSlot)
 {
 	ListCell *cell;
+	ResultRelInfo *oldRelInfo;
+	oldRelInfo = estate->es_result_relation_info;
 	foreach (cell, resultRels)
 	{
 		ResultRelInfo *relInfo = (ResultRelInfo *)lfirst(cell);
 		if (relInfo->nBufferedTuples > 0)
+		{
+			estate->es_result_relation_info = relInfo;
 			CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-					relInfo,
-					baseSlot,
-					relInfo->biState,
-					relInfo->nBufferedTuples,
-					relInfo->bufferedTuples);
+								relInfo,
+								baseSlot,
+								relInfo->biState,
+								relInfo->nBufferedTuples,
+								relInfo->bufferedTuples);
+		}
 		relInfo->nBufferedTuples = 0;
 		relInfo->bufferedTuplesSize = 0;
 	}
+	estate->es_result_relation_info = oldRelInfo;
 }
 
 /*
@@ -3335,16 +3341,6 @@ CopyFrom(CopyState cstate)
 		cstate->volatile_defexprs)
 	{
 		useHeapMultiInsert = false;
-	}
-	else
-	{
-		char relstorage = RelinfoGetStorage(resultRelInfo);
-		if (relstorage != RELSTORAGE_AOROWS &&
-			relstorage != RELSTORAGE_AOCOLS &&
-			relstorage != RELSTORAGE_EXTERNAL)
-			useHeapMultiInsert = true;
-		else
-			useHeapMultiInsert = false;
 	}
 
 	/* Prepare to catch AFTER triggers. */
@@ -3759,6 +3755,17 @@ CopyFrom(CopyState cstate)
 			/* Check the constraints of the tuple */
 			if (resultRelInfo->ri_RelationDesc->rd_att->constr)
 				ExecConstraints(resultRelInfo, slot, estate);
+
+			if (useHeapMultiInsert)
+			{
+				char relstorage = RelinfoGetStorage(resultRelInfo);
+				if (relstorage != RELSTORAGE_AOROWS &&
+					relstorage != RELSTORAGE_AOCOLS &&
+					relstorage != RELSTORAGE_EXTERNAL)
+					useHeapMultiInsert = true;
+				else
+					useHeapMultiInsert = false;
+			}
 
 			/* OK, store the tuple and create index entries for it */
 			if (useHeapMultiInsert) {
