@@ -2113,7 +2113,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	 * would amount to optimizing for the case where the join method is
 	 * disabled, which doesn't seem like the way to bet.
 	 */
-	if (!enable_nestloop)
+	if (!(root ? root->config->enable_nestloop: enable_nestloop))
 		startup_cost += disable_cost;
 
 	/* cost of source data */
