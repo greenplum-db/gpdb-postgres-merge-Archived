@@ -3303,19 +3303,19 @@ describeRoles(const char *pattern, bool verbose)
 
 
 		/* output Greenplum specific attributes */
-		if (strcmp(PQgetvalue(res, i, 8), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, 9), "t") == 0)
 			add_role_attribute(&buf, _("Ext gpfdist Table"));
 
-		if (strcmp(PQgetvalue(res, i, 9), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, 10), "t") == 0)
 			add_role_attribute(&buf, _("Wri Ext gpfdist Table"));
 
-		if (strcmp(PQgetvalue(res, i, 10), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, 11), "t") == 0)
 			add_role_attribute(&buf, _("Ext http Table"));
 
-		if (strcmp(PQgetvalue(res, i, 11), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, 12), "t") == 0)
 			add_role_attribute(&buf, _("Ext hdfs Table"));
 
-		if (strcmp(PQgetvalue(res, i, 12), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, 13), "t") == 0)
 			add_role_attribute(&buf, _("Wri Ext hdfs Table"));
 		/* end Greenplum specific attributes */
 
@@ -3324,7 +3324,8 @@ describeRoles(const char *pattern, bool verbose)
 			add_role_attribute(&buf, _("Cannot login"));
 
 		if (pset.sversion >= 90100)
-			if (strcmp(PQgetvalue(res, i, (verbose ? 10 : 9)), "t") == 0)
+			/* +5 is due to additional Greenplum specific attributes */
+			if (strcmp(PQgetvalue(res, i, (verbose ? 10 + 5 : 9 + 5)), "t") == 0)
 				add_role_attribute(&buf, _("Replication"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
