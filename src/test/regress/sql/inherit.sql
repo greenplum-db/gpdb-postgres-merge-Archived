@@ -385,6 +385,8 @@ SELECT thousand, random()::integer FROM tenk1
 ORDER BY thousand, tenthous;
 
 -- Check min/max aggregate optimization
+-- GPDB_92_MERGE_FIXME: simple union all pull up is disabled
+-- in pull_up_subqueries(), need some work on that.
 explain (costs off)
 SELECT min(x) FROM
   (SELECT unique1 AS x FROM tenk1 a

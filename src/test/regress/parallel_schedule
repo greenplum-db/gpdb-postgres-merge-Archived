@@ -56,8 +56,7 @@ test: create_misc create_operator
 # These depend on the above two
 test: create_index create_view
 
-# 'inherit' test is disabled in GPDB. FIXME: why?
-#test: inherit
+test: inherit
 
 # 'triggers' test is disabled in GPDB, because it contains a trigger function
 # that would need to access rows on other segments, which doens't work. You

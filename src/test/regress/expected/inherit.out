@@ -1011,9 +1011,8 @@ select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 l
 ----------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
    ->  Hash Join
-         Hash Cond: pg_temp_459.patest0.id = int4_tbl.f1
-         ->  Merge Append
-               Sort Key: pg_temp_459.patest0.id
+         Hash Cond: pg_temp_317.patest0.id = int4_tbl.f1
+         ->  Append
                ->  Index Scan using patest0i on patest0
                ->  Index Scan using patest1i on patest1 patest0
                ->  Index Scan using patest2i on patest2 patest0
@@ -1045,10 +1044,8 @@ select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 l
    ->  Hash Join
          Hash Cond: pg_temp_665.patest0.id = int4_tbl.f1
          ->  Append
-               ->  Bitmap Heap Scan on patest0
-                     ->  Bitmap Index Scan on patest0i
-               ->  Bitmap Heap Scan on patest1 patest0
-                     ->  Bitmap Index Scan on patest1i
+               ->  Index Scan using patest0i on patest0
+               ->  Index Scan using patest1i on patest1 patest0
                ->  Seq Scan on patest2 patest0
          ->  Hash
                ->  Redistribute Motion 1:3  (slice2; segments: 1)
@@ -1059,7 +1056,7 @@ select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 l
                                        ->  Seq Scan on int4_tbl
                                              Filter: f1 < 10 AND f1 > (-10)
  Optimizer: legacy query optimizer
-(17 rows)
+(16 rows)
 
 select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
  id | x | f1 
@@ -1140,22 +1137,25 @@ set enable_seqscan = off;  -- plan with fewest seqscans should be merge
 explain (verbose, costs off) select * from matest0 order by 1-id;
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
- Result
+ Gather Motion 3:1  (slice1; segments: 3)
    Output: public.matest0.id, public.matest0.name, ((1 - public.matest0.id))
+   Merge Key: (1 - public.matest0.id)
    ->  Merge Append
-         Sort Key: ((1 - public.matest0.id))
+         Sort Key: (1 - public.matest0.id)
          ->  Index Scan using matest0i on public.matest0
                Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
          ->  Index Scan using matest1i on public.matest1 matest0
                Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
          ->  Sort
                Output: public.matest0.id, public.matest0.name, ((1 - public.matest0.id))
-               Sort Key: ((1 - public.matest0.id))
+               Sort Key: (1 - public.matest0.id)
                ->  Seq Scan on public.matest2 matest0
                      Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
          ->  Index Scan using matest3i on public.matest3 matest0
                Output: public.matest0.id, public.matest0.name, (1 - public.matest0.id)
-(15 rows)
+ Optimizer: legacy query optimizer
+ Settings: enable_seqscan=off
+(18 rows)
 
 select * from matest0 order by 1-id;
  id |  name  
@@ -1188,14 +1188,16 @@ SELECT thousand, thousand FROM tenk1
 ORDER BY thousand, tenthous;
                               QUERY PLAN                               
 -----------------------------------------------------------------------
- Result
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: public.tenk1.thousand, public.tenk1.tenthous
    ->  Merge Append
          Sort Key: public.tenk1.thousand, public.tenk1.tenthous
          ->  Index Only Scan using tenk1_thous_tenthous on tenk1
          ->  Sort
                Sort Key: public.tenk1.thousand, public.tenk1.thousand
                ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-(7 rows)
+ Optimizer: legacy query optimizer
+(9 rows)
 
 explain (costs off)
 SELECT thousand, tenthous, thousand+tenthous AS x FROM tenk1
@@ -1204,14 +1206,16 @@ SELECT 42, 42, hundred FROM tenk1
 ORDER BY thousand, tenthous;
                            QUERY PLAN                            
 -----------------------------------------------------------------
- Result
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: public.tenk1.thousand, public.tenk1.tenthous
    ->  Merge Append
          Sort Key: public.tenk1.thousand, public.tenk1.tenthous
          ->  Index Only Scan using tenk1_thous_tenthous on tenk1
          ->  Sort
                Sort Key: (42), (42)
                ->  Index Only Scan using tenk1_hundred on tenk1
-(7 rows)
+ Optimizer: legacy query optimizer
+(9 rows)
 
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
@@ -1220,51 +1224,52 @@ SELECT thousand, random()::integer FROM tenk1
 ORDER BY thousand, tenthous;
                               QUERY PLAN                               
 -----------------------------------------------------------------------
- Result
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: public.tenk1.thousand, public.tenk1.tenthous
    ->  Merge Append
          Sort Key: public.tenk1.thousand, public.tenk1.tenthous
          ->  Index Only Scan using tenk1_thous_tenthous on tenk1
          ->  Sort
-               Sort Key: public.tenk1.thousand, ((random())::integer)
+               Sort Key: public.tenk1.thousand, (random()::integer)
                ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-(7 rows)
+ Optimizer: legacy query optimizer
+(9 rows)
 
 -- Check min/max aggregate optimization
+-- GPDB_92_MERGE_FIXME: simple union all pull up is disabled
+-- in pull_up_subqueries(), need some work on that.
 explain (costs off)
 SELECT min(x) FROM
   (SELECT unique1 AS x FROM tenk1 a
    UNION ALL
    SELECT unique2 AS x FROM tenk1 b) s;
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Result
-   InitPlan 1 (returns $0)
-     ->  Limit
-           ->  Merge Append
-                 Sort Key: a.unique1
-                 ->  Index Only Scan using tenk1_unique1 on tenk1 a
-                       Index Cond: (unique1 IS NOT NULL)
-                 ->  Index Only Scan using tenk1_unique2 on tenk1 b
-                       Index Cond: (unique2 IS NOT NULL)
-(9 rows)
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Append
+                     ->  Index Only Scan using tenk1_unique1 on tenk1 a
+                     ->  Index Only Scan using tenk1_unique2 on tenk1 b
+ Optimizer: legacy query optimizer
+(7 rows)
 
 explain (costs off)
 SELECT min(y) FROM
   (SELECT unique1 AS x, unique1 AS y FROM tenk1 a
    UNION ALL
    SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s;
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Result
-   InitPlan 1 (returns $0)
-     ->  Limit
-           ->  Merge Append
-                 Sort Key: a.unique1
-                 ->  Index Only Scan using tenk1_unique1 on tenk1 a
-                       Index Cond: (unique1 IS NOT NULL)
-                 ->  Index Only Scan using tenk1_unique2 on tenk1 b
-                       Index Cond: (unique2 IS NOT NULL)
-(9 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         ->  Aggregate
+               ->  Subquery Scan on s
+                     ->  Append
+                           ->  Index Only Scan using tenk1_unique1 on tenk1 a
+                           ->  Index Only Scan using tenk1_unique2 on tenk1 b
+ Optimizer: legacy query optimizer
+(8 rows)
 
 -- XXX planner doesn't recognize that index on unique2 is sufficiently sorted
 explain (costs off)
@@ -1273,16 +1278,17 @@ SELECT x, y FROM
    UNION ALL
    SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s
 ORDER BY x, y;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Result
-   ->  Merge Append
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: a.thousand, a.tenthous
+   ->  Sort
          Sort Key: a.thousand, a.tenthous
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
-         ->  Sort
-               Sort Key: b.unique2, b.unique2
+         ->  Append
+               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
                ->  Index Only Scan using tenk1_unique2 on tenk1 b
-(7 rows)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 reset enable_seqscan;
 reset enable_indexscan;

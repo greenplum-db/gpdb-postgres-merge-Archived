@@ -1379,6 +1379,10 @@ create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids re
 
 		pathnode->path.rows += subpath->rows;
 
+		if (l == list_head(subpaths))   /* first node? */
+			pathnode->path.startup_cost = subpath->startup_cost;
+		pathnode->path.total_cost += subpath->total_cost;
+
 		/* All child paths must have same parameterization */
 		Assert(bms_equal(PATH_REQ_OUTER(subpath), required_outer));
 	}
@@ -1584,10 +1588,6 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 												   subpath->parent->reltargetlist,
 												   rel->reltargetlist,
 												   rel->relid);
-
-		if (l == list_head(subpaths))	/* first node? */
-			pathnode->startup_cost = subpath->startup_cost;
-		pathnode->total_cost += subpath->total_cost;
 
 		/*
 		 * CDB: If all the scans are distributed alike, set
