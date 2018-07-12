@@ -422,6 +422,16 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				address.objectId = get_ts_config_oid(objname, missing_ok);
 				address.objectSubId = 0;
 				break;
+		   case OBJECT_RESQUEUE:
+				address.classId = ResQueueRelationId;
+				address.objectId = get_resqueue_oid(NameListToString(objname), false);
+				address.objectSubId = 0;
+				break;
+			case OBJECT_RESGROUP:
+				address.classId = ResGroupRelationId;
+				address.objectId = GetResGroupIdForName(NameListToString(objname));
+				address.objectSubId = 0;
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				/* placate compiler, in case it thinks elog might return */
