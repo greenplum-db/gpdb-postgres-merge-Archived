@@ -24,7 +24,7 @@ create language plpythonu;
 create or replace function pg_ctl(datadir text, command text, port int, contentid int, dbid int)
 returns text as $$
     import subprocess
-    cmd = 'pg_ctl -D %s ' % datadir
+    cmd = 'pg_ctl -l postmaster.log -D %s ' % datadir
     if command in ('stop', 'restart'):
         cmd = cmd + '-w -m immediate %s' % command
     elif command == 'start':
