@@ -528,11 +528,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	{
 		if (testspec->sessions[i]->setupsql)
 		{
-<<<<<<< HEAD
-			res = PQexec(conns[i], testspec->sessions[i]->setupsql);
-=======
 			res = PQexec(conns[i + 1], testspec->sessions[i]->setupsql);
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 			if (PQresultStatus(res) == PGRES_TUPLES_OK)
 			{
 				printResultSet(res);
@@ -541,11 +537,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			{
 				fprintf(stderr, "setup of session %s failed: %s",
 						testspec->sessions[i]->name,
-<<<<<<< HEAD
-						PQerrorMessage(conns[i]));
-=======
 						PQerrorMessage(conns[i + 1]));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				exit_nicely();
 			}
 			PQclear(res);
@@ -605,41 +597,9 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 
 		if (!PQsendQuery(conn, step->sql))
 		{
-<<<<<<< HEAD
-			case PGRES_COMMAND_OK:
-				break;
-
-			case PGRES_TUPLES_OK:
-				printResultSet(res);
-				break;
-
-			case PGRES_FATAL_ERROR:
-				/*
-				 * Detail may contain XID values, so we want to just show
-				 * primary.  Beware however that libpq-generated error results
-				 * may not contain subfields, only an old-style message.
-				 */
-				{
-					const char *sev = PQresultErrorField(res,
-														 PG_DIAG_SEVERITY);
-					const char *msg = PQresultErrorField(res,
-													PG_DIAG_MESSAGE_PRIMARY);
-
-					if (sev && msg)
-						printf("%s:  %s\n", sev, msg);
-					else
-						printf("%s", PQresultErrorMessage(res));
-				}
-				break;
-
-			default:
-				printf("unexpected result status: %s\n",
-					   PQresStatus(PQresultStatus(res)));
-=======
 			fprintf(stdout, "failed to send query for step %s: %s\n",
 					step->name, PQerrorMessage(conns[1 + step->session]));
 			exit_nicely();
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 		}
 
 		if (waiting != NULL)
@@ -685,11 +645,7 @@ teardown:
 			{
 				fprintf(stderr, "teardown of session %s failed: %s",
 						testspec->sessions[i]->name,
-<<<<<<< HEAD
-						PQerrorMessage(conns[i]));
-=======
 						PQerrorMessage(conns[i + 1]));
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 				/* don't exit on teardown failure */
 			}
 			PQclear(res);

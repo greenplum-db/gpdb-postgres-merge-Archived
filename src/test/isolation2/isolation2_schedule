@@ -144,4 +144,4 @@ test: reindex/repeatable_read_reindex_with_insert_part_heap reindex/vacuum_anal_
 test: reindex/vacuum_while_reindex_ao_bitmap reindex/vacuum_while_reindex_heap_btree reindex/vacuum_while_reindex_heap_btree_toast
 
 # Cancel test
-test: cancel_plpython
+#test: cancel_plpython
