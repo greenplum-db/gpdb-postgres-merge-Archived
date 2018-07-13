@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.74 2010/04/03 07:22:58 petere Exp $
+doc/src/sgml/ref/create_index.sgml
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
 
 CREATE [UNIQUE] INDEX [name] ON table
        [USING btree|bitmap|gist]
-       ( {column | (expression)} [opclass] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
+       ( {column | (expression)} [COLLATE collation] [opclass] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
        [ WITH ( FILLFACTOR = value ) ]
        [TABLESPACE tablespace]
        [WHERE predicate]
@@ -61,7 +61,7 @@ CREATE [UNIQUE] INDEX [name] ON table
 
   <para>
    <productname>PostgreSQL</productname> provides the index methods
-   B-tree, hash, GiST, and GIN.  Users can also define their own index
+   B-tree, hash, GiST, SP-GiST, and GIN.  Users can also define their own index
    methods, but that is fairly complicated.
   </para>
 
@@ -158,8 +158,8 @@ CREATE [UNIQUE] INDEX [name] ON table
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, and <literal>gin</>.  The
-        default method is <literal>btree</literal>.
+        <literal>gist</literal>, <literal>spgist</> and <literal>gin</>.
+        The default method is <literal>btree</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -181,6 +181,19 @@ CREATE [UNIQUE] INDEX [name] ON table
         expression usually must be written with surrounding parentheses,
         as shown in the syntax.  However, the parentheses can be omitted
         if the expression has the form of a function call.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">collation</replaceable></term>
+      <listitem>
+       <para>
+        The name of the collation to use for the index.  By default,
+        the index uses the collation declared for the column to be
+        indexed or the result collation of the expression to be
+        indexed.  Indexes with non-default collations can be useful for
+        queries that involve expressions using non-default collations.
        </para>
       </listitem>
      </varlistentry>
@@ -272,12 +285,11 @@ CREATE [UNIQUE] INDEX [name] ON table
    <para>
     The optional <literal>WITH</> clause specifies <firstterm>storage
     parameters</> for the index.  Each index method has its own set of allowed
-    storage parameters.  The B-tree, hash and GiST index methods all accept a
-    single parameter:
+    storage parameters.  The B-tree, hash, GiST and SP-GiST index methods all
+    accept this parameter:
    </para>
 
    <variablelist>
-
    <varlistentry>
     <term><literal>FILLFACTOR</></term>
     <listitem>
@@ -298,7 +310,25 @@ CREATE [UNIQUE] INDEX [name] ON table
      </para>
     </listitem>
    </varlistentry>
+   </variablelist>
 
+   <para>
+    GiST indexes additionally accept this parameter:
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>BUFFERING</></term>
+    <listitem>
+    <para>
+     Determines whether the buffering build technique described in
+     <xref linkend="gist-buffering-build"> is used to build the index. With
+     <literal>OFF</> it is disabled, with <literal>ON</> it is enabled, and
+     with <literal>AUTO</> it is initially disabled, but turned on
+     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</>.
+    </para>
+    </listitem>
+   </varlistentry>
    </variablelist>
 
    <para>
@@ -306,7 +336,6 @@ CREATE [UNIQUE] INDEX [name] ON table
    </para>
 
    <variablelist>
-
    <varlistentry>
     <term><literal>FASTUPDATE</></term>
     <listitem>
@@ -330,7 +359,6 @@ CREATE [UNIQUE] INDEX [name] ON table
     </note>
     </listitem>
    </varlistentry>
-
    </variablelist>
   </refsect2>
 
@@ -372,7 +400,16 @@ CREATE [UNIQUE] INDEX [name] ON table
    <para>
     In a concurrent index build, the index is actually entered into the
     system catalogs in one transaction, then the two table scans occur in a
-    second and third transaction.
+    second and third transaction.  All active transactions at the time the
+    second table scan starts, not just ones that already involve the table,
+    have the potential to block the concurrent index creation until they
+    finish.  When checking for transactions that could still use the original
+    index, concurrent index creation advances through potentially interfering
+    older transactions one at a time, obtaining shared locks on their virtual
+    transaction identifiers to wait for them to complete.
+   </para>
+
+   <para>
     If a problem arises while scanning the table, such as a
     uniqueness violation in a unique index, the <command>CREATE INDEX</>
     command will fail but leave behind an <quote>invalid</> index. This index
@@ -540,6 +577,13 @@ CREATE INDEX ON films ((lower(title)));
   </caution>
 
   <para>
+   To create an index with non-default collation:
+<programlisting>
+CREATE INDEX title_idx_german ON films (title COLLATE "de_DE");
+</programlisting>
+  </para>
+
+  <para>
    To create an index with non-default sort ordering of nulls:
 <programlisting>
 CREATE INDEX title_idx_nulls_low ON films (title NULLS FIRST);
@@ -573,20 +617,19 @@ CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;
    To create a GiST index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
-  <programlisting>
+<programlisting>
 CREATE INDEX pointloc
     ON points USING gist (box(location,location));
 SELECT * FROM points
     WHERE box(location,location) &amp;&amp; '(0,0),(1,1)'::box;
-  </programlisting>
+</programlisting>
   </para>
 
   <para>
    To create an index without locking out writes to the table:
 <programlisting>
 CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

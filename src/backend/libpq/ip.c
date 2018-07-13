@@ -3,12 +3,12 @@
  * ip.c
  *	  IPv6-aware network access.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.51 2010/02/26 02:00:43 momjian Exp $
+ *	  src/backend/libpq/ip.c
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -291,14 +291,14 @@ pg_range_sockaddr(const struct sockaddr_storage * addr,
 				  const struct sockaddr_storage * netmask)
 {
 	if (addr->ss_family == AF_INET)
-		return range_sockaddr_AF_INET((struct sockaddr_in *) addr,
-									  (struct sockaddr_in *) netaddr,
-									  (struct sockaddr_in *) netmask);
+		return range_sockaddr_AF_INET((const struct sockaddr_in *) addr,
+									  (const struct sockaddr_in *) netaddr,
+									  (const struct sockaddr_in *) netmask);
 #ifdef HAVE_IPV6
 	else if (addr->ss_family == AF_INET6)
-		return range_sockaddr_AF_INET6((struct sockaddr_in6 *) addr,
-									   (struct sockaddr_in6 *) netaddr,
-									   (struct sockaddr_in6 *) netmask);
+		return range_sockaddr_AF_INET6((const struct sockaddr_in6 *) addr,
+									   (const struct sockaddr_in6 *) netaddr,
+									   (const struct sockaddr_in6 *) netmask);
 #endif
 	else
 		return 0;
@@ -646,6 +646,12 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 /*
  * SIOCGIFCONF does not return IPv6 addresses on Solaris
  * and HP/UX. So we prefer SIOCGLIFCONF if it's available.
+ *
+ * On HP/UX, however, it *only* returns IPv6 addresses,
+ * and the structs are named slightly differently too.
+ * We'd have to do another call with SIOCGIFCONF to get the
+ * IPv4 addresses as well. We don't currently bother, just
+ * fall back to SIOCGIFCONF on HP/UX.
  */
 
 #if defined(SIOCGLIFCONF) && !defined(__hpux)

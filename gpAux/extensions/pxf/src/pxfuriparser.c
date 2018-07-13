@@ -216,11 +216,6 @@ GPHDUri_parse_option(char *pair, GPHDUri *uri)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Invalid URI %s: option '%s' missing '='", uri->uri, pair)));
 
-	if (strchr(sep + 1, '=') != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Invalid URI %s: option '%s' contains duplicate '='", uri->uri, pair)));
-
 	int			key_len = sep - pair;
 
 	if (key_len == 0)
@@ -319,7 +314,7 @@ GPHDUri_verify_no_duplicate_options(GPHDUri *uri)
 	foreach(option, uri->options)
 	{
 		OptionData *data = (OptionData *) lfirst(option);
-		Value	   *key = makeString(str_toupper(data->key, strlen(data->key)));
+		Value	   *key = makeString(asc_toupper(data->key, strlen(data->key)));
 
 		if (!list_member(previousKeys, key))
 			previousKeys = lappend(previousKeys, key);

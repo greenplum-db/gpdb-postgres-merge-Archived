@@ -28,14 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.15 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/md5.c
  */
 
 #include "postgres.h"
 
 #include <sys/param.h>
 
-#include "px.h"
 #include "md5.h"
 
 #define SHIFT(X, s) (((X) << (s)) | ((X) >> (32 - (s))))

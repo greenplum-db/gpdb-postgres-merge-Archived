@@ -224,8 +224,19 @@ plan_tree_mutator(Node *node,
 				FLATCOPY(newappend, append, Append);
 				PLANMUTATE(newappend, append);
 				MUTATE(newappend->appendplans, append->appendplans, List *);
-				/* isTarget is scalar. */
 				return (Node *) newappend;
+			}
+			break;
+
+		case T_MergeAppend:
+			{
+				MergeAppend	   *merge = (MergeAppend *) node;
+				MergeAppend	   *newmerge;
+
+				FLATCOPY(newmerge, merge, MergeAppend);
+				PLANMUTATE(newmerge, merge);
+				MUTATE(newmerge->mergeplans, merge->mergeplans, List *);
+				return (Node *) newmerge;
 			}
 			break;
 
@@ -386,7 +397,6 @@ plan_tree_mutator(Node *node,
 				SCANMUTATE(newextscan, extscan);
 
 				MUTATE(newextscan->uriList, extscan->uriList, List *);
-				MUTATE(newextscan->fmtOpts, extscan->fmtOpts, List *);
 				newextscan->fmtType = extscan->fmtType;
 				newextscan->isMasterOnly = extscan->isMasterOnly;
 
@@ -422,6 +432,22 @@ plan_tree_mutator(Node *node,
 				MUTATE(newidxscan->indexqualorig, idxscan->indexqualorig, List *);
 				/* indxorderdir  is  scalar */
 				return (Node *) newidxscan;
+			}
+			break;
+
+		case T_IndexOnlyScan:
+			{
+				IndexOnlyScan  *idxonlyscan = (IndexOnlyScan *) node;
+				IndexOnlyScan  *newidxonlyscan;
+
+				FLATCOPY(newidxonlyscan, idxonlyscan, IndexOnlyScan);
+				SCANMUTATE(newidxonlyscan, idxonlyscan);
+				newidxonlyscan->indexid = idxonlyscan->indexid;
+				/* MUTATE(newidxonlyscan->indexid, idxonlyscan->indexid, List *); */
+				MUTATE(newidxonlyscan->indexqual, idxonlyscan->indexqual, List *);
+				MUTATE(newidxonlyscan->indextlist, idxonlyscan->indextlist, List *);
+				/* indxorderdir  is  scalar */
+				return (Node *) newidxonlyscan;
 			}
 			break;
 
@@ -820,7 +846,6 @@ plan_tree_mutator(Node *node,
 				switch (rte->rtekind)
 				{
 					case RTE_RELATION:	/* ordinary relation reference */
-					case RTE_SPECIAL:	/* special rule relation (NEW or OLD) */
 					case RTE_VOID:	/* deleted entry */
 						/* No extras. */
 						break;
@@ -860,6 +885,22 @@ plan_tree_mutator(Node *node,
 						break;
 				}
 				return (Node *) newrte;
+			}
+			break;
+
+		case T_ForeignScan:
+			{
+				ForeignScan *fdwscan = (ForeignScan *) node;
+				ForeignScan *newfdwscan;
+
+				FLATCOPY(newfdwscan, fdwscan, ForeignScan);
+				SCANMUTATE(newfdwscan, fdwscan);
+
+				MUTATE(newfdwscan->fdw_exprs, fdwscan->fdw_exprs, List *);
+				MUTATE(newfdwscan->fdw_private, fdwscan->fdw_private, List *);
+				newfdwscan->fsSystemCol = fdwscan->fsSystemCol;
+
+				return (Node *) newfdwscan;
 			}
 			break;
 
@@ -1009,7 +1050,6 @@ package_plan_as_rte(Query *query, Plan *plan, Alias *eref, List *pathkeys)
 	subquery->querySource = QSRC_PLANNER;
 	subquery->canSetTag = false;
 	subquery->resultRelation = 0;
-	subquery->intoClause = NULL;
 	
 	subquery->rtable = copyObject(subquery->rtable);
 

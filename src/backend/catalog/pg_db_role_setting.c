@@ -2,18 +2,16 @@
  * pg_db_role_setting.c
  *		Routines to support manipulation of the pg_db_role_setting relation
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/catalog/pg_db_role_setting.c,v 1.4 2010/03/25 14:44:33 alvherre Exp $
+ *		src/backend/catalog/pg_db_role_setting.c
  */
 #include "postgres.h"
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/skey.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_db_role_setting.h"
 #include "utils/fmgroids.h"
@@ -264,7 +262,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 						appendStringInfoString(&buffer, strVal(&arg->val));
 						break;
 					case T_String:
-						appendStringInfoString(&buffer, quote_literal_internal(strVal(&arg->val)));
+						appendStringInfoString(&buffer, quote_literal_cstr(strVal(&arg->val)));
 						break;
 					default:
 						elog(ERROR, "unexpected constant type: %d", nodeTag(&arg->val));

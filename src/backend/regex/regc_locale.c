@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.10 2009/12/01 21:00:24 tgl Exp $
+ * src/backend/regex/regc_locale.c
  */
 
 /* ASCII character-name table */
@@ -351,168 +351,13 @@ static const struct cname
 
 
 /*
- * ctype functions adapted to work on pg_wchar (a/k/a chr)
- *
- * When working in UTF8 encoding, we use the <wctype.h> functions if
- * available.  This assumes that every platform uses Unicode codepoints
- * directly as the wchar_t representation of Unicode.  On some platforms
- * wchar_t is only 16 bits wide, so we have to punt for codepoints > 0xFFFF.
- *
- * In all other encodings, we use the <ctype.h> functions for pg_wchar
- * values up to 255, and punt for values above that.  This is only 100%
- * correct in single-byte encodings such as LATINn.  However, non-Unicode
- * multibyte encodings are mostly Far Eastern character sets for which the
- * properties being tested here aren't relevant for higher code values anyway.
- *
- * NB: the coding here assumes pg_wchar is an unsigned type.
+ * We do not use the hard-wired Unicode classification tables that Tcl does.
+ * This is because (a) we need to deal with other encodings besides Unicode,
+ * and (b) we want to track the behavior of the libc locale routines as
+ * closely as possible.  For example, it wouldn't be unreasonable for a
+ * locale to not consider every Unicode letter as a letter.  So we build
+ * character classification cvecs by asking libc, even for Unicode.
  */
-
-static int
-pg_wc_isdigit(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswdigit((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isdigit((unsigned char) c));
-}
-
-static int
-pg_wc_isalpha(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswalpha((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isalpha((unsigned char) c));
-}
-
-static int
-pg_wc_isalnum(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswalnum((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isalnum((unsigned char) c));
-}
-
-static int
-pg_wc_isupper(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswupper((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isupper((unsigned char) c));
-}
-
-static int
-pg_wc_islower(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswlower((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && islower((unsigned char) c));
-}
-
-static int
-pg_wc_isgraph(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswgraph((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isgraph((unsigned char) c));
-}
-
-static int
-pg_wc_isprint(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswprint((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isprint((unsigned char) c));
-}
-
-static int
-pg_wc_ispunct(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswpunct((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && ispunct((unsigned char) c));
-}
-
-static int
-pg_wc_isspace(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return iswspace((wint_t) c);
-	}
-#endif
-	return (c <= (pg_wchar) UCHAR_MAX && isspace((unsigned char) c));
-}
-
-static pg_wchar
-pg_wc_toupper(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return towupper((wint_t) c);
-	}
-#endif
-	if (c <= (pg_wchar) UCHAR_MAX)
-		return toupper((unsigned char) c);
-	return c;
-}
-
-static pg_wchar
-pg_wc_tolower(pg_wchar c)
-{
-#ifdef USE_WIDE_UPPER_LOWER
-	if (GetDatabaseEncoding() == PG_UTF8)
-	{
-		if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
-			return towlower((wint_t) c);
-	}
-#endif
-	if (c <= (pg_wchar) UCHAR_MAX)
-		return tolower((unsigned char) c);
-	return c;
-}
 
 
 /*
@@ -654,7 +499,11 @@ eclass(struct vars * v,			/* context */
 /*
  * cclass - supply cvec for a character class
  *
- * Must include case counterparts on request.
+ * Must include case counterparts if "cases" is true.
+ *
+ * The returned cvec might be either a transient cvec gotten from getcvec(),
+ * or a permanently cached one from pg_ctype_get_cache().  This is okay
+ * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
 cclass(struct vars * v,			/* context */
@@ -664,7 +513,7 @@ cclass(struct vars * v,			/* context */
 {
 	size_t		len;
 	struct cvec *cv = NULL;
-	const char **namePtr;
+	const char *const * namePtr;
 	int			i,
 				index;
 
@@ -672,7 +521,7 @@ cclass(struct vars * v,			/* context */
 	 * The following arrays define the valid character class names.
 	 */
 
-	static const char *classNames[] = {
+	static const char *const classNames[] = {
 		"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 		"lower", "print", "punct", "space", "upper", "xdigit", NULL
 	};
@@ -713,79 +562,55 @@ cclass(struct vars * v,			/* context */
 		index = (int) CC_ALPHA;
 
 	/*
-	 * Now compute the character class contents.
-	 *
-	 * For the moment, assume that only char codes < 256 can be in these
-	 * classes.
+	 * Now compute the character class contents.  For classes that are based
+	 * on the behavior of a <wctype.h> or <ctype.h> function, we use
+	 * pg_ctype_get_cache so that we can cache the results.  Other classes
+	 * have definitions that are hard-wired here, and for those we just
+	 * construct a transient cvec on the fly.
 	 */
 
 	switch ((enum classes) index)
 	{
 		case CC_PRINT:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isprint((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isprint);
 			break;
 		case CC_ALNUM:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isalnum((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isalnum);
 			break;
 		case CC_ALPHA:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isalpha((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isalpha);
 			break;
 		case CC_ASCII:
+			/* hard-wired meaning */
 			cv = getcvec(v, 0, 1);
 			if (cv)
 				addrange(cv, 0, 0x7f);
 			break;
 		case CC_BLANK:
+			/* hard-wired meaning */
 			cv = getcvec(v, 2, 0);
 			addchr(cv, '\t');
 			addchr(cv, ' ');
 			break;
 		case CC_CNTRL:
+			/* hard-wired meaning */
 			cv = getcvec(v, 0, 2);
 			addrange(cv, 0x0, 0x1f);
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = getcvec(v, 0, 1);
-			if (cv)
-				addrange(cv, (chr) '0', (chr) '9');
+			cv = pg_ctype_get_cache(pg_wc_isdigit);
 			break;
 		case CC_PUNCT:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_ispunct((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_ispunct);
 			break;
 		case CC_XDIGIT:
+
+			/*
+			 * It's not clear how to define this in non-western locales, and
+			 * even less clear that there's any particular use in trying. So
+			 * just hard-wire the meaning.
+			 */
 			cv = getcvec(v, 0, 3);
 			if (cv)
 			{
@@ -795,50 +620,20 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isspace((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isspace);
 			break;
 		case CC_LOWER:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_islower((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_islower);
 			break;
 		case CC_UPPER:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isupper((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isupper);
 			break;
 		case CC_GRAPH:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isgraph((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isgraph);
 			break;
 	}
+
+	/* If cv is NULL now, the reason must be "out of memory" */
 	if (cv == NULL)
 		ERR(REG_ESPACE);
 	return cv;

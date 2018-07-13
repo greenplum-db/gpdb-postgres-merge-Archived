@@ -3,12 +3,12 @@
  * be-fsstubs.c
  *	  Builtin functions for open/close/read/write operations on large objects
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.94 2010/02/26 02:00:42 momjian Exp $
+ *	  src/backend/libpq/be-fsstubs.c
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -42,7 +42,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "catalog/pg_largeobject_metadata.h"
 #include "libpq/be-fsstubs.h"
 #include "libpq/libpq-fs.h"
 #include "miscadmin.h"
@@ -423,7 +422,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 {
 	File		fd;
 	int			nbytes,
-				tmp;
+				tmp PG_USED_FOR_ASSERTS_ONLY;
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
@@ -443,7 +442,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	 * open the file to be read in
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
-	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
+	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, S_IRWXU);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -522,8 +521,9 @@ lo_export(PG_FUNCTION_ARGS)
 	 * world-writable export files doesn't seem wise.
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
-	oumask = umask((mode_t) 0022);
-	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
+	oumask = umask(S_IWGRP | S_IWOTH);
+	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
+						  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	umask(oumask);
 	if (fd < 0)
 		ereport(ERROR,

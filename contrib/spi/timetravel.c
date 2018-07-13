@@ -1,11 +1,11 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/timetravel.c,v 1.31 2009/06/11 14:48:52 momjian Exp $
+ * contrib/spi/timetravel.c
  *
  *
  * timetravel.c --	function to get time travel feature
  *		using general triggers.
  *
- * Modified by B?JTHE Zolt?n, Hungary, mailto:urdesobt@axelero.hu
+ * Modified by BÖJTHE Zoltán, Hungary, mailto:urdesobt@axelero.hu
  */
 #include "postgres.h"
 
@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/nabstime.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 
@@ -118,11 +119,11 @@ timetravel(PG_FUNCTION_ARGS)
 		elog(ERROR, "timetravel: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "timetravel: cannot process STATEMENT events");
+	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "timetravel: must be fired for row");
 
 	/* Should be called BEFORE */
-	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
+	if (!TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		elog(ERROR, "timetravel: must be fired before event");
 
 	/* INSERT ? */
@@ -344,11 +345,10 @@ timetravel(PG_FUNCTION_ARGS)
 
 		/*
 		 * Remember that SPI_prepare places plan in current memory context -
-		 * so, we have to save plan in Top memory context for latter use.
+		 * so, we have to save plan in Top memory context for later use.
 		 */
-		pplan = SPI_saveplan(pplan);
-		if (pplan == NULL)
-			elog(ERROR, "timetravel (%s): SPI_saveplan returned %d", relname, SPI_result);
+		if (SPI_keepplan(pplan))
+			elog(ERROR, "timetravel (%s): SPI_keepplan failed", relname);
 
 		plan->splan = pplan;
 	}

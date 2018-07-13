@@ -3,12 +3,12 @@
  * genam.c
  *	  general index access method routines
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.81 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/index/genam.c
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -23,7 +23,6 @@
 #include "access/transam.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -57,22 +56,20 @@
 /* ----------------
  *	RelationGetIndexScan -- Create and fill an IndexScanDesc.
  *
- *		This routine creates an index scan structure and sets its contents
- *		up correctly. This routine calls AMrescan to set up the scan with
- *		the passed key.
+ *		This routine creates an index scan structure and sets up initial
+ *		contents for it.
  *
  *		Parameters:
  *				indexRelation -- index relation for scan.
- *				nkeys -- count of scan keys.
- *				key -- array of scan keys to restrict the index scan.
+ *				nkeys -- count of scan keys (index qual conditions).
+ *				norderbys -- count of index order-by operators.
  *
  *		Returns:
  *				An initialized IndexScanDesc.
  * ----------------
  */
 IndexScanDesc
-RelationGetIndexScan(Relation indexRelation,
-					 int nkeys, ScanKey key)
+RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 {
 	IndexScanDesc scan;
 
@@ -82,15 +79,21 @@ RelationGetIndexScan(Relation indexRelation,
 	scan->indexRelation = indexRelation;
 	scan->xs_snapshot = SnapshotNow;	/* may be set later */
 	scan->numberOfKeys = nkeys;
+	scan->numberOfOrderBys = norderbys;
 
 	/*
-	 * We allocate the key space here, but the AM is responsible for actually
-	 * filling it from the passed key array.
+	 * We allocate key workspace here, but it won't get filled until amrescan.
 	 */
 	if (nkeys > 0)
 		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->keyData = NULL;
+	if (norderbys > 0)
+		scan->orderByData = (ScanKey) palloc(sizeof(ScanKeyData) * norderbys);
+	else
+		scan->orderByData = NULL;
+
+	scan->xs_want_itup = false; /* may be set later */
 
 	/*
 	 * During recovery we ignore killed tuples and don't bother to kill them
@@ -108,17 +111,13 @@ RelationGetIndexScan(Relation indexRelation,
 
 	scan->opaque = NULL;
 
+	scan->xs_itup = NULL;
+	scan->xs_itupdesc = NULL;
+
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-	scan->xs_hot_dead = false;
-	scan->xs_next_hot = InvalidOffsetNumber;
-	scan->xs_prev_xmax = InvalidTransactionId;
-
-	/*
-	 * Let the AM fill in the key and any opaque data it wants.
-	 */
-	index_rescan(scan, key);
+	scan->xs_continue_hot = false;
 
 	return scan;
 }
@@ -140,6 +139,8 @@ IndexScanEnd(IndexScanDesc scan)
 {
 	if (scan->keyData != NULL)
 		pfree(scan->keyData);
+	if (scan->orderByData != NULL)
+		pfree(scan->orderByData);
 
 	pfree(scan);
 }
@@ -291,7 +292,8 @@ systable_beginscan(Relation heapRelation,
 		}
 
 		sysscan->iscan = index_beginscan(heapRelation, irel,
-										 snapshot, nkeys, key);
+										 snapshot, nkeys, 0);
+		index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
 		sysscan->scan = NULL;
 	}
 	else
@@ -464,7 +466,8 @@ systable_beginscan_ordered(Relation heapRelation,
 	}
 
 	sysscan->iscan = index_beginscan(heapRelation, indexRelation,
-									 snapshot, nkeys, key);
+									 snapshot, nkeys, 0);
+	index_rescan(sysscan->iscan, key, nkeys, NULL, 0);
 	sysscan->scan = NULL;
 
 	return sysscan;

@@ -20,7 +20,7 @@ dnl
 dnl NOTE: This is just a modified version of the AC_FUNC_SELECT_ARGTYPES
 dnl macro. Credit for that one goes to David MacKenzie et. al.
 dnl
-dnl @version Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
+dnl @version $Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
 dnl @author Daniel Richard G. <skunk@mit.edu>
 dnl
 
@@ -46,7 +46,7 @@ AC_DEFUN([AC_FUNC_ACCEPT_ARGTYPES],
  [AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
   [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
    [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
-    [for ac_cv_func_accept_return in 'int' 'unsigned int PASCAL' 'SOCKET'; do
+    [for ac_cv_func_accept_return in 'int' 'unsigned int PASCAL' 'SOCKET WSAAPI'; do
       for ac_cv_func_accept_arg1 in 'int' 'unsigned int' 'SOCKET'; do
        for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
         for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do

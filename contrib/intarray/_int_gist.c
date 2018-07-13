@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/intarray/_int_gist.c,v 1.23 2009/06/11 14:48:51 momjian Exp $
+ * contrib/intarray/_int_gist.c
  */
 #include "postgres.h"
 
@@ -40,7 +40,7 @@ Datum
 g_int_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	ArrayType  *query = (ArrayType *) PG_GETARG_ARRAYTYPE_P_COPY(1);
+	ArrayType  *query = PG_GETARG_ARRAYTYPE_P_COPY(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
@@ -357,10 +357,10 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	if (((SPLITCOST *) a)->cost == ((SPLITCOST *) b)->cost)
+	if (((const SPLITCOST *) a)->cost == ((const SPLITCOST *) b)->cost)
 		return 0;
 	else
-		return (((SPLITCOST *) a)->cost > ((SPLITCOST *) b)->cost) ? 1 : -1;
+		return (((const SPLITCOST *) a)->cost > ((const SPLITCOST *) b)->cost) ? 1 : -1;
 }
 
 /*

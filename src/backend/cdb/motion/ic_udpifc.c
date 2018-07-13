@@ -31,17 +31,18 @@
 #include "nodes/execnodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/print.h"
-#include "utils/memutils.h"
 #include "miscadmin.h"
 #include "libpq/libpq-be.h"
 #include "libpq/ip.h"
-#include "utils/builtins.h"
-#include "utils/faultinjector.h"
 #include "port/atomics.h"
 #include "port/pg_crc32c.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "postmaster/postmaster.h"
+#include "utils/builtins.h"
+#include "utils/guc.h"
+#include "utils/memutils.h"
+#include "utils/faultinjector.h"
 
 #include "cdb/tupchunklist.h"
 #include "cdb/ml_ipc.h"
@@ -1189,11 +1190,6 @@ setupUDPListeningSocket(int *listenerSocketFd, uint16 *listenerPort, int *txFami
 #ifdef USE_ASSERT_CHECKING
 	if (gp_udpic_network_disable_ipv6)
 		hints.ai_family = AF_INET;
-#endif
-
-#ifdef __darwin__
-	hints.ai_family = AF_INET;	/* Due to a bug in OSX Leopard, disable IPv6
-								 * for UDP interconnect on all OSX platforms */
 #endif
 
 	fun = "getaddrinfo";
@@ -3734,7 +3730,7 @@ receiveChunksUDPIFC(ChunkTransportState *pTransportStates, ChunkTransportStateEn
 		{
 			checkQDConnectionAlive();
 
-			if (!PostmasterIsAlive(true))
+			if (!PostmasterIsAlive())
 				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 								errmsg("Interconnect failed to recv chunks"),
 								errdetail("Postmaster is not alive\n")));
@@ -5232,7 +5228,7 @@ checkExceptions(ChunkTransportState *transportStates,
 	{
 		checkQDConnectionAlive();
 
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 							errmsg("Interconnect failed to send chunks"),
 							errdetail("Postmaster is not alive\n")));

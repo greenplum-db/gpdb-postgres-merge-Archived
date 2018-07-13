@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.29 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/internal.c
  */
 
 #include "postgres.h"
@@ -36,7 +36,6 @@
 #include "px.h"
 #include "md5.h"
 #include "sha1.h"
-#include "sha2.h"
 #include "blf.h"
 #include "rijndael.h"
 #include "fortuna.h"
@@ -604,7 +603,7 @@ px_find_cipher(const char *name, PX_Cipher **res)
 	name = px_resolve_alias(int_aliases, name);
 
 	for (i = 0; int_ciphers[i].name; i++)
-		if (!strcmp(int_ciphers[i].name, name))
+		if (strcmp(int_ciphers[i].name, name) == 0)
 		{
 			c = int_ciphers[i].load();
 			break;

@@ -19,12 +19,12 @@
  * memory context given to inv_open (for LargeObjectDesc structs).
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.141 2010/02/26 02:01:00 momjian Exp $
+ *	  src/backend/storage/large_object/inv_api.c
  *
  *-------------------------------------------------------------------------
  */
@@ -35,20 +35,17 @@
 #include "access/sysattr.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
-#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
-#include "commands/comment.h"
 #include "libpq/libpq-fs.h"
 #include "miscadmin.h"
 #include "storage/large_object.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
-#include "utils/resowner.h"
 #include "utils/snapmgr.h"
-#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
@@ -218,6 +215,10 @@ inv_create(Oid lobjId)
 	recordDependencyOnOwner(LargeObjectRelationId,
 							lobjId_new, GetUserId());
 
+	/* Post creation hook for new large object */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   LargeObjectRelationId, lobjId_new, 0, NULL);
+
 	/*
 	 * Advance command counter to make new tuple visible to later operations.
 	 */
@@ -306,7 +307,7 @@ inv_drop(Oid lobjId)
 	object.classId = LargeObjectRelationId;
 	object.objectId = lobjId;
 	object.objectSubId = 0;
-	performDeletion(&object, DROP_CASCADE);
+	performDeletion(&object, DROP_CASCADE, 0);
 
 	/*
 	 * Advance command counter so that tuple removal will be seen by later
@@ -757,6 +758,9 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 
 	indstate = CatalogOpenIndexes(lo_heap_r);
 
+	/*
+	 * Set up to find all pages with desired loid and pageno >= target
+	 */
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -836,10 +840,14 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	{
 		/*
 		 * If the first page we found was after the truncation point, we're in
-		 * a hole that we'll fill, but we need to delete the later page.
+		 * a hole that we'll fill, but we need to delete the later page
+		 * because the loop below won't visit it again.
 		 */
-		if (olddata != NULL && olddata->pageno > pageno)
+		if (olddata != NULL)
+		{
+			Assert(olddata->pageno > pageno);
 			simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		}
 
 		/*
 		 * Write a brand new page.
@@ -868,11 +876,15 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	}
 
 	/*
-	 * Delete any pages after the truncation point
+	 * Delete any pages after the truncation point.  If the initial search
+	 * didn't find a page, then of course there's nothing more to do.
 	 */
-	while ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
+	if (olddata != NULL)
 	{
-		simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		while ((oldtuple = systable_getnext_ordered(sd, ForwardScanDirection)) != NULL)
+		{
+			simple_heap_delete(lo_heap_r, &oldtuple->t_self);
+		}
 	}
 
 	systable_endscan_ordered(sd);

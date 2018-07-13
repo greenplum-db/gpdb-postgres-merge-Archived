@@ -3,12 +3,12 @@
  * hashsearch.c
  *	  search code for postgres hash tables
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.59 2010/01/02 16:57:34 momjian Exp $
+ *	  src/backend/access/hash/hashsearch.c
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/bufmgr.h"
 #include "utils/rel.h"
 
 

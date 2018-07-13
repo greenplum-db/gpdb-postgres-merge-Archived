@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.37 2009/06/11 14:48:50 momjian Exp $
+  contrib/cube/cube.c
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -13,7 +13,6 @@
 
 #include "access/gist.h"
 #include "access/skey.h"
-#include "lib/stringinfo.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -187,7 +186,7 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	double	   *dur,
 			   *dll;
 
-	if (ARR_HASNULL(ur) || ARR_HASNULL(ll))
+	if (array_contains_nulls(ur) || array_contains_nulls(ll))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
@@ -228,7 +227,7 @@ cube_a_f8(PG_FUNCTION_ARGS)
 	int			size;
 	double	   *dur;
 
-	if (ARR_HASNULL(ur))
+	if (array_contains_nulls(ur))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
@@ -262,7 +261,7 @@ cube_subset(PG_FUNCTION_ARGS)
 				i;
 	int		   *dx;
 
-	if (ARR_HASNULL(idx))
+	if (array_contains_nulls(idx))
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
@@ -615,7 +614,7 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 		else
 		{
 			datum_r = union_dr;
-			size_r = size_alpha;
+			size_r = size_beta;
 			*right++ = i;
 			v->spl_nright++;
 		}

@@ -3,12 +3,12 @@
  * pg_proc.c
  *	  routines to support manipulation of the pg_proc relation
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.176 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/catalog/pg_proc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
@@ -41,6 +42,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "cdb/cdbvars.h"
@@ -77,6 +79,7 @@ ProcedureCreate(const char *procedureName,
 				bool replace,
 				bool returnsSet,
 				Oid returnType,
+				Oid proowner,
 				Oid languageObjectId,
 				Oid languageValidator,
 				Oid describeFuncOid,
@@ -85,9 +88,10 @@ ProcedureCreate(const char *procedureName,
 				bool isAgg,
 				bool isWindowFunc,
 				bool security_definer,
+				bool isLeakProof,
 				bool isStrict,
 				char volatility,
-				const oidvector *parameterTypes,
+				oidvector *parameterTypes,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
@@ -101,13 +105,15 @@ ProcedureCreate(const char *procedureName,
 	Oid			retval;
 	int			parameterCount;
 	int			allParamCount;
-	const Oid  *allParams;
+	Oid		   *allParams;
+	char	   *paramModes = NULL;
 	bool		genericInParam = false;
 	bool		genericOutParam = false;
+	bool		anyrangeInParam = false;
+	bool		anyrangeOutParam = false;
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
-	Oid			proowner = GetUserId();
 	Acl		   *proacl = NULL;
 	Relation	rel;
 	HeapTuple	tup;
@@ -138,6 +144,7 @@ ProcedureCreate(const char *procedureName,
 							   FUNC_MAX_ARGS)));
 	/* note: the above is correct, we do NOT count output arguments */
 
+	/* Deconstruct array inputs */
 	if (allParameterTypes != PointerGetDatum(NULL))
 	{
 		/*
@@ -163,10 +170,26 @@ ProcedureCreate(const char *procedureName,
 		allParams = parameterTypes->values;
 	}
 
+	if (parameterModes != PointerGetDatum(NULL))
+	{
+		/*
+		 * We expect the array to be a 1-D CHAR array; verify that. We don't
+		 * need to use deconstruct_array() since the array data is just going
+		 * to look like a C array of char values.
+		 */
+		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
+
+		if (ARR_NDIM(modesArray) != 1 ||
+			ARR_DIMS(modesArray)[0] != allParamCount ||
+			ARR_HASNULL(modesArray) ||
+			ARR_ELEMTYPE(modesArray) != CHAROID)
+			elog(ERROR, "parameterModes is not a 1-D char array");
+		paramModes = (char *) ARR_DATA_PTR(modesArray);
+	}
+
 	/*
-	 * Do not allow polymorphic return type unless at least one input argument
-	 * is polymorphic.	Also, do not allow return type INTERNAL unless at
-	 * least one input argument is INTERNAL.
+	 * Detect whether we have polymorphic or INTERNAL arguments.  The first
+	 * loop checks input arguments, the second output arguments.
 	 */
 	for (i = 0; i < parameterCount; i++)
 	{
@@ -178,6 +201,10 @@ ProcedureCreate(const char *procedureName,
 			case ANYENUMOID:
 				genericInParam = true;
 				break;
+			case ANYRANGEOID:
+				genericInParam = true;
+				anyrangeInParam = true;
+				break;
 			case INTERNALOID:
 				internalInParam = true;
 				break;
@@ -188,12 +215,11 @@ ProcedureCreate(const char *procedureName,
 	{
 		for (i = 0; i < allParamCount; i++)
 		{
-			/*
-			 * We don't bother to distinguish input and output params here, so
-			 * if there is, say, just an input INTERNAL param then we will
-			 * still set internalOutParam.	This is OK since we don't really
-			 * care.
-			 */
+			if (paramModes == NULL ||
+				paramModes[i] == PROARGMODE_IN ||
+				paramModes[i] == PROARGMODE_VARIADIC)
+				continue;		/* ignore input-only params */
+
 			switch (allParams[i])
 			{
 				case ANYARRAYOID:
@@ -202,6 +228,10 @@ ProcedureCreate(const char *procedureName,
 				case ANYENUMOID:
 					genericOutParam = true;
 					break;
+				case ANYRANGEOID:
+					genericOutParam = true;
+					anyrangeOutParam = true;
+					break;
 				case INTERNALOID:
 					internalOutParam = true;
 					break;
@@ -209,12 +239,26 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
+	/*
+	 * Do not allow polymorphic return type unless at least one input argument
+	 * is polymorphic.	ANYRANGE return type is even stricter: must have an
+	 * ANYRANGE input (since we can't deduce the specific range type from
+	 * ANYELEMENT).  Also, do not allow return type INTERNAL unless at least
+	 * one input argument is INTERNAL.
+	 */
 	if ((IsPolymorphicType(returnType) || genericOutParam)
 		&& !genericInParam)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
 				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
+
+	if ((returnType == ANYRANGEOID || anyrangeOutParam) &&
+		!anyrangeInParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine result data type"),
+				 errdetail("A function returning ANYRANGE must have at least one ANYRANGE argument.")));
 
 	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
 		ereport(ERROR,
@@ -236,23 +280,8 @@ ProcedureCreate(const char *procedureName,
 						procedureName,
 						format_type_be(parameterTypes->values[0]))));
 
-	if (parameterModes != PointerGetDatum(NULL))
+	if (paramModes != NULL)
 	{
-		/*
-		 * We expect the array to be a 1-D CHAR array; verify that. We don't
-		 * need to use deconstruct_array() since the array data is just going
-		 * to look like a C array of char values.
-		 */
-		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
-		char	   *modes;
-
-		if (ARR_NDIM(modesArray) != 1 ||
-			ARR_DIMS(modesArray)[0] != allParamCount ||
-			ARR_HASNULL(modesArray) ||
-			ARR_ELEMTYPE(modesArray) != CHAROID)
-			elog(ERROR, "parameterModes is not a 1-D char array");
-		modes = (char *) ARR_DATA_PTR(modesArray);
-
 		/*
 		 * Only the last input parameter can be variadic; if it is, save its
 		 * element type.  Errors here are just elog since caller should have
@@ -260,7 +289,7 @@ ProcedureCreate(const char *procedureName,
 		 */
 		for (i = 0; i < allParamCount; i++)
 		{
-			switch (modes[i])
+			switch (paramModes[i])
 			{
 				case PROARGMODE_IN:
 				case PROARGMODE_INOUT:
@@ -290,7 +319,7 @@ ProcedureCreate(const char *procedureName,
 					}
 					break;
 				default:
-					elog(ERROR, "invalid parameter mode '%c'", modes[i]);
+					elog(ERROR, "invalid parameter mode '%c'", paramModes[i]);
 					break;
 			}
 		}
@@ -321,9 +350,11 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_procost - 1] = Float4GetDatum(procost);
 	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_provariadic - 1] = ObjectIdGetDatum(variadicType);
+	values[Anum_pg_proc_protransform - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
 	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWindowFunc);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
+	values[Anum_pg_proc_proleakproof - 1] = BoolGetDatum(isLeakProof);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
 	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
 	values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);
@@ -705,6 +736,10 @@ ProcedureCreate(const char *procedureName,
 
 	heap_freetuple(tup);
 
+	/* Post creation hook for new function */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ProcedureRelationId, retval, 0, NULL);
+
 	heap_close(rel, RowExclusiveLock);
 
 	/* Verify function body */
@@ -751,7 +786,6 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
-	Form_pg_proc proc;
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
@@ -767,7 +801,6 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
@@ -800,7 +833,6 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	void	   *libraryhandle;
 	HeapTuple	tuple;
-	Form_pg_proc proc;
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
@@ -818,7 +850,6 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
@@ -850,7 +881,9 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc proc;
+	List	   *raw_parsetree_list;
 	List	   *querytree_list;
+	ListCell   *lc;
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
@@ -924,17 +957,37 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		 * We can run the text through the raw parser though; this will at
 		 * least catch silly syntactic errors.
 		 */
+		raw_parsetree_list = pg_parse_query(prosrc);
+
 		if (!haspolyarg)
 		{
-			querytree_list = pg_parse_and_rewrite(prosrc,
-												  proc->proargtypes.values,
-												  proc->pronargs);
+			/*
+			 * OK to do full precheck: analyze and rewrite the queries, then
+			 * verify the result type.
+			 */
+			SQLFunctionParseInfoPtr pinfo;
+
+			/* But first, set up parameter information */
+			pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
+
+			querytree_list = NIL;
+			foreach(lc, raw_parsetree_list)
+			{
+				Node	   *parsetree = (Node *) lfirst(lc);
+				List	   *querytree_sublist;
+
+				querytree_sublist = pg_analyze_and_rewrite_params(parsetree,
+																  prosrc,
+									   (ParserSetupHook) sql_fn_parser_setup,
+																  pinfo);
+				querytree_list = list_concat(querytree_list,
+											 querytree_sublist);
+			}
+
 			(void) check_sql_fn_retval(funcoid, proc->prorettype,
 									   querytree_list,
 									   NULL, NULL);
 		}
-		else
-			querytree_list = pg_parse_query(prosrc);
 
 		error_context_stack = sqlerrcontext.previous;
 	}

@@ -11,9 +11,9 @@
  * bms_is_empty() in preference to testing for NULL.)
  *
  *
- * Copyright (c) 2003-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2012, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/bitmapset.h,v 1.12 2010/01/02 16:58:04 momjian Exp $
+ * src/include/nodes/bitmapset.h
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,15 @@ typedef struct Bitmapset
 	bitmapword	words[1];		/* really [nwords] */
 } Bitmapset;					/* VARIABLE LENGTH STRUCT */
 
+
+/* result of bms_subset_compare */
+typedef enum
+{
+	BMS_EQUAL,					/* sets are equal */
+	BMS_SUBSET1,				/* first set is a subset of the second */
+	BMS_SUBSET2,				/* second set is a subset of the first */
+	BMS_DIFFERENT				/* neither set is a subset of the other */
+} BMS_Comparison;
 
 /* result of bms_membership */
 typedef enum
@@ -60,6 +69,7 @@ extern Bitmapset *bms_union(const Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_intersect(const Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
+extern BMS_Comparison bms_subset_compare(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
 extern bool bms_overlap(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b);

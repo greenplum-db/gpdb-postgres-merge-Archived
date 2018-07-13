@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_server.sgml,v 1.7 2010/04/03 07:22:59 petere Exp $
+doc/src/sgml/ref/create_server.sgml
 PostgreSQL documentation
 -->
 
@@ -136,8 +136,7 @@ CREATE SERVER foo FOREIGN DATA WRAPPER "default";
    foreign-data wrapper <literal>pgsql</>:
 <programlisting>
 CREATE SERVER myserver FOREIGN DATA WRAPPER pgsql OPTIONS (host 'foo', dbname 'foodb', port '5432');
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

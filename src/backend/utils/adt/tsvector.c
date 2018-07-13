@@ -3,11 +3,11 @@
  * tsvector.c
  *	  I/O functions for tsvector
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.19 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsvector.c
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "postgres.h"
 
 #include "libpq/pqformat.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
@@ -198,8 +197,6 @@ tsvectorin(PG_FUNCTION_ARGS)
 	char	   *tmpbuf;
 	char	   *cur;
 	int			buflen = 256;	/* allocated size of tmpbuf */
-
-	pg_verifymbstr(buf, strlen(buf), false);
 
 	state = init_tsvector_parser(buf, false, false);
 

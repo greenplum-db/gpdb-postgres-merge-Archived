@@ -5,12 +5,12 @@
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.100 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/lmgr.c
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "access/subtrans.h"
 #include "access/transam.h"
+#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
@@ -88,10 +89,11 @@ LockRelationOid(Oid relid, LOCKMODE lockmode)
 	/*
 	 * Now that we have the lock, check for invalidation messages, so that we
 	 * will update or flush any stale relcache entry before we try to use it.
-	 * We can skip this in the not-uncommon case that we already had the same
-	 * type of lock being requested, since then no one else could have
-	 * modified the relcache entry in an undesirable way.  (In the case where
-	 * our own xact modifies the rel, the relcache update happens via
+	 * RangeVarGetRelid() specifically relies on us for this.  We can skip
+	 * this in the not-uncommon case that we already had the same type of lock
+	 * being requested, since then no one else could have modified the
+	 * relcache entry in an undesirable way.  (In the case where our own xact
+	 * modifies the rel, the relcache update happens via
 	 * CommandCounterIncrement, not here.)
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
@@ -584,70 +586,6 @@ ConditionalXactLockTableWait(TransactionId xid)
 	return true;
 }
 
-
-/*
- *		VirtualXactLockTableInsert
- *
- * Insert a lock showing that the given virtual transaction ID is running ---
- * this is done at main transaction start when its VXID is assigned.
- * The lock can then be used to wait for the transaction to finish.
- */
-void
-VirtualXactLockTableInsert(VirtualTransactionId vxid)
-{
-	LOCKTAG		tag;
-
-	Assert(VirtualTransactionIdIsValid(vxid));
-
-	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
-
-	(void) LockAcquire(&tag, ExclusiveLock, false, false);
-}
-
-/*
- *		VirtualXactLockTableWait
- *
- * Waits until the lock on the given VXID is released, which shows that
- * the top-level transaction owning the VXID has ended.
- */
-void
-VirtualXactLockTableWait(VirtualTransactionId vxid)
-{
-	LOCKTAG		tag;
-
-	Assert(VirtualTransactionIdIsValid(vxid));
-
-	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
-
-	(void) LockAcquire(&tag, ShareLock, false, false);
-
-	LockRelease(&tag, ShareLock, false);
-}
-
-/*
- *		ConditionalVirtualXactLockTableWait
- *
- * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE if the lock was acquired.
- */
-bool
-ConditionalVirtualXactLockTableWait(VirtualTransactionId vxid)
-{
-	LOCKTAG		tag;
-
-	Assert(VirtualTransactionIdIsValid(vxid));
-
-	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
-
-	if (LockAcquire(&tag, ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
-		return false;
-
-	LockRelease(&tag, ShareLock, false);
-
-	return true;
-}
-
-
 /*
  *		LockDatabaseObject
  *
@@ -669,6 +607,9 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objsubid);
 
 	(void) LockAcquire(&tag, lockmode, false, false);
+
+	/* Make sure syscaches are up-to-date with any changes we waited for */
+	AcceptInvalidationMessages();
 }
 
 /*
@@ -917,7 +858,7 @@ CondUpgradeRelLock(Oid relid)
 
 	if (!rel)
 		elog(ERROR, "Relation open failed!");
-	else if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
+	else if (RelationIsAppendOptimized(rel))
 		upgrade = true;
 	else
 		upgrade = false;

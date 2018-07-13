@@ -3,6 +3,12 @@
  * elog.c
  *	  error logging and reporting
  *
+ * Because of the extremely high rate at which log messages can be generated,
+ * we need to be mindful of the performance cost of obtaining any information
+ * that may be logged.	Also, it's important to keep in mind that this code may
+ * get called from within an aborted transaction, in which case operations
+ * such as syscache lookups are unsafe.
+ *
  * Some notes about recursion and errors during error processing:
  *
  * We need to be robust about recursive-error scenarios --- for example,
@@ -39,12 +45,12 @@
  *
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.224 2010/05/08 16:39:51 tgl Exp $
+ *	  src/backend/utils/error/elog.c
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +141,15 @@ sigjmp_buf *PG_exception_stack = NULL;
 
 extern bool redirection_done;
 
+/*
+ * Hook for intercepting messages before they are sent to the server log.
+ * Note that the hook will not get called for messages that are suppressed
+ * by log_min_messages.  Also note that logging hooks implemented in preload
+ * libraries will miss any log messages that are generated before the
+ * library is loaded.
+ */
+emit_log_hook_type emit_log_hook = NULL;
+
 /* GUC parameters */
 int			Log_error_verbosity = PGERROR_VERBOSE;
 char	   *Log_line_prefix = NULL;		/* format for extra log line info */
@@ -145,11 +160,12 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
- * added by syslog itself.	On many implementations it seems that the hard
- * limit is approximately 2K bytes including both those prefixes.
+ * added by syslog itself.	Solaris and sysklogd truncate the final message
+ * at 1024 bytes, so this value leaves 124 bytes for those prefixes.  (Most
+ * other syslog implementations seem to have limits of 2KB or so.)
  */
 #ifndef PG_SYSLOG_LIMIT
-#define PG_SYSLOG_LIMIT 1024
+#define PG_SYSLOG_LIMIT 900
 #endif
 
 static bool openlog_done = false;
@@ -162,6 +178,7 @@ static void write_syslog(int level, const char *line);
 static void write_console(const char *line, int len);
 
 #ifdef WIN32
+extern char *event_source;
 static void write_eventlog(int level, const char *line, int len);
 #endif
 
@@ -966,8 +983,10 @@ sqlstate_to_errcode(const char *sqlstate)
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
-		if ((appendval) && edata->targetfield) \
-			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		if ((appendval) && edata->targetfield) { \
+			appendStringInfoString(&buf, edata->targetfield); \
+			appendStringInfoChar(&buf, '\n'); \
+		} \
 		/* Generate actual output --- have to use appendStringInfoVA */ \
 		for (;;) \
 		{ \
@@ -1007,8 +1026,10 @@ sqlstate_to_errcode(const char *sqlstate)
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
-		if ((appendval) && edata->targetfield) \
-			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		if ((appendval) && edata->targetfield) { \
+			appendStringInfoString(&buf, edata->targetfield); \
+			appendStringInfoChar(&buf, '\n'); \
+		} \
 		/* Generate actual output --- have to use appendStringInfoVA */ \
 		for (;;) \
 		{ \
@@ -1139,13 +1160,38 @@ errdetail(const char *fmt,...)
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
-
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 	errno = edata->saved_errno; /*CDB*/
 	return 0;					/* return value does not matter */
 }
 
+
+/*
+ * errdetail_internal --- add a detail error message text to the current error
+ *
+ * This is exactly like errdetail() except that strings passed to
+ * errdetail_internal are not translated, and are customarily left out of the
+ * internationalization message dictionary.  This should be used for detail
+ * messages that seem not worth translating for one reason or another
+ * (typically, that they don't seem to be useful to average users).
+ */
+int
+errdetail_internal(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail, false, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
 
 /*
  * errdetail_plural --- add a detail error message text to the current error,
@@ -1548,6 +1594,62 @@ elog_finish(int elevel, const char *fmt,...)
 	errfinish(0);
 }
 
+
+/*
+ * Functions to allow construction of error message strings separately from
+ * the ereport() call itself.
+ *
+ * The expected calling convention is
+ *
+ *	pre_format_elog_string(errno, domain), var = format_elog_string(format,...)
+ *
+ * which can be hidden behind a macro such as GUC_check_errdetail().  We
+ * assume that any functions called in the arguments of format_elog_string()
+ * cannot result in re-entrant use of these functions --- otherwise the wrong
+ * text domain might be used, or the wrong errno substituted for %m.  This is
+ * okay for the current usage with GUC check hooks, but might need further
+ * effort someday.
+ *
+ * The result of format_elog_string() is stored in ErrorContext, and will
+ * therefore survive until FlushErrorState() is called.
+ */
+static int	save_format_errnumber;
+static const char *save_format_domain;
+
+void
+pre_format_elog_string(int errnumber, const char *domain)
+{
+	/* Save errno before evaluation of argument functions can change it */
+	save_format_errnumber = errnumber;
+	/* Save caller's text domain */
+	save_format_domain = domain;
+}
+
+char *
+format_elog_string(const char *fmt,...)
+{
+	ErrorData	errdata;
+	ErrorData  *edata;
+	MemoryContext oldcontext;
+
+	/* Initialize a mostly-dummy error frame */
+	edata = &errdata;
+	MemSet(edata, 0, sizeof(ErrorData));
+	/* the default text domain is the backend's */
+	edata->domain = save_format_domain ? save_format_domain : PG_TEXTDOMAIN("postgres");
+	/* set the errno to be used to interpret %m */
+	edata->saved_errno = save_format_errnumber;
+
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(message, false, true);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return edata->message;
+}
+
+
 /*
  * Actual output of the top-of-stack error message
  *
@@ -1573,6 +1675,23 @@ EmitErrorReport(void)
 	if (edata->output_to_server ||
 		edata->output_to_client)
 		cdb_tidy_message(edata);
+
+	/*
+	 * Call hook before sending message to log.  The hook function is allowed
+	 * to turn off edata->output_to_server, so we must recheck that afterward.
+	 * Making any other change in the content of edata is not considered
+	 * supported.
+	 *
+	 * Note: the reason why the hook can only turn off output_to_server, and
+	 * not turn it on, is that it'd be unreliable: we will never get here at
+	 * all if errstart() deems the message uninteresting.  A hook that could
+	 * make decisions in that direction would have to hook into errstart(),
+	 * where it would have much less information available.  emit_log_hook is
+	 * intended for custom log filtering and custom log message transmission
+	 * mechanisms.
+	 */
+	if (edata->output_to_server && emit_log_hook)
+		(*emit_log_hook) (edata);
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
@@ -1781,15 +1900,9 @@ pg_re_throw(void)
 		errfinish(0);
 	}
 
-	/* We mustn't return... */
+	/* Doesn't return ... */
 	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
 						 __FILE__, __LINE__);
-
-	/*
-	 * Since ExceptionalCondition isn't declared noreturn because of
-	 * TrapMacro(), we need this to keep gcc from complaining.
-	 */
-	abort();
 }
 
 
@@ -2150,7 +2263,7 @@ write_eventlog(int level, const char *line, int len)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "PostgreSQL");
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -2354,15 +2467,22 @@ cdb_tidy_message(ErrorData *edata)
 static void
 write_console(const char *line, int len)
 {
+	int			rc;
+
 #ifdef WIN32
 
 	/*
-	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
+	 * WriteConsoleW() will fail if stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
+	 *
+	 * Since we palloc the structure required for conversion, also fall
+	 * through to writing unconverted if we have not yet set up
+	 * CurrentMemoryContext.
 	 */
 	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
 		!in_error_recursion_trouble() &&
-		!redirection_done)
+		!redirection_done &&
+		CurrentMemoryContext != NULL)
 	{
 		WCHAR	   *utf16;
 		int			utf16len;
@@ -2390,13 +2510,18 @@ write_console(const char *line, int len)
 #else
 
 	/*
-	 * Conversion on non-win32 platform is not implemented yet. It requires
+	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
 	 * unconvertable characters to '?' without errors.
 	 */
 #endif
 
-	write(fileno(stderr), line, len);
+	/*
+	 * We ignore any error from write() here.  We have no useful way to report
+	 * it ... certainly whining on stderr isn't likely to be productive.
+	 */
+	rc = write(fileno(stderr), line, len);
+	(void) rc;
 }
 
 /*
@@ -2413,13 +2538,13 @@ setup_formatted_log_time(void)
 	stamp_time = (pg_time_t) tv.tv_sec;
 
 	/*
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
-				/* leave room for microseconds... */
-				"%Y-%m-%d %H:%M:%S        %Z",
+	/* leave room for milliseconds... */
+				"%Y-%m-%d %H:%M:%S     %Z",
 				pg_localtime(&stamp_time, log_timezone));
 
 	/* 'paste' microseconds into place... */
@@ -2436,8 +2561,8 @@ setup_formatted_start_time(void)
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 
 	/*
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
@@ -2503,7 +2628,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (appname == NULL || *appname == '\0')
 						appname = _("[unknown]");
-					appendStringInfo(buf, "%s", appname);
+					appendStringInfoString(buf, appname);
 				}
 				break;
 			case 'u':
@@ -2513,7 +2638,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (username == NULL || *username == '\0')
 						username = _("[unknown]");
-					appendStringInfo(buf, "%s", username);
+					appendStringInfoString(buf, username);
 				}
 				break;
 			case 'd':
@@ -2523,7 +2648,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 					if (dbname == NULL || *dbname == '\0')
 						dbname = _("[unknown]");
-					appendStringInfo(buf, "%s", dbname);
+					appendStringInfoString(buf, dbname);
 				}
 				break;
 			case 'c':
@@ -2568,7 +2693,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'r':
 				if (MyProcPort && MyProcPort->remote_host)
 				{
-					appendStringInfo(buf, "%s", MyProcPort->remote_host);
+					appendStringInfoString(buf, MyProcPort->remote_host);
 					if (MyProcPort->remote_port &&
 						MyProcPort->remote_port[0] != '\0')
 						appendStringInfo(buf, "(%s)",
@@ -2577,7 +2702,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				break;
 			case 'h':
 				if (MyProcPort && MyProcPort->remote_host)
-					appendStringInfo(buf, "%s", MyProcPort->remote_host);
+					appendStringInfoString(buf, MyProcPort->remote_host);
 				break;
 			case 'q':
 				/* in postmaster and friends, stop if %q is seen */
@@ -2784,9 +2909,12 @@ write_csvlog(ErrorData *edata)
 	if (MyProcPort && MyProcPort->remote_host)
 	{
 		appendStringInfoChar(&buf, '"');
-		appendStringInfo(&buf, "%s", MyProcPort->remote_host);
+		appendStringInfoString(&buf, MyProcPort->remote_host);
 		if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
-			appendStringInfo(&buf, ":%s", MyProcPort->remote_port);
+		{
+			appendStringInfoChar(&buf, ':');
+			appendStringInfoString(&buf, MyProcPort->remote_port);
+		}
 		appendStringInfoChar(&buf, '"');
 	}
 	appendStringInfoChar(&buf, ',');
@@ -2833,40 +2961,40 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	appendStringInfo(&buf, "%s", error_severity(edata->elevel));
+	appendStringInfoString(&buf, error_severity(edata->elevel));
 	appendStringInfoChar(&buf, ',');
 
 	/* SQL state code */
-	appendStringInfo(&buf, "%s", unpack_sql_state(edata->sqlerrcode));
+	appendStringInfoString(&buf, unpack_sql_state(edata->sqlerrcode));
 	appendStringInfoChar(&buf, ',');
 
 	/* errmessage */
 	appendCSVLiteral(&buf, edata->message);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errdetail or errdetail_log */
 	if (edata->detail_log)
 		appendCSVLiteral(&buf, edata->detail_log);
 	else
 		appendCSVLiteral(&buf, edata->detail);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errhint */
 	appendCSVLiteral(&buf, edata->hint);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* internal query */
 	appendCSVLiteral(&buf, edata->internalquery);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* if printed internal query, print internal pos too */
 	if (edata->internalpos > 0 && edata->internalquery != NULL)
 		appendStringInfo(&buf, "%d", edata->internalpos);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* errcontext */
 	appendCSVLiteral(&buf, edata->context);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* user query --- only reported if not disabled by the caller */
 	if (is_log_level_output(edata->elevel, log_min_error_statement) &&
@@ -2875,10 +3003,10 @@ write_csvlog(ErrorData *edata)
 		print_stmt = true;
 	if (print_stmt)
 		appendCSVLiteral(&buf, debug_query_string);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 	if (print_stmt && edata->cursorpos > 0)
 		appendStringInfo(&buf, "%d", edata->cursorpos);
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* file error location */
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
@@ -2897,7 +3025,7 @@ write_csvlog(ErrorData *edata)
 		appendCSVLiteral(&buf, msgbuf.data);
 		pfree(msgbuf.data);
 	}
-	appendStringInfoCharMacro(&buf, ',');
+	appendStringInfoChar(&buf, ',');
 
 	/* application name */
 	if (application_name)
@@ -3894,15 +4022,13 @@ send_message_to_server_log(ErrorData *edata)
 		}
 		else
 		{
-			const char *msg = _("Not safe to send CSV data\n");
-
-			write_console(msg, strlen(msg));
+			/*
+			 * syslogger not up (yet), so just dump the message to stderr,
+			 * unless we already did so above.
+			 */
 			if (!(Log_destination & LOG_DESTINATION_STDERR) &&
 				whereToSendOutput != DestDebug)
-			{
-				/* write message to stderr unless we just sent it above */
 				write_console(buf.data, buf.len);
-			}
 			pfree(buf.data);
 		}
 	}
@@ -3914,12 +4040,28 @@ send_message_to_server_log(ErrorData *edata)
 
 /*
  * Send data to the syslogger using the chunked protocol
+ *
+ * Note: when there are multiple backends writing into the syslogger pipe,
+ * it's critical that each write go into the pipe indivisibly, and not
+ * get interleaved with data from other processes.	Fortunately, the POSIX
+ * spec requires that writes to pipes be atomic so long as they are not
+ * more than PIPE_BUF bytes long.  So we divide long messages into chunks
+ * that are no more than that length, and send one chunk per write() call.
+ * The collector process knows how to reassemble the chunks.
+ *
+ * Because of the atomic write requirement, there are only two possible
+ * results from write() here: -1 for failure, or the requested number of
+ * bytes.  There is not really anything we can do about a failure; retry would
+ * probably be an infinite loop, and we can't even report the error usefully.
+ * (There is noplace else we could send it!)  So we might as well just ignore
+ * the result from write().  However, on some platforms you get a compiler
+ * warning from ignoring write()'s result, so do a little dance with casting
+ * rc to void to shut up the compiler.
  */
 static void
 write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
-
 	int			fd = fileno(stderr);
 
 	Assert(len > 0);
@@ -4422,12 +4564,19 @@ is_log_level_output(int elevel, int log_min_level)
 }
 
 /*
- * If trace_recovery_messages is set to make this visible, then show as LOG,
- * else display as whatever level is set. It may still be shown, but only
- * if log_min_messages is set lower than trace_recovery_messages.
+ * Adjust the level of a recovery-related message per trace_recovery_messages.
+ *
+ * The argument is the default log level of the message, eg, DEBUG2.  (This
+ * should only be applied to DEBUGn log messages, otherwise it's a no-op.)
+ * If the level is >= trace_recovery_messages, we return LOG, causing the
+ * message to be logged unconditionally (for most settings of
+ * log_min_messages).  Otherwise, we return the argument unchanged.
+ * The message will then be shown based on the setting of log_min_messages.
  *
  * Intention is to keep this for at least the whole of the 9.0 production
  * release, so we can more easily diagnose production problems in the field.
+ * It should go away eventually, though, because it's an ugly and
+ * hard-to-explain kluge.
  */
 int
 trace_recovery(int trace_level)

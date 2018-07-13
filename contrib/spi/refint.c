@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/spi/refint.c,v 1.35 2009/06/11 14:48:52 momjian Exp $
+ * contrib/spi/refint.c
  *
  *
  * refint.c --	set of functions to define referential integrity
@@ -12,6 +12,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 
@@ -79,9 +80,9 @@ check_primary_key(PG_FUNCTION_ARGS)
 		elog(ERROR, "check_primary_key: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_primary_key: cannot process STATEMENT events");
+		elog(ERROR, "check_primary_key: must be fired for row");
 
 	/* If INSERTion then must check Tuple to being inserted */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -189,12 +190,11 @@ check_primary_key(PG_FUNCTION_ARGS)
 
 		/*
 		 * Remember that SPI_prepare places plan in current memory context -
-		 * so, we have to save plan in Top memory context for latter use.
+		 * so, we have to save plan in Top memory context for later use.
 		 */
-		pplan = SPI_saveplan(pplan);
-		if (pplan == NULL)
+		if (SPI_keepplan(pplan))
 			/* internal error */
-			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
+			elog(ERROR, "check_primary_key: SPI_keepplan failed");
 		plan->splan = (SPIPlanPtr *) malloc(sizeof(SPIPlanPtr));
 		*(plan->splan) = pplan;
 		plan->nplans = 1;
@@ -279,9 +279,9 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		elog(ERROR, "check_foreign_key: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_foreign_key: cannot process STATEMENT events");
+		elog(ERROR, "check_foreign_key: must be fired for row");
 
 	/* Not should be called for INSERT */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -536,13 +536,11 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 			/*
 			 * Remember that SPI_prepare places plan in current memory context
-			 * - so, we have to save plan in Top memory context for latter
-			 * use.
+			 * - so, we have to save plan in Top memory context for later use.
 			 */
-			pplan = SPI_saveplan(pplan);
-			if (pplan == NULL)
+			if (SPI_keepplan(pplan))
 				/* internal error */
-				elog(ERROR, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
+				elog(ERROR, "check_foreign_key: SPI_keepplan failed");
 
 			plan->splan[r] = pplan;
 

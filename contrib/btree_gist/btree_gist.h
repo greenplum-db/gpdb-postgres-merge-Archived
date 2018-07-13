@@ -1,13 +1,13 @@
 /*
- * $PostgreSQL: pgsql/contrib/btree_gist/btree_gist.h,v 1.9 2009/06/11 14:48:50 momjian Exp $
+ * contrib/btree_gist/btree_gist.h
  */
 #ifndef __BTREE_GIST_H__
 #define __BTREE_GIST_H__
 
-#include "postgres.h"
-#include "access/gist.h"
-#include "access/itup.h"
+#include "fmgr.h"
 #include "access/nbtree.h"
+
+#define BtreeGistNotEqualStrategyNumber 6
 
 /* indexed types */
 

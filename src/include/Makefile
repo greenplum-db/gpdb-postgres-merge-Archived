@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.31 2010/01/15 09:19:05 heikki Exp $
+# src/include/Makefile
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ all: pg_config.h pg_config_os.h check_oids
 
 
 # Subdirectories containing headers for server-side dev
-SUBDIRS = access bootstrap catalog commands executor foreign lib libpq mb \
+SUBDIRS = access bootstrap catalog commands datatype executor foreign lib libpq mb \
 	nodes optimizer parser postmaster regex replication rewrite storage \
 	tcop snowball snowball/libstemmer tsearch tsearch/dicts utils \
 	port port/atomics port/win32 port/win32_msvc port/win32_msvc/sys \
@@ -42,6 +42,7 @@ install: all installdirs
 # These headers are needed for server-side development
 	$(INSTALL_DATA) pg_config.h    '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) pg_config_os.h '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) utils/errcodes.h '$(DESTDIR)$(includedir_server)/utils'
 	$(INSTALL_DATA) utils/fmgroids.h '$(DESTDIR)$(includedir_server)/utils'
 # We don't use INSTALL_DATA for performance reasons --- there are a lot of files
 	cp $(srcdir)/*.h '$(DESTDIR)$(includedir_server)'/ || exit; \
@@ -51,7 +52,7 @@ install: all installdirs
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$dir/*.h  || exit; \
 	done
 ifeq ($(vpath_build),yes)
-	for file in dynloader.h parser/gram.h utils/probes.h; do \
+	for file in dynloader.h catalog/schemapg.h parser/gram.h utils/probes.h; do \
 	  cp $$file '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	  chmod $(INSTALL_DATA_MODE) '$(DESTDIR)$(includedir_server)'/$$file || exit; \
 	done
@@ -72,7 +73,10 @@ check_oids:
 	(cd $(abs_top_srcdir)/src/include/catalog/ && ./duplicate_oids) 
 
 clean:
-	rm -f utils/fmgroids.h parser/gram.h utils/probes.h catalog/schemapg.h
+	rm -f utils/fmgroids.h utils/errcodes.h parser/gram.h utils/probes.h catalog/schemapg.h
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h dynloader.h pg_config_os.h stamp-h
+
+maintainer-check:
+	cd catalog && ./duplicate_oids

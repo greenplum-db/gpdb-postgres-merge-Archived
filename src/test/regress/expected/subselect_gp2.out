@@ -33,7 +33,7 @@ where (select count(*) from echotable as i where i.c2 = o.c2) >= 2;
 -- Planner test to make sure the initplan is not removed for function scan
 explain (costs off)
 select sess_id from pg_stat_activity
-where current_query = (select current_query())
+where query = (select current_query())
 and usename='xxx' and datname='xxx';
                      QUERY PLAN                      
 -----------------------------------------------------
@@ -44,7 +44,7 @@ and usename='xxx' and datname='xxx';
    ->  Hash Join
          Hash Cond: s.datid = d.oid
          ->  Function Scan on pg_stat_get_activity s
-               Filter: current_query = $0
+               Filter: query = $0
          ->  Hash
                ->  Seq Scan on pg_database d
                      Filter: datname = 'xxx'::name
@@ -53,4 +53,25 @@ and usename='xxx' and datname='xxx';
                Filter: rolname = 'xxx'::name
  Optimizer: legacy query optimizer
 (15 rows)
+
+-- Planner test: constant folding in subplan testexpr  produces no error
+create table subselect_t1 (a int, b int, c int) distributed by (a);
+create table subselect_t2 (a int, b int, c int) distributed by (a);
+insert into subselect_t1 values (1,1,1);
+insert into subselect_t2 values (1,1,1);
+select * from subselect_t1 where NULL in (select c from subselect_t2);
+ a | b | c 
+---+---+---
+(0 rows)
+
+select * from subselect_t1 where NULL in (select c from subselect_t2) and exists (select generate_series(1,2));
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- Planner test to make sure initplan is removed when no param is used
+select * from subselect_t2 where false and exists (select generate_series(1,2));
+ a | b | c 
+---+---+---
+(0 rows)
 

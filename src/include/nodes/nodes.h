@@ -6,10 +6,10 @@
  *
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.234 2010/03/28 22:59:33 tgl Exp $
+ * src/include/nodes/nodes.h
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ typedef enum NodeTag
 	T_Plan_Start = T_Result,
 	T_ModifyTable,
 	T_Append,
+	T_MergeAppend,
 	T_RecursiveUnion,
 	T_Sequence,
 	T_BitmapAnd,
@@ -75,6 +76,7 @@ typedef enum NodeTag
 	T_DynamicTableScan,
 	T_IndexScan,
 	T_DynamicIndexScan,
+	T_IndexOnlyScan,
 	T_BitmapIndexScan,
 	T_DynamicBitmapIndexScan,
 	T_BitmapHeapScan,
@@ -87,6 +89,7 @@ typedef enum NodeTag
 	T_ValuesScan,
 	T_CteScan,
 	T_WorkTableScan,
+	T_ForeignScan,
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
@@ -109,6 +112,7 @@ typedef enum NodeTag
 	T_PartitionSelector,
 	T_Plan_End,
 	/* these aren't subclasses of Plan: */
+	T_NestLoopParam,
 	T_PlanRowMark,
 	T_PlanInvalItem,
 
@@ -127,6 +131,7 @@ typedef enum NodeTag
 	T_ResultState,
 	T_ModifyTableState,
 	T_AppendState,
+	T_MergeAppendState,
 	T_RecursiveUnionState,
 	T_SequenceState,
 	T_BitmapAndState,
@@ -139,6 +144,7 @@ typedef enum NodeTag
 	T_ExternalScanState,
 	T_IndexScanState,
 	T_DynamicIndexScanState,
+	T_IndexOnlyScanState,
 	T_BitmapIndexScanState,
 	T_DynamicBitmapIndexScanState,
 	T_BitmapHeapScanState,
@@ -151,6 +157,7 @@ typedef enum NodeTag
 	T_ValuesScanState,
 	T_CteScanState,
 	T_WorkTableScanState,
+	T_ForeignScanState,
 	T_NestLoopState,
 	T_MergeJoinState,
 	T_HashJoinState,
@@ -195,6 +202,7 @@ typedef enum NodeTag
 	T_NamedArgExpr,
 	T_OpExpr,
 	T_DistinctExpr,
+	T_NullIfExpr,
 	T_ScalarArrayOpExpr,
 	T_BoolExpr,
 	T_SubLink,
@@ -206,6 +214,7 @@ typedef enum NodeTag
 	T_CoerceViaIO,
 	T_ArrayCoerceExpr,
 	T_ConvertRowtypeExpr,
+	T_CollateExpr,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_CaseTestExpr,
@@ -215,7 +224,6 @@ typedef enum NodeTag
 	T_CoalesceExpr,
 	T_MinMaxExpr,
 	T_XmlExpr,
-	T_NullIfExpr,
 	T_NullTest,
 	T_BooleanTest,
 	T_CoerceToDomain,
@@ -290,6 +298,7 @@ typedef enum NodeTag
 	T_PlannerGlobal,
 	T_RelOptInfo,
 	T_IndexOptInfo,
+	T_ParamPathInfo,
 	T_Path,
 	T_AppendOnlyPath,
 	T_AOCSPath,
@@ -304,7 +313,9 @@ typedef enum NodeTag
 	T_MergePath,
 	T_HashPath,
 	T_TidPath,
+	T_ForeignPath,
 	T_AppendPath,
+	T_MergeAppendPath,
 	T_ResultPath,
 	T_MaterialPath,
 	T_UniquePath,
@@ -312,11 +323,11 @@ typedef enum NodeTag
 	T_EquivalenceMember,
 	T_PathKey,
 	T_RestrictInfo,
-	T_InnerIndexscanInfo,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
+	T_MinMaxAggInfo,
 	T_Partition,
 	T_PartitionRule,
 	T_PartitionNode,
@@ -326,6 +337,7 @@ typedef enum NodeTag
 
     /* Tags for MPP planner nodes (relation.h) */
     T_CdbMotionPath = 580,
+	T_PartitionSelectorPath,
     T_CdbRelColumnInfo,
 
 	/*
@@ -383,7 +395,6 @@ typedef enum NodeTag
 	T_IndexStmt,
 	T_CreateFunctionStmt,
 	T_AlterFunctionStmt,
-	T_RemoveFuncStmt,
 	T_DoStmt,
 	T_RenameStmt,
 	T_RuleStmt,
@@ -398,15 +409,14 @@ typedef enum NodeTag
 	T_DropdbStmt,
 	T_VacuumStmt,
 	T_ExplainStmt,
+	T_CreateTableAsStmt,
 	T_CreateSeqStmt,
 	T_AlterSeqStmt,
 	T_VariableSetStmt,
 	T_VariableShowStmt,
 	T_DiscardStmt,
 	T_CreateTrigStmt,
-	T_DropPropertyStmt,
 	T_CreatePLangStmt,
-	T_DropPLangStmt,
 	T_CreateRoleStmt,
 	T_AlterRoleStmt,
 	T_DropRoleStmt,
@@ -426,12 +436,9 @@ typedef enum NodeTag
 	T_AlterRoleSetStmt,
 	T_CreateConversionStmt,
 	T_CreateCastStmt,
-	T_DropCastStmt,
 	T_CreateOpClassStmt,
 	T_CreateOpFamilyStmt,
 	T_AlterOpFamilyStmt,
-	T_RemoveOpClassStmt,
-	T_RemoveOpFamilyStmt,
 	T_PrepareStmt,
 	T_ExecuteStmt,
 	T_DeallocateStmt,
@@ -444,18 +451,23 @@ typedef enum NodeTag
 	T_ReassignOwnedStmt,
 	T_CompositeTypeStmt,
 	T_CreateEnumStmt,
+	T_CreateRangeStmt,
+	T_AlterEnumStmt,
 	T_AlterTSDictionaryStmt,
 	T_AlterTSConfigurationStmt,
 	T_CreateFdwStmt,
 	T_AlterFdwStmt,
-	T_DropFdwStmt,
 	T_CreateForeignServerStmt,
 	T_AlterForeignServerStmt,
-	T_DropForeignServerStmt,
 	T_CreateUserMappingStmt,
 	T_AlterUserMappingStmt,
 	T_DropUserMappingStmt,
 	T_AlterTableSpaceOptionsStmt,
+	T_SecLabelStmt,
+	T_CreateForeignTableStmt,
+	T_CreateExtensionStmt,
+	T_AlterExtensionStmt,
+	T_AlterExtensionContentsStmt,
 	/* GPDB additions */
 	T_PartitionBy,
 	T_PartitionElem,
@@ -473,9 +485,6 @@ typedef enum NodeTag
 	T_DenyLoginInterval,
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
-	T_CreateExtensionStmt,
-	T_AlterExtensionStmt,
-	T_AlterExtensionContentsStmt,
 	T_SetDistributionCmd,
 
 	/*
@@ -492,6 +501,7 @@ typedef enum NodeTag
 	T_A_ArrayExpr,
 	T_ResTarget,
 	T_TypeCast,
+	T_CollateClause,
 	T_SortBy,
 	T_WindowDef,
 	T_RangeSubselect,
@@ -510,7 +520,7 @@ typedef enum NodeTag
 	T_FuncWithArgs,
 	T_AccessPriv,
 	T_CreateOpClassItem,
-	T_InhRelation,
+	T_TableLikeClause,
 	T_FunctionParameter,
 	T_LockingClause,
 	T_RowMarkClause,
@@ -539,6 +549,7 @@ typedef enum NodeTag
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
+	T_FdwRoutine,				/* in foreign/fdwapi.h */
     T_StreamBitmap,             /* in nodes/tidbitmap.h */
 	T_FormatterData,            /* in access/formatter.h */
 	T_ExtProtocolData,          /* in access/extprotocol.h */
@@ -563,7 +574,7 @@ typedef struct Node
 	NodeTag		type;
 } Node;
 
-#define nodeTag(nodeptr)		(((Node*)(nodeptr))->type)
+#define nodeTag(nodeptr)		(((const Node*)(nodeptr))->type)
 
 /*
  * newNode -
@@ -619,7 +630,7 @@ extern PGDLLIMPORT Node *newNodeMacroHolder;
 /*
  * nodes/{outfuncs.c,print.c}
  */
-extern char *nodeToString(void *obj);
+extern char *nodeToString(const void *obj);
 
 /*
  * nodes/outfast.c. This special version of nodeToString is only used by serializeNode.
@@ -637,12 +648,12 @@ extern void *stringToNode(char *str);
 /*
  * nodes/copyfuncs.c
  */
-extern void *copyObject(void *obj);
+extern void *copyObject(const void *obj);
 
 /*
  * nodes/equalfuncs.c
  */
-extern bool equal(void *a, void *b);
+extern bool equal(const void *a, const void *b);
 
 
 /*

@@ -12,12 +12,12 @@
  *	  This information is needed by routines manipulating tuples
  *	  (getattribute, formtuple, etc.).
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.112 2010/02/26 02:00:41 momjian Exp $
+ *	  src/backend/executor/execTuples.c
  *
  *-------------------------------------------------------------------------
  */
@@ -1114,11 +1114,15 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 		if (skipjunk && tle->resjunk)
 			continue;
 		TupleDescInitEntry(typeInfo,
-						   cur_resno++,
+						   cur_resno,
 						   tle->resname,
 						   exprType((Node *) tle->expr),
 						   exprTypmod((Node *) tle->expr),
 						   0);
+		TupleDescInitEntryCollation(typeInfo,
+									cur_resno,
+									exprCollation((Node *) tle->expr));
+		cur_resno++;
 	}
 
 	return typeInfo;
@@ -1127,30 +1131,35 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 /*
  * ExecTypeFromExprList - build a tuple descriptor from a list of Exprs
  *
- * Here we must make up an arbitrary set of field names.
+ * Caller must also supply a list of field names (String nodes).
  */
 TupleDesc
-ExecTypeFromExprList(List *exprList)
+ExecTypeFromExprList(List *exprList, List *namesList)
 {
 	TupleDesc	typeInfo;
-	ListCell   *l;
+	ListCell   *le;
+	ListCell   *ln;
 	int			cur_resno = 1;
-	char		fldname[NAMEDATALEN];
+
+	Assert(list_length(exprList) == list_length(namesList));
 
 	typeInfo = CreateTemplateTupleDesc(list_length(exprList), false);
 
-	foreach(l, exprList)
+	forboth(le, exprList, ln, namesList)
 	{
-		Node	   *e = lfirst(l);
-
-		sprintf(fldname, "f%d", cur_resno);
+		Node	   *e = lfirst(le);
+		char	   *n = strVal(lfirst(ln));
 
 		TupleDescInitEntry(typeInfo,
-						   cur_resno++,
-						   fldname,
+						   cur_resno,
+						   n,
 						   exprType(e),
 						   exprTypmod(e),
 						   0);
+		TupleDescInitEntryCollation(typeInfo,
+									cur_resno,
+									exprCollation(e));
+		cur_resno++;
 	}
 
 	return typeInfo;

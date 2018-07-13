@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.26 2009/12/16 10:15:06 meskes Exp $ */
+/* src/interfaces/ecpg/preproc/output.c */
 
 #include "postgres_fe.h"
 
@@ -163,7 +163,7 @@ output_deallocate_prepare_statement(char *name)
 {
 	const char *con = connection ? connection : "NULL";
 
-	if (strcmp(name, "all"))
+	if (strcmp(name, "all") != 0)
 	{
 		fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, ", compat, con);
 		output_escaped_str(name, true);

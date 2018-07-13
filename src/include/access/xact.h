@@ -4,10 +4,10 @@
  *	  postgres transaction system definitions
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.103 2010/02/26 02:01:21 momjian Exp $
+ * src/include/access/xact.h
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/xlog.h"
 #include "nodes/pg_list.h"
 #include "storage/relfilenode.h"
-#include "utils/timestamp.h"
 
 #include "cdb/cdbpublic.h"
 
@@ -33,20 +32,46 @@ extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
 
 /*
- * We only implement two isolation levels internally.  This macro should
- * be used to check which one is selected.
+ * We implement three isolation levels internally.
+ * The two stronger ones use one snapshot per database transaction;
+ * the others use one snapshot per statement.
+ * Serializable uses predicate locks in addition to snapshots.
+ * These macros should be used to check which isolation level is selected.
  */
-#define IsXactIsoLevelSerializable (XactIsoLevel >= XACT_REPEATABLE_READ)
+#define IsolationUsesXactSnapshot() (XactIsoLevel >= XACT_REPEATABLE_READ)
+#define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
 
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
 
-/* Asynchronous commits */
-extern bool XactSyncCommit;
+/*
+ * Xact is deferrable -- only meaningful (currently) for read only
+ * SERIALIZABLE transactions
+ */
+extern bool DefaultXactDeferrable;
+extern bool XactDeferrable;
 
+typedef enum
+{
+	SYNCHRONOUS_COMMIT_OFF,		/* asynchronous commit */
+	SYNCHRONOUS_COMMIT_LOCAL_FLUSH,		/* wait for local flush only */
+	SYNCHRONOUS_COMMIT_REMOTE_WRITE,	/* wait for local flush and remote
+										 * write */
+	SYNCHRONOUS_COMMIT_REMOTE_FLUSH		/* wait for local and remote flush */
+}	SyncCommitLevel;
+
+/* Define the default setting for synchonous_commit */
+#define SYNCHRONOUS_COMMIT_ON	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
+
+/* Synchronous commit level */
+extern int	synchronous_commit;
+
+/* Disabled in GPDB as per comment in PrepareTransaction(). */
+#if 0
 /* Kluge for 2PC support */
 extern bool MyXactAccessedTempRel;
+#endif
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
@@ -86,8 +111,9 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XLOG_XACT_COMMIT_PREPARED	0x30
 #define XLOG_XACT_ABORT_PREPARED	0x40
 #define XLOG_XACT_ASSIGNMENT		0x50
-#define XLOG_XACT_DISTRIBUTED_COMMIT 0x60
-#define XLOG_XACT_DISTRIBUTED_FORGET 0x70
+#define XLOG_XACT_COMMIT_COMPACT	0x60
+#define XLOG_XACT_DISTRIBUTED_COMMIT 0x70
+#define XLOG_XACT_DISTRIBUTED_FORGET 0x80
 
 typedef struct xl_xact_assignment
 {
@@ -97,6 +123,16 @@ typedef struct xl_xact_assignment
 } xl_xact_assignment;
 
 #define MinSizeOfXactAssignment offsetof(xl_xact_assignment, xsub)
+
+typedef struct xl_xact_commit_compact
+{
+	TimestampTz xact_time;		/* time of commit */
+	int			nsubxacts;		/* number of subtransaction XIDs */
+	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
+	TransactionId subxacts[1];	/* VARIABLE LENGTH ARRAY */
+} xl_xact_commit_compact;
+
+#define MinSizeOfXactCommitCompact offsetof(xl_xact_commit_compact, subxacts)
 
 typedef struct xl_xact_commit
 {
@@ -109,7 +145,7 @@ typedef struct xl_xact_commit
 	Oid			dbId;			/* MyDatabaseId */
 	Oid			tsId;			/* MyDatabaseTableSpace */
 	/* Array of RelFileNode(s) to drop at commit */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	RelFileNodeWithStorageType xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF COMMITTED SUBTRANSACTION XIDs FOLLOWS */
 	/* ARRAY OF SHARED INVALIDATION MESSAGES FOLLOWS */
 	/* DISTRIBUTED XACT STUFF FOLLOWS */
@@ -129,8 +165,8 @@ typedef struct xl_xact_commit
 #define XACT_COMPLETION_FORCE_SYNC_COMMIT		0x02
 
 /* Access macros for above flags */
-#define XactCompletionRelcacheInitFileInval(xlrec)	((xlrec)->xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
-#define XactCompletionForceSyncCommit(xlrec)		((xlrec)->xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
+#define XactCompletionRelcacheInitFileInval(xinfo)	(xinfo & XACT_COMPLETION_UPDATE_RELCACHE_FILE)
+#define XactCompletionForceSyncCommit(xinfo)		(xinfo & XACT_COMPLETION_FORCE_SYNC_COMMIT)
 
 typedef struct xl_xact_abort
 {
@@ -139,7 +175,7 @@ typedef struct xl_xact_abort
 	int			nrels;			/* number of RelFileNodes */
 	int			nsubxacts;		/* number of subtransaction XIDs */
 	/* Array of RelFileNode(s) to drop at abort */
-	RelFileNode xnodes[1];		/* VARIABLE LENGTH ARRAY */
+	RelFileNodeWithStorageType xnodes[1];		/* VARIABLE LENGTH ARRAY */
 	/* ARRAY OF ABORTED SUBTRANSACTION XIDs FOLLOWS */
 } xl_xact_abort;
 
@@ -202,6 +238,7 @@ extern TransactionId GetTopTransactionId(void);
 extern TransactionId GetTopTransactionIdIfAny(void);
 extern TransactionId GetCurrentTransactionId(void);
 extern TransactionId GetCurrentTransactionIdIfAny(void);
+extern TransactionId GetStableLatestTransactionId(void);
 extern SubTransactionId GetCurrentSubTransactionId(void);
 extern CommandId GetCurrentCommandId(bool used);
 extern TimestampTz GetCurrentTransactionStartTimestamp(void);
@@ -250,7 +287,7 @@ extern void RecordDistributedForgetCommitted(struct TMGXACT_LOG *gxact_log);
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void xact_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void xact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void xact_desc(StringInfo buf, XLogRecord *record);
 extern const char *IsoLevelAsUpperString(int IsoLevel);
 
 #endif   /* XACT_H */

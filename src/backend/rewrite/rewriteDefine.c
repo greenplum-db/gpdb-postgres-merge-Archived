@@ -5,12 +5,12 @@
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.141 2010/02/14 18:42:15 rhaas Exp $
+ *	  src/backend/rewrite/rewriteDefine.c
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/storage.h"
 #include "miscadmin.h"
@@ -65,7 +66,6 @@ InsertRule(char *rulname,
 {
 	char	   *evqual = nodeToString(event_qual);
 	char	   *actiontree = nodeToString((Node *) action);
-	int			i;
 	Datum		values[Natts_pg_rewrite];
 	bool		nulls[Natts_pg_rewrite];
 	bool		replaces[Natts_pg_rewrite];
@@ -83,16 +83,15 @@ InsertRule(char *rulname,
 	 */
 	MemSet(nulls, false, sizeof(nulls));
 
-	i = 0;
 	namestrcpy(&rname, rulname);
-	values[i++] = NameGetDatum(&rname); /* rulename */
-	values[i++] = ObjectIdGetDatum(eventrel_oid);		/* ev_class */
-	values[i++] = Int16GetDatum(evslot_index);	/* ev_attr */
-	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
-	values[i++] = CharGetDatum(RULE_FIRES_ON_ORIGIN);	/* ev_enabled */
-	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
-	values[i++] = CStringGetTextDatum(evqual);	/* ev_qual */
-	values[i++] = CStringGetTextDatum(actiontree);		/* ev_action */
+	values[Anum_pg_rewrite_rulename - 1] = NameGetDatum(&rname);
+	values[Anum_pg_rewrite_ev_class - 1] = ObjectIdGetDatum(eventrel_oid);
+	values[Anum_pg_rewrite_ev_attr - 1] = Int16GetDatum(evslot_index);
+	values[Anum_pg_rewrite_ev_type - 1] = CharGetDatum(evtype + '0');
+	values[Anum_pg_rewrite_ev_enabled - 1] = CharGetDatum(RULE_FIRES_ON_ORIGIN);
+	values[Anum_pg_rewrite_is_instead - 1] = BoolGetDatum(evinstead);
+	values[Anum_pg_rewrite_ev_qual - 1] = CStringGetTextDatum(evqual);
+	values[Anum_pg_rewrite_ev_action - 1] = CStringGetTextDatum(actiontree);
 
 	/*
 	 * Ready to store new pg_rewrite tuple
@@ -183,6 +182,10 @@ InsertRule(char *rulname,
 							   DEPENDENCY_NORMAL);
 	}
 
+	/* Post creation hook for new rule */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   RewriteRelationId, rewriteObjectId, 0, NULL);
+
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 
 	return rewriteObjectId;
@@ -199,11 +202,14 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 	Node	   *whereClause;
 	Oid			relId;
 
-	/* Parse analysis ... */
+	/* Parse analysis. */
 	transformRuleStmt(stmt, queryString, &actions, &whereClause);
 
-	/* ... find the relation ... */
-	relId = RangeVarGetRelid(stmt->relation, false);
+	/*
+	 * Find and lock the relation.	Lock level should match
+	 * DefineQueryRewrite.
+	 */
+	relId = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, false);
 
 	/* ... and execute */
 	DefineQueryRewrite(stmt->rulename,
@@ -233,7 +239,6 @@ DefineQueryRewrite(char *rulename,
 				   List *action)
 {
 	Relation	event_relation;
-	Oid			ruleId;
 	int			event_attno;
 	ListCell   *l;
 	Query	   *query;
@@ -242,9 +247,12 @@ DefineQueryRewrite(char *rulename,
 	/*
 	 * If we are installing an ON SELECT rule, we had better grab
 	 * AccessExclusiveLock to ensure no SELECTs are currently running on the
-	 * event relation.	For other types of rules, it might be sufficient to
-	 * grab ShareLock to lock out insert/update/delete actions.  But for now,
-	 * let's just grab AccessExclusiveLock all the time.
+	 * event relation. For other types of rules, it would be sufficient to
+	 * grab ShareRowExclusiveLock to lock out insert/update/delete actions and
+	 * to ensure that we lock out current CREATE RULE statements; but because
+	 * of race conditions in access to catalog entries, we can't do that yet.
+	 *
+	 * Note that this lock level should match the one used in DefineRule.
 	 */
 	event_relation = heap_open(event_relid, AccessExclusiveLock);
 
@@ -321,11 +329,18 @@ DefineQueryRewrite(char *rulename,
 		query = (Query *) linitial(action);
 		if (!is_instead ||
 			query->commandType != CMD_SELECT ||
-			query->utilityStmt != NULL ||
-			query->intoClause != NULL)
+			query->utilityStmt != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
+
+		/*
+		 * ... it cannot contain data-modifying WITH ...
+		 */
+		if (query->hasModifyingCTE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("rules on SELECT must not contain data-modifying statements in WITH")));
 
 		/*
 		 * ... there can be no rule qual, ...
@@ -485,14 +500,14 @@ DefineQueryRewrite(char *rulename,
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
-		ruleId = InsertRule(rulename,
-							event_type,
-							event_relid,
-							event_attno,
-							is_instead,
-							event_qual,
-							action,
-							replace);
+		InsertRule(rulename,
+				   event_type,
+				   event_relid,
+				   event_attno,
+				   is_instead,
+				   event_qual,
+				   action,
+				   replace);
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation. If

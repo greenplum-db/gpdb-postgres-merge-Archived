@@ -15,10 +15,12 @@ QUICKLZ_COMPRESSION = quicklz_compression.o
 endif
 
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
-       objectaddress.o pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o pg_enum.o \
-       pg_inherits.o pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o \
-       pg_db_role_setting.o pg_shdepend.o pg_type.o storage.o toasting.o \
-       pg_exttable.o pg_extprotocol.o \
+       objectaddress.o pg_aggregate.o pg_collation.o pg_constraint.o pg_conversion.o \
+       pg_depend.o pg_enum.o pg_inherits.o pg_largeobject.o pg_namespace.o \
+       pg_operator.o pg_proc.o pg_range.o pg_db_role_setting.o pg_shdepend.o \
+       pg_type.o storage.o toasting.o
+
+OBJS += pg_exttable.o pg_extprotocol.o \
        pg_proc_callback.o \
        aoseg.o aoblkdir.o gp_fastsequence.o gp_segment_config.o \
        pg_attribute_encoding.o pg_compression.o aovisimap.o \
@@ -49,7 +51,8 @@ POSTGRES_BKI_SRCS = $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_ts_config.h pg_ts_config_map.h pg_ts_dict.h \
 	pg_ts_parser.h pg_ts_template.h pg_extension.h \
 	pg_foreign_data_wrapper.h pg_foreign_server.h pg_user_mapping.h \
-	pg_default_acl.h \
+	pg_foreign_table.h \
+	pg_default_acl.h pg_seclabel.h pg_shseclabel.h pg_collation.h pg_range.h \
 	pg_resqueue.h pg_resqueuecapability.h pg_resourcetype.h \
 	pg_resgroup.h pg_resgroupcapability.h \
 	gp_configuration_history.h gp_id.h gp_policy.h gp_version.h \
@@ -92,7 +95,12 @@ pg_proc_combined.h: $(top_srcdir)/src/include/catalog/pg_proc.h $(top_srcdir)/sr
 $(CATALOG_JSON): process_foreign_keys.pl $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h
 	cat $(POSTGRES_BKI_SRCS) $(top_srcdir)/src/include/catalog/catversion.h | $(PERL) process_foreign_keys.pl > $@
 
-postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
+# Technically, this should depend on Makefile.global, but then
+# postgres.bki would need to be rebuilt after every configure run,
+# even in distribution tarballs.  So this is cheating a bit, but it
+# will achieve the goal of updating the version number when it
+# changes.
+postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(top_srcdir)/configure
 	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(PG_MAJORVERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
@@ -106,6 +114,7 @@ install-data: $(BKIFILES) installdirs
 	$(INSTALL_DATA) $(call vpathsearch,cdb_schema.sql) '$(DESTDIR)$(datadir)/cdb_init.d/cdb_schema.sql'
 	$(INSTALL_DATA) $(srcdir)/sql_features.txt '$(DESTDIR)$(datadir)/sql_features.txt'
 	$(INSTALL_DATA) $(call vpathsearch,gp_toolkit.sql) '$(DESTDIR)$(datadir)/cdb_init.d/gp_toolkit.sql'
+	$(INSTALL_DATA) $(call vpathsearch,hyperloglog_counter.sql) '$(DESTDIR)$(datadir)/cdb_init.d/hyperloglog_counter.sql'
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(datadir)'

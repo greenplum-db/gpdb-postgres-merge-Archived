@@ -36,6 +36,7 @@
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -60,8 +61,8 @@ PG_MODULE_MAGIC;
 
 
 /**********************************************************************
- * Information associated with a Perl interpreter.  We have one interpreter
- * that is used for all plperlu (untrusted) functions.  For plperl (trusted)
+ * Information associated with a Perl interpreter.	We have one interpreter
+ * that is used for all plperlu (untrusted) functions.	For plperl (trusted)
  * functions, there is a separate interpreter for each effective SQL userid.
  * (This is needed to ensure that an unprivileged user can't inject Perl code
  * that'll be executed with the privileges of some other SQL user.)
@@ -183,7 +184,7 @@ typedef struct plperl_query_desc
 {
 	char		qname[24];
 	MemoryContext plan_cxt;		/* context holding this struct */
-	void	   *plan;
+	SPIPlanPtr	plan;
 	int			nargs;
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
@@ -404,7 +405,7 @@ _PG_init(void)
 							 &plperl_use_strict,
 							 false,
 							 PGC_USERSET, 0,
-							 NULL, NULL);
+							 NULL, NULL, NULL);
 
 	/*
 	 * plperl.on_init is marked PGC_SIGHUP to support the idea that it might
@@ -418,7 +419,7 @@ _PG_init(void)
 							   &plperl_on_init,
 							   NULL,
 							   PGC_SIGHUP, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	/*
 	 * plperl.on_plperl_init is marked PGC_SUSET to avoid issues whereby a
@@ -440,7 +441,7 @@ _PG_init(void)
 							   &plperl_on_plperl_init,
 							   NULL,
 							   PGC_SUSET, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable("plperl.on_plperlu_init",
 							   gettext_noop("Perl initialization code to execute once when plperlu is first used."),
@@ -448,7 +449,7 @@ _PG_init(void)
 							   &plperl_on_plperlu_init,
 							   NULL,
 							   PGC_SUSET, 0,
-							   NULL, NULL);
+							   NULL, NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plperl");
 
@@ -486,15 +487,6 @@ _PG_init(void)
 	inited = true;
 }
 
-
-/********************************************************************
- *
- * We start out by creating a "held" interpreter that we can use in
- * trusted or untrusted mode (but not both) as the need arises. Later, we
- * assign that interpreter if it is available to either the trusted or
- * untrusted interpreter. If it has already been assigned, and we need to
- * create the other interpreter, we do that if we can, or error out.
- */
 
 static void
 set_interp_require(bool trusted)
@@ -1317,7 +1309,7 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			if (!type_is_rowtype(typid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("cannot convert Perl hash to non-composite type %s",
+					errmsg("cannot convert Perl hash to non-composite type %s",
 								format_type_be(typid))));
 
 			td = lookup_rowtype_tupdesc_noerror(typid, typmod, true);
@@ -1328,7 +1320,7 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 					get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
+						errmsg("function returning record called in context "
 									"that cannot accept type record")));
 			}
 
@@ -1618,10 +1610,8 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		when = "BEFORE";
 	else if (TRIGGER_FIRED_AFTER(tdata->tg_event))
 		when = "AFTER";
-#if 0 /* GPDB_91_MERGE_FIXME: re-enable this when we merge with 9.1 */
 	else if (TRIGGER_FIRED_INSTEAD(tdata->tg_event))
 		when = "INSTEAD OF";
-#endif
 	else
 		when = "UNKNOWN";
 	hv_store_string(hv, "when", cstr2sv(when));
@@ -2974,13 +2964,6 @@ plperl_return_next(SV *sv)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot use return_next in a non-SETOF function")));
 
-	if (prodesc->fn_retistuple &&
-		!(SvOK(sv) && SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("SETOF-composite-returning PL/Perl function "
-						"must call return_next with reference to hash")));
-
 	if (!current_call_data->ret_tdesc)
 	{
 		TupleDesc	tupdesc;
@@ -3032,6 +3015,12 @@ plperl_return_next(SV *sv)
 	{
 		HeapTuple	tuple;
 
+		if (!(SvOK(sv) && SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("SETOF-composite-returning PL/Perl function "
+							"must call return_next with reference to hash")));
+
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->ret_tdesc);
 		tuplestore_puttuple(current_call_data->tuple_store, tuple);
@@ -3079,7 +3068,7 @@ plperl_spi_query(char *query)
 
 	PG_TRY();
 	{
-		void	   *plan;
+		SPIPlanPtr	plan;
 		Portal		portal;
 
 		/* Make sure the query is validly encoded */
@@ -3243,7 +3232,7 @@ plperl_spi_cursor_close(char *cursor)
 SV *
 plperl_spi_prepare(char *query, int argc, SV **argv)
 {
-	void	   *volatile plan = NULL;
+	volatile SPIPlanPtr plan = NULL;
 	volatile MemoryContext plan_cxt = NULL;
 	plperl_query_desc *volatile qdesc = NULL;
 	plperl_query_entry *volatile hash_entry = NULL;
@@ -3334,13 +3323,9 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		 * Save the plan into permanent memory (right now it's in the
 		 * SPI procCxt, which will go away at function end).
 		 ************************************************************/
-		qdesc->plan = SPI_saveplan(plan);
-		if (qdesc->plan == NULL)
-			elog(ERROR, "SPI_saveplan() failed: %s",
-				 SPI_result_code_string(SPI_result));
-
-		/* Release the procCxt copy to avoid within-function memory leak */
-		SPI_freeplan(plan);
+		if (SPI_keepplan(plan))
+			elog(ERROR, "SPI_keepplan() failed");
+		qdesc->plan = plan;
 
 		/************************************************************
 		 * Insert a hashtable entry for the plan.
@@ -3679,7 +3664,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 void
 plperl_spi_freeplan(char *query)
 {
-	void	   *plan;
+	SPIPlanPtr	plan;
 	plperl_query_desc *qdesc;
 	plperl_query_entry *hash_entry;
 

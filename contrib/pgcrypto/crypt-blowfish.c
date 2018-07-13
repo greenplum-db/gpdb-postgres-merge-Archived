@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.14 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/crypt-blowfish.c
  *
  * This code comes from John the Ripper password cracker, with reentrant
  * and crypt(3) interfaces added, but optimizations specific to password
@@ -372,7 +372,7 @@ BF_decode(BF_word *dst, const char *src, int size)
 {
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned char *end = dptr + size;
-	unsigned char *sptr = (unsigned char *) src;
+	const unsigned char *sptr = (const unsigned char *) src;
 	unsigned int tmp,
 				c1,
 				c2,
@@ -402,8 +402,8 @@ BF_decode(BF_word *dst, const char *src, int size)
 static void
 BF_encode(char *dst, const BF_word *src, int size)
 {
-	unsigned char *sptr = (unsigned char *) src;
-	unsigned char *end = sptr + size;
+	const unsigned char *sptr = (const unsigned char *) src;
+	const unsigned char *end = sptr + size;
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned int c1,
 				c2;

@@ -1,24 +1,11 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-		xmlns:exsl="http://exslt.org/common"
+                xmlns:exsl="http://exslt.org/common"
                 version='1.0'
                 exclude-result-prefixes="exsl">
 
 <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"/>
 <xsl:import href="stylesheet-common.xsl" />
-
-
-<!-- The following is a workaround for what may actually be a mistake
-     in our markup.  The problem is in a situation like
-
-<para>
- <command>FOO</command> is ...
-
-     there is strictly speaking a line break before "FOO".  In the
-     HTML output, this does not appear to be a problem, but in the man
-     page output, this shows up.  Using this setting, pure whitespace
-     text nodes are removed, so the problem is solved. -->
-<xsl:strip-space elements="para"/>
 
 
 <!-- Parameters -->
@@ -43,6 +30,16 @@
 
 <!-- Custom templates -->
 
+<!-- Improve output of email element.  See also
+     <https://sourceforge.net/tracker/?func=detail&aid=3524417&group_id=21935&atid=373747>
+ -->
+<xsl:template match="email">
+  <xsl:text>&lt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&gt;</xsl:text>
+</xsl:template>
+
+
 <xsl:template match="refentry" mode="xref-to">
   <xsl:param name="referrer"/>
   <xsl:param name="xrefstyle"/>
@@ -54,13 +51,13 @@
          the man page to read about it. -->
     <xsl:when test="contains(refnamediv/refname[1],' ')">
       <xsl:variable name="mangled.title">
-       <xsl:value-of select="translate(refnamediv/refname[1],' ','_')"/>
+        <xsl:value-of select="translate(refnamediv/refname[1],' ','_')"/>
       </xsl:variable>
       <xsl:apply-templates select="refnamediv/refname[1]"/>
       <xsl:text> (</xsl:text>
       <xsl:call-template name="bold">
-       <xsl:with-param name="node" select="exsl:node-set($mangled.title)"/>
-       <xsl:with-param name="context" select="."/>
+        <xsl:with-param name="node" select="exsl:node-set($mangled.title)"/>
+        <xsl:with-param name="context" select="."/>
       </xsl:call-template>
       <xsl:apply-templates select="refmeta/manvolnum"/>
       <xsl:text>)</xsl:text>
@@ -71,16 +68,16 @@
     <xsl:otherwise>
       <xsl:choose>
         <xsl:when test="refmeta/refentrytitle">
-	 <xsl:call-template name="bold">
-	  <xsl:with-param name="node" select="refmeta/refentrytitle"/>
-	  <xsl:with-param name="context" select="."/>
-	 </xsl:call-template>
+          <xsl:call-template name="bold">
+            <xsl:with-param name="node" select="refmeta/refentrytitle"/>
+            <xsl:with-param name="context" select="."/>
+          </xsl:call-template>
         </xsl:when>
         <xsl:otherwise>
-	 <xsl:call-template name="bold">
-	  <xsl:with-param name="node" select="refnamediv/refname[1]"/>
-	  <xsl:with-param name="context" select="."/>
-	 </xsl:call-template>
+          <xsl:call-template name="bold">
+            <xsl:with-param name="node" select="refnamediv/refname[1]"/>
+            <xsl:with-param name="context" select="."/>
+          </xsl:call-template>
         </xsl:otherwise>
       </xsl:choose>
       <xsl:apply-templates select="refmeta/manvolnum"/>
@@ -88,6 +85,50 @@
   </xsl:choose>
 
 </xsl:template>
+
+
+<!-- For refentries we don't man to generate a man page for, leave out
+     manvolnum, let it default to 0, and skip writing out man files
+     with section 0. -->
+
+<!-- overridden from common/refentry.xsl -->
+<xsl:template name="get.refentry.section">
+  <xsl:choose>
+    <xsl:when test="refmeta/manvolnum">
+      <xsl:value-of select="refmeta/manvolnum"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>0</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+<!-- overridden from manpages/other.xsl -->
+  <xsl:template name="write.man.file">
+    <xsl:param name="name"/>
+    <xsl:param name="section"/>
+    <xsl:param name="lang"/>
+    <xsl:param name="content"/>
+    <xsl:param name="filename">
+      <xsl:call-template name="make.adjusted.man.filename">
+        <xsl:with-param name="name" select="$name"/>
+        <xsl:with-param name="section" select="$section"/>
+        <xsl:with-param name="lang" select="$lang"/>
+      </xsl:call-template>
+    </xsl:param>
+    <xsl:if test="$section != 0">
+    <xsl:call-template name="write.text.chunk">
+      <xsl:with-param name="filename" select="$filename"/>
+      <xsl:with-param name="suppress-context-node-name" select="1"/>
+      <xsl:with-param name="quiet" select="$man.output.quietly"/>
+      <xsl:with-param
+          name="message-prolog"
+          >Note: </xsl:with-param>
+      <xsl:with-param name="encoding" select="$man.output.encoding"/>
+      <xsl:with-param name="content" select="$content"/>
+    </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
 
 
 <!-- Overridden template as workaround for this problem:
@@ -112,14 +153,14 @@
           <xsl:with-param name="message-prolog">Note: </xsl:with-param>
           <xsl:with-param name="message-epilog"> (soelim stub)</xsl:with-param>
           <xsl:with-param name="content">
-	    <xsl:choose>
-	      <xsl:when test="$man.output.in.separate.dir = 0">
-		<xsl:value-of select="concat('.so man', $section, '/')"/>
-	      </xsl:when>
-	      <xsl:otherwise>
-		<xsl:value-of select="'.so '"/> <!-- added case -->
-	      </xsl:otherwise>
-	    </xsl:choose>
+            <xsl:choose>
+              <xsl:when test="$man.output.in.separate.dir = 0">
+                <xsl:value-of select="concat('.so man', $section, '/')"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="'.so '"/> <!-- added case -->
+              </xsl:otherwise>
+            </xsl:choose>
             <xsl:call-template name="make.adjusted.man.filename">
               <xsl:with-param name="name" select="$first.refname"/>
               <xsl:with-param name="section" select="$section"/>

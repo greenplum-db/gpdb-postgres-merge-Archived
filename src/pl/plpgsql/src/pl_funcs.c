@@ -3,12 +3,12 @@
  * pl_funcs.c		- Misc functions for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.90 2010/02/26 02:01:35 momjian Exp $
+ *	  src/pl/plpgsql/src/pl_funcs.c
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "plpgsql.h"
 
 #include "utils/memutils.h"
+
 
 /* ----------
  * Local variables for namespace handling
@@ -231,6 +232,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return _("FOR over SELECT rows");
 		case PLPGSQL_STMT_FORC:
 			return _("FOR over cursor");
+		case PLPGSQL_STMT_FOREACH_A:
+			return _("FOREACH over array");
 		case PLPGSQL_STMT_EXIT:
 			return "EXIT";
 		case PLPGSQL_STMT_RETURN:
@@ -262,7 +265,35 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 	return "unknown";
 }
 
- /**********************************************************************
+/*
+ * GET DIAGNOSTICS item name as a string, for use in error messages etc.
+ */
+const char *
+plpgsql_getdiag_kindname(int kind)
+{
+	switch (kind)
+	{
+		case PLPGSQL_GETDIAG_ROW_COUNT:
+			return "ROW_COUNT";
+		case PLPGSQL_GETDIAG_RESULT_OID:
+			return "RESULT_OID";
+		case PLPGSQL_GETDIAG_ERROR_CONTEXT:
+			return "PG_EXCEPTION_CONTEXT";
+		case PLPGSQL_GETDIAG_ERROR_DETAIL:
+			return "PG_EXCEPTION_DETAIL";
+		case PLPGSQL_GETDIAG_ERROR_HINT:
+			return "PG_EXCEPTION_HINT";
+		case PLPGSQL_GETDIAG_RETURNED_SQLSTATE:
+			return "RETURNED_SQLSTATE";
+		case PLPGSQL_GETDIAG_MESSAGE_TEXT:
+			return "MESSAGE_TEXT";
+	}
+
+	return "unknown";
+}
+
+
+/**********************************************************************
  * Release memory when a PL/pgSQL function is no longer needed
  *
  * The code for recursing through the function tree is really only
@@ -281,6 +312,7 @@ static void free_while(PLpgSQL_stmt_while *stmt);
 static void free_fori(PLpgSQL_stmt_fori *stmt);
 static void free_fors(PLpgSQL_stmt_fors *stmt);
 static void free_forc(PLpgSQL_stmt_forc *stmt);
+static void free_foreach_a(PLpgSQL_stmt_foreach_a *stmt);
 static void free_exit(PLpgSQL_stmt_exit *stmt);
 static void free_return(PLpgSQL_stmt_return *stmt);
 static void free_return_next(PLpgSQL_stmt_return_next *stmt);
@@ -328,6 +360,9 @@ free_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_FORC:
 			free_forc((PLpgSQL_stmt_forc *) stmt);
+			break;
+		case PLPGSQL_STMT_FOREACH_A:
+			free_foreach_a((PLpgSQL_stmt_foreach_a *) stmt);
 			break;
 		case PLPGSQL_STMT_EXIT:
 			free_exit((PLpgSQL_stmt_exit *) stmt);
@@ -411,9 +446,18 @@ free_assign(PLpgSQL_stmt_assign *stmt)
 static void
 free_if(PLpgSQL_stmt_if *stmt)
 {
+	ListCell   *l;
+
 	free_expr(stmt->cond);
-	free_stmts(stmt->true_body);
-	free_stmts(stmt->false_body);
+	free_stmts(stmt->then_body);
+	foreach(l, stmt->elsif_list)
+	{
+		PLpgSQL_if_elsif *elif = (PLpgSQL_if_elsif *) lfirst(l);
+
+		free_expr(elif->cond);
+		free_stmts(elif->stmts);
+	}
+	free_stmts(stmt->else_body);
 }
 
 static void
@@ -469,11 +513,24 @@ free_forc(PLpgSQL_stmt_forc *stmt)
 }
 
 static void
+free_foreach_a(PLpgSQL_stmt_foreach_a *stmt)
+{
+	free_expr(stmt->expr);
+	free_stmts(stmt->body);
+}
+
+static void
 free_open(PLpgSQL_stmt_open *stmt)
 {
+	ListCell   *lc;
+
 	free_expr(stmt->argquery);
 	free_expr(stmt->query);
 	free_expr(stmt->dynquery);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
 }
 
 static void
@@ -533,6 +590,12 @@ free_raise(PLpgSQL_stmt_raise *stmt)
 	{
 		free_expr((PLpgSQL_expr *) lfirst(lc));
 	}
+	foreach(lc, stmt->options)
+	{
+		PLpgSQL_raise_option *opt = (PLpgSQL_raise_option *) lfirst(lc);
+
+		free_expr(opt->expr);
+	}
 }
 
 static void
@@ -544,14 +607,26 @@ free_execsql(PLpgSQL_stmt_execsql *stmt)
 static void
 free_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 {
+	ListCell   *lc;
+
 	free_expr(stmt->query);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
 }
 
 static void
 free_dynfors(PLpgSQL_stmt_dynfors *stmt)
 {
+	ListCell   *lc;
+
 	free_stmts(stmt->body);
 	free_expr(stmt->query);
+	foreach(lc, stmt->params)
+	{
+		free_expr((PLpgSQL_expr *) lfirst(lc));
+	}
 }
 
 static void
@@ -639,6 +714,7 @@ static void dump_while(PLpgSQL_stmt_while *stmt);
 static void dump_fori(PLpgSQL_stmt_fori *stmt);
 static void dump_fors(PLpgSQL_stmt_fors *stmt);
 static void dump_forc(PLpgSQL_stmt_forc *stmt);
+static void dump_foreach_a(PLpgSQL_stmt_foreach_a *stmt);
 static void dump_exit(PLpgSQL_stmt_exit *stmt);
 static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
@@ -697,6 +773,9 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_FORC:
 			dump_forc((PLpgSQL_stmt_forc *) stmt);
+			break;
+		case PLPGSQL_STMT_FOREACH_A:
+			dump_foreach_a((PLpgSQL_stmt_foreach_a *) stmt);
 			break;
 		case PLPGSQL_STMT_EXIT:
 			dump_exit((PLpgSQL_stmt_exit *) stmt);
@@ -807,20 +886,29 @@ dump_assign(PLpgSQL_stmt_assign *stmt)
 static void
 dump_if(PLpgSQL_stmt_if *stmt)
 {
+	ListCell   *l;
+
 	dump_ind();
 	printf("IF ");
 	dump_expr(stmt->cond);
 	printf(" THEN\n");
+	dump_stmts(stmt->then_body);
+	foreach(l, stmt->elsif_list)
+	{
+		PLpgSQL_if_elsif *elif = (PLpgSQL_if_elsif *) lfirst(l);
 
-	dump_stmts(stmt->true_body);
-
-	if (stmt->false_body != NIL)
+		dump_ind();
+		printf("    ELSIF ");
+		dump_expr(elif->cond);
+		printf(" THEN\n");
+		dump_stmts(elif->stmts);
+	}
+	if (stmt->else_body != NIL)
 	{
 		dump_ind();
 		printf("    ELSE\n");
-		dump_stmts(stmt->false_body);
+		dump_stmts(stmt->else_body);
 	}
-
 	dump_ind();
 	printf("    ENDIF\n");
 }
@@ -954,6 +1042,23 @@ dump_forc(PLpgSQL_stmt_forc *stmt)
 
 	dump_ind();
 	printf("    ENDFORC\n");
+}
+
+static void
+dump_foreach_a(PLpgSQL_stmt_foreach_a *stmt)
+{
+	dump_ind();
+	printf("FOREACHA var %d ", stmt->varno);
+	if (stmt->slice != 0)
+		printf("SLICE %d ", stmt->slice);
+	printf("IN ");
+	dump_expr(stmt->expr);
+	printf("\n");
+
+	dump_stmts(stmt->body);
+
+	dump_ind();
+	printf("    ENDFOREACHA");
 }
 
 static void
@@ -1329,7 +1434,7 @@ dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 	ListCell   *lc;
 
 	dump_ind();
-	printf("GET DIAGNOSTICS ");
+	printf("GET %s DIAGNOSTICS ", stmt->is_stacked ? "STACKED" : "CURRENT");
 	foreach(lc, stmt->diag_items)
 	{
 		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
@@ -1337,22 +1442,8 @@ dump_getdiag(PLpgSQL_stmt_getdiag *stmt)
 		if (lc != list_head(stmt->diag_items))
 			printf(", ");
 
-		printf("{var %d} = ", diag_item->target);
-
-		switch (diag_item->kind)
-		{
-			case PLPGSQL_GETDIAG_ROW_COUNT:
-				printf("ROW_COUNT");
-				break;
-
-			case PLPGSQL_GETDIAG_RESULT_OID:
-				printf("RESULT_OID");
-				break;
-
-			default:
-				printf("???");
-				break;
-		}
+		printf("{var %d} = %s", diag_item->target,
+			   plpgsql_getdiag_kindname(diag_item->kind));
 	}
 	printf("\n");
 }
@@ -1370,7 +1461,7 @@ plpgsql_dumptree(PLpgSQL_function *func)
 	PLpgSQL_datum *d;
 
 	printf("\nExecution tree of successfully compiled PL/pgSQL function %s:\n",
-		   func->fn_name);
+		   func->fn_signature);
 
 	printf("\nFunction's data area:\n");
 	for (i = 0; i < func->ndatums; i++)
@@ -1447,6 +1538,6 @@ plpgsql_dumptree(PLpgSQL_function *func)
 	dump_indent = 0;
 	printf("%3d:", func->action->lineno);
 	dump_block(func->action);
-	printf("\nEnd of execution tree of function %s\n\n", func->fn_name);
+	printf("\nEnd of execution tree of function %s\n\n", func->fn_signature);
 	fflush(stdout);
 }

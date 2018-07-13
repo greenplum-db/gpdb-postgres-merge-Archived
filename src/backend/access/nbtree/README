@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.22 2010/02/08 04:33:53 tgl Exp $
+src/backend/access/nbtree/README
 
 Btree Indexing
 ==============
@@ -154,7 +154,7 @@ even pages that don't contain any deletable tuples.  This guarantees that
 the btbulkdelete call cannot return while any indexscan is still holding
 a copy of a deleted index tuple.  Note that this requirement does not say
 that btbulkdelete must visit the pages in any particular order.  (See also
-on-the-fly deletion, below.) 
+on-the-fly deletion, below.)
 
 There is no such interlocking for deletion of items in internal pages,
 since backends keep no lock nor pin on a page they have descended past.
@@ -375,7 +375,7 @@ leaf-item deletions (if the deletion brings the leaf page to zero items,
 it is now a candidate to be deleted, but that is a separate action).
 
 An insertion that causes a page split is logged as a single WAL entry for
-the changes occuring on the insertion's level --- including update of the
+the changes occurring on the insertion's level --- including update of the
 right sibling's left-link --- followed by a second WAL entry for the
 insertion on the parent level (which might itself be a page split, requiring
 an additional insertion above that, etc).

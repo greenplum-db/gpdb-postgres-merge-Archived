@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.18 2010/04/02 15:21:20 mha Exp $
+ * contrib/pgcrypto/sha1.c
  */
 /*
  * FIPS pub 180-1: Secure Hash Algorithm (SHA-1)
@@ -40,7 +40,6 @@
 
 #include <sys/param.h>
 
-#include "px.h"
 #include "sha1.h"
 
 /* constant table */

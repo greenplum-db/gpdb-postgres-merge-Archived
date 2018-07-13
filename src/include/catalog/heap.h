@@ -6,10 +6,10 @@
  *
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.98 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/heap.h
  *
  *-------------------------------------------------------------------------
  */
@@ -40,21 +40,26 @@ typedef struct CookedConstraint
 	char	   *name;			/* name, or NULL if none */
 	AttrNumber	attnum;			/* which attr (only for DEFAULT) */
 	Node	   *expr;			/* transformed default or check expr */
+	bool		skip_validation;	/* skip validation? (only for CHECK) */
 	bool		is_local;		/* constraint has local (non-inherited) def */
 	int			inhcount;		/* number of times constraint is inherited */
 	/*
 	 * Remember to update copy/out/read functions if new fields are added
 	 * here!
 	 */
+	bool		is_no_inherit;	/* constraint has local def and cannot be
+								 * inherited */
 } CookedConstraint;
 
 extern Relation heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
 			Oid relid,
+			Oid relfilenode,
 			TupleDesc tupDesc,
 			Oid relam,
 			char relkind,
+			char relpersistence,
 			char relstorage,
 			bool shared_relation,
 			bool mapped_relation,
@@ -71,6 +76,7 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 List *cooked_constraints,
 						 Oid relam,
 						 char relkind,
+						 char relpersistence,
 						 char relstorage,
 						 bool shared_relation,
 						 bool mapped_relation,
@@ -81,7 +87,10 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 Datum reloptions,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
-						 bool valid_opts);
+						 bool valid_opts,
+						 bool is_part_child);
+
+extern void heap_create_init_fork(Relation rel);
 
 extern void heap_drop_with_catalog(Oid relid);
 
@@ -124,7 +133,7 @@ extern void DeleteRelationTuple(Oid relid);
 extern void DeleteAttributeTuples(Oid relid);
 extern void RemoveAttributeById(Oid relid, AttrNumber attnum);
 extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
-				  DropBehavior behavior, bool complain);
+				  DropBehavior behavior, bool complain, bool internal);
 extern void RemoveAttrDefaultById(Oid attrdefId);
 extern void RemoveStatistics(Oid relid, AttrNumber attnum);
 
@@ -137,7 +146,8 @@ extern Form_pg_attribute SystemAttributeByName(const char *attname,
 extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 						 bool allow_system_table_mods);
 
-extern void CheckAttributeType(const char *attname, Oid atttypid,
+extern void CheckAttributeType(const char *attname,
+				   Oid atttypid, Oid attcollation,
 				   List *containing_rowtypes,
 				   bool allow_system_table_mods);
 extern void SetRelationNumChecks(Relation rel, int numchecks);

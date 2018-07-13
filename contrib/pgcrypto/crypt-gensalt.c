@@ -2,7 +2,7 @@
  * Written by Solar Designer and placed in the public domain.
  * See crypt_blowfish.c for more information.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-gensalt.c,v 1.11 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/crypt-gensalt.c
  *
  * This file contains salt generation functions for the traditional and
  * other common crypt(3) algorithms, except for bcrypt which is defined
@@ -14,7 +14,6 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
 
 typedef unsigned int BF_word;
@@ -124,8 +123,8 @@ static unsigned char BF_itoa64[64 + 1] =
 static void
 BF_encode(char *dst, const BF_word *src, int size)
 {
-	unsigned char *sptr = (unsigned char *) src;
-	unsigned char *end = sptr + size;
+	const unsigned char *sptr = (const unsigned char *) src;
+	const unsigned char *end = sptr + size;
 	unsigned char *dptr = (unsigned char *) dst;
 	unsigned int c1,
 				c2;
@@ -181,7 +180,7 @@ _crypt_gensalt_blowfish_rn(unsigned long count,
 	output[5] = '0' + count % 10;
 	output[6] = '$';
 
-	BF_encode(&output[7], (BF_word *) input, 16);
+	BF_encode(&output[7], (const BF_word *) input, 16);
 	output[7 + 22] = '\0';
 
 	return output;

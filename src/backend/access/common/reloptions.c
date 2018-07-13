@@ -3,12 +3,12 @@
  * reloptions.c
  *	  Core support for relation options (pg_class.reloptions)
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.35 2010/06/07 02:59:02 itagaki Exp $
+ *	  src/backend/access/common/reloptions.c
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/hash.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
+#include "access/spgist.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbvars.h"
@@ -73,6 +74,14 @@ static relopt_bool boolRelOpts[] =
 		},
 		true
 	},
+	{
+		{
+			"security_barrier",
+			"View acts as a row security barrier",
+			RELOPT_KIND_VIEW
+		},
+		false
+	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -110,6 +119,14 @@ static relopt_int intRelOpts[] =
 			RELOPT_KIND_GIST
 		},
 		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			"fillfactor",
+			"Packs spgist index pages only to this percentage",
+			RELOPT_KIND_SPGIST
+		},
+		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100
 	},
 	{
 		{
@@ -226,6 +243,17 @@ static relopt_real realRelOpts[] =
 
 static relopt_string stringRelOpts[] =
 {
+	{
+		{
+			"buffering",
+			"Enables buffering build for this GiST index",
+			RELOPT_KIND_GIST
+		},
+		4,
+		false,
+		gistValidateBufferingOption,
+		"auto"
+	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -380,8 +408,6 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 	size_t		size;
 	relopt_gen *newoption;
 
-	Assert(type != RELOPT_TYPE_STRING);
-
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	switch (type)
@@ -394,6 +420,9 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 			break;
 		case RELOPT_TYPE_REAL:
 			size = sizeof(relopt_real);
+			break;
+		case RELOPT_TYPE_STRING:
+			size = sizeof(relopt_string);
 			break;
 		default:
 			elog(ERROR, "unsupported option type");
@@ -483,44 +512,28 @@ void
 add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
 					 validate_string_relopt validator)
 {
-	MemoryContext oldcxt;
 	relopt_string *newoption;
-	int			default_len = 0;
 
-	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	/* make sure the validator/default combination is sane */
+	if (validator)
+		(validator) (default_val);
 
-	if (default_val)
-		default_len = strlen(default_val);
-
-	newoption = palloc0(sizeof(relopt_string) + default_len);
-
-	newoption->gen.name = pstrdup(name);
-	if (desc)
-		newoption->gen.desc = pstrdup(desc);
-	else
-		newoption->gen.desc = NULL;
-	newoption->gen.kinds = kinds;
-	newoption->gen.namelen = strlen(name);
-	newoption->gen.type = RELOPT_TYPE_STRING;
+	newoption = (relopt_string *) allocate_reloption(kinds, RELOPT_TYPE_STRING,
+													 name, desc);
 	newoption->validate_cb = validator;
 	if (default_val)
 	{
-		strcpy(newoption->default_val, default_val);
-		newoption->default_len = default_len;
+		newoption->default_val = MemoryContextStrdup(TopMemoryContext,
+													 default_val);
+		newoption->default_len = strlen(default_val);
 		newoption->default_isnull = false;
 	}
 	else
 	{
-		newoption->default_val[0] = '\0';
+		newoption->default_val = "";
 		newoption->default_len = 0;
 		newoption->default_isnull = true;
 	}
-
-	/* make sure the validator/default combination is sane */
-	if (newoption->validate_cb)
-		(newoption->validate_cb) (newoption->default_val);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	add_reloption((relopt_gen *) newoption);
 }
@@ -541,8 +554,8 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  *
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
- * listed in validnsps.  The NULL namespace is always valid and needs not be
- * explicitely listed.	Passing a NULL pointer means that only the NULL
+ * listed in validnsps.  The NULL namespace is always valid and need not be
+ * explicitly listed.  Passing a NULL pointer means that only the NULL
  * namespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
@@ -785,11 +798,15 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
+		case RELKIND_VIEW:
 		case RELKIND_UNCATALOGED:
 			options = heap_reloptions(classForm->relkind, datum, false);
 			break;
 		case RELKIND_INDEX:
 			options = index_reloptions(amoptions, datum, false);
+			break;
+		case RELKIND_FOREIGN_TABLE:
+			options = NULL;
 			break;
 		default:
 			Assert(false);		/* can't get here */
@@ -1154,7 +1171,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)}
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)},
+		{"security_barrier", RELOPT_TYPE_BOOL,
+		offsetof(StdRdOptions, security_barrier)},
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
@@ -1176,7 +1195,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 }
 
 /*
- * Parse options for heaps and toast tables.
+ * Parse options for heaps, views and toast tables.
  */
 bytea *
 heap_reloptions(char relkind, Datum reloptions, bool validate)
@@ -1198,9 +1217,10 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
+		case RELKIND_VIEW:
+			return default_reloptions(reloptions, validate, RELOPT_KIND_VIEW);
 		default:
-			/* sequences, composite types and views are not supported */
-			/* Neither are AO aux tables (AO segments, blockdir, visimap) */
+			/* other relkinds are not supported */
 			return NULL;
 	}
 }
@@ -1229,7 +1249,7 @@ index_reloptions(RegProcedure amoptions, Datum reloptions, bool validate)
 	/* Can't use OidFunctionCallN because we might get a NULL result */
 	fmgr_info(amoptions, &flinfo);
 
-	InitFunctionCallInfoData(fcinfo, &flinfo, 2, NULL, NULL);
+	InitFunctionCallInfoData(fcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
 
 	fcinfo.arg[0] = reloptions;
 	fcinfo.arg[1] = BoolGetDatum(validate);

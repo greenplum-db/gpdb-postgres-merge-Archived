@@ -5,26 +5,23 @@
  *
  * Access-method specific inspection functions are in separate files.
  *
- * Copyright (c) 2007-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2012, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/rawpage.c,v 1.14 2010/01/02 16:57:32 momjian Exp $
+ *	  contrib/pageinspect/rawpage.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 
@@ -118,6 +115,11 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot get raw page from composite type \"%s\"",
+						RelationGetRelationName(rel))));
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot get raw page from foreign table \"%s\"",
 						RelationGetRelationName(rel))));
 
 	/*

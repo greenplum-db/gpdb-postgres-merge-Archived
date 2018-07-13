@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.12 2010/04/03 07:23:02 petere Exp $
+doc/src/sgml/ref/rollback_to.sgml
 PostgreSQL documentation
 -->
 
@@ -64,9 +64,9 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-RELEASE-SAVEPOINT"
-  > to destroy a savepoint without
-   discarding the effects of commands executed after it was established.
+   Use <xref linkend="SQL-RELEASE-SAVEPOINT"> to destroy a savepoint
+   without discarding the effects of commands executed after it was
+   established.
   </para>
 
   <para>
@@ -124,8 +124,7 @@ FETCH 1 FROM foo;
         2
 
 COMMIT;
-</programlisting>
-   </para>
+</programlisting></para>
 
 
  </refsect1>

@@ -1,9 +1,8 @@
-/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.22 2009/06/11 14:48:51 momjian Exp $ */
+/* contrib/ltree/ltree.h */
 
 #ifndef __LTREE_H__
 #define __LTREE_H__
 
-#include "postgres.h"
 #include "fmgr.h"
 #include "tsearch/ts_locale.h"
 

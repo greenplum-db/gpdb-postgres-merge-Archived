@@ -4,10 +4,10 @@
  *	  POSTGRES index tuple definitions.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.55 2010/02/26 02:01:21 momjian Exp $
+ * src/include/access/itup.h
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ typedef struct IndexTupleData
 	ItemPointerData t_tid;		/* reference TID to heap tuple */
 
 	/* ---------------
-	 * t_info is layed out in the following fashion:
+	 * t_info is laid out in the following fashion:
 	 *
 	 * 15th (high) bit: has nulls
 	 * 14th bit: has var-width attributes
@@ -55,7 +55,7 @@ typedef IndexTupleData *IndexTuple;
 typedef struct IndexAttributeBitMapData
 {
 	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
-} IndexAttributeBitMapData;
+}	IndexAttributeBitMapData;
 
 typedef IndexAttributeBitMapData *IndexAttributeBitMap;
 

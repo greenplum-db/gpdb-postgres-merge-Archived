@@ -4,10 +4,10 @@
  *	  Lightweight lock manager
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.46 2010/02/26 02:01:27 momjian Exp $
+ * src/include/storage/lwlock.h
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,10 @@
 /* Number of partitions the shared lock tables are divided into */
 #define LOG2_NUM_LOCK_PARTITIONS  4
 #define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
+
+/* Number of partitions the shared predicate lock tables are divided into */
+#define LOG2_NUM_PREDICATELOCK_PARTITIONS  4
+#define NUM_PREDICATELOCK_PARTITIONS  (1 << LOG2_NUM_PREDICATELOCK_PARTITIONS)
 
 /* Number of partitions of the workfile manager hashtable */
 #define NUM_WORKFILEMGR_PARTITIONS 32
@@ -78,19 +82,24 @@ typedef enum LWLockId
 	RelationMappingLock,
 	AsyncCtlLock,
 	AsyncQueueLock,
+	SerializableXactHashLock,
+	SerializableFinishedListLock,
+	SerializablePredicateLockListLock,
+	OldSerXidLock,
+	SyncRepLock,
 	SharedSnapshotLock,
 	DistributedLogControlLock,
 	SeqServerControlLock,
 	AOSegFileLock,
 	ResQueueLock,
 	ResGroupLock,
-	SyncRepLock,
 	ErrorLogLock,
 	FirstWorkfileMgrLock,
 	FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
 	FirstBufMappingLock = FirstWorkfileQuerySpaceLock + NUM_WORKFILE_QUERYSPACE_PARTITIONS,
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
-	SessionStateLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+	FirstPredicateLockMgrLock = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
+	SessionStateLock = FirstPredicateLockMgrLock + NUM_LOCK_PARTITIONS,
 	RelfilenodeGenLock,
 	FilespaceHashLock,
 	TablespaceHashLock,
@@ -106,7 +115,10 @@ typedef enum LWLockId
 typedef enum LWLockMode
 {
 	LW_EXCLUSIVE,
-	LW_SHARED
+	LW_SHARED,
+	LW_WAIT_UNTIL_FREE			/* A special mode used in PGPROC->lwlockMode,
+								 * when waiting for lock to become free. Not
+								 * to be used as LWLockAcquire argument */
 } LWLockMode;
 
 
@@ -117,6 +129,7 @@ extern bool Trace_lwlocks;
 extern LWLockId LWLockAssign(void);
 extern void LWLockAcquire(LWLockId lockid, LWLockMode mode);
 extern bool LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode);
+extern bool LWLockAcquireOrWait(LWLockId lockid, LWLockMode mode);
 extern void LWLockRelease(LWLockId lockid);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLockId lockid);

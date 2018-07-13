@@ -3,49 +3,53 @@
  *
  *	options functions
  *
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/option.c,v 1.12.2.1 2010/07/13 20:15:51 momjian Exp $
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	contrib/pg_upgrade/option.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
-#include "getopt_long.h"
-
+#include <getopt_long.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef WIN32
 #include <io.h>
 #endif
 
 
-static void usage(migratorContext *ctx);
-static void validateDirectoryOption(migratorContext *ctx, char **dirpath,
+static void usage(void);
+static void check_required_directory(char **dirpath,
 				   char *envVarName, char *cmdLineOption, char *description);
-static void get_pkglibdirs(migratorContext *ctx);
-static char *get_pkglibdir(migratorContext *ctx, const char *bindir);
+
+
+UserOpts	user_opts;
 
 
 /*
  * parseCommandLine()
  *
- *	Parses the command line (argc, argv[]) into the given migratorContext object
- *	and initializes the rest of the object.
+ *	Parses the command line (argc, argv[]) and loads structures
  */
 void
-parseCommandLine(migratorContext *ctx, int argc, char *argv[])
+parseCommandLine(int argc, char *argv[])
 {
 	static struct option long_options[] = {
 		{"old-datadir", required_argument, NULL, 'd'},
 		{"new-datadir", required_argument, NULL, 'D'},
 		{"old-bindir", required_argument, NULL, 'b'},
 		{"new-bindir", required_argument, NULL, 'B'},
+		{"old-options", required_argument, NULL, 'o'},
+		{"new-options", required_argument, NULL, 'O'},
 		{"old-port", required_argument, NULL, 'p'},
 		{"new-port", required_argument, NULL, 'P'},
 
 		{"user", required_argument, NULL, 'u'},
 		{"check", no_argument, NULL, 'c'},
-		{"debug", no_argument, NULL, 'g'},
-		{"debugfile", required_argument, NULL, 'G'},
 		{"link", no_argument, NULL, 'k'},
-		{"logfile", required_argument, NULL, 'l'},
+		{"retain", no_argument, NULL, 'r'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"progress", no_argument, NULL, 'X'},
 		{"add-checksum", no_argument, NULL, 'J'},
@@ -57,127 +61,145 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 	};
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
-	int			user_id;
+	int			os_user_effective_id;
+	FILE	   *fp;
+	char	  **filename;
+	time_t		run_time = time(NULL);
 
+	user_opts.transfer_mode = TRANSFER_MODE_COPY;
+
+	os_info.progname = get_progname(argv[0]);
+
+	/* Process libpq env. variables; load values here for usage() output */
+	old_cluster.port = getenv("PGPORTOLD") ? atoi(getenv("PGPORTOLD")) : DEF_PGUPORT;
+	new_cluster.port = getenv("PGPORTNEW") ? atoi(getenv("PGPORTNEW")) : DEF_PGUPORT;
+
+	os_user_effective_id = get_user_info(&os_info.user);
+	/* we override just the database user name;  we got the OS id above */
 	if (getenv("PGUSER"))
 	{
-		pg_free(ctx->user);
-		ctx->user = pg_strdup(ctx, getenv("PGUSER"));
+		pg_free(os_info.user);
+		/* must save value, getenv()'s pointer is not stable */
+		os_info.user = pg_strdup(getenv("PGUSER"));
 	}
-
-	ctx->progname = get_progname(argv[0]);
-	ctx->old.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	ctx->new.port = getenv("PGPORT") ? atoi(getenv("PGPORT")) : DEF_PGPORT;
-	/* must save value, getenv()'s pointer is not stable */
-
-	ctx->transfer_mode = TRANSFER_MODE_COPY;
-
-	/* user lookup and 'root' test must be split because of usage() */
-	user_id = get_user_info(ctx, &ctx->user);
 
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
 			strcmp(argv[1], "-?") == 0)
 		{
-			usage(ctx);
-			exit_nicely(ctx, false);
+			usage();
+			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			pg_log(ctx, PG_REPORT, "pg_upgrade " PG_VERSION "\n");
-			exit_nicely(ctx, false);
+			puts("pg_upgrade (PostgreSQL) " PG_VERSION);
+			exit(0);
 		}
 	}
 
-	if (user_id == 0)
-		pg_log(ctx, PG_FATAL, "%s: cannot be run as root\n", ctx->progname);
+	/* Allow help and version to be run as root, so do the test here. */
+	if (os_user_effective_id == 0)
+		pg_log(PG_FATAL, "%s: cannot be run as root\n", os_info.progname);
 
-	getcwd(ctx->cwd, MAXPGPATH);
+	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
+		pg_log(PG_FATAL, "cannot write to log file %s\n", INTERNAL_LOG_FILE);
 
+<<<<<<< HEAD
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:jJkl:p:P:u:v",
+=======
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cko:O:p:P:ru:v",
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
 		{
-			case 'd':
-				ctx->old.pgdata = pg_strdup(ctx, optarg);
-				break;
-
-			case 'D':
-				ctx->new.pgdata = pg_strdup(ctx, optarg);
-				break;
-
 			case 'b':
-				ctx->old.bindir = pg_strdup(ctx, optarg);
+				old_cluster.bindir = pg_strdup(optarg);
 				break;
 
 			case 'B':
-				ctx->new.bindir = pg_strdup(ctx, optarg);
+				new_cluster.bindir = pg_strdup(optarg);
 				break;
 
 			case 'c':
-				ctx->check = true;
+				user_opts.check = true;
 				break;
 
-			case 'g':
-				pg_log(ctx, PG_REPORT, "Running in debug mode\n");
-				ctx->debug = true;
+			case 'd':
+				old_cluster.pgdata = pg_strdup(optarg);
+				old_cluster.pgconfig = pg_strdup(optarg);
 				break;
 
-			case 'G':
-				if ((ctx->debug_fd = fopen(optarg, "w")) == NULL)
-				{
-					pg_log(ctx, PG_FATAL, "cannot open debug file\n");
-					exit_nicely(ctx, false);
-				}
+			case 'D':
+				new_cluster.pgdata = pg_strdup(optarg);
+				new_cluster.pgconfig = pg_strdup(optarg);
 				break;
 
 			case 'j':
-				ctx->checksum_mode = CHECKSUM_REMOVE;
+				user_opts.checksum_mode = CHECKSUM_REMOVE;
 				break;
 
 			case 'J':
-				ctx->checksum_mode = CHECKSUM_ADD;
+				user_opts.checksum_mode = CHECKSUM_ADD;
 				break;
 
 			case 'k':
-				ctx->transfer_mode = TRANSFER_MODE_LINK;
+				user_opts.transfer_mode = TRANSFER_MODE_LINK;
 				break;
 
-			case 'l':
-				ctx->logfile = pg_strdup(ctx, optarg);
+			case 'o':
+				old_cluster.pgopts = pg_strdup(optarg);
 				break;
 
+			case 'O':
+				new_cluster.pgopts = pg_strdup(optarg);
+				break;
+
+				/*
+				 * Someday, the port number option could be removed and passed
+				 * using -o/-O, but that requires postmaster -C to be
+				 * supported on all old/new versions.
+				 */
 			case 'p':
-				if ((ctx->old.port = atoi(optarg)) <= 0)
+				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(ctx, PG_FATAL, "invalid old port number\n");
-					exit_nicely(ctx, false);
+					pg_log(PG_FATAL, "invalid old port number\n");
+					exit(1);
 				}
 				break;
 
 			case 'P':
-				if ((ctx->new.port = atoi(optarg)) <= 0)
+				if ((new_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(ctx, PG_FATAL, "invalid new port number\n");
-					exit_nicely(ctx, false);
+					pg_log(PG_FATAL, "invalid new port number\n");
+					exit(1);
 				}
 				break;
 
+			case 'r':
+				log_opts.retain = true;
+				break;
+
 			case 'u':
-				pg_free(ctx->user);
-				ctx->user = pg_strdup(ctx, optarg);
+				pg_free(os_info.user);
+				os_info.user = pg_strdup(optarg);
+
+				/*
+				 * Push the user name into the environment so pre-9.1
+				 * pg_ctl/libpq uses it.
+				 */
+				pg_putenv("PGUSER", os_info.user);
 				break;
 
 			case 'v':
-				pg_log(ctx, PG_REPORT, "Running in verbose mode\n");
-				ctx->verbose = true;
+				pg_log(PG_REPORT, "Running in verbose mode\n");
+				log_opts.verbose = true;
 				break;
 
 			case 'X':
-				pg_log(ctx, PG_REPORT, "Running in progress report mode\n");
-				ctx->progress = true;
+				pg_log(PG_REPORT, "Running in progress report mode\n");
+				log_opts.progress = true;
 				break;
 
 			case 1:		/* --dispatcher-mode */
@@ -192,85 +214,85 @@ parseCommandLine(migratorContext *ctx, int argc, char *argv[])
 				 * caller of pg_upgrade must use the --dispatcher-mode
 				 * option, when upgrading the QD node.
 				 */
-				ctx->dispatcher_mode = true;
+				user_opts.dispatcher_mode = true;
 				break;
 
 			default:
-				pg_log(ctx, PG_FATAL,
+				pg_log(PG_FATAL,
 					   "Try \"%s --help\" for more information.\n",
-					   ctx->progname);
+					   os_info.progname);
 				break;
 		}
 	}
 
-	if (ctx->logfile != NULL)
+	/* label start of upgrade in logfiles */
+	for (filename = output_files; *filename != NULL; filename++)
 	{
-		/*
-		 * We must use append mode so output generated by child processes via
-		 * ">>" will not be overwritten, and we want the file truncated on
-		 * start.
-		 */
-		/* truncate */
-		if ((ctx->log_fd = fopen(ctx->logfile, "w")) == NULL)
-			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
-		fclose(ctx->log_fd);
-		if ((ctx->log_fd = fopen(ctx->logfile, "a")) == NULL)
-			pg_log(ctx, PG_FATAL, "Cannot write to log file %s\n", ctx->logfile);
-	}
-	else
-		ctx->logfile = pg_strdup(ctx, DEVNULL);
+		if ((fp = fopen_priv(*filename, "a")) == NULL)
+			pg_log(PG_FATAL, "cannot write to log file %s\n", *filename);
 
-	/* if no debug file name, output to the terminal */
-	if (ctx->debug && !ctx->debug_fd)
-	{
-		ctx->debug_fd = fopen(DEVTTY, "w");
-		if (!ctx->debug_fd)
-			pg_log(ctx, PG_FATAL, "Cannot write to terminal\n");
+		/* Start with newline because we might be appending to a file. */
+		fprintf(fp, "\n"
+		"-----------------------------------------------------------------\n"
+				"  pg_upgrade run on %s"
+				"-----------------------------------------------------------------\n\n",
+				ctime(&run_time));
+		fclose(fp);
 	}
 
 	/* Ensure we are only adding checksums in copy mode */
-	if (ctx->transfer_mode != TRANSFER_MODE_COPY &&
-		ctx->checksum_mode != CHECKSUM_NONE)
-		pg_log(ctx, PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
+	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
+		user_opts.checksum_mode != CHECKSUM_NONE)
+		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
 
 	/* Get values from env if not already set */
-	validateDirectoryOption(ctx, &ctx->old.pgdata, "OLDDATADIR", "-d",
-							"old cluster data resides");
-	validateDirectoryOption(ctx, &ctx->new.pgdata, "NEWDATADIR", "-D",
-							"new cluster data resides");
-	validateDirectoryOption(ctx, &ctx->old.bindir, "OLDBINDIR", "-b",
-							"old cluster binaries reside");
-	validateDirectoryOption(ctx, &ctx->new.bindir, "NEWBINDIR", "-B",
-							"new cluster binaries reside");
-
-	get_pkglibdirs(ctx);
+	check_required_directory(&old_cluster.bindir, "PGBINOLD", "-b",
+							 "old cluster binaries reside");
+	check_required_directory(&new_cluster.bindir, "PGBINNEW", "-B",
+							 "new cluster binaries reside");
+	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", "-d",
+							 "old cluster data resides");
+	check_required_directory(&new_cluster.pgdata, "PGDATANEW", "-D",
+							 "new cluster data resides");
 }
 
 
 static void
-usage(migratorContext *ctx)
+usage(void)
 {
-	printf(_("\nUsage: pg_upgrade [OPTIONS]...\n\
+	printf(_("pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n\
+\nUsage:\n\
+  pg_upgrade [OPTION]...\n\
 \n\
 Options:\n\
- -b, --old-bindir=old_bindir      old cluster executable directory\n\
- -B, --new-bindir=new_bindir      new cluster executable directory\n\
- -c, --check                      check clusters only, don't change any data\n\
- -d, --old-datadir=old_datadir    old cluster data directory\n\
- -D, --new-datadir=new_datadir    new cluster data directory\n\
- -g, --debug                      enable debugging\n\
- -G, --debugfile=debug_filename   output debugging activity to file\n\
- -j, --remove-checksum            remove data checksums when creating new cluster\n\
- -J, --add-checksum               add data checksumming to the new cluster\n\
- -k, --link                       link instead of copying files to new cluster\n\
- -l, --logfile=log_filename       log session activity to file\n\
- -p, --old-port=old_portnum       old cluster port number (default %d)\n\
- -P, --new-port=new_portnum       new cluster port number (default %d)\n\
- -u, --user=username              clusters superuser (default \"%s\")\n\
- -v, --verbose                    enable verbose output\n\
- -X, --progress                   enable progress reporting\n\
- -V, --version                    display version information, then exit\n\
- -h, --help                       show this help, then exit\n\
+  -b, --old-bindir=OLDBINDIR    old cluster executable directory\n\
+  -B, --new-bindir=NEWBINDIR    new cluster executable directory\n\
+  -c, --check                   check clusters only, don't change any data\n\
+  -d, --old-datadir=OLDDATADIR  old cluster data directory\n\
+  -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
+<<<<<<< HEAD
+  -g, --debug                   enable debugging\n\
+  -G, --debugfile=FILENAME      output debugging activity to file\n\
+  -j, --remove-checksum         remove data checksums when creating new cluster\n\
+  -J, --add-checksum            add data checksumming to the new cluster\n\
+=======
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+  -k, --link                    link instead of copying files to new cluster\n\
+  -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
+  -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
+  -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
+  -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
+<<<<<<< HEAD
+  -u, --user=NAME               clusters superuser (default \"%s\")\n\
+  -v, --verbose                 enable verbose output\n\
+  -X, --progress                enable progress reporting\n\
+=======
+  -r, --retain                  retain SQL and log files after success\n\
+  -u, --user=NAME               cluster superuser (default \"%s\")\n\
+  -v, --verbose                 enable verbose internal logging\n\
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+  -V, --version                 display version information, then exit\n\
+  -h, --help                    show this help, then exit\n\
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\
@@ -280,34 +302,35 @@ Before running pg_upgrade you must:\n\
 When you run pg_upgrade, you must provide the following information:\n\
   the data directory for the old cluster  (-d OLDDATADIR)\n\
   the data directory for the new cluster  (-D NEWDATADIR)\n\
-  the 'bin' directory for the old version (-b OLDBINDIR)\n\
-  the 'bin' directory for the new version (-B NEWBINDIR)\n\
+  the \"bin\" directory for the old version (-b OLDBINDIR)\n\
+  the \"bin\" directory for the new version (-B NEWBINDIR)\n\
 \n\
 For example:\n\
   pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n\
-or\n"), ctx->old.port, ctx->new.port, ctx->user);
+or\n"), old_cluster.port, new_cluster.port, os_info.user);
 #ifndef WIN32
 	printf(_("\
-  $ export OLDDATADIR=oldCluster/data\n\
-  $ export NEWDATADIR=newCluster/data\n\
-  $ export OLDBINDIR=oldCluster/bin\n\
-  $ export NEWBINDIR=newCluster/bin\n\
+  $ export PGDATAOLD=oldCluster/data\n\
+  $ export PGDATANEW=newCluster/data\n\
+  $ export PGBINOLD=oldCluster/bin\n\
+  $ export PGBINNEW=newCluster/bin\n\
   $ pg_upgrade\n"));
 #else
 	printf(_("\
-  C:\\> set OLDDATADIR=oldCluster/data\n\
-  C:\\> set NEWDATADIR=newCluster/data\n\
-  C:\\> set OLDBINDIR=oldCluster/bin\n\
-  C:\\> set NEWBINDIR=newCluster/bin\n\
+  C:\\> set PGDATAOLD=oldCluster/data\n\
+  C:\\> set PGDATANEW=newCluster/data\n\
+  C:\\> set PGBINOLD=oldCluster/bin\n\
+  C:\\> set PGBINNEW=newCluster/bin\n\
   C:\\> pg_upgrade\n"));
 #endif
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
 
 
 /*
- * validateDirectoryOption()
+ * check_required_directory()
  *
- * Validates a directory option.
+ * Checks a directory option.
  *	dirpath		  - the directory name supplied on the command line
  *	envVarName	  - the name of an environment variable to get if dirpath is NULL
  *	cmdLineOption - the command line option corresponds to this directory (-o, -O, -n, -N)
@@ -317,21 +340,19 @@ or\n"), ctx->old.port, ctx->new.port, ctx->user);
  * user hasn't provided the required directory name.
  */
 static void
-validateDirectoryOption(migratorContext *ctx, char **dirpath,
-					char *envVarName, char *cmdLineOption, char *description)
+check_required_directory(char **dirpath, char *envVarName,
+						 char *cmdLineOption, char *description)
 {
-	if (*dirpath == NULL || (strlen(*dirpath) == 0))
+	if (*dirpath == NULL || strlen(*dirpath) == 0)
 	{
 		const char *envVar;
 
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
-			*dirpath = pg_strdup(ctx, envVar);
+			*dirpath = pg_strdup(envVar);
 		else
-		{
-			pg_log(ctx, PG_FATAL, "You must identify the directory where the %s\n"
-				   "Please use the %s command-line option or the %s environment variable\n",
+			pg_log(PG_FATAL, "You must identify the directory where the %s.\n"
+				   "Please use the %s command-line option or the %s environment variable.\n",
 				   description, cmdLineOption, envVarName);
-		}
 	}
 
 	/*
@@ -346,43 +367,61 @@ validateDirectoryOption(migratorContext *ctx, char **dirpath,
 		(*dirpath)[strlen(*dirpath) - 1] = 0;
 }
 
-
-static void
-get_pkglibdirs(migratorContext *ctx)
+/*
+ * adjust_data_dir
+ *
+ * If a configuration-only directory was specified, find the real data dir
+ * by quering the running server.  This has limited checking because we
+ * can't check for a running server because we can't find postmaster.pid.
+ */
+void
+adjust_data_dir(ClusterInfo *cluster)
 {
+	char		filename[MAXPGPATH];
+	char		cmd[MAXPGPATH],
+				cmd_output[MAX_STRING];
+	FILE	   *fp,
+			   *output;
+
+	/* If there is no postgresql.conf, it can't be a config-only dir */
+	snprintf(filename, sizeof(filename), "%s/postgresql.conf", cluster->pgconfig);
+	if ((fp = fopen(filename, "r")) == NULL)
+		return;
+	fclose(fp);
+
+	/* If PG_VERSION exists, it can't be a config-only dir */
+	snprintf(filename, sizeof(filename), "%s/PG_VERSION", cluster->pgconfig);
+	if ((fp = fopen(filename, "r")) != NULL)
+	{
+		fclose(fp);
+		return;
+	}
+
+	/* Must be a configuration directory, so find the real data directory. */
+
+	prep_status("Finding the real data directory for the %s cluster",
+				CLUSTER_NAME(cluster));
+
 	/*
-	 * we do not need to know the libpath in the old cluster, and might not
-	 * have a working pg_config to ask for it anyway.
+	 * We don't have a data directory yet, so we can't check the PG version,
+	 * so this might fail --- only works for PG 9.2+.	If this fails,
+	 * pg_upgrade will fail anyway because the data files will not be found.
 	 */
-	ctx->old.libpath = NULL;
-	ctx->new.libpath = get_pkglibdir(ctx, ctx->new.bindir);
-}
+	snprintf(cmd, sizeof(cmd), "\"%s/postmaster\" -D \"%s\" -C data_directory",
+			 cluster->bindir, cluster->pgconfig);
 
+	if ((output = popen(cmd, "r")) == NULL ||
+		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
+		pg_log(PG_FATAL, "Could not get data directory using %s: %s\n",
+			   cmd, getErrorText(errno));
 
-static char *
-get_pkglibdir(migratorContext *ctx, const char *bindir)
-{
-	char		cmd[MAXPGPATH];
-	char		bufin[MAX_STRING];
-	FILE	   *output;
-	int			i;
-
-	snprintf(cmd, sizeof(cmd), "\"%s/pg_config\" --pkglibdir", bindir);
-
-	if ((output = popen(cmd, "r")) == NULL)
-		pg_log(ctx, PG_FATAL, "Could not get pkglibdir data: %s\n",
-			   getErrorText(errno));
-
-	fgets(bufin, sizeof(bufin), output);
-
-	if (output)
-		pclose(output);
+	pclose(output);
 
 	/* Remove trailing newline */
-	i = strlen(bufin) - 1;
+	if (strchr(cmd_output, '\n') != NULL)
+		*strchr(cmd_output, '\n') = '\0';
 
-	if (bufin[i] == '\n')
-		bufin[i] = '\0';
+	cluster->pgdata = pg_strdup(cmd_output);
 
-	return pg_strdup(ctx, bufin);
+	check_ok();
 }

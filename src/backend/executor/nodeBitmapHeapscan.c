@@ -16,12 +16,12 @@
  * index qual conditions.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.38 2010/01/02 16:57:41 momjian Exp $
+ *	  src/backend/executor/nodeBitmapHeapscan.c
  *
  *-------------------------------------------------------------------------
  */
@@ -30,23 +30,24 @@
  *		ExecBitmapHeapScan			scans a relation using bitmap info
  *		ExecBitmapHeapNext			workhorse for above
  *		ExecInitBitmapHeapScan		creates and initializes state info.
- *		ExecBitmapHeapReScan		prepares to rescan the plan.
+ *		ExecReScanBitmapHeapScan	prepares to rescan the plan.
  *		ExecEndBitmapHeapScan		releases all storage.
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "storage/predicate.h"
 #include "utils/memutils.h"
 #include "miscadmin.h"
 #include "parser/parsetree.h"
 #include "cdb/cdbvars.h" /* gp_select_invisible */
 #include "nodes/tidbitmap.h"
+#include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
@@ -121,7 +122,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	Node  		*tbm;
 	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
+#ifdef USE_PREFETCH
 	GenericBMIterator *prefetch_iterator;
+#endif
+
 	OffsetNumber targoffset;
 	TupleTableSlot *slot;
 	bool		more = true;
@@ -138,7 +142,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	tbm = node->tbm;
 	tbmiterator = node->tbmiterator;
 	tbmres = node->tbmres;
+#ifdef USE_PREFETCH
 	prefetch_iterator = node->prefetch_iterator;
+#endif
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and begin
@@ -342,14 +348,21 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 * We recheck the qual conditions for every tuple, since the bitmap
 		 * may contain invalid entries from deleted tuples.
 		 */
-		econtext->ecxt_scantuple = slot;
-		ResetExprContext(econtext);
-
-		if (!ExecQual(node->bitmapqualorig, econtext, false))
+		/*
+		 * GPDB_92_MERGE_FIXME:
+		 * PG check "if (tbmres->recheck)" here. Do we really not want this?
+		 */
 		{
-			/* Fails recheck, so drop it and loop back for another */
-			ExecClearTuple(slot);
-			continue;
+			econtext->ecxt_scantuple = slot;
+			ResetExprContext(econtext);
+
+			if (!ExecQual(node->bitmapqualorig, econtext, false))
+			{
+				/* Fails recheck, so drop it and loop back for another */
+				InstrCountFiltered2(node, 1);
+				ExecClearTuple(slot);
+				continue;
+			}
 		}
 
 		/* OK to return this tuple */
@@ -421,9 +434,11 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		{
 			OffsetNumber offnum = tbmres->offsets[curslot];
 			ItemPointerData tid;
+			HeapTupleData heapTuple;
 
 			ItemPointerSet(&tid, page, offnum);
-			if (heap_hot_search_buffer(scan->rs_rd, &tid, buffer, snapshot, NULL))
+			if (heap_hot_search_buffer(&tid, scan->rs_rd, buffer, snapshot,
+									   &heapTuple, NULL, true))
 				scan->rs_vistuples[ntup++] = ItemPointerGetOffsetNumber(&tid);
 		}
 	}
@@ -441,14 +456,22 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		{
 			ItemId		lp;
 			HeapTupleData loctup;
+			bool		valid;
 
 			lp = PageGetItemId(dp, offnum);
 			if (!ItemIdIsNormal(lp))
 				continue;
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 			loctup.t_len = ItemIdGetLength(lp);
-			if (HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer))
+			ItemPointerSet(&loctup.t_self, page, offnum);
+			valid = HeapTupleSatisfiesVisibility(scan->rs_rd, &loctup, snapshot, buffer);
+			if (valid)
+			{
 				scan->rs_vistuples[ntup++] = offnum;
+				PredicateLockTuple(scan->rs_rd, &loctup, snapshot);
+			}
+			CheckForSerializableConflictOut(valid, scan->rs_rd, &loctup,
+											buffer, snapshot);
 		}
 	}
 
@@ -492,24 +515,12 @@ ExecBitmapHeapScan(BitmapHeapScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecBitmapHeapReScan(node)
+ *		ExecReScanBitmapHeapScan(node)
  * ----------------------------------------------------------------
  */
 void
-ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
+ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 {
-	/*
-	 * If we are being passed an outer tuple, link it into the "regular"
-	 * per-tuple econtext for possible qual eval.
-	 */
-	if (exprCtxt != NULL)
-	{
-		ExprContext *stdecontext;
-
-		stdecontext = node->ss.ps.ps_ExprContext;
-		stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-	}
-
 	/* rescan to release any page pin */
 	if (node->ss_currentScanDesc)
 		heap_rescan(node->ss_currentScanDesc, NULL);
@@ -519,10 +530,11 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	ExecScanReScan(&node->ss);
 
 	/*
-	 * Always rescan the input immediately, to ensure we can pass down any
-	 * outer tuple that might be used in index quals.
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
 	 */
-	ExecReScan(outerPlanState(node), exprCtxt);
+	if (node->ss.ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ss.ps.lefttree);
 }
 
 /* ----------------------------------------------------------------

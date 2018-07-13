@@ -77,7 +77,7 @@ gp_aovisimap_internal(PG_FUNCTION_ARGS, Oid aoRelOid)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->aorel = heap_open(aoRelOid, AccessShareLock);
-		if (!(RelationIsAoRows(context->aorel) || RelationIsAoCols(context->aorel)))
+		if (!RelationIsAppendOptimized(context->aorel))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -143,7 +143,7 @@ gp_aovisimap_name(PG_FUNCTION_ARGS)
 	Oid			relid;
 
 	parentrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	relid = RangeVarGetRelid(parentrv, false);
+	relid = RangeVarGetRelid(parentrv, NoLock, false);
 
 	return gp_aovisimap_internal(fcinfo, relid);
 }
@@ -207,7 +207,7 @@ gp_aovisimap_hidden_info_internal(PG_FUNCTION_ARGS, Oid aoRelOid)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->parentRelation = heap_open(aoRelOid, AccessShareLock);
-		if (!(RelationIsAoRows(context->parentRelation) || RelationIsAoCols(context->parentRelation)))
+		if (!RelationIsAppendOptimized(context->parentRelation))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -318,7 +318,7 @@ gp_aovisimap_hidden_info_name(PG_FUNCTION_ARGS)
 	Oid			relid;
 
 	parentrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	relid = RangeVarGetRelid(parentrv, false);
+	relid = RangeVarGetRelid(parentrv, NoLock, false);
 
 	return gp_aovisimap_hidden_info_internal(fcinfo, relid);
 }
@@ -403,7 +403,7 @@ gp_aovisimap_entry_internal(PG_FUNCTION_ARGS, Oid aoRelOid)
 		context = (Context *) palloc0(sizeof(Context));
 
 		context->parentRelation = heap_open(aoRelOid, AccessShareLock);
-		if (!(RelationIsAoRows(context->parentRelation) || RelationIsAoCols(context->parentRelation)))
+		if (!RelationIsAppendOptimized(context->parentRelation))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -483,7 +483,7 @@ gp_aovisimap_entry_name(PG_FUNCTION_ARGS)
 	Oid			relid;
 
 	parentrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	relid = RangeVarGetRelid(parentrv, false);
+	relid = RangeVarGetRelid(parentrv, NoLock, false);
 
 	return gp_aovisimap_entry_internal(fcinfo, relid);
 }

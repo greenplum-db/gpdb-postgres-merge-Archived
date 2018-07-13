@@ -1,5 +1,5 @@
 # ----------
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.61 2010/02/12 17:33:21 tgl Exp $
+# src/test/regress/parallel_schedule
 #
 # By convention, we put no more than twenty tests in any one parallel group;
 # this limits the number of connections needed to run the tests.
@@ -13,7 +13,7 @@ test: tablespace
 # ----------
 # The first group of parallel tests
 # ----------
-test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric txid uuid enum money
+test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric txid uuid enum money rangetypes
 
 # Depends on things setup during char, varchar and text
 test: strings
@@ -30,7 +30,7 @@ test: point lseg box path polygon circle date time timetz timestamp timestamptz 
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz, reltime and abstime
 # ----------
-test: geometry horology oidjoins type_sanity opr_sanity
+test: geometry horology regex oidjoins type_sanity opr_sanity
 
 # ----------
 # These four each depend on the previous one
@@ -50,12 +50,13 @@ test: create_function_2
 test: copy copyselect
 
 # ----------
-# Another group of parallel tests
+# More groups of parallel tests
 # ----------
-test: constraints create_misc create_aggregate create_operator typed_table vacuum drop_if_exists create_cast
+test: create_misc create_operator
+# These depend on the above two
+test: create_index create_view
 
-# 'inherit' test is disabled in GPDB. FIXME: why?
-#test: inherit
+test: inherit
 
 # 'triggers' test is disabled in GPDB, because it contains a trigger function
 # that would need to access rows on other segments, which doens't work. You
@@ -63,8 +64,10 @@ test: constraints create_misc create_aggregate create_operator typed_table vacuu
 # ERROR: function cannot execute on a QE slice because it accesses relation "public.pkeys"
 #test: triggers
 
-# Depends on the above
-test: create_index create_view
+# ----------
+# Another group of parallel tests
+# ----------
+test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -85,7 +88,7 @@ ignore: random
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates random portals arrays btree_index hash_index update update_gp delete lock
+test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates random portals arrays btree_index hash_index update delete lock
 
 # In PostgreSQL, namespace test is run as part of the fourth group, but there
 # are some GPDB additions in it that will show diff if concurrent tests use
@@ -100,7 +103,11 @@ test: namespace
 # ERROR:  function cannot execute on a QE slice because it accesses relation "public.xacttest"
 #test: transactions
 
-test: privileges
+# ----------
+# Another group of parallel tests
+# ----------
+test: privileges security_label collate
+
 test: misc
 
 # rules cannot run concurrently with any test that creates a view
@@ -117,7 +124,7 @@ test: misc
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap json
+test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
 # differ depending on how many segments are used. Hence disabled in GPDB.

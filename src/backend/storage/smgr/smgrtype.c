@@ -3,12 +3,12 @@
  * smgrtype.c
  *	  storage manager type
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgrtype.c,v 1.31 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/smgr/smgrtype.c
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ smgrout(PG_FUNCTION_ARGS)
 	char	   *s;
 
 	if (i >= NStorageManagers || i < 0)
-		elog(ERROR, "invalid storage manager id: %d", i);
+		elog(ERROR, "invalid storage manager ID: %d", i);
 
 	s = pstrdup(StorageManager[i].smgr_name);
 	PG_RETURN_CSTRING(s);

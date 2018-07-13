@@ -47,19 +47,18 @@
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.130 2010/01/10 04:26:36 rhaas Exp $
+ *	  src/backend/access/common/heaptuple.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/tuptoaster.h"
 #include "executor/tuptable.h"
@@ -377,7 +376,7 @@ nocachegetattr(HeapTuple tuple,
 		 *
 		 * check to see if any preceding bits are null...
 		 */
-		int byte = attnum >> 3;
+		int			byte = attnum >> 3;
 		int			finalbit = attnum & 0x07;
 
 		/* check for nulls "before" final bit of last byte */
@@ -941,7 +940,8 @@ heap_modifytuple(HeapTuple tuple,
  *		the inverse of heap_form_tuple.
  *
  *		Storage for the values/isnull arrays is provided by the caller;
- *		it should be sized according to tupleDesc->natts not tuple->t_natts.
+ *		it should be sized according to tupleDesc->natts not
+ *		HeapTupleHeaderGetNatts(tuple->t_data).
  *
  *		Note that for pass-by-reference datatypes, the pointer placed
  *		in the Datum will point into the given tuple.
@@ -1049,7 +1049,8 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
  *		the inverse of heap_formtuple.
  *
  *		Storage for the values/nulls arrays is provided by the caller;
- *		it should be sized according to tupleDesc->natts not tuple->t_natts.
+ *		it should be sized according to tupleDesc->natts not
+ *		HeapTupleHeaderGetNatts(tuple->t_data).
  *
  *		Note that for pass-by-reference datatypes, the pointer placed
  *		in the Datum will point into the given tuple.

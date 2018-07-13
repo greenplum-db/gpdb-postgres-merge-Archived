@@ -1,5 +1,7 @@
 @echo off
+
 REM src/tools/msvc/pgbison.bat
+<<<<<<< HEAD
 
 IF NOT EXIST src\tools\msvc\buildenv.pl goto nobuildenv
 perl -e "require 'src/tools/msvc/buildenv.pl'; while(($k,$v) = each %ENV) { print qq[\@SET $k=$v\n]; }" > bldenv.bat
@@ -16,8 +18,10 @@ goto nobison
 :bisonok
 
 if "%1" == "src\backend\parser\gram.y" call :generate %1 src\backend\parser\gram.c src\backend\parser\gram.h
-if "%1" == "src\backend\bootstrap\bootparse.y" call :generate %1 src\backend\bootstrap\bootparse.c src\backend\bootstrap\bootparse.h
+if "%1" == "src\backend\bootstrap\bootparse.y" call :generate %1 src\backend\bootstrap\bootparse.c
+if "%1" == "src\backend\replication\repl_gram.y" call :generate %1 src\backend\replication\repl_gram.c
 if "%1" == "src\pl\plpgsql\src\gram.y" call :generate %1 src\pl\plpgsql\src\pl_gram.c src\pl\plpgsql\src\pl_gram.h
+if "%1" == "src\test\isolation\specparse.y" call :generate %1 src\test\isolation\specparse.c
 if "%1" == "src\interfaces\ecpg\preproc\preproc.y" call :generate %1 src\interfaces\ecpg\preproc\preproc.c src\interfaces\ecpg\preproc\preproc.h
 if "%1" == "contrib\cube\cubeparse.y" call :generate %1 contrib\cube\cubeparse.c
 if "%1" == "contrib\seg\segparse.y" call :generate %1 contrib\seg\segparse.c
@@ -49,3 +53,9 @@ exit 1
 echo WARNING! Bison install not found, or unsupported Bison version.
 echo Attempting to build without.
 exit 0
+=======
+REM all the logic for this now belongs in pgbison.pl. This file really
+REM only exists so you don't have to type "perl src/tools/msvc/pgbison.pl"
+REM Resist any temptation to add any logic here.
+@perl src/tools/msvc/pgbison.pl %*
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56

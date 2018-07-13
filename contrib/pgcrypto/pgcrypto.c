@@ -26,14 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.27 2008/03/25 22:42:41 tgl Exp $
+ * contrib/pgcrypto/pgcrypto.c
  */
 
 #include "postgres.h"
 
 #include <ctype.h>
 
-#include "fmgr.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 

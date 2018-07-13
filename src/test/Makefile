@@ -1,15 +1,17 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Makefile for test suites
+# Makefile for src/test
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/Makefile,v 1.4 2003/11/29 19:52:13 pgsql Exp $
+# src/test/Makefile
 #
 #-------------------------------------------------------------------------
 
-.DEFAULT:
-	$(MAKE) -C regress $@
+subdir = src/test
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+
+SUBDIRS = regress isolation
+
+$(recurse)

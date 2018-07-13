@@ -92,11 +92,11 @@
  * heap's TOAST table will go through the normal bufmgr.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.22 2010/04/28 16:10:40 heikki Exp $
+ *	  src/backend/access/heap/rewriteheap.c
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ typedef struct RewriteStateData
 								 * them */
 	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
 	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
-} RewriteStateData;
+}	RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -254,8 +254,6 @@ end_heap_rewrite(RewriteState state)
 	/*
 	 * Write any remaining tuples in the UnresolvedTups table. If we have any
 	 * left, they should in fact be dead, but let's err on the safe side.
-	 *
-	 * XXX this really is a waste of code no?
 	 */
 	hash_seq_init(&seq_status, state->rs_unresolved_tups);
 
@@ -283,8 +281,8 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel isn't temp, must fsync before commit.  We use heap_sync to
-	 * ensure that the toast table gets fsync'd too.
+	 * If the rel is WAL-logged, must fsync before commit.	We use heap_sync
+	 * to ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less
 	 * obvious that we have to do it even if we did WAL-log the pages. The
@@ -293,7 +291,7 @@ end_heap_rewrite(RewriteState state)
 	 * occurring during the rewriteheap operation won't have fsync'd data we
 	 * wrote before the checkpoint.
 	 */
-	if (!state->rs_new_rel->rd_istemp)
+	if (RelationNeedsWAL(state->rs_new_rel))
 		heap_sync(state->rs_new_rel);
 
 	/* Deleting the context frees everything */
@@ -341,13 +339,8 @@ rewrite_heap_tuple(RewriteState state,
 	/*
 	 * While we have our hands on the tuple, we may as well freeze any
 	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
-	 *
-	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting to
-	 * be given a pointer to a tuple in a disk buffer.	It happens though that
-	 * we can get the right things to happen by passing InvalidBuffer for the
-	 * buffer.
 	 */
-	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid, InvalidBuffer);
+	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid);
 
 	/*
 	 * Invalid ctid means that ctid should point to the tuple itself. We'll
@@ -506,8 +499,12 @@ rewrite_heap_tuple(RewriteState state,
  * Register a dead tuple with an ongoing rewrite. Dead tuples are not
  * copied to the new table, but we still make note of them so that we
  * can release some resources earlier.
+ *
+ * Returns true if a tuple was removed from the unresolved_tups table.
+ * This indicates that that tuple, previously thought to be "recently dead",
+ * is now known really dead and won't be written to the output.
  */
-void
+bool
 rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 {
 	/*
@@ -543,7 +540,10 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 		hash_search(state->rs_unresolved_tups, &hashkey,
 					HASH_REMOVE, &found);
 		Assert(found);
+		return true;
 	}
+
+	return false;
 }
 
 /*

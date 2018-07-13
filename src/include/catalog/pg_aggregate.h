@@ -5,10 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.71 2010/02/01 03:14:43 itagaki Exp $
+ * src/include/catalog/pg_aggregate.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -57,7 +57,10 @@ CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
 	bool		aggfinalextra;
 	Oid			aggsortop;
 	Oid			aggtranstype;
-	text		agginitval;		/* VARIABLE LENGTH FIELD */
+
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	text		agginitval;
+#endif
 } FormData_pg_aggregate;
 
 /* GPDB added foreign key definitions for gpcheckcat. */
@@ -253,9 +256,9 @@ DATA(insert ( 2828	n 0 float8_regr_accum		- float8_regr_amalg	- float8_covar_sam
 DATA(insert ( 2829	n 0 float8_regr_accum		- float8_regr_amalg	- float8_corr				f 0	1022	"{0,0,0,0,0,0}"));
 
 /* boolean-and and boolean-or */
-DATA(insert ( 2517	n 0 booland_statefunc	- booland_statefunc	- -			f 0	16		_null_));
-DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 0	16		_null_));
-DATA(insert ( 2519	n 0 booland_statefunc	- booland_statefunc	- -			f 0	16		_null_));
+DATA(insert ( 2517	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
+DATA(insert ( 2518	n 0 boolor_statefunc	- boolor_statefunc	- -			f 59	16		_null_));
+DATA(insert ( 2519	n 0 booland_statefunc	- booland_statefunc	- -			f 58	16		_null_));
 
 /* bitwise integer */
 DATA(insert ( 2236 n 0 int2and		  - int2and		  - -					f 0	21		_null_));
@@ -313,8 +316,10 @@ DATA(insert ( 6129	o 1 ordered_set_transition	- - -		percentile_cont_timestamp_f
 DATA(insert ( 6130	o 1 ordered_set_transition	- - -		percentile_cont_timestamptz_final		f 0	2281	_null_ ));
 
 /* text */
-DATA(insert ( 3537	n 0 string_agg_transfn       - - - string_agg_finalfn f 0 2281 _null_));
-DATA(insert ( 3538	n 0 string_agg_delim_transfn - - - string_agg_finalfn f 0 2281 _null_));
+DATA(insert ( 3538	n 0 string_agg_transfn - - - string_agg_finalfn f 0 2281 _null_));
+
+/* bytea */
+DATA(insert ( 3545	n 0 bytea_string_agg_transfn - - - 	bytea_string_agg_finalfn	f	0	2281	_null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c

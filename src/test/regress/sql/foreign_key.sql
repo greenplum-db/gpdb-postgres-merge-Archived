@@ -47,7 +47,7 @@ DROP TABLE PKTABLE;
 -- check set NULL and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2) 
+CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2)
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
 
 -- Test comments
@@ -110,7 +110,7 @@ DROP TABLE FKTABLE;
 -- check set default and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2) 
+CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2)
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT);
 
 -- Insert a value in PKTABLE for default
@@ -228,7 +228,7 @@ INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
 INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
 
 -- Insert Foreign Key values
-INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1);
 INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
 INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
 INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
@@ -273,7 +273,7 @@ INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
 INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
 
 -- Insert Foreign Key values
-INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1);
 INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
 INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
 INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
@@ -325,8 +325,8 @@ INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
 INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
 
 -- Insert Foreign Key values
-INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
-INSERT INTO FKTABLE VALUES (2, 3, 4, 1); 
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1);
+INSERT INTO FKTABLE VALUES (2, 3, 4, 1);
 INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
 INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
 INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
@@ -379,8 +379,8 @@ INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
 INSERT INTO PKTABLE VALUES (2, -1, 5, 'test5');
 
 -- Insert Foreign Key values
-INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
-INSERT INTO FKTABLE VALUES (2, 3, 4, 1); 
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1);
+INSERT INTO FKTABLE VALUES (2, 3, 4, 1);
 INSERT INTO FKTABLE VALUES (2, 4, 5, 1);
 INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
 INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
@@ -442,7 +442,7 @@ DROP TABLE PKTABLE;
 --
 -- Tests for mismatched types
 --
--- Basic one column, two table setup 
+-- Basic one column, two table setup
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 INSERT INTO PKTABLE VALUES(42);
 -- This next should fail, because int=inet does not exist
@@ -502,7 +502,7 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest1, ptest2));
 DROP TABLE PKTABLE;
--- And this, 
+-- And this,
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable);
 DROP TABLE PKTABLE;
@@ -525,7 +525,7 @@ create table fktable (ftest1 int references pktable(base1));
 -- now some ins, upd, del
 insert into pktable(base1) values (1);
 insert into pktable(base1) values (2);
---  let's insert a non-existant fktable value
+--  let's insert a non-existent fktable value
 insert into fktable(ftest1) values (3);
 --  let's make a valid row for that
 insert into pktable(base1) values (3);
@@ -548,7 +548,7 @@ create table fktable (ftest1 int, ftest2 int, foreign key(ftest1, ftest2) refere
 -- now some ins, upd, del
 insert into pktable(base1, ptest1) values (1, 1);
 insert into pktable(base1, ptest1) values (2, 2);
---  let's insert a non-existant fktable value
+--  let's insert a non-existent fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);

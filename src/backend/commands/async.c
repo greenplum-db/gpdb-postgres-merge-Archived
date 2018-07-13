@@ -3,11 +3,11 @@
  * async.c
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.157 2010/04/28 16:54:15 tgl Exp $
+ *	  src/backend/commands/async.c
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/timestamp.h"
 
 
 /*
@@ -194,7 +195,7 @@ typedef struct QueuePosition
 
 /* choose logically smaller QueuePosition */
 #define QUEUE_POS_MIN(x,y) \
-	(asyncQueuePagePrecedesLogically((x).page, (y).page) ? (x) : \
+	(asyncQueuePagePrecedes((x).page, (y).page) ? (x) : \
 	 (x).page != (y).page ? (y) : \
 	 (x).offset < (y).offset ? (x) : (y))
 
@@ -360,8 +361,7 @@ static bool backendHasExecutedInitialListen = false;
 bool		Trace_notify = false;
 
 /* local function prototypes */
-static bool asyncQueuePagePrecedesPhysically(int p, int q);
-static bool asyncQueuePagePrecedesLogically(int p, int q);
+static bool asyncQueuePagePrecedes(int p, int q);
 static void queue_listen(ListenActionKind action, const char *channel);
 static void Async_UnlistenOnExit(int code, Datum arg);
 static void Exec_ListenPreCommit(void);
@@ -388,25 +388,11 @@ static void NotifyMyFrontEnd(const char *channel,
 static bool AsyncExistsPendingNotify(const char *channel, const char *payload);
 static void ClearPendingActionsAndNotifies(void);
 
-
 /*
  * We will work on the page range of 0..QUEUE_MAX_PAGE.
- *
- * asyncQueuePagePrecedesPhysically just checks numerically without any magic
- * if one page precedes another one.  This is wrong for normal operation but
- * is helpful when clearing pg_notify/ during startup.
- *
- * asyncQueuePagePrecedesLogically compares using wraparound logic, as is
- * required by slru.c.
  */
 static bool
-asyncQueuePagePrecedesPhysically(int p, int q)
-{
-	return p < q;
-}
-
-static bool
-asyncQueuePagePrecedesLogically(int p, int q)
+asyncQueuePagePrecedes(int p, int q)
 {
 	int			diff;
 
@@ -484,7 +470,7 @@ AsyncShmemInit(void)
 	/*
 	 * Set up SLRU management of the pg_notify data.
 	 */
-	AsyncCtl->PagePrecedes = asyncQueuePagePrecedesLogically;
+	AsyncCtl->PagePrecedes = asyncQueuePagePrecedes;
 	SimpleLruInit(AsyncCtl, "Async Ctl", NUM_ASYNC_BUFFERS, 0,
 				  AsyncCtlLock, "pg_notify");
 	/* Override default assumption that writes should be fsync'd */
@@ -494,21 +480,14 @@ AsyncShmemInit(void)
 	{
 		/*
 		 * During start or reboot, clean out the pg_notify directory.
-		 *
-		 * Since we want to remove every file, we temporarily use
-		 * asyncQueuePagePrecedesPhysically() and pass INT_MAX as the
-		 * comparison value; every file in the directory should therefore
-		 * appear to be less than that.
 		 */
-		AsyncCtl->PagePrecedes = asyncQueuePagePrecedesPhysically;
-		(void) SlruScanDirectory(AsyncCtl, INT_MAX, true);
-		AsyncCtl->PagePrecedes = asyncQueuePagePrecedesLogically;
+		(void) SlruScanDirectory(AsyncCtl, SlruScanDirCbDeleteAll, NULL);
 
 		/* Now initialize page zero to empty */
 		LWLockAcquire(AsyncCtlLock, LW_EXCLUSIVE);
 		slotno = SimpleLruZeroPage(AsyncCtl, QUEUE_POS_PAGE(QUEUE_HEAD));
 		/* This write is just to verify that pg_notify/ is writable */
-		SimpleLruWritePage(AsyncCtl, slotno, NULL);
+		SimpleLruWritePage(AsyncCtl, slotno);
 		LWLockRelease(AsyncCtlLock);
 	}
 }
@@ -761,7 +740,7 @@ AtPrepare_Notify(void)
 	if (pendingActions || pendingNotifies)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot PREPARE a transaction that has executed LISTEN, UNLISTEN or NOTIFY")));
+				 errmsg("cannot PREPARE a transaction that has executed LISTEN, UNLISTEN, or NOTIFY")));
 }
 
 /*
@@ -1091,6 +1070,7 @@ Exec_UnlistenAllCommit(void)
 void
 ProcessCompletedNotifies(void)
 {
+	MemoryContext caller_context;
 	bool		signalled;
 
 	/* Nothing to do if we didn't send any notifications */
@@ -1103,6 +1083,12 @@ ProcessCompletedNotifies(void)
 	 * right back here after error cleanup.
 	 */
 	backendHasSentNotifications = false;
+
+	/*
+	 * We must preserve the caller's memory context (probably MessageContext)
+	 * across the transaction we do here.
+	 */
+	caller_context = CurrentMemoryContext;
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessCompletedNotifies");
@@ -1135,6 +1121,8 @@ ProcessCompletedNotifies(void)
 	}
 
 	CommitTransactionCommand();
+
+	MemoryContextSwitchTo(caller_context);
 
 	/* We don't need pq_flush() here since postgres.c will do one shortly */
 }
@@ -1214,7 +1202,7 @@ asyncQueueIsFull(void)
 		nexthead = 0;			/* wrap around */
 	boundary = QUEUE_POS_PAGE(QUEUE_TAIL);
 	boundary -= boundary % SLRU_PAGES_PER_SEGMENT;
-	return asyncQueuePagePrecedesLogically(nexthead, boundary);
+	return asyncQueuePagePrecedes(nexthead, boundary);
 }
 
 /*
@@ -2064,7 +2052,7 @@ asyncQueueAdvanceTail(void)
 	 */
 	newtailpage = QUEUE_POS_PAGE(min);
 	boundary = newtailpage - (newtailpage % SLRU_PAGES_PER_SEGMENT);
-	if (asyncQueuePagePrecedesLogically(oldtailpage, boundary))
+	if (asyncQueuePagePrecedes(oldtailpage, boundary))
 	{
 		/*
 		 * SimpleLruTruncate() will ask for AsyncCtlLock but will also release
@@ -2091,7 +2079,10 @@ ProcessIncomingNotify(void)
 	bool		catchup_enabled;
 	bool		client_wait_timeout_enabled;
 
-	/* Do nothing if we aren't actively listening */
+	/* We *must* reset the flag */
+	notifyInterruptOccurred = 0;
+
+	/* Do nothing else if we aren't actively listening */
 	if (listenChannels == NIL)
 		return;
 
@@ -2103,8 +2094,6 @@ ProcessIncomingNotify(void)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
 	set_ps_display("notify interrupt", false);
-
-	notifyInterruptOccurred = 0;
 
 	/*
 	 * We must run asyncQueueReadAllNotifications inside a transaction, else

@@ -3,10 +3,10 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.94 2010/02/26 02:01:25 momjian Exp $
+ * src/include/mb/pg_wchar.h
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
@@ -18,8 +18,6 @@
  */
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
-
-#include <sys/types.h>
 
 /*
  * The pg_wchar type
@@ -302,6 +300,8 @@ typedef int (*mblen_converter) (const unsigned char *mbstr);
 
 typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
 
+typedef bool (*mbcharacter_incrementer) (unsigned char *mbstr, int len);
+
 typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
@@ -413,13 +413,10 @@ extern int pg_encoding_mbcliplen(int encoding, const char *mbstr,
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int imit);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
+extern mbcharacter_incrementer pg_database_encoding_character_incrementer(void);
 
-#ifdef USE_WIDE_UPPER_LOWER
-extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen);
-extern size_t char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen);
-#endif
-
-extern int	SetClientEncoding(int encoding, bool doit);
+extern int	PrepareClientEncoding(int encoding);
+extern int	SetClientEncoding(int encoding);
 extern void InitializeClientEncoding(void);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
@@ -434,6 +431,7 @@ extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
 
 extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
+extern pg_wchar utf8_to_unicode(const unsigned char *c);
 extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 						  int src_encoding,
@@ -443,9 +441,6 @@ extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
 extern char *pg_custom_to_server(const char *s, int len, int src_encoding, void *cep); /* Obsolete? */
 extern char *pg_server_to_custom(const char *s, int len, int dest_encoding, void *cep); /* Obsolete? */
-
-extern char *pg_client_to_server(const char *s, int len);
-extern char *pg_server_to_client(const char *s, int len);
 extern char *pg_any_to_server(const char *s, int len, int encoding);
 extern char *pg_server_to_any(const char *s, int len, int encoding);
 

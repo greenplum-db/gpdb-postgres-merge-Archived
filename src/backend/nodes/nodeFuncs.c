@@ -3,19 +3,21 @@
  * nodeFuncs.c
  *		Various general-purpose manipulations of Node trees
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/nodeFuncs.c,v 1.46 2010/02/12 17:33:20 tgl Exp $
+ *	  src/backend/nodes/nodeFuncs.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/relation.h"
 #include "utils/builtins.h"
@@ -31,7 +33,7 @@ static int	leftmostLoc(int loc1, int loc2);
  *	  returns the Oid of the type of the expression's result.
  */
 Oid
-exprType(Node *expr)
+exprType(const Node *expr)
 {
 	Oid			type;
 
@@ -41,23 +43,23 @@ exprType(Node *expr)
 	switch (nodeTag(expr))
 	{
 		case T_Var:
-			type = ((Var *) expr)->vartype;
+			type = ((const Var *) expr)->vartype;
 			break;
 		case T_Const:
-			type = ((Const *) expr)->consttype;
+			type = ((const Const *) expr)->consttype;
 			break;
 		case T_Param:
-			type = ((Param *) expr)->paramtype;
+			type = ((const Param *) expr)->paramtype;
 			break;
 		case T_Aggref:
-			type = ((Aggref *) expr)->aggtype;
+			type = ((const Aggref *) expr)->aggtype;
 			break;
 		case T_WindowFunc:
-			type = ((WindowFunc *) expr)->wintype;
+			type = ((const WindowFunc *) expr)->wintype;
 			break;
 		case T_ArrayRef:
 			{
-				ArrayRef   *arrayref = (ArrayRef *) expr;
+				const ArrayRef *arrayref = (const ArrayRef *) expr;
 
 				/* slice and/or store operations yield the array type */
 				if (arrayref->reflowerindexpr || arrayref->refassgnexpr)
@@ -67,16 +69,19 @@ exprType(Node *expr)
 			}
 			break;
 		case T_FuncExpr:
-			type = ((FuncExpr *) expr)->funcresulttype;
+			type = ((const FuncExpr *) expr)->funcresulttype;
 			break;
 		case T_NamedArgExpr:
-			type = exprType((Node *) ((NamedArgExpr *) expr)->arg);
+			type = exprType((Node *) ((const NamedArgExpr *) expr)->arg);
 			break;
 		case T_OpExpr:
-			type = ((OpExpr *) expr)->opresulttype;
+			type = ((const OpExpr *) expr)->opresulttype;
 			break;
 		case T_DistinctExpr:
-			type = ((DistinctExpr *) expr)->opresulttype;
+			type = ((const DistinctExpr *) expr)->opresulttype;
+			break;
+		case T_NullIfExpr:
+			type = ((const NullIfExpr *) expr)->opresulttype;
 			break;
 		case T_ScalarArrayOpExpr:
 			type = BOOLOID;
@@ -86,7 +91,7 @@ exprType(Node *expr)
 			break;
 		case T_SubLink:
 			{
-				SubLink    *sublink = (SubLink *) expr;
+				const SubLink *sublink = (const SubLink *) expr;
 
 				if (sublink->subLinkType == EXPR_SUBLINK ||
 					sublink->subLinkType == ARRAY_SUBLINK)
@@ -120,7 +125,7 @@ exprType(Node *expr)
 			break;
 		case T_SubPlan:
 			{
-				SubPlan    *subplan = (SubPlan *) expr;
+				const SubPlan *subplan = (const SubPlan *) expr;
 
 				if (subplan->subLinkType == EXPR_SUBLINK ||
 					subplan->subLinkType == ARRAY_SUBLINK)
@@ -146,41 +151,44 @@ exprType(Node *expr)
 			break;
 		case T_AlternativeSubPlan:
 			{
-				AlternativeSubPlan *asplan = (AlternativeSubPlan *) expr;
+				const AlternativeSubPlan *asplan = (const AlternativeSubPlan *) expr;
 
 				/* subplans should all return the same thing */
 				type = exprType((Node *) linitial(asplan->subplans));
 			}
 			break;
 		case T_FieldSelect:
-			type = ((FieldSelect *) expr)->resulttype;
+			type = ((const FieldSelect *) expr)->resulttype;
 			break;
 		case T_FieldStore:
-			type = ((FieldStore *) expr)->resulttype;
+			type = ((const FieldStore *) expr)->resulttype;
 			break;
 		case T_RelabelType:
-			type = ((RelabelType *) expr)->resulttype;
+			type = ((const RelabelType *) expr)->resulttype;
 			break;
 		case T_CoerceViaIO:
-			type = ((CoerceViaIO *) expr)->resulttype;
+			type = ((const CoerceViaIO *) expr)->resulttype;
 			break;
 		case T_ArrayCoerceExpr:
-			type = ((ArrayCoerceExpr *) expr)->resulttype;
+			type = ((const ArrayCoerceExpr *) expr)->resulttype;
 			break;
 		case T_ConvertRowtypeExpr:
-			type = ((ConvertRowtypeExpr *) expr)->resulttype;
+			type = ((const ConvertRowtypeExpr *) expr)->resulttype;
+			break;
+		case T_CollateExpr:
+			type = exprType((Node *) ((const CollateExpr *) expr)->arg);
 			break;
 		case T_CaseExpr:
-			type = ((CaseExpr *) expr)->casetype;
+			type = ((const CaseExpr *) expr)->casetype;
 			break;
 		case T_CaseTestExpr:
-			type = ((CaseTestExpr *) expr)->typeId;
+			type = ((const CaseTestExpr *) expr)->typeId;
 			break;
 		case T_ArrayExpr:
-			type = ((ArrayExpr *) expr)->array_typeid;
+			type = ((const ArrayExpr *) expr)->array_typeid;
 			break;
 		case T_RowExpr:
-			type = ((RowExpr *) expr)->row_typeid;
+			type = ((const RowExpr *) expr)->row_typeid;
 			break;
 		case T_TableValueExpr:
 			type = ANYTABLEOID;  /* MULTISET values are a special pseudotype */
@@ -189,21 +197,18 @@ exprType(Node *expr)
 			type = BOOLOID;
 			break;
 		case T_CoalesceExpr:
-			type = ((CoalesceExpr *) expr)->coalescetype;
+			type = ((const CoalesceExpr *) expr)->coalescetype;
 			break;
 		case T_MinMaxExpr:
-			type = ((MinMaxExpr *) expr)->minmaxtype;
+			type = ((const MinMaxExpr *) expr)->minmaxtype;
 			break;
 		case T_XmlExpr:
-			if (((XmlExpr *) expr)->op == IS_DOCUMENT)
+			if (((const XmlExpr *) expr)->op == IS_DOCUMENT)
 				type = BOOLOID;
-			else if (((XmlExpr *) expr)->op == IS_XMLSERIALIZE)
+			else if (((const XmlExpr *) expr)->op == IS_XMLSERIALIZE)
 				type = TEXTOID;
 			else
 				type = XMLOID;
-			break;
-		case T_NullIfExpr:
-			type = exprType((Node *) linitial(((NullIfExpr *) expr)->args));
 			break;
 		case T_NullTest:
 			type = BOOLOID;
@@ -212,19 +217,19 @@ exprType(Node *expr)
 			type = BOOLOID;
 			break;
 		case T_CoerceToDomain:
-			type = ((CoerceToDomain *) expr)->resulttype;
+			type = ((const CoerceToDomain *) expr)->resulttype;
 			break;
 		case T_CoerceToDomainValue:
-			type = ((CoerceToDomainValue *) expr)->typeId;
+			type = ((const CoerceToDomainValue *) expr)->typeId;
 			break;
 		case T_SetToDefault:
-			type = ((SetToDefault *) expr)->typeId;
+			type = ((const SetToDefault *) expr)->typeId;
 			break;
 		case T_CurrentOfExpr:
 			type = BOOLOID;
 			break;
 		case T_PlaceHolderVar:
-			type = exprType((Node *) ((PlaceHolderVar *) expr)->phexpr);
+			type = exprType((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
 
 		case T_GroupingFunc:
@@ -272,7 +277,7 @@ exprType(Node *expr)
  *	  if it can be determined.	In many cases, it can't and we return -1.
  */
 int32
-exprTypmod(Node *expr)
+exprTypmod(const Node *expr)
 {
 	if (!expr)
 		return -1;
@@ -280,14 +285,14 @@ exprTypmod(Node *expr)
 	switch (nodeTag(expr))
 	{
 		case T_Var:
-			return ((Var *) expr)->vartypmod;
+			return ((const Var *) expr)->vartypmod;
 		case T_Const:
-			return ((Const *) expr)->consttypmod;
+			return ((const Const *) expr)->consttypmod;
 		case T_Param:
-			return ((Param *) expr)->paramtypmod;
+			return ((const Param *) expr)->paramtypmod;
 		case T_ArrayRef:
 			/* typmod is the same for array or element */
-			return ((ArrayRef *) expr)->reftypmod;
+			return ((const ArrayRef *) expr)->reftypmod;
 		case T_FuncExpr:
 			{
 				int32		coercedTypmod;
@@ -298,10 +303,21 @@ exprTypmod(Node *expr)
 			}
 			break;
 		case T_NamedArgExpr:
-			return exprTypmod((Node *) ((NamedArgExpr *) expr)->arg);
+			return exprTypmod((Node *) ((const NamedArgExpr *) expr)->arg);
+		case T_NullIfExpr:
+			{
+				/*
+				 * Result is either first argument or NULL, so we can report
+				 * first argument's typmod if known.
+				 */
+				const NullIfExpr *nexpr = (const NullIfExpr *) expr;
+
+				return exprTypmod((Node *) linitial(nexpr->args));
+			}
+			break;
 		case T_SubLink:
 			{
-				SubLink    *sublink = (SubLink *) expr;
+				const SubLink *sublink = (const SubLink *) expr;
 
 				if (sublink->subLinkType == EXPR_SUBLINK ||
 					sublink->subLinkType == ARRAY_SUBLINK)
@@ -322,7 +338,7 @@ exprTypmod(Node *expr)
 			break;
 		case T_SubPlan:
 			{
-				SubPlan    *subplan = (SubPlan *) expr;
+				const SubPlan *subplan = (const SubPlan *) expr;
 
 				if (subplan->subLinkType == EXPR_SUBLINK ||
 					subplan->subLinkType == ARRAY_SUBLINK)
@@ -340,25 +356,27 @@ exprTypmod(Node *expr)
 			break;
 		case T_AlternativeSubPlan:
 			{
-				AlternativeSubPlan *asplan = (AlternativeSubPlan *) expr;
+				const AlternativeSubPlan *asplan = (const AlternativeSubPlan *) expr;
 
 				/* subplans should all return the same thing */
 				return exprTypmod((Node *) linitial(asplan->subplans));
 			}
 			break;
 		case T_FieldSelect:
-			return ((FieldSelect *) expr)->resulttypmod;
+			return ((const FieldSelect *) expr)->resulttypmod;
 		case T_RelabelType:
-			return ((RelabelType *) expr)->resulttypmod;
+			return ((const RelabelType *) expr)->resulttypmod;
 		case T_ArrayCoerceExpr:
-			return ((ArrayCoerceExpr *) expr)->resulttypmod;
+			return ((const ArrayCoerceExpr *) expr)->resulttypmod;
+		case T_CollateExpr:
+			return exprTypmod((Node *) ((const CollateExpr *) expr)->arg);
 		case T_CaseExpr:
 			{
 				/*
 				 * If all the alternatives agree on type/typmod, return that
 				 * typmod, else use -1
 				 */
-				CaseExpr   *cexpr = (CaseExpr *) expr;
+				const CaseExpr *cexpr = (const CaseExpr *) expr;
 				Oid			casetype = cexpr->casetype;
 				int32		typmod;
 				ListCell   *arg;
@@ -384,14 +402,14 @@ exprTypmod(Node *expr)
 			}
 			break;
 		case T_CaseTestExpr:
-			return ((CaseTestExpr *) expr)->typeMod;
+			return ((const CaseTestExpr *) expr)->typeMod;
 		case T_ArrayExpr:
 			{
 				/*
 				 * If all the elements agree on type/typmod, return that
 				 * typmod, else use -1
 				 */
-				ArrayExpr  *arrayexpr = (ArrayExpr *) expr;
+				const ArrayExpr *arrayexpr = (const ArrayExpr *) expr;
 				Oid			commontype;
 				int32		typmod;
 				ListCell   *elem;
@@ -423,7 +441,7 @@ exprTypmod(Node *expr)
 				 * If all the alternatives agree on type/typmod, return that
 				 * typmod, else use -1
 				 */
-				CoalesceExpr *cexpr = (CoalesceExpr *) expr;
+				const CoalesceExpr *cexpr = (const CoalesceExpr *) expr;
 				Oid			coalescetype = cexpr->coalescetype;
 				int32		typmod;
 				ListCell   *arg;
@@ -451,7 +469,7 @@ exprTypmod(Node *expr)
 				 * If all the alternatives agree on type/typmod, return that
 				 * typmod, else use -1
 				 */
-				MinMaxExpr *mexpr = (MinMaxExpr *) expr;
+				const MinMaxExpr *mexpr = (const MinMaxExpr *) expr;
 				Oid			minmaxtype = mexpr->minmaxtype;
 				int32		typmod;
 				ListCell   *arg;
@@ -473,21 +491,14 @@ exprTypmod(Node *expr)
 				return typmod;
 			}
 			break;
-		case T_NullIfExpr:
-			{
-				NullIfExpr *nexpr = (NullIfExpr *) expr;
-
-				return exprTypmod((Node *) linitial(nexpr->args));
-			}
-			break;
 		case T_CoerceToDomain:
-			return ((CoerceToDomain *) expr)->resulttypmod;
+			return ((const CoerceToDomain *) expr)->resulttypmod;
 		case T_CoerceToDomainValue:
-			return ((CoerceToDomainValue *) expr)->typeMod;
+			return ((const CoerceToDomainValue *) expr)->typeMod;
 		case T_SetToDefault:
-			return ((SetToDefault *) expr)->typeMod;
+			return ((const SetToDefault *) expr)->typeMod;
 		case T_PlaceHolderVar:
-			return exprTypmod((Node *) ((PlaceHolderVar *) expr)->phexpr);
+			return exprTypmod((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 		default:
 			break;
 	}
@@ -506,7 +517,7 @@ exprTypmod(Node *expr)
  * length coercion by this routine.
  */
 bool
-exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
+exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod)
 {
 	if (coercedTypmod != NULL)
 		*coercedTypmod = -1;	/* default result on failure */
@@ -517,7 +528,7 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	 */
 	if (expr && IsA(expr, FuncExpr))
 	{
-		FuncExpr   *func = (FuncExpr *) expr;
+		const FuncExpr *func = (const FuncExpr *) expr;
 		int			nargs;
 		Const	   *second_arg;
 
@@ -554,7 +565,7 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 
 	if (expr && IsA(expr, ArrayCoerceExpr))
 	{
-		ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) expr;
+		const ArrayCoerceExpr *acoerce = (const ArrayCoerceExpr *) expr;
 
 		/* It's not a length coercion unless there's a nondefault typmod */
 		if (acoerce->resulttypmod < 0)
@@ -570,6 +581,30 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	}
 
 	return false;
+}
+
+/*
+ * relabel_to_typmod
+ *		Add a RelabelType node that changes just the typmod of the expression.
+ *
+ * This is primarily intended to be used during planning.  Therefore, it
+ * strips any existing RelabelType nodes to maintain the planner's invariant
+ * that there are not adjacent RelabelTypes, and it uses COERCE_DONTCARE
+ * which would typically be inappropriate earlier.
+ */
+Node *
+relabel_to_typmod(Node *expr, int32 typmod)
+{
+	Oid			type = exprType(expr);
+	Oid			coll = exprCollation(expr);
+
+	/* Strip any existing RelabelType node(s) */
+	while (expr && IsA(expr, RelabelType))
+		expr = (Node *) ((RelabelType *) expr)->arg;
+
+	/* Apply new typmod, preserving the previous exposed type and collation */
+	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
+									COERCE_DONTCARE);
 }
 
 /*
@@ -615,6 +650,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, DistinctExpr))
 		return false;
+	if (IsA(node, NullIfExpr))
+		return false;
 	if (IsA(node, ScalarArrayOpExpr))
 		return false;
 	if (IsA(node, BoolExpr))
@@ -637,11 +674,489 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, XmlExpr))
 		return false;
-	if (IsA(node, NullIfExpr))
-		return false;
 
 	return expression_tree_walker(node, expression_returns_set_walker,
 								  context);
+}
+
+
+/*
+ *	exprCollation -
+ *	  returns the Oid of the collation of the expression's result.
+ *
+ * Note: expression nodes that can invoke functions generally have an
+ * "inputcollid" field, which is what the function should use as collation.
+ * That is the resolved common collation of the node's inputs.  It is often
+ * but not always the same as the result collation; in particular, if the
+ * function produces a non-collatable result type from collatable inputs
+ * or vice versa, the two are different.
+ */
+Oid
+exprCollation(const Node *expr)
+{
+	Oid			coll;
+
+	if (!expr)
+		return InvalidOid;
+
+	switch (nodeTag(expr))
+	{
+		case T_Var:
+			coll = ((const Var *) expr)->varcollid;
+			break;
+		case T_Const:
+			coll = ((const Const *) expr)->constcollid;
+			break;
+		case T_Param:
+			coll = ((const Param *) expr)->paramcollid;
+			break;
+		case T_Aggref:
+			coll = ((const Aggref *) expr)->aggcollid;
+			break;
+		case T_WindowFunc:
+			coll = ((const WindowFunc *) expr)->wincollid;
+			break;
+		case T_ArrayRef:
+			coll = ((const ArrayRef *) expr)->refcollid;
+			break;
+		case T_FuncExpr:
+			coll = ((const FuncExpr *) expr)->funccollid;
+			break;
+		case T_NamedArgExpr:
+			coll = exprCollation((Node *) ((const NamedArgExpr *) expr)->arg);
+			break;
+		case T_OpExpr:
+			coll = ((const OpExpr *) expr)->opcollid;
+			break;
+		case T_DistinctExpr:
+			coll = ((const DistinctExpr *) expr)->opcollid;
+			break;
+		case T_NullIfExpr:
+			coll = ((const NullIfExpr *) expr)->opcollid;
+			break;
+		case T_ScalarArrayOpExpr:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_BoolExpr:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_SubLink:
+			{
+				const SubLink *sublink = (const SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the collation of subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get collation for untransformed sublink");
+					tent = (TargetEntry *) linitial(qtree->targetList);
+					Assert(IsA(tent, TargetEntry));
+					Assert(!tent->resjunk);
+					coll = exprCollation((Node *) tent->expr);
+					/* collation doesn't change if it's converted to array */
+				}
+				else
+				{
+					/* for all other sublink types, result is boolean */
+					coll = InvalidOid;
+				}
+			}
+			break;
+		case T_SubPlan:
+			{
+				const SubPlan *subplan = (const SubPlan *) expr;
+
+				if (subplan->subLinkType == EXPR_SUBLINK ||
+					subplan->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the collation of subselect's first target column */
+					coll = subplan->firstColCollation;
+					/* collation doesn't change if it's converted to array */
+				}
+				else
+				{
+					/* for all other subplan types, result is boolean */
+					coll = InvalidOid;
+				}
+			}
+			break;
+		case T_AlternativeSubPlan:
+			{
+				const AlternativeSubPlan *asplan = (const AlternativeSubPlan *) expr;
+
+				/* subplans should all return the same thing */
+				coll = exprCollation((Node *) linitial(asplan->subplans));
+			}
+			break;
+		case T_FieldSelect:
+			coll = ((const FieldSelect *) expr)->resultcollid;
+			break;
+		case T_FieldStore:
+			coll = InvalidOid;	/* result is always composite */
+			break;
+		case T_RelabelType:
+			coll = ((const RelabelType *) expr)->resultcollid;
+			break;
+		case T_CoerceViaIO:
+			coll = ((const CoerceViaIO *) expr)->resultcollid;
+			break;
+		case T_ArrayCoerceExpr:
+			coll = ((const ArrayCoerceExpr *) expr)->resultcollid;
+			break;
+		case T_ConvertRowtypeExpr:
+			coll = InvalidOid;	/* result is always composite */
+			break;
+		case T_CollateExpr:
+			coll = ((const CollateExpr *) expr)->collOid;
+			break;
+		case T_CaseExpr:
+			coll = ((const CaseExpr *) expr)->casecollid;
+			break;
+		case T_CaseTestExpr:
+			coll = ((const CaseTestExpr *) expr)->collation;
+			break;
+		case T_ArrayExpr:
+			coll = ((const ArrayExpr *) expr)->array_collid;
+			break;
+		case T_RowExpr:
+			coll = InvalidOid;	/* result is always composite */
+			break;
+		case T_TableValueExpr:
+			coll = InvalidOid;  /* result is always anytable */
+			break;
+		case T_RowCompareExpr:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_CoalesceExpr:
+			coll = ((const CoalesceExpr *) expr)->coalescecollid;
+			break;
+		case T_MinMaxExpr:
+			coll = ((const MinMaxExpr *) expr)->minmaxcollid;
+			break;
+		case T_XmlExpr:
+
+			/*
+			 * XMLSERIALIZE returns text from non-collatable inputs, so its
+			 * collation is always default.  The other cases return boolean or
+			 * XML, which are non-collatable.
+			 */
+			if (((const XmlExpr *) expr)->op == IS_XMLSERIALIZE)
+				coll = DEFAULT_COLLATION_OID;
+			else
+				coll = InvalidOid;
+			break;
+		case T_NullTest:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_BooleanTest:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_CoerceToDomain:
+			coll = ((const CoerceToDomain *) expr)->resultcollid;
+			break;
+		case T_CoerceToDomainValue:
+			coll = ((const CoerceToDomainValue *) expr)->collation;
+			break;
+		case T_SetToDefault:
+			coll = ((const SetToDefault *) expr)->collation;
+			break;
+		case T_CurrentOfExpr:
+			coll = InvalidOid;	/* result is always boolean */
+			break;
+		case T_PlaceHolderVar:
+			coll = exprCollation((Node *) ((const PlaceHolderVar *) expr)->phexpr);
+			break;
+
+		case T_GroupingFunc:
+			coll = InvalidOid;	/* result is always int8 */
+			break;
+		case T_Grouping:
+			coll = InvalidOid;	/* result is always int8 */
+			break;
+		case T_GroupId:
+			coll = InvalidOid;	/* result is always int4 */
+			break;
+
+		case T_DMLActionExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartSelectedExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartDefaultExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartBoundExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartBoundInclusionExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartBoundOpenExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartListRuleExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		case T_PartListNullTestExpr:
+			coll = InvalidOid;	/* GPDB_91_MERGE_FIXME: ORCA only expression */
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
+			coll = InvalidOid;	/* keep compiler quiet */
+			break;
+	}
+	return coll;
+}
+
+/*
+ *	exprInputCollation -
+ *	  returns the Oid of the collation a function should use, if available.
+ *
+ * Result is InvalidOid if the node type doesn't store this information.
+ */
+Oid
+exprInputCollation(const Node *expr)
+{
+	Oid			coll;
+
+	if (!expr)
+		return InvalidOid;
+
+	switch (nodeTag(expr))
+	{
+		case T_Aggref:
+			coll = ((const Aggref *) expr)->inputcollid;
+			break;
+		case T_WindowFunc:
+			coll = ((const WindowFunc *) expr)->inputcollid;
+			break;
+		case T_FuncExpr:
+			coll = ((const FuncExpr *) expr)->inputcollid;
+			break;
+		case T_OpExpr:
+			coll = ((const OpExpr *) expr)->inputcollid;
+			break;
+		case T_DistinctExpr:
+			coll = ((const DistinctExpr *) expr)->inputcollid;
+			break;
+		case T_NullIfExpr:
+			coll = ((const NullIfExpr *) expr)->inputcollid;
+			break;
+		case T_ScalarArrayOpExpr:
+			coll = ((const ScalarArrayOpExpr *) expr)->inputcollid;
+			break;
+		case T_MinMaxExpr:
+			coll = ((const MinMaxExpr *) expr)->inputcollid;
+			break;
+		default:
+			coll = InvalidOid;
+			break;
+	}
+	return coll;
+}
+
+/*
+ *	exprSetCollation -
+ *	  Assign collation information to an expression tree node.
+ *
+ * Note: since this is only used during parse analysis, we don't need to
+ * worry about subplans or PlaceHolderVars.
+ */
+void
+exprSetCollation(Node *expr, Oid collation)
+{
+	switch (nodeTag(expr))
+	{
+		case T_Var:
+			((Var *) expr)->varcollid = collation;
+			break;
+		case T_Const:
+			((Const *) expr)->constcollid = collation;
+			break;
+		case T_Param:
+			((Param *) expr)->paramcollid = collation;
+			break;
+		case T_Aggref:
+			((Aggref *) expr)->aggcollid = collation;
+			break;
+		case T_WindowFunc:
+			((WindowFunc *) expr)->wincollid = collation;
+			break;
+		case T_ArrayRef:
+			((ArrayRef *) expr)->refcollid = collation;
+			break;
+		case T_FuncExpr:
+			((FuncExpr *) expr)->funccollid = collation;
+			break;
+		case T_NamedArgExpr:
+			Assert(collation == exprCollation((Node *) ((NamedArgExpr *) expr)->arg));
+			break;
+		case T_OpExpr:
+			((OpExpr *) expr)->opcollid = collation;
+			break;
+		case T_DistinctExpr:
+			((DistinctExpr *) expr)->opcollid = collation;
+			break;
+		case T_NullIfExpr:
+			((NullIfExpr *) expr)->opcollid = collation;
+			break;
+		case T_ScalarArrayOpExpr:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_BoolExpr:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_SubLink:
+#ifdef USE_ASSERT_CHECKING
+			{
+				SubLink    *sublink = (SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the collation of subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot set collation for untransformed sublink");
+					tent = (TargetEntry *) linitial(qtree->targetList);
+					Assert(IsA(tent, TargetEntry));
+					Assert(!tent->resjunk);
+					Assert(collation == exprCollation((Node *) tent->expr));
+				}
+				else
+				{
+					/* for all other sublink types, result is boolean */
+					Assert(!OidIsValid(collation));
+				}
+			}
+#endif   /* USE_ASSERT_CHECKING */
+			break;
+		case T_FieldSelect:
+			((FieldSelect *) expr)->resultcollid = collation;
+			break;
+		case T_FieldStore:
+			Assert(!OidIsValid(collation));		/* result is always composite */
+			break;
+		case T_RelabelType:
+			((RelabelType *) expr)->resultcollid = collation;
+			break;
+		case T_CoerceViaIO:
+			((CoerceViaIO *) expr)->resultcollid = collation;
+			break;
+		case T_ArrayCoerceExpr:
+			((ArrayCoerceExpr *) expr)->resultcollid = collation;
+			break;
+		case T_ConvertRowtypeExpr:
+			Assert(!OidIsValid(collation));		/* result is always composite */
+			break;
+		case T_CaseExpr:
+			((CaseExpr *) expr)->casecollid = collation;
+			break;
+		case T_ArrayExpr:
+			((ArrayExpr *) expr)->array_collid = collation;
+			break;
+		case T_RowExpr:
+			Assert(!OidIsValid(collation));		/* result is always composite */
+			break;
+		case T_TableValueExpr:
+			Assert(!OidIsValid(collation));		/* result is always anytable */
+			break;
+		case T_RowCompareExpr:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_CoalesceExpr:
+			((CoalesceExpr *) expr)->coalescecollid = collation;
+			break;
+		case T_MinMaxExpr:
+			((MinMaxExpr *) expr)->minmaxcollid = collation;
+			break;
+		case T_XmlExpr:
+			Assert((((XmlExpr *) expr)->op == IS_XMLSERIALIZE) ?
+				   (collation == DEFAULT_COLLATION_OID) :
+				   (collation == InvalidOid));
+			break;
+		case T_NullTest:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_BooleanTest:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+		case T_CoerceToDomain:
+			((CoerceToDomain *) expr)->resultcollid = collation;
+			break;
+		case T_CoerceToDomainValue:
+			((CoerceToDomainValue *) expr)->collation = collation;
+			break;
+		case T_SetToDefault:
+			((SetToDefault *) expr)->collation = collation;
+			break;
+		case T_CurrentOfExpr:
+			Assert(!OidIsValid(collation));		/* result is always boolean */
+			break;
+
+		case T_GroupingFunc:
+			Assert(!OidIsValid(collation));		/* result is always int8 */
+			break;
+		case T_Grouping:
+			Assert(!OidIsValid(collation));		/* result is always int8 */
+			break;
+		case T_GroupId:
+			Assert(!OidIsValid(collation));		/* result is always int4 */
+			break;
+
+		default:
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));
+			break;
+	}
+}
+
+/*
+ *	exprSetInputCollation -
+ *	  Assign input-collation information to an expression tree node.
+ *
+ * This is a no-op for node types that don't store their input collation.
+ * Note we omit RowCompareExpr, which needs special treatment since it
+ * contains multiple input collation OIDs.
+ */
+void
+exprSetInputCollation(Node *expr, Oid inputcollation)
+{
+	switch (nodeTag(expr))
+	{
+		case T_Aggref:
+			((Aggref *) expr)->inputcollid = inputcollation;
+			break;
+		case T_WindowFunc:
+			((WindowFunc *) expr)->inputcollid = inputcollation;
+			break;
+		case T_FuncExpr:
+			((FuncExpr *) expr)->inputcollid = inputcollation;
+			break;
+		case T_OpExpr:
+			((OpExpr *) expr)->inputcollid = inputcollation;
+			break;
+		case T_DistinctExpr:
+			((DistinctExpr *) expr)->inputcollid = inputcollation;
+			break;
+		case T_NullIfExpr:
+			((NullIfExpr *) expr)->inputcollid = inputcollation;
+			break;
+		case T_ScalarArrayOpExpr:
+			((ScalarArrayOpExpr *) expr)->inputcollid = inputcollation;
+			break;
+		case T_MinMaxExpr:
+			((MinMaxExpr *) expr)->inputcollid = inputcollation;
+			break;
+		default:
+			break;
+	}
 }
 
 
@@ -675,7 +1190,7 @@ expression_returns_set_walker(Node *node, void *context)
  * known and unknown locations in a tree.
  */
 int
-exprLocation(Node *expr)
+exprLocation(const Node *expr)
 {
 	int			loc;
 
@@ -684,32 +1199,32 @@ exprLocation(Node *expr)
 	switch (nodeTag(expr))
 	{
 		case T_RangeVar:
-			loc = ((RangeVar *) expr)->location;
+			loc = ((const RangeVar *) expr)->location;
 			break;
 		case T_Var:
-			loc = ((Var *) expr)->location;
+			loc = ((const Var *) expr)->location;
 			break;
 		case T_Const:
-			loc = ((Const *) expr)->location;
+			loc = ((const Const *) expr)->location;
 			break;
 		case T_Param:
-			loc = ((Param *) expr)->location;
+			loc = ((const Param *) expr)->location;
 			break;
 		case T_Aggref:
 			/* function name should always be the first thing */
-			loc = ((Aggref *) expr)->location;
+			loc = ((const Aggref *) expr)->location;
 			break;
 		case T_WindowFunc:
 			/* function name should always be the first thing */
-			loc = ((WindowFunc *) expr)->location;
+			loc = ((const WindowFunc *) expr)->location;
 			break;
 		case T_ArrayRef:
 			/* just use array argument's location */
-			loc = exprLocation((Node *) ((ArrayRef *) expr)->refexpr);
+			loc = exprLocation((Node *) ((const ArrayRef *) expr)->refexpr);
 			break;
 		case T_FuncExpr:
 			{
-				FuncExpr   *fexpr = (FuncExpr *) expr;
+				const FuncExpr *fexpr = (const FuncExpr *) expr;
 
 				/* consider both function name and leftmost arg */
 				loc = leftmostLoc(fexpr->location,
@@ -718,7 +1233,7 @@ exprLocation(Node *expr)
 			break;
 		case T_NamedArgExpr:
 			{
-				NamedArgExpr *na = (NamedArgExpr *) expr;
+				const NamedArgExpr *na = (const NamedArgExpr *) expr;
 
 				/* consider both argument name and value */
 				loc = leftmostLoc(na->location,
@@ -729,7 +1244,7 @@ exprLocation(Node *expr)
 		case T_DistinctExpr:	/* struct-equivalent to OpExpr */
 		case T_NullIfExpr:		/* struct-equivalent to OpExpr */
 			{
-				OpExpr	   *opexpr = (OpExpr *) expr;
+				const OpExpr *opexpr = (const OpExpr *) expr;
 
 				/* consider both operator name and leftmost arg */
 				loc = leftmostLoc(opexpr->location,
@@ -738,7 +1253,7 @@ exprLocation(Node *expr)
 			break;
 		case T_ScalarArrayOpExpr:
 			{
-				ScalarArrayOpExpr *saopexpr = (ScalarArrayOpExpr *) expr;
+				const ScalarArrayOpExpr *saopexpr = (const ScalarArrayOpExpr *) expr;
 
 				/* consider both operator name and leftmost arg */
 				loc = leftmostLoc(saopexpr->location,
@@ -747,7 +1262,7 @@ exprLocation(Node *expr)
 			break;
 		case T_BoolExpr:
 			{
-				BoolExpr   *bexpr = (BoolExpr *) expr;
+				const BoolExpr *bexpr = (const BoolExpr *) expr;
 
 				/*
 				 * Same as above, to handle either NOT or AND/OR.  We can't
@@ -760,7 +1275,7 @@ exprLocation(Node *expr)
 			break;
 		case T_SubLink:
 			{
-				SubLink    *sublink = (SubLink *) expr;
+				const SubLink *sublink = (const SubLink *) expr;
 
 				/* check the testexpr, if any, and the operator/keyword */
 				loc = leftmostLoc(exprLocation(sublink->testexpr),
@@ -769,15 +1284,15 @@ exprLocation(Node *expr)
 			break;
 		case T_FieldSelect:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((FieldSelect *) expr)->arg);
+			loc = exprLocation((Node *) ((const FieldSelect *) expr)->arg);
 			break;
 		case T_FieldStore:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((FieldStore *) expr)->arg);
+			loc = exprLocation((Node *) ((const FieldStore *) expr)->arg);
 			break;
 		case T_RelabelType:
 			{
-				RelabelType *rexpr = (RelabelType *) expr;
+				const RelabelType *rexpr = (const RelabelType *) expr;
 
 				/* Much as above */
 				loc = leftmostLoc(rexpr->location,
@@ -786,7 +1301,7 @@ exprLocation(Node *expr)
 			break;
 		case T_CoerceViaIO:
 			{
-				CoerceViaIO *cexpr = (CoerceViaIO *) expr;
+				const CoerceViaIO *cexpr = (const CoerceViaIO *) expr;
 
 				/* Much as above */
 				loc = leftmostLoc(cexpr->location,
@@ -795,7 +1310,7 @@ exprLocation(Node *expr)
 			break;
 		case T_ArrayCoerceExpr:
 			{
-				ArrayCoerceExpr *cexpr = (ArrayCoerceExpr *) expr;
+				const ArrayCoerceExpr *cexpr = (const ArrayCoerceExpr *) expr;
 
 				/* Much as above */
 				loc = leftmostLoc(cexpr->location,
@@ -804,28 +1319,32 @@ exprLocation(Node *expr)
 			break;
 		case T_ConvertRowtypeExpr:
 			{
-				ConvertRowtypeExpr *cexpr = (ConvertRowtypeExpr *) expr;
+				const ConvertRowtypeExpr *cexpr = (const ConvertRowtypeExpr *) expr;
 
 				/* Much as above */
 				loc = leftmostLoc(cexpr->location,
 								  exprLocation((Node *) cexpr->arg));
 			}
 			break;
+		case T_CollateExpr:
+			/* just use argument's location */
+			loc = exprLocation((Node *) ((const CollateExpr *) expr)->arg);
+			break;
 		case T_CaseExpr:
 			/* CASE keyword should always be the first thing */
-			loc = ((CaseExpr *) expr)->location;
+			loc = ((const CaseExpr *) expr)->location;
 			break;
 		case T_CaseWhen:
 			/* WHEN keyword should always be the first thing */
-			loc = ((CaseWhen *) expr)->location;
+			loc = ((const CaseWhen *) expr)->location;
 			break;
 		case T_ArrayExpr:
 			/* the location points at ARRAY or [, which must be leftmost */
-			loc = ((ArrayExpr *) expr)->location;
+			loc = ((const ArrayExpr *) expr)->location;
 			break;
 		case T_RowExpr:
 			/* the location points at ROW or (, which must be leftmost */
-			loc = ((RowExpr *) expr)->location;
+			loc = ((const RowExpr *) expr)->location;
 			break;
 		case T_TableValueExpr:
 			/* the location points at TABLE, which must be leftmost */
@@ -833,19 +1352,19 @@ exprLocation(Node *expr)
 			break;
 		case T_RowCompareExpr:
 			/* just use leftmost argument's location */
-			loc = exprLocation((Node *) ((RowCompareExpr *) expr)->largs);
+			loc = exprLocation((Node *) ((const RowCompareExpr *) expr)->largs);
 			break;
 		case T_CoalesceExpr:
 			/* COALESCE keyword should always be the first thing */
-			loc = ((CoalesceExpr *) expr)->location;
+			loc = ((const CoalesceExpr *) expr)->location;
 			break;
 		case T_MinMaxExpr:
 			/* GREATEST/LEAST keyword should always be the first thing */
-			loc = ((MinMaxExpr *) expr)->location;
+			loc = ((const MinMaxExpr *) expr)->location;
 			break;
 		case T_XmlExpr:
 			{
-				XmlExpr    *xexpr = (XmlExpr *) expr;
+				const XmlExpr *xexpr = (const XmlExpr *) expr;
 
 				/* consider both function name and leftmost arg */
 				loc = leftmostLoc(xexpr->location,
@@ -854,15 +1373,15 @@ exprLocation(Node *expr)
 			break;
 		case T_NullTest:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((NullTest *) expr)->arg);
+			loc = exprLocation((Node *) ((const NullTest *) expr)->arg);
 			break;
 		case T_BooleanTest:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((BooleanTest *) expr)->arg);
+			loc = exprLocation((Node *) ((const BooleanTest *) expr)->arg);
 			break;
 		case T_CoerceToDomain:
 			{
-				CoerceToDomain *cexpr = (CoerceToDomain *) expr;
+				const CoerceToDomain *cexpr = (const CoerceToDomain *) expr;
 
 				/* Much as above */
 				loc = leftmostLoc(cexpr->location,
@@ -870,18 +1389,18 @@ exprLocation(Node *expr)
 			}
 			break;
 		case T_CoerceToDomainValue:
-			loc = ((CoerceToDomainValue *) expr)->location;
+			loc = ((const CoerceToDomainValue *) expr)->location;
 			break;
 		case T_SetToDefault:
-			loc = ((SetToDefault *) expr)->location;
+			loc = ((const SetToDefault *) expr)->location;
 			break;
 		case T_TargetEntry:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((TargetEntry *) expr)->expr);
+			loc = exprLocation((Node *) ((const TargetEntry *) expr)->expr);
 			break;
 		case T_IntoClause:
 			/* use the contained RangeVar's location --- close enough */
-			loc = exprLocation((Node *) ((IntoClause *) expr)->rel);
+			loc = exprLocation((Node *) ((const IntoClause *) expr)->rel);
 			break;
 		case T_List:
 			{
@@ -889,7 +1408,7 @@ exprLocation(Node *expr)
 				ListCell   *lc;
 
 				loc = -1;		/* just to suppress compiler warning */
-				foreach(lc, (List *) expr)
+				foreach(lc, (const List *) expr)
 				{
 					loc = exprLocation((Node *) lfirst(lc));
 					if (loc >= 0)
@@ -899,7 +1418,7 @@ exprLocation(Node *expr)
 			break;
 		case T_A_Expr:
 			{
-				A_Expr	   *aexpr = (A_Expr *) expr;
+				const A_Expr *aexpr = (const A_Expr *) expr;
 
 				/* use leftmost of operator or left operand (if any) */
 				/* we assume right operand can't be to left of operator */
@@ -908,17 +1427,17 @@ exprLocation(Node *expr)
 			}
 			break;
 		case T_ColumnRef:
-			loc = ((ColumnRef *) expr)->location;
+			loc = ((const ColumnRef *) expr)->location;
 			break;
 		case T_ParamRef:
-			loc = ((ParamRef *) expr)->location;
+			loc = ((const ParamRef *) expr)->location;
 			break;
 		case T_A_Const:
-			loc = ((A_Const *) expr)->location;
+			loc = ((const A_Const *) expr)->location;
 			break;
 		case T_FuncCall:
 			{
-				FuncCall   *fc = (FuncCall *) expr;
+				const FuncCall *fc = (const FuncCall *) expr;
 
 				/* consider both function name and leftmost arg */
 				/* (we assume any ORDER BY nodes must be to right of name) */
@@ -928,15 +1447,15 @@ exprLocation(Node *expr)
 			break;
 		case T_A_ArrayExpr:
 			/* the location points at ARRAY or [, which must be leftmost */
-			loc = ((A_ArrayExpr *) expr)->location;
+			loc = ((const A_ArrayExpr *) expr)->location;
 			break;
 		case T_ResTarget:
 			/* we need not examine the contained expression (if any) */
-			loc = ((ResTarget *) expr)->location;
+			loc = ((const ResTarget *) expr)->location;
 			break;
 		case T_TypeCast:
 			{
-				TypeCast   *tc = (TypeCast *) expr;
+				const TypeCast *tc = (const TypeCast *) expr;
 
 				/*
 				 * This could represent CAST(), ::, or TypeName 'literal', so
@@ -947,33 +1466,40 @@ exprLocation(Node *expr)
 				loc = leftmostLoc(loc, tc->location);
 			}
 			break;
+		case T_CollateClause:
+			/* just use argument's location */
+			loc = exprLocation(((const CollateClause *) expr)->arg);
+			break;
 		case T_SortBy:
 			/* just use argument's location (ignore operator, if any) */
-			loc = exprLocation(((SortBy *) expr)->node);
+			loc = exprLocation(((const SortBy *) expr)->node);
+			break;
+		case T_WindowDef:
+			loc = ((const WindowDef *) expr)->location;
 			break;
 		case T_TypeName:
-			loc = ((TypeName *) expr)->location;
+			loc = ((const TypeName *) expr)->location;
 			break;
 		case T_FunctionParameter:
 			/* just use typename's location */
 			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
 			break;
 		case T_Constraint:
-			loc = ((Constraint *) expr)->location;
+			loc = ((const Constraint *) expr)->location;
 			break;
 		case T_XmlSerialize:
 			/* XMLSERIALIZE keyword should always be the first thing */
-			loc = ((XmlSerialize *) expr)->location;
+			loc = ((const XmlSerialize *) expr)->location;
 			break;
 		case T_WithClause:
-			loc = ((WithClause *) expr)->location;
+			loc = ((const WithClause *) expr)->location;
 			break;
 		case T_CommonTableExpr:
-			loc = ((CommonTableExpr *) expr)->location;
+			loc = ((const CommonTableExpr *) expr)->location;
 			break;
 		case T_PlaceHolderVar:
 			/* just use argument's location */
-			loc = exprLocation((Node *) ((PlaceHolderVar *) expr)->phexpr);
+			loc = exprLocation((Node *) ((const PlaceHolderVar *) expr)->phexpr);
 			break;
 		default:
 			/* for any other node type it's just unknown... */
@@ -1199,17 +1725,10 @@ expression_tree_walker(Node *node,
 		case T_NamedArgExpr:
 			return walker(((NamedArgExpr *) node)->arg, context);
 		case T_OpExpr:
+		case T_DistinctExpr:	/* struct-equivalent to OpExpr */
+		case T_NullIfExpr:		/* struct-equivalent to OpExpr */
 			{
 				OpExpr	   *expr = (OpExpr *) node;
-
-				if (expression_tree_walker((Node *) expr->args,
-										   walker, context))
-					return true;
-			}
-			break;
-		case T_DistinctExpr:
-			{
-				DistinctExpr *expr = (DistinctExpr *) node;
 
 				if (expression_tree_walker((Node *) expr->args,
 										   walker, context))
@@ -1283,6 +1802,8 @@ expression_tree_walker(Node *node,
 			return walker(((ArrayCoerceExpr *) node)->arg, context);
 		case T_ConvertRowtypeExpr:
 			return walker(((ConvertRowtypeExpr *) node)->arg, context);
+		case T_CollateExpr:
+			return walker(((CollateExpr *) node)->arg, context);
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -1334,8 +1855,6 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
-		case T_NullIfExpr:
-			return walker(((NullIfExpr *) node)->args, context);
 		case T_NullTest:
 			return walker(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
@@ -1536,8 +2055,11 @@ query_tree_walker(Query *query,
 		if (walker((Node *) query->cteList, context))
 			return true;
 	}
-	if (range_table_walker(query->rtable, walker, context, flags))
-		return true;
+	if (!(flags & QTW_IGNORE_RANGE_TABLE))
+	{
+		if (range_table_walker(query->rtable, walker, context, flags))
+			return true;
+	}
 	if (query->utilityStmt)
 	{
 		/*
@@ -1598,7 +2120,6 @@ range_table_walker(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-			case RTE_SPECIAL:
 			case RTE_VOID:
 			case RTE_CTE:
 				/* nothing to do */
@@ -1861,6 +2382,16 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_NullIfExpr:
+			{
+				NullIfExpr *expr = (NullIfExpr *) node;
+				NullIfExpr *newnode;
+
+				FLATCOPY(newnode, expr, NullIfExpr);
+				MUTATE(newnode->args, expr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
 		case T_ScalarArrayOpExpr:
 			{
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -1983,6 +2514,16 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_CollateExpr:
+			{
+				CollateExpr *collate = (CollateExpr *) node;
+				CollateExpr *newnode;
+
+				FLATCOPY(newnode, collate, CollateExpr);
+				MUTATE(newnode->arg, collate->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -2067,16 +2608,6 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->named_args, xexpr->named_args, List *);
 				/* assume mutator does not care about arg_names */
 				MUTATE(newnode->args, xexpr->args, List *);
-				return (Node *) newnode;
-			}
-			break;
-		case T_NullIfExpr:
-			{
-				NullIfExpr *expr = (NullIfExpr *) node;
-				NullIfExpr *newnode;
-
-				FLATCOPY(newnode, expr, NullIfExpr);
-				MUTATE(newnode->args, expr->args, List *);
 				return (Node *) newnode;
 			}
 			break;
@@ -2397,7 +2928,6 @@ range_table_mutator(List *rtable,
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-			case RTE_SPECIAL:
 			case RTE_VOID:
 			case RTE_CTE:
 				/* we don't bother to copy eref, aliases, etc; OK? */
@@ -2500,7 +3030,9 @@ query_or_expression_tree_mutator(Node *node,
  * that could appear under it, but not other statement types.
  */
 bool
-			raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
+raw_expression_tree_walker(Node *node,
+						   bool (*walker) (),
+						   void *context)
 {
 	ListCell   *temp;
 
@@ -2618,6 +3150,56 @@ bool
 					return true;
 			}
 			break;
+		case T_InsertStmt:
+			{
+				InsertStmt *stmt = (InsertStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->cols, context))
+					return true;
+				if (walker(stmt->selectStmt, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
+			}
+			break;
+		case T_DeleteStmt:
+			{
+				DeleteStmt *stmt = (DeleteStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->usingClause, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
+			}
+			break;
+		case T_UpdateStmt:
+			{
+				UpdateStmt *stmt = (UpdateStmt *) node;
+
+				if (walker(stmt->relation, context))
+					return true;
+				if (walker(stmt->targetList, context))
+					return true;
+				if (walker(stmt->whereClause, context))
+					return true;
+				if (walker(stmt->fromClause, context))
+					return true;
+				if (walker(stmt->returningList, context))
+					return true;
+				if (walker(stmt->withClause, context))
+					return true;
+			}
+			break;
 		case T_SelectStmt:
 			{
 				SelectStmt *stmt = (SelectStmt *) node;
@@ -2727,6 +3309,8 @@ bool
 					return true;
 			}
 			break;
+		case T_CollateClause:
+			return walker(((CollateClause *) node)->arg, context);
 		case T_SortBy:
 			return walker(((SortBy *) node)->node, context);
 		case T_WindowDef:
@@ -2781,6 +3365,8 @@ bool
 				if (walker(coldef->typeName, context))
 					return true;
 				if (walker(coldef->raw_default, context))
+					return true;
+				if (walker(coldef->collClause, context))
 					return true;
 				/* for now, constraints are ignored */
 			}

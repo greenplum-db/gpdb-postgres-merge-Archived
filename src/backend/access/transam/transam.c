@@ -3,12 +3,12 @@
  * transam.c
  *	  postgres transaction log interface routines
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.80 2010/01/02 16:57:35 momjian Exp $
+ *	  src/backend/access/transam/transam.c
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -25,6 +25,8 @@
 #include "cdb/cdbvars.h"
 #include "utils/snapmgr.h"
 
+/* Handy constant for an invalid xlog recptr */
+const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 /*
  * Single-item cache for results of TransactionLogFetch.  It's worth having
@@ -35,9 +37,6 @@
 static TransactionId cachedFetchXid = InvalidTransactionId;
 static XidStatus cachedFetchXidStatus;
 static XLogRecPtr cachedCommitLSN;
-
-/* Handy constant for an invalid xlog recptr */
-static const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 /* Local functions */
 static XidStatus TransactionLogFetch(TransactionId transactionId);

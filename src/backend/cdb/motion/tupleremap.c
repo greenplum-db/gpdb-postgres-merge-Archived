@@ -34,9 +34,9 @@
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rangetypes.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-
 
 /*
  * When a tuple is received on the motion receiver, the typmod of RECORDOID

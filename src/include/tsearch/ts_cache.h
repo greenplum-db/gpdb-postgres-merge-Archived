@@ -3,17 +3,16 @@
  * ts_cache.h
  *	  Tsearch related object caches.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_cache.h,v 1.6 2010/01/02 16:58:09 momjian Exp $
+ * src/include/tsearch/ts_cache.h
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TS_CACHE_H
 #define TS_CACHE_H
 
-#include "fmgr.h"
 #include "utils/guc.h"
 
 
@@ -93,6 +92,7 @@ extern TSDictionaryCacheEntry *lookup_ts_dictionary_cache(Oid dictId);
 extern TSConfigCacheEntry *lookup_ts_config_cache(Oid cfgId);
 
 extern Oid	getTSCurrentConfig(bool emitError);
-extern const char *assignTSCurrentConfig(const char *newval, bool doit, GucSource source);
+extern bool check_TSCurrentConfig(char **newval, void **extra, GucSource source);
+extern void assign_TSCurrentConfig(const char *newval, void *extra);
 
 #endif   /* TS_CACHE_H */

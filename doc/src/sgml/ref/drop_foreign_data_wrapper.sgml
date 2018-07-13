@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_foreign_data_wrapper.sgml,v 1.3 2010/04/03 07:23:00 petere Exp $
+doc/src/sgml/ref/drop_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 
@@ -87,8 +87,7 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
    Drop the foreign-data wrapper <literal>dbi</>:
 <programlisting>
 DROP FOREIGN DATA WRAPPER dbi;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

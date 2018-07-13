@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.38 2007/06/05 21:31:06 tgl Exp $
+ *	src/backend/utils/adt/mac.c
  */
 
 #include "postgres.h"
@@ -239,6 +239,59 @@ hashmacaddr(PG_FUNCTION_ARGS)
 	macaddr    *key = PG_GETARG_MACADDR_P(0);
 
 	return hash_any((unsigned char *) key, sizeof(macaddr));
+}
+
+/*
+ * Arithmetic functions: bitwise NOT, AND, OR.
+ */
+Datum
+macaddr_not(PG_FUNCTION_ARGS)
+{
+	macaddr    *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *result;
+
+	result = (macaddr *) palloc(sizeof(macaddr));
+	result->a = ~addr->a;
+	result->b = ~addr->b;
+	result->c = ~addr->c;
+	result->d = ~addr->d;
+	result->e = ~addr->e;
+	result->f = ~addr->f;
+	PG_RETURN_MACADDR_P(result);
+}
+
+Datum
+macaddr_and(PG_FUNCTION_ARGS)
+{
+	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *result;
+
+	result = (macaddr *) palloc(sizeof(macaddr));
+	result->a = addr1->a & addr2->a;
+	result->b = addr1->b & addr2->b;
+	result->c = addr1->c & addr2->c;
+	result->d = addr1->d & addr2->d;
+	result->e = addr1->e & addr2->e;
+	result->f = addr1->f & addr2->f;
+	PG_RETURN_MACADDR_P(result);
+}
+
+Datum
+macaddr_or(PG_FUNCTION_ARGS)
+{
+	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *result;
+
+	result = (macaddr *) palloc(sizeof(macaddr));
+	result->a = addr1->a | addr2->a;
+	result->b = addr1->b | addr2->b;
+	result->c = addr1->c | addr2->c;
+	result->d = addr1->d | addr2->d;
+	result->e = addr1->e | addr2->e;
+	result->f = addr1->f | addr2->f;
+	PG_RETURN_MACADDR_P(result);
 }
 
 /*

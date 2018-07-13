@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/common.c,v 1.14 2006/07/30 16:28:58 meskes Exp $ */
+/* src/interfaces/ecpg/pgtypeslib/common.c */
 
 #include "postgres_fe.h"
 
@@ -16,7 +16,7 @@ pgtypes_alloc(long size)
 }
 
 char *
-pgtypes_strdup(char *str)
+pgtypes_strdup(const char *str)
 {
 	char	   *new = (char *) strdup(str);
 

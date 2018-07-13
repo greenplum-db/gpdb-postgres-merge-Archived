@@ -4,10 +4,10 @@
  *	  prototypes for pquery.c.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.46 2010/01/02 16:58:09 momjian Exp $
+ * src/include/tcop/pquery.h
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,9 @@ extern List *FetchPortalTargetList(Portal portal);
 
 extern List *FetchStatementTargetList(Node *stmt);
 
+/* GPDB_92_MERGE_FIXME: ddesc is needed? */
 extern void PortalStart(Portal portal, ParamListInfo params,
-						Snapshot snapshot,
+						int eflags, bool use_active_snapshot,
 						QueryDispatchDesc *ddesc);
 
 extern void PortalSetResultFormat(Portal portal, int nFormats,

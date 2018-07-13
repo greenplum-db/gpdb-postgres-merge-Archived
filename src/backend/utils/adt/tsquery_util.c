@@ -3,18 +3,17 @@
  * tsquery_util.c
  *	  Utilities for tsquery datatype
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.13 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery_util.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "miscadmin.h"
 
@@ -45,7 +44,7 @@ QT2QTN(QueryItem *in, char *operand)
 	else if (operand)
 	{
 		node->word = operand + in->qoperand.distance;
-		node->sign = 1 << (in->qoperand.valcrc % 32);
+		node->sign = ((uint32) 1) << (((unsigned int) in->qoperand.valcrc) % 32);
 	}
 
 	return node;
@@ -135,7 +134,7 @@ QTNodeCompare(QTNode *an, QTNode *bn)
 static int
 cmpQTN(const void *a, const void *b)
 {
-	return QTNodeCompare(*(QTNode **) a, *(QTNode **) b);
+	return QTNodeCompare(*(QTNode *const *) a, *(QTNode *const *) b);
 }
 
 void

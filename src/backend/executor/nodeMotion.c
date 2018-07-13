@@ -247,9 +247,11 @@ ExecMotion(MotionState * node)
 	{
 		return execMotionSender(node);
 	}
-
-	Assert(!"Non-active motion is executed");
-	return NULL;
+	else
+	{
+		elog(ERROR, "cannot execute inactive Motion");
+		return NULL;
+	}
 }
 
 static TupleTableSlot *
@@ -303,6 +305,14 @@ execMotionSender(MotionState * node)
 		{
 			doSendEndOfStream(motion, node);
 			done = true;
+		}
+		else if (node->isExplictGatherMotion &&
+				 GpIdentity.segindex != gp_singleton_segindex)
+		{
+			/*
+			 * For explicit gather motion, receiver
+			 * get data from the singleton segment explictly.
+			 */
 		}
 		else
 		{
@@ -540,7 +550,9 @@ static void create_motion_mk_heap(MotionState *node)
     create_mksort_context(
             &ctxt->mkctxt,
             motion->numSortCols, motion->sortColIdx,
-            motion->sortOperators, motion->nullsFirst,
+            motion->sortOperators,
+			motion->collations,
+			motion->nullsFirst,
 			NULL,
             tupsort_fetch_datum_motion,
             tupsort_free_datum_motion,
@@ -865,6 +877,7 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 	motionstate->stopRequested = false;
 	motionstate->hashExpr = NULL;
 	motionstate->cdbhash = NULL;
+	motionstate->isExplictGatherMotion = false;
 
     /* Look up the sending gang's slice table entry. */
     sendSlice = (Slice *)list_nth(sliceTable->slices, node->motionID);
@@ -885,12 +898,15 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 			/* Is receiving slice a root slice that runs here in the qDisp? */
 			if (recvSlice->sliceIndex == recvSlice->rootIndex)
 			{
-				motionstate->mstype = MOTIONSTATE_RECV; 
-				Assert(recvSlice->gangType == GANGTYPE_UNALLOCATED || recvSlice->gangType == GANGTYPE_PRIMARY_WRITER);
+				motionstate->mstype = MOTIONSTATE_RECV;
+				Assert(recvSlice->gangType == GANGTYPE_UNALLOCATED ||
+					   recvSlice->gangType == GANGTYPE_PRIMARY_WRITER);
 			}
 			else
 			{
-				Assert(recvSlice->gangSize == 1);
+				/* sanity checks */
+				if (recvSlice->gangSize != 1)
+					elog(ERROR, "unexpected gang size: %d", recvSlice->gangSize);
 				Assert(node->outputSegIdx[0] >= 0
 					   ? (recvSlice->gangType == GANGTYPE_SINGLETON_READER ||
 						  recvSlice->gangType == GANGTYPE_ENTRYDB_READER ||
@@ -920,6 +936,21 @@ ExecInitMotion(Motion * node, EState *estate, int eflags)
 			motionstate->mstype = MOTIONSTATE_SEND;
         }
 		/* TODO: If neither sending nor receiving, don't bother to initialize. */
+	}
+
+	/*
+	 * If it's gather motion and subplan's locus is
+	 * CdbLocusType_Replicated, mark isExplictGatherMotion
+	 * to true
+	 */
+	if (motionstate->mstype == MOTIONSTATE_SEND &&
+		node->motionType == MOTIONTYPE_FIXED &&
+		node->numOutputSegs == 1 &&
+		outerPlan(node) &&
+		outerPlan(node)->flow &&
+		outerPlan(node)->flow->locustype == CdbLocusType_Replicated)
+	{
+		motionstate->isExplictGatherMotion = true;
 	}
 
     motionstate->tupleheapReady = false;
@@ -1212,6 +1243,7 @@ CdbMergeComparator(void *lhs, void *rhs, void *context)
 
         compare = ApplySortFunction(&sortFunctions[nkey],
                                     cmpFlags[nkey],
+                                    InvalidOid, /* GDPB_91_MERGE_FIXME: collation */
                                     datum1, isnull1,
                                     datum2, isnull2);
         if (compare != 0)
@@ -1504,7 +1536,7 @@ doSendTuple(Motion * motion, MotionState * node, TupleTableSlot *outerTupleSlot)
  * provided there is only one outer tuple.)
  */
 void
-ExecReScanMotion(MotionState *node, ExprContext *exprCtxt)
+ExecReScanMotion(MotionState *node)
 {
 	if (node->mstype != MOTIONSTATE_RECV ||
 					node->numTuplesToParent != 0)

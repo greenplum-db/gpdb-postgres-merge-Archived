@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.27 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/ecpglib/error.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -335,8 +335,8 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 		sqlca->sqlcode = ECPG_PGSQL;
 
 	/* %.*s is safe here as long as sqlstate is all-ASCII */
-	ecpg_log("raising sqlstate %.*s (sqlcode %d): %s\n",
-			 sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, sqlca->sqlerrm.sqlerrmc);
+	ecpg_log("raising sqlstate %.*s (sqlcode %ld): %s\n",
+			 (int) sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();

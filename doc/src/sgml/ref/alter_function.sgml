@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.19 2010/04/03 07:22:56 petere Exp $
+doc/src/sgml/ref/alter_function.sgml
 PostgreSQL documentation
 -->
 
@@ -13,8 +13,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>ALTER FUNCTION</refname>
   <refpurpose>change the definition of a function</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-alterfunction">
   <primary>ALTER FUNCTION</primary>
  </indexterm>
@@ -33,7 +33,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
     CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
-    IMMUTABLE | STABLE | VOLATILE
+    IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     | EXECUTE ON { ANY | MASTER | ALL SEGMENTS }
     COST <replaceable class="parameter">execution_cost</replaceable>
@@ -44,7 +44,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     RESET ALL
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -64,7 +64,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
    However, a superuser can alter ownership of any function anyway.)
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -113,7 +113,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
 
     <listitem>
      <para>
-      The data type(s) of the function's arguments (optionally 
+      The data type(s) of the function's arguments (optionally
       schema-qualified), if any.
      </para>
     </listitem>
@@ -154,8 +154,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
      <term><literal>STRICT</literal></term>
 
      <listitem>
-      <para>
-       <literal>CALLED ON NULL INPUT</literal> changes the function so
+      <para><literal>CALLED ON NULL INPUT</literal> changes the function so
        that it will be invoked when some or all of its arguments are
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> changes the function so that it is not
@@ -194,6 +193,20 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
    </varlistentry>
 
    <varlistentry>
+<<<<<<< HEAD
+=======
+    <term><literal>LEAKPROOF</literal></term>
+    <listitem>
+     <para>
+      Change whether the function is considered leakproof or not.
+      See <xref linkend="sql-createfunction"> for more information about
+      this capability.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    <varlistentry>
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
      <term><literal>COST</literal> <replaceable class="parameter">execution_cost</replaceable></term>
 
      <listitem>

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pg_archivecleanup/pg_archivecleanup.c,v 1.3 2010/07/06 19:18:55 momjian Exp $
+ * contrib/pg_archivecleanup/pg_archivecleanup.c
  *
  * pg_archivecleanup.c
  *
@@ -18,15 +18,15 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#ifdef WIN32
-int			getopt(int argc, char *const argv[], const char *optstring);
-#else
+#ifndef WIN32
 #include <sys/time.h>
 #include <unistd.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#else							/* WIN32 */
+extern int	getopt(int argc, char *const argv[], const char *optstring);
 #endif   /* ! WIN32 */
 
 extern char *optarg;
@@ -36,6 +36,8 @@ const char *progname;
 
 /* Options and defaults */
 bool		debug = false;		/* are we debugging? */
+bool		dryrun = false;		/* are we performing a dry-run operation? */
+char	   *additional_ext = NULL;		/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
@@ -83,10 +85,26 @@ Initialize(void)
 	if (stat(archiveLocation, &stat_buf) != 0 ||
 		!S_ISDIR(stat_buf.st_mode))
 	{
-		fprintf(stderr, "%s: archiveLocation \"%s\" does not exist\n",
+		fprintf(stderr, "%s: archive location \"%s\" does not exist\n",
 				progname, archiveLocation);
 		exit(2);
 	}
+}
+
+static void
+TrimExtension(char *filename, char *extension)
+{
+	int			flen;
+	int			elen;
+
+	if (extension == NULL)
+		return;
+
+	elen = strlen(extension);
+	flen = strlen(filename);
+
+	if (flen > elen && strcmp(filename + flen - elen, extension) == 0)
+		filename[flen - elen] = '\0';
 }
 
 static void
@@ -95,11 +113,15 @@ CleanupPriorWALFiles(void)
 	int			rc;
 	DIR		   *xldir;
 	struct dirent *xlde;
+	char		walfile[MAXPGPATH];
 
 	if ((xldir = opendir(archiveLocation)) != NULL)
 	{
 		while ((xlde = readdir(xldir)) != NULL)
 		{
+			strncpy(walfile, xlde->d_name, MAXPGPATH);
+			TrimExtension(walfile, additional_ext);
+
 			/*
 			 * We ignore the timeline part of the XLOG segment identifiers in
 			 * deciding whether a segment is still needed.	This ensures that
@@ -113,15 +135,32 @@ CleanupPriorWALFiles(void)
 			 * file. Note that this means files are not removed in the order
 			 * they were originally written, in case this worries you.
 			 */
-			if (strlen(xlde->d_name) == XLOG_DATA_FNAME_LEN &&
-			strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
-				strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
+			if (strlen(walfile) == XLOG_DATA_FNAME_LEN &&
+				strspn(walfile, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
+				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
-#ifdef WIN32
-				snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
-#else
-				snprintf(WALFilePath, MAXPGPATH, "%s/%s", archiveLocation, xlde->d_name);
-#endif
+				/*
+				 * Use the original file name again now, including any
+				 * extension that might have been chopped off before testing
+				 * the sequence.
+				 */
+				snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+						 archiveLocation, xlde->d_name);
+
+				if (dryrun)
+				{
+					/*
+					 * Prints the name of the file to be removed and skips the
+					 * actual removal.	The regular printout is so that the
+					 * user can pipe the output into some other program.
+					 */
+					printf("%s\n", WALFilePath);
+					if (debug)
+						fprintf(stderr,
+								"%s: file \"%s\" would be removed\n",
+								progname, WALFilePath);
+					continue;
+				}
 
 				if (debug)
 					fprintf(stderr, "%s: removing file \"%s\"\n",
@@ -139,7 +178,7 @@ CleanupPriorWALFiles(void)
 		closedir(xldir);
 	}
 	else
-		fprintf(stderr, "%s: could not open archiveLocation \"%s\": %s\n",
+		fprintf(stderr, "%s: could not open archive location \"%s\": %s\n",
 				progname, archiveLocation, strerror(errno));
 }
 
@@ -153,6 +192,8 @@ static void
 SetWALFileNameForCleanup(void)
 {
 	bool		fnameOK = false;
+
+	TrimExtension(restartWALFileName, additional_ext);
 
 	/*
 	 * If restartWALFileName is a WAL file name then just use it directly. If
@@ -207,19 +248,21 @@ usage(void)
 	printf("%s removes older WAL files from PostgreSQL archives.\n\n", progname);
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
+	printf("\nOptions:\n");
+	printf("  -d         generate debug output (verbose mode)\n");
+	printf("  -n         dry run, show the names of the files that would be removed\n");
+	printf("  -x EXT     clean up files if they have this extension\n");
+	printf("  --help     show this help, then exit\n");
+	printf("  --version  output version information, then exit\n");
 	printf("\n"
-		   "for use as an archive_cleanup_command in the recovery.conf when standby_mode = on:\n"
+		   "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
 		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 		   "e.g.\n"
 		   "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n");
 	printf("\n"
-		   "or for use as a standalone archive cleaner:\n"
+		   "Or for use as a standalone archive cleaner:\n"
 		   "e.g.\n"
 		   "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n");
-	printf("\nOptions:\n");
-	printf("  -d                 generates debug output (verbose mode)\n");
-	printf("  --help             show this help, then exit\n");
-	printf("  --version          output version information, then exit\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
@@ -245,12 +288,19 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt(argc, argv, "d")) != -1)
+	while ((c = getopt(argc, argv, "x:dn")) != -1)
 	{
 		switch (c)
 		{
 			case 'd':			/* Debug mode */
 				debug = true;
+				break;
+			case 'n':			/* Dry-Run mode */
+				dryrun = true;
+				break;
+			case 'x':
+				additional_ext = optarg;		/* Extension to remove from
+												 * xlogfile names */
 				break;
 			default:
 				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
@@ -308,8 +358,12 @@ main(int argc, char **argv)
 	SetWALFileNameForCleanup();
 
 	if (debug)
+	{
+		snprintf(WALFilePath, MAXPGPATH, "%s/%s",
+				 archiveLocation, exclusiveCleanupFileName);
 		fprintf(stderr, "%s: keep WAL file \"%s\" and later\n",
-				progname, exclusiveCleanupFileName);
+				progname, WALFilePath);
+	}
 
 	/*
 	 * Remove WAL files older than cut-off

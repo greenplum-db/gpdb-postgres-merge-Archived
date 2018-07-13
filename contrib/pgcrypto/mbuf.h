@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/mbuf.h,v 1.3 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/mbuf.h
  */
 
 #ifndef __PX_MBUF_H
@@ -77,7 +77,7 @@ struct PullFilterOps
  * Memory buffer
  */
 MBuf	   *mbuf_create(int len);
-MBuf	   *mbuf_create_from_data(const uint8 *data, int len);
+MBuf	   *mbuf_create_from_data(uint8 *data, int len);
 int			mbuf_tell(MBuf *mbuf);
 int			mbuf_avail(MBuf *mbuf);
 int			mbuf_size(MBuf *mbuf);

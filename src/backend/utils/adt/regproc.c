@@ -8,12 +8,12 @@
  * special I/O conversion routines.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.113 2010/02/14 18:42:16 rhaas Exp $
+ *	  src/backend/utils/adt/regproc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -819,7 +819,8 @@ regclassin(PG_FUNCTION_ARGS)
 	 */
 	names = stringToQualifiedNameList(class_name_or_oid);
 
-	result = RangeVarGetRelid(makeRangeVarFromNameList(names), false);
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, false);
 
 	PG_RETURN_OID(result);
 }
@@ -1091,7 +1092,7 @@ regconfigin(PG_FUNCTION_ARGS)
 	 */
 	names = stringToQualifiedNameList(cfg_name_or_oid);
 
-	result = TSConfigGetCfgid(names, false);
+	result = get_ts_config_oid(names, false);
 
 	PG_RETURN_OID(result);
 }
@@ -1201,7 +1202,7 @@ regdictionaryin(PG_FUNCTION_ARGS)
 	 */
 	names = stringToQualifiedNameList(dict_name_or_oid);
 
-	result = TSDictionaryGetDictid(names, false);
+	result = get_ts_dict_oid(names, false);
 
 	PG_RETURN_OID(result);
 }
@@ -1289,7 +1290,9 @@ text_regclass(PG_FUNCTION_ARGS)
 	RangeVar   *rv;
 
 	rv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	result = RangeVarGetRelid(rv, false);
+
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = RangeVarGetRelid(rv, NoLock, false);
 
 	PG_RETURN_OID(result);
 }

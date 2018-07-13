@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.6 2010/04/03 07:23:00 petere Exp $
+doc/src/sgml/ref/discard.sgml
 PostgreSQL documentation
 -->
 
@@ -83,8 +83,7 @@ UNLISTEN *;
 SELECT pg_advisory_unlock_all();
 DISCARD PLANS;
 DISCARD TEMP;
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 

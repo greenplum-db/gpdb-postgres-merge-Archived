@@ -192,8 +192,13 @@ ifneq (false, ${PG_LANG})
 ifeq ($(BLD_ARCH), sles11_x86_64)
 CONFIGFLAGS+= --with-python
 else
+ifeq ($(BLD_ARCH),win32)
+# GPDB_91_MERGE_FIXME: Our MinGW environment doesn't currently include Python.
+CONFIGFLAGS+= --with-perl
+else
 CONFIGFLAGS+= --with-perl --with-python
-endif   # ifdef sles11
+endif   # win32
+endif   # sles11_x86_64
 ifdef TCL_CFG
 CONFIGFLAGS+= --with-tcl-config=${TCL_CFG}
 endif
@@ -360,6 +365,7 @@ define BUILD_STEPS
 	rm -rf $(INSTLOC)
 	cd $(BUILDDIR)/gpMgmt/ && $(MAKE) generate_greenplum_path_file
 	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/parser/gram.h
+	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/utils/errcodes.h
 	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/utils/fmgroids.h
 	cd $(BUILDDIR)/src/include/ && $(MAKE) install
 	cd $(BUILDDIR)/src/interfaces/libpq/ && $(MAKE) install
@@ -390,6 +396,7 @@ define BUILD_STEPS
 	fi
 	cd $(BUILDDIR)/gpMgmt/ && $(MAKE) generate_greenplum_path_file
 	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/parser/gram.h
+	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/utils/errcodes.h
 	cd $(BUILDDIR)/src/backend/ && $(MAKE) ../../src/include/utils/fmgroids.h
 	cd $(BUILDDIR)/src/port/ && $(MAKE) install
 	cd $(BUILDDIR)/src/bin/scripts/ && $(MAKE) install
@@ -555,9 +562,8 @@ define tmpCLIENT_SQLDOCS
 endef
 CLIENT_SQLDOCS = $(strip $(tmpCLIENT_SQLDOCS))
 
+# FIXME: put back pg_dump and pg_dumpall as soon as they compile
 define tmpCLIENT_FILESET
-	pg_dump$(EXE_EXT)
-	pg_dumpall$(EXE_EXT)
 	psql$(EXE_EXT)
 endef
 ifeq "$(findstring rhel,$(BLD_ARCH))" "rhel"
@@ -656,7 +662,9 @@ VERSION:=$(shell [ -f ../VERSION ] && perl -pe 's, ,-,g' ../VERSION)
 VERSION_SHORT:=$(shell [ -f ../VERSION ] && perl -pe 's, .*,,g' ../VERSION)
 
 ifeq "$(findstring win,$(BLD_ARCH))" "win"
+ifeq "$(findstring $(MAKECMDGOALS),sync_tools)" ""
 BLD_PACKAGING_PID:=$(shell ssh $(WIX_PACKAGER) 'echo $$$$')
+endif
 endif
 
 clients :
@@ -890,7 +898,7 @@ ifeq "$(shell uname -s)" "Darwin"
 	echo "pgbouncer can't build on Mac"
 else
 	@if [ ! -f extensions/pgbouncer/source/configure ]; then cd extensions/pgbouncer/source && ./autogen.sh ;fi
-	@cd extensions/pgbouncer/source && ./configure --with-libevent=$(BLD_TOP)/ext/$(BLD_ARCH) --prefix=$(INSTLOC) --enable-evdns
+	@cd extensions/pgbouncer/source && ./configure --with-libevent=$(BLD_TOP)/ext/$(BLD_ARCH) --prefix=$(INSTLOC) --enable-evdns --with-pam
 	$(MAKE) -C extensions/pgbouncer/source install
 endif
 

@@ -4,12 +4,12 @@
  * nodeSeqscan.c
  *	  Support routines for sequential scans of relations.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.70 2010/02/26 02:00:42 momjian Exp $
+ *	  src/backend/executor/nodeSeqscan.c
  *
  *-------------------------------------------------------------------------
  */
@@ -19,16 +19,16 @@
  *		ExecSeqNext				retrieve next tuple in sequential order.
  *		ExecInitSeqScan			creates and initializes a seqscan node.
  *		ExecEndSeqScan			releases any storage allocated.
- *		ExecSeqReScan			rescans the relation
+ *		ExecReScanSeqScan		rescans the relation
  *		ExecSeqMarkPos			marks scan position
  *		ExecSeqRestrPos			restores scan position
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/relscan.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSeqscan.h"
+#include "utils/rel.h"
 
 static void InitScanRelation(SeqScanState *node, EState *estate);
 static TupleTableSlot *SeqNext(SeqScanState *node);
@@ -256,13 +256,13 @@ ExecEndSeqScan(SeqScanState *node)
  */
 
 /* ----------------------------------------------------------------
- *		ExecSeqReScan
+ *		ExecReScanSeqScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
+ExecReScanSeqScan(SeqScanState *node)
 {
 	HeapScanDesc scan;
 

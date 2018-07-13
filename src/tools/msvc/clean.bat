@@ -10,8 +10,12 @@ if exist ..\msvc if exist ..\..\..\src cd ..\..\..
 if exist debug rd /s /q debug
 if exist release rd /s /q release
 for %%f in (*.vcproj) do del %%f
+for %%f in (*.vcxproj) do del %%f
+for %%f in (*.vcxproj.user) do del %%f
 if exist pgsql.sln del /q pgsql.sln
 if exist pgsql.sln.cache del /q pgsql.sln.cache
+if exist pgsql.sdf del /q pgsql.sdf
+if exist pgsql.suo del /q /a:H pgsql.suo
 del /s /q src\bin\win32ver.rc 2> NUL
 del /s /q src\interfaces\win32ver.rc 2> NUL
 if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
@@ -20,6 +24,7 @@ REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
 if exist src\include\pg_config_os.h del /q src\include\pg_config_os.h
 if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
+if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 

@@ -7,9 +7,9 @@
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.49 2010/06/15 07:52:11 itagaki Exp $
+ *	  src/include/utils/guc_tables.h
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ enum config_type
 	PGC_ENUM
 };
 
-union config_var_value
+union config_var_val
 {
 	bool		boolval;
 	int			intval;
@@ -38,6 +38,16 @@ union config_var_value
 	char	   *stringval;
 	int			enumval;
 };
+
+/*
+ * The actual value of a GUC variable can include a malloc'd opaque struct
+ * "extra", which is created by its check_hook and used by its assign_hook.
+ */
+typedef struct config_var_value
+{
+	union config_var_val val;
+	void	   *extra;
+} config_var_value;
 
 /*
  * Groupings to help organize all the run-time options for display
@@ -57,6 +67,7 @@ enum config_group
 	APPENDONLY_TABLES,                  /*CDB*/
 	RESOURCES,
 	RESOURCES_MEM,
+	RESOURCES_DISK,
 	RESOURCES_KERNEL,
 	RESOURCES_VACUUM_DELAY,
 	RESOURCES_BGWRITER,
@@ -66,8 +77,10 @@ enum config_group
 	WAL_SETTINGS,
 	WAL_CHECKPOINTS,
 	WAL_ARCHIVING,
-	WAL_REPLICATION,
-	WAL_STANDBY_SERVERS,
+	REPLICATION,
+	REPLICATION_SENDING,
+	REPLICATION_MASTER,
+	REPLICATION_STANDBY,
 	QUERY_TUNING,
 	QUERY_TUNING_METHOD,
 	QUERY_TUNING_COST,
@@ -94,6 +107,7 @@ enum config_group
 	COMPAT_OPTIONS_PREVIOUS,
 	COMPAT_OPTIONS_CLIENT,
     COMPAT_OPTIONS_IGNORED,             /*CDB*/
+	ERROR_HANDLING_OPTIONS,
     GP_ARRAY_CONFIGURATION,            /*CDB*/
     GP_ARRAY_TUNING,                   /*CDB*/
 
@@ -143,9 +157,11 @@ typedef struct guc_stack
 	int			nest_level;		/* nesting depth at which we made entry */
 	GucStackState state;		/* see enum above */
 	GucSource	source;			/* source of the prior value */
-	union config_var_value prior;		/* previous value of variable */
-	union config_var_value masked;		/* SET value in a GUC_SET_LOCAL entry */
 	/* masked value's source must be PGC_S_SESSION, so no need to store it */
+	GucContext	scontext;		/* context that set the prior value */
+	GucContext	masked_scontext;	/* context that set the masked value */
+	config_var_value prior;		/* previous value of variable */
+	config_var_value masked;	/* SET value in a GUC_SET_LOCAL entry */
 } GucStack;
 
 /*
@@ -154,6 +170,11 @@ typedef struct guc_stack
  * The short description should be less than 80 chars in length. Some
  * applications may use the long description as well, and will append
  * it to the short description. (separated by a newline or '. ')
+ *
+ * Note that sourcefile/sourceline are kept here, and not pushed into stacked
+ * values, although in principle they belong with some stacked value if the
+ * active value is session- or transaction-local.  This is to avoid bloating
+ * stack entries.  We know they are only relevant when source == PGC_S_FILE.
  */
 struct config_generic
 {
@@ -163,15 +184,18 @@ struct config_generic
 	enum config_group group;	/* to help organize variables by function */
 	const char *short_desc;		/* short desc. of this variable's purpose */
 	const char *long_desc;		/* long desc. of this variable's purpose */
-	int			flags;			/* flag bits, see below */
+	int			flags;			/* flag bits, see guc.h */
 	/* variable fields, initialized at runtime: */
 	enum config_type vartype;	/* type of variable (set only at startup) */
 	int			status;			/* status bits, see below */
-	GucSource	reset_source;	/* source of the reset_value */
 	GucSource	source;			/* source of the current actual value */
+	GucSource	reset_source;	/* source of the reset_value */
+	GucContext	scontext;		/* context that set the current value */
+	GucContext	reset_scontext; /* context that set the reset value */
 	GucStack   *stack;			/* stacked prior values */
-	char	   *sourcefile;		/* file this settings is from (NULL if not
-								 * file) */
+	void	   *extra;			/* "extra" pointer for current actual value */
+	char	   *sourcefile;		/* file current setting is from (NULL if not
+								 * set in config file) */
 	int			sourceline;		/* line in source file */
 };
 
@@ -206,10 +230,12 @@ struct config_bool
 	/* constant fields, must be set correctly in initial value: */
 	bool	   *variable;
 	bool		boot_val;
+	GucBoolCheckHook check_hook;
 	GucBoolAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	bool		reset_val;
+	void	   *reset_extra;
 };
 
 struct config_int
@@ -220,10 +246,12 @@ struct config_int
 	int			boot_val;
 	int			min;
 	int			max;
+	GucIntCheckHook check_hook;
 	GucIntAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
+	void	   *reset_extra;
 };
 
 struct config_real
@@ -234,10 +262,12 @@ struct config_real
 	double		boot_val;
 	double		min;
 	double		max;
+	GucRealCheckHook check_hook;
 	GucRealAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	double		reset_val;
+	void	   *reset_extra;
 };
 
 struct config_string
@@ -246,10 +276,12 @@ struct config_string
 	/* constant fields, must be set correctly in initial value: */
 	char	  **variable;
 	const char *boot_val;
+	GucStringCheckHook check_hook;
 	GucStringAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
+	void	   *reset_extra;
 };
 
 struct config_enum
@@ -259,10 +291,12 @@ struct config_enum
 	int		   *variable;
 	int			boot_val;
 	const struct config_enum_entry *options;
+	GucEnumCheckHook check_hook;
 	GucEnumAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
+	void	   *reset_extra;
 };
 
 /* constant tables corresponding to enums above and in guc.h */

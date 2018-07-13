@@ -39,10 +39,10 @@
  * anything we saw during replay.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.35 2010/02/26 02:00:34 momjian Exp $
+ * src/backend/access/transam/multixact.c
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,6 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-#include "storage/backendid.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
@@ -173,7 +172,7 @@ static MultiXactId *OldestVisibleMXactId;
  * Definitions for the backend-local MultiXactId cache.
  *
  * We use this cache to store known MultiXacts, so we don't need to go to
- * SLRU areas everytime.
+ * SLRU areas every time.
  *
  * The cache lasts for the duration of a single transaction, the rationale
  * for this being that most entries will contain our own TransactionId and
@@ -1453,7 +1452,7 @@ BootStrapMultiXact(void)
 	slotno = ZeroMultiXactOffsetPage(0, false);
 
 	/* Make sure it's written out */
-	SimpleLruWritePage(MultiXactOffsetCtl, slotno, NULL);
+	SimpleLruWritePage(MultiXactOffsetCtl, slotno);
 	Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(MultiXactOffsetControlLock);
@@ -1464,7 +1463,7 @@ BootStrapMultiXact(void)
 	slotno = ZeroMultiXactMemberPage(0, false);
 
 	/* Make sure it's written out */
-	SimpleLruWritePage(MultiXactMemberCtl, slotno, NULL);
+	SimpleLruWritePage(MultiXactMemberCtl, slotno);
 	Assert(!MultiXactMemberCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(MultiXactMemberControlLock);
@@ -1567,7 +1566,7 @@ StartupMultiXact(void)
 
 	/*
 	 * Zero out the remainder of the current members page.	See notes in
-	 * StartupCLOG() for motivation.
+	 * TrimCLOG() for motivation.
 	 */
 	entryno = MXOffsetToMemberEntry(offset);
 	if (entryno != 0)
@@ -1656,8 +1655,9 @@ CheckPointMultiXact(void)
  * Set the next-to-be-assigned MultiXactId and offset
  *
  * This is used when we can determine the correct next ID/offset exactly
- * from a checkpoint record.  We need no locking since it is only called
- * during bootstrap and XLog replay.
+ * from a checkpoint record.  Although this is only called during bootstrap
+ * and XLog replay, we take the lock in case any hot-standby backends are
+ * examining the values.
  */
 void
 MultiXactSetNextMXact(MultiXactId nextMulti,
@@ -1665,8 +1665,10 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
 {
 	debug_elog4(DEBUG2, "MultiXact: setting next multi to %u offset %u",
 				nextMulti, nextMultiOffset);
+	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	MultiXactState->nextMXact = nextMulti;
 	MultiXactState->nextOffset = nextMultiOffset;
+	LWLockRelease(MultiXactGenLock);
 }
 
 /*
@@ -1675,12 +1677,14 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
  *
  * This is used when we can determine minimum safe values from an XLog
  * record (either an on-line checkpoint or an mxact creation log entry).
- * We need no locking since it is only called during XLog replay.
+ * Although this is only called during XLog replay, we take the lock in case
+ * any hot-standby backends are examining the values.
  */
 void
 MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset)
 {
+	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	if (MultiXactIdPrecedes(MultiXactState->nextMXact, minMulti))
 	{
 		debug_elog3(DEBUG2, "MultiXact: setting next multi to %u", minMulti);
@@ -1692,6 +1696,7 @@ MultiXactAdvanceNextMXact(MultiXactId minMulti,
 					minMultiOffset);
 		MultiXactState->nextOffset = minMultiOffset;
 	}
+	LWLockRelease(MultiXactGenLock);
 }
 
 /*
@@ -1986,7 +1991,7 @@ multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __att
 		LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
 
 		slotno = ZeroMultiXactOffsetPage(pageno, false);
-		SimpleLruWritePage(MultiXactOffsetCtl, slotno, NULL);
+		SimpleLruWritePage(MultiXactOffsetCtl, slotno);
 		Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(MultiXactOffsetControlLock);
@@ -2001,7 +2006,7 @@ multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __att
 		LWLockAcquire(MultiXactMemberControlLock, LW_EXCLUSIVE);
 
 		slotno = ZeroMultiXactMemberPage(pageno, false);
-		SimpleLruWritePage(MultiXactMemberCtl, slotno, NULL);
+		SimpleLruWritePage(MultiXactMemberCtl, slotno);
 		Assert(!MultiXactMemberCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(MultiXactMemberControlLock);
@@ -2050,7 +2055,7 @@ multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __att
 }
 
 void
-multixact_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+multixact_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

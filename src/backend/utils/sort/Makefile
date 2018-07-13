@@ -4,7 +4,7 @@
 #    Makefile for utils/sort
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/sort/Makefile,v 1.15 2008/02/19 10:30:09 petere Exp $
+#    src/backend/utils/sort/Makefile
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,16 @@ subdir = src/backend/utils/sort
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = logtape.o tuplesort.o tuplestore.o tuplestorenew.o tuplesort_mk.o tuplesort_mkheap.o tuplesort_mkqsort.o
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
+
+OBJS = logtape.o sortsupport.o tuplesort.o tuplestore.o tuplestorenew.o tuplesort_mk.o tuplesort_mkheap.o tuplesort_mkqsort.o
+
+tuplesort.o: qsort_tuple.c
+
+qsort_tuple.c: gen_qsort_tuple.pl
+	$(PERL) $(srcdir)/gen_qsort_tuple.pl $< > $@
 
 include $(top_srcdir)/src/backend/common.mk
+
+maintainer-clean:
+	rm -f qsort_tuple.c

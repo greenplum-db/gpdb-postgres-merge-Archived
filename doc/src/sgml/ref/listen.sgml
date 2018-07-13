@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/listen.sgml,v 1.25 2010/04/03 07:23:01 petere Exp $
+doc/src/sgml/ref/listen.sgml
 PostgreSQL documentation
 -->
 
@@ -113,8 +113,7 @@ LISTEN <replaceable class="PARAMETER">channel</replaceable>
 LISTEN virtual;
 NOTIFY virtual;
 Asynchronous notification "virtual" received from server process with PID 8448.
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

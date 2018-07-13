@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.52 2010/02/22 22:30:10 momjian Exp $
+doc/src/sgml/ref/postgres-ref.sgml
 PostgreSQL documentation
 -->
 
@@ -66,9 +66,9 @@ PostgreSQL documentation
    The <command>postgres</command> command can also be called in
    single-user mode.  The primary use for this mode is during
    bootstrapping by <xref linkend="app-initdb">.  Sometimes it is used
-   for debugging or disaster recovery (but note that running a single-user
+   for debugging or disaster recovery;  note that running a single-user
    server is not truly suitable for debugging the server, since no
-   realistic interprocess communication and locking will happen).
+   realistic interprocess communication and locking will happen.
    When invoked in single-user
    mode from the shell, the user can enter queries and the results
    will be printed to the screen, but in a form that is more useful
@@ -99,7 +99,7 @@ PostgreSQL documentation
 
    <refsect2>
     <title>General Purpose</title>
-    
+
     <variablelist>
      <varlistentry>
       <term><option>-A 0|1</option></term>
@@ -136,6 +136,27 @@ PostgreSQL documentation
         other command line options are in fact short forms of such a
         parameter assignment.  <option>-c</> can appear multiple times
         to set multiple parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-C <replaceable>name</replaceable></option></term>
+      <listitem>
+       <para>
+        Prints the value of the named run-time parameter, and exits.
+        (See the <option>-c</> option above for details.)  This can
+        be used on a running server, and returns values from
+        <filename>postgresql.conf</>, modified by any parameters
+        supplied in this invocation.  It does not reflect parameters
+        supplied when the cluster was started.
+       </para>
+
+       <para>
+        This option is meant for other programs that interact with a server
+        instance, such as <xref linkend="app-pg-ctl">, to query configuration
+        parameter values.  User-facing applications should instead use <xref
+        linkend="sql-show"> or the <structname>pg_settings</structname> view.
        </para>
       </listitem>
      </varlistentry>
@@ -338,7 +359,7 @@ PostgreSQL documentation
       <term><option>--describe-config</option></term>
       <listitem>
        <para>
-        This option dumps out the server's internal configuration variables, 
+        This option dumps out the server's internal configuration variables,
         descriptions, and defaults in tab-delimited <command>COPY</> format.
         It is designed primarily for use by administration tools.
        </para>
@@ -362,16 +383,19 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
+      <term><option>-f</option> <literal>{ s | i | o | b | t | n | m | h }</literal></term>
       <listitem>
        <para>
         Forbids the use of particular scan and join methods:
         <literal>s</literal> and <literal>i</literal>
-        disable sequential and index scans respectively, while
+        disable sequential and index scans respectively,
+        <literal>o</literal>, <literal>b</literal> and <literal>t</literal>
+        disable index-only scans, bitmap index scans, and TID scans
+        respectively, while
         <literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
         disable nested-loop, merge and hash joins respectively.
        </para>
-        
+
        <para>
         Neither sequential scans nor nested-loop joins can be disabled
         completely; the <literal>-fs</literal> and
@@ -413,8 +437,8 @@ PostgreSQL documentation
       <term><option>-P</option></term>
       <listitem>
        <para>
-        Ignore system indexes when reading system tables (but still update
-        the indexes when modifying the tables).  This is useful when
+        Ignore system indexes when reading system tables, but still update
+        the indexes when modifying the tables.  This is useful when
         recovering from damaged system indexes.
        </para>
       </listitem>
@@ -476,7 +500,7 @@ PostgreSQL documentation
    </refsect2>
 
    <refsect2>
-    <title>Options for single-user mode</title>
+    <title>Options for Single-User Mode</title>
 
     <para>
      The following options only apply to the single-user mode.
@@ -651,7 +675,7 @@ PostgreSQL documentation
    start and shut down the <command>postgres</command> server
    safely and comfortably.
   </para>
-  
+
   <para>
    If at all possible, <emphasis>do not</emphasis> use
    <literal>SIGKILL</literal> to kill the main
@@ -746,6 +770,9 @@ PostgreSQL documentation
    <para>
     Note that the single-user mode server does not provide sophisticated
     line-editing features (no command history, for example).
+    Single-User mode also does not do any background processing, like
+    automatic checkpoints.
+
    </para>
  </refsect1>
 
@@ -763,13 +790,11 @@ PostgreSQL documentation
 
   <para>
    To start <command>postgres</command> with a specific
-   port:
+   port, e.g. 1234:
 <screen>
 <prompt>$</prompt> <userinput>postgres -p 1234</userinput>
 </screen>
-   This command will start up <command>postgres</command>
-   communicating through the port 1234. In order to connect to this
-   server using <application>psql</>, you would need to run it as
+   To connect to this server using <application>psql</>, specify this port with the -p option:
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>
 </screen>

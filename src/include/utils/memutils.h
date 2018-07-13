@@ -9,10 +9,10 @@
  *
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/memutils.h,v 1.66 2010/01/02 16:58:10 momjian Exp $
+ * src/include/utils/memutils.h
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,9 @@
  *		be summarily denied.
  *
  * XXX This is deliberately chosen to correspond to the limiting size
- * of varlena objects under TOAST.	See VARATT_MASK_SIZE in postgres.h.
+ * of varlena objects under TOAST.	See VARSIZE_4B() and related macros
+ * in postgres.h.  Many datatypes assume that any allocatable size can
+ * be represented in a varlena header.
  *
  * XXX Also, various places in aset.c assume they can compute twice an
  * allocation's size without overflow, so beware of raising this.
@@ -132,11 +134,11 @@ typedef struct AllocChunkData *AllocChunk;
 /*
  * AllocSetContext is our standard implementation of MemoryContext.
  *
- * Note: isReset means there is nothing for AllocSetReset to do.  This is
- * different from the aset being physically empty (empty blocks list) because
- * we may still have a keeper block.  It's also different from the set being
- * logically empty, because we don't attempt to detect pfree'ing the last
- * active chunk.
+ * Note: header.isReset means there is nothing for AllocSetReset to do.
+ * This is different from the aset being physically empty (empty blocks list)
+ * because we may still have a keeper block.  It's also different from the set
+ * being logically empty, because we don't attempt to detect pfree'ing the
+ * last active chunk.
  */
 typedef struct AllocSetContext
 {
@@ -144,7 +146,6 @@ typedef struct AllocSetContext
 	/* Info about storage allocated in this context: */
 	AllocBlock	blocks;			/* head of list of blocks in this set */
 	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
-	bool		isReset;		/* T = no space alloced since last reset */
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
@@ -198,8 +199,11 @@ extern void MemoryContextReset(MemoryContext context);
 extern void MemoryContextResetChildren(MemoryContext context);
 extern void MemoryContextDeleteChildren(MemoryContext context);
 extern void MemoryContextResetAndDeleteChildren(MemoryContext context);
+extern void MemoryContextSetParent(MemoryContext context,
+					   MemoryContext new_parent);
 extern Size GetMemoryChunkSpace(void *pointer);
 extern MemoryContext GetMemoryChunkContext(void *pointer);
+extern MemoryContext MemoryContextGetParent(MemoryContext context);
 extern bool MemoryContextIsEmpty(MemoryContext context);
 
 /* Statistics */
@@ -232,7 +236,8 @@ __declspec(noreturn)
 extern void MemoryContextError(int errorcode, MemoryContext context,
                                const char *sfile, int sline,
                                const char *fmt, ...)
-                              __attribute__((__noreturn__));
+                              __attribute__((__noreturn__))
+                              __attribute__((format(PG_PRINTF_ATTRIBUTE, 5, 6)));
 
 /*
  * This routine handles the context-type-independent part of memory

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user_mapping.sgml,v 1.5 2010/04/03 07:22:57 petere Exp $
+doc/src/sgml/ref/alter_user_mapping.sgml
 PostgreSQL documentation
 -->
 
@@ -92,8 +92,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> 
    Change the password for user mapping <literal>bob</>, server<literal> foo</>:
 <programlisting>
 ALTER USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'public');
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

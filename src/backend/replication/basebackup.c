@@ -30,7 +30,6 @@
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "replication/basebackup.h"
 #include "replication/walsender.h"
@@ -41,6 +40,7 @@
 #include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/memutils.h"
 #include "utils/fmgroids.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
@@ -146,6 +146,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			char		fullpath[MAXPGPATH];
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
+
 			int			rllen;
 
 			/* Skip special stuff */
@@ -189,6 +190,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
+
 			/*
 			 * If the platform does not have symbolic links, it should not be
 			 * possible to have tablespaces - clearly somebody else created
@@ -196,7 +198,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			 */
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("tablespaces are not supported on this platform")));
+				  errmsg("tablespaces are not supported on this platform")));
 #endif
 		}
 
@@ -241,6 +243,22 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			else
 				sendTablespace(ti->path, false);
 
+			/* In the main tar, include pg_control last. */
+			if (ti->path == NULL)
+			{
+				struct stat statbuf;
+
+				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
+				{
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not stat control file \"%s\": %m",
+									XLOG_CONTROL_FILE)));
+				}
+
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
+			}
+
 			/*
 			 * If we're including WAL, and this is the main data directory we
 			 * don't terminate the tar stream here. Instead, we will append
@@ -257,7 +275,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	endptr = do_pg_stop_backup(labelfile);
+	endptr = do_pg_stop_backup(labelfile, !opt->nowait);
 
 	if (opt->includewal)
 	{
@@ -286,18 +304,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		while (true)
 		{
 			/* Send another xlog segment */
-			char		tempfn[MAXPGPATH], fn[MAXPGPATH];
+			char		fn[MAXPGPATH];
 			int			i;
 
-			/*
-			 * XLogFilePath may produce full path as well as relative path.
-			 * Here we are sendin this as part of the last tar file,
-			 * so make sure it is relative path.
-			 */
-			XLogFileName(tempfn, ThisTimeLineID, logid, logseg);
-			if (snprintf(fn, MAXPGPATH, "pg_xlog/%s", tempfn) > MAXPGPATH)
-				elog(ERROR, "could not make xlog filename for %s", tempfn);
-
+			XLogFilePath(fn, ThisTimeLineID, logid, logseg);
 			_tarWriteHeader(fn, NULL, &statbuf);
 
 			/* Send the actual WAL file contents, block-by-block */
@@ -325,10 +335,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			elogif(debug_basebackup, LOG,
 				   "basebackup perform -- Sent xlog file %s", fn);
 
-			/*
-			 * Files are always fixed size, and always end on a 512 byte
-			 * boundary, so padding is never necessary.
-			 */
 			/* Advance to the next WAL file */
 			NextLogSeg(logid, logseg);
 
@@ -446,9 +452,18 @@ void
 SendBaseBackup(BaseBackupCmd *cmd)
 {
 	DIR		   *dir;
+	MemoryContext backup_context;
+	MemoryContext old_context;
 	basebackup_options opt;
 
 	parse_basebackup_options(cmd->options, &opt);
+
+	backup_context = AllocSetContextCreate(CurrentMemoryContext,
+										   "Streaming base backup context",
+										   ALLOCSET_DEFAULT_MINSIZE,
+										   ALLOCSET_DEFAULT_INITSIZE,
+										   ALLOCSET_DEFAULT_MAXSIZE);
+	old_context = MemoryContextSwitchTo(backup_context);
 
 	WalSndSetState(WALSNDSTATE_BACKUP);
 
@@ -470,6 +485,9 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	perform_base_backup(&opt, dir);
 
 	FreeDir(dir);
+
+	MemoryContextSwitchTo(old_context);
+	MemoryContextDelete(backup_context);
 }
 
 static void
@@ -780,7 +798,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 * WAL archive anyway. But include it as an empty directory anyway, so
 		 * we get permissions right.
 		 */
-		if (strcmp(de->d_name, "pg_xlog") == 0)
+		if (strcmp(pathbuf, "./pg_xlog") == 0)
 		{
 			if (!sizeonly)
 			{
@@ -795,6 +813,19 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			}
 			size += 512;		/* Size of the header just added */
 			continue;			/* don't recurse into pg_xlog */
+		}
+
+		/*
+		 * We can skip pg_log because the segment logs should be unique to
+		 * each segment. However, include pg_log as an empty directory because
+		 * it is required to start the segment.
+		 */
+		if (strcmp(pathbuf, "./pg_log") == 0)
+		{
+			if (!sizeonly)
+				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
+
+			continue;
 		}
 
 		/* Skip if client does not want */

@@ -3,11 +3,11 @@
  * tsquery.c
  *	  I/O functions for tsquery
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.22 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery.c
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,9 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "tsearch/ts_locale.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/pg_crc.h"
 
 
 struct TSQueryParserStateData
@@ -571,8 +569,6 @@ Datum
 tsqueryin(PG_FUNCTION_ARGS)
 {
 	char	   *in = PG_GETARG_CSTRING(0);
-
-	pg_verifymbstr(in, strlen(in), false);
 
 	PG_RETURN_TSQUERY(parse_tsquery(in, pushval_asis, PointerGetDatum(NULL), false));
 }

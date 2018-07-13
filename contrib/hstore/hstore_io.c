@@ -1,12 +1,10 @@
 /*
- * $PostgreSQL: pgsql/contrib/hstore/hstore_io.c,v 1.13 2010/02/26 02:00:32 momjian Exp $
+ * contrib/hstore/hstore_io.c
  */
 #include "postgres.h"
 
 #include <ctype.h>
 
-#include "access/heapam.h"
-#include "access/htup.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
@@ -76,7 +74,7 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 			}
 			else if (*(state->ptr) == '=' && !ignoreeq)
 			{
-				elog(ERROR, "Syntax error near '%c' at postion %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
 			}
 			else if (*(state->ptr) == '\\')
 			{
@@ -278,24 +276,25 @@ parse_hstore(HSParser *state)
 static int
 comparePairs(const void *a, const void *b)
 {
-	if (((Pairs *) a)->keylen == ((Pairs *) b)->keylen)
+	const Pairs *pa = a;
+	const Pairs *pb = b;
+
+	if (pa->keylen == pb->keylen)
 	{
-		int			res = strncmp(((Pairs *) a)->key,
-								  ((Pairs *) b)->key,
-								  ((Pairs *) a)->keylen);
+		int			res = memcmp(pa->key, pb->key, pa->keylen);
 
 		if (res)
 			return res;
 
 		/* guarantee that needfree will be later */
-		if (((Pairs *) b)->needfree == ((Pairs *) a)->needfree)
+		if (pb->needfree == pa->needfree)
 			return 0;
-		else if (((Pairs *) a)->needfree)
+		else if (pa->needfree)
 			return 1;
 		else
 			return -1;
 	}
-	return (((Pairs *) a)->keylen > ((Pairs *) b)->keylen) ? 1 : -1;
+	return (pa->keylen > pb->keylen) ? 1 : -1;
 }
 
 /*
@@ -324,7 +323,7 @@ hstoreUniquePairs(Pairs *a, int4 l, int4 *buflen)
 	while (ptr - a < l)
 	{
 		if (ptr->keylen == res->keylen &&
-			strncmp(ptr->key, res->key, res->keylen) == 0)
+			memcmp(ptr->key, res->key, res->keylen) == 0)
 		{
 			if (ptr->needfree)
 			{

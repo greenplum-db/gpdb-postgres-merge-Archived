@@ -4,10 +4,10 @@
  *	  Catalog-to-filenode mapping
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relmapper.h,v 1.2 2010/02/26 02:01:29 momjian Exp $
+ * src/include/utils/relmapper.h
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,6 @@ extern void RelationMapInitializePhase2(void);
 extern void RelationMapInitializePhase3(void);
 
 extern void relmap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void relmap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record);
+extern void relmap_desc(StringInfo buf, XLogRecord *record);
 
 #endif   /* RELMAPPER_H */

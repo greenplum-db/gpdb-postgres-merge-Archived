@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_date.h,v 1.11 2006/10/04 00:30:11 momjian Exp $ */
+/* src/interfaces/ecpg/include/pgtypes_date.h */
 
 #ifndef PGTYPES_DATETIME
 #define PGTYPES_DATETIME
@@ -21,8 +21,8 @@ extern void PGTYPESdate_julmdy(date, int *);
 extern void PGTYPESdate_mdyjul(int *, date *);
 extern int	PGTYPESdate_dayofweek(date);
 extern void PGTYPESdate_today(date *);
-extern int	PGTYPESdate_defmt_asc(date *, char *, char *);
-extern int	PGTYPESdate_fmt_asc(date, char *, char *);
+extern int	PGTYPESdate_defmt_asc(date *, const char *, char *);
+extern int	PGTYPESdate_fmt_asc(date, const char *, char *);
 
 #ifdef __cplusplus
 }

@@ -5,10 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_largeobject.h,v 1.28 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/pg_largeobject.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -32,6 +32,8 @@ CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
 {
 	Oid			loid;			/* Identifier of large object */
 	int4		pageno;			/* Page number (starting from 0) */
+
+	/* data has variable length, but we allow direct access; see inv_api.c */
 	bytea		data;			/* Data for page (may be zero-length) */
 } FormData_pg_largeobject;
 

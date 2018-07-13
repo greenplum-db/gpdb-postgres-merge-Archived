@@ -5,12 +5,12 @@
  *	  commands.  At one time acted as an interface between the Lisp and C
  *	  systems.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.335 2010/02/26 02:01:04 momjian Exp $
+ *	  src/backend/tcop/utility.c
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,10 @@
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/comment.h"
+#include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/copy.h"
+#include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/discard.h"
@@ -44,6 +46,7 @@
 #include "commands/proclang.h"
 #include "commands/resgroupcmds.h"
 #include "commands/schemacmds.h"
+#include "commands/seclabel.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
@@ -85,7 +88,15 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 	Oid			relOid;
 	HeapTuple	tuple;
 
-	relOid = RangeVarGetRelid(rel, false);
+	/*
+	 * XXX: This is unsafe in the presence of concurrent DDL, since it is
+	 * called before acquiring any lock on the target relation.  However,
+	 * locking the target relation (especially using something like
+	 * AccessExclusiveLock) before verifying that the user has permissions is
+	 * not appealing either.
+	 */
+	relOid = RangeVarGetRelid(rel, NoLock, false);
+
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(tuple))		/* should not happen */
 		elog(ERROR, "cache lookup failed for relation %u", relOid);
@@ -127,10 +138,10 @@ CommandIsReadOnly(Node *parsetree)
 		switch (stmt->commandType)
 		{
 			case CMD_SELECT:
-				if (stmt->intoClause != NULL)
-					return false;		/* SELECT INTO */
-				else if (stmt->rowMarks != NIL)
+				if (stmt->rowMarks != NIL)
 					return false;		/* SELECT FOR UPDATE/SHARE */
+				else if (stmt->hasModifyingCTE)
+					return false;		/* data-modifying CTE */
 				else
 					return true;
 			case CMD_UPDATE:
@@ -174,7 +185,7 @@ check_xact_readonly(Node *parsetree)
 
 				createStmt = (CreateStmt *) parsetree;
 
-				if (createStmt->relation->istemp)
+				if (createStmt->relation->relpersistence == RELPERSISTENCE_TEMP)
 					return;		// Permit creation of TEMPORARY tables in read-only mode.
 
 				ereport(ERROR,
@@ -233,9 +244,6 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateResourceGroupStmt:
 		case T_CreateRoleStmt:
 		case T_IndexStmt:
-		case T_CreateExtensionStmt:
-		case T_AlterExtensionStmt:
-		case T_AlterExtensionContentsStmt:
 		case T_CreatePLangStmt:
 		case T_CreateOpClassStmt:
 		case T_CreateOpFamilyStmt:
@@ -244,22 +252,19 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateSchemaStmt:
 		case T_CreateSeqStmt:
 		case T_CreateExternalStmt:
+		case T_CreateTableAsStmt:
 		case T_CreateTableSpaceStmt:
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
 		case T_CreateEnumStmt:
+		case T_CreateRangeStmt:
+		case T_AlterEnumStmt:
 		case T_ViewStmt:
-		case T_DropCastStmt:
 		case T_DropdbStmt:
 		case T_DropTableSpaceStmt:
-		case T_RemoveFuncStmt:
 		case T_DropQueueStmt:
 		case T_DropResourceGroupStmt:
 		case T_DropRoleStmt:
-		case T_DropPLangStmt:
-		case T_RemoveOpClassStmt:
-		case T_RemoveOpFamilyStmt:
-		case T_DropPropertyStmt:
 		case T_GrantStmt:
 		case T_GrantRoleStmt:
 		case T_AlterDefaultPrivilegesStmt:
@@ -268,16 +273,19 @@ check_xact_readonly(Node *parsetree)
 		case T_ReassignOwnedStmt:
 		case T_AlterTSDictionaryStmt:
 		case T_AlterTSConfigurationStmt:
+		case T_CreateExtensionStmt:
+		case T_AlterExtensionStmt:
+		case T_AlterExtensionContentsStmt:
 		case T_CreateFdwStmt:
 		case T_AlterFdwStmt:
-		case T_DropFdwStmt:
 		case T_CreateForeignServerStmt:
 		case T_AlterForeignServerStmt:
-		case T_DropForeignServerStmt:
 		case T_CreateUserMappingStmt:
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
 		case T_AlterTableSpaceOptionsStmt:
+		case T_CreateForeignTableStmt:
+		case T_SecLabelStmt:
 			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
 			break;
 		default:
@@ -438,6 +446,11 @@ standard_ProcessUtility(Node *parsetree,
 												  list_make1(item->arg),
 												  true,
 												  /* gp_dispatch */ false);
+								else if (strcmp(item->defname, "transaction_deferrable") == 0)
+									SetPGVariableOptDispatch("transaction_deferrable",
+												  list_make1(item->arg),
+												  true,
+												  /* gp_dispatch */ false);
 							}
 
 							sendDtxExplicitBegin();
@@ -594,6 +607,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateStmt:
+		case T_CreateForeignTableStmt:
 			{
 				List	   *stmts;
 				ListCell   *l;
@@ -664,7 +678,9 @@ standard_ProcessUtility(Node *parsetree,
 						 * created the toast and other auxiliary tables yet.
 						 */
 						relOid = DefineRelation((CreateStmt *) stmt,
-												relKind, relStorage, false);
+												relKind,
+												((CreateStmt *) stmt)->ownerid,
+												relStorage, false, true);
 
 						/*
 						 * Let AlterTableCreateToastTable decide if this one
@@ -688,7 +704,8 @@ standard_ProcessUtility(Node *parsetree,
 
 							AlterTableCreateToastTable(relOid,
 													   toast_options,
-													   cstmt->is_part_child);
+													   cstmt->is_part_child,
+													   true);
 							AlterTableCreateAoSegTable(relOid,
 													   cstmt->is_part_child);
 
@@ -715,6 +732,18 @@ standard_ProcessUtility(Node *parsetree,
 						 * in the deferred statements cannot see the relfile.
 						 */
 						EvaluateDeferredStatements(cstmt->deferredStmts);
+					}
+					else if (IsA(stmt, CreateForeignTableStmt))
+					{
+						/* Create the table itself */
+						relOid = DefineRelation((CreateStmt *) stmt,
+												RELKIND_FOREIGN_TABLE,
+												((CreateStmt *) stmt)->ownerid,
+												RELSTORAGE_FOREIGN,
+												true,
+												true);
+						CreateForeignTable((CreateForeignTableStmt *) stmt,
+										   relOid);
 					}
 					else
 					{
@@ -802,6 +831,18 @@ standard_ProcessUtility(Node *parsetree,
 			AlterTableSpaceOptions((AlterTableSpaceOptionsStmt *) parsetree);
 			break;
 
+		case T_CreateExtensionStmt:
+			CreateExtension((CreateExtensionStmt *) parsetree);
+			break;
+
+		case T_AlterExtensionStmt:
+			ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree);
+			break;
+
+		case T_AlterExtensionContentsStmt:
+			ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
+			break;
+
 		case T_CreateFdwStmt:
 			CreateForeignDataWrapper((CreateFdwStmt *) parsetree);
 			break;
@@ -810,20 +851,12 @@ standard_ProcessUtility(Node *parsetree,
 			AlterForeignDataWrapper((AlterFdwStmt *) parsetree);
 			break;
 
-		case T_DropFdwStmt:
-			RemoveForeignDataWrapper((DropFdwStmt *) parsetree);
-			break;
-
 		case T_CreateForeignServerStmt:
 			CreateForeignServer((CreateForeignServerStmt *) parsetree);
 			break;
 
 		case T_AlterForeignServerStmt:
 			AlterForeignServer((AlterForeignServerStmt *) parsetree);
-			break;
-
-		case T_DropForeignServerStmt:
-			RemoveForeignServer((DropForeignServerStmt *) parsetree);
 			break;
 
 		case T_CreateUserMappingStmt:
@@ -841,89 +874,46 @@ standard_ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				ListCell   *arg;
-				List	   *objects;
-				bool		if_exists;
+				DropStmt   *copyStmt;
 
-				if_exists = stmt->missing_ok;
-				objects = stmt->objects;
+				/* stmt->objects could be modified (e.g.
+				 * CREATE TABLE test_exists(a int, b int);
+				 * DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;)
+				 * so copy for later use. */
+				copyStmt = copyObject(stmt);
 
 				switch (stmt->removeType)
 				{
+					case OBJECT_INDEX:
+						if (((DropStmt *) parsetree)->concurrent)
+						PreventTransactionChain(isTopLevel,
+											"DROP INDEX CONCURRENTLY");
+						/* fall through */
+
 					case OBJECT_EXTTABLE:
 					case OBJECT_TABLE:
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
-					case OBJECT_INDEX:
-						RemoveRelations(stmt);
+					case OBJECT_FOREIGN_TABLE:
+						RemoveRelations((DropStmt *) parsetree);
 						break;
-
-					case OBJECT_TYPE:
-					case OBJECT_DOMAIN:
-						RemoveTypes(stmt);
-						break;
-
-					case OBJECT_CONVERSION:
-						DropConversionsCommand(stmt);
-						break;
-
-					case OBJECT_SCHEMA:
-						RemoveSchemas(stmt);
-						break;
-
-					case OBJECT_TSPARSER:
-						RemoveTSParsers(stmt);
-						break;
-
-					case OBJECT_TSDICTIONARY:
-						RemoveTSDictionaries(stmt);
-						break;
-
-					case OBJECT_TSTEMPLATE:
-						RemoveTSTemplates(stmt);
-						break;
-
-					case OBJECT_TSCONFIGURATION:
-						RemoveTSConfigurations(stmt);
-						break;
-
-					case OBJECT_EXTENSION:
-						RemoveExtensions(stmt);
-						break;
-
 					case OBJECT_EXTPROTOCOL:
+						/* GPDB_92_MERGE_FIXME: Could we move it to RemoveObjects()? */
 						RemoveExtProtocols(stmt);
 						break;
-
 					default:
-						elog(ERROR, "unrecognized drop object type: %d",
-							 (int) stmt->removeType);
+						RemoveObjects((DropStmt *) parsetree);
 						break;
 				}
 
 				/* we modify the object in the loop below, so make a copy */
-				stmt = copyObject(stmt);
-
-				foreach(arg, objects)
-				{
-					List	   *names = (List *) lfirst(arg);
-
-					stmt->objects = NIL;
-					stmt->objects = lappend(stmt->objects, list_copy(names));
-					stmt->missing_ok = if_exists;
-
-					/*
-					 * If we are the QD, dispatch this DROP command to all the
-					 * QEs
-					 */
-					if (Gp_role == GP_ROLE_DISPATCH)
-						CdbDispatchUtilityStatement((Node *) stmt,
-													DF_CANCEL_ON_ERROR|
-													DF_WITH_SNAPSHOT|
-													DF_NEED_TWO_PHASE,
-													NIL,
-													NULL);
-				}
+				if (Gp_role == GP_ROLE_DISPATCH)
+					CdbDispatchUtilityStatement((Node *) copyStmt,
+												DF_CANCEL_ON_ERROR|
+												DF_WITH_SNAPSHOT|
+												DF_NEED_TWO_PHASE,
+												NIL,
+												NULL);
 			}
 			break;
 
@@ -934,6 +924,10 @@ standard_ProcessUtility(Node *parsetree,
 		case T_CommentStmt:
 			/* NOTE: Not currently dispatched to QEs */
 			CommentObject((CommentStmt *) parsetree);
+			break;
+
+		case T_SecLabelStmt:
+			ExecSecLabelStmt((SecLabelStmt *) parsetree);
 			break;
 
 		case T_CopyStmt:
@@ -953,7 +947,8 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ExecuteStmt:
-			ExecuteQuery((ExecuteStmt *) parsetree, queryString, params,
+			ExecuteQuery((ExecuteStmt *) parsetree, NULL,
+						 queryString, params,
 						 dest, completionTag);
 			break;
 
@@ -979,44 +974,62 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_AlterTableStmt:
 			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+				Oid			relid;
 				List	   *stmts;
 				ListCell   *l;
+				LOCKMODE	lockmode;
 
-				/* Run parse analysis ... */
 				/*
-				 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
+				 * Figure out lock mode, and acquire lock.	This also does
+				 * basic permissions checks, so that we won't wait for a lock
+				 * on (for example) a relation on which we have no
+				 * permissions.
 				 */
-				if (Gp_role == GP_ROLE_EXECUTE)
-					stmts = list_make1(parsetree);
-				else
-					stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
-													queryString);
+				lockmode = AlterTableGetLockLevel(atstmt->cmds);
+				relid = AlterTableLookupRelation(atstmt, lockmode);
 
-				/* ... and do it */
-				foreach(l, stmts)
+				if (OidIsValid(relid))
 				{
-					Node	   *stmt = (Node *) lfirst(l);
-
-					if (IsA(stmt, AlterTableStmt))
-					{
-						/* Do the table alteration proper */
-						AlterTable((AlterTableStmt *) stmt);
-					}
+					/*
+					 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
+					 */
+					if (Gp_role == GP_ROLE_EXECUTE)
+						stmts = list_make1(parsetree);
 					else
-					{
-						/* Recurse for anything else */
-						ProcessUtility(stmt,
-									   queryString,
-									   params,
-									   false,
-									   None_Receiver,
-									   NULL);
-					}
+						/* Run parse analysis ... */
+						stmts = transformAlterTableStmt(atstmt, queryString);
 
-					/* Need CCI between commands */
-					if (lnext(l) != NULL)
-						CommandCounterIncrement();
+					/* ... and do it */
+					foreach(l, stmts)
+					{
+						Node	   *stmt = (Node *) lfirst(l);
+
+						if (IsA(stmt, AlterTableStmt))
+						{
+							/* Do the table alteration proper */
+							AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
+						}
+						else
+						{
+							/* Recurse for anything else */
+							ProcessUtility(stmt,
+										   queryString,
+										   params,
+										   false,
+										   None_Receiver,
+										   NULL);
+						}
+
+						/* Need CCI between commands */
+						if (lnext(l) != NULL)
+							CommandCounterIncrement();
+					}
 				}
+				else
+					ereport(NOTICE,
+						  (errmsg("relation \"%s\" does not exist, skipping",
+								  atstmt->relation->relname)));
 			}
 			break;
 
@@ -1054,7 +1067,12 @@ standard_ProcessUtility(Node *parsetree,
 					case 'X':	/* DROP CONSTRAINT */
 						AlterDomainDropConstraint(stmt->typeName,
 												  stmt->name,
-												  stmt->behavior);
+												  stmt->behavior,
+												  stmt->missing_ok);
+						break;
+					case 'V':	/* VALIDATE CONSTRAINT */
+						AlterDomainValidateConstraint(stmt->typeName,
+													  stmt->name);
 						break;
 					default:	/* oops */
 						elog(ERROR, "unrecognized alter domain type: %d",
@@ -1130,6 +1148,10 @@ standard_ProcessUtility(Node *parsetree,
 						Assert(stmt->args == NIL);
 						DefineTSConfiguration(stmt->defnames, stmt->definition);
 						break;
+					case OBJECT_COLLATION:
+						Assert(stmt->args == NIL);
+						DefineCollation(stmt->defnames, stmt->definition, false);
+						break;
 					default:
 						elog(ERROR, "unrecognized define stmt type: %d",
 							 (int) stmt->kind);
@@ -1146,8 +1168,30 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_CreateEnumStmt:	/* CREATE TYPE (enum) */
+		case T_CreateEnumStmt:	/* CREATE TYPE AS ENUM */
 			DefineEnum((CreateEnumStmt *) parsetree);
+			break;
+
+		case T_CreateRangeStmt:	/* CREATE TYPE AS RANGE */
+			DefineRange((CreateRangeStmt *) parsetree);
+			break;
+
+		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
+
+			/*
+			 * We disallow this in transaction blocks, because we can't cope
+			 * with enum OID values getting into indexes and then having their
+			 * defining pg_enum entries go away.
+			 */
+			if (Gp_role != GP_ROLE_EXECUTE)
+			{
+				/*
+				 * Don't allow master to call this in a transaction block.  Segments are ok as
+				 * distributed transaction participants.
+				 */
+				PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+			}
+			AlterEnum((AlterEnumStmt *) parsetree);
 			break;
 
 		case T_ViewStmt:		/* CREATE VIEW */
@@ -1184,6 +1228,7 @@ standard_ProcessUtility(Node *parsetree,
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
 							InvalidOid, /* no predefined OID */
+							InvalidOid, /* no previous storage */
 							stmt->accessMethod, /* am name */
 							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */
@@ -1205,18 +1250,6 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 		}
 
-		case T_CreateExtensionStmt:
-			CreateExtension((CreateExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionStmt:
-			ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
-			break;
-
 		case T_RuleStmt:		/* CREATE RULE */
 			DefineRule((RuleStmt *) parsetree, queryString);
 			if (Gp_role == GP_ROLE_DISPATCH)
@@ -1236,29 +1269,6 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_AlterSeqStmt:
 			AlterSequence((AlterSeqStmt *) parsetree);
-			break;
-
-		case T_RemoveFuncStmt:
-			{
-				RemoveFuncStmt *stmt = (RemoveFuncStmt *) parsetree;
-
-				switch (stmt->kind)
-				{
-					case OBJECT_FUNCTION:
-						RemoveFunction(stmt);
-						break;
-					case OBJECT_AGGREGATE:
-						RemoveAggregate(stmt);
-						break;
-					case OBJECT_OPERATOR:
-						RemoveOperator(stmt);
-						break;
-					default:
-						elog(ERROR, "unrecognized object type: %d",
-							 (int) stmt->kind);
-						break;
-				}
-			}
 			break;
 
 		case T_DoStmt:
@@ -1389,6 +1399,11 @@ standard_ProcessUtility(Node *parsetree,
 			ExplainQuery((ExplainStmt *) parsetree, queryString, params, dest);
 			break;
 
+		case T_CreateTableAsStmt:
+			ExecCreateTableAs((CreateTableAsStmt *) parsetree,
+							  queryString, params, completionTag);
+			break;
+
 		case T_VariableSetStmt:
 			ExecSetVariableStmt((VariableSetStmt *) parsetree);
 			break;
@@ -1426,48 +1441,8 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_DropPropertyStmt:
-			{
-				DropPropertyStmt *stmt = (DropPropertyStmt *) parsetree;
-				Oid			relId;
-
-				relId = RangeVarGetRelid(stmt->relation, false);
-
-				switch (stmt->removeType)
-				{
-					case OBJECT_RULE:
-						/* RemoveRewriteRule checks permissions */
-						RemoveRewriteRule(relId, stmt->property,
-										  stmt->behavior, stmt->missing_ok);
-						break;
-					case OBJECT_TRIGGER:
-						/* DropTrigger checks permissions */
-						DropTrigger(relId, stmt->property,
-									stmt->behavior, stmt->missing_ok);
-						break;
-					default:
-						elog(ERROR, "unrecognized object type: %d",
-							 (int) stmt->removeType);
-						break;
-				}
-				if (Gp_role == GP_ROLE_DISPATCH)
-				{
-					CdbDispatchUtilityStatement((Node *) parsetree,
-												DF_CANCEL_ON_ERROR|
-												DF_WITH_SNAPSHOT|
-												DF_NEED_TWO_PHASE,
-												NIL,
-												NULL);
-				}
-			}
-			break;
-
 		case T_CreatePLangStmt:
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
-			break;
-
-		case T_DropPLangStmt:
-			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
 
 			/*
@@ -1631,10 +1606,6 @@ standard_ProcessUtility(Node *parsetree,
 			CreateCast((CreateCastStmt *) parsetree);
 			break;
 
-		case T_DropCastStmt:
-			DropCast((DropCastStmt *) parsetree);
-			break;
-
 		case T_CreateOpClassStmt:
 			DefineOpClass((CreateOpClassStmt *) parsetree);
 			break;
@@ -1645,14 +1616,6 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_AlterOpFamilyStmt:
 			AlterOpFamily((AlterOpFamilyStmt *) parsetree);
-			break;
-
-		case T_RemoveOpClassStmt:
-			RemoveOpClass((RemoveOpClassStmt *) parsetree);
-			break;
-
-		case T_RemoveOpFamilyStmt:
-			RemoveOpFamily((RemoveOpFamilyStmt *) parsetree);
 			break;
 
 		case T_AlterTypeStmt:
@@ -1705,8 +1668,6 @@ UtilityReturnsTuples(Node *parsetree)
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
 				PreparedStatement *entry;
 
-				if (stmt->into)
-					return false;
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return false;		/* not our business to raise error */
@@ -1757,8 +1718,6 @@ UtilityTupleDescriptor(Node *parsetree)
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
 				PreparedStatement *entry;
 
-				if (stmt->into)
-					return NULL;
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return NULL;	/* not our business to raise error */
@@ -1780,6 +1739,199 @@ UtilityTupleDescriptor(Node *parsetree)
 	}
 }
 
+
+/*
+ * QueryReturnsTuples
+ *		Return "true" if this Query will send output to the destination.
+ */
+#ifdef NOT_USED
+bool
+QueryReturnsTuples(Query *parsetree)
+{
+	switch (parsetree->commandType)
+	{
+		case CMD_SELECT:
+			/* returns tuples ... unless it's DECLARE CURSOR */
+			if (parsetree->utilityStmt == NULL)
+				return true;
+			break;
+		case CMD_INSERT:
+		case CMD_UPDATE:
+		case CMD_DELETE:
+			/* the forms with RETURNING return tuples */
+			if (parsetree->returningList)
+				return true;
+			break;
+		case CMD_UTILITY:
+			return UtilityReturnsTuples(parsetree->utilityStmt);
+		case CMD_UNKNOWN:
+		case CMD_NOTHING:
+			/* probably shouldn't get here */
+			break;
+	}
+	return false;				/* default */
+}
+#endif
+
+
+/*
+ * UtilityContainsQuery
+ *		Return the contained Query, or NULL if there is none
+ *
+ * Certain utility statements, such as EXPLAIN, contain a Query.
+ * This function encapsulates knowledge of exactly which ones do.
+ * We assume it is invoked only on already-parse-analyzed statements
+ * (else the contained parsetree isn't a Query yet).
+ */
+Query *
+UtilityContainsQuery(Node *parsetree)
+{
+	switch (nodeTag(parsetree))
+	{
+		case T_ExplainStmt:
+			Assert(IsA(((ExplainStmt *) parsetree)->query, Query));
+			return (Query *) ((ExplainStmt *) parsetree)->query;
+
+		case T_CreateTableAsStmt:
+			/* might or might not contain a Query ... */
+			if (IsA(((CreateTableAsStmt *) parsetree)->query, Query))
+				return (Query *) ((CreateTableAsStmt *) parsetree)->query;
+			Assert(IsA(((CreateTableAsStmt *) parsetree)->query, ExecuteStmt));
+			return NULL;
+
+		default:
+			return NULL;
+	}
+}
+
+
+/*
+ * AlterObjectTypeCommandTag
+ *		helper function for CreateCommandTag
+ *
+ * This covers most cases where ALTER is used with an ObjectType enum.
+ */
+static const char *
+AlterObjectTypeCommandTag(ObjectType objtype)
+{
+	const char *tag;
+
+	switch (objtype)
+	{
+		case OBJECT_AGGREGATE:
+			tag = "ALTER AGGREGATE";
+			break;
+		case OBJECT_ATTRIBUTE:
+			tag = "ALTER TYPE";
+			break;
+		case OBJECT_CAST:
+			tag = "ALTER CAST";
+			break;
+		case OBJECT_COLLATION:
+			tag = "ALTER COLLATION";
+			break;
+		case OBJECT_COLUMN:
+			tag = "ALTER TABLE";
+			break;
+		case OBJECT_CONSTRAINT:
+			tag = "ALTER TABLE";
+			break;
+		case OBJECT_CONVERSION:
+			tag = "ALTER CONVERSION";
+			break;
+		case OBJECT_DATABASE:
+			tag = "ALTER DATABASE";
+			break;
+		case OBJECT_DOMAIN:
+			tag = "ALTER DOMAIN";
+			break;
+		case OBJECT_EXTENSION:
+			tag = "ALTER EXTENSION";
+			break;
+		case OBJECT_FDW:
+			tag = "ALTER FOREIGN DATA WRAPPER";
+			break;
+		case OBJECT_FOREIGN_SERVER:
+			tag = "ALTER SERVER";
+			break;
+		case OBJECT_FOREIGN_TABLE:
+			tag = "ALTER FOREIGN TABLE";
+			break;
+		case OBJECT_FUNCTION:
+			tag = "ALTER FUNCTION";
+			break;
+		case OBJECT_INDEX:
+			tag = "ALTER INDEX";
+			break;
+		case OBJECT_LANGUAGE:
+			tag = "ALTER LANGUAGE";
+			break;
+		case OBJECT_LARGEOBJECT:
+			tag = "ALTER LARGE OBJECT";
+			break;
+		case OBJECT_OPCLASS:
+			tag = "ALTER OPERATOR CLASS";
+			break;
+		case OBJECT_OPERATOR:
+			tag = "ALTER OPERATOR";
+			break;
+		case OBJECT_OPFAMILY:
+			tag = "ALTER OPERATOR FAMILY";
+			break;
+		case OBJECT_ROLE:
+			tag = "ALTER ROLE";
+			break;
+		case OBJECT_RULE:
+			tag = "ALTER RULE";
+			break;
+		case OBJECT_SCHEMA:
+			tag = "ALTER SCHEMA";
+			break;
+		case OBJECT_SEQUENCE:
+			tag = "ALTER SEQUENCE";
+			break;
+		case OBJECT_TABLE:
+			tag = "ALTER TABLE";
+			break;
+		case OBJECT_TABLESPACE:
+			tag = "ALTER TABLESPACE";
+			break;
+		case OBJECT_TRIGGER:
+			tag = "ALTER TRIGGER";
+			break;
+		case OBJECT_TSCONFIGURATION:
+			tag = "ALTER TEXT SEARCH CONFIGURATION";
+			break;
+		case OBJECT_TSDICTIONARY:
+			tag = "ALTER TEXT SEARCH DICTIONARY";
+			break;
+		case OBJECT_TSPARSER:
+			tag = "ALTER TEXT SEARCH PARSER";
+			break;
+		case OBJECT_TSTEMPLATE:
+			tag = "ALTER TEXT SEARCH TEMPLATE";
+			break;
+		case OBJECT_TYPE:
+			tag = "ALTER TYPE";
+			break;
+		case OBJECT_VIEW:
+			tag = "ALTER VIEW";
+			break;
+
+		case OBJECT_EXTPROTOCOL:
+			tag = "ALTER PROTOCOL";
+			break;
+		case OBJECT_EXTTABLE:
+			tag = "ALTER EXTERNAL TABLE";
+			break;
+
+		default:
+			tag = "???";
+			break;
+	}
+
+	return tag;
+}
 
 /*
  * CreateCommandTag
@@ -1918,6 +2070,18 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER TABLESPACE";
 			break;
 
+		case T_CreateExtensionStmt:
+			tag = "CREATE EXTENSION";
+			break;
+
+		case T_AlterExtensionStmt:
+			tag = "ALTER EXTENSION";
+			break;
+
+		case T_AlterExtensionContentsStmt:
+			tag = "ALTER EXTENSION";
+			break;
+
 		case T_CreateFdwStmt:
 			tag = "CREATE FOREIGN DATA WRAPPER";
 			break;
@@ -1926,20 +2090,12 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER FOREIGN DATA WRAPPER";
 			break;
 
-		case T_DropFdwStmt:
-			tag = "DROP FOREIGN DATA WRAPPER";
-			break;
-
 		case T_CreateForeignServerStmt:
 			tag = "CREATE SERVER";
 			break;
 
 		case T_AlterForeignServerStmt:
 			tag = "ALTER SERVER";
-			break;
-
-		case T_DropForeignServerStmt:
-			tag = "DROP SERVER";
 			break;
 
 		case T_CreateUserMappingStmt:
@@ -1952,6 +2108,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_DropUserMappingStmt:
 			tag = "DROP USER MAPPING";
+			break;
+
+		case T_CreateForeignTableStmt:
+			tag = "CREATE FOREIGN TABLE";
 			break;
 
 		case T_DropStmt:
@@ -1978,6 +2138,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_DOMAIN:
 					tag = "DROP DOMAIN";
 					break;
+				case OBJECT_COLLATION:
+					tag = "DROP COLLATION";
+					break;
 				case OBJECT_CONVERSION:
 					tag = "DROP CONVERSION";
 					break;
@@ -2002,8 +2165,44 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "DROP TEXT SEARCH CONFIGURATION";
 					break;
+				case OBJECT_FOREIGN_TABLE:
+					tag = "DROP FOREIGN TABLE";
+					break;
 				case OBJECT_EXTENSION:
 					tag = "DROP EXTENSION";
+					break;
+				case OBJECT_FUNCTION:
+					tag = "DROP FUNCTION";
+					break;
+				case OBJECT_AGGREGATE:
+					tag = "DROP AGGREGATE";
+					break;
+				case OBJECT_OPERATOR:
+					tag = "DROP OPERATOR";
+					break;
+				case OBJECT_LANGUAGE:
+					tag = "DROP LANGUAGE";
+					break;
+				case OBJECT_CAST:
+					tag = "DROP CAST";
+					break;
+				case OBJECT_TRIGGER:
+					tag = "DROP TRIGGER";
+					break;
+				case OBJECT_RULE:
+					tag = "DROP RULE";
+					break;
+				case OBJECT_FDW:
+					tag = "DROP FOREIGN DATA WRAPPER";
+					break;
+				case OBJECT_FOREIGN_SERVER:
+					tag = "DROP SERVER";
+					break;
+				case OBJECT_OPCLASS:
+					tag = "DROP OPERATOR CLASS";
+					break;
+				case OBJECT_OPFAMILY:
+					tag = "DROP OPERATOR FAMILY";
 					break;
 				default:
 					tag = "???";
@@ -2018,216 +2217,28 @@ CreateCommandTag(Node *parsetree)
 			tag = "COMMENT";
 			break;
 
+		case T_SecLabelStmt:
+			tag = "SECURITY LABEL";
+			break;
+
 		case T_CopyStmt:
 			tag = "COPY";
 			break;
 
 		case T_RenameStmt:
-			switch (((RenameStmt *) parsetree)->renameType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_CONVERSION:
-					tag = "ALTER CONVERSION";
-					break;
-				case OBJECT_DATABASE:
-					tag = "ALTER DATABASE";
-					break;
-				case OBJECT_EXTPROTOCOL:
-					tag = "ALTER PROTOCOL";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_INDEX:
-					tag = "ALTER INDEX";
-					break;
-				case OBJECT_LANGUAGE:
-					tag = "ALTER LANGUAGE";
-					break;
-				case OBJECT_OPCLASS:
-					tag = "ALTER OPERATOR CLASS";
-					break;
-				case OBJECT_OPFAMILY:
-					tag = "ALTER OPERATOR FAMILY";
-					break;
-				case OBJECT_ROLE:
-					tag = "ALTER ROLE";
-					break;
-				case OBJECT_SCHEMA:
-					tag = "ALTER SCHEMA";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_COLUMN:
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_TABLESPACE:
-					tag = "ALTER TABLESPACE";
-					break;
-				case OBJECT_TRIGGER:
-					tag = "ALTER TRIGGER";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				case OBJECT_TSPARSER:
-					tag = "ALTER TEXT SEARCH PARSER";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_TSTEMPLATE:
-					tag = "ALTER TEXT SEARCH TEMPLATE";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
+			tag = AlterObjectTypeCommandTag(((RenameStmt *) parsetree)->renameType);
 			break;
 
 		case T_AlterObjectSchemaStmt:
-			switch (((AlterObjectSchemaStmt *) parsetree)->objectType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_DOMAIN:
-					tag = "ALTER DOMAIN";
-					break;
-				case OBJECT_EXTENSION:
-					tag = "ALTER EXTENSION";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				case OBJECT_TSPARSER:
-					tag = "ALTER TEXT SEARCH PARSER";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_TSTEMPLATE:
-					tag = "ALTER TEXT SEARCH TEMPLATE";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
+			tag = AlterObjectTypeCommandTag(((AlterObjectSchemaStmt *) parsetree)->objectType);
 			break;
 
 		case T_AlterOwnerStmt:
-			switch (((AlterOwnerStmt *) parsetree)->objectType)
-			{
-				case OBJECT_AGGREGATE:
-					tag = "ALTER AGGREGATE";
-					break;
-				case OBJECT_CONVERSION:
-					tag = "ALTER CONVERSION";
-					break;
-				case OBJECT_DATABASE:
-					tag = "ALTER DATABASE";
-					break;
-				case OBJECT_DOMAIN:
-					tag = "ALTER DOMAIN";
-					break;
-				case OBJECT_EXTENSION:
-					tag = "ALTER EXTENSION";
-					break;
-				case OBJECT_FUNCTION:
-					tag = "ALTER FUNCTION";
-					break;
-				case OBJECT_LANGUAGE:
-					tag = "ALTER LANGUAGE";
-					break;
-				case OBJECT_LARGEOBJECT:
-					tag = "ALTER LARGE OBJECT";
-					break;
-				case OBJECT_OPERATOR:
-					tag = "ALTER OPERATOR";
-					break;
-				case OBJECT_OPCLASS:
-					tag = "ALTER OPERATOR CLASS";
-					break;
-				case OBJECT_OPFAMILY:
-					tag = "ALTER OPERATOR FAMILY";
-					break;
-				case OBJECT_SCHEMA:
-					tag = "ALTER SCHEMA";
-					break;
-				case OBJECT_TABLESPACE:
-					tag = "ALTER TABLESPACE";
-					break;
-				case OBJECT_TYPE:
-					tag = "ALTER TYPE";
-					break;
-				case OBJECT_EXTPROTOCOL:
-					tag = "ALTER PROTOCOL";
-					break;
-				case OBJECT_TSCONFIGURATION:
-					tag = "ALTER TEXT SEARCH CONFIGURATION";
-					break;
-				case OBJECT_TSDICTIONARY:
-					tag = "ALTER TEXT SEARCH DICTIONARY";
-					break;
-				case OBJECT_FDW:
-					tag = "ALTER FOREIGN DATA WRAPPER";
-					break;
-				case OBJECT_FOREIGN_SERVER:
-					tag = "ALTER SERVER";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
+			tag = AlterObjectTypeCommandTag(((AlterOwnerStmt *) parsetree)->objectType);
 			break;
 
 		case T_AlterTableStmt:
-			switch (((AlterTableStmt *) parsetree)->relkind)
-			{
-				case OBJECT_TABLE:
-					tag = "ALTER TABLE";
-					break;
-				case OBJECT_EXTTABLE:
-					tag = "ALTER EXTERNAL TABLE";
-					break;
-				case OBJECT_INDEX:
-					tag = "ALTER INDEX";
-					break;
-				case OBJECT_SEQUENCE:
-					tag = "ALTER SEQUENCE";
-					break;
-				case OBJECT_VIEW:
-					tag = "ALTER VIEW";
-					break;
-				default:
-					tag = "???";
-					break;
-			}
+			tag = AlterObjectTypeCommandTag(((AlterTableStmt *) parsetree)->relkind);
 			break;
 
 		case T_AlterDomainStmt:
@@ -2285,6 +2296,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TSCONFIGURATION:
 					tag = "CREATE TEXT SEARCH CONFIGURATION";
 					break;
+				case OBJECT_COLLATION:
+					tag = "CREATE COLLATION";
+					break;
 				default:
 					tag = "???";
 			}
@@ -2296,6 +2310,14 @@ CreateCommandTag(Node *parsetree)
 
 		case T_CreateEnumStmt:
 			tag = "CREATE TYPE";
+			break;
+
+		case T_CreateRangeStmt:
+			tag = "CREATE TYPE";
+			break;
+
+		case T_AlterEnumStmt:
+			tag = "ALTER TYPE";
 			break;
 
 		case T_ViewStmt:
@@ -2310,18 +2332,6 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE INDEX";
 			break;
 
-		case T_CreateExtensionStmt:
-			tag = "CREATE EXTENSION";
-			break;
-
-		case T_AlterExtensionStmt:
-			tag = "ALTER EXTENSION";
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			tag = "ALTER EXTENSION";
-			break;
-
 		case T_RuleStmt:
 			tag = "CREATE RULE";
 			break;
@@ -2332,23 +2342,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterSeqStmt:
 			tag = "ALTER SEQUENCE";
-			break;
-
-		case T_RemoveFuncStmt:
-			switch (((RemoveFuncStmt *) parsetree)->kind)
-			{
-				case OBJECT_FUNCTION:
-					tag = "DROP FUNCTION";
-					break;
-				case OBJECT_AGGREGATE:
-					tag = "DROP AGGREGATE";
-					break;
-				case OBJECT_OPERATOR:
-					tag = "DROP OPERATOR";
-					break;
-				default:
-					tag = "???";
-			}
 			break;
 
 		case T_DoStmt:
@@ -2402,6 +2395,13 @@ CreateCommandTag(Node *parsetree)
 			tag = "EXPLAIN";
 			break;
 
+		case T_CreateTableAsStmt:
+			if (((CreateTableAsStmt *) parsetree)->is_select_into)
+				tag = "SELECT INTO";
+			else
+				tag = "CREATE TABLE AS";
+			break;
+
 		case T_VariableSetStmt:
 			switch (((VariableSetStmt *) parsetree)->kind)
 			{
@@ -2445,26 +2445,8 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE TRIGGER";
 			break;
 
-		case T_DropPropertyStmt:
-			switch (((DropPropertyStmt *) parsetree)->removeType)
-			{
-				case OBJECT_TRIGGER:
-					tag = "DROP TRIGGER";
-					break;
-				case OBJECT_RULE:
-					tag = "DROP RULE";
-					break;
-				default:
-					tag = "???";
-			}
-			break;
-
 		case T_CreatePLangStmt:
 			tag = "CREATE LANGUAGE";
-			break;
-
-		case T_DropPLangStmt:
-			tag = "DROP LANGUAGE";
 			break;
 
 		case T_CreateQueueStmt:
@@ -2539,10 +2521,6 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE CAST";
 			break;
 
-		case T_DropCastStmt:
-			tag = "DROP CAST";
-			break;
-
 		case T_CreateOpClassStmt:
 			tag = "CREATE OPERATOR CLASS";
 			break;
@@ -2553,14 +2531,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_AlterOpFamilyStmt:
 			tag = "ALTER OPERATOR FAMILY";
-			break;
-
-		case T_RemoveOpClassStmt:
-			tag = "DROP OPERATOR CLASS";
-			break;
-
-		case T_RemoveOpFamilyStmt:
-			tag = "DROP OPERATOR FAMILY";
 			break;
 
 		case T_AlterTSDictionaryStmt:
@@ -2609,8 +2579,6 @@ CreateCommandTag(Node *parsetree)
 							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
 							tag = "DECLARE CURSOR";
 						}
-						else if (stmt->intoClause != NULL)
-							tag = "SELECT INTO";
 						else if (stmt->rowMarks != NIL)
 						{
 							/* not 100% but probably close enough */
@@ -2654,8 +2622,11 @@ CreateCommandTag(Node *parsetree)
 						 * will be useful for complaints about read-only
 						 * statements
 						 */
-						if (stmt->intoClause != NULL)
-							tag = "SELECT INTO";
+						if (stmt->utilityStmt != NULL)
+						{
+							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
+							tag = "DECLARE CURSOR";
+						}
 						else if (stmt->rowMarks != NIL)
 						{
 							/* not 100% but probably close enough */
@@ -2728,7 +2699,7 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_SelectStmt:
 			if (((SelectStmt *) parsetree)->intoClause)
-				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
+				lev = LOGSTMT_DDL;		/* SELECT INTO */
 			else
 				lev = LOGSTMT_ALL;
 			break;
@@ -2755,6 +2726,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateStmt:
+		case T_CreateForeignTableStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
@@ -2763,23 +2735,21 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateTableSpaceStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
 		case T_DropTableSpaceStmt:
+		case T_AlterTableSpaceOptionsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
-		case T_AlterTableSpaceOptionsStmt:
+		case T_CreateExtensionStmt:
+		case T_AlterExtensionStmt:
+		case T_AlterExtensionContentsStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
 		case T_CreateFdwStmt:
 		case T_AlterFdwStmt:
-		case T_DropFdwStmt:
 		case T_CreateForeignServerStmt:
 		case T_AlterForeignServerStmt:
-		case T_DropForeignServerStmt:
 		case T_CreateUserMappingStmt:
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
@@ -2795,6 +2765,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CommentStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_SecLabelStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
@@ -2876,6 +2850,14 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
+		case T_CreateRangeStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterEnumStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
 		case T_ViewStmt:
 			lev = LOGSTMT_DDL;
 			break;
@@ -2892,12 +2874,6 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
-		case T_CreateExtensionStmt:
-		case T_AlterExtensionStmt:
-		case T_AlterExtensionContentsStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
 		case T_RuleStmt:
 			lev = LOGSTMT_DDL;
 			break;
@@ -2907,10 +2883,6 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterSeqStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveFuncStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
@@ -2981,6 +2953,10 @@ GetCommandLogLevel(Node *parsetree)
 			}
 			break;
 
+		case T_CreateTableAsStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
 		case T_VariableSetStmt:
 			lev = LOGSTMT_ALL;
 			break;
@@ -2997,15 +2973,7 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
-		case T_DropPropertyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
 		case T_CreatePLangStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_DropPLangStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
@@ -3061,10 +3029,6 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
-		case T_DropCastStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
 		case T_CreateOpClassStmt:
 			lev = LOGSTMT_DDL;
 			break;
@@ -3074,14 +3038,6 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterOpFamilyStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveOpClassStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
-		case T_RemoveOpFamilyStmt:
 			lev = LOGSTMT_DDL;
 			break;
 
@@ -3101,10 +3057,7 @@ GetCommandLogLevel(Node *parsetree)
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
-						if (stmt->intoClause != NULL)
-							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
-						else
-							lev = LOGSTMT_ALL;	/* SELECT or DECLARE CURSOR */
+						lev = LOGSTMT_ALL;
 						break;
 
 					case CMD_UPDATE:
@@ -3130,10 +3083,7 @@ GetCommandLogLevel(Node *parsetree)
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
-						if (stmt->intoClause != NULL)
-							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
-						else
-							lev = LOGSTMT_ALL;	/* SELECT or DECLARE CURSOR */
+						lev = LOGSTMT_ALL;
 						break;
 
 					case CMD_UPDATE:

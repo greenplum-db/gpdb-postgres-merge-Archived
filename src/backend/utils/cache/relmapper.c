@@ -28,12 +28,12 @@
  * all these files commit in a single map file update rather than being tied
  * to transaction commit.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relmapper.c,v 1.3 2010/02/26 02:01:12 momjian Exp $
+ *	  src/backend/utils/cache/relmapper.c
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,6 @@
 #include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "utils/inval.h"
-#include "utils/pg_crc.h"
 #include "utils/relmapper.h"
 
 
@@ -792,7 +791,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 			rnode.spcNode = tsid;
 			rnode.dbNode = dbid;
 			rnode.relNode = newmap->mappings[i].mapfilenode;
-			RelationPreserveStorage(rnode);
+			RelationPreserveStorage(rnode, false);
 		}
 	}
 
@@ -838,7 +837,10 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 	else
 		memcpy(&newmap, &local_map, sizeof(RelMapFile));
 
-	/* Apply the updates to newmap.  No new mappings should appear. */
+	/*
+	 * Apply the updates to newmap.  No new mappings should appear, unless
+	 * somebody is adding indexes to system catalogs.
+	 */
 	merge_map_updates(&newmap, updates, false);
 
 	/* Write out the updated map and do other necessary tasks */
@@ -896,7 +898,7 @@ relmap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-relmap_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+relmap_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

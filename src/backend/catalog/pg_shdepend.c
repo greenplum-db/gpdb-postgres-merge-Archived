@@ -3,12 +3,12 @@
  * pg_shdepend.c
  *	  routines to support manipulation of the pg_shdepend relation
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.43 2010/07/06 19:18:56 momjian Exp $
+ *	  src/backend/catalog/pg_shdepend.c
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,12 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_foreign_data_wrapper.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
@@ -35,6 +38,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
@@ -388,7 +392,7 @@ getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
  * nnewmembers, newmembers: array of roleids appearing in new ACL
  *
  * We calculate the differences between the new and old lists of roles,
- * and then insert or delete from pg_shdepend as appropiate.
+ * and then insert or delete from pg_shdepend as appropriate.
  *
  * Note that we can't just insert all referenced roles blindly during GRANT,
  * because we would end up with duplicate registered dependencies.	We could
@@ -1067,7 +1071,7 @@ storeObjectDescription(StringInfo descs, objectType type,
 			if (deptype == SHARED_DEPENDENCY_OWNER)
 				appendStringInfo(descs, _("owner of %s"), objdesc);
 			else if (deptype == SHARED_DEPENDENCY_ACL)
-				appendStringInfo(descs, _("access to %s"), objdesc);
+				appendStringInfo(descs, _("privileges for %s"), objdesc);
 			else
 				elog(ERROR, "unrecognized dependency type: %d",
 					 (int) deptype);
@@ -1245,7 +1249,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 	}
 
 	/* the dependency mechanism does the actual work */
-	performMultipleDeletions(deleteobjs, behavior);
+	performMultipleDeletions(deleteobjs, behavior, 0);
 
 	heap_close(sdepRel, RowExclusiveLock);
 
@@ -1290,7 +1294,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot reassign ownership of objects owned by %s because they are required by the database system",
-						  getObjectDescription(&obj))));
+							getObjectDescription(&obj))));
 
 			/*
 			 * There's no need to tell the whole truth, which is that we
@@ -1329,6 +1333,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			/* Issue the appropriate ALTER OWNER call */
 			switch (sdepForm->classid)
 			{
+				case CollationRelationId:
+					AlterCollationOwner_oid(sdepForm->objid, newrole);
+					break;
+
 				case ConversionRelationId:
 					AlterConversionOwner_oid(sdepForm->objid, newrole);
 					break;
@@ -1352,7 +1360,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					 * owned sequences, etc when we happen to visit them
 					 * before their parent table.
 					 */
-					ATExecChangeOwner(sdepForm->objid, newrole, true);
+					ATExecChangeOwner(sdepForm->objid, newrole, true, AccessExclusiveLock);
 					break;
 
 				case ProcedureRelationId:
@@ -1381,6 +1389,14 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 				case OperatorFamilyRelationId:
 					AlterOpFamilyOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case ForeignServerRelationId:
+					AlterForeignServerOwner_oid(sdepForm->objid, newrole);
+					break;
+
+				case ForeignDataWrapperRelationId:
+					AlterForeignDataWrapperOwner_oid(sdepForm->objid, newrole);
 					break;
 
 				default:

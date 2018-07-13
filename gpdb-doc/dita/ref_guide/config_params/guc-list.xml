@@ -232,9 +232,6 @@
                 >gp_enable_exchange_default_partition</xref>
             </li>
             <li>
-              <xref href="#gp_enable_fallback_plan"/>
-            </li>
-            <li>
               <xref href="#gp_enable_fast_sri"/>
             </li>
             <li>
@@ -277,6 +274,9 @@
             </li>
             <li>
               <xref href="#gp_external_max_segs"/>
+            </li>
+            <li>
+              <xref href="#gp_external_enable_filter_pushdown"/>
             </li>
             <li>
               <xref href="#gp_filerep_tcp_keepalives_count"/>
@@ -595,12 +595,6 @@
               <xref href="#max_files_per_process"/>
             </li>
             <li>
-              <xref href="#max_fsm_pages"/>
-            </li>
-            <li>
-              <xref href="#max_fsm_relations"/>
-            </li>
-            <li>
               <xref href="#max_function_args"/>
             </li>
             <li>
@@ -863,7 +857,8 @@
               <xref href="#wal_receiver_status_interval"/>
             </li>
             <li><xref href="#writable_external_table_bufsize" type="section"
-                >writable_external_table_bufsize</xref></li>
+                >writable_external_table_bufsize</xref>
+            </li>
             <li>
               <xref href="#xid_stop_limit"/>
             </li>
@@ -3208,33 +3203,6 @@
       </table>
     </body>
   </topic>
-  <topic id="gp_enable_fallback_plan">
-    <title>gp_enable_fallback_plan</title>
-    <body>
-      <p>Allows use of disabled plan types when a query would not be feasible without them.</p>
-      <table id="gp_enable_fallback_plan_table">
-        <tgroup cols="3">
-          <colspec colnum="1" colname="col1" colwidth="1*"/>
-          <colspec colnum="2" colname="col2" colwidth="1*"/>
-          <colspec colnum="3" colname="col3" colwidth="1*"/>
-          <thead>
-            <row>
-              <entry colname="col1">Value Range</entry>
-              <entry colname="col2">Default</entry>
-              <entry colname="col3">Set Classifications</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry colname="col1">Boolean</entry>
-              <entry colname="col2">on</entry>
-              <entry colname="col3">master<p>session</p><p>reload</p></entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </table>
-    </body>
-  </topic>
   <topic id="gp_enable_fast_sri">
     <title>gp_enable_fast_sri</title>
     <body>
@@ -3664,6 +3632,35 @@
             <row>
               <entry colname="col1">integer</entry>
               <entry colname="col2">64</entry>
+              <entry colname="col3">master<p>session</p><p>reload</p></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </body>
+  </topic>
+  <topic id="gp_external_enable_filter_pushdown">
+    <title>gp_external_enable_filter_pushdown</title>
+    <body>
+      <p>Enable filter pushdown when reading data from external tables. If
+      pushdown fails, a query will be executed without it, and GPDB will apply
+      the same constraints to the result.</p>
+      <table id="enable_filter_pushdown_table">
+        <tgroup cols="3">
+          <colspec colnum="1" colname="col1" colwidth="1*"/>
+          <colspec colnum="2" colname="col2" colwidth="1*"/>
+          <colspec colnum="3" colname="col3" colwidth="1*"/>
+          <thead>
+            <row>
+              <entry colname="col1">Value Range</entry>
+              <entry colname="col2">Default</entry>
+              <entry colname="col3">Set Classifications</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry colname="col1">Boolean</entry>
+              <entry colname="col2">false</entry>
               <entry colname="col3">master<p>session</p><p>reload</p></entry>
             </row>
           </tbody>
@@ -4124,13 +4121,13 @@
       <p>The default value is <codeph>false</codeph>, Greenplum Database returns an error if the
           <codeph>INTO ERROR TABLE</codeph> clause is specified in a command. </p>
       <p>If the value is <codeph>true</codeph>, Greenplum Database ignores the clause, issues a
-        warning, and executes the command and logs information about data rows with formatting
-        errors. In Greenplum Database 5.x, you access the error log information with built-in SQL
+        warning, and executes the command without the <codeph>INTO ERROR TABLE</codeph> clause. In
+        Greenplum Database 5.x and later, you access the error log information with built-in SQL
         functions. See the <codeph><xref href="../sql_commands/CREATE_EXTERNAL_TABLE.xml">CREATE
             EXTERNAL TABLE</xref></codeph> or <codeph><xref href="../sql_commands/COPY.xml"
             >COPY</xref></codeph> command.</p>
-      <p>You can set this value to <codeph>true</codeph> to avoid the Greenplum Database 5 error
-        when you run applications that execute <codeph>CREATE EXTERNAL TABLE</codeph> or
+      <p>You can set this value to <codeph>true</codeph> to avoid the Greenplum Database error when
+        you run applications that execute <codeph>CREATE EXTERNAL TABLE</codeph> or
           <codeph>COPY</codeph> commands that include the Greenplum Database 4.3.x <codeph>INTO
           ERROR TABLE</codeph> clause.</p>
       <table id="table_hnf_2v5_bdb">
@@ -4149,7 +4146,7 @@
             <row>
               <entry colname="col1">Boolean</entry>
               <entry colname="col2">false</entry>
-              <entry colname="col3">master<p>system</p><p>reload</p></entry>
+              <entry colname="col3">master<p>session</p><p>reload</p></entry>
             </row>
           </tbody>
         </tgroup>
@@ -4640,7 +4637,7 @@
       </table>
     </body>
   </topic>
-  
+
   <topic id="gp_motion_cost_per_row">
     <title>gp_motion_cost_per_row</title>
     <body>
@@ -6992,65 +6989,6 @@
       </table>
     </body>
   </topic>
-  <topic id="max_fsm_pages">
-    <title>max_fsm_pages</title>
-    <body>
-      <p>Sets the maximum number of disk pages for which free space will be tracked in the shared
-        free-space map. Six bytes of shared memory are consumed for each page slot. </p>
-      <table id="max_fsm_pages_table">
-        <tgroup cols="3">
-          <colspec colnum="1" colname="col1" colwidth="1*"/>
-          <colspec colnum="2" colname="col2" colwidth="1*"/>
-          <colspec colnum="3" colname="col3" colwidth="1*"/>
-          <thead>
-            <row>
-              <entry colname="col1">Value Range</entry>
-              <entry colname="col2">Default</entry>
-              <entry colname="col3">Set Classifications</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry colname="col1">integer &gt; 16 * <i>max_fsm_relations</i></entry>
-              <entry colname="col2">200000</entry>
-              <entry colname="col3">local<p>system</p><p>restart</p></entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </table>
-    </body>
-  </topic>
-  <topic id="max_fsm_relations">
-    <title>max_fsm_relations</title>
-    <body>
-      <p>Sets the maximum number of relations for which free space will be tracked in the shared
-        memory free-space map. Should be set to a value larger than the total number of:</p>
-      <p>tables + indexes + system tables.</p>
-      <p>It costs about 60 bytes of memory for each relation per segment instance. It is better to
-        allow some room for overhead and set too high rather than too low.</p>
-      <table id="max_fsm_relations_table">
-        <tgroup cols="3">
-          <colspec colnum="1" colname="col1" colwidth="1*"/>
-          <colspec colnum="2" colname="col2" colwidth="1*"/>
-          <colspec colnum="3" colname="col3" colwidth="1*"/>
-          <thead>
-            <row>
-              <entry colname="col1">Value Range</entry>
-              <entry colname="col2">Default</entry>
-              <entry colname="col3">Set Classifications</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry colname="col1">integer</entry>
-              <entry colname="col2">1000</entry>
-              <entry colname="col3">local<p>system</p><p>restart</p></entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </table>
-    </body>
-  </topic>
   <topic id="max_function_args">
     <title>max_function_args</title>
     <body>
@@ -7334,13 +7272,14 @@
     <body>
       <note>The <codeph>memory_spill_ratio</codeph> server configuration parameter is enforced only
         when resource group-based resource management is active.</note>
-      <p>Sets the memory usage threshold percentage for memory-intensive operators in a transaction. When 
-        a transaction reaches this threshold, it spills to disk.</p>
-      <p>The default <codeph>memory_spill_ratio</codeph> percentage is the value defined for the resource group
-        assigned to the currently active role. You can set <codeph>memory_spill_ratio</codeph> at
-        the session level to selectively set this limit on a per-query basis. For example, if you
-        have a specific query that spills to disk and requires more memory, you may choose to set a
-        larger <codeph>memory_spill_ratio</codeph> to increase the initial memory allocation.</p>
+      <p>Sets the memory usage threshold percentage for memory-intensive operators in a transaction.
+        When a transaction reaches this threshold, it spills to disk.</p>
+      <p>The default <codeph>memory_spill_ratio</codeph> percentage is the value defined for the
+        resource group assigned to the currently active role. You can set
+          <codeph>memory_spill_ratio</codeph> at the session level to selectively set this limit on
+        a per-query basis. For example, if you have a specific query that spills to disk and
+        requires more memory, you may choose to set a larger <codeph>memory_spill_ratio</codeph> to
+        increase the initial memory allocation.</p>
       <p>When you set <codeph>memory_spill_ratio</codeph> at the session level, Greenplum Database
         does not perform semantic validation on the new value until you next perform a query.</p>
       <table id="memory_spill_ratio_table">
@@ -7409,10 +7348,10 @@
       <p>For a partitioned table, collects statistics for the root partition when the
           <cmdname>ANALYZE</cmdname> command is run on the table. GPORCA uses the root partition
         statistics when generating a query plan. The legacy query optimizer does not use these
-        statistics. If you set the value of the server configuration parameter <codeph><xref
-            href="#optimizer" format="dita"/></codeph> to on, set the value of this parameter to on
-        and run the command <cmdname>ANALYZE</cmdname> or <cmdname>ANALYZE ROOTPARTITION</cmdname>
-        on partitioned tables to ensure the proper statistics have been collected. </p>
+        statistics. When the value of the server configuration parameter <codeph><xref
+            href="#optimizer" format="dita"/></codeph> is on (the default), the value of this
+        parameter should also be on (the default). For information about collecting table statistics
+        on partitioned tables, see <codeph><xref href="../sql_commands/ANALYZE.xml"/></codeph>.</p>
       <p>For information about the legacy query optimizer and GPORCA, see <xref
           href="../../admin_guide/query/topics/query.xml">Querying Data</xref><ph
           otherprops="op-print"> in the <cite>Greenplum Database Administrator
@@ -7432,7 +7371,7 @@
           <tbody>
             <row>
               <entry colname="col1">Boolean</entry>
-              <entry colname="col2">off</entry>
+              <entry colname="col2">on</entry>
               <entry colname="col3">master<p>session</p><p>reload</p></entry>
             </row>
           </tbody>

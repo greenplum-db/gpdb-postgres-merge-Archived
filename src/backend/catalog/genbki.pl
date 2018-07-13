@@ -7,10 +7,10 @@
 #    header files.  The .bki files are used to initialize the postgres
 #    template database.
 #
-# Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/catalog/genbki.pl,v 1.8 2010/04/20 23:48:47 tgl Exp $
+# src/backend/catalog/genbki.pl
 #
 #----------------------------------------------------------------------
 
@@ -265,7 +265,7 @@ print SCHEMAPG <<EOM;
  * schemapg.h
  *    Schema_pg_xxx macros for use by relcache.c
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -341,6 +341,7 @@ sub emit_pgattr_row
             $row{attalign}    = $type->{typalign};
             # set attndims if it's an array type
             $row{attndims}    = $type->{typcategory} eq 'A' ? '1' : '0';
+            $row{attcollation} = $type->{typcollation};
             # attnotnull must be set true if the type is fixed-width and
             # prior columns are too --- compare DefineAttr in bootstrap.c.
             # oidvector and int2vector are also treated as not-nullable.
@@ -369,7 +370,8 @@ sub emit_pgattr_row
         attislocal    => 't',
         attinhcount   => '0',
         attacl        => '_null_',
-        attoptions    => '_null_'
+        attoptions    => '_null_',
+        attfdwoptions => '_null_'
     );
     return {%PGATTR_DEFAULTS, %row};
 }
@@ -400,6 +402,7 @@ sub emit_schemapg_row
     # Only the fixed-size portions of the descriptors are ever used.
     delete $row->{attacl};
     delete $row->{attoptions};
+    delete $row->{attfdwoptions};
 
     # Expand booleans from 'f'/'t' to 'false'/'true'.
     # Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.

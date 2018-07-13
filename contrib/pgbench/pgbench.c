@@ -4,8 +4,8 @@
  * A simple benchmark program for PostgreSQL
  * Originally written by Tatsuo Ishii and enhanced by many contributors.
  *
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.99 2010/07/06 19:18:55 momjian Exp $
- * Copyright (c) 2000-2010, PostgreSQL Global Development Group
+ * contrib/pgbench/pgbench.c
+ * Copyright (c) 2000-2012, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -33,6 +33,7 @@
 
 #include "postgres_fe.h"
 
+#include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"
 #include "portability/instr_time.h"
@@ -43,10 +44,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 #endif   /* ! WIN32 */
-
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -123,6 +120,17 @@ int			scale = 1;
 int			fillfactor = 100;
 
 /*
+ * use unlogged tables?
+ */
+int			unlogged_tables = 0;
+
+/*
+ * tablespace selection
+ */
+char	   *tablespace = NULL;
+char	   *index_tablespace = NULL;
+
+/*
  * end of configurable parameters
  *********************************************************************/
 
@@ -133,6 +141,7 @@ int			fillfactor = 100;
 
 bool		use_log;			/* log transaction latencies to a file */
 bool		is_connect;			/* establish connection for each transaction */
+bool		is_latencies;		/* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
 
 int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-unique indexes */
@@ -174,7 +183,8 @@ typedef struct
 	int64		until;			/* napping until (usec) */
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
-	instr_time	txn_begin;		/* used for measuring latencies */
+	instr_time	txn_begin;		/* used for measuring transaction latencies */
+	instr_time	stmt_begin;		/* used for measuring statement latencies */
 	int			use_file;		/* index in sql_files for this client */
 	bool		prepared[MAX_FILES];
 } CState;
@@ -189,6 +199,9 @@ typedef struct
 	CState	   *state;			/* array of CState */
 	int			nstate;			/* length of state[] */
 	instr_time	start_time;		/* thread start time */
+	instr_time *exec_elapsed;	/* time spent executing cmds (per Command) */
+	int		   *exec_count;		/* number of cmd executions (per Command) */
+	unsigned short random_state[3];		/* separate randomness for each thread */
 } TState;
 
 #define INVALID_THREAD		((pthread_t) 0)
@@ -219,13 +232,16 @@ static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
 
 typedef struct
 {
+	char	   *line;			/* full text of command line */
+	int			command_num;	/* unique index of this Command struct */
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
-	int			argc;			/* number of commands */
-	char	   *argv[MAX_ARGS]; /* command list */
+	int			argc;			/* number of command words */
+	char	   *argv[MAX_ARGS]; /* command word list */
 } Command;
 
 static Command **sql_files[MAX_FILES];	/* SQL script files */
 static int	num_files;			/* number of script files */
+static int	num_commands = 0;	/* total number of Command structs */
 static int	debug = 0;			/* debug flag */
 
 /* default scenario */
@@ -273,18 +289,71 @@ static char *select_only = {
 static void setalarm(int seconds);
 static void *threadRun(void *arg);
 
+
+/*
+ * routines to check mem allocations and fail noisily.
+ */
+static void *
+xmalloc(size_t size)
+{
+	void	   *result;
+
+	result = malloc(size);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+static void *
+xrealloc(void *ptr, size_t size)
+{
+	void	   *result;
+
+	result = realloc(ptr, size);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+static char *
+xstrdup(const char *s)
+{
+	char	   *result;
+
+	result = strdup(s);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
+}
+
+
 static void
 usage(const char *progname)
 {
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
-		   "  %s [OPTIONS]... [DBNAME]\n"
+		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i           invokes initialization mode\n"
 		   "  -x STRING    append this string to the storage clause e.g. 'appendonly=true, orientation=column'\n"
 		   "  -q           make the indexes that are created non-unique indexes (default: unique)\n"
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
+		   "  --index-tablespace=TABLESPACE\n"
+		   "               create indexes in the specified tablespace\n"
+		   "  --tablespace=TABLESPACE\n"
+		   "               create tables in the specified tablespace\n"
+		   "  --unlogged-tables\n"
+		   "               create tables as unlogged tables\n"
 		   "\nBenchmarking options:\n"
 		"  -c NUM       number of concurrent database clients (default: 1)\n"
 		   "  -C           establish new connection for each transaction\n"
@@ -293,10 +362,11 @@ usage(const char *progname)
 		   "  -f FILENAME  read transaction script from FILENAME\n"
 		   "  -j NUM       number of threads (default: 1)\n"
 		   "  -l           write transaction times to log file\n"
-		   "  -M {simple|extended|prepared}\n"
+		   "  -M simple|extended|prepared\n"
 		   "               protocol for submitting queries to server (default: simple)\n"
 		   "  -n           do not run VACUUM before tests\n"
 		   "  -N           do not update tables \"pgbench_tellers\" and \"pgbench_branches\"\n"
+		   "  -r           report average latency per command\n"
 		   "  -s NUM       report this scale factor in output\n"
 		   "  -S           perform SELECT-only transactions\n"
 	 "  -t NUM       number of transactions each client runs (default: 10)\n"
@@ -316,13 +386,18 @@ usage(const char *progname)
 
 /* random number generator: uniform distribution from min to max inclusive */
 static int
-getrand(int min, int max)
+getrand(TState *thread, int min, int max)
 {
 	/*
 	 * Odd coding is so that min and max have approximately the same chance of
 	 * being selected as do numbers between them.
+	 *
+	 * pg_erand48() is thread-safe and concurrent, which is why we use it
+	 * rather than random(), which in glibc is non-reentrant, and therefore
+	 * protected by a mutex, and therefore a bottleneck on machines with many
+	 * CPUs.
 	 */
-	return min + (int) (((max - min + 1) * (double) random()) / (MAX_RANDOM_VALUE + 1.0));
+	return min + (int) ((max - min + 1) * pg_erand48(thread->random_state));
 }
 
 /* call PQexec() and exit() on failure */
@@ -477,28 +552,17 @@ putVariable(CState *st, const char *context, char *name, char *value)
 		}
 
 		if (st->variables)
-			newvars = (Variable *) realloc(st->variables,
+			newvars = (Variable *) xrealloc(st->variables,
 									(st->nvariables + 1) * sizeof(Variable));
 		else
-			newvars = (Variable *) malloc(sizeof(Variable));
-
-		if (newvars == NULL)
-			goto out_of_memory;
+			newvars = (Variable *) xmalloc(sizeof(Variable));
 
 		st->variables = newvars;
 
 		var = &newvars[st->nvariables];
 
-		var->name = NULL;
-		var->value = NULL;
-
-		if ((var->name = strdup(name)) == NULL ||
-			(var->value = strdup(value)) == NULL)
-		{
-			free(var->name);
-			free(var->value);
-			return false;
-		}
+		var->name = xstrdup(name);
+		var->value = xstrdup(value);
 
 		st->nvariables++;
 
@@ -509,18 +573,14 @@ putVariable(CState *st, const char *context, char *name, char *value)
 	{
 		char	   *val;
 
-		if ((val = strdup(value)) == NULL)
-			return false;
+		/* dup then free, in case value is pointing at this variable */
+		val = xstrdup(value);
 
 		free(var->value);
 		var->value = val;
 	}
 
 	return true;
-
-out_of_memory:
-	fprintf(stderr, "%s: out of memory for variable '%s'\n", context, name);
-	return false;
 }
 
 static char *
@@ -536,9 +596,7 @@ parseVariable(const char *sql, int *eaten)
 	if (i == 1)
 		return NULL;
 
-	name = malloc(i);
-	if (name == NULL)
-		return NULL;
+	name = xmalloc(i);
 	memcpy(name, &sql[1], i - 1);
 	name[i - 1] = '\0';
 
@@ -553,16 +611,9 @@ replaceVariable(char **sql, char *param, int len, char *value)
 
 	if (valueln > len)
 	{
-		char   *tmp;
-		size_t	offset = param - *sql;
+		size_t		offset = param - *sql;
 
-		tmp = realloc(*sql, strlen(*sql) - len + valueln + 1);
-		if (tmp == NULL)
-		{
-			free(*sql);
-			return NULL;
-		}
-		*sql = tmp;
+		*sql = xrealloc(*sql, strlen(*sql) - len + valueln + 1);
 		param = *sql + offset;
 	}
 
@@ -603,8 +654,7 @@ assignVariables(CState *st, char *sql)
 			continue;
 		}
 
-		if ((p = replaceVariable(&sql, p, eaten, val)) == NULL)
-			return NULL;
+		p = replaceVariable(&sql, p, eaten, val);
 	}
 
 	return sql;
@@ -634,11 +684,13 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 	char	   *endptr;
 	int			retval;
 
-	/*
-	 * Join arguments with whilespace separaters. Arguments starting with
-	 * exactly one colon are treated as variables: name - append a string
-	 * "name" :var - append a variable named 'var'. ::name - append a string
-	 * ":name"
+	/*----------
+	 * Join arguments with whitespace separators. Arguments starting with
+	 * exactly one colon are treated as variables:
+	 *	name - append a string "name"
+	 *	:var - append a variable named 'var'
+	 *	::name - append a string ":name"
+	 *----------
 	 */
 	for (i = 0; i < argc; i++)
 	{
@@ -745,7 +797,7 @@ clientDone(CState *st, bool ok)
 
 /* return false iff client should be disconnected */
 static bool
-doCustom(CState *st, instr_time *conn_time, FILE *logfile)
+doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile)
 {
 	PGresult   *res;
 	Command   **commands;
@@ -780,7 +832,22 @@ top:
 		}
 
 		/*
-		 * transaction finished: record the time it took in the log
+		 * command finished: accumulate per-command execution times in
+		 * thread-local data structure, if per-command latencies are requested
+		 */
+		if (is_latencies)
+		{
+			instr_time	now;
+			int			cnum = commands[st->state]->command_num;
+
+			INSTR_TIME_SET_CURRENT(now);
+			INSTR_TIME_ACCUM_DIFF(thread->exec_elapsed[cnum],
+								  now, st->stmt_begin);
+			thread->exec_count[cnum]++;
+		}
+
+		/*
+		 * if transaction finished, record the time it took in the log
 		 */
 		if (logfile && commands[st->state + 1] == NULL)
 		{
@@ -807,6 +874,10 @@ top:
 
 		if (commands[st->state]->type == SQL_COMMAND)
 		{
+			/*
+			 * Read and discard the query result; note this is not included in
+			 * the statement latency numbers.
+			 */
 			res = PQgetResult(st->con);
 			switch (PQresultStatus(res))
 			{
@@ -841,7 +912,7 @@ top:
 		if (commands[st->state] == NULL)
 		{
 			st->state = 0;
-			st->use_file = getrand(0, num_files - 1);
+			st->use_file = getrand(thread, 0, num_files - 1);
 			commands = sql_files[st->use_file];
 		}
 	}
@@ -861,8 +932,13 @@ top:
 		INSTR_TIME_ACCUM_DIFF(*conn_time, end, start);
 	}
 
+	/* Record transaction start time if logging is enabled */
 	if (logfile && st->state == 0)
 		INSTR_TIME_SET_CURRENT(st->txn_begin);
+
+	/* Record statement start time if per-command latencies are requested */
+	if (is_latencies)
+		INSTR_TIME_SET_CURRENT(st->stmt_begin);
 
 	if (commands[st->state]->type == SQL_COMMAND)
 	{
@@ -873,13 +949,8 @@ top:
 		{
 			char	   *sql;
 
-			if ((sql = strdup(command->argv[0])) == NULL
-				|| (sql = assignVariables(st, sql)) == NULL)
-			{
-				fprintf(stderr, "out of memory\n");
-				st->ecnt++;
-				return true;
-			}
+			sql = xstrdup(command->argv[0]);
+			sql = assignVariables(st, sql);
 
 			if (debug)
 				fprintf(stderr, "client %d sending %s\n", st->id, sql);
@@ -1000,17 +1071,31 @@ top:
 			else
 				max = atoi(argv[3]);
 
-			if (max < min || max > MAX_RANDOM_VALUE)
+			if (max < min)
 			{
-				fprintf(stderr, "%s: invalid maximum number %d\n", argv[0], max);
+				fprintf(stderr, "%s: maximum is less than minimum\n", argv[0]);
+				st->ecnt++;
+				return true;
+			}
+
+			/*
+			 * getrand() neeeds to be able to subtract max from min and add
+			 * one the result without overflowing.	Since we know max > min,
+			 * we can detect overflow just by checking for a negative result.
+			 * But we must check both that the subtraction doesn't overflow,
+			 * and that adding one to the result doesn't overflow either.
+			 */
+			if (max - min < 0 || (max - min) + 1 < 0)
+			{
+				fprintf(stderr, "%s: range too large\n", argv[0]);
 				st->ecnt++;
 				return true;
 			}
 
 #ifdef DEBUG
-			printf("min: %d max: %d random: %d\n", min, max, getrand(min, max));
+			printf("min: %d max: %d random: %d\n", min, max, getrand(thread, min, max));
 #endif
-			snprintf(res, sizeof(res), "%d", getrand(min, max));
+			snprintf(res, sizeof(res), "%d", getrand(thread, min, max));
 
 			if (!putVariable(st, argv[0], argv[1], res))
 			{
@@ -1187,15 +1272,38 @@ init(void)
 	 * versions.  Since pgbench has never pretended to be fully TPC-B
 	 * compliant anyway, we stick with the historical behavior.
 	 */
-	static char *DDLs[] = {
-		"drop table if exists pgbench_branches",
-		"create table pgbench_branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d, %s) DISTRIBUTED BY (bid)",
-		"drop table if exists pgbench_tellers",
-		"create table pgbench_tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (tid)",
-		"drop table if exists pgbench_accounts",
-		"create table pgbench_accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d, %s) DISTRIBUTED BY (aid)",
-		"drop table if exists pgbench_history",
-		"create table pgbench_history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)) with (%s) DISTRIBUTED BY (tid)"
+	struct ddlinfo
+	{
+		char	   *table;
+		char	   *cols;
+		int			declare_fillfactor;
+		char	   *distributed_col;
+	};
+	struct ddlinfo DDLs[] = {
+		{
+			"pgbench_branches",
+			"bid int not null,bbalance int,filler char(88)",
+			1,
+			"bid"
+		},
+		{
+			"pgbench_tellers",
+			"tid int not null,bid int,tbalance int,filler char(84)",
+			1,
+			"tid"
+		},
+		{
+			"pgbench_accounts",
+			"aid int not null,bid int,abalance int,filler char(84)",
+			1,
+			"aid"
+		},
+		{
+			"pgbench_history",
+			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
+			0,
+			"tid"
+		}
 	};
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
@@ -1220,29 +1328,39 @@ init(void)
 
 	for (i = 0; i < lengthof(DDLs); i++)
 	{
-		/*
-		 * set fillfactor for branches, tellers and accounts tables
-		 */
-		if ((strstr(DDLs[i], "create table pgbench_branches") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table pgbench_tellers") == DDLs[i]) ||
-			(strstr(DDLs[i], "create table pgbench_accounts") == DDLs[i]))
-		{
-			char		ddl_stmt[256];
-			snprintf(ddl_stmt, 256, DDLs[i], fillfactor, storage_clause);
-			fprintf(stderr, "%s\n", ddl_stmt); 
-			executeStatement(con, ddl_stmt);
-		}
-		else if (strstr(DDLs[i], "create table pgbench_history") == DDLs[i])
-		{
-			char		ddl_stmt[256];
-			snprintf(ddl_stmt, 256, DDLs[i], storage_clause);
-			fprintf(stderr, "%s\n", ddl_stmt); 
-			executeStatement(con, ddl_stmt);
-		}
+		char		opts[256];
+		char		buffer[256];
+		struct ddlinfo *ddl = &DDLs[i];
+
+		/* Remove old table, if it exists. */
+		snprintf(buffer, 256, "drop table if exists %s", ddl->table);
+		executeStatement(con, buffer);
+
+		/* Construct new create table statement. */
+		opts[0] = '\0';
+		if (ddl->declare_fillfactor)
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " with (fillfactor=%d, %s) DISTRIBUTED BY (%s)",
+					 fillfactor, storage_clause, ddl->declare_fillfactor);
 		else
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " with (%s) DISTRIBUTED BY (%s)",
+					 storage_clause, ddl->declare_fillfactor);
+		if (tablespace != NULL)
 		{
-			executeStatement(con, DDLs[i]);
+			char	   *escape_tablespace;
+
+			escape_tablespace = PQescapeIdentifier(con, tablespace,
+												   strlen(tablespace));
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " tablespace %s", escape_tablespace);
+			PQfreemem(escape_tablespace);
 		}
+		snprintf(buffer, 256, "create%s table %s(%s)%s",
+				 unlogged_tables ? " unlogged" : "",
+				 ddl->table, ddl->cols, opts);
+
+		executeStatement(con, buffer);
 	}
 
 	executeStatement(con, "begin");
@@ -1306,22 +1424,31 @@ init(void)
 	/*
 	 * create indexes
 	 */
-	fprintf(stderr, "creating indexes...\n");
-	if (use_unique_key)
+	fprintf(stderr, "set primary key...\n");
+	for (i = 0; i < lengthof(DDLAFTERs); i++)
 	{
-		for (i = 0; i < lengthof(DDLAFTERs); i++)
+		char		buffer[256];
+		if (use_unique_key)
 		{
-			fprintf(stderr, "%s\n", DDLAFTERs[i]);
-			executeStatement(con, DDLAFTERs[i]);
+			strncpy(buffer, DDLAFTERs[i], 256);
 		}
-	}
-	else
-	{
-		for (i = 0; i < lengthof(NON_UNIQUE_INDEX_DDLAFTERs); i++)
+		else
 		{
-			fprintf(stderr, "%s\n", NON_UNIQUE_INDEX_DDLAFTERs[i]);
-			executeStatement(con, NON_UNIQUE_INDEX_DDLAFTERs[i]);
+			strncpy(buffer, NON_UNIQUE_INDEX_DDLAFTERs[i], 256);
 		}
+
+		if (index_tablespace != NULL)
+		{
+			char	   *escape_tablespace;
+
+			escape_tablespace = PQescapeIdentifier(con, index_tablespace,
+												   strlen(index_tablespace));
+			snprintf(buffer + strlen(buffer), 256 - strlen(buffer),
+					 " using index tablespace %s", escape_tablespace);
+			PQfreemem(escape_tablespace);
+		}
+
+		executeStatement(con, buffer);
 	}
 
 	/* vacuum */
@@ -1344,9 +1471,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 	char	   *sql,
 			   *p;
 
-	sql = strdup(raw_sql);
-	if (sql == NULL)
-		return false;
+	sql = xstrdup(raw_sql);
 	cmd->argc = 1;
 
 	p = sql;
@@ -1373,8 +1498,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 		}
 
 		sprintf(var, "$%d", cmd->argc);
-		if ((p = replaceVariable(&sql, p, eaten, var)) == NULL)
-			return false;
+		p = replaceVariable(&sql, p, eaten, var);
 
 		cmd->argv[cmd->argc] = name;
 		cmd->argc++;
@@ -1384,6 +1508,7 @@ parseQuery(Command *cmd, const char *raw_sql)
 	return true;
 }
 
+/* Parse a command; return a Command struct, or NULL if it's a comment */
 static Command *
 process_commands(char *buf)
 {
@@ -1394,24 +1519,24 @@ process_commands(char *buf)
 	char	   *p,
 			   *tok;
 
+	/* Make the string buf end at the next newline */
 	if ((p = strchr(buf, '\n')) != NULL)
 		*p = '\0';
 
+	/* Skip leading whitespace */
 	p = buf;
 	while (isspace((unsigned char) *p))
 		p++;
 
+	/* If the line is empty or actually a comment, we're done */
 	if (*p == '\0' || strncmp(p, "--", 2) == 0)
-	{
 		return NULL;
-	}
 
-	my_commands = (Command *) malloc(sizeof(Command));
-	if (my_commands == NULL)
-	{
-		return NULL;
-	}
-
+	/* Allocate and initialize Command structure */
+	my_commands = (Command *) xmalloc(sizeof(Command));
+	my_commands->line = xstrdup(buf);
+	my_commands->command_num = num_commands++;
+	my_commands->type = 0;		/* until set */
 	my_commands->argc = 0;
 
 	if (*p == '\\')
@@ -1423,12 +1548,8 @@ process_commands(char *buf)
 
 		while (tok != NULL)
 		{
-			if ((my_commands->argv[j] = strdup(tok)) == NULL)
-				return NULL;
-
+			my_commands->argv[j++] = xstrdup(tok);
 			my_commands->argc++;
-
-			j++;
 			tok = strtok(NULL, delim);
 		}
 
@@ -1437,7 +1558,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 4)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			for (j = 4; j < my_commands->argc; j++)
@@ -1449,7 +1570,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 3)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			for (j = my_commands->argc < 5 ? 3 : 5; j < my_commands->argc; j++)
@@ -1461,7 +1582,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 2)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 
 			/*
@@ -1488,11 +1609,11 @@ process_commands(char *buf)
 			{
 				if (pg_strcasecmp(my_commands->argv[2], "us") != 0 &&
 					pg_strcasecmp(my_commands->argv[2], "ms") != 0 &&
-					pg_strcasecmp(my_commands->argv[2], "s"))
+					pg_strcasecmp(my_commands->argv[2], "s") != 0)
 				{
 					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n",
 							my_commands->argv[0], my_commands->argv[2]);
-					return NULL;
+					exit(1);
 				}
 			}
 
@@ -1505,7 +1626,7 @@ process_commands(char *buf)
 			if (my_commands->argc < 3)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 		}
 		else if (pg_strcasecmp(my_commands->argv[0], "shell") == 0)
@@ -1513,13 +1634,13 @@ process_commands(char *buf)
 			if (my_commands->argc < 1)
 			{
 				fprintf(stderr, "%s: missing command\n", my_commands->argv[0]);
-				return NULL;
+				exit(1);
 			}
 		}
 		else
 		{
 			fprintf(stderr, "Invalid command %s\n", my_commands->argv[0]);
-			return NULL;
+			exit(1);
 		}
 	}
 	else
@@ -1529,17 +1650,16 @@ process_commands(char *buf)
 		switch (querymode)
 		{
 			case QUERY_SIMPLE:
-				if ((my_commands->argv[0] = strdup(p)) == NULL)
-					return NULL;
+				my_commands->argv[0] = xstrdup(p);
 				my_commands->argc++;
 				break;
 			case QUERY_EXTENDED:
 			case QUERY_PREPARED:
 				if (!parseQuery(my_commands, p))
-					return NULL;
+					exit(1);
 				break;
 			default:
-				return NULL;
+				exit(1);
 		}
 	}
 
@@ -1564,9 +1684,7 @@ process_file(char *filename)
 	}
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
-	if (my_commands == NULL)
-		return false;
+	my_commands = (Command **) xmalloc(sizeof(Command *) * alloc_num);
 
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
@@ -1580,37 +1698,19 @@ process_file(char *filename)
 
 	while (fgets(buf, sizeof(buf), fd) != NULL)
 	{
-		Command    *commands;
-		int			i;
+		Command    *command;
 
-		i = 0;
-		while (isspace((unsigned char) buf[i]))
-			i++;
-
-		if (buf[i] != '\0' && strncmp(&buf[i], "--", 2) != 0)
-		{
-			commands = process_commands(&buf[i]);
-			if (commands == NULL)
-			{
-				fclose(fd);
-				return false;
-			}
-		}
-		else
+		command = process_commands(buf);
+		if (command == NULL)
 			continue;
 
-		my_commands[lineno] = commands;
+		my_commands[lineno] = command;
 		lineno++;
 
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
-			if (my_commands == NULL)
-			{
-				fclose(fd);
-				return false;
-			}
+			my_commands = xrealloc(my_commands, sizeof(Command *) * alloc_num);
 		}
 	}
 	fclose(fd);
@@ -1632,20 +1732,15 @@ process_builtin(char *tb)
 	char		buf[BUFSIZ];
 	int			alloc_num;
 
-	if (*tb == '\0')
-		return NULL;
-
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
-	if (my_commands == NULL)
-		return NULL;
+	my_commands = (Command **) xmalloc(sizeof(Command *) * alloc_num);
 
 	lineno = 0;
 
 	for (;;)
 	{
 		char	   *p;
-		Command    *commands;
+		Command    *command;
 
 		p = buf;
 		while (*tb && *tb != '\n')
@@ -1659,23 +1754,17 @@ process_builtin(char *tb)
 
 		*p = '\0';
 
-		commands = process_commands(buf);
-		if (commands == NULL)
-		{
-			return NULL;
-		}
+		command = process_commands(buf);
+		if (command == NULL)
+			continue;
 
-		my_commands[lineno] = commands;
+		my_commands[lineno] = command;
 		lineno++;
 
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
-			if (my_commands == NULL)
-			{
-				return NULL;
-			}
+			my_commands = xrealloc(my_commands, sizeof(Command *) * alloc_num);
 		}
 	}
 
@@ -1686,7 +1775,8 @@ process_builtin(char *tb)
 
 /* print out results */
 static void
-printResults(int ttype, int normal_xacts, int nclients, int nthreads,
+printResults(int ttype, int normal_xacts, int nclients,
+			 TState *threads, int nthreads,
 			 instr_time total_time, instr_time conn_total_time)
 {
 	double		time_include,
@@ -1727,6 +1817,51 @@ printResults(int ttype, int normal_xacts, int nclients, int nthreads,
 	}
 	printf("tps = %f (including connections establishing)\n", tps_include);
 	printf("tps = %f (excluding connections establishing)\n", tps_exclude);
+
+	/* Report per-command latencies */
+	if (is_latencies)
+	{
+		int			i;
+
+		for (i = 0; i < num_files; i++)
+		{
+			Command   **commands;
+
+			if (num_files > 1)
+				printf("statement latencies in milliseconds, file %d:\n", i + 1);
+			else
+				printf("statement latencies in milliseconds:\n");
+
+			for (commands = sql_files[i]; *commands != NULL; commands++)
+			{
+				Command    *command = *commands;
+				int			cnum = command->command_num;
+				double		total_time;
+				instr_time	total_exec_elapsed;
+				int			total_exec_count;
+				int			t;
+
+				/* Accumulate per-thread data for command */
+				INSTR_TIME_SET_ZERO(total_exec_elapsed);
+				total_exec_count = 0;
+				for (t = 0; t < nthreads; t++)
+				{
+					TState	   *thread = &threads[t];
+
+					INSTR_TIME_ADD(total_exec_elapsed,
+								   thread->exec_elapsed[cnum]);
+					total_exec_count += thread->exec_count[cnum];
+				}
+
+				if (total_exec_count > 0)
+					total_time = INSTR_TIME_GET_MILLISEC(total_exec_elapsed) / (double) total_exec_count;
+				else
+					total_time = 0.0;
+
+				printf("\t%f\t%s\n", total_time, command->line);
+			}
+		}
+	}
 }
 
 
@@ -1741,6 +1876,7 @@ main(int argc, char **argv)
 	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
+	int			optindex;
 	char	   *filename = NULL;
 	bool		scale_given = false;
 
@@ -1753,6 +1889,13 @@ main(int argc, char **argv)
 	int			total_xacts;
 
 	int			i;
+
+	static struct option long_options[] = {
+		{"index-tablespace", required_argument, NULL, 3},
+		{"tablespace", required_argument, NULL, 2},
+		{"unlogged-tables", no_argument, &unlogged_tables, 1},
+		{NULL, 0, NULL, 0}
+	};
 
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
@@ -1794,16 +1937,10 @@ main(int argc, char **argv)
 	else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
 		login = env;
 
-	state = (CState *) malloc(sizeof(CState));
-	if (state == NULL)
-	{
-		fprintf(stderr, "Couldn't allocate memory for state\n");
-		exit(1);
-	}
+	state = (CState *) xmalloc(sizeof(CState));
+	memset(state, 0, sizeof(CState));
 
-	memset(state, 0, sizeof(*state));
-
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Cs:t:T:U:lf:D:F:M:j:x:q")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Crs:t:T:U:lf:D:F:M:j:x:q")) != -1)
 	{
 		switch (c)
 		{
@@ -1872,6 +2009,9 @@ main(int argc, char **argv)
 				break;
 			case 'C':
 				is_connect = true;
+				break;
+			case 'r':
+				is_latencies = true;
 				break;
 			case 's':
 				scale_given = true;
@@ -1958,6 +2098,15 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
+			case 0:
+				/* This covers long options which take no argument. */
+				break;
+			case 2:				/* tablespace */
+				tablespace = optarg;
+				break;
+			case 3:				/* index-tablespace */
+				index_tablespace = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -1994,6 +2143,22 @@ main(int argc, char **argv)
 	}
 
 	/*
+	 * is_latencies only works with multiple threads in thread-based
+	 * implementations, not fork-based ones, because it supposes that the
+	 * parent can see changes made to the per-thread execution stats by child
+	 * threads.  It seems useful enough to accept despite this limitation, but
+	 * perhaps we should FIXME someday (by passing the stats data back up
+	 * through the parent-to-child pipes).
+	 */
+#ifndef ENABLE_THREAD_SAFETY
+	if (is_latencies && nthreads > 1)
+	{
+		fprintf(stderr, "-r does not work with -j larger than 1 on this platform.\n");
+		exit(1);
+	}
+#endif
+
+	/*
 	 * save main process id in the global variable because process id will be
 	 * changed after fork.
 	 */
@@ -2001,14 +2166,8 @@ main(int argc, char **argv)
 
 	if (nclients > 1)
 	{
-		state = (CState *) realloc(state, sizeof(CState) * nclients);
-		if (state == NULL)
-		{
-			fprintf(stderr, "Couldn't allocate memory for state\n");
-			exit(1);
-		}
-
-		memset(state + 1, 0, sizeof(*state) * (nclients - 1));
+		state = (CState *) xrealloc(state, sizeof(CState) * nclients);
+		memset(state + 1, 0, sizeof(CState) * (nclients - 1));
 
 		/* copy any -D switch values to all clients */
 		for (i = 1; i < nclients; i++)
@@ -2130,6 +2289,42 @@ main(int argc, char **argv)
 			break;
 	}
 
+	/* set up thread data structures */
+	threads = (TState *) xmalloc(sizeof(TState) * nthreads);
+	for (i = 0; i < nthreads; i++)
+	{
+		TState	   *thread = &threads[i];
+
+		thread->tid = i;
+		thread->state = &state[nclients / nthreads * i];
+		thread->nstate = nclients / nthreads;
+		thread->random_state[0] = random();
+		thread->random_state[1] = random();
+		thread->random_state[2] = random();
+
+		if (is_latencies)
+		{
+			/* Reserve memory for the thread to store per-command latencies */
+			int			t;
+
+			thread->exec_elapsed = (instr_time *)
+				xmalloc(sizeof(instr_time) * num_commands);
+			thread->exec_count = (int *)
+				xmalloc(sizeof(int) * num_commands);
+
+			for (t = 0; t < num_commands; t++)
+			{
+				INSTR_TIME_SET_ZERO(thread->exec_elapsed[t]);
+				thread->exec_count[t] = 0;
+			}
+		}
+		else
+		{
+			thread->exec_elapsed = NULL;
+			thread->exec_count = NULL;
+		}
+	}
+
 	/* get start up time */
 	INSTR_TIME_SET_CURRENT(start_time);
 
@@ -2138,20 +2333,18 @@ main(int argc, char **argv)
 		setalarm(duration);
 
 	/* start threads */
-	threads = (TState *) malloc(sizeof(TState) * nthreads);
 	for (i = 0; i < nthreads; i++)
 	{
-		threads[i].tid = i;
-		threads[i].state = &state[nclients / nthreads * i];
-		threads[i].nstate = nclients / nthreads;
-		INSTR_TIME_SET_CURRENT(threads[i].start_time);
+		TState	   *thread = &threads[i];
+
+		INSTR_TIME_SET_CURRENT(thread->start_time);
 
 		/* the first thread (i = 0) is executed by main thread */
 		if (i > 0)
 		{
-			int			err = pthread_create(&threads[i].thread, NULL, threadRun, &threads[i]);
+			int			err = pthread_create(&thread->thread, NULL, threadRun, thread);
 
-			if (err != 0 || threads[i].thread == INVALID_THREAD)
+			if (err != 0 || thread->thread == INVALID_THREAD)
 			{
 				fprintf(stderr, "cannot create thread: %s\n", strerror(err));
 				exit(1);
@@ -2159,7 +2352,7 @@ main(int argc, char **argv)
 		}
 		else
 		{
-			threads[i].thread = INVALID_THREAD;
+			thread->thread = INVALID_THREAD;
 		}
 	}
 
@@ -2189,7 +2382,8 @@ main(int argc, char **argv)
 	/* get end time */
 	INSTR_TIME_SET_CURRENT(total_time);
 	INSTR_TIME_SUBTRACT(total_time, start_time);
-	printResults(ttype, total_xacts, nclients, nthreads, total_time, conn_total_time);
+	printResults(ttype, total_xacts, nclients, threads, nthreads,
+				 total_time, conn_total_time);
 
 	return 0;
 }
@@ -2207,7 +2401,7 @@ threadRun(void *arg)
 	int			remains = nstate;		/* number of remaining clients */
 	int			i;
 
-	result = malloc(sizeof(TResult));
+	result = xmalloc(sizeof(TResult));
 	INSTR_TIME_SET_ZERO(result->conn_time);
 
 	/* open log file if requested */
@@ -2249,8 +2443,8 @@ threadRun(void *arg)
 		Command   **commands = sql_files[st->use_file];
 		int			prev_ecnt = st->ecnt;
 
-		st->use_file = getrand(0, num_files - 1);
-		if (!doCustom(st, &result->conn_time, logfile))
+		st->use_file = getrand(thread, 0, num_files - 1);
+		if (!doCustom(thread, st, &result->conn_time, logfile))
 			remains--;			/* I've aborted */
 
 		if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
@@ -2352,7 +2546,7 @@ threadRun(void *arg)
 			if (st->con && (FD_ISSET(PQsocket(st->con), &input_mask)
 							|| commands[st->state]->type == META_COMMAND))
 			{
-				if (!doCustom(st, &result->conn_time, logfile))
+				if (!doCustom(thread, st, &result->conn_time, logfile))
 					remains--;	/* I've aborted */
 			}
 
@@ -2419,10 +2613,13 @@ pthread_create(pthread_t *thread,
 {
 	fork_pthread *th;
 	void	   *ret;
-	instr_time	start_time;
 
-	th = (fork_pthread *) malloc(sizeof(fork_pthread));
-	pipe(th->pipes);
+	th = (fork_pthread *) xmalloc(sizeof(fork_pthread));
+	if (pipe(th->pipes) < 0)
+	{
+		free(th);
+		return errno;
+	}
 
 	th->pid = fork();
 	if (th->pid == -1)			/* error */
@@ -2443,17 +2640,6 @@ pthread_create(pthread_t *thread,
 	/* set alarm again because the child does not inherit timers */
 	if (duration > 0)
 		setalarm(duration);
-
-	/*
-	 * Set a different random seed in each child process.  Otherwise they all
-	 * inherit the parent's state and generate the same "random" sequence. (In
-	 * the threaded case, the different threads will obtain subsets of the
-	 * output of a single random() sequence, which should be okay for our
-	 * purposes.)
-	 */
-	INSTR_TIME_SET_CURRENT(start_time);
-	srandom(((unsigned int) INSTR_TIME_GET_MICROSEC(start_time)) +
-			((unsigned int) getpid()));
 
 	ret = start_routine(arg);
 	write(th->pipes[1], ret, sizeof(TResult));
@@ -2476,7 +2662,7 @@ pthread_join(pthread_t th, void **thread_return)
 	if (thread_return != NULL)
 	{
 		/* assume result is TResult */
-		*thread_return = malloc(sizeof(TResult));
+		*thread_return = xmalloc(sizeof(TResult));
 		if (read(th->pipes[0], *thread_return, sizeof(TResult)) != sizeof(TResult))
 		{
 			free(*thread_return);
@@ -2523,7 +2709,7 @@ typedef struct win32_pthread
 	void	   *(*routine) (void *);
 	void	   *arg;
 	void	   *result;
-}	win32_pthread;
+} win32_pthread;
 
 static unsigned __stdcall
 win32_pthread_run(void *arg)
@@ -2544,7 +2730,7 @@ pthread_create(pthread_t *thread,
 	int			save_errno;
 	win32_pthread *th;
 
-	th = (win32_pthread *) malloc(sizeof(win32_pthread));
+	th = (win32_pthread *) xmalloc(sizeof(win32_pthread));
 	th->routine = start_routine;
 	th->arg = arg;
 	th->result = NULL;

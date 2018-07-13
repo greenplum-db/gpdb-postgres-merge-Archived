@@ -4,16 +4,17 @@
  *	  Stub main() routine for the postgres executable.
  *
  * This does some essential startup tasks for any incarnation of postgres
- * (postmaster, standalone backend, or standalone bootstrap mode) and then
- * dispatches to the proper FooMain() routine for the incarnation.
+ * (postmaster, standalone backend, standalone bootstrap process, or a
+ * separately exec'd child of a postmaster) and then dispatches to the
+ * proper FooMain() routine for the incarnation.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.113 2010/01/02 16:57:45 momjian Exp $
+ *	  src/backend/main/main.c
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +56,9 @@ static void check_root(const char *progname);
 static char *get_current_username(const char *progname);
 
 
-
+/*
+ * Any Postgres server process begins execution here.
+ */
 int
 main(int argc, char *argv[])
 {
@@ -78,6 +81,14 @@ main(int argc, char *argv[])
 	 * result pointer.
 	 */
 	argv = save_ps_display_args(argc, argv);
+
+	/*
+	 * If supported on the current platform, set up a handler to be called if
+	 * the backend/postmaster crashes with a fatal signal or exception.
+	 */
+#if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
+	pgwin32_install_crashdump_handler();
+#endif
 
 	/*
 	 * Set up locale information from environment.	Note that LC_CTYPE and
@@ -210,10 +221,10 @@ main(int argc, char *argv[])
 
 /*
  * Place platform-specific startup hacks here.	This is the right
- * place to put code that must be executed early in launch of either a
- * postmaster, a standalone backend, or a standalone bootstrap run.
- * Note that this code will NOT be executed when a backend or
- * sub-bootstrap run is forked by the server.
+ * place to put code that must be executed early in the launch of any new
+ * server process.	Note that this code will NOT be executed when a backend
+ * or sub-bootstrap process is forked, unless we are in a fork/exec
+ * environment (ie EXEC_BACKEND is defined).
  *
  * XXX The need for code here is proof that the platform in question
  * is too brain-dead to provide a standard C execution environment
@@ -222,35 +233,30 @@ main(int argc, char *argv[])
 static void
 startup_hacks(const char *progname)
 {
-#if defined(__alpha)			/* no __alpha__ ? */
-#ifdef NOFIXADE
-	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
-#endif
-#endif   /* __alpha */
-
-
 	/*
 	 * On some platforms, unaligned memory accesses result in a kernel trap;
 	 * the default kernel behavior is to emulate the memory access, but this
-	 * results in a significant performance penalty. We ought to fix PG not to
-	 * make such unaligned memory accesses, so this code disables the kernel
+	 * results in a significant performance penalty.  We want PG never to make
+	 * such unaligned memory accesses, so this code disables the kernel
 	 * emulation: unaligned accesses will result in SIGBUS instead.
 	 */
 #ifdef NOFIXADE
 
-#if defined(ultrix4)
-	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
-#endif
-
 #if defined(__alpha)			/* no __alpha__ ? */
-	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
-				   (unsigned long) NULL) < 0)
-		write_stderr("%s: setsysinfo failed: %s\n",
-					 progname, strerror(errno));
-#endif
+	{
+		int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
+
+		if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
+					   (unsigned long) NULL) < 0)
+			write_stderr("%s: setsysinfo failed: %s\n",
+						 progname, strerror(errno));
+	}
+#endif   /* __alpha */
 #endif   /* NOFIXADE */
 
-
+	/*
+	 * Windows-specific execution environment hacking.
+	 */
 #ifdef WIN32
 	{
 		WSADATA		wsaData;
@@ -287,40 +293,41 @@ help(const char *progname)
 	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(_("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
-	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
+	printf(_("  -A 1|0             enable/disable run-time assert checking\n"));
 #endif
-	printf(_("  -B NBUFFERS     number of shared buffers\n"));
-	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(_("  -d 1-5          debugging level\n"));
-	printf(_("  -D DATADIR      database directory\n"));
-	printf(_("  -e              use European date input format (DMY)\n"));
-	printf(_("  -F              turn fsync off\n"));
-	printf(_("  -h HOSTNAME     host name or IP address to listen on\n"));
-	printf(_("  -i              enable TCP/IP connections\n"));
-	printf(_("  -k DIRECTORY    Unix-domain socket location\n"));
+	printf(_("  -B NBUFFERS        number of shared buffers\n"));
+	printf(_("  -c NAME=VALUE      set run-time parameter\n"));
+	printf(_("  -C NAME            print value of run-time parameter, then exit\n"));
+	printf(_("  -d 1-5             debugging level\n"));
+	printf(_("  -D DATADIR         database directory\n"));
+	printf(_("  -e                 use European date input format (DMY)\n"));
+	printf(_("  -F                 turn fsync off\n"));
+	printf(_("  -h HOSTNAME        host name or IP address to listen on\n"));
+	printf(_("  -i                 enable TCP/IP connections\n"));
+	printf(_("  -k DIRECTORY       Unix-domain socket location\n"));
 #ifdef USE_SSL
-	printf(_("  -l              enable SSL connections\n"));
+	printf(_("  -l                 enable SSL connections\n"));
 #endif
-	printf(_("  -N MAX-CONNECT  maximum number of allowed connections\n"));
-	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process (obsolete)\n"));
-	printf(_("  -p PORT         port number to listen on\n"));
-	printf(_("  -s              show statistics after each query\n"));
-	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
-	printf(_("  --NAME=VALUE    set run-time parameter\n"));
+	printf(_("  -N MAX-CONNECT     maximum number of allowed connections\n"));
+	printf(_("  -o OPTIONS         pass \"OPTIONS\" to each server process (obsolete)\n"));
+	printf(_("  -p PORT            port number to listen on\n"));
+	printf(_("  -s                 show statistics after each query\n"));
+	printf(_("  -S WORK-MEM        set amount of memory for sorts (in kB)\n"));
+	printf(_("  --NAME=VALUE       set run-time parameter\n"));
 	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
-	printf(_("  --help          show this help, then exit\n"));
-	printf(_("  --version       output version information, then exit\n"));
-	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
-	printf(_("  --catalog-version output the catalog version, then exit\n"));
+	printf(_("  --help             show this help, then exit\n"));
+	printf(_("  --version          output version information, then exit\n"));
+	printf(_("  --gp-version       output Greenplum version information, then exit\n"));
+	printf(_("  --catalog-version  output the catalog version, then exit\n"));
 
 	printf(_("\nDeveloper options:\n"));
-	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
-	printf(_("  -n              do not reinitialize shared memory after abnormal exit\n"));
-	printf(_("  -O              allow system table structure changes\n"));
-	printf(_("  -P              disable system indexes\n"));
-	printf(_("  -t pa|pl|ex     show timings after each query\n"));
-	printf(_("  -T              send SIGSTOP to all backend servers if one dies\n"));
-	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
+	printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));
+	printf(_("  -n                 do not reinitialize shared memory after abnormal exit\n"));
+	printf(_("  -O                 allow system table structure changes\n"));
+	printf(_("  -P                 disable system indexes\n"));
+	printf(_("  -t pa|pl|ex        show timings after each query\n"));
+	printf(_("  -T                 send SIGSTOP to all backend processes if one dies\n"));
+	printf(_("  -W NUM             wait NUM seconds to allow attach from a debugger\n"));
 
 	printf(_("\nOptions for maintenance mode:\n"));
 	printf(_("  -m              start the system in maintenance mode\n"));
@@ -329,18 +336,18 @@ help(const char *progname)
 	printf(_("  -U              start the system in upgrade mode\n"));
 
 	printf(_("\nOptions for single-user mode:\n"));
-	printf(_("  --single        selects single-user mode (must be first argument)\n"));
-	printf(_("  DBNAME          database name (defaults to user name)\n"));
-	printf(_("  -d 0-5          override debugging level\n"));
-	printf(_("  -E              echo statement before execution\n"));
-	printf(_("  -j              do not use newline as interactive query delimiter\n"));
-	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
+	printf(_("  --single           selects single-user mode (must be first argument)\n"));
+	printf(_("  DBNAME             database name (defaults to user name)\n"));
+	printf(_("  -d 0-5             override debugging level\n"));
+	printf(_("  -E                 echo statement before execution\n"));
+	printf(_("  -j                 do not use newline as interactive query delimiter\n"));
+	printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
 
 	printf(_("\nOptions for bootstrapping mode:\n"));
-	printf(_("  --boot          selects bootstrapping mode (must be first argument)\n"));
-	printf(_("  DBNAME          database name (mandatory argument in bootstrapping mode)\n"));
-	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
-	printf(_("  -x NUM          internal use\n"));
+	printf(_("  --boot             selects bootstrapping mode (must be first argument)\n"));
+	printf(_("  DBNAME             database name (mandatory argument in bootstrapping mode)\n"));
+	printf(_("  -r FILENAME        send stdout and stderr to given file\n"));
+	printf(_("  -x NUM             internal use\n"));
 
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
 	 "configuration settings and how to set them on the command line or in\n"
@@ -410,7 +417,7 @@ get_current_username(const char *progname)
 	/* Allocate new memory because later getpwuid() calls can overwrite it. */
 	return strdup(pw->pw_name);
 #else
-	long		namesize = 256 /* UNLEN */ + 1;
+	unsigned long namesize = 256 /* UNLEN */ + 1;
 	char	   *name;
 
 	name = malloc(namesize);

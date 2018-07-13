@@ -10,6 +10,8 @@ COMMENT ON TABLE tmp_wrong IS 'table comment';
 COMMENT ON TABLE tmp IS 'table comment';
 COMMENT ON TABLE tmp IS NULL;
 
+ALTER TABLE tmp ADD COLUMN xmin integer; -- fails
+
 ALTER TABLE tmp ADD COLUMN a int4 default 3;
 
 ALTER TABLE tmp ADD COLUMN b name;
@@ -63,8 +65,8 @@ ALTER TABLE tmp ADD COLUMN z int2[];
 
 INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
-   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
-        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}', 
+   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
+        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	314159, '(1,1)', '512',
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["epoch" "infinity"]',
@@ -74,7 +76,7 @@ SELECT * FROM tmp;
 
 DROP TABLE tmp;
 
--- the wolf bug - schema mods caused inconsistent row descriptors 
+-- the wolf bug - schema mods caused inconsistent row descriptors
 CREATE TABLE tmp (
 	initial 	int4
 );
@@ -132,8 +134,8 @@ ALTER TABLE tmp ADD COLUMN z int2[];
 
 INSERT INTO tmp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
-   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
-        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}', 
+   VALUES (4, 'name', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
+        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	314159, '(1,1)', '512',
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["epoch" "infinity"]',
@@ -166,6 +168,9 @@ DROP TABLE tmp_new2;
 
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
+ALTER INDEX IF EXISTS __onek_unique1 RENAME TO tmp_onek_unique1;
+ALTER INDEX IF EXISTS __tmp_onek_unique1 RENAME TO onek_unique1;
+
 ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
 ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
@@ -176,7 +181,7 @@ ALTER TABLE tmp_view RENAME TO tmp_view_new;
 ANALYZE tenk1;
 set enable_seqscan to off;
 set enable_bitmapscan to off;
--- 5 values, sorted 
+-- 5 values, sorted
 SELECT unique1 FROM tenk1 WHERE unique1 < 5 ORDER BY 1;
 reset enable_seqscan;
 reset enable_bitmapscan;
@@ -185,6 +190,46 @@ DROP VIEW tmp_view_new;
 -- toast-like relation name
 alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;
+
+-- renaming index should rename constraint as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+ALTER INDEX onek_unique1_key RENAME TO onek_unique1_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+
+-- renaming constraint
+ALTER TABLE onek ADD CONSTRAINT onek_check_constraint CHECK (unique1 >= 0);
+ALTER TABLE onek RENAME CONSTRAINT onek_check_constraint TO onek_check_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_check_constraint_foo;
+
+-- renaming constraint should rename index as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+DROP INDEX onek_unique1_key;  -- to see whether it's there
+ALTER TABLE onek RENAME CONSTRAINT onek_unique1_constraint TO onek_unique1_constraint_foo;
+DROP INDEX onek_unique1_constraint_foo;  -- to see whether it's there
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+
+-- renaming constraints vs. inheritance
+CREATE TABLE constraint_rename_test (a int CONSTRAINT con1 CHECK (a > 0), b int, c int);
+\d constraint_rename_test
+CREATE TABLE constraint_rename_test2 (a int CONSTRAINT con1 CHECK (a > 0), d int) INHERITS (constraint_rename_test);
+\d constraint_rename_test2
+ALTER TABLE constraint_rename_test2 RENAME CONSTRAINT con1 TO con1foo; -- fail
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- fail
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+DROP TABLE constraint_rename_test2;
+DROP TABLE constraint_rename_test;
+ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
 
 -- FOREIGN KEY CONSTRAINT adding TEST
 
@@ -219,11 +264,60 @@ ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match 
 -- Delete one row, add the constraint again -- should fail
 DELETE FROM tmp3 where a=5;
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
+ALTER TABLE tmp3 drop constraint tmpconstr;
+
+INSERT INTO tmp3 values (5,50);
+
+-- Try NOT VALID and then VALIDATE CONSTRAINT, but fails. Delete failure then re-validate
+ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full NOT VALID;
+-- FK constraints are not supported in GPDB
+--start_ignore
+ALTER TABLE tmp3 validate constraint tmpconstr;
+--end_ignore
+
+-- Delete failing row
+DELETE FROM tmp3 where a=5;
+
+-- Try (and succeed) and repeat to show it works on already valid constraint
+--start_ignore
+ALTER TABLE tmp3 validate constraint tmpconstr;
+ALTER TABLE tmp3 validate constraint tmpconstr;
+--end_ignore
+
+-- Try a non-verified CHECK constraint
+ALTER TABLE tmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10); -- fail
+ALTER TABLE tmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10) NOT VALID; -- succeeds
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- fails
+DELETE FROM tmp3 WHERE NOT b > 10;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
+
+-- Test inherited NOT VALID CHECK constraints
+select * from tmp3;
+CREATE TABLE tmp6 () INHERITS (tmp3);
+CREATE TABLE tmp7 () INHERITS (tmp3);
+
+INSERT INTO tmp6 VALUES (6, 30), (7, 16);
+ALTER TABLE tmp3 ADD CONSTRAINT b_le_20 CHECK (b <= 20) NOT VALID;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_le_20;	-- fails
+DELETE FROM tmp6 WHERE b > 20;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT b_le_20;	-- succeeds
+
+-- An already validated constraint must not be revalidated
+CREATE FUNCTION boo(int) RETURNS int IMMUTABLE STRICT LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'boo: %', $1; RETURN $1; END; $$;
+INSERT INTO tmp7 VALUES (8, 18);
+ALTER TABLE tmp7 ADD CONSTRAINT identity CHECK (b = boo(b));
+ALTER TABLE tmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
+ALTER TABLE tmp3 VALIDATE CONSTRAINT identity;
 
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
+
+DROP TABLE tmp7;
+
+DROP TABLE tmp6;
 
 DROP TABLE tmp5;
 
@@ -232,6 +326,23 @@ DROP TABLE tmp4;
 DROP TABLE tmp3;
 
 DROP TABLE tmp2;
+
+-- NOT VALID with plan invalidation -- ensure we don't use a constraint for
+-- exclusion until validated
+set constraint_exclusion TO 'partition';
+create table nv_parent (d date);
+create table nv_child_2010 () inherits (nv_parent);
+create table nv_child_2011 () inherits (nv_parent);
+alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
+alter table nv_child_2011 add check (d between '2011-01-01'::date and '2011-12-31'::date) not valid;
+explain (costs off) select * from nv_parent where d between '2011-08-01' and '2011-08-31';
+create table nv_child_2009 (check (d between '2009-01-01'::date and '2009-12-31'::date)) inherits (nv_parent);
+explain (costs off) select * from nv_parent where d between '2011-08-01'::date and '2011-08-31'::date;
+explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
+-- after validation, the constraint should be used
+alter table nv_child_2011 VALIDATE CONSTRAINT nv_child_2011_d_check;
+explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
+
 
 -- Foreign key adding test with mixed types
 
@@ -391,20 +502,19 @@ select test2 from atacc2;
 drop table atacc2 cascade;
 drop table atacc1;
 
--- adding only to a parent is disallowed as of 8.4
+-- adding only to a parent is allowed as of 9.2
 
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
--- fail:
-alter table only atacc1 add constraint foo check (test>0);
 -- ok:
-alter table only atacc2 add constraint foo check (test>0);
--- check constraint not there on parent
+alter table atacc1 add constraint foo check no inherit (test>0);
+-- check constraint is not there on child
+insert into atacc2 (test) values (-3);
+-- check constraint is there on parent
 insert into atacc1 (test) values (-3);
 insert into atacc1 (test) values (3);
--- check constraint is there on child
-insert into atacc2 (test) values (-3);
-insert into atacc2 (test) values (3);
+-- fail, violating row:
+alter table atacc2 add constraint foo check no inherit (test>0);
 drop table atacc2;
 drop table atacc1;
 
@@ -418,9 +528,14 @@ insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
 -- should succeed
-insert into atacc1 (test) values (4);
+-- In GPDB, we must insert enough values so as to cause duplicates to
+-- be detected on at least one out of several (usually 3) gpdb
+-- segments.
+insert into atacc1 select i from generate_series(3,10)i;
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
+-- try to create duplicates via alter table using - should fail
+alter table atacc1 alter column test type integer using 0;
 drop table atacc1;
 
 -- let's do one where the unique constraint fails when added
@@ -839,6 +954,10 @@ alter table only renameColumn rename column a to d;
 alter table renameColumn rename column a to d;
 alter table renameColumnChild rename column b to a;
 
+-- these should work
+alter table if exists doesnt_exist_tab rename column a to d;
+alter table if exists doesnt_exist_tab rename column b to a;
+
 -- this should work
 alter table renameColumn add column w int;
 
@@ -929,6 +1048,18 @@ where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
 order by relname, attnum;
 
 drop table p1, p2 cascade;
+
+-- test attinhcount tracking with merged columns
+
+create table depth0();
+create table depth1(c text) inherits (depth0);
+create table depth2() inherits (depth1);
+alter table depth0 add c text;
+
+select attrelid::regclass, attname, attinhcount, attislocal
+from pg_attribute
+where attnum > 0 and attrelid::regclass in ('depth0', 'depth1', 'depth2')
+order by attrelid::regclass::text, attnum;
 
 --
 -- Test the ALTER TABLE SET WITH/WITHOUT OIDS command
@@ -1057,7 +1188,7 @@ insert into anothertab (atcol1, atcol2) values (default, null);
 select * from anothertab;
 
 alter table anothertab alter column atcol2 type text
-      using case when atcol2 is true then 'IT WAS TRUE' 
+      using case when atcol2 is true then 'IT WAS TRUE'
                  when atcol2 is false then 'IT WAS FALSE'
                  else 'IT WAS NULL!' end;
 
@@ -1094,14 +1225,106 @@ select * from another;
 
 drop table another;
 
+-- table's row type
+create table tab1 (a int, b text);
+create table tab2 (x int, y tab1);
+alter table tab1 alter column b type varchar; -- fails
+
 -- disallow recursive containment of row types
 create temp table recur1 (f1 int);
 alter table recur1 add column f2 recur1; -- fails
 alter table recur1 add column f2 recur1[]; -- fails
+create domain array_of_recur1 as recur1[];
+alter table recur1 add column f2 array_of_recur1; -- fails
 create temp table recur2 (f1 int, f2 recur1);
 alter table recur1 add column f2 recur2; -- fails
 alter table recur1 add column f2 int;
 alter table recur1 alter column f2 type recur2; -- fails
+
+-- SET STORAGE may need to add a TOAST table
+create table test_storage (a text);
+alter table test_storage alter a set storage plain;
+alter table test_storage add b int default 0; -- rewrite table to remove its TOAST table
+alter table test_storage alter a set storage extended; -- re-add TOAST table
+
+select reltoastrelid <> 0 as has_toast_table
+from pg_class
+where oid = 'test_storage'::regclass;
+
+--
+-- lock levels
+--
+drop type lockmodes;
+create type lockmodes as enum (
+ 'AccessShareLock'
+,'RowShareLock'
+,'RowExclusiveLock'
+,'ShareUpdateExclusiveLock'
+,'ShareLock'
+,'ShareRowExclusiveLock'
+,'ExclusiveLock'
+,'AccessExclusiveLock'
+);
+
+drop view my_locks;
+create or replace view my_locks as
+select case when c.relname like 'pg_toast%' then 'pg_toast' else c.relname end, max(mode::lockmodes) as max_lockmode
+from pg_locks l join pg_class c on l.relation = c.oid
+where virtualtransaction = (
+        select virtualtransaction
+        from pg_locks
+        where transactionid = txid_current()::integer)
+and locktype = 'relation'
+and relnamespace != (select oid from pg_namespace where nspname = 'pg_catalog')
+and c.relname != 'my_locks'
+group by c.relname;
+
+create table alterlock (f1 int primary key, f2 text);
+
+begin; alter table alterlock alter column f2 set statistics 150;
+select * from my_locks order by 1;
+rollback;
+
+begin; alter table alterlock cluster on alterlock_pkey;
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set without cluster;
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (fillfactor = 100);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock reset (fillfactor);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (toast.autovacuum_enabled = off);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock set (autovacuum_enabled = off);
+select * from my_locks order by 1;
+commit;
+
+begin; alter table alterlock alter column f2 set (n_distinct = 1);
+select * from my_locks order by 1;
+rollback;
+
+begin; alter table alterlock alter column f2 set storage extended;
+select * from my_locks order by 1;
+rollback;
+
+begin; alter table alterlock alter column f2 set default 'x';
+select * from my_locks order by 1;
+rollback;
+
+-- cleanup
+drop table alterlock;
+drop view my_locks;
+drop type lockmodes;
 
 --
 -- alter function
@@ -1137,6 +1360,21 @@ create domain alter1.posint integer check (value > 0);
 
 create type alter1.ctype as (f1 int, f2 text);
 
+create function alter1.same(alter1.ctype, alter1.ctype) returns boolean language sql
+as 'select $1.f1 is not distinct from $2.f1 and $1.f2 is not distinct from $2.f2';
+
+create operator alter1.=(procedure = alter1.same, leftarg  = alter1.ctype, rightarg = alter1.ctype);
+
+create operator class alter1.ctype_hash_ops default for type alter1.ctype using hash as
+  operator 1 alter1.=(alter1.ctype, alter1.ctype);
+
+create conversion alter1.ascii_to_utf8 for 'sql_ascii' to 'utf8' from ascii_to_utf8;
+
+create text search parser alter1.prs(start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
+create text search configuration alter1.cfg(parser = alter1.prs);
+create text search template alter1.tmpl(init = dsimple_init, lexize = dsimple_lexize);
+create text search dictionary alter1.dict(template = alter1.tmpl);
+
 insert into alter1.t1(f2) values(11);
 insert into alter1.t1(f2) values(12);
 
@@ -1144,7 +1382,16 @@ alter table alter1.t1 set schema alter2;
 alter table alter1.v1 set schema alter2;
 alter function alter1.plus1(int) set schema alter2;
 alter domain alter1.posint set schema alter2;
+alter operator class alter1.ctype_hash_ops using hash set schema alter2;
+alter operator family alter1.ctype_hash_ops using hash set schema alter2;
+alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
+alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
 alter type alter1.ctype set schema alter2;
+alter conversion alter1.ascii_to_utf8 set schema alter2;
+alter text search parser alter1.prs set schema alter2;
+alter text search configuration alter1.cfg set schema alter2;
+alter text search template alter1.tmpl set schema alter2;
+alter text search dictionary alter1.dict set schema alter2;
 
 -- this should succeed because nothing is left in alter1
 drop schema alter1;
@@ -1160,3 +1407,181 @@ select alter2.plus1(41);
 
 -- clean up
 drop schema alter2 cascade;
+
+--
+-- composite types
+--
+
+CREATE TYPE test_type AS (a int);
+\d test_type
+
+ALTER TYPE nosuchtype ADD ATTRIBUTE b text; -- fails
+
+ALTER TYPE test_type ADD ATTRIBUTE b text;
+\d test_type
+
+ALTER TYPE test_type ADD ATTRIBUTE b text; -- fails
+
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE varchar;
+\d test_type
+
+ALTER TYPE test_type ALTER ATTRIBUTE b SET DATA TYPE integer;
+\d test_type
+
+ALTER TYPE test_type DROP ATTRIBUTE b;
+\d test_type
+
+ALTER TYPE test_type DROP ATTRIBUTE c; -- fails
+
+ALTER TYPE test_type DROP ATTRIBUTE IF EXISTS c;
+
+ALTER TYPE test_type DROP ATTRIBUTE a, ADD ATTRIBUTE d boolean;
+\d test_type
+
+ALTER TYPE test_type RENAME ATTRIBUTE a TO aa;
+ALTER TYPE test_type RENAME ATTRIBUTE d TO dd;
+\d test_type
+
+DROP TYPE test_type;
+
+CREATE TYPE test_type1 AS (a int, b text);
+CREATE TABLE test_tbl1 (x int, y test_type1);
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+
+CREATE TYPE test_type2 AS (a int, b text);
+CREATE TABLE test_tbl2 OF test_type2;
+CREATE TABLE test_tbl2_subclass () INHERITS (test_tbl2);
+\d test_type2
+\d test_tbl2
+
+ALTER TYPE test_type2 ADD ATTRIBUTE c text; -- fails
+ALTER TYPE test_type2 ADD ATTRIBUTE c text CASCADE;
+\d test_type2
+\d test_tbl2
+
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ALTER TYPE test_type2 ALTER ATTRIBUTE b TYPE varchar CASCADE;
+\d test_type2
+\d test_tbl2
+
+ALTER TYPE test_type2 DROP ATTRIBUTE b; -- fails
+ALTER TYPE test_type2 DROP ATTRIBUTE b CASCADE;
+\d test_type2
+\d test_tbl2
+
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa; -- fails
+ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
+\d test_type2
+\d test_tbl2
+\d test_tbl2_subclass
+
+DROP TABLE test_tbl2_subclass;
+
+-- This test isn't that interesting on its own, but the purpose is to leave
+-- behind a table to test pg_upgrade with. The table has a composite type
+-- column in it, and the composite type has a dropped attribute.
+CREATE TYPE test_type3 AS (a int);
+CREATE TABLE test_tbl3 (c) AS SELECT '(1)'::test_type3;
+ALTER TYPE test_type3 DROP ATTRIBUTE a, ADD ATTRIBUTE b int;
+
+CREATE TYPE test_type_empty AS ();
+DROP TYPE test_type_empty;
+
+--
+-- typed tables: OF / NOT OF
+--
+
+CREATE TYPE tt_t0 AS (z inet, x int, y numeric(8,2));
+ALTER TYPE tt_t0 DROP ATTRIBUTE z;
+CREATE TABLE tt0 (x int NOT NULL, y numeric(8,2));	-- OK
+CREATE TABLE tt1 (x int, y bigint);					-- wrong base type
+CREATE TABLE tt2 (x int, y numeric(9,2));			-- wrong typmod
+CREATE TABLE tt3 (y numeric(8,2), x int);			-- wrong column order
+CREATE TABLE tt4 (x int);							-- too few columns
+CREATE TABLE tt5 (x int, y numeric(8,2), z int);	-- too few columns
+CREATE TABLE tt6 () INHERITS (tt0);					-- can't have a parent
+CREATE TABLE tt7 (x int, q text, y numeric(8,2)) WITH OIDS;
+ALTER TABLE tt7 DROP q;								-- OK
+
+ALTER TABLE tt0 OF tt_t0;
+ALTER TABLE tt1 OF tt_t0;
+ALTER TABLE tt2 OF tt_t0;
+ALTER TABLE tt3 OF tt_t0;
+ALTER TABLE tt4 OF tt_t0;
+ALTER TABLE tt5 OF tt_t0;
+ALTER TABLE tt6 OF tt_t0;
+ALTER TABLE tt7 OF tt_t0;
+
+CREATE TYPE tt_t1 AS (x int, y numeric(8,2));
+ALTER TABLE tt7 OF tt_t1;			-- reassign an already-typed table
+ALTER TABLE tt7 NOT OF;
+\d tt7
+
+-- make sure we can drop a constraint on the parent but it remains on the child
+CREATE TABLE test_drop_constr_parent (c text CHECK (c IS NOT NULL));
+CREATE TABLE test_drop_constr_child () INHERITS (test_drop_constr_parent);
+ALTER TABLE ONLY test_drop_constr_parent DROP CONSTRAINT "test_drop_constr_parent_c_check";
+-- should fail
+INSERT INTO test_drop_constr_child (c) VALUES (NULL);
+DROP TABLE test_drop_constr_parent CASCADE;
+
+--
+-- IF EXISTS test
+--
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+
+CREATE TABLE tt8(a int);
+CREATE SCHEMA alter2;
+
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+
+\d alter2.tt8
+
+DROP TABLE alter2.tt8;
+DROP SCHEMA alter2;
+
+--
+-- Test for splitting after dropping a column
+--
+DROP TABLE IF EXISTS test_part;
+CREATE TABLE test_part (
+    field_part timestamp without time zone,
+    field1 int,
+    field2 text,
+    field3 int
+) PARTITION BY RANGE(field_part)
+          (
+          PARTITION p2017 START ('2017-01-01'::date) END ('2018-01-01'::date) WITH (appendonly=false ),
+          DEFAULT PARTITION p_overflow  WITH (appendonly=false )
+          );
+
+DROP TABLE IF EXISTS test_ref;
+CREATE TABLE test_ref (
+    field1 text,
+    field2 text
+) DISTRIBUTED BY (field1);
+
+INSERT INTO test_part select '2017-01-01'::date + interval '1 days' * mod (id,1000) , mod(id,50), 'test ' || mod(id,5) ,mod(id,2) from generate_series(1,10000) id;
+INSERT INTO test_ref select 'test ' || id , 'values' from generate_series(1,10) id;
+
+ALTER TABLE test_part DROP COLUMN field1;
+ALTER TABLE test_part   SPLIT DEFAULT PARTITION
+START('2018-01-01'::date)
+       END( '2018-02-01'::date);
+ANALYZE test_part;
+ANALYZE test_ref;
+
+SELECT * FROM test_part WHERE field2 IN (SELECT field1 FROM test_ref) ORDER BY 1 LIMIT 10;
+
+DROP TABLE test_ref;
+DROP TABLE test_part;

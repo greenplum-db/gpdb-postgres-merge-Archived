@@ -9,20 +9,9 @@ include $(top_builddir)/src/Makefile.global
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
 
-ifeq ($(PORTNAME), win32)
-LDLIBS += -lws2_32
-endif
-
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
-override LDLIBS := $(libpq_pgport) $(LDLIBS)
 
 OBJS =  specparse.o isolationtester.o
-
-all: isolationtester$(X) pg_isolation_regress$(X)
-
-pg_regress.o:
-	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
-	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
 
 gpstringsubs.pl:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/gpstringsubs.pl
@@ -39,11 +28,19 @@ atmsort.pm:
 explain.pm:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/explain.pm
 
-pg_isolation_regress$(X): isolation_main.o pg_regress.o
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+submake-regress:
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
 
-isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
-	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
+pg_regress.o: | submake-regress
+	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
+
+pg_isolation_regress: isolation_main.o pg_regress.o
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+all: isolationtester pg_isolation_regress
+
+isolationtester: $(OBJS) | submake-libpq submake-libpgport
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 distprep: specparse.c specscanner.c
 
@@ -53,6 +50,8 @@ distprep: specparse.c specscanner.c
 # make, we must chain the dependencies like this.  The semicolon is
 # important, otherwise make will choose the built-in rule for
 # gram.y=>gram.c.
+
+all: isolationtester$(X) pg_isolation_regress$(X)
 
 specparse.h: specparse.c ;
 
@@ -93,11 +92,5 @@ installcheck: all gpdiff.pl gpstringsubs.pl
 installcheck-prepared-txns: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
 
-
-# We can't support "make check" because isolationtester requires libpq, and
-# in fact (on typical platforms using shared libraries) requires libpq to
-# already be installed.  You could run "make install" and then run a check
-# using a temp installation, but there seems little point in that.
-check:
-	@echo "'make check' is not supported."
-	@echo "Install PostgreSQL, then 'make installcheck' instead."
+check: all
+	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule

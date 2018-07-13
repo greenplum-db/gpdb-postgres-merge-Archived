@@ -4,12 +4,12 @@
  *	   Hardware-dependent implementation of spinlocks.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.51 2010/01/02 16:57:52 momjian Exp $
+ *	  src/backend/storage/lmgr/s_lock.c
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	int			delays = 0;
 	int			cur_delay = 0;
 
-	while (TAS(lock))
+	while (TAS_SPIN(lock))
 	{
 		/* CPU-specific delay each time through the loop */
 		SPIN_DELAY();

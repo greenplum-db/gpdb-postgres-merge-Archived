@@ -3,31 +3,23 @@
  * wparser.c
  *		Standard interface to word parser
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.12 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/wparser.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "funcapi.h"
-#include "access/genam.h"
-#include "access/skey.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_ts_parser.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
 
 
 /******sql-level interface******/
@@ -54,7 +46,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 
 	st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
 	st->cur = 0;
-	/* OidFunctionCall0 is absent */
+	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
 															 (Datum) 0));
 	funcctx->user_fctx = (void *) st;
@@ -134,7 +126,7 @@ ts_token_type_byname(PG_FUNCTION_ARGS)
 		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prsId = TSParserGetPrsid(textToQualifiedNameList(prsname), false);
+		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
 		tt_setup_firstcall(funcctx, prsId);
 	}
 
@@ -282,7 +274,7 @@ ts_parse_byname(PG_FUNCTION_ARGS)
 		Oid			prsId;
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prsId = TSParserGetPrsid(textToQualifiedNameList(prsname), false);
+		prsId = get_ts_parser_oid(textToQualifiedNameList(prsname), false);
 		prs_setup_firstcall(funcctx, prsId, txt);
 	}
 

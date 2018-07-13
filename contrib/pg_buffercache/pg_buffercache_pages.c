@@ -3,17 +3,15 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.16 2009/06/11 14:48:51 momjian Exp $
+ *	  contrib/pg_buffercache/pg_buffercache_pages.c
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "utils/relcache.h"
 
 
 #define NUM_BUFFERCACHE_PAGES_ELEM	8

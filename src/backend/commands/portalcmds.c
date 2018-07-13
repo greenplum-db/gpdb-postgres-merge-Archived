@@ -11,12 +11,12 @@
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.82 2010/01/02 16:57:37 momjian Exp $
+ *	  src/backend/commands/portalcmds.c
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
-	PortalStart(portal, params, GetActiveSnapshot(), NULL);
+	PortalStart(portal, params, 0, true, NULL);
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -262,7 +262,7 @@ PerformPortalClose(const char *name)
 	}
 
 	/*
-	 * Note: PortalCleanup is called as a side-effect
+	 * Note: PortalCleanup is called as a side-effect, if not already done.
 	 */
 	PortalDrop(portal, false);
 }
@@ -272,6 +272,10 @@ PerformPortalClose(const char *name)
  *
  * Clean up a portal when it's dropped.  This is the standard cleanup hook
  * for portals.
+ *
+ * Note: if portal->status is PORTAL_FAILED, we are probably being called
+ * during error abort, and must be careful to avoid doing anything that
+ * is likely to fail again.
  */
 void
 PortalCleanup(Portal portal)
@@ -292,7 +296,14 @@ PortalCleanup(Portal portal)
 	queryDesc = PortalGetQueryDesc(portal);
 	if (queryDesc)
 	{
+		/*
+		 * Reset the queryDesc before anything else.  This prevents us from
+		 * trying to shut down the executor twice, in case of an error below.
+		 * The transaction abort mechanisms will take care of resource cleanup
+		 * in such a case.
+		 */
 		portal->queryDesc = NULL;
+
 		if (portal->status != PORTAL_FAILED)
 		{
 			ResourceOwner saveResourceOwner;
@@ -308,7 +319,7 @@ PortalCleanup(Portal portal)
 				 */
 				queryDesc->estate->cancelUnfinished = true;
 
-				/* we do not need AfterTriggerEndQuery() here */
+				ExecutorFinish(queryDesc);
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);
 			}
@@ -460,7 +471,7 @@ PersistHoldablePortal(Portal portal)
 		 * Now shut down the inner executor.
 		 */
 		portal->queryDesc = NULL;		/* prevent double shutdown */
-		/* we do not need AfterTriggerEndQuery() here */
+		ExecutorFinish(queryDesc);
 		ExecutorEnd(queryDesc);
 		FreeQueryDesc(queryDesc);
 
@@ -509,7 +520,7 @@ PersistHoldablePortal(Portal portal)
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* GPDB: cleanup dispatch and teardown interconnect */
 		if (portal->queryDesc)

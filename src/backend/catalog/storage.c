@@ -3,12 +3,12 @@
  * storage.c
  *	  code to create and destroy physical storage for relations
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/storage.c,v 1.10 2010/02/09 21:43:30 tgl Exp $
+ *	  src/backend/catalog/storage.c
  *
  * NOTES
  *	  Some of this code used to be in storage/smgr/smgr.c, and the
@@ -51,8 +51,8 @@
 
 typedef struct PendingRelDelete
 {
-	RelFileNode relnode;		/* relation that may need to be deleted */
-	bool		isLocalBuf;		/* is it a temporary relation, in local buffers? */
+	RelFileNodeWithStorageType relnode;		/* relation that may need to be deleted */
+	BackendId	backend;		/* InvalidBackendId if not a temp rel */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	int			nestLevel;		/* xact nesting level of request */
 	struct PendingRelDelete *next;		/* linked-list link */
@@ -74,6 +74,7 @@ static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
 typedef struct xl_smgr_create
 {
 	RelFileNode rnode;
+	ForkNumber	forkNum;
 } xl_smgr_create;
 
 typedef struct xl_smgr_truncate
@@ -95,41 +96,71 @@ typedef struct xl_smgr_truncate
  * transaction aborts later on, the storage will be destroyed.
  */
 void
-RelationCreateStorage(RelFileNode rnode, bool isLocalBuf)
+RelationCreateStorage(RelFileNode rnode, char relpersistence, char relstorage)
 {
 	PendingRelDelete *pending;
-	XLogRecPtr	lsn;
-	XLogRecData rdata;
-	xl_smgr_create xlrec;
 	SMgrRelation srel;
+	BackendId	backend;
+	bool		needs_wal;
 
-	srel = smgropen(rnode);
+	switch (relpersistence)
+	{
+		case RELPERSISTENCE_TEMP:
+			backend = TempRelBackendId;
+			needs_wal = false;
+			break;
+		case RELPERSISTENCE_UNLOGGED:
+			backend = InvalidBackendId;
+			needs_wal = false;
+			break;
+		case RELPERSISTENCE_PERMANENT:
+			backend = InvalidBackendId;
+			needs_wal = true;
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relpersistence);
+			return;				/* placate compiler */
+	}
+
+	srel = smgropen(rnode, backend);
 	smgrcreate(srel, MAIN_FORKNUM, false);
 
-	if (!isLocalBuf)
-	{
-		/*
-		 * Make an XLOG entry reporting the file creation.
-		 */
-		xlrec.rnode = rnode;
-
-		rdata.data = (char *) &xlrec;
-		rdata.len = sizeof(xlrec);
-		rdata.buffer = InvalidBuffer;
-		rdata.next = NULL;
-
-		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
-	}
+	if (needs_wal)
+		log_smgrcreate(&srel->smgr_rnode.node, MAIN_FORKNUM);
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = rnode;
-	pending->isLocalBuf = isLocalBuf;
+	pending->relnode.node = rnode;
+	pending->relnode.relstorage = relstorage;
+	pending->backend = backend;
 	pending->atCommit = false;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
+}
+
+/*
+ * Perform XLogInsert of a XLOG_SMGR_CREATE record to WAL.
+ */
+void
+log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum)
+{
+	xl_smgr_create xlrec;
+	XLogRecData rdata;
+
+	/*
+	 * Make an XLOG entry reporting the file creation.
+	 */
+	xlrec.rnode = *rnode;
+	xlrec.forkNum = forkNum;
+
+	rdata.data = (char *) &xlrec;
+	rdata.len = sizeof(xlrec);
+	rdata.buffer = InvalidBuffer;
+	rdata.next = NULL;
+
+	XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
 }
 
 /*
@@ -144,8 +175,9 @@ RelationDropStorage(Relation rel)
 	/* Add the relation to the list of stuff to delete at commit */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = rel->rd_node;
-	pending->isLocalBuf = rel->rd_isLocalBuf;
+	pending->relnode.node = rel->rd_node;
+	pending->relnode.relstorage = rel->rd_rel->relstorage;
+	pending->backend = rel->rd_backend;
 	pending->atCommit = true;	/* delete if commit */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
@@ -176,10 +208,13 @@ RelationDropStorage(Relation rel)
  * The relation mapper fixes this by telling us to not delete such relations
  * after all as part of its commit.
  *
+ * We also use this to reuse an old build of an index during ALTER TABLE, this
+ * time removing the delete-at-commit entry.
+ *
  * No-op if the relation is not among those scheduled for deletion.
  */
 void
-RelationPreserveStorage(RelFileNode rnode)
+RelationPreserveStorage(RelFileNode rnode, bool atCommit)
 {
 	PendingRelDelete *pending;
 	PendingRelDelete *prev;
@@ -189,11 +224,9 @@ RelationPreserveStorage(RelFileNode rnode)
 	for (pending = pendingDeletes; pending != NULL; pending = next)
 	{
 		next = pending->next;
-		if (RelFileNodeEquals(rnode, pending->relnode))
+		if (RelFileNodeEquals(rnode, pending->relnode.node)
+			&& pending->atCommit == atCommit)
 		{
-			/* we should only find delete-on-abort entries, else trouble */
-			if (pending->atCommit)
-				elog(ERROR, "cannot preserve a delete-on-commit relation");
 			/* unlink and delete list entry */
 			if (prev)
 				prev->next = next;
@@ -252,7 +285,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * failure to truncate, that might spell trouble at WAL replay, into a
 	 * certain PANIC.
 	 */
-	if (!rel->rd_istemp)
+	if (RelationNeedsWAL(rel))
 	{
 		/*
 		 * Make an XLOG entry reporting the file truncation.
@@ -283,7 +316,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	}
 
 	/* Do the real work */
-	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks, rel->rd_isLocalBuf);
+	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
 }
 
 /*
@@ -291,6 +324,11 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
  *
  * This also runs when aborting a subxact; we want to clean up a failed
  * subxact immediately.
+ *
+ * Note: It's possible that we're being asked to remove a relation that has
+ * no physical storage in any fork. In particular, it's possible that we're
+ * cleaning up an old temporary relation for which RemovePgTempFiles has
+ * already recovered the physical storage.
  */
 void
 smgrDoPendingDeletes(bool isCommit)
@@ -320,16 +358,10 @@ smgrDoPendingDeletes(bool isCommit)
 			if (pending->atCommit == isCommit)
 			{
 				SMgrRelation srel;
-				int			i;
 
-				srel = smgropen(pending->relnode);
-				for (i = 0; i <= MAX_FORKNUM; i++)
-				{
-					smgrdounlink(srel,
-								 i,
-								 pending->isLocalBuf,
-								 false);
-				}
+				srel = smgropen(pending->relnode.node, pending->backend);
+
+				smgrdounlink(srel, false, pending->relnode.relstorage);
 				smgrclose(srel);
 			}
 			/* must explicitly free the list entry */
@@ -340,32 +372,47 @@ smgrDoPendingDeletes(bool isCommit)
 }
 
 /*
- * smgrGetPendingDeletes() -- Get a list of relations to be deleted.
+ * smgrGetPendingDeletes() -- Get a list of non-temp relations to be deleted.
  *
  * The return value is the number of relations scheduled for termination.
  * *ptr is set to point to a freshly-palloc'd array of RelFileNodes.
  * If there are no relations to be deleted, *ptr is set to NULL.
  *
- * If haveNonTemp isn't NULL, the bool it points to gets set to true if
- * there is any non-temp table pending to be deleted; false if not.
+ * Only non-temporary relations are included in the returned list.	This is OK
+ * because the list is used only in contexts where temporary relations don't
+ * matter: we're either writing to the two-phase state file (and transactions
+ * that have touched temp tables can't be prepared) or we're writing to xlog
+ * (and all temporary files will be zapped if we restart anyway, so no need
+ * for redo to do it also).
  *
  * Note that the list does not include anything scheduled for termination
  * by upper-level transactions.
+ *
+ * Greenplum-specific notes: We *do* include temporary relations in the returned
+ * list. Because unlike in Upstream Postgres, Greenplum two-phase commits can
+ * involve temporary tables, which necessitates including the temporary
+ * relations in the two-phase state files (PREPARE xlog record). Otherwise the
+ * relation files won't get unlink(2)'d, or the shared buffers won't be
+ * dropped at the end of COMMIT phase.
  */
 int
-smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
+smgrGetPendingDeletes(bool forCommit, RelFileNodeWithStorageType **ptr)
 {
 	int			nestLevel = GetCurrentTransactionNestLevel();
 	int			nrels;
-	RelFileNode *rptr;
+	RelFileNodeWithStorageType *rptr;
 	PendingRelDelete *pending;
 
 	nrels = 0;
-	if (haveNonTemp)
-		*haveNonTemp = false;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
+		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit
+			/*
+			 * Greenplum allows transactions that access temporary tables to be
+			 * prepared.
+			 */
+			/* && pending->backend == InvalidBackendId) */
+				)
 			nrels++;
 	}
 	if (nrels == 0)
@@ -373,17 +420,20 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 		*ptr = NULL;
 		return 0;
 	}
-	rptr = (RelFileNode *) palloc(nrels * sizeof(RelFileNode));
+	rptr = (RelFileNodeWithStorageType *) palloc(nrels * sizeof(RelFileNodeWithStorageType));
 	*ptr = rptr;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
+		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit
+			/*
+			 * Keep this loop condition identical to above
+			 */
+			/* && pending->backend == InvalidBackendId) */
+				)
 		{
 			*rptr = pending->relnode;
 			rptr++;
 		}
-		if (haveNonTemp && !pending->isLocalBuf)
-			*haveNonTemp = true;
 	}
 	return nrels;
 }
@@ -455,8 +505,8 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		xl_smgr_create *xlrec = (xl_smgr_create *) XLogRecGetData(record);
 		SMgrRelation reln;
 
-		reln = smgropen(xlrec->rnode);
-		smgrcreate(reln, MAIN_FORKNUM, true);
+		reln = smgropen(xlrec->rnode, InvalidBackendId);
+		smgrcreate(reln, xlrec->forkNum, true);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
@@ -464,13 +514,13 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		SMgrRelation reln;
 		Relation	rel;
 
-		reln = smgropen(xlrec->rnode);
+		reln = smgropen(xlrec->rnode, InvalidBackendId);
 
 		/*
 		 * Forcibly create relation if it doesn't exist (which suggests that
 		 * it was dropped somewhere later in the WAL sequence).  As in
-		 * XLogOpenRelation, we prefer to recreate the rel and replay the log
-		 * as best we can until the drop is seen.
+		 * XLogReadBuffer, we prefer to recreate the rel and replay the log as
+		 * best we can until the drop is seen.
 		 */
 		smgrcreate(reln, MAIN_FORKNUM, true);
 
@@ -492,7 +542,7 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		 */
 		XLogFlush(lsn);
 
-		smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno, false);
+		smgrtruncate(reln, MAIN_FORKNUM, xlrec->blkno);
 
 		/* Also tell xlogutils.c about it */
 		XLogTruncateRelation(xlrec->rnode, MAIN_FORKNUM, xlrec->blkno);
@@ -512,7 +562,7 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+smgr_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8           info = record->xl_info & ~XLR_INFO_MASK;
 	char            *rec = XLogRecGetData(record);
@@ -520,7 +570,7 @@ smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 	if (info == XLOG_SMGR_CREATE)
 	{
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
-		char	   *path = relpath(xlrec->rnode, MAIN_FORKNUM);
+		char	   *path = relpathperm(xlrec->rnode, xlrec->forkNum);
 
 		appendStringInfo(buf, "file create: %s", path);
 		pfree(path);
@@ -528,7 +578,7 @@ smgr_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
-		char	   *path = relpath(xlrec->rnode, MAIN_FORKNUM);
+		char	   *path = relpathperm(xlrec->rnode, MAIN_FORKNUM);
 
 		appendStringInfo(buf, "file truncate: %s to %u blocks", path,
 						 xlrec->blkno);

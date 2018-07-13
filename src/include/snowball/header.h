@@ -13,9 +13,9 @@
  *
  * NOTE: this file should not be included into any non-snowball sources!
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/snowball/header.h,v 1.5 2010/01/02 16:58:08 momjian Exp $
+ * src/include/snowball/header.h
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #endif
 
 /* Now we can include the original Snowball header.h */
-#include "snowball/libstemmer/header.h"
+#include "snowball/libstemmer/header.h" /* pgrminclude ignore */
 
 /*
  * Redefine standard memory allocation interface to pgsql's one.

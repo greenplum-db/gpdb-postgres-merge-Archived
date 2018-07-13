@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.48 2010/02/26 02:00:57 momjian Exp $
+ * src/backend/regex/regcomp.c
  *
  */
 
@@ -172,7 +172,7 @@ static void addrange(struct cvec *, chr, chr);
 static struct cvec *getcvec(struct vars *, int, int);
 static void freecvec(struct cvec *);
 
-/* === regc_locale.c === */
+/* === regc_pg_locale.c === */
 static int	pg_wc_isdigit(pg_wchar c);
 static int	pg_wc_isalpha(pg_wchar c);
 static int	pg_wc_isalnum(pg_wchar c);
@@ -184,6 +184,8 @@ static int	pg_wc_ispunct(pg_wchar c);
 static int	pg_wc_isspace(pg_wchar c);
 static pg_wchar pg_wc_toupper(pg_wchar c);
 static pg_wchar pg_wc_tolower(pg_wchar c);
+
+/* === regc_locale.c === */
 static celt element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, celt, celt, int);
 static int	before(celt, celt);
@@ -232,14 +234,13 @@ struct vars
 #define EAT(t)	(SEE(t) && next(v))		/* if next is this, swallow it */
 #define VISERR(vv)	((vv)->err != 0)	/* have we seen an error yet? */
 #define ISERR() VISERR(v)
-#define VERR(vv,e)	((vv)->nexttype = EOS, ((vv)->err) ? (vv)->err :\
-							((vv)->err = (e)))
-#undef ERR
+#define VERR(vv,e)	((vv)->nexttype = EOS, \
+					 (vv)->err = ((vv)->err ? (vv)->err : (e)))
 #define ERR(e)	VERR(v, e)		/* record an error */
 #define NOERR() {if (ISERR()) return;}	/* if error seen, return */
 #define NOERRN()	{if (ISERR()) return NULL;} /* NOERR with retval */
 #define NOERRZ()	{if (ISERR()) return 0;}	/* NOERR with retval */
-#define INSIST(c, e)	((c) ? 0 : ERR(e))		/* if condition false, error */
+#define INSIST(c, e) do { if (!(c)) ERR(e); } while (0) /* error if c false */
 #define NOTE(b) (v->re->re_info |= (b)) /* note visible condition */
 #define EMPTYARC(x, y)	newarc(v->nfa, EMPTY, 0, x, y)
 
@@ -285,7 +286,8 @@ int
 pg_regcomp(regex_t *re,
 		   const chr *string,
 		   size_t len,
-		   int flags)
+		   int flags,
+		   Oid collation)
 {
 	struct vars var;
 	struct vars *v = &var;
@@ -310,6 +312,9 @@ pg_regcomp(regex_t *re,
 		return REG_INVARG;
 	if (!(flags & REG_EXTENDED) && (flags & REG_ADVF))
 		return REG_INVARG;
+
+	/* Initialize locale-dependent support */
+	pg_set_regex_collation(collation);
 
 	/* initial setup (after which freev() is callable) */
 	v->re = re;
@@ -337,6 +342,7 @@ pg_regcomp(regex_t *re,
 	re->re_magic = REMAGIC;
 	re->re_info = 0;			/* bits get set during parse */
 	re->re_csize = sizeof(chr);
+	re->re_collation = collation;
 	re->re_guts = NULL;
 	re->re_fns = VS(&functions);
 
@@ -353,6 +359,7 @@ pg_regcomp(regex_t *re,
 	ZAPCNFA(g->search);
 	v->nfa = newnfa(v, v->cm, (struct nfa *) NULL);
 	CNOERR();
+	/* set up a reasonably-sized transient cvec for getcvec usage */
 	v->cv = newcvec(100, 20);
 	if (v->cv == NULL)
 		return freev(v, REG_ESPACE);
@@ -1032,11 +1039,17 @@ parseqatom(struct vars * v,
 	/*----------
 	 * Prepare a general-purpose state skeleton.
 	 *
-	 *	  ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
-	 *	 /											  /
-	 * [lp] ----> [s2] ----bypass---------------------
+	 * In the no-backrefs case, we want this:
 	 *
-	 * where bypass is an empty, and prefix is some repetitions of atom
+	 * [lp] ---> [s] ---prefix---> [begin] ---atom---> [end] ---rest---> [rp]
+	 *
+	 * where prefix is some repetitions of atom.  In the general case we need
+	 *
+	 * [lp] ---> [s] ---iterator---> [s2] ---rest---> [rp]
+	 *
+	 * where the iterator wraps around [begin] ---atom---> [end]
+	 *
+	 * We make the s state here for both cases; s2 is made below if needed
 	 *----------
 	 */
 	s = newstate(v->nfa);		/* first, new endpoints for the atom */
@@ -1047,11 +1060,9 @@ parseqatom(struct vars * v,
 	NOERR();
 	atom->begin = s;
 	atom->end = s2;
-	s = newstate(v->nfa);		/* and spots for prefix and bypass */
-	s2 = newstate(v->nfa);
+	s = newstate(v->nfa);		/* set up starting state */
 	NOERR();
 	EMPTYARC(lp, s);
-	EMPTYARC(lp, s2);
 	NOERR();
 
 	/* break remaining subRE into x{...} and what follows */
@@ -1085,28 +1096,9 @@ parseqatom(struct vars * v,
 	}
 
 	/*
-	 * It's quantifier time.  If the atom is just a BACKREF, we'll let it deal
-	 * with quantifiers internally.  Otherwise, the first step is to turn
-	 * x{0,...} into x{1,...}|empty
+	 * It's quantifier time.  If the atom is just a backref, we'll let it deal
+	 * with quantifiers internally.
 	 */
-	if (m == 0 && atomtype != BACKREF)
-	{
-		EMPTYARC(s2, atom->end);	/* the bypass */
-		assert(PREF(qprefer) != 0);
-		f = COMBINE(qprefer, atom->flags);
-		t = subre(v, '|', f, lp, atom->end);
-		NOERR();
-		t->left = atom;
-		t->right = subre(v, '|', PREF(f), s2, atom->end);
-		NOERR();
-		t->right->left = subre(v, '=', 0, s2, atom->end);
-		NOERR();
-		*atomp = t;
-		atomp = &t->left;
-		m = 1;
-	}
-
-	/* deal with the rest of the quantifier */
 	if (atomtype == BACKREF)
 	{
 		/* special case:  backrefs have internal quantifiers */
@@ -1116,17 +1108,25 @@ parseqatom(struct vars * v,
 		atom->min = (short) m;
 		atom->max = (short) n;
 		atom->flags |= COMBINE(qprefer, atom->flags);
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
 	}
 	else if (m == 1 && n == 1)
 	{
 		/* no/vacuous quantifier:  done */
 		EMPTYARC(s, atom->begin);		/* empty prefix */
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
 	}
-	else
+	else if (m > 0 && !(atom->flags & BACKR))
 	{
 		/*
-		 * Turn x{m,n} into x{m-1,n-1}x, with capturing parens in only the
-		 * second x
+		 * If there's no backrefs involved, we can turn x{m,n} into
+		 * x{m-1,n-1}x, with capturing parens in only the second x.  This is
+		 * valid because we only care about capturing matches from the final
+		 * iteration of the quantifier.  It's a win because we can implement
+		 * the backref-free left side as a plain DFA node, since we don't
+		 * really care where its submatches are.
 		 */
 		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
 		assert(m >= 1 && m != INFINITY && n >= 1);
@@ -1138,16 +1138,36 @@ parseqatom(struct vars * v,
 		NOERR();
 		t->right = atom;
 		*atomp = t;
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
+	}
+	else
+	{
+		/* general case: need an iteration node */
+		s2 = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, atom->end, s2);
+		NOERR();
+		dupnfa(v->nfa, atom->begin, atom->end, s, s2);
+		repeat(v, s, s2, m, n);
+		f = COMBINE(qprefer, atom->flags);
+		t = subre(v, '*', f, s, s2);
+		NOERR();
+		t->min = (short) m;
+		t->max = (short) n;
+		t->left = atom;
+		*atomp = t;
+		/* rest of branch is to be strung from iteration's end state */
 	}
 
 	/* and finally, look after that postponed recursion */
 	t = top->right;
 	if (!(SEE('|') || SEE(stopper) || SEE(EOS)))
-		t->right = parsebranch(v, stopper, type, atom->end, rp, 1);
+		t->right = parsebranch(v, stopper, type, s2, rp, 1);
 	else
 	{
-		EMPTYARC(atom->end, rp);
-		t->right = subre(v, '=', 0, atom->end, rp);
+		EMPTYARC(s2, rp);
+		t->right = subre(v, '=', 0, s2, rp);
 	}
 	assert(SEE('|') || SEE(stopper) || SEE(EOS));
 	t->flags |= COMBINE(t->flags, t->right->flags);
@@ -1210,6 +1230,9 @@ scannum(struct vars * v)
 /*
  * repeat - replicate subNFA for quantifiers
  *
+ * The sub-NFA strung from lp to rp is modified to represent m to n
+ * repetitions of its initial contents.
+ *
  * The duplication sequences used here are chosen carefully so that any
  * pointers starting out pointing into the subexpression end up pointing into
  * the last occurrence.  (Note that it may not be strung between the same
@@ -1225,7 +1248,7 @@ repeat(struct vars * v,
 	   int n)
 {
 #define  SOME	 2
-#define  INF 3
+#define  INF	 3
 #define  PAIR(x, y)  ((x)*4 + (y))
 #define  REDUCE(x)	 ( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
 	const int	rm = REDUCE(m);
@@ -1599,11 +1622,11 @@ subre(struct vars * v,
 		v->treechain = ret;
 	}
 
-	assert(strchr("|.b(=", op) != NULL);
+	assert(strchr("=b|.*(", op) != NULL);
 
 	ret->op = op;
 	ret->flags = flags;
-	ret->retry = 0;
+	ret->id = 0;				/* will be assigned later */
 	ret->subno = 0;
 	ret->min = ret->max = 1;
 	ret->left = NULL;
@@ -1673,7 +1696,7 @@ optst(struct vars * v,
 }
 
 /*
- * numst - number tree nodes (assigning retry indexes)
+ * numst - number tree nodes (assigning "id" indexes)
  */
 static int						/* next number */
 numst(struct subre * t,
@@ -1684,7 +1707,7 @@ numst(struct subre * t,
 	assert(t != NULL);
 
 	i = start;
-	t->retry = (short) i++;
+	t->id = (short) i++;
 	if (t->left != NULL)
 		i = numst(t->left, i);
 	if (t->right != NULL)
@@ -1982,11 +2005,11 @@ stid(struct subre * t,
 	 char *buf,
 	 size_t bufsize)
 {
-	/* big enough for hex int or decimal t->retry? */
-	if (bufsize < sizeof(void *) * 2 + 3 || bufsize < sizeof(t->retry) * 3 + 1)
+	/* big enough for hex int or decimal t->id? */
+	if (bufsize < sizeof(void *) * 2 + 3 || bufsize < sizeof(t->id) * 3 + 1)
 		return "unable";
-	if (t->retry != 0)
-		sprintf(buf, "%d", t->retry);
+	if (t->id != 0)
+		sprintf(buf, "%d", t->id);
 	else
 		sprintf(buf, "%p", t);
 	return buf;
@@ -1998,4 +2021,5 @@ stid(struct subre * t,
 #include "regc_color.c"
 #include "regc_nfa.c"
 #include "regc_cvec.c"
+#include "regc_pg_locale.c"
 #include "regc_locale.c"

@@ -10,12 +10,12 @@
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.235 2010/02/26 02:00:38 momjian Exp $
+ *	  src/backend/commands/dbcommands.c
  *
  *-------------------------------------------------------------------------
  */
@@ -26,16 +26,16 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "access/transam.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_attribute.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
@@ -44,22 +44,20 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/seclabel.h"
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
-#include "storage/bufmgr.h"
-#include "storage/fd.h"
+#include "storage/copydir.h"
 #include "storage/lmgr.h"
 #include "storage/ipc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
-#include "storage/standby.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -138,10 +136,9 @@ createdb(CreatedbStmt *stmt)
 	const char *dbtemplate = NULL;
 	char	   *dbcollate = NULL;
 	char	   *dbctype = NULL;
+	char	   *canonname;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
-	int			ctype_encoding;
-	int			collate_encoding;
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
@@ -277,7 +274,7 @@ createdb(CreatedbStmt *stmt)
 
 	/* obtain OID of proposed owner */
 	if (dbowner)
-		datdba = get_roleid_checked(dbowner);
+		datdba = get_role_oid(dbowner, false);
 	else
 		datdba = GetUserId();
 
@@ -344,72 +341,19 @@ createdb(CreatedbStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
 
-	/* Check that the chosen locales are valid */
-	if (!check_locale(LC_COLLATE, dbcollate))
+	/* Check that the chosen locales are valid, and get canonical spellings */
+	if (!check_locale(LC_COLLATE, dbcollate, &canonname))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid locale name %s", dbcollate)));
-	if (!check_locale(LC_CTYPE, dbctype))
+				 errmsg("invalid locale name: \"%s\"", dbcollate)));
+	dbcollate = canonname;
+	if (!check_locale(LC_CTYPE, dbctype, &canonname))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid locale name %s", dbctype)));
+				 errmsg("invalid locale name: \"%s\"", dbctype)));
+	dbctype = canonname;
 
-	/*
-	 * Check whether chosen encoding matches chosen locale settings.  This
-	 * restriction is necessary because libc's locale-specific code usually
-	 * fails when presented with data in an encoding it's not expecting. We
-	 * allow mismatch in four cases:
-	 *
-	 * 1. locale encoding = SQL_ASCII, which means that the locale is C/POSIX
-	 * which works with any encoding.
-	 *
-	 * 2. locale encoding = -1, which means that we couldn't determine the
-	 * locale's encoding and have to trust the user to get it right.
-	 *
-	 * 3. selected encoding is UTF8 and platform is win32. This is because
-	 * UTF8 is a pseudo codepage that is supported in all locales since it's
-	 * converted to UTF16 before being used.
-	 *
-	 * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
-	 * is risky but we have historically allowed it --- notably, the
-	 * regression tests require it.
-	 *
-	 * Note: if you change this policy, fix initdb to match.
-	 */
-	ctype_encoding = pg_get_encoding_from_locale(dbctype);
-	collate_encoding = pg_get_encoding_from_locale(dbcollate);
-
-	if (!(ctype_encoding == encoding ||
-		  ctype_encoding == PG_SQL_ASCII ||
-		  ctype_encoding == -1 ||
-#ifdef WIN32
-		  encoding == PG_UTF8 ||
-#endif
-		  (encoding == PG_SQL_ASCII && superuser())))
-	{
-		ereport(gp_encoding_check_locale_compatibility ? ERROR : WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("encoding %s does not match locale %s",
-						pg_encoding_to_char(encoding),
-						dbctype),
-			   errdetail("The chosen LC_CTYPE setting requires encoding %s.",
-						 pg_encoding_to_char(ctype_encoding))));
-	}
-
-	if (!(collate_encoding == encoding ||
-		  collate_encoding == PG_SQL_ASCII ||
-		  collate_encoding == -1 ||
-#ifdef WIN32
-		  encoding == PG_UTF8 ||
-#endif
-		  (encoding == PG_SQL_ASCII && superuser())))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("encoding %s does not match locale %s",
-						pg_encoding_to_char(encoding),
-						dbcollate),
-			 errdetail("The chosen LC_COLLATE setting requires encoding %s.",
-					   pg_encoding_to_char(collate_encoding))));
+	check_encoding_locale_matches(encoding, dbcollate, dbctype);
 
 	/*
 	 * Check that the new encoding and locale settings match the source
@@ -624,9 +568,13 @@ createdb(CreatedbStmt *stmt)
 						   GetUserId(),
 						   "CREATE", "DATABASE"
 				);
-	
+
 	CHECK_FOR_INTERRUPTS();
-	
+
+	/* Post creation hook for new database */
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   DatabaseRelationId, dboid, 0, NULL);
+
 	/*
 	 * Force a checkpoint before starting the copy. This will force dirty
 	 * buffers out to disk, to ensure source database is up-to-date on disk
@@ -787,6 +735,65 @@ createdb(CreatedbStmt *stmt)
 	UnregisterSnapshot(snapshot);
 }
 
+/*
+ * Check whether chosen encoding matches chosen locale settings.  This
+ * restriction is necessary because libc's locale-specific code usually
+ * fails when presented with data in an encoding it's not expecting. We
+ * allow mismatch in four cases:
+ *
+ * 1. locale encoding = SQL_ASCII, which means that the locale is C/POSIX
+ * which works with any encoding.
+ *
+ * 2. locale encoding = -1, which means that we couldn't determine the
+ * locale's encoding and have to trust the user to get it right.
+ *
+ * 3. selected encoding is UTF8 and platform is win32. This is because
+ * UTF8 is a pseudo codepage that is supported in all locales since it's
+ * converted to UTF16 before being used.
+ *
+ * 4. selected encoding is SQL_ASCII, but only if you're a superuser. This
+ * is risky but we have historically allowed it --- notably, the
+ * regression tests require it.
+ *
+ * Note: if you change this policy, fix initdb to match.
+ */
+void
+check_encoding_locale_matches(int encoding, const char *collate, const char *ctype)
+{
+	int			ctype_encoding = pg_get_encoding_from_locale(ctype, true);
+	int			collate_encoding = pg_get_encoding_from_locale(collate, true);
+
+	if (!(ctype_encoding == encoding ||
+		  ctype_encoding == PG_SQL_ASCII ||
+		  ctype_encoding == -1 ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(gp_encoding_check_locale_compatibility ? ERROR : WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("encoding \"%s\" does not match locale \"%s\"",
+						pg_encoding_to_char(encoding),
+						ctype),
+		   errdetail("The chosen LC_CTYPE setting requires encoding \"%s\".",
+					 pg_encoding_to_char(ctype_encoding))));
+
+	if (!(collate_encoding == encoding ||
+		  collate_encoding == PG_SQL_ASCII ||
+		  collate_encoding == -1 ||
+#ifdef WIN32
+		  encoding == PG_UTF8 ||
+#endif
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(gp_encoding_check_locale_compatibility ? ERROR : WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("encoding \"%s\" does not match locale \"%s\"",
+						pg_encoding_to_char(encoding),
+						collate),
+		 errdetail("The chosen LC_COLLATE setting requires encoding \"%s\".",
+				   pg_encoding_to_char(collate_encoding))));
+}
+
 /* Error cleanup callback for createdb */
 static void
 createdb_failure_callback(int code, Datum arg)
@@ -872,6 +879,16 @@ dropdb(const char *dbname, bool missing_ok)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   dbname);
 
+	/* DROP hook for the database being removed */
+	if (object_access_hook)
+	{
+		ObjectAccessDrop drop_arg;
+
+		memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
+		InvokeObjectAccessHook(OAT_DROP,
+							   DatabaseRelationId, db_id, 0, &drop_arg);
+	}
+
 	/*
 	 * Disallow dropping a DB that is marked istemplate.  This is just to
 	 * prevent people from accidentally dropping template0 or template1; they
@@ -936,9 +953,10 @@ dropdb(const char *dbname, bool missing_ok)
 	ReleaseSysCache(tup);
 
 	/*
-	 * Delete any comments associated with the database.
+	 * Delete any comments or security labels associated with the database.
 	 */
 	DeleteSharedComments(db_id, DatabaseRelationId);
+	DeleteSharedSecurityLabel(db_id, DatabaseRelationId);
 
 	/*
 	 * Remove settings associated with this database
@@ -965,18 +983,18 @@ dropdb(const char *dbname, bool missing_ok)
 	pgstat_drop_database(db_id);
 
 	/*
-	 * Tell bgwriter to forget any pending fsync and unlink requests for files
-	 * in the database; else the fsyncs will fail at next checkpoint, or
+	 * Tell checkpointer to forget any pending fsync and unlink requests for
+	 * files in the database; else the fsyncs will fail at next checkpoint, or
 	 * worse, it will delete files that belong to a newly created database
 	 * with the same OID.
 	 */
 	ForgetDatabaseFsyncRequests(db_id);
 
 	/*
-	 * Force a checkpoint to make sure the bgwriter has received the message
-	 * sent by ForgetDatabaseFsyncRequests. On Windows, this also ensures that
-	 * the bgwriter doesn't hold any open files, which would cause rmdir() to
-	 * fail.
+	 * Force a checkpoint to make sure the checkpointer has received the
+	 * message sent by ForgetDatabaseFsyncRequests. On Windows, this also
+	 * ensures that background procs don't hold any open files, which would
+	 * cause rmdir() to fail.
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
@@ -1158,11 +1176,7 @@ movedb(const char *dbname, const char *tblspcname)
 	/*
 	 * Get tablespace's oid
 	 */
-	dst_tblspcoid = get_tablespace_oid(tblspcname, true);
-	if (dst_tblspcoid == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("tablespace \"%s\" does not exist", tblspcname)));
+	dst_tblspcoid = get_tablespace_oid(tblspcname, false);
 
 	/*
 	 * Permission checks
@@ -1218,7 +1232,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * process any pending unlink requests. Otherwise, the check for existing
 	 * files in the target directory might fail unnecessarily, not to mention
 	 * that the copy might fail due to source files getting deleted under it.
-	 * On Windows, this also ensures that the bgwriter doesn't hold any open
+	 * On Windows, this also ensures that background procs don't hold any open
 	 * files, which would cause rmdir() to fail.
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
@@ -1556,11 +1570,6 @@ void
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
 	Oid			datid = get_database_oid(stmt->dbname, false);
-
-	if (!OidIsValid(datid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
 	/*
 	 * Obtain a lock on the database and make sure it didn't go away in the
@@ -2009,7 +2018,8 @@ errdetail_busy_db(int notherbackends, int npreparedxacts)
 /*
  * get_database_oid - given a database name, look up the OID
  *
- * Returns InvalidOid if database name not found.
+ * If missing_ok is false, throw an error if database name not found.  If
+ * true, just return InvalidOid.
  */
 Oid
 get_database_oid(const char *dbname, bool missing_ok)
@@ -2047,7 +2057,7 @@ get_database_oid(const char *dbname, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist",
-						 dbname)));
+						dbname)));
 
 	return oid;
 }
@@ -2175,7 +2185,7 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 }
 
 void
-dbase_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+dbase_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

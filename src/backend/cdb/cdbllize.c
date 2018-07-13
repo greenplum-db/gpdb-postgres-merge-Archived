@@ -29,10 +29,11 @@
 #include "optimizer/planmain.h" /* for is_projection_capable_plan() */
 #include "optimizer/var.h"		/* for contain_vars_of_level_or_above() */
 #include "parser/parsetree.h"	/* for rt_fetch() */
-#include "utils/lsyscache.h"	/* for getatttypetypmod() */
 #include "parser/parse_oper.h"	/* for compatible_oper_opid() */
 #include "nodes/makefuncs.h"	/* for makeVar() */
 #include "nodes/value.h"		/* for makeString() */
+#include "utils/guc.h"	/* for getatttypetypmod() */
+#include "utils/lsyscache.h"	/* for getatttypetypmod() */
 #include "utils/relcache.h"		/* RelationGetPartitioningKey() */
 
 #include "cdb/cdbvars.h"
@@ -185,11 +186,9 @@ cdbparallelize(PlannerInfo *root,
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			if (query->intoClause)
-			{
-				/* SELECT INTO always created partitioned tables. */
+			/* SELECT INTO / CREATE TABLE AS always created partitioned tables. */
+			if (query->isCTAS)
 				context->resultSegments = true;
-			}
 			break;
 
 		case CMD_INSERT:
@@ -359,7 +358,7 @@ ContainsParamWalker(Node *expr, void *ctx)
 }
 
 /**
- * Replaces all vars in an expression with OUTER vars referring to the
+ * Replaces all vars in an expression with OUTER_VAR vars referring to the
  * targetlist contained in the context (ctx->outerTL).
  */
 static Node *
@@ -380,7 +379,7 @@ MapVarsMutator(Node *expr, MapVarsMutatorContext *ctx)
 		Var		   *vOrig = (Var *) expr;
 		Var		   *vOuter = (Var *) copyObject(vOrig);
 
-		vOuter->varno = OUTER;
+		vOuter->varno = OUTER_VAR;
 		vOuter->varattno = tle->resno;
 		vOuter->varnoold = vOrig->varno;
 		return (Node *) vOuter;
@@ -439,6 +438,18 @@ ParallelizeCorrelatedSubPlanUpdateFlowMutator(Node *node)
 
 				Assert(first_append && first_append->flow);
 				((Plan *) node)->flow = pull_up_Flow((Plan *) node, first_append);
+				break;
+			}
+		case T_MergeAppend:
+			{
+				List	   *merge_list = (List *) ((MergeAppend *) node)->mergeplans;
+
+				if (merge_list == NULL)
+					break;
+				Plan	   *first_merge = (Plan *) (lfirst(list_head(merge_list)));
+
+				Assert(first_merge && first_merge->flow);
+				((Plan *) node)->flow = pull_up_Flow((Plan *) node, first_merge);
 				break;
 			}
 		default:
@@ -744,7 +755,9 @@ ParallelizeSubplan(SubPlan *spExpr, PlanProfile *context)
 
 	Plan	   *origPlan = planner_subplan_get_plan(context->root, spExpr);
 
-	bool		containingPlanDistributed = (context->currentPlanFlow && context->currentPlanFlow->flotype == FLOW_PARTITIONED);
+	bool		containingPlanDistributed = (context->currentPlanFlow &&
+											 (context->currentPlanFlow->flotype == FLOW_PARTITIONED ||
+											  context->currentPlanFlow->flotype == FLOW_REPLICATED));
 	bool		subPlanDistributed = (origPlan->flow && origPlan->flow->flotype == FLOW_PARTITIONED);
 	bool		hasParParam = (list_length(spExpr->parParam) > 0);
 
@@ -783,7 +796,19 @@ ParallelizeSubplan(SubPlan *spExpr, PlanProfile *context)
 			focusPlan(newPlan, false /* stable */ , false /* rescannable */ );
 		}
 
-		newPlan = materialize_subplan(context->root, newPlan);
+		if (containingPlanDistributed &&
+			newPlan->flow->flotype == FLOW_SINGLETON &&
+			newPlan->flow->locustype == CdbLocusType_SegmentGeneral)
+		{
+			/*
+			 * Nothing to do, the data is already replicated on segments,
+			 * no need to add a motion or materialize.
+			 */
+		}
+		else
+		{
+			newPlan = materialize_subplan(context->root, newPlan);
+		}
 	}
 
 	/*
@@ -1021,14 +1046,13 @@ focusPlan(Plan *plan, bool stable, bool rescannable)
 {
 	Assert(plan->flow && plan->flow->flotype != FLOW_UNDEFINED);
 
-	/* Already focused and flow is not CdbLocusType_SegmentGeneral, Do nothing. */
+	/*
+	 * Already focused and flow is CdbLocusType_SingleQE, CdbLocusType_Entry,
+	 * do nothing.
+	 */
 	if (plan->flow->flotype == FLOW_SINGLETON &&
 		plan->flow->locustype != CdbLocusType_SegmentGeneral)
 		return true;
-
-	/* TODO How specify deep-six? */
-	if (plan->flow->flotype == FLOW_REPLICATED)
-		return false;
 
 	return adjustPlanFlow(plan, stable, rescannable, MOVEMENT_FOCUS, NIL);
 }
@@ -1040,6 +1064,11 @@ bool
 broadcastPlan(Plan *plan, bool stable, bool rescannable)
 {
 	Assert(plan->flow && plan->flow->flotype != FLOW_UNDEFINED);
+
+	/* Already focused and flow is CdbLocusType_SegmentGeneral, do nothing. */
+	if (plan->flow->flotype == FLOW_SINGLETON &&
+		plan->flow->locustype == CdbLocusType_SegmentGeneral)
+		return true;
 
 	return adjustPlanFlow(plan, stable, rescannable, MOVEMENT_BROADCAST, NIL);
 }
@@ -1224,6 +1253,7 @@ adjustPlanFlow(Plan *plan,
 			break;
 
 		case T_Append:			/* Maybe handle specially some day. */
+		case T_MergeAppend:
 		default:
 			break;
 	}
@@ -1423,6 +1453,7 @@ motion_sanity_walker(Node *node, sanity_result_t *result)
 		case T_TableFunctionScan:
 		case T_ShareInputScan:
 		case T_Append:
+		case T_MergeAppend:
 		case T_SeqScan:
 		case T_ExternalScan:
 		case T_AppendOnlyScan:
@@ -1443,6 +1474,7 @@ motion_sanity_walker(Node *node, sanity_result_t *result)
 		case T_Limit:
 		case T_Sort:
 		case T_Material:
+		case T_ForeignScan:
 			if (plan_tree_walker(node, motion_sanity_walker, result))
 				return true;
 			break;

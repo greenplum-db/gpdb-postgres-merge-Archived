@@ -7,9 +7,9 @@
  *	  Remove ill-considered "swap_cnt" switch to insertion sort,
  *	  in favor of a simple check for presorted input.
  *
- *	CAUTION: if you change this file, see also qsort_arg.c
+ *	CAUTION: if you change this file, see also qsort_arg.c, gen_qsort_tuple.pl
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.13 2007/03/18 05:36:50 neilc Exp $
+ *	src/port/qsort.c
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/

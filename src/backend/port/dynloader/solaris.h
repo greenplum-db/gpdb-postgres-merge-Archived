@@ -4,10 +4,10 @@
  *	  port-specific prototypes for Solaris
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/solaris.h,v 1.18 2010/01/02 16:57:50 momjian Exp $
+ * src/backend/port/dynloader/solaris.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
-#include "utils/dynamic_loader.h"
+#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
 
 /*
  * In some older systems, the RTLD_NOW flag isn't defined and the mode

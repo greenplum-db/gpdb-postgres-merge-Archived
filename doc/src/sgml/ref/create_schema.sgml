@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.22 2010/04/03 07:22:59 petere Exp $
+doc/src/sgml/ref/create_schema.sgml
 PostgreSQL documentation
 -->
 
@@ -149,8 +149,7 @@ CREATE SCHEMA hollywood;
 CREATE TABLE hollywood.films (title text, release date, awards text[]);
 CREATE VIEW hollywood.winners AS
     SELECT title, release FROM hollywood.films WHERE awards IS NOT NULL;
-</programlisting>
-  </para>
+</programlisting></para>
 
  </refsect1>
 

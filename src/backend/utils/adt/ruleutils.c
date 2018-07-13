@@ -4,12 +4,12 @@
  *	  Functions to convert stored expressions/querytrees back to
  *	  source text
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.326 2010/05/30 18:10:41 tgl Exp $
+ *	  src/backend/utils/adt/ruleutils.c
  *
  *-------------------------------------------------------------------------
  */
@@ -18,13 +18,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "access/genam.h"
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_attribute_encoding.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
@@ -56,8 +56,9 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
-#include "utils/tqual.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
@@ -79,6 +80,8 @@
 /* Pretty flags */
 #define PRETTYFLAG_PAREN		1
 #define PRETTYFLAG_INDENT		2
+
+#define PRETTY_WRAP_DEFAULT		79
 
 /* macro to test if pretty action needed */
 #define PRETTY_PAREN(context)	((context)->prettyFlags & PRETTYFLAG_PAREN)
@@ -111,18 +114,28 @@ typedef struct
  * The rangetable is the list of actual RTEs from the query tree, and the
  * cte list is the list of actual CTEs.
  *
- * For deparsing plan trees, we provide for outer and inner subplan nodes.
- * The tlists of these nodes are used to resolve OUTER and INNER varnos.
- * Also, in the plan-tree case we don't have access to the parse-time CTE
- * list, so we need a list of subplans instead.
+ * When deparsing plan trees, there is always just a single item in the
+ * deparse_namespace list (since a plan tree never contains Vars with
+ * varlevelsup > 0).  We store the PlanState node that is the immediate
+ * parent of the expression to be deparsed, as well as a list of that
+ * PlanState's ancestors.  In addition, we store its outer and inner subplan
+ * state nodes, as well as their plan nodes' targetlists, and the indextlist
+ * if the current PlanState is an IndexOnlyScanState.  (These fields could
+ * be derived on-the-fly from the current PlanState, but it seems notationally
+ * clearer to set them up as separate fields.)
  */
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
 	List	   *ctes;			/* List of CommonTableExpr nodes */
-	List	   *subplans;		/* List of subplans, in plan-tree case */
-	Plan	   *outer_plan;		/* OUTER subplan, or NULL if none */
-	Plan	   *inner_plan;		/* INNER subplan, or NULL if none */
+	/* Remaining fields are used only when deparsing a Plan tree: */
+	PlanState  *planstate;		/* immediate parent of current expression */
+	List	   *ancestors;		/* ancestors of planstate */
+	PlanState  *outer_planstate;	/* outer subplan state, or NULL if none */
+	PlanState  *inner_planstate;	/* inner subplan state, or NULL if none */
+	List	   *outer_tlist;	/* referent for OUTER_VAR Vars */
+	List	   *inner_tlist;	/* referent for INNER_VAR Vars */
+	List	   *index_tlist;	/* referent for INDEX_VAR Vars */
 } deparse_namespace;
 
 
@@ -134,6 +147,10 @@ static SPIPlanPtr plan_getrulebyoid = NULL;
 static const char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
 static SPIPlanPtr plan_getviewrule = NULL;
 static const char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
+static int	pretty_wrap = PRETTY_WRAP_DEFAULT;
+
+/* GUC parameters */
+bool		quote_all_identifiers = false;
 
 
 /* ----------
@@ -163,6 +180,15 @@ static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
+static void set_deparse_planstate(deparse_namespace *dpns, PlanState *ps);
+static void push_child_plan(deparse_namespace *dpns, PlanState *ps,
+				deparse_namespace *save_dpns);
+static void pop_child_plan(deparse_namespace *dpns,
+			   deparse_namespace *save_dpns);
+static void push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
+				   deparse_namespace *save_dpns);
+static void pop_ancestor_plan(deparse_namespace *dpns,
+				  deparse_namespace *save_dpns);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -195,11 +221,13 @@ static void get_rule_orderby(List *orderList, List *targetList,
 				 bool force_colno, deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
-static void push_plan(deparse_namespace *dpns, Plan *subplan);
-static char *get_variable(Var *var, int levelsup, bool showstar,
+static char *get_variable(Var *var, int levelsup, bool istoplevel,
 			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
+static Node *find_param_referent(Param *param, deparse_context *context,
+					deparse_namespace **dpns_p, ListCell **ancestor_cell_p);
+static void get_parameter(Param *param, deparse_context *context);
 static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
 static void appendContextKeyword(deparse_context *context, const char *str,
@@ -220,6 +248,7 @@ static void get_coercion_expr(Node *arg, deparse_context *context,
 				  Node *parentNode);
 static void get_const_expr(Const *constval, deparse_context *context,
 			   int showtype);
+static void get_const_collation(Const *constval, deparse_context *context);
 static void simple_quote_literal(StringInfo buf, const char *val);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
@@ -228,7 +257,8 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
 					  deparse_context *context);
-static void get_from_clause_coldeflist(List *names, List *types, List *typmods,
+static void get_from_clause_coldeflist(List *names,
+						   List *types, List *typmods, List *collations,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
@@ -313,7 +343,8 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 		plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getrulebyoid);
-		plan_getrulebyoid = SPI_saveplan(plan);
+		SPI_keepplan(plan);
+		plan_getrulebyoid = plan;
 	}
 
 	/*
@@ -374,6 +405,23 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
+{
+	/* By OID */
+	Oid			viewoid = PG_GETARG_OID(0);
+	int			wrap = PG_GETARG_INT32(1);
+	int			prettyFlags;
+	char	   *result;
+
+	/* calling this implies we want pretty printing */
+	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT;
+	pretty_wrap = wrap;
+	result = pg_get_viewdef_worker(viewoid, prettyFlags);
+	pretty_wrap = PRETTY_WRAP_DEFAULT;
+	PG_RETURN_TEXT_P(string_to_text(result));
+}
+
+Datum
 pg_get_viewdef_name(PG_FUNCTION_ARGS)
 {
 	/* By qualified name */
@@ -381,8 +429,9 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	RangeVar   *viewrel;
 	Oid			viewoid;
 
+	/* Look up view name.  Can't lock it - we might not have privileges. */
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
-	viewoid = RangeVarGetRelid(viewrel, false);
+	viewoid = RangeVarGetRelid(viewrel, NoLock, false);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, 0)));
 }
@@ -399,8 +448,10 @@ pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
 	Oid			viewoid;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
+
+	/* Look up view name.  Can't lock it - we might not have privileges. */
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
-	viewoid = RangeVarGetRelid(viewrel, false);
+	viewoid = RangeVarGetRelid(viewrel, NoLock, false);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags)));
 }
@@ -444,7 +495,8 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags)
 		plan = SPI_prepare(query_getviewrule, 2, argtypes);
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getviewrule);
-		plan_getviewrule = SPI_saveplan(plan);
+		SPI_keepplan(plan);
+		plan_getviewrule = plan;
 	}
 
 	/*
@@ -546,8 +598,13 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	if (TRIGGER_FOR_BEFORE(trigrec->tgtype))
 		appendStringInfo(&buf, "BEFORE");
-	else
+	else if (TRIGGER_FOR_AFTER(trigrec->tgtype))
 		appendStringInfo(&buf, "AFTER");
+	else if (TRIGGER_FOR_INSTEAD(trigrec->tgtype))
+		appendStringInfo(&buf, "INSTEAD OF");
+	else
+		elog(ERROR, "unexpected tgtype value: %d", trigrec->tgtype);
+
 	if (TRIGGER_FOR_INSERT(trigrec->tgtype))
 	{
 		appendStringInfo(&buf, " INSERT");
@@ -622,6 +679,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	if (!isnull)
 	{
 		Node	   *qual;
+		char		relkind;
 		deparse_context context;
 		deparse_namespace dpns;
 		RangeTblEntry *oldrte;
@@ -631,10 +689,13 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 		qual = stringToNode(TextDatumGetCString(value));
 
+		relkind = get_rel_relkind(trigrec->tgrelid);
+
 		/* Build minimal OLD and NEW RTEs for the rel */
 		oldrte = makeNode(RangeTblEntry);
 		oldrte->rtekind = RTE_RELATION;
 		oldrte->relid = trigrec->tgrelid;
+		oldrte->relkind = relkind;
 		oldrte->eref = makeAlias("old", NIL);
 		oldrte->inh = false;
 		oldrte->inFromCl = true;
@@ -642,15 +703,15 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte = makeNode(RangeTblEntry);
 		newrte->rtekind = RTE_RELATION;
 		newrte->relid = trigrec->tgrelid;
+		newrte->relkind = relkind;
 		newrte->eref = makeAlias("new", NIL);
 		newrte->inh = false;
 		newrte->inFromCl = true;
 
 		/* Build two-element rtable */
+		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = list_make2(oldrte, newrte);
 		dpns.ctes = NIL;
-		dpns.subplans = NIL;
-		dpns.outer_plan = dpns.inner_plan = NULL;
 
 		/* Set up context with one-deep namespace stack */
 		context.buf = &buf;
@@ -784,10 +845,11 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	List	   *context;
 	Oid			indrelid;
 	int			keyno;
-	Oid			keycoltype;
+	Datum		indcollDatum;
 	Datum		indclassDatum;
 	Datum		indoptionDatum;
 	bool		isnull;
+	oidvector  *indcollation;
 	oidvector  *indclass;
 	int2vector *indoption;
 	StringInfoData buf;
@@ -809,11 +871,17 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	indrelid = idxrec->indrelid;
 	Assert(indexrelid == idxrec->indexrelid);
 
-	/* Must get indclass and indoption the hard way */
+	/* Must get indcollation, indclass, and indoption the hard way */
+	indcollDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+								   Anum_pg_index_indcollation, &isnull);
+	Assert(!isnull);
+	indcollation = (oidvector *) DatumGetPointer(indcollDatum);
+
 	indclassDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
 									Anum_pg_index_indclass, &isnull);
 	Assert(!isnull);
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
+
 	indoptionDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
 									 Anum_pg_index_indoption, &isnull);
 	Assert(!isnull);
@@ -888,6 +956,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	{
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 		int16		opt = indoption->values[keyno];
+		Oid			keycoltype;
+		Oid			keycolcollation;
 
 		if (!colno)
 			appendStringInfoString(&buf, sep);
@@ -897,11 +967,14 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 		{
 			/* Simple index column */
 			char	   *attname;
+			int32		keycoltypmod;
 
 			attname = get_relid_attribute_name(indrelid, attnum);
 			if (!colno || colno == keyno + 1)
 				appendStringInfoString(&buf, quote_identifier(attname));
-			keycoltype = get_atttype(indrelid, attnum);
+			get_atttypetypmodcoll(indrelid, attnum,
+								  &keycoltype, &keycoltypmod,
+								  &keycolcollation);
 		}
 		else
 		{
@@ -925,10 +998,19 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 					appendStringInfo(&buf, "(%s)", str);
 			}
 			keycoltype = exprType(indexkey);
+			keycolcollation = exprCollation(indexkey);
 		}
 
 		if (!attrsOnly && (!colno || colno == keyno + 1))
 		{
+			Oid			indcoll;
+
+			/* Add collation, if not default for column */
+			indcoll = indcollation->values[keyno];
+			if (OidIsValid(indcoll) && indcoll != keycolcollation)
+				appendStringInfo(&buf, " COLLATE %s",
+								 generate_collation_name((indcoll)));
+
 			/* Add the operator class name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
 
@@ -1283,15 +1365,20 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												   prettyFlags, 0);
 
 				/*
-				 * Now emit the constraint definition.	There are cases where
-				 * the constraint expression will be fully parenthesized and
-				 * we don't need the outer parens ... but there are other
-				 * cases where we do need 'em.  Be conservative for now.
+				 * Now emit the constraint definition, adding NO INHERIT if
+				 * necessary.
+				 *
+				 * There are cases where the constraint expression will be
+				 * fully parenthesized and we don't need the outer parens ...
+				 * but there are other cases where we do need 'em.  Be
+				 * conservative for now.
 				 *
 				 * Note that simply checking for leading '(' and trailing ')'
 				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
 				 */
-				appendStringInfo(&buf, "CHECK (%s)", consrc);
+				appendStringInfo(&buf, "CHECK %s(%s)",
+								 conForm->connoinherit ? "NO INHERIT " : "",
+								 consrc);
 
 				break;
 			}
@@ -1351,6 +1438,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 		appendStringInfo(&buf, " DEFERRABLE");
 	if (conForm->condeferred)
 		appendStringInfo(&buf, " INITIALLY DEFERRED");
+	if (!conForm->convalidated)
+		appendStringInfoString(&buf, " NOT VALID");
 
 	/* Cleanup */
 	ReleaseSysCache(tup);
@@ -1543,9 +1632,9 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	/* Get the OID of the table */
+	/* Look up table name.	Can't lock it - we might not have privileges. */
 	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
-	tableOid = RangeVarGetRelid(tablerv, false);
+	tableOid = RangeVarGetRelid(tablerv, NoLock, false);
 
 	/* Get the number of the column */
 	column = text_to_cstring(columnname);
@@ -1633,6 +1722,11 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
  * pg_get_functiondef
  *		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
  *		the specified function.
+ *
+ * Note: if you change the output format of this function, be careful not
+ * to break psql's rules (in \ef and \sf) for identifying the start of the
+ * function body.  To wit: the function body starts on a line that begins
+ * with "AS ", and no preceding line will look like that.
  */
 Datum
 pg_get_functiondef(PG_FUNCTION_ARGS)
@@ -2152,12 +2246,13 @@ deparse_context_for(const char *aliasname, Oid relid)
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
 
-	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+	dpns = (deparse_namespace *) palloc0(sizeof(deparse_namespace));
 
 	/* Build a minimal RTE for the rel */
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
 	rte->relid = relid;
+	rte->relkind = RELKIND_RELATION;	/* no need for exactness here */
 	rte->eref = makeAlias(aliasname, NIL);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -2165,58 +2260,50 @@ deparse_context_for(const char *aliasname, Oid relid)
 	/* Build one-element rtable */
 	dpns->rtable = list_make1(rte);
 	dpns->ctes = NIL;
-	dpns->subplans = NIL;
-	dpns->outer_plan = dpns->inner_plan = NULL;
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
 }
 
 /*
- * deparse_context_for_plan		- Build deparse context for a plan node
+ * deparse_context_for_planstate	- Build deparse context for a plan
  *
  * When deparsing an expression in a Plan tree, we might have to resolve
- * OUTER or INNER references.  To do this, the caller must provide the
- * parent Plan node.  In the normal case of a join plan node, OUTER and
- * INNER references can be resolved by drilling down into the left and
- * right child plans.  A special case is that a nestloop inner indexscan
- * might have OUTER Vars, but the outer side of the join is not a child
- * plan node.  To handle such cases the outer plan node must be passed
- * separately.	(Pass NULL for outer_plan otherwise.)
+ * OUTER_VAR, INNER_VAR, or INDEX_VAR references.  To do this, the caller must
+ * provide the parent PlanState node.  Then OUTER_VAR and INNER_VAR references
+ * can be resolved by drilling down into the left and right child plans.
+ * Similarly, INDEX_VAR references can be resolved by reference to the
+ * indextlist given in the parent IndexOnlyScan node.  (Note that we don't
+ * currently support deparsing of indexquals in regular IndexScan or
+ * BitmapIndexScan nodes; for those, we can only deparse the indexqualorig
+ * fields, which won't contain INDEX_VAR Vars.)
  *
- * Note: plan and outer_plan really ought to be declared as "Plan *", but
- * we use "Node *" to avoid having to include plannodes.h in builtins.h.
+ * Note: planstate really ought to be declared as "PlanState *", but we use
+ * "Node *" to avoid having to include execnodes.h in builtins.h.
+ *
+ * The ancestors list is a list of the PlanState's parent PlanStates, the
+ * most-closely-nested first.  This is needed to resolve PARAM_EXEC Params.
+ * Note we assume that all the PlanStates share the same rtable.
  *
  * The plan's rangetable list must also be passed.  We actually prefer to use
  * the rangetable to resolve simple Vars, but the plan inputs are necessary
- * for Vars that reference expressions computed in subplan target lists.
- *
- * We also need the list of subplans associated with the Plan tree; this
- * is for resolving references to CTE subplans.
+ * for Vars with special varnos.
  */
 List *
-deparse_context_for_plan(Node *plan, Node *outer_plan,
-						 List *rtable, List *subplans)
+deparse_context_for_planstate(Node *planstate, List *ancestors,
+							  List *rtable)
 {
 	deparse_namespace *dpns;
 
-	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+	dpns = (deparse_namespace *) palloc0(sizeof(deparse_namespace));
 
+	/* Initialize fields that stay the same across the whole plan tree */
 	dpns->rtable = rtable;
 	dpns->ctes = NIL;
-	dpns->subplans = subplans;
 
-	/*
-	 * Set up outer_plan and inner_plan from the Plan node (this includes
-	 * various special cases for particular Plan types).
-	 */
-	push_plan(dpns, (Plan *) plan);
-
-	/*
-	 * If outer_plan is given, that overrides whatever we got from the plan.
-	 */
-	if (outer_plan)
-		dpns->outer_plan = (Plan *) outer_plan;
+	/* Set our attention on the specific plan node passed in */
+	set_deparse_planstate(dpns, (PlanState *) planstate);
+	dpns->ancestors = ancestors;
 
 	/*
 	 * Previously, this function was called from explain_partition_selector with
@@ -2228,15 +2315,185 @@ deparse_context_for_plan(Node *plan, Node *outer_plan,
 	 * subplans list. Thus, we allow push_plans to assign inner and outer plan
 	 * as usual and then add a check here
 	 */
-	if (dpns->inner_plan && IsA(dpns->inner_plan, PartitionSelector))
+	if (dpns->inner_planstate && IsA(dpns->inner_planstate, PartitionSelectorState))
 	{
-		dpns->inner_plan = (Plan *) plan;
-		dpns->outer_plan = (Plan *) plan;
+		dpns->inner_planstate = (PlanState *) planstate;
+		dpns->outer_planstate = (PlanState *) planstate;
+		dpns->outer_tlist = ((PlanState *) planstate)->plan->targetlist;
+		dpns->inner_tlist = ((PlanState *) planstate)->plan->targetlist;
 	}
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
 }
+
+/*
+ * set_deparse_planstate: set up deparse_namespace to parse subexpressions
+ * of a given PlanState node
+ *
+ * This sets the planstate, outer_planstate, inner_planstate, outer_tlist,
+ * inner_tlist, and index_tlist fields.  Caller is responsible for adjusting
+ * the ancestors list if necessary.  Note that the rtable and ctes fields do
+ * not need to change when shifting attention to different plan nodes in a
+ * single plan tree.
+ */
+static void
+set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
+{
+	dpns->planstate = ps;
+
+	/*
+	 * We special-case Append and MergeAppend to pretend that the first child
+	 * plan is the OUTER referent; we have to interpret OUTER Vars in their
+	 * tlists according to one of the children, and the first one is the most
+	 * natural choice.	Likewise special-case ModifyTable to pretend that the
+	 * first child plan is the OUTER referent; this is to support RETURNING
+	 * lists containing references to non-target relations.
+	 */
+	if (IsA(ps, AppendState))
+		dpns->outer_planstate = ((AppendState *) ps)->appendplans[0];
+	else if (IsA(ps, SequenceState))
+		/*
+		 * A Sequence node returns tuples from the *last* child node only.
+		 * The other subplans can even have a different, incompatible tuple
+		 * descriptor. A typical case is to have a PartitionSelector node
+		 * as the first subplan, and the Dynamic Table Scan as the second
+		 * subplan.
+		 */
+		dpns->outer_planstate = ((SequenceState *) ps)->subplans[1];
+	else if (IsA(ps, MergeAppendState))
+		dpns->outer_planstate = ((MergeAppendState *) ps)->mergeplans[0];
+	else if (IsA(ps, ModifyTableState))
+		dpns->outer_planstate = ((ModifyTableState *) ps)->mt_plans[0];
+	else
+		dpns->outer_planstate = outerPlanState(ps);
+
+	if (dpns->outer_planstate)
+		dpns->outer_tlist = dpns->outer_planstate->plan->targetlist;
+	else
+		dpns->outer_tlist = NIL;
+
+	/*
+	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
+	 * use OUTER because that could someday conflict with the normal meaning.)
+	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
+	 */
+	if (IsA(ps, SubqueryScanState))
+		dpns->inner_planstate = ((SubqueryScanState *) ps)->subplan;
+	else if (IsA(ps, CteScanState))
+		dpns->inner_planstate = ((CteScanState *) ps)->cteplanstate;
+	else if (IsA(ps, SequenceState))
+		/*
+		 * Set the inner_plan to a sequences first child only if it is a
+		 * partition selector. This is a specific fix to enable Explain’s of
+		 * query plans that have a Partition Selector
+		 */
+		dpns->inner_planstate = ((SequenceState *) ps)->subplans[0];
+	else
+		dpns->inner_planstate = innerPlanState(ps);
+
+	if (dpns->inner_planstate)
+		dpns->inner_tlist = dpns->inner_planstate->plan->targetlist;
+	else
+		dpns->inner_tlist = NIL;
+
+	/* index_tlist is set only if it's an IndexOnlyScan */
+	if (IsA(ps->plan, IndexOnlyScan))
+		dpns->index_tlist = ((IndexOnlyScan *) ps->plan)->indextlist;
+	else
+		dpns->index_tlist = NIL;
+}
+
+/*
+ * push_child_plan: temporarily transfer deparsing attention to a child plan
+ *
+ * When expanding an OUTER_VAR or INNER_VAR reference, we must adjust the
+ * deparse context in case the referenced expression itself uses
+ * OUTER_VAR/INNER_VAR.  We modify the top stack entry in-place to avoid
+ * affecting levelsup issues (although in a Plan tree there really shouldn't
+ * be any).
+ *
+ * Caller must provide a local deparse_namespace variable to save the
+ * previous state for pop_child_plan.
+ */
+static void
+push_child_plan(deparse_namespace *dpns, PlanState *ps,
+				deparse_namespace *save_dpns)
+{
+	/* Save state for restoration later */
+	*save_dpns = *dpns;
+
+	/*
+	 * Currently we don't bother to adjust the ancestors list, because an
+	 * OUTER_VAR or INNER_VAR reference really shouldn't contain any Params
+	 * that would be set by the parent node itself.  If we did want to adjust
+	 * the list, lcons'ing dpns->planstate onto dpns->ancestors would be the
+	 * appropriate thing --- and pop_child_plan would need to undo the change
+	 * to the list.
+	 */
+
+	/* Set attention on selected child */
+	set_deparse_planstate(dpns, ps);
+}
+
+/*
+ * pop_child_plan: undo the effects of push_child_plan
+ */
+static void
+pop_child_plan(deparse_namespace *dpns, deparse_namespace *save_dpns)
+{
+	/* Restore fields changed by push_child_plan */
+	*dpns = *save_dpns;
+}
+
+/*
+ * push_ancestor_plan: temporarily transfer deparsing attention to an
+ * ancestor plan
+ *
+ * When expanding a Param reference, we must adjust the deparse context
+ * to match the plan node that contains the expression being printed;
+ * otherwise we'd fail if that expression itself contains a Param or
+ * OUTER_VAR/INNER_VAR/INDEX_VAR variable.
+ *
+ * The target ancestor is conveniently identified by the ListCell holding it
+ * in dpns->ancestors.
+ *
+ * Caller must provide a local deparse_namespace variable to save the
+ * previous state for pop_ancestor_plan.
+ */
+static void
+push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
+				   deparse_namespace *save_dpns)
+{
+	PlanState  *ps = (PlanState *) lfirst(ancestor_cell);
+	List	   *ancestors;
+
+	/* Save state for restoration later */
+	*save_dpns = *dpns;
+
+	/* Build a new ancestor list with just this node's ancestors */
+	ancestors = NIL;
+	while ((ancestor_cell = lnext(ancestor_cell)) != NULL)
+		ancestors = lappend(ancestors, lfirst(ancestor_cell));
+	dpns->ancestors = ancestors;
+
+	/* Set attention on selected ancestor */
+	set_deparse_planstate(dpns, ps);
+}
+
+/*
+ * pop_ancestor_plan: undo the effects of push_ancestor_plan
+ */
+static void
+pop_ancestor_plan(deparse_namespace *dpns, deparse_namespace *save_dpns)
+{
+	/* Free the ancestor list made in push_ancestor_plan */
+	list_free(dpns->ancestors);
+
+	/* Restore fields changed by push_ancestor_plan */
+	*dpns = *save_dpns;
+}
+
 
 /* ----------
  * make_ruledef			- reconstruct the CREATE RULE command
@@ -2382,10 +2639,10 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		context.varprefix = (list_length(query->rtable) != 1);
 		context.prettyFlags = prettyFlags;
 		context.indentLevel = PRETTYINDENT_STD;
+
+		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = query->rtable;
 		dpns.ctes = query->cteList;
-		dpns.subplans = NIL;
-		dpns.outer_plan = dpns.inner_plan = NULL;
 
 		get_rule_expr(qual, &context, false);
 	}
@@ -2538,10 +2795,9 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.prettyFlags = prettyFlags;
 	context.indentLevel = startIndent;
 
+	memset(&dpns, 0, sizeof(dpns));
 	dpns.rtable = query->rtable;
 	dpns.ctes = query->cteList;
-	dpns.subplans = NIL;
-	dpns.outer_plan = dpns.inner_plan = NULL;
 
 	switch (query->commandType)
 	{
@@ -2951,6 +3207,7 @@ get_target_list(List *targetList, deparse_context *context,
 	char	   *sep;
 	int			colno;
 	ListCell   *l;
+	bool		last_was_multiline = false;
 
 	sep = " ";
 	colno = 0;
@@ -2959,6 +3216,10 @@ get_target_list(List *targetList, deparse_context *context,
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		char	   *colname;
 		char	   *attname;
+		StringInfoData targetbuf;
+		int			leading_nl_pos = -1;
+		char	   *trailing_nl;
+		int			pos;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
@@ -2966,6 +3227,14 @@ get_target_list(List *targetList, deparse_context *context,
 		appendStringInfoString(buf, sep);
 		sep = ", ";
 		colno++;
+
+		/*
+		 * Put the new field spec into targetbuf so we can decide after we've
+		 * got it whether or not it needs to go on a new line.
+		 */
+
+		initStringInfo(&targetbuf);
+		context->buf = &targetbuf;
 
 		/*
 		 * We special-case Var nodes rather than using get_rule_expr. This is
@@ -3002,8 +3271,65 @@ get_target_list(List *targetList, deparse_context *context,
 		if (colname)			/* resname could be NULL */
 		{
 			if (attname == NULL || strcmp(attname, colname) != 0)
-				appendStringInfo(buf, " AS %s", quote_identifier(colname));
+				appendStringInfo(&targetbuf, " AS %s", quote_identifier(colname));
 		}
+
+		/* Restore context buffer */
+
+		context->buf = buf;
+
+		/* Does the new field start with whitespace plus a new line? */
+
+		for (pos = 0; pos < targetbuf.len; pos++)
+		{
+			if (targetbuf.data[pos] == '\n')
+			{
+				leading_nl_pos = pos;
+				break;
+			}
+			if (targetbuf.data[pos] > ' ')
+				break;
+		}
+
+		/* Locate the start of the current	line in the buffer */
+
+		trailing_nl = (strrchr(buf->data, '\n'));
+		if (trailing_nl == NULL)
+			trailing_nl = buf->data;
+		else
+			trailing_nl++;
+
+		/*
+		 * If the field we're adding is the first in the list, or it already
+		 * has a leading newline, or wrap mode is disabled (pretty_wrap < 0),
+		 * don't add anything. Otherwise, add a newline, plus some
+		 * indentation, if either the new field would cause an overflow or the
+		 * last field used more than one line.
+		 */
+
+		if (colno > 1 &&
+			leading_nl_pos == -1 &&
+			pretty_wrap >= 0 &&
+			((strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap) ||
+			 last_was_multiline))
+		{
+			appendContextKeyword(context, "", -PRETTYINDENT_STD,
+								 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+		}
+
+		/* Add the new field */
+
+		appendStringInfoString(buf, targetbuf.data);
+
+
+		/* Keep track of this field's status for next iteration */
+
+		last_was_multiline =
+			(strchr(targetbuf.data + leading_nl_pos + 1, '\n') != NULL);
+
+		/* cleanup */
+
+		pfree(targetbuf.data);
 	}
 }
 
@@ -3345,6 +3671,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 	ListCell   *l;
 	List	   *strippedexprs;
 
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
+
 	/*
 	 * If it's an INSERT ... SELECT or multi-row VALUES, there will be a
 	 * single RTE for the SELECT or VALUES.  Plain VALUES has neither.
@@ -3447,15 +3776,11 @@ get_insert_query_def(Query *query, deparse_context *context)
 	}
 	else if (values_rte)
 	{
-		/* A WITH clause is possible here */
-		get_with_clause(query, context);
 		/* Add the multi-VALUES expression lists */
 		get_values_def(values_rte->values_lists, context);
 	}
 	else if (strippedexprs)
 	{
-		/* A WITH clause is possible here */
-		get_with_clause(query, context);
 		/* Add the single-VALUES expression list */
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
@@ -3489,6 +3814,9 @@ get_update_query_def(Query *query, deparse_context *context)
 	char	   *sep;
 	RangeTblEntry *rte;
 	ListCell   *l;
+
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
 
 	/*
 	 * Start the query with UPDATE relname SET
@@ -3571,6 +3899,9 @@ get_delete_query_def(Query *query, deparse_context *context)
 	StringInfo	buf = context->buf;
 	RangeTblEntry *rte;
 
+	/* Insert the WITH clause if given */
+	get_with_clause(query, context);
+
 	/*
 	 * Start the query with DELETE FROM relname
 	 */
@@ -3641,79 +3972,6 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
- * push_plan: set up deparse_namespace to recurse into the tlist of a subplan
- *
- * When expanding an OUTER or INNER reference, we must push new outer/inner
- * subplans in case the referenced expression itself uses OUTER/INNER.	We
- * modify the top stack entry in-place to avoid affecting levelsup issues
- * (although in a Plan tree there really shouldn't be any).
- *
- * Caller must save and restore outer_plan and inner_plan around this.
- *
- * We also use this to initialize the fields during deparse_context_for_plan.
- */
-static void
-push_plan(deparse_namespace *dpns, Plan *subplan)
-{
-	/*
-	 * We special-case Append to pretend that the first child plan is the
-	 * OUTER referent; we have to interpret OUTER Vars in the Append's tlist
-	 * according to one of the children, and the first one is the most natural
-	 * choice.	Likewise special-case ModifyTable to pretend that the first
-	 * child plan is the OUTER referent; this is to support RETURNING lists
-	 * containing references to non-target relations.
-	 */
-	if (IsA(subplan, Append))
-		dpns->outer_plan = (Plan *) linitial(((Append *) subplan)->appendplans);
-	else if (IsA(subplan, Sequence))
-	{
-		/*
-		 * A Sequence node returns tuples from the *last* child node only.
-		 * The other subplans can even have a different, incompatible tuple
-		 * descriptor. A typical case is to have a PartitionSelector node
-		 * as the first subplan, and the Dynamic Table Scan as the second
-		 * subplan.
-		 */
-		dpns->outer_plan = (Plan *) llast(((Sequence *) subplan)->subplans);
-	}
-	else if (IsA(subplan, ModifyTable))
-		dpns->outer_plan = (Plan *) linitial(((ModifyTable *) subplan)->plans);
-	else
-		dpns->outer_plan = outerPlan(subplan);
-
-	/*
-	 * For a SubqueryScan, pretend the subplan is INNER referent.  (We don't
-	 * use OUTER because that could someday conflict with the normal meaning.)
-	 * Likewise, for a CteScan, pretend the subquery's plan is INNER referent.
-	 */
-	if (IsA(subplan, SubqueryScan))
-		dpns->inner_plan = ((SubqueryScan *) subplan)->subplan;
-	else if (IsA(subplan, CteScan))
-	{
-		int			ctePlanId = ((CteScan *) subplan)->ctePlanId;
-
-		if (ctePlanId > 0 && ctePlanId <= list_length(dpns->subplans))
-			dpns->inner_plan = list_nth(dpns->subplans, ctePlanId - 1);
-		else
-			dpns->inner_plan = NULL;
-	}
-	else if (IsA(subplan, Sequence))
-	{
-		/*
-		 * Set the inner_plan to a sequences first child only if it is a
-		 * partition selector. This is a specific fix to enable Explain's of
-		 * query plans that have a Partition Selector
-		 */
-		Plan *node = (Plan *) linitial(((Sequence *) subplan)->subplans);
-		if (IsA(node, PartitionSelector))
-			dpns->inner_plan = node;
-	}
-	else
-		dpns->inner_plan = innerPlan(subplan);
-}
-
-
-/*
  * Display a Var appropriately.
  *
  * In some cases (currently only when recursing into an unnamed join)
@@ -3754,28 +4012,28 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
-	 * likely that varno is OUTER or INNER, in which case we must dig down
-	 * into the subplans.
+	 * likely that varno is OUTER_VAR or INNER_VAR, in which case we must dig
+	 * down into the subplans, or INDEX_VAR, which is resolved similarly.
 	 */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 	{
 		rte = rt_fetch(var->varno, dpns->rtable);
 		attnum = var->varattno;
 	}
-	else if (var->varno == OUTER && dpns->outer_plan)
+	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 
-		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
+		tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
 		if (!tle)
-			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+		{
+			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
+			return NULL;
+		}
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->outer_plan);
+		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
 
 		/*
 		 * In cases where the INNER VAR subtree (left/right) contains a CONST
@@ -3803,24 +4061,20 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 				appendStringInfoChar(buf, ')');
 		}
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return NULL;
 	}
-	else if (var->varno == INNER && dpns->inner_plan)
+	else if (var->varno == INNER_VAR && dpns->inner_tlist)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 
-		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
+		tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
 		if (!tle)
-			elog(ERROR, "bogus varattno for INNER var: %d", var->varattno);
+			elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->inner_plan);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 		/*
 		 * In cases where the INNER VAR subtree (left/right) contains a CONST
@@ -3848,14 +4102,75 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 				appendStringInfoChar(buf, ')');
 		}
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
+		return NULL;
+	}
+	else if (var->varno == INDEX_VAR && dpns->index_tlist)
+	{
+		TargetEntry *tle;
+
+		tle = get_tle_by_resno(dpns->index_tlist, var->varattno);
+		if (!tle)
+			elog(ERROR, "bogus varattno for INDEX_VAR var: %d", var->varattno);
+
+		Assert(netlevelsup == 0);
+
+		/*
+		 * Force parentheses because our caller probably assumed a Var is a
+		 * simple expression.
+		 */
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, '(');
+		get_rule_expr((Node *) tle->expr, context, true);
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, ')');
+
 		return NULL;
 	}
 	else
 	{
-		elog(ERROR, "bogus varno: %d", var->varno);
+		elog(WARNING, "bogus varno: %d", var->varno);
+		return psprintf("<BOGUS %d>", var->varattno);
 		return NULL;			/* keep compiler quiet */
+	}
+
+	/*
+	 * The planner will sometimes emit Vars referencing resjunk elements of a
+	 * subquery's target list (this is currently only possible if it chooses
+	 * to generate a "physical tlist" for a SubqueryScan or CteScan node).
+	 * Although we prefer to print subquery-referencing Vars using the
+	 * subquery's alias, that's not possible for resjunk items since they have
+	 * no alias.  So in that case, drill down to the subplan and print the
+	 * contents of the referenced tlist item.  This works because in a plan
+	 * tree, such Vars can only occur in a SubqueryScan or CteScan node, and
+	 * we'll have set dpns->inner_planstate to reference the child plan node.
+	 */
+	if ((rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE) &&
+		attnum > list_length(rte->eref->colnames) &&
+		dpns->inner_planstate)
+	{
+		TargetEntry *tle;
+		deparse_namespace save_dpns;
+
+		tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
+		if (!tle)
+			elog(ERROR, "bogus varattno for subquery var: %d", var->varattno);
+
+		Assert(netlevelsup == 0);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
+
+		/*
+		 * Force parentheses because our caller probably assumed a Var is a
+		 * simple expression.
+		 */
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, '(');
+		get_rule_expr((Node *) tle->expr, context, true);
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, ')');
+
+		pop_child_plan(dpns, &save_dpns);
+		return NULL;
 	}
 
 	/* Identify names to use */
@@ -3927,7 +4242,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 							 quote_identifier(schemaname));
 
 		appendStringInfoString(buf, quote_identifier(refname));
-
 		appendStringInfoChar(buf, '.');
 	}
 	if (attname)
@@ -3946,15 +4260,21 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 
 /*
- * Get the name of a field of an expression of composite type.
- *
- * This is fairly straightforward except for the case of a Var of type RECORD.
- * Since no actual table or view column is allowed to have type RECORD, such
- * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.	We
- * drill down to find the ultimate defining expression and attempt to infer
- * the field name from it.	We ereport if we can't determine the name.
+ * Get the name of a field of an expression of composite type.	The
+ * expression is usually a Var, but we handle other cases too.
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
+ *
+ * This is fairly straightforward when the expression has a named composite
+ * type; we need only look up the type in the catalogs.  However, the type
+ * could also be RECORD.  Since no actual table or view column is allowed to
+ * have type RECORD, a Var of type RECORD must refer to a JOIN or FUNCTION RTE
+ * or to a subquery output.  We drill down to find the ultimate defining
+ * expression and attempt to infer the field name from it.	We ereport if we
+ * can't determine the name.
+ *
+ * Similarly, a PARAM of type RECORD has to refer to some expression of
+ * a determinable composite type.
  */
 static const char *
 get_name_for_var_field(Var *var, int fieldno,
@@ -3977,6 +4297,29 @@ get_name_for_var_field(Var *var, int fieldno,
 
 		if (fieldno > 0 && fieldno <= list_length(r->colnames))
 			return strVal(list_nth(r->colnames, fieldno - 1));
+	}
+
+	/*
+	 * If it's a Param of type RECORD, try to find what the Param refers to.
+	 */
+	if (IsA(var, Param))
+	{
+		Param	   *param = (Param *) var;
+		ListCell   *ancestor_cell;
+
+		expr = find_param_referent(param, context, &dpns, &ancestor_cell);
+		if (expr)
+		{
+			/* Found a match, so recurse to decipher the field name */
+			deparse_namespace save_dpns;
+			const char *result;
+
+			push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
+			result = get_name_for_var_field((Var *) expr, fieldno,
+											0, context);
+			pop_ancestor_plan(dpns, &save_dpns);
+			return result;
+		}
 	}
 
 	/*
@@ -4007,63 +4350,75 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
-	 * likely that varno is OUTER or INNER, in which case we must dig down
-	 * into the subplans.
+	 * likely that varno is OUTER_VAR or INNER_VAR, in which case we must dig
+	 * down into the subplans, or INDEX_VAR, which is resolved similarly.
 	 */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 	{
 		rte = rt_fetch(var->varno, dpns->rtable);
 		attnum = var->varattno;
 	}
-	else if (var->varno == OUTER && dpns->outer_plan)
+	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 		const char *result;
 
-		tle = get_tle_by_resno(dpns->outer_plan->targetlist, var->varattno);
+		tle = get_tle_by_resno(dpns->outer_tlist, var->varattno);
 		if (!tle)
-			elog(ERROR, "bogus varattno for OUTER var: %d", var->varattno);
+		{
+			elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
+			return NULL;
+		}
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->outer_plan);
+		push_child_plan(dpns, dpns->outer_planstate, &save_dpns);
 
 		result = get_name_for_var_field((Var *) tle->expr, fieldno,
 										levelsup, context);
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
 		return result;
 	}
-	else if (var->varno == INNER && dpns->inner_plan)
+	else if (var->varno == INNER_VAR && dpns->inner_tlist)
 	{
 		TargetEntry *tle;
-		Plan	   *save_outer;
-		Plan	   *save_inner;
+		deparse_namespace save_dpns;
 		const char *result;
 
-		tle = get_tle_by_resno(dpns->inner_plan->targetlist, var->varattno);
+		tle = get_tle_by_resno(dpns->inner_tlist, var->varattno);
 		if (!tle)
-			elog(ERROR, "bogus varattno for INNER var: %d", var->varattno);
+			elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
 
 		Assert(netlevelsup == 0);
-		save_outer = dpns->outer_plan;
-		save_inner = dpns->inner_plan;
-		push_plan(dpns, dpns->inner_plan);
+		push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 		result = get_name_for_var_field((Var *) tle->expr, fieldno,
 										levelsup, context);
 
-		dpns->outer_plan = save_outer;
-		dpns->inner_plan = save_inner;
+		pop_child_plan(dpns, &save_dpns);
+		return result;
+	}
+	else if (var->varno == INDEX_VAR && dpns->index_tlist)
+	{
+		TargetEntry *tle;
+		const char *result;
+
+		tle = get_tle_by_resno(dpns->index_tlist, var->varattno);
+		if (!tle)
+			elog(ERROR, "bogus varattno for INDEX_VAR var: %d", var->varattno);
+
+		Assert(netlevelsup == 0);
+
+		result = get_name_for_var_field((Var *) tle->expr, fieldno,
+										levelsup, context);
+
 		return result;
 	}
 	else
 	{
-		elog(ERROR, "bogus varno: %d", var->varno);
+		elog(WARNING, "bogus varno: %d", var->varno);
+		return psprintf("<BOGUS %d>", var->varattno);
 		return NULL;			/* keep compiler quiet */
 	}
 
@@ -4093,7 +4448,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 		case RTE_VALUES:
 
 			/*
@@ -4125,10 +4479,9 @@ get_name_for_var_field(Var *var, int fieldno,
 						deparse_namespace mydpns;
 						const char *result;
 
+						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = rte->subquery->rtable;
 						mydpns.ctes = rte->subquery->cteList;
-						mydpns.subplans = NIL;
-						mydpns.outer_plan = mydpns.inner_plan = NULL;
 
 						context->namespaces = lcons(&mydpns,
 													context->namespaces);
@@ -4153,28 +4506,23 @@ get_name_for_var_field(Var *var, int fieldno,
 					 * look into the child plan's tlist instead.
 					 */
 					TargetEntry *tle;
-					Plan	   *save_outer;
-					Plan	   *save_inner;
+					deparse_namespace save_dpns;
 					const char *result;
 
-					if (!dpns->inner_plan)
+					if (!dpns->inner_planstate)
 						elog(ERROR, "failed to find plan for subquery %s",
 							 rte->eref->aliasname);
-					tle = get_tle_by_resno(dpns->inner_plan->targetlist,
-										   attnum);
+					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
 					Assert(netlevelsup == 0);
-					save_outer = dpns->outer_plan;
-					save_inner = dpns->inner_plan;
-					push_plan(dpns, dpns->inner_plan);
+					push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 					result = get_name_for_var_field((Var *) tle->expr, fieldno,
 													levelsup, context);
 
-					dpns->outer_plan = save_outer;
-					dpns->inner_plan = save_inner;
+					pop_child_plan(dpns, &save_dpns);
 					return result;
 				}
 			}
@@ -4249,10 +4597,9 @@ get_name_for_var_field(Var *var, int fieldno,
 						deparse_namespace mydpns;
 						const char *result;
 
+						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = ctequery->rtable;
 						mydpns.ctes = ctequery->cteList;
-						mydpns.subplans = NIL;
-						mydpns.outer_plan = mydpns.inner_plan = NULL;
 
 						new_nslist = list_copy_tail(context->namespaces,
 													ctelevelsup);
@@ -4276,28 +4623,23 @@ get_name_for_var_field(Var *var, int fieldno,
 					 * can look into the subplan's tlist instead.
 					 */
 					TargetEntry *tle;
-					Plan	   *save_outer;
-					Plan	   *save_inner;
+					deparse_namespace save_dpns;
 					const char *result;
 
-					if (!dpns->inner_plan)
+					if (!dpns->inner_planstate)
 						elog(ERROR, "failed to find plan for CTE %s",
 							 rte->eref->aliasname);
-					tle = get_tle_by_resno(dpns->inner_plan->targetlist,
-										   attnum);
+					tle = get_tle_by_resno(dpns->inner_tlist, attnum);
 					if (!tle)
 						elog(ERROR, "bogus varattno for subquery var: %d",
 							 attnum);
 					Assert(netlevelsup == 0);
-					save_outer = dpns->outer_plan;
-					save_inner = dpns->inner_plan;
-					push_plan(dpns, dpns->inner_plan);
+					push_child_plan(dpns, dpns->inner_planstate, &save_dpns);
 
 					result = get_name_for_var_field((Var *) tle->expr, fieldno,
 													levelsup, context);
 
-					dpns->outer_plan = save_outer;
-					dpns->inner_plan = save_inner;
+					pop_child_plan(dpns, &save_dpns);
 					return result;
 				}
 			}
@@ -4364,6 +4706,193 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 	return result;
 }
 
+/*
+ * Try to find the referenced expression for a PARAM_EXEC Param that might
+ * reference a parameter supplied by an upper NestLoop or SubPlan plan node.
+ *
+ * If successful, return the expression and set *dpns_p and *ancestor_cell_p
+ * appropriately for calling push_ancestor_plan().	If no referent can be
+ * found, return NULL.
+ */
+static Node *
+find_param_referent(Param *param, deparse_context *context,
+					deparse_namespace **dpns_p, ListCell **ancestor_cell_p)
+{
+	/* Initialize output parameters to prevent compiler warnings */
+	*dpns_p = NULL;
+	*ancestor_cell_p = NULL;
+
+	/*
+	 * If it's a PARAM_EXEC parameter, look for a matching NestLoopParam or
+	 * SubPlan argument.  This will necessarily be in some ancestor of the
+	 * current expression's PlanState.
+	 */
+	if (param->paramkind == PARAM_EXEC)
+	{
+		deparse_namespace *dpns;
+		PlanState  *child_ps;
+		bool		in_same_plan_level;
+		ListCell   *lc;
+
+		dpns = (deparse_namespace *) linitial(context->namespaces);
+		child_ps = dpns->planstate;
+		in_same_plan_level = true;
+
+		foreach(lc, dpns->ancestors)
+		{
+			PlanState  *ps = (PlanState *) lfirst(lc);
+			ListCell   *lc2;
+
+			/*
+			 * NestLoops transmit params to their inner child only; also, once
+			 * we've crawled up out of a subplan, this couldn't possibly be
+			 * the right match.
+			 */
+			if (IsA(ps, NestLoopState) &&
+				child_ps == innerPlanState(ps) &&
+				in_same_plan_level)
+			{
+				NestLoop   *nl = (NestLoop *) ps->plan;
+
+				foreach(lc2, nl->nestParams)
+				{
+					NestLoopParam *nlp = (NestLoopParam *) lfirst(lc2);
+
+					if (nlp->paramno == param->paramid)
+					{
+						/* Found a match, so return it */
+						*dpns_p = dpns;
+						*ancestor_cell_p = lc;
+						return (Node *) nlp->paramval;
+					}
+				}
+			}
+
+			/*
+			 * Check to see if we're crawling up from a subplan.
+			 */
+			foreach(lc2, ps->subPlan)
+			{
+				SubPlanState *sstate = (SubPlanState *) lfirst(lc2);
+				SubPlan    *subplan = (SubPlan *) sstate->xprstate.expr;
+				ListCell   *lc3;
+				ListCell   *lc4;
+
+				if (child_ps != sstate->planstate)
+					continue;
+
+				/* Matched subplan, so check its arguments */
+				forboth(lc3, subplan->parParam, lc4, subplan->args)
+				{
+					int			paramid = lfirst_int(lc3);
+					Node	   *arg = (Node *) lfirst(lc4);
+
+					if (paramid == param->paramid)
+					{
+						/* Found a match, so return it */
+						*dpns_p = dpns;
+						*ancestor_cell_p = lc;
+						return arg;
+					}
+				}
+
+				/* Keep looking, but we are emerging from a subplan. */
+				in_same_plan_level = false;
+				break;
+			}
+
+			/*
+			 * Likewise check to see if we're emerging from an initplan.
+			 * Initplans never have any parParams, so no need to search that
+			 * list, but we need to know if we should reset
+			 * in_same_plan_level.
+			 */
+			foreach(lc2, ps->initPlan)
+			{
+				SubPlanState *sstate = (SubPlanState *) lfirst(lc2);
+
+				if (child_ps != sstate->planstate)
+					continue;
+
+				/* No parameters to be had here. */
+				Assert(((SubPlan *) sstate->xprstate.expr)->parParam == NIL);
+
+				/* Keep looking, but we are emerging from an initplan. */
+				in_same_plan_level = false;
+				break;
+			}
+
+			/* No luck, crawl up to next ancestor */
+			child_ps = ps;
+		}
+	}
+
+	/* No referent found */
+	return NULL;
+}
+
+/*
+ * Display a Param appropriately.
+ */
+static void
+get_parameter(Param *param, deparse_context *context)
+{
+	Node	   *expr;
+	deparse_namespace *dpns;
+	ListCell   *ancestor_cell;
+
+	/*
+	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
+	 * the parameter was computed.	Note that failing to find a referent isn't
+	 * an error, since the Param might well be a subplan output rather than an
+	 * input.
+	 */
+	expr = find_param_referent(param, context, &dpns, &ancestor_cell);
+	if (expr)
+	{
+		/* Found a match, so print it */
+		deparse_namespace save_dpns;
+		bool		save_varprefix;
+		bool		need_paren;
+
+		/* Switch attention to the ancestor plan node */
+		push_ancestor_plan(dpns, ancestor_cell, &save_dpns);
+
+		/*
+		 * Force prefixing of Vars, since they won't belong to the relation
+		 * being scanned in the original plan node.
+		 */
+		save_varprefix = context->varprefix;
+		context->varprefix = true;
+
+		/*
+		 * A Param's expansion is typically a Var, Aggref, or upper-level
+		 * Param, which wouldn't need extra parentheses.  Otherwise, insert
+		 * parens to ensure the expression looks atomic.
+		 */
+		need_paren = !(IsA(expr, Var) ||
+					   IsA(expr, Aggref) ||
+					   IsA(expr, Param));
+		if (need_paren)
+			appendStringInfoChar(context->buf, '(');
+
+		get_rule_expr(expr, context, false);
+
+		if (need_paren)
+			appendStringInfoChar(context->buf, ')');
+
+		context->varprefix = save_varprefix;
+
+		pop_ancestor_plan(dpns, &save_dpns);
+
+		return;
+	}
+
+	/*
+	 * Not PARAM_EXEC, or couldn't find referent: just print $N.
+	 */
+	appendStringInfo(context->buf, "$%d", param->paramid);
+}
 
 /*
  * get_simple_binary_op_name
@@ -4697,7 +5226,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Param:
-			appendStringInfo(buf, "$%d", ((Param *) node)->paramid);
+			get_parameter((Param *) node, context);
 			break;
 
 
@@ -4820,6 +5349,16 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_NullIfExpr:
+			{
+				NullIfExpr *nullifexpr = (NullIfExpr *) node;
+
+				appendStringInfo(buf, "NULLIF(");
+				get_rule_expr((Node *) nullifexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+
 		case T_ScalarArrayOpExpr:
 			{
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
@@ -4833,7 +5372,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfo(buf, " %s %s (",
 								 generate_operator_name(expr->opno,
 														exprType(arg1),
-										   get_element_type(exprType(arg2))),
+									  get_base_element_type(exprType(arg2))),
 								 expr->useOr ? "ANY" : "ALL");
 				get_rule_expr_paren(arg2, context, true, node);
 				appendStringInfoChar(buf, ')');
@@ -5089,6 +5628,21 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_CollateExpr:
+			{
+				CollateExpr *collate = (CollateExpr *) node;
+				Node	   *arg = (Node *) collate->arg;
+
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, '(');
+				get_rule_expr_paren(arg, context, showimplicit, node);
+				appendStringInfo(buf, " COLLATE %s",
+								 generate_collation_name(collate->collOid));
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, ')');
+			}
+			break;
+
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -5135,7 +5689,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoChar(buf, ' ');
 					appendContextKeyword(context, "WHEN ",
 										 0, 0, 0);
-
 
 					/* WHEN IS NOT DISTINCT FROM */
 					if (not_clause(w))
@@ -5349,76 +5902,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_NullIfExpr:
-			{
-				NullIfExpr *nullifexpr = (NullIfExpr *) node;
-
-				appendStringInfo(buf, "NULLIF(");
-				get_rule_expr((Node *) nullifexpr->args, context, true);
-				appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_NullTest:
-			{
-				NullTest   *ntest = (NullTest *) node;
-
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren((Node *) ntest->arg, context, true, node);
-				switch (ntest->nulltesttype)
-				{
-					case IS_NULL:
-						appendStringInfo(buf, " IS NULL");
-						break;
-					case IS_NOT_NULL:
-						appendStringInfo(buf, " IS NOT NULL");
-						break;
-					default:
-						elog(ERROR, "unrecognized nulltesttype: %d",
-							 (int) ntest->nulltesttype);
-				}
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_BooleanTest:
-			{
-				BooleanTest *btest = (BooleanTest *) node;
-
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
-				get_rule_expr_paren((Node *) btest->arg, context, false, node);
-				switch (btest->booltesttype)
-				{
-					case IS_TRUE:
-						appendStringInfo(buf, " IS TRUE");
-						break;
-					case IS_NOT_TRUE:
-						appendStringInfo(buf, " IS NOT TRUE");
-						break;
-					case IS_FALSE:
-						appendStringInfo(buf, " IS FALSE");
-						break;
-					case IS_NOT_FALSE:
-						appendStringInfo(buf, " IS NOT FALSE");
-						break;
-					case IS_UNKNOWN:
-						appendStringInfo(buf, " IS UNKNOWN");
-						break;
-					case IS_NOT_UNKNOWN:
-						appendStringInfo(buf, " IS NOT UNKNOWN");
-						break;
-					default:
-						elog(ERROR, "unrecognized booltesttype: %d",
-							 (int) btest->booltesttype);
-				}
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
-			}
-			break;
-
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;
@@ -5566,11 +6049,72 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				}
 				if (xexpr->op == IS_XMLSERIALIZE)
-					appendStringInfo(buf, " AS %s", format_type_with_typemod(xexpr->type,
-															 xexpr->typmod));
+					appendStringInfo(buf, " AS %s",
+									 format_type_with_typemod(xexpr->type,
+															  xexpr->typmod));
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else
+					appendStringInfoChar(buf, ')');
+			}
+			break;
+
+		case T_NullTest:
+			{
+				NullTest   *ntest = (NullTest *) node;
+
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, '(');
+				get_rule_expr_paren((Node *) ntest->arg, context, true, node);
+				switch (ntest->nulltesttype)
+				{
+					case IS_NULL:
+						appendStringInfo(buf, " IS NULL");
+						break;
+					case IS_NOT_NULL:
+						appendStringInfo(buf, " IS NOT NULL");
+						break;
+					default:
+						elog(ERROR, "unrecognized nulltesttype: %d",
+							 (int) ntest->nulltesttype);
+				}
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, ')');
+			}
+			break;
+
+		case T_BooleanTest:
+			{
+				BooleanTest *btest = (BooleanTest *) node;
+
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, '(');
+				get_rule_expr_paren((Node *) btest->arg, context, false, node);
+				switch (btest->booltesttype)
+				{
+					case IS_TRUE:
+						appendStringInfo(buf, " IS TRUE");
+						break;
+					case IS_NOT_TRUE:
+						appendStringInfo(buf, " IS NOT TRUE");
+						break;
+					case IS_FALSE:
+						appendStringInfo(buf, " IS FALSE");
+						break;
+					case IS_NOT_FALSE:
+						appendStringInfo(buf, " IS NOT FALSE");
+						break;
+					case IS_UNKNOWN:
+						appendStringInfo(buf, " IS UNKNOWN");
+						break;
+					case IS_NOT_UNKNOWN:
+						appendStringInfo(buf, " IS NOT UNKNOWN");
+						break;
+					default:
+						elog(ERROR, "unrecognized booltesttype: %d",
+							 (int) btest->booltesttype);
+				}
+				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
 			}
 			break;
@@ -6163,6 +6707,10 @@ get_coercion_expr(Node *arg, deparse_context *context,
  * showtype can be -1 to never show "::typename" decoration, or +1 to always
  * show it, or 0 to show it only if the constant wouldn't be assumed to be
  * the right type by default.
+ *
+ * If the Const's collation isn't default for its type, show that too.
+ * This can only happen in trees that have been through constant-folding.
+ * We assume we don't need to do this when showtype is -1.
  * ----------
  */
 static void
@@ -6183,9 +6731,12 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		 */
 		appendStringInfo(buf, "NULL");
 		if (showtype >= 0)
+		{
 			appendStringInfo(buf, "::%s",
 							 format_type_with_typemod(constval->consttype,
 													  constval->consttypmod));
+			get_const_collation(constval, context);
+		}
 		return;
 	}
 
@@ -6286,6 +6837,28 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(constval->consttype,
 												  constval->consttypmod));
+
+	get_const_collation(constval, context);
+}
+
+/*
+ * helper for get_const_expr: append COLLATE if needed
+ */
+static void
+get_const_collation(Const *constval, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+
+	if (OidIsValid(constval->constcollid))
+	{
+		Oid			typcollation = get_typcollation(constval->consttype);
+
+		if (constval->constcollid != typcollation)
+		{
+			appendStringInfo(buf, " COLLATE %s",
+							 generate_collation_name(constval->constcollid));
+		}
+	}
 }
 
 /*
@@ -6478,11 +7051,52 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			appendContextKeyword(context, prefix,
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 			first = false;
+
+			get_from_clause_item(jtnode, query, context);
 		}
 		else
+		{
+			StringInfoData targetbuf;
+			char	   *trailing_nl;
+
 			appendStringInfoString(buf, ", ");
 
-		get_from_clause_item(jtnode, query, context);
+			initStringInfo(&targetbuf);
+			context->buf = &targetbuf;
+
+			get_from_clause_item(jtnode, query, context);
+
+			context->buf = buf;
+
+			/* Locate the start of the current	line in the buffer */
+
+			trailing_nl = (strrchr(buf->data, '\n'));
+			if (trailing_nl == NULL)
+				trailing_nl = buf->data;
+			else
+				trailing_nl++;
+
+			/*
+			 * Add a newline, plus some  indentation, if pretty_wrap is on and
+			 * the new from-clause item would cause an overflow.
+			 */
+
+			if (pretty_wrap >= 0 &&
+				(strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap))
+			{
+				appendContextKeyword(context, "", -PRETTYINDENT_STD,
+									 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+			}
+
+			/* Add the new item */
+
+			appendStringInfoString(buf, targetbuf.data);
+
+			/* cleanup */
+
+			pfree(targetbuf.data);
+		}
+
 	}
 }
 
@@ -6539,7 +7153,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			gavealias = true;
 		}
 		else if (rte->rtekind == RTE_RELATION &&
-				 strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
+			strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
 		{
 			/*
 			 * Apparently the rel has been renamed since the rule was made.
@@ -6573,6 +7187,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				get_from_clause_coldeflist(rte->eref->colnames,
 										   rte->funccoltypes,
 										   rte->funccoltypmods,
+										   rte->funccolcollations,
 										   context);
 			}
 			else
@@ -6771,35 +7386,45 @@ get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
  * responsible for ensuring that an alias or AS is present before it.
  */
 static void
-get_from_clause_coldeflist(List *names, List *types, List *typmods,
+get_from_clause_coldeflist(List *names,
+						   List *types, List *typmods, List *collations,
 						   deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	ListCell   *l1;
 	ListCell   *l2;
 	ListCell   *l3;
+	ListCell   *l4;
 	int			i = 0;
 
 	appendStringInfoChar(buf, '(');
 
 	l2 = list_head(types);
 	l3 = list_head(typmods);
+	l4 = list_head(collations);
 	foreach(l1, names)
 	{
 		char	   *attname = strVal(lfirst(l1));
 		Oid			atttypid;
 		int32		atttypmod;
+		Oid			attcollation;
 
 		atttypid = lfirst_oid(l2);
 		l2 = lnext(l2);
 		atttypmod = lfirst_int(l3);
 		l3 = lnext(l3);
+		attcollation = lfirst_oid(l4);
+		l4 = lnext(l4);
 
 		if (i > 0)
 			appendStringInfo(buf, ", ");
 		appendStringInfo(buf, "%s %s",
 						 quote_identifier(attname),
 						 format_type_with_typemod(atttypid, atttypmod));
+		if (OidIsValid(attcollation) &&
+			attcollation != get_typcollation(atttypid))
+			appendStringInfo(buf, " COLLATE %s",
+							 generate_collation_name(attcollation));
 		i++;
 	}
 
@@ -6937,57 +7562,6 @@ printSubscripts(ArrayRef *aref, deparse_context *context)
 	}
 }
 
-
-/*
- * quote_literal_internal			- Quote a literal as required.
- *
- * NOTE: think not to make this function's behavior change with
- * standard_conforming_strings.  We don't know where the result
- * literal will be used, and so we must generate a result that
- * will work with either setting.  Take a look at what dblink
- * uses this for before thinking you know better.
- */
-const char *
-quote_literal_internal(const char *literal)
-{
-	char	   *result;
-	const char *cp1;
-	char	   *cp2;
-	int			len;
-
-	len = strlen(literal);
-	/* We make a worst-case result area; wasting a little space is OK */
-	result = (char *) palloc(len * 2 + 3 + 1);
-
-	cp1 = literal;
-	cp2 = result;
-
-	for (; len-- > 0; cp1++)
-	{
-		if (*cp1 == '\\')
-		{
-			*cp2++ = ESCAPE_STRING_SYNTAX;
-			break;
-		}
-	}
-
-	len = strlen(literal);
-	cp1 = literal;
-
-	*cp2++ = '\'';
-	while (len-- > 0)
-	{
-		if (SQL_STR_DOUBLE(*cp1, true))
-			*cp2++ = *cp1;
-		*cp2++ = *cp1++;
-	}
-	*cp2++ = '\'';
-
-	result[cp2 - ((char *) result)] = '\0';
-
-	return result;
-}
-
 /*
  * quote_identifier			- Quote an identifier only if needed
  *
@@ -7031,6 +7605,9 @@ quote_identifier(const char *ident)
 				nquotes++;
 		}
 	}
+
+	if (quote_all_identifiers)
+		safe = false;
 
 	if (safe)
 	{
@@ -7337,6 +7914,39 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	ReleaseSysCache(opertup);
 
 	return buf.data;
+}
+
+/*
+ * generate_collation_name
+ *		Compute the name to display for a collation specified by OID
+ *
+ * The result includes all necessary quoting and schema-prefixing.
+ */
+char *
+generate_collation_name(Oid collid)
+{
+	HeapTuple	tp;
+	Form_pg_collation colltup;
+	char	   *collname;
+	char	   *nspname;
+	char	   *result;
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", collid);
+	colltup = (Form_pg_collation) GETSTRUCT(tp);
+	collname = NameStr(colltup->collname);
+
+	if (!CollationIsVisible(collid))
+		nspname = get_namespace_name(colltup->collnamespace);
+	else
+		nspname = NULL;
+
+	result = quote_qualified_identifier(nspname, collname);
+
+	ReleaseSysCache(tp);
+
+	return result;
 }
 
 /*
@@ -7651,7 +8261,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 
 			/* Always quote to make WITH (tablename=...) work correctly */
 			char *relname = get_rel_name(rule->parchildrelid);
-			appendStringInfo(&sid1, "tablename=%s", quote_literal_internal(relname));
+			appendStringInfo(&sid1, "tablename=%s", quote_literal_cstr(relname));
 
 			/* MPP-7191, MPP-7193: fully-qualify storage type if not
 			 * specified (and not a template)
@@ -7711,7 +8321,7 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 			 */
 
 			char *relname = get_rel_name(part->parrelid);
-			appendStringInfo(&buf, "tablename=%s", quote_literal_internal(relname));
+			appendStringInfo(&buf, "tablename=%s", quote_literal_cstr(relname));
 		}
 
 		opts = rule->parreloptions;
@@ -8395,7 +9005,7 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 		templatelevel++;
 	} /* end while pn */
 
-	heap_close(rel, NoLock);
+	heap_close(rel, AccessShareLock);
 
 	return sid1.data;
 } /* end pg_get_partition_template_def_worker */
@@ -8428,7 +9038,7 @@ pg_get_partition_def_worker(Oid relid, int prettyFlags, int bLeafTablename)
 
 	get_partition_recursive(pn, &headc, &bodyc, &leveldone, bLeafTablename);
 
-	heap_close(rel, NoLock);
+	heap_close(rel, AccessShareLock);
 
 	if (strlen(body.data))
 		appendStringInfo(&head, " %s", body.data);

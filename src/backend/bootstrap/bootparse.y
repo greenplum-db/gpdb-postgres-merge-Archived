@@ -6,12 +6,12 @@
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.105 2010/02/07 20:48:09 tgl Exp $
+ *	  src/backend/bootstrap/bootparse.y
  *
  *-------------------------------------------------------------------------
  */
@@ -231,9 +231,11 @@ Boot_CreateStmt:
 												   PG_CATALOG_NAMESPACE,
 												   shared_relation ? GLOBALTABLESPACE_OID : 0,
 												   $3,
+												   InvalidOid,
 												   tupdesc,
 												   /* relam */ InvalidOid,
 												   RELKIND_RELATION,
+												   RELPERSISTENCE_PERMANENT,
 												   RELSTORAGE_HEAP,
 												   shared_relation,
 												   mapped_relation,
@@ -255,6 +257,7 @@ Boot_CreateStmt:
 													  NIL,
 													  /* relam */ InvalidOid,
 													  RELKIND_RELATION,
+													  RELPERSISTENCE_PERMANENT,
 													  RELSTORAGE_HEAP,
 													  shared_relation,
 													  mapped_relation,
@@ -265,7 +268,8 @@ Boot_CreateStmt:
 													  (Datum) 0,
 													  false,
 													  true,
-													  /* valid_opts */ false);
+													  /* valid_opts */ false,
+													  /* is_part_child */ false);
 						elog(DEBUG4, "relation created with oid %u", id);
 					}
 					do_end();
@@ -302,6 +306,7 @@ Boot_DeclareIndexStmt:
 					DefineIndex(makeRangeVar(NULL, $6, -1),
 								$3,
 								$4,
+								InvalidOid,
 								$8,
 								NULL,
 								$10,
@@ -321,6 +326,7 @@ Boot_DeclareUniqueIndexStmt:
 					DefineIndex(makeRangeVar(NULL, $7, -1),
 								$4,
 								$5,
+								InvalidOid,
 								$9,
 								NULL,
 								$11,
@@ -364,6 +370,7 @@ boot_index_param:
 					n->name = $1;
 					n->expr = NULL;
 					n->indexcolname = NULL;
+					n->collation = NIL;
 					n->opclass = list_make1(makeString($2));
 					n->ordering = SORTBY_DEFAULT;
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;

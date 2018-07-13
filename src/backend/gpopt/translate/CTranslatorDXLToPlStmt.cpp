@@ -15,14 +15,17 @@
 //---------------------------------------------------------------------------
 
 #include "postgres.h"
+
 #include "nodes/nodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "catalog/gp_policy.h"
 #include "catalog/pg_exttable.h"
+#include "catalog/pg_collation.h"
 #include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "cdb/partitionselection.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/uri.h"
 #include "gpos/base.h"
@@ -233,7 +236,10 @@ CTranslatorDXLToPlStmt::PplstmtFromDXL
 	}
 	
 	pplstmt->resultRelations = m_plResultRelations;
-	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
+	// GPDB_92_MERGE_FIXME: we really *should* be handling intoClause
+	// but currently planner cheats (c.f. createas.c)
+	// shift the intoClause handling into planner and re-enable this
+//	pplstmt->intoClause = m_pctxdxltoplstmt->Pintocl();
 	pplstmt->intoPolicy = m_pctxdxltoplstmt->Pdistrpolicy();
 	
 	SetInitPlanVariables(pplstmt);
@@ -454,8 +460,7 @@ CTranslatorDXLToPlStmt::PtsFromDXLTblScan
 		ExternalScan *pes = MakeNode(ExternalScan);
 		pes->scan.scanrelid = iRel;
 		pes->uriList = gpdb::PlExternalScanUriList(pextentry, &isMasterOnly);
-		Value *pval = gpdb::PvalMakeString(pextentry->fmtopts);
-		pes->fmtOpts = ListMake1(pval);
+		pes->fmtOptString = pextentry->fmtopts;
 		pes->fmtType = pextentry->fmtcode;
 		pes->isMasterOnly = isMasterOnly;
 		GPOS_ASSERT((IMDRelation::EreldistrMasterOnly == pmdrelext->Ereldistribution()) == isMasterOnly);
@@ -537,7 +542,7 @@ CTranslatorDXLToPlStmt::FSetIndexVarAttno
 		return false;
 	}
 
-	if (IsA(pnode, Var) && ((Var *)pnode)->varno != OUTER)
+	if (IsA(pnode, Var) && ((Var *)pnode)->varno != OUTER_VAR)
 	{
 		INT iAttno = ((Var *)pnode)->varattno;
 		const IMDRelation *pmdrel = pctxtidxvarattno->m_pmdrel;
@@ -842,7 +847,7 @@ CTranslatorDXLToPlStmt::TranslateIndexConditions
 		GPOS_ASSERT((IsA(pnodeFst, Var) || IsA(pnodeSnd, Var)) && "expected index key in index qual");
 
 		INT iAttno = 0;
-		if (IsA(pnodeFst, Var) && ((Var *) pnodeFst)->varno != OUTER)
+		if (IsA(pnodeFst, Var) && ((Var *) pnodeFst)->varno != OUTER_VAR)
 		{
 			// index key is on the left side
 			iAttno =  ((Var *) pnodeFst)->varattno;
@@ -850,7 +855,7 @@ CTranslatorDXLToPlStmt::TranslateIndexConditions
 		else
 		{
 			// index key is on the right side
-			GPOS_ASSERT(((Var *) pnodeSnd)->varno != OUTER && "unexpected outer reference in index qual");
+			GPOS_ASSERT(((Var *) pnodeSnd)->varno != OUTER_VAR && "unexpected outer reference in index qual");
 			iAttno = ((Var *) pnodeSnd)->varattno;
 		}
 		
@@ -1253,9 +1258,12 @@ CTranslatorDXLToPlStmt::PplanFunctionScanFromDXLTVF
 		GPOS_ASSERT(InvalidOid != oidType);
 
 		INT typMod = gpdb::IExprTypeMod((Node*) pte->expr);
+		Oid typCollation = gpdb::OidTypeCollation(oidType);
 
 		pfuncscan->funccoltypes = gpdb::PlAppendOid(pfuncscan->funccoltypes, oidType);
 		pfuncscan->funccoltypmods = gpdb::PlAppendInt(pfuncscan->funccoltypmods, typMod);
+		// GDPB_91_MERGE_FIXME: collation
+		pfuncscan->funccolcollations = gpdb::PlAppendOid(pfuncscan->funccolcollations, typCollation);
 	}
 
 	SetParamIds(pplan);
@@ -1336,9 +1344,15 @@ CTranslatorDXLToPlStmt::PrteFromDXLTVF
 		pfuncexpr->args = gpdb::PlAppendElement(pfuncexpr->args, pexprFuncArg);
 	}
 
+	// GDPB_91_MERGE_FIXME: collation
+	pfuncexpr->inputcollid = gpdb::OidExprCollation((Node *) pfuncexpr->args);
+	pfuncexpr->funccollid = gpdb::OidTypeCollation(pfuncexpr->funcresulttype);
+
 	prte->funcexpr = (Node *)pfuncexpr;
 	prte->inFromCl = true;
 	prte->eref = palias;
+	// GDPB_91_MERGE_FIXME: collation
+	// set prte->funccoltypemods & prte->funccolcollations?
 
 	return prte;
 }
@@ -1393,6 +1407,8 @@ CTranslatorDXLToPlStmt::PrteFromDXLValueScan
 	CMappingColIdVarPlStmt mapcidvarplstmt = CMappingColIdVarPlStmt(m_pmp, pdxltrctxbt, NULL, pdxltrctxOut, m_pctxdxltoplstmt);
 	const ULONG ulChildren = pdxlnValueScan->UlArity();
 	List *values_lists = NIL;
+	List *values_collations = NIL;
+
 	for (ULONG ulValue = EdxlValIndexConstStart; ulValue < ulChildren; ulValue++)
 	{
 		CDXLNode *pdxlnValueList = (*pdxlnValueScan)[ulValue];
@@ -1402,11 +1418,23 @@ CTranslatorDXLToPlStmt::PrteFromDXLValueScan
 		{
 			Expr *pconst = m_pdxlsctranslator->PexprFromDXLNodeScalar((*pdxlnValueList)[ulCol], &mapcidvarplstmt);
 			value = gpdb::PlAppendElement(value, pconst);
+
 		}
 		values_lists = gpdb::PlAppendElement(values_lists, value);
+
+		// GPDB_91_MERGE_FIXME: collation
+		if (NIL == values_collations)
+		{
+			// Set collation based on the first list of values
+			for (ULONG ulCol = 0; ulCol < ulCols ; ulCol++)
+			{
+				values_collations = gpdb::PlAppendOid(values_collations, gpdb::OidExprCollation((Node *) value));
+			}
+		}
 	}
 
-	prte->values_lists = (List *) values_lists;
+	prte->values_lists = values_lists;
+	prte->values_collations = values_collations;
 	prte->eref = palias;
 
 	return prte;
@@ -1647,6 +1675,10 @@ CTranslatorDXLToPlStmt::PmjFromDXLMJ
 	pplan->nMotionNodes = pplanLeft->nMotionNodes + pplanRight->nMotionNodes;
 	SetParamIds(pplan);
 
+	// GDPB_91_MERGE_FIXME: collation
+	// Need to set pmj->mergeCollations, but ORCA does not produce plans with
+	// Merge Joins.
+
 	// cleanup
 	pdrgpdxltrctxWithSiblings->Release();
 	pdrgpdxltrctx->Release();
@@ -1804,9 +1836,10 @@ CTranslatorDXLToPlStmt::PplanMotionFromDXLMotion
 		pmotion->numSortCols = ulNumSortCols;
 		pmotion->sortColIdx = (AttrNumber *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(AttrNumber));
 		pmotion->sortOperators = (Oid *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(Oid));
+		pmotion->collations = (Oid *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(Oid));
 		pmotion->nullsFirst = (bool *) gpdb::GPDBAlloc(ulNumSortCols * sizeof(bool));
 
-		TranslateSortCols(pdxlnSortColList, pdxltrctxOut, pmotion->sortColIdx, pmotion->sortOperators, pmotion->nullsFirst);
+		TranslateSortCols(pdxlnSortColList, pdxltrctxOut, pmotion->sortColIdx, pmotion->sortOperators, pmotion->collations, pmotion->nullsFirst);
 	}
 	else
 	{
@@ -2322,7 +2355,7 @@ CTranslatorDXLToPlStmt::PwindowFromDXLWindow
 		pwindow->ordColIdx = (AttrNumber *) gpdb::GPDBAlloc(ulNumCols * sizeof(AttrNumber));
 		pwindow->ordOperators = (Oid *) gpdb::GPDBAlloc(ulNumCols * sizeof(Oid));
 		bool *pNullsFirst = (bool *) gpdb::GPDBAlloc(ulNumCols * sizeof(bool));
-		TranslateSortCols(pdxlnSortColList, &dxltrctxChild, pwindow->ordColIdx, pwindow->ordOperators, pNullsFirst);
+		TranslateSortCols(pdxlnSortColList, &dxltrctxChild, pwindow->ordColIdx, pwindow->ordOperators, NULL, pNullsFirst);
 
 		// The firstOrder* fields are separate from just picking the first of ordCol*,
 		// because the Postgres planner might omit columns that are redundant with the
@@ -2512,9 +2545,10 @@ CTranslatorDXLToPlStmt::PsortFromDXLSort
 	psort->numCols = ulNumCols;
 	psort->sortColIdx = (AttrNumber *) gpdb::GPDBAlloc(ulNumCols * sizeof(AttrNumber));
 	psort->sortOperators = (Oid *) gpdb::GPDBAlloc(ulNumCols * sizeof(Oid));
+	psort->collations = (Oid *) gpdb::GPDBAlloc(ulNumCols * sizeof(Oid));
 	psort->nullsFirst = (bool *) gpdb::GPDBAlloc(ulNumCols * sizeof(bool));
 
-	TranslateSortCols(pdxlnSortColList, &dxltrctxChild, psort->sortColIdx, psort->sortOperators, psort->nullsFirst);
+	TranslateSortCols(pdxlnSortColList, &dxltrctxChild, psort->sortColIdx, psort->sortOperators, psort->collations, psort->nullsFirst);
 
 	SetParamIds(pplan);
 
@@ -2952,7 +2986,7 @@ CTranslatorDXLToPlStmt::PappendFromDXLAppend
 		CDXLNode *pdxlnExpr = (*pdxlnPrEl)[0];
 		CDXLScalarIdent *pdxlopScIdent = CDXLScalarIdent::PdxlopConvert(pdxlnExpr->Pdxlop());
 
-		Index idxVarno = OUTER;
+		Index idxVarno = OUTER_VAR;
 		AttrNumber attno = (AttrNumber) (ul + 1);
 
 		Var *pvar = gpdb::PvarMakeVar
@@ -3166,7 +3200,7 @@ CTranslatorDXLToPlStmt::PshscanFromDXLCTEProducer
 			GPOS_ASSERT(IsA(pexpr, Var));
 
 			Var *pvar = (Var *) pexpr;
-			Var *pvarNew = gpdb::PvarMakeVar(OUTER, pvar->varattno, pvar->vartype, pvar->vartypmod,	0 /* varlevelsup */);
+			Var *pvarNew = gpdb::PvarMakeVar(OUTER_VAR, pvar->varattno, pvar->vartype, pvar->vartypmod, 0 /* varlevelsup */);
 			pvarNew->varnoold = pvar->varnoold;
 			pvarNew->varoattno = pvar->varoattno;
 
@@ -3357,7 +3391,7 @@ CTranslatorDXLToPlStmt::PshscanFromDXLCTEConsumer
 		CDXLScalarIdent *pdxlopScIdent = CDXLScalarIdent::PdxlopConvert(pdxlnScIdent->Pdxlop());
 		OID oidType = CMDIdGPDB::PmdidConvert(pdxlopScIdent->PmdidType())->OidObjectId();
 
-		Var *pvar = gpdb::PvarMakeVar(OUTER, (AttrNumber) (ul + 1), oidType, pdxlopScIdent->ITypeModifier(),  0	/* varlevelsup */);
+		Var *pvar = gpdb::PvarMakeVar(OUTER_VAR, (AttrNumber) (ul + 1), oidType, pdxlopScIdent->ITypeModifier(),  0	/* varlevelsup */);
 
 		CHAR *szResname = CTranslatorUtils::SzFromWsz(pdxlopPrE->PmdnameAlias()->Pstr()->Wsz());
 		TargetEntry *pte = gpdb::PteMakeTargetEntry((Expr *) pvar, (AttrNumber) (ul + 1), szResname, false /* resjunk */);
@@ -4473,14 +4507,14 @@ CTranslatorDXLToPlStmt::PlTargetListForHashNode
 		}
 		else
 		{
-			idxVarnoold = OUTER;
+			idxVarnoold = OUTER_VAR;
 			attnoOld = pteChild->resno;
 		}
 
 		// create a Var expression for this target list entry expression
 		Var *pvar = gpdb::PvarMakeVar
 					(
-					OUTER,
+					OUTER_VAR,
 					pteChild->resno,
 					oidType,
 					iTypeModifier,
@@ -4732,6 +4766,7 @@ CTranslatorDXLToPlStmt::TranslateSortCols
 	const CDXLTranslateContext *pdxltrctxChild,
 	AttrNumber *pattnoSortColIds,
 	Oid *poidSortOpIds,
+	Oid *poidSortCollations,
 	bool *pboolNullsFirst
 	)
 {
@@ -4750,6 +4785,10 @@ CTranslatorDXLToPlStmt::TranslateSortCols
 
 		pattnoSortColIds[ul] = pteSortCol->resno;
 		poidSortOpIds[ul] = CMDIdGPDB::PmdidConvert(pdxlopSortCol->PmdidSortOp())->OidObjectId();
+		if (poidSortCollations)
+		{
+			poidSortCollations[ul] = gpdb::OidExprCollation((Node *) pteSortCol->expr);
+		}
 		pboolNullsFirst[ul] = pdxlopSortCol->FSortNullsFirst();
 	}
 }
@@ -4832,7 +4871,7 @@ CTranslatorDXLToPlStmt::UlAddTargetEntryForColId
 	INT iTypeModifier = gpdb::IExprTypeMod((Node *) pte->expr);
 	Var *pvar = gpdb::PvarMakeVar
 						(
-						OUTER,
+						OUTER_VAR,
 						pte->resno,
 						oidExpr,
 						iTypeModifier,
@@ -4985,7 +5024,8 @@ CTranslatorDXLToPlStmt::PplanCTAS
 		&(pplan->plan_width)
 		);
 
-	IntoClause *pintocl = PintoclFromCtas(pdxlop);
+//	IntoClause *pintocl = PintoclFromCtas(pdxlop);
+	IntoClause *pintocl = NULL;
 	GpPolicy *pdistrpolicy = PdistrpolicyFromCtas(pdxlop);
 	m_pctxdxltoplstmt->AddCtasInfo(pintocl, pdistrpolicy);
 	
@@ -5024,7 +5064,8 @@ CTranslatorDXLToPlStmt::PintoclFromCtas
 {
 	IntoClause *pintocl = MakeNode(IntoClause);
 	pintocl->rel = MakeNode(RangeVar);
-	pintocl->rel->istemp = pdxlop->FTemporary();
+	/* GPDB_91_MERGE_FIXME: what about unlogged? */
+	pintocl->rel->relpersistence = pdxlop->FTemporary() ? RELPERSISTENCE_TEMP : RELPERSISTENCE_PERMANENT;
 	pintocl->rel->relname = CTranslatorUtils::SzFromWsz(pdxlop->Pmdname()->Pstr()->Wsz());
 	pintocl->rel->schemaname = NULL;
 	if (NULL != pdxlop->PmdnameSchema())
@@ -5055,6 +5096,9 @@ CTranslatorDXLToPlStmt::PintoclFromCtas
 		pcoldef->colname = szColName;
 		pcoldef->is_local = true;
 
+		// GDPB_91_MERGE_FIXME: collation
+		pcoldef->collClause = NULL;
+		pcoldef->collOid = gpdb::OidTypeCollation(CMDIdGPDB::PmdidConvert(pdxlcd->PmdidType())->OidObjectId());
 		pintocl->colNames = gpdb::PlAppendElement(pintocl->colNames, pcoldef);
 
 	}

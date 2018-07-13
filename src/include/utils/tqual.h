@@ -5,10 +5,10 @@
  *
  *	  Should be moved/renamed...	- vadim 07/28/98
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.75 2010/01/02 16:58:10 momjian Exp $
+ * src/include/utils/tqual.h
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,8 @@ extern HTSU_Result HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader t
 						 CommandId curcid, Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple,
 						 TransactionId OldestXmin, Buffer buffer);
+extern bool HeapTupleIsSurelyDead(HeapTupleHeader tuple,
+					  TransactionId OldestXmin);
 
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 					 uint16 infomask, TransactionId xid);

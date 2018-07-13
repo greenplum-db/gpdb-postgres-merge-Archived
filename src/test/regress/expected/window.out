@@ -361,7 +361,7 @@ SELECT first_value(ten) OVER (PARTITION BY four ORDER BY ten), ten, four FROM te
 (10 rows)
 
 -- last_value returns the last row of the frame, which is CURRENT ROW in ORDER BY window.
-SELECT last_value(four) OVER (ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10; 
+SELECT last_value(four) OVER (ORDER BY ten), ten, four FROM tenk1 WHERE unique2 < 10;
  last_value | ten | four 
 ------------+-----+------
           0 |   0 |    0
@@ -411,7 +411,7 @@ SELECT nth_value(ten, four + 1) OVER (PARTITION BY four ORDER BY ten), ten, four
 (10 rows)
 
 reset search_path;
-SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum 
+SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER (PARTITION BY two ORDER BY ten) AS wsum
 FROM tenk1 GROUP BY ten, two;
  ten | two | gsum  |  wsum  
 -----+-----+-------+--------
@@ -438,8 +438,8 @@ SELECT count(*) OVER (PARTITION BY four), four FROM (SELECT * FROM tenk1 WHERE t
      2 |    3
 (6 rows)
 
-SELECT (count(*) OVER (PARTITION BY four ORDER BY ten) + 
-  sum(hundred) OVER (PARTITION BY four ORDER BY ten))::varchar AS cntsum 
+SELECT (count(*) OVER (PARTITION BY four ORDER BY ten) +
+  sum(hundred) OVER (PARTITION BY four ORDER BY ten))::varchar AS cntsum
   FROM tenk1 WHERE unique2 < 10;
  cntsum 
 --------
@@ -457,8 +457,8 @@ SELECT (count(*) OVER (PARTITION BY four ORDER BY ten) +
 
 -- opexpr with different windows evaluation.
 SELECT * FROM(
-  SELECT count(*) OVER (PARTITION BY four ORDER BY ten) + 
-    sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS total, 
+  SELECT count(*) OVER (PARTITION BY four ORDER BY ten) +
+    sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS total,
     count(*) OVER (PARTITION BY four ORDER BY ten) AS fourcount,
     sum(hundred) OVER (PARTITION BY two ORDER BY ten) AS twosum
     FROM tenk1
@@ -483,7 +483,7 @@ SELECT avg(four) OVER (PARTITION BY four ORDER BY thousand / 100) FROM tenk1 WHE
    3
 (10 rows)
 
-SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER win AS wsum 
+SELECT ten, two, sum(hundred) AS gsum, sum(sum(hundred)) OVER win AS wsum
 FROM tenk1 GROUP BY ten, two WINDOW win AS (PARTITION BY two ORDER BY ten);
  ten | two | gsum  |  wsum  
 -----+-----+-------+--------
@@ -595,6 +595,26 @@ SELECT SUM(COUNT(f1)) OVER () FROM int4_tbl WHERE f1=42;
 -----
    0
 (1 row)
+
+-- window function with ORDER BY an expression involving aggregates (9.1 bug)
+select ten,
+  sum(unique1) + sum(unique2) as res,
+  rank() over (order by sum(unique1) + sum(unique2)) as rank
+from tenk1
+group by ten order by ten;
+ ten |   res    | rank 
+-----+----------+------
+   0 |  9976146 |    4
+   1 | 10114187 |    9
+   2 | 10059554 |    8
+   3 |  9878541 |    1
+   4 |  9881005 |    2
+   5 |  9981670 |    5
+   6 |  9947099 |    3
+   7 | 10120309 |   10
+   8 |  9991305 |    6
+   9 | 10040184 |    7
+(10 rows)
 
 -- test non-default frame specifications
 SELECT four, ten,

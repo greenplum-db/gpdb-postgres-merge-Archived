@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.38 2010/03/21 11:33:44 meskes Exp $ */
+/* src/interfaces/ecpg/ecpglib/prepare.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -19,7 +19,7 @@ typedef struct
 	char		stmtID[STMTID_SIZE];
 	char	   *ecpgQuery;
 	long		execs;			/* # of executions		*/
-	char	   *connection;		/* connection for the statement		*/
+	const char *connection;		/* connection for the statement		*/
 } stmtCacheEntry;
 
 static int	nextStmtID = 1;
@@ -100,7 +100,7 @@ replace_variables(char **text, int lineno)
 }
 
 static bool
-prepare_common(int lineno, struct connection * con, const bool questionmarks, const char *name, const char *variable)
+prepare_common(int lineno, struct connection * con, const char *name, const char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
@@ -124,7 +124,7 @@ prepare_common(int lineno, struct connection * con, const bool questionmarks, co
 	stmt->command = ecpg_strdup(variable, lineno);
 	stmt->inlist = stmt->outlist = NULL;
 
-	/* if we have C variables in our statment replace them with '?' */
+	/* if we have C variables in our statement replace them with '?' */
 	replace_variables(&(stmt->command), lineno);
 
 	/* add prepared statement to our list */
@@ -156,7 +156,7 @@ prepare_common(int lineno, struct connection * con, const bool questionmarks, co
 }
 
 /* handle the EXEC SQL PREPARE statement */
-/* questionmarks is not needed but remians in there for the time being to not change the API */
+/* questionmarks is not needed but remains in there for the time being to not change the API */
 bool
 ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, const char *name, const char *variable)
 {
@@ -164,6 +164,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	struct prepared_statement *this,
 			   *prev;
 
+	(void) questionmarks;		/* quiet the compiler */
 	con = ecpg_get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
@@ -174,7 +175,7 @@ ECPGprepare(int lineno, const char *connection_name, const bool questionmarks, c
 	if (this && !deallocate_one(lineno, ECPG_COMPAT_PGSQL, con, prev, this))
 		return false;
 
-	return prepare_common(lineno, con, questionmarks, name, variable);
+	return prepare_common(lineno, con, name, variable);
 }
 
 struct prepared_statement *
@@ -304,6 +305,7 @@ ecpg_prepared(const char *name, struct connection * con)
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
+	(void) lineno;				/* keep the compiler quiet */
 	return ecpg_prepared(name, ecpg_get_connection(connection_name));
 }
 
@@ -359,7 +361,7 @@ SearchStmtCache(const char *ecpgQuery)
 	{
 		if (stmtCacheEntries[entNo].stmtID[0])	/* check if entry is in use		*/
 		{
-			if (!strcmp(ecpgQuery, stmtCacheEntries[entNo].ecpgQuery))
+			if (strcmp(ecpgQuery, stmtCacheEntries[entNo].ecpgQuery) == 0)
 				break;			/* found it		*/
 		}
 		++entNo;				/* incr entry #		*/
@@ -454,14 +456,14 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 	entry = &stmtCacheEntries[entNo];
 	entry->lineno = lineno;
 	entry->ecpgQuery = ecpg_strdup(ecpgQuery, lineno);
-	entry->connection = (char *) connection;
+	entry->connection = connection;
 	entry->execs = 0;
 	memcpy(entry->stmtID, stmtID, sizeof(entry->stmtID));
 
 	return (entNo);
 }
 
-/* handle cache and preparation of statments in auto-prepare mode */
+/* handle cache and preparation of statements in auto-prepare mode */
 bool
 ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, char **name, const char *query)
 {
@@ -484,7 +486,7 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 		con = ecpg_get_connection(connection_name);
 		prep = ecpg_find_prepared_statement(stmtID, con, NULL);
 		/* This prepared name doesn't exist on this connection. */
-		if (!prep && !prepare_common(lineno, con, 0, stmtID, query))
+		if (!prep && !prepare_common(lineno, con, stmtID, query))
 			return (false);
 
 		*name = ecpg_strdup(stmtID, lineno);

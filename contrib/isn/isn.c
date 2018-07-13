@@ -4,10 +4,10 @@
  *	  PostgreSQL type definitions for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
  *
  * Author:	German Mendez Bravo (Kronuz)
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.14 2010/02/26 02:00:32 momjian Exp $
+ *	  contrib/isn/isn.c
  *
  *-------------------------------------------------------------------------
  */
@@ -341,8 +341,7 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 	enum isn_type type = INVALID;
 
 	char		buf[MAXEAN13LEN + 1];
-	char	   *firstdig,
-			   *aux;
+	char	   *aux;
 	unsigned	digval;
 	unsigned	search;
 	ean13		ret = ean;
@@ -354,7 +353,7 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 
 	/* convert the number */
 	search = 0;
-	firstdig = aux = buf + 13;
+	aux = buf + 13;
 	*aux = '\0';				/* terminate string; aux points to last digit */
 	do
 	{
@@ -366,19 +365,19 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 		*--aux = '0';			/* fill the remaining EAN13 with '0' */
 
 	/* find out the data type: */
-	if (!strncmp("978", buf, 3))
+	if (strncmp("978", buf, 3) == 0)
 	{							/* ISBN */
 		type = ISBN;
 	}
-	else if (!strncmp("977", buf, 3))
+	else if (strncmp("977", buf, 3) == 0)
 	{							/* ISSN */
 		type = ISSN;
 	}
-	else if (!strncmp("9790", buf, 4))
+	else if (strncmp("9790", buf, 4) == 0)
 	{							/* ISMN */
 		type = ISMN;
 	}
-	else if (!strncmp("979", buf, 3))
+	else if (strncmp("979", buf, 3) == 0)
 	{							/* ISBN-13 */
 		type = ISBN;
 	}
@@ -528,8 +527,7 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 	const unsigned (*TABLE_index)[2];
 	enum isn_type type = INVALID;
 
-	char	   *firstdig,
-			   *aux;
+	char	   *aux;
 	unsigned	digval;
 	unsigned	search;
 	char		valid = '\0';	/* was the number initially written with a
@@ -546,7 +544,7 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 
 	/* convert the number */
 	search = 0;
-	firstdig = aux = result + MAXEAN13LEN;
+	aux = result + MAXEAN13LEN;
 	*aux = '\0';				/* terminate string; aux points to last digit */
 	*--aux = valid;				/* append '!' for numbers with invalid but
 								 * corrected check digit */
@@ -572,26 +570,33 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 	}
 
 	/* find out what type of hyphenation is needed: */
-	if (!strncmp("978-", result, search))
-	{							/* ISBN */
+	if (strncmp("978-", result, search) == 0)
+	{							/* ISBN -13 978-range */
 		/* The string should be in this form: 978-??000000000-0" */
 		type = ISBN;
 		TABLE = ISBN_range;
 		TABLE_index = ISBN_index;
 	}
-	else if (!strncmp("977-", result, search))
+	else if (strncmp("977-", result, search) == 0)
 	{							/* ISSN */
 		/* The string should be in this form: 977-??000000000-0" */
 		type = ISSN;
 		TABLE = ISSN_range;
 		TABLE_index = ISSN_index;
 	}
-	else if (!strncmp("979-0", result, search + 1))
+	else if (strncmp("979-0", result, search + 1) == 0)
 	{							/* ISMN */
 		/* The string should be in this form: 979-0?000000000-0" */
 		type = ISMN;
 		TABLE = ISMN_range;
 		TABLE_index = ISMN_index;
+	}
+	else if (strncmp("979-", result, search) == 0)
+	{							/* ISBN-13 979-range */
+		/* The string should be in this form: 979-??000000000-0" */
+		type = ISBN;
+		TABLE = ISBN_range_new;
+		TABLE_index = ISBN_index_new;
 	}
 	else if (*result == '0')
 	{							/* UPC */
@@ -808,13 +813,13 @@ string2ean(const char *str, bool errorOK, ean13 *result,
 			/* now get the subtype of EAN13: */
 			if (buf[3] == '0')
 				type = UPC;
-			else if (!strncmp("977", buf + 3, 3))
+			else if (strncmp("977", buf + 3, 3) == 0)
 				type = ISSN;
-			else if (!strncmp("978", buf + 3, 3))
+			else if (strncmp("978", buf + 3, 3) == 0)
 				type = ISBN;
-			else if (!strncmp("9790", buf + 3, 4))
+			else if (strncmp("9790", buf + 3, 4) == 0)
 				type = ISMN;
-			else if (!strncmp("979", buf + 3, 3))
+			else if (strncmp("979", buf + 3, 3) == 0)
 				type = ISBN;
 			if (accept != EAN13 && accept != ANY && type != accept)
 				goto eanwrongtype;

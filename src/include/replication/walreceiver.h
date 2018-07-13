@@ -18,6 +18,7 @@
 #include "utils/builtins.h"
 #include "pgtime.h"
 
+extern bool am_walreceiver;
 extern int	wal_receiver_status_interval;
 extern bool hot_standby_feedback;
 
@@ -27,6 +28,9 @@ extern bool hot_standby_feedback;
  * XXX: Should this move to pg_config_manual.h?
  */
 #define MAXCONNINFO		1024
+
+/* Can we allow the standby to accept replication connection from another standby? */
+#define AllowCascadeReplication() (EnableHotStandby && max_wal_senders > 0)
 
 /*
  * Values for WalRcv->walRcvState.
@@ -80,12 +84,6 @@ typedef struct
 	 */
 	TimestampTz lastMsgSendTime;
 	TimestampTz lastMsgReceiptTime;
-
-	/*
-	 * Latest reported end of WAL on the sender
-	 */
-	XLogRecPtr	latestWalEnd;
-	TimestampTz latestWalEndTime;
 
 	/*
 	 * connection string; is used for walreceiver to connect with the primary.

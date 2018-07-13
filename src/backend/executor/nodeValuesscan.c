@@ -6,12 +6,12 @@
  *
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.12 2010/01/02 16:57:45 momjian Exp $
+ *	  src/backend/executor/nodeValuesscan.c
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  *		ExecValuesNext			retrieve next tuple in sequential order.
  *		ExecInitValuesScan		creates and initializes a valuesscan node.
  *		ExecEndValuesScan		releases any storage allocated.
- *		ExecValuesReScan		rescans the values list
+ *		ExecReScanValuesScan	rescans the values list
  */
 #include "postgres.h"
 
@@ -30,7 +30,6 @@
 #include "executor/nodeValuesscan.h"
 #include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
-#include "utils/memutils.h"
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
@@ -204,6 +203,8 @@ ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
 	ValuesScanState *scanstate;
+	RangeTblEntry *rte = rt_fetch(node->scan.scanrelid,
+								  estate->es_range_table);
 	TupleDesc	tupdesc;
 	ListCell   *vtl;
 	int			i;
@@ -258,7 +259,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * get info about values list
 	 */
-	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
+	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists),
+								   rte->eref->colnames);
 
 	ExecAssignScanType(&scanstate->ss, tupdesc);
 
@@ -337,13 +339,13 @@ ExecValuesRestrPos(ValuesScanState *node)
 }
 
 /* ----------------------------------------------------------------
- *		ExecValuesReScan
+ *		ExecReScanValuesScan
  *
  *		Rescans the relation.
  * ----------------------------------------------------------------
  */
 void
-ExecValuesReScan(ValuesScanState *node, ExprContext *exprCtxt)
+ExecReScanValuesScan(ValuesScanState *node)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 

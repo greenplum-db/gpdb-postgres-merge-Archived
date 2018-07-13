@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.36 2010/01/22 15:45:15 petere Exp $
+# src/pl/plpython/Makefile
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -29,7 +29,7 @@ shared_libpython = yes
 #override python_additional_libs =
 # sys.prefix reflects the runtime location of the python tree;
 # the GP install has the dylib in the lib directory of that tree.
-override python_libspec = -L$(shell ${PYTHON} -c "import sys, os; print os.path.join(sys.prefix, 'lib')") -lpython${python_version}
+override python_libspec = -L$(shell ${PYTHON} -c "import sys, os; print (os.path.join(sys.prefix, 'lib'))") -lpython${python_version}
 endif
 
 override python_libspec := -L${python_configdir}/../.. ${python_libspec}
@@ -39,14 +39,32 @@ override python_libspec := -L${python_configdir}/../.. ${python_libspec}
 ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
 
 # do not fail build due to warnings in this code
-#override CPPFLAGS := -Wno-error -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO
-override CPPFLAGS := -Wno-error -I$(srcdir) $(python_includespec) $(CPPFLAGS) 
+#override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO
+override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
 
 rpathdir = $(python_libdir):$(INSTLOC)/ext/python/lib
 
 NAME = plpython$(python_majorversion)
-OBJS = plpython.o
+
+OBJS = \
+	plpy_cursorobject.o \
+	plpy_elog.o \
+	plpy_exec.o \
+	plpy_main.o \
+	plpy_planobject.o \
+	plpy_plpymodule.o \
+	plpy_procedure.o \
+	plpy_resultobject.o \
+	plpy_spi.o \
+	plpy_subxactobject.o \
+	plpy_typeio.o \
+	plpy_util.o
+
+DATA = $(NAME)u.control $(NAME)u--1.0.sql $(NAME)u--unpackaged--1.0.sql
+ifeq ($(python_majorversion),2)
+DATA += plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql
+endif
 
 
 # Python on win32 ships with import libraries only for Microsoft Visual C++,
@@ -69,8 +87,9 @@ REGRESS_OPTS = --dbname=$(PL_TESTDB) --init-file=$(srcdir)/init_file
 # Only load plpythonu with Python 2.  The test files themselves load
 # the versioned language plpython(2|3)u.
 ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-language=plpythonu
+REGRESS_OPTS += --load-extension=plpythonu
 endif
+
 REGRESS = \
 	plpython_schema \
 	plpython_populate \
@@ -88,6 +107,7 @@ REGRESS = \
 	plpython_types \
 	plpython_error \
 	plpython_unicode \
+	plpython_quote \
 	plpython_composite \
 	plpython_subtransaction \
 	plpython_returns \
@@ -99,20 +119,24 @@ PSQLDIR = $(bindir)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-
 all: all-lib
 
-install: all installdirs install-lib
-ifeq ($(python_majorversion),2)
-	cd '$(DESTDIR)$(pkglibdir)' && rm -f plpython$(DLSUFFIX) && $(LN_S) $(shlib) plpython$(DLSUFFIX)
-endif
+
+install: all install-lib install-data
 
 installdirs: installdirs-lib
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 
-uninstall: uninstall-lib
-ifeq ($(python_majorversion),2)
-	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
-endif
+uninstall: uninstall-lib uninstall-data
+
+install-data: installdirs
+	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
+
+uninstall-data:
+	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
+
+.PHONY: install-data uninstall-data
+
 
 ifeq ($(python_majorversion),3)
 # Adjust regression tests for Python 3 compatibility
@@ -128,29 +152,36 @@ prep3:
 	      -e "s/def next/def __next__/g" \
 	      -e "s/LANGUAGE plpythonu/LANGUAGE plpython3u/g" \
 	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
-	    $$file >`echo $$file | sed 's,$(srcdir),python3,'`; \
+	      -e "s/EXTENSION plpythonu/EXTENSION plpython3u/g" \
+	      -e "s/EXTENSION plpython2u/EXTENSION plpython3u/g" \
+	    $$file >`echo $$file | sed 's,^.*\(/[^/][^/]*/[^/][^/]*\)$$,python3\1,'` || exit; \
 	done
 
 clean3:
 	rm -rf python3/
 
+check: all submake prep3
+	$(pg_regress_check) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
+
 installcheck: submake prep3
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=./python3 --outputdir=./python3 --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+	$(pg_regress_installcheck) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
 
 clean: clean3
-else
+else # not Python 3
+check: all submake
+	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
+
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir="$(PSQLDIR)" $(REGRESS_OPTS) $(REGRESS)
-endif
+	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
+endif # not Python 3
 
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
-clean distclean maintainer-clean: clean-lib
+clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -rf results
-	rm -f regression.diffs regression.out
+	rm -rf $(pg_regress_clean_files)
 ifeq ($(PORTNAME), win32)
 	rm -f python${pytverstr}.def
 endif
@@ -165,3 +196,16 @@ all:
 	 echo ""
 
 endif # can't build
+
+# distprep and maintainer-clean rules should be run even if we can't build.
+
+# Force this dependency to be known even without dependency info built:
+plpy_plpymodule.o: spiexceptions.h
+
+spiexceptions.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-spiexceptions.pl
+	$(PERL) $(srcdir)/generate-spiexceptions.pl $< > $@
+
+distprep: spiexceptions.h
+
+maintainer-clean: distclean
+	rm -f spiexceptions.h

@@ -3,11 +3,11 @@
  * tsquery_rewrite.c
  *	  Utilities for reconstructing tsquery
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.17 2010/01/02 16:57:55 momjian Exp $
+ *	  src/backend/utils/adt/tsquery_rewrite.c
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "miscadmin.h"
-#include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 

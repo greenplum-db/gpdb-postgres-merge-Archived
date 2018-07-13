@@ -102,7 +102,7 @@ open_all_datumstreamread_segfiles(Relation rel,
 								  int num_proj_atts,
 								  AppendOnlyBlockDirectory *blockDirectory)
 {
-	char	   *basepath = relpath(rel->rd_node, MAIN_FORKNUM);
+	char	   *basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	int			i;
 
 	Assert(proj_atts);
@@ -166,7 +166,7 @@ open_ds_write(Relation rel, DatumStreamWrite **ds, TupleDesc relationTupleDesc,
 										blksz,
 										attr,
 										RelationGetRelationName(rel),
-										/* title */ titleBuf.data, rel->rd_istemp);
+										/* title */ titleBuf.data);
 
 	}
 }
@@ -737,7 +737,8 @@ ReadNext:
 static void
 OpenAOCSDatumStreams(AOCSInsertDesc desc)
 {
-	char	   *basepath = relpath(desc->aoi_rel->rd_node, MAIN_FORKNUM);
+	RelFileNodeBackend rnode;
+	char	   *basepath;
 	char		fn[MAXPGPATH];
 	int32		fileSegNo;
 
@@ -785,6 +786,10 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 
 	desc->rowCount = seginfo->total_tupcount;
 
+	rnode.node = desc->aoi_rel->rd_node;
+	rnode.backend = desc->aoi_rel->rd_backend;
+	basepath = relpath(rnode, MAIN_FORKNUM);
+
 	for (i = 0; i < nvp; ++i)
 	{
 		AOCSVPInfoEntry *e = getAOCSVPEntry(seginfo, i);
@@ -793,7 +798,7 @@ OpenAOCSDatumStreams(AOCSInsertDesc desc)
 		Assert(strlen(fn) + 1 <= MAXPGPATH);
 
 		datumstreamwrite_open_file(desc->ds[i], fn, e->eof, e->eof_uncompressed,
-								   desc->aoi_rel->rd_node,
+								   &rnode,
 								   fileSegNo, seginfo->formatversion);
 	}
 
@@ -941,17 +946,6 @@ aocs_insert_values(AOCSInsertDesc idesc, Datum *d, bool *null, AOTupleId *aoTupl
 			if (err < 0)
 			{
 				Assert(!null[i]);
-
-				/*
-				 * rle_type is running on a block stream, if an object spans
-				 * multiple blocks then data will not be compressed (if
-				 * rle_type is set).
-				 */
-				if ((idesc->compType != NULL) && (pg_strcasecmp(idesc->compType, "rle_type") == 0))
-				{
-					idesc->ds[i]->ao_write.storageAttributes.compress = FALSE;
-				}
-
 				err = datumstreamwrite_lob(idesc->ds[i],
 										   datum,
 										   &idesc->blockDirectory,
@@ -1209,7 +1203,7 @@ aocs_fetch_init(Relation relation,
 {
 	AOCSFetchDesc aocsFetchDesc;
 	int			colno;
-	char	   *basePath = relpath(relation->rd_node, MAIN_FORKNUM);
+	char	   *basePath = relpathbackend(relation->rd_node, relation->rd_backend, MAIN_FORKNUM);
 	TupleDesc	tupleDesc = RelationGetDescr(relation);
 	StdRdOptions **opts = RelationGetAttributeOptions(relation);
 
@@ -1840,7 +1834,7 @@ aocs_addcol_init(Relation rel,
 		blksz = opts[iattr]->blocksize;
 		desc->dsw[i] = create_datumstreamwrite(ct, clvl, rel->rd_appendonly->checksum, 0, blksz /* safeFSWriteSize */ ,
 											   attr, RelationGetRelationName(rel),
-											   titleBuf.data, rel->rd_istemp);
+											   titleBuf.data);
 	}
 	return desc;
 }
@@ -1852,7 +1846,7 @@ void
 aocs_addcol_newsegfile(AOCSAddColumnDesc desc,
 					   AOCSFileSegInfo *seginfo,
 					   char *basepath,
-					   RelFileNode relfilenode)
+					   RelFileNodeBackend relfilenode)
 {
 	int32		fileSegNo;
 	char		fn[MAXPGPATH];
@@ -1885,7 +1879,7 @@ aocs_addcol_newsegfile(AOCSAddColumnDesc desc,
 		Assert(strlen(fn) + 1 <= MAXPGPATH);
 		datumstreamwrite_open_file(desc->dsw[i], fn,
 								   0 /* eof */ , 0 /* eof_uncompressed */ ,
-								   relfilenode, fileSegNo,
+								   &relfilenode, fileSegNo,
 								   version);
 		desc->dsw[i]->blockFirstRowNum = 1;
 	}
@@ -1993,16 +1987,6 @@ aocs_addcol_insert_datum(AOCSAddColumnDesc desc, Datum *d, bool *isnull)
 			if (err < 0)
 			{
 				Assert(!isnull[i]);
-
-				/*
-				 * rle_type is running on a block stream, if an object spans
-				 * multiple blocks then data will not be compressed (if
-				 * rle_type is set).
-				 */
-				if (desc->dsw[i]->rle_want_compression)
-				{
-					desc->dsw[i]->ao_write.storageAttributes.compress = FALSE;
-				}
 				err = datumstreamwrite_lob(desc->dsw[i],
 										   datum,
 										   &desc->blockDirectory,

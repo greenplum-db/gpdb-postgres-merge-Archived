@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.h,v 1.56 2010/04/01 10:30:53 meskes Exp $
+ * src/interfaces/ecpg/preproc/type.h
  */
 #ifndef _ECPG_PREPROC_TYPE_H
 #define _ECPG_PREPROC_TYPE_H
@@ -36,7 +36,6 @@ struct ECPGtype
 /* Everything is malloced. */
 void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, char *, int);
-struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, char *);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype, char *, char *);
 struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *);

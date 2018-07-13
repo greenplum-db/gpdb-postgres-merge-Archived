@@ -5,17 +5,16 @@
  *
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.57 2010/02/26 02:00:39 momjian Exp $
+ *	  src/backend/commands/schemacmds.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -30,7 +29,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 #include "cdb/cdbdisp_query.h"
@@ -84,7 +83,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 * Who is supposed to own the new schema?
 	 */
 	if (authId)
-		owner_uid = get_roleid_checked(authId);
+		owner_uid = get_role_oid(authId, false);
 	else
 		owner_uid = saved_uid;
 
@@ -127,7 +126,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/* Create the schema's namespace */
 	if (shouldDispatch || Gp_role != GP_ROLE_EXECUTE)
 	{
-		namespaceId = NamespaceCreate(schemaName, owner_uid);
+		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 
 		if (shouldDispatch)
 		{
@@ -156,7 +155,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	}
 	else
 	{
-		namespaceId = NamespaceCreate(schemaName, owner_uid);
+		namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 	}
 
 	/* Advance cmd counter to make the namespace visible */
@@ -209,111 +208,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	SetUserIdAndSecContext(saved_uid, save_sec_context);
 }
 
-
-/*
- *	RemoveSchemas
- *		Implements DROP SCHEMA.
- */
-void
-RemoveSchemas(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-	List	   *namespaceIdList = NIL;
-
-	/*
-	 * First we identify all the schemas, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the schemas depends on another.
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *names = (List *) lfirst(cell);
-		char	   *namespaceName;
-		Oid			namespaceId;
-		ObjectAddress object;
-
-		if (list_length(names) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("schema name cannot be qualified")));
-		namespaceName = strVal(linitial(names));
-
-		namespaceId = GetSysCacheOid1(NAMESPACENAME,
-									  CStringGetDatum(namespaceName));
-
-		if (!OidIsValid(namespaceId))
-		{
-			if (!drop->missing_ok)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist",
-								namespaceName)));
-			}
-			else
-			{
-				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport(NOTICE,
-							(errmsg("schema \"%s\" does not exist, skipping",
-								namespaceName)));
-			}
-			continue;
-		}
-
-		namespaceIdList = lappend_oid(namespaceIdList, namespaceId);
-
-		/* Permission check */
-		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-						   namespaceName);
-
-		/*
-		 * Additional check to protect reserved schema names.
-		 *
-		 * But allow dropping temp schemas. This makes it much easier to get rid
-		 * of leaked temp schemas. I wish it wasn't necessary, but we do tend to
-		 * leak them on crashes, so let's make life a bit easier for admins.
-		 * gpcheckcat will also try to automatically drop any leaked temp schemas.
-		 */
-		if (!allowSystemTableModsDDL &&	IsReservedName(namespaceName) &&
-			strncmp(namespaceName, "pg_temp_", 8) != 0 &&
-			strncmp(namespaceName, "pg_toast_temp_", 14) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_RESERVED_NAME),
-					 errmsg("cannot drop schema %s because it is required by the database system",
-							namespaceName)));
-
-		object.classId = NamespaceRelationId;
-		object.objectId = namespaceId;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-	}
-
-	/*
-	 * Do the deletions.  Objects contained in the schema(s) are removed by
-	 * means of their dependency links to the schema.
-	 */
-	performMultipleDeletions(objects, drop->behavior);
-
-	/* MPP-6929: metadata tracking */
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		foreach(cell, namespaceIdList)
-		{
-			Oid namespaceId = lfirst_oid(cell);
-
-			MetaTrackDropObject(NamespaceRelationId, namespaceId);
-		}
-	}
-
-	free_object_addresses(objects);
-}
-
-
 /*
  * Guts of schema deletion.
  */
@@ -357,9 +251,7 @@ RenameSchema(const char *oldname, const char *newname)
 				 errmsg("schema \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
-	if (HeapTupleIsValid(
-						 SearchSysCache1(NAMESPACENAME,
-										 CStringGetDatum(newname))))
+	if (OidIsValid(get_namespace_oid(newname, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists", newname)));

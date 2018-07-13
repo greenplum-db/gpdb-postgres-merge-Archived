@@ -3,12 +3,12 @@
  * random.c
  *	  random() wrapper
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/random.c,v 1.11 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/random.c
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,5 @@
 long
 random()
 {
-	return lrand48();
+	return pg_lrand48();
 }

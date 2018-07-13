@@ -1154,7 +1154,7 @@ AlterQueue(AlterQueueStmt *stmt)
 	}
 	else
 	{
-		char *tempo = str_toupper(alter_subtype, strlen(alter_subtype));
+		char *tempo = asc_toupper(alter_subtype, strlen(alter_subtype));
 
 		alter_subtype = tempo;
 	}
@@ -1557,6 +1557,40 @@ DropQueue(DropQueueStmt *stmt)
 	heap_close(resqueueCapabilityRel, NoLock);
 
 	heap_close(pg_resqueue_rel, NoLock);
+}
+
+Oid
+get_resqueue_oid(const char *queuename, bool missing_ok)
+{
+	Relation	rel;
+	ScanKeyData	scankey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	Oid			oid;
+
+	rel = heap_open(ResQueueRelationId, AccessShareLock);
+	ScanKeyInit(&scankey, Anum_pg_resqueue_rsqname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(queuename));
+	scan = systable_beginscan(rel, ResQueueRsqnameIndexId, true,
+							  SnapshotNow, 1, &scankey);
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+		oid = HeapTupleGetOid(tuple);
+	else
+		oid = InvalidOid;
+
+	systable_endscan(scan);
+	heap_close(rel, AccessShareLock);
+
+	if (!OidIsValid(oid) && !missing_ok)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("resource queue \"%s\" does not exist",
+						queuename)));
+
+	return oid;
 }
 
 /*

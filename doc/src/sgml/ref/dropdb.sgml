@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.38 2010/04/03 07:23:01 petere Exp $
+doc/src/sgml/ref/dropdb.sgml
 PostgreSQL documentation
 -->
 
@@ -87,6 +87,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--if-exists</></term>
+      <listitem>
+       <para>
+       Do not throw an error if the database does not exist. A notice is issued
+       in this case.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-V</></term>
        <term><option>--version</></term>
        <listitem>
@@ -118,12 +128,12 @@ PostgreSQL documentation
    <variablelist>
      <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></></term>
-      <term><option>--host <replaceable class="parameter">host</replaceable></></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-        Specifies the host name of the machine on which the 
+        Specifies the host name of the machine on which the
         server
-        is running.  If the value begins with a slash, it is used 
+        is running.  If the value begins with a slash, it is used
         as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -131,10 +141,10 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-      <term><option>--port <replaceable class="parameter">port</replaceable></></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-        Specifies the TCP port or local Unix domain socket file 
+        Specifies the TCP port or local Unix domain socket file
         extension on which the server
         is listening for connections.
        </para>
@@ -143,7 +153,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-      <term><option>--username <replaceable class="parameter">username</replaceable></></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
         User name to connect as.
@@ -172,7 +182,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Force <application>dropdb</application> to prompt for a
-        password before connecting to a database.  
+        password before connecting to a database.
        </para>
 
        <para>
@@ -183,6 +193,18 @@ PostgreSQL documentation
         connection attempt finding out that the server wants a password.
         In some cases it is worth typing <option>-W</> to avoid the extra
         connection attempt.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></></term>
+      <listitem>
+       <para>
+         Specifies the name of the database to connect to in order to drop the
+         target database. If not specified, the <literal>postgres</literal>
+         database will be used; if that does not exist (or is the database
+         being dropped), <literal>template1</literal> will be used.
        </para>
       </listitem>
      </varlistentry>
@@ -253,8 +275,7 @@ PostgreSQL documentation
 <computeroutput>Database "demo" will be permanently deleted.
 Are you sure? (y/n) </computeroutput><userinput>y</userinput>
 <computeroutput>DROP DATABASE demo;</computeroutput>
-</screen>
-   </para>
+</screen></para>
  </refsect1>
 
 

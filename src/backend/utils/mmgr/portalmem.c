@@ -10,11 +10,11 @@
  *
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.120 2010/07/06 19:18:59 momjian Exp $
+ *	  src/backend/utils/mmgr/portalmem.c
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "utils/resscheduler.h"
 
 #include "cdb/ml_ipc.h"
+#include "utils/timestamp.h"
 
 /*
  * Estimate of the maximum number of open portals a user would have,
@@ -297,9 +298,9 @@ CreateNewPortal(void)
  * (before rewriting) was an empty string.	Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.
  *
- * If cplan is provided, then it is a cached plan containing the stmts,
- * and the caller must have done RevalidateCachedPlan(), causing a refcount
- * increment.  The refcount will be released when the portal is destroyed.
+ * If cplan is provided, then it is a cached plan containing the stmts, and
+ * the caller must have done GetCachedPlan(), causing a refcount increment.
+ * The refcount will be released when the portal is destroyed.
  *
  * If cplan is NULL, then it is the caller's responsibility to ensure that
  * the passed plan trees have adequate lifetime.  Typically this is done by
@@ -422,6 +423,62 @@ UnpinPortal(Portal portal)
 }
 
 /*
+ * MarkPortalDone
+ *		Transition a portal from ACTIVE to DONE state.
+ *
+ * NOTE: never set portal->status = PORTAL_DONE directly; call this instead.
+ */
+void
+MarkPortalDone(Portal portal)
+{
+	/* Perform the state transition */
+	Assert(portal->status == PORTAL_ACTIVE);
+	portal->status = PORTAL_DONE;
+
+	/*
+	 * Allow portalcmds.c to clean up the state it knows about.  We might as
+	 * well do that now, since the portal can't be executed any more.
+	 *
+	 * In some cases involving execution of a ROLLBACK command in an already
+	 * aborted transaction, this prevents an assertion failure caused by
+	 * reaching AtCleanup_Portals with the cleanup hook still unexecuted.
+	 */
+	if (PointerIsValid(portal->cleanup))
+	{
+		(*portal->cleanup) (portal);
+		portal->cleanup = NULL;
+	}
+}
+
+/*
+ * MarkPortalFailed
+ *		Transition a portal into FAILED state.
+ *
+ * NOTE: never set portal->status = PORTAL_FAILED directly; call this instead.
+ */
+void
+MarkPortalFailed(Portal portal)
+{
+	/* Perform the state transition */
+	Assert(portal->status != PORTAL_DONE);
+	portal->status = PORTAL_FAILED;
+
+	/*
+	 * Allow portalcmds.c to clean up the state it knows about.  We might as
+	 * well do that now, since the portal can't be executed any more.
+	 *
+	 * In some cases involving cleanup of an already aborted transaction, this
+	 * prevents an assertion failure caused by reaching AtCleanup_Portals with
+	 * the cleanup hook still unexecuted.
+	 */
+	if (PointerIsValid(portal->cleanup))
+	{
+		(*portal->cleanup) (portal);
+		portal->cleanup = NULL;
+	}
+}
+
+/*
  * PortalDrop
  *		Destroy the portal.
  */
@@ -444,7 +501,24 @@ PortalDrop(Portal portal, bool isTopCommit)
 	TeardownSequenceServer();
 
 	/*
-	 * Remove portal from hash table.  Because we do this first, we will not
+	 * Allow portalcmds.c to clean up the state it knows about, in particular
+	 * shutting down the executor if still active.	This step potentially runs
+	 * user-defined code so failure has to be expected.  It's the cleanup
+	 * hook's responsibility to not try to do that more than once, in the case
+	 * that failure occurs and then we come back to drop the portal again
+	 * during transaction abort.
+	 *
+	 * Note: in most paths of control, this will have been done already in
+	 * MarkPortalDone or MarkPortalFailed.	We're just making sure.
+	 */
+	if (PointerIsValid(portal->cleanup))
+	{
+		(*portal->cleanup) (portal);
+		portal->cleanup = NULL;
+	}
+
+	/*
+	 * Remove portal from hash table.  Because we do this here, we will not
 	 * come back to try to remove the portal again if there's any error in the
 	 * subsequent steps.  Better to leak a little memory than to get into an
 	 * infinite error-recovery loop.
@@ -456,10 +530,6 @@ PortalDrop(Portal portal, bool isTopCommit)
 		portal->releaseResLock = false;
 		ResUnLockPortal(portal);
 	}
-
-	/* let portalcmds.c clean up the state it knows about */
-	if (portal->cleanup)
-		(*portal->cleanup) (portal);
 
 	/* drop cached plan reference, if any */
 	PortalReleaseCachedPlan(portal);
@@ -550,8 +620,15 @@ PortalHashTableDeleteAll(void)
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->status != PORTAL_ACTIVE)
-			PortalDrop(portal, false);
+		/* Can't close the active portal (the one running the command) */
+		if (portal->status == PORTAL_ACTIVE)
+			continue;
+
+		PortalDrop(portal, false);
+
+		/* Restart the iteration in case that led to other drops */
+		hash_seq_term(&status);
+		hash_seq_init(&status, PortalHashTable);
 	}
 }
 
@@ -559,14 +636,17 @@ PortalHashTableDeleteAll(void)
 /*
  * Pre-commit processing for portals.
  *
- * Any holdable cursors created in this transaction need to be converted to
+ * Holdable cursors created in this transaction need to be converted to
  * materialized form, since we are going to close down the executor and
- * release locks.  Other portals are not touched yet.
+ * release locks.  Non-holdable portals created in this transaction are
+ * simply removed.	Portals remaining from prior transactions should be
+ * left untouched.
  *
- * Returns TRUE if any holdable cursors were processed, FALSE if not.
+ * Returns TRUE if any portals changed state (possibly causing user-defined
+ * code to be run), FALSE if not.
  */
 bool
-CommitHoldablePortals(void)
+PreCommit_Portals(bool isPrepare)
 {
 	bool		result = false;
 	HASH_SEQ_STATUS status;
@@ -578,6 +658,26 @@ CommitHoldablePortals(void)
 	{
 		Portal		portal = hentry->portal;
 
+		/*
+		 * There should be no pinned portals anymore. Complain if someone
+		 * leaked one.
+		 */
+		if (portal->portalPinned)
+			elog(ERROR, "cannot commit while a portal is pinned");
+
+		/*
+		 * Do not touch active portals --- this can only happen in the case of
+		 * a multi-transaction utility command, such as VACUUM.
+		 *
+		 * Note however that any resource owner attached to such a portal is
+		 * still going to go away, so don't leave a dangling pointer.
+		 */
+		if (portal->status == PORTAL_ACTIVE)
+		{
+			portal->resowner = NULL;
+			continue;
+		}
+
 		/* Is it a holdable portal created in the current xact? */
 		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
 			portal->createSubid != InvalidSubTransactionId &&
@@ -588,6 +688,15 @@ CommitHoldablePortals(void)
 			 * Instead of dropping the portal, prepare it for access by later
 			 * transactions.
 			 *
+			 * However, if this is PREPARE TRANSACTION rather than COMMIT,
+			 * refuse PREPARE, because the semantics seem pretty unclear.
+			 */
+			if (isPrepare)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot PREPARE a transaction that has created a cursor WITH HOLD")));
+
+			/*
 			 * Note that PersistHoldablePortal() must release all resources
 			 * used by the portal that are local to the creating transaction.
 			 */
@@ -610,108 +719,36 @@ CommitHoldablePortals(void)
 			 */
 			portal->createSubid = InvalidSubTransactionId;
 
+			/* Report we changed state */
 			result = true;
 		}
-	}
-
-	return result;
-}
-
-/*
- * Pre-prepare processing for portals.
- *
- * Currently we refuse PREPARE if the transaction created any holdable
- * cursors, since it's quite unclear what to do with one.  However, this
- * has the same API as CommitHoldablePortals and is invoked in the same
- * way by xact.c, so that we can easily do something reasonable if anyone
- * comes up with something reasonable to do.
- *
- * Returns TRUE if any holdable cursors were processed, FALSE if not.
- */
-bool
-PrepareHoldablePortals(void)
-{
-	bool		result = false;
-	HASH_SEQ_STATUS status;
-	PortalHashEnt *hentry;
-
-	hash_seq_init(&status, PortalHashTable);
-
-	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Portal		portal = hentry->portal;
-
-		/* Is it a holdable portal created in the current xact? */
-		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
-			portal->createSubid != InvalidSubTransactionId &&
-			portal->status == PORTAL_READY)
+		else if (portal->createSubid == InvalidSubTransactionId)
 		{
 			/*
-			 * We are exiting the transaction that created a holdable cursor.
-			 * Can't do PREPARE.
+			 * Do nothing to cursors held over from a previous transaction
+			 * (including ones we just froze in a previous cycle of this loop)
 			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot PREPARE a transaction that has created a cursor WITH HOLD")));
+			continue;
 		}
-	}
-
-	return result;
-}
-
-/*
- * Pre-commit processing for portals.
- *
- * Remove all non-holdable portals created in this transaction.
- * Portals remaining from prior transactions should be left untouched.
- */
-void
-AtCommit_Portals(void)
-{
-	HASH_SEQ_STATUS status;
-	PortalHashEnt *hentry;
-
-	hash_seq_init(&status, PortalHashTable);
-
-	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Portal		portal = hentry->portal;
-
-		/*
-		 * Do not touch active portals --- this can only happen in the case of
-		 * a multi-transaction utility command, such as VACUUM.
-		 *
-		 * Note however that any resource owner attached to such a portal is
-		 * still going to go away, so don't leave a dangling pointer.
-		 */
-		if (portal->status == PORTAL_ACTIVE)
+		else
 		{
-			portal->resowner = NULL;
-			continue;
+			/* Zap all non-holdable portals */
+			PortalDrop(portal, true);
+
+			/* Report we changed state */
+			result = true;
 		}
 
 		/*
-		 * There should be no pinned portals anymore. Complain if someone
-		 * leaked one.
+		 * After either freezing or dropping a portal, we have to restart the
+		 * iteration, because we could have invoked user-defined code that
+		 * caused a drop of the next portal in the hash chain.
 		 */
-		if (portal->portalPinned)
-			elog(ERROR, "cannot commit while a portal is pinned");
-
-		/*
-		 * Do nothing to cursors held over from a previous transaction
-		 * (including holdable ones just frozen by CommitHoldablePortals).
-		 */
-		if (portal->createSubid == InvalidSubTransactionId)
-			continue;
-
-		/* Zap all non-holdable portals */
-		PortalDrop(portal, true);
-
-		/* Restart the iteration in case that led to other drops */
-		/* XXX is this really necessary? */
 		hash_seq_term(&status);
 		hash_seq_init(&status, PortalHashTable);
 	}
+
+	return result;
 }
 
 /*
@@ -737,7 +774,7 @@ AtAbort_Portals(void)
 
 		/* Any portal that was actually running has to be considered broken */
 		if (portal->status == PORTAL_ACTIVE)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 
 		if (portal->is_extended_query && portal->queryDesc != NULL)
 		{
@@ -768,11 +805,14 @@ AtAbort_Portals(void)
 		 * AtSubAbort_Portals.
 		 */
 		if (portal->status == PORTAL_READY)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 #endif
 
-		/* let portalcmds.c clean up the state it knows about */
-		if (portal->cleanup)
+		/*
+		 * Allow portalcmds.c to clean up the state it knows about, if we
+		 * haven't already.
+		 */
+		if (PointerIsValid(portal->cleanup))
 		{
 			(*portal->cleanup) (portal);
 			portal->cleanup = NULL;
@@ -829,6 +869,9 @@ AtCleanup_Portals(void)
 		 */
 		if (portal->portalPinned)
 			portal->portalPinned = false;
+
+		/* We had better not be calling any user-defined code here */
+		Assert(portal->cleanup == NULL);
 
 		/* Zap it. */
 		PortalDrop(portal, false);
@@ -901,9 +944,12 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		// GPDB_90_MERGE_FIXME: Not in READY portals. See comment in AtAbort_Portals.
 		if (//portal->status == PORTAL_READY ||
 			portal->status == PORTAL_ACTIVE)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 
-		/* let portalcmds.c clean up the state it knows about */
+		/*
+		 * Allow portalcmds.c to clean up the state it knows about, if we
+		 * haven't already.
+		 */
 		if (PointerIsValid(portal->cleanup))
 		{
 			(*portal->cleanup) (portal);
@@ -958,6 +1004,9 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 		 */
 		if (portal->portalPinned)
 			portal->portalPinned = false;
+
+		/* We had better not be calling any user-defined code here */
+		Assert(portal->cleanup == NULL);
 
 		/* Zap it. */
 		PortalDrop(portal, false);

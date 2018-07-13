@@ -115,3 +115,28 @@ SELECT test_setof_as_iterator(2, null);
  
 (2 rows)
 
+SELECT test_setof_spi_in_iterator();
+ test_setof_spi_in_iterator 
+----------------------------
+ Hello
+ Brave
+ New
+ World
+(4 rows)
+
+-- setof function with an SPI result set (used to crash because of
+-- memory management issues across multiple calls)
+CREATE OR REPLACE FUNCTION get_user_records()
+RETURNS SETOF users
+AS $$
+    return plpy.execute("SELECT * FROM users ORDER BY username")
+$$ LANGUAGE plpythonu;
+SELECT get_user_records();
+   get_user_records   
+----------------------
+ (jane,doe,j_doe,1)
+ (john,doe,johnd,2)
+ (rick,smith,slash,4)
+ (willem,doe,w_doe,3)
+(4 rows)
+

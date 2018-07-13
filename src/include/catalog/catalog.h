@@ -4,17 +4,21 @@
  *	  prototypes for functions in backend/catalog/catalog.c
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/catalog.h,v 1.49 2010/02/26 02:01:21 momjian Exp $
+ * src/include/catalog/catalog.h
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATALOG_H
 #define CATALOG_H
 
-#include "catalog/catversion.h"
+/*
+ *	'pgrminclude ignore' needed here because CppAsString2() does not throw
+ *	an error if the symbol is not defined.
+ */
+#include "catalog/catversion.h" /* pgrminclude ignore */
 #include "catalog/pg_class.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
@@ -33,12 +37,26 @@
 
 extern const char *forkNames[];
 extern ForkNumber forkname_to_number(char *forkName);
+extern int	forkname_chars(const char *str, ForkNumber *);
 
-extern char *relpath(RelFileNode rnode, ForkNumber forknum);
+extern char *relpathbackend(RelFileNode rnode, BackendId backend,
+			   ForkNumber forknum);
 extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
 
-extern void reldir_and_filename(RelFileNode rnode, ForkNumber forknum,
+extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
 					char **dir, char **filename);
+extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
+
+/* First argument is a RelFileNodeBackend */
+#define relpath(rnode, forknum) \
+		relpathbackend((rnode).node, (rnode).backend, (forknum))
+
+/* First argument is a RelFileNode */
+#define relpathperm(rnode, forknum) \
+		relpathbackend((rnode), InvalidBackendId, (forknum))
+
+#define aorelpath(rnode, segno) \
+		aorelpathbackend((rnode).node, (rnode).backend, (segno))
 
 extern bool IsSystemRelation(Relation relation);
 extern bool IsToastRelation(Relation relation);
@@ -59,7 +77,8 @@ extern Oid GetNewOid(Relation relation);
 extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 				   AttrNumber oidcolumn);
 extern Oid GetNewSequenceRelationOid(Relation relation);
-extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class);
+extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
+				  char relpersistence);
 
 const char *tablespace_version_directory(void);
 

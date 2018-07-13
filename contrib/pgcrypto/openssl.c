@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.33 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/openssl.c
  */
 
 #include "postgres.h"
@@ -953,7 +953,7 @@ px_find_cipher(const char *name, PX_Cipher **res)
 
 	name = px_resolve_alias(ossl_aliases, name);
 	for (i = ossl_cipher_types; i->name; i++)
-		if (!strcmp(i->name, name))
+		if (strcmp(i->name, name) == 0)
 			break;
 	if (i->name == NULL)
 		return PXE_NO_CIPHER;

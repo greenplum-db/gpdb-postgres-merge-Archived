@@ -4,10 +4,10 @@
  *	  POSTGRES generalized index access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.84 2010/02/26 02:01:20 momjian Exp $
+ * src/include/access/genam.h
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "nodes/tidbitmap.h"
-#include "storage/buf.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
@@ -135,14 +134,19 @@ extern bool index_insert(Relation indexRelation,
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,
 				Snapshot snapshot,
-				int nkeys, ScanKey key);
+				int nkeys, int norderbys);
 extern IndexScanDesc index_beginscan_bitmap(Relation indexRelation,
 					   Snapshot snapshot,
-					   int nkeys, ScanKey key);
-extern void index_rescan(IndexScanDesc scan, ScanKey key);
+					   int nkeys);
+extern void index_rescan(IndexScanDesc scan,
+			 ScanKey keys, int nkeys,
+			 ScanKey orderbys, int norderbys);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
+extern ItemPointer index_getnext_tid(IndexScanDesc scan,
+				  ScanDirection direction);
+extern HeapTuple index_fetch_heap(IndexScanDesc scan);
 extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
 extern Node *index_getbitmap(IndexScanDesc scan, Node *bitmap);
 
@@ -152,6 +156,7 @@ extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
 				  void *callback_state);
 extern IndexBulkDeleteResult *index_vacuum_cleanup(IndexVacuumInfo *info,
 					 IndexBulkDeleteResult *stats);
+extern bool index_can_return(Relation indexRelation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
 extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
@@ -161,7 +166,7 @@ extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
  * index access method support routines (in genam.c)
  */
 extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
-					 int nkeys, ScanKey key);
+					 int nkeys, int norderbys);
 extern void IndexScanEnd(IndexScanDesc scan);
 extern char *BuildIndexValueDescription(Relation indexRelation,
 						   Datum *values, bool *isnull);

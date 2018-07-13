@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.12 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgrowlocks/pgrowlocks.c
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -24,7 +24,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/xact.h"
@@ -35,6 +34,7 @@
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 #include "utils/tqual.h"
 
 

@@ -5,10 +5,10 @@
  *	  strategy.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.104 2010/01/02 16:58:08 momjian Exp $
+ * src/include/storage/buf_internals.h
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define BUFMGR_INTERNALS_H
 
 #include "storage/buf.h"
+#include "storage/latch.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
@@ -37,6 +38,9 @@
 #define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
 #define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
 #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
+#define BM_PERMANENT			(1 << 8)		/* permanent relation (neither
+												 * unlogged or temporary) */
+#define BM_TEMP					(1 << 9)		/* temporary relation */
 
 typedef bits16 BufFlags;
 
@@ -58,6 +62,12 @@ typedef bits16 BufFlags;
  * possible that the backend flushing the buffer doesn't even believe the
  * relation is visible yet (its xact may have started before the xact that
  * created the rel).  The storage manager must be able to cope anyway.
+ *
+ * GPDB_91_MERGE_FIXME: The argument in the previous note doesn't quite hold in
+ * GPDB.  Temp tables in GPDB use shared buffers.  But there is no way to
+ * distinguish a temp relation's buffers from a non-temp relation's buffers
+ * from buffer tag.  The flag BM_TEMP from buffer header is used to identify a
+ * temp relation's bufffers.
  *
  * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
  * to be fixed to zero them, since this struct is used as a hash key.
@@ -186,6 +196,8 @@ extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 					 volatile BufferDesc *buf);
 
 extern int	StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc);
+extern void StrategyNotifyBgWriter(Latch *bgwriterLatch);
+
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 
@@ -205,6 +217,7 @@ extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 							BlockNumber firstDelBlock);
+extern void DropRelFileNodeAllLocalBuffers(RelFileNode rnode);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif   /* BUFMGR_INTERNALS_H */

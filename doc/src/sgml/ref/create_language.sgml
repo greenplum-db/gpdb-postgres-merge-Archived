@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.51 2010/05/30 02:23:09 momjian Exp $
+doc/src/sgml/ref/create_language.sgml
 PostgreSQL documentation
 -->
 
@@ -36,6 +36,21 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
    database.  Subsequently, functions and trigger procedures can be
    defined in this new language.
   </para>
+
+  <note>
+   <para>
+    As of <productname>PostgreSQL</productname> 9.1, most procedural
+    languages have been made into <quote>extensions</>, and should
+    therefore be installed with <xref linkend="sql-createextension">
+    not <command>CREATE LANGUAGE</command>.  Direct use of
+    <command>CREATE LANGUAGE</command> should now be confined to
+    extension installation scripts.  If you have a <quote>bare</>
+    language in your database, perhaps as a result of an upgrade,
+    you can convert it to an extension using
+    <literal>CREATE EXTENSION <replaceable>langname</> FROM
+    unpackaged</literal>.
+   </para>
+  </note>
 
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
@@ -103,8 +118,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
      <term><literal>TRUSTED</literal></term>
 
      <listitem>
-      <para>
-       <literal>TRUSTED</literal> specifies that the language does
+      <para><literal>TRUSTED</literal> specifies that the language does
        not grant access to data that the user would not otherwise
        have.  If this key word is omitted
        when registering the language, only users with the
@@ -129,9 +143,8 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
 
      <listitem>
       <para>
-       The name of the new procedural language.  The language name is
-       case insensitive. The name must be unique among the languages
-       in the database.
+       The name of the new procedural language.
+       The name must be unique among the languages in the database.
       </para>
 
       <para>
@@ -145,8 +158,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
      <term><literal>HANDLER</literal> <replaceable class="parameter">call_handler</replaceable></term>
 
      <listitem>
-      <para>
-       <replaceable class="parameter">call_handler</replaceable> is
+      <para><replaceable class="parameter">call_handler</replaceable> is
        the name of a previously registered function that will be
        called to execute the procedural language's functions.  The call
        handler for a procedural language must be written in a compiled
@@ -163,8 +175,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
      <term><literal>INLINE</literal> <replaceable class="parameter">inline_handler</replaceable></term>
 
      <listitem>
-      <para>
-       <replaceable class="parameter">inline_handler</replaceable> is the
+      <para><replaceable class="parameter">inline_handler</replaceable> is the
        name of a previously registered function that will be called
        to execute an anonymous code block
        (<xref linkend="sql-do"> command)
@@ -184,8 +195,7 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
      <term><literal>VALIDATOR</literal> <replaceable class="parameter">valfunction</replaceable></term>
 
      <listitem>
-      <para>
-       <replaceable class="parameter">valfunction</replaceable> is the
+      <para><replaceable class="parameter">valfunction</replaceable> is the
        name of a previously registered function that will be called
        when a new function in the language is created, to validate the
        new function.
@@ -294,8 +304,7 @@ CREATE FUNCTION plsample_call_handler() RETURNS language_handler
     LANGUAGE C;
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-compat">

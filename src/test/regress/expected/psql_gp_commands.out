@@ -3,7 +3,9 @@
 --
 -- We just use gp_inject_fault as an example of an extension here. We don't
 -- inject any faults.
+-- start_ignore
 CREATE EXTENSION IF NOT EXISTS gp_inject_fault;
+-- end_ignore
 \dx gp_inject*
                            List of installed extensions
       Name       | Version | Schema |                 Description                  
@@ -12,11 +14,14 @@ CREATE EXTENSION IF NOT EXISTS gp_inject_fault;
 (1 row)
 
 \dx+ gp_inject*
-                           List of installed extensions
-      Name       | Version | Schema |                 Description                  
------------------+---------+--------+----------------------------------------------
- gp_inject_fault | 1.0     | public | simulate various faults for testing purposes
-(1 row)
+                       Objects in extension "gp_inject_fault"
+                                 Object Description                                 
+------------------------------------------------------------------------------------
+ function gp_inject_fault_infinite(text,text,integer)
+ function gp_inject_fault(text,text,integer)
+ function gp_inject_fault(text,text,text,text,text,integer,integer,integer,integer)
+ function gp_wait_until_triggered_fault(text,integer,integer)
+(4 rows)
 
 --
 -- Test extended \du flags
@@ -118,3 +123,21 @@ HINT:  Issue the GRANT or REVOKE on the protocol itself
  test_psql_du_e8 | Superuser, Wri Ext hdfs Table, Cannot login | {}
 
 DROP ROLE test_psql_du_e8;
+-- Test replication and verbose. GPDB specific attributes are mixed with PG attributes.
+-- Our role describe code is easy to be buggy when we merge with PG upstream code.
+-- The tests here are used to double-confirm the correctness of our role describe code.
+CREATE ROLE test_psql_du_e9 WITH SUPERUSER REPLICATION;
+COMMENT ON ROLE test_psql_du_e9 IS 'test_role_description';
+\du test_psql_du_e9
+                           List of roles
+    Role name    |              Attributes              | Member of 
+-----------------+--------------------------------------+-----------
+ test_psql_du_e9 | Superuser, Cannot login, Replication | {}
+
+\du+ test_psql_du_e9
+                                       List of roles
+    Role name    |              Attributes              | Member of |      Description      
+-----------------+--------------------------------------+-----------+-----------------------
+ test_psql_du_e9 | Superuser, Cannot login, Replication | {}        | test_role_description
+
+DROP ROLE test_psql_du_e9;

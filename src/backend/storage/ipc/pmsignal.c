@@ -4,11 +4,11 @@
  *	  routines for signaling the postmaster from its child processes
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.30 2010/01/15 09:19:03 heikki Exp $
+ *	  src/backend/storage/ipc/pmsignal.c
  *
  *-------------------------------------------------------------------------
  */
@@ -267,46 +267,26 @@ MarkPostmasterChildInactive(void)
 
 /*
  * PostmasterIsAlive - check whether postmaster process is still alive
- *
- * amDirectChild should be passed as "true" by code that knows it is
- * executing in a direct child process of the postmaster; pass "false"
- * if an indirect child or not sure.  The "true" case uses a faster and
- * more reliable test, so use it when possible.
  */
 bool
-PostmasterIsAlive(bool amDirectChild)
+PostmasterIsAlive(void)
 {
 #ifndef WIN32
-	if (amDirectChild)
+	char		c;
+	ssize_t		rc;
+
+	rc = read(postmaster_alive_fds[POSTMASTER_FD_WATCH], &c, 1);
+	if (rc < 0)
 	{
-		/*
-		 * If the postmaster is alive, we'll still be its child.  If it's
-		 * died, we'll be reassigned as a child of the init process.
-		 */
-#ifdef __darwin__
-		/*
-		 * When attached w/gdb on OSX, gdb becomes parent of debugged process!
-		 * If we are direct child of postmaster and end up as child of
-		 * init, the postmaster musta died. This, of course, fails to detect
-		 * death of postmaster while this process is attached to gdb - but
-		 * that's easier to deal w/than being difficult to use gdb in the
-		 * normal case.
-		 */
-		return(getppid() != 1 /* init's pid */);
-#else  /* __darwin__ */
-		return (getppid() == PostmasterPid);
-#endif /* __darwin__ */
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return true;
+		else
+			elog(FATAL, "read on postmaster death monitoring pipe failed: %m");
 	}
-	else
-	{
-		/*
-		 * Use kill() to see if the postmaster is still alive.	This can
-		 * sometimes give a false positive result, since the postmaster's PID
-		 * may get recycled, but it is good enough for existing uses by
-		 * indirect children.
-		 */
-		return (kill(PostmasterPid, 0) == 0);
-	}
+	else if (rc > 0)
+		elog(FATAL, "unexpected data in postmaster death monitoring pipe");
+
+	return false;
 #else							/* WIN32 */
 	return (WaitForSingleObject(PostmasterHandle, 0) == WAIT_TIMEOUT);
 #endif   /* WIN32 */

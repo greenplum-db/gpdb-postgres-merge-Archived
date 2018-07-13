@@ -1,7 +1,4 @@
-#
-# Makefile for pg_upgrade
-#
-# $PostgreSQL: pgsql/contrib/pg_upgrade/Makefile,v 1.4 2010/07/03 14:23:13 momjian Exp $
+# contrib/pg_upgrade/Makefile
 
 top_builddir = ../..
 
@@ -21,7 +18,7 @@ PG_LIBS = $(libpq_pgport)
 # We don't need to add tmp_check to the EXTRA_CLEAN since it's a default name
 # and thus already handled by PGXS "make clean"
 EXTRA_CLEAN = clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
-              hostfile
+              hostfile delete_old_cluster.sh
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

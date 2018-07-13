@@ -2,15 +2,15 @@
  *
  * droplang
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.34 2010/02/26 02:01:20 momjian Exp $
+ * src/bin/scripts/droplang.c
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres_fe.h"
+
 #include "common.h"
 #include "print.h"
 
@@ -47,18 +47,6 @@ main(int argc, char *argv[])
 	bool		echo = false;
 	char	   *langname = NULL;
 	char	   *p;
-	Oid			lanplcallfoid;
-	Oid			laninline;
-	Oid			lanvalidator;
-	char	   *handler;
-	char	   *inline_handler;
-	char	   *validator;
-	char	   *handler_ns;
-	char	   *inline_ns;
-	char	   *validator_ns;
-	bool		keephandler;
-	bool		keepinline;
-	bool		keepvalidator;
 	PQExpBufferData sql;
 	PGconn	   *conn;
 	PGresult   *result;
@@ -102,14 +90,23 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	 * We set dbname from positional arguments if it is not already set by
+	 * option arguments -d. If not doing listlangs, positional dbname must
+	 * follow positional langname.
+	 */
+
 	if (argc - optind > 0)
 	{
 		if (listlangs)
-			dbname = argv[optind++];
+		{
+			if (dbname == NULL)
+				dbname = argv[optind++];
+		}
 		else
 		{
 			langname = argv[optind++];
-			if (argc - optind > 0)
+			if (argc - optind > 0 && dbname == NULL)
 				dbname = argv[optind++];
 		}
 	}
@@ -143,7 +140,7 @@ main(int argc, char *argv[])
 		static const bool translate_columns[] = {false, true};
 
 		conn = connectDatabase(dbname, host, port, username, prompt_password,
-							   progname);
+							   progname, false);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
 				"(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
@@ -177,11 +174,13 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* lower case language name */
 	for (p = langname; *p; p++)
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false);
 
 	/*
 	 * Force schema search path to be just pg_catalog, so that we don't have
@@ -190,10 +189,9 @@ main(int argc, char *argv[])
 	executeCommand(conn, "SET search_path = pg_catalog;", progname, echo);
 
 	/*
-	 * Make sure the language is installed and find the OIDs of the language
-	 * support functions
+	 * Make sure the language is installed
 	 */
-	printfPQExpBuffer(&sql, "SELECT lanplcallfoid, laninline, lanvalidator "
+	printfPQExpBuffer(&sql, "SELECT oid "
 					  "FROM pg_language WHERE lanname = '%s' AND lanispl;",
 					  langname);
 	result = executeQuery(conn, sql.data, progname, echo);
@@ -205,151 +203,14 @@ main(int argc, char *argv[])
 				progname, langname, dbname);
 		exit(1);
 	}
-	lanplcallfoid = atooid(PQgetvalue(result, 0, 0));
-	laninline = atooid(PQgetvalue(result, 0, 1));
-	lanvalidator = atooid(PQgetvalue(result, 0, 2));
 	PQclear(result);
 
 	/*
-	 * Check that there are no functions left defined in that language
+	 * Attempt to drop the language.  We do not use CASCADE, so that the drop
+	 * will fail if there are any functions in the language.
 	 */
-	printfPQExpBuffer(&sql, "SELECT count(proname) FROM pg_proc P, "
-					  "pg_language L WHERE P.prolang = L.oid "
-					  "AND L.lanname = '%s';", langname);
-	result = executeQuery(conn, sql.data, progname, echo);
-	if (strcmp(PQgetvalue(result, 0, 0), "0") != 0)
-	{
-		PQfinish(conn);
-		fprintf(stderr,
-				_("%s: still %s functions declared in language \"%s\"; "
-				  "language not removed\n"),
-				progname, PQgetvalue(result, 0, 0), langname);
-		exit(1);
-	}
-	PQclear(result);
+	printfPQExpBuffer(&sql, "DROP EXTENSION \"%s\";\n", langname);
 
-	/*
-	 * Check that the handler function isn't used by some other language
-	 */
-	printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language "
-					  "WHERE lanplcallfoid = %u AND lanname <> '%s';",
-					  lanplcallfoid, langname);
-	result = executeQuery(conn, sql.data, progname, echo);
-	if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
-		keephandler = false;
-	else
-		keephandler = true;
-	PQclear(result);
-
-	/*
-	 * Find the handler name
-	 */
-	if (!keephandler)
-	{
-		printfPQExpBuffer(&sql, "SELECT proname, (SELECT nspname "
-						  "FROM pg_namespace ns WHERE ns.oid = pronamespace) "
-						  "AS prons FROM pg_proc WHERE oid = %u;",
-						  lanplcallfoid);
-		result = executeQuery(conn, sql.data, progname, echo);
-		handler = strdup(PQgetvalue(result, 0, 0));
-		handler_ns = strdup(PQgetvalue(result, 0, 1));
-		PQclear(result);
-	}
-	else
-	{
-		handler = NULL;
-		handler_ns = NULL;
-	}
-
-	/*
-	 * Check that the inline function isn't used by some other language
-	 */
-	if (OidIsValid(laninline))
-	{
-		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language "
-						  "WHERE laninline = %u AND lanname <> '%s';",
-						  laninline, langname);
-		result = executeQuery(conn, sql.data, progname, echo);
-		if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
-			keepinline = false;
-		else
-			keepinline = true;
-		PQclear(result);
-	}
-	else
-		keepinline = true;		/* don't try to delete it */
-
-	/*
-	 * Find the inline handler name
-	 */
-	if (!keepinline)
-	{
-		printfPQExpBuffer(&sql, "SELECT proname, (SELECT nspname "
-						  "FROM pg_namespace ns WHERE ns.oid = pronamespace) "
-						  "AS prons FROM pg_proc WHERE oid = %u;",
-						  laninline);
-		result = executeQuery(conn, sql.data, progname, echo);
-		inline_handler = strdup(PQgetvalue(result, 0, 0));
-		inline_ns = strdup(PQgetvalue(result, 0, 1));
-		PQclear(result);
-	}
-	else
-	{
-		inline_handler = NULL;
-		inline_ns = NULL;
-	}
-
-	/*
-	 * Check that the validator function isn't used by some other language
-	 */
-	if (OidIsValid(lanvalidator))
-	{
-		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language "
-						  "WHERE lanvalidator = %u AND lanname <> '%s';",
-						  lanvalidator, langname);
-		result = executeQuery(conn, sql.data, progname, echo);
-		if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
-			keepvalidator = false;
-		else
-			keepvalidator = true;
-		PQclear(result);
-	}
-	else
-		keepvalidator = true;	/* don't try to delete it */
-
-	/*
-	 * Find the validator name
-	 */
-	if (!keepvalidator)
-	{
-		printfPQExpBuffer(&sql, "SELECT proname, (SELECT nspname "
-						  "FROM pg_namespace ns WHERE ns.oid = pronamespace) "
-						  "AS prons FROM pg_proc WHERE oid = %u;",
-						  lanvalidator);
-		result = executeQuery(conn, sql.data, progname, echo);
-		validator = strdup(PQgetvalue(result, 0, 0));
-		validator_ns = strdup(PQgetvalue(result, 0, 1));
-		PQclear(result);
-	}
-	else
-	{
-		validator = NULL;
-		validator_ns = NULL;
-	}
-
-	/*
-	 * Drop the language and the functions
-	 */
-	printfPQExpBuffer(&sql, "DROP LANGUAGE \"%s\";\n", langname);
-	if (!keephandler)
-		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" ();\n",
-						  handler_ns, handler);
-	if (!keepinline)
-		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" (internal);\n",
-						  inline_ns, inline_handler);
-	if (!keepvalidator)
-		appendPQExpBuffer(&sql, "DROP FUNCTION \"%s\".\"%s\" (oid);\n",
-						  validator_ns, validator);
 	if (echo)
 		printf("%s", sql.data);
 	result = PQexec(conn, sql.data);

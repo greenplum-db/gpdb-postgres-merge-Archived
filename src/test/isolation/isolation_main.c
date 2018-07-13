@@ -2,7 +2,7 @@
  *
  * isolation_main --- pg_regress test launcher for isolation tests
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/isolation/isolation_main.c
@@ -53,15 +53,9 @@ isolation_start_test(const char *testname,
 	add_stringlist_item(resultfiles, outfile);
 	add_stringlist_item(expectfiles, expectfile);
 
-	/*
-	 * GPDB_91_MERGE_FIXME: pg_regress --launcher argument was added in PostgreSQL 9.1.
-	 * We don't have it in GPDB yet. Re-enable this when we merge with 9.1.
-	 */
-#if PG_VERSION_NUM >= 90100
 	if (launcher)
 		offset += snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 						   "%s ", launcher);
-#endif
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
 			 SYSTEMQUOTE "\"./isolationtester\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
@@ -75,7 +69,7 @@ isolation_start_test(const char *testname,
 	{
 		fprintf(stderr, _("could not start process for test %s\n"),
 				testname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	return pid;

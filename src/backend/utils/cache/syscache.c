@@ -5,18 +5,18 @@
  *
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.126 2010/02/14 18:42:17 rhaas Exp $
+ *	  src/backend/utils/cache/syscache.c
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
  *	  rapid lookups on the contents of the system catalogs.
  *
- *	  see catalog/syscache.h for a list of the cache id's
+ *	  see utils/syscache.h for a list of the cache IDs
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
@@ -40,6 +41,7 @@
 #include "catalog/pg_enum.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_foreign_table.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -48,6 +50,7 @@
 #include "catalog/pg_partition.h"
 #include "catalog/pg_partition_rule.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_range.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_tablespace.h"
@@ -143,11 +146,11 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{AccessMethodOperatorRelationId,	/* AMOPOPID */
 		AccessMethodOperatorIndexId,
-		2,
+		3,
 		{
 			Anum_pg_amop_amopopr,
+			Anum_pg_amop_amoppurpose,
 			Anum_pg_amop_amopfamily,
-			0,
 			0
 		},
 		64
@@ -264,6 +267,28 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{OperatorClassRelationId,	/* CLAOID */
 		OpclassOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		64
+	},
+	{CollationRelationId,		/* COLLNAMEENCNSP */
+		CollationNameEncNspIndexId,
+		3,
+		{
+			Anum_pg_collation_collname,
+			Anum_pg_collation_collencoding,
+			Anum_pg_collation_collnamespace,
+			0
+		},
+		64
+	},
+	{CollationRelationId,		/* COLLOID */
+		CollationOidIndexId,
 		1,
 		{
 			ObjectIdAttributeNumber,
@@ -404,6 +429,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		32
+	},
+	{ForeignTableRelationId,	/* FOREIGNTABLEREL */
+		ForeignTableRelidIndexId,
+		1,
+		{
+			Anum_pg_foreign_table_ftrelid,
+			0,
+			0,
+			0
+		},
+		128
 	},
 	{GpPolicyRelationId,	/* GPPOLICYID */
 		GpPolicyLocalOidIndexId,
@@ -558,6 +594,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		2048
+	},
+	{RangeRelationId,			/* RANGETYPE */
+		RangeTypidIndexId,
+		1,
+		{
+			Anum_pg_range_rngtypid,
+			0,
+			0,
+			0
+		},
+		64
 	},
 	{RelationRelationId,		/* RELNAMENSP */
 		ClassNameNspIndexId,
@@ -869,7 +916,7 @@ SearchSysCache(int cacheId,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
@@ -1053,7 +1100,7 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 	if (!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
 	{
 		InitCatCachePhase2(SysCache[cacheId], false);
@@ -1066,6 +1113,30 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 }
 
 /*
+ * GetSysCacheHashValue
+ *
+ * Get the hash value that would be used for a tuple in the specified cache
+ * with the given search keys.
+ *
+ * The reason for exposing this as part of the API is that the hash value is
+ * exposed in cache invalidation operations, so there are places outside the
+ * catcache code that need to be able to compute the hash values.
+ */
+uint32
+GetSysCacheHashValue(int cacheId,
+					 Datum key1,
+					 Datum key2,
+					 Datum key3,
+					 Datum key4)
+{
+	if (cacheId < 0 || cacheId >= SysCacheSize ||
+		!PointerIsValid(SysCache[cacheId]))
+		elog(ERROR, "invalid cache ID: %d", cacheId);
+
+	return GetCatCacheHashValue(SysCache[cacheId], key1, key2, key3, key4);
+}
+
+/*
  * List-search interface
  */
 struct catclist *
@@ -1074,7 +1145,7 @@ SearchSysCacheList(int cacheId, int nkeys,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache id: %d", cacheId);
+		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
 							  key1, key2, key3, key4);

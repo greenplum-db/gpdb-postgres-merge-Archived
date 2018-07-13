@@ -13,10 +13,10 @@
  * use the Windows native routines, but if not, we use our own.
  *
  *
- * Copyright (c) 2003-2010, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2012, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.30 2010/01/02 16:58:13 momjian Exp $
+ *	  src/port/getaddrinfo.c
  *
  *-------------------------------------------------------------------------
  */
@@ -328,12 +328,9 @@ gai_strerror(int errcode)
 		case EAI_MEMORY:
 			return "Not enough memory";
 #endif
-#ifdef EAI_NODATA
-#ifndef WIN32_ONLY_COMPILER		/* MSVC complains because another case has the
-								 * same value */
+#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME		/* MSVC/WIN64 duplicate */
 		case EAI_NODATA:
 			return "No host data of that type was found";
-#endif
 #endif
 #ifdef EAI_SERVICE
 		case EAI_SERVICE:
@@ -388,16 +385,14 @@ getnameinfo(const struct sockaddr * sa, int salen,
 
 	if (node)
 	{
-		int			ret = -1;
-
 		if (sa->sa_family == AF_INET)
 		{
-			char	   *p;
-
-			p = inet_ntoa(((struct sockaddr_in *) sa)->sin_addr);
-			ret = snprintf(node, nodelen, "%s", p);
+			if (inet_net_ntop(AF_INET, &((struct sockaddr_in *) sa)->sin_addr,
+							  sa->sa_family == AF_INET ? 32 : 128,
+							  node, nodelen) == NULL)
+				return EAI_MEMORY;
 		}
-		if (ret == -1 || ret > nodelen)
+		else
 			return EAI_MEMORY;
 	}
 

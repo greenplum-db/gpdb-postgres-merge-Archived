@@ -76,12 +76,14 @@ CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
 
 CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
 
+INSERT INTO POINT_TBL(f1) VALUES (NULL);
+
 CREATE INDEX gpointind ON point_tbl USING gist (f1);
 
 CREATE TEMP TABLE gpolygon_tbl AS
     SELECT polygon(home_base) AS f1 FROM slow_emp4000;
-INSERT INTO gpolygon_tbl VALUES ( '(1000,0,0,1000)' ); 
-INSERT INTO gpolygon_tbl VALUES ( '(0,1000,1000,1000)' ); 
+INSERT INTO gpolygon_tbl VALUES ( '(1000,0,0,1000)' );
+INSERT INTO gpolygon_tbl VALUES ( '(0,1000,1000,1000)' );
 
 CREATE TEMP TABLE gcircle_tbl AS
     SELECT circle(home_base) AS f1 FROM slow_emp4000;
@@ -89,6 +91,40 @@ CREATE TEMP TABLE gcircle_tbl AS
 CREATE INDEX ggpolygonind ON gpolygon_tbl USING gist (f1);
 
 CREATE INDEX ggcircleind ON gcircle_tbl USING gist (f1);
+
+--
+-- SP-GiST
+--
+
+CREATE TABLE quad_point_tbl AS
+    SELECT point(unique1,unique2) AS p FROM tenk1;
+
+INSERT INTO quad_point_tbl
+    SELECT '(333.0,400.0)'::point FROM generate_series(1,1000);
+
+INSERT INTO quad_point_tbl VALUES (NULL), (NULL), (NULL);
+
+CREATE INDEX sp_quad_ind ON quad_point_tbl USING spgist (p);
+
+CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
+
+CREATE INDEX sp_kd_ind ON kd_point_tbl USING spgist (p kd_point_ops);
+
+CREATE TABLE suffix_text_tbl AS
+    SELECT name AS t FROM road WHERE name !~ '^[0-9]';
+
+INSERT INTO suffix_text_tbl
+    SELECT 'P0123456789abcdef' FROM generate_series(1,1000);
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcde');
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcdefF');
+
+CREATE INDEX sp_suff_ind ON suffix_text_tbl USING spgist (t);
+
+--
+-- Test GiST and SP-GiST indexes
+--
+
+-- get non-indexed results for comparison purposes
 
 SET enable_seqscan = ON;
 SET enable_indexscan = OFF;
@@ -130,82 +166,402 @@ SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
 
 SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
 
+SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+
+SELECT * FROM point_tbl WHERE f1 IS NULL;
+
+SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+
+SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+
+SELECT count(*) FROM quad_point_tbl;
+
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+
+-- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
 SET optimizer_enable_tablescan = OFF;
 SET enable_indexscan = ON;
+SET enable_bitmapscan = OFF;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM fast_emp4000
+    WHERE home_base @ '(200,200),(2000,1000)'::box
+    ORDER BY (home_base[0])[0];
+SELECT * FROM fast_emp4000
+    WHERE home_base @ '(200,200),(2000,1000)'::box
+    ORDER BY (home_base[0])[0];
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY (poly_center(f1))[0];
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY area(f1);
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
+SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
+SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM point_tbl WHERE f1 IS NULL;
+SELECT * FROM point_tbl WHERE f1 IS NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl;
+SELECT count(*) FROM quad_point_tbl;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+
+-- Now check the results from bitmap indexscan
+SET enable_seqscan = OFF;
+SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM fast_emp4000
-    WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY (home_base[0])[0];
-SELECT * FROM fast_emp4000
-    WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY (home_base[0])[0];
+SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
-SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
-SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
-    ORDER BY (poly_center(f1))[0];
-SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
-    ORDER BY (poly_center(f1))[0];
+SELECT count(*) FROM quad_point_tbl;
+SELECT count(*) FROM quad_point_tbl;
 
 EXPLAIN (COSTS OFF)
-SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY area(f1);
-SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY area(f1);
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
-SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
-SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
-SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
-SELECT count(*) FROM point_tbl WHERE box '(0,0,100,100)' @> f1;
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
-SELECT count(*) FROM point_tbl WHERE f1 <@ polygon '(0,0),(0,100),(100,100),(50,50),(100,0),(0,0)';
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
-SELECT count(*) FROM point_tbl WHERE f1 <@ circle '<(50,50),50>';
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 << '(0.0, 0.0)';
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 >> '(0.0, 0.0)';
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 <^ '(0.0, 0.0)';
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 >^ '(0.0, 0.0)';
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
-SELECT count(*) FROM point_tbl p WHERE p.f1 ~= '(-5, -12)';
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
 
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
@@ -215,13 +571,18 @@ RESET enable_bitmapscan;
 --
 -- GIN over int[] and text[]
 --
+-- Note: GIN currently supports only bitmap scans, not plain indexscans
+--
 
 SET enable_seqscan = OFF;
 SET optimizer_enable_tablescan = OFF;
-SET enable_indexscan = ON;
-SET enable_bitmapscan = OFF;
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = ON;
 
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
+
+explain (costs off)
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
 
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
@@ -231,8 +592,19 @@ SELECT * FROM array_index_op_test WHERE i @> '{32,17}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32,17}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i <@ '{38,34,32,89}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i = '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i <@ '{}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i = '{NULL}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i @> '{NULL}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i && '{NULL}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 
 CREATE INDEX textarrayidx ON array_index_op_test USING gin (t);
+
+explain (costs off)
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908}' ORDER BY seqno;
 
 SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908}' ORDER BY seqno;
@@ -242,19 +614,10 @@ SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908,AAAAAAAAAA646}' ORD
 SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t <@ '{AAAAAAAA72908,AAAAAAAAAAAAAAAAAAA17075,AA88409,AAAAAAAAAAAAAAAAAA36842,AAAAAAA48038,AAAAAAAAAAAAAA10611}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t = '{AAAAAAAAAA646,A87088}' ORDER BY seqno;
-
--- Repeat some of the above tests but exercising bitmapscans instead
-SET enable_indexscan = OFF;
-SET enable_bitmapscan = ON;
-
-SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i @> '{17}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{17}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i @> '{32,17}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32,17}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i <@ '{38,34,32,89}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t = '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t <@ '{}' ORDER BY seqno;
 
 -- And try it with a multicolumn GIN index
 
@@ -262,27 +625,15 @@ DROP INDEX intarrayidx, textarrayidx;
 
 CREATE INDEX botharrayidx ON array_index_op_test USING gin (i, t);
 
-SET enable_seqscan = OFF;
-RESET optimizer_enable_tablescan;
-SET enable_indexscan = ON;
-SET enable_bitmapscan = OFF;
-
 SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
 SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
-
-SET enable_indexscan = OFF;
-SET enable_bitmapscan = ON;
-
-SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE t && '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i @> '{32}' AND t && '{AAAAAAA80240}' ORDER BY seqno;
-SELECT * FROM array_index_op_test WHERE i && '{32}' AND t @> '{AAAAAAA80240}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t = '{}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i = '{NULL}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i <@ '{NULL}' ORDER BY seqno;
 
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
@@ -385,7 +736,54 @@ COMMIT;
 
 \d concur_heap
 
+--
+-- Try some concurrent index drops
+--
+DROP INDEX CONCURRENTLY "concur_index2";				-- works
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
+
+-- failures
+DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
+BEGIN;
+DROP INDEX CONCURRENTLY "concur_index5";
+ROLLBACK;
+
+-- successes
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
+DROP INDEX CONCURRENTLY "concur_index4";
+DROP INDEX CONCURRENTLY "concur_index5";
+DROP INDEX CONCURRENTLY "concur_index1";
+DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+
+\d concur_heap
+
 DROP TABLE concur_heap;
+
+--
+-- Test ADD CONSTRAINT USING INDEX
+--
+
+CREATE TABLE cwi_test( a int , b varchar(10), c char);
+
+-- add some data so that all tests have something to work with.
+
+INSERT INTO cwi_test VALUES(1, 2), (3, 4), (5, 6);
+
+CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
+ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
+
+\d cwi_test
+
+CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
+ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
+	ADD CONSTRAINT cwi_replaced_pkey PRIMARY KEY
+		USING INDEX cwi_uniq2_idx;
+
+\d cwi_test
+
+DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
+
+DROP TABLE cwi_test;
 
 --
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
@@ -404,6 +802,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -413,6 +813,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -422,6 +824,8 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
 DROP INDEX onek_nulltest;
 
@@ -431,10 +835,77 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
+
+DROP INDEX onek_nulltest;
+
+-- Check initial-positioning logic too
+
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2);
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = OFF;
+
+SELECT unique1, unique2 FROM onek_with_null
+  ORDER BY unique2 LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
+  ORDER BY unique2 LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= 0
+  ORDER BY unique2 LIMIT 2;
+
+SELECT unique1, unique2 FROM onek_with_null
+  ORDER BY unique2 DESC LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
+  ORDER BY unique2 DESC LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
+  ORDER BY unique2 DESC LIMIT 2;
 
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
- 
+
 DROP TABLE onek_with_null;
+
+--
+-- Check bitmap index path planning
+--
+
+SET enable_seqscan = OFF;
+SET optimizer_enable_tablescan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+
+--
+-- Check behavior with duplicate index column contents
+--
+
+CREATE TABLE dupindexcols AS
+  SELECT unique1 as id, stringu2::text as f1 FROM tenk1;
+CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
+ANALYZE dupindexcols;
+
+EXPLAIN (COSTS OFF)
+  SELECT count(*) FROM dupindexcols
+    WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
+SELECT count(*) FROM dupindexcols
+  WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
+
+RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;

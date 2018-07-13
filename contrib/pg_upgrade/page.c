@@ -3,9 +3,11 @@
  *
  *	per-page conversion operations
  *
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/page.c,v 1.5 2010/07/03 16:33:14 momjian Exp $
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	contrib/pg_upgrade/page.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
@@ -15,9 +17,9 @@
 #ifdef PAGE_CONVERSION
 
 
-static const char *getPageVersion(migratorContext *ctx,
+static const char *getPageVersion(
 			   uint16 *version, const char *pathName);
-static pageCnvCtx *loadConverterPlugin(migratorContext *ctx,
+static pageCnvCtx *loadConverterPlugin(
 					uint16 newPageVersion, uint16 oldPageVersion);
 
 
@@ -37,7 +39,7 @@ static pageCnvCtx *loadConverterPlugin(migratorContext *ctx,
  *	string.
  */
 const char *
-setupPageConverter(migratorContext *ctx, pageCnvCtx **result)
+setupPageConverter(pageCnvCtx **result)
 {
 	uint16		oldPageVersion;
 	uint16		newPageVersion;
@@ -46,15 +48,15 @@ setupPageConverter(migratorContext *ctx, pageCnvCtx **result)
 	char		dstName[MAXPGPATH];
 	char		srcName[MAXPGPATH];
 
-	snprintf(dstName, sizeof(dstName), "%s/global/%u", ctx->new.pgdata,
-			 ctx->new.pg_database_oid);
-	snprintf(srcName, sizeof(srcName), "%s/global/%u", ctx->old.pgdata,
-			 ctx->old.pg_database_oid);
+	snprintf(dstName, sizeof(dstName), "%s/global/%u", new_cluster.pgdata,
+			 new_cluster.pg_database_oid);
+	snprintf(srcName, sizeof(srcName), "%s/global/%u", old_cluster.pgdata,
+			 old_cluster.pg_database_oid);
 
-	if ((msg = getPageVersion(ctx, &oldPageVersion, srcName)) != NULL)
+	if ((msg = getPageVersion(&oldPageVersion, srcName)) != NULL)
 		return msg;
 
-	if ((msg = getPageVersion(ctx, &newPageVersion, dstName)) != NULL)
+	if ((msg = getPageVersion(&newPageVersion, dstName)) != NULL)
 		return msg;
 
 	/*
@@ -73,8 +75,8 @@ setupPageConverter(migratorContext *ctx, pageCnvCtx **result)
 	 * layout.
 	 */
 
-	if ((converter = loadConverterPlugin(ctx, newPageVersion, oldPageVersion)) == NULL)
-		return "can't find plugin to convert from old page layout to new page layout";
+	if ((converter = loadConverterPlugin(newPageVersion, oldPageVersion)) == NULL)
+		return "could not find plugin to convert from old page layout to new page layout";
 	else
 	{
 		*result = converter;
@@ -93,19 +95,19 @@ setupPageConverter(migratorContext *ctx, pageCnvCtx **result)
  *	of a null-terminated string).
  */
 static const char *
-getPageVersion(migratorContext *ctx, uint16 *version, const char *pathName)
+getPageVersion(uint16 *version, const char *pathName)
 {
 	int			relfd;
 	PageHeaderData page;
 	ssize_t		bytesRead;
 
 	if ((relfd = open(pathName, O_RDONLY, 0)) < 0)
-		return "can't open relation";
+		return "could not open relation";
 
 	if ((bytesRead = read(relfd, &page, sizeof(page))) != sizeof(page))
 	{
 		close(relfd);
-		return "can't read page header";
+		return "could not read page header";
 	}
 
 	*version = PageGetPageLayoutVersion(&page);
@@ -128,7 +130,7 @@ getPageVersion(migratorContext *ctx, uint16 *version, const char *pathName)
  *	is not found, this function returns NULL.
  */
 static pageCnvCtx *
-loadConverterPlugin(migratorContext *ctx, uint16 newPageVersion, uint16 oldPageVersion)
+loadConverterPlugin(uint16 newPageVersion, uint16 oldPageVersion)
 {
 	char		pluginName[MAXPGPATH];
 	void	   *plugin;
@@ -151,7 +153,7 @@ loadConverterPlugin(migratorContext *ctx, uint16 newPageVersion, uint16 oldPageV
 		return NULL;
 	else
 	{
-		pageCnvCtx *result = (pageCnvCtx *) pg_malloc(ctx, sizeof(*result));
+		pageCnvCtx *result = (pageCnvCtx *) pg_malloc(sizeof(*result));
 
 		result->old.PageVersion = oldPageVersion;
 		result->new.PageVersion = newPageVersion;

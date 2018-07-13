@@ -3,11 +3,11 @@
  * dict_simple.c
  *		Simple dictionary: just lowercase and check for stopword
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_simple.c,v 1.9 2010/01/02 16:57:53 momjian Exp $
+ *	  src/backend/tsearch/dict_simple.c
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,7 @@
 
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
-#include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
-#include "utils/builtins.h"
 
 
 typedef struct

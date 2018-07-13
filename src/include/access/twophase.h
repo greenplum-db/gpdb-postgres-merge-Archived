@@ -4,20 +4,17 @@
  *	  Two-phase-commit related declarations.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.15 2010/04/13 14:17:46 heikki Exp $
+ * src/include/access/twophase.h
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TWOPHASE_H
 #define TWOPHASE_H
 
-#include "access/xlogdefs.h"
-#include "storage/backendid.h"
 #include "storage/proc.h"
-#include "utils/timestamp.h"
 
 /*
  * Directory where two phase commit files reside within PGDATA
@@ -104,7 +101,5 @@ extern void TwoPhaseAddPreparedTransaction(
 extern void getTwoPhasePreparedTransactionData(prepared_transaction_agg_state **ptas, char *caller);
 
 extern void SetupCheckpointPreparedTransactionList(prepared_transaction_agg_state *ptas);
-
-extern bool TwoPhaseFindRecoverPostCheckpointPreparedTransactionsMapEntry(TransactionId xid, XLogRecPtr *m, char *caller);
 
 #endif   /* TWOPHASE_H */

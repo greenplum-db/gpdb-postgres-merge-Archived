@@ -3,12 +3,12 @@
  * print.c
  *	  various print routines (used mostly for debugging)
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.92 2010/01/02 16:57:46 momjian Exp $
+ *	  src/backend/nodes/print.c
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,12 +20,10 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
-#include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
-#include "utils/rel.h"
 
 
 /*
@@ -33,7 +31,7 @@
  *	  print contents of Node to stdout
  */
 void
-print(void *obj)
+print(const void *obj)
 {
 	char	   *s;
 	char	   *f;
@@ -51,7 +49,7 @@ print(void *obj)
  *	  pretty-print contents of Node to stdout
  */
 void
-pprint(void *obj)
+pprint(const void *obj)
 {
 	char	   *s;
 	char	   *f;
@@ -69,7 +67,7 @@ pprint(void *obj)
  *	  send pretty-printed contents of Node to postmaster log
  */
 void
-elog_node_display(int lev, const char *title, void *obj, bool pretty)
+elog_node_display(int lev, const char *title, const void *obj, bool pretty)
 {
 	char	   *s;
 	char	   *f;
@@ -82,7 +80,7 @@ elog_node_display(int lev, const char *title, void *obj, bool pretty)
 	pfree(s);
 	ereport(lev,
 			(errmsg_internal("%s:", title),
-			 errdetail("%s", f)));
+			 errdetail_internal("%s", f)));
 	pfree(f);
 }
 
@@ -251,9 +249,9 @@ pretty_format_node_dump(const char *dump)
  *	  print contents of range table
  */
 void
-print_rt(List *rtable)
+print_rt(const List *rtable)
 {
-	ListCell   *l;
+	const ListCell *l;
 	int			i = 1;
 
 	printf("resno\trefname  \trelid\tinFromCl\n");
@@ -267,8 +265,8 @@ print_rt(List *rtable)
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
-				printf("%d\t%s\t%u",
-					   i, name, rte->relid);
+				printf("%d\t%s\t%u\t%c",
+					   i, name, rte->relid, rte->relkind);
 				break;
 			case RTE_SUBQUERY:
 				printf("%d\t%s\t[subquery]",
@@ -278,21 +276,17 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[join]",
 					   i, name);
 				break;
-			case RTE_SPECIAL:
-				printf("%d\t%s\t[special]",
-					   i, name);
-				break;
 			case RTE_FUNCTION:
 				printf("%d\t%s\t[rangefunction]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_VALUES:
 				printf("%d\t%s\t[values list]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_CTE:
 				printf("%d\t%s\t[cte]",
-					   i, rte->eref->aliasname);
+					   i, name);
 				break;
 			case RTE_TABLEFUNCTION:
 				printf("%d\t%s\t[tablefunction]",
@@ -320,7 +314,7 @@ print_rt(List *rtable)
  *	  print an expression
  */
 void
-print_expr(Node *expr, List *rtable)
+print_expr(const Node *expr, const List *rtable)
 {
 	if (expr == NULL)
 	{
@@ -330,18 +324,22 @@ print_expr(Node *expr, List *rtable)
 
 	if (IsA(expr, Var))
 	{
-		Var		   *var = (Var *) expr;
+		const Var  *var = (const Var *) expr;
 		char	   *relname,
 				   *attname;
 
 		switch (var->varno)
 		{
-			case INNER:
+			case INNER_VAR:
 				relname = "INNER";
 				attname = "?";
 				break;
-			case OUTER:
+			case OUTER_VAR:
 				relname = "OUTER";
+				attname = "?";
+				break;
+			case INDEX_VAR:
+				relname = "INDEX";
 				attname = "?";
 				break;
 			default:
@@ -360,7 +358,7 @@ print_expr(Node *expr, List *rtable)
 	}
 	else if (IsA(expr, Const))
 	{
-		Const	   *c = (Const *) expr;
+		const Const *c = (const Const *) expr;
 		Oid			typoutput;
 		bool		typIsVarlena;
 		char	   *outputstr;
@@ -380,26 +378,26 @@ print_expr(Node *expr, List *rtable)
 	}
 	else if (IsA(expr, OpExpr))
 	{
-		OpExpr	   *e = (OpExpr *) expr;
+		const OpExpr *e = (const OpExpr *) expr;
 		char	   *opname;
 
 		opname = get_opname(e->opno);
 		if (list_length(e->args) > 1)
 		{
-			print_expr(get_leftop((Expr *) e), rtable);
+			print_expr(get_leftop((const Expr *) e), rtable);
 			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr(get_rightop((Expr *) e), rtable);
+			print_expr(get_rightop((const Expr *) e), rtable);
 		}
 		else
 		{
 			/* we print prefix and postfix ops the same... */
 			printf("%s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr(get_leftop((Expr *) e), rtable);
+			print_expr(get_leftop((const Expr *) e), rtable);
 		}
 	}
 	else if (IsA(expr, FuncExpr))
 	{
-		FuncExpr   *e = (FuncExpr *) expr;
+		const FuncExpr *e = (const FuncExpr *) expr;
 		char	   *funcname;
 		ListCell   *l;
 
@@ -422,9 +420,9 @@ print_expr(Node *expr, List *rtable)
  *	  pathkeys list of PathKeys
  */
 void
-print_pathkeys(List *pathkeys, List *rtable)
+print_pathkeys(const List *pathkeys, const List *rtable)
 {
-	ListCell   *i;
+	const ListCell *i;
 
 	printf("(");
 	foreach(i, pathkeys)
@@ -462,9 +460,9 @@ print_pathkeys(List *pathkeys, List *rtable)
  *	  print targetlist in a more legible way.
  */
 void
-print_tl(List *tlist, List *rtable)
+print_tl(const List *tlist, const List *rtable)
 {
-	ListCell   *tl;
+	const ListCell *tl;
 
 	printf("(\n");
 	foreach(tl, tlist)
@@ -575,6 +573,8 @@ plannode_type(Plan *p)
 			return "MOTION";
 		case T_Repeat:
 			return "REPEAT";
+		case T_ForeignScan:
+			return "FOREIGNSCAN";
 		default:
 			return "UNKNOWN";
 	}

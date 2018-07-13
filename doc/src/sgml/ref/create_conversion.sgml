@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.24 2010/06/16 02:12:51 petere Exp $ -->
+<!-- doc/src/sgml/ref/create_conversion.sgml -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -22,7 +22,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
     FOR <replaceable>source_encoding</replaceable> TO <replaceable>dest_encoding</replaceable> FROM <replaceable>function_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1 id="sql-createconversion-description">
   <title>Description</title>
 
@@ -113,8 +113,7 @@ conv_proc(
     internal, -- destination (fill with a null terminated C string)
     integer   -- source string length
 ) RETURNS void;
-</programlisting>
-      </para>
+</programlisting></para>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -141,11 +140,10 @@ conv_proc(
    <literal>LATIN1</literal> using <function>myfunc</>:
 <programlisting>
 CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
- 
+
  <refsect1 id="sql-createconversion-compat">
   <title>Compatibility</title>
 

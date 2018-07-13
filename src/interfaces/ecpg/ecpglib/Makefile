@@ -2,10 +2,10 @@
 #
 # Makefile for ecpg library
 #
-# Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.66 2010/01/05 16:38:23 meskes Exp $
+# src/interfaces/ecpg/ecpglib/Makefile
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ include $(top_builddir)/src/Makefile.global
 
 NAME= ecpg
 SO_MAJOR_VERSION= 6
-SO_MINOR_VERSION= 2
+SO_MINOR_VERSION= 4
 
 
 # The frontend doesn't need everything that's in LIBS, some are backend only
@@ -38,7 +38,7 @@ LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o memory.o \
 	connect.o misc.o path.o pgstrcasecmp.o \
-	$(filter snprintf.o strlcpy.o, $(LIBOBJS))
+	$(filter snprintf.o strlcpy.o win32setlocale.o, $(LIBOBJS))
 
 # thread.c is needed only for non-WIN32 implementation of path.c
 ifneq ($(PORTNAME), win32)
@@ -48,6 +48,7 @@ PTHREAD_LIBS=-lpthread
 endif
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
+SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
@@ -58,12 +59,10 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder
 endif
 
-all: libpq pgtypeslib all-lib
+all: all-lib
 
-libpq:
-	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
-
-pgtypeslib:
+.PHONY: submake-pgtypeslib
+submake-pgtypeslib:
 	$(MAKE) -C $(top_builddir)/src/interfaces/ecpg/pgtypeslib all
 
 # Shared library stuff
@@ -74,7 +73,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c: % : $(top_srcdir)/src/port/%
+path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c win32setlocale.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 misc.o: misc.c $(top_builddir)/src/port/pg_config_paths.h
@@ -91,6 +90,6 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c
+	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c win32setlocale.c
 
 maintainer-clean: distclean maintainer-clean-lib

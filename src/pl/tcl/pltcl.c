@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.134 2010/07/06 19:19:01 momjian Exp $
+ *	  src/pl/tcl/pltcl.c
  *
  **********************************************************************/
 
@@ -20,7 +20,6 @@
 
 #include "catalog/namespace.h"
 #include "access/xact.h"
-#include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
@@ -34,6 +33,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -98,9 +98,9 @@ PG_MODULE_MAGIC;
  **********************************************************************/
 typedef struct pltcl_interp_desc
 {
-	Oid			user_id;				/* Hash key (must be first!) */
-	Tcl_Interp *interp;					/* The interpreter */
-	Tcl_HashTable query_hash;			/* pltcl_query_desc structs */
+	Oid			user_id;		/* Hash key (must be first!) */
+	Tcl_Interp *interp;			/* The interpreter */
+	Tcl_HashTable query_hash;	/* pltcl_query_desc structs */
 } pltcl_interp_desc;
 
 
@@ -130,7 +130,7 @@ typedef struct pltcl_proc_desc
 typedef struct pltcl_query_desc
 {
 	char		qname[20];
-	void	   *plan;
+	SPIPlanPtr	plan;
 	int			nargs;
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
@@ -140,7 +140,7 @@ typedef struct pltcl_query_desc
 
 /**********************************************************************
  * For speedy lookup, we maintain a hash table mapping from
- * function OID + trigger OID + user OID to pltcl_proc_desc pointers.
+ * function OID + trigger flag + user OID to pltcl_proc_desc pointers.
  * The reason the pltcl_proc_desc struct isn't directly part of the hash
  * entry is to simplify recovery from errors during compile_pltcl_function.
  *
@@ -151,14 +151,19 @@ typedef struct pltcl_query_desc
  **********************************************************************/
 typedef struct pltcl_proc_key
 {
-	Oid			proc_id;				/* Function OID */
-	Oid			trig_id;				/* Trigger OID, or 0 if not trigger */
-	Oid			user_id;				/* User calling the function, or 0 */
+	Oid			proc_id;		/* Function OID */
+
+	/*
+	 * is_trigger is really a bool, but declare as Oid to ensure this struct
+	 * contains no padding
+	 */
+	Oid			is_trigger;		/* is it a trigger function? */
+	Oid			user_id;		/* User calling the function, or 0 */
 } pltcl_proc_key;
 
 typedef struct pltcl_proc_ptr
 {
-	pltcl_proc_key proc_key;			/* Hash key (must be first!) */
+	pltcl_proc_key proc_key;	/* Hash key (must be first!) */
 	pltcl_proc_desc *proc_ptr;
 } pltcl_proc_ptr;
 
@@ -195,7 +200,7 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
-											   bool pltrusted);
+					   bool pltrusted);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
@@ -472,7 +477,6 @@ pltcl_fetch_interp(bool pltrusted)
 static void
 pltcl_init_load_unknown(Tcl_Interp *interp)
 {
-	Oid			relOid;
 	Relation	pmrel;
 	char	   *pmrelname,
 			   *nspname;
@@ -495,20 +499,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 * this next bit of code is the same as try_relation_openrv(),
 	 * which only exists in 8.4 and up.
 	 ************************************************************/
-
-	/* Check for shared-cache-inval messages */
-	AcceptInvalidationMessages();
-
-	/* Look up the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(makeRangeVar(NULL, "pltcl_modules", -1), true);
-
-	/* Drop out on not-found */
-	if (!OidIsValid(relOid))
-		return;
-
-	/* Let relation_open do the rest */
-	pmrel = relation_open(relOid, AccessShareLock);
-
+	pmrel = relation_openrv_extended(makeRangeVar(NULL, "pltcl_modules", -1), AccessShareLock, true, true);
 	if (pmrel == NULL)
 		return;
 	/* must be table or view, else ignore */
@@ -908,6 +899,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			Tcl_DStringAppendElement(&tcl_cmd, "BEFORE");
 		else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 			Tcl_DStringAppendElement(&tcl_cmd, "AFTER");
+		else if (TRIGGER_FIRED_INSTEAD(trigdata->tg_event))
+			Tcl_DStringAppendElement(&tcl_cmd, "INSTEAD OF");
 		else
 			elog(ERROR, "unrecognized WHEN tg_event: %u", trigdata->tg_event);
 
@@ -1189,7 +1182,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 
 	/* Try to find function in pltcl_proc_htab */
 	proc_key.proc_id = fn_oid;
-	proc_key.trig_id = tgreloid;
+	proc_key.is_trigger = OidIsValid(tgreloid);
 	proc_key.user_id = pltrusted ? GetUserId() : InvalidOid;
 
 	proc_ptr = hash_search(pltcl_proc_htab, &proc_key,
@@ -1245,14 +1238,16 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		int			tcl_rc;
 
 		/************************************************************
-		 * Build our internal proc name from the functions Oid + trigger Oid
+		 * Build our internal proc name from the function's Oid.  Append
+		 * "_trigger" when appropriate to ensure the normal and trigger
+		 * cases are kept separate.
 		 ************************************************************/
 		if (!is_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u", fn_oid);
 		else
 			snprintf(internal_proname, sizeof(internal_proname),
-					 "__PLTcl_proc_%u_trigger_%u", fn_oid, tgreloid);
+					 "__PLTcl_proc_%u_trigger", fn_oid);
 
 		/************************************************************
 		 * Allocate a new procedure description block
@@ -2033,7 +2028,7 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
  * pltcl_SPI_prepare()		- Builtin support for prepared plans
  *				  The Tcl command SPI_prepare
  *				  always saves the plan using
- *				  SPI_saveplan and returns a key for
+ *				  SPI_keepplan and returns a key for
  *				  access. There is no chance to prepare
  *				  and not save the plan currently.
  **********************************************************************/
@@ -2044,7 +2039,6 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	int			nargs;
 	CONST84 char **args;
 	pltcl_query_desc *qdesc;
-	void	   *plan;
 	int			i;
 	Tcl_HashEntry *hashent;
 	int			hashnew;
@@ -2112,22 +2106,18 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		 * Prepare the plan and check for errors
 		 ************************************************************/
 		UTF_BEGIN;
-		plan = SPI_prepare(UTF_U2E(argv[1]), nargs, qdesc->argtypes);
+		qdesc->plan = SPI_prepare(UTF_U2E(argv[1]), nargs, qdesc->argtypes);
 		UTF_END;
 
-		if (plan == NULL)
+		if (qdesc->plan == NULL)
 			elog(ERROR, "SPI_prepare() failed");
 
 		/************************************************************
 		 * Save the plan into permanent memory (right now it's in the
 		 * SPI procCxt, which will go away at function end).
 		 ************************************************************/
-		qdesc->plan = SPI_saveplan(plan);
-		if (qdesc->plan == NULL)
-			elog(ERROR, "SPI_saveplan() failed");
-
-		/* Release the procCxt copy to avoid within-function memory leak */
-		SPI_freeplan(plan);
+		if (SPI_keepplan(qdesc->plan))
+			elog(ERROR, "SPI_keepplan() failed");
 
 		pltcl_subtrans_commit(oldcontext, oldowner);
 	}

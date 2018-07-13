@@ -4,10 +4,10 @@
  *	  This file provides some definitions to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/toasting.h,v 1.14 2010/04/20 23:48:47 tgl Exp $
+ * src/include/catalog/toasting.h
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
  * toasting.c prototypes
  */
 extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
-									   bool is_part_child);
+									   bool is_part_child, bool is_create);
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 
@@ -46,13 +46,11 @@ DECLARE_TOAST(pg_constraint, 2832, 2833);
 DECLARE_TOAST(pg_description, 2834, 2835);
 DECLARE_TOAST(pg_proc, 2836, 2837);
 DECLARE_TOAST(pg_rewrite, 2838, 2839);
+DECLARE_TOAST(pg_seclabel, 3598, 3599);
 DECLARE_TOAST(pg_statistic, 2840, 2841);
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 
 /* shared catalogs */
-DECLARE_TOAST(pg_database, 2844, 2845);
-#define PgDatabaseToastTable 2844
-#define PgDatabaseToastIndex 2845
 DECLARE_TOAST(pg_shdescription, 2846, 2847);
 #define PgShdescriptionToastTable 2846
 #define PgShdescriptionToastIndex 2847

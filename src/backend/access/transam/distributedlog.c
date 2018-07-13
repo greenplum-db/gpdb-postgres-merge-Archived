@@ -637,7 +637,7 @@ DistributedLog_BootStrap(void)
 	slotno = DistributedLog_ZeroPage(0, false);
 
 	/* Make sure it's written out */
-	SimpleLruWritePage(DistributedLogCtl, slotno, NULL);
+	SimpleLruWritePage(DistributedLogCtl, slotno);
 	Assert(!DistributedLogCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(DistributedLogControlLock);
@@ -872,10 +872,8 @@ DistributedLog_Truncate(TransactionId oldestXmin)
 		 oldestXmin, cutoffPage);
 
 	/* Check to see if there's any files that could be removed */
-	if (!SlruScanDirectory(DistributedLogCtl, cutoffPage, false))
-	{
+	if (!SlruScanDirectory(DistributedLogCtl, SlruScanDirCbReportPresence, &cutoffPage))
 		return;					/* nothing to remove */
-	}
 
 	/* Write XLOG record and flush XLOG to disk */
 	DistributedLog_WriteTruncateXlogRec(cutoffPage);
@@ -974,7 +972,7 @@ DistributedLog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		LWLockAcquire(DistributedLogControlLock, LW_EXCLUSIVE);
 
 		slotno = DistributedLog_ZeroPage(page, false);
-		SimpleLruWritePage(DistributedLogCtl, slotno, NULL);
+		SimpleLruWritePage(DistributedLogCtl, slotno);
 		Assert(!DistributedLogCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(DistributedLogControlLock);
@@ -1010,7 +1008,7 @@ DistributedLog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-DistributedLog_desc(StringInfo buf, XLogRecPtr beginLoc, XLogRecord *record)
+DistributedLog_desc(StringInfo buf, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	char		*rec = XLogRecGetData(record);

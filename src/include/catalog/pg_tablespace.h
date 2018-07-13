@@ -5,10 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_tablespace.h,v 1.15 2010/01/05 21:53:59 rhaas Exp $
+ * src/include/catalog/pg_tablespace.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -32,8 +32,10 @@ CATALOG(pg_tablespace,1213) BKI_SHARED_RELATION
 {
 	NameData	spcname;		/* tablespace name */
 	Oid			spcowner;		/* owner of tablespace */
-	aclitem		spcacl[1];		/* access permissions (VAR LENGTH) */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	aclitem		spcacl[1];		/* access permissions */
 	text		spcoptions[1];	/* per-tablespace options */
+#endif
 } FormData_pg_tablespace;
 
 /* GPDB added foreign key definitions for gpcheckcat. */

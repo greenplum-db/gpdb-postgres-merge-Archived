@@ -5,7 +5,7 @@
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  *
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.38 2010/02/26 02:00:32 momjian Exp $
+ * contrib/oid2name/oid2name.c
  */
 #include "postgres_fe.h"
 
@@ -177,7 +177,7 @@ help(const char *progname)
 {
 	printf("%s helps examining the file structure used by PostgreSQL.\n\n"
 		   "Usage:\n"
-		   "  %s [OPTIONS]...\n"
+		   "  %s [OPTION]...\n"
 		   "\nOptions:\n"
 		   "  -d DBNAME    database to connect to\n"
 		   "  -f FILENODE  show info for table with given file node\n"

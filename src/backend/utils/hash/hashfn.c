@@ -4,12 +4,12 @@
  *		Hash functions for use in dynahash.c hashtables
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.34 2010/01/02 16:57:56 momjian Exp $
+ *	  src/backend/utils/hash/hashfn.c
  *
  * NOTES
  *	  It is expected that every bit of a hash function's 32-bit result is
@@ -28,11 +28,10 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "nodes/bitmapset.h"
 
 
 /*
- * string_hash: hash function for keys that are null-terminated strings.
+ * string_hash: hash function for keys that are NUL-terminated strings.
  *
  * NOTE: this is the default hash function if none is specified.
  */

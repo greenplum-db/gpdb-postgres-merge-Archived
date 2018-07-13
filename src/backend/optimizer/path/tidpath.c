@@ -27,12 +27,12 @@
  *
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.35 2010/01/02 16:57:47 momjian Exp $
+ *	  src/backend/optimizer/path/tidpath.c
  *
  *-------------------------------------------------------------------------
  */
@@ -248,18 +248,15 @@ TidQualFromRestrictinfo(List *restrictinfo, int varno)
  *
  *	  Candidate paths are added to the rel's pathlist (using add_path).
  *
- * CDB: Instead of handing the paths to add_path(), we append them to a List
- * (*ppathlist) belonging to the caller.
- *
  * CDB TODO: Set rel->onerow if at most one tid is to be fetched.
  */
 void
-create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel, List** ppathlist)
+create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *tidquals;
 
 	tidquals = TidQualFromRestrictinfo(rel->baserestrictinfo, rel->relid);
 
 	if (tidquals)
-		*ppathlist = lappend(*ppathlist, create_tidscan_path(root, rel, tidquals));
+		add_path(root, rel, (Path *) create_tidscan_path(root, rel, tidquals));
 }

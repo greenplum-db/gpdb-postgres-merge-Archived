@@ -854,14 +854,22 @@ SetSegnoForCompaction(Relation rel,
 	for (i = 0; i < MAX_AOREL_CONCURRENCY; i++)
 	{
 		AOSegfileStatus *segfilestat = &aoentry->relsegfiles[i];
+		bool		in_compaction_list = list_member_int(compactedSegmentFileList, i);
 
 		ereportif(Debug_appendonly_print_segfile_choice, LOG,
 				  (errmsg("segment file %i for append-only relation \"%s\" (%d): state %d",
 						  i, RelationGetRelationName(rel), RelationGetRelid(rel), segfilestat->state)));
 
+		/*
+		 * Find an available AO segment to use that is currently not in state
+		 * AWAITING_DROP_READY or COMPACTED_AWAITING_DROP, not being used by a
+		 * concurrent transaction, and not already marked to be compacted by
+		 * being in the in_compaction_list.
+		 */
 		if ((segfilestat->state == AWAITING_DROP_READY ||
 			 segfilestat->state == COMPACTED_AWAITING_DROP) &&
-			!usedByConcurrentTransaction(segfilestat, i))
+			!usedByConcurrentTransaction(segfilestat, i) &&
+			!in_compaction_list)
 		{
 			ereportif(Debug_appendonly_print_segfile_choice, LOG,
 					  (errmsg("Found segment awaiting drop for append-only relation \"%s\" (%d)",
@@ -1255,7 +1263,7 @@ assignPerRelSegno(List *all_relids)
 		Oid			cur_relid = lfirst_oid(cell);
 		Relation	rel = heap_open(cur_relid, NoLock);
 
-		if (RelationIsAoCols(rel) || RelationIsAoRows(rel))
+		if (RelationIsAppendOptimized(rel))
 		{
 			SegfileMapNode *n;
 
@@ -1309,7 +1317,8 @@ GetTotalTupleCountFromSegments(Relation parentrel,
 	 * assemble our query string
 	 */
 	initStringInfo(&sqlstmt);
-	appendStringInfo(&sqlstmt, "SELECT tupcount, segno FROM pg_aoseg.%s",
+	appendStringInfo(&sqlstmt, "SELECT tupcount, segno FROM %s.%s",
+					 get_namespace_name(RelationGetNamespace(aosegrel)),
 					 RelationGetRelationName(aosegrel));
 	if (segno >= 0)
 		appendStringInfo(&sqlstmt, " WHERE segno = %d", segno);
@@ -1404,7 +1413,7 @@ GetFileSegStateInfoFromSegments(Relation parentrel)
 	Oid			save_userid;
 	bool		save_secdefcxt;
 
-	Assert(RelationIsAoRows(parentrel) || RelationIsAoCols(parentrel));
+	Assert(RelationIsAppendOptimized(parentrel));
 
 	/*
 	 * get the name of the aoseg relation
@@ -1415,7 +1424,8 @@ GetFileSegStateInfoFromSegments(Relation parentrel)
 	 * assemble our query string
 	 */
 	initStringInfo(&sqlstmt);
-	appendStringInfo(&sqlstmt, "SELECT state, segno FROM pg_aoseg.%s",
+	appendStringInfo(&sqlstmt, "SELECT state, segno FROM %s.%s",
+					 get_namespace_name(RelationGetNamespace(aosegrel)),
 					 RelationGetRelationName(aosegrel));
 	heap_close(aosegrel, AccessShareLock);
 
@@ -1523,7 +1533,7 @@ UpdateMasterAosegTotalsFromSegments(Relation parentrel,
 	ListCell   *l;
 	int64	   *total_tupcount;
 
-	Assert(RelationIsAoRows(parentrel) || RelationIsAoCols(parentrel));
+	Assert(RelationIsAppendOptimized(parentrel));
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
 	/* Give -1 for segno, so that we'll have all segfile tupcount. */

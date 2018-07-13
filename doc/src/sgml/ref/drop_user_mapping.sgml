@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user_mapping.sgml,v 1.5 2010/04/03 07:23:01 petere Exp $
+doc/src/sgml/ref/drop_user_mapping.sgml
 PostgreSQL documentation
 -->
 
@@ -85,8 +85,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
    Drop a user mapping <literal>bob</>, server <literal>foo</> if it exists:
 <programlisting>
 DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

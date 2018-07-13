@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pg_upgrade/TESTING,v 1.2.2.2 2010/07/13 20:15:51 momjian Exp $
+contrib/pg_upgrade/TESTING
 
 The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
@@ -13,32 +13,32 @@ Here are the steps needed to create a regression database dump file:
     This database can be created by running 'gmake installcheck' from
     src/test/regression.
 
-2)  Use pg_dump to dump out the regression database
-    Use the new cluster's pg_dump on the old database to minimize
-    whitespace differences in the diff.
+2)  Use pg_dump to dump out the regression database.  Use the new
+    cluster's pg_dump on the old database to minimize whitespace
+    differences in the diff.
 
 3)  Adjust the regression database dump file
 
-    a)  Change CREATE FUNCTION shared object paths to use '$libdir'
-        The old and new cluster will have different shared object paths.
-
-    d)  Perform the load/dump twice
+    a)  Perform the load/dump twice
         This fixes problems with the ordering of COPY columns for
         inherited tables.
 
-    e)  Fix any wrapping format differences
+    b)  Change CREATE FUNCTION shared object paths to use '$libdir'
+        The old and new cluster will have different shared object paths.
+
+    c)  Fix any wrapping format differences
         Commands like CREATE TRIGGER and ALTER TABLE sometimes have
         differences.
 
-    c)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
+    d)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
 
-    b)  For pre-9.0, remove 'regex_flavor'
+    e)  For pre-9.0, remove 'regex_flavor'
 
     f)  For pre-9.0, adjust extra_float_digits
-	Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
-	databases, and extra_float_digits=-3 for >= 9.0 databases.
-	It is necessary to modify 9.0 pg_dump to always use -3, and
-	modify the pre-9.0 old server to accept extra_float_digits=-3.
+        Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
+        databases, and extra_float_digits=-3 for >= 9.0 databases.
+        It is necessary to modify 9.0 pg_dump to always use -3, and
+        modify the pre-9.0 old server to accept extra_float_digits=-3.
 
 Once the dump is created, it can be repeatedly loaded into the old
 database, upgraded, and dumped out of the new database, and then
@@ -52,7 +52,7 @@ steps:
 
 3)  Create the regression database in the old server.
 
-4)  Load the dump file created above into the regression database; 
+4)  Load the dump file created above into the regression database;
     check for errors while loading.
 
 5)  Upgrade the old database to the new major version, as outlined in
@@ -63,6 +63,21 @@ steps:
 7)  Diff the regression database dump file with the regression dump
     file loaded into the old server.
 
+The shell script test.sh in this directory performs more or less this
+procedure.  You can invoke it by running
 
+    gmake check
 
+or by running
 
+    gmake installcheck
+
+if "gmake install" (or "gmake install-world") were done beforehand.
+When invoked without arguments, it will run an upgrade from the
+version in this source tree to a new instance of the same version.  To
+test an upgrade from a different version, invoke it like this:
+
+    gmake installcheck oldbindir=...otherversion/bin oldsrc=...somewhere/postgresql
+
+In this case, you will have to manually eyeball the resulting dump
+diff for version-specific differences, as explained above.

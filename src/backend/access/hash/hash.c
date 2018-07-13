@@ -3,12 +3,12 @@
  * hash.c
  *	  Implementation of Margo Seltzer's Hashing package for postgres.
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.117 2010/02/26 02:00:33 momjian Exp $
+ *	  src/backend/access/hash/hash.c
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -25,6 +25,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
 #include "storage/bufmgr.h"
+#include "utils/rel.h"
 
 
 /* Working state for hashbuild and its callback */
@@ -54,6 +55,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	IndexBuildResult *result;
 	BlockNumber relpages;
 	double		reltuples;
+	double		allvisfrac;
 	uint32		num_buckets;
 	HashBuildState buildstate;
 
@@ -66,10 +68,10 @@ hashbuild(PG_FUNCTION_ARGS)
 			 RelationGetRelationName(index));
 
 	/* Estimate the number of rows currently present in the table */
-	estimate_rel_size(heap, NULL, &relpages, &reltuples);
+	estimate_rel_size(heap, NULL, &relpages, &reltuples, &allvisfrac);
 
 	/* Initialize the hash index metadata page and initial buckets */
-	num_buckets = _hash_metapinit(index, reltuples);
+	num_buckets = _hash_metapinit(index, reltuples, MAIN_FORKNUM);
 
 	/*
 	 * If we just insert the tuples into the index in scan order, then
@@ -111,6 +113,19 @@ hashbuild(PG_FUNCTION_ARGS)
 	result->index_tuples = buildstate.indtuples;
 
 	PG_RETURN_POINTER(result);
+}
+
+/*
+ *	hashbuildempty() -- build an empty hash index in the initialization fork
+ */
+Datum
+hashbuildempty(PG_FUNCTION_ARGS)
+{
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+
+	_hash_metapinit(index, 0, INIT_FORKNUM);
+
+	PG_RETURN_VOID();
 }
 
 /*
@@ -372,12 +387,16 @@ Datum
 hashbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	int			keysz = PG_GETARG_INT32(1);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	int			nkeys = PG_GETARG_INT32(1);
+	int			norderbys = PG_GETARG_INT32(2);
 	IndexScanDesc scan;
 	HashScanOpaque so;
 
-	scan = RelationGetIndexScan(rel, keysz, scankey);
+	/* no order by operators allowed */
+	Assert(norderbys == 0);
+
+	scan = RelationGetIndexScan(rel, nkeys, norderbys);
+
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
 	so->hashso_bucket_valid = false;
 	so->hashso_bucket_blkno = 0;
@@ -402,26 +421,24 @@ hashrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+
+	/* remaining arguments are ignored */
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/* if we are called from beginscan, so is still NULL */
-	if (so)
-	{
-		/* release any pin we still hold */
-		if (BufferIsValid(so->hashso_curbuf))
-			_hash_dropbuf(rel, so->hashso_curbuf);
-		so->hashso_curbuf = InvalidBuffer;
+	/* release any pin we still hold */
+	if (BufferIsValid(so->hashso_curbuf))
+		_hash_dropbuf(rel, so->hashso_curbuf);
+	so->hashso_curbuf = InvalidBuffer;
 
-		/* release lock on bucket, too */
-		if (so->hashso_bucket_blkno)
-			_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
-		so->hashso_bucket_blkno = 0;
+	/* release lock on bucket, too */
+	if (so->hashso_bucket_blkno)
+		_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
+	so->hashso_bucket_blkno = 0;
 
-		/* set position invalid (this will cause _hash_first call) */
-		ItemPointerSetInvalid(&(so->hashso_curpos));
-		ItemPointerSetInvalid(&(so->hashso_heappos));
-	}
+	/* set position invalid (this will cause _hash_first call) */
+	ItemPointerSetInvalid(&(so->hashso_curpos));
+	ItemPointerSetInvalid(&(so->hashso_heappos));
 
 	/* Update scan key, if a new one is given */
 	if (scankey && scan->numberOfKeys > 0)
@@ -429,8 +446,7 @@ hashrescan(PG_FUNCTION_ARGS)
 		memmove(scan->keyData,
 				scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
-		if (so)
-			so->hashso_bucket_valid = false;
+		so->hashso_bucket_valid = false;
 	}
 
 	PG_RETURN_VOID();
@@ -705,6 +721,6 @@ hash_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 }
 
 void
-hash_desc(StringInfo buf __attribute__((unused)), XLogRecPtr beginLoc, XLogRecord *record __attribute__((unused)))
+hash_desc(StringInfo buf __attribute__((unused)), XLogRecord *record __attribute__((unused)))
 {
 }

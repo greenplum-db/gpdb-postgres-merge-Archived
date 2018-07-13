@@ -4,10 +4,10 @@
  *	  POSTGRES relation scan descriptor definitions.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.70 2010/02/26 02:01:21 momjian Exp $
+ * src/include/access/relscan.h
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/itup.h"
+#include "access/tupdesc.h"
 
 #include "access/formatter.h"
 
@@ -50,7 +52,7 @@ typedef struct HeapScanDescData
 	int			rs_mindex;		/* marked tuple's saved index */
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
-} HeapScanDescData;
+}	HeapScanDescData;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
@@ -63,8 +65,11 @@ typedef struct IndexScanDescData
 	Relation	heapRelation;	/* heap relation descriptor, or NULL */
 	Relation	indexRelation;	/* index relation descriptor */
 	Snapshot	xs_snapshot;	/* snapshot to see */
-	int			numberOfKeys;	/* number of scan keys */
-	ScanKey		keyData;		/* array of scan key descriptors */
+	int			numberOfKeys;	/* number of index qualifier conditions */
+	int			numberOfOrderBys;		/* number of ordering operators */
+	ScanKey		keyData;		/* array of index qualifier descriptors */
+	ScanKey		orderByData;	/* array of ordering op descriptors */
+	bool		xs_want_itup;	/* caller requests index tuples */
 
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
@@ -75,6 +80,10 @@ typedef struct IndexScanDescData
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
 
+	/* in an index-only scan, this is valid after a successful amgettuple */
+	IndexTuple	xs_itup;		/* index tuple returned by AM */
+	TupleDesc	xs_itupdesc;	/* rowtype descriptor of xs_itup */
+
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
@@ -82,10 +91,8 @@ typedef struct IndexScanDescData
 	bool		xs_recheck;		/* T means scan keys must be rechecked */
 
 	/* state data for traversing HOT chains in index_getnext */
-	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
-	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
-	TransactionId xs_prev_xmax; /* previous HOT chain member's XMAX, if any */
-} IndexScanDescData;
+	bool		xs_continue_hot;	/* T if must keep walking HOT chain */
+}	IndexScanDescData;
 
 /*
  * used for scan of external relations with the file protocol
@@ -102,11 +109,12 @@ typedef struct FileScanDescData
 	/* current file parse state */
 	struct CopyStateData *fs_pstate;
 
+	bool		raw_buf_done;
+
 	Form_pg_attribute *attr;
 	AttrNumber	num_phys_attrs;
 	Datum	   *values;
 	bool	   *nulls;
-	int		   *attr_offsets;
 	FmgrInfo   *in_functions;
 	Oid		   *typioparams;
 	Oid			in_func_oid;
@@ -115,9 +123,10 @@ typedef struct FileScanDescData
 	bool		fs_inited;		/* false = scan not init'd yet */
 	TupleDesc	fs_tupDesc;
 	HeapTupleData fs_ctup;		/* current tuple in scan, if any */
-	Buffer		fs_cbuf;		/* always invalid buffer */
 
 	/* custom data formatter */
+	FmgrInfo   *fs_custom_formatter_func; /* function to convert to custom format */
+	List	   *fs_custom_formatter_params; /* list of defelems that hold user's format parameters */
 	FormatterData *fs_formatter;
 
 	/* external partition */
@@ -134,6 +143,6 @@ typedef struct SysScanDescData
 	Relation	irel;			/* NULL if doing heap scan */
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
-} SysScanDescData;
+}	SysScanDescData;
 
 #endif   /* RELSCAN_H */

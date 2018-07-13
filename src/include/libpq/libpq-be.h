@@ -8,10 +8,10 @@
  *	  Structs that need to be client-visible are in pqcomm.h.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.74 2010/01/15 09:19:08 heikki Exp $
+ * src/include/libpq/libpq-be.h
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,9 @@ typedef struct
 #endif
 #endif   /* ENABLE_SSPI */
 
+#include "datatype/timestamp.h"
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
-#include "utils/timestamp.h"
 
 
 typedef enum CAC_state
@@ -112,6 +112,14 @@ typedef struct Port
 	SockAddr	laddr;			/* local addr (postmaster) */
 	SockAddr	raddr;			/* remote addr (client) */
 	char	   *remote_host;	/* name (or ip addr) of remote host */
+	char	   *remote_hostname;/* name (not ip addr) of remote host, if
+								 * available */
+	int			remote_hostname_resolv; /* +1 = remote_hostname is known to
+										 * resolve to client's IP address; -1
+										 * = remote_hostname is known NOT to
+										 * resolve to client's IP address; 0 =
+										 * we have not done the forward DNS
+										 * lookup yet */
 	char	   *remote_port;	/* text rep of remote port */
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
@@ -155,7 +163,7 @@ typedef struct Port
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 
 	/*
-	 * If GSSAPI is supported, store GSSAPI information. Oterwise, store a
+	 * If GSSAPI is supported, store GSSAPI information. Otherwise, store a
 	 * NULL pointer to make sure offsets in the struct remain the same.
 	 */
 	pg_gssinfo *gss;
@@ -168,9 +176,9 @@ typedef struct Port
 	 * locations of other fields)
 	 */
 #ifdef USE_SSL
-	SSL		*ssl;
-	X509	   	*peer;
-	char		*peer_cn;
+	SSL		   *ssl;
+	X509	   *peer;
+	char	   *peer_cn;
 	unsigned long count;
 #endif
 } Port;

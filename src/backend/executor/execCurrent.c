@@ -3,10 +3,10 @@
  * execCurrent.c
  *	  executor support for WHERE CURRENT OF cursor
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.15 2010/01/02 16:57:40 momjian Exp $
+ *	src/backend/executor/execCurrent.c
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
+#include "utils/rel.h"
 
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
@@ -298,7 +299,7 @@ getCurrentOf(CurrentOfExpr *cexpr,
 	{
 		ScanState  *scanstate;
 		bool		lisnull;
-		Oid			tuple_tableoid;
+		Oid tuple_tableoid PG_USED_FOR_ASSERTS_ONLY;
 		ItemPointer tuple_tid;
 
 		/*
@@ -477,6 +478,7 @@ search_plan_tree(PlanState *node, Oid table_oid)
 		case T_TableScanState:
 		case T_DynamicTableScanState:
 		case T_IndexScanState:
+		case T_IndexOnlyScanState:
 		case T_BitmapHeapScanState:
 		case T_BitmapAppendOnlyScanState:
 		case T_BitmapTableScanState:
@@ -502,6 +504,29 @@ search_plan_tree(PlanState *node, Oid table_oid)
 				for (i = 0; i < astate->as_nplans; i++)
 				{
 					ScanState  *elem = search_plan_tree(astate->appendplans[i],
+														table_oid);
+
+					if (!elem)
+						continue;
+					if (result)
+						return NULL;	/* multiple matches */
+					result = elem;
+				}
+				return result;
+			}
+
+			/*
+			 * Similarly for MergeAppend
+			 */
+		case T_MergeAppendState:
+			{
+				MergeAppendState *mstate = (MergeAppendState *) node;
+				ScanState  *result = NULL;
+				int			i;
+
+				for (i = 0; i < mstate->ms_nplans; i++)
+				{
+					ScanState  *elem = search_plan_tree(mstate->mergeplans[i],
 														table_oid);
 
 					if (!elem)

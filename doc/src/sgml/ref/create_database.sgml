@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.54 2010/04/03 07:22:58 petere Exp $
+doc/src/sgml/ref/create_database.sgml
 PostgreSQL documentation
 -->
 
@@ -73,7 +73,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">use_name</replaceable></term>
+      <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
         The role name of the user who will own the new database,

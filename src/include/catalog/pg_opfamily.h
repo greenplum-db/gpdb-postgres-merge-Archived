@@ -5,10 +5,10 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.14 2010/01/14 16:31:09 teodor Exp $
+ * src/include/catalog/pg_opfamily.h
  *
  * NOTES
  *	  the genbki.pl script reads this file and generates .bki
@@ -65,6 +65,7 @@ typedef FormData_pg_opfamily *Form_pg_opfamily;
 
 DATA(insert OID =  421 (	403		abstime_ops		PGNSP PGUID ));
 DATA(insert OID =  397 (	403		array_ops		PGNSP PGUID ));
+DATA(insert OID =  627 (	405		array_ops		PGNSP PGUID ));
 DATA(insert OID =  423 (	403		bit_ops			PGNSP PGUID ));
 DATA(insert OID =  424 (	403		bool_ops		PGNSP PGUID ));
 #define BOOL_BTREE_FAM_OID 424
@@ -143,6 +144,13 @@ DATA(insert OID = 3655 (	783		tsvector_ops	PGNSP PGUID ));
 DATA(insert OID = 3659 (	2742	tsvector_ops	PGNSP PGUID ));
 DATA(insert OID = 3683 (	403		tsquery_ops		PGNSP PGUID ));
 DATA(insert OID = 3702 (	783		tsquery_ops		PGNSP PGUID ));
+DATA(insert OID = 3901 (	403		range_ops		PGNSP PGUID ));
+DATA(insert OID = 3903 (	405		range_ops		PGNSP PGUID ));
+DATA(insert OID = 3919 (	783		range_ops		PGNSP PGUID ));
+DATA(insert OID = 4015 (	4000	quad_point_ops	PGNSP PGUID ));
+DATA(insert OID = 4016 (	4000	kd_point_ops	PGNSP PGUID ));
+DATA(insert OID = 4017 (	4000	text_ops		PGNSP PGUID ));
+#define TEXT_SPGIST_FAM_OID 4017
 
 /* Complex Number type */
 DATA(insert OID = 3221 (	403		complex_ops		PGNSP PGUID ));

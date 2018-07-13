@@ -5,10 +5,10 @@
  *	  However, we define it here so that the format is documented.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.57 2010/06/03 20:37:13 alvherre Exp $
+ * src/include/catalog/pg_control.h
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,7 @@
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	9030600
-
+#define PG_CONTROL_VERSION	9220600
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
  * a copy of the latest one in pg_control for possible disaster recovery.
@@ -38,6 +37,7 @@ typedef struct CheckPoint
 	XLogRecPtr	redo;			/* next RecPtr available when we began to
 								 * create CheckPoint (i.e. REDO start point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
+	bool		fullPageWrites; /* current full_page_writes */
 	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
@@ -51,8 +51,8 @@ typedef struct CheckPoint
 	/*
 	 * Oldest XID still running. This is only needed to initialize hot standby
 	 * mode from an online checkpoint, so we only bother calculating this for
-	 * online checkpoints and only when archiving is enabled. Otherwise it's
-	 * set to InvalidTransactionId.
+	 * online checkpoints and only when wal_level is hot_standby. Otherwise
+	 * it's set to InvalidTransactionId.
 	 */
 	TransactionId oldestActiveXid;
 
@@ -67,8 +67,10 @@ typedef struct CheckPoint
 #define XLOG_SWITCH						0x40
 #define XLOG_BACKUP_END					0x50
 #define XLOG_PARAMETER_CHANGE			0x60
-#define XLOG_NEXTRELFILENODE			0x70
-#define XLOG_HINT						0x80
+#define XLOG_RESTORE_POINT				0x70
+#define XLOG_FPW_CHANGE				0x80
+#define XLOG_NEXTRELFILENODE			0x90
+#define XLOG_HINT						0xA0
 
 
 /*
@@ -148,6 +150,12 @@ typedef struct ControlFileData
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
 	 *
+	 * backupEndPoint is the backup end location, if we are recovering from an
+	 * online backup which was taken from the standby and haven't reached the
+	 * end of backup yet. It is initialized to the minimum recovery point in
+	 * pg_control which was backed up last. It is reset to zero when the end
+	 * of backup is reached, and we mustn't start up before that.
+	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
 	 * start up. If it's false, but backupStartPoint is set, a backup_label
@@ -156,6 +164,7 @@ typedef struct ControlFileData
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
+	XLogRecPtr	backupEndPoint;
 	bool		backupEndRequired;
 
 	/*

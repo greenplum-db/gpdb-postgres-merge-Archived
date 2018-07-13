@@ -36,11 +36,11 @@
  *
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.45 2010/01/02 16:57:45 momjian Exp $
+ *	  src/backend/executor/nodeResult.c
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,15 @@ ExecResult(ResultState *node)
 		node->rs_checkqual = false;
 		if (!qualResult)
 		{
+			/*
+			 * CDB: We'll read no more from outer subtree. To keep our
+			 * sibling QEs from being starved, tell source QEs not to clog
+			 * up the pipeline with our never-to-be-consumed data.
+			 */
+			PlanState *outerPlan = outerPlanState(node);	
+			if (outerPlan)
+				ExecSquelchNode(outerPlan);	
+
 			return NULL;
 		}
 	}
@@ -289,19 +298,9 @@ static bool TupleMatchesHashFilter(Result *resultNode, TupleTableSlot *resultSlo
 
 				/* CdbHash treats all array-types as ANYARRAYOID, it doesn't know how to hash
 				 * the individual types (why is this ?) */
-				switch (att_type)
-				{
-					case INT2ARRAYOID:
-					case INT4ARRAYOID:
-					case INT8ARRAYOID:
-					case FLOAT4ARRAYOID:
-					case FLOAT8ARRAYOID:
-					case REGTYPEARRAYOID:
-						att_type = ANYARRAYOID;
-						/* fall through */
-					default:
-						break;
-				}
+				if (typeIsArrayType(att_type))
+					att_type = ANYARRAYOID;
+
 				cdbhash(hash, hAttr, att_type);
 			}
 			else
@@ -456,7 +455,7 @@ ExecEndResult(ResultState *node)
 }
 
 void
-ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
+ExecReScanResult(ResultState *node)
 {
 	node->inputFullyConsumed = false;
 	node->isSRF = false;
@@ -464,11 +463,9 @@ ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.	However, if caller is passing us an exprCtxt then
-	 * forcibly rescan the subnode now, so that we can pass the exprCtxt down
-	 * to the subnode (needed for gated indexscan).
+	 * first ExecProcNode.
 	 */
 	if (node->ps.lefttree &&
-		(node->ps.lefttree->chgParam == NULL || exprCtxt != NULL))
-		ExecReScan(node->ps.lefttree, exprCtxt);
+		node->ps.lefttree->chgParam == NULL)
+		ExecReScan(node->ps.lefttree);
 }

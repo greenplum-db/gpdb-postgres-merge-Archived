@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.8 2009/06/11 14:48:52 momjian Exp $
+ * contrib/pgcrypto/pgp-compress.c
  */
 
 #include "postgres.h"
@@ -105,7 +105,7 @@ compress_init(PushFilter *next, void *init_arg, void **priv_p)
 
 /* writes compressed data packet */
 
-/* cant handle zero-len incoming data, but shouldnt */
+/* can handle zero-len incoming data, but shouldn't */
 static int
 compress_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {

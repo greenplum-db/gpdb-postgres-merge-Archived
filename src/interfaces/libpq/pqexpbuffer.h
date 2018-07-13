@@ -150,7 +150,7 @@ extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);
 extern void
 printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
  * appendPQExpBuffer
@@ -162,7 +162,7 @@ __attribute__((format(printf, 2, 3)));
 extern void
 appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
-__attribute__((format(printf, 2, 3)));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
  * appendPQExpBufferVA
@@ -171,7 +171,8 @@ __attribute__((format(printf, 2, 3)));
  * va_start(args, x) before calling, and va_end(args) upon return.
  */
 void
-appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args);
+appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 
 /*------------------------
  * appendPQExpBufferStr

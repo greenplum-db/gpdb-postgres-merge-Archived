@@ -26,6 +26,7 @@
 #include "cdb/cdbvars.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_expr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -568,8 +569,6 @@ recordIndexesOnLeafPart(PartitionIndexNode **pNodePtr,
 
 	char		relstorage = partRel->rd_rel->relstorage;
 
-	heap_close(partRel, AccessShareLock);
-
 	/* fetch each index on part */
 	indexoidlist = RelationGetIndexList(partRel);
 	foreach(lc, indexoidlist)
@@ -602,7 +601,6 @@ recordIndexesOnLeafPart(PartitionIndexNode **pNodePtr,
 		 */
 		if (!attmap)
 		{
-			Relation	partRel = heap_open(partOid, AccessShareLock);
 			Relation	rootRel = heap_open(rootOid, AccessShareLock);
 
 			TupleDesc	rootTupDesc = rootRel->rd_att;
@@ -611,7 +609,6 @@ recordIndexesOnLeafPart(PartitionIndexNode **pNodePtr,
 			attmap = varattnos_map(partTupDesc, rootTupDesc);
 
 			/* can we close here ? */
-			heap_close(partRel, AccessShareLock);
 			heap_close(rootRel, AccessShareLock);
 		}
 
@@ -684,6 +681,8 @@ recordIndexesOnLeafPart(PartitionIndexNode **pNodePtr,
 		/* update the PartitionIndexNode -> index bitmap */
 		pNode->index = bms_add_member(pNode->index, partIndexHashEntry->logicalIndexId);
 	}
+
+	heap_close(partRel, AccessShareLock);
 }
 
 /*
@@ -1359,7 +1358,13 @@ mergeIntervals(Node *intervalFst, Node *intervalSnd)
 
 				extractOpExprComponents(opexprStart1, &pvarStart1, &pconstStart1, &opnoStart1);
 
-				return (Node *) make_opclause(opnoStart1, opexprStart1->opresulttype, opexprStart1->opretset, (Expr *) pvarStart1, (Expr *) pconstStart1);
+				return (Node *) make_opclause(opnoStart1,
+											  opexprStart1->opresulttype,
+											  opexprStart1->opretset,
+											  (Expr *) pvarStart1,
+											  (Expr *) pconstStart1,
+											  opexprStart1->opcollid,
+											  opexprStart1->inputcollid);
 			}
 
 			if (NULL != pnodeEnd2)
@@ -1372,7 +1377,13 @@ mergeIntervals(Node *intervalFst, Node *intervalSnd)
 
 				extractOpExprComponents(opexprEnd2, &pvarEnd2, &pconstEnd2, &opnoEnd2);
 
-				return (Node *) make_opclause(opnoEnd2, opexprEnd2->opresulttype, opexprEnd2->opretset, (Expr *) pvarEnd2, (Expr *) pconstEnd2);
+				return (Node *) make_opclause(opnoEnd2,
+											  opexprEnd2->opresulttype,
+											  opexprEnd2->opretset,
+											  (Expr *) pvarEnd2,
+											  (Expr *) pconstEnd2,
+											  opexprEnd2->opcollid,
+											  opexprEnd2->inputcollid);
 			}
 
 			Assert(NULL == pnodeStart1 && NULL == pnodeEnd2);

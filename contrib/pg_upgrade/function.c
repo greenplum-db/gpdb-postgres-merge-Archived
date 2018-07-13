@@ -3,36 +3,43 @@
  *
  *	server-side function support
  *
- *	Copyright (c) 2010, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/contrib/pg_upgrade/function.c,v 1.6.2.1 2010/07/25 03:28:39 momjian Exp $
+ *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	contrib/pg_upgrade/function.c
  */
+
+#include "postgres.h"
 
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
 
-static void
-install_system_functions_internal(migratorContext *ctx, char *dbname)
+<<<<<<< HEAD
+=======
+#define PG_UPGRADE_SUPPORT	"$libdir/pg_upgrade_support"
+
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+/*
+ * install_support_functions_in_new_db()
+ *
+ * pg_upgrade requires some support functions that enable it to modify
+ * backend behavior.
+ */
+void
+install_support_functions_in_new_db(const char *db_name)
 {
-	PGconn	   *conn = connectToServer(ctx, dbname, CLUSTER_NEW);
+	PGconn	   *conn = connectToServer(&new_cluster, db_name);
 
 	/* suppress NOTICE of dropped objects */
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "SET client_min_messages = warning;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 					   "DROP SCHEMA IF EXISTS binary_upgrade CASCADE;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "RESET client_min_messages;"));
 
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE SCHEMA binary_upgrade;"));
-	PQclear(executeQueryOrDie(ctx, conn,
-							  "CREATE OR REPLACE FUNCTION "
-						  "binary_upgrade.add_pg_enum_label(OID, OID, NAME) "
-							  "RETURNS VOID "
-							  "AS '$libdir/pg_upgrade_support' "
-							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.create_empty_extension(text, text, bool, text, oid[], text[], text[]) "
 							  "RETURNS VOID "
@@ -40,163 +47,163 @@ install_system_functions_internal(migratorContext *ctx, char *dbname)
 							  "LANGUAGE C;"));
 
 	/* Additional GPDB functions. */
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_type_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_arraytype_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_extprotocol_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_tablespace_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_opclass_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_opfam_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_conversion_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_resqueue_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_resqueuecb_oid(OID, OID, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_cast_oid(OID, OID, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_authid_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_database_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_language_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_relation_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_procedure_oid(OID, TEXT, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_namespace_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_attrdef_oid(OID, OID, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_constraint_oid(OID, OID, TEXT, OID, OID) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_rule_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_operator_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_tsparser_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_tsdict_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_tstemplate_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_tsconfig_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_extension_oid(OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_enum_oid(OID, OID, TEXT) "
 							  "RETURNS VOID "
 							  "AS '$libdir/pg_upgrade_support' "
 							  "LANGUAGE C STRICT;"));
-	PQclear(executeQueryOrDie(ctx, conn,
+	PQclear(executeQueryOrDie(conn,
 							  "CREATE OR REPLACE FUNCTION "
 							  "binary_upgrade.preassign_amop_oid(OID, OID) "
 							  "RETURNS VOID "
@@ -206,58 +213,29 @@ install_system_functions_internal(migratorContext *ctx, char *dbname)
 	PQfinish(conn);
 }
 
-/*
- * install_support_functions()
- *
- * pg_upgrade requires some support functions that enable it to modify
- * backend behavior.
- */
-void
-install_system_support_functions(migratorContext *ctx)
-{
-	prep_status(ctx, "Adding support functions to new cluster (postgres)");
-	install_system_functions_internal(ctx, "postgres");
-	check_ok(ctx);
-}
 
 void
-install_support_functions(migratorContext *ctx)
+uninstall_support_functions_from_new_cluster(void)
 {
 	int			dbnum;
 
-	prep_status(ctx, "Adding support functions to new cluster");
+	prep_status("Removing support functions from new cluster");
 
-	for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
-		DbInfo	   *newdb = &ctx->new.dbarr.dbs[dbnum];
-		install_system_functions_internal(ctx, newdb->db_name);
-	}
-	check_ok(ctx);
-}
-
-
-void
-uninstall_support_functions(migratorContext *ctx)
-{
-	int			dbnum;
-
-	prep_status(ctx, "Removing support functions from new cluster");
-
-	for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
-	{
-		DbInfo	   *newdb = &ctx->new.dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, newdb->db_name, CLUSTER_NEW);
+		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&new_cluster, new_db->db_name);
 
 		/* suppress NOTICE of dropped objects */
-		PQclear(executeQueryOrDie(ctx, conn,
+		PQclear(executeQueryOrDie(conn,
 								  "SET client_min_messages = warning;"));
-		PQclear(executeQueryOrDie(ctx, conn,
+		PQclear(executeQueryOrDie(conn,
 								  "DROP SCHEMA binary_upgrade CASCADE;"));
-		PQclear(executeQueryOrDie(ctx, conn,
+		PQclear(executeQueryOrDie(conn,
 								  "RESET client_min_messages;"));
 		PQfinish(conn);
 	}
-	check_ok(ctx);
+	check_ok();
 }
 
 
@@ -268,16 +246,18 @@ uninstall_support_functions(migratorContext *ctx)
  *	We will later check that they all exist in the new installation.
  */
 void
-get_loadable_libraries(migratorContext *ctx)
+get_loadable_libraries(void)
 {
-	ClusterInfo *active_cluster = &ctx->old;
 	PGresult  **ress;
 	int			totaltups;
 	int			dbnum;
+<<<<<<< HEAD
 	char	   *pg83_str;
+=======
+	bool		found_public_plpython_handler = false;
+>>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
-	ress = (PGresult **)
-		pg_malloc(ctx, active_cluster->dbarr.ndbs * sizeof(PGresult *));
+	ress = (PGresult **) pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
 
 	/*
@@ -285,19 +265,24 @@ get_loadable_libraries(migratorContext *ctx)
 	 * functionality is now in backend, skip when checking for loadable
 	 * libraries in 4.3->5.0 upgrades.
 	 */
-	if (GET_MAJOR_VERSION(ctx->old.major_version) <= 802)
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 802)
 		pg83_str = "probin NOT IN ('$libdir/gpoptutils') AND ";
 	else
 		pg83_str = "";
 
 	/* Fetch all library names, removing duplicates within each DB */
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		DbInfo	   *active_db = &active_cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(ctx, active_db->db_name, CLUSTER_OLD);
+		DbInfo	   *active_db = &old_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
 
-		/* Fetch all libraries referenced in this DB */
-		ress[dbnum] = executeQueryOrDie(ctx, conn,
+		/*
+		 * Fetch all libraries referenced in this DB.  We can't exclude the
+		 * "pg_catalog" schema because, while such functions are not
+		 * explicitly dumped by pg_dump, they do reference implicit objects
+		 * that pg_dump does dump, e.g. CREATE LANGUAGE plperl.
+		 */
+		ress[dbnum] = executeQueryOrDie(conn,
 										"SELECT DISTINCT probin "
 										"FROM	pg_catalog.pg_proc "
 										"WHERE	prolang = 13 /* C */ AND "
@@ -308,22 +293,80 @@ get_loadable_libraries(migratorContext *ctx)
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
+		/*
+		 * Systems that install plpython before 8.1 have
+		 * plpython_call_handler() defined in the "public" schema, causing
+		 * pg_dumpall to dump it.  However that function still references
+		 * "plpython" (no "2"), so it throws an error on restore.  This code
+		 * checks for the problem function, reports affected databases to the
+		 * user and explains how to remove them. 8.1 git commit:
+		 * e0dedd0559f005d60c69c9772163e69c204bac69
+		 * http://archives.postgresql.org/pgsql-hackers/2012-03/msg01101.php
+		 * http://archives.postgresql.org/pgsql-bugs/2012-05/msg00206.php
+		 */
+		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901)
+		{
+			PGresult   *res;
+
+			res = executeQueryOrDie(conn,
+									"SELECT 1 "
+						   "FROM	pg_catalog.pg_proc JOIN pg_namespace "
+							 "		ON pronamespace = pg_namespace.oid "
+							   "WHERE proname = 'plpython_call_handler' AND "
+									"nspname = 'public' AND "
+									"prolang = 13 /* C */ AND "
+									"probin = '$libdir/plpython' AND "
+									"pg_proc.oid >= %u;",
+									FirstNormalObjectId);
+			if (PQntuples(res) > 0)
+			{
+				if (!found_public_plpython_handler)
+				{
+					pg_log(PG_WARNING,
+						   "\nThe old cluster has a \"plpython_call_handler\" function defined\n"
+						   "in the \"public\" schema which is a duplicate of the one defined\n"
+						   "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
+						   "in psql:\n"
+						   "\n"
+						   "	\\df *.plpython_call_handler\n"
+						   "\n"
+						   "The \"public\" schema version of this function was created by a\n"
+						   "pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
+						   "to complete because it references a now-obsolete \"plpython\"\n"
+						   "shared object file.  You can remove the \"public\" schema version\n"
+					   "of this function by running the following command:\n"
+						   "\n"
+						 "	DROP FUNCTION public.plpython_call_handler()\n"
+						   "\n"
+						   "in each affected database:\n"
+						   "\n");
+				}
+				pg_log(PG_WARNING, "	%s\n", active_db->db_name);
+				found_public_plpython_handler = true;
+			}
+			PQclear(res);
+		}
+
 		PQfinish(conn);
 	}
 
+	if (found_public_plpython_handler)
+		pg_log(PG_FATAL,
+		 "Remove the problem functions from the old cluster to continue.\n");
+
+	totaltups++;				/* reserve for pg_upgrade_support */
+
 	/* Allocate what's certainly enough space */
-	if (totaltups > 0)
-		ctx->libraries = (char **) pg_malloc(ctx, totaltups * sizeof(char *));
-	else
-		ctx->libraries = NULL;
+	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
 
 	/*
 	 * Now remove duplicates across DBs.  This is pretty inefficient code, but
 	 * there probably aren't enough entries to matter.
 	 */
 	totaltups = 0;
+	os_info.libraries[totaltups++] = pg_strdup(PG_UPGRADE_SUPPORT);
 
-	for (dbnum = 0; dbnum < active_cluster->dbarr.ndbs; dbnum++)
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
 		PGresult   *res = ress[dbnum];
 		int			ntups;
@@ -338,20 +381,20 @@ get_loadable_libraries(migratorContext *ctx)
 
 			for (n = 0; n < totaltups; n++)
 			{
-				if (strcmp(lib, ctx->libraries[n]) == 0)
+				if (strcmp(lib, os_info.libraries[n]) == 0)
 				{
 					dup = true;
 					break;
 				}
 			}
 			if (!dup)
-				ctx->libraries[totaltups++] = pg_strdup(ctx, lib);
+				os_info.libraries[totaltups++] = pg_strdup(lib);
 		}
 
 		PQclear(res);
 	}
 
-	ctx->num_libraries = totaltups;
+	os_info.num_libraries = totaltups;
 
 	pg_free(ress);
 }
@@ -365,28 +408,47 @@ get_loadable_libraries(migratorContext *ctx)
  *	compatibility as well as presence.
  */
 void
-check_loadable_libraries(migratorContext *ctx)
+check_loadable_libraries(void)
 {
-	PGconn	   *conn = connectToServer(ctx, "template1", CLUSTER_NEW);
+	PGconn	   *conn = connectToServer(&new_cluster, "template1");
 	int			libnum;
 	FILE	   *script = NULL;
 	bool		found = false;
 	char		output_path[MAXPGPATH];
 
-	prep_status(ctx, "Checking for presence of required libraries");
+	prep_status("Checking for presence of required libraries");
 
-	snprintf(output_path, sizeof(output_path), "%s/loadable_libraries.txt",
-			 ctx->cwd);
+	snprintf(output_path, sizeof(output_path), "loadable_libraries.txt");
 
-	for (libnum = 0; libnum < ctx->num_libraries; libnum++)
+	for (libnum = 0; libnum < os_info.num_libraries; libnum++)
 	{
-		char	   *lib = ctx->libraries[libnum];
+		char	   *lib = os_info.libraries[libnum];
 		int			llen = strlen(lib);
-		char	   *cmd = (char *) pg_malloc(ctx, 8 + 2 * llen + 1);
+		char		cmd[7 + 2 * MAXPGPATH + 1];
 		PGresult   *res;
 
+		/*
+		 * In Postgres 9.0, Python 3 support was added, and to do that, a
+		 * plpython2u language was created with library name plpython2.so as a
+		 * symbolic link to plpython.so.  In Postgres 9.1, only the
+		 * plpython2.so library was created, and both plpythonu and plpython2u
+		 * pointing to it.	For this reason, any reference to library name
+		 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
+		 * the new cluster.
+		 *
+		 * For this case, we could check pg_pltemplate, but that only works
+		 * for languages, and does not help with function shared objects, so
+		 * we just do a general fix.
+		 */
+		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
+			strcmp(lib, "$libdir/plpython") == 0)
+		{
+			lib = "$libdir/plpython2";
+			llen = strlen(lib);
+		}
+
 		strcpy(cmd, "LOAD '");
-		PQescapeStringConn(conn, cmd + 6, lib, llen, NULL);
+		PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
 		strcat(cmd, "'");
 
 		res = PQexec(conn, cmd);
@@ -394,16 +456,21 @@ check_loadable_libraries(migratorContext *ctx)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(ctx, PG_FATAL, "Could not create necessary file:  %s\n",
-					   output_path);
-			fprintf(script, "Failed to load library: %s\n%s\n",
+
+			/* exit and report missing support library with special message */
+			if (strcmp(lib, PG_UPGRADE_SUPPORT) == 0)
+				pg_log(PG_FATAL,
+					   "The pg_upgrade_support module must be created and installed in the new cluster.\n");
+
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+					   output_path, getErrorText(errno));
+			fprintf(script, "Could not load library \"%s\"\n%s\n",
 					lib,
 					PQerrorMessage(conn));
 		}
 
 		PQclear(res);
-		pg_free(cmd);
 	}
 
 	PQfinish(conn);
@@ -411,15 +478,14 @@ check_loadable_libraries(migratorContext *ctx)
 	if (found)
 	{
 		fclose(script);
-		pg_log(ctx, PG_REPORT, "fatal\n");
-		pg_log(ctx, PG_FATAL,
-			 "| Your installation references loadable libraries that are missing\n"
-			 "| from the new installation.  You can add these libraries to\n"
-			   "| the new installation, or remove the functions using them\n"
-			"| from the old installation.  A list of the problem libraries\n"
-			   "| is in the file\n"
-			   "| \"%s\".\n\n", output_path);
+		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_FATAL,
+			   "Your installation references loadable libraries that are missing from the\n"
+			   "new installation.  You can add these libraries to the new installation,\n"
+			   "or remove the functions using them from the old installation.  A list of\n"
+			   "problem libraries is in the file:\n"
+			   "    %s\n\n", output_path);
 	}
 	else
-		check_ok(ctx);
+		check_ok();
 }

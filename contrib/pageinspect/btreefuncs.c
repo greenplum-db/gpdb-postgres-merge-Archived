@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pageinspect/btreefuncs.c,v 1.10 2009/06/11 14:48:51 momjian Exp $
+ * contrib/pageinspect/btreefuncs.c
  *
  *
  * btreefuncs.c
@@ -27,14 +27,12 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 
 
 extern Datum bt_metap(PG_FUNCTION_ARGS);

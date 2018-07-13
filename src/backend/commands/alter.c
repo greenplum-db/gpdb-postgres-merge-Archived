@@ -3,22 +3,24 @@
  * alter.c
  *	  Drivers for generic alter commands
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.36 2010/06/13 17:43:12 rhaas Exp $
+ *	  src/backend/commands/alter.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_namespace.h"
 #include "commands/alter.h"
+#include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -32,11 +34,10 @@
 #include "commands/typecmds.h"
 #include "commands/user.h"
 #include "miscadmin.h"
-#include "parser/parse_clause.h"
 #include "tcop/utility.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 #include "cdb/cdbvars.h"
@@ -56,6 +57,14 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameAggregate(stmt->object, stmt->objarg, stmt->newname);
 			break;
 
+		case OBJECT_COLLATION:
+			RenameCollation(stmt->object, stmt->newname);
+			break;
+
+		case OBJECT_CONSTRAINT:
+			RenameConstraint(stmt);
+			break;
+
 		case OBJECT_CONVERSION:
 			RenameConversion(stmt->object, stmt->newname);
 			break;
@@ -66,6 +75,14 @@ ExecRenameStmt(RenameStmt *stmt)
 
 		case OBJECT_EXTPROTOCOL:
 			RenameExtProtocol(stmt->subname, stmt->newname);
+			break;
+
+		case OBJECT_FDW:
+			RenameForeignDataWrapper(stmt->subname, stmt->newname);
+			break;
+
+		case OBJECT_FOREIGN_SERVER:
+			RenameForeignServer(stmt->subname, stmt->newname);
 			break;
 
 		case OBJECT_FUNCTION:
@@ -100,66 +117,18 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_VIEW:
 		case OBJECT_INDEX:
+		case OBJECT_FOREIGN_TABLE:
+			RenameRelation(stmt);
+			break;
+
 		case OBJECT_COLUMN:
+		case OBJECT_ATTRIBUTE:
+			renameatt(stmt);
+			break;
+
 		case OBJECT_TRIGGER:
-			{
-				Oid			relid;
-
-				/*
-				 * In the dispatcher, resolve the name to OID, and update the
-				 * stmt struct with the OID. In the QE, use the OID from the
-				 * struct (which was filled in by the dispatcher).
-				 */
-				if (Gp_role == GP_ROLE_DISPATCH)
-				{
-					CheckRelationOwnership(stmt->relation, true);
-
-					stmt->objid = RangeVarGetRelid(stmt->relation, false);
-				}
-				relid = stmt->objid;
-
-				switch (stmt->renameType)
-				{
-					case OBJECT_TABLE:
-					case OBJECT_SEQUENCE:
-					case OBJECT_VIEW:
-					case OBJECT_INDEX:
-						{
-							/*
-							 * RENAME TABLE requires that we (still) hold
-							 * CREATE rights on the containing namespace, as
-							 * well as ownership of the table.
-							 */
-							Oid			namespaceId = get_rel_namespace(relid);
-							AclResult	aclresult;
-
-							aclresult = pg_namespace_aclcheck(namespaceId,
-															  GetUserId(),
-															  ACL_CREATE);
-							if (aclresult != ACLCHECK_OK)
-								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-											get_namespace_name(namespaceId));
-
-							RenameRelation(relid, stmt->newname, stmt->renameType, stmt);
-							break;
-						}
-					case OBJECT_COLUMN:
-						renameatt(relid,
-								  stmt->subname,		/* old att name */
-								  stmt->newname,		/* new att name */
-								  interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
-								  0);	/* expected inhcount */
-						break;
-					case OBJECT_TRIGGER:
-						renametrig(relid,
-								   stmt->subname,		/* old att name */
-								   stmt->newname);		/* new att name */
-						break;
-					default:
-						 /* can't happen */ ;
-				}
-				break;
-			}
+			renametrig(stmt);
+			break;
 
 		case OBJECT_TSPARSER:
 			RenameTSParser(stmt->object, stmt->newname);
@@ -177,8 +146,9 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameTSConfiguration(stmt->object, stmt->newname);
 			break;
 
+		case OBJECT_DOMAIN:
 		case OBJECT_TYPE:
-			RenameType(stmt->object, stmt->newname);
+			RenameType(stmt);
 			break;
 
 		default:
@@ -211,6 +181,10 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 								   stmt->newschema);
 			break;
 
+		case OBJECT_COLLATION:
+			AlterCollationNamespace(stmt->object, stmt->newschema);
+			break;
+
 		case OBJECT_CONVERSION:
 			AlterConversionNamespace(stmt->object, stmt->newschema);
 			break;
@@ -239,14 +213,29 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
-			CheckRelationOwnership(stmt->relation, true);
-			AlterTableNamespace(stmt->relation, stmt->newschema,
-								stmt->objectType);
+		case OBJECT_FOREIGN_TABLE:
+			AlterTableNamespace(stmt);
+			break;
+
+		case OBJECT_TSPARSER:
+			AlterTSParserNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			AlterTSDictionaryNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			AlterTSTemplateNamespace(stmt->object, stmt->newschema);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			AlterTSConfigurationNamespace(stmt->object, stmt->newschema);
 			break;
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
-			AlterTypeNamespace(stmt->object, stmt->newschema);
+			AlterTypeNamespace(stmt->object, stmt->newschema, stmt->objectType);
 			break;
 
 		default:
@@ -312,6 +301,10 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 			oldNspOid = AlterTypeNamespace_oid(objid, nspOid, objsMoved);
 			break;
 
+		case OCLASS_COLLATION:
+			oldNspOid = AlterCollationNamespace_oid(objid, nspOid);
+			break;
+
 		case OCLASS_CONVERSION:
 			oldNspOid = AlterConversionNamespace_oid(objid, nspOid);
 			break;
@@ -326,6 +319,22 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 
 		case OCLASS_OPFAMILY:
 			oldNspOid = AlterOpFamilyNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSPARSER:
+			oldNspOid = AlterTSParserNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSDICT:
+			oldNspOid = AlterTSDictionaryNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSTEMPLATE:
+			oldNspOid = AlterTSTemplateNamespace_oid(objid, nspOid);
+			break;
+
+		case OCLASS_TSCONFIG:
+			oldNspOid = AlterTSConfigurationNamespace_oid(objid, nspOid);
 			break;
 
 		default:
@@ -402,8 +411,8 @@ AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 		if (Anum_owner <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							(errmsg("must be superuser to set schema of %s",
-									getObjectDescriptionOids(classId, objid)))));
+					 (errmsg("must be superuser to set schema of %s",
+							 getObjectDescriptionOids(classId, objid)))));
 
 		/* Otherwise, must be owner of the existing object */
 		owner = heap_getattr(tup, Anum_owner, RelationGetDescr(rel), &isnull);
@@ -466,12 +475,16 @@ AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 void
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	Oid			newowner = get_roleid_checked(stmt->newowner);
+	Oid			newowner = get_role_oid(stmt->newowner, false);
 
 	switch (stmt->objectType)
 	{
 		case OBJECT_AGGREGATE:
 			AlterAggregateOwner(stmt->object, stmt->objarg, newowner);
+			break;
+
+		case OBJECT_COLLATION:
+			AlterCollationOwner(stmt->object, newowner);
 			break;
 
 		case OBJECT_CONVERSION:
@@ -524,7 +537,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
-			AlterTypeOwner(stmt->object, newowner);
+			AlterTypeOwner(stmt->object, newowner, stmt->objectType);
 			break;
 
 		case OBJECT_TSDICTIONARY:

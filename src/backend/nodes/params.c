@@ -4,11 +4,11 @@
  *	  Support for finding the values associated with Param nodes.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.15 2010/02/26 02:00:43 momjian Exp $
+ *	  src/backend/nodes/params.c
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "nodes/params.h"
-#include "parser/parse_param.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 
@@ -43,7 +42,7 @@ copyParamList(ParamListInfo from)
 
 	/* sizeof(ParamListInfoData) includes the first array element */
 	size = sizeof(ParamListInfoData) +
-		(from->numParams - 1) *sizeof(ParamExternData);
+		(from->numParams - 1) * sizeof(ParamExternData);
 
 	retval = (ParamListInfo) palloc(size);
 	retval->paramFetch = NULL;

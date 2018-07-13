@@ -43,6 +43,8 @@
 
 #include "access/transam.h"
 #include "access/xlog_internal.h"
+#include "access/transam.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
@@ -71,6 +73,7 @@
 #include "utils/faultinjector.h"
 #include "cdb/cdbvars.h"
 
+
 /* Array of WalSnds in shared memory */
 WalSndCtlData *WalSndCtl = NULL;
 
@@ -79,16 +82,16 @@ WalSnd	   *MyWalSnd = NULL;
 
 /* Global state */
 bool		am_walsender = false;		/* Am I a walsender process ? */
-int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
+bool		am_cascading_walsender = false;		/* Am I cascading WAL to
+												 * another standby ? */
 
 /* User-settable parameters for walsender */
+int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			replication_timeout = 60 * 1000;	/* maximum time to send one
 												 * WAL data message */
 int			repl_catchup_within_range = XLogSegsPerFile;
 
 static bool replication_started = false; 	/* Started streaming yet? */
-
-const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
@@ -133,12 +136,15 @@ static void IdentifySystem(void);
 static void StartReplication(StartReplicationCmd *cmd);
 static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
+static void ProcessStandbyHSFeedbackMessage(void);
 static void ProcessRepliesIfAny(void);
 static const char *WalSndGetStateString(WalSndState state);
 static void WalSndKeepalive(char *msgbuf);
+
 static void WalSndSetSync(bool sync);
 static void WalSndSetCaughtupWithinRange(bool catchup_within_range);
 static bool WalSndIsCatchupWithinRange(XLogRecPtr currRecPtr, XLogRecPtr catchupRecPtr);
+
 
 /* Main entry point for walsender process */
 void
@@ -199,7 +205,7 @@ IdentifySystem(void)
 			 GetSystemIdentifier());
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
-	logptr = GetInsertRecPtr();
+	logptr = am_cascading_walsender ? GetStandbyFlushRecPtr(NULL) : GetInsertRecPtr();
 
 	snprintf(xpos, sizeof(xpos), "%X/%X",
 			 logptr.xlogid, logptr.xrecoff);
@@ -316,6 +322,18 @@ StartReplication(StartReplicationCmd *cmd)
 
 	SyncRepInitConfig();
 
+	/* Initialize shared memory status */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile WalSnd *walsnd = MyWalSnd;
+
+		SpinLockAcquire(&walsnd->mutex);
+		walsnd->sentPtr = sentPtr;
+		SpinLockRelease(&walsnd->mutex);
+	}
+
+	SyncRepInitConfig();
+
 	/* Main loop of walsender */
 	WalSndLoop();
 }
@@ -410,6 +428,16 @@ ProcessRepliesIfAny(void)
 			break;
 		}
 
+		/* Read the message contents */
+		resetStringInfo(&reply_message);
+		if (pq_getmessage(&reply_message, 0))
+		{
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("unexpected EOF on standby connection")));
+			proc_exit(0);
+		}
+
 		/* Handle the very limited subset of commands expected in this phase */
 		switch (firstchar)
 		{
@@ -455,20 +483,6 @@ ProcessStandbyMessage(void)
 {
 	char		msgtype;
 
-	resetStringInfo(&reply_message);
-
-	/*
-	 * Read the message contents.
-	 */
-	if (pq_getmessage(&reply_message, 0))
-	{
-		ereport(COMMERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("unexpected EOF on standby connection"),
-				 errSendAlert(true)));
-		proc_exit(0);
-	}
-
 	/*
 	 * Check message type from the first byte.
 	 */
@@ -478,6 +492,10 @@ ProcessStandbyMessage(void)
 	{
 		case 'r':
 			ProcessStandbyReplyMessage();
+			break;
+
+		case 'h':
+			ProcessStandbyHSFeedbackMessage();
 			break;
 
 		default:
@@ -531,6 +549,76 @@ ProcessStandbyReplyMessage(void)
 	SyncRepReleaseWaiters();
 }
 
+/*
+ * Hot Standby feedback
+ */
+static void
+ProcessStandbyHSFeedbackMessage(void)
+{
+	StandbyHSFeedbackMessage reply;
+	TransactionId nextXid;
+	uint32		nextEpoch;
+
+	/* Decipher the reply message */
+	pq_copymsgbytes(&reply_message, (char *) &reply,
+					sizeof(StandbyHSFeedbackMessage));
+
+	elog(DEBUG2, "hot standby feedback xmin %u epoch %u",
+		 reply.xmin,
+		 reply.epoch);
+
+	/* Ignore invalid xmin (can't actually happen with current walreceiver) */
+	if (!TransactionIdIsNormal(reply.xmin))
+		return;
+
+	/*
+	 * Check that the provided xmin/epoch are sane, that is, not in the future
+	 * and not so far back as to be already wrapped around.  Ignore if not.
+	 *
+	 * Epoch of nextXid should be same as standby, or if the counter has
+	 * wrapped, then one greater than standby.
+	 */
+	GetNextXidAndEpoch(&nextXid, &nextEpoch);
+
+	if (reply.xmin <= nextXid)
+	{
+		if (reply.epoch != nextEpoch)
+			return;
+	}
+	else
+	{
+		if (reply.epoch + 1 != nextEpoch)
+			return;
+	}
+
+	if (!TransactionIdPrecedesOrEquals(reply.xmin, nextXid))
+		return;					/* epoch OK, but it's wrapped around */
+
+	/*
+	 * Set the WalSender's xmin equal to the standby's requested xmin, so that
+	 * the xmin will be taken into account by GetOldestXmin.  This will hold
+	 * back the removal of dead rows and thereby prevent the generation of
+	 * cleanup conflicts on the standby server.
+	 *
+	 * There is a small window for a race condition here: although we just
+	 * checked that reply.xmin precedes nextXid, the nextXid could have gotten
+	 * advanced between our fetching it and applying the xmin below, perhaps
+	 * far enough to make reply.xmin wrap around.  In that case the xmin we
+	 * set here would be "in the future" and have no effect.  No point in
+	 * worrying about this since it's too late to save the desired data
+	 * anyway.	Assuming that the standby sends us an increasing sequence of
+	 * xmins, this could only happen during the first reply cycle, else our
+	 * own xmin would prevent nextXid from advancing so far.
+	 *
+	 * We don't bother taking the ProcArrayLock here.  Setting the xmin field
+	 * is assumed atomic, and there's no real need to prevent a concurrent
+	 * GetOldestXmin.  (If we're moving our xmin forward, this is obviously
+	 * safe, and if we're moving it backwards, well, the data is at risk
+	 * already since a VACUUM could have just finished calling GetOldestXmin.)
+	 */
+	MyPgXact->xmin = reply.xmin;
+}
+
 /* Main loop of walsender process that streams the WAL over Copy messages. */
 static int
 WalSndLoop(void)
@@ -567,7 +655,7 @@ WalSndLoop(void)
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive(true))
+		if (!PostmasterIsAlive())
 			exit(1);
 
 		/* Process any requests or signals received recently */
@@ -620,15 +708,15 @@ WalSndLoop(void)
 			 */
 			if (MyWalSnd->state == WALSNDSTATE_CATCHUP)
 			{
-				ereport(LOG,
-					 (errmsg("standby has now caught up with primary")));
+				ereport(DEBUG1,
+					 (errmsg("standby \"%s\" has now caught up with primary",
+							 application_name)));
 				WalSndSetState(WALSNDSTATE_STREAMING);
 			}
 
 			/*
 			 * When SIGUSR2 arrives, we send any outstanding logs up to the
-			 * shutdown checkpoint record (i.e., the latest record), wait
-			 * for them to be replicated to the standby, and exit.
+			 * shutdown checkpoint record (i.e., the latest record) and exit.
 			 * This may be a normal termination at shutdown, or a promotion,
 			 * the walsender is not sure which.
 			 */
@@ -1533,7 +1621,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	if (!(rsinfo->allowedModes & SFRM_Materialize))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not "
+				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
 
 	/* Build a tuple descriptor for our result type */
@@ -1597,7 +1685,6 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		WalSndState state;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
 		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
-		HeapTuple	tuple;
 
 		if (walsnd->pid == 0)
 			continue;
@@ -1661,8 +1748,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 				values[7] = CStringGetTextDatum("potential");
 		}
 
-		tuple = heap_form_tuple(tupdesc, values, nulls);
-		tuplestore_puttuple(tupstore, tuple);
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 	pfree(sync_priority);
 
@@ -1680,7 +1766,6 @@ WalSndKeepalive(char *msgbuf)
 	/* Construct a new message */
 	keepalive_message.walEnd = sentPtr;
 	keepalive_message.sendTime = GetCurrentTimestamp();
-
 	elog(DEBUG2, "sending replication keepalive");
 
 	/* Prepend with the message type and send it. */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.59 2010/07/06 19:19:00 momjian Exp $ */
+/* src/interfaces/ecpg/ecpglib/misc.c */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -206,7 +206,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		 * developers have to take care themselves. However, if the command is
 		 * a begin statement, we just execute it once.
 		 */
-		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
+		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
@@ -218,11 +218,6 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 			return FALSE;
 		PQclear(res);
-
-		if (strncmp(transaction, "commit", 6) == 0 || strncmp(transaction, "rollback", 8) == 0)
-			con->committed = true;
-		else
-			con->committed = false;
 	}
 
 	return true;
@@ -506,12 +501,7 @@ ecpg_gettext(const char *msgid)
 }
 #endif   /* ENABLE_NLS */
 
-static struct var_list
-{
-	int			number;
-	void	   *pointer;
-	struct var_list *next;
-}	*ivlist = NULL;
+struct var_list *ivlist = NULL;
 
 void
 ECPGset_var(int number, void *pointer, int lineno)
@@ -535,7 +525,7 @@ ECPGset_var(int number, void *pointer, int lineno)
 		struct sqlca_t *sqlca = ECPGget_sqlca();
 
 		sqlca->sqlcode = ECPG_OUT_OF_MEMORY;
-		strncpy(sqlca->sqlstate, "YE001", sizeof("YE001"));
+		strncpy(sqlca->sqlstate, "YE001", sizeof(sqlca->sqlstate));
 		snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc), "out of memory on line %d", lineno);
 		sqlca->sqlerrm.sqlerrml = strlen(sqlca->sqlerrm.sqlerrmc);
 		/* free all memory we have allocated for the user */

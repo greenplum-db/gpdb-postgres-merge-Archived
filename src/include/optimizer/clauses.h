@@ -4,10 +4,10 @@
  *	  prototypes for clauses.c.
  *
  *
- * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.101 2010/02/26 02:01:26 momjian Exp $
+ * src/include/optimizer/clauses.h
  *
  *-------------------------------------------------------------------------
  */
@@ -29,16 +29,7 @@
 
 typedef struct
 {
-	int			numAggs;		/* total number of aggregate calls */
-	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
-	Size		transitionSpace;	/* for pass-by-ref transition data */
-	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
 	bool		hasOrderedAggs;	/* any ordered aggs? */
-	bool	missing_prelimfunc; /* CDB: any agg func w/o a prelim func? */
-} AggClauseCounts;
-
-typedef struct
-{
 	int			numWindowFuncs; /* total number of WindowFuncs found */
 	Index		maxWinRef;		/* windowFuncs[] is indexed 0 .. maxWinRef */
 	List	  **windowFuncs;	/* lists of WindowFuncs for each winref */
@@ -59,9 +50,10 @@ typedef struct CanonicalGroupingSets
 } CanonicalGroupingSets;
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop);
-extern Node *get_leftop(Expr *clause);
-extern Node *get_rightop(Expr *clause);
+			  Expr *leftop, Expr *rightop,
+			  Oid opcollid, Oid inputcollid);
+extern Node *get_leftop(const Expr *clause);
+extern Node *get_rightop(const Expr *clause);
 
 extern bool not_clause(Node *clause);
 extern Expr *make_notclause(Expr *notclause);
@@ -77,7 +69,8 @@ extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
-extern void count_agg_clauses(Node *clause, AggClauseCounts *counts);
+extern void count_agg_clauses(PlannerInfo *root, Node *clause,
+				  AggClauseCosts *costs);
 
 extern bool contain_window_function(Node *clause);
 extern WindowFuncLists *find_window_functions(Node *clause, Index maxWinRef);
@@ -89,6 +82,8 @@ extern bool contain_subplans(Node *clause);
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
 extern bool contain_nonstrict_functions(Node *clause);
+extern bool contain_leaky_functions(Node *clause);
+
 extern Relids find_nonnullable_rels(Node *clause);
 extern List *find_nonnullable_vars(Node *clause);
 extern List *find_forced_null_vars(Node *clause);
@@ -110,7 +105,7 @@ extern void set_coercionform_dontcare(Node *node);
 
 extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
 
-extern Query *fold_constants(PlannerGlobal *glob, Query *q, ParamListInfo boundParams, Size max_size);
+extern Query *fold_constants(PlannerInfo *root, Query *q, ParamListInfo boundParams, Size max_size);
 
 extern Expr *transform_array_Const_to_ArrayExpr(Const *c);
 
@@ -119,7 +114,8 @@ extern Node *estimate_expression_value(PlannerInfo *root, Node *node);
 extern Query *inline_set_returning_function(PlannerInfo *root,
 							  RangeTblEntry *rte);
 
-extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
+extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
+			  Oid result_collation);
 
 extern bool is_grouping_extension(CanonicalGroupingSets *grpsets);
 extern bool contain_extended_grouping(List *grp);
