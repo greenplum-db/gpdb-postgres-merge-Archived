@@ -186,6 +186,7 @@ struct PGPROC
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */
 	Oid			fpRelId[FP_LOCK_SLOTS_PER_BACKEND];		/* slots for rel oids */
+	bool		fpHoldTillEndXact[FP_LOCK_SLOTS_PER_BACKEND];		/* slots for gdd flags */
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */

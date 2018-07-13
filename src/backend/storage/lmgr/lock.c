@@ -377,7 +377,7 @@ static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 					 LOCKTAG *locktag, LOCKMODE lockmode,
 					 bool decrement_strong_lock_count);
 
-
+static void setFPHoldTillEndXact(Oid relid);
 /*
  * InitLocks -- Initialize the lock manager's data structures.
  *
@@ -2026,6 +2026,7 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 	LOCALLOCKTAG localtag;
 	LOCALLOCK  *locallock;
 	LOCKMODE    lm;
+	Oid         relid;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
@@ -2059,8 +2060,12 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 		 * be NULL.
 		 * This code should be revised to make GDD work under fast path.
 		 */
-//		locallock->lock->holdTillEndXact = true;
+		if (locallock->lock)
+			locallock->lock->holdTillEndXact = true;
 	}
+
+	relid = locktag->locktag_field2;
+	setFPHoldTillEndXact(relid);
 }
 
 /*
@@ -2545,6 +2550,7 @@ FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 	if (unused_slot < FP_LOCK_SLOTS_PER_BACKEND)
 	{
 		MyProc->fpRelId[unused_slot] = relid;
+		MyProc->fpHoldTillEndXact[unused_slot] = false;
 		FAST_PATH_SET_LOCKMODE(MyProc, unused_slot, lockmode);
 		++FastPathLocalUseCount;
 		return true;
@@ -3545,7 +3551,7 @@ GetLockStatusData(void)
 			instance->distribXid = (Gp_role == GP_ROLE_DISPATCH)?
 								   proc->gxact.gxid :
 								   proc->localDistribXactData.distribXid;
-			instance->holdTillEndXact = false;
+			instance->holdTillEndXact = proc->fpHoldTillEndXact[f];
 			el++;
 		}
 
@@ -4263,4 +4269,26 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 
 	LockRelease(&tag, ShareLock, false);
 	return true;
+}
+
+static void
+setFPHoldTillEndXact(Oid relid)
+{
+	uint32  f;
+	PGPROC *proc = MyProc;
+
+	LWLockAcquire(proc->backendLock, LW_EXCLUSIVE);
+
+	for (f = 0; f < FP_LOCK_SLOTS_PER_BACKEND; ++f)
+	{
+		uint32 lockbits = FAST_PATH_GET_BITS(proc, f);
+
+		if (!lockbits ||
+			proc->fpRelId[f] != relid)
+			continue;
+
+		proc->fpHoldTillEndXact[f] = true;
+	}
+
+	LWLockRelease(proc->backendLock);
 }
