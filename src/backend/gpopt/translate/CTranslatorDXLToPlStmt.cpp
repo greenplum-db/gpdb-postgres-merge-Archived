@@ -847,10 +847,20 @@ CTranslatorDXLToPlStmt::TranslateIndexConditions
 		GPOS_ASSERT((IsA(pnodeFst, Var) || IsA(pnodeSnd, Var)) && "expected index key in index qual");
 
 		INT iAttno = 0;
+		// GPDB_92_MERGE_FIXME: I don't believe we can have index key on the
+		// RHS of OpExpr for indexqual, so why do we have this conditional here
+		// at all?
 		if (IsA(pnodeFst, Var) && ((Var *) pnodeFst)->varno != OUTER_VAR)
 		{
 			// index key is on the left side
 			iAttno =  ((Var *) pnodeFst)->varattno;
+
+			// GPDB_92_MERGE_FIXME: helluva hack
+			// Upstream commit a0185461 cleaned up how the varno of indices
+			// We are patching up varno here, but it seems this really should
+			// happen in CTranslatorDXLToScalar::PexprFromDXLNodeScalar .
+			// Furthermore, should we guard against nonsensical varno?
+			((Var *) pnodeFst)->varno = INDEX_VAR;
 		}
 		else
 		{
