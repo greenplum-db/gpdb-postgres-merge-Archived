@@ -5058,6 +5058,7 @@ copyObject(const void *from)
 			break;
 		case T_DynamicIndexScan:
 			retval = _copyDynamicIndexScan(from);
+			break;
 		case T_IndexOnlyScan:
 			retval = _copyIndexOnlyScan(from);
 			break;
