@@ -109,6 +109,10 @@ _PG_init(void)
 					 errhint("Start a new session to use a different Python major version.")));
 	}
 
+	/* Register SIGINT/SIGTERM handler for python */
+	prev_cancel_pending_hook = cancel_pending_hook;
+	cancel_pending_hook = PLy_handle_cancel_interrupt;
+
 	pg_bindtextdomain(TEXTDOMAIN);
 
 #if PY_MAJOR_VERSION >= 3
