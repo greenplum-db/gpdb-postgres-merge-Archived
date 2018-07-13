@@ -614,7 +614,8 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 			add_path(root, rel, (Path *) ipath);
 
 		if (index->amhasgetbitmap &&
-			(ipath->path.pathkeys == NIL ||
+			(!root->config->enable_seqscan ||
+			 ipath->path.pathkeys == NIL ||
 			 ipath->indexselectivity < 1.0))
 			*bitindexpaths = lappend(*bitindexpaths, ipath);
 	}

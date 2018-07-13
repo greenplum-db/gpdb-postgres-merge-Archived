@@ -186,7 +186,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	else
 		path->rows = baserel->rows;
 
-	if (!enable_seqscan)
+	if (!(root ? root->config->enable_seqscan : enable_seqscan))
 		startup_cost += disable_cost;
 
 	/* fetch estimated page cost for tablespace containing table */
