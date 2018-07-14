@@ -305,11 +305,9 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		{
 			QueryCancelPending = false;
 			ereport(WARNING,
-					(errmsg("canceling wait for synchronous replication due to user request"),
-					 errdetail("The transaction has already committed locally, but might not have been replicated to the standby.")));
+					(errmsg("ignoring query cancel request for synchronous replication to ensure cluster consistency."),
+					 errdetail("The transaction has already changed locally, it has to be replicated to standby.")));
 			SIMPLE_FAULT_INJECTOR(SyncRepQueryCancel);
-			SyncRepCancelWait();
-			break;
 		}
 
 		/*
