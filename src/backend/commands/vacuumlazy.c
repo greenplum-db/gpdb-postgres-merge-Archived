@@ -309,19 +309,12 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		new_frozen_xid = InvalidTransactionId;
 
 	vac_update_relstats(onerel,
-						new_rel_pages, new_rel_tuples,
-						visibilitymap_count(onerel),
-						vacrelstats->hasindex,
-						new_frozen_xid,
-						true /* isvacuum */);
-
-	vac_update_relstats(onerel,
 						new_rel_pages,
 						new_rel_tuples,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
 						new_frozen_xid,
-						true);
+						true /* isvacuum */);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),

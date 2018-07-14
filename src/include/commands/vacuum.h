@@ -144,6 +144,7 @@ typedef struct VPgClassStats
 	Oid			relid;
 	BlockNumber rel_pages;
 	double		rel_tuples;
+	BlockNumber relallvisible;
 } VPgClassStats;
 
 /* GUC parameters */

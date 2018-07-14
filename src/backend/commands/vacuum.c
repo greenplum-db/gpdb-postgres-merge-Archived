@@ -1388,6 +1388,7 @@ vac_update_relstats_from_list(List *updated_stats)
 		{
 			stats->rel_pages = stats->rel_pages / getgpsegmentCount();
 			stats->rel_tuples = stats->rel_tuples / getgpsegmentCount();
+			stats->relallvisible = stats->relallvisible / getgpsegmentCount();
 		}
 
 		/*
@@ -1396,7 +1397,7 @@ vac_update_relstats_from_list(List *updated_stats)
 		 */
 		vac_update_relstats(rel,
 							stats->rel_pages, stats->rel_tuples,
-							visibilitymap_count(rel),
+							stats->relallvisible,
 							rel->rd_rel->relhasindex, InvalidTransactionId,
 							false /* isvacuum */);
 		relation_close(rel, AccessShareLock);
@@ -1464,6 +1465,7 @@ vac_update_relstats(Relation relation,
 		{
 			num_pages = relation->rd_rel->relpages;
 			num_tuples = relation->rd_rel->reltuples;
+			num_all_visible_pages = relation->rd_rel->relallvisible;
 		}
 		else if (Gp_role == GP_ROLE_EXECUTE)
 		{
@@ -1480,6 +1482,7 @@ vac_update_relstats(Relation relation,
 			stats.relid = RelationGetRelid(relation);
 			stats.rel_pages = num_pages;
 			stats.rel_tuples = num_tuples;
+			stats.relallvisible = num_all_visible_pages;
 			pq_sendint(&buf, sizeof(VPgClassStats), sizeof(int));
 			pq_sendbytes(&buf, (char *) &stats, sizeof(VPgClassStats));
 			pq_endmessage(&buf);
@@ -2805,6 +2808,7 @@ vacuum_combine_stats(VacuumStatsContext *stats_context, CdbPgResults* cdb_pgresu
 			{
 				tmp_stats->rel_pages += pgclass_stats->rel_pages;
 				tmp_stats->rel_tuples += pgclass_stats->rel_tuples;
+				tmp_stats->relallvisible += pgclass_stats->relallvisible;
 				break;
 			}
 		}

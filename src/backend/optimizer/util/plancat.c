@@ -66,7 +66,8 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
                       Relation      rel,
                       int32        *attr_widths,
 				      BlockNumber  *pages,
-                      double       *tuples);
+                      double       *tuples,
+                      double       *allvisfrac);
 
 static void get_external_relation_info(Relation relation, RelOptInfo *rel);
 
@@ -151,7 +152,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			relation,
 			rel->attr_widths - rel->min_attr,
 			&rel->pages,
-			&rel->tuples);
+			&rel->tuples,
+			&rel->allvisfrac);
 	}
 
 	/*
@@ -371,11 +373,14 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			 * a table, except we can be sure that the index is not larger
 			 * than the table.
 			 */
+			double		allvisfrac; /* dummy */
+
 			cdb_estimate_rel_size(rel,
                                   indexRelation,
                                   NULL,
                                   &info->pages,
-                                  &info->tuples);
+                                  &info->tuples,
+                                  &allvisfrac);
 
 			if (!info->indpred ||
 				info->tuples > rel->tuples)
@@ -432,20 +437,20 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
                       Relation      rel,
                       int32        *attr_widths,
 				      BlockNumber  *pages,
-                      double       *tuples)
+                      double       *tuples,
+                      double       *allvisfrac)
 {
 	BlockNumber relpages;
 	double		reltuples;
 	BlockNumber relallvisible;
 	double		density;
-	double      allvisfrac;
     BlockNumber curpages = 0;
 
     /* Rel not distributed?  RelationGetNumberOfBlocks can get actual #pages. */
     if (!relOptInfo->cdbpolicy ||
         relOptInfo->cdbpolicy->ptype == POLICYTYPE_ENTRY)
     {
-        estimate_rel_size(rel, attr_widths, pages, tuples, &allvisfrac);
+        estimate_rel_size(rel, attr_widths, pages, tuples, allvisfrac);
         return;
     }
 
@@ -525,8 +530,21 @@ cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
 	}
 	*tuples = rint(density * (double) curpages);
 
-	elog(DEBUG2, "cdb_estimate_rel_size estimated %g tuples and %d pages",
-		 *tuples, (int) *pages);
+	/*
+	 * We use relallvisible as-is, rather than scaling it up like we
+	 * do for the pages and tuples counts, on the theory that any
+	 * pages added since the last VACUUM are most likely not marked
+	 * all-visible.  But costsize.c wants it converted to a fraction.
+	 */
+	if (relallvisible == 0 || curpages <= 0)
+		*allvisfrac = 0;
+	else if ((double) relallvisible >= curpages)
+		*allvisfrac = 1;
+	else
+		*allvisfrac = (double) relallvisible / curpages;
+
+	elog(DEBUG2, "cdb_estimate_rel_size estimated %g tuples, %d pages, and"
+		" %f allvisfrac", *tuples, (int) *pages, *allvisfrac);
 }
 
 

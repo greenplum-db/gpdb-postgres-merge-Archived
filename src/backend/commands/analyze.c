@@ -847,6 +847,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * mostly historical; the planner, or at least ORCA, expects the
 	 * relpages/reltuples on a partitioned table to represent the total across
 	 * all partitions.
+	 *
+	 * GPDB_92_MERGE_FIXME: In postgres it is sufficient to check the number of
+	 * pages that are visible with visibilitymap_count(), but in GPDB this
+	 * needs to be the count of all pages marked all visible across the all the
+	 * QEs. We need to gather this information from the segments and then update
+	 * it here.
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
