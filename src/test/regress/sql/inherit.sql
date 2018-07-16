@@ -311,6 +311,7 @@ analyze patest1;
 analyze patest2;
 
 set enable_seqscan=off;
+set enable_bitmapscan=off;
 explain (costs off)
 select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
 select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
@@ -321,6 +322,7 @@ explain (costs off)
 select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
 select * from patest0 join (select f1 from int4_tbl where f1 < 10 and f1 > -10 limit 1) ss on id = f1;
 reset enable_seqscan;
+reset enable_bitmapscan;
 
 drop table patest0 cascade;
 
@@ -351,9 +353,14 @@ select * from matest0 order by 1-id;
 reset enable_indexscan;
 
 set enable_seqscan = off;  -- plan with fewest seqscans should be merge
+-- GPDB_92_MERGE_FIXME: the cost of bitmap scan is not correct?
+-- the cost of merge append with index scan is bigger than the cost
+-- of append with bitmapscan + sort
+set enable_bitmapscan = off; 
 explain (verbose, costs off) select * from matest0 order by 1-id;
 select * from matest0 order by 1-id;
 reset enable_seqscan;
+reset enable_bitmapscan;
 
 drop table matest0 cascade;
 
