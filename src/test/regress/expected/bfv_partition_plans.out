@@ -1342,27 +1342,27 @@ select * from r_part order by a,b;
 
 analyze r_part;
 explain select * from r_part r1, r_part r2 where r1.a=1; -- should eliminate partitions in the r1 copy of r_part
-                                           QUERY PLAN                                            
--------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=1.06..10.63 rows=9 width=16)
-   ->  Nested Loop  (cost=1.06..10.63 rows=3 width=16)
-         ->  Append  (cost=0.00..9.03 rows=3 width=8)
-               ->  Seq Scan on r_part_1_prt_1 r2  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_2 r2  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_3 r2  (cost=0.00..1.01 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_4 r2  (cost=0.00..1.00 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_5 r2  (cost=0.00..1.00 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_6 r2  (cost=0.00..1.00 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_7 r2  (cost=0.00..1.00 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_8 r2  (cost=0.00..1.00 rows=1 width=8)
-               ->  Seq Scan on r_part_1_prt_9 r2  (cost=0.00..1.00 rows=1 width=8)
-         ->  Materialize  (cost=1.06..1.09 rows=1 width=8)
-               ->  Broadcast Motion 1:3  (slice1; segments: 1)  (cost=0.00..1.05 rows=3 width=8)
-                     ->  Append  (cost=0.00..1.01 rows=1 width=8)
-                           ->  Seq Scan on r_part_1_prt_1 r1  (cost=0.00..1.01 rows=1 width=8)
-                                 Filter: a = 1
- Settings:  optimizer=off
- Optimizer status: legacy query optimizer
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=10000000000.00..10000000010.36 rows=9 width=0)
+   ->  Nested Loop  (cost=10000000000.00..10000000010.36 rows=3 width=0)
+         ->  Append  (cost=0.00..1.01 rows=1 width=8)
+               ->  Seq Scan on r_part_1_prt_1 r1  (cost=0.00..1.01 rows=1 width=8)
+                     Filter: a = 1
+         ->  Materialize  (cost=0.00..9.26 rows=3 width=0)
+               ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..9.21 rows=3 width=0)
+                     Hash Key: 1
+                     ->  Append  (cost=0.00..9.03 rows=3 width=8)
+                           ->  Seq Scan on r_part_1_prt_1 r2  (cost=0.00..1.01 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_2 r2  (cost=0.00..1.01 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_3 r2  (cost=0.00..1.01 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_4 r2  (cost=0.00..1.00 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_5 r2  (cost=0.00..1.00 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_6 r2  (cost=0.00..1.00 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_7 r2  (cost=0.00..1.00 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_8 r2  (cost=0.00..1.00 rows=1 width=8)
+                           ->  Seq Scan on r_part_1_prt_9 r2  (cost=0.00..1.00 rows=1 width=8)
+ Optimizer: legacy query optimizer
 (19 rows)
 
 explain select * from r_part where a in (1,2); -- should eliminate partitions
