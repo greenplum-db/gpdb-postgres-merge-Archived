@@ -31,15 +31,9 @@ then	FLAGS="--c-kinds=+dfmstuv"
 else	FLAGS="-dt"
 fi
 
-<<<<<<< HEAD
-find `pwd` \( -name _deadcode -prune \) -o \
-		-type f -name '*.[chyl]' -print |
-	xargs ctags "$FLAGS" -a -f tags
-=======
 # this is outputting the tags into the file 'tags', and appending
 find `pwd`/ -type f -name '*.[chyl]' -print |
 	xargs ctags -a -f tags "$FLAGS"
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 # Exuberant tags has a header that we cannot sort in with the other entries
 # so we skip the sort step
