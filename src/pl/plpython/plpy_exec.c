@@ -830,6 +830,7 @@ PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs)
 		rv = PyEval_EvalCode((PyCodeObject *) proc->code,
 							 proc->globals, proc->globals);
 #endif
+		PLy_enter_python_intepreter = false;
 
 		/*
 		 * Since plpy will only let you close subtransactions that you
