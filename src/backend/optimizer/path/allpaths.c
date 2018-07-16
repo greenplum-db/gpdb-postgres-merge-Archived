@@ -516,9 +516,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	int			nattrs;
 	ListCell   *l;
 
-	/* weighted average of widths */
-	double		width_avg = 0;
-
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
@@ -719,7 +716,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	{
 		int			i;
 
-		rel->width = rint(width_avg / parent_rows);
+		rel->width = rint(parent_size / parent_rows);
 		for (i = 0; i < nattrs; i++)
 			rel->attr_widths[i] = rint(parent_attrsizes[i] / parent_rows);
 	}
