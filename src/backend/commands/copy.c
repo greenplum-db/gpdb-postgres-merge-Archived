@@ -1466,16 +1466,6 @@ ProcessCopyOptions(CopyState cstate,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify HEADER in BINARY mode")));
 
-	if (!cstate->csv_mode && cstate->header_line)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("HEADER available only in CSV mode")));
-
-	if (!cstate->csv_mode && pg_strcasecmp(cstate->escape, "\\") != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("escape available only in CSV mode")));
-
 	/* Check quote */
 	if (!cstate->csv_mode && cstate->quote != NULL)
 		ereport(ERROR,
