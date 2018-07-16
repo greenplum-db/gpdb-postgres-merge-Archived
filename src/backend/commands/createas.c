@@ -47,6 +47,7 @@
 #include "cdb/cdbaocsam.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
+#include "cdb/memquota.h"
 
 typedef struct
 {
@@ -154,6 +155,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	queryDesc = CreateQueryDesc(plan, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, 0);
+
+	queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, GetIntoRelEFlags(into));
