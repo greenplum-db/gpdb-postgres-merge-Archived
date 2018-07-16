@@ -296,7 +296,8 @@ DROP TABLE inht1, inhs1 CASCADE;
 --
 
 create temp table patest0 (id, x) as
-  select x, x from generate_series(0,1000) x;
+  select x, x from generate_series(0,1000) x
+  distributed by (id);
 create temp table patest1() inherits (patest0);
 insert into patest1
   select x, x from generate_series(0,1000) x;
