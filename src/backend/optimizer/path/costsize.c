@@ -216,7 +216,7 @@ cost_seqscan(Path *path, PlannerInfo *root,
  */
 void
 cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root,
-					RelOptInfo *baserel)
+					RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -225,6 +225,12 @@ cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root,
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = baserel->rows;
 
 	if (!(root ? root->config->enable_seqscan : enable_seqscan))
 		startup_cost += disable_cost;
@@ -249,7 +255,7 @@ cost_appendonlyscan(AppendOnlyPath *path, PlannerInfo *root,
  */
 void
 cost_aocsscan(AOCSPath *path, PlannerInfo *root,
-					RelOptInfo *baserel)
+					RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -258,6 +264,12 @@ cost_aocsscan(AOCSPath *path, PlannerInfo *root,
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = baserel->rows;
 
 	if (!(root ? root->config->enable_seqscan : enable_seqscan))
 		startup_cost += disable_cost;

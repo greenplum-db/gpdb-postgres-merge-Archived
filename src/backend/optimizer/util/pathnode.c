@@ -1019,7 +1019,7 @@ create_appendonly_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->path.rescannable = true;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_appendonlyscan(pathnode, root, rel);
+	cost_appendonlyscan(pathnode, root, rel, pathnode->path.param_info);
 
 	return pathnode;
 }
@@ -1041,7 +1041,7 @@ create_aocs_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->path.rescannable = true;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_aocsscan(pathnode, root, rel);
+	cost_aocsscan(pathnode, root, rel, pathnode->path.param_info);
 	return pathnode;
 }
 /*
