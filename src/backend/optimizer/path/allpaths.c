@@ -548,6 +548,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		Node	   *childqual;
 		ListCell   *parentvars;
 		ListCell   *childvars;
+		ListCell   *targetListVars;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -626,6 +627,27 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->reltargetlist,
 								   appinfo);
+
+		/*
+		 * Set the corresponding attr_needed for childrel
+		 * It's needed in function cdbpath_dedup_fixup_append()
+		 */
+		foreach (targetListVars, childrel->reltargetlist)
+		{
+			int attno;
+			Var *v = (Var*)lfirst(targetListVars);
+
+			if (!IsA(v, Var))
+				continue;
+
+			attno = v->varattno;
+			if (attno <= FirstLowInvalidHeapAttributeNumber)
+				continue;
+
+			attno -= childrel->min_attr;
+			if (childrel->attr_needed[attno] == NULL)
+				childrel->attr_needed[attno] = bms_add_member(rel->attr_needed[attno], childrel->relid);
+		}
 
 		/*
 		 * We have to make child entries in the EquivalenceClass data
