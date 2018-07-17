@@ -70,6 +70,12 @@ test: inherit
 test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists
 
 # ----------
+# Because vacuum will detect concurrently running transactions, it is necessary to
+# run this test on its own, or it might not detect the pages are 'all visible'
+# ----------
+test: vacuum_stats
+
+# ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
 # results. So it should not run parallel to other tests.
 #
