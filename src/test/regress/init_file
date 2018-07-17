@@ -104,6 +104,10 @@ s/Hash Cond: pg_temp_\d+/Hash Cond: pg_temp_#####/
 m/\d+ was concurrently dropped/
 s/\d+ was concurrently dropped/##### was concurrently dropped/
 
+# Mask out row detail in constraint message
+m/DETAIL:  Failing row contains (.*)/
+s/DETAIL:  Failing row contains (.*)/DETAIL:  Failing row contains (#####)/
+
 # Segment number is not predictable
 m/ERROR:  There are more external files \(URLs\) than primary segments that can read them.*/
 s/ERROR:  There are more external files \(URLs\) than primary segments that can read them.*/ERROR:  There are more external files (URLs) than primary segments that can read them./

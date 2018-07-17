@@ -284,7 +284,8 @@ SELECT COUNT(*) FROM dml_ao_check_p;
 (1 row)
 
 INSERT INTO dml_ao_check_p select generate_series(1,100),'p', generate_series(1,100);
-ERROR:  new row for relation "dml_ao_check_p" violates check constraint "dml_ao_check_p_check"
+ERROR:  new row for relation "dml_ao_check_p" violates check constraint "dml_ao_check_p_check"  (seg2 172.17.0.2:25434 pid=290287)
+DETAIL:  Failing row contains (5, p, 5, null).
 SELECT COUNT(*) FROM dml_ao_check_p;
  count 
 -------
@@ -299,7 +300,8 @@ SELECT COUNT(*) FROM dml_ao_check_s;
 (1 row)
 
 INSERT INTO dml_ao_check_s values(default,1,'nn',1.0000);
-ERROR:  null value in column "a" violates not-null constraint  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  null value in column "a" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (null, 1, nn, 1.0000).
 SELECT COUNT(*) FROM dml_ao_check_s;
  count 
 -------
@@ -320,7 +322,8 @@ SELECT COUNT(*) FROM (SELECT dml_ao_check_r.a + 110 , 0, dml_ao_check_r.c, NULL 
 (1 row)
 
 INSERT INTO dml_ao_check_r SELECT dml_ao_check_r.a + 110 , 0, dml_ao_check_r.c, NULL FROM dml_ao_check_r, dml_ao_check_s WHERE dml_ao_check_r.a = dml_ao_check_s.a;
-ERROR:  null value in column "d" violates not-null constraint  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  null value in column "d" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (138, 0, r, null).
 SELECT COUNT(*) FROM dml_ao_check_r;
  count 
 -------
@@ -1129,7 +1132,8 @@ SELECT COUNT(*) FROM dml_co_check_p;
 (1 row)
 
 INSERT INTO dml_co_check_p select generate_series(1,100),'p', generate_series(1,100);
-ERROR:  new row for relation "dml_co_check_p" violates check constraint "dml_co_check_p_check"  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  new row for relation "dml_co_check_p" violates check constraint "dml_co_check_p_check"  (seg1 172.17.0.2:25433 pid=290286)
+DETAIL:  Failing row contains (2, p, 2, null).
 SELECT COUNT(*) FROM dml_co_check_p;
  count 
 -------
@@ -1144,7 +1148,8 @@ SELECT COUNT(*) FROM dml_co_check_s;
 (1 row)
 
 INSERT INTO dml_co_check_s values(default,1,'nn',1.0000);
-ERROR:  null value in column "a" violates not-null constraint  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  null value in column "a" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (null, 1, nn, 1.0000).
 SELECT COUNT(*) FROM dml_co_check_s;
  count 
 -------
@@ -1165,7 +1170,8 @@ SELECT COUNT(*) FROM (SELECT dml_co_check_r.a + 110 , dml_co_check_r.b, dml_co_c
 (1 row)
 
 INSERT INTO dml_co_check_r SELECT dml_co_check_r.a + 110 , dml_co_check_r.b, dml_co_check_r.c, dml_co_check_r.d FROM dml_co_check_r, dml_co_check_s WHERE dml_co_check_r.a = dml_co_check_s.a AND dml_co_check_r.b > 10;
-ERROR:  new row for relation "dml_co_check_r_1_prt_def" violates check constraint "dml_co_check_r_a_check"  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  new row for relation "dml_co_check_r_1_prt_def" violates check constraint "dml_co_check_r_a_check"  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (139, 96.57, r, 5).
 SELECT COUNT(*) FROM dml_co_check_r;
  count 
 -------
@@ -1186,7 +1192,8 @@ SELECT COUNT(*) FROM (SELECT dml_co_check_r.a + 110 , 0, dml_co_check_r.c, NULL 
 (1 row)
 
 INSERT INTO dml_co_check_r SELECT dml_co_check_r.a + 110 , 0, dml_co_check_r.c, NULL FROM dml_co_check_r, dml_co_check_s WHERE dml_co_check_r.a = dml_co_check_s.a;
-ERROR:  null value in column "d" violates not-null constraint  (seg2 127.0.0.1:40002 pid=18974)
+ERROR:  null value in column "d" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (117, 0, r, null).
 SELECT COUNT(*) FROM dml_co_check_r;
  count 
 -------
@@ -1995,7 +2002,8 @@ SELECT COUNT(*) FROM dml_heap_check_p;
 (1 row)
 
 INSERT INTO dml_heap_check_p select generate_series(1,100),'p', generate_series(1,100);
-ERROR:  new row for relation "dml_heap_check_p" violates check constraint "dml_heap_check_p_check"  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  new row for relation "dml_heap_check_p" violates check constraint "dml_heap_check_p_check"  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (1, p, 1, null).
 SELECT COUNT(*) FROM dml_heap_check_p;
  count 
 -------
@@ -2010,7 +2018,8 @@ SELECT COUNT(*) FROM dml_heap_check_s;
 (1 row)
 
 INSERT INTO dml_heap_check_s values(default,1,'nn',1.0000);
-ERROR:  null value in column "a" violates not-null constraint  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  null value in column "a" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (null, 1, nn, 1.0000).
 SELECT COUNT(*) FROM dml_heap_check_s;
  count 
 -------
@@ -2031,7 +2040,8 @@ SELECT COUNT(*) FROM (SELECT dml_heap_check_r.a + 110 , dml_heap_check_r.b, dml_
 (1 row)
 
 INSERT INTO dml_heap_check_r SELECT dml_heap_check_r.a + 110 , dml_heap_check_r.b, dml_heap_check_r.c, dml_heap_check_r.d FROM dml_heap_check_r, dml_heap_check_s WHERE dml_heap_check_r.a = dml_heap_check_s.a AND dml_heap_check_r.b > 10;
-ERROR:  new row for relation "dml_heap_check_r_1_prt_def" violates check constraint "dml_heap_check_r_a_check"  (seg1 127.0.0.1:40001 pid=18973)
+ERROR:  new row for relation "dml_heap_check_r_1_prt_def" violates check constraint "dml_heap_check_r_a_check"  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (138, 93.24, r, 4).
 SELECT COUNT(*) FROM dml_heap_check_r;
  count 
 -------
@@ -2052,7 +2062,8 @@ SELECT COUNT(*) FROM (SELECT dml_heap_check_r.a + 110 , 0, dml_heap_check_r.c, N
 (1 row)
 
 INSERT INTO dml_heap_check_r SELECT dml_heap_check_r.a + 110 , 0, dml_heap_check_r.c, NULL FROM dml_heap_check_r, dml_heap_check_s WHERE dml_heap_check_r.a = dml_heap_check_s.a;
-ERROR:  null value in column "d" violates not-null constraint  (seg0 127.0.0.1:40000 pid=18972)
+ERROR:  null value in column "d" violates not-null constraint  (seg0 172.17.0.2:25432 pid=290285)
+DETAIL:  Failing row contains (117, 0, r, null).
 SELECT COUNT(*) FROM dml_heap_check_r;
  count 
 -------
@@ -3287,9 +3298,8 @@ NOTICE:  dropped partition "def" for relation "dml_heap_pt_r"
 --Update with prepare plans
 begin;
 PREPARE plan_upd as UPDATE dml_heap_pt_r SET a = dml_heap_pt_s.a +1 FROM dml_heap_pt_s WHERE dml_heap_pt_r.a = dml_heap_pt_s.b ;
-ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 EXECUTE plan_upd;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 rollback;
 --Update and case
 begin;
@@ -3919,9 +3929,8 @@ rollback;
 --Update with prepare plans
 begin;
 PREPARE plan_upd_2 as UPDATE dml_heap_r SET a = dml_heap_s.a +1 FROM dml_heap_s WHERE dml_heap_r.a = dml_heap_s.b ;
-ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 EXECUTE plan_upd_2;
-ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  Cannot parallelize an UPDATE statement that updates the distribution columns
 rollback;
 --Update and case
 begin;
