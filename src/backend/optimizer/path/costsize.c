@@ -290,7 +290,7 @@ cost_aocsscan(AOCSPath *path, PlannerInfo *root,
  */
 void
 cost_externalscan(ExternalPath *path, PlannerInfo *root,
-				  RelOptInfo *baserel)
+				  RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -299,6 +299,12 @@ cost_externalscan(ExternalPath *path, PlannerInfo *root,
 	/* Should only be applied to external relations */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
+
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->path.rows = param_info->ppi_rows;
+	else
+		path->path.rows = baserel->rows;
 	
 	/*
 	 * disk costs

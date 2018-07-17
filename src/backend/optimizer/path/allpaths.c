@@ -418,16 +418,16 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			 * select it (only external path is considered for an external
 			 * base rel).
 			 */
-			add_path(root, rel, (Path *) create_external_path(root, rel));
+			add_path(root, rel, (Path *) create_external_path(root, rel, NULL));
 			set_cheapest(root, rel);
 			return;
 
 		case RELSTORAGE_AOROWS:
-			seqpath = (Path *) create_appendonly_path(root, rel);
+			seqpath = (Path *) create_appendonly_path(root, rel, NULL);
 			break;
 
 		case RELSTORAGE_AOCOLS:
-			seqpath = (Path *) create_aocs_path(root, rel);
+			seqpath = (Path *) create_aocs_path(root, rel, NULL);
 			break;
 
 		case RELSTORAGE_HEAP:

@@ -1006,12 +1006,14 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
  * Create a path for scanning an append-only table
  */
 AppendOnlyPath *
-create_appendonly_path(PlannerInfo *root, RelOptInfo *rel)
+create_appendonly_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 {
 	AppendOnlyPath *pathnode = makeNode(AppendOnlyPath);
 
 	pathnode->path.pathtype = T_AppendOnlyScan;
 	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->path.pathkeys = NIL;	/* seqscan has unordered result */
 
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
@@ -1028,12 +1030,14 @@ create_appendonly_path(PlannerInfo *root, RelOptInfo *rel)
  * Create a path for scanning an append-only table
  */
 AOCSPath *
-create_aocs_path(PlannerInfo *root, RelOptInfo *rel)
+create_aocs_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 {
 	AOCSPath   *pathnode = makeNode(AOCSPath);
 
 	pathnode->path.pathtype = T_AOCSScan;
 	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->path.pathkeys = NIL;	/* seqscan has unordered result */
 
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
@@ -1048,12 +1052,14 @@ create_aocs_path(PlannerInfo *root, RelOptInfo *rel)
 * Create a path for scanning an external table
  */
 ExternalPath *
-create_external_path(PlannerInfo *root, RelOptInfo *rel)
+create_external_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 {
 	ExternalPath   *pathnode = makeNode(ExternalPath);
 
 	pathnode->path.pathtype = T_ExternalScan;
 	pathnode->path.parent = rel;
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->path.pathkeys = NIL;	/* external scan has unordered result */
 
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
@@ -1067,7 +1073,7 @@ create_external_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->path.rescannable = false;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_externalscan(pathnode, root, rel);
+	cost_externalscan(pathnode, root, rel, pathnode->path.param_info);
 
 	return pathnode;
 }
