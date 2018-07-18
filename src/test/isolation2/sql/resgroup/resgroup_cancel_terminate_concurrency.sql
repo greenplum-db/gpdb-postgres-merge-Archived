@@ -5,7 +5,7 @@ DROP RESOURCE GROUP rg_concurrency_test;
 -- end_ignore
 
 CREATE OR REPLACE VIEW rg_concurrency_view AS
-	SELECT waiting, waiting_reason, query, rsgname
+	SELECT waiting, waiting_reason, state, query, rsgname
 	FROM pg_stat_activity
 	WHERE rsgname='rg_concurrency_test';
 

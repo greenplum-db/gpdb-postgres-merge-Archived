@@ -12,7 +12,7 @@ CREATE ROLE role_concurrency_test RESOURCE GROUP rg_concurrency_test;
 -- we might still see this session with query '<IDLE>'.
 -- A filter is put to filter out this kind of quitted sessions.
 CREATE OR REPLACE VIEW rg_activity_status AS
-	SELECT rsgname, waiting_reason, query
+	SELECT rsgname, waiting_reason, state, query
 	FROM pg_stat_activity
 	WHERE rsgname='rg_concurrency_test'
 	  AND query <> '<IDLE>';
