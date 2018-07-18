@@ -699,9 +699,8 @@ static void KeepLogSeg(XLogRecPtr recptr, uint32 *logId, uint32 *logSeg);
 static bool XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 							bool wal_check_consistency_enabled,
 							XLogRecPtr *lsn, BkpBlock *bkpb);
-static void RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb,
-				char *blk, bool get_cleanup_lock, bool keep_buffer);
-
+static Buffer RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb,
+						 char *blk, bool get_cleanup_lock, bool keep_buffer);
 static bool AdvanceXLInsertBuffer(bool new_segment);
 static bool XLogCheckpointNeeded(uint32 logid, uint32 logseg);
 static void XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch);
@@ -3877,8 +3876,6 @@ Buffer
 RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
 				   bool get_cleanup_lock, bool keep_buffer)
 {
-	Buffer		buffer;
-	Page		page;
 	BkpBlock	bkpb;
 	char	   *blk;
 	int			i;
@@ -3896,37 +3893,8 @@ RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
 		if (i == block_index)
 		{
 			/* Found it, apply the update */
-			buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block,
-											RBM_ZERO);
-			Assert(BufferIsValid(buffer));
-			if (get_cleanup_lock)
-				LockBufferForCleanup(buffer);
-			else
-				LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-			page = (Page) BufferGetPage(buffer);
-
-			if (bkpb.hole_length == 0)
-			{
-				memcpy((char *) page, blk, BLCKSZ);
-			}
-			else
-			{
-				memcpy((char *) page, blk, bkpb.hole_offset);
-				/* must zero-fill the hole */
-				MemSet((char *) page + bkpb.hole_offset, 0, bkpb.hole_length);
-				memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
-					   blk + bkpb.hole_offset,
-					   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
-			}
-
-			PageSetLSN(page, lsn);
-			MarkBufferDirty(buffer);
-
-			if (!keep_buffer)
-				UnlockReleaseBuffer(buffer);
-
-			return buffer;
+			return RestoreBackupBlockContents(lsn, bkpb, blk, get_cleanup_lock,
+											  keep_buffer);
 		}
 
 		blk += BLCKSZ - bkpb.hole_length;
@@ -3935,6 +3903,57 @@ RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
 	/* Caller specified a bogus block_index */
 	elog(ERROR, "failed to restore block_index %d", block_index);
 	return InvalidBuffer;		/* keep compiler quiet */
+}
+
+/*
+ * Workhorse for RestoreBackupBlock usable without an xlog record
+ *
+ * Restores a full-page image from BkpBlock and a data pointer.
+ */
+static Buffer
+RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
+						   bool get_cleanup_lock, bool keep_buffer)
+{
+	Buffer		buffer;
+	Page		page;
+
+	buffer = XLogReadBufferExtended(bkpb.node, bkpb.fork, bkpb.block, RBM_ZERO);
+
+	Assert(BufferIsValid(buffer));
+   if (get_cleanup_lock)
+	   LockBufferForCleanup(buffer);
+   else
+	   LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
+
+	page = (Page) BufferGetPage(buffer);
+
+	if (bkpb.hole_length == 0)
+	{
+		memcpy((char *) page, blk, BLCKSZ);
+	}
+	else
+	{
+		memcpy((char *) page, blk, bkpb.hole_offset);
+		/* must zero-fill the hole */
+		MemSet((char *) page + bkpb.hole_offset, 0, bkpb.hole_length);
+		memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
+			   blk + bkpb.hole_offset,
+			   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
+	}
+
+	/*
+	 * The checksum value on this page is currently invalid. We don't need to
+	 * reset it here since it will be set before being written.
+	 */
+
+	PageSetLSN(page, lsn);
+	MarkBufferDirty(buffer);
+
+	if (!keep_buffer)
+		UnlockReleaseBuffer(buffer);
+
+	return buffer;
 }
 
 bool
