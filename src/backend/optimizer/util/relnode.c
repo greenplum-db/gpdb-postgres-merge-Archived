@@ -1127,8 +1127,8 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 
 	/* Estimate the number of rows returned by the parameterized join */
 	rows = get_parameterized_joinrel_size(root, joinrel,
-										  cdbpath_rows(root, outer_path),
-										  cdbpath_rows(root, inner_path),
+										  outer_path->rows,
+										  inner_path->rows,
 										  sjinfo,
 										  *restrict_clauses);
 
