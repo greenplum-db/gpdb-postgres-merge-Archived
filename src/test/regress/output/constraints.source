@@ -332,7 +332,7 @@ DROP TABLE tmp;
 UPDATE INSERT_TBL SET x = NULL WHERE x = 5;
 UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
 UPDATE INSERT_TBL SET x = -z, z = -x;
-UPDATE INSERT_TBL SET x = z, z = x where z < 7;
+UPDATE INSERT_TBL SET x = z, z = x;
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_con"  (seg0 172.17.0.2:25432 pid=308523)
 DETAIL:  Failing row contains (-4, Y, 4).
 SELECT * FROM INSERT_TBL;
