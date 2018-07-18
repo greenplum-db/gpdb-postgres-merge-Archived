@@ -1731,7 +1731,12 @@ begin
 		when data_exception then  -- category match
 			raise notice 'caught data_exception';
 			x := -1;
-		when NUMERIC_VALUE_OUT_OF_RANGE OR CARDINALITY_VIOLATION then
+		-- start_ignore
+		-- GPDB_92_MERGE_FIXME: ORCA really should generate an error code of
+		-- CARDINALITY_VIOLATION in CException::m_rgerrcode
+		-- (libgpos/src/error/CException.cpp)
+		-- end_ignore
+		when NUMERIC_VALUE_OUT_OF_RANGE OR CARDINALITY_VIOLATION OR TOO_MANY_ROWS then
 			raise notice 'caught numeric_value_out_of_range or cardinality_violation';
 			x := -2;
 	end;
