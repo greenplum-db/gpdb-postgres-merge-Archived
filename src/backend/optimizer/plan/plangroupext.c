@@ -2269,7 +2269,7 @@ rebuild_append_simple_rel_and_rte(PlannerInfo *root,
 
 	int			i;
 	int			array_size;
-	ListCell	*l;
+	ListCell	*l1, *l2, *l3;
 	RelOptInfo	*rel;
 
 	if (root->simple_rel_array)
@@ -2285,8 +2285,11 @@ rebuild_append_simple_rel_and_rte(PlannerInfo *root,
 	root->simple_rte_array =
 		(RangeTblEntry **) palloc0(sizeof(RangeTblEntry *) * array_size);
 
+	Assert(list_length(rtable) == list_length(subplans));
+	Assert(list_length(subplans) == list_length(subroots));
+
 	i = 0;
-	foreach(l, rtable)
+	forthree(l1, rtable, l2, subroots, l3, subplans)
 	{
 		SubqueryScan	*splan;
 		PlannerInfo		*sroot;
@@ -2295,22 +2298,18 @@ rebuild_append_simple_rel_and_rte(PlannerInfo *root,
 		/* skip the first one */
 		i++;
 
-		rte = (RangeTblEntry *)lfirst(l);
-		root->simple_rte_array[i] = rte; 
+		rte = (RangeTblEntry *)lfirst(l1);
+		if (rte == NULL || rte->rtekind == RTE_JOIN)
+			continue;
 
+		root->simple_rte_array[i] = rte; 
 		if (rte->rtekind == RTE_VOID)
 			rel = makeNode(RelOptInfo);
 		else
 			rel = build_simple_rel(root, i, RELOPT_BASEREL);
 
-		rel->subroot = NULL;
-		rel->subplan = NULL; 
-
-
-		if (i - 1  >= list_length(subplans))
-			continue;
-		splan = (SubqueryScan *)list_nth(subplans, i - 1);
-		sroot = (PlannerInfo *)list_nth(subroots, i - 1);
+		sroot = (PlannerInfo *)lfirst(l2);
+		splan = (SubqueryScan *)lfirst(l3);
 
 		rel->subroot = sroot;
 		if (splan != NULL)
@@ -2318,8 +2317,11 @@ rebuild_append_simple_rel_and_rte(PlannerInfo *root,
 			splan->scan.scanrelid = i;
 			rel->subplan = splan->subplan;
 		}
+		else
+		{
+			rel->subplan = NULL;
+		}
 	}
-
 }
 
 static Plan *
@@ -2423,6 +2425,7 @@ plan_list_rollup_plans(PlannerInfo *root,
 		Plan *rollup_plan;
 		PlannerInfo * rollup_subroot = NULL;
 		SubqueryScan * rollup_subplan = NULL;
+		int i;
 
 		context->current_rollup = (CanonicalRollup *)
 			list_nth(context->canonical_rollups, rollup_no);
@@ -2506,20 +2509,38 @@ plan_list_rollup_plans(PlannerInfo *root,
 
 			rollup_subroot = add_subroot_for_subqueryscan(root, newrte);
 			rollup_subplan = (SubqueryScan *)rollup_plan;
+			rollup_subroots = lappend(rollup_subroots, rollup_subroot);
+			rollup_subplans = lappend(rollup_subplans, rollup_subplan);
 		}
 		else
 		{
 			final_query = root->parse;
 
-			if (root->simple_rel_array[1] != NULL)
-				rollup_subroot = root->simple_rel_array[1]->subroot;
+			for (i = 1; i < root->simple_rel_array_size; i++)
+			{
+				if (root->simple_rel_array[i] != NULL)
+				{
+					rollup_subroots = lappend(rollup_subroots, root->simple_rel_array[i]->subroot);
+					rollup_subplans = lappend(rollup_subplans, root->simple_rel_array[i]->subplan);
+				}
+				else
+				{
+					rollup_subroots = lappend(rollup_subroots, NULL);
+					rollup_subplans = lappend(rollup_subplans, NULL);
+				}
+			}
 
-			rollup_subplan = findFirstSubqueryScan(rollup_plan);
+			if (root->simple_rel_array_size == 2 &&
+				root->simple_rel_array[1] != NULL &&
+				root->simple_rte_array[1] != NULL &&
+				root->simple_rte_array[1]->rtekind == RTE_SUBQUERY)
+			{
+				rollup_subplan = findFirstSubqueryScan(rollup_plan);
+				list_nth_replace(rollup_subplans, 0, rollup_subplan);
+			}
 		}
 
 		rollup_plans = lappend(rollup_plans, rollup_plan);
-		rollup_subroots = lappend(rollup_subroots, rollup_subroot);
-		rollup_subplans = lappend(rollup_subplans, rollup_subplan);
 	}
 
 	if (list_length(rollup_plans) > 1)
