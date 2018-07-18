@@ -133,7 +133,7 @@ class WalReplKillProcessTestCase(TINCTestCase):
  
    def kill_transc_backend(self):
        pid_list = []
-       sql = "SELECT procpid FROM pg_stat_activity WHERE datname='{0}' AND current_query like 'INSERT INTO%'".format(self.pgdatabase)    
+       sql = "SELECT pid FROM pg_stat_activity WHERE datname='{0}' AND query like 'INSERT INTO%'".format(self.pgdatabase)
        tinctest.logger.info("running sql command to get transaction backend process: ---  %s"%sql)
        procid = PSQL.run_sql_command(sql, flags = '-q -t', dbname= self.pgdatabase)
        count = 1
