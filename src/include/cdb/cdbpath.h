@@ -54,7 +54,10 @@ cdbpath_rows(PlannerInfo *root, Path *path)
 {
 	/* GPDB_92_MERGE_FIXME: Maybe we should think about removing this function.
 	 * That will eliminate merge risk since pg upstream (since 9.2) uses
-	 * path->rows directly.
+	 * path->rows directly. Besides, it seems that this function should be
+	 * for cost estimation only but rows variable setting is often mixed with cost
+	 * estimation in pg/gp code, e.g. cost_material(), so we have to ugly reset
+	 * rows sometimes: See query_planner() and create_material_path().
 	 */
 	Path  *p;
 

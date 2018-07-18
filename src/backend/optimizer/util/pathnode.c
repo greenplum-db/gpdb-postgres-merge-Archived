@@ -1709,6 +1709,7 @@ create_material_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 				  subpath->total_cost,
 				  cdbpath_rows(root, subpath),
 				  rel->width);
+	pathnode->path.rows = subpath->rows;
 
 	return pathnode;
 }

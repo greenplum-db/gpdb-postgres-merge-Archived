@@ -434,6 +434,7 @@ query_planner(PlannerInfo *root, List *tlist,
 					  cheapestpath->total_cost,
 					  cdbpath_rows(root, cheapestpath), final_rel->width,
 					  0.0, work_mem, limit_tuples);
+			sort_path.rows = final_rel->rows;
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,
