@@ -772,20 +772,6 @@ SELECT xml_is_well_formed('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
-<<<<<<< HEAD
--- External entity references should not leak filesystem information.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
-ERROR:  unsupported XML feature
-DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
--- This might or might not load the requested DTD, but it mustn't throw error.
-SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
-ERROR:  unsupported XML feature
-=======
 -- Since xpath() deals with namespaces, it's a bit stricter about
 -- what's well-formed and what's not. If we don't obey these rules
 -- (i.e. ignore namespace-related errors from libxml), xpath()
@@ -813,7 +799,6 @@ SELECT xpath('/*', '<relativens xmlns=''relative''/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('/*', '<relativens xmlns=''relative''/>');
                            ^
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- External entity references should not leak filesystem information.
