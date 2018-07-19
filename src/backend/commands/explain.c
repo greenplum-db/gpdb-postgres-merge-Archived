@@ -1053,6 +1053,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_DynamicIndexScan:
 			pname = "Dynamic Index Scan";
+			break;
 		case T_IndexOnlyScan:
 			pname = sname = "Index Only Scan";
 			break;
