@@ -328,7 +328,11 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		/* Is it a convertible ANY or EXISTS clause? */
 		if (sublink->subLinkType == ANY_SUBLINK)
 		{
-			if ((j = convert_ANY_sublink_to_join(root, sublink,
+			/*
+			 * GPDB_92_MERGE_FIXME
+			 */
+			if (available_rels2 == NULL &&
+					(j = convert_ANY_sublink_to_join(root, sublink,
 												 available_rels1)) != NULL)
 			{
 				/* Yes; insert the new join node into the join tree */
