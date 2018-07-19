@@ -14,11 +14,11 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = plpgsql
 
-# ifeq ($(with_perl), yes)
-# SUBDIRS += plperl
-# else
-# ALWAYS_SUBDIRS += plperl
-# endif
+ifeq ($(with_perl), yes)
+SUBDIRS += plperl
+else
+ALWAYS_SUBDIRS += plperl
+endif
 
 ifeq ($(with_python), yes)
 SUBDIRS += plpython
