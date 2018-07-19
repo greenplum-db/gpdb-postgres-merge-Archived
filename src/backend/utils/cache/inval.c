@@ -1086,6 +1086,13 @@ CacheInvalidateHeapTuple(Relation relation,
 		 */
 		databaseId = MyDatabaseId;
 	}
+	else if (tupleRelId == GpPolicyRelationId)
+	{
+		FormData_gp_policy *gptup = (FormData_gp_policy *) GETSTRUCT(tuple);
+
+		relationId = gptup->localoid;
+		databaseId = MyDatabaseId;
+	}
 	else if (tupleRelId == IndexRelationId)
 	{
 		Form_pg_index indextup = (Form_pg_index) GETSTRUCT(tuple);
