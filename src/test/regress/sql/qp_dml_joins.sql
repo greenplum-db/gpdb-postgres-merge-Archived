@@ -1,5 +1,10 @@
 -- First create a bunch of test tables
 
+-- start_matchsubs
+-- m/DETAIL:  Failing row contains \(.*\)/
+-- s/DETAIL:  Failing row contains \(.*\)/DETAIL:  Failing row contains (#####)/
+-- end_matchsubs
+
 CREATE TABLE dml_ao_check_r (
 	a int default 100 CHECK( a between 1 and 105),
 	b float8 CONSTRAINT rcheck_b CHECK( b <> 0.00 and b IS NOT NULL),
