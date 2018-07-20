@@ -3201,8 +3201,8 @@ cost_rescan(PlannerInfo *root, Path *path,
 				 * the run_cost charge in cost_sort, and also see comments in
 				 * cost_material before you change it.)
 				 */
-				Cost		run_cost = cpu_operator_cost * path->rows;
-				double		nbytes = relation_byte_size(path->rows,
+				Cost		run_cost = cpu_operator_cost * path->parent->rows;
+				double		nbytes = relation_byte_size(path->parent->rows,
 														path->parent->width);
 				long		work_mem_bytes = work_mem * 1024L;
 
