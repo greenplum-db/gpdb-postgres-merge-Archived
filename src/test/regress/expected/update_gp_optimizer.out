@@ -174,9 +174,8 @@ EXPLAIN (COSTS OFF) DELETE FROM keo5 WHERE x IN (SELECT x FROM keo5 WHERE EXISTS
                                              ->  Gather Motion 3:1  (slice1; segments: 3)
                                                    ->  Table Scan on keo5
                                                          Filter: x < 2
- Settings:  optimizer=on
  Optimizer status: PQO version 2.42.3
-(17 rows)
+(16 rows)
 
 DELETE FROM keo5 WHERE x IN (SELECT x FROM keo5 WHERE EXISTS (SELECT x FROM keo5 WHERE x < 2));
 SELECT x FROM keo5;
