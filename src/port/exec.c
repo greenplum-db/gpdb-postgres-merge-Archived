@@ -511,12 +511,9 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 
 /*
  * pclose() plus useful error reporting
-<<<<<<< HEAD
-=======
  * Is this necessary?  bjm 2004-05-11
  * Originaally this was stated to be here because pipe.c had backend linkage.
  * Perhaps that's no longer so now we have got rid of pipe.c amd 2012-03-28
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  */
 int
 pclose_check(FILE *stream)
