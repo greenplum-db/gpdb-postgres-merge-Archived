@@ -169,7 +169,7 @@ installcheck-world: installcheck-gpcheckcat
 installcheck-gpcheckcat:
 	gpcheckcat -A
 $(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
-$(call recurse,installcheck-world,contrib/pg_upgrade,check)
+#$(call recurse,installcheck-world,contrib/pg_upgrade,check)
 
 $(call recurse,maintainer-check,doc src config contrib)
 
