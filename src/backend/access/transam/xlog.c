@@ -761,7 +761,9 @@ static void ReadControlFile(void);
 static char *str_time(pg_time_t tnow);
 static bool CheckForStandbyTrigger(void);
 
+#ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
+#endif
 static void pg_start_backup_callback(int code, Datum arg);
 static bool read_backup_label(XLogRecPtr *checkPointLoc,
 				  bool *backupEndRequired, bool *backupFromStandby);
@@ -776,6 +778,7 @@ static void XLogProcessCheckpointRecord(XLogRecord *rec, XLogRecPtr loc);
 static void GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg);
 static void checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr);
 
+#ifdef WAL_DEBUG
 static char *XLogContiguousCopy(
 	XLogRecord 		*record,
 
@@ -813,6 +816,7 @@ static char *XLogContiguousCopy(
 
 	return buffer;
 }
+#endif
 
 /*
  * Insert an XLOG record having the specified RMID and info bytes,
@@ -10541,6 +10545,7 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 		appendStringInfo(buf, "UNKNOWN");
 }
 
+#ifdef WAL_DEBUG
 static void
 xlog_outrec(StringInfo buf, XLogRecord *record)
 {
@@ -10561,6 +10566,7 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 
 	appendStringInfo(buf, ": %s", RmgrTable[record->xl_rmid].rm_name);
 }
+#endif
 
 
 /*

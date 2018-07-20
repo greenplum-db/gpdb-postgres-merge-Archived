@@ -5711,7 +5711,6 @@ exec_simple_check_node(Node *node)
 static void
 exec_simple_check_plan(PLpgSQL_expr *expr)
 {
-	SPIPlanPtr	spi_plan = expr->plan;
 	CachedPlanSource *plansource;
 	Query	   *query;
 	CachedPlan *cplan;

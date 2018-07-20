@@ -10,6 +10,8 @@
 #include <zlib.h>
 #endif
 
+#include "c.h"
+
 #ifdef WIN32
 #include <windows.h>
 #endif
