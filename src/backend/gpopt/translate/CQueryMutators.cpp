@@ -1466,6 +1466,8 @@ CQueryMutators::PqueryConvertToDerivedTable
 	pqueryNew->rtable = gpdb::PlAppendElement(pqueryNew->rtable, prte);
 //	pqueryNew->intoClause = origIntoClause;
 	pqueryNew->intoPolicy = origIntoPolicy;
+	pqueryNew->isCTAS = pqueryDrvd->isCTAS;
+	pqueryDrvd->isCTAS = false;
 
 	FromExpr *pfromexpr = MakeNode(FromExpr);
 	pfromexpr->quals = NULL;
