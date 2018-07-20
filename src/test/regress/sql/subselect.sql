@@ -412,6 +412,10 @@ from int4_tbl;
 -- Test case for planner bug with nested EXISTS handling
 --
 select a.thousand from tenk1 a, tenk1 b
+-- GPDB_92_MERGE_FIXME: ORCA cannot decorrelate this query, and generates
+-- correct-but-slow plan that takes 45 minutes. Wedge in a hack to
+-- conditionally short-circuit it only when running under ORCA
+, (SELECT name, setting FROM pg_settings WHERE (name, setting) = ('optimizer', 'off')) AS FIXME
 where a.thousand = b.thousand
   and exists ( select 1 from tenk1 c where b.hundred = c.hundred
                    and not exists ( select 1 from tenk1 d
