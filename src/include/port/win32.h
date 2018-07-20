@@ -242,10 +242,15 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
  * Supplement to <sys/types.h>.
  *
  * Perl already has typedefs for uid_t and gid_t.
+ * GPDB_91_MERGE_FIXME: I disabled setting this because it appears to be
+ * set in apr-1... I can't figure out what changed here, so we should
+ * probably figure out what to do with this in the future.
  */
+#if 0
 #ifndef PLPERL_HAVE_UID_GID
 typedef int uid_t;
 typedef int gid_t;
+#endif
 #endif
 typedef long key_t;
 
