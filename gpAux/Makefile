@@ -562,8 +562,9 @@ define tmpCLIENT_SQLDOCS
 endef
 CLIENT_SQLDOCS = $(strip $(tmpCLIENT_SQLDOCS))
 
-# FIXME: put back pg_dump and pg_dumpall as soon as they compile
 define tmpCLIENT_FILESET
+	pg_dump$(EXE_EXT)
+	pg_dumpall$(EXE_EXT)
 	psql$(EXE_EXT)
 endef
 ifeq "$(findstring rhel,$(BLD_ARCH))" "rhel"
