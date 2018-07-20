@@ -329,7 +329,15 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		if (sublink->subLinkType == ANY_SUBLINK)
 		{
 			/*
-			 * GPDB_92_MERGE_FIXME
+			 * GPDB_92_MERGE_FIXME: debug with the following two queries:
+			 *
+			 * select * from A where exists
+			 * 		(select * from B where A.i in
+			 * 			(select C.i from C where C.i = B.i));
+			 *
+			 *
+			 * select * from C,A where C.i in
+			 * 		(select C.i from C where C.i = A.i);
 			 */
 			if (available_rels2 == NULL &&
 					(j = convert_ANY_sublink_to_join(root, sublink,
