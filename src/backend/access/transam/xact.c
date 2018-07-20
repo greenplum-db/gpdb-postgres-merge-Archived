@@ -1298,7 +1298,7 @@ RecordTransactionCommit(void)
 		/*
 		 * Do we need the long commit record? If not, use the compact format.
 		 */
-		// GPDB_92_MERGE_FIXME_AS_SOON_AS_IT_COMPILES: always use "non
+		// GPDB_92_MERGE_FIXME: always use "non
 		// compact" WAL records when in distributed transactions. Can
 		// we use the compact one for non-DDL transactions?
 		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit
@@ -1385,23 +1385,6 @@ RecordTransactionCommit(void)
 				recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT, rdata);
 			}
 
-			/* MPP: If we are the QD and we've used sequences (from the sequence server) then we need
-			 * to make sure that we flush the XLOG entries made by the sequence server.  We do this
-			 * by moving our recptr ahead to where the sequence server is if its later than our own.
-			 *
-			 */
-			if (Gp_role == GP_ROLE_DISPATCH && seqXlogWrite)
-			{
-				LWLockAcquire(SeqServerControlLock, LW_EXCLUSIVE);
-
-				if (XLByteLT(recptr, seqServerCtl->lastXlogEntry))
-				{
-					recptr.xlogid = seqServerCtl->lastXlogEntry.xlogid;
-					recptr.xrecoff = seqServerCtl->lastXlogEntry.xrecoff;
-				}
-
-				LWLockRelease(SeqServerControlLock);
-			}
 		}
 		else
 		{
@@ -1426,7 +1409,7 @@ RecordTransactionCommit(void)
 			rdata[lastrdata].next = NULL;
 
 			/*
-			 * GPDB_92_MERGE_FIXME_AS_SOON_AS_IT_COMPILES: Can we
+			 * GPDB_92_MERGE_FIXME: Can we
 			 * handle distributed transactions in this way too?
 			 */
 			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_COMPACT, rdata);

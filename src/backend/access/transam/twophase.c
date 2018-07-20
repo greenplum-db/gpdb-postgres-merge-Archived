@@ -489,7 +489,6 @@ MarkAsPreparing(TransactionId xid,
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
 	proc->serializableIsoLevel = false;
-	proc->inDropTransaction = false;
 
 	proc->localDistribXactData = *localDistribXactRef;
 

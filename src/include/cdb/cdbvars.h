@@ -787,9 +787,6 @@ extern bool gp_cte_sharing;
 
 extern bool	gp_setwith_alter_storage;
 
-/* MPP-9772, MPP-9773: remove support for CREATE INDEX CONCURRENTLY */
-extern bool	gp_create_index_concurrently;
-
 /* Priority for the segworkers relative to the postmaster's priority */
 extern int gp_segworker_relative_priority;
 
@@ -942,17 +939,6 @@ extern GpId GpIdentity;
  * Interconnect connections from other Motion nodes.
  */
 extern uint32 Gp_listener_port;
-
-
-
-/* SequenceServer information to be shared with everyone */
-typedef struct SeqServerControlBlock
-{
-	int4		seqServerPort;
-	XLogRecPtr  lastXlogEntry;
-}	SeqServerControlBlock;
-
-extern SeqServerControlBlock *seqServerCtl;
 
 /*
  * Thread-safe routine to write to the log

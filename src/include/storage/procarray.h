@@ -78,7 +78,6 @@ extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
 					 int *nbackends, int *nprepared);
 extern bool HasSerializableBackends(bool allDbs);
-extern bool HasDropTransaction(bool allDbs);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  int nxids, const TransactionId *xids,

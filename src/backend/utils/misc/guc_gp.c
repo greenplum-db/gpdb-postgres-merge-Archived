@@ -20,6 +20,7 @@
 
 #include "access/reloptions.h"
 #include "access/transam.h"
+#include "access/tuptoaster.h"
 #include "access/url.h"
 #include "access/xlog_internal.h"
 #include "cdb/cdbappendonlyam.h"
@@ -161,6 +162,7 @@ bool		gp_create_table_random_default_distribution = true;
 bool		gp_allow_non_uniform_partitioning_ddl = true;
 bool		gp_enable_exchange_default_partition = false;
 int			dtx_phase2_retry_count = 0;
+int			gp_test_toast_max_chunk_size_override = 0;
 
 bool		log_dispatch_stats = false;
 
@@ -769,18 +771,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		/* MPP-9772, MPP-9773: remove support for CREATE INDEX CONCURRENTLY */
-		{"gp_create_index_concurrently", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Allow concurrent index creation."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_create_index_concurrently,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_enable_minmax_optimization", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of index scans with limit to implement MIN/MAX."),
 			NULL,
@@ -870,7 +860,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			NULL,
 		},
 		&gp_enable_groupext_distinct_pruning,
-		false /* GPDB_84_MERGE_FIXME: Turn GUC back to true and fix the failing tests */,
+		true,
 		NULL, NULL, NULL
 	},
 
@@ -4413,6 +4403,16 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&gp_max_slices,
 		0, 0, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"gp_test_toast_max_chunk_size_override", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Testing support for TOAST_MAX_CHUNK_SIZE changes."),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&gp_test_toast_max_chunk_size_override,
+		0, 0, TOAST_MAX_CHUNK_SIZE, NULL, NULL
 	},
 
 	/* End-of-list marker */

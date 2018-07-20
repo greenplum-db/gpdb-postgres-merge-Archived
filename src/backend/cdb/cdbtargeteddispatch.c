@@ -192,7 +192,7 @@ GetContentIdsFromPlanForSingleRelation(List *rtable, Plan *plan, int rangeTableI
 	{
 		/* Get a copy of the rel's GpPolicy from the relcache. */
 		relation = relation_open(rte->relid, NoLock);
-		policy = RelationGetPartitioningKey(relation);
+		policy = relation->rd_cdbpolicy;
 
 		if (policy != NULL)
 		{

@@ -473,7 +473,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 			pgxact->inCommit = false;		/* be sure this is cleared in abort */
 			proc->recoveryConflictPending = false;
 			proc->serializableIsoLevel = false;
-			proc->inDropTransaction = false;
 
 			/* Clear the subtransaction-XID cache too while holding the lock */
 			pgxact->nxids = 0;
@@ -510,7 +509,6 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 		pgxact->inCommit = false;		/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 		proc->serializableIsoLevel = false;
-		proc->inDropTransaction = false;
 
 		Assert(pgxact->nxids == 0);
 		Assert(pgxact->overflowed == false);
@@ -550,7 +548,6 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
 	pgxact->inCommit = false;
 	proc->serializableIsoLevel = false;
-	proc->inDropTransaction = false;
 
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
@@ -1139,47 +1136,6 @@ TransactionIdIsActive(TransactionId xid)
 		{
 			result = true;
 			break;
-		}
-	}
-
-	LWLockRelease(ProcArrayLock);
-
-	return result;
-}
-
-/*
- * Returns true if there are any UAO drop transaction active (except the current
- * one).
- *
- * If allDbs is TRUE then all backends are considered; if allDbs is FALSE
- * then only backends running in my own database are considered.
- */
-bool
-HasDropTransaction(bool allDbs)
-{
-	ProcArrayStruct *arrayP = procArray;
-	bool result = false; /* Assumes */
-	int			index;
-
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
-
-	for (index = 0; index < arrayP->numProcs; index++)
-	{
-		int			pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC *proc = &allProcs[pgprocno];
-		volatile PGXACT *pgxact = &allPgXact[pgprocno];
-		if (proc->pid == 0)
-			continue;			/* do not count prepared xacts */
-
-		if (allDbs || proc->databaseId == MyDatabaseId)
-		{
-			if (proc->inDropTransaction && proc != MyProc)
-			{
-				ereport((Debug_print_snapshot_dtm ? LOG : DEBUG3),
-						(errmsg("Found drop transaction: database %d, pid %d, xid %d, xmin %d",
-								proc->databaseId, proc->pid, pgxact->xid, pgxact->xmin)));
-				result = true;
-			}
 		}
 	}
 

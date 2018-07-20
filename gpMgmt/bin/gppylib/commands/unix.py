@@ -26,7 +26,8 @@ SUNOS = "sunos"
 LINUX = "linux"
 DARWIN = "darwin"
 FREEBSD = "freebsd"
-platform_list = [SUNOS, LINUX, DARWIN, FREEBSD]
+OPENBSD = "openbsd"
+platform_list = [SUNOS, LINUX, DARWIN, FREEBSD, OPENBSD]
 
 curr_platform = platform.uname()[0].lower()
 
@@ -328,6 +329,22 @@ class FreeBsdPlatform(GenericPlatform):
     def getMountDevFirst(self):
         return True
 
+class OpenBSDPlatform(GenericPlatform):
+    def __init__(self):
+        pass
+
+    def getName(self):
+        return "openbsd"
+
+    def get_machine_arch_cmd(self):
+        return 'uname -m'
+
+    def getMountDevFirst(self):
+        return True
+
+    def getPing6(self):
+        return findCmdInPath('ping6')
+
 
 """ if self.SYSTEM == 'sunos':
             self.PS_TXT='ef'
@@ -371,17 +388,29 @@ class Ping(Command):
     def __init__(self, name, hostToPing, ctxt=LOCAL, remoteHost=None, obj=None):
         self.hostToPing = hostToPing
         self.obj = obj
-        pingToUse = findCmdInPath('ping')
+        self.pingToUse = findCmdInPath('ping')
+        cmdStr = "%s -c 1 %s" % (self.pingToUse, self.hostToPing)
+        Command.__init__(self, name, cmdStr, ctxt, remoteHost)
 
-        if curr_platform == LINUX or curr_platform == DARWIN:
+    def run(self, validateAfter=False):
+        if curr_platform == LINUX or curr_platform == DARWIN or curr_platform == OPENBSD:
             # Get the family of the address we need to ping.  If it's AF_INET6
             # we must use ping6 to ping it.
-            addrinfo = socket.getaddrinfo(hostToPing, None)
-            if addrinfo and addrinfo[0] and addrinfo[0][0] == socket.AF_INET6:
-                pingToUse = SYSTEM.getPing6()
 
-        cmdStr = "%s -c 1 %s" % (pingToUse, hostToPing)
-        Command.__init__(self, name, cmdStr, ctxt, remoteHost)
+            try:
+                addrinfo = socket.getaddrinfo(self.hostToPing, None)
+                if addrinfo and addrinfo[0] and addrinfo[0][0] == socket.AF_INET6:
+                    self.pingToUse = SYSTEM.getPing6()
+                    self.cmdStr = "%s -c 1 %s" % (self.pingToUse, self.hostToPing)
+            except Exception as e:
+                self.results = CommandResult(1, '', 'Failed to get ip address: ' + str(e), False, True)
+                if validateAfter:
+                    self.validate()
+                else:
+                    # we know the next step of running ping is useless
+                    return
+
+        super(Ping, self).run(validateAfter)
 
     @staticmethod
     def ping_list(host_list):
@@ -1041,5 +1070,7 @@ elif curr_platform == DARWIN:
     SYSTEM = DarwinPlatform()
 elif curr_platform == FREEBSD:
     SYSTEM = FreeBsdPlatform()
+elif curr_platform == OPENBSD:
+    SYSTEM = OpenBSDPlatform();
 else:
     raise Exception("Platform %s is not supported.  Supported platforms are: %s", SYSTEM, str(platform_list))

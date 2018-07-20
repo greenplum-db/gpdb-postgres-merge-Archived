@@ -1719,7 +1719,7 @@ aocol_compression_ratio_internal(Relation parentrel)
 	Assert(OidIsValid(segrelid));
 
 	/*
-	 * open aoseg relation
+	 * open the aoseg relation
 	 */
 	aosegrel = heap_open(segrelid, AccessShareLock);
 

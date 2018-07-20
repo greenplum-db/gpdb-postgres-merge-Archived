@@ -92,14 +92,6 @@ typedef struct DispatchCommandQueryParms
 
 	int			rootIdx;
 
-	/*
-	 * the sequence server info.
-	 */
-	char	   *seqServerHost;	/* If non-null, sequence server host name. */
-	int			seqServerHostlen;
-	int			seqServerPort;	/* If seqServerHost non-null, sequence server
-								 * port. */
-
 	/* the map from sliceIndex to gang_id, in array form */
 	int			numSlices;
 	int		   *sliceIndexGangIdMap;
@@ -463,7 +455,6 @@ cdbdisp_dispatchCommandInternal(const char *strCommand,
 	MemoryContext oldContext;
 	DispatchCommandQueryParms *pQueryParms;
 	Gang		*primaryGang;
-	CdbComponentDatabaseInfo *qdinfo;
 	char		*queryText = NULL;
 	int		queryTextLength = 0;
 
@@ -503,15 +494,6 @@ cdbdisp_dispatchCommandInternal(const char *strCommand,
 								  withSnapshot, false,
 								  mppTxnOptions(needTwoPhase),
 								  "cdbdisp_dispatchCommandInternal");
-
-	/*
-	 * sequence server info
-	 */
-	qdinfo = &(getComponentDatabases()->entry_db_info[0]);
-	Assert(qdinfo != NULL && qdinfo->hostip != NULL);
-	pQueryParms->seqServerHost = pstrdup(qdinfo->hostip);
-	pQueryParms->seqServerHostlen = strlen(qdinfo->hostip) + 1;
-	pQueryParms->seqServerPort = seqServerCtl->seqServerPort;
 
 	/*
 	 * Dispatch the command.
@@ -555,8 +537,6 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 		   (rootIdx > sliceTbl->nMotions
 			&& rootIdx <= sliceTbl->nMotions + sliceTbl->nInitPlans));
 #endif
-
-	CdbComponentDatabaseInfo *qdinfo;
 
 	DispatchCommandQueryParms *pQueryParms = (DispatchCommandQueryParms *) palloc0(sizeof(*pQueryParms));
 
@@ -606,15 +586,6 @@ cdbdisp_buildPlanQueryParms(struct QueryDesc *queryDesc,
 	pQueryParms->serializedQueryDispatchDesc = sddesc;
 	pQueryParms->serializedQueryDispatchDesclen = sddesc_len;
 	pQueryParms->rootIdx = rootIdx;
-
-	/*
-	 * sequence server info
-	 */
-	qdinfo = &(getComponentDatabases()->entry_db_info[0]);
-	Assert(qdinfo != NULL && qdinfo->hostip != NULL);
-	pQueryParms->seqServerHost = pstrdup(qdinfo->hostip);
-	pQueryParms->seqServerHostlen = strlen(qdinfo->hostip) + 1;
-	pQueryParms->seqServerPort = seqServerCtl->seqServerPort;
 
 	/*
 	 * Serialize a version of our snapshot, and generate our transction
@@ -673,11 +644,6 @@ cdbdisp_destroyQueryParms(DispatchCommandQueryParms *pQueryParms)
 		pQueryParms->serializedDtxContextInfo = NULL;
 	}
 
-	if (pQueryParms->seqServerHost != NULL)
-	{
-		pfree(pQueryParms->seqServerHost);
-		pQueryParms->seqServerHost = NULL;
-	}
 
 	if (pQueryParms->sliceIndexGangIdMap != NULL)
 	{
@@ -879,9 +845,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	int			dtxContextInfo_len = pQueryParms->serializedDtxContextInfolen;
 	int			flags = 0;		/* unused flags */
 	int			rootIdx = pQueryParms->rootIdx;
-	const char *seqServerHost = pQueryParms->seqServerHost;
-	int			seqServerHostlen = pQueryParms->seqServerHostlen;
-	int			seqServerPort = pQueryParms->seqServerPort;
 	int			numSlices = pQueryParms->numSlices;
 	int		   *sliceIndexGangIdMap = pQueryParms->sliceIndexGangIdMap;
 	int64		currentStatementStartTimestamp = GetCurrentStatementStartTimestamp();
@@ -918,14 +881,11 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		sizeof(dtxContextInfo_len) +
 		dtxContextInfo_len +
 		sizeof(flags) +
-		sizeof(seqServerHostlen) +
-		sizeof(seqServerPort) +
 		command_len +
 		querytree_len +
 		plantree_len +
 		params_len +
 		sddesc_len +
-		seqServerHostlen +
 		sizeof(numSlices) +
 		sizeof(int) * numSlices +
 		sizeof(resgroupInfo.len) +
@@ -1010,14 +970,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	memcpy(pos, &tmp, sizeof(tmp));
 	pos += sizeof(tmp);
 
-	tmp = htonl(seqServerHostlen);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
-
-	tmp = htonl(seqServerPort);
-	memcpy(pos, &tmp, sizeof(tmp));
-	pos += sizeof(tmp);
-
 	memcpy(pos, command, command_len);
 	pos += command_len;
 
@@ -1043,12 +995,6 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 	{
 		memcpy(pos, sddesc, sddesc_len);
 		pos += sddesc_len;
-	}
-
-	if (seqServerHostlen > 0)
-	{
-		memcpy(pos, seqServerHost, seqServerHostlen);
-		pos += seqServerHostlen;
 	}
 
 	tmp = htonl(numSlices);

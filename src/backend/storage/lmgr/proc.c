@@ -399,7 +399,7 @@ InitProcess(void)
 	 * this; it probably should.)
 	 *
 	 * Ideally, we should create functions similar to IsAutoVacuumLauncherProcess()
-	 * for ftsProber, SeqServer etc who call InitProcess().
+	 * for ftsProber, etc who call InitProcess().
 	 * But MyPMChildSlot helps to get away with it.
 	 */
 	if (IsUnderPostmaster && !IsAutoVacuumLauncherProcess()
@@ -417,7 +417,6 @@ InitProcess(void)
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
 	MyProc->serializableIsoLevel = false;
-	MyProc->inDropTransaction = false;
 	MyProc->pid = MyProcPid;
 	/* backendId, databaseId and roleId will be filled in later */
 	MyProc->backendId = InvalidBackendId;
@@ -620,7 +619,6 @@ InitAuxiliaryProcess(void)
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
 	MyProc->serializableIsoLevel = false;
-	MyProc->inDropTransaction = false;
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
