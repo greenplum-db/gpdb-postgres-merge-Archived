@@ -140,8 +140,6 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * to correctly set the into-clause and into-policy of the PlannedStmt.
 	 */
 	plan->intoClause = copyObject(stmt->into);
-	plan->intoPolicy = copyObject(query->intoPolicy);
-	plan->query_mem = ResourceManagerGetQueryMemoryLimit(plan);
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
@@ -158,6 +156,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, 0);
 
+	queryDesc->plannedstmt->query_mem = ResourceManagerGetQueryMemoryLimit(queryDesc->plannedstmt);
 
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, GetIntoRelEFlags(into));
