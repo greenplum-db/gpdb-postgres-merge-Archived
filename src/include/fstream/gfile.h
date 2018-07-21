@@ -1,7 +1,9 @@
 #ifndef GFILE_H
 #define GFILE_H
 
-/*#include "c.h"*/
+#ifndef WIN32
+#include "c.h"
+#endif
 #include <sys/types.h>
 #ifdef HAVE_LIBBZ2
 #include <bzlib.h>
@@ -9,8 +11,6 @@
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
-
-#include "c.h"
 
 #ifdef WIN32
 #include <windows.h>
