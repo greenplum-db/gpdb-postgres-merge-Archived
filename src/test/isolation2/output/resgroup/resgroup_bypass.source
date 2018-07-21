@@ -375,7 +375,7 @@ SET
 SET
 62&: SELECT pg_sleep(20);  <waiting ...>
 SELECT query FROM pg_stat_activity WHERE rsgname='rg_bypass_test';
-query       
+query               
 --------------------
 SELECT pg_sleep(20);
 SELECT pg_sleep(10);
