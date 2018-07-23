@@ -55,16 +55,16 @@ set enable_seqscan = off;
 -- start_ignore
 -- Known_opt_diff: OPT-929
 -- end_ignore
-explain select f.id from co_nestloop_idxscan.foo f, co_nestloop_idxscan.bar b where f.id = b.id;
+explain select f.id from co_nestloop_idxscan.bar b, co_nestloop_idxscan.foo f where f.id = b.id;
                                          QUERY PLAN                                          
 ---------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..1324033.35 rows=1 width=8)
    ->  Nested Loop  (cost=0.00..1324033.35 rows=1 width=8)
          Join Filter: foo.id = bar.id
          ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
-               ->  Table Scan on foo  (cost=0.00..431.00 rows=1 width=8)
-         ->  Table Scan on bar  (cost=0.00..431.00 rows=1 width=8)
- Optimizer: PQO version 2.55.21
+               ->  Table Scan on bar  (cost=0.00..431.00 rows=1 width=8)
+         ->  Table Scan on foo  (cost=0.00..431.00 rows=1 width=8)
+ Optimizer: PQO version 2.64.0
 (7 rows)
 
 select f.id from co_nestloop_idxscan.foo f, co_nestloop_idxscan.bar b where f.id = b.id;
