@@ -1134,6 +1134,7 @@ _readCreateStmt_common(CreateStmt *local_node)
 	/* postCreate - for analysis, QD only */
 	/* deferredStmts - for analysis, QD only */
 	READ_BOOL_FIELD(is_part_child);
+	READ_BOOL_FIELD(is_part_parent);
 	READ_BOOL_FIELD(is_add_part);
 	READ_BOOL_FIELD(is_split_part);
 	READ_OID_FIELD(ownerid);
@@ -2952,6 +2953,9 @@ _readModifyTable(void)
 	READ_NODE_FIELD(returningLists);
 	READ_NODE_FIELD(rowMarks);
 	READ_INT_FIELD(epqParam);
+	READ_NODE_FIELD(action_col_idxes);
+	READ_NODE_FIELD(ctid_col_idxes);
+	READ_NODE_FIELD(oid_col_idxes);
 
 	READ_DONE();
 }

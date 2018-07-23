@@ -772,8 +772,7 @@ set_frozenxids(void)
 		 * The logic here should keep consistent with function
 		 * should_have_valid_relfrozenxid().
 		 */
-								  "WHERE	(relkind = 'r' AND relstorage "
-								  "NOT IN ('x', 'f', 'v', 'a', 'c')) "
+								  "WHERE	(relkind = 'r' AND not relfrozenxid = 0) "
 								  "OR (relkind IN ('t', 'o', 'b', 'm'))",
 								  old_cluster.controldata.chkpnt_nxtxid));
 		PQfinish(conn);

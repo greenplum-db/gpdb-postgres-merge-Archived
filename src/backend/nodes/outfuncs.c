@@ -459,6 +459,9 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_INT_FIELD(epqParam);
+	WRITE_NODE_FIELD(action_col_idxes);
+	WRITE_NODE_FIELD(ctid_col_idxes);
+	WRITE_NODE_FIELD(oid_col_idxes);
 }
 
 static void
@@ -2547,6 +2550,7 @@ _outCreateStmtInfo(StringInfo str, const CreateStmt *node)
 	/* postCreate omitted */
 	WRITE_NODE_FIELD(deferredStmts);
 	WRITE_BOOL_FIELD(is_part_child);
+	WRITE_BOOL_FIELD(is_part_parent);
 	WRITE_BOOL_FIELD(is_add_part);
 	WRITE_BOOL_FIELD(is_split_part);
 	WRITE_OID_FIELD(ownerid);

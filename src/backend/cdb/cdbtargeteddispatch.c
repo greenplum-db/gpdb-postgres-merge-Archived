@@ -660,6 +660,8 @@ AssignContentIdsToPlanData_Walker(Node *node, void *context)
 														 * foreign tables ...
 														 * so disable */
 				break;
+			case T_SplitUpdate:
+				break;
 			default:
 				elog(ERROR, "Invalid plan node %d", nodeTag(node));
 				break;

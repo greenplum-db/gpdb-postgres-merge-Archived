@@ -311,6 +311,9 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_NODE_FIELD(returningLists);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_SCALAR_FIELD(epqParam);
+	COPY_NODE_FIELD(action_col_idxes);
+	COPY_NODE_FIELD(ctid_col_idxes);
+	COPY_NODE_FIELD(oid_col_idxes);
 
 	return newnode;
 }
@@ -3493,6 +3496,7 @@ CopyCreateStmtFields(const CreateStmt *from, CreateStmt *newnode)
 	/* postCreate omitted (why?) */
 	COPY_NODE_FIELD(deferredStmts);
 	COPY_SCALAR_FIELD(is_part_child);
+	COPY_SCALAR_FIELD(is_part_parent);
 	COPY_SCALAR_FIELD(is_add_part);
 	COPY_SCALAR_FIELD(is_split_part);
 	COPY_SCALAR_FIELD(ownerid);

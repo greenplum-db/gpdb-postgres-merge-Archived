@@ -801,17 +801,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"gp_setwith_alter_storage", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Let SET WITH alter the storage options."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&gp_setwith_alter_storage,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"gp_enable_preunique", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enable 2-phase duplicate removal."),
 			gettext_noop("If true, planner may choose to remove duplicates in "
@@ -4379,7 +4368,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_SUPERUSER_ONLY |  GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
 		},
 		&dtx_phase2_retry_count,
-		2, 0, 10,
+		2, 0, 15,
 		NULL, NULL, NULL
 	},
 

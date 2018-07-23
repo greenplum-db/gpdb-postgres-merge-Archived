@@ -56,11 +56,6 @@ SELECT gp_segment_id, attrnums, policytype
 FROM gp_dist_random('gp_distribution_policy') WHERE
 localoid='alter_ao_table_setstorage_@orientation@.sto_alt_uao1_setstorage'::regclass;
 
-set gp_setwith_alter_storage = true;
-Alter Table sto_alt_uao1_setstorage
- set with (appendonly=true, compresslevel=3);
-select count(bigint_col) from sto_alt_uao1_setstorage;
-set gp_setwith_alter_storage = false;
 update sto_alt_uao1_setstorage set numeric_col = -numeric_col;
 delete from sto_alt_uao1_setstorage where numeric_col = 0;
 select * from sto_alt_uao1_setstorage;
