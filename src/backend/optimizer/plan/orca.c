@@ -170,6 +170,18 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	glob->subplans = result->subplans;
 
 	/*
+	 * Fake a subroot for each subplan, so that postprocessing steps don't
+	 * choke.
+	 */
+	glob->subroots = NIL;
+	foreach(lp, glob->subplans)
+	{
+		PlannerInfo *subroot = makeNode(PlannerInfo);
+		subroot->glob = glob;
+		glob->subroots = lappend(glob->subroots, subroot);
+	}
+
+	/*
 	 * For optimizer, we already have share_id and the plan tree is already a
 	 * tree. However, the apply_shareinput_dag_to_tree walker does more than
 	 * DAG conversion. It will also populate column names for RTE_CTE entries
