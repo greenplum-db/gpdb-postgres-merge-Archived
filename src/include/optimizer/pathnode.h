@@ -70,11 +70,6 @@ extern BitmapAppendOnlyPath *create_bitmap_appendonly_path(PlannerInfo *root,
 							  Relids required_outer,
 							  double loop_count,
 							  bool isAORow);
-extern BitmapTableScanPath *create_bitmap_table_scan_path(PlannerInfo *root,
-						RelOptInfo *rel,
-						Path *bitmapqual,
-						Relids required_outer,
-						double loop_count);
 extern BitmapAndPath *create_bitmap_and_path(PlannerInfo *root,
 					   RelOptInfo *rel,
 					   List *bitmapquals);

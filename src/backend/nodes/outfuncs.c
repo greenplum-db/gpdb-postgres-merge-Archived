@@ -2042,7 +2042,6 @@ _outBitmapAppendOnlyPath(StringInfo str, const BitmapAppendOnlyPath *node)
 	_outPathInfo(str, (Path *) node);
 
 	WRITE_NODE_FIELD(bitmapqual);
-	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_BOOL_FIELD(isAORow);
 }
 

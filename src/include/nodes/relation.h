@@ -1050,16 +1050,8 @@ typedef struct BitmapAppendOnlyPath
 {
 	Path		path;
 	Path	   *bitmapqual;		/* IndexPath, BitmapAndPath, BitmapOrPath */
-	bool		isjoininner;	/* T if it's a nestloop inner scan */
 	bool        isAORow;        /* If this is for AO Row tables */
 } BitmapAppendOnlyPath;
-
-typedef struct BitmapTableScanPath
-{
-	Path		path;
-	Path	   *bitmapqual;		/* IndexPath, BitmapAndPath, BitmapOrPath */
-	bool		isjoininner;	/* T if it's a nestloop inner scan */
-} BitmapTableScanPath;
 
 /*
  * BitmapAndPath represents a BitmapAnd plan node; it can only appear as

@@ -2459,9 +2459,9 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	Plan	   *bitmapqualplan;
 	List	   *bitmapqualorig = NULL;
 	List	   *indexquals = NULL;
+	List       *indexECs;
 	List	   *qpqual;
 	ListCell   *l;
-	List       *indexECs;
 	BitmapAppendOnlyScan *scan_plan;
 
 	/* it should be a base rel... */
@@ -2472,22 +2472,6 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
 										   &bitmapqualorig, &indexquals,
 										   &indexECs);
-
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	scan_clauses = extract_actual_clauses(scan_clauses, false);
-
-	/*
-	 * If this is a innerjoin scan, the indexclauses will contain join clauses
-	 * that are not present in scan_clauses (since the passed-in value is just
-	 * the rel's baserestrictinfo list).  We must add these clauses to
-	 * scan_clauses to ensure they get checked.  In most cases we will remove
-	 * the join clauses again below, but if a join clause contains a special
-	 * operator, we need to make sure it gets into the scan_clauses.
-	 */
-	if (best_path->isjoininner)
-	{
-		scan_clauses = list_concat_unique(scan_clauses, bitmapqualorig);
-	}
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically handled
@@ -2514,27 +2498,31 @@ create_bitmap_appendonly_scan_plan(PlannerInfo *root,
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
-		Node       *clause = (Node *) lfirst(l);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		Node       *clause = (Node *) rinfo->clause;
 
+		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->pseudoconstant)
+			continue;           /* we may drop pseudoconstants here */
 		if (list_member(indexquals, clause))
-			continue;
+			continue;			/* simple duplicate */
+		if (rinfo->parent_ec && list_member_ptr(indexECs, rinfo->parent_ec))
+			continue;           /* derived from same EquivalenceClass */
 		if (!contain_mutable_functions(clause))
 		{
 			List	   *clausel = list_make1(clause);
 
 			if (predicate_implied_by(clausel, indexquals))
-				continue;
+				continue;		/* provably implied by indexquals */
 		}
-		qpqual = lappend(qpqual, clause);
+		qpqual = lappend(qpqual, rinfo);
 	}
 
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
 
-	/* GPDB_92_MERGE_FIXME: Move extract_actual_clauses() here, following other
-	 * similar functions? We should double check gpdb specific plan node code
-	 * and change following other pg plan node code change.
-	 */
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	qpqual = extract_actual_clauses(qpqual, false);
 
 	/*
 	 * When dealing with special or lossy operators, we will at this point

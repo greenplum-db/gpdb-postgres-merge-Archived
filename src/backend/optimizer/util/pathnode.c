@@ -1227,37 +1227,7 @@ create_bitmap_appendonly_path(PlannerInfo *root,
 	pathnode->path.sameslice_relids = rel->relids;
 
 	pathnode->bitmapqual = bitmapqual;
-	pathnode->isjoininner = (required_outer != NULL); /* GPDB_92_MERGE_FIXME */
 	pathnode->isAORow = isAORow;
-
-	if (pathnode->isjoininner)
-	{
-		/*
-		 * We must compute the estimated number of output rows for the
-		 * indexscan.  This is less than rel->rows because of the additional
-		 * selectivity of the join clauses.  We make use of the selectivity
-		 * estimated for the bitmap to do this; this isn't really quite right
-		 * since there may be restriction conditions not included in the
-		 * bitmap ...
-		 */
-		Cost		indexTotalCost;
-		Selectivity indexSelectivity;
-
-		cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
-		((Path*)pathnode)->rows = rel->tuples * indexSelectivity;
-		if (((Path*)pathnode)->rows > rel->rows)
-			((Path*)pathnode)->rows = rel->rows;
-		/* Like costsize.c, force estimate to be at least one row */
-		((Path*)pathnode)->rows = clamp_row_est(((Path*)pathnode)->rows);
-	}
-	else
-	{
-		/*
-		 * The number of rows is the same as the parent rel's estimate, since
-		 * this isn't a join inner indexscan.
-		 */
-		((Path*)pathnode)->rows = rel->rows;
-	}
 
 	cost_bitmap_appendonly_scan(&pathnode->path, root, rel,
 						  pathnode->path.param_info,
