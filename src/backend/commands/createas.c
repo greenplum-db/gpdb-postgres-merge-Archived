@@ -61,9 +61,6 @@ typedef struct
 
 	struct AppendOnlyInsertDescData *ao_insertDesc; /* descriptor to AO tables */
 	struct AOCSInsertDescData *aocs_insertDes;      /* descriptor for aocs */
-
-	/* GPDB_92_MERGE_FIXME: Seems to be useless? */
-	ItemPointerData last_heap_tid;
 } DR_intorel;
 
 static void intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo);
