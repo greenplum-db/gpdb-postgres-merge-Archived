@@ -3197,8 +3197,8 @@ CopyFrom(CopyState cstate)
 	uint64		processed = 0;
     bool		useHeapMultiInsert;
 #define MAX_BUFFERED_TUPLES 1000
-	int			nTotalBufferedTuples;
-	Size		totalBufferedTuplesSize;
+	int			nTotalBufferedTuples = 0;
+	Size		totalBufferedTuplesSize = 0;
 	int			i;
 	Datum	   *baseValues;
 	bool	   *baseNulls;

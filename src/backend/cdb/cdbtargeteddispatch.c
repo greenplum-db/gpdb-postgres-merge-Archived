@@ -162,7 +162,7 @@ GetContentIdsFromPlanForSingleRelation(List *rtable, Plan *plan, int rangeTableI
 
 	DirectDispatchCalculationInfo result;
 	RangeTblEntry *rte;
-	Relation	relation;
+	Relation	relation = NULL;
 
 	InitDirectDispatchCalculationInfo(&result);
 
