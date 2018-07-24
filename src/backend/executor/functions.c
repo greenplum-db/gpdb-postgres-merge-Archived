@@ -187,7 +187,7 @@ querytree_safe_for_qe_walker(Node *expr, void *context)
 				if (!allow_segment_DML &&
 					(q->commandType != CMD_SELECT
 					 || (q->utilityStmt != NULL &&
-					     IsA(q->utilityStmt, CreateTableAsStmt)) /* GPDB_92_MERGE_FIXME: Test it when gpdb could run. */
+					     IsA(q->utilityStmt, CreateTableAsStmt))
 					 || q->resultRelation > 0))
 				{
 					ereport(ERROR,
