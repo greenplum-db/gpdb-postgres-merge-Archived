@@ -1662,11 +1662,10 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	if (resultRelation->rd_rel->relhasoids)
 		hasOids = true;
 
-
-	relation_close(resultRelation, NoLock);
-
 	find_ctid_attribute_check(subplan->targetlist, &ctidColIdx, resultRelationsIdx);
 	copy_junk_attributes(subplan->targetlist, &splitUpdateTargetList, resultDesc->natts);
+
+	relation_close(resultRelation, NoLock);
 
 	/* add the TargetEntry of old values to the lower plan node */
 	absentAttrStart = list_length(subplan->targetlist);
