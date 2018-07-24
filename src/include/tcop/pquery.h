@@ -27,7 +27,6 @@ extern List *FetchPortalTargetList(Portal portal);
 
 extern List *FetchStatementTargetList(Node *stmt);
 
-/* GPDB_92_MERGE_FIXME: ddesc is needed? */
 extern void PortalStart(Portal portal, ParamListInfo params,
 						int eflags, Snapshot snapshot,
 						QueryDispatchDesc *ddesc);
