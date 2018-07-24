@@ -3942,7 +3942,7 @@ get_check_constraint_oids(Oid oidRel)
 		Form_pg_constraint contuple = (Form_pg_constraint) GETSTRUCT(htup);
 
 		// only consider check constraints
-		if (CONSTRAINT_CHECK != contuple->contype)
+		if (CONSTRAINT_CHECK != contuple->contype || !contuple->convalidated)
 		{
 			continue;
 		}
