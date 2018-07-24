@@ -1649,7 +1649,6 @@ explain select k from ( select row_number() over()+2 as k from window_preds unio
 select k from ( select row_number() over()+2 as k from window_preds union all select row_number() over()+2 as k from window_preds) as t where k = 3;
 explain insert into window_preds select k from ( select row_number() over()+2 as k from window_preds union all select row_number() over()+2 as k from window_preds) as t where k = 3;
 insert into window_preds select k from ( select row_number() over()+2 as k from window_preds union all select row_number() over()+2 as k from window_preds) as t where k = 3;
-analyze window_preds;
 explain SELECT t.k FROM window_preds p1, window_preds p2, (SELECT ROW_NUMBER() OVER() AS k FROM window_preds union all SELECT ROW_NUMBER() OVER() AS k FROM window_preds) AS t WHERE t.k = 1 limit 1;
 SELECT t.k FROM window_preds p1, window_preds p2, (SELECT ROW_NUMBER() OVER() AS k FROM window_preds union all SELECT ROW_NUMBER() OVER() AS k FROM window_preds) AS t WHERE t.k = 1 limit 1;
 explain with CTE as (select i, row_number() over (partition by j) j from window_preds union all select i, row_number() over (partition by j) from window_preds) select * from cte where j = 1;
