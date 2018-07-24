@@ -196,7 +196,7 @@ gen_implied_qual(PlannerInfo *root,
 										   PVC_RECURSE_AGGREGATES,
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, required_relids, true /* GPDB_92_MERGE_FIXME: what is the expected create_new_ph? */);
+		add_vars_to_targetlist(root, vars, required_relids, false);
 		list_free(vars);
 	}
 
