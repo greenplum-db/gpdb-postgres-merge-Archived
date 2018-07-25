@@ -771,9 +771,7 @@ static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
 /* New functions added for WAL replication */
-static void SetCurrentChunkStartTime(TimestampTz xtime);
-static int XLogFileReadAnyTLI(uint32 log, uint32 seg, int emode, int sources);
-static void XLogProcessCheckpointRecord(XLogRecord *rec, XLogRecPtr loc);
+static void XLogProcessCheckpointRecord(XLogRecord *rec);
 
 static void GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg);
 static void checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr);
@@ -6454,7 +6452,7 @@ ApplyStartupRedo(
  * record is processed as well.
  */
 static void
-XLogProcessCheckpointRecord(XLogRecord *rec, XLogRecPtr loc)
+XLogProcessCheckpointRecord(XLogRecord *rec)
 {
 	CheckpointExtendedRecord ckptExtended;
 
@@ -6976,7 +6974,7 @@ StartupXLOG(void)
 	 * Find Xacts that are distributed committed from the checkpoint record and
 	 * store them such that they can utilized later during DTM recovery.
 	 */
-	XLogProcessCheckpointRecord(record, checkPointLoc);
+	XLogProcessCheckpointRecord(record);
 
 	ereport(DEBUG1,
 			(errmsg("redo record is at %X/%X; shutdown %s",
@@ -7394,7 +7392,7 @@ StartupXLOG(void)
 					(xlogRecInfo == XLOG_CHECKPOINT_SHUTDOWN
 					 || xlogRecInfo == XLOG_CHECKPOINT_ONLINE))
 				{
-					XLogProcessCheckpointRecord(record, ReadRecPtr);
+					XLogProcessCheckpointRecord(record);
 					memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 				}
 
@@ -7934,132 +7932,6 @@ StartupXLOG(void)
 	XLogCloseReadRecord();
 }
 
-/*
- * Determine the recovery redo start location from the pg_control file.
- *
- *    1) Only uses information from the pg_control file.
- *    2) This simplified routine does not examine the offline recovery file or
- *       the online backup labels, etc.
- *    3) This routine is a heavily reduced version of StartXLOG.
- *    4) IMPORTANT NOTE: This routine sets global variables that establish
- *       the timeline context necessary to do ReadRecord.  The ThisTimeLineID
- *       and expectedTLIs globals are set.
- *
- */
-void
-XLogGetRecoveryStart(char *callerStr, char *reasonStr, XLogRecPtr *redoCheckPointLoc, CheckPoint *redoCheckPoint)
-{
-	CheckPoint	checkPoint;
-	XLogRecPtr	checkPointLoc;
-	XLogRecord *record;
-	bool previous;
-	XLogRecPtr checkPointLSN;
-
-	Assert(redoCheckPointLoc != NULL);
-	Assert(redoCheckPoint != NULL);
-
-	XLogCloseReadRecord();
-
-	/*
-	 * Read control file and verify XLOG status looks valid.
-	 *
-	 */
-	ReadControlFile();
-
-	if (ControlFile->state < DB_SHUTDOWNED ||
-		ControlFile->state > DB_IN_PRODUCTION ||
-		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
-		ereport(FATAL,
-				(errmsg("%s: control file contains invalid data", callerStr)));
-
-	/*
-	 * Get the last valid checkpoint record.  If the latest one according
-	 * to pg_control is broken, try the next-to-last one.
-	 */
-	checkPointLoc = ControlFile->checkPoint;
-	ThisTimeLineID = ControlFile->checkPointCopy.ThisTimeLineID;
-
-	/*
-	 * Check for recovery control file, and if so set up state for offline
-	 * recovery
-	 */
-	XLogReadRecoveryCommandFile(DEBUG5);
-
-	/* Now we can determine the list of expected TLIs */
-	expectedTLIs = XLogReadTimeLineHistory(ThisTimeLineID);
-
-	record = ReadCheckpointRecord(checkPointLoc, 1);
-	if (record != NULL)
-	{
-		previous = false;
-	}
-	else
-	{
-		previous = true;
-		checkPointLoc = ControlFile->prevCheckPoint;
-		record = ReadCheckpointRecord(checkPointLoc, 2);
-		if (record != NULL)
-		{
-			ereport(LOG,
-					(errmsg("%s: using previous checkpoint record at %s (LSN %s)",
-						    callerStr,
-							XLogLocationToString(&checkPointLoc),
-						    XLogLocationToString2(&EndRecPtr))));
-		}
-		else
-		{
-			ereport(ERROR,
-				 (errmsg("%s: could not locate a valid checkpoint record", callerStr)));
-		}
-	}
-
-	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-	checkPointLSN = EndRecPtr;
-
-	if (XLByteEQ(checkPointLoc,checkPoint.redo))
-	{
-		{
-			elog(LOG,
-				 "control file has restart '%s' and redo start checkpoint at location(lsn) '%s(%s)' ",
-				 (previous ? "previous " : ""),
-				 XLogLocationToString3(&checkPointLoc),
-				 XLogLocationToString4(&checkPointLSN));
-		}
-	}
- 	else if (XLByteLT(checkPointLoc, checkPoint.redo))
-	{
-		ereport(ERROR,
-				(errmsg("%s: invalid redo in checkpoint record", callerStr)));
-	}
-	else
-	{
-		XLogRecord *record;
-
-		record = XLogReadRecord(&checkPoint.redo, LOG, false);
-		if (record == NULL)
-		{
-			ereport(ERROR,
-			 (errmsg("%s: first redo record before checkpoint not found at %s",
-					 callerStr, XLogLocationToString(&checkPoint.redo))));
-		}
-
-		{
-			elog(LOG,
-				 "control file has restart '%s' checkpoint at location(lsn) '%s(%s)', redo starts at location(lsn) '%s(%s)' ",
-				 (previous ? "previous " : ""),
-				 XLogLocationToString3(&checkPointLoc),
-				 XLogLocationToString4(&checkPointLSN),
-				 XLogLocationToString(&checkPoint.redo),
-				 XLogLocationToString2(&EndRecPtr));
-		}
-	}
-
-	XLogCloseReadRecord();
-
-	*redoCheckPointLoc = checkPointLoc;
-	*redoCheckPoint = checkPoint;
-
-}
 
 /*
  * Checks if recovery has reached a consistent state. When consistency is
@@ -12261,7 +12133,6 @@ CheckForStandbyTrigger(void)
 		triggered = true;
 		return true;
 	}
-
 	return false;
 }
 
@@ -12285,6 +12156,31 @@ CheckPromoteSignal(bool do_unlink)
 		return true;
 	}
 	return false;
+}
+
+/*
+ * Wake up startup process to replay newly arrived WAL, or to notice that
+ * failover has been requested.
+ */
+void
+WakeupRecovery(void)
+{
+	SetLatch(&XLogCtl->recoveryWakeupLatch);
+}
+
+/*
+ * Update the WalWriterSleeping flag.
+ */
+
+void
+SetWalWriterSleeping(bool sleeping)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->WalWriterSleeping = sleeping;
+	SpinLockRelease(&xlogctl->info_lck);
 }
 
 /*
@@ -12448,17 +12344,6 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		}
 	}
 }
-
-/*
- * Wake up startup process to replay newly arrived WAL, or to notice that
- * failover has been requested.
- */
-void
-WakeupRecovery(void)
-{
-	SetLatch(&XLogCtl->recoveryWakeupLatch);
-}
-
 /*
  * Report the last WAL replay location
  */
@@ -12477,19 +12362,6 @@ last_xlog_replay_location()
 	return recptr;
 }
 
-/*
- * Update the WalWriterSleeping flag.
- */
-void
-SetWalWriterSleeping(bool sleeping)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
-
-	SpinLockAcquire(&xlogctl->info_lck);
-	xlogctl->WalWriterSleeping = sleeping;
-	SpinLockRelease(&xlogctl->info_lck);
-}
 
 void
 wait_for_mirror()
