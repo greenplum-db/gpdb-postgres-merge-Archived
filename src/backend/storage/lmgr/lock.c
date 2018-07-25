@@ -205,7 +205,16 @@ static int	FastPathLocalUseCount = 0;
 	 (proc)->fpLockBits &= ~(UINT64CONST(1) << FAST_PATH_BIT_POSITION(n, l))
 #define FAST_PATH_CHECK_LOCKMODE(proc, n, l) \
 	 ((proc)->fpLockBits & (UINT64CONST(1) << FAST_PATH_BIT_POSITION(n, l)))
-
+/*
+ * fpHoldTillEndXactBits is used for GDD
+ * bits is the result of FAST_PATH_GET_BITS(proc, n)
+ * we simply set the whole bits to the corresponding bits
+ * as fpLockBits.
+ */
+#define FAST_PATH_SET_HOLD_TILL_END_XACT(proc, n, bits) \
+	 (proc)->fpHoldTillEndXactBits |= ((bits) & FAST_PATH_MASK) << (FAST_PATH_BITS_PER_SLOT * n)
+#define FAST_PATH_GET_HOLD_TILL_END_XACT_BITS(proc, n) \
+	(((proc)->fpHoldTillEndXactBits >> (FAST_PATH_BITS_PER_SLOT * n)) & FAST_PATH_MASK)
 /*
  * The fast-path lock mechanism is concerned only with relation locks on
  * unshared relations by backends bound to a database.	The fast-path
@@ -376,6 +385,7 @@ static void CleanUpLock(LOCK *lock, PROCLOCK *proclock,
 static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 					 LOCKTAG *locktag, LOCKMODE lockmode,
 					 bool decrement_strong_lock_count);
+static bool setFPHoldTillEndXact(Oid relid);
 
 
 /*
@@ -2026,6 +2036,15 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 	LOCALLOCKTAG localtag;
 	LOCALLOCK  *locallock;
 	LOCKMODE    lm;
+	Oid         relid;
+
+	/*
+	 * A relation lock would exist either in fast-pach or in shared lock
+	 * table. So we could return immediately if we have found it in fast-path.
+	 */
+	relid = locktag->locktag_field2;
+	if (setFPHoldTillEndXact(relid))
+		return;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
@@ -2053,13 +2072,8 @@ LockSetHoldTillEndXact(const LOCKTAG *locktag)
 		if (!locallock || locallock->nLocks <= 0)
 			continue;
 
-		/*
-		 * GPDB_92_MERGE_FIXME:
-		 * If the lock is taken via the fast-path, locallock->lock would
-		 * be NULL.
-		 * This code should be revised to make GDD work under fast path.
-		 */
-//		locallock->lock->holdTillEndXact = true;
+		if (locallock->lock)
+			locallock->lock->holdTillEndXact = true;
 	}
 }
 
@@ -2545,6 +2559,7 @@ FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 	if (unused_slot < FP_LOCK_SLOTS_PER_BACKEND)
 	{
 		MyProc->fpRelId[unused_slot] = relid;
+		FAST_PATH_SET_HOLD_TILL_END_XACT(MyProc, unused_slot, 0);
 		FAST_PATH_SET_LOCKMODE(MyProc, unused_slot, lockmode);
 		++FastPathLocalUseCount;
 		return true;
@@ -2653,6 +2668,9 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 					LWLockRelease(partitionLock);
 					return false;
 				}
+				/* Set holdTillEndXact of proclock */
+				proclock->tag.myLock->holdTillEndXact = \
+					FAST_PATH_GET_HOLD_TILL_END_XACT_BITS(proc, f) > 0;
 				GrantLock(proclock->tag.myLock, proclock, lockmode);
 				FAST_PATH_CLEAR_LOCKMODE(proc, f, lockmode);
 			}
@@ -3518,6 +3536,7 @@ GetLockStatusData(void)
 		{
 			LockInstanceData *instance;
 			uint32		lockbits = FAST_PATH_GET_BITS(proc, f);
+			uint32      holdTillEndXactBits = FAST_PATH_GET_HOLD_TILL_END_XACT_BITS(proc, f);
 
 			/* Skip unallocated slots. */
 			if (!lockbits)
@@ -3545,7 +3564,7 @@ GetLockStatusData(void)
 			instance->distribXid = (Gp_role == GP_ROLE_DISPATCH)?
 								   proc->gxact.gxid :
 								   proc->localDistribXactData.distribXid;
-			instance->holdTillEndXact = false;
+			instance->holdTillEndXact = (holdTillEndXactBits > 0);
 			el++;
 		}
 
@@ -4263,4 +4282,37 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 
 	LockRelease(&tag, ShareLock, false);
 	return true;
+}
+
+/*
+ *         setFPHoldTillEndXact
+ * Some locks are acquired via fast path, this function is
+ * to set the HoldTillEndXact field for those relation locks.
+ */
+static bool
+setFPHoldTillEndXact(Oid relid)
+{
+	uint32  f;
+	bool result = false;
+	PGPROC *proc = MyProc;
+
+	LWLockAcquire(proc->backendLock, LW_EXCLUSIVE);
+
+	for (f = 0; f < FP_LOCK_SLOTS_PER_BACKEND; ++f)
+	{
+		uint32 lockbits;
+
+		if (proc->fpRelId[f] != relid ||
+			(lockbits = FAST_PATH_GET_BITS(proc, f)) == 0)
+			continue;
+
+		/* one relid only occupies one slot. */
+		FAST_PATH_SET_HOLD_TILL_END_XACT(proc, f, lockbits);
+		result = true;
+		break;
+	}
+
+	LWLockRelease(proc->backendLock);
+
+	return result;
 }
