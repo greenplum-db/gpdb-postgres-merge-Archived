@@ -120,9 +120,6 @@ optimize_query(Query *parse, ParamListInfo boundParams)
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 
-	/*
-	 * GPDB_92_MERGE_FIXME
-	 */
 	root = makeNode(PlannerInfo);
 	root->parse = parse;
 	root->glob = glob;
