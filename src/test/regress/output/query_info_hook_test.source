@@ -16,14 +16,18 @@ WARNING:  Query Done
 (3 rows)
 
 -- Test Error case: Error out in executor.
-CREATE FUNCTION ret_zero() RETURNS int VOLATILE LANGUAGE plpgsql AS $$ BEGIN RETURN 0; END; $$;
-SELECT * FROM generate_series(1, 3/ret_zero());
+CREATE FUNCTION error_in_execution() RETURNS setof int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+RAISE EXCEPTION 'error in function execution';
+END;
+$$;
+SELECT * FROM error_in_execution();
 WARNING:  Query submit
 WARNING:  Query start
 WARNING:  Plan node initializing
 WARNING:  Plan node executing
 WARNING:  Query Error
-ERROR:  division by zero
+ERROR:  error in function execution
 -- Test Error case: Error out in planner.
 SELECT * FROM generate_series(1, 3/0);
 ERROR:  division by zero
