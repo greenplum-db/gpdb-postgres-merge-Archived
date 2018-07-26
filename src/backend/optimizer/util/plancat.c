@@ -61,14 +61,6 @@ static List *get_relation_constraints(PlannerInfo *root,
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 				  Relation heapRelation);
 
-static void
-cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
-                      Relation      rel,
-                      int32        *attr_widths,
-				      BlockNumber  *pages,
-                      double       *tuples,
-                      double       *allvisfrac);
-
 static void get_external_relation_info(Relation relation, RelOptInfo *rel);
 
 
@@ -432,7 +424,7 @@ get_external_relation_info(Relation relation, RelOptInfo *rel)
  * relation's attr_width[] cache; we fill this in if we have need to compute
  * the attribute widths for estimation purposes.
  */
-static void
+void
 cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
                       Relation      rel,
                       int32        *attr_widths,
