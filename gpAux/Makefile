@@ -802,7 +802,6 @@ PVK_SCRIPTS = \
 	bin/gpscp			\
 	bin/gpssh			\
 	bin/gpcheckperf			\
-	bin/run_operator_tests.pl	\
 	$(NULL)
 
 PVK_FILESET = \
@@ -810,9 +809,7 @@ PVK_FILESET = \
 	bin/lib/gplib.py	\
 	bin/lib/pxssh.py	\
 	bin/lib/pexpect.py	\
-	bin/lib/gpsys.py	\
 	bin/lib/multidd		\
-	bin/lib/netserver	\
 	bin/lib/stream		\
 	$(NULL)
 
@@ -955,7 +952,6 @@ endif
 	rm -rf $(INSTLOC)/bin/lib/CVS
 	rm -rf $(INSTLOC)/bin/lib/.p4ignore
 	rm -rf $(INSTLOC)/bin/src
-	rm -f $(INSTLOC)/bin/gpchecksubnetcfg
 	rm -rf $(INSTLOC)/bin/gppylib
 	find $(INSTLOC)/lib/python/gppylib -name test -type d | xargs rm -rf
 
