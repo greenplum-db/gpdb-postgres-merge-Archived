@@ -432,7 +432,7 @@ get_external_relation_info(Relation relation, RelOptInfo *rel)
  * relation's attr_width[] cache; we fill this in if we have need to compute
  * the attribute widths for estimation purposes.
  */
-void
+static void
 cdb_estimate_rel_size(RelOptInfo   *relOptInfo,
                       Relation      rel,
                       int32        *attr_widths,

@@ -13406,7 +13406,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			 * TODO: when this bug is fixed, version-gate this code so that we
 			 * don't run it on well-behaved backends.
 			 */
-			do_sql_command(g_conn, "SET enable_nestloop TO off");
+			ExecuteSqlStatement(fout, "SET enable_nestloop TO off");
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT c.relname, pr.parname,"
@@ -13464,7 +13464,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			PQclear(res);
 
 			/* TODO: version-gate this when the planner bug is fixed; see above. */
-			do_sql_command(g_conn, "SET enable_nestloop TO on");
+			ExecuteSqlStatement(fout, "SET enable_nestloop TO on");
 		}
 
 		/*
