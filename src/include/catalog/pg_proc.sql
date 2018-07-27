@@ -531,3 +531,7 @@
  CREATE FUNCTION complex_lte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_lte' WITH (OID=3595);
 
  CREATE FUNCTION complex_gte(complex, complex) RETURNS bool  LANGUAGE internal IMMUTABLE STRICT AS 'complex_gte' WITH (OID=7596);
+
+ CREATE FUNCTION gp_lock_status_segments(OUT locktype text, OUT database oid, OUT relation oid, OUT page int4, OUT tuple int2, OUT virtualxid text, OUT transactionid xid, OUT classid oid, OUT objid oid, OUT objsubid int2, OUT virtualtransaction text, OUT pid int4, OUT mode text, OUT granted bool, OUT fastpath bool, OUT mppsessionid int4, OUT mppiswriter bool, OUT gp_segment_id int4) RETURNS SETOF pg_catalog.record LANGUAGE internal VOLATILE STRICT EXECUTE ON ALL SEGMENTS AS 'pg_lock_status' WITH (OID=3167);
+
+ CREATE FUNCTION gp_lock_status_master(OUT locktype text, OUT database oid, OUT relation oid, OUT page int4, OUT tuple int2, OUT virtualxid text, OUT transactionid xid, OUT classid oid, OUT objid oid, OUT objsubid int2, OUT virtualtransaction text, OUT pid int4, OUT mode text, OUT granted bool, OUT fastpath bool, OUT mppsessionid int4, OUT mppiswriter bool, OUT gp_segment_id int4) RETURNS SETOF pg_catalog.record LANGUAGE internal VOLATILE STRICT EXECUTE ON MASTER AS 'pg_lock_status' WITH (OID=3168);
