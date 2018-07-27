@@ -3,11 +3,11 @@
  *
  *	controldata functions
  *
- *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/controldata.c
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "pg_upgrade.h"
 
@@ -27,7 +27,7 @@
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the upgrade, but it provides enough for
- * check mode.	We do not implement pg_resetxlog -n because it is hard to
+ * check mode.  We do not implement pg_resetxlog -n because it is hard to
  * return valid xid data for a running server.
  */
 void
@@ -39,6 +39,12 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char	   *p;
 	bool		got_xid = false;
 	bool		got_oid = false;
+	bool		got_nextxlogfile = false;
+	/* GPDB_93_MERGE_FIXME
+	bool		got_multi = false;
+	bool		got_mxoff = false;
+	bool		got_oldestmulti = false;
+	*/
 	bool		got_log_id = false;
 	bool		got_log_seg = false;
 	bool		got_tli = false;
@@ -52,7 +58,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	bool		got_toast = false;
 	bool		got_date_is_int = false;
 	bool		got_float8_pass_by_value = false;
-	bool		got_data_checksums = false;
+	bool		got_data_checksum_version = false;
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
 	char	   *lc_monetary = NULL;
@@ -62,6 +68,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char	   *language = NULL;
 	char	   *lc_all = NULL;
 	char	   *lc_messages = NULL;
+	uint32		logid = 0;
+	uint32		segno = 0;
+	uint32		tli = 0;
+
 
 	/*
 	 * Because we test the pg_resetxlog output as strings, it has to be in
@@ -126,13 +136,14 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	/*
 	 * In PostgreSQL, checksums were introduced in 9.3 so the test for checksum
-	 * version applies to <= 9.2. Greenplum backported checksums into 5.x which
-	 * is based on PostgreSQL 8.3 so this test need to go on <= 8.2 instead.
+	 * version in upstream applies to <= 9.2. Greenplum backported checksums
+	 * into 5.x which is based on PostgreSQL 8.3 so this test need to go
+	 * against 8.2 instead.
 	 */
-	if (GET_MAJOR_VERSION(cluster->major_version) <= 802)
+	if (GET_MAJOR_VERSION(cluster->major_version) == 802)
 	{
 		cluster->controldata.data_checksum_version = 0;
-		got_data_checksums = true;
+		got_data_checksum_version = true;
 	}
 
 	/* we have the result of cmd in "output". so parse it line by line now */
@@ -178,6 +189,23 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* removing ':' char */
 			cluster->controldata.cat_ver = str2uint(p);
 		}
+		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
+		{
+			/* Skip the colon and any whitespace after it */
+			p = strchr(p, ':');
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+			p = strpbrk(p, "01234567890ABCDEF");
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			/* Make sure it looks like a valid WAL file name */
+			if (strspn(p, "0123456789ABCDEF") != 24)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			strlcpy(cluster->controldata.nextxlogfile, p, 25);
+			got_nextxlogfile = true;
+		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -186,7 +214,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.logid = str2uint(p);
+			logid = str2uint(p);
+			cluster->controldata.logid = logid;
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "First log file segment after reset:")) != NULL)
@@ -197,7 +226,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.nxtlogseg = str2uint(p);
+			segno = str2uint(p);
+			cluster->controldata.nxtlogseg = segno;
 			got_log_seg = true;
 		}
 		/* GPDB 4.3 (and PostgreSQL 8.2) wording of the above two. */
@@ -209,7 +239,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.logid = str2uint(p);
+			logid = str2uint(p);
+			cluster->controldata.logid = logid;
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "Next log file segment:")) != NULL)
@@ -220,7 +251,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.nxtlogseg = str2uint(p);
+			segno = str2uint(p);
+			cluster->controldata.nxtlogseg = segno;
 			got_log_seg = true;
 		}
 		/*---*/
@@ -232,21 +264,25 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.chkpnt_tli = str2uint(p);
+			tli = str2uint(p);
 			got_tli = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextXID:")) != NULL)
 		{
-			char	   *op = strchr(p, '/');
+			p = strchr(p, ':');
 
-			if (op == NULL)
-				op = strchr(p, ':');
-
-			if (op == NULL || strlen(op) <= 1)
+			if (p == NULL || strlen(p) <= 1)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
-			op++;				/* removing ':' char */
-			cluster->controldata.chkpnt_nxtxid = str2uint(op);
+			p++;				/* removing ':' char */
+			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
+
+			p = strchr(p, '/');
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* removing '/' char */
+			cluster->controldata.chkpnt_nxtxid = str2uint(p);
 			got_xid = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextOID:")) != NULL)
@@ -260,6 +296,42 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			cluster->controldata.chkpnt_nxtoid = str2uint(p);
 			got_oid = true;
 		}
+		/* GPDB_93_MERGE_FIXME */
+#if 0
+		else if ((p = strstr(bufin, "Latest checkpoint's NextMultiXactId:")) != NULL)
+		{
+			p = strchr(p, ':');
+
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* removing ':' char */
+			cluster->controldata.chkpnt_nxtmulti = str2uint(p);
+			got_multi = true;
+		}
+		else if ((p = strstr(bufin, "Latest checkpoint's oldestMultiXid:")) != NULL)
+		{
+			p = strchr(p, ':');
+
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* removing ':' char */
+			cluster->controldata.chkpnt_oldstMulti = str2uint(p);
+			got_oldestmulti = true;
+		}
+		else if ((p = strstr(bufin, "Latest checkpoint's NextMultiOffset:")) != NULL)
+		{
+			p = strchr(p, ':');
+
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			p++;				/* removing ':' char */
+			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
+			got_mxoff = true;
+		}
+#endif
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -381,7 +453,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* removing ':' char */
 			/* used later for contrib check */
 			cluster->controldata.data_checksum_version = str2uint(p);
-			got_data_checksums = true;
+			got_data_checksum_version = true;
 		}
 		/* In pre-8.4 only */
 		else if ((p = strstr(bufin, "LC_COLLATE:")) != NULL)
@@ -440,18 +512,36 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_free(language);
 	pg_free(lc_all);
 	pg_free(lc_messages);
- 
+
+	/*
+	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first log
+	 * file after reset as separate lines. Starting with 9.3, it reports the
+	 * WAL file name. If the old cluster is older than 9.3, we construct the
+	 * WAL file name from the tli, xlogid, and segno.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
+	{
+		if (got_tli && got_log_id && got_log_seg)
+		{
+			snprintf(cluster->controldata.nextxlogfile, 25, "%08X%08X%08X",
+					 tli, logid, segno);
+			got_nextxlogfile = true;
+		}
+	}
+
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
-		(!live_check && !got_log_id) ||
-		(!live_check && !got_log_seg) ||
-		!got_tli ||
+		/*!got_multi || GPDB_93_MERGE_FIXME !got_mxoff ||
+		(!got_oldestmulti &&
+		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) || */
+		(!live_check && !got_nextxlogfile) ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || /* !got_toast || */
-		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksums)
+		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
-			"Some required control information is missing;  cannot find:\n");
+			   "The %s cluster lacks some required control information:\n",
+			   CLUSTER_NAME(cluster));
 
 		if (!got_xid)
 			pg_log(PG_REPORT, "  checkpoint next XID\n");
@@ -459,14 +549,20 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_oid)
 			pg_log(PG_REPORT, "  latest checkpoint next OID\n");
 
-		if (!live_check && !got_log_id)
-			pg_log(PG_REPORT, "  first log file ID after reset\n");
+		/* GPDB_93_MERGE_FIXME
+		if (!got_multi)
+			pg_log(PG_REPORT, "  latest checkpoint next MultiXactId\n");
 
-		if (!live_check && !got_log_seg)
-			pg_log(PG_REPORT, "  first log file segment after reset\n");
+		if (!got_mxoff)
+			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
 
-		if (!got_tli)
-			pg_log(PG_REPORT, "  latest checkpoint timeline ID\n");
+		if (!got_oldestmulti &&
+			cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
+			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId\n");
+		*/
+
+		if (!live_check && !got_nextxlogfile)
+			pg_log(PG_REPORT, "  first WAL segment after reset\n");
 
 		if (!got_align)
 			pg_log(PG_REPORT, "  maximum alignment\n");
@@ -489,7 +585,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_index)
 			pg_log(PG_REPORT, "  maximum number of indexed columns\n");
 
-#if 0	/* not mandatory in GPDB, see above */
+#if 0	/* not mandatory in GPDB, see comment in check_control_data() */
 		if (!got_toast)
 			pg_log(PG_REPORT, "  maximum TOAST chunk size\n");
 #endif
@@ -502,8 +598,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			pg_log(PG_REPORT, "  float8 argument passing method\n");
 
 		/* value added in Postgres 9.3 */
-		if (!got_data_checksums)
-			pg_log(PG_REPORT, "  data checksums\n");
+		if (!got_data_checksum_version)
+			pg_log(PG_REPORT, "  data checksum version\n");
 
 		pg_log(PG_FATAL,
 			   "Cannot continue without required control information, terminating\n");
@@ -522,7 +618,8 @@ check_control_data(ControlData *oldctrl,
 {
 	if (oldctrl->align == 0 || oldctrl->align != newctrl->align)
 		pg_log(PG_FATAL,
-			   "old and new pg_controldata alignments are invalid or do not match\n");
+		"old and new pg_controldata alignments are invalid or do not match\n"
+			   "Likely one cluster is a 32-bit install, the other 64-bit\n");
 
 	if (oldctrl->blocksz == 0 || oldctrl->blocksz != newctrl->blocksz)
 		pg_log(PG_FATAL,
@@ -530,7 +627,7 @@ check_control_data(ControlData *oldctrl,
 
 	if (oldctrl->largesz == 0 || oldctrl->largesz != newctrl->largesz)
 		pg_log(PG_FATAL,
-			   "old and new pg_controldata maximum relation segement sizes are invalid or do not match\n");
+			   "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n");
 
 	if (oldctrl->walsz == 0 || oldctrl->walsz != newctrl->walsz)
 		pg_log(PG_FATAL,
@@ -551,10 +648,12 @@ check_control_data(ControlData *oldctrl,
 	/*
 	 * PostgreSQL's pg_upgrade checks for the maximum TOAST chunk size, because
 	 * the tuptoaster code assumes all chunks to have the same size. GPDB's
-	 * tuptoaster code has been modified to work with any chunk size, to support
-	 * upgrading from GPDB 4.3 to 5.0, because the chunk size was changed between
-	 * those releases (that is, between PostgreSQL 8.2 and 8.3). Hence,
-	 * 'got_toast' is not mandatory in GPDB.
+	 * tuptoaster code has been modified to work with any chunk size, to
+	 * support upgrading from GPDB 4.3 to 5.0, because the chunk size was
+	 * changed between those releases (that is, between PostgreSQL 8.2 and
+	 * 8.3). Hence, 'got_toast' is not mandatory in GPDB.
+	 * TODO: Should we only consider got_toast not mandatory for upgrades to
+	 * 5.x?
 	 */
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
 		pg_log(PG_WARNING,
@@ -575,7 +674,9 @@ check_control_data(ControlData *oldctrl,
 	}
 
 	/*
-	 * Check for allowed combinations of data checksums
+	 * Check for allowed combinations of data checksums. PostgreSQL only allow
+	 * upgrades where the checksum settings match, in Greenplum we can however
+	 * set or remove checksums during the upgrade.
 	 */
 	if (oldctrl->data_checksum_version == 0 &&
 		newctrl->data_checksum_version != 0 &&

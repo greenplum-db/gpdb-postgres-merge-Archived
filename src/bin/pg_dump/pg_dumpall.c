@@ -570,7 +570,7 @@ main(int argc, char *argv[])
 		}
 
 		/* Dump CREATE DATABASE commands */
-		if (!globals_only && !roles_only && !tablespaces_only)
+		if (binary_upgrade || (!globals_only && !roles_only && !tablespaces_only))
 			dumpCreateDB(conn);
 
 		/* Dump role/database settings */
@@ -1066,7 +1066,8 @@ dumpRoles(PGconn *conn)
 				i_rolcreaterexthttp = -1,
 				i_rolcreatewextgpfd = -1,
 				i_rolcreaterexthdfs = -1,
-				i_rolcreatewexthdfs = -1;
+				i_rolcreatewexthdfs = -1,
+				i_is_current_user;
 	int			i;
 	bool		exttab_auth = (server_version >= 80214);
 	bool		hdfs_auth = (server_version >= 80215);
@@ -1091,7 +1092,8 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			  			  "rolname = current_user AS is_current_user "
 						  " %s %s %s %s"
 						  "FROM pg_authid "
 						  "ORDER BY 2",
@@ -1102,7 +1104,8 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+			  			  "rolname = current_user AS is_current_user "
 						  " %s %s %s %s"
 						  "FROM pg_authid "
 						  "ORDER BY 2",
@@ -1124,6 +1127,7 @@ dumpRoles(PGconn *conn)
 	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
 	i_rolreplication = PQfnumber(res, "rolreplication");
 	i_rolcomment = PQfnumber(res, "rolcomment");
+	i_is_current_user = PQfnumber(res, "is_current_user");
 
 	if (resource_queues)
 		i_rolqueuename = PQfnumber(res, "rolqueuename");
@@ -1156,24 +1160,25 @@ dumpRoles(PGconn *conn)
 
 		resetPQExpBuffer(buf);
 
-#if 0 /* GPDB: OIDs for pg_authid are preassigned during upgrade. */
 		if (binary_upgrade)
 		{
 			appendPQExpBuffer(buf, "\n-- For binary upgrade, must preserve pg_authid.oid\n");
 			appendPQExpBuffer(buf,
-							  "SELECT binary_upgrade.set_next_pg_authid_oid('%u'::pg_catalog.oid);\n\n",
-							  auth_oid);
+							  "SELECT binary_upgrade.set_next_pg_authid_oid('%u'::pg_catalog.oid, '%s'::text);\n\n",
+							  auth_oid, rolename);
 		}
-#endif
 
 		/*
 		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the role
 		 * will acquire the right properties even if it already exists (ie, it
 		 * won't hurt for the CREATE to fail).  This is particularly important
 		 * for the role we are connected as, since even with --clean we will
-		 * have failed to drop it.
+		 * have failed to drop it.  binary_upgrade cannot generate any errors,
+		 * so we assume the current role is already created.
 		 */
-		appendPQExpBuffer(buf, "CREATE ROLE %s;\n", fmtId(rolename));
+		if (!binary_upgrade ||
+			strcmp(PQgetvalue(res, i, i_is_current_user), "f") == 0)
+			appendPQExpBuffer(buf, "CREATE ROLE %s;\n", fmtId(rolename));
 		appendPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
 
 		if (strcmp(PQgetvalue(res, i, i_rolsuper), "t") == 0)

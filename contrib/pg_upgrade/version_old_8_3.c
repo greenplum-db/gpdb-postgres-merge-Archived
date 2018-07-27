@@ -3,11 +3,11 @@
  *
  *	Postgres-version-specific routines
  *
- *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/version_old_8_3.c
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "pg_upgrade.h"
 
@@ -55,24 +55,15 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
 								"		pg_catalog.pg_attribute a "
-								"WHERE	c.relkind='r' AND "
-								"		c.oid = a.attrelid AND "
+								"WHERE	c.oid = a.attrelid AND "
 								"		a.attnum > 1 AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.name'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
-								/* exclude possibly orphaned temp tables */
-							 	"		n.nspname != 'pg_catalog' AND "
-								"		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname != 'information_schema' ");
-=======
 		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -154,23 +145,16 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
 								"		pg_catalog.pg_attribute a "
+		/* materialized views didn't exist in 8.3, so no need to check 'm' */
 								"WHERE	c.relkind = 'r' AND "
 								"		c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsquery'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
-								/* exclude possibly orphaned temp tables */
-							 	"		n.nspname != 'pg_catalog' AND "
-								"		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname != 'information_schema' ");
-=======
 		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -297,86 +281,6 @@ old_8_3_check_ltree_usage(ClusterInfo *cluster)
 
 
 /*
- *	old_8_3_check_ltree_usage()
- *	8.3 -> 8.4
- *	The internal ltree structure was changed in 8.4 so upgrading is impossible.
- */
-void
-old_8_3_check_ltree_usage(ClusterInfo *cluster)
-{
-	int			dbnum;
-	FILE	   *script = NULL;
-	bool		found = false;
-	char		output_path[MAXPGPATH];
-
-	prep_status("Checking for /contrib/ltree");
-
-	snprintf(output_path, sizeof(output_path), "%s/contrib_ltree.txt",
-			 os_info.cwd);
-
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_nspname,
-					i_proname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-
-		/* Find any functions coming from contrib/ltree */
-		res = executeQueryOrDie(conn,
-								"SELECT n.nspname, p.proname "
-								"FROM	pg_catalog.pg_proc p, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	p.pronamespace = n.oid AND "
-								"		p.probin = '$libdir/ltree'");
-
-		ntups = PQntuples(res);
-		i_nspname = PQfnumber(res, "nspname");
-		i_proname = PQfnumber(res, "proname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not create necessary file:  %s\n", output_path);
-			if (!db_used)
-			{
-				fprintf(script, "Database:  %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  %s.%s\n",
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_proname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-		fclose(script);
-
-	if (found)
-	{
-		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "| Your installation contains the \"ltree\" data type.  This data type\n"
-			   "| changed its internal storage format between your old and new clusters so this\n"
-			   "| cluster cannot currently be upgraded.  You can manually upgrade databases\n"
-			   "| that use \"contrib/ltree\" facilities and remove \"contrib/ltree\" from the old\n"
-			   "| cluster and restart the upgrade.  A list of the problem functions is in the\n"
-			   "| file:\n"
-			   "| \t%s\n\n", output_path);
-	}
-	else
-		check_ok();
-}
-
-
-/*
  * old_8_3_rebuild_tsvector_tables()
  *	8.3 -> 8.4
  * 8.3 sorts lexemes by its length and if lengths are the same then it uses
@@ -420,23 +324,16 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
 								"		pg_catalog.pg_attribute a "
+		/* materialized views didn't exist in 8.3, so no need to check 'm' */
 								"WHERE	c.relkind = 'r' AND "
 								"		c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
-								/* exclude possibly orphaned temp tables */
-							 	"		n.nspname != 'pg_catalog' AND "
-								"		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname != 'information_schema' ");
-=======
 		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 /*
  *	This macro is used below to avoid reindexing indexes already rebuilt
@@ -448,20 +345,14 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"FROM	pg_catalog.pg_class c, "		\
 								"		pg_catalog.pg_namespace n, "	\
 								"		pg_catalog.pg_attribute a "		\
+		/* materialized views didn't exist in 8.3, so no need to check 'm' */ \
 								"WHERE	c.relkind = 'r' AND "			\
 								"		c.oid = a.attrelid AND "		\
 								"		NOT a.attisdropped AND "		\
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND " \
 								"		c.relnamespace = n.oid AND "	\
-<<<<<<< HEAD
-							 	"		n.nspname != 'pg_catalog' AND " \
-								"		n.nspname !~ '^pg_temp_' AND " \
-								"		n.nspname !~ '^pg_toast_temp_' AND " \
-								"		n.nspname != 'information_schema')"
-=======
 								"       n.nspname !~ '^pg_' AND "		\
 								"		n.nspname != 'information_schema') "
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -476,8 +367,13 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					appendPQExpBufferChar(&connectbuf, '\n');
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 
@@ -592,8 +488,12 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
@@ -711,8 +611,12 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
-					fprintf(script, "\\connect %s\n",
-							quote_identifier(active_db->db_name));
+					PQExpBufferData connectbuf;
+
+					initPQExpBuffer(&connectbuf);
+					appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+					fputs(connectbuf.data, script);
+					termPQExpBuffer(&connectbuf);
 					db_used = true;
 				}
 				fprintf(script, "REINDEX INDEX %s.%s;\n",
@@ -811,19 +715,10 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 								"		pg_catalog.pg_namespace n "
 								"WHERE	c.relkind = 'S' AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
-								/* exclude possibly orphaned temp tables */
-							 	"		n.nspname != 'pg_catalog' AND "
-								"		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-								"		n.nspname != 'information_schema' ");
-
-=======
 		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -842,8 +737,13 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
-				fprintf(script, "\\connect %s\n\n",
-						quote_identifier(active_db->db_name));
+				PQExpBufferData connectbuf;
+
+				initPQExpBuffer(&connectbuf);
+				appendPsqlMetaConnect(&connectbuf, active_db->db_name);
+				appendPQExpBufferChar(&connectbuf, '\n');
+				fputs(connectbuf.data, script);
+				termPQExpBuffer(&connectbuf);
 				db_used = true;
 			}
 
