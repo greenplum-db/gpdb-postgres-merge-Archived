@@ -3,11 +3,13 @@
  *
  *	options functions
  *
- *	Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/option.c
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
+
+#include "miscadmin.h"
 
 #include "pg_upgrade.h"
 
@@ -21,7 +23,7 @@
 
 
 static void usage(void);
-static void check_required_directory(char **dirpath,
+static void check_required_directory(char **dirpath, char **configpath,
 				   char *envVarName, char *cmdLineOption, char *description);
 
 
@@ -50,12 +52,14 @@ parseCommandLine(int argc, char *argv[])
 		{"check", no_argument, NULL, 'c'},
 		{"link", no_argument, NULL, 'k'},
 		{"retain", no_argument, NULL, 'r'},
+		{"jobs", required_argument, NULL, 'j'},
 		{"verbose", no_argument, NULL, 'v'},
-		{"progress", no_argument, NULL, 'X'},
-		{"add-checksum", no_argument, NULL, 'J'},
-		{"remove-checksum", no_argument, NULL, 'j'},
 
-		{"dispatcher-mode", no_argument, NULL, 1},
+		/* Greenplum specific parameters */
+		{"mode", required_argument, NULL, 1},
+		{"progress", no_argument, NULL, '2'},
+		{"add-checksum", no_argument, NULL, '3'},
+		{"remove-checksum", no_argument, NULL, '4'},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -75,6 +79,9 @@ parseCommandLine(int argc, char *argv[])
 	new_cluster.port = getenv("PGPORTNEW") ? atoi(getenv("PGPORTNEW")) : DEF_PGUPORT;
 
 	os_user_effective_id = get_user_info(&os_info.user);
+
+	user_opts.segment_mode = SEGMENT;
+
 	/* we override just the database user name;  we got the OS id above */
 	if (getenv("PGUSER"))
 	{
@@ -105,11 +112,7 @@ parseCommandLine(int argc, char *argv[])
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", INTERNAL_LOG_FILE);
 
-<<<<<<< HEAD
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:jJkl:p:P:u:v",
-=======
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cko:O:p:P:ru:v",
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:ru:v",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -137,11 +140,7 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			case 'j':
-				user_opts.checksum_mode = CHECKSUM_REMOVE;
-				break;
-
-			case 'J':
-				user_opts.checksum_mode = CHECKSUM_ADD;
+				user_opts.jobs = atoi(optarg);
 				break;
 
 			case 'k':
@@ -197,24 +196,33 @@ parseCommandLine(int argc, char *argv[])
 				log_opts.verbose = true;
 				break;
 
-			case 'X':
-				pg_log(PG_REPORT, "Running in progress report mode\n");
-				log_opts.progress = true;
+			/*
+			 * Greenplum specific parameters
+			 */
+
+			case 1:		/* --mode={dispatcher|segment} */
+				if (pg_strcasecmp("dispatcher", optarg) == 0)
+					user_opts.segment_mode = DISPATCHER;
+				else if (pg_strcasecmp("segment", optarg) == 0)
+					user_opts.segment_mode = SEGMENT;
+				else
+				{
+					pg_log(PG_FATAL, "invalid segment configuration\n");
+					exit(1);
+				}
+
 				break;
 
-			case 1:		/* --dispatcher-mode */
-				/*
-				 * XXX: Ideally, we could tell just by looking at the data
-				 * directory, whether it's a QD node, or a QE node. You might
-				 * think that we could look at Gp_role or gp_contentid, but
-				 * alas, we pass those options on the pg_ctl command line,
-				 * they are not stored permanently in the data directory
-				 * itself, and we don't want to dig into the auxiliary
-				 * config files created by gpinitsystem. So for now, the
-				 * caller of pg_upgrade must use the --dispatcher-mode
-				 * option, when upgrading the QD node.
-				 */
-				user_opts.dispatcher_mode = true;
+			case 2:		/* --progress */
+				user_opts.progress = true;
+				break;
+
+			case 3:		/* --add-checksum */
+				user_opts.checksum_mode = CHECKSUM_ADD;
+				break;
+
+			case 4:		/* --remove-checksum */
+				user_opts.checksum_mode = CHECKSUM_REMOVE;
 				break;
 
 			default:
@@ -240,27 +248,27 @@ parseCommandLine(int argc, char *argv[])
 		fclose(fp);
 	}
 
+	/* Get values from env if not already set */
+	check_required_directory(&old_cluster.bindir, NULL, "PGBINOLD", "-b",
+							 "old cluster binaries reside");
+	check_required_directory(&new_cluster.bindir, NULL, "PGBINNEW", "-B",
+							 "new cluster binaries reside");
+	check_required_directory(&old_cluster.pgdata, &old_cluster.pgconfig,
+							 "PGDATAOLD", "-d", "old cluster data resides");
+	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
+							 "PGDATANEW", "-D", "new cluster data resides");
+
 	/* Ensure we are only adding checksums in copy mode */
 	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
 		user_opts.checksum_mode != CHECKSUM_NONE)
 		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
-
-	/* Get values from env if not already set */
-	check_required_directory(&old_cluster.bindir, "PGBINOLD", "-b",
-							 "old cluster binaries reside");
-	check_required_directory(&new_cluster.bindir, "PGBINNEW", "-B",
-							 "new cluster binaries reside");
-	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", "-d",
-							 "old cluster data resides");
-	check_required_directory(&new_cluster.pgdata, "PGDATANEW", "-D",
-							 "new cluster data resides");
 }
 
 
 static void
 usage(void)
 {
-	printf(_("pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n\
+	printf(_("pg_upgrade upgrades a Greenplum cluster to a different major version.\n\
 \nUsage:\n\
   pg_upgrade [OPTION]...\n\
 \n\
@@ -270,29 +278,21 @@ Options:\n\
   -c, --check                   check clusters only, don't change any data\n\
   -d, --old-datadir=OLDDATADIR  old cluster data directory\n\
   -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
-<<<<<<< HEAD
-  -g, --debug                   enable debugging\n\
-  -G, --debugfile=FILENAME      output debugging activity to file\n\
-  -j, --remove-checksum         remove data checksums when creating new cluster\n\
-  -J, --add-checksum            add data checksumming to the new cluster\n\
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
+  -j, --jobs                    number of simultaneous processes or threads to use\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
   -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
-<<<<<<< HEAD
-  -u, --user=NAME               clusters superuser (default \"%s\")\n\
-  -v, --verbose                 enable verbose output\n\
-  -X, --progress                enable progress reporting\n\
-=======
   -r, --retain                  retain SQL and log files after success\n\
   -u, --user=NAME               cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
   -V, --version                 display version information, then exit\n\
-  -h, --help                    show this help, then exit\n\
+      --mode=TYPE               designate node type to upgrade, \"segment\" or \"dispatcher\" (default \"segment\")\n\
+      --progress                enable progress reporting\n\
+      --remove-checksum         remove data checksums when creating new cluster\n\
+      --add-checksum            add data checksumming to the new cluster\n\
+  -?, -h, --help                show this help, then exit\n\
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\
@@ -332,6 +332,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  *
  * Checks a directory option.
  *	dirpath		  - the directory name supplied on the command line
+ *	configpath	  - optional configuration directory
  *	envVarName	  - the name of an environment variable to get if dirpath is NULL
  *	cmdLineOption - the command line option corresponds to this directory (-o, -O, -n, -N)
  *	description   - a description of this directory option
@@ -340,15 +341,20 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  * user hasn't provided the required directory name.
  */
 static void
-check_required_directory(char **dirpath, char *envVarName,
-						 char *cmdLineOption, char *description)
+check_required_directory(char **dirpath, char **configpath,
+						 char *envVarName, char *cmdLineOption,
+						 char *description)
 {
 	if (*dirpath == NULL || strlen(*dirpath) == 0)
 	{
 		const char *envVar;
 
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
+		{
 			*dirpath = pg_strdup(envVar);
+			if (configpath)
+				*configpath = pg_strdup(envVar);
+		}
 		else
 			pg_log(PG_FATAL, "You must identify the directory where the %s.\n"
 				   "Please use the %s command-line option or the %s environment variable.\n",
@@ -356,7 +362,8 @@ check_required_directory(char **dirpath, char *envVarName,
 	}
 
 	/*
-	 * Trim off any trailing path separators
+	 * Trim off any trailing path separators because we construct paths by
+	 * appending to this path.
 	 */
 #ifndef WIN32
 	if ((*dirpath)[strlen(*dirpath) - 1] == '/')
@@ -404,7 +411,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	/*
 	 * We don't have a data directory yet, so we can't check the PG version,
-	 * so this might fail --- only works for PG 9.2+.	If this fails,
+	 * so this might fail --- only works for PG 9.2+.   If this fails,
 	 * pg_upgrade will fail anyway because the data files will not be found.
 	 */
 	snprintf(cmd, sizeof(cmd), "\"%s/postmaster\" -D \"%s\" -C data_directory",
@@ -424,4 +431,86 @@ adjust_data_dir(ClusterInfo *cluster)
 	cluster->pgdata = pg_strdup(cmd_output);
 
 	check_ok();
+}
+
+
+/*
+ * get_sock_dir
+ *
+ * Identify the socket directory to use for this cluster.  If we're doing
+ * a live check (old cluster only), we need to find out where the postmaster
+ * is listening.  Otherwise, we're going to put the socket into the current
+ * directory.
+ */
+void
+get_sock_dir(ClusterInfo *cluster, bool live_check)
+{
+#ifdef HAVE_UNIX_SOCKETS
+
+	/*
+	 * sockdir and port were added to postmaster.pid in PG 9.1. Pre-9.1 cannot
+	 * process pg_ctl -w for sockets in non-default locations.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 901)
+	{
+		if (!live_check)
+		{
+			/* Use the current directory for the socket */
+			cluster->sockdir = pg_malloc(MAXPGPATH);
+			if (!getcwd(cluster->sockdir, MAXPGPATH))
+				pg_log(PG_FATAL, "cannot find current directory\n");
+		}
+		else
+		{
+			/*
+			 * If we are doing a live check, we will use the old cluster's
+			 * Unix domain socket directory so we can connect to the live
+			 * server.
+			 */
+			unsigned short orig_port = cluster->port;
+			char		filename[MAXPGPATH],
+						line[MAXPGPATH];
+			FILE	   *fp;
+			int			lineno;
+
+			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
+					 cluster->pgdata);
+			if ((fp = fopen(filename, "r")) == NULL)
+				pg_log(PG_FATAL, "Cannot open file %s: %m\n", filename);
+
+			for (lineno = 1;
+			   lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
+				 lineno++)
+			{
+				if (fgets(line, sizeof(line), fp) == NULL)
+					pg_log(PG_FATAL, "Cannot read line %d from %s: %m\n", lineno, filename);
+
+				/* potentially overwrite user-supplied value */
+				if (lineno == LOCK_FILE_LINE_PORT)
+					sscanf(line, "%hu", &old_cluster.port);
+				if (lineno == LOCK_FILE_LINE_SOCKET_DIR)
+				{
+					cluster->sockdir = pg_malloc(MAXPGPATH);
+					/* strip off newline */
+					sscanf(line, "%s\n", cluster->sockdir);
+				}
+			}
+			fclose(fp);
+
+			/* warn of port number correction */
+			if (orig_port != DEF_PGUPORT && old_cluster.port != orig_port)
+				pg_log(PG_WARNING, "User-supplied old port number %hu corrected to %hu\n",
+					   orig_port, cluster->port);
+		}
+	}
+	else
+
+		/*
+		 * Can't get sockdir and pg_ctl -w can't use a non-default, use
+		 * default
+		 */
+		cluster->sockdir = NULL;
+#else							/* !HAVE_UNIX_SOCKETS */
+	cluster->sockdir = NULL;
+#endif
 }

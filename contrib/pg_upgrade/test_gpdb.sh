@@ -2,12 +2,16 @@
 
 # contrib/pg_upgrade/test_gpdb.sh
 #
-# Test driver for upgrading a Greenplum cluster with pg_upgrade. For test data,
-# this script assumes the gpdemo cluster in gpAux/gpdemo/datadirs contains the
-# end-state of an ICW test run. Performs a pg_dumpall, initializes a parallel
-# gpdemo cluster and upgrades it against the ICW cluster and then performs
-# another pg_dumpall. If the two dumps match then the upgrade created a new
-# identical copy of the cluster.
+# Test driver for upgrading a Greenplum cluster with pg_upgrade within the same
+# major version. Upgrading within the same major version is obviously not
+# testing the full functionality of pg_upgrade, but it's a good compromise for
+# being able to test pg_upgrade in a normal CI pipeline. Testing an actual
+# major version upgrade need another setup. For test data, this script assumes
+# the gpdemo cluster in gpAux/gpdemo/datadirs contains the end-state of an ICW
+# test run. The test first performs a pg_dumpall, then initializes a parallel
+# gpdemo cluster and upgrades it against the ICW cluster. After the upgrade it
+# performs another pg_dumpall, if the two dumps match then the upgrade created
+# a new identical copy of the cluster.
 
 OLD_BINDIR=
 OLD_DATADIR=
@@ -16,8 +20,6 @@ NEW_DATADIR=
 
 DEMOCLUSTER_OPTS=
 PGUPGRADE_OPTS=
-
-qddir=
 
 # The normal ICW run has a gpcheckcat call, so allow this testrunner to skip
 # running it in case it was just executed to save time.
@@ -104,14 +106,14 @@ check_vacuum_worked()
 
 	# Start the instance using the same pg_ctl invocation used by pg_upgrade.
 	"${NEW_BINDIR}/pg_ctl" -w -l /dev/null -D "${datadir}" \
-		-o "-p 5432 --gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=${contentid} --xid_warn_limit=10000000 -b" \
+		-o "-p 18432 --gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=${contentid} --xid_warn_limit=10000000 -b" \
 		start
 
 	# Query for the xmin ages.
 	local xmin_ages=$( \
 		PGOPTIONS='-c gp_session_role=utility' \
-		psql -c 'SELECT age(xmin) FROM pg_catalog.gp_segment_configuration GROUP BY age(xmin);' \
-			 -p 5432 -t -A template1 \
+		"${NEW_BINDIR}/psql" -c 'SELECT age(xmin) FROM pg_catalog.gp_segment_configuration GROUP BY age(xmin);' \
+			 -p 18432 -t -A template1 \
 	)
 
 	# Stop the instance.
@@ -119,7 +121,7 @@ check_vacuum_worked()
 
 	# Check to make sure all the xmins are frozen (maximum age).
 	while read age; do
-		if [ "$age" -ne 2147483647 ]; then
+		if [ "$age" -ne "2147483647" ]; then
 			echo "ERROR: gp_segment_configuration has an entry of age $age"
 			return 1
 		fi
@@ -134,7 +136,7 @@ upgrade_qd()
 
 	# Run pg_upgrade
 	pushd $1
-	time ${NEW_BINDIR}/pg_upgrade --old-bindir=${OLD_BINDIR} --old-datadir=$2 --new-bindir=${NEW_BINDIR} --new-datadir=$3 --dispatcher-mode ${PGUPGRADE_OPTS}
+	time ${NEW_BINDIR}/pg_upgrade --mode=dispatcher --old-bindir=${OLD_BINDIR} --old-datadir=$2 --new-bindir=${NEW_BINDIR} --new-datadir=$3 ${PGUPGRADE_OPTS}
 	if (( $? )) ; then
 		echo "ERROR: Failure encountered in upgrading qd node"
 		exit 1
@@ -155,12 +157,9 @@ upgrade_segment()
 {
 	mkdir -p $1
 
-	# Copy the OID files from the QD to segments.
-	cp $qddir/pg_upgrade_dump_*_oids.sql $1
-
 	# Run pg_upgrade
 	pushd $1
-	time ${NEW_BINDIR}/pg_upgrade --old-bindir=${OLD_BINDIR} --old-datadir=$2 --new-bindir=${NEW_BINDIR} --new-datadir=$3 ${PGUPGRADE_OPTS}
+	time ${NEW_BINDIR}/pg_upgrade --mode=segment --old-bindir=${OLD_BINDIR} --old-datadir=$2 --new-bindir=${NEW_BINDIR} --new-datadir=$3 ${PGUPGRADE_OPTS}
 	if (( $? )) ; then
 		echo "ERROR: Failure encountered in upgrading node"
 		exit 1
@@ -208,18 +207,19 @@ while getopts ":o:b:sCkKmr" opt; do
 			;;
 		k )
 			add_checksums=1
-			PGUPGRADE_OPTS=' -J '
+			PGUPGRADE_OPTS+=' --add-checksum '
 			;;
 		K )
 			remove_checksums=1
 			DEMOCLUSTER_OPTS=' -K '
-			PGUPGRADE_OPTS=' -j '
+			PGUPGRADE_OPTS+=' --remove-checksum '
 			;;
 		m )
 			mirrors=1
 			;;
 		r )
 			retain_tempdir=1
+			PGUPGRADE_OPTS+=' --retain '
 			;;
 		* )
 			usage
@@ -231,6 +231,9 @@ if [ -z "${OLD_DATADIR}" ] || [ -z "${NEW_BINDIR}" ]; then
 	usage
 fi
 
+# This should be rejected by pg_upgrade as well, but this test is not concerned
+# with testing handling incorrect option handling in pg_upgrade so we'll error
+# out early instead.
 if [ ! -z "${add_checksums}"] && [ ! -z "${remove_checksums}" ]; then
 	echo "ERROR: adding and removing checksums are mutually exclusive"
 	exit 1
@@ -260,8 +263,7 @@ fi
 
 # Run any pre-upgrade tasks to prep the cluster
 if [ -f "test_gpdb_pre.sql" ]; then
-	psql -f test_gpdb_pre.sql regression
-	psql -f test_gpdb_pre.sql isolation2test
+	psql -f test_gpdb_pre.sql postgres
 fi
 
 # Ensure that the catalog is sane before attempting an upgrade. While there is
@@ -303,9 +305,8 @@ PGOPTIONS=""; unset PGOPTIONS
 # Start by upgrading the master
 upgrade_qd "${temp_root}/upgrade/qd" "${OLD_DATADIR}/qddir/demoDataDir-1/" "${NEW_DATADIR}/qddir/demoDataDir-1/"
 
-# If this is a minimal smoketest to ensure that we are pulling the Oids across
-# from the old cluster to the new, then exit here as we have now successfully
-# upgraded a node (the QD).
+# If this is a minimal smoketest to ensure that we are handling all objects
+# properly, then exit here as we have now successfully upgraded the QD.
 if (( $smoketest )) ; then
 	restore_cluster
 	exit
@@ -314,11 +315,28 @@ fi
 # Upgrade all the segments and mirrors. In a production setup the segments
 # would be upgraded first and then the mirrors once the segments are verified.
 # In this scenario we can cut corners since we don't have any important data
-# in the test cluster and we only consern ourselves with 100% success rate.
+# in the test cluster and we only concern ourselves with 100% success rate.
 for i in 1 2 3
 do
 	j=$(($i-1))
+	k=$(($i+1))
+
+	# Replace the QE datadir with a copy of the QD datadir, in order to
+	# bootstrap the QE upgrade so that we don't need to dump/restore
+	mv "${NEW_DATADIR}/dbfast$i/demoDataDir$j/" "${NEW_DATADIR}/dbfast$i/demoDataDir$j.old/"
+	cp -rp "${NEW_DATADIR}/qddir/demoDataDir-1/" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/"
+	# Retain the segment configuration
+	cp "${NEW_DATADIR}/dbfast$i/demoDataDir$j.old/postgresql.conf" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/postgresql.conf"
+	cp "${NEW_DATADIR}/dbfast$i/demoDataDir$j.old/pg_hba.conf" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/pg_hba.conf"
+	cp "${NEW_DATADIR}/dbfast$i/demoDataDir$j.old/postmaster.opts" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/postmaster.opts"
+	cp "${NEW_DATADIR}/dbfast$i/demoDataDir$j.old/gp_replication.conf" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/gp_replication.conf"
+	# Remove QD only files
+	rm -f "${NEW_DATADIR}/dbfast$i/demoDataDir$j/gp_dbid"
+	rm -f "${NEW_DATADIR}/dbfast$i/demoDataDir$j/gpssh.conf"
+	rm -rf "${NEW_DATADIR}/dbfast$i/demoDataDir$j/gpperfmon"
+	# Upgrade the segment data files without dump/restore of the schema
 	upgrade_segment "${temp_root}/upgrade/dbfast$i" "${OLD_DATADIR}/dbfast$i/demoDataDir$j/" "${NEW_DATADIR}/dbfast$i/demoDataDir$j/"
+
 	if (( $mirrors )) ; then
 		upgrade_segment "${temp_root}/upgrade/dbfast_mirror$i" "${OLD_DATADIR}/dbfast_mirror$i/demoDataDir$j/" "${NEW_DATADIR}/dbfast_mirror$i/demoDataDir$j/"
 	fi
@@ -348,12 +366,14 @@ export MASTER_DATA_DIRECTORY="${OLD_DATADIR}/qddir/demoDataDir-1"
 # shouldn't be a cause of difference in the files but it is. Partitioning info
 # is generated via backend functionality in the cluster being dumped, and not
 # in pg_dump, so whitespace changes can trip up the diff.
+# FIXME: Maybe we should not use '-w' in the future since it is too aggressive.
 if diff -w "$temp_root/dump1.sql" "$temp_root/dump2.sql" >/dev/null; then
+	rm -f regression.diffs
 	echo "Passed"
 	exit 0
 else
 	# To aid debugging in pipelines, print the diff to stdout
-	diff "$temp_root/dump1.sql" "$temp_root/dump2.sql"
+	diff -du "$temp_root/dump1.sql" "$temp_root/dump2.sql" | tee regression.diffs
 	echo "Error: before and after dumps differ"
 	exit 1
 fi

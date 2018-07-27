@@ -85,7 +85,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	Oid         relationOid = InvalidOid;   /* relation that is modified */
 	AutoStatsCmdType cmdType = AUTOSTATS_CMDTYPE_SENTINEL;  /* command type */
 
-	Assert(Gp_role == GP_ROLE_DISPATCH);
+	Assert(Gp_role != GP_ROLE_EXECUTE);
 
 	/*
 	 * Create the tuple receiver object and insert info it will need
@@ -397,7 +397,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 
 	stdRdOptions = (StdRdOptions*) heap_reloptions(RELKIND_RELATION,
 												   reloptions,
-												   queryDesc->ddesc->useChangedAOOpts);
+												   queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
 	if(stdRdOptions->appendonly)
 		relstorage = stdRdOptions->columnstore ? RELSTORAGE_AOCOLS : RELSTORAGE_AOROWS;
 	else
@@ -430,7 +430,7 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 									InvalidOid,
 									relstorage,
 									false,
-									queryDesc->ddesc->useChangedAOOpts);
+									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that

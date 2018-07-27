@@ -25,9 +25,8 @@ all:
 	$(MAKE) -C contrib/gp_cancel_query all
 	$(MAKE) -C contrib/indexscan all
 	$(MAKE) -C contrib/pg_upgrade_support all
-#	$(MAKE) -C contrib/pg_upgrade all
+	$(MAKE) -C contrib/pg_upgrade all
 	$(MAKE) -C contrib/hstore all
-	$(MAKE) -C contrib/postgres_hyperloglog all
 	$(MAKE) -C contrib/pgcrypto all
 	$(MAKE) -C gpAux/extensions all
 	$(MAKE) -C gpAux/gpperfmon all
@@ -62,9 +61,8 @@ install:
 	$(MAKE) -C contrib/gp_cancel_query $@
 	$(MAKE) -C contrib/indexscan $@ 
 	$(MAKE) -C contrib/pg_upgrade_support $@
-#	$(MAKE) -C contrib/pg_upgrade $@
+	$(MAKE) -C contrib/pg_upgrade $@
 	$(MAKE) -C contrib/hstore $@
-	$(MAKE) -C contrib/postgres_hyperloglog $@ 
 	$(MAKE) -C contrib/pgcrypto $@
 	$(MAKE) -C gpMgmt $@
 	$(MAKE) -C gpAux/extensions $@
@@ -169,7 +167,7 @@ installcheck-world: installcheck-gpcheckcat
 installcheck-gpcheckcat:
 	gpcheckcat -A
 $(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
-#$(call recurse,installcheck-world,contrib/pg_upgrade,check)
+$(call recurse,installcheck-world,contrib/pg_upgrade,check)
 
 $(call recurse,maintainer-check,doc src config contrib)
 
