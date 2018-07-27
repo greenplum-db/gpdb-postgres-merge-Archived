@@ -2457,16 +2457,13 @@ gpdb::CdbEstimateRelationSize
 	Relation rel,
 	int32 *attr_widths,
 	BlockNumber *pages,
-	double *tuples
+	double *tuples,
+	double *allvisfrac
 	)
 {
 	GP_WRAP_START;
 	{
-		/*
-		 * GPDB_92_MERGE_FIXME: What is the expected allvisfrac?
-		 */
-		double      allvisfrac; /* dummy */
-		cdb_estimate_rel_size(relOptInfo, rel, attr_widths, pages, tuples, &allvisfrac);
+		cdb_estimate_rel_size(relOptInfo, rel, attr_widths, pages, tuples, allvisfrac);
 		return;
 	}
 	GP_WRAP_END;

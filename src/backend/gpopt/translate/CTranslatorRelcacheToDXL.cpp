@@ -2295,7 +2295,7 @@ CTranslatorRelcacheToDXL::PimdobjRelStats
 				RelOptInfo *relOptInfo = makeNode(RelOptInfo);
 				relOptInfo->cdbpolicy = gpdb::Pdistrpolicy(rel);
 
-				gpdb::CdbEstimateRelationSize(relOptInfo, rel, NULL, &pages, &rows);
+				gpdb::CdbEstimateRelationSize(relOptInfo, rel, NULL, &pages, &rows, &allvisfrac);
 				pfree(relOptInfo);
 
 			}
