@@ -1024,6 +1024,11 @@ PostmasterMain(int argc, char *argv[])
 			 (errmsg_internal("-----------------------------------------")));
 	}
 
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
+
 	/*
 	 * Create lockfile for data directory.
 	 *
