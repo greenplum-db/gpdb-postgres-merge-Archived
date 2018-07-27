@@ -182,10 +182,7 @@ CREATE VIEW pg_stats AS
 REVOKE ALL on pg_statistic FROM public;
 
 CREATE VIEW pg_locks AS
-    SELECT *
-    FROM gp_lock_status_master() AS L
-    UNION ALL
-    SELECT * FROM gp_lock_status_segments();
+    SELECT * FROM pg_lock_status() AS L;
 
 CREATE VIEW pg_cursors AS
     SELECT * FROM pg_cursor() AS C;
