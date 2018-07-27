@@ -270,12 +270,13 @@ static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
 static void binary_upgrade_set_namespace_oid(PQExpBuffer upgrade_buffer,
 								Oid pg_namespace_oid, char *namespacename);
-static void binary_upgrade_set_type_oids_by_type_oid(
+static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 								PQExpBuffer upgrade_buffer, Oid pg_type_oid,
 								Oid pg_type_ns_oid, char *pg_type_name);
-static bool binary_upgrade_set_type_oids_by_rel_oid(
+static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
-static void binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer,
+static void binary_upgrade_set_pg_class_oids(Archive *fout,
+								 PQExpBuffer upgrade_buffer,
 								 Oid pg_class_oid, bool is_index);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
@@ -2751,12 +2752,12 @@ binary_upgrade_set_namespace_oid(PQExpBuffer upgrade_buffer,
 }
 
 static void
-binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
+binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
+										 PQExpBuffer upgrade_buffer,
 										 Oid pg_type_oid, Oid pg_type_ns_oid,
 										 char *pg_type_name)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_array_oid;
 	Oid			pg_type_array_nsoid;
@@ -2777,19 +2778,7 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 					  "WHERE t.oid = '%u'::pg_catalog.oid;",
 					  pg_type_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely();
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_type_array_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typarray")));
 	pg_type_array_nsoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typnamespace")));
@@ -2811,11 +2800,11 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 }
 
 static bool
-binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
+binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
+										PQExpBuffer upgrade_buffer,
 										Oid pg_rel_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_oid;
 	Oid			pg_type_nsoid;
@@ -2835,25 +2824,14 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_rel_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely();
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
 	pg_type_nsoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typnamespace")));
 	pg_type_name = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typname"));
 
-	binary_upgrade_set_type_oids_by_type_oid(upgrade_buffer, pg_type_oid, pg_type_nsoid, pg_type_name);
+	binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
+											 pg_type_oid, pg_type_nsoid, pg_type_name);
 
 	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
 	{
@@ -2880,11 +2858,11 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 }
 
 static void
-binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
+binary_upgrade_set_pg_class_oids(Archive *fout,
+								 PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 								 bool is_index)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_class_reltoastrelid;
 	Oid			pg_class_reltoastidxid;
@@ -2911,19 +2889,7 @@ binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid, pg_class_oid, pg_class_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely();
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
 	pg_class_reltoastidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastidxid")));
@@ -2981,10 +2947,10 @@ binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 		 */
 		if (OidIsValid(pg_class_bmoid))
 		{
-			binary_upgrade_set_pg_class_oids(upgrade_buffer, pg_class_bmoid, false);
-			binary_upgrade_set_type_oids_by_rel_oid(upgrade_buffer, pg_class_bmoid);
+			binary_upgrade_set_pg_class_oids(fout, upgrade_buffer, pg_class_bmoid, false);
+			binary_upgrade_set_type_oids_by_rel_oid(fout, upgrade_buffer, pg_class_bmoid);
 
-			binary_upgrade_set_pg_class_oids(upgrade_buffer, pg_class_bmidxoid, true);
+			binary_upgrade_set_pg_class_oids(fout, upgrade_buffer, pg_class_bmidxoid, true);
 		}
 	}
 
@@ -7582,7 +7548,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 					  fmtId(tyinfo->dobj.name));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
 												 tyinfo->dobj.namespace->dobj.catId.oid,
 												 tyinfo->dobj.name);
 
@@ -7706,8 +7672,8 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 					  fmtId(tyinfo->dobj.name));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(fout,
-												 q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
+				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
 					  fmtId(tyinfo->dobj.name));
@@ -8039,7 +8005,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 
 	/* We might already have a shell type, but setting pg_type_oid is harmless */
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
 				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
 
 	appendPQExpBuffer(q,
@@ -8273,7 +8239,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	typcollation = atooid(PQgetvalue(res, 0, PQfnumber(res, "typcollation")));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
 				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
 
 	appendPQExpBuffer(q,
@@ -8446,9 +8412,9 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 	if (binary_upgrade)
 	{
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q, tyinfo->dobj.catId.oid,
 				tyinfo->dobj.namespace->dobj.catId.oid, tyinfo->dobj.name);
-		binary_upgrade_set_pg_class_oids(q, tyinfo->typrelid, false);
+		binary_upgrade_set_pg_class_oids(fout, q, tyinfo->typrelid, false);
 	}
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
@@ -8711,7 +8677,7 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 	 */
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 										   stinfo->baseType->dobj.catId.oid,
 										   stinfo->baseType->dobj.namespace->dobj.catId.oid,
 										   stinfo->baseType->dobj.name);
@@ -12874,7 +12840,7 @@ dumpExternal(Archive *fout, TableInfo *tbinfo, PQExpBuffer query, PQExpBuffer q,
 			iswritable = true;
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_pg_class_oids(fout, q, tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE %sEXTERNAL %sTABLE %s (",
 						  (iswritable ? "WRITABLE " : ""),
@@ -13086,9 +13052,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		binary_upgrade_set_type_oids_by_rel_oid(fout, q,
 												tbinfo->dobj.catId.oid);
 
-	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_rel_oid(q, tbinfo->dobj.catId.oid);
-
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
 	{
@@ -13137,7 +13100,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE VIEW %s AS\n    %s\n",
 						  fmtId(tbinfo->dobj.name), viewdef);
@@ -13210,7 +13174,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		if (binary_upgrade)
 		{
-			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 tbinfo->dobj.catId.oid, false);
 
 			/*
 			 * If this is a partition hierarchy parent, dump the Oid
@@ -13229,8 +13194,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 											 "     JOIN pg_catalog.pg_class c ON ( "
 											 "       p.partitiontablename = c.relname)",
 											 tbinfo->dobj.catId.oid);
-				partres = PQexec(g_conn, partquery->data);
-				check_sql_result(partres, g_conn, partquery->data, PGRES_TUPLES_OK);
+				partres = ExecuteSqlQuery(fout, partquery->data, PGRES_TUPLES_OK);
 
 				/* It really should..  */
 				if (PQntuples(partres) > 0)
@@ -13241,7 +13205,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					{
 						Oid part_oid = atooid(PQgetvalue(partres, i, 0));
 
-						binary_upgrade_set_pg_class_oids(q, part_oid, false);
+						binary_upgrade_set_pg_class_oids(fout, q, part_oid, false);
 					}
 				}
 
@@ -14051,7 +14015,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 	if (indxinfo->indexconstraint == 0)
 	{
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
+			binary_upgrade_set_pg_class_oids(fout, q, indxinfo->dobj.catId.oid, true);
 
 		/* Plain secondary index */
 		appendPQExpBuffer(q, "%s;\n", indxinfo->indexdef);
@@ -14129,11 +14093,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 						  coninfo->dobj.name);
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(fout, q,
-											 indxinfo->dobj.catId.oid, true);
-
-		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
+			binary_upgrade_set_pg_class_oids(fout, q, indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
 						  fmtId(tbinfo->dobj.name));
@@ -14469,9 +14429,9 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 		if (binary_upgrade)
 		{
-			binary_upgrade_set_pg_class_oids(query,
+			binary_upgrade_set_pg_class_oids(fout, query,
 											 tbinfo->dobj.catId.oid, false);
-			binary_upgrade_set_type_oids_by_rel_oid(query,
+			binary_upgrade_set_type_oids_by_rel_oid(fout, query,
 													tbinfo->dobj.catId.oid);
 		}
 
