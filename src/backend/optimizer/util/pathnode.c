@@ -38,6 +38,7 @@
 #include "utils/selfuncs.h"
 
 #include "cdb/cdbpath.h"        /* cdb_create_motion_path() etc */
+#include "commands/defrem.h"    /* defGetString() */
 
 typedef enum
 {
@@ -1048,6 +1049,7 @@ create_aocs_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	cost_aocsscan(pathnode, root, rel, pathnode->path.param_info);
 	return pathnode;
 }
+
 /*
 * Create a path for scanning an external table
  */
@@ -2836,7 +2838,35 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.startup_cost = startup_cost;
 	pathnode->path.total_cost = total_cost;
 	pathnode->path.pathkeys = pathkeys;
-	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
+
+	/*
+	 * Get the mpp_execute option.
+	 */
+	char *mpp_execute = NULL;
+	ListCell   *lc = NULL;
+	foreach(lc, rel->ftEntry->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "mpp_execute") == 0)
+		{
+			mpp_execute = defGetString(def);
+			break;
+		}
+	}
+
+	if (mpp_execute && strcasecmp(mpp_execute, "any") == 0)
+	{
+		CdbPathLocus_MakeGeneral(&(pathnode->path.locus));
+	}
+	else if (mpp_execute && strcasecmp(mpp_execute, "all segments") == 0)
+	{
+		CdbPathLocus_MakeStrewn(&(pathnode->path.locus));
+	}
+	else
+	{
+		CdbPathLocus_MakeEntry(&(pathnode->path.locus));
+	}
 
 	pathnode->fdw_private = fdw_private;
 

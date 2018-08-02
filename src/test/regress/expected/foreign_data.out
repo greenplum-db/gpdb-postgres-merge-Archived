@@ -702,6 +702,31 @@ SELECT * FROM ft1;                                              -- ERROR
 ERROR:  foreign-data wrapper "dummy" has no handler
 EXPLAIN SELECT * FROM ft1;                                      -- ERROR
 ERROR:  foreign-data wrapper "dummy" has no handler
+CREATE FOREIGN TABLE ft2 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'a');           -- ERROR
+ERROR:  "a" is not a valid mpp_execute value
+CREATE FOREIGN TABLE ft2 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'any');
+\d+ ft2
+                            Foreign table "public.ft2"
+ Column |  Type   | Modifiers | FDW Options | Storage | Stats target | Description 
+--------+---------+-----------+-------------+---------+--------------+-------------
+ c1     | integer |           |             | plain   |              | 
+Server: s0
+FDW Options: (delimiter ',', mpp_execute 'any')
+Has OIDs: no
+
+CREATE FOREIGN TABLE ft3 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'master');
+CREATE FOREIGN TABLE ft4 (
+	c1 int
+) SERVER s0 OPTIONS (delimiter ',', mpp_execute 'all segments');
+DROP FOREIGN TABLE ft2;
+DROP FOREIGN TABLE ft3;
+DROP FOREIGN TABLE ft4;
 -- ALTER FOREIGN TABLE
 COMMENT ON FOREIGN TABLE ft1 IS 'foreign table';
 COMMENT ON FOREIGN TABLE ft1 IS NULL;
