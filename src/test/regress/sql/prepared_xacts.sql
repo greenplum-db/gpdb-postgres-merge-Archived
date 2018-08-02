@@ -54,10 +54,6 @@ SELECT gid FROM pg_prepared_xacts;
 
 BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 INSERT INTO pxtest1 VALUES ('fff');
-<<<<<<< HEAD
-SELECT * from pxtest1;
-=======
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
 
 -- This should fail, because the gid foo3 is already in use
 PREPARE TRANSACTION 'foo3';
