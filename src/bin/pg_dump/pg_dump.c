@@ -13052,9 +13052,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		binary_upgrade_set_type_oids_by_rel_oid(fout, q,
 												tbinfo->dobj.catId.oid);
 
-	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_rel_oid(q, tbinfo->dobj.catId.oid);
-
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
 	{
@@ -14097,9 +14094,6 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		if (binary_upgrade)
 			binary_upgrade_set_pg_class_oids(fout, q, indxinfo->dobj.catId.oid, true);
-
-		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
 						  fmtId(tbinfo->dobj.name));
