@@ -191,6 +191,7 @@ ExecReScan(PlanState *node)
 
 		case T_DynamicIndexScanState:
 			ExecReScanDynamicIndex((DynamicIndexScanState *) node);
+			break;
 
 		case T_IndexOnlyScanState:
 			ExecReScanIndexOnlyScan((IndexOnlyScanState *) node);
