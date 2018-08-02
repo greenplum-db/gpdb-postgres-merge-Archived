@@ -13409,7 +13409,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * because that runs against a single segment server, and we don't
 		 * store the distribution policy information in segments.
 		 */
-		if (dumpPolicy)
+		if (dumpPolicy && tbinfo->relkind != RELKIND_FOREIGN_TABLE)
 			addDistributedBy(fout, q, tbinfo, actual_atts);
 
 		/*
