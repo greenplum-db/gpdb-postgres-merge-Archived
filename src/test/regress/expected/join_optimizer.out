@@ -2778,14 +2778,15 @@ where thousand = (q1 + q2);
    ->  Hash Join
          Hash Cond: tenk1.twothousand = int4_tbl.f1
          ->  Nested Loop
-               Join Filter: tenk1.thousand = ("inner".q1 + "outer".q2)
-               ->  Table Scan on tenk1
+               Join Filter: true
                ->  Nested Loop
                      Join Filter: true
                      ->  Result
                            ->  Result
                      ->  Result
                            ->  Result
+               ->  Index Scan using tenk1_thous_tenthous on tenk1
+                     Index Cond: thousand = ("inner".q1 + "outer".q2)
          ->  Hash
                ->  Broadcast Motion 3:3  (slice1; segments: 3)
                      ->  Table Scan on int4_tbl
