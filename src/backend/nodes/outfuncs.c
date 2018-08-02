@@ -2642,9 +2642,9 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 
 	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(excludeOpNames);
-	WRITE_BOOL_FIELD(is_part_child);
 	WRITE_OID_FIELD(indexOid);
 	WRITE_OID_FIELD(oldNode);
+	WRITE_BOOL_FIELD(is_part_child);
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(primary);
 	WRITE_BOOL_FIELD(isconstraint);
@@ -2652,7 +2652,7 @@ _outIndexStmt(StringInfo str, const IndexStmt *node)
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_BOOL_FIELD(concurrent);
 	WRITE_STRING_FIELD(altconname);
-	/* GPDB_90_MERGE_FIXME: should we write is_split_part? */
+	WRITE_BOOL_FIELD(is_split_part);
 }
 
 static void

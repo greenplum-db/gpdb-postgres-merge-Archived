@@ -836,7 +836,7 @@ else \
 	pstate->cdbsreh->processed++; \
 	pstate->cdbsreh->consec_csv_err = pstate->num_consec_csv_err; \
 \
-	/* set the error message. Use original msg and add column name if availble */ \
+	/* set the error message. Use original msg and add column name if available */ \
 	if (pstate->cur_attname)\
 	{\
 		pstate->cdbsreh->errmsg = psprintf("%s, column %s", \
@@ -2063,18 +2063,6 @@ parseCopyFormatString(char *fmtstr, char fmttype)
 
 			item = makeDefElem("newline", (Node *)makeString(pstrdup(token)));
 		}
-		else if (pg_strcasecmp(token, "formatter") == 0)
-		{
-			/* GPDB_91_MERGE_FIXME: what is this used for? */
-			token = strtokx2(NULL, whitespace, NULL, "'",
-							 nonstd_backslash, true, true, encoding);
-			if (!token)
-				goto error;
-
-			elog(WARNING,
-				 "external table internal parser will not use formatter %s",
-				 token);
-		}
 		else
 			goto error;
 
@@ -2102,13 +2090,14 @@ parseCopyFormatString(char *fmtstr, char fmttype)
 
 error:
 	if (token)
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-					  errmsg("external table internal parse error at \"%s\"",
-							 token)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("external table internal parse error at \"%s\"",
+						token)));
 	else
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-					  errmsg("external table internal parse error at end of "
-							 "line")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("external table internal parse error at end of line")));
 }
 
 static void
@@ -2165,9 +2154,9 @@ parseCustomFormatString(char *fmtstr, char **formatter_name, List **formatter_pa
 	}
 
 	if (!formatter_found)
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("external table internal parse error: "
-							   "no formatter function name found")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("external table internal parse error: no formatter function name found")));
 
 	*formatter_params = l;
 
@@ -2175,13 +2164,14 @@ parseCustomFormatString(char *fmtstr, char **formatter_name, List **formatter_pa
 
 error:
 	if (token)
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-					  errmsg("external table internal parse error at \"%s\"",
-							 token)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("external table internal parse error at \"%s\"",
+						token)));
 	else
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-					  errmsg("external table internal parse error at end of "
-							 "line")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("external table internal parse error at end of line")));
 }
 
 static char *

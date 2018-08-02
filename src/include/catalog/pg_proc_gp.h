@@ -1092,5 +1092,33 @@ DESCR("Includes a data value into a hyperloglog counter");
 DATA(insert OID = 7164 ( hyperloglog_accum  PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 7157 "2283" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ n a ));
 DESCR("Adds every data value to a hyperloglog counter and returns the counter");
 
+/* hyperloglog_in(value cstring) => hyperloglog_estimator */
+DATA(insert OID = 7158 ( hyperloglog_in  PGNSP PGUID 12 1 0 0 f f f t f i 1 0 7157 "2275" _null_ _null_ "{value}" _null_ hyperloglog_in _null_ _null_ _null_ n a ));
+DESCR("Decode a bytea into hyperloglog_counter");
+
+/* hyperloglog_out(counter hyperloglog_estimator) => cstring */
+DATA(insert OID = 7159 ( hyperloglog_out  PGNSP PGUID 12 1 0 0 f f f t f i 1 0 2275 "7157" _null_ _null_ "{counter}" _null_ hyperloglog_out _null_ _null_ _null_ n a ));
+DESCR("Encode an hyperloglog_counter into a bytea");
+
+/* hyperloglog_comp(counter hyperloglog_estimator) => hyperloglog_estimator */
+DATA(insert OID = 7160 ( hyperloglog_comp  PGNSP PGUID 12 1 0 0 f f f t f i 1 0 7157 "7157" _null_ _null_ "{counter}" _null_ hyperloglog_comp _null_ _null_ _null_ n a ));
+DESCR("Compress an hyperloglog counter");
+
+/* hyperloglog_merge(estimator1 hyperloglog_estimator, estimator2 hyperloglog_estimator) => hyperloglog_estimator */
+DATA(insert OID = 7161 ( hyperloglog_merge  PGNSP PGUID 12 1 0 0 f f f f f i 2 0 7157 "7157 7157" _null_ _null_ "{estimator1,estimator2}" _null_ hyperloglog_merge _null_ _null_ _null_ n a ));
+DESCR("Merge two hyperloglog counters into one");
+
+/* hyperloglog_get_estimate(counter hyperloglog_estimator) => float8 */
+DATA(insert OID = 7162 ( hyperloglog_get_estimate  PGNSP PGUID 12 1 0 0 f f f t f i 1 0 701 "7157" _null_ _null_ "{counter}" _null_ hyperloglog_get_estimate _null_ _null_ _null_ n a ));
+DESCR("Estimates the number of distinct values stored in an hyperloglog counter");
+
+/* hyperloglog_add_item_agg_default(counter hyperloglog_estimator, item anyelement) => hyperloglog_estimator */
+DATA(insert OID = 7163 ( hyperloglog_add_item_agg_default  PGNSP PGUID 12 1 0 0 f f f f f i 2 0 7157 "7157 2283" _null_ _null_ "{counter,item}" _null_ hyperloglog_add_item_agg_default _null_ _null_ _null_ n a ));
+DESCR("Includes a data value into a hyperloglog counter");
+
+/* hyperloglog_accum(anyelement) => hyperloglog_estimator */
+DATA(insert OID = 7164 ( hyperloglog_accum  PGNSP PGUID 12 1 0 0 t f f f f i 1 0 7157 "2283" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ n a ));
+DESCR("Adds every data value to a hyperloglog counter and returns the counter");
+
 
 /* TIDYCAT_END_PG_PROC_GEN */
