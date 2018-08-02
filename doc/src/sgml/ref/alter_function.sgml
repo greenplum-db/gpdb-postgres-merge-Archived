@@ -193,8 +193,6 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-=======
     <term><literal>LEAKPROOF</literal></term>
     <listitem>
      <para>
@@ -206,7 +204,6 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
    </varlistentry>
 
     <varlistentry>
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
      <term><literal>COST</literal> <replaceable class="parameter">execution_cost</replaceable></term>
 
      <listitem>

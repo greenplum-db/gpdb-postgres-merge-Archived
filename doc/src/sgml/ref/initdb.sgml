@@ -228,11 +228,7 @@ PostgreSQL documentation
       <term><option>--no-locale</option></term>
       <listitem>
        <para>
-<<<<<<< HEAD
-		Equivalent to <option>--locale=C</option>.
-=======
         Equivalent to <option>--locale=C</option>.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
        </para>
       </listitem>
      </varlistentry>

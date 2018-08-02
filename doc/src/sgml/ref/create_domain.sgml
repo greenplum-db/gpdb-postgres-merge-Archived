@@ -167,12 +167,7 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
    <varlistentry>
     <term><literal>CHECK (<replaceable class="PARAMETER">expression</replaceable>)</literal></term>
     <listitem>
-<<<<<<< HEAD
-     <para>
-      <literal>CHECK</literal> clauses specify integrity constraints or tests
-=======
      <para><literal>CHECK</> clauses specify integrity constraints or tests
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
       which values of the domain must satisfy.
       Each constraint must be an expression
       producing a Boolean result.  It should use the key word <literal>VALUE</literal>

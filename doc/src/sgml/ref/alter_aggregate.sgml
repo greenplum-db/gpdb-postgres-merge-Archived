@@ -160,18 +160,12 @@ ALTER AGGREGATE myavg(integer) OWNER TO joe;
    direct argument of type <type>float8</type> and aggregated argument
    of type <type>integer</type> into schema <literal>myschema</literal>:
 <programlisting>
-<<<<<<< HEAD
 ALTER AGGREGATE mypercentile(float8 ORDER BY integer) SET SCHEMA myschema;
 </programlisting>
    This will work too:
 <programlisting>
 ALTER AGGREGATE mypercentile(float8, integer) SET SCHEMA myschema;
-</programlisting>
-  </para>
-=======
-ALTER AGGREGATE myavg(integer) SET SCHEMA myschema;
 </programlisting></para>
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
  </refsect1>
 
  <refsect1>

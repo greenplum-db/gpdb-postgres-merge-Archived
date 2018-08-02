@@ -34,15 +34,6 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
   <title>Description</title>
 
   <para>
-<<<<<<< HEAD
-   <command>PREPARE</command> creates a prepared statement, 
-   possibly with unbound parameters. A prepared statement is a 
-   server-side object that can be used to optimize performance. 
-   A prepared statement may be subsequently executed with a 
-   binding for its parameters. Greenplum Database may choose to 
-   replan the query for different executions of the same 
-   prepared statement. 
-=======
    <command>PREPARE</command> creates a prepared statement. A prepared
    statement is a server-side object that can be used to optimize
    performance. When the <command>PREPARE</command> statement is
@@ -51,7 +42,6 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    issued, the prepared statement is planned and executed.  This division
    of labor avoids repetitive parse analysis work, while allowing
    the execution plan to depend on the specific parameter values supplied.
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
   </para>
 
   <para>

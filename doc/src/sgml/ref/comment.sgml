@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
-  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>sourcetype</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">relation_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
@@ -105,13 +105,8 @@ COMMENT ON
   <variablelist>
    <varlistentry>
     <term><replaceable class="parameter">object_name</replaceable></term>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">table_name.column_name</replaceable></term>
-    <term><replaceable class="parameter">aggregate_name</replaceable></term>
-=======
     <term><replaceable class="parameter">relation_name</replaceable>.<replaceable>column_name</replaceable></term>
     <term><replaceable class="parameter">agg_name</replaceable></term>
->>>>>>> 80edfd76591fdb9beec061de3c05ef4e9d96ce56
     <term><replaceable class="parameter">constraint_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
     <term><replaceable class="parameter">operator_name</replaceable></term>
