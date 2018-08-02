@@ -5648,7 +5648,7 @@ CTranslatorDXLToPlStmt::TranslateNestLoopParamList
 		GPOS_ASSERT(NULL != target_entry);
 		Var *old_var = (Var *) target_entry->expr;
 
-		Var *new_var = gpdb::PvarMakeVar(OUTER, target_entry->resno, old_var->vartype, old_var->vartypmod, 0/*varlevelsup*/);
+		Var *new_var = gpdb::PvarMakeVar(OUTER_VAR, target_entry->resno, old_var->vartype, old_var->vartypmod, 0/*varlevelsup*/);
 		new_var->varnoold = old_var->varnoold;
 		new_var->varoattno = old_var->varoattno;
 
