@@ -12,6 +12,12 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+<<<<<<< HEAD
+=======
+#include <limits.h>
+#include <locale.h>
+#include <time.h>
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -188,10 +194,19 @@ static zic_t leapmaxyear;
 static lineno_t linenum;
 static int	max_abbrvar_len = PERCENT_Z_LEN_BOUND;
 static int	max_format_len;
+<<<<<<< HEAD
 static zic_t max_year;
 static zic_t min_year;
 static bool noise;
 static bool print_abbrevs;
+=======
+static zic_t max_time;
+static int	max_year;
+static zic_t min_time;
+static int	min_year;
+static int	noise;
+static int	print_abbrevs;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 static zic_t print_cutoff;
 static const char *rfilename;
 static lineno_t rlinenum;
@@ -542,6 +557,7 @@ close_file(FILE *stream, char const *dir, char const *name)
 static void
 usage(FILE *stream, int status)
 {
+<<<<<<< HEAD
 	fprintf(stream,
 			_("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -P ] \\\n"
 			  "\t[ -l localtime ] [ -p posixrules ] [ -d directory ] \\\n"
@@ -550,6 +566,14 @@ usage(FILE *stream, int status)
 			progname, progname, PACKAGE_BUGREPORT);
 	if (status == EXIT_SUCCESS)
 		close_file(stream, NULL, NULL);
+=======
+	(void) fprintf(stream, _("%s: usage is %s \
+[ --version ] [ --help ] [ -v ] [ -P ] [ -l localtime ] [ -p posixrules ] \\\n\
+\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n\
+\n\
+Report bugs to tz@elsie.nci.nih.gov.\n"),
+				   progname, progname);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	exit(status);
 }
 
@@ -613,7 +637,11 @@ main(int argc, char **argv)
 		{
 			usage(stdout, EXIT_SUCCESS);
 		}
+<<<<<<< HEAD
 	while ((c = getopt(argc, argv, "d:l:L:p:Pst:vy:")) != EOF && c != -1)
+=======
+	while ((c = getopt(argc, argv, "d:l:p:L:vPsy:")) != EOF && c != -1)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		switch (c)
 		{
 			default:
@@ -664,10 +692,14 @@ main(int argc, char **argv)
 				break;
 			case 'y':
 				if (yitcommand == NULL)
+<<<<<<< HEAD
 				{
 					warning(_("-y is obsolescent"));
 					yitcommand = strdup(optarg);
 				}
+=======
+					yitcommand = strdup(optarg);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				else
 				{
 					fprintf(stderr,
@@ -692,6 +724,10 @@ main(int argc, char **argv)
 				break;
 			case 'P':
 				print_abbrevs = true;
+				print_cutoff = time(NULL);
+				break;
+			case 'P':
+				print_abbrevs = TRUE;
 				print_cutoff = time(NULL);
 				break;
 			case 's':
@@ -2313,8 +2349,28 @@ writezone(const char *const name, const char *const string, char version)
 			if (writetype[i])
 			{
 				puttzcode(gmtoffs[i], fp);
+<<<<<<< HEAD
 				putc(isdsts[i], fp);
 				putc((unsigned char) indmap[abbrinds[i]], fp);
+=======
+				(void) putc(isdsts[i], fp);
+				(void) putc((unsigned char) indmap[abbrinds[i]], fp);
+
+				/* Print current timezone abbreviations if requested */
+				if (print_abbrevs && pass == 2 &&
+					(ats[i] >= print_cutoff || i == typecnt - 1))
+				{
+					char	   *thisabbrev = &thischars[indmap[abbrinds[i]]];
+
+					/* filter out assorted junk entries */
+					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
+						strcmp(thisabbrev, "zzz") != 0)
+						fprintf(stdout, "%s\t%ld%s\n",
+								thisabbrev,
+								gmtoffs[i],
+								isdsts[i] ? "\tD" : "");
+				}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		if (thischarcnt != 0)
 			fwrite(thischars, sizeof thischars[0],

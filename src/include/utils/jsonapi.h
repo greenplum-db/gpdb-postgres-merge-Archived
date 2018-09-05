@@ -30,7 +30,11 @@ typedef enum
 	JSON_TOKEN_TRUE,
 	JSON_TOKEN_FALSE,
 	JSON_TOKEN_NULL,
+<<<<<<< HEAD
 	JSON_TOKEN_END
+=======
+	JSON_TOKEN_END,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 } JsonTokenType;
 
 
@@ -74,7 +78,11 @@ typedef void (*json_scalar_action) (void *state, char *token, JsonTokenType toke
  * to doing a pure parse with no side-effects, and is therefore exactly
  * what the json input routines do.
  */
+<<<<<<< HEAD
 typedef struct JsonSemAction
+=======
+typedef struct jsonSemAction
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	void	   *semstate;
 	json_struct_action object_start;
@@ -86,7 +94,12 @@ typedef struct JsonSemAction
 	json_aelem_action array_element_start;
 	json_aelem_action array_element_end;
 	json_scalar_action scalar;
+<<<<<<< HEAD
 } JsonSemAction;
+=======
+} jsonSemAction,
+		   *JsonSemAction;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * parse_json will parse the string in the lex calling the
@@ -97,7 +110,11 @@ typedef struct JsonSemAction
  * points to. If the action pointers are NULL the parser
  * does nothing and just continues.
  */
+<<<<<<< HEAD
 extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
+=======
+extern void pg_parse_json(JsonLexContext *lex, JsonSemAction sem);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * constructor for JsonLexContext, with or without strval element.
@@ -107,6 +124,7 @@ extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
  */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 
+<<<<<<< HEAD
 /*
  * Utility function to check if a string is a valid JSON number.
  *
@@ -114,4 +132,6 @@ extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
  */
 extern bool IsValidJsonNumber(const char * str, int len);
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #endif   /* JSONAPI_H */

@@ -4,7 +4,7 @@
  *	  WAL replay logic for btrees.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam_xlog.h"
 #include "access/nbtree.h"
 #include "access/transam.h"
 #include "storage/procarray.h"
@@ -218,7 +219,11 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 		datalen -= sizeof(xl_btree_metadata);
 	}
 
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 	else
 	{
@@ -229,7 +234,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 		{
 			page = (Page) BufferGetPage(buffer);
 
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -295,7 +300,11 @@ btree_xlog_split(bool onleft, bool isroot,
 		forget_matching_split(xlrec->node, downlink, false);
 
 		/* Extract left hikey and its size (still assuming 16-bit alignment) */
+<<<<<<< HEAD
 		if (!(IsBkpBlockApplied(record, 0)))
+=======
+		if (!(record->xl_info & XLR_BKP_BLOCK(0)))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			/* We assume 16-bit alignment is enough for IndexTupleSize */
 			left_hikey = (Item) datapos;
@@ -315,7 +324,11 @@ btree_xlog_split(bool onleft, bool isroot,
 		datalen -= sizeof(OffsetNumber);
 	}
 
+<<<<<<< HEAD
 	if (onleft && !(IsBkpBlockApplied(record, 0)))
+=======
+	if (onleft && !(record->xl_info & XLR_BKP_BLOCK(0)))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		/*
 		 * We assume that 16-bit alignment is enough to apply IndexTupleSize
@@ -362,7 +375,11 @@ btree_xlog_split(bool onleft, bool isroot,
 	/* don't release the buffer yet; we touch right page's first item below */
 
 	/* Now reconstruct left (original) sibling page */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 	else
 	{
@@ -374,12 +391,16 @@ btree_xlog_split(bool onleft, bool isroot,
 			 * Note that this code ensures that the items remaining on the
 			 * left page are in the correct item number order, but it does not
 			 * reproduce the physical order they would have had.  Is this
+<<<<<<< HEAD
 			 * worth changing?  See also _bt_restore_page().
+=======
+			 * worth changing?	See also _bt_restore_page().
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			 */
 			Page		lpage = (Page) BufferGetPage(lbuf);
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
-			if (!XLByteLE(lsn, PageGetLSN(lpage)))
+			if (lsn > PageGetLSN(lpage))
 			{
 				OffsetNumber off;
 				OffsetNumber maxoff = PageGetMaxOffsetNumber(lpage);
@@ -446,7 +467,11 @@ btree_xlog_split(bool onleft, bool isroot,
 	 * replay, because no other index update can be in progress, and readers
 	 * will cope properly when following an obsolete left-link.
 	 */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 1))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(1))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 1, false, false);
 	else if (xlrec->rnext != P_NONE)
 	{
@@ -456,7 +481,7 @@ btree_xlog_split(bool onleft, bool isroot,
 		{
 			Page		page = (Page) BufferGetPage(buffer);
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -533,7 +558,7 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	LockBufferForCleanup(buffer);
 	page = (Page) BufferGetPage(buffer);
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn <= PageGetLSN(page))
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -593,15 +618,33 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 
 	/*
 	 * If there's nothing running on the standby we don't need to derive a
-	 * full latestRemovedXid value, so use a fast path out of here. That
-	 * returns InvalidTransactionId, and so will conflict with users, but
-	 * since we just worked out that's zero people, its OK.
+	 * full latestRemovedXid value, so use a fast path out of here.  This
+	 * returns InvalidTransactionId, and so will conflict with all HS
+	 * transactions; but since we just worked out that that's zero people,
+	 * it's OK.
+	 *
+	 * XXX There is a race condition here, which is that a new backend might
+	 * start just after we look.  If so, it cannot need to conflict, but this
+	 * coding will result in throwing a conflict anyway.
 	 */
 	if (CountDBBackends(InvalidOid) == 0)
 		return latestRemovedXid;
 
 	/*
-	 * Get index page
+	 * In what follows, we have to examine the previous state of the index
+	 * page, as well as the heap page(s) it points to.	This is only valid if
+	 * WAL replay has reached a consistent database state; which means that
+	 * the preceding check is not just an optimization, but is *necessary*. We
+	 * won't have let in any user sessions before we reach consistency.
+	 */
+	if (!reachedConsistency)
+		elog(PANIC, "btree_xlog_delete_get_latestRemovedXid: cannot operate with inconsistent data");
+
+	/*
+	 * Get index page.	If the DB is consistent, this should not fail, nor
+	 * should any of the heap page fetches below.  If one does, we return
+	 * InvalidTransactionId to cancel all HS transactions.	That's probably
+	 * overkill, but it's safe, and certainly better than panicking here.
 	 */
 	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(ibuffer))
@@ -683,12 +726,11 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 	UnlockReleaseBuffer(ibuffer);
 
 	/*
-	 * Note that if all heap tuples were LP_DEAD then we will be returning
-	 * InvalidTransactionId here. That can happen if we are re-replaying this
-	 * record type, though that will be before the consistency point and will
-	 * not cause problems. It should happen very rarely after the consistency
-	 * point, though note that we can't tell the difference between this and
-	 * the fast path exit above. May need to change that in future.
+	 * XXX If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, causing conflict for all HS transactions.
+	 * That should happen very rarely (reasoning please?). Also note that
+	 * caller can't tell the difference between this case and the fast path
+	 * exit above. May need to change that in future.
 	 */
 	return latestRemovedXid;
 }
@@ -705,7 +747,11 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have any conflict processing to do, it must happen before we
 	 * update the page.
 	 *
+<<<<<<< HEAD
 	 * Btree delete records can conflict with standby queries.  You might
+=======
+	 * Btree delete records can conflict with standby queries.	You might
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * think that vacuum records would conflict as well, but we've handled
 	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
 	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
@@ -720,7 +766,11 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* If we have a full-page image, restore it and we're done */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
@@ -735,7 +785,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 		return;
 	page = (Page) BufferGetPage(buffer);
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn <= PageGetLSN(page))
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -788,7 +838,11 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 	 */
 
 	/* parent page */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 	else
 	{
@@ -797,7 +851,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 		{
 			page = (Page) BufferGetPage(buffer);
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -835,7 +889,11 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* Fix left-link of right sibling */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 1))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(1))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 1, false, false);
 	else
 	{
@@ -843,7 +901,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = (Page) BufferGetPage(buffer);
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -860,7 +918,11 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* Fix right-link of left sibling, if any */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 2))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(2))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 2, false, false);
 	else
 	{
@@ -870,7 +932,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(buffer))
 			{
 				page = (Page) BufferGetPage(buffer);
-				if (XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn <= PageGetLSN(page))
 				{
 					UnlockReleaseBuffer(buffer);
 				}
@@ -1053,6 +1115,7 @@ btree_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	}
 }
 
+<<<<<<< HEAD
 static void
 out_target(StringInfo buf, xl_btreetid *target)
 {
@@ -1317,6 +1380,8 @@ btree_desc(StringInfo buf, XLogRecord *record)
 	}
 }
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 void
 btree_xlog_startup(void)
 {

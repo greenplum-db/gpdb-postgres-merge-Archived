@@ -4,9 +4,13 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/planmain.h
@@ -68,11 +72,15 @@ typedef struct GroupContext
 #define DEFAULT_CURSOR_TUPLE_FRACTION 1.0 /* assume all rows will be fetched */
 extern double cursor_tuple_fraction;
 
+/* query_planner callback to compute query_pathkeys */
+typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
+
 /*
  * prototypes for plan/planmain.c
  */
 extern void query_planner(PlannerInfo *root, List *tlist,
 			  double tuple_fraction, double limit_tuples,
+			  query_pathkeys_callback qp_callback, void *qp_extra,
 			  Path **cheapest_path, Path **sorted_path,
 			  double *num_groups);
 
@@ -198,12 +206,17 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
+<<<<<<< HEAD
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
 extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
+=======
+extern ModifyTable *make_modifytable(PlannerInfo *root,
+				 CmdType operation, bool canSetTag,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				 List *resultRelations, List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
@@ -232,6 +245,8 @@ extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 					   Relids where_needed, bool create_new_ph);
+extern void find_lateral_references(PlannerInfo *root);
+extern void create_lateral_join_info(PlannerInfo *root);
 extern List *deconstruct_jointree(PlannerInfo *root);
 extern void distribute_restrictinfo_to_rels(PlannerInfo *root,
 								RestrictInfo *restrictinfo);
@@ -250,6 +265,7 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Expr *item2,
 							Relids qualscope,
 							Relids nullable_relids);
+<<<<<<< HEAD
 
 extern void check_mergejoinable(RestrictInfo *restrictinfo);
 extern void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -259,6 +275,8 @@ extern bool has_redistributable_clause(RestrictInfo *restrictinfo);
  * prototypes for plan/analyzejoins.c
  */
 extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * prototypes for plan/analyzejoins.c

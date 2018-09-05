@@ -4,7 +4,7 @@
  *
  *	  Routines for aggregate-manipulation commands
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,12 +23,14 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -52,9 +54,14 @@
  * isn't an ordered-set aggregate.
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
+<<<<<<< HEAD
 void
 DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 				bool ordered, const char *queryString)
+=======
+Oid
+DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -88,8 +95,11 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	Oid			variadicArgType;
 	Oid			transTypeId;
 	char		transTypeType;
+<<<<<<< HEAD
 	Oid			mtransTypeId = InvalidOid;
 	char		mtransTypeType = 0;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	ListCell   *pl;
 	List	   *orig_args = args;
 
@@ -382,8 +392,27 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	}
 
 	/*
+	 * If we have an initval, and it's not for a pseudotype (particularly a
+	 * polymorphic type), make sure it's acceptable to the type's input
+	 * function.  We will store the initval as text, because the input
+	 * function isn't necessarily immutable (consider "now" for timestamp),
+	 * and we want to use the runtime not creation-time interpretation of the
+	 * value.  However, if it's an incorrect value it seems much more
+	 * user-friendly to complain at CREATE AGGREGATE time.
+	 */
+	if (initval && transTypeType != TYPTYPE_PSEUDO)
+	{
+		Oid			typinput,
+					typioparam;
+
+		getTypeInputInfo(transTypeId, &typinput, &typioparam);
+		(void) OidInputFunctionCall(typinput, initval, typioparam, -1);
+	}
+
+	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
+<<<<<<< HEAD
 	AggregateCreate(aggName,	/* aggregate name */
 					aggNamespace,		/* namespace */
 					aggKind,
@@ -500,4 +529,15 @@ AlterAggregateOwner(List *name, List *args, Oid newOwnerId)
 
 	/* The rest is just like a function */
 	AlterFunctionOwner_oid(procOid, newOwnerId);
+=======
+	return AggregateCreate(aggName,		/* aggregate name */
+						   aggNamespace,		/* namespace */
+						   aggArgTypes, /* input data type(s) */
+						   numArgs,
+						   transfuncName,		/* step function name */
+						   finalfuncName,		/* final function name */
+						   sortoperatorName,	/* sort operator name */
+						   transTypeId, /* transition data type */
+						   initval);	/* initial condition */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }

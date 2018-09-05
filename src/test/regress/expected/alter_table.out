@@ -164,8 +164,12 @@ alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;
 -- renaming index should rename constraint as well
 ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "onek_unique1_key" for table "onek"
 ALTER INDEX onek_unique1_key RENAME TO onek_unique1_constraint_foo;
+=======
+ALTER INDEX onek_unique1_constraint RENAME TO onek_unique1_constraint_foo;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
 -- renaming constraint
 ALTER TABLE onek ADD CONSTRAINT onek_check_constraint CHECK (unique1 >= 0);
@@ -173,9 +177,14 @@ ALTER TABLE onek RENAME CONSTRAINT onek_check_constraint TO onek_check_constrain
 ALTER TABLE onek DROP CONSTRAINT onek_check_constraint_foo;
 -- renaming constraint should rename index as well
 ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "onek_unique1_key" for table "onek"
 DROP INDEX onek_unique1_key;  -- to see whether it's there
 ERROR:  cannot drop index onek_unique1_key because constraint onek_unique1_constraint on table onek requires it
+=======
+DROP INDEX onek_unique1_constraint;  -- to see whether it's there
+ERROR:  cannot drop index onek_unique1_constraint because constraint onek_unique1_constraint on table onek requires it
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 HINT:  You can drop constraint onek_unique1_constraint on table onek instead.
 ALTER TABLE onek RENAME CONSTRAINT onek_unique1_constraint TO onek_unique1_constraint_foo;
 DROP INDEX onek_unique1_constraint_foo;  -- to see whether it's there
@@ -241,7 +250,7 @@ Check constraints:
 Inherits: constraint_rename_test
 Distributed by: (a)
 
-ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0) NO INHERIT;
 ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
 \d constraint_rename_test
@@ -253,7 +262,7 @@ Table "public.constraint_rename_test"
  c      | integer | 
 Check constraints:
     "con1foo" CHECK (a > 0)
-    "con2bar" CHECK NO INHERIT (b > 0)
+    "con2bar" CHECK (b > 0) NO INHERIT
 Number of child tables: 1 (Use \d+ to list them.)
 Distributed by: (a)
 
@@ -271,7 +280,10 @@ Inherits: constraint_rename_test
 Distributed by: (a)
 
 ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "constraint_rename_test_pkey" for table "constraint_rename_test"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
 \d constraint_rename_test
 Table "public.constraint_rename_test"
@@ -284,7 +296,7 @@ Indexes:
     "con3foo" PRIMARY KEY, btree (a)
 Check constraints:
     "con1foo" CHECK (a > 0)
-    "con2bar" CHECK NO INHERIT (b > 0)
+    "con2bar" CHECK (b > 0) NO INHERIT
 Number of child tables: 1 (Use \d+ to list them.)
 Distributed by: (a)
 
@@ -306,11 +318,17 @@ DROP TABLE constraint_rename_test;
 ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
 NOTICE:  relation "constraint_rename_test" does not exist, skipping
 -- FOREIGN KEY CONSTRAINT adding TEST
+<<<<<<< HEAD
 CREATE TABLE tmp2 (a int primary key) distributed by (a);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tmp2_pkey" for table "tmp2"
 CREATE TABLE tmp3 (a int, b int);
 CREATE TABLE tmp4 (a int, b int, unique(a,b)) distributed by (a);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "tmp4_a_b_key" for table "tmp4"
+=======
+CREATE TABLE tmp2 (a int primary key);
+CREATE TABLE tmp3 (a int, b int);
+CREATE TABLE tmp4 (a int, b int, unique(a,b));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TABLE tmp5 (a int, b int);
 -- Insert rows into tmp2 (pktable)
 INSERT INTO tmp2 values (1);
@@ -407,6 +425,7 @@ alter table nv_child_2011 add check (d between '2011-01-01'::date and '2011-12-3
 explain (costs off) select * from nv_parent where d between '2011-08-01' and '2011-08-31';
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Seq Scan on nv_parent
@@ -417,11 +436,22 @@ explain (costs off) select * from nv_parent where d between '2011-08-01' and '20
                Filter: d >= '08-01-2011'::date AND d <= '08-31-2011'::date
  Optimizer: legacy query optimizer
 (9 rows)
+=======
+ Append
+   ->  Seq Scan on nv_parent
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+   ->  Seq Scan on nv_child_2010
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+   ->  Seq Scan on nv_child_2011
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+(7 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 create table nv_child_2009 (check (d between '2009-01-01'::date and '2009-12-31'::date)) inherits (nv_parent);
 explain (costs off) select * from nv_parent where d between '2011-08-01'::date and '2011-08-31'::date;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Seq Scan on nv_parent
@@ -432,10 +462,21 @@ explain (costs off) select * from nv_parent where d between '2011-08-01'::date a
                Filter: d >= '08-01-2011'::date AND d <= '08-31-2011'::date
  Optimizer: legacy query optimizer
 (9 rows)
+=======
+ Append
+   ->  Seq Scan on nv_parent
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+   ->  Seq Scan on nv_child_2010
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+   ->  Seq Scan on nv_child_2011
+         Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
+(7 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Seq Scan on nv_parent
@@ -448,12 +489,25 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
                Filter: d >= '08-01-2009'::date AND d <= '08-31-2009'::date
  Optimizer: legacy query optimizer
 (11 rows)
+=======
+ Append
+   ->  Seq Scan on nv_parent
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+   ->  Seq Scan on nv_child_2010
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+   ->  Seq Scan on nv_child_2011
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+   ->  Seq Scan on nv_child_2009
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+(9 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 -- after validation, the constraint should be used
 alter table nv_child_2011 VALIDATE CONSTRAINT nv_child_2011_d_check;
 explain (costs off) select * from nv_parent where d between '2009-08-01'::date and '2009-08-31'::date;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Seq Scan on nv_parent
@@ -464,12 +518,26 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
                Filter: d >= '08-01-2009'::date AND d <= '08-31-2009'::date
  Optimizer: legacy query optimizer
 (9 rows)
+=======
+ Append
+   ->  Seq Scan on nv_parent
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+   ->  Seq Scan on nv_child_2010
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+   ->  Seq Scan on nv_child_2009
+         Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
+(7 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 -- Foreign key adding test with mixed types
 -- Note: these tables are TEMP to avoid name conflicts when this test
 -- is run in parallel with foreign_key.sql.
+<<<<<<< HEAD
 CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY) distributed by (ptest1);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+=======
+CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 INSERT INTO PKTABLE VALUES(42);
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because int=inet does not exist
@@ -503,7 +571,6 @@ DROP TABLE PKTABLE;
 -- On the other hand, this should work because int implicitly promotes to
 -- numeric, and we allow promotion on the FK side
 CREATE TEMP TABLE PKTABLE (ptest1 numeric PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 INSERT INTO PKTABLE VALUES(42);
 CREATE TEMP TABLE FKTABLE (ftest1 int);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
@@ -514,9 +581,13 @@ INSERT INTO FKTABLE VALUES(43);		-- should fail
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
+<<<<<<< HEAD
                            PRIMARY KEY(ptest1, ptest2))
                            distributed by (ptest1);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+=======
+                           PRIMARY KEY(ptest1, ptest2));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
@@ -663,7 +734,7 @@ drop table atacc1;
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
 -- ok:
-alter table atacc1 add constraint foo check no inherit (test>0);
+alter table atacc1 add constraint foo check (test>0) no inherit;
 -- check constraint is not there on child
 insert into atacc2 (test) values (-3);
 -- check constraint is there on parent
@@ -672,7 +743,7 @@ ERROR:  new row for relation "atacc1" violates check constraint "foo"
 DETAIL:  Failing row contains (-3).
 insert into atacc1 (test) values (3);
 -- fail, violating row:
-alter table atacc2 add constraint foo check no inherit (test>0);
+alter table atacc2 add constraint foo check (test>0) no inherit;
 ERROR:  check constraint "foo" is violated by some row
 drop table atacc2;
 drop table atacc1;
@@ -681,7 +752,10 @@ create table atacc1 ( test int ) with oids distributed by (test);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
@@ -695,7 +769,10 @@ DETAIL:  Key (test)=(2) already exists.
 insert into atacc1 select i from generate_series(3,10)i;
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
+<<<<<<< HEAD
 ERROR:  cannot create unique index on system column
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
 ERROR:  could not create unique index "atacc1_test_key"  (seg2 172.17.0.2:25434 pid=389538)
@@ -708,8 +785,12 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
 ERROR:  could not create unique index "atacc1_test_key"
+=======
+ERROR:  could not create unique index "atacc_test1"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 DETAIL:  Key (test)=(2) is duplicated.
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -724,7 +805,10 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int) distributed by (test);
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test, test2);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test_test2_key" for table "atacc1"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
@@ -737,10 +821,15 @@ insert into atacc1 (test,test2) values (5,4);
 insert into atacc1 (test,test2) values (5,5);
 drop table atacc1;
 -- lets do some naming tests
+<<<<<<< HEAD
 create table atacc1 (test int, test2 int, unique(test)) distributed by (test);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "atacc1_test_key" for table "atacc1"
 alter table atacc1 add unique (test2);
 ERROR:  UNIQUE index must contain all columns in the distribution key of relation "atacc1"
+=======
+create table atacc1 (test int, test2 int, unique(test));
+alter table atacc1 add unique (test2);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
@@ -752,7 +841,10 @@ create table atacc1 ( test int ) with oids distributed by (test);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
@@ -772,7 +864,10 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should fail)
 alter table atacc1 add constraint atacc_oid1 primary key(oid);
+<<<<<<< HEAD
 ERROR:  cannot create primary key on system column
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 drop table atacc1;
 -- let's do one where the primary key constraint fails when added
 create table atacc1 ( test int ) distributed by (test);
@@ -781,8 +876,12 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 ERROR:  could not create unique index "atacc1_pkey"
+=======
+ERROR:  could not create unique index "atacc_test1"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 DETAIL:  Key (test)=(2) is duplicated.
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -809,16 +908,25 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
+<<<<<<< HEAD
 ERROR:  cannot add column with primary key constraint
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
 ERROR:  cannot add column with primary key constraint
+=======
+ERROR:  column "test2" contains null values
+-- now add a primary key column with a default (succeeds).
+alter table atacc1 add column test2 int default 0 primary key;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int) distributed by (test);
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test, test2);
+<<<<<<< HEAD
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- try adding a second primary key - should fail
 alter table atacc1 add constraint atacc_test2 primary key (test);
 ERROR:  multiple primary keys for table "atacc1" are not allowed
@@ -843,8 +951,12 @@ insert into atacc1 (test,test2) values (5,4);
 insert into atacc1 (test,test2) values (5,5);
 drop table atacc1;
 -- lets do some naming tests
+<<<<<<< HEAD
 create table atacc1 (test int, test2 int, primary key(test)) distributed by (test);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
+=======
+create table atacc1 (test int, test2 int, primary key(test));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- only first should succeed
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
@@ -870,7 +982,6 @@ ERROR:  relation "non_existent" does not exist
 create table atacc1 (test int not null) with oids distributed by (test);
 NOTICE:  OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 alter table atacc1 alter column test drop not null;
 ERROR:  column "test" is in a primary key
 alter table atacc1 drop constraint "atacc1_pkey";
@@ -1212,8 +1323,12 @@ alter table atacc1 add check (a > 3);
 ERROR:  column "a" does not exist
 alter table atacc1 add check ("........pg.dropped.1........" > 3);
 ERROR:  column "........pg.dropped.1........" does not exist
+<<<<<<< HEAD
 create table atacc2 (id int4 unique) distributed by (id);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "atacc2_id_key" for table "atacc2"
+=======
+create table atacc2 (id int4 unique);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 alter table atacc1 add foreign key (a) references atacc2(id);
 ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc1 add foreign key ("........pg.dropped.1........") references atacc2(id);
@@ -1740,9 +1855,13 @@ ERROR:  column "f1" cannot be cast automatically to type integer
 HINT:  Specify a USING expression to perform the conversion.
 alter table foo alter f1 TYPE varchar(10);
 create table anothertab (atcol1 serial8, atcol2 boolean,
+<<<<<<< HEAD
 	constraint anothertab_chk check (atcol1 <= 3))
 	distributed by (atcol1);
 NOTICE:  CREATE TABLE will create implicit sequence "anothertab_atcol1_seq" for serial column "anothertab.atcol1"
+=======
+	constraint anothertab_chk check (atcol1 <= 3));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 insert into anothertab (atcol1, atcol2) values (default, true);
 insert into anothertab (atcol1, atcol2) values (default, false);
 select * from anothertab;
@@ -1869,6 +1988,28 @@ where oid = 'test_storage'::regclass;
  t
 (1 row)
 
+-- ALTER TYPE with a check constraint and a child table (bug before Nov 2012)
+CREATE TABLE test_inh_check (a float check (a > 10.2));
+CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
+ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
+\d test_inh_check
+Table "public.test_inh_check"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | numeric | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d test_inh_check_child
+Table "public.test_inh_check_child"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | numeric | 
+Check constraints:
+    "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
+Inherits: test_inh_check
+
 --
 -- lock levels
 --
@@ -1898,7 +2039,6 @@ and relnamespace != (select oid from pg_namespace where nspname = 'pg_catalog')
 and c.relname != 'my_locks'
 group by c.relname;
 create table alterlock (f1 int primary key, f2 text);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "alterlock_pkey" for table "alterlock"
 begin; alter table alterlock alter column f2 set statistics 150;
 select * from my_locks order by 1;
   relname  |    max_lockmode     
@@ -2030,9 +2170,13 @@ select non_strict(NULL);
 --
 create schema alter1;
 create schema alter2;
+<<<<<<< HEAD
 create table alter1.t1(f1 serial primary key, f2 int check (f2 > 0)) distributed by (f1);
 NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
+=======
+create table alter1.t1(f1 serial primary key, f2 int check (f2 > 0));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 create view alter1.v1 as select * from alter1.t1;
 create function alter1.plus1(int) returns int as 'select $1+1' language sql CONTAINS SQL;
 create domain alter1.posint integer check (value > 0);
@@ -2372,8 +2516,11 @@ CREATE TABLE tt8(a int);
 CREATE SCHEMA alter2;
 ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
 ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+<<<<<<< HEAD
 NOTICE:  updating distribution policy to match new primary key
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "tt8_pkey" for table "tt8"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
 ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
 ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;

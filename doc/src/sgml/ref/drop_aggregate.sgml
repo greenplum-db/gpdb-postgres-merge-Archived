@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) [ CASCADE | RESTRICT ]
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
@@ -28,6 +29,9 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
 * |
 [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
 [ [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
+=======
+DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">argtype</replaceable> [ , ... ] ) [ CASCADE | RESTRICT ]
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 </synopsis>
  </refsynopsisdiv>
 
@@ -66,6 +70,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
    </varlistentry>
 
    <varlistentry>
+<<<<<<< HEAD
     <term><replaceable class="parameter">argmode</replaceable></term>
 
     <listitem>
@@ -77,6 +82,8 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggr
    </varlistentry>
 
    <varlistentry>
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
     <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>

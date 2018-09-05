@@ -4,7 +4,7 @@
  *	  local buffer manager. Fast buffer manager for temporary tables,
  *	  which never need to be WAL-logged or checkpointed, etc.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -16,12 +16,13 @@
 #include "postgres.h"
 
 #include "catalog/catalog.h"
+#include "common/relpath.h"
 #include "executor/instrument.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/resowner.h"
+#include "utils/resowner_private.h"
 
 
 /*#define LBDEBUG*/
@@ -202,13 +203,21 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
+<<<<<<< HEAD
 		SMgrRelation	oreln;
 		Page			localpage = (char *) LocalBufHdrGetBlock(bufHdr);
+=======
+		SMgrRelation oreln;
+		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/* Find smgr relation for buffer */
 		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
 
+<<<<<<< HEAD
 		// UNDONE: Unfortunately, I think we write temp relations to the mirror...
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
 		/* And write... */
@@ -513,14 +522,22 @@ void
 AtEOXact_LocalBuffers(bool isCommit)
 {
 #ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
+	if (assert_enabled && LocalRefCount)
 	{
+		int			RefCountErrors = 0;
 		int			i;
 
 		for (i = 0; i < NLocBuffer; i++)
 		{
-			Assert(LocalRefCount[i] == 0);
+			if (LocalRefCount[i] != 0)
+			{
+				Buffer		b = -i - 1;
+
+				PrintBufferLeakWarning(b);
+				RefCountErrors++;
+			}
 		}
+		Assert(RefCountErrors == 0);
 	}
 #endif
 }
@@ -539,12 +556,20 @@ AtProcExit_LocalBuffers(void)
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled && LocalRefCount)
 	{
+		int			RefCountErrors = 0;
 		int			i;
 
 		for (i = 0; i < NLocBuffer; i++)
 		{
-			Assert(LocalRefCount[i] == 0);
+			if (LocalRefCount[i] != 0)
+			{
+				Buffer		b = -i - 1;
+
+				PrintBufferLeakWarning(b);
+				RefCountErrors++;
+			}
 		}
+		Assert(RefCountErrors == 0);
 	}
 #endif
 }

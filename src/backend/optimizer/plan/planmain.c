@@ -9,9 +9,13 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -37,10 +41,6 @@
 
 static Bitmapset *distcols_in_groupclause(List *gc, Bitmapset *bms);
 
-/* Local functions */
-static void canonicalize_all_pathkeys(PlannerInfo *root);
-
-
 /*
  * query_planner
  *	  Generate a path (that is, a simplified plan) for a basic query,
@@ -62,6 +62,8 @@ static void canonicalize_all_pathkeys(PlannerInfo *root);
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  * limit_tuples is a hard limit on number of tuples to retrieve,
  *		or -1 if no limit
+ * qp_callback is a function to compute query_pathkeys once it's safe to do so
+ * qp_extra is optional extra data to pass to qp_callback
  *
  * Output parameters:
  * *cheapest_path receives the overall-cheapest path for the query
@@ -70,18 +72,11 @@ static void canonicalize_all_pathkeys(PlannerInfo *root);
  * *num_groups receives the estimated number of groups, or 1 if query
  *				does not use grouping
  *
- * Note: the PlannerInfo node also includes a query_pathkeys field, which is
- * both an input and an output of query_planner().	The input value signals
- * query_planner that the indicated sort order is wanted in the final output
- * plan.  But this value has not yet been "canonicalized", since the needed
- * info does not get computed until we scan the qual clauses.  We canonicalize
- * it as soon as that task is done.  (The main reason query_pathkeys is a
- * PlannerInfo field and not a passed parameter is that the low-level routines
- * in indxpath.c need to see it.)
- *
- * Note: the PlannerInfo node includes other pathkeys fields besides
- * query_pathkeys, all of which need to be canonicalized once the info is
- * available.  See canonicalize_all_pathkeys.
+ * Note: the PlannerInfo node also includes a query_pathkeys field, which
+ * tells query_planner the sort order that is desired in the final output
+ * plan.  This value is *not* available at call time, but is computed by
+ * qp_callback once we have completed merging the query's equivalence classes.
+ * (We cannot construct canonical pathkeys until that's done.)
  *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
@@ -96,6 +91,7 @@ static void canonicalize_all_pathkeys(PlannerInfo *root);
 void
 query_planner(PlannerInfo *root, List *tlist,
 			  double tuple_fraction, double limit_tuples,
+			  query_pathkeys_callback qp_callback, void *qp_extra,
 			  Path **cheapest_path, Path **sorted_path,
 			  double *num_groups)
 {
@@ -125,10 +121,11 @@ query_planner(PlannerInfo *root, List *tlist,
 		*sorted_path = NULL;
 
 		/*
-		 * We still are required to canonicalize any pathkeys, in case it's
-		 * something like "SELECT 2+2 ORDER BY 1".
+		 * We still are required to call qp_callback, in case it's something
+		 * like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
+<<<<<<< HEAD
 		canonicalize_all_pathkeys(root);
 
 		{
@@ -141,6 +138,9 @@ query_planner(PlannerInfo *root, List *tlist,
 			else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
 				CdbPathLocus_MakeStrewn(&(*cheapest_path)->locus);
 		}
+=======
+		(*qp_callback) (root, qp_extra);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		return;
 	}
 
@@ -159,6 +159,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
+	root->lateral_info_list = NIL;
 	root->placeholder_list = NIL;
 	root->initial_rels = NIL;
 
@@ -196,7 +197,15 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	find_placeholders_in_jointree(root);
 
+	find_lateral_references(root);
+
 	joinlist = deconstruct_jointree(root);
+
+	/*
+	 * Create the LateralJoinInfo list now that we have finalized
+	 * PlaceHolderVar eval levels.
+	 */
+	create_lateral_join_info(root);
 
 	/*
 	 * Reconsider any postponed outer-join quals now that we have built up
@@ -220,10 +229,10 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
-	 * convert previously generated pathkeys (in particular, the requested
-	 * query_pathkeys) to canonical form.
+	 * generate pathkeys in canonical form; so compute query_pathkeys and
+	 * other pathkeys fields in PlannerInfo.
 	 */
-	canonicalize_all_pathkeys(root);
+	(*qp_callback) (root, qp_extra);
 
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
@@ -282,7 +291,8 @@ query_planner(PlannerInfo *root, List *tlist,
 	 */
 	final_rel = make_one_rel(root, joinlist);
 
-	if (!final_rel || !final_rel->cheapest_total_path)
+	if (!final_rel || !final_rel->cheapest_total_path ||
+		final_rel->cheapest_total_path->param_info != NULL)
 		elog(ERROR, "failed to construct the join relation");
 	Insist(final_rel->cheapest_startup_path);
 
@@ -447,6 +457,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	*cheapest_path = cheapestpath;
 	*sorted_path = sortedpath;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -588,3 +599,5 @@ CopyPlannerConfig(const PlannerConfig *c1)
 	memcpy(c2, c1, sizeof(PlannerConfig));
 	return c2;
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

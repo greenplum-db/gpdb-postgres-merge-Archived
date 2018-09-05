@@ -1,6 +1,7 @@
 --
 -- Test cases for COPY (select) TO
 --
+<<<<<<< HEAD
 create table copyselect_test1 (id serial, t text);
 NOTICE:  CREATE TABLE will create implicit sequence "copyselect_test1_id_seq" for serial column "copyselect_test1.id"
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
@@ -21,6 +22,22 @@ insert into copyselect_test2 (t) values ('D');
 insert into copyselect_test2 (t) values ('E');
 create view v_copyselect_test1
 as select 'v_'||t from copyselect_test1;
+=======
+create table test1 (id serial, t text);
+insert into test1 (t) values ('a');
+insert into test1 (t) values ('b');
+insert into test1 (t) values ('c');
+insert into test1 (t) values ('d');
+insert into test1 (t) values ('e');
+create table test2 (id serial, t text);
+insert into test2 (t) values ('A');
+insert into test2 (t) values ('B');
+insert into test2 (t) values ('C');
+insert into test2 (t) values ('D');
+insert into test2 (t) values ('E');
+create view v_test1
+as select 'v_'||t from test1;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 --
 -- Test COPY table TO
 --

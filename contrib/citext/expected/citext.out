@@ -216,6 +216,7 @@ SELECT citext_cmp('B'::citext, 'a'::citext) > 0 AS true;
 
 -- Do some tests using a table and index.
 CREATE TEMP TABLE try (
+<<<<<<< HEAD
    a text,
    name citext,
    UNIQUE (a, name)
@@ -223,6 +224,12 @@ CREATE TEMP TABLE try (
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "try_a_key" for table "try"
 INSERT INTO try (a, name)
 VALUES ('a', 'a'), ('a','ab'), ('â','â'), ('aba','aba'), ('b','b'), ('ba','ba'), ('bab','bab'), ('AZ','AZ');
+=======
+   name citext PRIMARY KEY
+);
+INSERT INTO try (name)
+VALUES ('a'), ('ab'), ('â'), ('aba'), ('b'), ('ba'), ('bab'), ('AZ');
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 SELECT name, 'a' = name AS eq_a   FROM try WHERE name <> 'â';
  name | eq_a 
 ------+------

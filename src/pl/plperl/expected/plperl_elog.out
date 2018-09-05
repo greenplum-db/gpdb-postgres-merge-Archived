@@ -104,6 +104,7 @@ PL/Perl function "indirect_die_caller"
                    2
 (1 row)
 
+<<<<<<< HEAD
 -- Test non-ASCII error messages
 --
 -- Note: this test case is known to fail if the database encoding is
@@ -117,3 +118,5 @@ $$;
 select error_with_nbsp();
 ERROR:  this message contains a no-break space at line 2.
 CONTEXT:  PL/Perl function "error_with_nbsp"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

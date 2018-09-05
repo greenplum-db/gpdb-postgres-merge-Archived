@@ -118,8 +118,12 @@ CREATE TABLE temptest(col) ON COMMIT DELETE ROWS AS SELECT 1;
 ERROR:  ON COMMIT can only be used on temporary tables
 -- Test foreign keys
 BEGIN;
+<<<<<<< HEAD
 CREATE TEMP TABLE temptest1(col int PRIMARY KEY) DISTRIBUTED BY (col);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "temptest1_pkey" for table "temptest1"
+=======
+CREATE TEMP TABLE temptest1(col int PRIMARY KEY);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TEMP TABLE temptest2(col int REFERENCES temptest1)
   ON COMMIT DELETE ROWS;
 WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
@@ -138,8 +142,12 @@ SELECT * FROM temptest2;
 (0 rows)
 
 BEGIN;
+<<<<<<< HEAD
 CREATE TEMP TABLE temptest3(col int PRIMARY KEY) ON COMMIT DELETE ROWS DISTRIBUTED BY (col);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "temptest3_pkey" for table "temptest3"
+=======
+CREATE TEMP TABLE temptest3(col int PRIMARY KEY) ON COMMIT DELETE ROWS;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TEMP TABLE temptest4(col int REFERENCES temptest3);
 WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
 COMMIT;

@@ -812,11 +812,17 @@ insert into minmaxtest3 values(17), (18);
 set enable_seqscan=off;
 explain (costs off)
   select min(f1), max(f1) from minmaxtest;
+<<<<<<< HEAD
                                            QUERY PLAN                                            
 -------------------------------------------------------------------------------------------------
+=======
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  Result
    InitPlan 1 (returns $0)  (slice3)
      ->  Limit
+<<<<<<< HEAD
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: public.minmaxtest.f1
                  ->  Merge Append
@@ -845,6 +851,31 @@ explain (costs off)
                              Index Cond: f1 IS NOT NULL
  Optimizer: legacy query optimizer
 (30 rows)
+=======
+           ->  Merge Append
+                 Sort Key: minmaxtest.f1
+                 ->  Index Only Scan using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
+                       Index Cond: (f1 IS NOT NULL)
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: minmaxtest_1.f1
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
+                       Index Cond: (f1 IS NOT NULL)
+(25 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 select min(f1), max(f1) from minmaxtest;
  min | max 
@@ -852,7 +883,49 @@ select min(f1), max(f1) from minmaxtest;
   11 |  18
 (1 row)
 
+<<<<<<< HEAD
 reset enable_seqscan;
+=======
+-- DISTINCT doesn't do anything useful here, but it shouldn't fail
+explain (costs off)
+  select distinct min(f1), max(f1) from minmaxtest;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ HashAggregate
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: minmaxtest.f1
+                 ->  Index Only Scan using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
+                       Index Cond: (f1 IS NOT NULL)
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: minmaxtest_1.f1
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
+                       Index Cond: (f1 IS NOT NULL)
+   ->  Result
+(26 rows)
+
+select distinct min(f1), max(f1) from minmaxtest;
+ min | max 
+-----+-----
+  11 |  18
+(1 row)
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 drop table minmaxtest cascade;
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table minmaxtest1
@@ -1017,9 +1090,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                     pg_get_viewdef                                                                     
---------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c) AS aggfns                                                                            +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1033,9 +1107,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                       pg_get_viewdef                                                                                        
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 3) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c) AS aggfns                                                                    +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 3) i(i);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1049,9 +1125,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                              pg_get_viewdef                                                                                              
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 3) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.b) AS aggfns                                                       +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 3) i(i);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1064,9 +1142,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                              pg_get_viewdef                                                                               
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c ORDER BY (v.b + 1)) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c ORDER BY (v.b + 1)) AS aggfns                                                         +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1079,9 +1158,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                           pg_get_viewdef                                                                            
----------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.a, v.c ORDER BY v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.a, v.c ORDER BY v.b) AS aggfns                                                               +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1094,9 +1174,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                      pg_get_viewdef                                                                                      
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c ORDER BY v.c USING ~<~ NULLS LAST) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c ORDER BY v.c USING ~<~ NULLS LAST) AS aggfns                                          +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1110,9 +1191,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                                             pg_get_viewdef                                                                                                              
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.a, v.c USING ~<~ NULLS LAST, v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 2) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.a, v.c USING ~<~ NULLS LAST, v.b) AS aggfns                        +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 2) i(i);
 (1 row)
 
 drop view agg_view1;

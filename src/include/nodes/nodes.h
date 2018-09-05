@@ -4,9 +4,13 @@
  *	  Definitions for tagged nodes.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -257,6 +261,7 @@ typedef enum NodeTag
 	 */
 	T_ExprState = 400,
 	T_GenericExprState,
+	T_WholeRowVarExprState,
 	T_AggrefExprState,
 	T_WindowFuncExprState,
 	T_ArrayRefExprState,
@@ -325,6 +330,7 @@ typedef enum NodeTag
 	T_RestrictInfo,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
+	T_LateralJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
 	T_MinMaxAggInfo,
@@ -468,6 +474,7 @@ typedef enum NodeTag
 	T_CreateExtensionStmt,
 	T_AlterExtensionStmt,
 	T_AlterExtensionContentsStmt,
+<<<<<<< HEAD
 	/* GPDB additions */
 	T_PartitionBy,
 	T_PartitionElem,
@@ -486,6 +493,11 @@ typedef enum NodeTag
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
 	T_SetDistributionCmd,
+=======
+	T_CreateEventTrigStmt,
+	T_AlterEventTrigStmt,
+	T_RefreshMatViewStmt,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
@@ -535,6 +547,7 @@ typedef enum NodeTag
 	T_IdentifySystemCmd,
 	T_BaseBackupCmd,
 	T_StartReplicationCmd,
+	T_TimeLineHistoryCmd,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF
@@ -545,6 +558,7 @@ typedef enum NodeTag
 	 * pass multiple object types through the same pointer).
 	 */
 	T_TriggerData = 950,		/* in commands/trigger.h */
+	T_EventTriggerData,			/* in commands/event_trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
 	T_WindowObjectData,			/* private in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */

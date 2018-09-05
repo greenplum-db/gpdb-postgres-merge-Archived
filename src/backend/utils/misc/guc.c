@@ -6,9 +6,13 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2000-2012, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2000-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -55,6 +59,7 @@
 #include "parser/scansup.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
+#include "postmaster/bgworker.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
@@ -65,6 +70,7 @@
 #include "storage/bufmgr.h"
 #include "storage/standby.h"
 #include "storage/fd.h"
+#include "storage/proc.h"
 #include "storage/predicate.h"
 #include "tcop/tcopprot.h"
 #include "tsearch/ts_cache.h"
@@ -105,16 +111,6 @@
 #else
 #define MAX_KILOBYTES	(INT_MAX / 1024)
 #endif
-
-/*
- * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
- * backend ID as a 3-byte signed integer.  Even if that limitation were
- * removed, we still could not exceed INT_MAX/4 because some places compute
- * 4*MaxBackends without any overflow check.  This is rechecked in
- * check_maxconnections, since MaxBackends is computed as MaxConnections
- * plus autovacuum_max_workers plus one (for the autovacuum launcher).
- */
-#define MAX_BACKENDS	0x7fffff
 
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
@@ -204,9 +200,7 @@ static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
 static bool check_maxconnections(int *newval, void **extra, GucSource source);
-static void assign_maxconnections(int newval, void *extra);
 static bool check_autovacuum_max_workers(int *newval, void **extra, GucSource source);
-static void assign_autovacuum_max_workers(int newval, void *extra);
 static bool check_effective_io_concurrency(int *newval, void **extra, GucSource source);
 static void assign_effective_io_concurrency(int newval, void *extra);
 static void assign_pgstat_temp_directory(const char *newval, void *extra);
@@ -521,6 +515,7 @@ const char *const GucSource_Names[] =
 	 /* PGC_S_ENV_VAR */ "environment variable",
 	 /* PGC_S_FILE */ "configuration file",
 	 /* PGC_S_ARGV */ "command line",
+	 /* PGC_S_GLOBAL */ "global",
 	 /* PGC_S_DATABASE */ "database",
 	 /* PGC_S_USER */ "user",
 	 /* PGC_S_DATABASE_USER */ "database user",
@@ -858,13 +853,23 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Detection of a checksum failure normally causes PostgreSQL to "
 				"report an error, aborting the current transaction. Setting "
 						 "ignore_checksum_failure to true causes the system to ignore the failure "
+<<<<<<< HEAD
 						 "(but still report a warning), and continue processing. This "
 						 "behavior could cause crashes or other serious problems. Only "
+=======
+			   "(but still report a warning), and continue processing. This "
+			  "behavior could cause crashes or other serious problems. Only "
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 						 "has an effect if checksums are enabled."),
 			GUC_NOT_IN_SAMPLE
 		},
 		&ignore_checksum_failure,
+<<<<<<< HEAD
 		false, NULL, NULL
+=======
+		false,
+		NULL, NULL, NULL
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1688,13 +1693,29 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"wal_receiver_timeout", PGC_SIGHUP, REPLICATION_STANDBY,
+			gettext_noop("Sets the maximum wait time to receive data from master."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&wal_receiver_timeout,
+		60 * 1000, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"max_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the maximum number of concurrent connections."),
 			NULL
 		},
 		&MaxConnections,
+<<<<<<< HEAD
 		200, 10, MAX_BACKENDS,
 		check_maxconnections, assign_maxconnections, NULL
+=======
+		100, 1, MAX_BACKENDS,
+		check_maxconnections, NULL, NULL
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	},
 
 	{
@@ -1814,7 +1835,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"temp_file_limit", PGC_SUSET, RESOURCES_DISK,
-			gettext_noop("Limits the total size of all temp files used by each session."),
+			gettext_noop("Limits the total size of all temporary files used by each session."),
 			gettext_noop("-1 means no limit."),
 			GUC_UNIT_KB
 		},
@@ -1949,6 +1970,17 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS | GUC_GPDB_ADDOPT
 		},
 		&StatementTimeout,
+		0, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"lock_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the maximum allowed duration of any wait for a lock."),
+			gettext_noop("A value of 0 turns off the timeout."),
+			GUC_UNIT_MS
+		},
+		&LockTimeout,
 		0, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
@@ -2112,22 +2144,32 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+<<<<<<< HEAD
 		{"replication_timeout", PGC_SUSET, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
+=======
+		{"wal_sender_timeout", PGC_SIGHUP, REPLICATION_SENDING,
+			gettext_noop("Sets the maximum time to wait for WAL replication."),
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			NULL,
 			GUC_UNIT_MS | GUC_SUPERUSER_ONLY
 		},
-		&replication_timeout,
+		&wal_sender_timeout,
 		60 * 1000, 0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
 	{
-		{"commit_delay", PGC_USERSET, WAL_SETTINGS,
+		{"commit_delay", PGC_SUSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
+<<<<<<< HEAD
 			NULL,
 			GUC_GPDB_ADDOPT | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
+=======
+			NULL
+			/* we have no microseconds designation, so can't supply units here */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		},
 		&CommitDelay,
 		0, 0, 100000,
@@ -2231,7 +2273,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MIN
 		},
 		&Log_RotationAge,
-		HOURS_PER_DAY * MINS_PER_HOUR, 0, INT_MAX / MINS_PER_HOUR,
+		HOURS_PER_DAY * MINS_PER_HOUR, 0, INT_MAX / SECS_PER_MINUTE,
 		NULL, NULL, NULL
 	},
 
@@ -2385,7 +2427,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_max_workers,
 		3, 1, MAX_BACKENDS,
-		check_autovacuum_max_workers, assign_autovacuum_max_workers, NULL
+		check_autovacuum_max_workers, NULL, NULL
 	},
 
 	{
@@ -2970,7 +3012,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"event_source", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Sets the application name used to identify"
+			gettext_noop("Sets the application name used to identify "
 						 "PostgreSQL messages in the event log."),
 			NULL
 		},
@@ -3022,14 +3064,18 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"unix_socket_directory", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Sets the directory where the Unix-domain socket will be created."),
+		{"unix_socket_directories", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Sets the directories where Unix-domain sockets will be created."),
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&UnixSocketDir,
+		&Unix_socket_directories,
+#ifdef HAVE_UNIX_SOCKETS
+		DEFAULT_PGSOCKET_DIR,
+#else
 		"",
-		check_canonical_path, NULL, NULL
+#endif
+		NULL, NULL, NULL
 	},
 
 	{
@@ -3178,7 +3224,7 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&SSLCipherSuites,
 #ifdef USE_SSL
-		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH",
+		"DEFAULT:!LOW:!EXP:!MD5:@STRENGTH",
 #else
 		"none",
 #endif
@@ -3521,6 +3567,9 @@ guc_malloc(int elevel, size_t size)
 {
 	void	   *data;
 
+	/* Avoid unportable behavior of malloc(0) */
+	if (size == 0)
+		size = 1;
 	data = malloc(size);
 	if (data == NULL)
 		ereport(elevel,
@@ -3534,6 +3583,9 @@ guc_realloc(int elevel, void *old, size_t size)
 {
 	void	   *data;
 
+	/* Avoid unportable behavior of realloc(NULL, 0) */
+	if (old == NULL && size == 0)
+		size = 1;
 	data = realloc(old, size);
 	if (data == NULL)
 		ereport(elevel,
@@ -5473,7 +5525,7 @@ set_config_option(const char *name, const char *value,
 			 */
 			elevel = IsUnderPostmaster ? DEBUG3 : LOG;
 		}
-		else if (source == PGC_S_DATABASE || source == PGC_S_USER ||
+		else if (source == PGC_S_GLOBAL || source == PGC_S_DATABASE || source == PGC_S_USER ||
 				 source == PGC_S_DATABASE_USER)
 			elevel = WARNING;
 		else
@@ -9231,29 +9283,19 @@ show_tcp_keepalives_count(void)
 static bool
 check_maxconnections(int *newval, void **extra, GucSource source)
 {
-	if (*newval + autovacuum_max_workers + 1 > MAX_BACKENDS)
+	if (*newval + GetNumShmemAttachedBgworkers() + autovacuum_max_workers + 1 >
+		MAX_BACKENDS)
 		return false;
 	return true;
-}
-
-static void
-assign_maxconnections(int newval, void *extra)
-{
-	MaxBackends = newval + autovacuum_max_workers + 1;
 }
 
 static bool
 check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
 {
-	if (MaxConnections + *newval + 1 > MAX_BACKENDS)
+	if (MaxConnections + *newval + 1 + GetNumShmemAttachedBgworkers() >
+		MAX_BACKENDS)
 		return false;
 	return true;
-}
-
-static void
-assign_autovacuum_max_workers(int newval, void *extra)
-{
-	MaxBackends = MaxConnections + newval + 1;
 }
 
 static bool
@@ -9328,14 +9370,23 @@ static void
 assign_pgstat_temp_directory(const char *newval, void *extra)
 {
 	/* check_canonical_path already canonicalized newval for us */
+	char	   *dname;
 	char	   *tname;
 	char	   *fname;
 
-	tname = guc_malloc(ERROR, strlen(newval) + 12);		/* /pgstat.tmp */
-	sprintf(tname, "%s/pgstat.tmp", newval);
-	fname = guc_malloc(ERROR, strlen(newval) + 13);		/* /pgstat.stat */
-	sprintf(fname, "%s/pgstat.stat", newval);
+	/* directory */
+	dname = guc_malloc(ERROR, strlen(newval) + 1);		/* runtime dir */
+	sprintf(dname, "%s", newval);
 
+	/* global stats */
+	tname = guc_malloc(ERROR, strlen(newval) + 12);		/* /global.tmp */
+	sprintf(tname, "%s/global.tmp", newval);
+	fname = guc_malloc(ERROR, strlen(newval) + 13);		/* /global.stat */
+	sprintf(fname, "%s/global.stat", newval);
+
+	if (pgstat_stat_directory)
+		free(pgstat_stat_directory);
+	pgstat_stat_directory = dname;
 	if (pgstat_stat_tmpname)
 		free(pgstat_stat_tmpname);
 	pgstat_stat_tmpname = tname;

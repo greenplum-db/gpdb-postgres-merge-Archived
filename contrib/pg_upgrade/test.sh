@@ -12,6 +12,23 @@
 set -e
 
 : ${MAKE=make}
+<<<<<<< HEAD
+=======
+
+# Guard against parallel make issues (see comments in pg_regress.c)
+unset MAKEFLAGS
+unset MAKELEVEL
+
+# Set listen_addresses desirably
+testhost=`uname -s`
+
+case $testhost in
+	MINGW*)	LISTEN_ADDRESSES="localhost" ;;
+	*)		LISTEN_ADDRESSES="" ;;
+esac
+
+POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # Guard against parallel make issues (see comments in pg_regress.c)
 unset MAKEFLAGS
@@ -116,6 +133,7 @@ mkdir "$logdir"
 
 # Clear out any environment vars that might cause libpq to connect to
 # the wrong postmaster (cf pg_regress.c)
+<<<<<<< HEAD
 #
 # Some shells, such as NetBSD's, return non-zero from unset if the variable
 # is already unset. Since we are operating under 'set -e', this causes the
@@ -127,6 +145,16 @@ PGSSLMODE="";         unset PGSSLMODE
 PGREQUIRESSL="";      unset PGREQUIRESSL
 PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
 PGHOSTADDR="";        unset PGHOSTADDR
+=======
+unset PGDATABASE
+unset PGUSER
+unset PGSERVICE
+unset PGSSLMODE
+unset PGREQUIRESSL
+unset PGCONNECT_TIMEOUT
+unset PGHOST
+unset PGHOSTADDR
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # Select a non-conflicting port number, similarly to pg_regress.c
 PG_VERSION_NUM=`grep '#define PG_VERSION_NUM' $newsrc/src/include/pg_config.h | awk '{print $3}'`
@@ -153,6 +181,7 @@ export EXTRA_REGRESS_OPTS
 # enable echo so the user can see what is being executed
 set -x
 
+<<<<<<< HEAD
 standard_initdb "$oldbindir"/initdb
 $oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
@@ -169,6 +198,10 @@ createdb "$dbname1" || createdb_status=$?
 createdb "$dbname2" || createdb_status=$?
 createdb "$dbname3" || createdb_status=$?
 
+=======
+$oldbindir/initdb -N
+$oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -210,9 +243,15 @@ fi
 
 PGDATA=$BASE_PGDATA
 
+<<<<<<< HEAD
 standard_initdb 'initdb'
 
 pg_upgrade $PG_UPGRADE_OPTS -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
+=======
+initdb -N
+
+pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
@@ -238,7 +277,11 @@ case $testhost in
 	*)	    sh ./delete_old_cluster.sh ;;
 esac
 
+<<<<<<< HEAD
 if diff "$temp_root"/dump1.sql "$temp_root"/dump2.sql >/dev/null; then
+=======
+if diff -q "$temp_root"/dump1.sql "$temp_root"/dump2.sql; then
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	echo PASSED
 	exit 0
 else

@@ -621,6 +621,18 @@ group by ten order by ten;
    9 | 10040184 |    7
 (10 rows)
 
+-- window and aggregate with GROUP BY expression (9.2 bug)
+explain (costs off)
+select first_value(max(x)) over (), y
+  from (select unique1 as x, ten+four as y from tenk1) ss
+  group by y;
+          QUERY PLAN           
+-------------------------------
+ WindowAgg
+   ->  HashAggregate
+         ->  Seq Scan on tenk1
+(3 rows)
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
@@ -958,9 +970,11 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                                         pg_get_viewdef                                                          
----------------------------------------------------------------------------------------------------------------------------------
- SELECT i.i, sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows FROM generate_series(1, 10) i(i);
+                                    pg_get_viewdef                                     
+---------------------------------------------------------------------------------------
+  SELECT i.i,                                                                         +
+     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
+    FROM generate_series(1, 10) i(i);
 (1 row)
 
 reset search_path;
@@ -996,7 +1010,11 @@ ERROR:  window functions are not allowed in GROUP BY
 LINE 1: SELECT rank() OVER (ORDER BY 1), count(*) FROM empsalary GRO...
                ^
 SELECT * FROM rank() OVER (ORDER BY random());
+<<<<<<< HEAD
 ERROR:  syntax error at or near "ORDER"
+=======
+ERROR:  window functions are not allowed in functions in FROM
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 LINE 1: SELECT * FROM rank() OVER (ORDER BY random());
                                    ^
 DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())) > 10;

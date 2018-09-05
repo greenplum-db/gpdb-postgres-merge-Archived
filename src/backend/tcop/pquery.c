@@ -3,9 +3,13 @@
  * pquery.c
  *	  POSTGRES process query command code
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -597,8 +601,12 @@ FetchStatementTargetList(Node *stmt)
  */
 void
 PortalStart(Portal portal, ParamListInfo params,
+<<<<<<< HEAD
 			int eflags, Snapshot snapshot,
 			QueryDispatchDesc *ddesc)
+=======
+			int eflags, Snapshot snapshot)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
@@ -1388,9 +1396,13 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	ResHandleUtilityStmt(portal, utilityStmt);
 
 	ProcessUtility(utilityStmt,
+<<<<<<< HEAD
 				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
+=======
+				   portal->sourceText,
+			   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				   portal->portalParams,
-				   isTopLevel,
 				   dest,
 				   completionTag);
 
@@ -1860,7 +1872,7 @@ DoPortalRunFetch(Portal portal,
 	forward = (fdirection == FETCH_FORWARD);
 
 	/*
-	 * Zero count means to re-fetch the current row, if any (per SQL92)
+	 * Zero count means to re-fetch the current row, if any (per SQL)
 	 */
 	if (count == 0)
 	{

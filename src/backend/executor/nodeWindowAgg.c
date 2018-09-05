@@ -23,7 +23,7 @@
  * aggregate function over all rows in the current row's window frame.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -33,6 +33,8 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
@@ -2126,6 +2128,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(wfunc->winfnoid));
+		InvokeFunctionExecuteHook(wfunc->winfnoid);
 
 		/* Fill in the perfuncstate data */
 		perfuncstate->wfuncstate = wfuncstate;
@@ -2567,6 +2570,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(transfn_oid));
+<<<<<<< HEAD
 
 		if (OidIsValid(invtransfn_oid))
 		{
@@ -2577,6 +2581,9 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							   get_func_name(invtransfn_oid));
 		}
 
+=======
+		InvokeFunctionExecuteHook(transfn_oid);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (OidIsValid(finalfn_oid))
 		{
 			aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,
@@ -2584,6 +2591,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, ACL_KIND_PROC,
 							   get_func_name(finalfn_oid));
+			InvokeFunctionExecuteHook(finalfn_oid);
 		}
 	}
 

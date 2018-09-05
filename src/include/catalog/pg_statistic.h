@@ -5,9 +5,13 @@
  *	  along with the relation's initial contents.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_statistic.h
@@ -34,7 +38,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 {
 	/* These fields form the unique key for the entry: */
 	Oid			starelid;		/* relation containing attribute */
-	int2		staattnum;		/* attribute (column) stats are for */
+	int16		staattnum;		/* attribute (column) stats are for */
 	bool		stainherit;		/* true if inheritance children are included */
 
 	/* the fraction of the column's entries that are NULL: */
@@ -50,7 +54,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	 * the statistic, which is to estimate sizes of in-memory hash tables of
 	 * tuples.
 	 */
-	int4		stawidth;
+	int32		stawidth;
 
 	/* ----------------
 	 * stadistinct indicates the (approximate) number of distinct non-null
@@ -86,11 +90,11 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	 * ----------------
 	 */
 
-	int2		stakind1;
-	int2		stakind2;
-	int2		stakind3;
-	int2		stakind4;
-	int2		stakind5;
+	int16		stakind1;
+	int16		stakind2;
+	int16		stakind3;
+	int16		stakind4;
+	int16		stakind5;
 
 	Oid			staop1;
 	Oid			staop2;
@@ -278,6 +282,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 #define STATISTIC_KIND_DECHIST	5
 
 /*
+<<<<<<< HEAD
  * A "hyperloglog" slot stores the hyperloglog_counter created for sampled data.
  * This hyperloglog_counter data structure is converted into a bytea and stored
  * in "stavalues4" slot of pg_statistic catalog table
@@ -291,5 +296,27 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * in "stavalues4" slot of pg_statistic catalog table
  */
 #define STATISTIC_KIND_FULLHLL  98
+=======
+ * A "length histogram" slot describes the distribution of range lengths in
+ * rows of a range-type column. stanumbers contains a single entry, the
+ * fraction of empty ranges. stavalues is a histogram of non-empty lengths, in
+ * a format similar to STATISTIC_KIND_HISTOGRAM: it contains M (>=2) range
+ * values that divide the column data values into M-1 bins of approximately
+ * equal population. The lengths are stores as float8s, as measured by the
+ * range type's subdiff function. Only non-null rows are considered.
+ */
+#define STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM  6
+
+/*
+ * A "bounds histogram" slot is similar to STATISTIC_KIND_HISTOGRAM, but for
+ * a range-type column.  stavalues contains M (>=2) range values that divide
+ * the column data values into M-1 bins of approximately equal population.
+ * Unlike a regular scalar histogram, this is actually two histograms combined
+ * into a single array, with the lower bounds of each value forming a
+ * histogram of lower bounds, and the upper bounds a histogram of upper
+ * bounds.	Only non-NULL, non-empty ranges are included.
+ */
+#define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* PG_STATISTIC_H */

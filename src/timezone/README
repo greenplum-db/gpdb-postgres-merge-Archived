@@ -15,6 +15,7 @@ we should endeavor to update the data files before each PostgreSQL
 release.  The code need not be updated as often, but we must track
 changes that might affect interpretation of the data files.
 
+<<<<<<< HEAD
 
 Time Zone data
 ==============
@@ -31,10 +32,19 @@ These need to be changed whenever new abbreviations are invented or the
 UTC offset associated with an existing abbreviation changes.  To detect
 if this has happened, after installing new files under data/ do
 	make abbrevs.txt
+=======
+While the files under data/ can just be duplicated when updating, manual
+effort is needed to update the time zone abbreviation lists under tznames/.
+These need to be changed whenever new abbreviations are invented or the
+UTC offset associated with an existing abbreviation changes.  To detect
+if this has happened, after installing new files under data/ do
+	gmake abbrevs.txt
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 which will produce a file showing all abbreviations that are in current
 use according to the data/ files.  Compare this to known_abbrevs.txt,
 which is the list that existed last time the tznames/ files were updated.
 Update tznames/ as seems appropriate, then replace known_abbrevs.txt
+<<<<<<< HEAD
 in the same commit.  Usually, if a known abbreviation has changed meaning,
 the appropriate fix is to make it refer to a long-form zone name instead
 of a fixed GMT offset.
@@ -43,6 +53,9 @@ The core regression test suite does some simple validation of the zone
 data and abbreviations data (notably by checking that the pg_timezone_names
 and pg_timezone_abbrevs views don't throw errors).  It's worth running it
 as a cross-check on proposed updates.
+=======
+in the same commit.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 When there has been a new release of Windows (probably including Service
 Packs), the list of matching timezones need to be updated. Run the

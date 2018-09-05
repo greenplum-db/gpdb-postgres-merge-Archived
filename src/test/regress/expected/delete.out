@@ -2,9 +2,13 @@ CREATE TABLE delete_test (
     id SERIAL PRIMARY KEY,
     a INT,
     b text
+<<<<<<< HEAD
 ) DISTRIBUTED BY (id);
 NOTICE:  CREATE TABLE will create implicit sequence "delete_test_id_seq" for serial column "delete_test.id"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "delete_test_pkey" for table "delete_test"
+=======
+);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 INSERT INTO delete_test (a) VALUES (10);
 INSERT INTO delete_test (a, b) VALUES (50, repeat('x', 10000));
 INSERT INTO delete_test (a) VALUES (100);

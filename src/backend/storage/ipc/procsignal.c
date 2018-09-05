@@ -4,7 +4,7 @@
  *	  Routines for interprocess signalling
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -17,13 +17,20 @@
 #include <signal.h>
 #include <unistd.h>
 
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
+<<<<<<< HEAD
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
+=======
+#include "storage/shmem.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 

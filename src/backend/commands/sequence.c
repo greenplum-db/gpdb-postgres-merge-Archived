@@ -3,9 +3,13 @@
  * sequence.c
  *	  PostgreSQL sequences support code.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,12 +20,18 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/bufmask.h"
+=======
+#include "access/htup_details.h"
+#include "access/multixact.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/transam.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
@@ -124,7 +134,7 @@ cdb_sequence_nextval_qe(Relation seqrel,
  * DefineSequence
  *				Creates a new sequence relation
  */
-void
+Oid
 DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
@@ -231,9 +241,13 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->relation = seq->sequence;
 	stmt->inhRelations = NIL;
 	stmt->constraints = NIL;
+<<<<<<< HEAD
 	stmt->inhOids = NIL;
 	stmt->parentOidCount = 0;
 	stmt->options = list_make1(defWithOids(false));
+=======
+	stmt->options = NIL;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	stmt->oncommit = ONCOMMIT_NOOP;
 	stmt->tablespacename = NULL;
 	stmt->if_not_exists = false;
@@ -274,6 +288,8 @@ DefineSequence(CreateSeqStmt *seq)
 		process_owned_by(rel, owned_by);
 
 	heap_close(rel, NoLock);
+
+	return seqoid;
 }
 
 /*
@@ -326,8 +342,10 @@ ResetSequence(Oid seq_relid)
 	/*
 	 * Create a new storage file for the sequence.  We want to keep the
 	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
+	 * Same with relminmxid, since a sequence will never contain multixacts.
 	 */
-	RelationSetNewRelfilenode(seq_rel, InvalidTransactionId);
+	RelationSetNewRelfilenode(seq_rel, InvalidTransactionId,
+							  InvalidMultiXactId);
 
 	/*
 	 * Insert the modified tuple into the new storage file.
@@ -425,7 +443,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
  *
  * Modify the definition of a sequence relation
  */
-void
+Oid
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
@@ -448,7 +466,7 @@ AlterSequence(AlterSeqStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->sequence->relname)));
-		return;
+		return InvalidOid;
 	}
 
 	init_sequence(relid, &elm, &seqrel);
@@ -510,6 +528,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	if (owned_by)
 		process_owned_by(seqrel, owned_by);
 
+<<<<<<< HEAD
 	bSeqIsTemp = (seqrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP);
 
 	relation_close(seqrel, NoLock);
@@ -554,6 +573,13 @@ AlterSequence(AlterSeqStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									NIL,
 									NULL);
+=======
+	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
+
+	relation_close(seqrel, NoLock);
+
+	return relid;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -610,6 +636,7 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	Relation	seqrel;
 	Buffer		buf;
 	Page		page;
+	HeapTupleData seqtuple;
 	Form_pg_sequence seq;
 	int64		incby,
 				maxv,
@@ -634,7 +661,11 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 						RelationGetRelationName(seqrel))));
 
 	/* read-only transactions may only modify temp sequences */
+<<<<<<< HEAD
 	if (seqrel->rd_backend != TempRelBackendId)
+=======
+	if (!seqrel->rd_islocaltemp)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		PreventCommandIfReadOnly("nextval()");
 
 	if (elm->last != elm->cached 		/* some numbers were cached */
@@ -700,7 +731,7 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	{
 		XLogRecPtr	redoptr = GetRedoRecPtr();
 
-		if (XLByteLE(PageGetLSN(page), redoptr))
+		if (PageGetLSN(page) <= redoptr)
 		{
 			/* last update of seq was before checkpoint */
 			fetch = log = fetch + SEQ_LOG_VALS;
@@ -789,7 +820,11 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 	 * We must mark the buffer dirty before doing XLogInsert(); see notes in
 	 * SyncOneBuffer().  However, we don't apply the desired changes just yet.
 	 * This looks like a violation of the buffer update protocol, but it is in
+<<<<<<< HEAD
 	 * fact safe because we hold exclusive lock on the buffer.  Any other
+=======
+	 * fact safe because we hold exclusive lock on the buffer.	Any other
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * process, including a checkpoint, that tries to examine the buffer
 	 * contents will block until we release the lock, and then will see the
 	 * final state that we install below.
@@ -966,12 +1001,19 @@ do_setval(Oid relid, int64 next, bool iscalled)
 						RelationGetRelationName(seqrel))));
 
 	/* read-only transactions may only modify temp sequences */
+<<<<<<< HEAD
 	if (seqrel->rd_backend != TempRelBackendId)
+=======
+	if (!seqrel->rd_islocaltemp)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		PreventCommandIfReadOnly("setval()");
 
 	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
+<<<<<<< HEAD
 	elm->increment = seq->increment_by;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 	{
@@ -1226,7 +1268,12 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 	 * bit update, ie, don't bother to WAL-log it, since we can certainly do
 	 * this again if the update gets lost.
 	 */
+<<<<<<< HEAD
 	if (HeapTupleHeaderGetXmax(seqtuple->t_data) != InvalidTransactionId)
+=======
+	Assert(!(seqtuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
+	if (HeapTupleHeaderGetRawXmax(seqtuple->t_data) != InvalidTransactionId)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		HeapTupleHeaderSetXmax(seqtuple->t_data, InvalidTransactionId);
 		seqtuple->t_data->t_infomask &= ~HEAP_XMAX_COMMITTED;
@@ -1553,8 +1600,9 @@ process_owned_by(Relation seqrel, List *owned_by)
 		rel = makeRangeVarFromNameList(relname);
 		tablerel = relation_openrv(rel, AccessShareLock);
 
-		/* Must be a regular table */
-		if (tablerel->rd_rel->relkind != RELKIND_RELATION)
+		/* Must be a regular or foreign table */
+		if (!(tablerel->rd_rel->relkind == RELKIND_RELATION ||
+			  tablerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("referenced relation \"%s\" is not a table or foreign table",
@@ -1714,6 +1762,7 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 
 	pfree(localpage);
 }
+<<<<<<< HEAD
 
 void
 seq_desc(StringInfo buf, XLogRecord *record)
@@ -1893,3 +1942,5 @@ cdb_sequence_nextval_qe(Relation	seqrel,
 	*pincrement = increment;
 	*pvalid = true;
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

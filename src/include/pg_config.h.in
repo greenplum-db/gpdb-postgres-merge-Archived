@@ -426,8 +426,13 @@
 /* Define to 1 if `long long int' works and is 64 bits. */
 #undef HAVE_LONG_LONG_INT_64
 
+<<<<<<< HEAD
 /* Define to 1 if you have the <mbarrier.h> header file. */
 #undef HAVE_MBARRIER_H
+=======
+/* Define to 1 if you have the `mbstowcs_l' function. */
+#undef HAVE_MBSTOWCS_L
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
@@ -616,6 +621,9 @@
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
+/* Define to 1 if you have the `sync_file_range' function. */
+#undef HAVE_SYNC_FILE_RANGE
+
 /* Define to 1 if you have the syslog interface. */
 #undef HAVE_SYSLOG
 
@@ -725,9 +733,6 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
-/* Define to 1 if you have the `waitpid' function. */
-#undef HAVE_WAITPID
-
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
@@ -743,11 +748,28 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
+<<<<<<< HEAD
 /* Define to 1 if you have the <winsock2.h> header file. */
 #undef HAVE_WINSOCK2_H
 
 /* Define to 1 if your libxml has xmlStructuredErrorContext. */
 #undef HAVE_XMLSTRUCTUREDERRORCONTEXT
+=======
+/* Define to 1 if your compiler understands __builtin_constant_p. */
+#undef HAVE__BUILTIN_CONSTANT_P
+
+/* Define to 1 if your compiler understands __builtin_types_compatible_p. */
+#undef HAVE__BUILTIN_TYPES_COMPATIBLE_P
+
+/* Define to 1 if your compiler understands __builtin_unreachable. */
+#undef HAVE__BUILTIN_UNREACHABLE
+
+/* Define to 1 if your compiler understands _Static_assert. */
+#undef HAVE__STATIC_ASSERT
+
+/* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
+#undef HAVE__VA_ARGS
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* Define to 1 if you have the <yaml.h> header file. */
 #undef HAVE_YAML_H
@@ -806,9 +828,12 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+<<<<<<< HEAD
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /* Define to the name of a signed 64-bit integer type. */
 #undef PG_INT64_TYPE
 
@@ -819,14 +844,21 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
+<<<<<<< HEAD
 /* Define to gnu_printf if compiler supports it, else printf. */
 #undef PG_PRINTF_ATTRIBUTE
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /* Define to 1 if "static inline" works without unwanted warnings from
    compilations where static inline functions are defined but not called. */
 #undef PG_USE_INLINE
 
+<<<<<<< HEAD
 /* Postgres version Greenplum Database is based on */
+=======
+/* PostgreSQL version as a string */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #undef PG_VERSION
 
 /* PostgreSQL version as a number */
@@ -900,9 +932,12 @@
    (Always defined in GPDB) */
 #undef USE_FLOAT8_BYVAL
 
+<<<<<<< HEAD
 /* Define to 1 to build with gpcloud (--enable-gpcloud) */
 #undef USE_GPCLOUD
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 #undef USE_INTEGER_DATETIMES

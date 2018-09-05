@@ -11,7 +11,7 @@
  * Transactions on Mathematical Software, Vol. 24, No. 4, December 1998,
  * pages 359-367.
  *
- * Copyright (c) 1998-2012, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2013, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/numeric.c
@@ -267,6 +267,16 @@ static NumericDigit const_two_data[1] = {2};
 static NumericVar const_two =
 {1, 0, NUMERIC_POS, 0, const_two.ndb, const_two_data, {0}};
 
+#if DEC_DIGITS == 4 || DEC_DIGITS == 2
+static NumericDigit const_ten_data[1] = {10};
+static NumericVar const_ten =
+{1, 0, NUMERIC_POS, 0, NULL, const_ten_data};
+#elif DEC_DIGITS == 1
+static NumericDigit const_ten_data[1] = {1};
+static NumericVar const_ten =
+{1, 1, NUMERIC_POS, 0, NULL, const_ten_data};
+#endif
+
 #if DEC_DIGITS == 4
 static NumericDigit const_zero_point_five_data[1] = {5000};
 #elif DEC_DIGITS == 2
@@ -390,6 +400,7 @@ static void dump_var(const char *str, NumericVar *var);
 static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
 
+<<<<<<< HEAD
 static const char *init_var_from_str(const char *str, const char *cp, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
@@ -398,6 +409,14 @@ static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_num(Numeric value, NumericVar *dest);
 static void init_ro_var_from_num(Numeric value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var, int dscale);
+=======
+static const char *set_var_from_str(const char *str, const char *cp,
+				 NumericVar *dest);
+static void set_var_from_num(Numeric value, NumericVar *dest);
+static void init_var_from_num(Numeric num, NumericVar *dest);
+static void set_var_from_var(NumericVar *value, NumericVar *dest);
+static char *get_str_from_var(NumericVar *var);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 static char *get_str_from_var_sci(NumericVar *var, int rscale);
 
 /* ----------
@@ -569,17 +588,18 @@ numeric_out(PG_FUNCTION_ARGS)
 
 	/*
 	 * Get the number in the variable format.
+<<<<<<< HEAD
 	 *
 	 * Even if we didn't need to change format, we'd still need to copy the
 	 * value to have a modifiable copy for rounding.  init_var_from_num() also
 	 * guarantees there is extra digit space in case we produce a carry out
 	 * from rounding.
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	init_var_from_num(num, &x);
 
-	str = get_str_from_var(&x, x.dscale);
-
-	free_var(&x);
+	str = get_str_from_var(&x);
 
 	PG_RETURN_CSTRING(str);
 }
@@ -677,7 +697,6 @@ numeric_out_sci(Numeric num, int scale)
 
 	str = get_str_from_var_sci(&x, scale);
 
-	free_var(&x);
 	return str;
 }
 
@@ -749,7 +768,11 @@ numeric_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 	int			i;
 
+<<<<<<< HEAD
 	init_ro_var_from_num(num, &x);
+=======
+	init_var_from_num(num, &x);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	pq_begintypsend(&buf);
 
@@ -759,8 +782,6 @@ numeric_send(PG_FUNCTION_ARGS)
 	pq_sendint(&buf, x.dscale, sizeof(int16));
 	for (i = 0; i < x.ndigits; i++)
 		pq_sendint(&buf, x.digits[i], sizeof(NumericDigit));
-
-	free_var(&x);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
@@ -1193,7 +1214,11 @@ numeric_ceil(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
+<<<<<<< HEAD
 	init_ro_var_from_num(num, &result);
+=======
+	init_var_from_num(num, &result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	ceil_var(&result, &result);
 
 	res = make_result(&result);
@@ -1217,7 +1242,11 @@ numeric_floor(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
+<<<<<<< HEAD
 	init_ro_var_from_num(num, &result);
+=======
+	init_var_from_num(num, &result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	floor_var(&result, &result);
 
 	res = make_result(&result);
@@ -1319,9 +1348,15 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 	NumericVar	bound2_var;
 	NumericVar	operand_var;
 
+<<<<<<< HEAD
 	init_ro_var_from_num(bound1, &bound1_var);
 	init_ro_var_from_num(bound2, &bound2_var);
 	init_ro_var_from_num(operand, &operand_var);
+=======
+	init_var_from_num(bound1, &bound1_var);
+	init_var_from_num(bound2, &bound2_var);
+	init_var_from_num(operand, &operand_var);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (cmp_var(&bound1_var, &bound2_var) < 0)
 	{
@@ -1606,15 +1641,27 @@ numeric_add(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the values, let add_var() compute the result and return it.
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
 	init_ro_var_from_num(num2, &arg2);
 
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	add_var(&arg1, &arg2, &result);
 
 	res = make_result(&result);
 
+<<<<<<< HEAD
+=======
+	free_var(&result);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -1643,15 +1690,27 @@ numeric_sub(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the values, let sub_var() compute the result and return it.
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
 	init_ro_var_from_num(num2, &arg2);
 
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	sub_var(&arg1, &arg2, &result);
 
 	res = make_result(&result);
 
+<<<<<<< HEAD
+=======
+	free_var(&result);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	PG_RETURN_NUMERIC(res);
 }
 
@@ -1684,6 +1743,7 @@ numeric_mul(PG_FUNCTION_ARGS)
 	 * we request exact representation for the product (rscale = sum(dscale of
 	 * arg1, dscale of arg2)).
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
@@ -1695,6 +1755,17 @@ numeric_mul(PG_FUNCTION_ARGS)
 	free_var(&arg2);
 
 	res = make_result(&result);
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+	mul_var(&arg1, &arg2, &result, arg1.dscale + arg2.dscale);
+
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1725,10 +1796,17 @@ numeric_div(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the arguments
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
 	init_ro_var_from_num(num2, &arg2);
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Select scale for division result
@@ -1740,10 +1818,16 @@ numeric_div(PG_FUNCTION_ARGS)
 	 */
 	div_var(&arg1, &arg2, &result, rscale, true);
 
+<<<<<<< HEAD
 	free_var(&arg1);
 	free_var(&arg2);
 
 	res = make_result(&result);
+=======
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -1773,10 +1857,17 @@ numeric_div_trunc(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the arguments
 	 */
+<<<<<<< HEAD
 	init_var(&result);
 
 	init_var_from_num(num1, &arg1);
 	init_var_from_num(num2, &arg2);
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Do the divide and return the result
@@ -1785,8 +1876,6 @@ numeric_div_trunc(PG_FUNCTION_ARGS)
 
 	res = make_result(&result);
 
-	free_var(&arg1);
-	free_var(&arg2);
 	free_var(&result);
 
 	PG_RETURN_NUMERIC(res);
@@ -1811,6 +1900,7 @@ numeric_mod(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
@@ -1820,6 +1910,18 @@ numeric_mod(PG_FUNCTION_ARGS)
 
 	free_var(&arg2);
 	free_var(&arg1);
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	init_var(&result);
+
+	mod_var(&arg1, &arg2, &result);
+
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = make_result(&result);
 
@@ -1847,8 +1949,12 @@ numeric_inc(PG_FUNCTION_ARGS)
 	/*
 	 * Compute the result and return it
 	 */
+<<<<<<< HEAD
 
 	init_ro_var_from_num(num, &arg);
+=======
+	init_var_from_num(num, &arg);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	add_var(&arg, &const_one, &arg);
 
@@ -2019,9 +2125,15 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num, &arg);
+=======
+	init_var_from_num(num, &arg);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Assume the input was normalized, so arg.weight is accurate */
 	sweight = (arg.weight + 1) * DEC_DIGITS / 2 - 1;
@@ -2035,7 +2147,14 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	 * Let sqrt_var() do the calculation and return the result.
 	 */
 	sqrt_var(&arg, &result, rscale);
+<<<<<<< HEAD
 	free_var(&arg);
+=======
+
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = make_result(&result);
 
@@ -2069,9 +2188,15 @@ numeric_exp(PG_FUNCTION_ARGS)
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_var_from_num(num, &arg);
+=======
+	init_var_from_num(num, &arg);
+
+	init_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* convert input to float8, ignoring overflow */
 	val = numericvar_to_double_no_overflow(&arg);
@@ -2096,7 +2221,13 @@ numeric_exp(PG_FUNCTION_ARGS)
 	 */
 	exp_var(&arg, &result, rscale);
 
+<<<<<<< HEAD
 	free_var(&arg);
+=======
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = make_result(&result);
 
@@ -2125,10 +2256,16 @@ numeric_ln(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num, &arg);
 
+=======
+	init_var_from_num(num, &arg);
+	init_var(&result);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* Approx decimal digits before decimal point */
 	dec_digits = (arg.weight + 1) * DEC_DIGITS;
 
@@ -2145,7 +2282,13 @@ numeric_ln(PG_FUNCTION_ARGS)
 
 	ln_var(&arg, &result, rscale);
 
+<<<<<<< HEAD
 	free_var(&arg);
+=======
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = make_result(&result);
 
@@ -2177,19 +2320,32 @@ numeric_log(PG_FUNCTION_ARGS)
 	/*
 	 * Initialize things
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
 	init_ro_var_from_num(num2, &arg2);
 
+=======
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+	init_var(&result);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Call log_var() to compute and return the result; note it handles scale
 	 * selection itself.
 	 */
 	log_var(&arg1, &arg2, &result);
 
+<<<<<<< HEAD
 	free_var(&arg2);
 	free_var(&arg1);
+=======
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = make_result(&result);
 
@@ -2222,12 +2378,21 @@ numeric_power(PG_FUNCTION_ARGS)
 	/*
 	 * Initialize things
 	 */
+<<<<<<< HEAD
 	quick_init_var(&result);
 
 	init_ro_var_from_num(num1, &arg1);
 	init_ro_var_from_num(num2, &arg2);
 	init_var_from_var(&arg2, &arg2_trunc);
 
+=======
+	init_var(&arg2_trunc);
+	init_var(&result);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
+
+	set_var_from_var(&arg2, &arg2_trunc);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	trunc_var(&arg2_trunc, 0);
 
 	/*
@@ -2253,9 +2418,14 @@ numeric_power(PG_FUNCTION_ARGS)
 	 */
 	power_var(&arg1, &arg2, &result);
 
+<<<<<<< HEAD
 	free_var(&arg2);
+=======
+	res = make_result(&result);
+
+	free_var(&result);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	free_var(&arg2_trunc);
-	free_var(&arg1);
 
 	res = make_result(&result);
 
@@ -2540,7 +2710,11 @@ numeric_int4(PG_FUNCTION_ARGS)
 
 	/* Convert to variable format, then convert to int4 */
 	init_var_from_num(num, &x);
+<<<<<<< HEAD
 	result = numericvar_to_int32(&x);
+=======
+	result = numericvar_to_int4(&x);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	PG_RETURN_INT32(result);
 }
 
@@ -4165,6 +4339,7 @@ numeric_poly_avg(PG_FUNCTION_ARGS)
 Datum
 numeric_avg(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	NumericAggState *state;
 	Datum		N_datum;
 	Datum		sumX_datum;
@@ -4193,6 +4368,26 @@ numeric_sum(PG_FUNCTION_ARGS)
 
 	/* If there were no non-null inputs, return NULL */
 	if (state == NULL || (state->N + state->NaNcount) == 0)
+=======
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum	   *transdatums;
+	int			ndatums;
+	Numeric		N,
+				sumX;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  NUMERICOID, -1, false, 'i',
+					  &transdatums, NULL, &ndatums);
+	if (ndatums != 2)
+		elog(ERROR, "expected 2-element numeric array");
+	N = DatumGetNumeric(transdatums[0]);
+	sumX = DatumGetNumeric(transdatums[1]);
+
+	/* SQL defines AVG of no values to be NULL */
+	/* N is zero iff no digits (cf. numeric_uminus) */
+	if (NUMERIC_NDIGITS(N) == 0)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		PG_RETURN_NULL();
 
 	if (state->NaNcount > 0)	/* there was at least one NaN input */
@@ -4237,6 +4432,7 @@ numeric_stddev_internal(NumericAggState *state,
 	if (state->NaNcount > 0)
 		return make_result(&const_nan);
 
+<<<<<<< HEAD
 	init_var(&vN);
 	init_var(&vsumX);
 	init_var(&vsumX2);
@@ -4244,6 +4440,9 @@ numeric_stddev_internal(NumericAggState *state,
 	int64_to_numericvar(state->N, &vN);
 	set_var_from_var(&(state->sumX), &vsumX);
 	set_var_from_var(&(state->sumX2), &vsumX2);
+=======
+	init_var_from_num(N, &vN);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Sample stddev and variance are undefined when N <= 1; population stddev
@@ -4256,7 +4455,6 @@ numeric_stddev_internal(NumericAggState *state,
 
 	if (cmp_var(&vN, comp) <= 0)
 	{
-		free_var(&vN);
 		*is_null = true;
 		return NULL;
 	}
@@ -4264,6 +4462,12 @@ numeric_stddev_internal(NumericAggState *state,
 	quick_init_var(&vNminus1);
 	sub_var(&vN, &const_one, &vNminus1);
 
+<<<<<<< HEAD
+=======
+	init_var_from_num(sumX, &vsumX);
+	init_var_from_num(sumX2, &vsumX2);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* compute rscale for mul_var calls */
 	rscale = vsumX.dscale * 2;
 
@@ -4290,7 +4494,6 @@ numeric_stddev_internal(NumericAggState *state,
 		res = make_result(&vsumX);
 	}
 
-	free_var(&vN);
 	free_var(&vNminus1);
 	free_var(&vsumX);
 	free_var(&vsumX2);
@@ -4493,7 +4696,7 @@ numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
  * purposes.  (The latter two therefore don't really belong in this file,
  * but we keep them here anyway.)
  *
- * Because SQL92 defines the SUM() of no values to be NULL, not zero,
+ * Because SQL defines the SUM() of no values to be NULL, not zero,
  * the initial condition of the transition data value needs to be NULL. This
  * means we can't rely on ExecAgg to automatically insert the first non-null
  * data value into the transition data: it doesn't know how to do the type
@@ -5190,6 +5393,32 @@ init_ro_var_from_num(Numeric num, NumericVar *dest)
 
 
 /*
+ * init_var_from_num() -
+ *
+ *	Initialize a variable from packed db format. The digits array is not
+ *	copied, which saves some cycles when the resulting var is not modified.
+ *	Also, there's no need to call free_var(), as long as you don't assign any
+ *	other value to it (with set_var_* functions, or by using the var as the
+ *	destination of a function like add_var())
+ *
+ *	CAUTION: Do not modify the digits buffer of a var initialized with this
+ *	function, e.g by calling round_var() or trunc_var(), as the changes will
+ *	propagate to the original Numeric! It's OK to use it as the destination
+ *	argument of one of the calculational functions, though.
+ */
+static void
+init_var_from_num(Numeric num, NumericVar *dest)
+{
+	dest->ndigits = NUMERIC_NDIGITS(num);
+	dest->weight = NUMERIC_WEIGHT(num);
+	dest->sign = NUMERIC_SIGN(num);
+	dest->dscale = NUMERIC_DSCALE(num);
+	dest->digits = NUMERIC_DIGITS(num);
+	dest->buf = NULL;			/* digits array is not palloc'd */
+}
+
+
+/*
  * set_var_from_var() -
  *
  *	Copy one variable into another
@@ -5251,12 +5480,13 @@ init_ro_var_from_var(NumericVar *value, NumericVar *dest)
  * get_str_from_var() -
  *
  *	Convert a var to text representation (guts of numeric_out).
- *	CAUTION: var's contents may be modified by rounding!
+ *	The var is displayed to the number of digits indicated by its dscale.
  *	Returns a palloc'd string.
  */
 static char *
-get_str_from_var(NumericVar *var, int dscale)
+get_str_from_var(NumericVar *var)
 {
+	int			dscale;
 	char	   *str;
 	char	   *cp;
 	char	   *endcp;
@@ -5268,13 +5498,7 @@ get_str_from_var(NumericVar *var, int dscale)
 	NumericDigit d1;
 #endif
 
-	if (dscale < 0)
-		dscale = 0;
-
-	/*
-	 * Check if we must round up before printing the value and do so.
-	 */
-	round_var(var, dscale);
+	dscale = var->dscale;
 
 	/*
 	 * Allocate space for the result.
@@ -5410,8 +5634,6 @@ get_str_from_var(NumericVar *var, int dscale)
  *	rscale is the number of decimal digits desired after the decimal point in
  *	the output, negative values will be treated as meaning zero.
  *
- *	CAUTION: var's contents may be modified by rounding!
- *
  *	Returns a palloc'd string.
  */
 static char *
@@ -5470,10 +5692,14 @@ get_str_from_var_sci(NumericVar *var, int rscale)
 	init_var(&denominator);
 	init_var(&significand);
 
+<<<<<<< HEAD
 	int64_to_numericvar((int64) 10, &denominator);
 	power_var_int(&denominator, exponent, &denominator, denom_scale);
+=======
+	power_var_int(&const_ten, exponent, &denominator, denom_scale);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	div_var(var, &denominator, &significand, rscale, true);
-	sig_out = get_str_from_var(&significand, rscale);
+	sig_out = get_str_from_var(&significand);
 
 	free_var(&denominator);
 	free_var(&significand);
@@ -5675,9 +5901,12 @@ apply_typmod(NumericVar *var, int32 typmod)
  * Convert numeric to int8, rounding if needed.
  *
  * If overflow, return FALSE (no error is raised).	Return TRUE if okay.
+<<<<<<< HEAD
  *
  *	CAUTION: var's contents may be modified by rounding!
  *	CAUTION: we free_var(var) here!
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static bool
 numericvar_to_int64(NumericVar *var, int64 *result)
@@ -5689,17 +5918,21 @@ numericvar_to_int64(NumericVar *var, int64 *result)
 	int64		val,
 				oldval;
 	bool		neg;
+	NumericVar	rounded;
 
 	/* Round to nearest integer */
-	round_var(var, 0);
+	init_var(&rounded);
+	set_var_from_var(var, &rounded);
+	round_var(&rounded, 0);
 
 	/* Check for zero input */
-	strip_var(var);
-	ndigits = var->ndigits;
+	strip_var(&rounded);
+	ndigits = rounded.ndigits;
 	if (ndigits == 0)
 	{
 		free_var(var);
 		*result = 0;
+		free_var(&rounded);
 		return true;
 	}
 
@@ -5707,12 +5940,12 @@ numericvar_to_int64(NumericVar *var, int64 *result)
 	 * For input like 10000000000, we must treat stripped digits as real. So
 	 * the loop assumes there are weight+1 digits before the decimal point.
 	 */
-	weight = var->weight;
+	weight = rounded.weight;
 	Assert(weight >= 0 && ndigits <= weight + 1);
 
 	/* Construct the result */
-	digits = var->digits;
-	neg = (var->sign == NUMERIC_NEG);
+	digits = rounded.digits;
+	neg = (rounded.sign == NUMERIC_NEG);
 	val = digits[0];
 	for (i = 1; i <= weight; i++)
 	{
@@ -5732,11 +5965,17 @@ numericvar_to_int64(NumericVar *var, int64 *result)
 		{
 			if (!neg || (-val) != val || val == 0 || oldval < 0)
 			{
+<<<<<<< HEAD
 				free_var(var);
+=======
+				free_var(&rounded);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				return false;
 			}
 		}
 	}
+
+	free_var(&rounded);
 
 	*result = neg ? -val : val;
 	free_var(var);
@@ -5945,7 +6184,7 @@ numericvar_to_double_no_overflow(NumericVar *var)
 	double		val;
 	char	   *endptr;
 
-	tmp = get_str_from_var(var, var->dscale);
+	tmp = get_str_from_var(var);
 
 	/* unlike float8in, we ignore ERANGE from strtod */
 	val = strtod(tmp, &endptr);
@@ -7521,12 +7760,18 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 	if (exp->ndigits == 0 || exp->ndigits <= exp->weight + 1)
 	{
 		/* exact integer, but does it fit in int? */
+<<<<<<< HEAD
 		NumericVar	x;
 		int64		expval64 = 0;
 
 		/* must copy because numericvar_to_int8() scribbles on input */
 		init_var_from_var(exp, &x);
 		if (numericvar_to_int64(&x, &expval64))
+=======
+		int64		expval64;
+
+		if (numericvar_to_int8(exp, &expval64))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			int			expval = (int) expval64;
 
@@ -7540,7 +7785,10 @@ power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 				rscale = Min(rscale, NUMERIC_MAX_DISPLAY_SCALE);
 
 				power_var_int(base, expval, result, rscale);
+<<<<<<< HEAD
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				return;
 			}
 		}

@@ -5,7 +5,7 @@
  *
  * See src/backend/access/transam/README for more information.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -43,14 +43,20 @@
 #include "pgstat.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
+<<<<<<< HEAD
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
+=======
+#include "storage/fd.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
+#include "utils/catcache.h"
 #include "utils/combocid.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
@@ -86,9 +92,6 @@ bool		DefaultXactDeferrable = false;
 bool		XactDeferrable;
 
 int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
-
-int			CommitDelay = 0;	/* precommit delay in microseconds */
-int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
 
 /*
  * MyXactAccessedTempRel is set when a temporary relation is accessed.
@@ -671,6 +674,27 @@ GetCurrentSubTransactionId(void)
 	return s->subTransactionId;
 }
 
+/*
+ *	SubTransactionIsActive
+ *
+ * Test if the specified subxact ID is still active.  Note caller is
+ * responsible for checking whether this ID is relevant to the current xact.
+ */
+bool
+SubTransactionIsActive(SubTransactionId subxid)
+{
+	TransactionState s;
+
+	for (s = CurrentTransactionState; s != NULL; s = s->parent)
+	{
+		if (s->state == TRANS_ABORT)
+			continue;
+		if (s->subTransactionId == subxid)
+			return true;
+	}
+	return false;
+}
+
 
 /*
  *	GetCurrentCommandId
@@ -1213,7 +1237,7 @@ RecordTransactionCommit(void)
 	if (XLogStandbyInfoActive())
 		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
 													 &RelcacheInitFileInval);
-	wrote_xlog = (XactLastRecEnd.xrecoff != 0);
+	wrote_xlog = (XactLastRecEnd != 0);
 
 	isDtxPrepared = isPreparedDtxTransaction();
 
@@ -1272,8 +1296,9 @@ RecordTransactionCommit(void)
 		 * RecordTransactionAbort.	That's because loss of a transaction abort
 		 * is noncritical; the presumption would be that it aborted, anyway.
 		 *
-		 * It's safe to change the inCommit flag of our own backend without
+		 * It's safe to change the delayChkpt flag of our own backend without
 		 * holding the ProcArrayLock, since we're the only one modifying it.
+<<<<<<< HEAD
 		 * This makes checkpoint's determination of which xacts are inCommit a
 		 * bit fuzzy, but it doesn't matter.
 		 *
@@ -1289,9 +1314,13 @@ RecordTransactionCommit(void)
 		 * this transaction and the second phase of 2PC will never happen.  The
 		 * inCommit flag avoids this situation by blocking checkpointer until a
 		 * backend has finished updating the state.
+=======
+		 * This makes checkpoint's determination of which xacts are delayChkpt
+		 * a bit fuzzy, but it doesn't matter.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		 */
 		START_CRIT_SECTION();
-		MyPgXact->inCommit = true;
+		MyPgXact->delayChkpt = true;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1430,6 +1459,7 @@ RecordTransactionCommit(void)
 		forceSyncCommit || nrels > 0)
 #endif
 	{
+<<<<<<< HEAD
 		/*
 		 * Synchronous commit case:
 		 *
@@ -1458,13 +1488,9 @@ RecordTransactionCommit(void)
 										   ""); // tableName
 		}
 #endif
-
-		/*
-		 * Wake up all walsenders to send WAL up to the COMMIT record
-		 * immediately if replication is enabled
-		 */
-		if (max_wal_senders > 0)
-			WalSndWakeup();
+=======
+		XLogFlush(XactLastRecEnd);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/*
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
@@ -1529,7 +1555,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted || isDtxPrepared)
 	{
-		MyPgXact->inCommit = false;
+		MyPgXact->delayChkpt = false;
 		END_CRIT_SECTION();
 	}
 
@@ -1549,7 +1575,7 @@ RecordTransactionCommit(void)
 	latestXid = TransactionIdLatest(xid, nchildren, children);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
-	XactLastRecEnd.xrecoff = 0;
+	XactLastRecEnd = 0;
 
 cleanup:
 	/* And clean up local data */
@@ -1783,7 +1809,7 @@ RecordTransactionAbort(bool isSubXact)
 	{
 		/* Reset XactLastRecEnd until the next transaction writes something */
 		if (!isSubXact)
-			XactLastRecEnd.xrecoff = 0;
+			XactLastRecEnd = 0;
 		return InvalidTransactionId;
 	}
 
@@ -1882,7 +1908,7 @@ RecordTransactionAbort(bool isSubXact)
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	if (!isSubXact)
-		XactLastRecEnd.xrecoff = 0;
+		XactLastRecEnd = 0;
 
 	if (max_wal_senders > 0)
 		WalSndWakeup();
@@ -2517,6 +2543,8 @@ CommitTransaction(void)
 			break;
 	}
 
+	CallXactCallbacks(XACT_EVENT_PRE_COMMIT);
+
 	/*
 	 * The remaining actions cannot call any user-defined code, so it's safe
 	 * to start shutting down within-transaction services.	But note that most
@@ -2676,14 +2704,6 @@ CommitTransaction(void)
 	 */
 	AtEOXact_Inval(true);
 
-	/*
-	 * Likewise, dropping of files deleted during the transaction is best done
-	 * after releasing relcache and buffer pins.  (This is not strictly
-	 * necessary during commit, since such pins should have been released
-	 * already, but this ordering is definitely critical during abort.)
-	 */
-	smgrDoPendingDeletes(true);
-
 	AtEOXact_MultiXact();
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
@@ -2692,6 +2712,17 @@ CommitTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
+
+	/*
+	 * Likewise, dropping of files deleted during the transaction is best done
+	 * after releasing relcache and buffer pins.  (This is not strictly
+	 * necessary during commit, since such pins should have been released
+	 * already, but this ordering is definitely critical during abort.)  Since
+	 * this may take many seconds, also delay until after releasing locks.
+	 * Other backends will observe the attendant catalog changes and not
+	 * attempt to access affected files.
+	 */
+	smgrDoPendingDeletes(true);
 
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
@@ -2702,7 +2733,7 @@ CommitTransaction(void)
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
-	/* smgrcommit already done */
+	AtEOXact_SMgr();
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
@@ -2796,6 +2827,8 @@ PrepareTransaction(void)
 		if (!PreCommit_Portals(true))
 			break;
 	}
+
+	CallXactCallbacks(XACT_EVENT_PRE_PREPARE);
 
 	/*
 	 * The remaining actions cannot call any user-defined code, so it's safe
@@ -2946,7 +2979,7 @@ PrepareTransaction(void)
 	 */
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
-	XactLastRecEnd.xrecoff = 0;
+	XactLastRecEnd = 0;
 
 	/*
 	 * Let others know about no transaction in progress by me.	This has to be
@@ -3015,7 +3048,7 @@ PrepareTransaction(void)
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
-	/* smgrcommit already done */
+	AtEOXact_SMgr();
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
@@ -3174,7 +3207,6 @@ AbortTransaction(void)
 		AtEOXact_Buffers(false);
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
-		smgrDoPendingDeletes(false);
 		AtEOXact_MultiXact();
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_LOCKS,
@@ -3182,6 +3214,7 @@ AbortTransaction(void)
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, true);
+		smgrDoPendingDeletes(false);
 		AtEOXact_CatCache(false);
 
 		AtEOXact_AppendOnly();
@@ -3189,6 +3222,7 @@ AbortTransaction(void)
 		AtEOXact_SPI(false);
 		AtEOXact_on_commit_actions(false);
 		AtEOXact_Namespace(false);
+		AtEOXact_SMgr();
 		AtEOXact_Files();
 		AtEOXact_ComboCid();
 		AtEOXact_HashTables(false);
@@ -4424,7 +4458,7 @@ UserAbortTransactionBlock(void)
 
 			/*
 			 * The user issued ABORT when not inside a transaction. Issue a
-			 * WARNING and go to abort state.  The upcoming call to
+			 * NOTICE and go to abort state.  The upcoming call to
 			 * CommitTransactionCommand() will then put us back into the
 			 * default state.
 			 */
@@ -5211,8 +5245,12 @@ CommitSubTransaction(void)
 		elog(WARNING, "CommitSubTransaction while in %s state",
 			 TransStateAsString(s->state));
 
-	/* Pre-commit processing goes here -- nothing to do at the moment */
+	/* Pre-commit processing goes here */
 
+	CallSubXactCallbacks(SUBXACT_EVENT_PRE_COMMIT_SUB, s->subTransactionId,
+						 s->parent->subTransactionId);
+
+	/* Do the actual "commit", such as it is */
 	s->state = TRANS_COMMIT;
 
 	/* Must CCI to ensure commands of subtransaction are seen as done */
@@ -5373,13 +5411,13 @@ AbortSubTransaction(void)
 		AtEOSubXact_RelationCache(false, s->subTransactionId,
 								  s->parent->subTransactionId);
 		AtEOSubXact_Inval(false);
-		AtSubAbort_smgr();
 		ResourceOwnerRelease(s->curTransactionOwner,
 							 RESOURCE_RELEASE_LOCKS,
 							 false, false);
 		ResourceOwnerRelease(s->curTransactionOwner,
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, false);
+		AtSubAbort_smgr();
 
 		AtEOXact_GUC(false, s->gucNestLevel);
 		AtEOSubXact_SPI(false, s->subTransactionId);
@@ -5842,14 +5880,17 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		/*
 		 * Release locks, if any. We do this for both two phase and normal one
 		 * phase transactions. In effect we are ignoring the prepare phase and
-		 * just going straight to lock release.
+		 * just going straight to lock release. At commit we release all locks
+		 * via their top-level xid only, so no need to provide subxact list,
+		 * which will save time when replaying commits.
 		 */
-		StandbyReleaseLockTree(xid, nsubxacts, sub_xids);
+		StandbyReleaseLockTree(xid, 0, NULL);
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-	for (i = 0; i < nrels; i++)
+	if (nrels > 0)
 	{
+<<<<<<< HEAD
 		SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
 		ForkNumber	fork;
 
@@ -5857,19 +5898,48 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 			XLogDropRelation(xnodes[i].node, fork);
 		smgrdounlink(srel, true, xnodes[i].relstorage);
 		smgrclose(srel);
+=======
+		/*
+		 * First update minimum recovery point to cover this WAL record. Once
+		 * a relation is deleted, there's no going back. The buffer manager
+		 * enforces the WAL-first rule for normal updates to relation files,
+		 * so that the minimum recovery point is always updated before the
+		 * corresponding change in the data file is flushed to disk, but we
+		 * have to do the same here since we're bypassing the buffer manager.
+		 *
+		 * Doing this before deleting the files means that if a deletion fails
+		 * for some reason, you cannot start up the system even after restart,
+		 * until you fix the underlying situation so that the deletion will
+		 * succeed. Alternatively, we could update the minimum recovery point
+		 * after deletion, but that would leave a small window where the
+		 * WAL-first rule would be violated.
+		 */
+		XLogFlush(lsn);
+
+		for (i = 0; i < nrels; i++)
+		{
+			SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
+			ForkNumber	fork;
+
+			for (fork = 0; fork <= MAX_FORKNUM; fork++)
+				XLogDropRelation(xnodes[i], fork);
+			smgrdounlink(srel, true);
+			smgrclose(srel);
+		}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
 	 * We issue an XLogFlush() for the same reason we emit ForceSyncCommit()
-	 * in normal operation. For example, in DROP DATABASE, we delete all the
-	 * files belonging to the database, and then commit the transaction. If we
-	 * crash after all the files have been deleted but before the commit, you
-	 * have an entry in pg_database without any files. To minimize the window
-	 * for that, we use ForceSyncCommit() to rush the commit record to disk as
-	 * quick as possible. We have the same window during recovery, and forcing
-	 * an XLogFlush() (which updates minRecoveryPoint during recovery) helps
-	 * to reduce that problem window, for any user that requested
-	 * ForceSyncCommit().
+	 * in normal operation. For example, in CREATE DATABASE, we copy all files
+	 * from the template database, and then commit the transaction. If we
+	 * crash after all the files have been copied but before the commit, you
+	 * have files in the data directory without an entry in pg_database. To
+	 * minimize the window for that, we use ForceSyncCommit() to rush the
+	 * commit record to disk as quick as possible. We have the same window
+	 * during recovery, and forcing an XLogFlush() (which updates
+	 * minRecoveryPoint during recovery) helps to reduce that problem window,
+	 * for any user that requested ForceSyncCommit().
 	 */
 	if (XactCompletionForceSyncCommit(xinfo))
 		XLogFlush(lsn);
@@ -6178,6 +6248,7 @@ xact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);
 }
+<<<<<<< HEAD
 
 static char*
 xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
@@ -6390,3 +6461,5 @@ xact_desc(StringInfo buf, XLogRecord *record)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

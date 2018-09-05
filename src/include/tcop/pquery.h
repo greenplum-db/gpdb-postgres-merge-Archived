@@ -4,7 +4,7 @@
  *	  prototypes for pquery.c.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/tcop/pquery.h
@@ -28,8 +28,12 @@ extern List *FetchPortalTargetList(Portal portal);
 extern List *FetchStatementTargetList(Node *stmt);
 
 extern void PortalStart(Portal portal, ParamListInfo params,
+<<<<<<< HEAD
 						int eflags, Snapshot snapshot,
 						QueryDispatchDesc *ddesc);
+=======
+			int eflags, Snapshot snapshot);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void PortalSetResultFormat(Portal portal, int nFormats,
 					  int16 *formats);

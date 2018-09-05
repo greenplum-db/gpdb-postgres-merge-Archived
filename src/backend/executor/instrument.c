@@ -4,9 +4,13 @@
  *	 functions for instrumentation of plan execution
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 2001-2012, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2001-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * IDENTIFICATION
  *	  src/backend/executor/instrument.c
@@ -51,10 +55,15 @@ InstrAlloc(int n, int instrument_options)
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_CDB))
 	{
+		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 		int			i;
+<<<<<<< HEAD
 		bool		need_buffers = instrument_options & INSTRUMENT_BUFFERS;
 		bool		need_timer = instrument_options & INSTRUMENT_TIMER;
 		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		for (i = 0; i < n; i++)
 		{
@@ -76,10 +85,13 @@ InstrAlloc(int n, int instrument_options)
 void
 InstrStartNode(Instrumentation *instr)
 {
-	if (instr->need_timer && INSTR_TIME_IS_ZERO(instr->starttime))
-		INSTR_TIME_SET_CURRENT(instr->starttime);
-	else
-		elog(DEBUG2, "InstrStartNode called twice in a row");
+	if (instr->need_timer)
+	{
+		if (INSTR_TIME_IS_ZERO(instr->starttime))
+			INSTR_TIME_SET_CURRENT(instr->starttime);
+		else
+			elog(ERROR, "InstrStartNode called twice in a row");
+	}
 
 	/* save buffer usage totals at node entry, if needed */
 	if (instr->need_bufusage)
@@ -103,18 +115,13 @@ InstrStopNode(Instrumentation *instr, uint64 nTuples)
 	/* let's update the time only if the timer was requested */
 	if (instr->need_timer)
 	{
-
 		if (INSTR_TIME_IS_ZERO(instr->starttime))
-		{
-			elog(DEBUG2, "InstrStopNode called without start");
-			return;
-		}
+			elog(ERROR, "InstrStopNode called without start");
 
 		INSTR_TIME_SET_CURRENT(endtime);
 		INSTR_TIME_ACCUM_DIFF(instr->counter, endtime, instr->starttime);
 
 		INSTR_TIME_SET_ZERO(instr->starttime);
-
 	}
 
 	/* Add delta of buffer usage since entry to node's totals */
@@ -145,7 +152,7 @@ InstrEndLoop(Instrumentation *instr)
 		return;
 
 	if (!INSTR_TIME_IS_ZERO(instr->starttime))
-		elog(DEBUG2, "InstrEndLoop called on running node");
+		elog(ERROR, "InstrEndLoop called on running node");
 
 	/* Accumulate per-cycle statistics into totals */
 	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);

@@ -192,6 +192,7 @@ ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		$$ = cat_str(2,mm_strdup("where current of"), cursor_marker);
 	}
+<<<<<<< HEAD
 ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionsOptSingleRowErrorHandlingskip_external_partition addon
 			if (strcmp($6, "to") == 0 && strcmp($7, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
@@ -202,6 +203,12 @@ ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromopt_pr
 ECPG: CopyStmtCOPYselect_with_parensTOopt_programcopy_file_nameopt_withcopy_options addon
 			if (strcmp($4, "stdin") == 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "COPY TO STDIN is not possible");
+=======
+ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listopt_oidscopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_options addon
+			if (strcmp($6, "from") == 0 &&
+			   (strcmp($7, "stdin") == 0 || strcmp($7, "stdout") == 0))
+				mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 ECPG: var_valueNumericOnly addon
 		if ($1[0] == '$')
 		{
@@ -358,7 +365,11 @@ ECPG: into_clauseINTOOptTempTableName block
 						$$= cat2_str(mm_strdup("into"), $2);
 					}
 	| ecpg_into { $$ = EMPTY; }
-ECPG: table_refselect_with_parens addon
+ECPG: table_refselect_with_parensopt_alias_clause addon
+	if ($2 == NULL)
+		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
+ECPG: table_refLATERAL_Pselect_with_parensopt_alias_clause addon
+	if ($3 == NULL)
 		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{	$$ = cat2_str($1, $2.str); }

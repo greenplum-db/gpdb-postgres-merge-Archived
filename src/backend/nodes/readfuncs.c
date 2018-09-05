@@ -3,9 +3,13 @@
  * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -66,8 +70,7 @@
 /* And a few guys need only the pg_strtok support fields */
 #define READ_TEMP_LOCALS()	\
 	char	   *token;		\
-	int			length;		\
-	(void) token				/* possibly unused */
+	int			length
 
 /* ... but most need both */
 #define READ_LOCALS(nodeTypeName)			\
@@ -152,6 +155,7 @@ inline static char extended_char(char* token, size_t length)
 
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
+<<<<<<< HEAD
     do { \
 	    token = pg_strtok(&length);		/* skip :fldname */ \
 	    local_node->fldname = nodeRead(NULL, 0); \
@@ -163,6 +167,11 @@ inline static char extended_char(char* token, size_t length)
 
 /* Set field to a given value, ignoring the value read from the input */
 #define READ_DUMMY_FIELD(fldname,fldvalue)  READ_SCALAR_FIELD(fldname, fldvalue)
+=======
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	(void) token;				/* in case not used elsewhere */ \
+	local_node->fldname = nodeRead(NULL, 0)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* Read a bitmapset field */
 #define READ_BITMAPSET_FIELD(fldname) \
@@ -556,7 +565,7 @@ _readRowMarkClause(void)
 	READ_LOCALS(RowMarkClause);
 
 	READ_UINT_FIELD(rti);
-	READ_BOOL_FIELD(forUpdate);
+	READ_ENUM_FIELD(strength, LockClauseStrength);
 	READ_BOOL_FIELD(noWait);
 	READ_BOOL_FIELD(pushedDown);
 
@@ -664,6 +673,7 @@ _readIntoClause(void)
 	READ_NODE_FIELD(options);
 	READ_ENUM_FIELD(onCommit, OnCommitAction);
 	READ_STRING_FIELD(tableSpaceName);
+	READ_NODE_FIELD(viewQuery);
 	READ_BOOL_FIELD(skipData);
 	READ_NODE_FIELD(distributedBy);
 
@@ -2207,6 +2217,7 @@ _readRangeTblEntry(void)
 			break;
 	}
 
+	READ_BOOL_FIELD(lateral);
 	READ_BOOL_FIELD(inh);
 	READ_BOOL_FIELD(inFromCl);
 	READ_UINT_FIELD(requiredPerms);

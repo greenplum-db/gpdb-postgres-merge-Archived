@@ -5,7 +5,7 @@
  *
  * All the actual insertion logic is in spgdoinsert.c.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -17,12 +17,14 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam_xlog.h"
 #include "access/spgist_private.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 typedef struct
@@ -43,7 +45,14 @@ spgistBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 	/* Work in temp context, and reset it after each tuple */
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
+<<<<<<< HEAD
 	spgdoinsert(index, &buildstate->spgstate, tupleId, *values, *isnull);
+=======
+	/* No concurrent insertions can be happening, so failure is unexpected */
+	if (!spgdoinsert(index, &buildstate->spgstate, &htup->t_self,
+					 *values, *isnull))
+		elog(ERROR, "unexpected spgdoinsert() failure");
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
@@ -217,7 +226,17 @@ spginsert(PG_FUNCTION_ARGS)
 
 	initSpGistState(&spgstate, index);
 
-	spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull);
+	/*
+	 * We might have to repeat spgdoinsert() multiple times, if conflicts
+	 * occur with concurrent insertions.  If so, reset the insertCtx each time
+	 * to avoid cumulative memory consumption.	That means we also have to
+	 * redo initSpGistState(), but it's cheap enough not to matter.
+	 */
+	while (!spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull))
+	{
+		MemoryContextReset(insertCtx);
+		initSpGistState(&spgstate, index);
+	}
 
 	SpGistUpdateMetaPage(index);
 

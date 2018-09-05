@@ -4,7 +4,7 @@
  *	  Routines to support inter-object dependencies.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/dependency.h
@@ -146,8 +146,12 @@ typedef enum ObjectClass
 	OCLASS_USER_MAPPING,		/* pg_user_mapping */
 	OCLASS_DEFACL,				/* pg_default_acl */
 	OCLASS_EXTENSION,			/* pg_extension */
+<<<<<<< HEAD
 	OCLASS_EXTPROTOCOL,			/* pg_extprotocol */
 	OCLASS_COMPRESSION,			/* pg_compression */
+=======
+	OCLASS_EVENT_TRIGGER,		/* pg_event_trigger */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 
@@ -176,9 +180,6 @@ extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								DependencyType self_behavior);
 
 extern ObjectClass getObjectClass(const ObjectAddress *object);
-
-extern char *getObjectDescription(const ObjectAddress *object);
-extern char *getObjectDescriptionOids(Oid classid, Oid objid);
 
 extern ObjectAddresses *new_object_addresses(void);
 

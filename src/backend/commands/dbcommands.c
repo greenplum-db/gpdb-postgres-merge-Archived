@@ -8,9 +8,13 @@
  * stepping on each others' toes.  Formerly we used table-level locks
  * on pg_database, but that's too coarse-grained.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -29,6 +33,7 @@
 #include "access/transam.h"
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
@@ -51,6 +56,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/copydir.h"
+#include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "storage/ipc.h"
 #include "storage/procarray.h"
@@ -92,6 +98,7 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
+			MultiXactId *dbMinMultiP,
 			Oid *dbTablespace, char **dbCollate, char **dbCtype);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
@@ -102,8 +109,13 @@ static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
 /*
  * CREATE DATABASE
  */
+<<<<<<< HEAD
 void
 createdb(CreatedbStmt *stmt)
+=======
+Oid
+createdb(const CreatedbStmt *stmt)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	HeapScanDesc scan;
 	Relation	rel;
@@ -114,9 +126,16 @@ createdb(CreatedbStmt *stmt)
 	char	   *src_ctype = NULL;
 	bool		src_istemplate;
 	bool		src_allowconn;
+<<<<<<< HEAD
 	Oid			src_lastsysoid = InvalidOid;
 	TransactionId src_frozenxid = InvalidTransactionId;
 	Oid			src_deftablespace = InvalidOid;
+=======
+	Oid			src_lastsysoid;
+	TransactionId src_frozenxid;
+	MultiXactId src_minmxid;
+	Oid			src_deftablespace;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
@@ -143,7 +162,10 @@ createdb(CreatedbStmt *stmt)
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
+<<<<<<< HEAD
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	Snapshot	snapshot;
 
 	/* Extract options from the statement node tree */
@@ -308,7 +330,7 @@ createdb(CreatedbStmt *stmt)
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_allowconn, &src_lastsysoid,
-					 &src_frozenxid, &src_deftablespace,
+					 &src_frozenxid, &src_minmxid, &src_deftablespace,
 					 &src_collate, &src_ctype))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -516,6 +538,7 @@ createdb(CreatedbStmt *stmt)
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
+	new_record[Anum_pg_database_datminmxid - 1] = TransactionIdGetDatum(src_minmxid);
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 	/* new created dbs all use jump hash */
 	new_record[Anum_pg_database_hashmethod - 1] = Int32GetDatum(JUMP_HASH_METHOD);
@@ -574,8 +597,7 @@ createdb(CreatedbStmt *stmt)
 	CHECK_FOR_INTERRUPTS();
 
 	/* Post creation hook for new database */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   DatabaseRelationId, dboid, 0, NULL);
+	InvokeObjectPostCreateHook(DatabaseRelationId, dboid, 0);
 
 	/*
 	 * Force a checkpoint before starting the copy. This will force dirty
@@ -590,7 +612,11 @@ createdb(CreatedbStmt *stmt)
 
 	/*
 	 * Take an MVCC snapshot to use while scanning through pg_tablespace.  For
+<<<<<<< HEAD
 	 * safety, copy the snapshot (this prevents it from changing if
+=======
+	 * safety, register the snapshot (this prevents it from changing if
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * something else were to request a snapshot during the loop).
 	 *
 	 * Traversing pg_tablespace with an MVCC snapshot is necessary to provide
@@ -735,6 +761,11 @@ createdb(CreatedbStmt *stmt)
 
 	/* Free our snapshot */
 	UnregisterSnapshot(snapshot);
+<<<<<<< HEAD
+=======
+
+	return dboid;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -840,7 +871,11 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
+<<<<<<< HEAD
 					 &db_istemplate, NULL, NULL, NULL, &defaultTablespace, NULL, NULL))
+=======
+				   &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		if (!missing_ok)
 		{
@@ -882,14 +917,7 @@ dropdb(const char *dbname, bool missing_ok)
 					   dbname);
 
 	/* DROP hook for the database being removed */
-	if (object_access_hook)
-	{
-		ObjectAccessDrop drop_arg;
-
-		memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
-		InvokeObjectAccessHook(OAT_DROP,
-							   DatabaseRelationId, db_id, 0, &drop_arg);
-	}
+	InvokeObjectDropHook(DatabaseRelationId, db_id, 0);
 
 	/*
 	 * Disallow dropping a DB that is marked istemplate.  This is just to
@@ -1023,7 +1051,7 @@ dropdb(const char *dbname, bool missing_ok)
 /*
  * Rename database
  */
-void
+Oid
 RenameDatabase(const char *oldname, const char *newname)
 {
 	Oid			db_id = InvalidOid;
@@ -1039,7 +1067,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
@@ -1096,6 +1124,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	simple_heap_update(rel, &newtup->t_self, newtup);
 	CatalogUpdateIndexes(rel, newtup);
 
+<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(DatabaseRelationId,
@@ -1103,11 +1132,16 @@ RenameDatabase(const char *oldname, const char *newname)
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
+=======
+	InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Close pg_database, but keep lock till commit.
 	 */
 	heap_close(rel, NoLock);
+
+	return db_id;
 }
 
 
@@ -1146,7 +1180,7 @@ movedb(const char *dbname, const char *tblspcname)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
+				   NULL, NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -1339,6 +1373,9 @@ movedb(const char *dbname, const char *tblspcname)
 		/* Update indexes */
 		CatalogUpdateIndexes(pgdbrel, newtuple);
 
+		InvokeObjectPostAlterHook(DatabaseRelationId,
+								  HeapTupleGetOid(newtuple), 0);
+
 		systable_endscan(sysscan);
 
 		/*
@@ -1430,10 +1467,11 @@ movedb_failure_callback(int code, Datum arg)
 /*
  * ALTER DATABASE name ...
  */
-void
+Oid
 AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 {
 	Relation	rel;
+	Oid			dboid;
 	HeapTuple	tuple,
 				newtuple;
 	ScanKeyData scankey;
@@ -1480,7 +1518,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 		/* this case isn't allowed within a transaction block */
 		PreventTransactionChain(isTopLevel, "ALTER DATABASE SET TABLESPACE");
 		movedb(stmt->dbname, strVal(dtablespace->arg));
-		return;
+		return InvalidOid;
 	}
 
 	if (dconnlimit)
@@ -1512,7 +1550,11 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	dboid = HeapTupleGetOid(tuple);
 
+<<<<<<< HEAD
 	if (!pg_database_ownercheck(dboid, GetUserId()))
+=======
+	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
@@ -1536,6 +1578,9 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* Update indexes */
 	CatalogUpdateIndexes(rel, newtuple);
 
+	InvokeObjectPostAlterHook(DatabaseRelationId,
+							  HeapTupleGetOid(newtuple), 0);
+
 	systable_endscan(scan);
 
 	/* MPP-6929: metadata tracking */
@@ -1548,6 +1593,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		char	   *cmd;
@@ -1561,13 +1607,16 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 						   NULL);
 		pfree(cmd);
 	}
+=======
+	return dboid;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
 /*
  * ALTER DATABASE name SET ...
  */
-void
+Oid
 AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 {
 	Oid			datid = get_database_oid(stmt->dbname, false);
@@ -1585,15 +1634,18 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	AlterSetting(datid, InvalidOid, stmt->setstmt);
 
 	UnlockSharedObject(DatabaseRelationId, datid, 0, AccessShareLock);
+
+	return datid;
 }
 
 
 /*
  * ALTER DATABASE name OWNER TO newowner
  */
-void
+Oid
 AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 {
+	Oid			db_id;
 	HeapTuple	tuple;
 	Relation	rel;
 	ScanKeyData scankey;
@@ -1619,6 +1671,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
 
+	db_id = HeapTupleGetOid(tuple);
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
 
 	dboid = HeapTupleGetOid(tuple);
@@ -1702,10 +1755,14 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 
 	}
 
+	InvokeObjectPostAlterHook(DatabaseRelationId, HeapTupleGetOid(tuple), 0);
+
 	systable_endscan(scan);
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
+
+	return db_id;
 }
 
 
@@ -1724,6 +1781,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
+			MultiXactId *dbMinMultiP,
 			Oid *dbTablespace, char **dbCollate, char **dbCtype)
 {
 	bool		result = false;
@@ -1812,6 +1870,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* limit of frozen XIDs */
 				if (dbFrozenXidP)
 					*dbFrozenXidP = dbform->datfrozenxid;
+				/* limit of frozen Multixacts */
+				if (dbMinMultiP)
+					*dbMinMultiP = dbform->datminmxid;
 				/* default tablespace for this database */
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;
@@ -1999,20 +2060,24 @@ check_db_file_conflict(Oid db_id)
 static int
 errdetail_busy_db(int notherbackends, int npreparedxacts)
 {
-	/*
-	 * We don't worry about singular versus plural here, since the English
-	 * rules for that don't translate very well.  But we can at least avoid
-	 * the case of zero items.
-	 */
 	if (notherbackends > 0 && npreparedxacts > 0)
+
+		/*
+		 * We don't deal with singular versus plural here, since gettext
+		 * doesn't support multiple plurals in one string.
+		 */
 		errdetail("There are %d other session(s) and %d prepared transaction(s) using the database.",
 				  notherbackends, npreparedxacts);
 	else if (notherbackends > 0)
-		errdetail("There are %d other session(s) using the database.",
-				  notherbackends);
+		errdetail_plural("There is %d other session using the database.",
+						 "There are %d other sessions using the database.",
+						 notherbackends,
+						 notherbackends);
 	else
-		errdetail("There are %d prepared transaction(s) using the database.",
-				  npreparedxacts);
+		errdetail_plural("There is %d prepared transaction using the database.",
+					"There are %d prepared transactions using the database.",
+						 npreparedxacts,
+						 npreparedxacts);
 	return 0;					/* just to keep ereport macro happy */
 }
 
@@ -2199,6 +2264,7 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }
+<<<<<<< HEAD
 
 void
 dbase_desc(StringInfo buf, XLogRecord *record)
@@ -2217,3 +2283,5 @@ dbase_desc(StringInfo buf, XLogRecord *record)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

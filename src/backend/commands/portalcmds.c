@@ -9,9 +9,13 @@
  * storage management for portals (but doesn't run any queries in them).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -159,7 +163,11 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
+<<<<<<< HEAD
 	PortalStart(portal, params, 0, GetActiveSnapshot(), NULL);
+=======
+	PortalStart(portal, params, 0, GetActiveSnapshot());
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -312,6 +320,7 @@ PortalCleanup(Portal portal)
 			saveResourceOwner = CurrentResourceOwner;
 			PG_TRY();
 			{
+<<<<<<< HEAD
 				CurrentResourceOwner = portal->resowner;
 
 				/*
@@ -319,6 +328,10 @@ PortalCleanup(Portal portal)
 				 */
 				queryDesc->estate->cancelUnfinished = true;
 
+=======
+				if (portal->resowner)
+					CurrentResourceOwner = portal->resowner;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				ExecutorFinish(queryDesc);
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);

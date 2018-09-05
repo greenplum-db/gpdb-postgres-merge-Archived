@@ -3,7 +3,7 @@
  * conversioncmds.c
  *	  conversion creation command support code
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/oid_dispatch.h"
@@ -31,16 +32,19 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
 static void AlterConversionOwner_internal(Relation rel, Oid conversionOid,
 							  Oid newOwnerId);
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * CREATE CONVERSION
  */
-void
+Oid
 CreateConversionCommand(CreateConversionStmt *stmt)
 {
 	Oid			namespaceId;
@@ -117,6 +121,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * All seem ok, go ahead (possible failure would be a duplicate conversion
 	 * name)
 	 */
+<<<<<<< HEAD
 	ConversionCreate(conversion_name, namespaceId, GetUserId(),
 					 from_encoding, to_encoding, funcoid, stmt->def);
 					 
@@ -331,4 +336,8 @@ AlterConversionNamespace_oid(Oid convOid, Oid newNspOid)
 	heap_close(rel, RowExclusiveLock);
 
 	return oldNspOid;
+=======
+	return ConversionCreate(conversion_name, namespaceId, GetUserId(),
+							from_encoding, to_encoding, funcoid, stmt->def);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }

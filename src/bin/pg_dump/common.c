@@ -4,7 +4,7 @@
  *	Catalog routines used by pg_dump; long ago these were shared
  *	by another dump tool, but not anymore.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,12 +14,11 @@
  *-------------------------------------------------------------------------
  */
 #include "pg_backup_archiver.h"
+#include "pg_backup_utils.h"
 
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
-#include "dumpmem.h"
-#include "dumputils.h"
 
 
 /*
@@ -106,6 +105,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numForeignDataWrappers;
 	int			numForeignServers;
 	int			numDefaultACLs;
+	int			numEventTriggers;
 
 	/* GPDB specific variables */
 	int			numExtProtocols;
@@ -235,8 +235,22 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 
 	/* Identify extension configuration tables that should be dumped */
 	if (g_verbose)
+<<<<<<< HEAD
 		write_msg(NULL, "finding extension tables\n");
 	processExtensionTables(fout, extinfo, numExtensions);
+=======
+		write_msg(NULL, "reading event triggers\n");
+	getEventTriggers(fout, &numEventTriggers);
+
+	/*
+	 * Identify extension member objects and mark them as not to be dumped.
+	 * This must happen after reading all objects that can be direct members
+	 * of extensions, but before we begin to process table subsidiary objects.
+	 */
+	if (g_verbose)
+		write_msg(NULL, "finding extension members\n");
+	getExtensionMembership(fout, extinfo, numExtensions);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -295,8 +309,12 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 		/* Sequences, views and external tables never have parents */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
 			tblinfo[i].relkind == RELKIND_VIEW ||
+<<<<<<< HEAD
 			tblinfo[i].relstorage == RELSTORAGE_EXTERNAL ||
 			tblinfo[i].relstorage == RELSTORAGE_FOREIGN)
+=======
+			tblinfo[i].relkind == RELKIND_MATVIEW)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */
@@ -342,8 +360,12 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 		/* Sequences, views and external tables never have parents */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
 			tbinfo->relkind == RELKIND_VIEW ||
+<<<<<<< HEAD
 			tbinfo->relstorage == RELSTORAGE_EXTERNAL ||
 			tbinfo->relstorage == RELSTORAGE_FOREIGN)
+=======
+			tbinfo->relkind == RELKIND_MATVIEW)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */
@@ -1011,24 +1033,6 @@ simple_oid_list_append(SimpleOidList *list, Oid val)
 	list->tail = cell;
 }
 
-void
-simple_string_list_append(SimpleStringList *list, const char *val)
-{
-	SimpleStringListCell *cell;
-
-	/* this calculation correctly accounts for the null trailing byte */
-	cell = (SimpleStringListCell *)
-		pg_malloc(sizeof(SimpleStringListCell) + strlen(val));
-	cell->next = NULL;
-	strcpy(cell->val, val);
-
-	if (list->tail)
-		list->tail->next = cell;
-	else
-		list->head = cell;
-	list->tail = cell;
-}
-
 bool
 simple_oid_list_member(SimpleOidList *list, Oid val)
 {
@@ -1041,6 +1045,7 @@ simple_oid_list_member(SimpleOidList *list, Oid val)
 	}
 	return false;
 }
+<<<<<<< HEAD
 
 bool
 simple_string_list_member(SimpleStringList *list, const char *val)
@@ -1120,3 +1125,5 @@ DetectChildConstraintDropped(TableInfo *tbinfo, PQExpBuffer q)
 	}
 
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

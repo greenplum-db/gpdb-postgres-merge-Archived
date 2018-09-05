@@ -3,7 +3,7 @@
  * parse_target.c
  *	  handle target lists
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -63,9 +63,9 @@ static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 					  bool make_target_entry, ParseExprKind exprKind);
 static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool targetlist);
+				  int location, bool make_target_entry);
 static List *ExpandRowReference(ParseState *pstate, Node *expr,
-				   bool targetlist);
+				   bool make_target_entry);
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -77,7 +77,11 @@ static int	FigureColnameInternal(Node *node, char **name);
  *
  * node		the (untransformed) parse tree for the value expression.
  * expr		the transformed expression, or NULL if caller didn't do it yet.
+<<<<<<< HEAD
  * exprKind	expression kind (EXPR_KIND_SELECT_TARGET, etc)
+=======
+ * exprKind expression kind (EXPR_KIND_SELECT_TARGET, etc)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * colname	the column name to be assigned, or NULL if none yet set.
  * resjunk	true if the target should be marked resjunk, ie, it is not
  *			wanted in the final projected tuple.
@@ -971,7 +975,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  */
 static List *
 ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
-					bool targetlist)
+					bool make_target_entry)
 {
 	List	   *fields = cref->fields;
 	int			numnames = list_length(fields);
@@ -984,11 +988,15 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
-		 * need not handle the targetlist==false case here.
+		 * need not handle the make_target_entry==false case here.
 		 */
+<<<<<<< HEAD
 		if (!targetlist)
 			elog(ERROR, "invalid use of *");
 
+=======
+		Assert(make_target_entry);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		return ExpandAllTables(pstate, cref->location);
 	}
 	else
@@ -1028,7 +1036,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 
 			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
 			if (node != NULL)
-				return ExpandRowReference(pstate, node, targetlist);
+				return ExpandRowReference(pstate, node, make_target_entry);
 		}
 
 		switch (numnames)
@@ -1091,7 +1099,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 							 errmsg("column reference \"%s\" is ambiguous",
 									NameListToString(cref->fields)),
 							 parser_errposition(pstate, cref->location)));
-				return ExpandRowReference(pstate, node, targetlist);
+				return ExpandRowReference(pstate, node, make_target_entry);
 			}
 		}
 
@@ -1126,7 +1134,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		/*
 		 * OK, expand the RTE into fields.
 		 */
-		return ExpandSingleTable(pstate, rte, cref->location, targetlist);
+		return ExpandSingleTable(pstate, rte, cref->location, make_target_entry);
 	}
 }
 
@@ -1134,9 +1142,10 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
  * ExpandAllTables()
  *		Transforms '*' (in the target list) into a list of targetlist entries.
  *
- * tlist entries are generated for each relation appearing in the query's
- * varnamespace.  We do not consider relnamespace because that would include
- * input tables of aliasless JOINs, NEW/OLD pseudo-entries, etc.
+ * tlist entries are generated for each relation visible for unqualified
+ * column name access.	We do not consider qualified-name-only entries because
+ * that would include input tables of aliasless JOINs, NEW/OLD pseudo-entries,
+ * etc.
  *
  * The referenced relations/columns are marked as requiring SELECT access.
  */
@@ -1144,24 +1153,41 @@ static List *
 ExpandAllTables(ParseState *pstate, int location)
 {
 	List	   *target = NIL;
+	bool		found_table = false;
 	ListCell   *l;
 
-	/* Check for SELECT *; */
-	if (!pstate->p_varnamespace)
+	foreach(l, pstate->p_namespace)
+	{
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+		RangeTblEntry *rte = nsitem->p_rte;
+
+		/* Ignore table-only items */
+		if (!nsitem->p_cols_visible)
+			continue;
+		/* Should not have any lateral-only items when parsing targetlist */
+		Assert(!nsitem->p_lateral_only);
+		/* Remember we found a p_cols_visible item */
+		found_table = true;
+
+		target = list_concat(target,
+							 expandRelAttrs(pstate,
+											rte,
+											RTERangeTablePosn(pstate, rte,
+															  NULL),
+											0,
+											location));
+	}
+
+	/*
+	 * Check for "SELECT *;".  We do it this way, rather than checking for
+	 * target == NIL, because we want to allow SELECT * FROM a zero_column
+	 * table.
+	 */
+	if (!found_table)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("SELECT * with no tables specified is not valid"),
 				 parser_errposition(pstate, location)));
-
-	foreach(l, pstate->p_varnamespace)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
-
-		target = list_concat(target,
-							 expandRelAttrs(pstate, rte, rtindex, 0,
-											location));
-	}
 
 	return target;
 }
@@ -1206,14 +1232,14 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
  */
 static List *
 ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool targetlist)
+				  int location, bool make_target_entry)
 {
 	int			sublevels_up;
 	int			rtindex;
 
 	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	if (targetlist)
+	if (make_target_entry)
 	{
 		/* expandRelAttrs handles permissions marking */
 		return expandRelAttrs(pstate, rte, rtindex, sublevels_up,

@@ -4,7 +4,7 @@
  *	  prototypes for catalog/index.c.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/index.h
@@ -34,8 +34,16 @@ typedef void (*IndexBuildCallback) (Relation index,
 typedef enum
 {
 	INDEX_CREATE_SET_READY,
+<<<<<<< HEAD
 	INDEX_CREATE_SET_VALID
 } IndexStateFlagsAction;
+=======
+	INDEX_CREATE_SET_VALID,
+	INDEX_DROP_CLEAR_VALID,
+	INDEX_DROP_SET_DEAD
+} IndexStateFlagsAction;
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 extern bool relationHasPrimaryKey(Relation rel);
@@ -62,7 +70,11 @@ extern Oid index_create(Relation heapRelation,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent,
+<<<<<<< HEAD
 			 const char *altConName);
+=======
+			 bool is_internal);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,
@@ -73,7 +85,9 @@ extern void index_constraint_create(Relation heapRelation,
 						bool initdeferred,
 						bool mark_as_primary,
 						bool update_pgindex,
-						bool allow_system_table_mods);
+						bool remove_old_dependencies,
+						bool allow_system_table_mods,
+						bool is_internal);
 
 extern void index_drop(Oid indexId, bool concurrent);
 

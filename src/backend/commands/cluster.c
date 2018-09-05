@@ -6,9 +6,13 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -19,6 +23,7 @@
  */
 #include "postgres.h"
 
+#include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/rewriteheap.h"
 #include "access/transam.h"
@@ -31,11 +36,15 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
+=======
+#include "catalog/objectaccess.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
@@ -78,7 +87,8 @@ static void rebuild_relation(Relation OldHeap, Oid indexOid,
 				 int freeze_min_age, int freeze_table_age, bool verbose);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			   int freeze_min_age, int freeze_table_age, bool verbose,
-			   bool *pSwapToastByContent, TransactionId *pFreezeXid);
+			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
+			   MultiXactId *pFreezeMulti);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
@@ -434,6 +444,20 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
 
 	/*
+	 * Quietly ignore the request if this is a materialized view which has not
+	 * been populated from its query. No harm is done because there is no data
+	 * to deal with, and we don't want to throw an error if this is part of a
+	 * multi-relation request -- for example, CLUSTER was run on the entire
+	 * database.
+	 */
+	if (OldHeap->rd_rel->relkind == RELKIND_MATVIEW &&
+		!RelationIsPopulated(OldHeap))
+	{
+		relation_close(OldHeap, AccessExclusiveLock);
+		return;
+	}
+
+	/*
 	 * All predicate locks on the tuples or pages are about to be made
 	 * invalid, because we move tuples around.	Promote them to relation
 	 * locks.  Predicate locks on indexes will be promoted when they are
@@ -523,7 +547,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
  * otherwise concurrent executions of RelationGetIndexList could miss indexes.
  */
 void
-mark_index_clustered(Relation rel, Oid indexOid)
+mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 {
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
@@ -583,6 +607,10 @@ mark_index_clustered(Relation rel, Oid indexOid)
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);
 		}
+
+		InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
+									 InvalidOid, is_internal);
+
 		heap_freetuple(indexTuple);
 	}
 
@@ -607,10 +635,11 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	bool		is_system_catalog;
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
+	MultiXactId frozenMulti;
 
 	/* Mark the correct index as clustered */
 	if (OidIsValid(indexOid))
-		mark_index_clustered(OldHeap, indexOid);
+		mark_index_clustered(OldHeap, indexOid, true);
 
 	/* Remember if it's a system catalog */
 	is_system_catalog = IsSystemRelation(OldHeap);
@@ -625,17 +654,22 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	/* Copy the heap data into the new table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid,
 				   freeze_min_age, freeze_table_age, verbose,
-				   &swap_toast_by_content, &frozenXid);
+				   &swap_toast_by_content, &frozenXid, &frozenMulti);
 
 	/*
 	 * Swap the physical files of the target and transient tables, then
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
+<<<<<<< HEAD
 					 swap_toast_by_content,
 					 true /* swap_stats */,
 					 false,
 					 frozenXid);
+=======
+					 swap_toast_by_content, false, true,
+					 frozenXid, frozenMulti);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -733,10 +767,15 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
                                           NULL,                         /*CDB*/
 										  reloptions,
 										  false,
+<<<<<<< HEAD
 										  /* allowSystemTableMods */ true,
 										  /* valid_opts */ true,
 										  is_part_child,
 										  is_part_parent);
+=======
+										  true,
+										  true);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	Assert(OIDNewHeap != InvalidOid);
 
 	ReleaseSysCache(tuple);
@@ -802,7 +841,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
 static void
 copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 			   int freeze_min_age, int freeze_table_age, bool verbose,
-			   bool *pSwapToastByContent, TransactionId *pFreezeXid)
+			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
+			   MultiXactId *pFreezeMulti)
 {
 	Relation	NewHeap,
 				OldHeap,
@@ -818,6 +858,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	bool		is_system_catalog;
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
+	MultiXactId MultiXactFrzLimit;
 	RewriteState rwstate;
 	bool		use_sort;
 	Tuplesortstate *tuplesort;
@@ -918,7 +959,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	 */
 	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
 						  OldHeap->rd_rel->relisshared,
-						  &OldestXmin, &FreezeXid, NULL);
+						  &OldestXmin, &FreezeXid, NULL, &MultiXactFrzLimit);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
@@ -927,14 +968,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
 		FreezeXid = OldHeap->rd_rel->relfrozenxid;
 
-	/* return selected value to caller */
+	/* return selected values to caller */
 	*pFreezeXid = FreezeXid;
+	*pFreezeMulti = MultiXactFrzLimit;
 
 	/* Remember if it's a system catalog */
 	is_system_catalog = IsSystemRelation(OldHeap);
 
 	/* Initialize the rewrite operation */
-	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
+	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid,
+								 MultiXactFrzLimit, use_wal);
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
@@ -1062,9 +1105,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 				/*
 				 * Similar situation to INSERT_IN_PROGRESS case.
 				 */
-				Assert(!(tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
 				if (!is_system_catalog &&
-					!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple->t_data)))
+					!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tuple->t_data)))
 					elog(WARNING, "concurrent delete in progress within table \"%s\"",
 						 RelationGetRelationName(OldHeap));
 				/* treat as recently dead */
@@ -1245,8 +1287,13 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
 void
 swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 					bool swap_toast_by_content,
+<<<<<<< HEAD
 					bool swap_stats,
+=======
+					bool is_internal,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 					TransactionId frozenXid,
+					MultiXactId frozenMulti,
 					Oid *mapped_tables)
 {
 	Relation	relRelation;
@@ -1378,12 +1425,24 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * and then fail to commit the pg_class update.
 	 */
 
+<<<<<<< HEAD
+=======
+	/* set rel1's frozen Xid and minimum MultiXid */
+	if (relform1->relkind != RELKIND_INDEX)
+	{
+		Assert(TransactionIdIsNormal(frozenXid));
+		relform1->relfrozenxid = frozenXid;
+		Assert(MultiXactIdIsValid(frozenMulti));
+		relform1->relminmxid = frozenMulti;
+	}
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
 	{
-		int4		swap_pages;
+		int32		swap_pages;
 		float4		swap_tuples;
-		int4		swap_allvisible;
+		int32		swap_allvisible;
 
 		swap_pages = relform1->relpages;
 		relform1->relpages = relform2->relpages;
@@ -1449,6 +1508,15 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	}
 
 	/*
+	 * Post alter hook for modified relations. The change to r2 is always
+	 * internal, but r1 depends on the invocation context.
+	 */
+	InvokeObjectPostAlterHookArg(RelationRelationId, r1, 0,
+								 InvalidOid, is_internal);
+	InvokeObjectPostAlterHookArg(RelationRelationId, r2, 0,
+								 InvalidOid, true);
+
+	/*
 	 * If we have toast tables associated with the relations being swapped,
 	 * deal with them too.
 	 */
@@ -1463,8 +1531,13 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 									relform2->reltoastrelid,
 									target_is_pg_class,
 									swap_toast_by_content,
+<<<<<<< HEAD
 									swap_stats,
+=======
+									is_internal,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 									frozenXid,
+									frozenMulti,
 									mapped_tables);
 			}
 			else
@@ -1513,8 +1586,13 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 							relform2->reltoastidxid,
 							target_is_pg_class,
 							swap_toast_by_content,
+<<<<<<< HEAD
 							swap_stats,
+=======
+							is_internal,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 							InvalidTransactionId,
+							InvalidMultiXactId,
 							mapped_tables);
 
 	/* Clean up. */
@@ -1553,7 +1631,9 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool swap_toast_by_content,
 				 bool swap_stats,
 				 bool check_constraints,
-				 TransactionId frozenXid)
+				 bool is_internal,
+				 TransactionId frozenXid,
+				 MultiXactId frozenMulti)
 {
 	ObjectAddress object;
 	Oid			mapped_tables[4];
@@ -1569,9 +1649,14 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 */
 	swap_relation_files(OIDOldHeap, OIDNewHeap,
 						(OIDOldHeap == RelationRelationId),
+<<<<<<< HEAD
 						swap_toast_by_content,
 						swap_stats,
 						frozenXid, mapped_tables);
+=======
+						swap_toast_by_content, is_internal,
+						frozenXid, frozenMulti, mapped_tables);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If it's a system catalog, queue an sinval message to flush all
@@ -1652,13 +1737,13 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
 					 OIDOldHeap);
 			RenameRelationInternal(newrel->rd_rel->reltoastrelid,
-								   NewToastName);
+								   NewToastName, true);
 
 			/* ... and its index too */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index",
 					 OIDOldHeap);
 			RenameRelationInternal(toastidx,
-								   NewToastName);
+								   NewToastName, true);
 		}
 		relation_close(newrel, NoLock);
 	}

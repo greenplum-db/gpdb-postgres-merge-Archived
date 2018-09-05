@@ -40,11 +40,17 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	bool		got_xid = false;
 	bool		got_oid = false;
 	bool		got_nextxlogfile = false;
+<<<<<<< HEAD
 	/* GPDB_93_MERGE_FIXME
 	bool		got_multi = false;
 	bool		got_mxoff = false;
 	bool		got_oldestmulti = false;
 	*/
+=======
+	bool		got_multi = false;
+	bool		got_mxoff = false;
+	bool		got_oldestmulti = false;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	bool		got_log_id = false;
 	bool		got_log_seg = false;
 	bool		got_tli = false;
@@ -134,6 +140,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		got_float8_pass_by_value = true;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * In PostgreSQL, checksums were introduced in 9.3 so the test for checksum
 	 * version in upstream applies to <= 9.2. Greenplum backported checksums
@@ -141,6 +148,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 * against 8.2 instead.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) == 802)
+=======
+	/* Only in <= 9.2 */
+	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		cluster->controldata.data_checksum_version = 0;
 		got_data_checksum_version = true;
@@ -215,7 +226,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 			p++;				/* removing ':' char */
 			logid = str2uint(p);
+<<<<<<< HEAD
 			cluster->controldata.logid = logid;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "First log file segment after reset:")) != NULL)
@@ -227,7 +241,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 			p++;				/* removing ':' char */
 			segno = str2uint(p);
+<<<<<<< HEAD
 			cluster->controldata.nxtlogseg = segno;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			got_log_seg = true;
 		}
 		/* GPDB 4.3 (and PostgreSQL 8.2) wording of the above two. */
@@ -296,8 +313,11 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			cluster->controldata.chkpnt_nxtoid = str2uint(p);
 			got_oid = true;
 		}
+<<<<<<< HEAD
 		/* GPDB_93_MERGE_FIXME */
 #if 0
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		else if ((p = strstr(bufin, "Latest checkpoint's NextMultiXactId:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -331,7 +351,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
 			got_mxoff = true;
 		}
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		else if ((p = strstr(bufin, "Maximum data alignment:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -517,11 +540,19 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first log
 	 * file after reset as separate lines. Starting with 9.3, it reports the
 	 * WAL file name. If the old cluster is older than 9.3, we construct the
+<<<<<<< HEAD
 	 * WAL file name from the tli, xlogid, and segno.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
 		if (got_tli && got_log_id && got_log_seg)
+=======
+	 * WAL file name from the xlogid and segno.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
+	{
+		if (got_log_id && got_log_seg)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			snprintf(cluster->controldata.nextxlogfile, 25, "%08X%08X%08X",
 					 tli, logid, segno);
@@ -531,12 +562,22 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
+<<<<<<< HEAD
 		/*!got_multi || GPDB_93_MERGE_FIXME !got_mxoff ||
 		(!got_oldestmulti &&
 		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) || */
 		(!live_check && !got_nextxlogfile) ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || /* !got_toast || */
+=======
+		!got_multi || !got_mxoff ||
+		(!got_oldestmulti &&
+		 cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER) ||
+		(!live_check && !got_nextxlogfile) ||
+		!got_tli ||
+		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
+		!got_walseg || !got_ident || !got_index || !got_toast ||
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
@@ -549,12 +590,25 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_oid)
 			pg_log(PG_REPORT, "  latest checkpoint next OID\n");
 
+<<<<<<< HEAD
 		/* GPDB_93_MERGE_FIXME
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (!got_multi)
 			pg_log(PG_REPORT, "  latest checkpoint next MultiXactId\n");
 
 		if (!got_mxoff)
 			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
+<<<<<<< HEAD
+=======
+
+		if (!got_oldestmulti &&
+			cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
+			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId\n");
+
+		if (!live_check && !got_nextxlogfile)
+			pg_log(PG_REPORT, "  first WAL segment after reset\n");
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		if (!got_oldestmulti &&
 			cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
@@ -674,6 +728,7 @@ check_control_data(ControlData *oldctrl,
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Check for allowed combinations of data checksums. PostgreSQL only allow
 	 * upgrades where the checksum settings match, in Greenplum we can however
 	 * set or remove checksums during the upgrade.
@@ -695,6 +750,16 @@ check_control_data(ControlData *oldctrl,
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version
 			 && user_opts.checksum_mode == CHECKSUM_NONE)
 		pg_log(PG_FATAL, "old and new cluster pg_controldata checksum versions do not match\n");
+=======
+	 * We might eventually allow upgrades from checksum to no-checksum
+	 * clusters.
+	 */
+	if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
+	{
+		pg_log(PG_FATAL,
+			   "old and new pg_controldata checksum versions are invalid or do not match\n");
+	}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 

@@ -4,9 +4,13 @@
  * bootparse.y
  *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -268,10 +272,15 @@ Boot_CreateStmt:
 													  (Datum) 0,
 													  false,
 													  true,
+<<<<<<< HEAD
 													  /* valid_opts */ false,
 													  /* is_part_child */ false,
 													  /* is_part_parent */ false);
 						elog(DEBUG4, "relation created with oid %u", id);
+=======
+													  false);
+						elog(DEBUG4, "relation created with OID %u", id);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 					}
 					do_end();
 				}
@@ -302,11 +311,31 @@ Boot_InsertStmt:
 Boot_DeclareIndexStmt:
 		  XDECLARE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
+					IndexStmt *stmt = makeNode(IndexStmt);
+
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, $6, -1),
-								$3,
+					stmt->idxname = $3;
+					stmt->relation = makeRangeVar(NULL, $6, -1);
+					stmt->accessMethod = $8;
+					stmt->tableSpace = NULL;
+					stmt->indexParams = $10;
+					stmt->options = NIL;
+					stmt->whereClause = NULL;
+					stmt->excludeOpNames = NIL;
+					stmt->idxcomment = NULL;
+					stmt->indexOid = InvalidOid;
+					stmt->oldNode = InvalidOid;
+					stmt->unique = false;
+					stmt->primary = false;
+					stmt->isconstraint = false;
+					stmt->deferrable = false;
+					stmt->initdeferred = false;
+					stmt->concurrent = false;
+
+					DefineIndex(stmt,
 								$4,
+<<<<<<< HEAD
 								InvalidOid,
 								$8,
 								NULL,
@@ -315,6 +344,12 @@ Boot_DeclareIndexStmt:
 								false, false, false, false, false,
 								false, false, true, false, false,
 								NULL);
+=======
+								false,
+								false,
+								true, /* skip_build */
+								false);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 					do_end();
 				}
 		;
@@ -322,11 +357,31 @@ Boot_DeclareIndexStmt:
 Boot_DeclareUniqueIndexStmt:
 		  XDECLARE UNIQUE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
+					IndexStmt *stmt = makeNode(IndexStmt);
+
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, $7, -1),
-								$4,
+					stmt->idxname = $4;
+					stmt->relation = makeRangeVar(NULL, $7, -1);
+					stmt->accessMethod = $9;
+					stmt->tableSpace = NULL;
+					stmt->indexParams = $11;
+					stmt->options = NIL;
+					stmt->whereClause = NULL;
+					stmt->excludeOpNames = NIL;
+					stmt->idxcomment = NULL;
+					stmt->indexOid = InvalidOid;
+					stmt->oldNode = InvalidOid;
+					stmt->unique = true;
+					stmt->primary = false;
+					stmt->isconstraint = false;
+					stmt->deferrable = false;
+					stmt->initdeferred = false;
+					stmt->concurrent = false;
+
+					DefineIndex(stmt,
 								$5,
+<<<<<<< HEAD
 								InvalidOid,
 								$9,
 								NULL,
@@ -335,6 +390,12 @@ Boot_DeclareUniqueIndexStmt:
 								true, false, false, false, false,
 								false, false, true, false, false,
 								NULL);
+=======
+								false,
+								false,
+								true, /* skip_build */
+								false);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 					do_end();
 				}
 		;

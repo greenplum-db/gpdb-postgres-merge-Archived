@@ -24,6 +24,7 @@ INSERT INTO test_schema_1.abc DEFAULT VALUES;
 SELECT * FROM test_schema_1.abc;
 SELECT * FROM test_schema_1.abc_view;
 
+<<<<<<< HEAD
 -- Test GRANT/REVOKE 
 CREATE SCHEMA test_schema_2;
 CREATE TABLE test_schema_2.abc as select * from test_schema_1.abc DISTRIBUTED BY (a);
@@ -71,6 +72,18 @@ DROP SCHEMA test_schema_1;  -- does not exist
 DROP SCHEMA test_schema_2;  -- contains objects
 DROP SCHEMA test_schema_2 CASCADE;
 DROP ROLE tmp_test_schema_role;
+=======
+-- test IF NOT EXISTS cases
+CREATE SCHEMA test_schema_1; -- fail, already exists
+CREATE SCHEMA IF NOT EXISTS test_schema_1; -- ok with notice
+CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
+       CREATE TABLE abc (
+              a serial,
+              b int UNIQUE
+       );
+
+DROP SCHEMA test_schema_1 CASCADE;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 -- verify that the objects were dropped
 SELECT nspname, relname

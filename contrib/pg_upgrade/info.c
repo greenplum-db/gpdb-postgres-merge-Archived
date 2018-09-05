@@ -46,6 +46,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
+<<<<<<< HEAD
 	/*
 	 * The old database shouldn't have more relations than the new one.
 	 * We force the new cluster to have a TOAST table if the old table
@@ -58,6 +59,10 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	/* Drive the loop using new_relnum, which might be higher. */
 	for (old_relnum = new_relnum = 0; new_relnum < new_db->rel_arr.nrels;
 		 new_relnum++)
+=======
+	for (relnum = 0; relnum < Min(old_db->rel_arr.nrels, new_db->rel_arr.nrels);
+		 relnum++)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		RelInfo    *old_rel;
 		RelInfo    *new_rel = &new_db->rel_arr.rels[new_relnum];
@@ -139,9 +144,18 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		old_relnum++;
 	}
 
+<<<<<<< HEAD
 	/* Did we fail to exhaust the old array? */
 	if (old_relnum != old_db->rel_arr.nrels)
 		pg_log(PG_FATAL, "old and new databases \"%s\" have a mismatched number of relations\n",
+=======
+	/*
+	 * Do this check after the loop so hopefully we will produce a clearer
+	 * error above
+	 */
+	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
+		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			   old_db->db_name);
 
 	*nmaps = num_maps;
@@ -168,12 +182,19 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 * exist in the data directories.
 		 */
 		strlcpy(map->old_tablespace, old_data, sizeof(map->old_tablespace));
+<<<<<<< HEAD
 		strlcpy(map->old_tablespace_suffix, "/base", sizeof(map->old_tablespace_suffix));
+=======
+		strlcpy(map->new_tablespace, new_data, sizeof(map->new_tablespace));
+		strlcpy(map->old_tablespace_suffix, "/base", sizeof(map->old_tablespace_suffix));
+		strlcpy(map->new_tablespace_suffix, "/base", sizeof(map->new_tablespace_suffix));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
 		strlcpy(map->old_tablespace, old_rel->tablespace, sizeof(map->old_tablespace));
+<<<<<<< HEAD
 		strlcpy(map->old_tablespace_suffix, old_cluster.tablespace_suffix,
 				sizeof(map->old_tablespace_suffix));
 	}
@@ -196,6 +217,15 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 				sizeof(map->new_tablespace_suffix));
 	}
 
+=======
+		strlcpy(map->new_tablespace, new_rel->tablespace, sizeof(map->new_tablespace));
+		strlcpy(map->old_tablespace_suffix, old_cluster.tablespace_suffix,
+				sizeof(map->old_tablespace_suffix));
+		strlcpy(map->new_tablespace_suffix, new_cluster.tablespace_suffix,
+				sizeof(map->new_tablespace_suffix));
+	}
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	map->old_db_oid = old_db->db_oid;
 	map->new_db_oid = new_db->db_oid;
 
@@ -437,28 +467,41 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	   ON c.relnamespace = n.oid "
 			 "LEFT OUTER JOIN pg_catalog.pg_index i "
 			 "	   ON c.oid = i.indexrelid "
+<<<<<<< HEAD
 			 "WHERE relkind IN ('r', 'o', 'm', 'b', 'i'%s) AND "
+=======
+			 "WHERE relkind IN ('r', 'm', 'i'%s) AND "
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * pg_dump only dumps valid indexes;  testing indisready is necessary in
 	 * 9.2, and harmless in earlier/later versions.
 	 */
+<<<<<<< HEAD
 			 " %s "
 	/* workaround for Greenplum 4.3 bugs */
 			 " %s "
+=======
+			 " i.indisvalid IS DISTINCT FROM false AND "
+			 " i.indisready IS DISTINCT FROM false AND "
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* exclude possible orphaned temp tables */
 			 "  ((n.nspname !~ '^pg_temp_' AND "
 			 "    n.nspname !~ '^pg_toast_temp_' AND "
 	/* skip pg_toast because toast index have relkind == 'i', not 't' */
 			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', "
 			 "						'binary_upgrade', 'pg_toast') AND "
+<<<<<<< HEAD
 			 "    n.nspname NOT IN ('gp_toolkit', 'pg_bitmapindex', 'pg_aoseg') AND "
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			 "	  c.oid >= %u) "
 			 "  OR (n.nspname = 'pg_catalog' AND "
 	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) ));",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			 "" : ", 'S'",
+<<<<<<< HEAD
 	/* Greenplum 4.3 does not have indisvalid nor indisready */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) == 802) ?
 			 "" : " i.indisvalid IS DISTINCT FROM false AND "
@@ -467,6 +510,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 (GET_MAJOR_VERSION(old_cluster.major_version) > 802) ?
 			 "" : "  AND relname NOT IN ('__gp_localid', '__gp_masterid', "
 			 		 "'__gp_log_segment_ext', '__gp_log_master_ext', 'gp_disk_free') ",
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			 FirstNormalObjectId,
 	/* does pg_largeobject_metadata need to be migrated? */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 804) ?
@@ -491,7 +536,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "
+<<<<<<< HEAD
 			 "  c.relstorage, c.relkind, "
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			 "	c.relfilenode, c.reltablespace, %s "
 			 "FROM info_rels i JOIN pg_catalog.pg_class c "
 			 "		ON i.reloid = c.oid "
@@ -501,11 +549,16 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	   ON c.reltablespace = t.oid "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
+<<<<<<< HEAD
 	/*
 	 * 9.2 removed the spclocation column in upstream postgres, in GPDB it was
 	 * removed in 6.0.0 during the 8.4 merge
 	 */
 			 (GET_MAJOR_VERSION(cluster->major_version) <= 803) ?
+=======
+	/* 9.2 removed the spclocation column */
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);

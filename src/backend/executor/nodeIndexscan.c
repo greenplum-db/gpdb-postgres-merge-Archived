@@ -3,7 +3,7 @@
  * nodeIndexscan.c
  *	  Routines to support indexed scans of relations
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -523,6 +523,14 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	ExecInitResultTupleSlot(estate, &indexstate->ss.ps);
 	ExecInitScanTupleSlot(estate, &indexstate->ss);
 
+<<<<<<< HEAD
+=======
+	/*
+	 * open the base relation and acquire appropriate lock on it.
+	 */
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	indexstate->ss.ss_currentRelation = currentRelation;
 
 	/*

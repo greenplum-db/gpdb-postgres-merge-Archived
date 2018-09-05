@@ -3,7 +3,7 @@
  * basebackup.c
  *	  code for taking a base backup and streaming it to a standby
  *
- * Portions Copyright (c) 2010-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/basebackup.c
@@ -27,9 +27,11 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "common/relpath.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "replication/basebackup.h"
 #include "replication/walsender.h"
@@ -40,12 +42,17 @@
 #include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+<<<<<<< HEAD
 #include "utils/memutils.h"
 #include "utils/fmgroids.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
+=======
+#include "utils/ps_status.h"
+#include "pgtar.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 typedef struct
 {
@@ -58,8 +65,12 @@ typedef struct
 } basebackup_options;
 
 
+<<<<<<< HEAD
 static bool match_exclude_list(char *path, List *exclude);
 static int64 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces, List *exclude);
+=======
+static int64 sendDir(char *path, int basepathlen, bool sizeonly);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 static int64 sendTablespace(char *path, bool sizeonly);
 static bool sendFile(char *readfilename, char *tarfilename,
 		 struct stat * statbuf, bool missing_ok);
@@ -71,12 +82,14 @@ static void SendBackupHeader(List *tablespaces);
 static void base_backup_cleanup(int code, Datum arg);
 static void perform_base_backup(basebackup_options *opt, DIR *tblspcdir);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
-static void SendXlogRecPtrResult(XLogRecPtr ptr);
+static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
+static int	compareWalFileNames(const void *a, const void *b);
+
+/* Was the backup currently in-progress initiated in recovery mode? */
+static bool backup_started_in_recovery = false;
 
 /*
  * Size of each block sent into the tar stream for larger files.
- *
- * XLogSegSize *MUST* be evenly dividable by this
  */
 #define TAR_SEND_SIZE 32768
 
@@ -109,12 +122,15 @@ static void
 perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 {
 	XLogRecPtr	startptr;
+	TimeLineID	starttli;
 	XLogRecPtr	endptr;
+	TimeLineID	endtli;
 	char	   *labelfile;
 	int			datadirpathlen;
 
 	datadirpathlen = strlen(DataDir);
 
+<<<<<<< HEAD
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &labelfile);
 	Assert(!XLogRecPtrIsInvalid(startptr));
 
@@ -130,6 +146,13 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	WalSndSetXLogCleanUpTo(startptr);
 
 	SIMPLE_FAULT_INJECTOR(BaseBackupPostCreateCheckpoint);
+=======
+	backup_started_in_recovery = RecoveryInProgress();
+
+	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
+								  &labelfile);
+	SendXlogRecPtrResult(startptr, starttli);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -186,7 +209,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(linkpath);
+<<<<<<< HEAD
 			ti->rpath = relpath ? pstrdup(relpath) : NULL;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
@@ -222,6 +248,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			pq_sendint(&buf, 0, 2);		/* natts */
 			pq_endmessage(&buf);
 
+<<<<<<< HEAD
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
@@ -244,20 +271,33 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				sendTablespace(ti->path, false);
 
 			/* In the main tar, include pg_control last. */
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
 
+				/* In the main tar, include the backup_label first... */
+				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
+
+				/* ... then the bulk of the files ... */
+				sendDir(".", 1, false);
+
+				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
-				{
 					ereport(ERROR,
 							(errcode_for_file_access(),
 							 errmsg("could not stat control file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
+<<<<<<< HEAD
 				}
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
+			else
+				sendTablespace(ti->path, false);
 
 			/*
 			 * If we're including WAL, and this is the main data directory we
@@ -275,7 +315,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 
-	endptr = do_pg_stop_backup(labelfile, !opt->nowait);
+	endptr = do_pg_stop_backup(labelfile, !opt->nowait, &endtli);
 
 	if (opt->includewal)
 	{
@@ -283,71 +323,229 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		 * We've left the last tar file "open", so we can now append the
 		 * required WAL files to it.
 		 */
-		uint32		logid,
-					logseg;
-		uint32		endlogid,
-					endlogseg;
+		char		pathbuf[MAXPGPATH];
+		XLogSegNo	segno;
+		XLogSegNo	startsegno;
+		XLogSegNo	endsegno;
 		struct stat statbuf;
+		List	   *historyFileList = NIL;
+		List	   *walFileList = NIL;
+		char	  **walFiles;
+		int			nWalFiles;
+		char		firstoff[MAXFNAMELEN];
+		char		lastoff[MAXFNAMELEN];
+		DIR		   *dir;
+		struct dirent *de;
+		int			i;
+		ListCell   *lc;
+		TimeLineID	tli;
 
-		MemSet(&statbuf, 0, sizeof(statbuf));
-		statbuf.st_mode = S_IRUSR | S_IWUSR;
-#ifndef WIN32
-		statbuf.st_uid = geteuid();
-		statbuf.st_gid = getegid();
-#endif
-		statbuf.st_size = XLogSegSize;
-		statbuf.st_mtime = time(NULL);
+		/*
+		 * I'd rather not worry about timelines here, so scan pg_xlog and
+		 * include all WAL files in the range between 'startptr' and 'endptr',
+		 * regardless of the timeline the file is stamped with. If there are
+		 * some spurious WAL files belonging to timelines that don't belong in
+		 * this server's history, they will be included too. Normally there
+		 * shouldn't be such files, but if there are, there's little harm in
+		 * including them.
+		 */
+		XLByteToSeg(startptr, startsegno);
+		XLogFileName(firstoff, ThisTimeLineID, startsegno);
+		XLByteToPrevSeg(endptr, endsegno);
+		XLogFileName(lastoff, ThisTimeLineID, endsegno);
 
-		XLByteToSeg(startptr, logid, logseg);
-		XLByteToPrevSeg(endptr, endlogid, endlogseg);
-
-		while (true)
+		dir = AllocateDir("pg_xlog");
+		if (!dir)
+			ereport(ERROR,
+				 (errmsg("could not open directory \"%s\": %m", "pg_xlog")));
+		while ((de = ReadDir(dir, "pg_xlog")) != NULL)
 		{
-			/* Send another xlog segment */
-			char		fn[MAXPGPATH];
-			int			i;
-
-			XLogFilePath(fn, ThisTimeLineID, logid, logseg);
-			_tarWriteHeader(fn, NULL, &statbuf);
-
-			/* Send the actual WAL file contents, block-by-block */
-			for (i = 0; i < XLogSegSize / TAR_SEND_SIZE; i++)
+			/* Does it look like a WAL segment, and is it in the range? */
+			if (strlen(de->d_name) == 24 &&
+				strspn(de->d_name, "0123456789ABCDEF") == 24 &&
+				strcmp(de->d_name + 8, firstoff + 8) >= 0 &&
+				strcmp(de->d_name + 8, lastoff + 8) <= 0)
 			{
-				char		buf[TAR_SEND_SIZE];
-				XLogRecPtr	ptr;
+				walFileList = lappend(walFileList, pstrdup(de->d_name));
+			}
+			/* Does it look like a timeline history file? */
+			else if (strlen(de->d_name) == 8 + strlen(".history") &&
+					 strspn(de->d_name, "0123456789ABCDEF") == 8 &&
+					 strcmp(de->d_name + 8, ".history") == 0)
+			{
+				historyFileList = lappend(historyFileList, pstrdup(de->d_name));
+			}
+		}
+		FreeDir(dir);
 
-				ptr.xlogid = logid;
-				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
+		/*
+		 * Before we go any further, check that none of the WAL segments we
+		 * need were removed.
+		 */
+		CheckXLogRemoved(startsegno, ThisTimeLineID);
 
+		/*
+		 * Put the WAL filenames into an array, and sort. We send the files in
+		 * order from oldest to newest, to reduce the chance that a file is
+		 * recycled before we get a chance to send it over.
+		 */
+		nWalFiles = list_length(walFileList);
+		walFiles = palloc(nWalFiles * sizeof(char *));
+		i = 0;
+		foreach(lc, walFileList)
+		{
+			walFiles[i++] = lfirst(lc);
+		}
+		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
+
+		/*
+		 * Sanity check: the first and last segment should cover startptr and
+		 * endptr, with no gaps in between.
+		 */
+		XLogFromFileName(walFiles[0], &tli, &segno);
+		if (segno != startsegno)
+		{
+			char		startfname[MAXFNAMELEN];
+
+			XLogFileName(startfname, ThisTimeLineID, startsegno);
+			ereport(ERROR,
+					(errmsg("could not find WAL file \"%s\"", startfname)));
+		}
+		for (i = 0; i < nWalFiles; i++)
+		{
+			XLogSegNo	currsegno = segno;
+			XLogSegNo	nextsegno = segno + 1;
+
+			XLogFromFileName(walFiles[i], &tli, &segno);
+			if (!(nextsegno == segno || currsegno == segno))
+			{
+				char		nextfname[MAXFNAMELEN];
+
+				XLogFileName(nextfname, ThisTimeLineID, nextsegno);
+				ereport(ERROR,
+					  (errmsg("could not find WAL file \"%s\"", nextfname)));
+			}
+		}
+		if (segno != endsegno)
+		{
+			char		endfname[MAXFNAMELEN];
+
+			XLogFileName(endfname, ThisTimeLineID, endsegno);
+			ereport(ERROR,
+					(errmsg("could not find WAL file \"%s\"", endfname)));
+		}
+
+		/* Ok, we have everything we need. Send the WAL files. */
+		for (i = 0; i < nWalFiles; i++)
+		{
+			FILE	   *fp;
+			char		buf[TAR_SEND_SIZE];
+			size_t		cnt;
+			pgoff_t		len = 0;
+
+			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", walFiles[i]);
+			XLogFromFileName(walFiles[i], &tli, &segno);
+
+			fp = AllocateFile(pathbuf, "rb");
+			if (fp == NULL)
+			{
 				/*
-				 * Some old compilers, e.g. gcc 2.95.3/x86, think that passing
-				 * a struct in the same function as a longjump might clobber a
-				 * variable.  bjm 2011-02-04
-				 * http://lists.apple.com/archives/xcode-users/2003/Dec//msg000
-				 * 51.html
+				 * Most likely reason for this is that the file was already
+				 * removed by a checkpoint, so check for that to get a better
+				 * error message.
 				 */
-				XLogRead(buf, ptr, TAR_SEND_SIZE);
-				if (pq_putmessage('d', buf, TAR_SEND_SIZE))
-					ereport(ERROR,
-							(errmsg("base backup could not send data, aborting backup")));
+				CheckXLogRemoved(segno, tli);
+
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open file \"%s\": %m", pathbuf)));
 			}
 
+			if (fstat(fileno(fp), &statbuf) != 0)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								pathbuf)));
+			if (statbuf.st_size != XLogSegSize)
+			{
+				CheckXLogRemoved(segno, tli);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+			}
+
+			_tarWriteHeader(pathbuf, NULL, &statbuf);
+
+			while ((cnt = fread(buf, 1, Min(sizeof(buf), XLogSegSize - len), fp)) > 0)
+			{
+				CheckXLogRemoved(segno, tli);
+				/* Send the chunk as a CopyData message */
+				if (pq_putmessage('d', buf, cnt))
+					ereport(ERROR,
+							(errmsg("base backup could not send data, aborting backup")));
+
+				len += cnt;
+				if (len == XLogSegSize)
+					break;
+			}
+
+			if (len != XLogSegSize)
+			{
+				CheckXLogRemoved(segno, tli);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+			}
+
+<<<<<<< HEAD
 			elogif(debug_basebackup, LOG,
 				   "basebackup perform -- Sent xlog file %s", fn);
+=======
+			/* XLogSegSize is a multiple of 512, so no need for padding */
+			FreeFile(fp);
+		}
 
-			/* Advance to the next WAL file */
-			NextLogSeg(logid, logseg);
+		/*
+		 * Send timeline history files too. Only the latest timeline history
+		 * file is required for recovery, and even that only if there happens
+		 * to be a timeline switch in the first WAL segment that contains the
+		 * checkpoint record, or if we're taking a base backup from a standby
+		 * server and the target timeline changes while the backup is taken.
+		 * But they are small and highly useful for debugging purposes, so
+		 * better include them all, always.
+		 */
+		foreach(lc, historyFileList)
+		{
+			char	   *fname = lfirst(lc);
 
-			/* Have we reached our stop position yet? */
-			if (logid > endlogid ||
-				(logid == endlogid && logseg > endlogseg))
-				break;
+			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", fname);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
+
+			if (lstat(pathbuf, &statbuf) != 0)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", pathbuf)));
+
+			sendFile(pathbuf, pathbuf, &statbuf, false);
 		}
 
 		/* Send CopyDone message for the last tar file */
 		pq_putemptymessage('c');
 	}
-	SendXlogRecPtrResult(endptr);
+	SendXlogRecPtrResult(endptr, endtli);
+}
+
+/*
+ * qsort comparison function, to compare log/seg portion of WAL segment
+ * filenames, ignoring the timeline portion.
+ */
+static int
+compareWalFileNames(const void *a, const void *b)
+{
+	char	   *fna = *((char **) a);
+	char	   *fnb = *((char **) b);
+
+	return strcmp(fna + 8, fnb + 8);
 }
 
 /*
@@ -452,18 +650,9 @@ void
 SendBaseBackup(BaseBackupCmd *cmd)
 {
 	DIR		   *dir;
-	MemoryContext backup_context;
-	MemoryContext old_context;
 	basebackup_options opt;
 
 	parse_basebackup_options(cmd->options, &opt);
-
-	backup_context = AllocSetContextCreate(CurrentMemoryContext,
-										   "Streaming base backup context",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
-	old_context = MemoryContextSwitchTo(backup_context);
 
 	WalSndSetState(WALSNDSTATE_BACKUP);
 
@@ -485,9 +674,6 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	perform_base_backup(&opt, dir);
 
 	FreeDir(dir);
-
-	MemoryContextSwitchTo(old_context);
-	MemoryContextDelete(backup_context);
 }
 
 static void
@@ -576,17 +762,15 @@ SendBackupHeader(List *tablespaces)
  * XlogRecPtr record (in text format)
  */
 static void
-SendXlogRecPtrResult(XLogRecPtr ptr)
+SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 {
 	StringInfoData buf;
 	char		str[MAXFNAMELEN];
 
-	snprintf(str, sizeof(str), "%X/%X", ptr.xlogid, ptr.xrecoff);
-
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint(&buf, 1, 2);		/* 1 field */
+	pq_sendint(&buf, 2, 2);		/* 2 fields */
 
-	/* Field header */
+	/* Field headers */
 	pq_sendstring(&buf, "recptr");
 	pq_sendint(&buf, 0, 4);		/* table oid */
 	pq_sendint(&buf, 0, 2);		/* attnum */
@@ -594,11 +778,30 @@ SendXlogRecPtrResult(XLogRecPtr ptr)
 	pq_sendint(&buf, -1, 2);
 	pq_sendint(&buf, 0, 4);
 	pq_sendint(&buf, 0, 2);
+
+	pq_sendstring(&buf, "tli");
+	pq_sendint(&buf, 0, 4);		/* table oid */
+	pq_sendint(&buf, 0, 2);		/* attnum */
+
+	/*
+	 * int8 may seem like a surprising data type for this, but in thory int4
+	 * would not be wide enough for this, as TimeLineID is unsigned.
+	 */
+	pq_sendint(&buf, INT8OID, 4);		/* type oid */
+	pq_sendint(&buf, -1, 2);
+	pq_sendint(&buf, 0, 4);
+	pq_sendint(&buf, 0, 2);
 	pq_endmessage(&buf);
 
 	/* Data row */
 	pq_beginmessage(&buf, 'D');
-	pq_sendint(&buf, 1, 2);		/* number of columns */
+	pq_sendint(&buf, 2, 2);		/* number of columns */
+
+	snprintf(str, sizeof(str), "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
+	pq_sendint(&buf, strlen(str), 4);	/* length */
+	pq_sendbytes(&buf, str, strlen(str));
+
+	snprintf(str, sizeof(str), "%u", tli);
 	pq_sendint(&buf, strlen(str), 4);	/* length */
 	pq_sendbytes(&buf, str, strlen(str));
 	pq_endmessage(&buf);
@@ -721,6 +924,50 @@ match_exclude_list(char *path, List *exclude)
 }
 
 /*
+ * Include the tablespace directory pointed to by 'path' in the output tar
+ * stream.	If 'sizeonly' is true, we just calculate a total length and return
+ * it, without actually sending anything.
+ */
+static int64
+sendTablespace(char *path, bool sizeonly)
+{
+	int64		size;
+	char		pathbuf[MAXPGPATH];
+	struct stat statbuf;
+
+	/*
+	 * 'path' points to the tablespace location, but we only want to include
+	 * the version directory in it that belongs to us.
+	 */
+	snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path,
+			 TABLESPACE_VERSION_DIRECTORY);
+
+	/*
+	 * Store a directory entry in the tar file so we get the permissions
+	 * right.
+	 */
+	if (lstat(pathbuf, &statbuf) != 0)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file or directory \"%s\": %m",
+							pathbuf)));
+
+		/* If the tablespace went away while scanning, it's no error. */
+		return 0;
+	}
+	if (!sizeonly)
+		_tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf);
+	size = 512;					/* Size of the header just added */
+
+	/* Send all the files in the tablespace version directory */
+	size += sendDir(pathbuf, strlen(path), sizeonly);
+
+	return size;
+}
+
+/*
  * Include all files from the given directory in the output tar stream. If
  * 'sizeonly' is true, we just calculate a total length and return it, without
  * actually sending anything.
@@ -764,11 +1011,23 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		/*
 		 * Check if the postmaster has signaled us to exit, and abort with an
 		 * error in that case. The error handler further up will call
-		 * do_pg_abort_backup() for us.
+		 * do_pg_abort_backup() for us. Also check that if the backup was
+		 * started while still in recovery, the server wasn't promoted.
+		 * dp_pg_stop_backup() will check that too, but it's better to stop
+		 * the backup early than continue to the end and fail there.
 		 */
+<<<<<<< HEAD
 		if (ProcDiePending || walsender_ready_to_stop)
+=======
+		CHECK_FOR_INTERRUPTS();
+		if (RecoveryInProgress() != backup_started_in_recovery)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			ereport(ERROR,
-				(errmsg("shutdown requested, aborting active base backup")));
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the standby was promoted during online backup"),
+				 errhint("This means that the backup being taken is corrupt "
+						 "and should not be used. "
+						 "Try taking another online backup.")));
 
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 
@@ -912,7 +1171,11 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		}
 		else if (S_ISREG(statbuf.st_mode))
 		{
+<<<<<<< HEAD
 			bool sent = false;
+=======
+			bool		sent = false;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			if (!sizeonly)
 				sent = sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf,
@@ -922,7 +1185,11 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			{
 				/* Add size, rounded up to 512byte block */
 				size += ((statbuf.st_size + 511) & ~511);
+<<<<<<< HEAD
 				size += 512;		/* Size of the header of the file */
+=======
+				size += 512;	/* Size of the header of the file */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		}
 		else
@@ -945,30 +1212,13 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 
 /*
- * Utility routine to print possibly larger than 32 bit integers in a
- * portable fashion.  Filled with zeros.
- */
-static void
-print_val(char *s, uint64 val, unsigned int base, size_t len)
-{
-	int			i;
-
-	for (i = len; i > 0; i--)
-	{
-		int			digit = val % base;
-
-		s[i - 1] = '0' + digit;
-		val = val / base;
-	}
-}
-
-/*
  * Maximum file size for a tar member: The limit inherent in the
  * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
  * what we can represent in pgoff_t.
  */
 #define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
 
+<<<<<<< HEAD
 static int
 _tarChecksum(char *header)
 {
@@ -982,6 +1232,8 @@ _tarChecksum(char *header)
 	return sum + 256;			/* Assume 8 blanks in checksum field */
 }
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Given the member, write the TAR header & send the file.
  *
@@ -991,7 +1243,11 @@ _tarChecksum(char *header)
  * and the file did not exist.
  */
 static bool
+<<<<<<< HEAD
 sendFile(char *readfilename, char *tarfilename, struct stat *statbuf,
+=======
+sendFile(char *readfilename, char *tarfilename, struct stat * statbuf,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		 bool missing_ok)
 {
 	FILE	   *fp;
@@ -1072,84 +1328,10 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat * statbuf)
 {
 	char		h[512];
-	int			lastSum = 0;
-	int			sum;
 
-	memset(h, 0, sizeof(h));
-
-	/* Name 100 */
-	sprintf(&h[0], "%.99s", filename);
-	if (linktarget != NULL || S_ISDIR(statbuf->st_mode))
-	{
-		/*
-		 * We only support symbolic links to directories, and this is
-		 * indicated in the tar format by adding a slash at the end of the
-		 * name, the same as for regular directories.
-		 */
-		h[strlen(filename)] = '/';
-		h[strlen(filename) + 1] = '\0';
-	}
-
-	/* Mode 8 */
-	sprintf(&h[100], "%07o ", (int) statbuf->st_mode);
-
-	/* User ID 8 */
-	sprintf(&h[108], "%07o ", statbuf->st_uid);
-
-	/* Group 8 */
-	sprintf(&h[117], "%07o ", statbuf->st_gid);
-
-	/* File size 12 - 11 digits, 1 space, no NUL */
-	if (linktarget != NULL || S_ISDIR(statbuf->st_mode))
-		/* Symbolic link or directory has size zero */
-		print_val(&h[124], 0, 8, 11);
-	else
-		print_val(&h[124], statbuf->st_size, 8, 11);
-	sprintf(&h[135], " ");
-
-	/* Mod Time 12 */
-	sprintf(&h[136], "%011o ", (int) statbuf->st_mtime);
-
-	/* Checksum 8 */
-	sprintf(&h[148], "%06o ", lastSum);
-
-	if (linktarget != NULL)
-	{
-		/* Type - Symbolic link */
-		sprintf(&h[156], "2");
-		sprintf(&h[157], "%.99s", linktarget);
-	}
-	else if (S_ISDIR(statbuf->st_mode))
-		/* Type - directory */
-		sprintf(&h[156], "5");
-	else
-		/* Type - regular file */
-		sprintf(&h[156], "0");
-
-	/* Link tag 100 (NULL) */
-
-	/* Magic 6 + Version 2 */
-	sprintf(&h[257], "ustar00");
-
-	/* User 32 */
-	/* XXX: Do we need to care about setting correct username? */
-	sprintf(&h[265], "%.31s", "postgres");
-
-	/* Group 32 */
-	/* XXX: Do we need to care about setting correct group name? */
-	sprintf(&h[297], "%.31s", "postgres");
-
-	/* Maj Dev 8 */
-	sprintf(&h[329], "%6o ", 0);
-
-	/* Min Dev 8 */
-	sprintf(&h[337], "%6o ", 0);
-
-	while ((sum = _tarChecksum(h)) != lastSum)
-	{
-		sprintf(&h[148], "%06o ", sum);
-		lastSum = sum;
-	}
+	tarCreateHeader(h, filename, linktarget, statbuf->st_size,
+					statbuf->st_mode, statbuf->st_uid, statbuf->st_gid,
+					statbuf->st_mtime);
 
 	pq_putmessage('d', h, 512);
 }

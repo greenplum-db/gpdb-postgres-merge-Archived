@@ -23,7 +23,7 @@
  * for aborts (whether sync or async), since the post-crash assumption would
  * be that such transactions failed anyway.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/clog.c
@@ -365,7 +365,7 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 	{
 		int			lsnindex = GetLSNIndex(slotno, xid);
 
-		if (XLByteLT(ClogCtl->shared->group_lsn[lsnindex], lsn))
+		if (ClogCtl->shared->group_lsn[lsnindex] < lsn)
 			ClogCtl->shared->group_lsn[lsnindex] = lsn;
 	}
 }
@@ -878,6 +878,7 @@ clog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "clog_redo: unknown op code %u", info);
 }
+<<<<<<< HEAD
 
 void
 clog_desc(StringInfo buf, XLogRecord *record)
@@ -902,3 +903,5 @@ clog_desc(StringInfo buf, XLogRecord *record)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

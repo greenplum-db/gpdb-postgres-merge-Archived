@@ -55,7 +55,7 @@
  * This code isn't concerned about the FSM at all. The caller is responsible
  * for initializing that.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -66,6 +66,7 @@
 
 #include "postgres.h"
 
+#include "access/heapam_xlog.h"
 #include "access/nbtree.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
@@ -83,7 +84,12 @@
  */
 struct BTSpool
 {
+<<<<<<< HEAD
 	void *sortstate;	/* state data for tuplesort.c */
+=======
+	Tuplesortstate *sortstate;	/* state data for tuplesort.c */
+	Relation	heap;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	Relation	index;
 	bool		isunique;
 };
@@ -117,6 +123,7 @@ typedef struct BTPageState
  */
 typedef struct BTWriteState
 {
+	Relation	heap;
 	Relation	index;
 	bool		btws_use_wal;	/* dump pages to WAL? */
 	BlockNumber btws_pages_alloced;		/* # pages allocated */
@@ -146,11 +153,12 @@ static void _bt_load(BTWriteState *wstate,
  * create and initialize a spool structure
  */
 BTSpool *
-_bt_spoolinit(Relation index, bool isunique, bool isdead)
+_bt_spoolinit(Relation heap, Relation index, bool isunique, bool isdead)
 {
 	BTSpool    *btspool = (BTSpool *) palloc0(sizeof(BTSpool));
 	int			btKbytes;
 
+	btspool->heap = heap;
 	btspool->index = index;
 	btspool->isunique = isunique;
 
@@ -163,7 +171,7 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	 * work_mem.
 	 */
 	btKbytes = isdead ? work_mem : maintenance_work_mem;
-	btspool->sortstate = tuplesort_begin_index_btree(index, isunique,
+	btspool->sortstate = tuplesort_begin_index_btree(heap, index, isunique,
 													 btKbytes, false);
 
 	return btspool;
@@ -209,6 +217,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	if (btspool2)
 		tuplesort_performsort(btspool2->sortstate);
 
+	wstate.heap = btspool->heap;
 	wstate.index = btspool->index;
 
 	/*
@@ -271,7 +280,11 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the heap NEWPAGE record type for this */
+<<<<<<< HEAD
 		log_newpage_rel(wstate->index, MAIN_FORKNUM, blkno, page);
+=======
+		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
@@ -285,7 +298,10 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	{
 		if (!wstate->btws_zeropage)
 			wstate->btws_zeropage = (Page) palloc0(BLCKSZ);
+<<<<<<< HEAD
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		/* don't set checksum for all-zero page */
 		smgrextend(wstate->index->rd_smgr, MAIN_FORKNUM,
 				   wstate->btws_pages_written++,
@@ -486,7 +502,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 				   RelationGetRelationName(wstate->index)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
-				"or use full text indexing.")));
+				"or use full text indexing."),
+				 errtableconstraint(wstate->heap,
+									RelationGetRelationName(wstate->index))));
 
 	/*
 	 * Check to see if page is "full".	It's definitely full if the item won't

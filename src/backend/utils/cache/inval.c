@@ -85,7 +85,7 @@
  *	problems can be overcome cheaply.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -95,11 +95,13 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/catcache.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -176,11 +178,16 @@ static int	maxSharedInvalidMessagesArray;
  * Dynamically-registered callback functions.  Current implementation
  * assumes there won't be very many of these at once; could improve if needed.
  */
+<<<<<<< HEAD
 /*
  * MAX_SYSCACHE_CALLBACKS has been bumped up in GPDB, because ORCA registers
  * a lot of callbacks.
  */
 #define MAX_SYSCACHE_CALLBACKS 40
+=======
+
+#define MAX_SYSCACHE_CALLBACKS 32
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #define MAX_RELCACHE_CALLBACKS 5
 
 static struct SYSCACHECALLBACK

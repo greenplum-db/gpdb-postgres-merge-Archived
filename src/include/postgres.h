@@ -7,7 +7,7 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/include/postgres.h
@@ -25,7 +25,7 @@
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
  *		2)		datum type + support macros
- *		3)		exception handling definitions
+ *		3)		exception handling backend support
  *
  *	 NOTES
  *
@@ -374,11 +374,27 @@ static inline Datum Int64GetDatumFast(int64 x) { return Int64GetDatum(x); }
  * to palloc'd space.
  */
 
+<<<<<<< HEAD
 #ifdef USE_FLOAT8_BYVAL
 #define UInt64GetDatum(X) ((Datum) SET_8_BYTES(X))
 #else
 #define UInt64GetDatum(X) Int64GetDatum((int64) (X))
 #endif
+=======
+#define TransactionIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+
+/*
+ * MultiXactIdGetDatum
+ *		Returns datum representation for a multixact identifier.
+ */
+
+#define MultiXactIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+
+/*
+ * DatumGetCommandId
+ *		Returns command identifier value of a datum.
+ */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 static inline Oid DatumGetObjectId(Datum d) { return (Oid) d; } 
 static inline Datum ObjectIdGetDatum(Oid oid) { return (Datum) oid; } 
@@ -433,11 +449,11 @@ static inline bool IsAligned(void *p, int align)
 }
 
 /* ----------------------------------------------------------------
- *				Section 3:	exception handling definitions
- *							Assert, Trap, etc macros
+ *				Section 3:	exception handling backend support
  * ----------------------------------------------------------------
  */
 
+<<<<<<< HEAD
 #define COMPILE_ASSERT(e) ((void)sizeof(char[1-2*!(e)]))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
@@ -508,6 +524,16 @@ extern PGDLLIMPORT bool assert_enabled;
 
 #endif   /* USE_ASSERT_CHECKING */
 
+=======
+/*
+ * These declarations supports the assertion-related macros in c.h.
+ * assert_enabled is here because that file doesn't have PGDLLIMPORT in the
+ * right place, and ExceptionalCondition must be present, for the backend only,
+ * even when assertions are not enabled.
+ */
+extern PGDLLIMPORT bool assert_enabled;
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 			 const char *fileName, int lineNumber) __attribute__((noreturn));

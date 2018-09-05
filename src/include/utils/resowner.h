@@ -9,7 +9,7 @@
  * See utils/resowner/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/resowner.h
@@ -19,12 +19,15 @@
 #ifndef RESOWNER_H
 #define RESOWNER_H
 
+<<<<<<< HEAD
 #include "storage/fd.h"
 #include "storage/lock.h"
 #include "utils/catcache.h"
 #include "utils/plancache.h"
 #include "utils/snapshot.h"
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * ResourceOwner objects are an opaque data structure known only within
@@ -85,6 +88,7 @@ extern void RegisterResourceReleaseCallback(ResourceReleaseCallback callback,
 extern void UnregisterResourceReleaseCallback(ResourceReleaseCallback callback,
 								  void *arg);
 
+<<<<<<< HEAD
 /* support for buffer refcount management */
 extern void ResourceOwnerEnlargeBuffers(ResourceOwner owner);
 extern void ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer);
@@ -141,4 +145,6 @@ extern void ResourceOwnerRememberFile(ResourceOwner owner,
 extern void ResourceOwnerForgetFile(ResourceOwner owner,
 						File file);
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #endif   /* RESOWNER_H */

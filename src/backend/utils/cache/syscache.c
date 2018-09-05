@@ -3,9 +3,13 @@
  * syscache.c
  *	  System cache management routines
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,9 +26,13 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "miscadmin.h"
 
 #include "access/heapam.h"
+=======
+#include "access/htup_details.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/sysattr.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
@@ -39,6 +47,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_enum.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
@@ -63,6 +72,7 @@
 #include "catalog/pg_user_mapping.h"
 #include "catalog/pg_resgroup.h"
 #include "utils/rel.h"
+#include "utils/catcache.h"
 #include "utils/syscache.h"
 
 
@@ -385,6 +395,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		256
+	},
+	{EventTriggerRelationId,	/* EVENTTRIGGERNAME */
+		EventTriggerNameIndexId,
+		1,
+		{
+			Anum_pg_event_trigger_evtname,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{EventTriggerRelationId,	/* EVENTTRIGGEROID */
+		EventTriggerOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		8
 	},
 	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPERNAME */
 		ForeignDataWrapperNameIndexId,

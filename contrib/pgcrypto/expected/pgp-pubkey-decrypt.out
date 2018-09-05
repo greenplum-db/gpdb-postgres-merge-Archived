@@ -625,7 +625,11 @@ ERROR:  No encryption key found
 -- rsa: password-protected secret key, wrong password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), '123')
 from keytbl, encdata where keytbl.id=7 and encdata.id=4;
+<<<<<<< HEAD
 ERROR:  Wrong key or corrupt data
+=======
+ERROR:  Corrupt data
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 -- rsa: password-protected secret key, right password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'parool')
 from keytbl, encdata where keytbl.id=7 and encdata.id=4;

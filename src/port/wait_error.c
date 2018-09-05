@@ -34,7 +34,10 @@ char *
 wait_result_to_str(int exitstatus)
 {
 	char		str[512];
+<<<<<<< HEAD
 	char	   *result;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (WIFEXITED(exitstatus))
 	{
@@ -81,6 +84,7 @@ wait_result_to_str(int exitstatus)
 	else
 		snprintf(str, sizeof(str),
 				 _("child process exited with unrecognized status %d"),
+<<<<<<< HEAD
 				  exitstatus);
 
 #ifndef FRONTEND
@@ -89,4 +93,9 @@ wait_result_to_str(int exitstatus)
 	result = strdup(str);
 #endif
 	return result;
+=======
+				 exitstatus);
+
+	return pstrdup(str);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }

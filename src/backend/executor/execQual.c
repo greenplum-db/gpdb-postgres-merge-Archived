@@ -3,7 +3,7 @@
  * execQual.c
  *	  Routines to evaluate qualification and targetlist expressions
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -36,9 +36,11 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/tuptoaster.h"
 #include "access/tupconvert.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
@@ -779,6 +781,7 @@ ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
 	{
+<<<<<<< HEAD
 		case INNER_VAR:				/* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
@@ -787,6 +790,18 @@ ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
 			slot = econtext->ecxt_outertuple;
 			break;
 
+=======
+		case INNER_VAR: /* get the tuple from the inner node */
+			slot = econtext->ecxt_innertuple;
+			break;
+
+		case OUTER_VAR: /* get the tuple from the outer node */
+			slot = econtext->ecxt_outertuple;
+			break;
+
+			/* INDEX_VAR is handled by default case */
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		default:				/* get the tuple from the relation being
 								 * scanned */
 			slot = econtext->ecxt_scantuple;
@@ -817,6 +832,10 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
+<<<<<<< HEAD
+=======
+	TupleDesc	slot_tupdesc;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	bool		needslow = false;
 
 	if (isDone)
@@ -826,9 +845,29 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	Assert(variable->varattno == InvalidAttrNumber);
 
 	/* Get the input slot we want */
+<<<<<<< HEAD
 	Assert(variable->varno != INNER_VAR);
 	Assert(variable->varno != OUTER_VAR);
 	slot = econtext->ecxt_scantuple;
+=======
+	switch (variable->varno)
+	{
+		case INNER_VAR: /* get the tuple from the inner node */
+			slot = econtext->ecxt_innertuple;
+			break;
+
+		case OUTER_VAR: /* get the tuple from the outer node */
+			slot = econtext->ecxt_outertuple;
+			break;
+
+			/* INDEX_VAR is handled by default case */
+
+		default:				/* get the tuple from the relation being
+								 * scanned */
+			slot = econtext->ecxt_scantuple;
+			break;
+	}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If the input tuple came from a subquery, it might contain "resjunk"
@@ -851,6 +890,12 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 			case T_SubqueryScanState:
 				subplan = ((SubqueryScanState *) wrvstate->parent)->subplan;
 				break;
+<<<<<<< HEAD
+=======
+			case T_CteScanState:
+				subplan = ((CteScanState *) wrvstate->parent)->cteplanstate;
+				break;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			default:
 				break;
 		}
@@ -881,7 +926,11 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 				wrvstate->wrv_junkFilter =
 					ExecInitJunkFilter(subplan->plan->targetlist,
 									   ExecGetResultType(subplan)->tdhasoid,
+<<<<<<< HEAD
 									   NULL);
+=======
+							ExecInitExtraTupleSlot(wrvstate->parent->state));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				MemoryContextSwitchTo(oldcontext);
 			}
 		}
@@ -891,6 +940,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
+<<<<<<< HEAD
 	/*
 	 * If the Var identifies a named composite type, we must check that the
 	 * actual tuple type is compatible with it.
@@ -899,6 +949,27 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	{
 		TupleDesc	var_tupdesc;
 		TupleDesc	slot_tupdesc;
+=======
+	slot_tupdesc = slot->tts_tupleDescriptor;
+
+	/*
+	 * If it's a RECORD Var, we'll use the slot's type ID info.  It's likely
+	 * that the slot's type is also RECORD; if so, make sure it's been
+	 * "blessed", so that the Datum can be interpreted later.
+	 *
+	 * If the Var identifies a named composite type, we must check that the
+	 * actual tuple type is compatible with it.
+	 */
+	if (variable->vartype == RECORDOID)
+	{
+		if (slot_tupdesc->tdtypeid == RECORDOID &&
+			slot_tupdesc->tdtypmod < 0)
+			assign_record_type_typmod(slot_tupdesc);
+	}
+	else
+	{
+		TupleDesc	var_tupdesc;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		int			i;
 
 		/*
@@ -915,8 +986,11 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		 */
 		var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
 
+<<<<<<< HEAD
 		slot_tupdesc = slot->tts_tupleDescriptor;
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (var_tupdesc->natts != slot_tupdesc->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1005,6 +1079,7 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
+<<<<<<< HEAD
 	tuple = ExecFetchSlotHeapTuple(slot);
 
 	/*
@@ -1020,6 +1095,10 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		slot_tupdesc->tdtypeid == RECORDOID &&
 		slot_tupdesc->tdtypmod < 0)
 		assign_record_type_typmod(slot_tupdesc);
+=======
+	tuple = ExecFetchSlotTuple(slot);
+	tupleDesc = slot->tts_tupleDescriptor;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Copy the slot tuple and make sure any toasted fields get detoasted.
@@ -1050,7 +1129,7 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 /* ----------------------------------------------------------------
  *		ExecEvalWholeRowSlow
  *
- *		Returns a Datum for a whole-row variable, in the "slow" cases where
+ *		Returns a Datum for a whole-row variable, in the "slow" case where
  *		we can't just copy the subplan's output.
  * ----------------------------------------------------------------
  */
@@ -1099,6 +1178,7 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
+<<<<<<< HEAD
 	tuple = ExecFetchSlotHeapTuple(slot);
 	tupleDesc = slot->tts_tupleDescriptor;
 
@@ -1109,6 +1189,11 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	 * be a need for more-extensive rearrangements, in which case we'd
 	 * probably use tupconvert.c.
 	 */
+=======
+	tuple = ExecFetchSlotTuple(slot);
+	tupleDesc = slot->tts_tupleDescriptor;
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	Assert(variable->vartype != RECORDOID);
 	var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
 
@@ -1400,6 +1485,7 @@ init_fcache(Oid foid, Oid input_collation, FuncExprState *fcache,
 	aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(foid));
+	InvokeFunctionExecuteHook(foid);
 
 	/*
 	 * Safety check on nargs.  Under normal circumstances this should never
@@ -1910,11 +1996,19 @@ restart:
 				pgstat_end_function_usage(&fcusage,
 										rsinfo.isDone != ExprMultipleResult);
 			}
-			else
+			else if (fcache->func.fn_retset)
 			{
+				/* for a strict SRF, result for NULL is an empty set */
 				result = (Datum) 0;
 				*isNull = true;
 				*isDone = ExprEndResult;
+			}
+			else
+			{
+				/* for a strict non-SRF, result for NULL is a NULL */
+				result = (Datum) 0;
+				*isNull = true;
+				*isDone = ExprSingleResult;
 			}
 
 			/* Which protocol does function want to use? */
@@ -4402,7 +4496,8 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
 							 errmsg("domain %s does not allow null values",
-									format_type_be(ctest->resulttype))));
+									format_type_be(ctest->resulttype)),
+							 errdatatype(ctest->resulttype)));
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
@@ -4432,7 +4527,9 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 								(errcode(ERRCODE_CHECK_VIOLATION),
 								 errmsg("value for domain %s violates check constraint \"%s\"",
 										format_type_be(ctest->resulttype),
-										con->name)));
+										con->name),
+								 errdomainconstraint(ctest->resulttype,
+													 con->name)));
 					econtext->domainValue_datum = save_datum;
 					econtext->domainValue_isNull = save_isNull;
 
@@ -5115,6 +5212,7 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(acoerce->elemfuncid));
+		InvokeFunctionExecuteHook(acoerce->elemfuncid);
 
 		/* Set up the primary fmgr lookup information */
 		fmgr_info_cxt(acoerce->elemfuncid, &(astate->elemfunc),
@@ -5143,6 +5241,29 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 					 astate->amstate);
 }
 
+<<<<<<< HEAD
+=======
+/* ----------------------------------------------------------------
+ *		ExecEvalCurrentOfExpr
+ *
+ * The planner should convert CURRENT OF into a TidScan qualification, or some
+ * other special handling in a ForeignScan node.  So we have to be able to do
+ * ExecInitExpr on a CurrentOfExpr, but we shouldn't ever actually execute it.
+ * If we get here, we suppose we must be dealing with CURRENT OF on a foreign
+ * table whose FDW doesn't handle it, and complain accordingly.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
+					  bool *isNull, ExprDoneCond *isDone)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		   errmsg("WHERE CURRENT OF is not supported for this table type")));
+	return 0;					/* keep compiler quiet */
+}
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * ExecEvalExprSwitchContext

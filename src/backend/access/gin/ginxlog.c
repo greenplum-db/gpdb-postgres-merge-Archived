@@ -4,7 +4,7 @@
  *	  WAL replay logic for inverted index.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -165,7 +165,11 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* If we have a full-page image, restore it and we're done */
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
@@ -176,7 +180,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* page was deleted, nothing to do */
 	page = (Page) BufferGetPage(buffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn > PageGetLSN(page))
 	{
 		if (data->isData)
 		{
@@ -376,7 +380,12 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	/* If we have a full-page image, restore it and we're done */
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
@@ -387,7 +396,7 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 		return;
 	page = (Page) BufferGetPage(buffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn > PageGetLSN(page))
 	{
 		if (GinPageIsData(page))
 		{
@@ -433,7 +442,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		lbuffer;
 	Page		page;
 
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 0))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		dbuffer = RestoreBackupBlock(lsn, record, 0, false, true);
 	else
 	{
@@ -441,7 +454,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(dbuffer))
 		{
 			page = BufferGetPage(dbuffer);
+<<<<<<< HEAD
 			if (!XLByteLE(lsn, PageGetLSN(page)))
+=======
+			if (lsn > PageGetLSN(page))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
@@ -451,7 +468,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 1))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(1))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		pbuffer = RestoreBackupBlock(lsn, record, 1, false, true);
 	else
 	{
@@ -459,7 +480,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(pbuffer))
 		{
 			page = BufferGetPage(pbuffer);
+<<<<<<< HEAD
 			if (!XLByteLE(lsn, PageGetLSN(page)))
+=======
+			if (lsn > PageGetLSN(page))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				Assert(!GinPageIsLeaf(page));
@@ -470,7 +495,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
+<<<<<<< HEAD
 	if (IsBkpBlockApplied(record, 2))
+=======
+	if (record->xl_info & XLR_BKP_BLOCK(2))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 2, false, false);
 	else if (data->leftBlkno != InvalidBlockNumber)
 	{
@@ -478,7 +507,11 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(lbuffer))
 		{
 			page = BufferGetPage(lbuffer);
+<<<<<<< HEAD
 			if (!XLByteLE(lsn, PageGetLSN(page)))
+=======
+			if (lsn > PageGetLSN(page))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->rightlink = data->rightLink;
@@ -508,7 +541,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	if (lsn > PageGetLSN(metapage))
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
@@ -529,7 +562,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Page		page = BufferGetPage(buffer);
 
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					OffsetNumber l,
 								off = (PageIsEmpty(page)) ? FirstOffsetNumber :
@@ -578,7 +611,11 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Page		page = BufferGetPage(buffer);
 
+<<<<<<< HEAD
 				if (!XLByteLE(lsn, PageGetLSN(page)))
+=======
+				if (lsn > PageGetLSN(page))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					GinPageGetOpaque(page)->rightlink = data->newRightlink;
 
@@ -663,7 +700,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	if (lsn > PageGetLSN(metapage))
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
@@ -688,7 +725,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		{
 			Page		page = BufferGetPage(buffer);
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
 
@@ -750,6 +787,7 @@ gin_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	MemoryContextReset(opCtx);
 }
 
+<<<<<<< HEAD
 static void
 desc_node(StringInfo buf, RelFileNode node, BlockNumber blkno)
 {
@@ -814,6 +852,8 @@ gin_desc(StringInfo buf, XLogRecord *record)
 	}
 }
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 void
 gin_xlog_startup(void)
 {

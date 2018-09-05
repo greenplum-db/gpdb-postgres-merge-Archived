@@ -63,6 +63,7 @@ test: triggers
 # ----------
 # Another group of parallel tests
 # ----------
+<<<<<<< HEAD
 test: create_aggregate create_function_3 create_cast constraints create_table_like typed_table vacuum drop_if_exists
 
 # ----------
@@ -70,6 +71,9 @@ test: create_aggregate create_function_3 create_cast constraints create_table_li
 # run this test on its own, or it might not detect the pages are 'all visible'
 # ----------
 test: vacuum_stats
+=======
+test: create_aggregate create_function_3 create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists updatable_views
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
@@ -108,8 +112,14 @@ test: namespace
 # ----------
 # Another group of parallel tests
 # ----------
-test: privileges security_label collate
+test: privileges security_label collate matview
 
+# ----------
+# Another group of parallel tests
+# ----------
+test: alter_generic misc psql
+
+<<<<<<< HEAD
 test: misc
 
 # rules cannot run concurrently with any test that creates a view
@@ -122,6 +132,12 @@ test: misc
 # merge, it was done a long time ago, it's time to revisit this so we can re-
 # enable it
 #test: rules
+=======
+# rules cannot run concurrently with any test that creates a view
+test: rules
+# event triggers cannot run concurrently with any test that runs DDL
+test: event_trigger
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # ----------
 # Another group of parallel tests

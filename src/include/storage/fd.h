@@ -4,9 +4,13 @@
  *	  Virtual file descriptor definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fd.h
@@ -68,6 +72,7 @@ extern int	max_safe_fds;
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+<<<<<<< HEAD
 
 extern File OpenNamedTemporaryFile(const char *fileName,
 								   bool create,
@@ -75,6 +80,9 @@ extern File OpenNamedTemporaryFile(const char *fileName,
 								   bool interXact);
 extern File OpenTemporaryFile(bool interXact, const char *filePrefix);
 extern void FileSetTransient(File file);
+=======
+extern File OpenTemporaryFile(bool interXact);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount);
 extern int	FileRead(File file, char *buffer, int amount);
@@ -89,6 +97,10 @@ extern int64 FileDiskSize(File file);
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
 extern int	FreeFile(FILE *file);
+
+/* Operations that allow use of pipe streams (popen/pclose) */
+extern FILE *OpenPipeStream(const char *command, const char *mode);
+extern int	ClosePipeStream(FILE *file);
 
 /* Operations to allow use of the <dirent.h> library routines */
 extern DIR *AllocateDir(const char *dirname);

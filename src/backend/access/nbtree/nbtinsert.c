@@ -3,7 +3,7 @@
  * nbtinsert.c
  *	  Item insertion in Lehman and Yao btrees for Postgres.
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -382,6 +382,70 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 					if (TransactionIdIsValid(xwait))
 						return xwait;
+<<<<<<< HEAD
+=======
+					}
+
+					/*
+					 * Otherwise we have a definite conflict.  But before
+					 * complaining, look to see if the tuple we want to insert
+					 * is itself now committed dead --- if so, don't complain.
+					 * This is a waste of time in normal scenarios but we must
+					 * do it to support CREATE INDEX CONCURRENTLY.
+					 *
+					 * We must follow HOT-chains here because during
+					 * concurrent index build, we insert the root TID though
+					 * the actual tuple may be somewhere in the HOT-chain.
+					 * While following the chain we might not stop at the
+					 * exact tuple which triggered the insert, but that's OK
+					 * because if we find a live tuple anywhere in this chain,
+					 * we have a unique key conflict.  The other live tuple is
+					 * not part of this chain because it had a different index
+					 * entry.
+					 */
+					htid = itup->t_tid;
+					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
+					{
+						/* Normal case --- it's still live */
+					}
+					else
+					{
+						/*
+						 * It's been deleted, so no error, and no need to
+						 * continue searching
+						 */
+						break;
+					}
+
+					/*
+					 * This is a definite conflict.  Break the tuple down into
+					 * datums and report the error.  But first, make sure we
+					 * release the buffer locks we're holding ---
+					 * BuildIndexValueDescription could make catalog accesses,
+					 * which in the worst case might touch this same index and
+					 * cause deadlocks.
+					 */
+					if (nbuf != InvalidBuffer)
+						_bt_relbuf(rel, nbuf);
+					_bt_relbuf(rel, buf);
+
+					{
+						Datum		values[INDEX_MAX_KEYS];
+						bool		isnull[INDEX_MAX_KEYS];
+
+						index_deform_tuple(itup, RelationGetDescr(rel),
+										   values, isnull);
+						ereport(ERROR,
+								(errcode(ERRCODE_UNIQUE_VIOLATION),
+								 errmsg("duplicate key value violates unique constraint \"%s\"",
+										RelationGetRelationName(rel)),
+								 errdetail("Key %s already exists.",
+										   BuildIndexValueDescription(rel,
+															values, isnull)),
+								 errtableconstraint(heapRel,
+											 RelationGetRelationName(rel))));
+					}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 				else
 				{
@@ -392,6 +456,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * are rechecking.  It's not a duplicate, but we have to keep
 					 * scanning.
 					 */
+<<<<<<< HEAD
 					if (checkUnique == UNIQUE_CHECK_EXISTING &&
 						ItemPointerCompare(&htid, &itup->t_tid) == 0)
 					{
@@ -510,6 +575,19 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						else
 							MarkBufferDirtyHint(buf);
 					}
+=======
+					ItemIdMarkDead(curitemid);
+					opaque->btpo_flags |= BTP_HAS_GARBAGE;
+
+					/*
+					 * Mark buffer with a dirty hint, since state is not
+					 * crucial. Be sure to mark the proper buffer dirty.
+					 */
+					if (nbuf != InvalidBuffer)
+						MarkBufferDirtyHint(nbuf);
+					else
+						MarkBufferDirtyHint(buf);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 			}
 		}
@@ -555,7 +633,9 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("failed to re-find tuple within index \"%s\"",
 						RelationGetRelationName(rel)),
-		errhint("This may be because of a non-immutable index expression.")));
+		 errhint("This may be because of a non-immutable index expression."),
+				 errtableconstraint(heapRel,
+									RelationGetRelationName(rel))));
 
 	if (nbuf != InvalidBuffer)
 		_bt_relbuf(rel, nbuf);
@@ -623,6 +703,8 @@ _bt_findinsertloc(Relation rel,
 	 * able to fit three items on every page, so restrict any one item to 1/3
 	 * the per-page available space. Note that at this point, itemsz doesn't
 	 * include the ItemId.
+	 *
+	 * NOTE: if you change this, see also the similar code in _bt_buildadd().
 	 */
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
@@ -633,7 +715,9 @@ _bt_findinsertloc(Relation rel,
 				   RelationGetRelationName(rel)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
-				"or use full text indexing.")));
+				"or use full text indexing."),
+				 errtableconstraint(heapRel,
+									RelationGetRelationName(rel))));
 
 	/*----------
 	 * If we will need to split the page to put the item on this page,

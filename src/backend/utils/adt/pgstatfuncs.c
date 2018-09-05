@@ -3,7 +3,7 @@
  * pgstatfuncs.c
  *	  Functions for accessing the statistics collector data
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,8 +14,12 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "storage/lock.h"
 #include "commands/resgroupcmds.h"
+=======
+#include "access/htup_details.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/ip.h"
@@ -711,15 +715,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[4] = true;
 					break;
 			}
-			if (beentry->st_state == STATE_UNDEFINED ||
-				beentry->st_state == STATE_DISABLED)
-			{
-				values[5] = CStringGetTextDatum("");
-			}
-			else
-			{
-				values[5] = CStringGetTextDatum(beentry->st_activity);
-			}
+
+			values[5] = CStringGetTextDatum(beentry->st_activity);
 			values[6] = BoolGetDatum(beentry->st_waiting);
 
 			if (beentry->st_xact_start_timestamp != 0)

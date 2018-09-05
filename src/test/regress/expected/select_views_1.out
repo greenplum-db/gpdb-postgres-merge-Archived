@@ -1261,11 +1261,16 @@ CREATE TABLE customer (
        cid      int,
        name     text not null,
        tel      text,
+<<<<<<< HEAD
        passwd	text,
        dist_key int default 1,
        unique (dist_key, cid)
 ) DISTRIBUTED BY (dist_key);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "customer_dist_key_cid_key" for table "customer"
+=======
+       passwd	text
+);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TABLE credit_card (
        cid      int,
        cnum     text,
@@ -1431,6 +1436,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice2; segments: 3)
    ->  Hash Join
          Hash Cond: r.cid = l.cid
@@ -1448,6 +1454,22 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
                                              Filter: name = 'regress_alice'::text
  Optimizer: legacy query optimizer
 (16 rows)
+=======
+ Nested Loop
+   Join Filter: (l.cid = r.cid)
+   ->  Seq Scan on credit_usage r
+         Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
+   ->  Materialize
+         ->  Subquery Scan on l
+               Filter: f_leak(l.cnum)
+               ->  Hash Join
+                     Hash Cond: (r_1.cid = l_1.cid)
+                     ->  Seq Scan on credit_card r_1
+                     ->  Hash
+                           ->  Seq Scan on customer l_1
+                                 Filter: (name = ("current_user"())::text)
+(13 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
@@ -1465,6 +1487,7 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
+<<<<<<< HEAD
  Gather Motion 3:1  (slice2; segments: 3)
    ->  Subquery Scan on my_credit_card_usage_secure
          Filter: f_leak(my_credit_card_usage_secure.cnum)
@@ -1482,6 +1505,22 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
                                              Filter: name = 'regress_alice'::text
  Optimizer: legacy query optimizer
 (16 rows)
+=======
+ Subquery Scan on my_credit_card_usage_secure
+   Filter: f_leak(my_credit_card_usage_secure.cnum)
+   ->  Nested Loop
+         Join Filter: (l.cid = r.cid)
+         ->  Seq Scan on credit_usage r
+               Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
+         ->  Materialize
+               ->  Hash Join
+                     Hash Cond: (r_1.cid = l.cid)
+                     ->  Seq Scan on credit_card r_1
+                     ->  Hash
+                           ->  Seq Scan on customer l
+                                 Filter: (name = ("current_user"())::text)
+(13 rows)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 --
 -- Test for the case when security_barrier gets changed between rewriter

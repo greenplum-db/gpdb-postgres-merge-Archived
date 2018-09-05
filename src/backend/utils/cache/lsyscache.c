@@ -3,9 +3,13 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -19,6 +23,7 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/heap.h"                   /* SystemAttributeDefinition() */
@@ -46,6 +51,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"

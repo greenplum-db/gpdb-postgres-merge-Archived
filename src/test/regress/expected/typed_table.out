@@ -49,7 +49,10 @@ CREATE TABLE persons2 OF person_type (
     id WITH OPTIONS PRIMARY KEY,
     UNIQUE (name)
 );
+<<<<<<< HEAD
 ERROR:  Greenplum Database does not allow having both PRIMARY KEY and UNIQUE constraints
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 \d persons2
 -- These are added for Greenplum, as the previous table creation statement
 -- should have failed.
@@ -87,7 +90,6 @@ CREATE TABLE persons3 OF person_type (
     PRIMARY KEY (id),
     name WITH OPTIONS DEFAULT ''
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "persons3_pkey" for table "persons3"
 \d persons3
        Table "public.persons3"
  Column |  Type   |    Modifiers     

@@ -5,9 +5,13 @@
  *
  * See src/backend/utils/misc/README for design notes.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  *	  src/include/utils/guc_tables.h
  *
@@ -316,6 +320,7 @@ extern const char *config_enum_lookup_by_value(struct config_enum * record, int 
 extern bool config_enum_lookup_by_name(struct config_enum * record,
 						   const char *value, int *retval);
 
+<<<<<<< HEAD
 extern bool parse_int(const char *value, int *result, int flags, const char **hintmsg);
 
 /* guc_gp.c needs this from guc.c */
@@ -328,4 +333,6 @@ extern struct config_real ConfigureNamesReal_gp[];
 extern struct config_string ConfigureNamesString_gp[];
 extern struct config_enum ConfigureNamesEnum_gp[];
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #endif   /* GUC_TABLES_H */

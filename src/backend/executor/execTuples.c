@@ -12,7 +12,7 @@
  *	  This information is needed by routines manipulating tuples
  *	  (getattribute, formtuple, etc.).
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -88,9 +88,13 @@
  */
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tuptoaster.h"
+=======
+#include "access/htup_details.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"

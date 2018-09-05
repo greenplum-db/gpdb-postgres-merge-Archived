@@ -3,7 +3,7 @@
  * parse_expr.c
  *	  handle expressions in parser
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -259,7 +259,11 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						break;
 					default:
 						elog(ERROR, "unrecognized A_Expr kind: %d", a->kind);
+<<<<<<< HEAD
 						result = NULL;		/* keep compiler quiet */
+=======
+						result = NULL;	/* keep compiler quiet */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 						break;
 				}
 				break;
@@ -860,19 +864,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		switch (crerr)
 		{
 			case CRERR_NO_COLUMN:
-				if (relname)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column %s.%s does not exist",
-									relname, colname),
-							 parser_errposition(pstate, cref->location)));
-
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" does not exist",
-									colname),
-							 parser_errposition(pstate, cref->location)));
+				errorMissingColumn(pstate, relname, colname, cref->location);
 				break;
 			case CRERR_NO_RTE:
 				errorMissingRTE(pstate, makeRangeVar(nspname, relname,
@@ -986,7 +978,11 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	else if (lexpr && IsA(lexpr, RowExpr) &&
 			 rexpr && IsA(rexpr, RowExpr))
 	{
+<<<<<<< HEAD
 		/* "row op row" */
+=======
+		/* ROW() op ROW() is handled specially */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		lexpr = transformExprRecurse(pstate, lexpr);
 		rexpr = transformExprRecurse(pstate, rexpr);
 		Assert(IsA(lexpr, RowExpr));
@@ -1091,7 +1087,7 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 	if (lexpr && IsA(lexpr, RowExpr) &&
 		rexpr && IsA(rexpr, RowExpr))
 	{
-		/* "row op row" */
+		/* ROW() op ROW() is handled specially */
 		return make_row_distinct_op(pstate, a->name,
 									(RowExpr *) lexpr,
 									(RowExpr *) rexpr,
@@ -1190,7 +1186,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	List	   *rvars;
 	List	   *rnonvars;
 	bool		useOr;
-	bool		haveRowExpr;
 	ListCell   *l;
 
 	/*
@@ -1203,24 +1198,25 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 
 	/*
 	 * We try to generate a ScalarArrayOpExpr from IN/NOT IN, but this is only
-	 * possible if the inputs are all scalars (no RowExprs) and there is a
-	 * suitable array type available.  If not, we fall back to a boolean
-	 * condition tree with multiple copies of the lefthand expression. Also,
-	 * any IN-list items that contain Vars are handled as separate boolean
-	 * conditions, because that gives the planner more scope for optimization
-	 * on such clauses.
+	 * possible if there is a suitable array type available.  If not, we fall
+	 * back to a boolean condition tree with multiple copies of the lefthand
+	 * expression.	Also, any IN-list items that contain Vars are handled as
+	 * separate boolean conditions, because that gives the planner more scope
+	 * for optimization on such clauses.
 	 *
-	 * First step: transform all the inputs, and detect whether any are
-	 * RowExprs or contain Vars.
+	 * First step: transform all the inputs, and detect whether any contain
+	 * Vars.
 	 */
 	lexpr = transformExprRecurse(pstate, a->lexpr);
+<<<<<<< HEAD
 	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
 		Node	   *rexpr = transformExprRecurse(pstate, lfirst(l));
 
-		haveRowExpr |= (rexpr && IsA(rexpr, RowExpr));
 		rexprs = lappend(rexprs, rexpr);
 		if (contain_vars_of_level(rexpr, 0))
 			rvars = lappend(rvars, rexpr);
@@ -1230,9 +1226,9 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 
 	/*
 	 * ScalarArrayOpExpr is only going to be useful if there's more than one
-	 * non-Var righthand item.	Also, it won't work for RowExprs.
+	 * non-Var righthand item.
 	 */
-	if (!haveRowExpr && list_length(rnonvars) > 1)
+	if (list_length(rnonvars) > 1)
 	{
 		List	   *allexprs;
 		Oid			scalar_type;
@@ -1248,8 +1244,13 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		allexprs = list_concat(list_make1(lexpr), rnonvars);
 		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
 
-		/* Do we have an array type to use? */
-		if (OidIsValid(scalar_type))
+		/*
+		 * Do we have an array type to use?  Aside from the case where there
+		 * isn't one, we don't risk using ScalarArrayOpExpr when the common
+		 * type is RECORD, because the RowExpr comparison logic below can cope
+		 * with some cases of non-identical row types.
+		 */
+		if (OidIsValid(scalar_type) && scalar_type != RECORDOID)
 			array_type = get_array_type(scalar_type);
 		else
 			array_type = InvalidOid;
@@ -1300,14 +1301,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		Node	   *rexpr = (Node *) lfirst(l);
 		Node	   *cmp;
 
-		if (haveRowExpr)
+		if (IsA(lexpr, RowExpr) &&
+			IsA(rexpr, RowExpr))
 		{
-			if (!IsA(lexpr, RowExpr) ||
-				!IsA(rexpr, RowExpr))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-				   errmsg("arguments of row IN must all be row expressions"),
-						 parser_errposition(pstate, a->location)));
+			/* ROW() op ROW() is handled specially */
 			cmp = make_row_comparison_op(pstate,
 										 a->name,
 							  (List *) copyObject(((RowExpr *) lexpr)->args),
@@ -1315,11 +1312,14 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 										 a->location);
 		}
 		else
+		{
+			/* Ordinary scalar operator */
 			cmp = (Node *) make_op(pstate,
 								   a->name,
 								   copyObject(lexpr),
 								   rexpr,
 								   a->location);
+		}
 
 		cmp = coerce_to_boolean(pstate, cmp, "IN");
 		if (result == NULL)
@@ -1345,6 +1345,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	{
 		targs = lappend(targs, transformExprRecurse(pstate,
 													(Node *) lfirst(args)));
+<<<<<<< HEAD
 	}
 
 	/*
@@ -1365,6 +1366,8 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 			targs = lappend(targs, transformExpr(pstate, arg->node,
 												 EXPR_KIND_ORDER_BY));
 		}
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* ... and hand off to ParseFuncOrColumn */
@@ -1484,6 +1487,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 													 warg,
 													 w->location);
 		}
+<<<<<<< HEAD
 		else
 		{
 			if (isWhenIsNotDistinctFromExpr(warg))
@@ -1493,6 +1497,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\""),
 						 parser_errposition(pstate, exprLocation((Node *) warg))));
 		}
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		neww->expr = (Expr *) transformExprRecurse(pstate, warg);
 
 		neww->expr = (Expr *) coerce_to_boolean(pstate,
@@ -1569,9 +1575,15 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		return result;
 
 	/*
+<<<<<<< HEAD
 	 * Check to see if the sublink is in an invalid place within the query.
 	 * We allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but
 	 * generally not in utility statements.
+=======
+	 * Check to see if the sublink is in an invalid place within the query. We
+	 * allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but generally
+	 * not in utility statements.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	err = NULL;
 	switch (pstate->p_expr_kind)
@@ -1588,7 +1600,10 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_FROM_FUNCTION:
 		case EXPR_KIND_WHERE:
 		case EXPR_KIND_HAVING:
+<<<<<<< HEAD
 		case EXPR_KIND_FILTER:
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		case EXPR_KIND_WINDOW_PARTITION:
 		case EXPR_KIND_WINDOW_ORDER:
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
@@ -1608,7 +1623,11 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:
+<<<<<<< HEAD
 			err = _("cannot use subquery in CHECK constraint");
+=======
+			err = _("cannot use subquery in check constraint");
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 		case EXPR_KIND_COLUMN_DEFAULT:
 		case EXPR_KIND_FUNCTION_DEFAULT:
@@ -1629,6 +1648,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_TRIGGER_WHEN:
 			err = _("cannot use subquery in trigger WHEN condition");
 			break;
+<<<<<<< HEAD
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			err = _("cannot use subquery in partition key expression");
 			break;
@@ -1636,6 +1656,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_SCATTER_BY:
 			/* okay */
 			break;
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			/*
 			 * There is intentionally no default: case here, so that the
@@ -1656,7 +1678,11 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
+<<<<<<< HEAD
 	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, NULL);
+=======
+	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
@@ -2248,7 +2274,11 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
 	xexpr->args = list_make1(coerce_to_specific_type(pstate,
+<<<<<<< HEAD
 										transformExprRecurse(pstate, xs->expr),
+=======
+									  transformExprRecurse(pstate, xs->expr),
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 													 XMLOID,
 													 "XMLSERIALIZE"));
 
@@ -2829,8 +2859,11 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "WHERE";
 		case EXPR_KIND_HAVING:
 			return "HAVING";
+<<<<<<< HEAD
 		case EXPR_KIND_FILTER:
 			return "FILTER";
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		case EXPR_KIND_WINDOW_PARTITION:
 			return "window PARTITION BY";
 		case EXPR_KIND_WINDOW_ORDER:
@@ -2876,11 +2909,14 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "EXECUTE";
 		case EXPR_KIND_TRIGGER_WHEN:
 			return "WHEN";
+<<<<<<< HEAD
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			return "PARTITION BY";
 
 		case EXPR_KIND_SCATTER_BY:
 			return "SCATTER BY";
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			/*
 			 * There is intentionally no default: case here, so that the

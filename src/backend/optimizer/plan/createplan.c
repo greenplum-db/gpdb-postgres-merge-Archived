@@ -5,9 +5,13 @@
  *	  Planning is complete, we just need to convert the selected
  *	  Path into a Plan.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,6 +28,7 @@
 #include "catalog/pg_exttable.h"
 #include "catalog/pg_type.h"	/* INT8OID */
 #include "access/skey.h"
+#include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -36,7 +41,11 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
+<<<<<<< HEAD
 #include "optimizer/planpartition.h"
+=======
+#include "optimizer/planner.h"
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/subselect.h"
@@ -114,6 +123,8 @@ static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
+static void process_subquery_nestloop_params(PlannerInfo *root,
+								 List *subplan_params);
 static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path);
 static List *fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path);
 static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
@@ -247,6 +258,9 @@ create_subplan(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Initialize this module's private workspace in PlannerInfo */
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
@@ -257,6 +271,12 @@ create_subplan(PlannerInfo *root, Path *best_path)
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
+
+	/*
+	 * Reset plan_params to ensure param IDs used for nestloop params are not
+	 * re-used later
+	 */
+	root->plan_params = NIL;
 
 	return plan;
 }
@@ -374,7 +394,18 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 		}
 	}
 	else
+	{
 		tlist = build_relation_tlist(rel);
+
+		/*
+		 * If it's a parameterized otherrel, there might be lateral references
+		 * in the tlist, which need to be replaced with Params.  This cannot
+		 * happen for regular baserels, though.  Note use_physical_tlist()
+		 * always fails for otherrels, so we don't need to check this above.
+		 */
+		if (rel->reloptkind != RELOPT_BASEREL && best_path->param_info)
+			tlist = (List *) replace_nestloop_params(root, (Node *) tlist);
+	}
 
 	/*
 	 * Extract the relevant restriction clauses from the parent relation. The
@@ -843,13 +874,13 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	ListCell   *subpaths;
 
 	/*
-	 * It is possible for the subplans list to contain only one entry, or even
-	 * no entries.	Handle these cases specially.
+	 * The subpaths list could be empty, if every child was proven empty by
+	 * constraint exclusion.  In that case generate a dummy plan that returns
+	 * no rows.
 	 *
-	 * XXX ideally, if there's just one entry, we'd not bother to generate an
-	 * Append node but just return the single child.  At the moment this does
-	 * not work because the varno of the child scan plan won't match the
-	 * parent-rel Vars it'll be asked to emit.
+	 * Note that an AppendPath with no members is also generated in certain
+	 * cases where there was no appending construct at all, but we know the
+	 * relation is empty (see set_dummy_rel_pathlist).
 	 */
 	if (best_path->subpaths == NIL)
 	{
@@ -861,13 +892,20 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 									NULL);
 	}
 
-	/* Normal case with multiple subpaths */
+	/* Build the plan for each child */
 	foreach(subpaths, best_path->subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
 
 		subplans = lappend(subplans, create_plan_recurse(root, subpath));
 	}
+
+	/*
+	 * XXX ideally, if there's just one child, we'd not bother to generate an
+	 * Append node but just return the single child.  At the moment this does
+	 * not work because the varno of the child scan plan won't match the
+	 * parent-rel Vars it'll be asked to emit.
+	 */
 
 	plan = make_append(subplans, tlist);
 
@@ -1122,10 +1160,19 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	if (newitems || best_path->umethod == UNIQUE_PATH_SORT)
 	{
 		/*
-		 * If the top plan node can't do projections, we need to add a Result
-		 * node to help it along.
+		 * If the top plan node can't do projections and its existing target
+		 * list isn't already what we need, we need to add a Result node to
+		 * help it along.
 		 */
+<<<<<<< HEAD
 		subplan = plan_pushdown_tlist(root, subplan, newtlist);
+=======
+		if (!is_projection_capable_plan(subplan) &&
+			!tlist_same_exprs(newtlist, subplan->targetlist))
+			subplan = (Plan *) make_result(root, newtlist, NULL, subplan);
+		else
+			subplan->targetlist = newtlist;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
@@ -2777,6 +2824,7 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 {
 	TidScan    *scan_plan;
 	Index		scan_relid = best_path->path.parent->relid;
+	List	   *tidquals = best_path->tidquals;
 	List	   *ortidquals;
 
 	/* it should be a base rel... */
@@ -2789,6 +2837,15 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->path.param_info)
+	{
+		tidquals = (List *)
+			replace_nestloop_params(root, (Node *) tidquals);
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
 	/*
 	 * Remove any clauses that are TID quals.  This is a bit tricky since the
 	 * tidquals list has implicit OR semantics.
@@ -2799,6 +2856,7 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	 * finish up this qual rewriting to ensure what we dispatch is a sane interpretation
 	 * of CURRENT OF behavior.
 	 */
+<<<<<<< HEAD
 	if (!(list_length(scan_clauses) == 1 && IsA(linitial(scan_clauses), CurrentOfExpr)))
 	{
 		ortidquals = best_path->tidquals;
@@ -2806,11 +2864,17 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 			ortidquals = list_make1(make_orclause(ortidquals));
 		scan_clauses = list_difference(scan_clauses, ortidquals);
 	}
+=======
+	ortidquals = tidquals;
+	if (list_length(ortidquals) > 1)
+		ortidquals = list_make1(make_orclause(ortidquals));
+	scan_clauses = list_difference(scan_clauses, ortidquals);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
 							 scan_relid,
-							 best_path->tidquals);
+							 tidquals);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, &best_path->path);
 
@@ -2844,6 +2908,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	{
 		scan_clauses = (List *)
 			replace_nestloop_params(root, (Node *) scan_clauses);
+		process_subquery_nestloop_params(root,
+										 best_path->parent->subplan_params);
 	}
 
 	scan_plan = make_subqueryscan(tlist,
@@ -2868,11 +2934,13 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	FunctionScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
+	Node	   *funcexpr;
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
+	funcexpr = rte->funcexpr;
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -2880,8 +2948,17 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+		/* The func expression itself could contain nestloop params, too */
+		funcexpr = replace_nestloop_params(root, funcexpr);
+	}
+
 	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid,
-								  rte->funcexpr,
+								  funcexpr,
 								  rte->eref->colnames,
 								  rte->funccoltypes,
 								  rte->funccoltypmods,
@@ -2938,11 +3015,13 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 	ValuesScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
+	List	   *values_lists;
 
 	/* it should be a values base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
 	Assert(rte->rtekind == RTE_VALUES);
+	values_lists = rte->values_lists;
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -2950,8 +3029,18 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+		/* The values lists could contain nestloop params, too */
+		values_lists = (List *)
+			replace_nestloop_params(root, (Node *) values_lists);
+	}
+
 	scan_plan = make_valuesscan(tlist, scan_clauses, scan_relid,
-								rte->values_lists);
+								values_lists);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
@@ -2980,10 +3069,22 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+<<<<<<< HEAD
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan);
+=======
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
+	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
+							 plan_id, cte_param_id);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
@@ -3034,6 +3135,13 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
 
 	scan_plan = make_worktablescan(tlist, scan_clauses, scan_relid,
 								   cteroot->wt_param_id);
@@ -3949,6 +4057,92 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 	return expression_tree_mutator(node,
 								   replace_nestloop_params_mutator,
 								   (void *) root);
+}
+
+/*
+ * process_subquery_nestloop_params
+ *	  Handle params of a parameterized subquery that need to be fed
+ *	  from an outer nestloop.
+ *
+ * Currently, that would be *all* params that a subquery in FROM has demanded
+ * from the current query level, since they must be LATERAL references.
+ *
+ * The subplan's references to the outer variables are already represented
+ * as PARAM_EXEC Params, so we need not modify the subplan here.  What we
+ * do need to do is add entries to root->curOuterParams to signal the parent
+ * nestloop plan node that it must provide these values.
+ */
+static void
+process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
+{
+	ListCell   *ppl;
+
+	foreach(ppl, subplan_params)
+	{
+		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(ppl);
+
+		if (IsA(pitem->item, Var))
+		{
+			Var		   *var = (Var *) pitem->item;
+			NestLoopParam *nlp;
+			ListCell   *lc;
+
+			/* If not from a nestloop outer rel, complain */
+			if (!bms_is_member(var->varno, root->curOuterRels))
+				elog(ERROR, "non-LATERAL parameter required by subquery");
+			/* Is this param already listed in root->curOuterParams? */
+			foreach(lc, root->curOuterParams)
+			{
+				nlp = (NestLoopParam *) lfirst(lc);
+				if (nlp->paramno == pitem->paramId)
+				{
+					Assert(equal(var, nlp->paramval));
+					/* Present, so nothing to do */
+					break;
+				}
+			}
+			if (lc == NULL)
+			{
+				/* No, so add it */
+				nlp = makeNode(NestLoopParam);
+				nlp->paramno = pitem->paramId;
+				nlp->paramval = copyObject(var);
+				root->curOuterParams = lappend(root->curOuterParams, nlp);
+			}
+		}
+		else if (IsA(pitem->item, PlaceHolderVar))
+		{
+			PlaceHolderVar *phv = (PlaceHolderVar *) pitem->item;
+			NestLoopParam *nlp;
+			ListCell   *lc;
+
+			/* If not from a nestloop outer rel, complain */
+			if (!bms_is_subset(find_placeholder_info(root, phv, false)->ph_eval_at,
+							   root->curOuterRels))
+				elog(ERROR, "non-LATERAL parameter required by subquery");
+			/* Is this param already listed in root->curOuterParams? */
+			foreach(lc, root->curOuterParams)
+			{
+				nlp = (NestLoopParam *) lfirst(lc);
+				if (nlp->paramno == pitem->paramId)
+				{
+					Assert(equal(phv, nlp->paramval));
+					/* Present, so nothing to do */
+					break;
+				}
+			}
+			if (lc == NULL)
+			{
+				/* No, so add it */
+				nlp = makeNode(NestLoopParam);
+				nlp->paramno = pitem->paramId;
+				nlp->paramval = copyObject(phv);
+				root->curOuterParams = lappend(root->curOuterParams, nlp);
+			}
+		}
+		else
+			elog(ERROR, "unexpected type of subquery parameter");
+	}
 }
 
 /*
@@ -5960,8 +6154,8 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 	 * anything for Aggref nodes; this is okay since they are really
 	 * comparable to Vars.
 	 *
-	 * See notes in grouping_planner about why only make_agg, make_windowagg
-	 * and make_group worry about tlist eval cost.
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
 	 */
 	if (qual)
 	{
@@ -5970,10 +6164,7 @@ add_agg_cost(PlannerInfo *root, Plan *plan,
 		plan->total_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 	}
-	cost_qual_eval(&qual_cost, tlist, root);
-	plan->startup_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	return plan;
 }
@@ -5990,7 +6181,6 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
 	Path		windowagg_path; /* dummy for result of cost_windowagg */
-	QualCost	qual_cost;
 
 	node->winref = winref;
 	node->partNumCols = partNumCols;
@@ -6018,13 +6208,10 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	/*
 	 * We also need to account for the cost of evaluation of the tlist.
 	 *
-	 * See notes in grouping_planner about why only make_agg, make_windowagg
-	 * and make_group worry about tlist eval cost.
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
 	 */
-	cost_qual_eval(&qual_cost, tlist, root);
-	plan->startup_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
@@ -6058,9 +6245,37 @@ make_tablefunction(List *tlist,
 	plan->targetlist	= tlist;
 	plan->righttree		= NULL;
 
+<<<<<<< HEAD
 	/* Fill in information for the subplan */
 	plan->lefttree		 = subplan;
 	node->scan.scanrelid = scanrelid;
+=======
+	/*
+	 * We also need to account for the cost of evaluation of the qual (ie, the
+	 * HAVING clause) and the tlist.
+	 *
+	 * XXX this double-counts the cost of evaluation of any expressions used
+	 * for grouping, since in reality those will have been evaluated at a
+	 * lower plan level and will only be copied by the Group node. Worth
+	 * fixing?
+	 *
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
+	 */
+	if (qual)
+	{
+		cost_qual_eval(&qual_cost, qual, root);
+		plan->startup_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.startup;
+		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	}
+	add_tlist_costs_to_plan(root, plan, tlist);
+
+	plan->qual = qual;
+	plan->targetlist = tlist;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return node;
 }
@@ -6391,7 +6606,12 @@ make_repeat(List *tlist,
  * to make it look better sometime.
  */
 ModifyTable *
+<<<<<<< HEAD
 make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
+=======
+make_modifytable(PlannerInfo *root,
+				 CmdType operation, bool canSetTag,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				 List *resultRelations,
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam)
@@ -6399,7 +6619,10 @@ make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
 	ModifyTable *node = makeNode(ModifyTable);
 	Plan	   *plan = &node->plan;
 	double		total_size;
+	List	   *fdw_private_list;
 	ListCell   *subnode;
+	ListCell   *lc;
+	int			i;
 
 	Assert(list_length(resultRelations) == list_length(subplans));
 	Assert(returningLists == NIL ||
@@ -6446,6 +6669,53 @@ make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
 	node->oid_col_idxes = NIL;
 
 	adjust_modifytable_flow(root, node);
+
+	/*
+	 * For each result relation that is a foreign table, allow the FDW to
+	 * construct private plan data, and accumulate it all into a list.
+	 */
+	fdw_private_list = NIL;
+	i = 0;
+	foreach(lc, resultRelations)
+	{
+		Index		rti = lfirst_int(lc);
+		FdwRoutine *fdwroutine;
+		List	   *fdw_private;
+
+		/*
+		 * If possible, we want to get the FdwRoutine from our RelOptInfo for
+		 * the table.  But sometimes we don't have a RelOptInfo and must get
+		 * it the hard way.  (In INSERT, the target relation is not scanned,
+		 * so it's not a baserel; and there are also corner cases for
+		 * updatable views where the target rel isn't a baserel.)
+		 */
+		if (rti < root->simple_rel_array_size &&
+			root->simple_rel_array[rti] != NULL)
+		{
+			RelOptInfo *resultRel = root->simple_rel_array[rti];
+
+			fdwroutine = resultRel->fdwroutine;
+		}
+		else
+		{
+			RangeTblEntry *rte = planner_rt_fetch(rti, root);
+
+			Assert(rte->rtekind == RTE_RELATION);
+			if (rte->relkind == RELKIND_FOREIGN_TABLE)
+				fdwroutine = GetFdwRoutineByRelId(rte->relid);
+			else
+				fdwroutine = NULL;
+		}
+
+		if (fdwroutine != NULL &&
+			fdwroutine->PlanForeignModify != NULL)
+			fdw_private = fdwroutine->PlanForeignModify(root, node, rti, i);
+		else
+			fdw_private = NIL;
+		fdw_private_list = lappend(fdw_private_list, fdw_private);
+		i++;
+	}
+	node->fdwPrivLists = fdw_private_list;
 
 	return node;
 }

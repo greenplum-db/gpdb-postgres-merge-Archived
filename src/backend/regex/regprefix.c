@@ -4,7 +4,11 @@
  *	  Extract a common prefix, if any, from a compiled regex.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 2012-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION
@@ -20,7 +24,11 @@
  * forward declarations
  */
 static int findprefix(struct cnfa * cnfa, struct colormap * cm,
+<<<<<<< HEAD
 					  chr *string, size_t *slength);
+=======
+		   chr *string, size_t *slength);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /*
@@ -38,7 +46,11 @@ static int findprefix(struct cnfa * cnfa, struct colormap * cm,
  *
  * This function does not analyze all complex cases (such as lookahead
  * constraints) exactly.  Therefore it is possible that some strings matching
+<<<<<<< HEAD
  * the reported prefix or exact-match string do not satisfy the regex.  But
+=======
+ * the reported prefix or exact-match string do not satisfy the regex.	But
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * it should never be the case that a string satisfying the regex does not
  * match the reported prefix or exact-match string.
  */
@@ -61,6 +73,12 @@ pg_regprefix(regex_t *re,
 	if (re->re_csize != sizeof(chr))
 		return REG_MIXED;
 
+<<<<<<< HEAD
+=======
+	/* Initialize locale-dependent support */
+	pg_set_regex_collation(re->re_collation);
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* setup */
 	g = (struct guts *) re->re_guts;
 	if (g->info & REG_UIMPOSSIBLE)
@@ -76,8 +94,13 @@ pg_regprefix(regex_t *re,
 
 	/*
 	 * Since a correct NFA should never contain any exit-free loops, it should
+<<<<<<< HEAD
 	 * not be possible for our traversal to return to a previously visited
 	 * NFA state.  Hence we need at most nstates chrs in the output string.
+=======
+	 * not be possible for our traversal to return to a previously visited NFA
+	 * state.  Hence we need at most nstates chrs in the output string.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	*string = (chr *) MALLOC(cnfa->nstates * sizeof(chr));
 	if (*string == NULL)
@@ -119,8 +142,13 @@ findprefix(struct cnfa * cnfa,
 
 	/*
 	 * The "pre" state must have only BOS/BOL outarcs, else pattern isn't
+<<<<<<< HEAD
 	 * anchored left.  If we have both BOS and BOL, they must go to the
 	 * same next state.
+=======
+	 * anchored left.  If we have both BOS and BOL, they must go to the same
+	 * next state.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	st = cnfa->pre;
 	nextst = -1;
@@ -147,7 +175,11 @@ findprefix(struct cnfa * cnfa,
 	 * We could find a state with multiple out-arcs that are all labeled with
 	 * the same singleton color; this comes from patterns like "^ab(cde|cxy)".
 	 * In that case we add the chr "c" to the output string but then exit the
+<<<<<<< HEAD
 	 * loop with nextst == -1.  This leaves a little bit on the table: if the
+=======
+	 * loop with nextst == -1.	This leaves a little bit on the table: if the
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * pattern is like "^ab(cde|cdy)", we won't notice that "d" could be added
 	 * to the prefix.  But chasing multiple parallel state chains doesn't seem
 	 * worth the trouble.
@@ -198,14 +230,22 @@ findprefix(struct cnfa * cnfa,
 
 		/*
 		 * Identify the color's sole member chr and add it to the prefix
+<<<<<<< HEAD
 		 * string.  In general the colormap data structure doesn't provide a
+=======
+		 * string.	In general the colormap data structure doesn't provide a
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * way to find color member chrs, except by trying GETCOLOR() on each
 		 * possible chr value, which won't do at all.  However, for the cases
 		 * we care about it should be sufficient to test the "firstchr" value,
 		 * that is the first chr ever added to the color.  There are cases
 		 * where this might no longer be a member of the color (so we do need
 		 * to test), but none of them are likely to arise for a character that
+<<<<<<< HEAD
 		 * is a member of a common prefix.  If we do hit such a corner case,
+=======
+		 * is a member of a common prefix.	If we do hit such a corner case,
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * we just fall out without adding anything to the prefix string.
 		 */
 		c = cm->cd[thiscolor].firstchr;

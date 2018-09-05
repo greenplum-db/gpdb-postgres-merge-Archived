@@ -21,6 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+<<<<<<< HEAD
 ALTER TABLE [ IF EXISTS ] [ONLY] name RENAME [COLUMN] column TO new_column
 
 ALTER TABLE [ IF EXISTS ] name RENAME TO new_name
@@ -132,6 +133,61 @@ Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
 
+=======
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    <replaceable class="PARAMETER">action</replaceable> [, ... ]
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+
+<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
+    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
+    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
+    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    DISABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE REPLICA RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    SET WITHOUT CLUSTER
+    SET WITH OIDS
+    SET WITHOUT OIDS
+    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    OF <replaceable class="PARAMETER">type_name</replaceable>
+    NOT OF
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+
+<phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
+
+    [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+    { UNIQUE | PRIMARY KEY } USING INDEX <replaceable class="PARAMETER">index_name</replaceable>
+    [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 </synopsis>
  </refsynopsisdiv>
 
@@ -205,11 +261,9 @@ Where column_reference_storage_directive is:
     <listitem>
      <para>
       These forms set or remove the default value for a column.
-      The default values only apply to subsequent <command>INSERT</command>
-      commands; they do not cause rows already in the table to change.
-      Defaults can also be created for views, in which case they are
-      inserted into <command>INSERT</> statements on the view before
-      the view's <literal>ON INSERT</literal> rule is applied.
+      Default values only apply in subsequent <command>INSERT</command>
+      or <command>UPDATE</> commands; they do not cause rows already in the
+      table to change.
      </para>
     </listitem>
    </varlistentry>
@@ -553,7 +607,7 @@ Where column_reference_storage_directive is:
      <para>
       There must also be matching child-table constraints for all
       <literal>CHECK</literal> constraints of the parent, except those
-      marked non-inheritable (that is, created with <literal>ALTER TABLE ONLY</literal>)
+      marked non-inheritable (that is, created with <literal>ALTER TABLE ... ADD CONSTRAINT ... NO INHERIT</literal>)
       in the parent, which are ignored; all child-table constraints matched
       must not be marked non-inheritable.
       Currently
@@ -702,7 +756,7 @@ Where column_reference_storage_directive is:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
+      <term><replaceable class="PARAMETER">column_name</replaceable></term>
       <listitem>
        <para>
         Name of a new or existing column.
@@ -711,7 +765,7 @@ Where column_reference_storage_directive is:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_column</replaceable></term>
+      <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
       <listitem>
        <para>
         New name for an existing column.
@@ -1081,7 +1135,7 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
   <para>
    To add a check constraint only to a table and not to its children:
 <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK NO INHERIT (char_length(zipcode) = 5);
+ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5) NO INHERIT;
 </programlisting>
    (The check constraint will not be inherited by future children, either.)
   </para>
@@ -1094,7 +1148,7 @@ ALTER TABLE distributors DROP CONSTRAINT zipchk;
   </para>
 
   <para>
-   To remove a check constraint from a table only:
+   To remove a check constraint from one table only:
 <programlisting>
 ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;
 </programlisting>

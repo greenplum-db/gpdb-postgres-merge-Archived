@@ -4,7 +4,7 @@
  *	  WAL replay logic for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -136,7 +136,7 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 				SpGistInitBuffer(buffer,
 					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				/* insert new tuple */
 				if (xldata->offnumLeaf != xldata->offnumHeadLeaf)
@@ -183,7 +183,7 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				SpGistInnerTuple tuple;
 
@@ -246,7 +246,7 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 				SpGistInitBuffer(buffer,
 					 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				int			i;
 
@@ -274,7 +274,7 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				spgPageIndexMultiDelete(&state, page, toDelete, xldata->nMoves,
 						state.isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
@@ -298,7 +298,7 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				SpGistInnerTuple tuple;
 
@@ -345,7 +345,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(buffer))
 			{
 				page = BufferGetPage(buffer);
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					PageIndexTupleDelete(page, xldata->offnum);
 					if (PageAddItem(page, (Item) innerTuple, innerTuple->size,
@@ -390,7 +390,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 				if (xldata->newPage)
 					SpGistInitBuffer(buffer, 0);
 
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					addOrReplaceTuple(page, (Item) innerTuple,
 									  innerTuple->size, xldata->offnumNew);
@@ -420,7 +420,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(buffer))
 			{
 				page = BufferGetPage(buffer);
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					SpGistDeadTuple dt;
 
@@ -484,7 +484,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(buffer))
 			{
 				page = BufferGetPage(buffer);
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					SpGistInnerTuple innerTuple;
 
@@ -540,7 +540,7 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 			if (xldata->newPage)
 				SpGistInitBuffer(buffer, 0);
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				addOrReplaceTuple(page, (Item) postfixTuple,
 								  postfixTuple->size, xldata->offnumPostfix);
@@ -561,7 +561,7 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				PageIndexTupleDelete(page, xldata->offnumPrefix);
 				if (PageAddItem(page, (Item) prefixTuple, prefixTuple->size,
@@ -656,7 +656,11 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(srcBuffer))
 			{
 				srcPage = BufferGetPage(srcBuffer);
+<<<<<<< HEAD
 				if (!XLByteLE(lsn, PageGetLSN(srcPage)))
+=======
+				if (lsn > PageGetLSN(srcPage))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					/*
 					 * We have it a bit easier here than in doPickSplit(),
@@ -723,7 +727,11 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(destBuffer))
 			{
 				destPage = (Page) BufferGetPage(destBuffer);
+<<<<<<< HEAD
 				if (XLByteLE(lsn, PageGetLSN(destPage)))
+=======
+				if (lsn <= PageGetLSN(destPage))
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 					destPage = NULL;	/* don't do any page updates */
 			}
 			else
@@ -774,7 +782,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 				SpGistInitBuffer(buffer,
 								 (xldata->storesNulls ? SPGIST_NULLS : 0));
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				addOrReplaceTuple(page, (Item) innerTuple, innerTuple->size,
 								  xldata->offnumInner);
@@ -825,7 +833,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 			{
 				page = BufferGetPage(buffer);
 
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					SpGistInnerTuple parent;
 
@@ -882,7 +890,7 @@ spgRedoVacuumLeaf(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				spgPageIndexMultiDelete(&state, page,
 										toDead, xldata->nDead,
@@ -952,7 +960,7 @@ spgRedoVacuumRoot(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				/* The tuple numbers are in order */
 				PageIndexMultiDelete(page, toDelete, xldata->nDelete);
@@ -997,7 +1005,7 @@ spgRedoVacuumRedirect(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				SpGistPageOpaque opaque = SpGistPageGetOpaque(page);
 				int			i;
@@ -1096,6 +1104,7 @@ spg_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	MemoryContextReset(opCtx);
 }
 
+<<<<<<< HEAD
 static void
 out_target(StringInfo buf, RelFileNode node)
 {
@@ -1169,6 +1178,8 @@ spg_desc(StringInfo buf, XLogRecord *record)
 	}
 }
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 void
 spg_xlog_startup(void)
 {

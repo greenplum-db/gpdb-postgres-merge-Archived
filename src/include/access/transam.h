@@ -4,7 +4,7 @@
  *	  postgres transaction access method support code
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/transam.h
@@ -121,6 +121,7 @@ extern bool TransactionStartedDuringRecovery(void);
 /* in transam/varsup.c */
 extern PGDLLIMPORT VariableCache ShmemVariableCache;
 
+<<<<<<< HEAD
 extern int xid_stop_limit;
 extern int xid_warn_limit;
 
@@ -128,6 +129,8 @@ extern int xid_warn_limit;
 extern const XLogRecPtr InvalidXLogRecPtr;
 
 
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * prototypes for functions in transam/transam.c
  */

@@ -19,6 +19,7 @@ fi])# PGAC_C_SIGNED
 
 # PGAC_C_INLINE
 # -------------
+<<<<<<< HEAD
 # Check if the C compiler understands inline functions without being
 # noisy about unused static inline functions. Some older compilers
 # understand inline functions (as tested by AC_C_INLINE) but warn about
@@ -31,6 +32,9 @@ fi])# PGAC_C_SIGNED
 # to see if the warning appears when the function is in a header file.
 # Not pretty, but it works.
 #
+=======
+# Check if the C compiler understands inline functions.
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 # Defines: inline, PG_USE_INLINE
 AC_DEFUN([PGAC_C_INLINE],
 [AC_C_INLINE

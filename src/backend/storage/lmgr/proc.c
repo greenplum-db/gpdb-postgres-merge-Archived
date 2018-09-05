@@ -3,9 +3,13 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -56,6 +60,7 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/spin.h"
+#include "utils/timeout.h"
 #include "utils/timestamp.h"
 
 #include "utils/sharedsnapshot.h"  /*SharedLocalSnapshotSlot*/
@@ -71,6 +76,7 @@
 /* GUC variables */
 int			DeadlockTimeout = 1000;
 int			StatementTimeout = 0;
+int			LockTimeout = 0;
 bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC and PGXACT structs, if any */
@@ -98,11 +104,9 @@ PGPROC	   *PreparedXactProcs = NULL;
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
 static LOCALLOCK *lockAwaited = NULL;
 
-/* Mark these volatile because they can be changed by signal handler */
-static volatile bool standby_timeout_active = false;
-static volatile bool statement_timeout_active = false;
-static volatile bool deadlock_timeout_active = false;
+/* Mark this volatile because it can be changed by signal handler */
 static volatile DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
+<<<<<<< HEAD
 static volatile sig_atomic_t clientWaitTimeoutInterruptEnabled = 0;
 static volatile sig_atomic_t clientWaitTimeoutInterruptOccurred = 0;
 volatile bool cancel_from_timeout = false;
@@ -113,14 +117,19 @@ static TimestampTz timeout_start_time;
 /* statement_fin_time is valid only if statement_timeout_active is true */
 static TimestampTz statement_fin_time;
 static TimestampTz statement_fin_time2; /* valid only in recovery */
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
+<<<<<<< HEAD
 static bool CheckStatementTimeout(void);
 static bool CheckStandbyTimeout(void);
 static void ClientWaitTimeoutInterruptHandler(void);
 static void ProcessClientWaitTimeout(void);
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /*
@@ -176,7 +185,9 @@ ProcGlobalSemas(void)
  *	  So, now we grab enough semaphores to support the desired max number
  *	  of backends immediately at initialization --- if the sysadmin has set
  *	  MaxConnections or autovacuum_max_workers higher than his kernel will
- *	  support, he'll find out sooner rather than later.
+ *	  support, he'll find out sooner rather than later.  (The number of
+ *	  background worker processes registered by loadable modules is also taken
+ *	  into consideration.)
  *
  *	  Another reason for creating semaphores here is that the semaphore
  *	  implementation typically requires us to create semaphores in the
@@ -208,6 +219,7 @@ InitProcGlobal(void)
 	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 	ProcGlobal->freeProcs = NULL;
 	ProcGlobal->autovacFreeProcs = NULL;
+	ProcGlobal->bgworkerFreeProcs = NULL;
 	ProcGlobal->startupProc = NULL;
 	ProcGlobal->startupProcPid = 0;
 	ProcGlobal->startupBufferPinWaitBufId = -1;
@@ -218,10 +230,11 @@ InitProcGlobal(void)
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need.  There are
-	 * four separate consumers: (1) normal backends, (2) autovacuum workers
-	 * and the autovacuum launcher, (3) auxiliary processes, and (4) prepared
-	 * transactions.  Each PGPROC structure is dedicated to exactly one of
-	 * these purposes, and they do not move between groups.
+	 * five separate consumers: (1) normal backends, (2) autovacuum workers
+	 * and the autovacuum launcher, (3) background workers, (4) auxiliary
+	 * processes, and (5) prepared transactions.  Each PGPROC structure is
+	 * dedicated to exactly one of these purposes, and they do not move
+	 * between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
@@ -270,12 +283,12 @@ InitProcGlobal(void)
 		procs[i].pgprocno = i;
 
 		/*
-		 * Newly created PGPROCs for normal backends or for autovacuum must be
-		 * queued up on the appropriate free list.	Because there can only
-		 * ever be a small, fixed number of auxiliary processes, no free list
-		 * is used in that case; InitAuxiliaryProcess() instead uses a linear
-		 * search.	PGPROCs for prepared transactions are added to a free list
-		 * by TwoPhaseShmemInit().
+		 * Newly created PGPROCs for normal backends, autovacuum and bgworkers
+		 * must be queued up on the appropriate free list.	Because there can
+		 * only ever be a small, fixed number of auxiliary processes, no free
+		 * list is used in that case; InitAuxiliaryProcess() instead uses a
+		 * linear search.	PGPROCs for prepared transactions are added to a
+		 * free list by TwoPhaseShmemInit().
 		 */
 		if (i < MaxConnections)
 		{
@@ -283,11 +296,17 @@ InitProcGlobal(void)
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 			ProcGlobal->freeProcs = &procs[i];
 		}
-		else if (i < MaxBackends)
+		else if (i < MaxConnections + autovacuum_max_workers + 1)
 		{
 			/* PGPROC for AV launcher/worker, add to autovacFreeProcs list */
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 			ProcGlobal->autovacFreeProcs = &procs[i];
+		}
+		else if (i < MaxBackends)
+		{
+			/* PGPROC for bgworker, add to bgworkerFreeProcs list */
+			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->bgworkerFreeProcs;
+			ProcGlobal->bgworkerFreeProcs = &procs[i];
 		}
 
 		/* Initialize myProcLocks[] shared memory queues. */
@@ -336,6 +355,13 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
+	 * Initialize process-local latch support.	This could fail if the kernel
+	 * is low on resources, and if so we want to exit cleanly before acquiring
+	 * any shared-memory resources.
+	 */
+	InitializeLatchSupport();
+
+	/*
 	 * Try to get a proc struct from the free list.  If this fails, we must be
 	 * out of PGPROC structures (not to mention semaphores).
 	 *
@@ -348,6 +374,8 @@ InitProcess(void)
 
 	if (IsAnyAutoVacuumProcess())
 		MyProc = procglobal->autovacFreeProcs;
+	else if (IsBackgroundWorker)
+		MyProc = procglobal->bgworkerFreeProcs;
 	else
 		MyProc = procglobal->freeProcs;
 
@@ -355,6 +383,8 @@ InitProcess(void)
 	{
 		if (IsAnyAutoVacuumProcess())
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
+		else if (IsBackgroundWorker)
+			procglobal->bgworkerFreeProcs = (PGPROC *) MyProc->links.next;
 		else
 			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
@@ -409,6 +439,8 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
+	MyProc->fpVXIDLock = false;
+	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyPgXact->xid = InvalidTransactionId;
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
@@ -418,7 +450,7 @@ InitProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-	MyPgXact->inCommit = false;
+	MyPgXact->delayChkpt = false;
 	MyPgXact->vacuumFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
@@ -472,8 +504,7 @@ InitProcess(void)
 	MyProc->recoveryConflictPending = false;
 
 	/* Initialize fields for sync rep */
-	MyProc->waitLSN.xlogid = 0;
-	MyProc->waitLSN.xrecoff = 0;
+	MyProc->waitLSN = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
 
@@ -569,6 +600,13 @@ InitAuxiliaryProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
+	 * Initialize process-local latch support.	This could fail if the kernel
+	 * is low on resources, and if so we want to exit cleanly before acquiring
+	 * any shared-memory resources.
+	 */
+	InitializeLatchSupport();
+
+	/*
 	 * We use the ProcStructLock to protect assignment and releasing of
 	 * AuxiliaryProcs entries.
 	 *
@@ -612,6 +650,8 @@ InitAuxiliaryProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
+	MyProc->fpVXIDLock = false;
+	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyPgXact->xid = InvalidTransactionId;
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
@@ -619,10 +659,14 @@ InitAuxiliaryProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
+<<<<<<< HEAD
     MyProc->mppLocalProcessSerial = 0;
     MyProc->mppSessionId = 0;
     MyProc->mppIsWriter = false;
 	MyPgXact->inCommit = false;
+=======
+	MyPgXact->delayChkpt = false;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	MyPgXact->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
@@ -759,6 +803,7 @@ void
 LockErrorCleanup(void)
 {
 	LWLockId	partitionLock;
+	DisableTimeoutParams timeouts[2];
 
 	AbortStrongLockAcquire();
 
@@ -766,6 +811,7 @@ LockErrorCleanup(void)
 	if (lockAwaited == NULL)
 		return;
 
+<<<<<<< HEAD
 	/* Don't try to cancel resource locks.*/
 	if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled() &&
 		LOCALLOCK_LOCKMETHOD(*lockAwaited) == RESOURCE_LOCKMETHOD)
@@ -773,6 +819,21 @@ LockErrorCleanup(void)
 
 	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
 	disable_sig_alarm(false);
+=======
+	/*
+	 * Turn off the deadlock and lock timeout timers, if they are still
+	 * running (see ProcSleep).  Note we must preserve the LOCK_TIMEOUT
+	 * indicator flag, since this function is executed before
+	 * ProcessInterrupts when responding to SIGINT; else we'd lose the
+	 * knowledge that the SIGINT came from a lock timeout and not an external
+	 * source.
+	 */
+	timeouts[0].id = DEADLOCK_TIMEOUT;
+	timeouts[0].keep_indicator = false;
+	timeouts[1].id = LOCK_TIMEOUT;
+	timeouts[1].keep_indicator = true;
+	disable_timeouts(timeouts, 2);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
 	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
@@ -959,6 +1020,11 @@ ProcKill(int code, Datum arg)
 	{
 		proc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
 		procglobal->autovacFreeProcs = proc;
+	}
+	else if (IsBackgroundWorker)
+	{
+		MyProc->links.next = (SHM_QUEUE *) procglobal->bgworkerFreeProcs;
+		procglobal->bgworkerFreeProcs = MyProc;
 	}
 	else
 	{
@@ -1232,7 +1298,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	if (RecoveryInProgress() && !InRecovery)
 		CheckRecoveryConflictDeadlock();
 
-	/* Reset deadlock_state before enabling the signal handler */
+	/* Reset deadlock_state before enabling the timeout handler */
 	deadlock_state = DS_NOT_YET_CHECKED;
 
 	/*
@@ -1243,9 +1309,24 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 *
 	 * By delaying the check until we've waited for a bit, we can avoid
 	 * running the rather expensive deadlock-check code in most cases.
+	 *
+	 * If LockTimeout is set, also enable the timeout for that.  We can save a
+	 * few cycles by enabling both timeout sources in one call.
 	 */
-	if (!enable_sig_alarm(DeadlockTimeout, false))
-		elog(FATAL, "could not set timer for process wakeup");
+	if (LockTimeout > 0)
+	{
+		EnableTimeoutParams timeouts[2];
+
+		timeouts[0].id = DEADLOCK_TIMEOUT;
+		timeouts[0].type = TMPARAM_AFTER;
+		timeouts[0].delay_ms = DeadlockTimeout;
+		timeouts[1].id = LOCK_TIMEOUT;
+		timeouts[1].type = TMPARAM_AFTER;
+		timeouts[1].delay_ms = LockTimeout;
+		enable_timeouts(timeouts, 2);
+	}
+	else
+		enable_timeout_after(DEADLOCK_TIMEOUT, DeadlockTimeout);
 
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
@@ -1261,8 +1342,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 * that we don't mind losing control to a cancel/die interrupt here.  We
 	 * don't, because we have no shared-state-change work to do after being
 	 * granted the lock (the grantor did it all).  We do have to worry about
-	 * updating the locallock table, but if we lose control to an error,
-	 * LockErrorCleanup will fix that up.
+	 * canceling the deadlock timeout and updating the locallock table, but if
+	 * we lose control to an error, LockErrorCleanup will fix that up.
 	 */
 	do
 	{
@@ -1296,25 +1377,43 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			{
 				int			pid = autovac->pid;
 				StringInfoData locktagbuf;
+<<<<<<< HEAD
 				StringInfoData logbuf;		/* errdetail for server log */
+=======
+				StringInfoData logbuf;	/* errdetail for server log */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				initStringInfo(&locktagbuf);
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
 				appendStringInfo(&logbuf,
+<<<<<<< HEAD
 					  _("Process %d waits for %s on %s."),
 						 MyProcPid,
 						 GetLockmodeName(lock->tag.locktag_lockmethodid,
 										 lockmode),
 						 locktagbuf.data);
+=======
+								 _("Process %d waits for %s on %s."),
+								 MyProcPid,
+							  GetLockmodeName(lock->tag.locktag_lockmethodid,
+											  lockmode),
+								 locktagbuf.data);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/* release lock as quickly as possible */
 				LWLockRelease(ProcArrayLock);
 
 				ereport(LOG,
+<<<<<<< HEAD
 						(errmsg("sending cancel to blocking autovacuum PID %d",
 							pid),
 						 errdetail("%s", logbuf.data)));
+=======
+					  (errmsg("sending cancel to blocking autovacuum PID %d",
+							  pid),
+					   errdetail_log("%s", logbuf.data)));
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				pfree(logbuf.data);
 				pfree(locktagbuf.data);
@@ -1351,7 +1450,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			DescribeLockTag(&buf, &locallock->tag.lock);
 			modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
 									   lockmode);
-			TimestampDifference(timeout_start_time, GetCurrentTimestamp(),
+			TimestampDifference(get_timeout_start_time(DEADLOCK_TIMEOUT),
+								GetCurrentTimestamp(),
 								&secs, &usecs);
 			msecs = secs * 1000 + usecs / 1000;
 			usecs = usecs % 1000;
@@ -1411,10 +1511,20 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	} while (myWaitStatus == STATUS_WAITING);
 
 	/*
-	 * Disable the timer, if it's still running
+	 * Disable the timers, if they are still running
 	 */
-	if (!disable_sig_alarm(false))
-		elog(FATAL, "could not disable timer for process wakeup");
+	if (LockTimeout > 0)
+	{
+		DisableTimeoutParams timeouts[2];
+
+		timeouts[0].id = DEADLOCK_TIMEOUT;
+		timeouts[0].keep_indicator = false;
+		timeouts[1].id = LOCK_TIMEOUT;
+		timeouts[1].keep_indicator = false;
+		disable_timeouts(timeouts, 2);
+	}
+	else
+		disable_timeout(DEADLOCK_TIMEOUT, false);
 
 	/*
 	 * Re-acquire the lock table's partition lock.  We have to do this to hold
@@ -1547,7 +1657,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 /*
  * CheckDeadLock
  *
- * We only get to this routine if we got SIGALRM after DeadlockTimeout
+ * We only get to this routine if the DEADLOCK_TIMEOUT fired
  * while waiting for a lock to be released by some other process.  Look
  * to see if there's a deadlock; if not, just return and continue waiting.
  * (But signal ProcSleep to log a message, if log_lock_waits is true.)
@@ -1557,7 +1667,7 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
  * NB: this is run inside a signal handler, so be very wary about what is done
  * here or in called routines.
  */
-static void
+void
 CheckDeadLock(void)
 {
 	int			i;
@@ -1720,6 +1830,7 @@ ProcSendSignal(int pid)
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);
 }
+<<<<<<< HEAD
 
 
 /*****************************************************************************
@@ -2412,3 +2523,5 @@ handle_standby_sig_alarm(SIGNAL_ARGS)
 
 	errno = save_errno;
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

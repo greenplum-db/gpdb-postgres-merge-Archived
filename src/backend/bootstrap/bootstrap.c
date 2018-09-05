@@ -4,7 +4,7 @@
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -21,6 +21,7 @@
 #include <getopt.h>
 #endif
 
+#include "access/htup_details.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -48,7 +49,12 @@
 extern int	optind;
 extern char *optarg;
 
+<<<<<<< HEAD
 uint32 bootstrap_data_checksum_version = 0;  /* No checksum */
+=======
+uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
@@ -64,6 +70,8 @@ static void cleanup(void);
  *		global variables
  * ----------------
  */
+
+AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
 
 Relation	boot_reldesc;		/* current relation descriptor */
 AuxProcType MyAuxProcType = NotAnAuxProcess;
@@ -229,9 +237,16 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		argc--;
 	}
 
+<<<<<<< HEAD
 	MyAuxProcType = CheckerProcess;
 
 	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:y:-:")) != -1)
+=======
+	/* If no -x argument, we are a CheckerProcess */
+	MyAuxProcType = CheckerProcess;
+
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:-:")) != -1)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		switch (flag)
 		{
@@ -239,7 +254,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'D':
-				userDoption = optarg;
+				userDoption = strdup(optarg);
 				break;
 			case 'd':
 				{
@@ -257,9 +272,15 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+<<<<<<< HEAD
  			case 'k':
 				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
  				break;
+=======
+			case 'k':
+				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
+				break;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
@@ -360,6 +381,10 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes = true;
 
+	/* Initialize MaxBackends (if under postmaster, was done already) */
+	if (!IsUnderPostmaster)
+		InitializeMaxBackends();
+
 	BaseInit();
 
 	/*
@@ -380,8 +405,13 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/*
 		 * Assign the ProcSignalSlot for an auxiliary process.	Since it
 		 * doesn't have a BackendId, the slot is statically allocated based on
+<<<<<<< HEAD
 		 * the auxiliary process type (MyAuxProcType).  Backends use slots indexed
 		 * in the range from 1 to MaxBackends (inclusive), so we use
+=======
+		 * the auxiliary process type (MyAuxProcType).	Backends use slots
+		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
 		 * auxiliary process.
 		 *
@@ -442,7 +472,11 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 
 		default:
+<<<<<<< HEAD
 			elog(PANIC, "unrecognized process type: %d", MyAuxProcType);
+=======
+			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 			proc_exit(1);
 	}
 }

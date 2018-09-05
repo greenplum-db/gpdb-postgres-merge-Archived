@@ -3,9 +3,13 @@
  * parse_type.c
  *		handle type operations for parser
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
@@ -150,7 +155,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			/* Look in specific schema only */
 			Oid			namespaceId;
 
-			namespaceId = LookupExplicitNamespace(schemaname);
+			namespaceId = LookupExplicitNamespace(schemaname, false);
 			typoid = GetSysCacheOid2(TYPENAMENSP,
 									 PointerGetDatum(typname),
 									 ObjectIdGetDatum(namespaceId));
@@ -706,12 +711,17 @@ parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
 		stmt->whereClause != NULL ||
 		stmt->groupClause != NIL ||
 		stmt->havingClause != NULL ||
+<<<<<<< HEAD
 		stmt->withClause != NULL ||
+=======
+		stmt->windowClause != NIL ||
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		stmt->valuesLists != NIL ||
 		stmt->sortClause != NIL ||
 		stmt->limitOffset != NULL ||
 		stmt->limitCount != NULL ||
 		stmt->lockingClause != NIL ||
+		stmt->withClause != NULL ||
 		stmt->op != SETOP_NONE)
 		goto fail;
 	if (list_length(stmt->targetList) != 1)

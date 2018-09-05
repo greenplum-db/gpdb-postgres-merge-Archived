@@ -4,7 +4,7 @@
  *	  POSTGRES system attribute definitions.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/sysattr.h
@@ -25,7 +25,11 @@
 #define MaxTransactionIdAttributeNumber			(-5)
 #define MaxCommandIdAttributeNumber				(-6)
 #define TableOidAttributeNumber					(-7)
+<<<<<<< HEAD
 #define GpSegmentIdAttributeNumber			    (-8)    /*CDB*/
 #define FirstLowInvalidHeapAttributeNumber		(-9)
+=======
+#define FirstLowInvalidHeapAttributeNumber		(-8)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* SYSATTR_H */

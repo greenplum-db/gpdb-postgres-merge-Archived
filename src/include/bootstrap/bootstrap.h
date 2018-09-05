@@ -4,7 +4,7 @@
  *	  include file for the bootstrapping code
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/bootstrap/bootstrap.h
@@ -17,6 +17,10 @@
 #include "catalog/index.h"
 #include "nodes/execnodes.h"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).
@@ -28,7 +32,7 @@ extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 
 
-extern void AuxiliaryProcessMain(int argc, char *argv[]);
+extern void AuxiliaryProcessMain(int argc, char *argv[]) __attribute__((noreturn));
 
 extern void err_out(void);
 

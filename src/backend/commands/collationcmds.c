@@ -3,7 +3,7 @@
  * collationcmds.c
  *	  collation-related commands support code
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -34,6 +35,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
@@ -53,6 +55,13 @@ typedef struct
  */
 void
 DefineCollation(List *names, List *parameters, bool if_not_exists)
+=======
+/*
+ * CREATE COLLATION
+ */
+Oid
+DefineCollation(List *names, List *parameters)
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	char	   *collName;
 	Oid			collNamespace;
@@ -159,6 +168,7 @@ DefineCollation(List *names, List *parameters, bool if_not_exists)
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
+<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -273,146 +283,41 @@ AlterCollationOwner_oid(Oid collationOid, Oid newOwnerId)
 	rel = heap_open(CollationRelationId, RowExclusiveLock);
 
 	AlterCollationOwner_internal(rel, collationOid, newOwnerId);
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
-	heap_close(rel, RowExclusiveLock);
+	return newoid;
 }
 
 /*
- * AlterCollationOwner_internal
+ * Subroutine for ALTER COLLATION SET SCHEMA and RENAME
  *
- * Internal routine for changing the owner.  rel must be pg_collation, already
- * open and suitably locked; it will not be closed.
- */
-static void
-AlterCollationOwner_internal(Relation rel, Oid collationOid, Oid newOwnerId)
-{
-	Form_pg_collation collForm;
-	HeapTuple	tup;
-
-	Assert(RelationGetRelid(rel) == CollationRelationId);
-
-	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collationOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for collation %u", collationOid);
-
-	collForm = (Form_pg_collation) GETSTRUCT(tup);
-
-	/*
-	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is for dump restoration purposes.
-	 */
-	if (collForm->collowner != newOwnerId)
-	{
-		AclResult	aclresult;
-
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* Otherwise, must be owner of the existing object */
-			if (!pg_collation_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
-							   NameStr(collForm->collname));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(collForm->collnamespace,
-											  newOwnerId,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(collForm->collnamespace));
-		}
-
-		/*
-		 * Modify the owner --- okay to scribble on tup because it's a copy
-		 */
-		collForm->collowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-
-		CatalogUpdateIndexes(rel, tup);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(CollationRelationId, collationOid,
-								newOwnerId);
-	}
-
-	heap_freetuple(tup);
-}
-
-/*
- * Execute ALTER COLLATION SET SCHEMA
+ * Is there a collation with the same name of the given collation already in
+ * the given namespace?  If so, raise an appropriate error message.
  */
 void
-AlterCollationNamespace(List *name, const char *newschema)
+IsThereCollationInNamespace(const char *collname, Oid nspOid)
 {
-	Oid			collOid,
-				nspOid;
-
-	collOid = get_collation_oid(name, false);
-
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterCollationNamespace_oid(collOid, nspOid);
-}
-
-/*
- * Change collation schema, by oid
- */
-Oid
-AlterCollationNamespace_oid(Oid collOid, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-	char	   *collation_name;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	/*
-	 * We have to check for name collision ourselves, because
-	 * AlterObjectNamespace doesn't know how to deal with the encoding
-	 * considerations.
-	 */
-	collation_name = get_collation_name(collOid);
-	if (!collation_name)
-		elog(ERROR, "cache lookup failed for collation %u", collOid);
-
 	/* make sure the name doesn't already exist in new schema */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(collation_name),
+							  CStringGetDatum(collname),
 							  Int32GetDatum(GetDatabaseEncoding()),
-							  ObjectIdGetDatum(newNspOid)))
+							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("collation \"%s\" for encoding \"%s\" already exists in schema \"%s\"",
-						collation_name,
-						GetDatabaseEncodingName(),
-						get_namespace_name(newNspOid))));
+						collname, GetDatabaseEncodingName(),
+						get_namespace_name(nspOid))));
 
 	/* mustn't match an any-encoding entry, either */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(collation_name),
+							  CStringGetDatum(collname),
 							  Int32GetDatum(-1),
-							  ObjectIdGetDatum(newNspOid)))
+							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("collation \"%s\" already exists in schema \"%s\"",
-						collation_name,
-						get_namespace_name(newNspOid))));
-
-	/* OK, do the work */
-	oldNspOid = AlterObjectNamespace(rel, COLLOID, -1,
-									 collOid, newNspOid,
-									 Anum_pg_collation_collname,
-									 Anum_pg_collation_collnamespace,
-									 Anum_pg_collation_collowner,
-									 ACL_KIND_COLLATION);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
+						collname, get_namespace_name(nspOid))));
 }
 
 

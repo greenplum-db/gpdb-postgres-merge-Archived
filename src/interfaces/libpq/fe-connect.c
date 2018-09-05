@@ -3,8 +3,12 @@
  * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -175,8 +179,13 @@ typedef struct _internalPQconninfoOption
 	int			dispsize;		/* Field size in characters for dialog	*/
 	/* ---
 	 * Anything above this comment must be synchronized with
+<<<<<<< HEAD
 	 * PQconninfoOption in libpq-fe.h with defining FRONTEND, since we FE
 	 * memcpy() data between them!
+=======
+	 * PQconninfoOption in libpq-fe.h, since we memcpy() data
+	 * between them!
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * ---
 	 */
 	off_t		connofs;		/* Offset into PGconn struct, -1 if not there */
@@ -281,7 +290,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 		"SSL-Mode", "", 8,		/* sizeof("disable") == 8 */
 	offsetof(struct pg_conn, sslmode)},
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
 		"SSL-Compression", "", 1,
@@ -328,6 +340,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"replication", NULL, NULL, NULL,
 		"Replication", "D", 5,
 	offsetof(struct pg_conn, replication)},
+<<<<<<< HEAD
 
     /* CDB: qExec wants some info from qDisp before GUCs are processed */
 	{"gpqeid", NULL, "", NULL,
@@ -337,6 +350,8 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{GPCONN_TYPE, NULL, NULL, NULL,
 		"connection type", "D", 10,
 	offsetof(struct pg_conn, gpconntype)},
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -728,6 +743,7 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
 	const internalPQconninfoOption *option;
 
+<<<<<<< HEAD
 	for (option = PQconninfoOptions; option->keyword; option++)
 	{
 		if (option->connofs >= 0)
@@ -752,6 +768,29 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	}
 
 	return true;
+=======
+	/*
+	 * Move option values into conn structure
+	 *
+	 * Don't put anything cute here --- intelligence should be in
+	 * connectOptions2 ...
+	 *
+	 * XXX: probably worth checking strdup() return value here...
+	 */
+	for (option = PQconninfoOptions; option->keyword; option++)
+	{
+		const char *tmp = conninfo_getval(connOptions, option->keyword);
+
+		if (tmp && option->connofs >= 0)
+		{
+			char	  **connmember = (char **) ((char *) conn + option->connofs);
+
+			if (*connmember)
+				free(*connmember);
+			*connmember = tmp ? strdup(tmp) : NULL;
+		}
+	}
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -2259,9 +2298,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 				}
@@ -2373,9 +2409,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2442,9 +2475,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2461,9 +2491,6 @@ keep_going:						/* We will come back to here until there is
 						/* Must drop the old connection */
 						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 #endif
@@ -2625,9 +2652,6 @@ keep_going:						/* We will come back to here until there is
 							/* Must drop the old connection */
 							pqDropConnection(conn);
 							conn->status = CONNECTION_NEEDED;
-							/* Discard any unread/unsent data */
-							conn->inStart = conn->inCursor = conn->inEnd = 0;
-							conn->outCount = 0;
 							goto keep_going;
 						}
 					}
@@ -2824,8 +2848,7 @@ makeEmptyPGconn(void)
 	/* Zero all pointers and booleans */
 	MemSet(conn, 0, sizeof(PGconn));
 
-	/* install default row processor and notice hooks */
-	PQsetRowProcessor(conn, NULL, NULL);
+	/* install default notice hooks */
 	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
 	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
 
@@ -4906,14 +4929,14 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (!*p)
 		{
 			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("end of string reached when looking for matching ']' in IPv6 host address in URI: %s\n"),
+							  libpq_gettext("end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"),
 							  uri);
 			goto cleanup;
 		}
 		if (p == host)
 		{
 			printfPQExpBuffer(errorMessage,
-			libpq_gettext("IPv6 host address may not be empty in URI: %s\n"),
+							  libpq_gettext("IPv6 host address may not be empty in URI: \"%s\"\n"),
 							  uri);
 			goto cleanup;
 		}
@@ -4928,7 +4951,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (*p && *p != ':' && *p != '/' && *p != '?')
 		{
 			printfPQExpBuffer(errorMessage,
-							  libpq_gettext("unexpected '%c' at position %d in URI (expecting ':' or '/'): %s\n"),
+							  libpq_gettext("unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"),
 							  *p, (int) (p - buf + 1), uri);
 			goto cleanup;
 		}
@@ -5042,7 +5065,7 @@ conninfo_uri_parse_params(char *params,
 				if (value != NULL)
 				{
 					printfPQExpBuffer(errorMessage,
-									  libpq_gettext("extra key/value separator '=' in URI query parameter: %s\n"),
+									  libpq_gettext("extra key/value separator \"=\" in URI query parameter: \"%s\"\n"),
 									  params);
 					return false;
 				}
@@ -5062,7 +5085,7 @@ conninfo_uri_parse_params(char *params,
 				if (value == NULL)
 				{
 					printfPQExpBuffer(errorMessage,
-									  libpq_gettext("missing key/value separator '=' in URI query parameter: %s\n"),
+									  libpq_gettext("missing key/value separator \"=\" in URI query parameter: \"%s\"\n"),
 									  params);
 					return false;
 				}
@@ -5133,7 +5156,11 @@ conninfo_uri_parse_params(char *params,
 
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext(
+<<<<<<< HEAD
 									"invalid URI query parameter: %s\n"),
+=======
+									"invalid URI query parameter: \"%s\"\n"),
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 							  keyword);
 			if (malloced)
 			{
@@ -5203,7 +5230,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			if (!(get_hexdigit(*q++, &hi) && get_hexdigit(*q++, &lo)))
 			{
 				printfPQExpBuffer(errorMessage,
-						libpq_gettext("invalid percent-encoded token: %s\n"),
+					libpq_gettext("invalid percent-encoded token: \"%s\"\n"),
 								  str);
 				free(buf);
 				return NULL;
@@ -5213,7 +5240,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			if (c == 0)
 			{
 				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("forbidden value %%00 in percent-encoded value: %s\n"),
+								  libpq_gettext("forbidden value %%00 in percent-encoded value: \"%s\"\n"),
 								  str);
 				free(buf);
 				return NULL;
@@ -5918,8 +5945,8 @@ static void
 dot_pg_pass_warning(PGconn *conn)
 {
 	/* If it was 'invalid authorization', add .pgpass mention */
-	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
 	/* only works with >= 9.0 servers */
+	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
 		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
 			   ERRCODE_INVALID_PASSWORD) == 0)
 	{

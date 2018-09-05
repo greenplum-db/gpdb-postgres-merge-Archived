@@ -9,9 +9,13 @@
  * context's MemoryContextMethods struct.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +24,9 @@
  *
  *-------------------------------------------------------------------------
  */
+
+/* see palloc.h.  Must be before postgres.h */
+#define MCXT_INCLUDE_DEFINITIONS
 
 #include "postgres.h"
 
@@ -1228,6 +1235,42 @@ MemoryContextAllocZeroAlignedImpl(MemoryContext context, Size size, const char* 
 	return ret;
 }
 
+void *
+palloc(Size size)
+{
+	/* duplicates MemoryContextAlloc to avoid increased overhead */
+	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	CurrentMemoryContext->isReset = false;
+
+	return (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+}
+
+void *
+palloc0(Size size)
+{
+	/* duplicates MemoryContextAllocZero to avoid increased overhead */
+	void	   *ret;
+
+	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	CurrentMemoryContext->isReset = false;
+
+	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+
+	MemSetAligned(ret, 0, size);
+
+	return ret;
+}
+
 /*
  * pfree
  *		Release an allocated chunk.
@@ -1326,6 +1369,7 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 	/* isReset must be false already */
 	Assert(!header->sharedHeader->context->isReset);
 
+<<<<<<< HEAD
 	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
 
 #ifdef PGTRACE_ENABLED
@@ -1338,6 +1382,12 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 }
 
 
+=======
+	return (*header->context->methods->realloc) (header->context,
+												 pointer, size);
+}
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * MemoryContextStrdup
  *		Like strdup(), but allocate from the specified context
@@ -1355,6 +1405,12 @@ MemoryContextStrdup(MemoryContext context, const char *string)
 	return nstr;
 }
 
+char *
+pstrdup(const char *in)
+{
+	return MemoryContextStrdup(CurrentMemoryContext, in);
+}
+
 /*
  * pnstrdup
  *		Like pstrdup(), but append null byte to a
@@ -1369,6 +1425,7 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
+<<<<<<< HEAD
 
 
 /*
@@ -1422,3 +1479,5 @@ pgport_pfree(void *pointer)
 }
 
 #endif
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196

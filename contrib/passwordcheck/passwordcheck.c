@@ -3,7 +3,11 @@
  * passwordcheck.c
  *
  *
+<<<<<<< HEAD
  * Copyright (c) 2009-2016, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 2009-2013, PostgreSQL Global Development Group
+>>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * Author: Laurenz Albe <laurenz.albe@wien.gv.at>
  *

@@ -4,7 +4,7 @@
  *	  Routines to support inter-object dependencies.
  *
  *
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -14,12 +14,11 @@
  */
 #include "postgres.h"
 
-#include "access/sysattr.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
@@ -35,6 +34,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -58,23 +58,18 @@
 #include "catalog/pg_user_mapping.h"
 #include "cdb/cdbpartition.h"
 #include "commands/comment.h"
-#include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
-#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
-#include "foreign/foreign.h"
-#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/lmgr.h"
-#include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -169,8 +164,12 @@ static const Oid object_classes[MAX_OCLASS] = {
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
+<<<<<<< HEAD
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
 	CompressionRelationId		/* OCLASS_COMPRESSION */
+=======
+	EventTriggerRelationId		/* OCLASS_EVENT_TRIGGER */
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 };
 
 
@@ -179,13 +178,13 @@ static void findDependentObjects(const ObjectAddress *object,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
 					 const ObjectAddresses *pendingObjects,
-					 Relation depRel);
+					 Relation *depRel);
 static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
 					   int msglevel,
 					   const ObjectAddress *origObject);
 static void deleteOneObject(const ObjectAddress *object,
-				Relation depRel, int32 flags);
+				Relation *depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object, int flags);
 static void AcquireDeletionLock(const ObjectAddress *object, int flags);
 static void ReleaseDeletionLock(const ObjectAddress *object);
@@ -204,9 +203,45 @@ static bool object_address_present_add_flags(const ObjectAddress *object,
 static bool stack_address_present_add_flags(const ObjectAddress *object,
 								int flags,
 								ObjectAddressStack *stack);
-static void getRelationDescription(StringInfo buffer, Oid relid);
-static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
 
+
+/*
+ * Go through the objects given running the final actions on them, and execute
+ * the actual deletion.
+ */
+static void
+deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
+					int flags)
+{
+	int			i;
+
+	/*
+	 * Keep track of objects for event triggers, if necessary.
+	 */
+	if (trackDroppedObjectsNeeded())
+	{
+		for (i = 0; i < targetObjects->numrefs; i++)
+		{
+			ObjectAddress *thisobj = targetObjects->refs + i;
+
+			if ((!(flags & PERFORM_DELETION_INTERNAL)) &&
+				EventTriggerSupportsObjectClass(getObjectClass(thisobj)))
+			{
+				EventTriggerSQLDropAddObject(thisobj);
+			}
+		}
+	}
+
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+
+		deleteOneObject(thisobj, depRel, flags);
+	}
+}
 
 /*
  * performDeletion: attempt to drop the specified object.  If CASCADE
@@ -233,7 +268,6 @@ performDeletion(const ObjectAddress *object,
 {
 	Relation	depRel;
 	ObjectAddresses *targetObjects;
-	int			i;
 
 	/*
 	 * We save some cycles by opening pg_depend just once and passing the
@@ -258,7 +292,7 @@ performDeletion(const ObjectAddress *object,
 						 NULL,	/* empty stack */
 						 targetObjects,
 						 NULL,	/* no pendingObjects */
-						 depRel);
+						 &depRel);
 
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
@@ -268,15 +302,8 @@ performDeletion(const ObjectAddress *object,
 						   NOTICE,
 						   object);
 
-	/*
-	 * Delete all the objects in the proper order.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-
-		deleteOneObject(thisobj, depRel, flags);
-	}
+	/* do the deed */
+	deleteObjectsInList(targetObjects, &depRel, flags);
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
@@ -336,7 +363,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 							 NULL,		/* empty stack */
 							 targetObjects,
 							 objects,
-							 depRel);
+							 &depRel);
 	}
 
 	/*
@@ -350,25 +377,13 @@ performMultipleDeletions(const ObjectAddresses *objects,
 						   NOTICE,
 						   (objects->numrefs == 1 ? objects->refs : NULL));
 
-	/*
-	 * Delete all the objects in the proper order.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-
-		deleteOneObject(thisobj, depRel, flags);
-	}
+	/* do the deed */
+	deleteObjectsInList(targetObjects, &depRel, flags);
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
 
-	/*
-	 * We closed depRel earlier in deleteOneObject if doing a drop
-	 * concurrently
-	 */
-	if ((flags & PERFORM_DELETION_CONCURRENTLY) != PERFORM_DELETION_CONCURRENTLY)
-		heap_close(depRel, RowExclusiveLock);
+	heap_close(depRel, RowExclusiveLock);
 }
 
 /*
@@ -379,6 +394,10 @@ performMultipleDeletions(const ObjectAddresses *objects,
  * This is currently used only to clean out the contents of a schema
  * (namespace): the passed object is a namespace.  We normally want this
  * to be done silently, so there's an option to suppress NOTICE messages.
+ *
+ * Note we don't fire object drop event triggers here; it would be wrong to do
+ * so for the current only use of this function, but if more callers are added
+ * this might need to be reconsidered.
  */
 void
 deleteWhatDependsOn(const ObjectAddress *object,
@@ -411,7 +430,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 						 NULL,	/* empty stack */
 						 targetObjects,
 						 NULL,	/* no pendingObjects */
-						 depRel);
+						 &depRel);
 
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
@@ -440,7 +459,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 		 * action.	If, in the future, this function is used for other
 		 * purposes, we might need to revisit this.
 		 */
-		deleteOneObject(thisobj, depRel, PERFORM_DELETION_INTERNAL);
+		deleteOneObject(thisobj, &depRel, PERFORM_DELETION_INTERNAL);
 	}
 
 	/* And clean up */
@@ -475,7 +494,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
  *	targetObjects: list of objects that are scheduled to be deleted
  *	pendingObjects: list of other objects slated for destruction, but
  *			not necessarily in targetObjects yet (can be NULL if none)
- *	depRel: already opened pg_depend relation
+ *	*depRel: already opened pg_depend relation
  */
 static void
 findDependentObjects(const ObjectAddress *object,
@@ -483,7 +502,7 @@ findDependentObjects(const ObjectAddress *object,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
 					 const ObjectAddresses *pendingObjects,
-					 Relation depRel)
+					 Relation *depRel)
 {
 	ScanKeyData key[3];
 	int			nkeys;
@@ -563,7 +582,7 @@ findDependentObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -738,7 +757,7 @@ findDependentObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+	scan = systable_beginscan(*depRel, DependReferenceIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -1027,10 +1046,10 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 /*
  * deleteOneObject: delete a single object for performDeletion.
  *
- * depRel is the already-open pg_depend relation.
+ * *depRel is the already-open pg_depend relation.
  */
 static void
-deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
+deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 {
 	ScanKeyData key[3];
 	int			nkeys;
@@ -1038,18 +1057,37 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	HeapTuple	tup;
 
 	/* DROP hook of the objects being removed */
-	if (object_access_hook)
-	{
-		ObjectAccessDrop drop_arg;
-
-		drop_arg.dropflags = flags;
-		InvokeObjectAccessHook(OAT_DROP, object->classId, object->objectId,
-							   object->objectSubId, &drop_arg);
-	}
+	InvokeObjectDropHookArg(object->classId, object->objectId,
+							object->objectSubId, flags);
 
 	/*
-	 * First remove any pg_depend records that link from this object to
-	 * others.	(Any records linking to this object should be gone already.)
+	 * Close depRel if we are doing a drop concurrently.  The object deletion
+	 * subroutine will commit the current transaction, so we can't keep the
+	 * relation open across doDeletion().
+	 */
+	if (flags & PERFORM_DELETION_CONCURRENTLY)
+		heap_close(*depRel, RowExclusiveLock);
+
+	/*
+	 * Delete the object itself, in an object-type-dependent way.
+	 *
+	 * We used to do this after removing the outgoing dependency links, but it
+	 * seems just as reasonable to do it beforehand.  In the concurrent case
+	 * we *must* do it in this order, because we can't make any transactional
+	 * updates before calling doDeletion() --- they'd get committed right
+	 * away, which is not cool if the deletion then fails.
+	 */
+	doDeletion(object, flags);
+
+	/*
+	 * Reopen depRel if we closed it above
+	 */
+	if (flags & PERFORM_DELETION_CONCURRENTLY)
+		*depRel = heap_open(DependRelationId, RowExclusiveLock);
+
+	/*
+	 * Now remove any pg_depend records that link from this object to others.
+	 * (Any records linking to this object should be gone already.)
 	 *
 	 * When dropping a whole object (subId = 0), remove all pg_depend records
 	 * for its sub-objects too.
@@ -1073,12 +1111,12 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		simple_heap_delete(depRel, &tup->t_self);
+		simple_heap_delete(*depRel, &tup->t_self);
 	}
 
 	systable_endscan(scan);
@@ -1090,17 +1128,6 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	deleteSharedDependencyRecordsFor(object->classId, object->objectId,
 									 object->objectSubId);
 
-	/*
-	 * Close depRel if we are doing a drop concurrently because it commits the
-	 * transaction, so we don't want dangling references.
-	 */
-	if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
-		heap_close(depRel, RowExclusiveLock);
-
-	/*
-	 * Now delete the object itself, in an object-type-dependent way.
-	 */
-	doDeletion(object, flags);
 
 	/*
 	 * Delete any comments or security labels associated with this object.
@@ -1261,6 +1288,7 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveExtensionById(object->objectId);
 			break;
 
+<<<<<<< HEAD
 		case OCLASS_EXTPROTOCOL:
 			RemoveExtProtocolById(object->objectId);
 			break;
@@ -1274,6 +1302,12 @@ doDeletion(const ObjectAddress *object, int flags)
 			 * not handled here
 			 */
 
+=======
+		case OCLASS_EVENT_TRIGGER:
+			RemoveEventTriggerById(object->objectId);
+			break;
+
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -1292,7 +1326,13 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 {
 	if (object->classId == RelationRelationId)
 	{
-		if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
+		/*
+		 * In DROP INDEX CONCURRENTLY, take only ShareUpdateExclusiveLock on
+		 * the index for the moment.  index_drop() will promote the lock once
+		 * it's safe to do so.  In all other cases we need full exclusive
+		 * lock.
+		 */
+		if (flags & PERFORM_DELETION_CONCURRENTLY)
 			LockRelationOid(object->objectId, ShareUpdateExclusiveLock);
 		else
 			LockRelationOid(object->objectId, AccessExclusiveLock);
@@ -1311,9 +1351,11 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 			UnlockRelationOid(object->objectId, AccessExclusiveLock);
 	}
 	else
+	{
 		/* assume we should lock the whole object not a sub-object */
 		LockDatabaseObject(object->classId, object->objectId, 0,
 						   AccessExclusiveLock);
+	}
 }
 
 /*
@@ -2249,7 +2291,7 @@ getObjectClass(const ObjectAddress *object)
 	/* only pg_class entries can have nonzero objectSubId */
 	if (object->classId != RelationRelationId &&
 		object->objectSubId != 0)
-		elog(ERROR, "invalid objectSubId 0 for object class %u",
+		elog(ERROR, "invalid non-zero objectSubId for object class %u",
 			 object->classId);
 
 	switch (object->classId)
@@ -2345,6 +2387,7 @@ getObjectClass(const ObjectAddress *object)
 		case ExtensionRelationId:
 			return OCLASS_EXTENSION;
 
+<<<<<<< HEAD
 		case ExtprotocolRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_EXTPROTOCOL;
@@ -2352,12 +2395,17 @@ getObjectClass(const ObjectAddress *object)
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
+=======
+		case EventTriggerRelationId:
+			return OCLASS_EVENT_TRIGGER;
+>>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* shouldn't get here */
 	elog(ERROR, "unrecognized object class: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
+<<<<<<< HEAD
 
 /*
  * getObjectDescription: build an object description for messages
@@ -3172,3 +3220,5 @@ pg_describe_object(PG_FUNCTION_ARGS)
 	description = getObjectDescription(&address);
 	PG_RETURN_TEXT_P(cstring_to_text(description));
 }
+=======
+>>>>>>> e472b921406407794bab911c64655b8b82375196
