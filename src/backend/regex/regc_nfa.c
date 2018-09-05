@@ -1506,11 +1506,7 @@ compact(struct nfa * nfa,
 	for (s = nfa->states; s != NULL; s = s->next)
 	{
 		nstates++;
-<<<<<<< HEAD
-		narcs += s->nouts + 1;		/* need one extra for endmarker */
-=======
 		narcs += s->nouts + 1;	/* need one extra for endmarker */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	cnfa->stflags = (char *) MALLOC(nstates * sizeof(char));

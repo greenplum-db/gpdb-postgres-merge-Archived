@@ -1510,11 +1510,7 @@ xml_pstrdup(const char *string)
 /*
  * xmlPgEntityLoader --- entity loader callback function
  *
-<<<<<<< HEAD
- * Silently prevent any external entity URL from being loaded.  We don't want
-=======
  * Silently prevent any external entity URL from being loaded.	We don't want
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * to throw an error, so instead make the entity appear to expand to an empty
  * string.
  *

@@ -111,11 +111,7 @@
  */
 typedef struct
 {
-<<<<<<< HEAD
-	RelFileNode	rnode;
-=======
 	RelFileNode rnode;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */

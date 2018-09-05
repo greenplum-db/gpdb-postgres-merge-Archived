@@ -1171,11 +1171,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		}
 		else if (S_ISREG(statbuf.st_mode))
 		{
-<<<<<<< HEAD
-			bool sent = false;
-=======
 			bool		sent = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			if (!sizeonly)
 				sent = sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf,
@@ -1185,11 +1181,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 			{
 				/* Add size, rounded up to 512byte block */
 				size += ((statbuf.st_size + 511) & ~511);
-<<<<<<< HEAD
-				size += 512;		/* Size of the header of the file */
-=======
 				size += 512;	/* Size of the header of the file */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		}
 		else

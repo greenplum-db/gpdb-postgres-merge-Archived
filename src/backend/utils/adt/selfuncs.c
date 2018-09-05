@@ -192,17 +192,10 @@ static Selectivity prefix_selectivity(PlannerInfo *root,
 				   VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
-<<<<<<< HEAD
-									bool case_insensitive);
-static Selectivity regex_selectivity(const char *patt, int pattlen,
-									 bool case_insensitive,
-									 int fixed_prefix_len);
-=======
 				 bool case_insensitive);
 static Selectivity regex_selectivity(const char *patt, int pattlen,
 				  bool case_insensitive,
 				  int fixed_prefix_len);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
@@ -1107,11 +1100,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-<<<<<<< HEAD
-	Selectivity	rest_selec = 0;
-=======
 	Selectivity rest_selec = 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	double		result;
 
 	/*
@@ -1881,17 +1870,10 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-<<<<<<< HEAD
-													  ObjectIdGetDatum(operator),
-													  PointerGetDatum(args),
-													  Int16GetDatum(jointype),
-													  PointerGetDatum(sjinfo)));
-=======
 												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
 												   PointerGetDatum(sjinfo)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
@@ -1961,17 +1943,10 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-<<<<<<< HEAD
-													  ObjectIdGetDatum(operator),
-													  PointerGetDatum(args),
-													  Int16GetDatum(jointype),
-													  PointerGetDatum(sjinfo)));
-=======
 												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
 												   PointerGetDatum(sjinfo)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,

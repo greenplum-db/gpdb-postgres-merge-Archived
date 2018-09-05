@@ -1797,11 +1797,7 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
-<<<<<<< HEAD
- * exprKind	identifies clause type being processed
-=======
  * exprKind identifies clause type being processed
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static TargetEntry *
 findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
@@ -1968,11 +1964,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
  *
  * node		the ORDER BY, GROUP BY, etc expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
-<<<<<<< HEAD
- * exprKind	identifies clause type being processed
-=======
  * exprKind identifies clause type being processed
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static TargetEntry *
 findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
@@ -2314,11 +2306,7 @@ make_group_clause(TargetEntry *tle, List *targetlist,
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause,
-<<<<<<< HEAD
-                     ParseExprKind exprKind, bool useSQL99)
-=======
 					 ParseExprKind exprKind, bool useSQL99)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	List	   *result = NIL;
 	List	   *tle_list = NIL;

@@ -1397,11 +1397,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 void
 RemoveLocalLock(LOCALLOCK *locallock)
 {
-<<<<<<< HEAD
-	int         i;
-=======
 	int			i;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	for (i = locallock->numLockOwners - 1; i >= 0; i--)
 	{
@@ -2507,11 +2503,7 @@ LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	}
 	else
 	{
-<<<<<<< HEAD
-		int                     i;
-=======
 		int			i;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		for (i = nlocks - 1; i >= 0; i--)
 			ReleaseLockIfHeld(locallocks[i], false);

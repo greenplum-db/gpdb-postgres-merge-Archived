@@ -203,13 +203,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-<<<<<<< HEAD
-		SMgrRelation	oreln;
-		Page			localpage = (char *) LocalBufHdrGetBlock(bufHdr);
-=======
 		SMgrRelation oreln;
 		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/* Find smgr relation for buffer */
 		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);

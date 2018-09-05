@@ -1377,29 +1377,17 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			{
 				int			pid = autovac->pid;
 				StringInfoData locktagbuf;
-<<<<<<< HEAD
-				StringInfoData logbuf;		/* errdetail for server log */
-=======
 				StringInfoData logbuf;	/* errdetail for server log */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				initStringInfo(&locktagbuf);
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
 				appendStringInfo(&logbuf,
-<<<<<<< HEAD
-					  _("Process %d waits for %s on %s."),
-						 MyProcPid,
-						 GetLockmodeName(lock->tag.locktag_lockmethodid,
-										 lockmode),
-						 locktagbuf.data);
-=======
 								 _("Process %d waits for %s on %s."),
 								 MyProcPid,
 							  GetLockmodeName(lock->tag.locktag_lockmethodid,
 											  lockmode),
 								 locktagbuf.data);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/* release lock as quickly as possible */
 				LWLockRelease(ProcArrayLock);

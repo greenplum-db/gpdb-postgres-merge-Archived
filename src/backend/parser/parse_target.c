@@ -77,11 +77,7 @@ static int	FigureColnameInternal(Node *node, char **name);
  *
  * node		the (untransformed) parse tree for the value expression.
  * expr		the transformed expression, or NULL if caller didn't do it yet.
-<<<<<<< HEAD
- * exprKind	expression kind (EXPR_KIND_SELECT_TARGET, etc)
-=======
  * exprKind expression kind (EXPR_KIND_SELECT_TARGET, etc)
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * colname	the column name to be assigned, or NULL if none yet set.
  * resjunk	true if the target should be marked resjunk, ie, it is not
  *			wanted in the final projected tuple.

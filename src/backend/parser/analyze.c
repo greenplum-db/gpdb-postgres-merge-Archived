@@ -722,11 +722,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	else
 	{
 		/*
-<<<<<<< HEAD
-		 * Process INSERT ... VALUES with a single VALUES sublist.  We treat
-=======
 		 * Process INSERT ... VALUES with a single VALUES sublist.	We treat
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * this case separately for efficiency.  The sublist is just computed
 		 * directly as the Query's targetlist, with no VALUES RTE.  So it
 		 * works just like a SELECT without any FROM.
@@ -2416,11 +2412,7 @@ transformSetOperationTree_internal(ParseState *pstate, SelectStmt *stmt,
 	/*
 	 * If an internal node of a set-op tree has ORDER BY, LIMIT, FOR UPDATE,
 	 * or WITH clauses attached, we need to treat it like a leaf node to
-<<<<<<< HEAD
-	 * generate an independent sub-Query tree.  Otherwise, it can be
-=======
 	 * generate an independent sub-Query tree.	Otherwise, it can be
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * represented by a SetOperationStmt node underneath the parent Query.
 	 */
 	if (stmt->op == SETOP_NONE)

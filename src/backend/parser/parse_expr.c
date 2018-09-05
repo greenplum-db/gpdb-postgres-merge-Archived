@@ -259,11 +259,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						break;
 					default:
 						elog(ERROR, "unrecognized A_Expr kind: %d", a->kind);
-<<<<<<< HEAD
-						result = NULL;		/* keep compiler quiet */
-=======
 						result = NULL;	/* keep compiler quiet */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 						break;
 				}
 				break;
@@ -2274,11 +2270,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
 	xexpr->args = list_make1(coerce_to_specific_type(pstate,
-<<<<<<< HEAD
-										transformExprRecurse(pstate, xs->expr),
-=======
 									  transformExprRecurse(pstate, xs->expr),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 													 XMLOID,
 													 "XMLSERIALIZE"));
 

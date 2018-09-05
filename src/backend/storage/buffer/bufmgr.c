@@ -2840,29 +2840,17 @@ IncrBufferRefCount(Buffer buffer)
  * This is essentially the same as MarkBufferDirty, except:
  *
  * 1. The caller does not write WAL; so if checksums are enabled, we may need
-<<<<<<< HEAD
- *    to write an XLOG_HINT WAL record to protect against torn pages.
- * 2. The caller might have only share-lock instead of exclusive-lock on the
- *    buffer's content lock.
- * 3. This function does not guarantee that the buffer is always marked dirty
- *    (due to a race condition), so it cannot be used for important changes.
-=======
  *	  to write an XLOG_HINT WAL record to protect against torn pages.
  * 2. The caller might have only share-lock instead of exclusive-lock on the
  *	  buffer's content lock.
  * 3. This function does not guarantee that the buffer is always marked dirty
  *	  (due to a race condition), so it cannot be used for important changes.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 void
 MarkBufferDirtyHint(Buffer buffer)
 {
 	volatile BufferDesc *bufHdr;
-<<<<<<< HEAD
-	Page	page = BufferGetPage(buffer);
-=======
 	Page		page = BufferGetPage(buffer);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer ID: %d", buffer);

@@ -24,11 +24,7 @@
  * forward declarations
  */
 static int findprefix(struct cnfa * cnfa, struct colormap * cm,
-<<<<<<< HEAD
-					  chr *string, size_t *slength);
-=======
 		   chr *string, size_t *slength);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /*
@@ -46,11 +42,7 @@ static int findprefix(struct cnfa * cnfa, struct colormap * cm,
  *
  * This function does not analyze all complex cases (such as lookahead
  * constraints) exactly.  Therefore it is possible that some strings matching
-<<<<<<< HEAD
- * the reported prefix or exact-match string do not satisfy the regex.  But
-=======
  * the reported prefix or exact-match string do not satisfy the regex.	But
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * it should never be the case that a string satisfying the regex does not
  * match the reported prefix or exact-match string.
  */
@@ -175,11 +167,7 @@ findprefix(struct cnfa * cnfa,
 	 * We could find a state with multiple out-arcs that are all labeled with
 	 * the same singleton color; this comes from patterns like "^ab(cde|cxy)".
 	 * In that case we add the chr "c" to the output string but then exit the
-<<<<<<< HEAD
-	 * loop with nextst == -1.  This leaves a little bit on the table: if the
-=======
 	 * loop with nextst == -1.	This leaves a little bit on the table: if the
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * pattern is like "^ab(cde|cdy)", we won't notice that "d" could be added
 	 * to the prefix.  But chasing multiple parallel state chains doesn't seem
 	 * worth the trouble.
@@ -230,22 +218,14 @@ findprefix(struct cnfa * cnfa,
 
 		/*
 		 * Identify the color's sole member chr and add it to the prefix
-<<<<<<< HEAD
-		 * string.  In general the colormap data structure doesn't provide a
-=======
 		 * string.	In general the colormap data structure doesn't provide a
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * way to find color member chrs, except by trying GETCOLOR() on each
 		 * possible chr value, which won't do at all.  However, for the cases
 		 * we care about it should be sufficient to test the "firstchr" value,
 		 * that is the first chr ever added to the color.  There are cases
 		 * where this might no longer be a member of the color (so we do need
 		 * to test), but none of them are likely to arise for a character that
-<<<<<<< HEAD
-		 * is a member of a common prefix.  If we do hit such a corner case,
-=======
 		 * is a member of a common prefix.	If we do hit such a corner case,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * we just fall out without adding anything to the prefix string.
 		 */
 		c = cm->cd[thiscolor].firstchr;

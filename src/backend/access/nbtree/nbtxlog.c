@@ -391,11 +391,7 @@ btree_xlog_split(bool onleft, bool isroot,
 			 * Note that this code ensures that the items remaining on the
 			 * left page are in the correct item number order, but it does not
 			 * reproduce the physical order they would have had.  Is this
-<<<<<<< HEAD
-			 * worth changing?  See also _bt_restore_page().
-=======
 			 * worth changing?	See also _bt_restore_page().
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			 */
 			Page		lpage = (Page) BufferGetPage(lbuf);
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
@@ -747,11 +743,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have any conflict processing to do, it must happen before we
 	 * update the page.
 	 *
-<<<<<<< HEAD
-	 * Btree delete records can conflict with standby queries.  You might
-=======
 	 * Btree delete records can conflict with standby queries.	You might
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * think that vacuum records would conflict as well, but we've handled
 	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
 	 * cleaned by the vacuum of the heap and so we can resolve any conflicts

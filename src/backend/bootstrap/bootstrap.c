@@ -272,15 +272,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-<<<<<<< HEAD
- 			case 'k':
-				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
- 				break;
-=======
 			case 'k':
 				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
 				break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;

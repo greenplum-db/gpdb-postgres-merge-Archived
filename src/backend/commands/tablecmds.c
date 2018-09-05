@@ -301,11 +301,7 @@ static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 						 bool is_partition);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
-<<<<<<< HEAD
-					 Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
-=======
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 				   LOCKMODE lockmode);

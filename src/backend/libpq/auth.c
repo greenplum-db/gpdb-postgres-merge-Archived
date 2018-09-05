@@ -2304,11 +2304,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	{
 		ldap_unbind(*ldap);
 		ereport(LOG,
-<<<<<<< HEAD
-		  (errmsg("could not set LDAP protocol version: %s", ldap_err2string(r))));
-=======
 				(errmsg("could not set LDAP protocol version: %s", ldap_err2string(r))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		return STATUS_ERROR;
 	}
 
@@ -2457,11 +2453,7 @@ CheckLDAPAuth(Port *port)
 		{
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
-<<<<<<< HEAD
-						  port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
-=======
 							port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			return STATUS_ERROR;
 		}
 
@@ -2486,11 +2478,7 @@ CheckLDAPAuth(Port *port)
 		{
 			ereport(LOG,
 					(errmsg("could not search LDAP for filter \"%s\" on server \"%s\": %s",
-<<<<<<< HEAD
-							filter, port->hba->ldapserver, ldap_err2string(r))));
-=======
 						filter, port->hba->ldapserver, ldap_err2string(r))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			pfree(filter);
 			return STATUS_ERROR;
 		}
@@ -2581,13 +2569,8 @@ CheckLDAPAuth(Port *port)
 	if (r != LDAP_SUCCESS)
 	{
 		ereport(LOG,
-<<<<<<< HEAD
-				(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
-						fulluser, port->hba->ldapserver, ldap_err2string(r))));
-=======
 			(errmsg("LDAP login failed for user \"%s\" on server \"%s\": %s",
 					fulluser, port->hba->ldapserver, ldap_err2string(r))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		pfree(fulluser);
 		return STATUS_ERROR;
 	}

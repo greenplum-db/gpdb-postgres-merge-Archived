@@ -789,17 +789,10 @@ json_lex(JsonLexContext *lex)
 
 					/*
 					 * We're not dealing with a string, number, legal
-<<<<<<< HEAD
-					 * punctuation mark, or end of string.  The only legal
-					 * tokens we might find here are true, false, and null,
-					 * but for error reporting purposes we scan until we see a
-					 * non-alphanumeric character.  That way, we can report
-=======
 					 * punctuation mark, or end of string.	The only legal
 					 * tokens we might find here are true, false, and null,
 					 * but for error reporting purposes we scan until we see a
 					 * non-alphanumeric character.	That way, we can report
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					 * the whole word as an unexpected token, rather than just
 					 * some unintuitive prefix thereof.
 					 */

@@ -2250,11 +2250,7 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 			str++;
 
 		if (*str == '\0')
-<<<<<<< HEAD
-			return DTERR_BAD_FORMAT;		/* end of string after separator */
-=======
 			return DTERR_BAD_FORMAT;	/* end of string after separator */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		field[nf] = str;
 		if (isdigit((unsigned char) *str))

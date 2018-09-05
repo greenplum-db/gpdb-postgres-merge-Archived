@@ -1885,11 +1885,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
  * that provides all its variables.
  *
  * "nullable_relids" is the set of relids used in the expressions that are
-<<<<<<< HEAD
- * potentially nullable below the expressions.  (This has to be supplied by
-=======
  * potentially nullable below the expressions.	(This has to be supplied by
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * caller because this function is used after deconstruct_jointree, so we
  * don't have knowledge of where the clause items came from.)
  *
