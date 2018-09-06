@@ -364,8 +364,8 @@ _bt_validate_vacuum(Relation irel, Relation hrel, TransactionId oldest_xmin)
 				}
 				if (RelationGetNamespace(irel) == PG_AOSEGMENT_NAMESPACE)
 				{
-					int4 isegno = index_getattr(itup, 1, RelationGetDescr(irel), &isnull);
-					int4 hsegno = heap_getattr(&htup, 1, RelationGetDescr(hrel), &isnull);
+					int32 isegno = index_getattr(itup, 1, RelationGetDescr(irel), &isnull);
+					int32 hsegno = heap_getattr(&htup, 1, RelationGetDescr(hrel), &isnull);
 					if (isegno != hsegno)
 					{
 						elog(ERROR,

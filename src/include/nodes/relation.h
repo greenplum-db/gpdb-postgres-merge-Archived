@@ -1907,9 +1907,9 @@ typedef struct Partition
 	Oid partid;			/* OID of row in pg_partition. */
 	Oid parrelid;		/* OID in pg_class of top-level partitioned relation */
 	char parkind;		/* 'r', 'l', or (unsupported) 'h' */
-	int2 parlevel;		/* depth below parent partitioned table */
+	int16 parlevel;		/* depth below parent partitioned table */
 	bool paristemplate;	/* just a template, or really a part? */
-	int2 parnatts;		/* number of partitioning attributes */
+	int16 parnatts;		/* number of partitioning attributes */
 	AttrNumber *paratts;/* attribute number vector */ 
 	Oid *parclass;		/* operator class vector */
 } Partition;

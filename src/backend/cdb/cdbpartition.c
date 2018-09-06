@@ -1936,8 +1936,8 @@ add_part_to_catalog(Oid relid, PartitionBy *pby,
  * gap in parruleord sequence.
  */
 static void
-parruleord_open_gap(Oid partid, int2 level, Oid parent, int2 ruleord,
-					int2 stopkey, bool closegap)
+parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
+					int16 stopkey, bool closegap)
 {
 	Relation	rel;
 	Relation	irel;
@@ -2192,7 +2192,7 @@ partMakePartition(HeapTuple tuple)
  *    includesubparts	--	whether or not to include sub partitions
  */
 PartitionNode *
-get_parts(Oid relid, int2 level, Oid parent, bool inctemplate,
+get_parts(Oid relid, int16 level, Oid parent, bool inctemplate,
 		  bool includesubparts)
 {
 	PartitionNode *pnode = NULL;

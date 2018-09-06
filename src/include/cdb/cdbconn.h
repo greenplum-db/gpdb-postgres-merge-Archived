@@ -35,7 +35,7 @@ typedef struct SegmentDatabaseDescriptor
 	 *
 	 * Identical to segment_database_info->segindex.
 	 */
-	int4         			segindex;
+	int32         			segindex;
 	
     /*
 	 * A non-NULL value points to the PGconn block of a successfully

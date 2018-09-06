@@ -14120,7 +14120,7 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List
 				char *nspname = get_namespace_name(typnamespace);
 				int arno;
 				char *typstr;
-				int4 ndims = att->attndims;
+				int32 ndims = att->attndims;
 
 				tname = makeNode(TypeName);
 

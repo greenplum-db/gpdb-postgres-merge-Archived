@@ -310,7 +310,7 @@ namespace gpdb {
 	void GetOrderedPartKeysAndKinds(Oid oid, List **pkeys, List **pkinds);
 
 	// parts of a partitioned table
-	PartitionNode *GetParts(Oid relid, int2 level, Oid parent, bool inctemplate, bool includesubparts);
+	PartitionNode *GetParts(Oid relid, int16 level, Oid parent, bool inctemplate, bool includesubparts);
 
 	// keys of the relation with the given oid
 	List *GetRelationKeys(Oid relid);

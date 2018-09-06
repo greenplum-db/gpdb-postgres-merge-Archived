@@ -755,8 +755,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 					old_context = MemoryContextSwitchTo(stats->anl_context);
 					hll_values = (Datum *) palloc(sizeof(Datum));
-					int2 hll_length = 0;
-					int2 stakind = 0;
+					int16 hll_length = 0;
+					int16 stakind = 0;
 					if(stats->stahll_full != NULL)
 					{
 						hll_length = datumGetSize(PointerGetDatum(stats->stahll_full), false, -1);

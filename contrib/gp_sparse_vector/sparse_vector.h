@@ -18,8 +18,8 @@
 //#include "float_specials.h"
 
 typedef struct {
-	int4 vl_len_;
-	int4 dimension; /* Number of elements in this vector, special case is
+	int32 vl_len_;
+	int32 dimension; /* Number of elements in this vector, special case is
 			   -1 indicates a scalar */
 	char data[1]; /*
 		       * We store the serialized SparseData representing the
