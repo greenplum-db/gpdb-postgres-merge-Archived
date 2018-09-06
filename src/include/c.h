@@ -9,13 +9,9 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -51,7 +47,6 @@
 #ifndef C_H
 #define C_H
 
-<<<<<<< HEAD
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -61,12 +56,10 @@ extern "C" {
  * on some platforms, and we only want our definitions used if stdlib.h doesn't
  * have its own.  The same goes for stddef and stdarg if present.
  */
-=======
 #include "postgres_ext.h"
 
 /* Must undef pg_config_ext.h symbols before including pg_config.h */
 #undef PG_INT64_TYPE
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
@@ -684,6 +677,9 @@ typedef NameData *Name;
 #define AssertMacro(condition)	((void)true)
 #define AssertArg(condition)
 #define AssertState(condition)
+#define AssertImply(condition1, condition2)
+#define AssertEquivalent(cond1, cond2)
+#define AssertPointerAlignment(ptr, bndr)   ((void)true)
 #elif defined(FRONTEND)
 
 #include <assert.h>
@@ -727,6 +723,20 @@ typedef NameData *Name;
 
 #define AssertState(condition) \
 		Trap(!(condition), "BadState")
+
+#define AssertImply(cond1, cond2) \
+		Trap(!(!(cond1) || (cond2)), "AssertImply failed")
+
+#define AssertEquivalent(cond1, cond2) \
+		Trap(!((bool)(cond1) == (bool)(cond2)), "AssertEquivalent failed")
+
+/*
+ * Check that `ptr' is `bndr' aligned.
+ */
+#define AssertPointerAlignment(ptr, bndr) \
+	Trap(TYPEALIGN(bndr, (uintptr_t)(ptr)) != (uintptr_t)(ptr), \
+		 "UnalignedPointer")
+
 #endif   /* USE_ASSERT_CHECKING && !FRONTEND */
 
 
@@ -930,7 +940,6 @@ typedef NameData *Name;
 
 
 /*
-<<<<<<< HEAD
  * UnusedArg
  *  Silence the compiler's warning about an unreferenced parameter or variable.
  *
@@ -957,19 +966,14 @@ typedef NameData *Name;
 
 
 /*
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Mark a point as unreachable in a portable fashion.  This should preferably
  * be something that the compiler understands, to aid code generation.
  * In assert-enabled builds, we prefer abort() for debugging reasons.
  */
 #if defined(HAVE__BUILTIN_UNREACHABLE) && !defined(USE_ASSERT_CHECKING)
 #define pg_unreachable() __builtin_unreachable()
-<<<<<<< HEAD
-=======
 #elif defined(_MSC_VER) && !defined(USE_ASSERT_CHECKING)
 #define pg_unreachable() __assume(0)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #else
 #define pg_unreachable() abort()
 #endif
@@ -981,28 +985,21 @@ typedef NameData *Name;
  *
  * The function bodies must be defined in the module header prefixed by
  * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
-<<<<<<< HEAD
- * define.  If the compiler doesn't support inline functions, the function
-=======
  * define.	If the compiler doesn't support inline functions, the function
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * definitions are pulled in by the .c file as regular (not inline) symbols.
  *
  * The header must also declare the functions' prototypes, protected by
  * !PG_USE_INLINE.
  */
-<<<<<<< HEAD
+
 
 /* declarations which are only visible when not inlining and in the .c file */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE static inline
 #else
 #define STATIC_IF_INLINE
 #endif   /* PG_USE_INLINE */
 
-<<<<<<< HEAD
 /* declarations which are marked inline when inlining, extern otherwise */
 #ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE_DECLARE static inline
@@ -1010,9 +1007,6 @@ typedef NameData *Name;
 #define STATIC_IF_INLINE_DECLARE extern
 #endif   /* PG_USE_INLINE */
 
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff
  * ----------------------------------------------------------------
