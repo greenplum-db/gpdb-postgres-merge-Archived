@@ -1938,10 +1938,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 			{
 				/* Yes, generate transformed child version */
 				Expr	   *child_expr;
-<<<<<<< HEAD
-=======
 				Relids		new_relids;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				Relids		new_nullable_relids;
 
 				child_expr = (Expr *)
@@ -1949,22 +1946,15 @@ add_child_rel_equivalences(PlannerInfo *root,
 										   appinfo);
 
 				/*
-				 * Must translate nullable_relids.  Note this code assumes
-				 * parent and child relids are singletons.
+				 * Transform em_relids to match.  Note we do *not* do
+				 * pull_varnos(child_expr) here, as for example the
+				 * transformation might have substituted a constant, but we
+				 * don't want the child member to be marked as constant.
 				 */
-				new_nullable_relids = cur_em->em_nullable_relids;
-				if (bms_overlap(new_nullable_relids, parent_rel->relids))
-				{
-					new_nullable_relids = bms_difference(new_nullable_relids,
-														 parent_rel->relids);
-					new_nullable_relids = bms_add_members(new_nullable_relids,
-														  child_rel->relids);
-				}
+				new_relids = bms_difference(cur_em->em_relids,
+											parent_rel->relids);
+				new_relids = bms_add_members(new_relids, child_rel->relids);
 
-<<<<<<< HEAD
-				(void) add_eq_member(cur_ec, child_expr,
-									 child_rel->relids, new_nullable_relids,
-=======
 				/*
 				 * And likewise for nullable_relids.  Note this code assumes
 				 * parent and child relids are singletons.
@@ -1980,7 +1970,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 
 				(void) add_eq_member(cur_ec, child_expr,
 									 new_relids, new_nullable_relids,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 									 true, cur_em->em_datatype);
 			}
 		}

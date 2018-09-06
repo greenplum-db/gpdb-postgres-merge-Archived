@@ -193,8 +193,7 @@ extern List *build_join_pathkeys(PlannerInfo *root,
 PathKey *
 cdb_make_pathkey_for_expr(PlannerInfo  *root,
                           Node     *expr,
-                          List     *eqopname,
-						  bool		canonical);
+                          List     *eqopname);
 PathKey *
 cdb_pull_up_pathkey(PlannerInfo    *root,
                     PathKey        *pathkey,

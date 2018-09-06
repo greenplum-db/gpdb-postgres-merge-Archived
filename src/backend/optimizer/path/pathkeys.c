@@ -48,28 +48,6 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
  *		PATHKEY CONSTRUCTION AND REDUNDANCY TESTING
  ****************************************************************************/
 
-/*
-<<<<<<< HEAD
- * makePathKey
- *		create a PathKey node
- *
- * This does not promise to create a canonical PathKey, it's merely a
- * convenience routine to build the specified node.
- */
-PathKey *
-makePathKey(EquivalenceClass *eclass, Oid opfamily,
-			int strategy, bool nulls_first)
-{
-	PathKey    *pk = makeNode(PathKey);
-
-	pk->pk_eclass = eclass;
-	pk->pk_opfamily = opfamily;
-	pk->pk_strategy = strategy;
-	pk->pk_nulls_first = nulls_first;
-
-	return pk;
-}
-
 /**
  * replace_expression_mutator
  *
@@ -312,8 +290,6 @@ generate_implied_quals(PlannerInfo *root)
 }
 
 /*
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * make_canonical_pathkey
  *	  Given the parameters for a PathKey, find any pre-existing matching
  *	  pathkey in the query's list of "canonical" pathkeys.  Make a new
@@ -1093,8 +1069,7 @@ build_join_pathkeys(PlannerInfo *root,
 PathKey *
 cdb_make_pathkey_for_expr(PlannerInfo *root,
 						  Node *expr,
-						  List *eqopname,
-						  bool canonical)
+						  List *eqopname)
 {
 	Oid			opfamily = InvalidOid;
 	Oid			typeoid = InvalidOid;
@@ -1135,10 +1110,7 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 									  0,
 									  NULL,
 									  true);
-	if (!canonical)
-		pk = makePathKey(eclass, opfamily, strategy, false);
-	else
-		pk = make_canonical_pathkey(root, eclass, opfamily, strategy, false);
+	pk = make_canonical_pathkey(root, eclass, opfamily, strategy, false);
 
 	return pk;
 }
@@ -1331,8 +1303,7 @@ make_distribution_keys_for_groupclause(PlannerInfo *root, List *groupclause, Lis
 										   sortcl->sortop,
 										   sortcl->nulls_first,
 										   sortcl->tleSortGroupRef,
-										   true,
-										   false);
+										   true);
 
 		pathkeys = lappend(pathkeys, pathkey);
 		exprs = lappend(exprs, expr);
@@ -1393,8 +1364,7 @@ make_pathkeys_for_groupclause_recurse(pathkeys_for_groupclause_context *cxt,
 												   sortcl->sortop,
 												   sortcl->nulls_first,
 												   sortcl->tleSortGroupRef,
-												   true,
-												   false);
+												   true);
 
 				/*
 				 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might

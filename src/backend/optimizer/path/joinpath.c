@@ -1313,23 +1313,10 @@ hash_inner_and_outer(PlannerInfo *root,
 			ListCell   *lc1;
 			ListCell   *lc2;
 
-<<<<<<< HEAD
-			try_hashjoin_path(root,
-							  joinrel,
-							  save_jointype,
-							  jointype,
-							  sjinfo,
-							  semifactors,
-							  param_source_rels,
-							  cheapest_startup_outer,
-							  cheapest_total_inner,
-							  restrictlist,
-							  redistribution_clauses,
-							  hashclauses);
-=======
 			if (cheapest_startup_outer != NULL)
 				try_hashjoin_path(root,
 								  joinrel,
+								  save_jointype,
 								  jointype,
 								  sjinfo,
 								  semifactors,
@@ -1337,8 +1324,8 @@ hash_inner_and_outer(PlannerInfo *root,
 								  cheapest_startup_outer,
 								  cheapest_total_inner,
 								  restrictlist,
+								  redistribution_clauses,
 								  hashclauses);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			foreach(lc1, outerrel->cheapest_parameterized_paths)
 			{

@@ -396,35 +396,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		Path *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-<<<<<<< HEAD
-		bpath = create_bitmap_scan_path(root, rel, bitmapqual, NULL, 1.0);
-		add_path(rel, (Path *) bpath);
-	}
-
-	/*
-	 * Likewise, if we found anything usable, generate a BitmapHeapPath for
-	 * the most promising combination of join bitmap index paths.  Note there
-	 * will be only one such path no matter how many join clauses are
-	 * available.  (XXX is that good enough, or do we need to consider even
-	 * more paths for different subsets of possible join partners?	Also,
-	 * should we add in restriction bitmap paths as well?)
-	 */
-	if (bitjoinpaths != NIL)
-	{
-		Path	   *bitmapqual;
-		Relids		required_outer;
-		double		loop_count;
-		Path *bpath;
-
-		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
-		required_outer = get_bitmap_tree_required_outer(bitmapqual);
-		loop_count = get_loop_count(root, required_outer);
 		bpath = create_bitmap_scan_path(root, rel, bitmapqual,
-										required_outer, loop_count);
-=======
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual,
 										rel->lateral_relids, 1.0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		add_path(rel, (Path *) bpath);
 	}
 

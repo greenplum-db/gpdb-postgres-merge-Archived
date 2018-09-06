@@ -1321,17 +1321,23 @@ cost_functionscan(Path *path, PlannerInfo *root,
  *	  Determines and returns the cost of scanning a table function RTE.
  */
 void
-cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+				   ParamPathInfo *param_info)
 {
 	Cost		startup_cost;
 	Cost		run_cost;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations that are functions */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_TABLEFUNCTION);
 
-	path->rows = baserel->rows;
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
 
 	/* Initialize cost of the subquery input */
 	path->startup_cost = baserel->subplan->startup_cost;
@@ -1345,9 +1351,11 @@ cost_tablefunction(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	cpu_per_tuple = cpu_operator_cost;
 
 	/* Calculate additional cost of the table function node */
-	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
-	startup_cost   = baserel->baserestrictcost.startup;
-	run_cost	   = cpu_per_tuple * baserel->tuples;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost = qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
+	run_cost = cpu_per_tuple * baserel->tuples;
 
 	/* Add in the additional cost */
 	path->startup_cost += startup_cost;
@@ -4507,8 +4515,6 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			int			ndx;
 			int32		item_width;
 
-<<<<<<< HEAD
-			Assert(var->varno == rel->relid);
 			/*
 			 * Postgres Upstream asserts for var->varattno >= rel->min_attr and
 			 * var->varattno <= rel->max_attr are not valid in GPDB since GPDB
@@ -4523,10 +4529,6 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 				tuple_width += rci->attr_width;
 				continue;
 			}
-=======
-			Assert(var->varattno >= rel->min_attr);
-			Assert(var->varattno <= rel->max_attr);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			ndx = var->varattno - rel->min_attr;
 
