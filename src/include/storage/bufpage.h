@@ -16,10 +16,7 @@
 
 #include "access/xlogdefs.h"
 #include "storage/block.h"
-<<<<<<< HEAD
 #include "storage/bufmgr.h"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/item.h"
 #include "storage/off.h"
 

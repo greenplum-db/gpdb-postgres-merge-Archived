@@ -539,33 +539,6 @@ extern bool has_rolreplication(Oid roleid);
 
 extern int64 db_dir_size(const char *path); /* implemented in dbsize.c */
 
-/*
- * Auxiliary-process type identifiers.  These used to be in bootstrap.h
- * but it seems saner to have them here, with the ProcessingMode stuff.
- * The MyAuxProcType global is defined and set in bootstrap.c.
- */
-typedef enum
-{
-	NotAnAuxProcess = -1,
-	CheckerProcess = 0,
-	BootstrapProcess,
-	StartupProcess,
-	BgWriterProcess,
-	CheckpointerProcess,
-	WalWriterProcess,
-	WalReceiverProcess,
-
-	NUM_AUXPROCTYPES			/* Must be last! */
-} AuxProcType;
-
-extern AuxProcType MyAuxProcType; /* bootstrap.c */
-#define AmBootstrapProcess()        (MyAuxProcType == BootstrapProcess)
-#define AmStartupProcess()          (MyAuxProcType == StartupProcess)
-#define AmBackgroundWriterProcess() (MyAuxProcType == BgWriterProcess)
-#define AmCheckpointerProcess()     (MyAuxProcType == CheckpointerProcess)
-#define AmWalWriterProcess()        (MyAuxProcType == WalWriterProcess)
-#define AmWalReceiverProcess()      (MyAuxProcType == WalReceiverProcess)
-
 /* in access/transam/xlog.c */
 extern bool BackupInProgress(void);
 extern void CancelBackup(void);

@@ -190,11 +190,7 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-<<<<<<< HEAD
-#else /* !HAVE__BUILTIN_CONSTANT_P */
-=======
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #define ereport_domain(elevel, domain, rest)	\
 	do { \
 		const int elevel_ = (elevel); \
@@ -203,11 +199,7 @@ void elog_internalerror(const char *filename, int lineno, const char *funcname)
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-<<<<<<< HEAD
-#endif /* HAVE__BUILTIN_CONSTANT_P */
-=======
 #endif   /* HAVE__BUILTIN_CONSTANT_P */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
@@ -347,11 +339,7 @@ extern int errSendAlert(bool sendAlert);		/* GPDB: Send alert via e-mail or SNMP
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-<<<<<<< HEAD
-#else /* !HAVE__BUILTIN_CONSTANT_P */
-=======
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #define elog(elevel, ...)  \
 	do { \
 		int		elevel_; \
@@ -361,21 +349,12 @@ extern int errSendAlert(bool sendAlert);		/* GPDB: Send alert via e-mail or SNMP
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-<<<<<<< HEAD
-#endif /* HAVE__BUILTIN_CONSTANT_P */
-#else /* !HAVE__VA_ARGS */
-#define elog  \
-	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
-	elog_finish
-#endif /* HAVE__VA_ARGS */
-=======
 #endif   /* HAVE__BUILTIN_CONSTANT_P */
 #else							/* !HAVE__VA_ARGS */
 #define elog  \
 	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
 	elog_finish
 #endif   /* HAVE__VA_ARGS */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void

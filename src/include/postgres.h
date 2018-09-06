@@ -380,25 +380,14 @@ static inline Datum Int64GetDatumFast(int64 x) { return Int64GetDatum(x); }
 #define UInt64GetDatum(X) Int64GetDatum((int64) (X))
 #endif
 
-#define TransactionIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
-
-/*
- * MultiXactIdGetDatum
- *		Returns datum representation for a multixact identifier.
- */
-
-#define MultiXactIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
-
-/*
- * DatumGetCommandId
- *		Returns command identifier value of a datum.
- */
-
 static inline Oid DatumGetObjectId(Datum d) { return (Oid) d; } 
 static inline Datum ObjectIdGetDatum(Oid oid) { return (Datum) oid; } 
 
 static inline TransactionId DatumGetTransactionId(Datum d) { return (TransactionId) d; } 
 static inline Datum TransactionIdGetDatum(TransactionId tid) { return (Datum) tid; } 
+
+static inline TransactionId DatumGetMultiXactId(Datum d) { return (TransactionId) d; } 
+static inline Datum MultiXactIdGetDatum(TransactionId tid) { return (Datum) tid; } 
 
 static inline CommandId DatumGetCommandId(Datum d) { return (CommandId) d; } 
 static inline Datum CommandIdGetDatum(CommandId cid) { return (Datum) cid; } 

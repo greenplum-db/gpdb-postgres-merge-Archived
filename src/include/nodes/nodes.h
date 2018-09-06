@@ -282,7 +282,6 @@ typedef enum NodeTag
 	T_NullTestState,
 	T_CoerceToDomainState,
 	T_DomainConstraintState,
-	T_WholeRowVarExprState,		/* will be in a more natural position in 9.3 */
 	T_GroupingFuncExprState,
 	T_PartSelectedExprState,
 	T_PartDefaultExprState,
@@ -470,7 +469,10 @@ typedef enum NodeTag
 	T_CreateExtensionStmt,
 	T_AlterExtensionStmt,
 	T_AlterExtensionContentsStmt,
-<<<<<<< HEAD
+	T_CreateEventTrigStmt,
+	T_AlterEventTrigStmt,
+	T_RefreshMatViewStmt,
+
 	/* GPDB additions */
 	T_PartitionBy,
 	T_PartitionElem,
@@ -489,11 +491,6 @@ typedef enum NodeTag
 	T_DenyLoginPoint,
 	T_AlterTypeStmt,
 	T_SetDistributionCmd,
-=======
-	T_CreateEventTrigStmt,
-	T_AlterEventTrigStmt,
-	T_RefreshMatViewStmt,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)

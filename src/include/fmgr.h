@@ -661,10 +661,7 @@ extern Oid	get_call_expr_argtype(fmNodePtr expr, int argnum);
 extern bool get_fn_expr_arg_stable(FmgrInfo *flinfo, int argnum);
 extern bool get_call_expr_arg_stable(fmNodePtr expr, int argnum);
 extern bool get_fn_expr_variadic(FmgrInfo *flinfo);
-<<<<<<< HEAD
 extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * Routines in dfmgr.c

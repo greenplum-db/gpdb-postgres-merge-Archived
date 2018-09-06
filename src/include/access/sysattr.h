@@ -25,11 +25,7 @@
 #define MaxTransactionIdAttributeNumber			(-5)
 #define MaxCommandIdAttributeNumber				(-6)
 #define TableOidAttributeNumber					(-7)
-<<<<<<< HEAD
 #define GpSegmentIdAttributeNumber			    (-8)    /*CDB*/
 #define FirstLowInvalidHeapAttributeNumber		(-9)
-=======
-#define FirstLowInvalidHeapAttributeNumber		(-8)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* SYSATTR_H */

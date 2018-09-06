@@ -281,7 +281,6 @@ DefineTSParser(List *names, List *parameters)
 
 	heap_close(prsRel, RowExclusiveLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		DefineStmt *stmt = makeNode(DefineStmt);
@@ -299,9 +298,8 @@ DefineTSParser(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
+
 	return prsOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -506,7 +504,6 @@ DefineTSDictionary(List *names, List *parameters)
 	heap_freetuple(tup);
 
 	heap_close(dictRel, RowExclusiveLock);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -523,9 +520,6 @@ DefineTSDictionary(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return dictOid;
 }
@@ -667,7 +661,6 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	ReleaseSysCache(tup);
 
 	heap_close(rel, RowExclusiveLock);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -676,9 +669,6 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 									DF_WITH_SNAPSHOT,
 									NIL,
 									NULL);
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return dictId;
 }
@@ -856,7 +846,6 @@ DefineTSTemplate(List *names, List *parameters)
 	heap_freetuple(tup);
 
 	heap_close(tmplRel, RowExclusiveLock);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -873,9 +862,6 @@ DefineTSTemplate(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return tmplOid;
 }
@@ -1173,7 +1159,6 @@ DefineTSConfiguration(List *names, List *parameters)
 	if (mapRel)
 		heap_close(mapRel, RowExclusiveLock);
 	heap_close(cfgRel, RowExclusiveLock);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -1190,9 +1175,6 @@ DefineTSConfiguration(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return cfgOid;
 }
@@ -1288,7 +1270,6 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 
 	ReleaseSysCache(tup);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR |
@@ -1296,9 +1277,8 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 									DF_WITH_SNAPSHOT,
 									NIL,
 									NULL);
-=======
+
 	return cfgId;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
