@@ -378,11 +378,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 
 	Assert(!GistPageIsLeaf(p));
 
-<<<<<<< HEAD
-	Assert(!GistPageIsLeaf(p));
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	gistDeCompressAtt(giststate, r,
 					  it, NULL, (OffsetNumber) 0,
 					  identry, isnull);
@@ -403,8 +398,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	best_penalty[0] = -1;
 
 	/*
-<<<<<<< HEAD
-=======
 	 * If we find a tuple that's exactly as good as the currently best one, we
 	 * could use either one.  When inserting a lot of tuples with the same or
 	 * similar keys, it's preferable to descend down the same path when
@@ -430,7 +423,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	keep_current_best = -1;
 
 	/*
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * Loop over tuples on page.
 	 */
 	maxoff = PageGetMaxOffsetNumber(p);
@@ -475,12 +467,9 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 
 				if (j < r->rd_att->natts - 1)
 					best_penalty[j + 1] = -1;
-<<<<<<< HEAD
-=======
 
 				/* we have new best, so reset keep-it decision */
 				keep_current_best = -1;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 			else if (best_penalty[j] == usize)
 			{
@@ -503,14 +492,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		}
 
 		/*
-<<<<<<< HEAD
-		 * If we find a tuple with zero penalty for all columns, there's no
-		 * need to examine remaining tuples; just break out of the loop and
-		 * return it.
-		 */
-		if (zero_penalty)
-			break;
-=======
 		 * If we looped past the last column, and did not update "result",
 		 * then this tuple is exactly as good as the prior best tuple.
 		 */
@@ -546,7 +527,6 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 			if (keep_current_best == 1)
 				break;
 		}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	return result;

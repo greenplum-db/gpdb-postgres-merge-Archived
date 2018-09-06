@@ -364,16 +364,12 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			{
 				/* Creating index-page GISTSearchItem */
 				item->blkno = ItemPointerGetBlockNumber(&it->t_tid);
-<<<<<<< HEAD
-				/* lsn of current page is lsn of parent page for child */
-=======
 
 				/*
 				 * LSN of current page is lsn of parent page for child. We
 				 * only have a shared lock, so we need to get the LSN
 				 * atomically.
 				 */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				item->data.parentlsn = BufferGetLSNAtomic(buffer);
 			}
 

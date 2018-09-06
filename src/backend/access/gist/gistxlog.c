@@ -65,15 +65,9 @@ gistRedoClearFollowRight(XLogRecPtr lsn, XLogRecord *record, int block_index,
 	 * of this record, because the updated NSN is not included in the full
 	 * page image.
 	 */
-<<<<<<< HEAD
-	if (!XLByteLT(lsn, PageGetLSN(page)))
-	{
-		GistPageGetOpaque(page)->nsn = lsn;
-=======
 	if (lsn >= PageGetLSN(page))
 	{
 		GistPageSetNSN(page, lsn);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		GistClearFollowRight(page);
 
 		PageSetLSN(page, lsn);
@@ -116,11 +110,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	/* nothing more to do if page was backed up (and no info to do it with) */
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 0))
-=======
 	if (record->xl_info & XLR_BKP_BLOCK(0))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -129,11 +119,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 	page = (Page) BufferGetPage(buffer);
 
 	/* nothing more to do if change already applied */
-<<<<<<< HEAD
-	if (XLByteLE(lsn, PageGetLSN(page)))
-=======
 	if (lsn <= PageGetLSN(page))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -373,57 +359,6 @@ gist_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	MemoryContextReset(opCtx);
 }
 
-<<<<<<< HEAD
-static void
-out_target(StringInfo buf, RelFileNode node)
-{
-	appendStringInfo(buf, "rel %u/%u/%u",
-					 node.spcNode, node.dbNode, node.relNode);
-}
-
-static void
-out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
-{
-	out_target(buf, xlrec->node);
-	appendStringInfo(buf, "; block number %u", xlrec->blkno);
-}
-
-static void
-out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
-{
-	appendStringInfo(buf, "page_split: ");
-	out_target(buf, xlrec->node);
-	appendStringInfo(buf, "; block number %u splits to %d pages",
-					 xlrec->origblkno, xlrec->npage);
-}
-
-void
-gist_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	switch (info)
-	{
-		case XLOG_GIST_PAGE_UPDATE:
-			appendStringInfo(buf, "page_update: ");
-			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
-			break;
-		case XLOG_GIST_PAGE_SPLIT:
-			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
-			break;
-		case XLOG_GIST_CREATE_INDEX:
-			appendStringInfo(buf, "create_index: rel %u/%u/%u",
-							 ((RelFileNode *) rec)->spcNode,
-							 ((RelFileNode *) rec)->dbNode,
-							 ((RelFileNode *) rec)->relNode);
-			break;
-		default:
-			appendStringInfo(buf, "unknown gist op code %u", info);
-			break;
-	}
-}
-
 /*
  * Mask a Gist page before running consistency checks on it.
  */
@@ -470,8 +405,6 @@ gist_mask(char *pagedata, BlockNumber blkno)
 #endif
 }
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 void
 gist_xlog_startup(void)
 {

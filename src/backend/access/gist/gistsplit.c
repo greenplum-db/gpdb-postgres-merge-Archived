@@ -743,20 +743,8 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				backupSplit.spl_right = (OffsetNumber *) palloc(sizeof(OffsetNumber) * len);
 				memcpy(backupSplit.spl_right, v->splitVector.spl_right, sizeof(OffsetNumber) * v->splitVector.spl_nright);
 
-<<<<<<< HEAD
-				/*
-				 * Backup the original spl_equiv, since the following gistSplitByKey() may
-				 * change its value (by re-allocating space with size newlen, which is most
-				 * likely smaller than len). spl_equiv is needed later in gistunionsubkey()
-				 * to reunion left and right datums.
-				 */
-				bool *orig_spl_equiv = v->spl_equiv;
-
-				gistSplitByKey(r, page, newitup, newlen, giststate, v, entryvec, attno + 1);
-=======
 				/* Recursively decide how to split the don't-care tuples */
 				gistSplitByKey(r, page, newitup, newlen, giststate, v, attno + 1);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/* Merge result of subsplit with non-don't-care tuples */
 				for (i = 0; i < v->splitVector.spl_nleft; i++)
@@ -765,15 +753,6 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 					backupSplit.spl_right[backupSplit.spl_nright++] = map[v->splitVector.spl_right[i] - 1];
 
 				v->splitVector = backupSplit;
-<<<<<<< HEAD
-
-				/* Reset the spl_equiv */
-				v->spl_equiv = orig_spl_equiv;
-				
-				/* reunion left and right datums */
-				gistunionsubkey(giststate, itup, v, attno);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		}
 	}
