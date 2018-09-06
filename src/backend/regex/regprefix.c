@@ -4,11 +4,7 @@
  *	  Extract a common prefix, if any, from a compiled regex.
  *
  *
-<<<<<<< HEAD
- * Portions Copyright (c) 2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 2012-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION
