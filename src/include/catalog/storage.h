@@ -33,12 +33,4 @@ extern void AtSubCommit_smgr(void);
 extern void AtSubAbort_smgr(void);
 extern void PostPrepare_smgr(void);
 
-<<<<<<< HEAD
-extern void log_smgrcreate(RelFileNode *rnode, ForkNumber forkNum);
-
-extern void smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(StringInfo buf, XLogRecord *record);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #endif   /* STORAGE_H */

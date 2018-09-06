@@ -878,30 +878,3 @@ clog_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "clog_redo: unknown op code %u", info);
 }
-<<<<<<< HEAD
-
-void
-clog_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	if (info == CLOG_ZEROPAGE)
-	{
-		int			pageno;
-
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "zeropage: %d", pageno);
-	}
-	else if (info == CLOG_TRUNCATE)
-	{
-		int			pageno;
-
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "truncate before: %d", pageno);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

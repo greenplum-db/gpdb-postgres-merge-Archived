@@ -18,6 +18,8 @@
 #include "datatype/timestamp.h"
 #include "storage/lock.h"
 
+#include "cdb/cdblocaldistribxact.h"
+
 /*
  * Directory where two phase commit files reside within PGDATA
  */

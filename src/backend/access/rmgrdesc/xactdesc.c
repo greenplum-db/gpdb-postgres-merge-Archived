@@ -21,13 +21,15 @@
 #include "utils/timestamp.h"
 
 
-static void
+static char*
 xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	int			i;
 	TransactionId *subxacts;
+	SharedInvalidationMessage *msgs;
 
 	subxacts = (TransactionId *) &xlrec->xnodes[xlrec->nrels];
+	msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
 
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 
@@ -36,7 +38,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -50,10 +52,6 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 	}
 	if (xlrec->nmsgs > 0)
 	{
-		SharedInvalidationMessage *msgs;
-
-		msgs = (SharedInvalidationMessage *) &subxacts[xlrec->nsubxacts];
-
 		if (XactCompletionRelcacheInitFileInval(xlrec->xinfo))
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 							 xlrec->dbId, xlrec->tsId);
@@ -78,7 +76,33 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " unknown id %d", msg->id);
 		}
 	}
+
+	/*
+-	 * MPP: Return end of regular commit information.
+	 */
+	return (char *) &msgs[xlrec->nmsgs];
 }
+
+static void
+xact_desc_distributed_commit(StringInfo buf, xl_xact_commit *xlrec)
+{
+	TMGXACT_LOG *gxact_log;
+
+	/*
+	 * We put the global transaction information last, so call the regular xact
+	 * commit routine.
+	 */
+	gxact_log = (TMGXACT_LOG *) xact_desc_commit(buf, xlrec);
+
+	descDistributedCommitRecord(buf, gxact_log);
+}
+
+static void
+xact_desc_distributed_forget(StringInfo buf, xl_xact_distributed_forget *xlrec)
+{
+	descDistributedForgetCommitRecord(buf, &xlrec->gxact_log);
+}
+
 
 static void
 xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
@@ -106,7 +130,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
-			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
+			char	   *path = relpathperm(xlrec->xnodes[i].node, MAIN_FORKNUM);
 
 			appendStringInfo(buf, " %s", path);
 			pfree(path);
@@ -135,9 +159,10 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 }
 
 void
-xact_desc(StringInfo buf, uint8 xl_info, char *rec)
+xact_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	char		*rec = XLogRecGetData(record);
 
 	if (info == XLOG_XACT_COMMIT_COMPACT)
 	{
@@ -190,6 +215,31 @@ xact_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "xid assignment xtop %u: ", xlrec->xtop);
 		xact_desc_assignment(buf, xlrec);
 	}
+	else if (info == XLOG_XACT_DISTRIBUTED_COMMIT)
+	{
+		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
+
+		appendStringInfo(buf, "distributed commit ");
+		xact_desc_distributed_commit(buf, xlrec);
+	}
+	else if (info == XLOG_XACT_DISTRIBUTED_FORGET)
+	{
+		xl_xact_distributed_forget *xlrec = (xl_xact_distributed_forget *) rec;
+
+		appendStringInfo(buf, "distributed forget ");
+		xact_desc_distributed_forget(buf, xlrec);
+	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
+}
+
+static void
+xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
+{
+	int			i;
+
+	appendStringInfo(buf, "subxacts:");
+
+	for (i = 0; i < xlrec->nsubxacts; i++)
+		appendStringInfo(buf, " %u", xlrec->xsub[i]);
 }

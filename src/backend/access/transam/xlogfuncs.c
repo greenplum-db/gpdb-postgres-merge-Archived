@@ -50,19 +50,13 @@ static void validate_xlog_location(char *str);
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	startpoint = {0,0};
+	XLogRecPtr	startpoint = InvalidXLogRecPtr;
 	char		startxlogstr[MAXFNAMELEN];
 
-<<<<<<< HEAD
 	ereport(NOTICE,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_start_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	backupidstr = text_to_cstring(backupid);
-
-	startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
 			 (uint32) (startpoint >> 32), (uint32) startpoint);
@@ -87,17 +81,13 @@ pg_start_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	stoppoint = {0,0};
+	XLogRecPtr	stoppoint = InvalidXLogRecPtr;
 	char		stopxlogstr[MAXFNAMELEN];
 
-<<<<<<< HEAD
 	ereport(NOTICE,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_stop_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	stoppoint = do_pg_stop_backup(NULL, true, NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
 			 (uint32) (stoppoint >> 32), (uint32) stoppoint);

@@ -211,15 +211,6 @@ typedef struct gistxlogPage
 	int			num;			/* number of index tuples following */
 } gistxlogPage;
 
-<<<<<<< HEAD
-typedef struct gistxlogPageDelete
-{
-	RelFileNode 	node;
-	BlockNumber 	blkno;
-} gistxlogPageDelete;
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /* SplitedPageLayout - gistSplit function result */
 typedef struct SplitedPageLayout
 {

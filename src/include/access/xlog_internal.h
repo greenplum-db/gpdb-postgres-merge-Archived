@@ -237,32 +237,24 @@ struct XLogRecord;
 /*
  * Method table for resource managers.
  *
-<<<<<<< HEAD
- * RmgrTable[] is indexed by RmgrId values (see rmgr.h).
- *
- * rm_mask takes as input a page modified by the resource manager and masks
- * out bits that shouldn't be flagged by wal_consistency_checking.
- *
-=======
  * This struct must be kept in sync with the PG_RMGR definition in
  * rmgr.c.
  *
  * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h).
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 typedef struct RmgrData
 {
 	const char *rm_name;
-<<<<<<< HEAD
-	void		(*rm_redo) (XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
-	void		(*rm_desc) (StringInfo buf, XLogRecord *record);
-=======
-	void		(*rm_redo) (XLogRecPtr lsn, struct XLogRecord *rptr);
-	void		(*rm_desc) (StringInfo buf, uint8 xl_info, char *rec);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	void		(*rm_redo) (XLogRecPtr beginLoc, XLogRecPtr lsn, struct XLogRecord *rptr);
+	void		(*rm_desc) (StringInfo buf, struct XLogRecord *record);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
 	bool		(*rm_safe_restartpoint) (void);
+
+	/*
+	 * rm_mask takes as input a page modified by the resource manager and masks
+	 * out bits that shouldn't be flagged by wal_consistency_checking.
+	 */
 	void		(*rm_mask) (char *pagedata, BlockNumber blkno);
 } RmgrData;
 

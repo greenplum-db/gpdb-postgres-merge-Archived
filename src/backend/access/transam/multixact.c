@@ -2424,20 +2424,10 @@ multixact_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __att
 		elog(PANIC, "multixact_redo: unknown op code %u", info);
 }
 
-<<<<<<< HEAD
-void
-multixact_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	if (info == XLOG_MULTIXACT_ZERO_OFF_PAGE)
-=======
 Datum
 pg_get_multixact_members(PG_FUNCTION_ARGS)
 {
 	typedef struct
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		MultiXactMember *members;
 		int			nmembers;

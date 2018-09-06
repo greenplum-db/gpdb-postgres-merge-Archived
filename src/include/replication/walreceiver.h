@@ -117,37 +117,21 @@ typedef struct
 extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
-<<<<<<< HEAD
-bool walrcv_connect(char *conninfo, XLogRecPtr startpoint);
-bool walrcv_receive(int timeout, unsigned char *type,
-					char **buffer, int *len);
-void walrcv_send(const char *buffer, int nbytes);
-void walrcv_disconnect(void);
-=======
-typedef void (*walrcv_connect_type) (char *conninfo);
-extern PGDLLIMPORT walrcv_connect_type walrcv_connect;
+typedef void walrcv_connect_type (char *conninfo);
 
-typedef void (*walrcv_identify_system_type) (TimeLineID *primary_tli);
-extern PGDLLIMPORT walrcv_identify_system_type walrcv_identify_system;
+void walrcv_identify_system_type (TimeLineID *primary_tli);
 
-typedef void (*walrcv_readtimelinehistoryfile_type) (TimeLineID tli, char **filename, char **content, int *size);
-extern PGDLLIMPORT walrcv_readtimelinehistoryfile_type walrcv_readtimelinehistoryfile;
+void walrcv_readtimelinehistoryfile_type (TimeLineID tli, char **filename, char **content, int *size);
 
-typedef bool (*walrcv_startstreaming_type) (TimeLineID tli, XLogRecPtr startpoint);
-extern PGDLLIMPORT walrcv_startstreaming_type walrcv_startstreaming;
+bool walrcv_startstreaming_type (TimeLineID tli, XLogRecPtr startpoint);
 
-typedef void (*walrcv_endstreaming_type) (TimeLineID *next_tli);
-extern PGDLLIMPORT walrcv_endstreaming_type walrcv_endstreaming;
+void walrcv_endstreaming_type (TimeLineID *next_tli);
 
-typedef int (*walrcv_receive_type) (int timeout, char **buffer);
-extern PGDLLIMPORT walrcv_receive_type walrcv_receive;
+int walrcv_receive_type (int timeout, char **buffer);
 
-typedef void (*walrcv_send_type) (const char *buffer, int nbytes);
-extern PGDLLIMPORT walrcv_send_type walrcv_send;
+void walrcv_send_type (const char *buffer, int nbytes);
 
-typedef void (*walrcv_disconnect_type) (void);
-extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+void walrcv_disconnect_type (void);
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) __attribute__((noreturn));

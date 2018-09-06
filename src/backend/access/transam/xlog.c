@@ -31,23 +31,15 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-<<<<<<< HEAD
 #include "access/xlogdefs.h"
-=======
 #include "access/xlogreader.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
-<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
-#include "executor/spi.h"
-#include "libpq/pqsignal.h"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"

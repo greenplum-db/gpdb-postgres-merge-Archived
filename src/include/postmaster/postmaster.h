@@ -56,12 +56,10 @@ extern void ClosePostmasterPorts(bool am_syslogger);
 
 extern int	MaxLivePostmasterChildren(void);
 
-<<<<<<< HEAD
+extern int	GetNumShmemAttachedBgworkers(void);
+
 extern void SignalPromote(void);
 extern void ResetMirrorReadyFlag(void);
-=======
-extern int	GetNumShmemAttachedBgworkers(void);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #ifdef EXEC_BACKEND
 extern pid_t postmaster_forkexec(int argc, char *argv[]);
@@ -71,10 +69,9 @@ extern Size ShmemBackendArraySize(void);
 extern void ShmemBackendArrayAllocation(void);
 #endif
 
-<<<<<<< HEAD
 /* CDB */
 typedef int (PMSubStartCallback)(void);
-=======
+
 /*
  * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
  * backend ID as a 3-byte signed integer.  Even if that limitation were
@@ -83,6 +80,5 @@ typedef int (PMSubStartCallback)(void);
  * GUC check hooks and in RegisterBackgroundWorker().
  */
 #define MAX_BACKENDS	0x7fffff
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* _POSTMASTER_H */

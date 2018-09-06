@@ -388,8 +388,6 @@ extern void xlog_print_redo_lsn_application(
 		XLogRecPtr		lsn,
 		const char		*funcName);
 
-extern XLogRecord *XLogReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt);
-
 extern void XLogCloseReadRecord(void);
 
 extern void XLogReadRecoveryCommandFile(int emode);

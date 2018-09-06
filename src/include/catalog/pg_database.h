@@ -64,7 +64,7 @@ typedef FormData_pg_database *Form_pg_database;
  *		compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database				13
+#define Natts_pg_database				14
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
@@ -75,23 +75,16 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datconnlimit	8
 #define Anum_pg_database_datlastsysoid	9
 #define Anum_pg_database_datfrozenxid	10
-<<<<<<< HEAD
-#define Anum_pg_database_dattablespace	11
-#define Anum_pg_database_hashmethod		12
-#define Anum_pg_database_datacl			13
+#define Anum_pg_database_datminmxid		11
+#define Anum_pg_database_dattablespace	12
+#define Anum_pg_database_hashmethod		13
+#define Anum_pg_database_datacl			14
 
 /*
  * The value for hashmethod col is defined in cdb/cdbhash.h
  * the magic number 1 here means JUMP_HASH_METHOD
  */
-DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1663 1 _null_));
-=======
-#define Anum_pg_database_datminmxid		11
-#define Anum_pg_database_dattablespace	12
-#define Anum_pg_database_datacl			13
-
-DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1 1663 _null_));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1 1663 1 _null_));
 SHDESCR("default template for new databases");
 #define TemplateDbOid			1
 
