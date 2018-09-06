@@ -673,7 +673,7 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
     else if (attnum > 0)
         result = fastgetattr(tup, attnum, tupleDesc, isnull);
     else
-        result = heap_getsysattr(tup, attnum, isnull);
+        result = heap_getsysattr(tup, attnum, tupleDesc, isnull);
 
     return result;
 }                               /* heap_getattr */

@@ -51,13 +51,10 @@ typedef struct XLogRecord
 	uint32		xl_len;			/* total len of rmgr data */
 	uint8		xl_info;		/* flag bits, see below */
 	RmgrId		xl_rmid;		/* resource manager for this record */
-<<<<<<< HEAD
 	uint8       xl_extended_info; /* flag bits, see below */
-=======
-	/* 2 bytes of padding here, initialize to zero */
+	/* 1 byte of padding here, initialize to zero */
 	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
 	pg_crc32	xl_crc;			/* CRC for this record */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* If MAXALIGN==8, there are 4 wasted bytes here */
 
@@ -92,16 +89,6 @@ typedef struct XLogRecord
 #define XLR_BKP_BLOCK_MASK		0x0F	/* all info bits used for bkp blocks */
 #define XLR_MAX_BKP_BLOCKS		4
 #define XLR_BKP_BLOCK(iblk)		(0x08 >> (iblk))		/* iblk in 0..3 */
-<<<<<<< HEAD
-
-/* These macros are deprecated and will be removed in 9.3; use XLR_BKP_BLOCK */
-#define XLR_SET_BKP_BLOCK(iblk) (0x08 >> (iblk))
-#define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
-#define XLR_BKP_BLOCK_2			XLR_SET_BKP_BLOCK(1)	/* 0x04 */
-#define XLR_BKP_BLOCK_3			XLR_SET_BKP_BLOCK(2)	/* 0x02 */
-#define XLR_BKP_BLOCK_4			XLR_SET_BKP_BLOCK(3)	/* 0x01 */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
@@ -312,15 +299,10 @@ extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int	XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(XLogSegNo segno);
 
-<<<<<<< HEAD
-extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
-=======
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer);
 
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
-extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer);
 
 extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
 				   int block_index,
@@ -336,13 +318,7 @@ extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
-<<<<<<< HEAD
-
-extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);
-extern XLogRecPtr GetStandbyFlushRecPtr(TimeLineID *targetTLI);
-=======
 extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *replayTLI);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern XLogRecPtr GetXLogInsertRecPtr(void);
 extern XLogRecPtr GetXLogWriteRecPtr(void);
 extern bool RecoveryIsPaused(void);
@@ -354,10 +330,7 @@ extern char *XLogFileNameP(TimeLineID tli, XLogSegNo segno);
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);
 extern bool DataChecksumsEnabled(void);
-<<<<<<< HEAD
-=======
 extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);

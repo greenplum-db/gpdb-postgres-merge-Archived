@@ -81,7 +81,6 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   Oid relid,
 						   Oid relfilenode,
 						   Oid reltablespace,
-			               char relkind,            /*CDB*/
 						   bool shared_relation,
 						   bool mapped_relation,
 						   char relpersistence,

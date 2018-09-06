@@ -15,14 +15,10 @@
 
 #include "access/attnum.h"
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "catalog/gp_policy.h"
 #include "nodes/pg_list.h"
-#include "utils/relcache.h"
 #include "parser/parse_coerce.h"
-=======
-#include "nodes/pg_list.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "utils/relcache.h"
 
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation

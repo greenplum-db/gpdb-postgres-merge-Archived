@@ -28,25 +28,15 @@ extern Oid DefineIndex(IndexStmt *stmt,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-<<<<<<< HEAD
 			bool quiet,
-			bool concurrent,
-			IndexStmt *stmt /* MPP */);
-extern void ReindexIndex(ReindexStmt *stmt);
-extern void ReindexTable(ReindexStmt *stmt);
-extern void ReindexDatabase(ReindexStmt *stmt);
-=======
-			bool quiet);
-extern Oid	ReindexIndex(RangeVar *indexRelation);
-extern Oid	ReindexTable(RangeVar *relation);
-extern Oid ReindexDatabase(const char *databaseName,
-				bool do_system, bool do_user);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			bool concurrent);
+extern Oid	ReindexIndex(ReindexStmt *stmt);
+extern Oid	ReindexTable(ReindexStmt *stmt);
+extern Oid	ReindexDatabase(ReindexStmt *stmt);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid);
-<<<<<<< HEAD
 extern char *ChooseRelationNameWithCache(const char *name1, const char *name2,
 								const char *label, Oid namespaceid, 
 								struct HTAB *cache);
@@ -54,8 +44,6 @@ extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint);
 extern List *ChooseIndexColumnNames(List *indexElems);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern bool CheckIndexCompatible(Oid oldId,
 					 RangeVar *heapRelation,
 					 char *accessMethodName,
@@ -71,7 +59,6 @@ extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern Oid	AlterFunction(AlterFunctionStmt *stmt);
 extern Oid	CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-<<<<<<< HEAD
 extern Oid  get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern void interpret_function_parameter_list(List *parameters,
 								  Oid languageOid,
@@ -84,13 +71,8 @@ extern void interpret_function_parameter_list(List *parameters,
 								  List **parameterDefaults,
 								  Oid *variadicArgType,
 								  Oid *requiredResultType);
-extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
-					   const char *newschema);
-extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
-=======
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 
@@ -99,15 +81,8 @@ extern Oid	DefineOperator(List *names, List *parameters);
 extern void RemoveOperatorById(Oid operOid);
 
 /* commands/aggregatecmds.c */
-<<<<<<< HEAD
-extern void DefineAggregate(List *name, List *args, bool oldstyle,
-							List *parameters, bool ordered, const char *queryString);
-extern void RenameAggregate(List *name, List *args, const char *newname);
-extern void AlterAggregateOwner(List *name, List *args, Oid newOwnerId);
-=======
 extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
-				List *parameters);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+							List *parameters, bool ordered, const char *queryString);
 
 /* commands/opclasscmds.c */
 extern Oid	DefineOpClass(CreateOpClassStmt *stmt);

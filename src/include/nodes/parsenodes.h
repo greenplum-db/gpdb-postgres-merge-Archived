@@ -1160,13 +1160,8 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
-<<<<<<< HEAD
 	List	   *windowClause;	/* window specification clauses */
 	List       *scatterClause;	/* GPDB: TableValueExpr data distribution */
-	WithClause *withClause; 	/* WITH clause */
-=======
-	List	   *windowClause;	/* WINDOW window_name AS (...), ... */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * In a "leaf" node representing a VALUES list, the above fields are all
@@ -1310,7 +1305,7 @@ typedef struct CreateSchemaStmt
 	char	   *schemaname;		/* the name of the schema to create */
 	char	   *authid;			/* the owner of the created schema */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
-<<<<<<< HEAD
+	bool		if_not_exists;	/* just do nothing if schema already exists? */
 
 	/*
 	 * In GPDB, when a CreateSchemaStmt is dispatched to executor nodes, the
@@ -1322,9 +1317,6 @@ typedef struct CreateSchemaStmt
 	 * both created in the same command, with istemp='true'.
 	 */
 	bool        istemp;         /* true for temp schemas (internal only) */
-=======
-	bool		if_not_exists;	/* just do nothing if schema already exists? */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 } CreateSchemaStmt;
 
 typedef enum DropBehavior
@@ -1639,10 +1631,7 @@ typedef struct CopyStmt
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
 	bool		is_program;		/* is 'filename' a program to popen? */
-<<<<<<< HEAD
 	bool		skip_ext_partition;		/* skip external partitions */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	List	   *options;		/* List of DefElem nodes */
 	Node	   *sreh;			/* Single row error handling info */
@@ -2586,12 +2575,8 @@ typedef struct IndexStmt
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
-<<<<<<< HEAD
 	bool		is_part_child;	/* in service of a part of a partition? */
-	Oid			oldNode;		/* relfilenode of my former self */
-=======
 	Oid			oldNode;		/* relfilenode of existing storage, if any */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index a primary key? */
 	bool		isconstraint;	/* is it for a pkey/unique constraint? */

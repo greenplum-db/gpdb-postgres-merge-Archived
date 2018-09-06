@@ -4259,11 +4259,7 @@ DATA(insert OID = 321 (  json_in		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 11
 DESCR("I/O");
 DATA(insert OID = 322 (  json_out		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "114" _null_ _null_ _null_ _null_ json_out _null_ _null_ _null_ ));
 DESCR("I/O");
-<<<<<<< HEAD
-DATA(insert OID = 323 (  json_recv		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 114 "2281" _null_ _null_ _null_	_null_ json_recv _null_ _null_ _null_ ));
-=======
 DATA(insert OID = 323 (  json_recv		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 114 "2281" _null_ _null_ _null_ _null_	json_recv _null_ _null_ _null_ ));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 DESCR("I/O");
 DATA(insert OID = 324 (  json_send		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "114" _null_ _null_ _null_ _null_ json_send _null_ _null_ _null_ ));
 DESCR("I/O");
@@ -4401,10 +4397,7 @@ DATA(insert OID = 3530 (  enum_range	PGNSP PGUID 12 1 0 0 0 f f f f f f s 2 0 22
 DESCR("range between the two given enum values, as an ordered array");
 DATA(insert OID = 3531 (  enum_range	PGNSP PGUID 12 1 0 0 0 f f f f f f s 1 0 2277 "3500" _null_ _null_ _null_ _null_ enum_range_all _null_ _null_ _null_ ));
 DESCR("range of the given enum type, as an ordered array");
-<<<<<<< HEAD
 /* GPDB: enum_recv first arg changed from cstring (2275) to internal (2281) */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 DATA(insert OID = 3532 (  enum_recv		PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 3500 "2281 26" _null_ _null_ _null_ _null_ enum_recv _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 3533 (  enum_send		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 17 "3500" _null_ _null_ _null_ _null_ enum_send _null_ _null_ _null_ ));
@@ -4914,7 +4907,17 @@ DESCR("SP-GiST support for radix tree over text");
 DATA(insert OID = 4031 (  spg_text_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  spg_text_leaf_consistent _null_ _null_ _null_ ));
 DESCR("SP-GiST support for radix tree over text");
 
-<<<<<<< HEAD
+DATA(insert OID = 3469 (  spg_range_quad_config PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over range");
+DATA(insert OID = 3470 (  spg_range_quad_choose PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_choose _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over range");
+DATA(insert OID = 3471 (  spg_range_quad_picksplit	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_picksplit _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over range");
+DATA(insert OID = 3472 (  spg_range_quad_inner_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_inner_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over range");
+DATA(insert OID = 3473 (  spg_range_quad_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_leaf_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over range");
+
 /* generic transition functions for ordered-set aggregates */
 DATA(insert OID = 3970 ( ordered_set_transition			PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 2276" _null_ _null_ _null_ _null_ ordered_set_transition _null_ _null_ _null_ n a ));
 DESCR("aggregate transition function");
@@ -5008,18 +5011,6 @@ DESCR("aggregate final function");
 /* collation management functions */
 DATA(insert OID = 3445 ( pg_import_system_collations  PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 23 "26" _null_ _null_ _null_ _null_ pg_import_system_collations _null_ _null_ _null_ n a ));
 DESCR("import collations from operating system");
-=======
-DATA(insert OID = 3469 (  spg_range_quad_config PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_config _null_ _null_ _null_ ));
-DESCR("SP-GiST support for quad tree over range");
-DATA(insert OID = 3470 (  spg_range_quad_choose PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_choose _null_ _null_ _null_ ));
-DESCR("SP-GiST support for quad tree over range");
-DATA(insert OID = 3471 (  spg_range_quad_picksplit	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_picksplit _null_ _null_ _null_ ));
-DESCR("SP-GiST support for quad tree over range");
-DATA(insert OID = 3472 (  spg_range_quad_inner_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_inner_consistent _null_ _null_ _null_ ));
-DESCR("SP-GiST support for quad tree over range");
-DATA(insert OID = 3473 (  spg_range_quad_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  spg_range_quad_leaf_consistent _null_ _null_ _null_ ));
-DESCR("SP-GiST support for quad tree over range");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /* event triggers */

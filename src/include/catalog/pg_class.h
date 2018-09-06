@@ -105,11 +105,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-<<<<<<< HEAD
-#define Natts_pg_class					28
-=======
-#define Natts_pg_class					29
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#define Natts_pg_class					30
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -127,7 +123,6 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relisshared		15
 #define Anum_pg_class_relpersistence	16
 #define Anum_pg_class_relkind			17
-<<<<<<< HEAD
 #define Anum_pg_class_relstorage		18 /* GPDB specific */
 #define Anum_pg_class_relnatts			19
 #define Anum_pg_class_relchecks			20
@@ -136,23 +131,12 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhasrules		23
 #define Anum_pg_class_relhastriggers	24
 #define Anum_pg_class_relhassubclass	25
-#define Anum_pg_class_relfrozenxid		26
-#define Anum_pg_class_relacl			27
-#define Anum_pg_class_reloptions		28
-=======
-#define Anum_pg_class_relnatts			18
-#define Anum_pg_class_relchecks			19
-#define Anum_pg_class_relhasoids		20
-#define Anum_pg_class_relhaspkey		21
-#define Anum_pg_class_relhasrules		22
-#define Anum_pg_class_relhastriggers	23
-#define Anum_pg_class_relhassubclass	24
-#define Anum_pg_class_relispopulated	25
-#define Anum_pg_class_relfrozenxid		26
-#define Anum_pg_class_relminmxid		27
-#define Anum_pg_class_relacl			28
-#define Anum_pg_class_reloptions		29
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#define Anum_pg_class_relispopulated	26
+#define Anum_pg_class_relfrozenxid		27
+#define Anum_pg_class_relminmxid		28
+#define Anum_pg_class_relacl			29
+#define Anum_pg_class_reloptions		30
+
 
 /* ----------------
  *		initial contents of pg_class
@@ -163,28 +147,17 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-<<<<<<< HEAD
-/* Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 30 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 21 0 f f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 29 0 t f f f f 3 _null_ _null_ ));
-DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 28 0 t f f f f 3 _null_ _null_ ));
-=======
 /*
  * Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId;
  * similarly, "1" in relminmxid stands for FirstMultiXactId
  */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 0 f f p r 30 0 t f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 30 0 t f f f f t 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 0 f f p r 21 0 f f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 21 0 f f f f f t 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 0 f f p r 27 0 t f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 29 0 t f f f f t 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 0 f f p r 29 0 t f f f f t 3 1 _null_ _null_ ));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 0 f f p r h 28 0 t f f f f t 3 1 _null_ _null_ ));
 DESCR("");
 
 
@@ -195,14 +168,10 @@ DESCR("");
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
 #define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
-<<<<<<< HEAD
-#define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
+#define		  RELKIND_MATVIEW		  'm'		/* materialized view */
 #define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
 #define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */
 #define		  RELKIND_AOVISIMAP		  'm'		/* AO visibility map */
-=======
-#define		  RELKIND_MATVIEW		  'm'		/* materialized view */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define		  RELPERSISTENCE_PERMANENT	'p'		/* regular table */
 #define		  RELPERSISTENCE_UNLOGGED	'u'		/* unlogged permanent table */

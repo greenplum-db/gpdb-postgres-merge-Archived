@@ -197,7 +197,6 @@ typedef PageHeaderData *PageHeader;
  *
  * As of Release 9.3, the checksum version must also be considered when
  * handling pages.
-<<<<<<< HEAD
  *
  * GPDB 4 uses 4. However, it didn't have the pd_prune_xid field
  * GPDB 5.0 uses 14. The layout is the same as PostgreSQL 8.3's, but
@@ -205,10 +204,7 @@ typedef PageHeaderData *PageHeader;
  *		used 4 for the previous format.
  */
 #define PG_PAGE_LAYOUT_VERSION		14
-=======
- */
-#define PG_PAGE_LAYOUT_VERSION		4
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
 #define PG_DATA_CHECKSUM_VERSION	1
 
 /* ----------------------------------------------------------------
@@ -389,25 +385,15 @@ PageGetLSN(Page page)
 	}
 #endif
 
-	return ((PageHeader) page)->pd_lsn;
+	return PageXLogRecPtrGet(((PageHeader) (page))->pd_lsn);
 }
 
 /*
- * Additional macros for access to page headers
- */
-#define PageSetLSN(page, lsn) \
-	(((PageHeader) (page))->pd_lsn = (lsn))
-#define PageXLogRecPtrSet(ptr, lsn) \
-	((ptr).xlogid = (uint32) ((lsn) >> 32), (ptr).xrecoff = (uint32) (lsn))
-=======
  * Additional macros for access to page headers. (Beware multiple evaluation
  * of the arguments!)
  */
-#define PageGetLSN(page) \
-	PageXLogRecPtrGet(((PageHeader) (page))->pd_lsn)
 #define PageSetLSN(page, lsn) \
 	PageXLogRecPtrSet(((PageHeader) (page))->pd_lsn, lsn)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define PageHasFreeLinePointers(page) \
 	(((PageHeader) (page))->pd_flags & PD_HAS_FREE_LINES)

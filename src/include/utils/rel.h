@@ -453,11 +453,7 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_LOCAL(relation) \
-<<<<<<< HEAD
-	((relation)->rd_backend == TempRelBackendId || \
-=======
 	((relation)->rd_islocaltemp || \
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
 
 /*
@@ -467,10 +463,6 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
-<<<<<<< HEAD
-	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP \
-	 && (relation)->rd_backend != TempRelBackendId)
-=======
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP && \
 	 !(relation)->rd_islocaltemp)
 
@@ -491,7 +483,6 @@ typedef struct StdRdOptions
  */
 #define RelationIsPopulated(relation) ((relation)->rd_rel->relispopulated)
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

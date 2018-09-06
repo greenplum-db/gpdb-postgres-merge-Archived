@@ -536,12 +536,8 @@ extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
 extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
-<<<<<<< HEAD
-extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid);
-extern Relation ExecOpenScanExternalRelation(EState *estate, Index scanrelid);
-=======
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+extern Relation ExecOpenScanExternalRelation(EState *estate, Index scanrelid);
 extern void ExecCloseScanRelation(Relation scanrel);
 extern void ExecCloseScanAppendOnlyRelation(Relation scanrel);
 

@@ -1143,11 +1143,7 @@ typedef struct SubPlanState
 	struct PlanState *planstate;	/* subselect plan's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
-<<<<<<< HEAD
-	struct MemTupleData *curTuple;                /* copy of most recent tuple from subplan */
-=======
-	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	struct MemTupleData *curTuple; /* copy of most recent tuple from subplan */
 	Datum		curArray;		/* most recent array from ARRAY() subplan */
 	/* these are used when hashing the subselect's output: */
 	ProjectionInfo *projLeft;	/* for projecting lefthand exprs */

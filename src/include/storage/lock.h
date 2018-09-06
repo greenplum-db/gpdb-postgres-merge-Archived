@@ -526,7 +526,6 @@ typedef enum
 extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
 extern uint32 LockTagHashCode(const LOCKTAG *locktag);
-<<<<<<< HEAD
 /*
  * Compute the hash code associated with a PROCLOCKTAG, given the hashcode
  * for its underlying LOCK.
@@ -547,9 +546,7 @@ ProcLockHashCode(const PROCLOCKTAG *proclocktag, uint32 hashcode)
 
 	return lockhash;
 }
-=======
 extern bool DoLockModesConflict(LOCKMODE mode1, LOCKMODE mode2);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
 			LOCKMODE lockmode,
 			bool sessionLock,
@@ -567,11 +564,8 @@ extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks);
 extern void LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks);
-<<<<<<< HEAD
-=======
 extern bool LockHasWaiters(const LOCKTAG *locktag,
 			   LOCKMODE lockmode, bool sessionLock);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
 				 LOCKMODE lockmode);
 extern void AtPrepare_Locks(void);

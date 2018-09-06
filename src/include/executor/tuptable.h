@@ -15,12 +15,9 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
-<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/memtup.h"
-=======
 #include "access/tupdesc.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/buf.h"
 
 /*----------
