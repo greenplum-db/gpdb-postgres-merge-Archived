@@ -25,14 +25,7 @@
  */
 extern void pull_up_sublinks(PlannerInfo *root);
 extern void inline_set_returning_functions(PlannerInfo *root);
-<<<<<<< HEAD
-extern void pull_up_sublinks(PlannerInfo *root);
-extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode,
-				   JoinExpr *lowest_outer_join,
-				   AppendRelInfo *containing_appendrel);
-=======
 extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern Relids get_relids_in_jointree(Node *jtnode, bool include_joins);

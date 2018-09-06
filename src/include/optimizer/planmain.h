@@ -202,17 +202,13 @@ extern SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
 		   long numGroups, double outputRows);
 extern Result *make_result(PlannerInfo *root, List *tlist,
 			Node *resconstantqual, Plan *subplan);
-<<<<<<< HEAD
 extern Repeat *make_repeat(List *tlist,
 						   List *qual,
 						   Expr *repeatCountExpr,
 						   uint64 grouping,
 						   Plan *subplan);
-extern ModifyTable *make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
-=======
 extern ModifyTable *make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				 List *resultRelations, List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam);
 extern bool is_projection_capable_plan(Plan *plan);
@@ -261,7 +257,6 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 							Expr *item2,
 							Relids qualscope,
 							Relids nullable_relids);
-<<<<<<< HEAD
 
 extern void check_mergejoinable(RestrictInfo *restrictinfo);
 extern void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -271,8 +266,6 @@ extern bool has_redistributable_clause(RestrictInfo *restrictinfo);
  * prototypes for plan/analyzejoins.c
  */
 extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * prototypes for plan/analyzejoins.c

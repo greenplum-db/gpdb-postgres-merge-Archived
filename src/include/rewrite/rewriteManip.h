@@ -78,12 +78,6 @@ extern Node *map_variable_attnos(Node *node,
 					const AttrNumber *attno_map, int map_length,
 					bool *found_whole_row);
 
-<<<<<<< HEAD
-extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
-		   RangeTblEntry *target_rte,
-		   List *targetlist, int event, int update_varno,
-		   bool *outer_hasSubLinks);
-=======
 extern Node *ReplaceVarsFromTargetList(Node *node,
 						  int target_varno, int sublevels_up,
 						  RangeTblEntry *target_rte,
@@ -91,6 +85,5 @@ extern Node *ReplaceVarsFromTargetList(Node *node,
 						  ReplaceVarsNoMatchOption nomatch_option,
 						  int nomatch_varno,
 						  bool *outer_hasSubLinks);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* REWRITEMANIP_H */

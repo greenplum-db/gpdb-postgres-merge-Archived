@@ -63,12 +63,8 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
-<<<<<<< HEAD
 						Relids deduced_nullable_relids,
 						List **postponed_qual_list);
-=======
-						Relids deduced_nullable_relids);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 					  Relids *nullable_relids_p, bool is_pushed_down);
 static bool check_equivalence_delay(PlannerInfo *root,
@@ -713,12 +709,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, JOIN_INNER,
-<<<<<<< HEAD
 									*qualscope, NULL, NULL, NULL,
 									postponed_qual_list);
-=======
-									*qualscope, NULL, NULL, NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -876,13 +868,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, j->jointype,
-<<<<<<< HEAD
-									*qualscope, ojscope, nonnullable_rels, NULL,
-									postponed_qual_list);
-=======
 									*qualscope,
-									ojscope, nonnullable_rels, NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+									ojscope, nonnullable_rels, NULL,
+									postponed_qual_list);
 		}
 
 		/* Now we can add the SpecialJoinInfo to join_info_list */
@@ -1214,12 +1202,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
-<<<<<<< HEAD
 						Relids deduced_nullable_relids,
 						List **postponed_qual_list)
-=======
-						Relids deduced_nullable_relids)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Relids		relids;
 	bool		is_pushed_down;
@@ -1237,40 +1221,33 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	relids = pull_varnos(clause);
 
 	/*
-	 * Normally relids is a subset of qualscope, and we like to check that
-	 * here as a crosscheck on the parser and rewriter.  That need not be the
-	 * case when there are LATERAL RTEs, however: the clause could contain
-	 * references to rels outside its syntactic scope as a consequence of
-	 * pull-up of such references from a LATERAL subquery below it.  So, only
-	 * check if the query contains no LATERAL RTEs.
-	 *
-	 * However, if it's an outer-join clause, we always insist that relids be
-	 * a subset of ojscope.  This is safe because is_simple_subquery()
-	 * disallows pullup of LATERAL subqueries that could cause the restriction
-	 * to be violated.
+	 * In ordinary SQL, a WHERE or JOIN/ON clause can't reference any rels
+	 * that aren't within its syntactic scope; however, if we pulled up a
+	 * LATERAL subquery then we might find such references in quals that have
+	 * been pulled up.  We need to treat such quals as belonging to the join
+	 * level that includes every rel they reference.  Although we could make
+	 * pull_up_subqueries() place such quals correctly to begin with, it's
+	 * easier to handle it here.  When we find a clause that contains Vars
+	 * outside its syntactic scope, we add it to the postponed-quals list, and
+	 * process it once we've recursed back up to the appropriate join level.
 	 */
-<<<<<<< HEAD
 	if (!bms_is_subset(relids, qualscope))
 	{
-		if (postponed_qual_list == NULL)
-		{
-			elog(ERROR, "JOIN qualification cannot refer to other relations");
-		}
-		else
-		{
-			PostponedQual *pq = (PostponedQual *) palloc(sizeof(PostponedQual));
+		PostponedQual *pq = (PostponedQual *) palloc(sizeof(PostponedQual));
 
-			Assert(!is_deduced);
-			pq->qual = clause;
-			pq->relids = relids;
-			*postponed_qual_list = lappend(*postponed_qual_list, pq);
-			return;
-		}
+		Assert(root->hasLateralRTEs);	/* shouldn't happen otherwise */
+		Assert(jointype == JOIN_INNER); /* mustn't postpone past outer join */
+		Assert(!is_deduced);	/* shouldn't be deduced, either */
+		pq->qual = clause;
+		pq->relids = relids;
+		*postponed_qual_list = lappend(*postponed_qual_list, pq);
+		return;
 	}
-=======
-	if (!root->hasLateralRTEs && !bms_is_subset(relids, qualscope))
-		elog(ERROR, "JOIN qualification cannot refer to other relations");
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+	/*
+	 * If it's an outer-join clause, also check that relids is a subset of
+	 * ojscope.  (This should not fail if the syntactic scope check passed.)
+	 */
 	if (ojscope && !bms_is_subset(relids, ojscope))
 		elog(ERROR, "JOIN qualification cannot refer to other relations");
 
@@ -1361,11 +1338,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		/*
 		 * If the qual came from implied-equality deduction, it should not be
 		 * outerjoin-delayed, else deducer blew it.  But we can't check this
-<<<<<<< HEAD
-		 * because the join_info_list list may now contain OJs above where the qual
-=======
 		 * because the join_info_list may now contain OJs above where the qual
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * belongs.  For the same reason, we must rely on caller to supply the
 		 * correct nullable_relids set.
 		 */
@@ -1943,12 +1916,8 @@ process_implied_equality(PlannerInfo *root,
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, below_outer_join, JOIN_INNER,
-<<<<<<< HEAD
 							qualscope, NULL, NULL, nullable_relids,
 							NULL);
-=======
-							qualscope, NULL, NULL, nullable_relids);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1996,12 +1965,8 @@ build_implied_join_equality(Oid opno,
 									 false,		/* pseudoconstant */
 									 qualscope,	/* required_relids */
 									 NULL,		/* outer_relids */
-<<<<<<< HEAD
 									 nullable_relids,	/* nullable_relids */
 									 qualscope); /* ojscope_relids */
-=======
-									 nullable_relids);	/* nullable_relids */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Set mergejoinability/hashjoinability flags */
 	check_mergejoinable(restrictinfo);

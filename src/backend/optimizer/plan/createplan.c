@@ -37,11 +37,8 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
-<<<<<<< HEAD
-#include "optimizer/planpartition.h"
-=======
 #include "optimizer/planner.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "optimizer/planpartition.h"
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/subselect.h"
@@ -1160,15 +1157,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		 * list isn't already what we need, we need to add a Result node to
 		 * help it along.
 		 */
-<<<<<<< HEAD
 		subplan = plan_pushdown_tlist(root, subplan, newtlist);
-=======
-		if (!is_projection_capable_plan(subplan) &&
-			!tlist_same_exprs(newtlist, subplan->targetlist))
-			subplan = (Plan *) make_result(root, newtlist, NULL, subplan);
-		else
-			subplan->targetlist = newtlist;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
@@ -2852,20 +2841,13 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	 * finish up this qual rewriting to ensure what we dispatch is a sane interpretation
 	 * of CURRENT OF behavior.
 	 */
-<<<<<<< HEAD
 	if (!(list_length(scan_clauses) == 1 && IsA(linitial(scan_clauses), CurrentOfExpr)))
 	{
-		ortidquals = best_path->tidquals;
+		ortidquals = tidquals;
 		if (list_length(ortidquals) > 1)
 			ortidquals = list_make1(make_orclause(ortidquals));
 		scan_clauses = list_difference(scan_clauses, ortidquals);
 	}
-=======
-	ortidquals = tidquals;
-	if (list_length(ortidquals) > 1)
-		ortidquals = list_make1(make_orclause(ortidquals));
-	scan_clauses = list_difference(scan_clauses, ortidquals);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
@@ -3065,12 +3047,6 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-<<<<<<< HEAD
-	scan_plan = make_subqueryscan(tlist,
-								  scan_clauses,
-								  scan_relid,
-								  best_path->parent->subplan);
-=======
 	/* Replace any outer-relation variables with nestloop params */
 	if (best_path->param_info)
 	{
@@ -3078,9 +3054,10 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
-	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
-							 plan_id, cte_param_id);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	scan_plan = make_subqueryscan(tlist,
+								  scan_clauses,
+								  scan_relid,
+								  best_path->parent->subplan);
 
 	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
@@ -6241,37 +6218,9 @@ make_tablefunction(List *tlist,
 	plan->targetlist	= tlist;
 	plan->righttree		= NULL;
 
-<<<<<<< HEAD
 	/* Fill in information for the subplan */
 	plan->lefttree		 = subplan;
 	node->scan.scanrelid = scanrelid;
-=======
-	/*
-	 * We also need to account for the cost of evaluation of the qual (ie, the
-	 * HAVING clause) and the tlist.
-	 *
-	 * XXX this double-counts the cost of evaluation of any expressions used
-	 * for grouping, since in reality those will have been evaluated at a
-	 * lower plan level and will only be copied by the Group node. Worth
-	 * fixing?
-	 *
-	 * See notes in add_tlist_costs_to_plan about why only make_agg,
-	 * make_windowagg and make_group worry about tlist eval cost.
-	 */
-	if (qual)
-	{
-		cost_qual_eval(&qual_cost, qual, root);
-		plan->startup_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.startup;
-		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
-	}
-	add_tlist_costs_to_plan(root, plan, tlist);
-
-	plan->qual = qual;
-	plan->targetlist = tlist;
-	plan->lefttree = lefttree;
-	plan->righttree = NULL;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return node;
 }
@@ -6602,12 +6551,8 @@ make_repeat(List *tlist,
  * to make it look better sometime.
  */
 ModifyTable *
-<<<<<<< HEAD
-make_modifytable(PlannerInfo *root, CmdType operation, bool canSetTag,
-=======
 make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				 List *resultRelations,
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam)
@@ -7007,42 +6952,13 @@ plan_pushdown_tlist(PlannerInfo *root, Plan *plan, List *tlist)
 {
 	bool		need_result;
 
-	if (is_projection_capable_plan(plan))
-		need_result = false;
-	else
+	if (!is_projection_capable_plan(plan) &&
+		!tlist_same_exprs(tlist, plan->targetlist))
 	{
-		/*
-		 * The Plan node doesn't support projection. But if we're lucky,
-		 * the target list we're about to assign is equal to what the plan
-		 * already has. In that case, we don't need projection, after all,
-		 * and we can just replace the target list.
-		 *
-		 * "Equal" in this case means that the expressions are equal;
-		 * resnames, resjunk and other TargetEntry fields don't matter, all
-		 * Node plans are capable of dealing with those, without projection.
-		 */
-		if (list_length(tlist) == list_length(plan->targetlist))
-		{
-			ListCell   *a;
-			ListCell   *b;
-			bool		all_equal = true;
-
-			forboth(a, tlist, b, plan->targetlist)
-			{
-				TargetEntry *tla = (TargetEntry *) lfirst(a);
-				TargetEntry *tlb = (TargetEntry *) lfirst(b);
-
-				if (!equal(tla->expr, tlb->expr))
-				{
-					all_equal = false;
-					break;
-				}
-			}
-			need_result = !all_equal;
-		}
-		else
-			need_result = true;
+		need_result = true;
 	}
+	else
+		need_result = false;
 
 	if (!need_result)
 	{

@@ -236,12 +236,10 @@ extern void PortalDefineQuery(Portal portal,
 extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
-<<<<<<< HEAD
+extern bool ThereAreNoReadyPortals(void);
+
 extern void AtExitCleanup_ResPortals(void);
 extern void TotalResPortalIncrements(int pid, Oid queueid,
 									 Cost *totalIncrements, int *num);
-=======
-extern bool ThereAreNoReadyPortals(void);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* PORTAL_H */

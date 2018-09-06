@@ -121,8 +121,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		 * like "SELECT 2+2 ORDER BY 1".
 		 */
 		root->canon_pathkeys = NIL;
-<<<<<<< HEAD
-		canonicalize_all_pathkeys(root);
+		(*qp_callback) (root, qp_extra);
 
 		{
 			char		exec_location;
@@ -134,9 +133,7 @@ query_planner(PlannerInfo *root, List *tlist,
 			else if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
 				CdbPathLocus_MakeStrewn(&(*cheapest_path)->locus);
 		}
-=======
-		(*qp_callback) (root, qp_extra);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
 		return;
 	}
 
@@ -453,24 +450,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	*cheapest_path = cheapestpath;
 	*sorted_path = sortedpath;
 }
-<<<<<<< HEAD
-
-
-/*
- * canonicalize_all_pathkeys
- *		Canonicalize all pathkeys that were generated before entering
- *		query_planner and then stashed in PlannerInfo.
- */
-static void
-canonicalize_all_pathkeys(PlannerInfo *root)
-{
-	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
-	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
-	root->window_pathkeys = canonicalize_pathkeys(root, root->window_pathkeys);
-	root->distinct_pathkeys = canonicalize_pathkeys(root, root->distinct_pathkeys);
-	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
-}
-
 
 /*
  * distcols_in_groupclause -
@@ -595,5 +574,3 @@ CopyPlannerConfig(const PlannerConfig *c1)
 	memcpy(c2, c1, sizeof(PlannerConfig));
 	return c2;
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

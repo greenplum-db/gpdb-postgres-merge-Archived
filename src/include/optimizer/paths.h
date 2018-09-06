@@ -155,7 +155,6 @@ typedef enum
 	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
 } PathKeysComparison;
 
-<<<<<<< HEAD
 typedef struct
 {
 	Node *replaceThis;
@@ -169,9 +168,6 @@ extern PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
 extern Node * replace_expression_mutator(Node *node, void *context);
 extern void generate_implied_quals(PlannerInfo *root);
 
-extern List *canonicalize_pathkeys(PlannerInfo *root, List *pathkeys);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
@@ -212,15 +208,10 @@ extern List *make_pathkeys_for_groupclause(PlannerInfo *root,
 										   List *tlist);
 extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
-<<<<<<< HEAD
-							  List *tlist,
-							  bool canonicalize);
+							  List *tlist);
 extern void make_distribution_keys_for_groupclause(PlannerInfo *root, List *groupclause, List *tlist,
 									   List **partition_dist_keys,
 									   List **partition_dist_exprs);
-=======
-							  List *tlist);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
 								RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,

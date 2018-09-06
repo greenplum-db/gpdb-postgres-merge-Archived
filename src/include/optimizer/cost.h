@@ -114,13 +114,9 @@ extern void cost_tidscan(Path *path, PlannerInfo *root,
 extern void cost_subqueryscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
-<<<<<<< HEAD
-				  RelOptInfo *baserel);
-extern void cost_tablefunction(Path *path, PlannerInfo *root,
-							   RelOptInfo *baserel);
-=======
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+extern void cost_tablefunction(Path *path, PlannerInfo *root,
+				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 				RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_ctescan(Path *path, PlannerInfo *root,
