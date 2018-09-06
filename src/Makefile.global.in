@@ -31,13 +31,11 @@ all:
 # started to update the file.
 .DELETE_ON_ERROR:
 
-<<<<<<< HEAD
 # BLD_ARCH
 BLD_ARCH = @BLD_ARCH@
-=======
+
 # Never delete any intermediate files automatically.
 .SECONDARY:
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # PostgreSQL version number
 PG_VERSION = @PG_PACKAGE_VERSION@
@@ -179,14 +177,11 @@ with_libxml	= @with_libxml@
 with_libxslt	= @with_libxslt@
 with_system_tzdata = @with_system_tzdata@
 with_zlib	= @with_zlib@
-<<<<<<< HEAD
 with_libbz2	= @with_libbz2@
 with_apr_config	= @with_apr_config@
 with_apu_config	= @with_apu_config@
 with_libsigar	= @with_libsigar@
 enable_shared	= @enable_shared@
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 enable_rpath	= @enable_rpath@
 # NLS is not supported in Greenplum, see comment documenting
 # this in configure.in
@@ -254,13 +249,10 @@ GCC = @GCC@
 SUN_STUDIO_CC = @SUN_STUDIO_CC@
 CFLAGS = @CFLAGS@
 CFLAGS_VECTOR = @CFLAGS_VECTOR@
-<<<<<<< HEAD
 CFLAGS_SSE42 = @CFLAGS_SSE42@
 
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # Kind-of compilers
 
@@ -587,14 +579,10 @@ endif
 
 LIBOBJS = @LIBOBJS@
 
-<<<<<<< HEAD
 # files needed for the chosen CRC-32C implementation
 PG_CRC32C_OBJS = @PG_CRC32C_OBJS@
 
-LIBS := -lpgport $(LIBS)
-=======
 LIBS := -lpgport -lpgcommon $(LIBS)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # to make ws2_32.lib the last library, and always link with shfolder,
 # so SHGetFolderName isn't picked up from shell32.dll
