@@ -105,11 +105,7 @@ typedef struct
  * space management information generic to any page
  *
  *		pd_lsn		- identifies xlog record for last change to this page.
-<<<<<<< HEAD
- *		pd_checksum	- page checksum, if set.
-=======
  *		pd_checksum - page checksum, if set.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *		pd_flags	- flag bits.
  *		pd_lower	- offset to start of free space.
  *		pd_upper	- offset to end of free space.
@@ -356,7 +352,6 @@ typedef PageHeaderData *PageHeader;
 	  / sizeof(ItemIdData)))
 
 /*
-<<<<<<< HEAD
  * Retrieving LSN of a shared buffer is safe only if: (1) exclusive lock on the
  * buffer's contents is held OR (2) shared lock on the buffer's contents and
  * the buffer header spinlock is held.  The Assert() validates that a shared
