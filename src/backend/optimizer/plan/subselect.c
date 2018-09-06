@@ -44,8 +44,6 @@
 #include "cdb/cdbsubselect.h"
 #include "cdb/cdbvars.h"
 
-extern bool is_simple_subquery(PlannerInfo *root, Query *subquery);
-
 typedef struct convert_testexpr_context
 {
 	PlannerInfo *root;
