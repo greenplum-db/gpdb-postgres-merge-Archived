@@ -62,32 +62,21 @@ extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
 extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
-<<<<<<< HEAD
-extern void quickdie(SIGNAL_ARGS);
-extern void quickdie_impl(void);
-=======
 extern void quickdie(SIGNAL_ARGS) __attribute__((noreturn));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+extern void quickdie_impl(void);
 extern void StatementCancelHandler(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS) __attribute__((noreturn));
 extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from SIGUSR1
 																 * handler */
 extern void prepare_for_client_read(void);
 extern void client_read_ended(void);
-<<<<<<< HEAD
 extern void prepare_for_client_write(void);
 extern void client_write_ended(void);
-extern void process_postgres_switches(int argc, char *argv[],
-						  GucContext ctx, const char **dbname);
-extern int	PostgresMain(int argc, char *argv[],
-			 const char *dbname, const char *username);
-=======
 extern void process_postgres_switches(int argc, char *argv[],
 						  GucContext ctx, const char **dbname);
 extern void PostgresMain(int argc, char *argv[],
 			 const char *dbname,
 			 const char *username) __attribute__((noreturn));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);

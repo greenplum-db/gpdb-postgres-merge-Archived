@@ -1265,18 +1265,17 @@ CreateExtension(CreateExtensionStmt *stmt)
 		switch (stmt->create_ext_state)
 		{
 			case CREATE_EXTENSION_INIT:
-				elog(WARNING, "Can not be here when QE create extension");
-				Insist(0);
-				creating_extension = false;
-				CurrentExtensionObject = InvalidOid;
-				return;
+				elog(ERROR, "invalid CREATE EXTENSION state");
+				return InvalidOid;
+
 			case CREATE_EXTENSION_BEGIN:	/* Mark creating_extension flag and add pg_extension catalog tuple */
 				creating_extension = true;
 				break;
 			case CREATE_EXTENSION_END:		/* Mark creating_extension flag = false */
 				creating_extension = false;
 				CurrentExtensionObject = InvalidOid;
-				return;
+				return InvalidOid;		/* GPDB_93_MERGE_FIXME: can we get the real OID from somewhere? Do we need it? */
+
 			default:
 				elog(ERROR, "unrecognized create_ext_state: %d",
 						stmt->create_ext_state);
@@ -1555,7 +1554,6 @@ CreateExtension(CreateExtensionStmt *stmt)
 							 requiredSchemas,
 							 schemaName, schemaOid);
 
-<<<<<<< HEAD
 		/*
 		 * If additional update scripts have to be executed, apply the updates as
 		 * though a series of ALTER EXTENSION UPDATE commands were given
@@ -1563,16 +1561,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 		ApplyExtensionUpdates(extensionOid, pcontrol,
 							  versionName, updateVersions);
 	}
-=======
-	/*
-	 * If additional update scripts have to be executed, apply the updates as
-	 * though a series of ALTER EXTENSION UPDATE commands were given
-	 */
-	ApplyExtensionUpdates(extensionOid, pcontrol,
-						  versionName, updateVersions);
 
 	return extensionOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

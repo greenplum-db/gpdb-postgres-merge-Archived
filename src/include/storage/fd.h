@@ -68,17 +68,12 @@ extern int	max_safe_fds;
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-<<<<<<< HEAD
 
 extern File OpenNamedTemporaryFile(const char *fileName,
 								   bool create,
 								   bool delOnClose,
 								   bool interXact);
 extern File OpenTemporaryFile(bool interXact, const char *filePrefix);
-extern void FileSetTransient(File file);
-=======
-extern File OpenTemporaryFile(bool interXact);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount);
 extern int	FileRead(File file, char *buffer, int amount);

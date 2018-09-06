@@ -1274,21 +1274,13 @@ get_canonical_locale_name(int category, const char *locale)
 		pg_log(PG_FATAL, "failed to get the current locale\n");
 
 	/* 'save' may be pointing at a modifiable scratch variable, so copy it. */
-<<<<<<< HEAD
-	save = (char *) pg_strdup(save);
-=======
 	save = pg_strdup(save);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* set the locale with setlocale, to see if it accepts it. */
 	res = setlocale(category, locale);
 
 	if (!res)
-<<<<<<< HEAD
 		pg_log(PG_FATAL, "failed to get system locale name for \"%s\"\n", locale);
-=======
-		pg_log(PG_FATAL, "failed to get system local name for \"%s\"\n", res);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = pg_strdup(res);
 

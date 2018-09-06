@@ -495,17 +495,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
-<<<<<<< HEAD
 	if (es->analyze)
 		instrument_option |= INSTRUMENT_CDB;
 
 	/*
-	 * Start timing.
-=======
-	/*
 	 * We always collect timing for the entire statement, even when node-level
 	 * timing is off, so we don't look at es->timing here.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 

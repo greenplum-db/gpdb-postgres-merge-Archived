@@ -17,17 +17,7 @@
 
 #include "nodes/parsenodes.h"
 
-<<<<<<< HEAD
-extern void DefineCollation(List *names, List *parameters, bool if_not_exists);
-extern void RenameCollation(List *name, const char *newname);
-extern void AlterCollationOwner(List *name, Oid newOwnerId);
-extern void AlterCollationOwner_oid(Oid collationOid, Oid newOwnerId);
-extern void AlterCollationNamespace(List *name, const char *newschema);
-extern Oid	AlterCollationNamespace_oid(Oid collOid, Oid newNspOid);
-extern Datum pg_import_system_collations(PG_FUNCTION_ARGS);
-=======
-extern Oid	DefineCollation(List *names, List *parameters);
+extern Oid	DefineCollation(List *names, List *parameters, bool if_not_exists);
 extern void IsThereCollationInNamespace(const char *collname, Oid nspOid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* COLLATIONCMDS_H */

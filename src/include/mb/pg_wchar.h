@@ -41,44 +41,6 @@ typedef unsigned int pg_wchar;
 #define ISSJISHEAD(c) (((c) >= 0x81 && (c) <= 0x9f) || ((c) >= 0xe0 && (c) <= 0xfc))
 #define ISSJISTAIL(c) (((c) >= 0x40 && (c) <= 0x7e) || ((c) >= 0x80 && (c) <= 0xfc))
 
-<<<<<<< HEAD
-/*
- * Leading byte types or leading prefix byte for MULE internal code.
- * See http://www.xemacs.org for more details.	(there is a doc titled
- * "XEmacs Internals Manual", "MULE Character Sets and Encodings"
- * section.)
- */
-/*
- * Is a leading byte for "official" single byte encodings?
- */
-#define IS_LC1(c)	((unsigned char)(c) >= 0x81 && (unsigned char)(c) <= 0x8d)
-/*
- * Is a prefix byte for "private" single byte encodings?
- */
-#define LCPRV1_A		0x9a
-#define LCPRV1_B		0x9b
-#define IS_LCPRV1(c)	((unsigned char)(c) == LCPRV1_A || (unsigned char)(c) == LCPRV1_B)
-#define IS_LCPRV1_A_RANGE(c)	\
-	((unsigned char)(c) >= 0xa0 && (unsigned char)(c) <= 0xdf)
-#define IS_LCPRV1_B_RANGE(c)	\
-	((unsigned char)(c) >= 0xe0 && (unsigned char)(c) <= 0xef)
-/*
- * Is a leading byte for "official" multibyte encodings?
- */
-#define IS_LC2(c)	((unsigned char)(c) >= 0x90 && (unsigned char)(c) <= 0x99)
-/*
- * Is a prefix byte for "private" multibyte encodings?
- */
-#define LCPRV2_A		0x9c
-#define LCPRV2_B		0x9d
-#define IS_LCPRV2(c)	((unsigned char)(c) == LCPRV2_A || (unsigned char)(c) == LCPRV2_B)
-#define IS_LCPRV2_A_RANGE(c)	\
-	((unsigned char)(c) >= 0xf0 && (unsigned char)(c) <= 0xf4)
-#define IS_LCPRV2_B_RANGE(c)	\
-	((unsigned char)(c) >= 0xf5 && (unsigned char)(c) <= 0xfe)
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*----------------------------------------------------
  * MULE Internal Encoding (MIC)
  *

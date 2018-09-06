@@ -55,7 +55,7 @@ CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
 {
 	regproc		aggfnoid;
 	char		aggkind;
-	int2		aggnumdirectargs;
+	int16		aggnumdirectargs;
 	regproc		aggtransfn;
 	regproc		aggfinalfn;
 	regproc		aggcombinefn;
@@ -68,9 +68,9 @@ CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
 	bool		aggmfinalextra;
 	Oid			aggsortop;
 	Oid			aggtranstype;
-	int4		aggtransspace;
+	int32		aggtransspace;
 	Oid			aggmtranstype;
-	int4		aggmtransspace;
+	int32		aggmtransspace;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		agginitval;

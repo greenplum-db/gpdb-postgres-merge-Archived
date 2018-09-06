@@ -566,14 +566,9 @@ typedef struct RelOptInfo
 	char		relstorage;		/* from pg_class.relstorage */
 	double		allvisfrac;
 	/* use "struct Plan" to avoid including plannodes.h here */
-<<<<<<< HEAD
 	struct Plan *subplan;		/* if subquery (in GPDB: or CTE) */
 	PlannerInfo *subroot;		/* if subquery (in GPDB: or CTE) */
-=======
-	struct Plan *subplan;		/* if subquery */
-	PlannerInfo *subroot;		/* if subquery */
 	List	   *subplan_params; /* if subquery */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;		/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
@@ -1938,7 +1933,7 @@ typedef struct PartitionRule
 	bool		 parrangeendincl;
 	Node		*parrangeevery;
 	List		*parlistvalues;
-	int2		 parruleord;
+	int16		 parruleord;
 	List		*parreloptions;
 	Oid			 partemplatespaceId; 	/* the tablespace id for the
 										 * template (or InvalidOid for 
