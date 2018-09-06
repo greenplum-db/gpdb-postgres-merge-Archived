@@ -287,11 +287,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Since this can be redone later if needed, mark as a hint.
 			 */
-<<<<<<< HEAD
-			MarkBufferDirtyHint(so->hashso_curbuf);
-=======
 			MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 
 		/*
@@ -723,11 +719,3 @@ hash_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 {
 	elog(PANIC, "hash_redo: unimplemented");
 }
-<<<<<<< HEAD
-
-void
-hash_desc(StringInfo buf __attribute__((unused)), XLogRecord *record __attribute__((unused)))
-{
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

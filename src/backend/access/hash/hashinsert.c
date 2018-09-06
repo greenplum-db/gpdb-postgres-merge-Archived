@@ -51,16 +51,6 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
-<<<<<<< HEAD
-	/*
-	 * Acquire shared split lock so we can compute the target bucket safely
-	 * (see README).
-	 */
-
-	_hash_getlock(rel, 0, HASH_SHARE);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
