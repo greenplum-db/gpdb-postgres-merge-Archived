@@ -31,26 +31,6 @@ extern Datum to_json(PG_FUNCTION_ARGS);
 extern Datum json_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum json_agg_finalfn(PG_FUNCTION_ARGS);
 
-<<<<<<< HEAD
-extern void escape_json(StringInfo buf, const char *str);
-
-/* functions in jsonfuncs.c */
-extern Datum json_object_field(PG_FUNCTION_ARGS);
-extern Datum json_object_field_text(PG_FUNCTION_ARGS);
-extern Datum json_array_element(PG_FUNCTION_ARGS);
-extern Datum json_array_element_text(PG_FUNCTION_ARGS);
-extern Datum json_extract_path(PG_FUNCTION_ARGS);
-extern Datum json_extract_path_text(PG_FUNCTION_ARGS);
-extern Datum json_object_keys(PG_FUNCTION_ARGS);
-extern Datum json_array_length(PG_FUNCTION_ARGS);
-extern Datum json_each(PG_FUNCTION_ARGS);
-extern Datum json_each_text(PG_FUNCTION_ARGS);
-extern Datum json_array_elements(PG_FUNCTION_ARGS);
-extern Datum json_populate_record(PG_FUNCTION_ARGS);
-extern Datum json_populate_recordset(PG_FUNCTION_ARGS);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void escape_json(StringInfo buf, const char *str);
 
 /* functions in jsonfuncs.c */
