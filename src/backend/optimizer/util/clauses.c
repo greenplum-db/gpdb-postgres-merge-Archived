@@ -116,12 +116,7 @@ static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
-<<<<<<< HEAD
-				  bool funcvariadic, 
-				  bool process_args, bool allow_non_const,
-=======
 				  bool funcvariadic, bool process_args, bool allow_non_const,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				  eval_const_expressions_context *context);
 static bool large_const(Expr *expr, Size max_size);
 static List *expand_function_arguments(List *args, Oid result_type,
@@ -2556,7 +2551,6 @@ eval_const_expressions_mutator(Node *node,
 										   expr->funcvariadic,
 										   true,
 										   true,
-										   true,
 										   context);
 				if (simple)		/* successfully simplified it */
 					return (Node *) simple;
@@ -2602,7 +2596,6 @@ eval_const_expressions_mutator(Node *node,
 										   expr->inputcollid,
 										   &args,
 										   false,
-										   true,
 										   true,
 										   true,
 										   context);
@@ -2913,7 +2906,6 @@ eval_const_expressions_mutator(Node *node,
 										   false,
 										   true,
 										   true,
-										   true,
 										   context);
 				if (simple)		/* successfully simplified output fn */
 				{
@@ -2945,7 +2937,6 @@ eval_const_expressions_mutator(Node *node,
 											   &args,
 											   false,
 											   false,
-											   true,
 											   true,
 											   context);
 					if (simple) /* successfully simplified input fn */
@@ -3878,12 +3869,7 @@ simplify_boolean_equality(Oid opno, List *args)
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
-<<<<<<< HEAD
-				  bool funcvariadic, 
-				  bool process_args, bool allow_non_const,
-=======
 				  bool funcvariadic, bool process_args, bool allow_non_const,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				  eval_const_expressions_context *context)
 {
 	List	   *args = *args_p;
@@ -3927,20 +3913,15 @@ static Expr *simplify_function(Oid funcid,
 	/* Now attempt simplification of the function call proper. */
 
 	newexpr = evaluate_function(funcid, result_type, result_typmod,
-<<<<<<< HEAD
-								result_collid, input_collid, args,
-								funcvariadic, func_tuple, context);
+								result_collid, input_collid,
+								args, funcvariadic,
+								func_tuple, context);
 
 	if (large_const(newexpr, context->max_size))
 	{
 		// folded expression prohibitively large
 		newexpr = NULL;
 	}
-=======
-								result_collid, input_collid,
-								args, funcvariadic,
-								func_tuple, context);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (!newexpr && allow_non_const && OidIsValid(func_form->protransform))
 	{
@@ -3969,13 +3950,8 @@ static Expr *simplify_function(Oid funcid,
 
 	if (!newexpr && allow_non_const)
 		newexpr = inline_function(funcid, result_type, result_collid,
-<<<<<<< HEAD
-								  input_collid, args,
-								  funcvariadic, func_tuple, context);
-=======
 								  input_collid, args, funcvariadic,
 								  func_tuple, context);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	ReleaseSysCache(func_tuple);
 
@@ -4340,11 +4316,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
 	newexpr->funcvariadic = funcvariadic;
-<<<<<<< HEAD
-	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
-=======
 	newexpr->funcformat = COERCE_EXPLICIT_CALL; /* doesn't matter */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	newexpr->funccollid = result_collid;		/* doesn't matter */
 	newexpr->inputcollid = input_collid;
 	newexpr->args = args;
@@ -5191,13 +5163,13 @@ flatten_join_alias_var_optimizer(Query *query, int queryLevel)
 
 	root->glob = makeNode(PlannerGlobal);
 	root->glob->boundParams = NULL;
-	root->glob->paramlist = NIL;
 	root->glob->subplans = NIL;
 	root->glob->subroots = NIL;
 	root->glob->finalrtable = NIL;
 	root->glob->relationOids = NIL;
 	root->glob->invalItems = NIL;
 	root->glob->transientPlan = false;
+	root->glob->nParamExec = 0;
 
 	root->config = DefaultPlannerConfig();
 

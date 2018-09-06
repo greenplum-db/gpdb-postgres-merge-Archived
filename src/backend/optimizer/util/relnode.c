@@ -554,7 +554,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 		    if (bms_nonempty_difference(rci->where_needed, relids))
 		    {
-			    joinrel->reltargetlist = lappend(joinrel->reltargetlist, origvar);
+			    joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
 			    joinrel->width += rci->attr_width;
 		    }
             continue;

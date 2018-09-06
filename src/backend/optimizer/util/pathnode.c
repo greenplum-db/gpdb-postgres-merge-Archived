@@ -1264,18 +1264,14 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
 
 	pathnode->tidquals = tidquals;
 
-<<<<<<< HEAD
 	/* Distribution is same as the base table. */
 	pathnode->path.locus = cdbpathlocus_from_baserel(root, rel);
 	pathnode->path.motionHazard = false;
 	pathnode->path.rescannable = true;
 	pathnode->path.sameslice_relids = rel->relids;
 
-	cost_tidscan(&pathnode->path, root, rel, tidquals);
-=======
 	cost_tidscan(&pathnode->path, root, rel, tidquals,
 				 pathnode->path.param_info);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return pathnode;
 }
@@ -2530,12 +2526,9 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
-create_functionscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-=======
 create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
+						 RangeTblEntry *rte,
 						 Relids required_outer)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -2545,7 +2538,6 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
 
-<<<<<<< HEAD
 	/*
 	 * If the function desires to run on segments, mark randomly-distributed.
 	 * If expression contains mutable functions, evaluate it on entry db.
@@ -2605,10 +2597,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
 
-	cost_functionscan(pathnode, root, rel);
-=======
 	cost_functionscan(pathnode, root, rel, pathnode->param_info);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return pathnode;
 }
@@ -2619,7 +2608,9 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel,
+						  RangeTblEntry *rte,
+						  Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -2628,6 +2619,8 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte
 	/* Setup the basics of the TableFunction path */
 	pathnode->pathtype	   = T_TableFunctionScan;
 	pathnode->parent	   = rel;
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys	   = NIL;		/* no way to specify output ordering */
 	pathnode->motionHazard = true;      /* better safe than sorry */
 	pathnode->rescannable  = false;     /* better safe than sorry */
@@ -2647,7 +2640,7 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte
 		CdbPathLocus_MakeStrewn(&pathnode->locus);
 	pathnode->sameslice_relids = NULL;
 
-	cost_tablefunction(pathnode, root, rel);
+	cost_tablefunction(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }
@@ -2658,12 +2651,9 @@ create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
-create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
-=======
 create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
+					   RangeTblEntry *rte,
 					   Relids required_outer)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -2673,7 +2663,6 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 													 required_outer);
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
-<<<<<<< HEAD
 	/*
 	 * CDB: If VALUES list contains mutable functions, evaluate it on entry db.
 	 * Otherwise let it be evaluated in the same slice as its parent operator.
@@ -2688,10 +2677,7 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->rescannable = true;
 	pathnode->sameslice_relids = NULL;
 
-	cost_valuesscan(pathnode, root, rel);
-=======
 	cost_valuesscan(pathnode, root, rel, pathnode->param_info);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return pathnode;
 }
@@ -2702,18 +2688,15 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
-=======
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys,
+					Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_CteScan;
 	pathnode->parent = rel;
-<<<<<<< HEAD
-	pathnode->param_info = NULL;	/* never parameterized at present */
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys = pathkeys;
 
 	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
@@ -2725,11 +2708,6 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 	pathnode->motionHazard = true;
 	pathnode->rescannable = false;
 	pathnode->sameslice_relids = NULL;
-=======
-	pathnode->param_info = get_baserel_parampathinfo(root, rel,
-													 required_outer);
-	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	cost_ctescan(pathnode, root, rel, pathnode->param_info);
 
@@ -2742,12 +2720,9 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
  *	  returning the pathnode.
  */
 Path *
-<<<<<<< HEAD
-create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel, CdbLocusType ctelocus)
-=======
 create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
+						  CdbLocusType ctelocus,
 						  Relids required_outer)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Path	   *pathnode = makeNode(Path);
 	CdbPathLocus result;

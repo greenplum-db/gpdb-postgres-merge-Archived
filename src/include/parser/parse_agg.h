@@ -22,7 +22,6 @@ extern void transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 						WindowDef *windef);
 
 extern void parseCheckAggregates(ParseState *pstate, Query *qry);
-<<<<<<< HEAD
 
 extern int	get_aggregate_argtypes(Aggref *aggref, Oid *inputTypes);
 
@@ -30,8 +29,6 @@ extern Oid resolve_aggregate_transtype(Oid aggfuncid,
 							Oid aggtranstype,
 							Oid *inputTypes,
 							int numArguments);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void build_aggregate_fnexprs(Oid *agg_input_types,
 						int agg_num_inputs,

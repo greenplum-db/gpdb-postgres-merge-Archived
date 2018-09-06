@@ -383,15 +383,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				info->tuples > rel->tuples)
 				info->tuples = rel->tuples;
 
-<<<<<<< HEAD
-			index_close(indexRelation, needs_longlock ? NoLock : lmode);
-=======
-				estimate_rel_size(indexRelation, NULL,
-								  &info->pages, &info->tuples, &allvisfrac);
-				if (info->tuples > rel->tuples)
-					info->tuples = rel->tuples;
-			}
-
 			if (info->relam == BTREE_AM_OID)
 			{
 				/* For btrees, get tree height while we have the index open */
@@ -403,8 +394,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				info->tree_height = -1;
 			}
 
-			index_close(indexRelation, NoLock);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			index_close(indexRelation, needs_longlock ? NoLock : lmode);
 
 			indexinfos = lcons(info, indexinfos);
 		}
