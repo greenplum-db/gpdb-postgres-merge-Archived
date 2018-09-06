@@ -1513,12 +1513,8 @@ void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
 					BlockNumber num_all_visible_pages,
-<<<<<<< HEAD
-					bool hasindex, TransactionId frozenxid, bool isvacuum)
-=======
 					bool hasindex, TransactionId frozenxid,
-					MultiXactId minmulti)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+					MultiXactId minmulti, bool isvacuum)
 {
 	Oid			relid = RelationGetRelid(relation);
 	Relation	rd;

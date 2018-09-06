@@ -171,11 +171,8 @@ extern void vac_update_relstats(Relation relation,
 					BlockNumber num_all_visible_pages,
 					bool hasindex,
 					TransactionId frozenxid,
-<<<<<<< HEAD
+					MultiXactId minmulti,
 					bool isvacuum);
-=======
-					MultiXactId minmulti);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,

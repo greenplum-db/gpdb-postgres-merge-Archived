@@ -525,18 +525,7 @@ ginbuildempty(PG_FUNCTION_ARGS)
 	log_newpage_buffer(MetaBuffer);
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 	MarkBufferDirty(RootBuffer);
-<<<<<<< HEAD
-
-	/* XLOG the new pages */
-	log_newpage_rel(index, INIT_FORKNUM,
-				BufferGetBlockNumber(MetaBuffer),
-				BufferGetPage(MetaBuffer));
-	log_newpage_rel(index, INIT_FORKNUM,
-				BufferGetBlockNumber(RootBuffer),
-				BufferGetPage(RootBuffer));
-=======
 	log_newpage_buffer(RootBuffer);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	END_CRIT_SECTION();
 
 	/* Unlock and release the buffers. */

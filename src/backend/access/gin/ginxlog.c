@@ -165,11 +165,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* If we have a full-page image, restore it and we're done */
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 0))
-=======
 	if (record->xl_info & XLR_BKP_BLOCK(0))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
@@ -380,12 +376,8 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 0))
-=======
 	/* If we have a full-page image, restore it and we're done */
 	if (record->xl_info & XLR_BKP_BLOCK(0))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
@@ -442,11 +434,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		lbuffer;
 	Page		page;
 
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 0))
-=======
 	if (record->xl_info & XLR_BKP_BLOCK(0))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		dbuffer = RestoreBackupBlock(lsn, record, 0, false, true);
 	else
 	{
@@ -454,11 +442,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(dbuffer))
 		{
 			page = BufferGetPage(dbuffer);
-<<<<<<< HEAD
-			if (!XLByteLE(lsn, PageGetLSN(page)))
-=======
 			if (lsn > PageGetLSN(page))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
@@ -468,11 +452,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 1))
-=======
 	if (record->xl_info & XLR_BKP_BLOCK(1))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		pbuffer = RestoreBackupBlock(lsn, record, 1, false, true);
 	else
 	{
@@ -480,11 +460,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(pbuffer))
 		{
 			page = BufferGetPage(pbuffer);
-<<<<<<< HEAD
-			if (!XLByteLE(lsn, PageGetLSN(page)))
-=======
 			if (lsn > PageGetLSN(page))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				Assert(!GinPageIsLeaf(page));
@@ -495,11 +471,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 
-<<<<<<< HEAD
-	if (IsBkpBlockApplied(record, 2))
-=======
 	if (record->xl_info & XLR_BKP_BLOCK(2))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		(void) RestoreBackupBlock(lsn, record, 2, false, false);
 	else if (data->leftBlkno != InvalidBlockNumber)
 	{
@@ -507,11 +479,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(lbuffer))
 		{
 			page = BufferGetPage(lbuffer);
-<<<<<<< HEAD
-			if (!XLByteLE(lsn, PageGetLSN(page)))
-=======
 			if (lsn > PageGetLSN(page))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->rightlink = data->rightLink;
@@ -611,11 +579,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Page		page = BufferGetPage(buffer);
 
-<<<<<<< HEAD
-				if (!XLByteLE(lsn, PageGetLSN(page)))
-=======
 				if (lsn > PageGetLSN(page))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					GinPageGetOpaque(page)->rightlink = data->newRightlink;
 
@@ -787,73 +751,6 @@ gin_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	MemoryContextReset(opCtx);
 }
 
-<<<<<<< HEAD
-static void
-desc_node(StringInfo buf, RelFileNode node, BlockNumber blkno)
-{
-	appendStringInfo(buf, "node: %u/%u/%u blkno: %u",
-					 node.spcNode, node.dbNode, node.relNode, blkno);
-}
-
-void
-gin_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	switch (info)
-	{
-		case XLOG_GIN_CREATE_INDEX:
-			appendStringInfo(buf, "Create index, ");
-			desc_node(buf, *(RelFileNode *) rec, GIN_ROOT_BLKNO);
-			break;
-		case XLOG_GIN_CREATE_PTREE:
-			appendStringInfo(buf, "Create posting tree, ");
-			desc_node(buf, ((ginxlogCreatePostingTree *) rec)->node, ((ginxlogCreatePostingTree *) rec)->blkno);
-			break;
-		case XLOG_GIN_INSERT:
-			appendStringInfo(buf, "Insert item, ");
-			desc_node(buf, ((ginxlogInsert *) rec)->node, ((ginxlogInsert *) rec)->blkno);
-			appendStringInfo(buf, " offset: %u nitem: %u isdata: %c isleaf %c isdelete %c updateBlkno:%u",
-							 ((ginxlogInsert *) rec)->offset,
-							 ((ginxlogInsert *) rec)->nitem,
-							 (((ginxlogInsert *) rec)->isData) ? 'T' : 'F',
-							 (((ginxlogInsert *) rec)->isLeaf) ? 'T' : 'F',
-							 (((ginxlogInsert *) rec)->isDelete) ? 'T' : 'F',
-							 ((ginxlogInsert *) rec)->updateBlkno);
-			break;
-		case XLOG_GIN_SPLIT:
-			appendStringInfo(buf, "Page split, ");
-			desc_node(buf, ((ginxlogSplit *) rec)->node, ((ginxlogSplit *) rec)->lblkno);
-			appendStringInfo(buf, " isrootsplit: %c", (((ginxlogSplit *) rec)->isRootSplit) ? 'T' : 'F');
-			break;
-		case XLOG_GIN_VACUUM_PAGE:
-			appendStringInfo(buf, "Vacuum page, ");
-			desc_node(buf, ((ginxlogVacuumPage *) rec)->node, ((ginxlogVacuumPage *) rec)->blkno);
-			break;
-		case XLOG_GIN_DELETE_PAGE:
-			appendStringInfo(buf, "Delete page, ");
-			desc_node(buf, ((ginxlogDeletePage *) rec)->node, ((ginxlogDeletePage *) rec)->blkno);
-			break;
-		case XLOG_GIN_UPDATE_META_PAGE:
-			appendStringInfo(buf, "Update metapage, ");
-			desc_node(buf, ((ginxlogUpdateMeta *) rec)->node, GIN_METAPAGE_BLKNO);
-			break;
-		case XLOG_GIN_INSERT_LISTPAGE:
-			appendStringInfo(buf, "Insert new list page, ");
-			desc_node(buf, ((ginxlogInsertListPage *) rec)->node, ((ginxlogInsertListPage *) rec)->blkno);
-			break;
-		case XLOG_GIN_DELETE_LISTPAGE:
-			appendStringInfo(buf, "Delete list pages (%d), ", ((ginxlogDeleteListPages *) rec)->ndeleted);
-			desc_node(buf, ((ginxlogDeleteListPages *) rec)->node, GIN_METAPAGE_BLKNO);
-			break;
-		default:
-			elog(PANIC, "gin_desc: unknown op code %u", info);
-	}
-}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 void
 gin_xlog_startup(void)
 {

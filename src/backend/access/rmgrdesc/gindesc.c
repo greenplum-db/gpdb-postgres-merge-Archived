@@ -26,9 +26,10 @@ desc_node(StringInfo buf, RelFileNode node, BlockNumber blkno)
 }
 
 void
-gin_desc(StringInfo buf, uint8 xl_info, char *rec)
+gin_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	char		*rec = XLogRecGetData(record);
 
 	switch (info)
 	{
