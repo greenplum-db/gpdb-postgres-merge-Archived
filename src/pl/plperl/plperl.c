@@ -99,11 +99,7 @@ typedef struct plperl_interp_desc
  *
  * The refcount field counts the struct's reference from the hash table shown
  * below, plus one reference for each function call level that is using the
-<<<<<<< HEAD
- * struct.  We can release the struct, and the associated Perl sub, when the
-=======
  * struct.	We can release the struct, and the associated Perl sub, when the
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * refcount goes to zero.
  **********************************************************************/
 typedef struct plperl_proc_desc

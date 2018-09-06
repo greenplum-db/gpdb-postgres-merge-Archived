@@ -1620,10 +1620,7 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 		case XML_FROM_NONE:
 		case XML_FROM_MEMORY:
 		case XML_FROM_IO:
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			/*
 			 * Suppress warnings about undeclared entities.  We need to do
 			 * this to avoid problems due to not loading DTD definitions.

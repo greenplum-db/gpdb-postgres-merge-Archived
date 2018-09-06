@@ -36,11 +36,7 @@
  *	\copy ( select stmt ) to filename [options]
  *
  * where 'filename' can be one of the following:
-<<<<<<< HEAD
- *  '<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
-=======
  *	'<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * An undocumented fact is that you can still write BINARY before the
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
@@ -50,11 +46,7 @@
  * table name can be double-quoted and can have a schema part.
  * column names can be double-quoted.
  * filename can be single-quoted like SQL literals.
-<<<<<<< HEAD
- * command must be single-quoted like SQL literals
-=======
  * command must be single-quoted like SQL literals.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
  */
@@ -212,11 +204,7 @@ parse_slash_copy(const char *args)
 
 	if (pg_strcasecmp(token, "program") == 0)
 	{
-<<<<<<< HEAD
-		int toklen;
-=======
 		int			toklen;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		token = strtokx(NULL, whitespace, NULL, "'",
 						0, false, false, pset.encoding);
@@ -224,13 +212,8 @@ parse_slash_copy(const char *args)
 			goto error;
 
 		/*
-<<<<<<< HEAD
-		 * The shell command must be quoted. This isn't fool-proof, but catches
-		 * most quoting errors.
-=======
 		 * The shell command must be quoted. This isn't fool-proof, but
 		 * catches most quoting errors.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 */
 		toklen = strlen(token);
 		if (token[0] != '\'' || toklen < 2 || token[toklen - 1] != '\'')
@@ -242,11 +225,7 @@ parse_slash_copy(const char *args)
 		result->file = pg_strdup(token);
 	}
 	else if (pg_strcasecmp(token, "stdin") == 0 ||
-<<<<<<< HEAD
-		pg_strcasecmp(token, "stdout") == 0)
-=======
 			 pg_strcasecmp(token, "stdout") == 0)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		result->file = NULL;
 	}
@@ -413,17 +392,10 @@ do_copy(const char *args)
 	{
 		if (options->program)
 			psql_error("could not execute command \"%s\": %s\n",
-<<<<<<< HEAD
-					options->file, strerror(errno));
-		else
-			psql_error("%s: %s\n",
-					options->file, strerror(errno));
-=======
 					   options->file, strerror(errno));
 		else
 			psql_error("%s: %s\n",
 					   options->file, strerror(errno));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		free_copy_options(options);
 		return false;
 	}
@@ -464,12 +436,8 @@ do_copy(const char *args)
 	{
 		if (options->program)
 		{
-<<<<<<< HEAD
-			int pclose_rc = pclose(copystream);
-=======
 			int			pclose_rc = pclose(copystream);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (pclose_rc != 0)
 			{
 				if (pclose_rc < 0)
@@ -477,12 +445,8 @@ do_copy(const char *args)
 							   strerror(errno));
 				else
 				{
-<<<<<<< HEAD
-					char *reason = wait_result_to_str(pclose_rc);
-=======
 					char	   *reason = wait_result_to_str(pclose_rc);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					psql_error("%s: %s\n", options->file,
 							   reason ? reason : "");
 					if (reason)

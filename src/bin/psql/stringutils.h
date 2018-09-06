@@ -20,10 +20,7 @@ extern char *strtokx(const char *s,
 		int encoding);
 
 extern void strip_quotes(char *source, char quote, char escape, int encoding);
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern char *quote_if_needed(const char *source, const char *entails_quote,
 				char quote, char escape, int encoding);
 

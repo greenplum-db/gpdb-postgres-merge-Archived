@@ -303,11 +303,7 @@ readfile(const char *path)
 	int			i;
 	int			n;
 	int			len;
-<<<<<<< HEAD
-	struct stat	statbuf;
-=======
 	struct stat statbuf;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Slurp the file into memory.
@@ -366,14 +362,9 @@ readfile(const char *path)
 	{
 		if (buffer[i] == '\n')
 		{
-<<<<<<< HEAD
-			int		slen = &buffer[i] - linebegin + 1;
-			char   *linebuf = pg_malloc(slen + 1);
-=======
 			int			slen = &buffer[i] - linebegin + 1;
 			char	   *linebuf = pg_malloc(slen + 1);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			memcpy(linebuf, linebegin, slen);
 			linebuf[slen] = '\0';
 			result[n++] = linebuf;

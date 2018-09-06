@@ -71,12 +71,8 @@ main(int argc, char **argv)
 {
 	RestoreOptions *opts;
 	int			c;
-<<<<<<< HEAD
 	int			exit_code = 0;
-=======
-	int			exit_code;
 	int			numWorkers = 1;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	Archive    *AH;
 	char	   *inputFileSpec;
 	static int	disable_triggers = 0;
