@@ -23,6 +23,7 @@
 #include "utils/memutils.h"
 #include "gpmon/gpmon.h"
 #include "miscadmin.h"
+#include "storage/shmem.h"
 
 BufferUsage pgBufferUsage;
 
@@ -53,13 +54,8 @@ InstrAlloc(int n, int instrument_options)
 	{
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
 		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
-		int			i;
-<<<<<<< HEAD
-		bool		need_buffers = instrument_options & INSTRUMENT_BUFFERS;
-		bool		need_timer = instrument_options & INSTRUMENT_TIMER;
 		bool		need_cdb = (instrument_options & INSTRUMENT_CDB) != 0;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		int			i;
 
 		for (i = 0; i < n; i++)
 		{

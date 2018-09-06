@@ -138,13 +138,9 @@ lnext:
 
 		test = heap_lock_tuple(erm->relation, &tuple,
 							   estate->es_output_cid,
-<<<<<<< HEAD
 							   lockmode,
-							   (erm->noWait ? LockTupleNoWait : LockTupleWait));
-=======
-							   lockmode, erm->noWait, true,
+							   (erm->noWait ? LockTupleNoWait : LockTupleWait), true,
 							   &buffer, &hufd);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		ReleaseBuffer(buffer);
 		switch (test)
 		{

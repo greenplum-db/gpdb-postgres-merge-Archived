@@ -1111,36 +1111,7 @@ PG_TRY();
 
 	if (!found)
 	{
-<<<<<<< HEAD
 		if (subLinkType == EXISTS_SUBLINK || subLinkType == NOT_EXISTS_SUBLINK)
-=======
-		/* There can be only one setParam... */
-		int			paramid = linitial_int(subplan->setParam);
-		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
-
-		/*
-		 * We build the result array in query context so it won't disappear;
-		 * to avoid leaking memory across repeated calls, we have to remember
-		 * the latest value, much as for curTuple above.
-		 */
-		if (node->curArray != PointerGetDatum(NULL))
-			pfree(DatumGetPointer(node->curArray));
-		if (astate != NULL)
-			node->curArray = makeArrayResult(astate,
-											 econtext->ecxt_per_query_memory);
-		else
-		{
-			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			node->curArray = PointerGetDatum(construct_empty_array(subplan->firstColType));
-		}
-		prm->execPlan = NULL;
-		prm->value = node->curArray;
-		prm->isnull = false;
-	}
-	else if (!found)
-	{
-		if (subLinkType == EXISTS_SUBLINK)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			/* There can be only one setParam... */
 			int			paramid = linitial_int(subplan->setParam);
@@ -1172,10 +1143,23 @@ PG_TRY();
 		int			paramid = linitial_int(subplan->setParam);
 		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
-		Assert(astate != NULL);
+		/*
+		 * We build the result array in query context so it won't disappear;
+		 * to avoid leaking memory across repeated calls, we have to remember
+		 * the latest value, much as for curTuple above.
+		 */
+		if (node->curArray != PointerGetDatum(NULL))
+			pfree(DatumGetPointer(node->curArray));
+		if (astate != NULL)
+			node->curArray = makeArrayResult(astate,
+											 econtext->ecxt_per_query_memory);
+		else
+		{
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+			node->curArray = PointerGetDatum(construct_empty_array(subplan->firstColType));
+		}
 		prm->execPlan = NULL;
-		/* We build the result in query context so it won't disappear */
-		prm->value = makeArrayResult(astate, econtext->ecxt_per_query_memory);
+		prm->value = node->curArray;
 		prm->isnull = false;
 	}
 

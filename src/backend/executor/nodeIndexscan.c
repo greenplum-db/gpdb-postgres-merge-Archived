@@ -468,7 +468,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	/*
 	 * open the base relation and acquire appropriate lock on it.
 	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	return ExecInitIndexScanForPartition(node, estate, eflags,
 										 currentRelation, node->indexid);
@@ -523,14 +523,6 @@ ExecInitIndexScanForPartition(IndexScan *node, EState *estate, int eflags,
 	ExecInitResultTupleSlot(estate, &indexstate->ss.ps);
 	ExecInitScanTupleSlot(estate, &indexstate->ss);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * open the base relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	indexstate->ss.ss_currentRelation = currentRelation;
 
 	/*

@@ -13,12 +13,8 @@
 #ifndef TUPTOASTER_H
 #define TUPTOASTER_H
 
-<<<<<<< HEAD
-#include "access/htup.h"
-#include "access/memtup.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "access/memtup.h"
 #include "utils/relcache.h"
 
 #ifndef VARSIZE_TO_SHORT

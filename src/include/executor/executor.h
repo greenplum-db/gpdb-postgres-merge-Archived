@@ -379,7 +379,7 @@ extern TupleTableSlot *ExecScan(ScanState *node, ExecScanAccessMtd accessMtd,
 		 ExecScanRecheckMtd recheckMtd);
 extern void ExecAssignScanProjectionInfo(ScanState *node);
 extern void ExecScanReScan(ScanState *node);
-extern void InitScanStateRelationDetails(ScanState *scanState, Plan *plan, EState *estate);
+extern void InitScanStateRelationDetails(ScanState *scanState, Plan *plan, EState *estate, int eflags);
 extern void InitScanStateInternal(ScanState *scanState, Plan *plan,
 	EState *estate, int eflags, bool initCurrentRelation);
 extern void FreeScanRelationInternal(ScanState *scanState, bool closeCurrentRelation);

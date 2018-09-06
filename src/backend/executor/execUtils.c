@@ -933,12 +933,6 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 
 	/* Open the relation and acquire lock as needed */
 	reloid = getrelid(scanrelid, estate->es_range_table);
-<<<<<<< HEAD
-
-	Assert(reloid != InvalidOid);
-	
-	return heap_open(reloid, lockmode);
-=======
 	rel = heap_open(reloid, lockmode);
 
 	/*
@@ -955,7 +949,6 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 				 errhint("Use the REFRESH MATERIALIZED VIEW command.")));
 
 	return rel;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

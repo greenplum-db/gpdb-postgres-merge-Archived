@@ -23,6 +23,7 @@
 #include "access/sdir.h"
 #include "access/tupmacs.h"
 #include "access/xlogutils.h"
+#include "access/xlog.h"
 #include "access/appendonly_visimap.h"
 #include "executor/tuptable.h"
 #include "nodes/primnodes.h"

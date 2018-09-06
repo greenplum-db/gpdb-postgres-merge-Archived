@@ -26,11 +26,8 @@
 #include <math.h>
 #include <limits.h>
 
-<<<<<<< HEAD
 #include "access/hash.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_statistic.h"
 #include "commands/tablespace.h"
 #include "executor/execdebug.h"
@@ -638,22 +635,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		nbatch = 1;
 	}
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.	We also force nbuckets to not
-	 * be real small, by starting the search at 2^10.  (Note: above we made
-	 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
-	 * overflow, nor can the final shift to recalculate nbuckets.)
-	 */
-	i = 10;
-	while ((1 << i) < nbuckets)
-		i++;
-	nbuckets = (1 << i);
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
 }

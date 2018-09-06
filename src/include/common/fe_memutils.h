@@ -15,6 +15,11 @@ extern void *pg_malloc0(size_t size);
 extern void *pg_realloc(void *pointer, size_t size);
 extern void pg_free(void *pointer);
 
-#include "utils/palloc.h"
+/* Equivalent functions, deliberately named the same as backend functions */
+extern char *pstrdup(const char *in);
+extern void *palloc(Size size);
+extern void *palloc0(Size size);
+extern void *repalloc(void *pointer, Size size);
+extern void pfree(void *pointer);
 
 #endif   /* FE_MEMUTILS_H */

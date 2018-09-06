@@ -313,10 +313,6 @@ extern void LockErrorCleanup(void);
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
 
-<<<<<<< HEAD
-extern bool enable_sig_alarm(int delayms, bool is_statement_timeout);
-extern bool disable_sig_alarm(bool is_statement_timeout);
-extern void handle_sig_alarm(SIGNAL_ARGS);
 extern void EnableClientWaitTimeoutInterrupt(void);
 extern bool DisableClientWaitTimeoutInterrupt(void);
 
@@ -326,11 +322,4 @@ extern void ResLockWaitCancel(void);
 extern bool ProcCanSetMppSessionId(void);
 extern void ProcNewMppSessionId(int *newSessionId);
 
-extern bool enable_standby_sig_alarm(TimestampTz now,
-						 TimestampTz fin_time, bool deadlock_only);
-extern bool disable_standby_sig_alarm(void);
-extern void handle_standby_sig_alarm(SIGNAL_ARGS);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #endif   /* PROC_H */

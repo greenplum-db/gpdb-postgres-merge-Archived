@@ -1352,11 +1352,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	/*
 	 * Start portal execution.
 	 */
-<<<<<<< HEAD
 	PortalStart(portal, paramLI, 0, snapshot, NULL);
-=======
-	PortalStart(portal, paramLI, 0, snapshot);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
@@ -1661,7 +1657,7 @@ SPI_plan_get_cached_plan(SPIPlanPtr plan)
 	error_context_stack = &spierrcontext;
 
 	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, plan->saved);
+	cplan = GetCachedPlan(plansource, NULL, plan->saved, NULL);
 	Assert(cplan == plansource->gplan);
 
 	/* Pop the error context stack */
@@ -2065,6 +2061,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			CompleteCachedPlan(plansource,
 							   stmt_list,
 							   NULL,
+							   nodeTag(parsetree),
 							   plan->argtypes,
 							   plan->nargs,
 							   plan->parserSetup,

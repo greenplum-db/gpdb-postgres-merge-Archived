@@ -781,16 +781,6 @@ ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
 	{
-<<<<<<< HEAD
-		case INNER_VAR:				/* get the tuple from the inner node */
-			slot = econtext->ecxt_innertuple;
-			break;
-
-		case OUTER_VAR:				/* get the tuple from the outer node */
-			slot = econtext->ecxt_outertuple;
-			break;
-
-=======
 		case INNER_VAR: /* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
@@ -801,7 +791,6 @@ ExecEvalScalarVarFast(ExprState *exprstate, ExprContext *econtext,
 
 			/* INDEX_VAR is handled by default case */
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		default:				/* get the tuple from the relation being
 								 * scanned */
 			slot = econtext->ecxt_scantuple;
@@ -832,10 +821,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
-<<<<<<< HEAD
-=======
 	TupleDesc	slot_tupdesc;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	bool		needslow = false;
 
 	if (isDone)
@@ -845,11 +831,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	Assert(variable->varattno == InvalidAttrNumber);
 
 	/* Get the input slot we want */
-<<<<<<< HEAD
-	Assert(variable->varno != INNER_VAR);
-	Assert(variable->varno != OUTER_VAR);
-	slot = econtext->ecxt_scantuple;
-=======
 	switch (variable->varno)
 	{
 		case INNER_VAR: /* get the tuple from the inner node */
@@ -867,7 +848,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 			slot = econtext->ecxt_scantuple;
 			break;
 	}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If the input tuple came from a subquery, it might contain "resjunk"
@@ -890,12 +870,9 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 			case T_SubqueryScanState:
 				subplan = ((SubqueryScanState *) wrvstate->parent)->subplan;
 				break;
-<<<<<<< HEAD
-=======
 			case T_CteScanState:
 				subplan = ((CteScanState *) wrvstate->parent)->cteplanstate;
 				break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			default:
 				break;
 		}
@@ -926,11 +903,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 				wrvstate->wrv_junkFilter =
 					ExecInitJunkFilter(subplan->plan->targetlist,
 									   ExecGetResultType(subplan)->tdhasoid,
-<<<<<<< HEAD
-									   NULL);
-=======
 							ExecInitExtraTupleSlot(wrvstate->parent->state));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				MemoryContextSwitchTo(oldcontext);
 			}
 		}
@@ -940,16 +913,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
-<<<<<<< HEAD
-	/*
-	 * If the Var identifies a named composite type, we must check that the
-	 * actual tuple type is compatible with it.
-	 */
-	if (variable->vartype != RECORDOID)
-	{
-		TupleDesc	var_tupdesc;
-		TupleDesc	slot_tupdesc;
-=======
 	slot_tupdesc = slot->tts_tupleDescriptor;
 
 	/*
@@ -969,7 +932,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	else
 	{
 		TupleDesc	var_tupdesc;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		int			i;
 
 		/*
@@ -986,11 +948,6 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		 */
 		var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
 
-<<<<<<< HEAD
-		slot_tupdesc = slot->tts_tupleDescriptor;
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (var_tupdesc->natts != slot_tupdesc->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1079,9 +1036,6 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
-<<<<<<< HEAD
-	tuple = ExecFetchSlotHeapTuple(slot);
-
 	/*
 	 * If it's a RECORD Var, we'll use the slot's type ID info.  It's likely
 	 * that the slot's type is also RECORD; if so, make sure it's been
@@ -1095,14 +1049,11 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 		slot_tupdesc->tdtypeid == RECORDOID &&
 		slot_tupdesc->tdtypmod < 0)
 		assign_record_type_typmod(slot_tupdesc);
-=======
-	tuple = ExecFetchSlotTuple(slot);
-	tupleDesc = slot->tts_tupleDescriptor;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Copy the slot tuple and make sure any toasted fields get detoasted.
 	 */
+	tuple = ExecFetchSlotHeapTuple(slot);
 	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
 
@@ -1178,22 +1129,9 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
-<<<<<<< HEAD
 	tuple = ExecFetchSlotHeapTuple(slot);
 	tupleDesc = slot->tts_tupleDescriptor;
 
-	/*
-	 * Currently, the only data modification case handled here is stripping of
-	 * trailing resjunk fields, which we do in a slightly chintzy way by just
-	 * adjusting the tuple's natts header field.  Possibly there will someday
-	 * be a need for more-extensive rearrangements, in which case we'd
-	 * probably use tupconvert.c.
-	 */
-=======
-	tuple = ExecFetchSlotTuple(slot);
-	tupleDesc = slot->tts_tupleDescriptor;
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	Assert(variable->vartype != RECORDOID);
 	var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
 
@@ -2903,7 +2841,7 @@ static void FastPathScalarArrayOp(ScalarArrayOpExpr *opexpr, ScalarArrayOpExprSt
 
 	Oid fnoid = InvalidOid;
 
-	static int4 optimize_func_oid[] = {
+	static Oid optimize_func_oid[] = {
 		INT2EQ_OID,
 		INT4EQ_OID,
 		TEXTEQ_OID,
@@ -5078,58 +5016,6 @@ static Datum ExecEvalPartListNullTestExpr(PartListNullTestExprState *exprstate,
 }
 
 /* ----------------------------------------------------------------
- *    ExecEvalCurrentOfExpr
- *
- *    Evaluate CURRENT OF
- *
- *    Constant folding must have bound observed values of
- * 	gp_segment_id, ctid, and tableoid into the CurrentOfExpr for
- *	this function's consumption.
- * ----------------------------------------------------------------
- */
-static Datum
-ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
-						bool *isNull, ExprDoneCond *isDone)
-{
-	CurrentOfExpr 	*cexpr = (CurrentOfExpr *) exprstate->expr;
-	bool 			result = false;
-	TupleTableSlot	*slot;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-	*isNull = false;
-
-	Assert(cexpr->cvarno != INNER_VAR);
-	Assert(cexpr->cvarno != OUTER_VAR);
-
-	slot = econtext->ecxt_scantuple;
-	Assert(!TupIsNull(slot));
-
-	/*
-	 * The currently scanned tuple must use heap storage for it to possibly
-	 * satisfy the CURRENT OF qualification. Despite our grand attempts during
-	 * parsing and constant folding to demand heap storage, the scanning of an
-	 * AO part is still possible, when the current row uses heap storage, but the
-	 * CURRENT OF invocation uses an unpruned scan of the partition table, yielding
-	 * tuples from the AO parts before the desired heap tuple.
-	 */
-	if (TupHasHeapTuple(slot))
-	{
-		ItemPointerData cursor_tid;
-
-		if (execCurrentOf(cexpr, econtext,
-						  slot->tts_tableOid,
-						  &cursor_tid))
-		{
-			if (ItemPointerEquals(&cursor_tid, slot_get_ctid(slot)))
-				result = true;
-		}
-	}
-
-	return BoolGetDatum(result);
-}
-
-/* ----------------------------------------------------------------
  *		ExecEvalCoerceViaIO
  *
  *		Evaluate a CoerceViaIO node.
@@ -5241,29 +5127,57 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 					 astate->amstate);
 }
 
-<<<<<<< HEAD
-=======
 /* ----------------------------------------------------------------
- *		ExecEvalCurrentOfExpr
+ *    ExecEvalCurrentOfExpr
  *
- * The planner should convert CURRENT OF into a TidScan qualification, or some
- * other special handling in a ForeignScan node.  So we have to be able to do
- * ExecInitExpr on a CurrentOfExpr, but we shouldn't ever actually execute it.
- * If we get here, we suppose we must be dealing with CURRENT OF on a foreign
- * table whose FDW doesn't handle it, and complain accordingly.
+ *    Evaluate CURRENT OF
+ *
+ *    Constant folding must have bound observed values of
+ * 	gp_segment_id, ctid, and tableoid into the CurrentOfExpr for
+ *	this function's consumption.
  * ----------------------------------------------------------------
  */
 static Datum
 ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
-					  bool *isNull, ExprDoneCond *isDone)
+						bool *isNull, ExprDoneCond *isDone)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("WHERE CURRENT OF is not supported for this table type")));
-	return 0;					/* keep compiler quiet */
-}
+	CurrentOfExpr 	*cexpr = (CurrentOfExpr *) exprstate->expr;
+	bool 			result = false;
+	TupleTableSlot	*slot;
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	Assert(cexpr->cvarno != INNER_VAR);
+	Assert(cexpr->cvarno != OUTER_VAR);
+
+	slot = econtext->ecxt_scantuple;
+	Assert(!TupIsNull(slot));
+
+	/*
+	 * The currently scanned tuple must use heap storage for it to possibly
+	 * satisfy the CURRENT OF qualification. Despite our grand attempts during
+	 * parsing and constant folding to demand heap storage, the scanning of an
+	 * AO part is still possible, when the current row uses heap storage, but the
+	 * CURRENT OF invocation uses an unpruned scan of the partition table, yielding
+	 * tuples from the AO parts before the desired heap tuple.
+	 */
+	if (TupHasHeapTuple(slot))
+	{
+		ItemPointerData cursor_tid;
+
+		if (execCurrentOf(cexpr, econtext,
+						  slot->tts_tableOid,
+						  &cursor_tid))
+		{
+			if (ItemPointerEquals(&cursor_tid, slot_get_ctid(slot)))
+				result = true;
+		}
+	}
+
+	return BoolGetDatum(result);
+}
 
 /*
  * ExecEvalExprSwitchContext

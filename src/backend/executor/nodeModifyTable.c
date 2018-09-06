@@ -405,9 +405,6 @@ ExecInsert(TupleTableSlot *parentslot,
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
-		/* FDW might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
-
 		newId = InvalidOid;
 	}
 	else
@@ -565,13 +562,8 @@ ExecDelete(ItemPointer tupleid,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	HTSU_Result result;
-<<<<<<< HEAD
-	ItemPointerData update_ctid;
-	TransactionId update_xmax = InvalidTransactionId;
-=======
 	HeapUpdateFailureData hufd;
 	TupleTableSlot *slot = NULL;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * get information on the (current) result relation
@@ -680,14 +672,13 @@ ExecDelete(ItemPointer tupleid,
 		 * mode transactions.
 		 */
 ldelete:;
-<<<<<<< HEAD
 		if (isHeapTable)
 		{
 			result = heap_delete(resultRelationDesc, tupleid,
-								 &update_ctid, &update_xmax,
 								 estate->es_output_cid,
 								 estate->es_crosscheck_snapshot,
-								 true /* wait for commit */ );
+								 true /* wait for commit */ ,
+								 &hufd);
 		}
 		else if (isAORowsTable)
 		{
@@ -742,44 +733,6 @@ ldelete:;
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
-				/* already deleted by self; nothing to do */
-
-				/*-------
-				 * In an scenario in which R(a,b) and S(a,b) have
-				 *        R               S
-				 *    ________         ________
-				 *     (1, 1)           (1, 2)
-				 *                      (1, 7)
-				 *
-				 *  An update query such as:
-				 *   UPDATE R SET a = S.b  FROM S WHERE R.b = S.a;
-				 *
-				 *  will have an non-deterministic output. The tuple in R
-				 * can be updated to (2,1) or (7,1).
-				 * Since the introduction of SplitUpdate, these queries will
-				 * send multiple requests to delete the same tuple. Therefore,
-				 * in order to avoid a non-deterministic output,
-				 * an error is reported in such scenario.
-				 *
-				 * ORCA requires this check as it does not support multiple
-				 * updates to a row by the same query
-				 *-------
-				*/
-				if (isUpdate)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION ),
-							 errmsg("multiple updates to a row by the same query is not allowed")));
-				}
-=======
-		result = heap_delete(resultRelationDesc, tupleid,
-							 estate->es_output_cid,
-							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ ,
-							 &hufd);
-		switch (result)
-		{
-			case HeapTupleSelfUpdated:
 
 				/*
 				 * The target tuple was already updated or deleted by the
@@ -812,7 +765,34 @@ ldelete:;
 							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
 
 				/* Else, already deleted by self; nothing to do */
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+				/*-------
+				 * In an scenario in which R(a,b) and S(a,b) have
+				 *        R               S
+				 *    ________         ________
+				 *     (1, 1)           (1, 2)
+				 *                      (1, 7)
+				 *
+				 *  An update query such as:
+				 *   UPDATE R SET a = S.b  FROM S WHERE R.b = S.a;
+				 *
+				 *  will have an non-deterministic output. The tuple in R
+				 * can be updated to (2,1) or (7,1).
+				 * Since the introduction of SplitUpdate, these queries will
+				 * send multiple requests to delete the same tuple. Therefore,
+				 * in order to avoid a non-deterministic output,
+				 * an error is reported in such scenario.
+				 *
+				 * ORCA requires this check as it does not support multiple
+				 * updates to a row by the same query
+				 *-------
+				*/
+				if (isUpdate)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION ),
+							 errmsg("multiple updates to a row by the same query is not allowed")));
+				}
 				return NULL;
 
 			case HeapTupleMayBeUpdated:
@@ -897,19 +877,12 @@ ldelete:;
 
 		if (resultRelInfo->ri_FdwRoutine)
 		{
-<<<<<<< HEAD
-			deltuple.t_data = oldtuple;
-			deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-			ItemPointerSetInvalid(&(deltuple.t_self));
-=======
 			/* FDW must have provided a slot containing the deleted row */
 			Assert(!TupIsNull(slot));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			delbuffer = InvalidBuffer;
 		}
 		else
 		{
-<<<<<<< HEAD
 			/*
 			 * If it's an AO table, we cannot fetch the old tuple. Punt.
 			 *
@@ -923,23 +896,12 @@ ldelete:;
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("DELETE RETURNING is not supported on appendonly tables")));
 
-			deltuple.t_self = *tupleid;
-			if (!heap_fetch(resultRelationDesc, SnapshotAny,
-							&deltuple, &delbuffer, false, NULL))
-				elog(ERROR, "failed to fetch deleted tuple for DELETE RETURNING");
-		}
-
-		if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
-			ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
-		ExecStoreHeapTuple(&deltuple, slot, InvalidBuffer, false);
-=======
 			slot = estate->es_trig_tuple_slot;
 			if (oldtuple != NULL)
 			{
 				deltuple.t_data = oldtuple;
 				deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 				ItemPointerSetInvalid(&(deltuple.t_self));
-				deltuple.t_tableOid = InvalidOid;
 				delbuffer = InvalidBuffer;
 			}
 			else
@@ -952,9 +914,8 @@ ldelete:;
 
 			if (slot->tts_tupleDescriptor != RelationGetDescr(resultRelationDesc))
 				ExecSetSlotDescriptor(slot, RelationGetDescr(resultRelationDesc));
-			ExecStoreTuple(&deltuple, slot, InvalidBuffer, false);
+			ExecStoreHeapTuple(&deltuple, slot, InvalidBuffer, false);
 		}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning,
 									 slot, planSlot);
@@ -1184,12 +1145,7 @@ ExecUpdate(ItemPointer tupleid,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	HTSU_Result result;
-<<<<<<< HEAD
-	ItemPointerData update_ctid;
-	TransactionId update_xmax = InvalidTransactionId;
-=======
 	HeapUpdateFailureData hufd;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	List	   *recheckIndexes = NIL;
 	ItemPointerData lastTid;
 	bool		wasHotUpdate;
@@ -1285,7 +1241,6 @@ ExecUpdate(ItemPointer tupleid,
 			return NULL;
 
 		/* FDW might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
 	}
 	else
 	{
@@ -1313,7 +1268,6 @@ lreplace:;
 		 * needed for referential integrity updates in transaction-snapshot
 		 * mode transactions.
 		 */
-<<<<<<< HEAD
 		if (rel_is_heap)
 		{
 			HeapTuple tuple;
@@ -1321,10 +1275,10 @@ lreplace:;
 			tuple = ExecMaterializeSlot(slot);
 
 			result = heap_update(resultRelationDesc, tupleid, tuple,
-							 &update_ctid, &update_xmax,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ );
+							 true /* wait for commit */ ,
+							 &hufd, &lockmode);
 
 			lastTid = tuple->t_self;
 			wasHotUpdate = HeapTupleIsHeapOnly(tuple) != 0;
@@ -1379,13 +1333,6 @@ lreplace:;
 			elog(ERROR, "invalid relation type");
 		}
 
-=======
-		result = heap_update(resultRelationDesc, tupleid, tuple,
-							 estate->es_output_cid,
-							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ ,
-							 &hufd, &lockmode);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:

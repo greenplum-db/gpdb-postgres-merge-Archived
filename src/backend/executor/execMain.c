@@ -26,13 +26,9 @@
  *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
  *	which should also omit ExecutorRun.
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -43,13 +39,10 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/aosegfiles.h"
 #include "access/appendonlywriter.h"
 #include "access/fileam.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -59,6 +52,7 @@
 #include "catalog/aoblkdir.h"
 #include "catalog/aovisimap.h"
 #include "catalog/catalog.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
@@ -68,13 +62,10 @@
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
-<<<<<<< HEAD
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
-#include "libpq/pqformat.h"
-=======
 #include "foreign/fdwapi.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -2143,7 +2134,14 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 							RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_VIEW:
-<<<<<<< HEAD
+
+			/*
+			 * Okay only if there's a suitable INSTEAD OF trigger.  Messages
+			 * here should match rewriteHandler.c's rewriteTargetView, except
+			 * that we omit errdetail because we haven't got the information
+			 * handy (and given that we really shouldn't get here anyway, it's
+			 * not worth great exertion to get).
+			 */
 			/*
 			 * GPDB_91_MERGE_FIXME: In Greenplum, views are treated as non
 			 * partitioned relations, gp_distribution_policy contains no entry
@@ -2163,16 +2161,6 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 							RelationGetRelationName(resultRel)),
 					 errhint("changing views is not supported in Greenplum")));
 
-=======
-
-			/*
-			 * Okay only if there's a suitable INSTEAD OF trigger.  Messages
-			 * here should match rewriteHandler.c's rewriteTargetView, except
-			 * that we omit errdetail because we haven't got the information
-			 * handy (and given that we really shouldn't get here anyway, it's
-			 * not worth great exertion to get).
-			 */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			switch (operation)
 			{
 				case CMD_INSERT:
@@ -2210,32 +2198,6 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					 errmsg("cannot change materialized view \"%s\"",
 							RelationGetRelationName(resultRel))));
 			break;
-<<<<<<< HEAD
-
-		/* GPDB additions */
-		case RELKIND_AOSEGMENTS:
-			if (!allowSystemTableMods)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO segment listing relation \"%s\"",
-								RelationGetRelationName(resultRel))));
-			break;
-		case RELKIND_AOBLOCKDIR:
-			if (!allowSystemTableMods)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO block directory relation \"%s\"",
-								RelationGetRelationName(resultRel))));
-			break;
-		case RELKIND_AOVISIMAP:
-			if (!allowSystemTableMods)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot change AO visibility map relation \"%s\"",
-								RelationGetRelationName(resultRel))));
-			break;
-
-=======
 		case RELKIND_FOREIGN_TABLE:
 			/* Okay only if the FDW supports it */
 			fdwroutine = GetFdwRoutineForRelation(resultRel, false);
@@ -2285,7 +2247,30 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					break;
 			}
 			break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+		/* GPDB additions */
+		case RELKIND_AOSEGMENTS:
+			if (!allowSystemTableMods)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO segment listing relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+		case RELKIND_AOBLOCKDIR:
+			if (!allowSystemTableMods)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO block directory relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+		case RELKIND_AOVISIMAP:
+			if (!allowSystemTableMods)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change AO visibility map relation \"%s\"",
+								RelationGetRelationName(resultRel))));
+			break;
+
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

@@ -2570,7 +2570,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_PROC,
 						   get_func_name(transfn_oid));
-<<<<<<< HEAD
+		InvokeFunctionExecuteHook(transfn_oid);
 
 		if (OidIsValid(invtransfn_oid))
 		{
@@ -2579,11 +2579,9 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, ACL_KIND_PROC,
 							   get_func_name(invtransfn_oid));
+			InvokeFunctionExecuteHook(invtransfn_oid);
 		}
 
-=======
-		InvokeFunctionExecuteHook(transfn_oid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (OidIsValid(finalfn_oid))
 		{
 			aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,

@@ -18,6 +18,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"

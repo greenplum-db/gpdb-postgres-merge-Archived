@@ -88,13 +88,10 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/heapam.h"
 #include "access/htup.h"
-#include "access/tuptoaster.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "access/tuptoaster.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -672,7 +669,7 @@ ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, un
 		if(mtup || !pctxt)
 			return mtup;
 
-		mtup = (MemTuple) ctxt_alloc(pctxt, *len);
+		mtup = (MemTuple) MemoryContextAlloc(pctxt, *len);
 		mtup = memtuple_copy_to(slot->PRIVATE_tts_memtuple, mtup, len);
 		Assert(mtup);
 
@@ -684,7 +681,7 @@ ExecCopySlotMemTupleTo(TupleTableSlot *slot, MemoryContext pctxt, char *dest, un
 
 	if(mtup || !pctxt)
 		return mtup;
-	mtup = (MemTuple) ctxt_alloc(pctxt, *len);
+	mtup = (MemTuple) MemoryContextAlloc(pctxt, *len);
 	mtup = memtuple_form_to(slot->tts_mt_bind, slot_get_values(slot), slot_get_isnull(slot), mtup, len, false);
 
 	Assert(mtup);
@@ -1437,7 +1434,8 @@ slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 							result = ObjectIdGetDatum(slot->tts_tableOid);
 							break;
                         default:
-							result = heap_getsysattr(htup, attnum, isnull);
+							result = heap_getsysattr(htup, attnum, slot->tts_tupleDescriptor, isnull);
+							break;
                 }
         }
 

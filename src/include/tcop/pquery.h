@@ -28,12 +28,8 @@ extern List *FetchPortalTargetList(Portal portal);
 extern List *FetchStatementTargetList(Node *stmt);
 
 extern void PortalStart(Portal portal, ParamListInfo params,
-<<<<<<< HEAD
-						int eflags, Snapshot snapshot,
-						QueryDispatchDesc *ddesc);
-=======
-			int eflags, Snapshot snapshot);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			int eflags, Snapshot snapshot,
+			QueryDispatchDesc *ddesc);
 
 extern void PortalSetResultFormat(Portal portal, int nFormats,
 					  int16 *formats);

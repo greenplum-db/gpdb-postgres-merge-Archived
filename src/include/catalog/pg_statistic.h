@@ -278,21 +278,6 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 #define STATISTIC_KIND_DECHIST	5
 
 /*
-<<<<<<< HEAD
- * A "hyperloglog" slot stores the hyperloglog_counter created for sampled data.
- * This hyperloglog_counter data structure is converted into a bytea and stored
- * in "stavalues4" slot of pg_statistic catalog table
- */
-#define STATISTIC_KIND_HLL  99
-
-/*
- * A "full hyperloglog" slot is similar to "hyperloglog" slot, except it stores
- * the "hyperloglog_counter" created for full table scan.
- * This hyperloglog_counter data structure is converted into a bytea and stored
- * in "stavalues4" slot of pg_statistic catalog table
- */
-#define STATISTIC_KIND_FULLHLL  98
-=======
  * A "length histogram" slot describes the distribution of range lengths in
  * rows of a range-type column. stanumbers contains a single entry, the
  * fraction of empty ranges. stavalues is a histogram of non-empty lengths, in
@@ -313,6 +298,20 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * bounds.	Only non-NULL, non-empty ranges are included.
  */
 #define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+/*
+ * A "hyperloglog" slot stores the hyperloglog_counter created for sampled data.
+ * This hyperloglog_counter data structure is converted into a bytea and stored
+ * in "stavalues4" slot of pg_statistic catalog table
+ */
+#define STATISTIC_KIND_HLL  99
+
+/*
+ * A "full hyperloglog" slot is similar to "hyperloglog" slot, except it stores
+ * the "hyperloglog_counter" created for full table scan.
+ * This hyperloglog_counter data structure is converted into a bytea and stored
+ * in "stavalues4" slot of pg_statistic catalog table
+ */
+#define STATISTIC_KIND_FULLHLL  98
 
 #endif   /* PG_STATISTIC_H */
