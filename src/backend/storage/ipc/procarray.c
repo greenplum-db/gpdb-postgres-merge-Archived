@@ -52,11 +52,8 @@
 #include "access/xact.h"
 #include "access/twophase.h"
 #include "miscadmin.h"
-<<<<<<< HEAD
 #include "port/atomics.h"
-=======
 #include "storage/proc.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/procarray.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"

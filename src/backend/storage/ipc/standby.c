@@ -809,58 +809,6 @@ standby_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		elog(PANIC, "standby_redo: unknown op code %u", info);
 }
 
-<<<<<<< HEAD
-static void
-standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
-{
-	int			i;
-
-	appendStringInfo(buf, " nextXid %u latestCompletedXid %u oldestRunningXid %u",
-					 xlrec->nextXid,
-					 xlrec->latestCompletedXid,
-					 xlrec->oldestRunningXid);
-	if (xlrec->xcnt > 0)
-	{
-		appendStringInfo(buf, "; %d xacts:", xlrec->xcnt);
-		for (i = 0; i < xlrec->xcnt; i++)
-			appendStringInfo(buf, " %u", xlrec->xids[i]);
-	}
-
-	if (xlrec->subxid_overflow)
-		appendStringInfo(buf, "; subxid ovf");
-}
-
-void
-standby_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	if (info == XLOG_STANDBY_LOCK)
-	{
-		xl_standby_locks *xlrec = (xl_standby_locks *) rec;
-		int			i;
-
-		appendStringInfo(buf, "AccessExclusive locks:");
-
-		for (i = 0; i < xlrec->nlocks; i++)
-			appendStringInfo(buf, " xid %u db %u rel %u",
-							 xlrec->locks[i].xid, xlrec->locks[i].dbOid,
-							 xlrec->locks[i].relOid);
-	}
-	else if (info == XLOG_RUNNING_XACTS)
-	{
-		xl_running_xacts *xlrec = (xl_running_xacts *) rec;
-
-		appendStringInfo(buf, " running xacts:");
-		standby_desc_running_xacts(buf, xlrec);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Log details of the current snapshot to WAL. This allows the snapshot state
  * to be reconstructed on the standby.
