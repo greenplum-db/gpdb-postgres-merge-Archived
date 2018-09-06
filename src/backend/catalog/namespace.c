@@ -19,19 +19,16 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
-=======
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/objectaccess.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
@@ -59,11 +56,8 @@
 #include "storage/sinval.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/fmgroids.h"
-=======
 #include "utils/catcache.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"

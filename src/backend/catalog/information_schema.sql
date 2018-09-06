@@ -1895,19 +1895,12 @@ CREATE VIEW tables AS
            CAST(nt.nspname AS sql_identifier) AS user_defined_type_schema,
            CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
-<<<<<<< HEAD
-           CAST(CASE WHEN (c.relkind != 'r' 
+           CAST(CASE WHEN (c.relkind != 'r'
            				   OR c.relstorage = 'f'
            				   OR (c.relstorage = 'x'
            				       AND x.writable = 'f'))
                           OR (c.relkind = 'v'
                               AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead))
-=======
-           CAST(CASE WHEN c.relkind = 'r' OR
-                          (c.relkind IN ('v', 'f') AND
-                           -- 1 << CMD_INSERT
-                           pg_relation_is_updatable(c.oid, false) & 8 = 8)
->>>>>>> e472b921406407794bab911c64655b8b82375196
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,
 
            CAST(CASE WHEN t.typname IS NOT NULL THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_typed,

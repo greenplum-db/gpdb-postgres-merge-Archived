@@ -146,12 +146,9 @@ typedef enum ObjectClass
 	OCLASS_USER_MAPPING,		/* pg_user_mapping */
 	OCLASS_DEFACL,				/* pg_default_acl */
 	OCLASS_EXTENSION,			/* pg_extension */
-<<<<<<< HEAD
+	OCLASS_EVENT_TRIGGER,		/* pg_event_trigger */
 	OCLASS_EXTPROTOCOL,			/* pg_extprotocol */
 	OCLASS_COMPRESSION,			/* pg_compression */
-=======
-	OCLASS_EVENT_TRIGGER,		/* pg_event_trigger */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 

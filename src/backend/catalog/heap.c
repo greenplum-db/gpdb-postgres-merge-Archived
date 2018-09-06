@@ -3,13 +3,9 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1222,15 +1218,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 			break;
 	}
 
-<<<<<<< HEAD
-	/* Initialize relfrozenxid */
-	if (should_have_valid_relfrozenxid(relkind, relstorage, is_part_parent))
-=======
 	/* Initialize relfrozenxid and relminmxid */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_MATVIEW ||
-		relkind == RELKIND_TOASTVALUE)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	if (should_have_valid_relfrozenxid(relkind, relstorage, is_part_parent))
 	{
 		/*
 		 * Initialize to the minimum XID that could put tuples in the table.
@@ -1264,11 +1253,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->reloftype = reloftype;
-<<<<<<< HEAD
 	new_rel_reltup->relkind = relkind;
 	new_rel_reltup->relstorage = relstorage;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
 
@@ -1381,13 +1367,10 @@ heap_create_with_catalog(const char *relname,
 						 Datum reloptions,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
-<<<<<<< HEAD
 						 bool valid_opts,
 						 bool is_part_child,
 						 bool is_part_parent)
-=======
 						 bool is_internal)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -1495,31 +1478,8 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (!OidIsValid(relid) && Gp_role != GP_ROLE_EXECUTE)
 	{
-<<<<<<< HEAD
 		if (IsBootstrapProcessingMode())
 			relid = GetNewOid(pg_class_desc);
-=======
-		/*
-		 * Use binary-upgrade override for pg_class.oid/relfilenode, if
-		 * supplied.
-		 */
-		if (IsBinaryUpgrade &&
-			OidIsValid(binary_upgrade_next_heap_pg_class_oid) &&
-			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-			 relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW ||
-			 relkind == RELKIND_COMPOSITE_TYPE || relkind == RELKIND_FOREIGN_TABLE))
-		{
-			relid = binary_upgrade_next_heap_pg_class_oid;
-			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
-		}
-		else if (IsBinaryUpgrade &&
-				 OidIsValid(binary_upgrade_next_toast_pg_class_oid) &&
-				 relkind == RELKIND_TOASTVALUE)
-		{
-			relid = binary_upgrade_next_toast_pg_class_oid;
-			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
-		}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		else
 			relid = GetNewOid(pg_class_desc);
 	}
@@ -3697,6 +3657,7 @@ should_have_valid_relfrozenxid(char relkind, char relstorage,
 			return true;
 
 		case RELKIND_TOASTVALUE:
+		case RELKIND_MATVIEW:
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:

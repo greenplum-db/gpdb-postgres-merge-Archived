@@ -70,7 +70,6 @@ extern Relation heap_create(const char *relname,
 			bool allow_system_table_mods);
 
 extern Oid heap_create_with_catalog(const char *relname,
-<<<<<<< HEAD
 									Oid relnamespace,
 									Oid reltablespace,
 									Oid relid,
@@ -94,28 +93,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 									bool allow_system_table_mods,
 									bool valid_opts,
 									bool is_part_child,
-									bool is_part_parent);
-=======
-						 Oid relnamespace,
-						 Oid reltablespace,
-						 Oid relid,
-						 Oid reltypeid,
-						 Oid reloftypeid,
-						 Oid ownerid,
-						 TupleDesc tupdesc,
-						 List *cooked_constraints,
-						 char relkind,
-						 char relpersistence,
-						 bool shared_relation,
-						 bool mapped_relation,
-						 bool oidislocal,
-						 int oidinhcount,
-						 OnCommitAction oncommit,
-						 Datum reloptions,
-						 bool use_user_acl,
-						 bool allow_system_table_mods,
-						 bool is_internal);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+									bool is_part_parent,
+									bool is_internal);
 
 extern void heap_create_init_fork(Relation rel);
 

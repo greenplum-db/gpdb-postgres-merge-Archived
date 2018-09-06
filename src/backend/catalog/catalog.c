@@ -57,11 +57,7 @@
 #include "catalog/gp_id.h"
 #include "catalog/gp_version.h"
 #include "catalog/toasting.h"
-<<<<<<< HEAD
-
-=======
 #include "common/relpath.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/fmgroids.h"
@@ -91,7 +87,6 @@ forkname_to_number(char *forkName)
 }
 
 /*
-<<<<<<< HEAD
  * Return directory name within tablespace location to use, for this server.
  * This is the GPDB replacement for PostgreSQL's TABLESPACE_VERSION_DIRECTORY
  * constant.
@@ -295,8 +290,6 @@ aorelpathbackend(RelFileNode node, BackendId backend, int32 segno)
 }
 
 /*
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * GetDatabasePath			- construct path to a database dir
  *
  * Result is a palloc'd string.

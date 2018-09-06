@@ -164,12 +164,9 @@ static const Oid object_classes[MAX_OCLASS] = {
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
 	ExtensionRelationId,		/* OCLASS_EXTENSION */
-<<<<<<< HEAD
+	EventTriggerRelationId,		/* OCLASS_EVENT_TRIGGER */
 	ExtprotocolRelationId,		/* OCLASS_EXTPROTOCOL */
 	CompressionRelationId		/* OCLASS_COMPRESSION */
-=======
-	EventTriggerRelationId		/* OCLASS_EVENT_TRIGGER */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 };
 
 
@@ -1288,7 +1285,10 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveExtensionById(object->objectId);
 			break;
 
-<<<<<<< HEAD
+		case OCLASS_EVENT_TRIGGER:
+			RemoveEventTriggerById(object->objectId);
+			break;
+
 		case OCLASS_EXTPROTOCOL:
 			RemoveExtProtocolById(object->objectId);
 			break;
@@ -1302,12 +1302,6 @@ doDeletion(const ObjectAddress *object, int flags)
 			 * not handled here
 			 */
 
-=======
-		case OCLASS_EVENT_TRIGGER:
-			RemoveEventTriggerById(object->objectId);
-			break;
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		default:
 			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
@@ -2387,7 +2381,9 @@ getObjectClass(const ObjectAddress *object)
 		case ExtensionRelationId:
 			return OCLASS_EXTENSION;
 
-<<<<<<< HEAD
+		case EventTriggerRelationId:
+			return OCLASS_EVENT_TRIGGER;
+
 		case ExtprotocolRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_EXTPROTOCOL;
@@ -2395,17 +2391,12 @@ getObjectClass(const ObjectAddress *object)
 		case CompressionRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_COMPRESSION;
-=======
-		case EventTriggerRelationId:
-			return OCLASS_EVENT_TRIGGER;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* shouldn't get here */
 	elog(ERROR, "unrecognized object class: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
-<<<<<<< HEAD
 
 /*
  * getObjectDescription: build an object description for messages
@@ -3034,6 +3025,13 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
+		case OCLASS_EVENT_TRIGGER:
+			{
+				appendStringInfo(&buffer, _("trigger %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+
 		case OCLASS_EXTPROTOCOL:
 			{
 				appendStringInfo(&buffer, _("protocol %s"),
@@ -3220,5 +3218,3 @@ pg_describe_object(PG_FUNCTION_ARGS)
 	description = getObjectDescription(&address);
 	PG_RETURN_TEXT_P(cstring_to_text(description));
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

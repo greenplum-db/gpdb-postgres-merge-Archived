@@ -307,13 +307,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   reloptions,
 										   false,
 										   true,
-<<<<<<< HEAD
 										   /* valid_opts */ false,
 										   /* is_part_child */ false,
-										   is_part_parent);
-=======
+										   is_part_parent,
 										   true);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	Assert(toast_relid != InvalidOid);
 
 	/* make the toast relation visible, else heap_open will fail */
@@ -369,12 +366,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 				 rel->rd_rel->reltablespace,
 				 collationObjectId, classObjectId, coloptions, (Datum) 0,
 				 true, false, false, false,
-<<<<<<< HEAD
-				 true, false, false, NULL);
-=======
-				 true, false, false, true);
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
+				 true, false, false, true, NULL);
 	heap_close(toast_rel, NoLock);
 
 	/*

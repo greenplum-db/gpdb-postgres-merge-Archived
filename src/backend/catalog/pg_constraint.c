@@ -767,11 +767,8 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 			 */
 		}
 
-<<<<<<< HEAD
-=======
 		InvokeObjectPostAlterHook(ConstraintRelationId, thisobj.objectId, 0);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		add_exact_object_address(&thisobj, objsMoved);
 	}
 

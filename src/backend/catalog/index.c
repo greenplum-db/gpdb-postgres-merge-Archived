@@ -3,13 +3,9 @@
  * index.c
  *	  code to create and destroy POSTGRES index relations
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -41,13 +37,10 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-<<<<<<< HEAD
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
-=======
 #include "catalog/objectaccess.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"
@@ -738,11 +731,8 @@ index_create(Relation heapRelation,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent,
-<<<<<<< HEAD
+			 bool is_internal,
 			 const char *altConName)
-=======
-			 bool is_internal)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
@@ -3441,11 +3431,7 @@ validate_index_heapscan(Relation heapRelation,
 /*
  * index_set_state_flags - adjust pg_index state flags
  *
-<<<<<<< HEAD
- * This is used during CREATE INDEX CONCURRENTLY to adjust the pg_index
-=======
  * This is used during CREATE/DROP INDEX CONCURRENTLY to adjust the pg_index
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * flags that denote the index's state.  We must use an in-place update of
  * the pg_index tuple, because we do not have exclusive lock on the parent
  * table and so other sessions might concurrently be doing SnapshotNow scans
@@ -3471,14 +3457,8 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 	/* Open pg_index and fetch a writable copy of the index's tuple */
 	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
-<<<<<<< HEAD
-	indexTuple = SearchSysCacheCopy(INDEXRELID,
-									ObjectIdGetDatum(indexId),
-									0, 0, 0);
-=======
 	indexTuple = SearchSysCacheCopy1(INDEXRELID,
 									 ObjectIdGetDatum(indexId));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (!HeapTupleIsValid(indexTuple))
 		elog(ERROR, "cache lookup failed for index %u", indexId);
 	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
@@ -3488,26 +3468,18 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 	{
 		case INDEX_CREATE_SET_READY:
 			/* Set indisready during a CREATE INDEX CONCURRENTLY sequence */
-<<<<<<< HEAD
-=======
 			Assert(indexForm->indislive);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			Assert(!indexForm->indisready);
 			Assert(!indexForm->indisvalid);
 			indexForm->indisready = true;
 			break;
 		case INDEX_CREATE_SET_VALID:
 			/* Set indisvalid during a CREATE INDEX CONCURRENTLY sequence */
-<<<<<<< HEAD
-=======
 			Assert(indexForm->indislive);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			Assert(indexForm->indisready);
 			Assert(!indexForm->indisvalid);
 			indexForm->indisvalid = true;
 			break;
-<<<<<<< HEAD
-=======
 		case INDEX_DROP_CLEAR_VALID:
 
 			/*
@@ -3538,7 +3510,6 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
 			indexForm->indisready = false;
 			indexForm->indislive = false;
 			break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* ... and write it back in-place */
@@ -3584,10 +3555,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 				heapRelation;
 	Oid			heapId;
 	IndexInfo  *indexInfo;
-<<<<<<< HEAD
 	Oid			namespaceId;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	volatile bool skipped_constraint = false;
 
 	Assert(OidIsValid(indexId));
@@ -3689,13 +3657,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * index's usability horizon (recorded as the tuple's xmin value) the same
 	 * as it was.
 	 *
-<<<<<<< HEAD
-	 * But, if the index was invalid/not-ready and there were broken HOT
-	 * chains, we had better force indcheckxmin true, because the normal
-	 * argument that the HOT chains couldn't conflict with the index is
-	 * suspect for an invalid index.  In this case advancing the usability
-	 * horizon is appropriate.
-=======
 	 * But, if the index was invalid/not-ready/dead and there were broken HOT
 	 * chains, we had better force indcheckxmin true, because the normal
 	 * argument that the HOT chains couldn't conflict with the index is
@@ -3703,7 +3664,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * the index was dead.	It probably shouldn't happen otherwise, but let's
 	 * be conservative.)  In this case advancing the usability horizon is
 	 * appropriate.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 *
 	 * Note that if we have to update the tuple, there is a risk of concurrent
 	 * transactions not seeing it during their SnapshotNow scans of pg_index.
@@ -3734,12 +3694,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		index_bad = (!indexForm->indisvalid ||
-<<<<<<< HEAD
-					 !indexForm->indisready);
-=======
 					 !indexForm->indisready ||
 					 !indexForm->indislive);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (index_bad ||
 			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
 		{

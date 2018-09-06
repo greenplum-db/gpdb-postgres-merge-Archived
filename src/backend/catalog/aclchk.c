@@ -294,16 +294,13 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case ACL_KIND_FOREIGN_SERVER:
 			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
-<<<<<<< HEAD
 		case ACL_KIND_EXTPROTOCOL:
 			whole_mask = ACL_ALL_RIGHTS_EXTPROTOCOL;
 			break;
-=======
 		case ACL_KIND_EVENT_TRIGGER:
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case ACL_KIND_TYPE:
 			whole_mask = ACL_ALL_RIGHTS_TYPE;
 			break;
@@ -4026,15 +4023,12 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
 			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_FOREIGN_SERVER:
 			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
-<<<<<<< HEAD
 		case ACL_KIND_EXTPROTOCOL:
 			return pg_extprotocol_aclmask(table_oid, roleid, mask, how);
-=======
 		case ACL_KIND_EVENT_TRIGGER:
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case ACL_KIND_TYPE:
 			return pg_type_aclmask(table_oid, roleid, mask, how);
 		default:

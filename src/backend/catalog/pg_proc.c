@@ -14,12 +14,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/heapam.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"

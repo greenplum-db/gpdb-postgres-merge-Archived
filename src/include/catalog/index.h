@@ -34,16 +34,11 @@ typedef void (*IndexBuildCallback) (Relation index,
 typedef enum
 {
 	INDEX_CREATE_SET_READY,
-<<<<<<< HEAD
-	INDEX_CREATE_SET_VALID
-} IndexStateFlagsAction;
-=======
 	INDEX_CREATE_SET_VALID,
 	INDEX_DROP_CLEAR_VALID,
 	INDEX_DROP_SET_DEAD
 } IndexStateFlagsAction;
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 extern bool relationHasPrimaryKey(Relation rel);
@@ -70,11 +65,8 @@ extern Oid index_create(Relation heapRelation,
 			 bool allow_system_table_mods,
 			 bool skip_build,
 			 bool concurrent,
-<<<<<<< HEAD
+			 bool is_internal,
 			 const char *altConName);
-=======
-			 bool is_internal);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void index_constraint_create(Relation heapRelation,
 						Oid indexRelationId,

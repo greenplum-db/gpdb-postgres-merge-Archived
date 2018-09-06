@@ -15,12 +15,9 @@
 
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/genam.h"
 #include "access/heapam.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/sysattr.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
@@ -537,11 +534,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_LANGUAGE:
 			case OBJECT_FDW:
 			case OBJECT_FOREIGN_SERVER:
-<<<<<<< HEAD
-			case OBJECT_EXTPROTOCOL:
-=======
 			case OBJECT_EVENT_TRIGGER:
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			case OBJECT_EXTPROTOCOL:
 				address = get_object_address_unqualified(objtype,
 														 objname, missing_ok);
 				break;
@@ -773,13 +767,11 @@ get_object_address_unqualified(ObjectType objtype,
 			case OBJECT_FOREIGN_SERVER:
 				msg = gettext_noop("server name cannot be qualified");
 				break;
-<<<<<<< HEAD
-			case OBJECT_EXTPROTOCOL:
-				msg = gettext_noop("protocol name cannot be qualified");
-=======
 			case OBJECT_EVENT_TRIGGER:
 				msg = gettext_noop("event trigger name cannot be qualified");
->>>>>>> e472b921406407794bab911c64655b8b82375196
+				break;
+			case OBJECT_EXTPROTOCOL:
+				msg = gettext_noop("protocol name cannot be qualified");
 				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
@@ -836,15 +828,14 @@ get_object_address_unqualified(ObjectType objtype,
 			address.objectId = get_foreign_server_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
-<<<<<<< HEAD
-		case OBJECT_EXTPROTOCOL:
-			address.classId = ExtprotocolRelationId;
-			address.objectId = get_extprotocol_oid(name, missing_ok);
-=======
 		case OBJECT_EVENT_TRIGGER:
 			address.classId = EventTriggerRelationId;
 			address.objectId = get_event_trigger_oid(name, missing_ok);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			address.objectSubId = 0;
+			break;
+		case OBJECT_EXTPROTOCOL:
+			address.classId = ExtprotocolRelationId;
+			address.objectId = get_extprotocol_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		default:

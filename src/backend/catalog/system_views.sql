@@ -1,13 +1,9 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * src/backend/catalog/system_views.sql
  */
@@ -1294,7 +1290,6 @@ CREATE OR REPLACE FUNCTION
 CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
-<<<<<<< HEAD
 
 -- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
 CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
@@ -1308,5 +1303,3 @@ AS
    UNION ALL
    SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
 LANGUAGE SQL EXECUTE ON MASTER;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

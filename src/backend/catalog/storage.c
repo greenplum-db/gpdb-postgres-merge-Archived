@@ -339,13 +339,6 @@ smgrDoPendingDeletes(bool isCommit)
 			if (pending->atCommit == isCommit)
 			{
 				SMgrRelation srel;
-
-<<<<<<< HEAD
-				srel = smgropen(pending->relnode.node, pending->backend);
-
-				smgrdounlink(srel, false, pending->relnode.relstorage);
-				smgrclose(srel);
-=======
 				srel = smgropen(pending->relnode, pending->backend);
 
 				/* extend the array if needed (double the size) */
@@ -356,7 +349,6 @@ smgrDoPendingDeletes(bool isCommit)
 				}
 
 				srels[nrels++] = srel;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 			/* must explicitly free the list entry */
 			pfree(pending);
@@ -530,22 +522,12 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 		smgrcreate(reln, MAIN_FORKNUM, true);
 
 		/*
-<<<<<<< HEAD
-		 * Before we perform the truncation, update minimum recovery point
-		 * to cover this WAL record. Once the relation is truncated, there's
-		 * no going back. The buffer manager enforces the WAL-first rule
-		 * for normal updates to relation files, so that the minimum recovery
-		 * point is always updated before the corresponding change in the
-		 * data file is flushed to disk. We have to do the same manually
-		 * here.
-=======
 		 * Before we perform the truncation, update minimum recovery point to
 		 * cover this WAL record. Once the relation is truncated, there's no
 		 * going back. The buffer manager enforces the WAL-first rule for
 		 * normal updates to relation files, so that the minimum recovery
 		 * point is always updated before the corresponding change in the data
 		 * file is flushed to disk. We have to do the same manually here.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 *
 		 * Doing this before the truncation means that if the truncation fails
 		 * for some reason, you cannot start up the system even after restart,
@@ -574,7 +556,6 @@ smgr_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "smgr_redo: unknown op code %u", info);
 }
-<<<<<<< HEAD
 
 void
 smgr_desc(StringInfo buf, XLogRecord *record)
@@ -602,5 +583,3 @@ smgr_desc(StringInfo buf, XLogRecord *record)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
