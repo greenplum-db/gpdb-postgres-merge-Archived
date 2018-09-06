@@ -32,7 +32,6 @@ fi
 AC_MSG_CHECKING([Python configuration directory])
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[[0]])"`
 python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
-<<<<<<< HEAD
 if [ "${python_majorversion}" = "2" ];
 then
 	python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print(os.path.join(f(plat_specific=1,standard_lib=1),'config'))"`
@@ -40,21 +39,6 @@ else
 	python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
 fi
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
-=======
-python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
-AC_MSG_RESULT([$python_configdir])
-
-AC_MSG_CHECKING([Python include directories])
-python_includespec=`${PYTHON} -c "
-import distutils.sysconfig
-a = '-I' + distutils.sysconfig.get_python_inc(False)
-b = '-I' + distutils.sysconfig.get_python_inc(True)
-if a == b:
-    print(a)
-else:
-    print(a + ' ' + b)"`
-AC_MSG_RESULT([$python_includespec])
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 AC_SUBST(python_majorversion)[]dnl
 AC_SUBST(python_version)[]dnl
@@ -76,14 +60,9 @@ AC_MSG_CHECKING([how to link an embedded Python application])
 
 python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
 python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
-<<<<<<< HEAD
 ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
-=======
-python_so=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('SO'))))"`
-ldlibrary=`echo "${python_ldlibrary}" | sed "s/${python_so}$//"`
 python_framework=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('PYTHONFRAMEWORK'))))"`
 python_enable_shared=`${PYTHON} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars().get('Py_ENABLE_SHARED',0))"`
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 if test -n "$python_framework"; then
 	python_frameworkprefix=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('PYTHONFRAMEWORKPREFIX'))))"`

@@ -1,14 +1,8 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
-<<<<<<< HEAD
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-01-01'
-=======
-#   Copyright 1992-2013 Free Software Foundation, Inc.
-
-timestamp='2013-04-24'
->>>>>>> e472b921406407794bab911c64655b8b82375196
+timestamp='2018-09-05'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -30,21 +24,12 @@ timestamp='2013-04-24'
 # program.  This Exception is an additional permission under section 7
 # of the GNU General Public License, version 3 ("GPLv3").
 #
-<<<<<<< HEAD
-# Originally written by Per Bothner; maintained since 2000 by Ben Elliston.
-#
-# You can get the latest version of this script from:
-# http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess
-#
-# Please send patches to <config-patches@gnu.org>.
-=======
 # Originally written by Per Bothner.
 #
 # You can get the latest version of this script from:
 # http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD
 #
 # Please send patches with a ChangeLog entry to config-patches@gnu.org.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 me=`echo "$0" | sed -e 's,.*/,,'`
@@ -65,11 +50,7 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
-<<<<<<< HEAD
 Copyright 1992-2017 Free Software Foundation, Inc.
-=======
-Copyright 1992-2013 Free Software Foundation, Inc.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -990,9 +971,6 @@ EOF
 	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit ;;
     i*86:Linux:*:*)
-<<<<<<< HEAD
-	echo ${UNAME_MACHINE}-pc-linux-${LIBC}
-=======
 	LIBC=gnu
 	eval $set_cc_for_build
 	sed 's/^	//' << EOF >$dummy.c
@@ -1007,7 +985,6 @@ EOF
 EOF
 	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep '^LIBC'`
 	echo "${UNAME_MACHINE}-pc-linux-${LIBC}"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	exit ;;
     ia64:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
@@ -1450,8 +1427,6 @@ EOF
 	exit ;;
 esac
 
-<<<<<<< HEAD
-=======
 eval $set_cc_for_build
 cat >$dummy.c <<EOF
 #ifdef _SEQUENT_
@@ -1600,7 +1575,6 @@ then
     esac
 fi
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 cat >&2 <<EOF
 $0: unable to guess system type
 
