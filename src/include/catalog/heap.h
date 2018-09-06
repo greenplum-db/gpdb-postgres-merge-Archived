@@ -118,15 +118,11 @@ extern List *AddRelationNewConstraints(Relation rel,
 						  List *newColDefaults,
 						  List *newConstraints,
 						  bool allow_merge,
-<<<<<<< HEAD
-						  bool is_local);
+						  bool is_local,
+						  bool is_internal);
 extern List *AddRelationConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *constraints);
-=======
-						  bool is_local,
-						  bool is_internal);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern void StoreAttrDefault(Relation rel, AttrNumber attnum,
 				 Node *expr, bool is_internal);

@@ -33,11 +33,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "access/reloptions.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "access/reloptions.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catalog.h"
@@ -82,6 +79,7 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
@@ -240,7 +238,6 @@ DefineType(List *names, List *parameters)
 		 * creating the shell type was all we're supposed to do.
 		 */
 		if (parameters == NIL)
-<<<<<<< HEAD
 		{
 			/* Must dispatch shell type creation */
 			if (Gp_role == GP_ROLE_DISPATCH)
@@ -258,11 +255,8 @@ DefineType(List *names, List *parameters)
 											GetAssignedOidsForDispatch(),
 											NULL);
 			}
-			return;
-		}
-=======
 			return InvalidOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		}
 	}
 	else
 	{
@@ -664,59 +658,6 @@ DefineType(List *names, List *parameters)
 	/* alignment must be 'i' or 'd' for arrays */
 	alignment = (alignment == 'd') ? 'd' : 'i';
 
-<<<<<<< HEAD
-	TypeCreateWithOptions(array_oid,		/* force assignment of this type OID */
-			   array_type,		/* type name */
-			   typeNamespace,	/* namespace */
-			   InvalidOid,		/* relation oid (n/a here) */
-			   0,				/* relation kind (ditto) */
-			   GetUserId(),		/* owner's ID */
-			   -1,				/* internal size (always varlena) */
-			   TYPTYPE_BASE,	/* type-type (base type) */
-			   TYPCATEGORY_ARRAY,		/* type-category (array) */
-			   false,			/* array types are never preferred */
-			   delimiter,		/* array element delimiter */
-			   F_ARRAY_IN,		/* input procedure */
-			   F_ARRAY_OUT,		/* output procedure */
-			   F_ARRAY_RECV,	/* receive procedure */
-			   F_ARRAY_SEND,	/* send procedure */
-			   typmodinOid,		/* typmodin procedure */
-			   typmodoutOid,	/* typmodout procedure */
-			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
-			   typoid,			/* element type ID */
-			   true,			/* yes this is an array type */
-			   InvalidOid,		/* no further array type */
-			   InvalidOid,		/* base type ID */
-			   NULL,			/* never a default type value */
-			   NULL,			/* binary default isn't sent either */
-			   false,			/* never passed by value */
-			   alignment,		/* see above */
-			   'x',				/* ARRAY is always toastable */
-			   -1,				/* typMod (Domains only) */
-			   0,				/* Array dimensions of typbasetype */
-			   false,			/* Type NOT NULL */
-			   collation,		/* type's collation */
-			   typoptions);
-
-	pfree(array_type);
-
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		DefineStmt * stmt = makeNode(DefineStmt);
-		stmt->kind = OBJECT_TYPE;
-		stmt->oldstyle = false; /*?*/
-		stmt->defnames = names;
-		stmt->args = NIL;
-		stmt->definition = parameters;
-
-		CdbDispatchUtilityStatement((Node *) stmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-	}
-=======
 	typoid = TypeCreate(array_oid,		/* force assignment of this type OID */
 						array_type,		/* type name */
 						typeNamespace,	/* namespace */
@@ -751,8 +692,24 @@ DefineType(List *names, List *parameters)
 
 	pfree(array_type);
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		DefineStmt * stmt = makeNode(DefineStmt);
+		stmt->kind = OBJECT_TYPE;
+		stmt->oldstyle = false; /*?*/
+		stmt->defnames = names;
+		stmt->args = NIL;
+		stmt->definition = parameters;
+
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
+
 	return typoid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1172,12 +1129,6 @@ DefineDomain(CreateDomainStmt *stmt)
 		CommandCounterIncrement();
 	}
 
-	/*
-	 * Now we can clean up.
-	 */
-	ReleaseSysCache(typeTup);
-
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1187,9 +1138,13 @@ DefineDomain(CreateDomainStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
+
+	/*
+	 * Now we can clean up.
+	 */
+	ReleaseSysCache(typeTup);
+
 	return domainoid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1322,7 +1277,6 @@ DefineEnum(CreateEnumStmt *stmt)
 
 	pfree(enumArrayName);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1330,9 +1284,8 @@ DefineEnum(CreateEnumStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
-=======
+
 	return enumTypeOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1385,7 +1338,6 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 
 	ReleaseSysCache(tup);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1393,9 +1345,8 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
-=======
+
 	return enum_type_oid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1690,7 +1641,6 @@ DefineRange(CreateRangeStmt *stmt)
 	/* And create the constructor functions for this range type */
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 		CdbDispatchUtilityStatement((Node *) stmt,
 									DF_CANCEL_ON_ERROR|
@@ -1698,9 +1648,8 @@ DefineRange(CreateRangeStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									GetAssignedOidsForDispatch(),
 									NULL);
-=======
+
 	return typoid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -3168,11 +3117,6 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		  errmsg("cannot use table references in domain check constraint")));
 
-<<<<<<< HEAD
-	free_parsestate(pstate);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Convert to string form for storage.
 	 */
@@ -3625,11 +3569,8 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype)
 	objsMoved = new_object_addresses();
 	AlterTypeNamespace_oid(typeOid, nspOid, objsMoved);
 	free_object_addresses(objsMoved);
-<<<<<<< HEAD
-=======
 
 	return typeOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 Oid
@@ -3684,12 +3625,9 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	bool		isCompositeType;
 	ObjectAddress thisobj;
 
-<<<<<<< HEAD
-=======
 	/*
 	 * Make sure we haven't moved this object previously.
 	 */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	thisobj.classId = TypeRelationId;
 	thisobj.objectId = typeOid;
 	thisobj.objectSubId = 0;
@@ -3771,12 +3709,8 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	{
 		/* If it's a domain, it might have constraints */
 		if (typform->typtype == TYPTYPE_DOMAIN)
-<<<<<<< HEAD
-			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true, objsMoved);
-=======
 			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true,
 									  objsMoved);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*

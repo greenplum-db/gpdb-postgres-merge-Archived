@@ -22,13 +22,23 @@
 
 
 #define OIDCHARS		10		/* max chars printed by %u */
-#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
+/*
+ * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY. But in 
+ * GPDB, you should use tablespace_version_directory() function instead.
+ * This constant has been renamed so that we catch and know to modify all
+ * upstream uses of TABLESPACE_VERSION_DIRECTORY.
+ */
+#define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
 									CppAsString2(CATALOG_VERSION_NO)
 
 extern const char *forkNames[];
 extern int	forkname_chars(const char *str, ForkNumber *fork);
 extern char *relpathbackend(RelFileNode rnode, BackendId backend,
 			   ForkNumber forknum);
+
+extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
+					char **dir, char **filename);
+extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
 
 /* First argument is a RelFileNodeBackend */
 #define relpath(rnode, forknum) \
@@ -37,5 +47,8 @@ extern char *relpathbackend(RelFileNode rnode, BackendId backend,
 /* First argument is a RelFileNode */
 #define relpathperm(rnode, forknum) \
 		relpathbackend((rnode), InvalidBackendId, (forknum))
+
+#define aorelpath(rnode, segno) \
+		aorelpathbackend((rnode).node, (rnode).backend, (segno))
 
 #endif   /* RELPATH_H */

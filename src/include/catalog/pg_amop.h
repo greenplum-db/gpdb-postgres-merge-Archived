@@ -782,7 +782,20 @@ DATA(insert (	4017   25 25 14 s	667 4000 0 ));
 DATA(insert (	4017   25 25 15 s	666 4000 0 ));
 
 /*
-<<<<<<< HEAD
+ * SP-GiST range_ops
+ */
+DATA(insert (	3474   3831 3831 1 s	3893 4000 0 ));
+DATA(insert (	3474   3831 3831 2 s	3895 4000 0 ));
+DATA(insert (	3474   3831 3831 3 s	3888 4000 0 ));
+DATA(insert (	3474   3831 3831 4 s	3896 4000 0 ));
+DATA(insert (	3474   3831 3831 5 s	3894 4000 0 ));
+DATA(insert (	3474   3831 3831 6 s	3897 4000 0 ));
+DATA(insert (	3474   3831 3831 7 s	3890 4000 0 ));
+DATA(insert (	3474   3831 3831 8 s	3892 4000 0 ));
+DATA(insert (	3474   3831 2283 16 s	3889 4000 0 ));
+DATA(insert (	3474   3831 3831 18 s	3882 4000 0 ));
+
+/*
  * the operators for the on-disk bitmap index.
  */
 /*
@@ -1198,19 +1211,5 @@ DATA(insert (	7080	3310 3310 2 s 3329 403 0 ));
 DATA(insert (	7080	3310 3310 3 s 6325 403 0 ));
 DATA(insert (	7080	3310 3310 4 s 3330 403 0 ));
 DATA(insert (	7080	3310 3310 5 s 3328 403 0 ));
-=======
- * SP-GiST range_ops
- */
-DATA(insert (	3474   3831 3831 1 s	3893 4000 0 ));
-DATA(insert (	3474   3831 3831 2 s	3895 4000 0 ));
-DATA(insert (	3474   3831 3831 3 s	3888 4000 0 ));
-DATA(insert (	3474   3831 3831 4 s	3896 4000 0 ));
-DATA(insert (	3474   3831 3831 5 s	3894 4000 0 ));
-DATA(insert (	3474   3831 3831 6 s	3897 4000 0 ));
-DATA(insert (	3474   3831 3831 7 s	3890 4000 0 ));
-DATA(insert (	3474   3831 3831 8 s	3892 4000 0 ));
-DATA(insert (	3474   3831 2283 16 s	3889 4000 0 ));
-DATA(insert (	3474   3831 3831 18 s	3882 4000 0 ));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #endif   /* PG_AMOP_H */
