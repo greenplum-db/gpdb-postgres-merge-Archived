@@ -66,11 +66,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	 * automatically converts text between these code pages when writing to a
 	 * console.  To identify such file descriptors, it calls GetConsoleMode()
 	 * on the underlying HANDLE, which in turn requires GENERIC_READ access on
-<<<<<<< HEAD
-	 * the HANDLE.  Opening termout in mode "w+" allows that detection to
-=======
 	 * the HANDLE.	Opening termout in mode "w+" allows that detection to
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * succeed.  Otherwise, write() would not recognize the descriptor as a
 	 * console, and non-ASCII characters would display incorrectly.
 	 *
@@ -90,19 +86,12 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #endif
 	if (!termin || !termout
 #ifdef WIN32
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Direct console I/O does not work from the MSYS 1.0.10 console.  Writes
 	 * reach nowhere user-visible; reads block indefinitely.  XXX This affects
 	 * most Windows terminal environments, including rxvt, mintty, Cygwin
-<<<<<<< HEAD
-	 * xterm, Cygwin sshd, and PowerShell ISE.  Switch to a more-generic test.
-=======
 	 * xterm, Cygwin sshd, and PowerShell ISE.	Switch to a more-generic test.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 		|| (getenv("OSTYPE") && strcmp(getenv("OSTYPE"), "msys") == 0)
 #endif

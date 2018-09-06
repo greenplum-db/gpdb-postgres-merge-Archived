@@ -324,7 +324,6 @@ find_other_exec(const char *argv0, const char *target,
 	if (validate_exec(retpath) != 0)
 		return -1;
 
-<<<<<<< HEAD
 	/*
 	 * In PostgreSQL, the version check is always performed. In GPDB, this
 	 * is also used to find scripts that don't necessarily have the same
@@ -333,9 +332,6 @@ find_other_exec(const char *argv0, const char *target,
 	if (versionstr)
 	{
 		snprintf(cmd, sizeof(cmd), "\"%s\" -V", retpath);
-=======
-	snprintf(cmd, sizeof(cmd), "\"%s\" -V", retpath);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		if (!pipe_read_line(cmd, line, sizeof(line)))
 			return -1;
