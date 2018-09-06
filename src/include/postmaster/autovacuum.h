@@ -55,15 +55,8 @@ extern void AutoVacWorkerFailed(void);
 extern void AutoVacuumUpdateDelay(void);
 
 #ifdef EXEC_BACKEND
-<<<<<<< HEAD
-extern void AutoVacMain(int argc, char *argv[]); // OLD interface
-extern void AutovacuumIAm(void);
-extern void AutoVacLauncherMain(int argc, char *argv[]);
-extern void AutoVacWorkerMain(int argc, char *argv[]);
-=======
 extern void AutoVacLauncherMain(int argc, char *argv[]) __attribute__((noreturn));
 extern void AutoVacWorkerMain(int argc, char *argv[]) __attribute__((noreturn));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void AutovacuumWorkerIAm(void);
 extern void AutovacuumLauncherIAm(void);
 #endif
