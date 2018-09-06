@@ -5152,11 +5152,7 @@ conninfo_uri_parse_params(char *params,
 
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext(
-<<<<<<< HEAD
-									"invalid URI query parameter: %s\n"),
-=======
 									"invalid URI query parameter: \"%s\"\n"),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 							  keyword);
 			if (malloced)
 			{

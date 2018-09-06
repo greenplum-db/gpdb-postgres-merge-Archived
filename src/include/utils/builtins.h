@@ -627,11 +627,7 @@ extern Datum regexp_split_to_table_no_flags(PG_FUNCTION_ARGS);
 extern Datum regexp_split_to_array(PG_FUNCTION_ARGS);
 extern Datum regexp_split_to_array_no_flags(PG_FUNCTION_ARGS);
 extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,
-<<<<<<< HEAD
-								 Oid collation, bool *exact);
-=======
 					Oid collation, bool *exact);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);

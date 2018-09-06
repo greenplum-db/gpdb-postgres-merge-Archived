@@ -405,17 +405,10 @@ typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
-<<<<<<< HEAD
-	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
-													 * string to a wchar */
-	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar
-													 * string to a multibyte */
-=======
 	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
 	wchar2mb_with_len_converter wchar2mb_with_len;		/* convert a wchar
 														 * string to a multibyte */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	mblen_converter mblen;		/* get byte length of a char */
 	mbdisplaylen_converter dsplen;		/* get display width of a char */
 	mbverifier	mbverify;		/* verify multibyte sequence */

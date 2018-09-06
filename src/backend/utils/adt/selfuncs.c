@@ -1186,14 +1186,9 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Divide pattern into fixed prefix and remainder.  Unlike many of the
-	 * other functions in this file, we use the pattern operator's actual
-=======
 	 * Pull out any fixed prefix implied by the pattern, and estimate the
 	 * fractional selectivity of the remainder of the pattern.	Unlike many of
 	 * the other functions in this file, we use the pattern operator's actual
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * collation for this step.  This is not because we expect the collation
 	 * to make a big difference in the selectivity estimate (it seldom would),
 	 * but because we want to be sure we cache compiled regexps under the

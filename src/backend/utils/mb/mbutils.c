@@ -844,22 +844,14 @@ pg_encoding_mb2wchar_with_len(int encoding,
 int
 pg_wchar2mb(const pg_wchar *from, char *to)
 {
-<<<<<<< HEAD
-	return (*pg_wchar_table[DatabaseEncoding->encoding].wchar2mb_with_len) (from, (unsigned char *)to, pg_wchar_strlen(from));
-=======
 	return (*pg_wchar_table[DatabaseEncoding->encoding].wchar2mb_with_len) (from, (unsigned char *) to, pg_wchar_strlen(from));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /* convert a wchar string to a multibyte with a limited length */
 int
 pg_wchar2mb_with_len(const pg_wchar *from, char *to, int len)
 {
-<<<<<<< HEAD
-	return (*pg_wchar_table[DatabaseEncoding->encoding].wchar2mb_with_len) (from, (unsigned char *)to, len);
-=======
 	return (*pg_wchar_table[DatabaseEncoding->encoding].wchar2mb_with_len) (from, (unsigned char *) to, len);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /* same, with any encoding */
@@ -867,11 +859,7 @@ int
 pg_encoding_wchar2mb_with_len(int encoding,
 							  const pg_wchar *from, char *to, int len)
 {
-<<<<<<< HEAD
-	return (*pg_wchar_table[encoding].wchar2mb_with_len) (from, (unsigned char *)to, len);
-=======
 	return (*pg_wchar_table[encoding].wchar2mb_with_len) (from, (unsigned char *) to, len);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /* returns the byte length of a multibyte character */

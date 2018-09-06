@@ -20,19 +20,14 @@
 #include "port/pg_crc32c.h"
 
 
-<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	9220600
-=======
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	937
+#define PG_CONTROL_VERSION	9370600
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
  * a copy of the latest one in pg_control for possible disaster recovery.

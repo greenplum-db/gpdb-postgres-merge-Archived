@@ -53,11 +53,7 @@ typedef struct xl_dbase_drop_rec
 	Oid			tablespace_id;
 } xl_dbase_drop_rec;
 
-<<<<<<< HEAD
-extern void createdb(CreatedbStmt *stmt);
-=======
 extern Oid	createdb(const CreatedbStmt *stmt);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 extern void dropdb(const char *dbname, bool missing_ok);
 extern Oid	RenameDatabase(const char *oldname, const char *newname);
 extern Oid	AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel);

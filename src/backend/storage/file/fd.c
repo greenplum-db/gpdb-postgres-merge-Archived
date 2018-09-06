@@ -41,17 +41,6 @@
  * for a long time, like relation files. It is the caller's responsibility
  * to close them, there is no automatic mechanism in fd.c for that.
  *
-<<<<<<< HEAD
- * AllocateFile, AllocateDir and OpenTransientFile are wrappers around
- * fopen(3), opendir(3), and open(2), respectively. They behave like the
- * corresponding native functions, except that the handle is registered with
- * the current subtransaction, and will be automatically closed at abort.
- * These are intended for short operations like reading a configuration file.
- * and there is a fixed limit on the number files that can be open using these
- * functions at any one time.
- *
- * Finally, BasicOpenFile is a just thin wrapper around open() that can
-=======
  * AllocateFile, AllocateDir, OpenPipeStream and OpenTransientFile are
  * wrappers around fopen(3), opendir(3), popen(3) and open(2), respectively.
  * They behave like the corresponding native functions, except that the handle
@@ -61,7 +50,6 @@
  * can be opened using these functions at any one time.
  *
  * Finally, BasicOpenFile is just a thin wrapper around open() that can
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * release file descriptors in use by the virtual file descriptors if
  * necessary. There is no automatic cleanup of file descriptors returned by
  * BasicOpenFile, it is solely the caller's responsibility to close the file
@@ -222,21 +210,15 @@ static uint64 temporary_files_size = 0;
 /*
  * List of OS handles opened with AllocateFile, AllocateDir and
  * OpenTransientFile.
-<<<<<<< HEAD
  *
  * Since we don't want to encourage heavy use of those functions,
  * it seems OK to put a pretty small maximum limit on the number of
  * simultaneously allocated descs.
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 typedef enum
 {
 	AllocateDescFile,
-<<<<<<< HEAD
-=======
 	AllocateDescPipe,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	AllocateDescDir,
 	AllocateDescRawFD
 } AllocateDescKind;
@@ -2494,13 +2476,9 @@ CleanupTempFiles(bool isProcExit)
 		have_xact_temporary_files = false;
 	}
 
-<<<<<<< HEAD
 	workfile_mgr_cleanup();
 
-	/* Clean up "allocated" stdio files and dirs. */
-=======
 	/* Clean up "allocated" stdio files, dirs and fds. */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	while (numAllocatedDescs > 0)
 		FreeDesc(&allocatedDescs[0]);
 }

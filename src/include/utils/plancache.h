@@ -77,13 +77,8 @@
 typedef struct CachedPlanSource
 {
 	int			magic;			/* should equal CACHEDPLANSOURCE_MAGIC */
-<<<<<<< HEAD
 	Node	   *raw_parse_tree; /* output of raw_parser(), or NULL */
-	char	   *query_string;	/* source text of query */
-=======
-	Node	   *raw_parse_tree; /* output of raw_parser() */
 	const char *query_string;	/* source text of query */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	const char *commandTag;		/* command tag (a constant!), or NULL */
 	NodeTag		sourceTag;		/* GPDB: Original statement NodeTag */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */

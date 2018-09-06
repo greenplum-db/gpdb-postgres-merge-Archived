@@ -17,10 +17,7 @@
 #include "catalog/index.h"
 #include "nodes/execnodes.h"
 
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).

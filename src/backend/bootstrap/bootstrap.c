@@ -49,12 +49,8 @@
 extern int	optind;
 extern char *optarg;
 
-<<<<<<< HEAD
-uint32 bootstrap_data_checksum_version = 0;  /* No checksum */
-=======
 uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 

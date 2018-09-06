@@ -1810,11 +1810,7 @@ dumpcstate(int st,
 		   struct cnfa * cnfa,
 		   FILE *f)
 {
-<<<<<<< HEAD
-	struct carc * ca;
-=======
 	struct carc *ca;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	int			pos;
 
 	fprintf(f, "%d%s", st, (cnfa->stflags[st] & CNFA_NOPROGRESS) ? ":" : ".");

@@ -70,11 +70,7 @@ typedef enum ForkNumber
  * is a "mapped" relation, whose current true filenode number is available
  * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
  *
-<<<<<<< HEAD
- * Note: various places use RelFileNode in hashtable keys.  Therefore,
-=======
  * Note: various places use RelFileNode in hashtable keys.	Therefore,
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * there *must not* be any unused padding bytes in this struct.  That
  * should be safe as long as all the fields are of type Oid.
  */
@@ -87,11 +83,7 @@ typedef struct RelFileNode
 
 /*
  * Augmenting a relfilenode with the backend ID provides all the information
-<<<<<<< HEAD
- * we need to locate the physical storage.  The backend ID is InvalidBackendId
-=======
  * we need to locate the physical storage.	The backend ID is InvalidBackendId
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * for regular relations (those accessible to more than one backend), or the
  * owning backend's ID for backend-local relations.  Backend-local relations
  * are always transient and removed in case of a database crash; they are

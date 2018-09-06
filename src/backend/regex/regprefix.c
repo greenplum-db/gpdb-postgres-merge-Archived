@@ -61,12 +61,9 @@ pg_regprefix(regex_t *re,
 	if (re->re_csize != sizeof(chr))
 		return REG_MIXED;
 
-<<<<<<< HEAD
-=======
 	/* Initialize locale-dependent support */
 	pg_set_regex_collation(re->re_collation);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* setup */
 	g = (struct guts *) re->re_guts;
 	if (g->info & REG_UIMPOSSIBLE)
@@ -82,13 +79,8 @@ pg_regprefix(regex_t *re,
 
 	/*
 	 * Since a correct NFA should never contain any exit-free loops, it should
-<<<<<<< HEAD
-	 * not be possible for our traversal to return to a previously visited
-	 * NFA state.  Hence we need at most nstates chrs in the output string.
-=======
 	 * not be possible for our traversal to return to a previously visited NFA
 	 * state.  Hence we need at most nstates chrs in the output string.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	*string = (chr *) MALLOC(cnfa->nstates * sizeof(chr));
 	if (*string == NULL)
@@ -130,13 +122,8 @@ findprefix(struct cnfa * cnfa,
 
 	/*
 	 * The "pre" state must have only BOS/BOL outarcs, else pattern isn't
-<<<<<<< HEAD
-	 * anchored left.  If we have both BOS and BOL, they must go to the
-	 * same next state.
-=======
 	 * anchored left.  If we have both BOS and BOL, they must go to the same
 	 * next state.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	st = cnfa->pre;
 	nextst = -1;

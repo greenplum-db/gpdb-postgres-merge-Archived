@@ -54,12 +54,8 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	bool		relisshared;	/* T if shared across databases */
 	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
 	char		relkind;		/* see RELKIND_xxx constants below */
-<<<<<<< HEAD
 	char		relstorage;		/* see RELSTORAGE_xxx constants below */
-	int2		relnatts;		/* number of user attributes */
-=======
 	int16		relnatts;		/* number of user attributes */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
