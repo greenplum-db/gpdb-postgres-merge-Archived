@@ -29,6 +29,18 @@
 
 
 /*
+ * Is there a rule by the given name?
+ */
+bool
+IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
+{
+	return SearchSysCacheExists2(RULERELNAME,
+								 ObjectIdGetDatum(owningRel),
+								 PointerGetDatum(ruleName));
+}
+
+
+/*
  * SetRelationRuleStatus
  *		Set the value of the relation's relhasrules field in pg_class.
  *
