@@ -186,6 +186,12 @@ extern void GPMemoryProtect_Shutdown(void);
 extern void UpdateTimeAtomically(volatile OOMTimeType* time_var);
 
 /*
+ * moved here from memutils.h, so that it can be used in the ReportOOMConsumption()
+ * macro below
+ */
+extern void MemoryContextStats(MemoryContext context);
+
+/*
  * ReportOOMConsumption
  *
  * Checks if there was any new OOM event in this segment.

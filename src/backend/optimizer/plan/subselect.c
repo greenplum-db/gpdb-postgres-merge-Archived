@@ -15,11 +15,8 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "catalog/catalog.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "catalog/catalog.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "catalog/gp_policy.h"
@@ -573,7 +570,9 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	else
 		tuple_fraction = 0.0;	/* default behavior */
 
-<<<<<<< HEAD
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	PlannerConfig *config = CopyPlannerConfig(root->config);
 
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -620,10 +619,6 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 				 subLinkType == EXPR_SUBLINK ||
 				 subLinkType == EXISTS_SUBLINK);
 	}
-=======
-	/* plan_params should not be in use in current query level */
-	Assert(root->plan_params == NIL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Strictly speaking, the order of rows in a subquery doesn't matter.
@@ -730,13 +725,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 {
 	Node	   *result;
 	SubPlan    *splan;
-<<<<<<< HEAD
-	Bitmapset  *tmpset;
-	int			paramid;
-=======
-	bool		isInitPlan;
 	ListCell   *lc;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Initialize the SubPlan node.  Note plan_id, plan_name, and cost fields
@@ -768,34 +757,6 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(lc);
 		Node	   *arg = pitem->item;
 
-<<<<<<< HEAD
-		if (pitem->abslevel == root->query_level)
-		{
-			splan->parParam = lappend_int(splan->parParam, paramid);
-
-			Node	   *arg;
-
-			/*
-			 * The Var, PlaceHolderVar, or Aggref has already been adjusted to
-			 * have the correct varlevelsup, phlevelsup, or agglevelsup.  We
-			 * probably don't even need to copy it again, but be safe.
-			 */
-			arg = copyObject(pitem->item);
-
-			/*
-			 * If it's a PlaceHolderVar or Aggref, its arguments might contain
-			 * SubLinks, which have not yet been processed (see the comments
-			 * for SS_replace_correlation_vars).  Do that now.
-			 */
-			if (IsA(arg, PlaceHolderVar) ||
-				IsA(arg, Aggref))
-				arg = SS_process_sublinks(root, arg, false);
-
-			splan->args = lappend(splan->args, arg);
-		}
-		else if (pitem->abslevel < root->query_level)
-			splan->extParam = lappend_int(splan->extParam, paramid);
-=======
 		/*
 		 * The Var, PlaceHolderVar, or Aggref has already been adjusted to
 		 * have the correct varlevelsup, phlevelsup, or agglevelsup.
@@ -810,7 +771,6 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 
 		splan->parParam = lappend_int(splan->parParam, pitem->paramId);
 		splan->args = lappend(splan->args, arg);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*

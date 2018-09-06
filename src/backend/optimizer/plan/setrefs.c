@@ -224,6 +224,10 @@ static void set_plan_references_input_asserts(PlannerGlobal *glob, Plan *plan, L
 	/* Ensure that all params that the plan refers to has a corresponding subplan */
 	allParams = extract_nodes(glob, (Node *) plan, T_Param);
 
+	// GPDB_93_MERGE_FIXME: this stopped working, when 'paramlist' was removed from
+	// PlannerGlobal. I think list_length(glob->paramlist) should now be glob->nParamExec,
+	// but how do you get the individal params? In boundParams perhaps?
+#if 0
 	foreach (lc, allParams)
 	{
 		Param *param = lfirst(lc);
@@ -247,9 +251,9 @@ static void set_plan_references_input_asserts(PlannerGlobal *glob, Plan *plan, L
 			{
 				Assert("Global PlannerParamItem is not a var or an aggref node");
 			}
-
 		}
 	}
+#endif
 
 }
 
@@ -394,51 +398,7 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	 * will have their rangetable indexes increased by rtoffset.  (Additional
 	 * RTEs, not referenced by the Plan tree, might get added after those.)
 	 */
-<<<<<<< HEAD
-	foreach(lc, root->parse->rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		RangeTblEntry *newrte;
-
-		/* flat copy to duplicate all the scalar fields */
-		newrte = copyObject(rte);
-
-		/** Need to fix up some of the references in the newly created newrte */
-		fix_scan_expr(root, (Node *) newrte->funcexpr, rtoffset);
-		fix_scan_expr(root, (Node *) newrte->joinaliasvars, rtoffset);
-		fix_scan_expr(root, (Node *) newrte->values_lists, rtoffset);
-
-		glob->finalrtable = lappend(glob->finalrtable, newrte);
-
-		/*
-		 * If it's a plain relation RTE, add the table to relationOids.
-		 *
-		 * We do this even though the RTE might be unreferenced in the plan
-		 * tree; this would correspond to cases such as views that were
-		 * expanded, child tables that were eliminated by constraint
-		 * exclusion, etc.	Schema invalidation on such a rel must still force
-		 * rebuilding of the plan.
-		 *
-		 * Note we don't bother to avoid duplicate list entries.  We could,
-		 * but it would probably cost more cycles than it would save.
-		 */
-		if (newrte->rtekind == RTE_RELATION)
-			glob->relationOids = lappend_oid(glob->relationOids,
-											 newrte->relid);
-	}
-
-	/*
-	 * Check for RT index overflow; it's very unlikely, but if it did happen,
-	 * the executor would get confused by varnos that match the special varno
-	 * values.
-	 */
-	if (IS_SPECIAL_VARNO(list_length(glob->finalrtable)))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("too many range table entries")));
-=======
 	add_rtes_to_flat_rtable(root, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Adjust RT indexes of PlanRowMarks and add to final rowmarks list
