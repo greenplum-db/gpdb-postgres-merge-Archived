@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "nodes/makefuncs.h"
+#include "optimizer/planmain.h"
 
 #include "cdb/cdbhash.h"
 #include "cdb/cdbllize.h"
@@ -340,10 +341,21 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, int segindex, List *sortPat
 
 	if (sortPathKeys)
 	{
+		Sort	   *sort;
+
+		sort = make_sort_from_pathkeys(root,
+									   subplan,
+									   sortPathKeys,
+									   -1.0,
+									   false /* useExecutorVarFormat */ );
 		motion = make_sorted_union_motion(root,
 										  subplan,
+										  sort->numCols,
+										  sort->sortColIdx,
+										  sort->sortOperators,
+										  sort->collations,
+										  sort->nullsFirst,
 										  segindex,
-										  sortPathKeys,
 										  false /* useExecutorVarFormat */ );
 	}
 	else

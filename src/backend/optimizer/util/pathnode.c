@@ -1502,7 +1502,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 					CdbPathLocus singleEntry;
 					CdbPathLocus_MakeEntry(&singleEntry);
 
-					subpath = cdbpath_create_motion_path(root, subpath, pathkeys, false, singleEntry);
+					subpath = cdbpath_create_motion_path(root, subpath, subpath->pathkeys, false, singleEntry);
 				}
 			}
 			else /* fIsNotPartitioned true, fIsPartitionInEntry false */
@@ -1512,7 +1512,7 @@ set_append_path_locus(PlannerInfo *root, Path *pathnode, RelOptInfo *rel,
 					CdbPathLocus    singleQE;
 					CdbPathLocus_MakeSingleQE(&singleQE);
 
-					subpath = cdbpath_create_motion_path(root, subpath, pathkeys, false, singleQE);
+					subpath = cdbpath_create_motion_path(root, subpath, subpath->pathkeys, false, singleQE);
 				}
 			}
 		}

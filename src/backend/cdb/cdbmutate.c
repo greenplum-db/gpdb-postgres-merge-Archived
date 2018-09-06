@@ -991,7 +991,9 @@ make_union_motion(Plan *lefttree, int destSegIndex, bool useExecutorVarFormat)
 
 	outSegIdx[0] = destSegIndex;
 
-	motion = make_motion(NULL, lefttree, NIL, useExecutorVarFormat);
+	motion = make_motion(NULL, lefttree,
+						 0, NULL, NULL, NULL, NULL, /* no ordering */
+						 useExecutorVarFormat);
 	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx);
 	return motion;
 }
@@ -999,8 +1001,9 @@ make_union_motion(Plan *lefttree, int destSegIndex, bool useExecutorVarFormat)
 Motion *
 make_sorted_union_motion(PlannerInfo *root,
 						 Plan *lefttree,
+						 int numSortCols, AttrNumber *sortColIdx,
+						 Oid *sortOperators, Oid *collations, bool *nullsFirst,
 						 int destSegIndex,
-						 List *sortPathKeys,
 						 bool useExecutorVarFormat)
 {
 	Motion	   *motion;
@@ -1008,7 +1011,9 @@ make_sorted_union_motion(PlannerInfo *root,
 
 	outSegIdx[0] = destSegIndex;
 
-	motion = make_motion(root, lefttree, sortPathKeys, useExecutorVarFormat);
+	motion = make_motion(root, lefttree,
+						 numSortCols, sortColIdx, sortOperators, collations, nullsFirst,
+						 useExecutorVarFormat);
 	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx);
 	return motion;
 }
@@ -1031,7 +1036,9 @@ make_hashed_motion(Plan *lefttree,
 			elog(ERROR, "cannot use expression as distribution key, because it is not hashable");
 	}
 
-	motion = make_motion(NULL, lefttree, NIL, useExecutorVarFormat);
+	motion = make_motion(NULL, lefttree,
+						 0, NULL, NULL, NULL, NULL, /* no ordering */
+						 useExecutorVarFormat);
 	add_slice_to_motion(motion, MOTIONTYPE_HASH, hashExpr, 0, NULL);
 	return motion;
 }
@@ -1041,7 +1048,9 @@ make_broadcast_motion(Plan *lefttree, bool useExecutorVarFormat)
 {
 	Motion	   *motion;
 
-	motion = make_motion(NULL, lefttree, NIL, useExecutorVarFormat);
+	motion = make_motion(NULL, lefttree,
+						 0, NULL, NULL, NULL, NULL, /* no ordering */
+						 useExecutorVarFormat);
 
 	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 0, NULL);
 	return motion;
@@ -1052,7 +1061,9 @@ make_explicit_motion(Plan *lefttree, AttrNumber segidColIdx, bool useExecutorVar
 {
 	Motion	   *motion;
 
-	motion = make_motion(NULL, lefttree, NIL, useExecutorVarFormat);
+	motion = make_motion(NULL, lefttree,
+						 0, NULL, NULL, NULL, NULL, /* no ordering */
+						 useExecutorVarFormat);
 
 	Assert(segidColIdx > 0 && segidColIdx <= list_length(lefttree->targetlist));
 
