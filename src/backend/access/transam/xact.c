@@ -43,13 +43,9 @@
 #include "pgstat.h"
 #include "replication/walsender.h"
 #include "replication/syncrep.h"
-<<<<<<< HEAD
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
-=======
-#include "storage/fd.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -1298,9 +1294,8 @@ RecordTransactionCommit(void)
 		 *
 		 * It's safe to change the delayChkpt flag of our own backend without
 		 * holding the ProcArrayLock, since we're the only one modifying it.
-<<<<<<< HEAD
-		 * This makes checkpoint's determination of which xacts are inCommit a
-		 * bit fuzzy, but it doesn't matter.
+		 * This makes checkpoint's determination of which xacts are delayChkpt
+		 * a bit fuzzy, but it doesn't matter.
 		 *
 		 * In GPDB, if this is a distributed transaction, checkpoint process
 		 * should hold off obtaining the REDO pointer while a backend is
@@ -1314,10 +1309,6 @@ RecordTransactionCommit(void)
 		 * this transaction and the second phase of 2PC will never happen.  The
 		 * inCommit flag avoids this situation by blocking checkpointer until a
 		 * backend has finished updating the state.
-=======
-		 * This makes checkpoint's determination of which xacts are delayChkpt
-		 * a bit fuzzy, but it doesn't matter.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 */
 		START_CRIT_SECTION();
 		MyPgXact->delayChkpt = true;
@@ -1459,23 +1450,6 @@ RecordTransactionCommit(void)
 		forceSyncCommit || nrels > 0)
 #endif
 	{
-<<<<<<< HEAD
-		/*
-		 * Synchronous commit case:
-		 *
-		 * Sleep before flush! So we can flush more than one commit records
-		 * per single fsync.  (The idea is some other backend may do the
-		 * XLogFlush while we're sleeping.  This needs work still, because on
-		 * most Unixen, the minimum select() delay is 10msec or more, which is
-		 * way too long.)
-		 *
-		 * We do not sleep if enableFsync is not turned on, nor if there are
-		 * fewer than CommitSiblings other backends with active transactions.
-		 */
-		if (CommitDelay > 0 && enableFsync &&
-			MinimumActiveBackends(CommitSiblings))
-			pg_usleep(CommitDelay);
-
 		XLogFlush(recptr);
 
 #ifdef FAULT_INJECTOR
@@ -1488,9 +1462,6 @@ RecordTransactionCommit(void)
 										   ""); // tableName
 		}
 #endif
-=======
-		XLogFlush(XactLastRecEnd);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/*
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
@@ -5890,15 +5861,6 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	/* Make sure files supposed to be dropped are dropped */
 	if (nrels > 0)
 	{
-<<<<<<< HEAD
-		SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
-		ForkNumber	fork;
-
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xnodes[i].node, fork);
-		smgrdounlink(srel, true, xnodes[i].relstorage);
-		smgrclose(srel);
-=======
 		/*
 		 * First update minimum recovery point to cover this WAL record. Once
 		 * a relation is deleted, there's no going back. The buffer manager
@@ -5918,15 +5880,14 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 
 		for (i = 0; i < nrels; i++)
 		{
-			SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
+			SMgrRelation srel = smgropen(xnodes[i].node, InvalidBackendId);
 			ForkNumber	fork;
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(xnodes[i], fork);
-			smgrdounlink(srel, true);
+				XLogDropRelation(xnodes[i].node, fork);
+			smgrdounlink(srel, true, xnodes[i].relstorage);
 			smgrclose(srel);
 		}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
