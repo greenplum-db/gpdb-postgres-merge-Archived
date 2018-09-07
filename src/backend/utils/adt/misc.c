@@ -113,7 +113,9 @@ pg_signal_backend(int pid, int sig, char *msg)
 		return SIGNAL_BACKEND_ERROR;
 	}
 
-<<<<<<< HEAD
+	if (!(superuser() || proc->roleId == GetUserId()))
+		return SIGNAL_BACKEND_NOPERMISSION;
+
 	/* If the user supplied a message to the signalled backend */
 	if (msg != NULL)
 	{
@@ -125,11 +127,7 @@ pg_signal_backend(int pid, int sig, char *msg)
 			ereport(NOTICE,
 					(errmsg("message is too long and has been truncated")));
 	}
-=======
-	if (!(superuser() || proc->roleId == GetUserId()))
-		return SIGNAL_BACKEND_NOPERMISSION;
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Can the process we just validated above end, followed by the pid being
 	 * recycled for a new process, before reaching here?  Then we'd be trying
@@ -194,15 +192,14 @@ pg_cancel_backend_msg(PG_FUNCTION_ARGS)
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {
-	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGTERM);
+	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGTERM, NULL);
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser or have the same role to terminate other server processes"))));
 
-<<<<<<< HEAD
-	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM, NULL) == SIGNAL_BACKEND_SUCCESS);
+	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
 
 Datum
@@ -210,14 +207,16 @@ pg_terminate_backend_msg(PG_FUNCTION_ARGS)
 {
 	pid_t		pid = PG_GETARG_INT32(0);
 	char 	   *msg = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	int			r;
 
-	if (!superuser())
+	r = pg_signal_backend(pid, SIGTERM, msg);
+
+	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to terminate other server processes"),
-				 errhint("You can cancel your own processes with pg_cancel_backend().")));
+				 (errmsg("must be superuser or have the same role to terminate other server processes"))));
 
-	PG_RETURN_BOOL(pg_signal_backend(pid, SIGTERM, msg) == SIGNAL_BACKEND_SUCCESS);
+	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
 
 /*
@@ -272,9 +271,6 @@ gp_cancel_query(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_BOOL(gp_cancel_query_internal(PG_GETARG_INT32(0),
 											PG_GETARG_INT32(1)));
-=======
-	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

@@ -489,7 +489,6 @@ typedef struct
 	int			lbound1;
 	int16		values[1];		/* VARIABLE LENGTH ARRAY */
 } int2vector;					/* VARIABLE LENGTH STRUCT */
-#define Int2VectorSize(n)	(offsetof(int2vector, values) + (n) * sizeof(int2))
 
 typedef struct
 {
