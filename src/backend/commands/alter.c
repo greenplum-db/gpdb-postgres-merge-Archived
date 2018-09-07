@@ -312,40 +312,7 @@ ExecRenameStmt(RenameStmt *stmt)
 			return RenameConstraint(stmt);
 
 		case OBJECT_DATABASE:
-<<<<<<< HEAD
-			RenameDatabase(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_EXTPROTOCOL:
-			RenameExtProtocol(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_FDW:
-			RenameForeignDataWrapper(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_FOREIGN_SERVER:
-			RenameForeignServer(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_FUNCTION:
-			RenameFunction(stmt->object, stmt->objarg, stmt->newname);
-			break;
-
-		case OBJECT_LANGUAGE:
-			RenameLanguage(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_OPCLASS:
-			RenameOpClass(stmt->object, stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_OPFAMILY:
-			RenameOpFamily(stmt->object, stmt->subname, stmt->newname);
-			break;
-=======
 			return RenameDatabase(stmt->subname, stmt->newname);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		case OBJECT_ROLE:
 			return RenameRole(stmt->subname, stmt->newname);
@@ -378,6 +345,12 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_DOMAIN:
 		case OBJECT_TYPE:
 			return RenameType(stmt);
+
+		case OBJECT_EXTPROTOCOL:
+			// GPDB_93_MERGE_FIXME: this probably could be refactored to
+			// use the generic AlterObjectRename_internal() function, like
+			// below.
+			return RenameExtProtocol(stmt->subname, stmt->newname);
 
 		case OBJECT_AGGREGATE:
 		case OBJECT_COLLATION:
@@ -663,15 +636,6 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	 * Since this is just a friendliness check, we can just skip it in cases
 	 * where there isn't suitable support.
 	 */
-<<<<<<< HEAD
-	if (nameCacheId >= 0 &&
-		SearchSysCacheExists2(nameCacheId, name, ObjectIdGetDatum(nspOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-						errmsg("%s already exists in schema \"%s\"",
-							   getObjectDescriptionOids(classId, objid),
-							   get_namespace_name(nspOid))));
-=======
 	if (classId == ProcedureRelationId)
 	{
 		Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
@@ -705,7 +669,6 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 		report_namespace_conflict(classId,
 								  NameStr(*(DatumGetName(name))),
 								  nspOid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Build modified tuple */
 	values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
@@ -751,10 +714,6 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 		case OBJECT_SCHEMA:
 			return AlterSchemaOwner(strVal(linitial(stmt->object)), newowner);
 
-		case OBJECT_EXTPROTOCOL:
-			AlterExtProtocolOwner(strVal(linitial(stmt->object)), newowner);
-			break;
-
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
 			return AlterTypeOwner(stmt->object, newowner, stmt->objectType);
@@ -771,6 +730,12 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 		case OBJECT_EVENT_TRIGGER:
 			return AlterEventTriggerOwner(strVal(linitial(stmt->object)),
 										  newowner);
+
+		case OBJECT_EXTPROTOCOL:
+			// GPDB_93_MERGE_FIXME: this probably could be refactored to
+			// follow the generic case below
+			return AlterExtProtocolOwner(strVal(linitial(stmt->object)),
+										 newowner);
 
 			/* Generic cases */
 		case OBJECT_AGGREGATE:
@@ -832,6 +797,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 									NIL,
 									NULL);
 	}
+	
 }
 
 /*
