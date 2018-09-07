@@ -1881,11 +1881,7 @@ asc_tolower(const char *buff, size_t nbytes)
 	result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
-<<<<<<< HEAD
-		*p = pg_tolower((unsigned char) *p);
-=======
 		*p = pg_ascii_tolower((unsigned char) *p);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return result;
 }
@@ -1908,11 +1904,7 @@ asc_toupper(const char *buff, size_t nbytes)
 	result = pnstrdup(buff, nbytes);
 
 	for (p = result; *p; p++)
-<<<<<<< HEAD
-		*p = pg_toupper((unsigned char) *p);
-=======
 		*p = pg_ascii_toupper((unsigned char) *p);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return result;
 }
@@ -1940,15 +1932,9 @@ asc_initcap(const char *buff, size_t nbytes)
 		char		c;
 
 		if (wasalnum)
-<<<<<<< HEAD
-			*p = c = pg_tolower((unsigned char) *p);
-		else
-			*p = c = pg_toupper((unsigned char) *p);
-=======
 			*p = c = pg_ascii_tolower((unsigned char) *p);
 		else
 			*p = c = pg_ascii_toupper((unsigned char) *p);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/* we don't trust isalnum() here */
 		wasalnum = ((c >= 'A' && c <= 'Z') ||
 					(c >= 'a' && c <= 'z') ||
@@ -2589,7 +2575,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-<<<<<<< HEAD
 				{
 					char	   *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
 
@@ -2600,9 +2585,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
-=======
-					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1], collid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(months_full[tm->tm_mon - 1]));
@@ -2651,7 +2633,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (!tm->tm_mon)
 					break;
 				if (S_TM(n->suffix))
-<<<<<<< HEAD
 				{
 					char	   *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
 
@@ -2662,9 +2643,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
-=======
-					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				else
 					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
@@ -2714,7 +2692,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-<<<<<<< HEAD
 				{
 					char	   *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
 
@@ -2725,9 +2702,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
-=======
-					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday], collid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
 							asc_tolower_z(days[tm->tm_wday]));
@@ -2770,7 +2744,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (S_TM(n->suffix))
-<<<<<<< HEAD
 				{
 					char	   *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
 
@@ -2781,9 +2754,6 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("localized string format value too long")));
 				}
-=======
-					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday], collid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				else
 					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
 				s += strlen(s);

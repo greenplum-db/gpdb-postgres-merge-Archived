@@ -14,12 +14,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
+#include "access/htup_details.h"
 #include "storage/lock.h"
 #include "commands/resgroupcmds.h"
-=======
-#include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/ip.h"

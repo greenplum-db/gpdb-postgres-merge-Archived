@@ -17,24 +17,18 @@
 
 #include "lib/stringinfo.h"
 
-#include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
 #include "access/aocssegfiles.h"
-=======
+#include "access/heapam.h"
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
-#include "executor/spi.h"
-=======
 #include "common/relpath.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "executor/spi.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
@@ -395,15 +389,13 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 /*
  * calculate size of (one fork of) a relation
  *
-<<<<<<< HEAD
  * Iterator over all files belong to the relation and do stat.
  * The obviously better way is to use glob.  For whatever reason,
  * glob is extremely slow if there are lots of relations in the
  * database.  So we handle all cases, instead. 
-=======
+ *
  * Note: we can safely apply this to temp tables of other sessions, so there
  * is no check here or at the call sites for that.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static int64
 calculate_relation_size(Relation rel, ForkNumber forknum)

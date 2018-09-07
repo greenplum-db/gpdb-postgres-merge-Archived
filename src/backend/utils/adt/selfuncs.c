@@ -5682,7 +5682,6 @@ like_selectivity(const char *patt, int pattlen, bool case_insensitive)
             fixed_char_sel += (1.0 - fixed_char_sel) * CDB_ROLLOFF_SEL;
         }
 	}
-<<<<<<< HEAD
 
 	/* CDB: If no trailing wildcard, reduce selectivity slightly. */
 	if (pos > 0 && patt[pos-1] != '%')
@@ -5690,11 +5689,6 @@ like_selectivity(const char *patt, int pattlen, bool case_insensitive)
 	else if (pos >= 2 && patt[pos-2] == '\\')
 		sel *= CDB_RANCHOR_SEL;
 
-=======
-	/* Could get sel > 1 if multiple wildcards */
-	if (sel > 1.0)
-		sel = 1.0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return sel;
 }
 
@@ -6183,18 +6177,11 @@ genericcostestimate(PlannerInfo *root,
 	}
 
 	/* Estimate the fraction of main-table tuples that will be visited */
-<<<<<<< HEAD
-	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   index->rel->relid,
-											   JOIN_INNER,
-											   NULL,
-											   false /* use_damping */);
-=======
 	indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											  index->rel->relid,
 											  JOIN_INNER,
-											  NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+											  NULL,
+											  false /* use_damping */);
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
@@ -7530,6 +7517,7 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	GenericCosts costs;
 
 	List *selectivityQuals;
 	double numIndexTuples;
@@ -7590,9 +7578,18 @@ bmcostestimate(PG_FUNCTION_ARGS)
 	numIndexTuples = *indexSelectivity * path->indexinfo->rel->tuples;
 	numIndexTuples = rint(numIndexTuples / numDistinctValues);
 
-	genericcostestimate(root, path, loop_count, numIndexTuples,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	/*
+	 * Now do generic index cost estimation.
+	 */
+	MemSet(&costs, 0, sizeof(costs));
+	costs.numIndexTuples = numIndexTuples;
+
+	genericcostestimate(root, path, loop_count, &costs);
+
+	*indexStartupCost = costs.indexStartupCost;
+	*indexTotalCost = costs.indexTotalCost;
+	*indexSelectivity = costs.indexSelectivity;
+	*indexCorrelation = costs.indexCorrelation;
 
 	PG_RETURN_VOID();
 }
