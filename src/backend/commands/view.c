@@ -531,8 +531,7 @@ StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 	/*
 	 * Now create the rules associated with the view.
 	 */
-<<<<<<< HEAD
-	DefineViewRules(viewOid, viewParse, stmt->replace);
+	DefineViewRules(viewOid, viewParse, replace);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -545,7 +544,4 @@ StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	DefineViewRules(viewOid, viewParse, replace);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }

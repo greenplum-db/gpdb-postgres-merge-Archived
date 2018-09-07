@@ -855,12 +855,8 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&ignore_checksum_failure,
-<<<<<<< HEAD
-		false, NULL, NULL
-=======
 		false,
 		NULL, NULL, NULL
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,

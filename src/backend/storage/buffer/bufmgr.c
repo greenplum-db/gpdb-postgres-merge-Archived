@@ -2648,15 +2648,8 @@ FlushRelationBuffers(Relation rel)
 			if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node) &&
 				(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
 			{
-<<<<<<< HEAD
-				ErrorContextCallback errcontext;
-				Page					localpage;
-=======
 				ErrorContextCallback errcallback;
 				Page		localpage;
-
-				localpage = (char *) LocalBufHdrGetBlock(bufHdr);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 				

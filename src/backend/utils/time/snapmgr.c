@@ -1273,7 +1273,15 @@ DeleteAllExportedSnapshotFiles(void)
 	FreeDir(s_dir);
 }
 
-<<<<<<< HEAD
+bool
+ThereAreNoPriorRegisteredSnapshots(void)
+{
+	if (RegisteredSnapshots <= 1)
+		return true;
+
+	return false;
+}
+
 DistributedSnapshotWithLocalMapping *
 GetCurrentDistributedSnapshotWithLocalMapping()
 {
@@ -1285,13 +1293,4 @@ GetCurrentDistributedSnapshotWithLocalMapping()
 		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
 
 	return NULL;
-=======
-bool
-ThereAreNoPriorRegisteredSnapshots(void)
-{
-	if (RegisteredSnapshots <= 1)
-		return true;
-
-	return false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }

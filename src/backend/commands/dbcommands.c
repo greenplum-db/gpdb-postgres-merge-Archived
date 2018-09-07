@@ -105,13 +105,8 @@ static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
 /*
  * CREATE DATABASE
  */
-<<<<<<< HEAD
-void
-createdb(CreatedbStmt *stmt)
-=======
 Oid
 createdb(const CreatedbStmt *stmt)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	HeapScanDesc scan;
 	Relation	rel;
@@ -1120,7 +1115,6 @@ RenameDatabase(const char *oldname, const char *newname)
 	simple_heap_update(rel, &newtup->t_self, newtup);
 	CatalogUpdateIndexes(rel, newtup);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(DatabaseRelationId,
@@ -1128,9 +1122,7 @@ RenameDatabase(const char *oldname, const char *newname)
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
-=======
 	InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Close pg_database, but keep lock till commit.
@@ -1589,7 +1581,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* Close pg_database, but keep lock till commit */
 	heap_close(rel, NoLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		char	   *cmd;
@@ -1603,9 +1594,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 						   NULL);
 		pfree(cmd);
 	}
-=======
 	return dboid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -2260,24 +2249,3 @@ dbase_redo(XLogRecPtr beginLoc  __attribute__((unused)), XLogRecPtr lsn  __attri
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }
-<<<<<<< HEAD
-
-void
-dbase_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	if (info == XLOG_DBASE_CREATE)
-	{
-		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
-
-		appendStringInfo(buf, "create db: copy dir %u/%u to %u/%u",
-						 xlrec->src_db_id, xlrec->src_tablespace_id,
-						 xlrec->db_id, xlrec->tablespace_id);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

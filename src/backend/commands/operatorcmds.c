@@ -52,14 +52,9 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 
-static void AlterOperatorOwner_internal(Relation rel, Oid operOid, Oid newOwnerId);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * DefineOperator
  *		this function extracts all the information from the
@@ -306,18 +301,18 @@ DefineOperator(List *names, List *parameters)
 	/*
 	 * now have OperatorCreate do all the work..
 	 */
-<<<<<<< HEAD
-	OperatorCreate(oprName,		/* operator name */
-				   oprNamespace,	/* namespace */
-				   typeId1,		/* left type id */
-				   typeId2,		/* right type id */
-				   functionOid, /* function for operator */
-				   commutatorName,		/* optional commutator operator name */
-				   negatorName, /* optional negator operator name */
-				   restrictionOid,		/* optional restrict. sel. procedure */
-				   joinOid,		/* optional join sel. procedure name */
-				   canMerge,	/* operator merges */
-				   canHash);	/* operator hashes */
+	Oid oprOid =
+		OperatorCreate(oprName, /* operator name */
+					   oprNamespace,	/* namespace */
+					   typeId1, /* left type id */
+					   typeId2, /* right type id */
+					   functionOid,		/* function for operator */
+					   commutatorName,	/* optional commutator operator name */
+					   negatorName,		/* optional negator operator name */
+					   restrictionOid,	/* optional restrict. sel. procedure */
+					   joinOid, /* optional join sel. procedure name */
+					   canMerge,	/* operator merges */
+					   canHash);	/* operator hashes */
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -334,20 +329,7 @@ DefineOperator(List *names, List *parameters)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
-	return
-		OperatorCreate(oprName, /* operator name */
-					   oprNamespace,	/* namespace */
-					   typeId1, /* left type id */
-					   typeId2, /* right type id */
-					   functionOid,		/* function for operator */
-					   commutatorName,	/* optional commutator operator name */
-					   negatorName,		/* optional negator operator name */
-					   restrictionOid,	/* optional restrict. sel. procedure */
-					   joinOid, /* optional join sel. procedure name */
-					   canMerge,	/* operator merges */
-					   canHash);	/* operator hashes */
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	return oprOid;
 }
 
 /*

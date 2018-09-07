@@ -2874,11 +2874,7 @@ GetOldestActiveTransactionId(void)
  * delaying checkpoint because they have critical actions in progress.
  *
  * Constructs an array of VXIDs of transactions that are currently in commit
-<<<<<<< HEAD
- * critical sections, as shown by having inCommit set in their PGXACT.
-=======
  * critical sections, as shown by having delayChkpt set in their PGXACT.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * Returns a palloc'd array that should be freed by the caller.
  * *nvxids is the number of valid entries.
@@ -2886,13 +2882,8 @@ GetOldestActiveTransactionId(void)
  * Note that because backends set or clear delayChkpt without holding any lock,
  * the result is somewhat indeterminate, but we don't really care.  Even in
  * a multiprocessor with delayed writes to shared memory, it should be certain
-<<<<<<< HEAD
- * that setting of inCommit will propagate to shared memory when the backend
- * takes a lock, so we cannot fail to see a virtual xact as inCommit if
-=======
  * that setting of delayChkpt will propagate to shared memory when the backend
  * takes a lock, so we cannot fail to see an virtual xact as delayChkpt if
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * it's already inserted its commit record.  Whether it takes a little while
  * for clearing of delayChkpt to propagate is unimportant for correctness.
  */
@@ -2916,11 +2907,7 @@ GetVirtualXIDsDelayingChkpt(int *nvxids)
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
-<<<<<<< HEAD
-		if (pgxact->inCommit)
-=======
 		if (pgxact->delayChkpt)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			VirtualTransactionId vxid;
 
@@ -2963,11 +2950,7 @@ HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 
 		GET_VXID_FROM_PGPROC(vxid, *proc);
 
-<<<<<<< HEAD
-		if (pgxact->inCommit && VirtualTransactionIdIsValid(vxid))
-=======
 		if (pgxact->delayChkpt && VirtualTransactionIdIsValid(vxid))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			int			i;
 

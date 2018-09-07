@@ -310,11 +310,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	/*
 	 * Run the portal as appropriate.
 	 */
-<<<<<<< HEAD
 	PortalStart(portal, paramLI, eflags, GetActiveSnapshot(), NULL);
-=======
-	PortalStart(portal, paramLI, eflags, GetActiveSnapshot());
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	(void) PortalRun(portal, count, false, dest, dest, completionTag);
 

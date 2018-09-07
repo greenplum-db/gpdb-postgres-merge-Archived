@@ -22,13 +22,10 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "miscadmin.h"
 
 #include "access/heapam.h"
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/sysattr.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"

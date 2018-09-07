@@ -847,13 +847,6 @@ hash_search_with_hash_value(HTAB *hashp,
 	 */
 	if (action == HASH_ENTER || action == HASH_ENTER_NULL)
 	{
-<<<<<<< HEAD
-		/* ENTER_NULL does not work with palloc-based allocator */
-		if (action == HASH_ENTER_NULL)
-			Assert(hashp->alloc != DynaHashAlloc);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/*
 		 * Can't split if running in partitioned mode, nor if frozen, nor if
 		 * table is the subject of any active hash_seq_search scans.  Strange

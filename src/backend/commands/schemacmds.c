@@ -77,7 +77,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		Assert(stmt->schemaElts == NIL);
 
 		InitTempTableNamespace();
-		return;
+		return InvalidOid;
 	}
 
 	GetUserIdAndSecContext(&saved_uid, &save_sec_context);

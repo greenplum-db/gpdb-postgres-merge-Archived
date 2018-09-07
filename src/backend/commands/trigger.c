@@ -2799,10 +2799,6 @@ ltrmark:;
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		tuple.t_len = ItemIdGetLength(lp);
 		tuple.t_self = *tid;
-<<<<<<< HEAD
-=======
-		tuple.t_tableOid = RelationGetRelid(relation);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	}

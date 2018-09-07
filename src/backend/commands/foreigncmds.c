@@ -782,7 +782,6 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		}
 	}
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -790,9 +789,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
 	InvokeObjectPostAlterHook(ForeignDataWrapperRelationId, fdwId, 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -1369,7 +1366,6 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 
 	performDeletion(&object, DROP_CASCADE, 0);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1377,9 +1373,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
-=======
 	return umId;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
