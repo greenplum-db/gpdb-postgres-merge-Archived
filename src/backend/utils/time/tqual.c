@@ -121,7 +121,7 @@ markDirty(Buffer buffer, Relation relation, HeapTupleHeader tuple, bool isXmin)
 	if (isXmin)
 		xid = HeapTupleHeaderGetXmin(tuple);
 	else
-		xid = HeapTupleHeaderGetXmax(tuple);
+		xid = HeapTupleHeaderGetRawXmax(tuple);
 
 	if (xid == InvalidTransactionId)
 	{
@@ -185,7 +185,6 @@ SetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 	}
 
 	tuple->t_infomask |= infomask;
-<<<<<<< HEAD
 
 	switch(infomask)
 	{
@@ -203,9 +202,6 @@ SetHintBits(HeapTupleHeader tuple, Buffer buffer, Relation rel,
 	}
 
 	markDirty(buffer, rel, tuple, isXmin);
-=======
-	MarkBufferDirtyHint(buffer);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -397,13 +393,8 @@ HeapTupleSatisfiesSelf(Relation relation, HeapTupleHeader tuple, Snapshot snapsh
 		return true;
 	}
 
-<<<<<<< HEAD
 	SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-				HeapTupleHeaderGetXmax(tuple));
-=======
-	SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
 				HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return false;
 }
 
@@ -604,13 +595,8 @@ HeapTupleSatisfiesNow(Relation relation, HeapTupleHeader tuple, Snapshot snapsho
 		return true;
 	}
 
-<<<<<<< HEAD
 	SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-				HeapTupleHeaderGetXmax(tuple));
-=======
-	SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
 				HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return false;
 }
 
@@ -854,7 +840,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple, CommandId cur
 				MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
 				return HeapTupleBeingUpdated;
 
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
+			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			return HeapTupleMayBeUpdated;
 		}
 
@@ -864,7 +850,7 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple, CommandId cur
 			if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
 				return HeapTupleBeingUpdated;
 
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
+			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			return HeapTupleMayBeUpdated;
 		}
 
@@ -878,16 +864,11 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple, CommandId cur
 
 		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
 			return HeapTupleBeingUpdated;
-<<<<<<< HEAD
-		SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID,
-					InvalidTransactionId);
-=======
 
 		if (TransactionIdDidCommit(xmax))
 			return HeapTupleUpdated;
 		/* it must have aborted or crashed */
-		SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 		return HeapTupleMayBeUpdated;
 	}
 
@@ -921,13 +902,8 @@ HeapTupleSatisfiesUpdate(Relation relation, HeapTupleHeader tuple, CommandId cur
 		return HeapTupleMayBeUpdated;
 	}
 
-<<<<<<< HEAD
 	SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-				HeapTupleHeaderGetXmax(tuple));
-=======
-	SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
 				HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return HeapTupleUpdated;	/* updated by other */
 }
 
@@ -1116,13 +1092,8 @@ HeapTupleSatisfiesDirty(Relation relation, HeapTupleHeader tuple, Snapshot snaps
 		return true;
 	}
 
-<<<<<<< HEAD
 	SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-				HeapTupleHeaderGetXmax(tuple));
-=======
-	SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
 				HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return false;				/* updated by other */
 }
 
@@ -1237,7 +1208,8 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTupleHeader tuple, Snapshot snapsh
 			/*
 			 * MPP-8317: cursors can't always *tell* that this is the current transaction.
 			 */
-			Assert(QEDtxContextInfo.cursorContext || TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
+			Assert(QEDtxContextInfo.cursorContext ||
+				   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)));
 
 			if (HeapTupleHeaderGetCmax(tuple) >= snapshot->curcid)
 				return true;	/* deleted after scan started */
@@ -1303,7 +1275,16 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTupleHeader tuple, Snapshot snapsh
 		if (TransactionIdDidCommit(xmax))
 		{
 			/* updating transaction committed, but when? */
-			if (XidInMVCCSnapshot(xmax, snapshot))
+			inSnapshot = XidInMVCCSnapshot(xmax, snapshot,
+										   ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
+										   &setDistributedSnapshotIgnore);
+			if (setDistributedSnapshotIgnore)
+			{
+				tuple->t_infomask2 |= HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE;
+				markDirty(buffer, relation, tuple, /* isXmin */ false);
+			}
+
+			if (inSnapshot)
 				return true;	/* treat as still in progress */
 			return false;
 		}
@@ -1332,21 +1313,15 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTupleHeader tuple, Snapshot snapsh
 		}
 
 		/* xmax transaction committed */
-<<<<<<< HEAD
 		SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-					HeapTupleHeaderGetXmax(tuple));
-=======
-		SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
 					HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/*
 	 * OK, the deleting transaction committed too ... but when?
 	 */
-<<<<<<< HEAD
 	inSnapshot =
-			XidInMVCCSnapshot(HeapTupleHeaderGetXmax(tuple), snapshot,
+			XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot,
 							  ((tuple->t_infomask2 & HEAP_XMAX_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
 							  &setDistributedSnapshotIgnore);
 	if (setDistributedSnapshotIgnore)
@@ -1356,9 +1331,6 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTupleHeader tuple, Snapshot snapsh
 	}
 
 	if (inSnapshot)
-=======
-	if (XidInMVCCSnapshot(HeapTupleHeaderGetRawXmax(tuple), snapshot))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		return true;			/* treat as still in progress */
 
 	return false;
@@ -1487,14 +1459,14 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple, TransactionId
 										  HEAP_XMAX_KEYSHR_LOCK)) &&
 					MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
 					return HEAPTUPLE_LIVE;
-				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
+				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 
 			}
 			else
 			{
 				if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmax(tuple)))
 					return HEAPTUPLE_LIVE;
-				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
+				SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 			}
 		}
@@ -1548,13 +1520,8 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple, TransactionId
 			/*
 			 * Not in Progress, Not Committed, so either Aborted or crashed.
 			 */
-<<<<<<< HEAD
-			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID,
-						InvalidTransactionId);
-=======
-			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID, InvalidTransactionId);
+			SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID, InvalidTransactionId);
 			return HEAPTUPLE_LIVE;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 
 		/*
@@ -1570,15 +1537,9 @@ HeapTupleSatisfiesVacuum(Relation relation, HeapTupleHeader tuple, TransactionId
 	{
 		if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmax(tuple)))
 			return HEAPTUPLE_DELETE_IN_PROGRESS;
-<<<<<<< HEAD
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
-			SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
-						HeapTupleHeaderGetXmax(tuple));
-=======
 		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmax(tuple)))
-			SetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
+			SetHintBits(tuple, buffer, relation, HEAP_XMAX_COMMITTED,
 						HeapTupleHeaderGetRawXmax(tuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		else
 		{
 			/*

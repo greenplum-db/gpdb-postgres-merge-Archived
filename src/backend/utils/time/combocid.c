@@ -53,6 +53,7 @@
 #include "access/twophase.h"  /* max_prepared_xacts */
 
 #include "storage/buffile.h"
+#include "storage/proc.h"
 
 /*
  * We now maintain two hashtables.
@@ -149,18 +150,13 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 {
 	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
-<<<<<<< HEAD
-	/* We do not store cmax when locking a tuple */
-	Assert(!(tup->t_infomask & (HEAP_MOVED | HEAP_IS_LOCKED)));
+	Assert(!(tup->t_infomask & HEAP_MOVED));
 
 	/*
 	 * MPP-8317: cursors can't always *tell* that this is the current transaction.
 	 */
-	Assert(QEDtxContextInfo.cursorContext || TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tup)));
-=======
-	Assert(!(tup->t_infomask & HEAP_MOVED));
-	Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	Assert(QEDtxContextInfo.cursorContext ||
+		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
 
 	if (tup->t_infomask & HEAP_COMBOCID)
 		return GetRealCmax(HeapTupleHeaderGetXmin(tup), cid);
