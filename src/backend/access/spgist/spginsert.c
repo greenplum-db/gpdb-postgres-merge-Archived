@@ -45,14 +45,10 @@ spgistBuildCallback(Relation index, ItemPointer tupleId, Datum *values,
 	/* Work in temp context, and reset it after each tuple */
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-<<<<<<< HEAD
-	spgdoinsert(index, &buildstate->spgstate, tupleId, *values, *isnull);
-=======
 	/* No concurrent insertions can be happening, so failure is unexpected */
-	if (!spgdoinsert(index, &buildstate->spgstate, &htup->t_self,
+	if (!spgdoinsert(index, &buildstate->spgstate, tupleId,
 					 *values, *isnull))
 		elog(ERROR, "unexpected spgdoinsert() failure");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
@@ -165,7 +161,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage_rel(index, INIT_FORKNUM,
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
 					SPGIST_METAPAGE_BLKNO, page);
 
 	/* Likewise for the root page. */
@@ -175,7 +171,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_ROOT_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage_rel(index, INIT_FORKNUM,
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
 					SPGIST_ROOT_BLKNO, page);
 
 	/* Likewise for the null-tuples root page. */
@@ -185,7 +181,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_NULL_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
-		log_newpage_rel(index, INIT_FORKNUM,
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
 					SPGIST_NULL_BLKNO, page);
 
 	/*
