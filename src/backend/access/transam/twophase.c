@@ -1349,10 +1349,12 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
     /* Now we can determine the list of expected TLIs */
     expectedTLIs = XLogReadTimeLineHistory(ThisTimeLineID);
 
-
     /* get the two phase information from the xlog */
-	XLogCloseReadRecord();
-	tfRecord = XLogReadRecord(&tfXLogRecPtr, LOG, false);
+	/*
+	 * GPDB_93_MERGE_FIXME: GPDB used to do XLogCloseReadRecord() and then read,
+	 * do we need to perform something similar with new interface.
+	 */
+	tfRecord = GP_ReadRecord(&tfXLogRecPtr, LOG, false);
 	if (tfRecord == NULL)
 	{
 		/*
@@ -1624,7 +1626,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 		TwoPhaseFileHeader *hdr;
 		TransactionId xid;
 
-		tfRecord = XLogReadRecord(tfXLogRecPtr, LOG, false);
+		tfRecord = GP_ReadRecord(tfXLogRecPtr, LOG, false);
 		hdr = (TwoPhaseFileHeader *) XLogRecGetData(tfRecord);
 		xid = hdr->xid;
 
@@ -1782,7 +1784,7 @@ RecoverPreparedTransactions(void)
 		DistributedTransactionId distribXid;
 		int			i;
 
-		tfRecord = XLogReadRecord(tfXLogRecPtr, LOG, false);
+		tfRecord = GP_ReadRecord(tfXLogRecPtr, LOG, false);
 
 		buf = XLogRecGetData(tfRecord);
 

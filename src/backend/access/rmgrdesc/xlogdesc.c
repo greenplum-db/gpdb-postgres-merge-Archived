@@ -32,14 +32,17 @@ const struct config_enum_entry wal_level_options[] = {
 };
 
 void
-xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
+xlog_desc(StringInfo buf, XLogRecord *record)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = record->xl_info & ~XLR_INFO_MASK;
+	char		*rec = XLogRecGetData(record);
 
 	if (info == XLOG_CHECKPOINT_SHUTDOWN ||
 		info == XLOG_CHECKPOINT_ONLINE)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
+
+		CheckpointExtendedRecord ckptExtended;
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
 						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; multi %u; offset %u; "
@@ -51,6 +54,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 checkpoint->fullPageWrites ? "true" : "false",
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,
 						 checkpoint->nextOid,
+						 checkpoint->nextRelfilenode,
 						 checkpoint->nextMulti,
 						 checkpoint->nextMultiOffset,
 						 checkpoint->oldestXid,
@@ -59,6 +63,21 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 checkpoint->oldestMultiDB,
 						 checkpoint->oldestActiveXid,
 				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
+
+		UnpackCheckPointRecord(record, &ckptExtended);
+
+		if (ckptExtended.dtxCheckpointLen > 0)
+		{
+			appendStringInfo(buf,
+				 ", checkpoint record data length = %u, DTX committed count %d, DTX data length %u",
+							 record->xl_len,
+							 ckptExtended.dtxCheckpoint->committedCount,
+							 ckptExtended.dtxCheckpointLen);
+			if (ckptExtended.ptas != NULL)
+				appendStringInfo(buf,
+								 ", prepared transaction agg state count = %d",
+								 ckptExtended.ptas->count);
+		}
 	}
 	else if (info == XLOG_NOOP)
 	{
@@ -70,6 +89,13 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 		memcpy(&nextOid, rec, sizeof(Oid));
 		appendStringInfo(buf, "nextOid: %u", nextOid);
+	}
+	else if (info == XLOG_NEXTRELFILENODE)
+	{
+		Oid			nextRelfilenode;
+
+		memcpy(&nextRelfilenode, rec, sizeof(Oid));
+		appendStringInfo(buf, "nextRelfilenode: %u", nextRelfilenode);
 	}
 	else if (info == XLOG_SWITCH)
 	{

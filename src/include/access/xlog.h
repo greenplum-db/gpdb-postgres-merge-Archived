@@ -13,6 +13,7 @@
 
 #include "access/rmgr.h"
 #include "access/xlogdefs.h"
+#include "access/xlogreader.h"
 #include "catalog/gp_segment_config.h"
 #include "catalog/pg_control.h"
 #include "lib/stringinfo.h"
@@ -388,6 +389,9 @@ extern void xlog_print_redo_lsn_application(
 		XLogRecPtr		lsn,
 		const char		*funcName);
 
+extern XLogRecord *GP_ReadRecord(XLogReaderState *xlogreader,
+								 XLogRecPtr RecPtr, int emode,
+								 bool fetching_ckpt);
 extern void XLogCloseReadRecord(void);
 
 extern void XLogReadRecoveryCommandFile(int emode);
