@@ -1279,10 +1279,6 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 											   opfamily, prefix);
 			else
 				prefixsel = 1.0;
-<<<<<<< HEAD
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			heursel = prefixsel * rest_selec;
 
 			if (selec < 0)		/* fewer than 10 histogram entries? */
@@ -1869,16 +1865,10 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-<<<<<<< HEAD
-													  ObjectIdGetDatum(operator),
-													  PointerGetDatum(args),
-													  Int32GetDatum(varRelid)));
-=======
 												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 												   Int32GetDatum(varRelid)));
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (useOr)
 			{
 				s1 = s1 + s2 - s1 * s2;
@@ -1942,16 +1932,10 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-<<<<<<< HEAD
-													  ObjectIdGetDatum(operator),
-													  PointerGetDatum(args),
-													  Int32GetDatum(varRelid)));
-=======
 												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 												   Int32GetDatum(varRelid)));
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (useOr)
 			{
 				s1 = s1 + s2 - s1 * s2;

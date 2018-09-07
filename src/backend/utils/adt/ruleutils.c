@@ -414,11 +414,7 @@ static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
 static char *generate_function_name(Oid funcid, int nargs,
 					   List *argnames, Oid *argtypes,
-<<<<<<< HEAD
 					   bool has_variadic, bool *use_variadic_p);
-=======
-					   bool was_variadic, bool *use_variadic_p);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -4343,7 +4339,6 @@ get_select_query_def(Query *query, deparse_context *context,
 			get_rule_expr(query->limitCount, context, false);
 	}
 
-<<<<<<< HEAD
 	/* Add the SCATTER BY clause, if given */
 	if (query->scatterClause)
 	{
@@ -4372,10 +4367,7 @@ get_select_query_def(Query *query, deparse_context *context,
 		}
 	}
 
-	/* Add FOR UPDATE/SHARE clauses if present */
-=======
 	/* Add FOR [KEY] UPDATE/SHARE clauses if present */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (query->hasForUpdate)
 	{
 		foreach(l, query->rowMarks)
@@ -5601,13 +5593,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 	if (refname && (context->varprefix || attname == NULL))
 	{
-<<<<<<< HEAD
-		if (schemaname)
-			appendStringInfo(buf, "%s.",
-							 quote_identifier(schemaname));
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		appendStringInfoString(buf, quote_identifier(refname));
 		appendStringInfoChar(buf, '.');
 	}
@@ -6029,51 +6014,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
 }
 
-<<<<<<< HEAD
-
-/*
- * find_rte_by_refname		- look up an RTE by refname in a deparse context
- *
- * Returns NULL if there is no matching RTE or the refname is ambiguous.
- *
- * NOTE: this code is not really correct since it does not take account of
- * the fact that not all the RTEs in a rangetable may be visible from the
- * point where a Var reference appears.  For the purposes we need, however,
- * the only consequence of a false match is that we might stick a schema
- * qualifier on a Var that doesn't really need it.  So it seems close
- * enough.
- */
-static RangeTblEntry *
-find_rte_by_refname(const char *refname, deparse_context *context)
-{
-	RangeTblEntry *result = NULL;
-	ListCell   *nslist;
-
-	foreach(nslist, context->namespaces)
-	{
-		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
-		ListCell   *rtlist;
-
-		foreach(rtlist, dpns->rtable)
-		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtlist);
-
-			if (rte->eref &&
-				strcmp(rte->eref->aliasname, refname) == 0)
-			{
-				if (result)
-					return NULL;	/* it's ambiguous */
-				result = rte;
-			}
-		}
-		if (result)
-			break;
-	}
-	return result;
-}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Try to find the referenced expression for a PARAM_EXEC Param that might
  * reference a parameter supplied by an upper NestLoop or SubPlan plan node.
@@ -7131,7 +7071,8 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				appendStringInfo(buf, "TABLE(");
 				get_query_def(subquery, buf, context->namespaces, NULL,
-							  context->prettyFlags, context->indentLevel);
+							  context->prettyFlags, context->wrapColumn,
+							  context->indentLevel);
 				appendStringInfoChar(buf, ')');
 			}
 			break;
@@ -7841,25 +7782,12 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 
 	/* Print the aggregate name, schema-qualified if needed */
 	appendStringInfo(buf, "%s(%s",
-<<<<<<< HEAD
 					 generate_function_name(fnoid, nargs,
 											NIL, argtypes,
 											aggref->aggvariadic,
 											&use_variadic),
-					 aggref->aggdistinct ? "DISTINCT " : "");
-	if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
-=======
-					 generate_function_name(aggref->aggfnoid, nargs,
-											NIL, argtypes,
-											false, NULL),
 					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
-	/* aggstar can be set only in zero-argument aggregates */
-	if (aggref->aggstar)
-		appendStringInfoChar(buf, '*');
-	else
-		get_rule_expr((Node *) arglist, context, true);
-	if (aggref->aggorder != NIL)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
 	{
 		/*
 		 * Ordered-set aggregates do not use "*" syntax.  Also, we needn't
@@ -7997,11 +7925,7 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(wfunc->winfnoid, nargs,
-<<<<<<< HEAD
 											argnames, argtypes,
-=======
-											NIL, argtypes,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 											false, NULL));
 	/* winstar can be set only in zero-argument aggregates */
 	if (wfunc->winstar)
@@ -8587,12 +8511,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		if (printalias)
 			appendStringInfo(buf, " %s", quote_identifier(refname));
 
-<<<<<<< HEAD
-		if (rte->rtekind == RTE_FUNCTION || rte->rtekind == RTE_TABLEFUNCTION)
-=======
 		/* Print the column definitions or aliases, if needed */
-		if (rte->rtekind == RTE_FUNCTION && rte->funccoltypes != NIL)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		if ((rte->rtekind == RTE_FUNCTION || rte->rtekind == RTE_TABLEFUNCTION) &&
+			rte->funccoltypes != NIL)
 		{
 			/* Function returning RECORD, reconstruct the columndefs */
 			get_from_clause_coldeflist(colinfo,
@@ -9108,28 +9029,17 @@ generate_relation_name(Oid relid, List *namespaces)
  *		types.	(Those matter because of ambiguous-function resolution rules.)
  *
  * If we're dealing with a potentially variadic function (in practice, this
-<<<<<<< HEAD
  * means a FuncExpr or Aggref, not some other way of calling a function), then
  * has_variadic must specify whether variadic arguments have been merged,
  * and *use_variadic_p will be set to indicate whether to print VARIADIC in
  * the output.  For non-FuncExpr cases, has_variadic should be FALSE and
-=======
- * means a FuncExpr and not some other way of calling the function), then
- * was_variadic must specify whether VARIADIC appeared in the original call,
- * and *use_variadic_p will be set to indicate whether to print VARIADIC in
- * the output.	For non-FuncExpr cases, was_variadic should be FALSE and
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * use_variadic_p can be NULL.
  *
  * The result includes all necessary quoting and schema-prefixing.
  */
 static char *
 generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
-<<<<<<< HEAD
 					   bool has_variadic, bool *use_variadic_p)
-=======
-					   bool was_variadic, bool *use_variadic_p)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	char	   *result;
 	HeapTuple	proctup;
@@ -9155,55 +9065,22 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	 * Determine whether VARIADIC should be printed.  We must do this first
 	 * since it affects the lookup rules in func_get_detail().
 	 *
-<<<<<<< HEAD
-	 * Currently, we always print VARIADIC if the function has a merged
-	 * variadic-array argument.  Note that this is always the case for
-	 * functions taking a VARIADIC argument type other than VARIADIC ANY.
-	 *
-	 * In principle, if VARIADIC wasn't originally specified and the array
-	 * actual argument is deconstructable, we could print the array elements
-	 * separately and not print VARIADIC, thus more nearly reproducing the
-	 * original input.  For the moment that seems like too much complication
-	 * for the benefit, and anyway we do not know whether VARIADIC was
-	 * originally specified if it's a non-ANY type.
+	 * We always print VARIADIC if the function has a merged variadic-array
+	 * argument.  Note that this is always the case for functions taking a
+	 * VARIADIC argument type other than VARIADIC ANY.  If we omitted VARIADIC
+	 * and printed the array elements as separate arguments, the call could
+	 * match a newer non-VARIADIC function.
 	 */
 	if (use_variadic_p)
 	{
 		/* Parser should not have set funcvariadic unless fn is variadic */
 		Assert(!has_variadic || OidIsValid(procform->provariadic));
 		use_variadic = has_variadic;
-=======
-	 * Currently, we always print VARIADIC if the function is variadic and
-	 * takes a variadic type other than ANY.  (In principle, if VARIADIC
-	 * wasn't originally specified and the array actual argument is
-	 * deconstructable, we could print the array elements separately and not
-	 * print VARIADIC, thus more nearly reproducing the original input.  For
-	 * the moment that seems like too much complication for the benefit.)
-	 * However, if the function takes VARIADIC ANY, then the parser didn't
-	 * fold the arguments together into an array, so we must print VARIADIC if
-	 * and only if it was used originally.
-	 */
-	if (use_variadic_p)
-	{
-		if (OidIsValid(procform->provariadic))
-		{
-			if (procform->provariadic != ANYOID)
-				use_variadic = true;
-			else
-				use_variadic = was_variadic;
-		}
-		else
-			use_variadic = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		*use_variadic_p = use_variadic;
 	}
 	else
 	{
-<<<<<<< HEAD
 		Assert(!has_variadic);
-=======
-		Assert(!was_variadic);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		use_variadic = false;
 	}
 
@@ -9795,8 +9672,8 @@ partition_rule_def_worker(PartitionRule *rule, Node *start,
 			{
 				ListCell	*lc;
 				List		*l1;
-				int2		 nkeys  = part->parnatts;
-				int2		 parcol = 0;
+				int16		 nkeys  = part->parnatts;
+				int16		 parcol = 0;
 
 				appendStringInfoString(&str, "VALUES(");
 
@@ -10330,8 +10207,8 @@ pg_get_partition_template_def_worker(Oid relid, int prettyFlags,
 				{
 					ListCell	*lc;
 					List		*l1;
-					int2		 nkeys  = pn->part->parnatts;
-					int2		 parcol = 0;
+					int16		 nkeys  = pn->part->parnatts;
+					int16		 parcol = 0;
 
 					truncateStringInfo(&partidsid, 0);
 
