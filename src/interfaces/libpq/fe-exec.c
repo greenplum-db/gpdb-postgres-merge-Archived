@@ -61,12 +61,6 @@ static bool static_std_strings = false;
 
 static PGEvent *dupEvents(PGEvent *events, int count);
 static bool pqAddTuple(PGresult *res, PGresAttValue *tup);
-<<<<<<< HEAD
-static int pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
-				  const char **errmsgp, void *param);
-=======
-static bool PQsendQueryStart(PGconn *conn);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static int PQsendQueryGuts(PGconn *conn,
 				const char *command,
 				const char *stmtName,
@@ -1048,7 +1042,6 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
  *
  * On error, *errmsgp can be set to an error string to be returned.
  * If it is left NULL, the error is presumed to be "out of memory".
-<<<<<<< HEAD
  *
  * In single-row mode, we create a new result holding just the current row,
  * stashing the previous result in conn->next_result so that it becomes
@@ -1143,157 +1136,6 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 	return 1;
 
 	fail:
-	/* release locally allocated PGresult, if we made one */
-	if (res != conn->result)
-		PQclear(res);
-	return 0;
-}
-
-/*
- * PQsetRowProcessor
- *	  Set function that copies row data out from the network buffer,
- *	  along with a passthrough parameter for it.
- */
-void
-PQsetRowProcessor(PGconn *conn, PQrowProcessor func, void *param)
-{
-	if (!conn)
-		return;
-
-	if (func)
-	{
-		/* set custom row processor */
-		conn->rowProcessor = func;
-		conn->rowProcessorParam = param;
-	}
-	else
-	{
-		/* set default row processor */
-		conn->rowProcessor = pqStdRowProcessor;
-		conn->rowProcessorParam = conn;
-	}
-}
-
-/*
- * PQgetRowProcessor
- *	  Get current row processor of PGconn.
- *	  If param is not NULL, also store the passthrough parameter at *param.
- */
-PQrowProcessor
-PQgetRowProcessor(const PGconn *conn, void **param)
-{
-	if (!conn)
-	{
-		if (param)
-			*param = NULL;
-		return NULL;
-	}
-
-	if (param)
-		*param = conn->rowProcessorParam;
-	return conn->rowProcessor;
-}
-
-/*
- * pqStdRowProcessor
- *	  Add the received row to the PGresult structure
- *	  Returns 1 if OK, -1 if error occurred.
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
- *
- * In single-row mode, we create a new result holding just the current row,
- * stashing the previous result in conn->next_result so that it becomes
- * active again after pqPrepareAsyncResult().  This allows the result metadata
- * (column descriptions) to be carried forward to each result row.
- */
-int
-pqRowProcessor(PGconn *conn, const char **errmsgp)
-{
-	PGresult   *res = conn->result;
-	int			nfields = res->numAttributes;
-	const PGdataValue *columns = conn->rowBuf;
-	PGresAttValue *tup;
-	int			i;
-
-	/*
-	 * In single-row mode, make a new PGresult that will hold just this one
-	 * row; the original conn->result is left unchanged so that it can be used
-	 * again as the template for future rows.
-	 */
-	if (conn->singleRowMode)
-	{
-		/* Copy everything that should be in the result at this point */
-		res = PQcopyResult(res,
-						   PG_COPYRES_ATTRS | PG_COPYRES_EVENTS |
-						   PG_COPYRES_NOTICEHOOKS);
-		if (!res)
-			return 0;
-	}
-
-	/*
-	 * Basically we just allocate space in the PGresult for each field and
-	 * copy the data over.
-	 *
-	 * Note: on malloc failure, we return 0 leaving *errmsgp still NULL, which
-	 * caller will take to mean "out of memory".  This is preferable to trying
-	 * to set up such a message here, because evidently there's not enough
-	 * memory for gettext() to do anything.
-	 */
-	tup = (PGresAttValue *)
-		pqResultAlloc(res, nfields * sizeof(PGresAttValue), TRUE);
-	if (tup == NULL)
-		goto fail;
-
-	for (i = 0; i < nfields; i++)
-	{
-		int			clen = columns[i].len;
-
-		if (clen < 0)
-		{
-			/* null field */
-			tup[i].len = NULL_LEN;
-			tup[i].value = res->null_field;
-		}
-		else
-		{
-			bool		isbinary = (res->attDescs[i].format != 0);
-			char	   *val;
-
-			val = (char *) pqResultAlloc(res, clen + 1, isbinary);
-			if (val == NULL)
-				goto fail;
-
-			/* copy and zero-terminate the data (even if it's binary) */
-			memcpy(val, columns[i].value, clen);
-			val[clen] = '\0';
-
-			tup[i].len = clen;
-			tup[i].value = val;
-		}
-	}
-
-	/* And add the tuple to the PGresult's tuple array */
-	if (!pqAddTuple(res, tup))
-		goto fail;
-
-	/*
-	 * Success.  In single-row mode, make the result available to the client
-	 * immediately.
-	 */
-	if (conn->singleRowMode)
-	{
-		/* Change result status to special single-row value */
-		res->resultStatus = PGRES_SINGLE_TUPLE;
-		/* Stash old result for re-use later */
-		conn->next_result = conn->result;
-		conn->result = res;
-		/* And mark the result ready to return */
-		conn->asyncStatus = PGASYNC_READY;
-	}
-
-	return 1;
-
-fail:
 	/* release locally allocated PGresult, if we made one */
 	if (res != conn->result)
 		PQclear(res);

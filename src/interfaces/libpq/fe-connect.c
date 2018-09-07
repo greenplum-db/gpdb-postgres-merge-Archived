@@ -286,10 +286,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 		"SSL-Mode", "", 8,		/* sizeof("disable") == 8 */
 	offsetof(struct pg_conn, sslmode)},
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
 		"SSL-Compression", "", 1,
@@ -336,7 +333,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"replication", NULL, NULL, NULL,
 		"Replication", "D", 5,
 	offsetof(struct pg_conn, replication)},
-<<<<<<< HEAD
 
     /* CDB: qExec wants some info from qDisp before GUCs are processed */
 	{"gpqeid", NULL, "", NULL,
@@ -346,8 +342,6 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{GPCONN_TYPE, NULL, NULL, NULL,
 		"connection type", "D", 10,
 	offsetof(struct pg_conn, gpconntype)},
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -739,7 +733,6 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
 	const internalPQconninfoOption *option;
 
-<<<<<<< HEAD
 	for (option = PQconninfoOptions; option->keyword; option++)
 	{
 		if (option->connofs >= 0)
@@ -764,29 +757,6 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	}
 
 	return true;
-=======
-	/*
-	 * Move option values into conn structure
-	 *
-	 * Don't put anything cute here --- intelligence should be in
-	 * connectOptions2 ...
-	 *
-	 * XXX: probably worth checking strdup() return value here...
-	 */
-	for (option = PQconninfoOptions; option->keyword; option++)
-	{
-		const char *tmp = conninfo_getval(connOptions, option->keyword);
-
-		if (tmp && option->connofs >= 0)
-		{
-			char	  **connmember = (char **) ((char *) conn + option->connofs);
-
-			if (*connmember)
-				free(*connmember);
-			*connmember = tmp ? strdup(tmp) : NULL;
-		}
-	}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
