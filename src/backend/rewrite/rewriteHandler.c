@@ -2122,7 +2122,7 @@ relation_is_updatable(Oid reloid, bool include_triggers)
 
 #define ALL_EVENTS ((1 << CMD_INSERT) | (1 << CMD_UPDATE) | (1 << CMD_DELETE))
 
-	rel = try_relation_open(reloid, AccessShareLock);
+	rel = try_relation_open(reloid, AccessShareLock, false);
 
 	/*
 	 * If the relation doesn't exist, return zero rather than throwing an
