@@ -2428,11 +2428,8 @@ get_call_expr_arg_stable(Node *expr, int argnum)
  * Get the VARIADIC flag from the function invocation
  *
  * Returns false (the default assumption) if information is not available
-<<<<<<< HEAD
  *
  * Note this is generally only of interest to VARIADIC ANY functions
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 bool
 get_fn_expr_variadic(FmgrInfo *flinfo)
@@ -2453,7 +2450,6 @@ get_fn_expr_variadic(FmgrInfo *flinfo)
 	else
 		return false;
 }
-<<<<<<< HEAD
 
 /*-------------------------------------------------------------------------
  *		Support routines for procedural language implementations
@@ -2538,5 +2534,3 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 
 	return true;
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
