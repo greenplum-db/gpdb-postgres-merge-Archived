@@ -13,10 +13,7 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-=======
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/transam.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_type.h"
@@ -52,7 +49,6 @@ typedef enum					/* contexts of JSON parser */
 	JSON_PARSE_END				/* saw the end of a document, expect nothing */
 } JsonParseContext;
 
-<<<<<<< HEAD
 typedef enum					/* type categories for datum_to_json */
 {
 	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
@@ -74,16 +70,6 @@ static void parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_array_element(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_array(JsonLexContext *lex, JsonSemAction *sem);
-=======
-static inline void json_lex(JsonLexContext *lex);
-static inline void json_lex_string(JsonLexContext *lex);
-static inline void json_lex_number(JsonLexContext *lex, char *s);
-static inline void parse_scalar(JsonLexContext *lex, JsonSemAction sem);
-static void parse_object_field(JsonLexContext *lex, JsonSemAction sem);
-static void parse_object(JsonLexContext *lex, JsonSemAction sem);
-static void parse_array_element(JsonLexContext *lex, JsonSemAction sem);
-static void parse_array(JsonLexContext *lex, JsonSemAction sem);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
 static int	report_json_context(JsonLexContext *lex);
@@ -96,7 +82,6 @@ static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 				  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
 					   bool use_line_feeds);
-<<<<<<< HEAD
 static void json_categorize_type(Oid typoid,
 					 JsonTypeCategory *tcategory,
 					 Oid *outfuncoid);
@@ -174,90 +159,6 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 		report_parse_error(ctx, lex);
 }
 
-=======
-
-/* the null action object used for pure validation */
-static jsonSemAction nullSemAction =
-{
-	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL
-};
-static JsonSemAction NullSemAction = &nullSemAction;
-
-/* Recursive Descent parser support routines */
-
-/*
- * lex_peek
- *
- * what is the current look_ahead token?
-*/
-static inline JsonTokenType
-lex_peek(JsonLexContext *lex)
-{
-	return lex->token_type;
-}
-
-/*
- * lex_accept
- *
- * accept the look_ahead token and move the lexer to the next token if the
- * look_ahead token matches the token parameter. In that case, and if required,
- * also hand back the de-escaped lexeme.
- *
- * returns true if the token matched, false otherwise.
- */
-static inline bool
-lex_accept(JsonLexContext *lex, JsonTokenType token, char **lexeme)
-{
-	if (lex->token_type == token)
-	{
-		if (lexeme != NULL)
-		{
-			if (lex->token_type == JSON_TOKEN_STRING)
-			{
-				if (lex->strval != NULL)
-					*lexeme = pstrdup(lex->strval->data);
-			}
-			else
-			{
-				int			len = (lex->token_terminator - lex->token_start);
-				char	   *tokstr = palloc(len + 1);
-
-				memcpy(tokstr, lex->token_start, len);
-				tokstr[len] = '\0';
-				*lexeme = tokstr;
-			}
-		}
-		json_lex(lex);
-		return true;
-	}
-	return false;
-}
-
-/*
- * lex_accept
- *
- * move the lexer to the next token if the current look_ahead token matches
- * the parameter token. Otherwise, report an error.
- */
-static inline void
-lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
-{
-	if (!lex_accept(lex, token, NULL))
-		report_parse_error(ctx, lex);;
-}
-
-/*
- * All the defined	type categories are upper case , so use lower case here
- * so we avoid any possible clash.
- */
-/* fake type category for JSON so we can distinguish it in datum_to_json */
-#define TYPCATEGORY_JSON 'j'
-/* fake category for types that have a cast to json */
-#define TYPCATEGORY_JSON_CAST 'c'
-/* letters appearing in numeric output that aren't valid in a JSON number */
-#define NON_NUMERIC_LETTER "NnAaIiFfTtYy"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /* chars to consider as part of an alphanumeric token */
 #define JSON_ALPHANUMERIC_CHAR(c)  \
 	(((c) >= 'a' && (c) <= 'z') || \
@@ -266,7 +167,6 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 	 (c) == '_' || \
 	 IS_HIGHBIT_SET(c))
 
-<<<<<<< HEAD
 /*
  * Utility function to check if a string is a valid JSON number.
  *
@@ -304,8 +204,6 @@ IsValidJsonNumber(const char *str, int len)
 	return (!numeric_error) && (total_len == dummy_lex.input_length);
 }
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Input.
  */
@@ -318,11 +216,7 @@ json_in(PG_FUNCTION_ARGS)
 
 	/* validate it */
 	lex = makeJsonLexContext(result, false);
-<<<<<<< HEAD
 	pg_parse_json(lex, &nullSemAction);
-=======
-	pg_parse_json(lex, NullSemAction);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Internal representation is the same as text, for now */
 	PG_RETURN_TEXT_P(result);
@@ -374,11 +268,7 @@ json_recv(PG_FUNCTION_ARGS)
 
 	/* Validate it. */
 	lex = makeJsonLexContext(result, false);
-<<<<<<< HEAD
 	pg_parse_json(lex, &nullSemAction);
-=======
-	pg_parse_json(lex, NullSemAction);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -416,11 +306,7 @@ makeJsonLexContext(text *json, bool need_escapes)
  * pointer to a state object to be passed to those routines.
  */
 void
-<<<<<<< HEAD
 pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
-=======
-pg_parse_json(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	JsonTokenType tok;
 
@@ -456,11 +342,7 @@ pg_parse_json(JsonLexContext *lex, JsonSemAction sem)
  *	  - object field
  */
 static inline void
-<<<<<<< HEAD
 parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
-=======
-parse_scalar(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	char	   *val = NULL;
 	json_scalar_action sfunc = sem->scalar;
@@ -496,11 +378,7 @@ parse_scalar(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-<<<<<<< HEAD
 parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
-=======
-parse_object_field(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	/*
 	 * an object field is "fieldname" : value where value can be a scalar,
@@ -548,11 +426,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-<<<<<<< HEAD
 parse_object(JsonLexContext *lex, JsonSemAction *sem)
-=======
-parse_object(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	/*
 	 * an object is a possibly empty sequence of object fields, separated by
@@ -562,11 +436,8 @@ parse_object(JsonLexContext *lex, JsonSemAction sem)
 	json_struct_action oend = sem->object_end;
 	JsonTokenType tok;
 
-<<<<<<< HEAD
 	check_stack_depth();
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (ostart != NULL)
 		(*ostart) (sem->semstate);
 
@@ -605,11 +476,7 @@ parse_object(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-<<<<<<< HEAD
 parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
-=======
-parse_array_element(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	json_aelem_action astart = sem->array_element_start;
 	json_aelem_action aend = sem->array_element_end;
@@ -640,11 +507,7 @@ parse_array_element(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-<<<<<<< HEAD
 parse_array(JsonLexContext *lex, JsonSemAction *sem)
-=======
-parse_array(JsonLexContext *lex, JsonSemAction sem)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	/*
 	 * an array is a possibly empty sequence of array elements, separated by
@@ -653,11 +516,8 @@ parse_array(JsonLexContext *lex, JsonSemAction sem)
 	json_struct_action astart = sem->array_start;
 	json_struct_action aend = sem->array_end;
 
-<<<<<<< HEAD
 	check_stack_depth();
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (astart != NULL)
 		(*astart) (sem->semstate);
 
@@ -758,11 +618,7 @@ json_lex(JsonLexContext *lex)
 				break;
 			case '-':
 				/* Negative number. */
-<<<<<<< HEAD
 				json_lex_number(lex, s + 1, NULL, NULL);
-=======
-				json_lex_number(lex, s + 1);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			case '0':
@@ -776,11 +632,7 @@ json_lex(JsonLexContext *lex)
 			case '8':
 			case '9':
 				/* Positive number. */
-<<<<<<< HEAD
 				json_lex_number(lex, s, NULL, NULL);
-=======
-				json_lex_number(lex, s);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			default:
@@ -789,10 +641,10 @@ json_lex(JsonLexContext *lex)
 
 					/*
 					 * We're not dealing with a string, number, legal
-					 * punctuation mark, or end of string.	The only legal
+					 * punctuation mark, or end of string.  The only legal
 					 * tokens we might find here are true, false, and null,
 					 * but for error reporting purposes we scan until we see a
-					 * non-alphanumeric character.	That way, we can report
+					 * non-alphanumeric character.  That way, we can report
 					 * the whole word as an unexpected token, rather than just
 					 * some unintuitive prefix thereof.
 					 */
@@ -927,11 +779,7 @@ json_lex_string(JsonLexContext *lex)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 								errdetail("Unicode high surrogate must not follow a high surrogate."),
-=======
-								errdetail("high order surrogate must not follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 								report_json_context(lex)));
 						hi_surrogate = (ch & 0x3ff) << 10;
 						continue;
@@ -942,11 +790,7 @@ json_lex_string(JsonLexContext *lex)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 								errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
-								errdetail("low order surrogate must follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 								report_json_context(lex)));
 						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
 						hi_surrogate = -1;
@@ -956,11 +800,7 @@ json_lex_string(JsonLexContext *lex)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 								 errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
-								 errdetail("low order surrogate must follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 								 report_json_context(lex)));
 
 					/*
@@ -994,11 +834,7 @@ json_lex_string(JsonLexContext *lex)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 								 errdetail("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."),
-=======
-								 errdetail("Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding"),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 								 report_json_context(lex)));
 					}
 
@@ -1010,11 +846,7 @@ json_lex_string(JsonLexContext *lex)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 							 errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
-							 errdetail("low order surrogate must follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 							 report_json_context(lex)));
 
 				switch (*s)
@@ -1075,11 +907,7 @@ json_lex_string(JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 						 errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
-						 errdetail("low order surrogate must follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 						 report_json_context(lex)));
 
 			appendStringInfoChar(lex->strval, *s);
@@ -1091,11 +919,7 @@ json_lex_string(JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
 		errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
-		errdetail("low order surrogate must follow a high order surrogate."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */
@@ -1132,39 +956,22 @@ json_lex_string(JsonLexContext *lex)
  * the distance from lex->input to the token end+1 is returned to *total_len.
  */
 static inline void
-<<<<<<< HEAD
 json_lex_number(JsonLexContext *lex, char *s,
 				bool *num_err, int *total_len)
 {
 	bool		error = false;
 	int			len = s - lex->input;
-=======
-json_lex_number(JsonLexContext *lex, char *s)
-{
-	bool		error = false;
-	char	   *p;
-	int			len;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
-	len = s - lex->input;
 	/* Part (1): leading sign indicator. */
 	/* Caller already did this for us; so do nothing. */
 
 	/* Part (2): parse main digit string. */
-<<<<<<< HEAD
 	if (len < lex->input_length && *s == '0')
-=======
-	if (*s == '0')
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		s++;
 		len++;
 	}
-<<<<<<< HEAD
 	else if (len < lex->input_length && *s >= '1' && *s <= '9')
-=======
-	else if (*s >= '1' && *s <= '9')
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		do
 		{
@@ -1215,11 +1022,10 @@ json_lex_number(JsonLexContext *lex, char *s)
 	}
 
 	/*
-	 * Check for trailing garbage.	As in json_lex(), any alphanumeric stuff
+	 * Check for trailing garbage.  As in json_lex(), any alphanumeric stuff
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
-<<<<<<< HEAD
 	for (; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*s); s++, len++)
 		error = true;
 
@@ -1240,14 +1046,6 @@ json_lex_number(JsonLexContext *lex, char *s)
 		if (error)
 			report_invalid_token(lex);
 	}
-=======
-	for (p = s; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*p); p++, len++)
-		error = true;
-	lex->prev_token_terminator = lex->token_terminator;
-	lex->token_terminator = p;
-	if (error)
-		report_invalid_token(lex);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1558,11 +1356,8 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 {
 	char	   *outputstr;
 	text	   *jsontext;
-<<<<<<< HEAD
 
 	check_stack_depth();
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (is_null)
 	{
@@ -1603,14 +1398,9 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
 			break;
-<<<<<<< HEAD
 		case JSONTYPE_CAST:
 			/* outfuncoid refers to a cast function, not an output function */
 			jsontext = DatumGetTextP(OidFunctionCall1(outfuncoid, val));
-=======
-		case TYPCATEGORY_JSON_CAST:
-			jsontext = DatumGetTextP(OidFunctionCall1(typoutputfunc, val));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			outputstr = text_to_cstring(jsontext);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
@@ -1684,18 +1474,9 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	bool	   *nulls;
 	int16		typlen;
 	bool		typbyval;
-<<<<<<< HEAD
 	char		typalign;
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
-=======
-	char		typalign,
-				typdelim;
-	Oid			typioparam;
-	Oid			typoutputfunc;
-	TYPCATEGORY tcategory;
-	Oid			castfunc = InvalidOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1713,41 +1494,10 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	json_categorize_type(element_type,
 						 &tcategory, &outfuncoid);
 
-	if (element_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(element_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutputfunc = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
-
 	deconstruct_array(v, element_type, typlen, typbyval,
 					  typalign, &elements, &nulls,
 					  &nitems);
 
-<<<<<<< HEAD
-=======
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (element_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (element_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(element_type);
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	array_dim_to_json(result, 0, ndim, dim, elements, nulls, &count, tcategory,
 					  outfuncoid, use_line_feeds);
 
@@ -1792,15 +1542,8 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 		Datum		val;
 		bool		isnull;
 		char	   *attname;
-<<<<<<< HEAD
 		JsonTypeCategory tcategory;
 		Oid			outfuncoid;
-=======
-		TYPCATEGORY tcategory;
-		Oid			typoutput;
-		bool		typisvarlena;
-		Oid			castfunc = InvalidOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
@@ -1815,66 +1558,16 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 
 		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-<<<<<<< HEAD
 		if (isnull)
 		{
 			tcategory = JSONTYPE_NULL;
 			outfuncoid = InvalidOid;
 		}
-=======
-		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-						  &typoutput, &typisvarlena);
-
-		if (tupdesc->attrs[i]->atttypid > FirstNormalObjectId)
-		{
-			HeapTuple	cast_tuple;
-			Form_pg_cast castForm;
-
-			cast_tuple = SearchSysCache2(CASTSOURCETARGET,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-										 ObjectIdGetDatum(JSONOID));
-			if (HeapTupleIsValid(cast_tuple))
-			{
-				castForm = (Form_pg_cast) GETSTRUCT(cast_tuple);
-
-				if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-					castfunc = typoutput = castForm->castfunc;
-
-				ReleaseSysCache(cast_tuple);
-			}
-		}
-
-		if (castfunc != InvalidOid)
-			tcategory = TYPCATEGORY_JSON_CAST;
-		else if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
-			tcategory = TYPCATEGORY_ARRAY;
-		else if (tupdesc->attrs[i]->atttypid == RECORDOID)
-			tcategory = TYPCATEGORY_COMPOSITE;
-		else if (tupdesc->attrs[i]->atttypid == JSONOID)
-			tcategory = TYPCATEGORY_JSON;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		else
 			json_categorize_type(tupdesc->attrs[i]->atttypid,
 								 &tcategory, &outfuncoid);
 
-<<<<<<< HEAD
 		datum_to_json(val, isnull, result, tcategory, outfuncoid);
-=======
-		/*
-		 * If we have a toasted datum, forcibly detoast it here to avoid
-		 * memory leakage inside the type's output routine.
-		 */
-		if (typisvarlena && !isnull)
-			val = PointerGetDatum(PG_DETOAST_DATUM(origval));
-		else
-			val = origval;
-
-		datum_to_json(val, isnull, result, tcategory, typoutput);
-
-		/* Clean up detoasted copy, if any */
-		if (val != origval)
-			pfree(DatumGetPointer(val));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	appendStringInfoChar(result, '}');
@@ -1953,99 +1646,31 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 Datum
 to_json(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	Datum		val = PG_GETARG_DATUM(0);
 	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	StringInfo	result;
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
-=======
-	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	StringInfo	result;
-	Datum		orig_val,
-				val;
-	TYPCATEGORY tcategory;
-	Oid			typoutput;
-	bool		typisvarlena;
-	Oid			castfunc = InvalidOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (val_type == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
-<<<<<<< HEAD
 	json_categorize_type(val_type,
 						 &tcategory, &outfuncoid);
 
 	result = makeStringInfo();
 
 	datum_to_json(val, false, result, tcategory, outfuncoid);
-=======
-
-	result = makeStringInfo();
-
-	orig_val = PG_ARGISNULL(0) ? (Datum) 0 : PG_GETARG_DATUM(0);
-
-	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
-
-	if (val_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(val_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutput = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
-
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (val_type == RECORDARRAYOID)
-		tcategory = TYPCATEGORY_ARRAY;
-	else if (val_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(val_type);
-
-	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
-	 */
-	if (typisvarlena && orig_val != (Datum) 0)
-		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
-	else
-		val = orig_val;
-
-	datum_to_json(val, false, result, tcategory, typoutput);
-
-	/* Clean up detoasted copy, if any */
-	if (val != orig_val)
-		pfree(DatumGetPointer(val));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_RETURN_TEXT_P(cstring_to_text(result->data));
 }
 
 /*
  * json_agg transition function
-<<<<<<< HEAD
  *
  * aggregate input column as a json array value.
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 Datum
 json_agg_transfn(PG_FUNCTION_ARGS)
@@ -2054,18 +1679,9 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext,
 				oldcontext;
 	StringInfo	state;
-<<<<<<< HEAD
 	Datum		val;
 	JsonTypeCategory tcategory;
 	Oid			outfuncoid;
-=======
-	Datum		orig_val,
-				val;
-	TYPCATEGORY tcategory;
-	Oid			typoutput;
-	bool		typisvarlena;
-	Oid			castfunc = InvalidOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (val_type == InvalidOid)
 		ereport(ERROR,
@@ -2082,15 +1698,9 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Make this StringInfo in a context where it will persist for the
-<<<<<<< HEAD
 		 * duration of the aggregate call.  MemoryContextSwitchTo is only
 		 * needed the first time, as the StringInfo routines make sure they
 		 * use the right context to enlarge the object if necessary.
-=======
-		 * duration off the aggregate call. It's only needed for this initial
-		 * piece, as the StringInfo routines make sure they use the right
-		 * context to enlarge the object if necessary.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 */
 		oldcontext = MemoryContextSwitchTo(aggcontext);
 		state = makeStringInfo();
@@ -2107,7 +1717,6 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	/* fast path for NULLs */
 	if (PG_ARGISNULL(1))
 	{
-<<<<<<< HEAD
 		datum_to_json((Datum) 0, true, state, JSONTYPE_NULL, InvalidOid);
 		PG_RETURN_POINTER(state);
 	}
@@ -2121,80 +1730,15 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	/* add some whitespace if structured type and not first item */
 	if (!PG_ARGISNULL(0) &&
 		(tcategory == JSONTYPE_ARRAY || tcategory == JSONTYPE_COMPOSITE))
-=======
-		orig_val = (Datum) 0;
-		datum_to_json(orig_val, true, state, 0, InvalidOid);
-		PG_RETURN_POINTER(state);
-	}
-
-
-	orig_val = PG_GETARG_DATUM(1);
-
-	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
-
-	if (val_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(val_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutput = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
-
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (val_type == RECORDARRAYOID)
-		tcategory = TYPCATEGORY_ARRAY;
-	else if (val_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(val_type);
-
-	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
-	 */
-	if (typisvarlena)
-		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
-	else
-		val = orig_val;
-
-	if (!PG_ARGISNULL(0) &&
-	  (tcategory == TYPCATEGORY_ARRAY || tcategory == TYPCATEGORY_COMPOSITE))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		appendStringInfoString(state, "\n ");
 	}
 
-<<<<<<< HEAD
 	datum_to_json(val, false, state, tcategory, outfuncoid);
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal", which
 	 * is a pass-by-value type the same size as a pointer.  So we can safely
-=======
-	datum_to_json(val, false, state, tcategory, typoutput);
-
-	/* Clean up detoasted copy, if any */
-	if (val != orig_val)
-		pfree(DatumGetPointer(val));
-
-	/*
-	 * The transition type for array_agg() is declared to be "internal", which
-	 * is a pass-by-value type the same size as a pointer.	So we can safely
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * pass the ArrayBuildState pointer through nodeAgg.c's machinations.
 	 */
 	PG_RETURN_POINTER(state);
@@ -2213,7 +1757,6 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
-<<<<<<< HEAD
 	/* NULL result for no rows in, as is standard with aggregates */
 	if (state == NULL)
 		PG_RETURN_NULL();
@@ -2240,14 +1783,6 @@ catenate_stringinfo_string(StringInfo buffer, const char *addon)
 	memcpy(VARDATA(result) + buflen, addon, addlen);
 
 	return result;
-=======
-	if (state == NULL)
-		PG_RETURN_NULL();
-
-	appendStringInfoChar(state, ']');
-
-	PG_RETURN_TEXT_P(cstring_to_text(state->data));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
