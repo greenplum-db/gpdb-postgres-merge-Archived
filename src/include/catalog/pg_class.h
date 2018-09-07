@@ -168,6 +168,7 @@ DESCR("");
 #define		  RELKIND_VIEW			  'v'		/* view */
 #define		  RELKIND_COMPOSITE_TYPE  'c'		/* composite type */
 #define		  RELKIND_FOREIGN_TABLE   'f'		/* foreign table */
+#define		  RELKIND_UNCATALOGED	  'u'		/* not yet cataloged */
 #define		  RELKIND_MATVIEW		  'm'		/* materialized view */
 #define		  RELKIND_AOSEGMENTS	  'o'		/* AO segment files and eof's */
 #define		  RELKIND_AOBLOCKDIR	  'b'		/* AO block directory */

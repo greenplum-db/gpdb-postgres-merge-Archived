@@ -41,6 +41,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/objectaccess.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_namespace.h"

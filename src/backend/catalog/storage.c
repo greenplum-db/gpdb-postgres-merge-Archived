@@ -25,6 +25,7 @@
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
+#include "common/relpath.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
@@ -339,7 +340,7 @@ smgrDoPendingDeletes(bool isCommit)
 			if (pending->atCommit == isCommit)
 			{
 				SMgrRelation srel;
-				srel = smgropen(pending->relnode, pending->backend);
+				srel = smgropen(pending->relnode.node, pending->backend);
 
 				/* extend the array if needed (double the size) */
 				if (maxrels <= nrels)
@@ -358,7 +359,7 @@ smgrDoPendingDeletes(bool isCommit)
 
 	if (nrels > 0)
 	{
-		smgrdounlinkall(srels, nrels, false);
+		smgrdounlinkall(srels, nrels, false, pending->relnode.relstorage);
 
 		for (i = 0; i < nrels; i++)
 			smgrclose(srels[i]);

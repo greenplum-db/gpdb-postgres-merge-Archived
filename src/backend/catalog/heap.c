@@ -44,6 +44,7 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_attribute_encoding.h"
@@ -373,7 +374,6 @@ heap_create(const char *relname,
 									 relid,
 									 relfilenode,
 									 reltablespace,
-                                     relkind,           /*CDB*/
 									 shared_relation,
 									 mapped_relation,
 									 relpersistence,
@@ -1369,7 +1369,7 @@ heap_create_with_catalog(const char *relname,
 						 bool allow_system_table_mods,
 						 bool valid_opts,
 						 bool is_part_child,
-						 bool is_part_parent)
+						 bool is_part_parent,
 						 bool is_internal)
 {
 	Relation	pg_class_desc;

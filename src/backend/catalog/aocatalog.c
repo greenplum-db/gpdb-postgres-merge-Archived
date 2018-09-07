@@ -151,7 +151,8 @@ CreateAOAuxiliaryTable(
 											     true,
 												 /* valid_opts */ false,
 												 /* is_part_child */ false,
-												 is_part_parent);
+												 is_part_parent,
+												 true);
 
 	/* Make this table visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -177,7 +178,7 @@ CreateAOAuxiliaryTable(
 										 rel->rd_rel->reltablespace,
 										 collationObjectId, classObjectId, coloptions, (Datum) 0,
 										 true, false, false, false,
-										 true, false, false, NULL);
+										 true, false, false, true, NULL);
 
 		/* Unlock target table -- no one can see it */
 		heap_close(aoauxiliary_rel, ShareLock);

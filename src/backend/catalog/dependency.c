@@ -19,6 +19,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
@@ -58,18 +59,22 @@
 #include "catalog/pg_user_mapping.h"
 #include "cdb/cdbpartition.h"
 #include "commands/comment.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/seclabel.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
+#include "foreign/foreign.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -200,6 +205,8 @@ static bool object_address_present_add_flags(const ObjectAddress *object,
 static bool stack_address_present_add_flags(const ObjectAddress *object,
 								int flags,
 								ObjectAddressStack *stack);
+static void getRelationDescription(StringInfo buffer, Oid relid);
+static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
 
 
 /*

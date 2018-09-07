@@ -352,7 +352,7 @@ DATA(insert ( 3545	n 0 bytea_string_agg_transfn		bytea_string_agg_finalfn				-	-
 DATA(insert ( 7164	n 0 hyperloglog_add_item_agg_default hyperloglog_comp		hyperloglog_merge	-	-	-		-		-		f f 0	7157	0	0		0	_null_ _null_ ));
 
 /* json */
-DATA(insert ( 3175	json_agg_transfn	json_agg_finalfn		0	2281	_null_ ));
+DATA(insert ( 3175	n 0 json_agg_transfn				json_agg_finalfn						-	-	-	-		-		-		f f 0	2281	0	0		0	_null_ _null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c
