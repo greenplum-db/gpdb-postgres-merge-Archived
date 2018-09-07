@@ -43,6 +43,4 @@ extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
 				  char relpersistence);
 
-const char *tablespace_version_directory(void);
-
 #endif   /* CATALOG_H */
