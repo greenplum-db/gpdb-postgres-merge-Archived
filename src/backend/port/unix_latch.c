@@ -49,11 +49,7 @@
 #endif
 
 #include "miscadmin.h"
-<<<<<<< HEAD
-#include "portability/instr_time.h" /* INSTR_TIME_SET_CURRENT(), etc */
-=======
 #include "portability/instr_time.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
@@ -68,11 +64,6 @@ static int	selfpipe_readfd = -1;
 static int	selfpipe_writefd = -1;
 
 /* Private function prototypes */
-<<<<<<< HEAD
-static void initSelfPipe(void);
-static void drainSelfPipe(void);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void sendSelfPipeByte(void);
 static void drainSelfPipe(void);
 
@@ -246,12 +237,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if ((wakeEvents & WL_LATCH_SET) && latch->owner_pid != MyProcPid)
 		elog(ERROR, "cannot wait on a latch owned by another process");
 
-<<<<<<< HEAD
-	if (wakeEvents & WL_TIMEOUT)
-	{
-		INSTR_TIME_SET_CURRENT(start_time);
-		Assert(timeout >= 0);
-=======
 	/*
 	 * Initialize timeout if requested.  We must record the current time so
 	 * that we can determine the remaining timeout if the poll() or select()
@@ -263,7 +248,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		INSTR_TIME_SET_CURRENT(start_time);
 		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #ifndef HAVE_POLL
 		tv.tv_sec = cur_timeout / 1000L;
@@ -360,69 +344,10 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 						(errcode_for_socket_access(),
 						 errmsg("poll() failed: %m")));
 			}
-<<<<<<< HEAD
-
-			elogif(debug_latch, LOG,
-				"latch wait -- poll() rc = %d, this means wait on poll() was interrupted.",rc);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 		else if (rc == 0)
 		{
 			/* timeout exceeded */
-<<<<<<< HEAD
-			elogif(debug_latch, LOG,
-				"latch wait -- poll() rc = %d and wakeup event is timeout.",rc);
-
-			result |= WL_TIMEOUT;
-		}
-		/* at least one event occurred, so check revents values */
-		if ((wakeEvents & WL_SOCKET_READABLE) &&
-			(pfds[0].revents & (POLLIN | POLLHUP | POLLERR | POLLNVAL)))
-		{
-			/* data available in socket, or EOF/error condition */
-			result |= WL_SOCKET_READABLE;
-
-			elogif(debug_latch, LOG,
-				"latch wait -- poll() rc = %d and wakeup event was data became "
-				"available at socket or EOF/error condition.",rc);
-		}
-		if ((wakeEvents & WL_SOCKET_WRITEABLE) &&
-			(pfds[0].revents & POLLOUT))
-		{
-			result |= WL_SOCKET_WRITEABLE;
-
-			elogif(debug_latch, LOG,
-					"latch wait -- poll() rc = %d and wakeup event was socket "
-					"became writeable.",rc);
-		}
-
-		/*
-		 * We expect a POLLHUP when the remote end is closed, but because
-		 * we don't expect the pipe to become readable or to have any
-		 * errors either, treat those cases as postmaster death, too.
-		 */
-		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-			(pfds[nfds - 1].revents & (POLLHUP | POLLIN | POLLERR | POLLNVAL)))
-		{
-			/*
-			 * According to the select(2) man page on Linux, select(2) may
-			 * spuriously return and report a file descriptor as readable,
-			 * when it's not; and presumably so can poll(2).  It's not
-			 * clear that the relevant cases would ever apply to the
-			 * postmaster pipe, but since the consequences of falsely
-			 * returning WL_POSTMASTER_DEATH could be pretty unpleasant,
-			 * we take the trouble to positively verify EOF with
-			 * PostmasterIsAlive().
-			 */
-			if (!PostmasterIsAlive())
-			{
-				result |= WL_POSTMASTER_DEATH;
-
-				elogif(debug_latch, LOG,
-						"latch wait -- poll() rc = %d and wakeup event was death of the "
-						"postmaster.",rc);
-=======
 			if (wakeEvents & WL_TIMEOUT)
 				result |= WL_TIMEOUT;
 		}
@@ -461,7 +386,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				 */
 				if (!PostmasterIsAlive())
 					result |= WL_POSTMASTER_DEATH;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		}
 #else							/* !HAVE_POLL */
@@ -528,21 +452,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			}
 			if ((wakeEvents & WL_POSTMASTER_DEATH) &&
 			FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
-<<<<<<< HEAD
-		{
-			/*
-			 * According to the select(2) man page on Linux, select(2) may
-			 * spuriously return and report a file descriptor as readable,
-			 * when it's not; and presumably so can poll(2).  It's not clear
-			 * that the relevant cases would ever apply to the postmaster
-			 * pipe, but since the consequences of falsely returning
-			 * WL_POSTMASTER_DEATH could be pretty unpleasant, we take the
-			 * trouble to positively verify EOF with PostmasterIsAlive().
-			 */
-
-			if (!PostmasterIsAlive())
-				result |= WL_POSTMASTER_DEATH;
-=======
 			{
 				/*
 				 * According to the select(2) man page on Linux, select(2) may
@@ -557,7 +466,6 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				if (!PostmasterIsAlive())
 					result |= WL_POSTMASTER_DEATH;
 			}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 #endif   /* HAVE_POLL */
 

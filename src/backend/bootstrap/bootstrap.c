@@ -70,7 +70,6 @@ static void cleanup(void);
 AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
 
 Relation	boot_reldesc;		/* current relation descriptor */
-AuxProcType MyAuxProcType = NotAnAuxProcess;
 
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 int			numattr;			/* number of attributes for cur. rel */
@@ -233,16 +232,10 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		argc--;
 	}
 
-<<<<<<< HEAD
-	MyAuxProcType = CheckerProcess;
-
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:y:-:")) != -1)
-=======
 	/* If no -x argument, we are a CheckerProcess */
 	MyAuxProcType = CheckerProcess;
 
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:-:")) != -1)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:y:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -395,13 +388,8 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/*
 		 * Assign the ProcSignalSlot for an auxiliary process.	Since it
 		 * doesn't have a BackendId, the slot is statically allocated based on
-<<<<<<< HEAD
-		 * the auxiliary process type (MyAuxProcType).  Backends use slots indexed
-		 * in the range from 1 to MaxBackends (inclusive), so we use
-=======
 		 * the auxiliary process type (MyAuxProcType).	Backends use slots
 		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
 		 * auxiliary process.
 		 *
@@ -462,11 +450,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 
 		default:
-<<<<<<< HEAD
-			elog(PANIC, "unrecognized process type: %d", MyAuxProcType);
-=======
 			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			proc_exit(1);
 	}
 }

@@ -327,21 +327,10 @@ Boot_DeclareIndexStmt:
 
 					DefineIndex(stmt,
 								$4,
-<<<<<<< HEAD
-								InvalidOid,
-								$8,
-								NULL,
-								$10,
-								NULL, NIL, NIL,
-								false, false, false, false, false,
-								false, false, true, false, false,
-								NULL);
-=======
 								false,
 								false,
 								true, /* skip_build */
 								false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					do_end();
 				}
 		;
@@ -373,21 +362,10 @@ Boot_DeclareUniqueIndexStmt:
 
 					DefineIndex(stmt,
 								$5,
-<<<<<<< HEAD
-								InvalidOid,
-								$9,
-								NULL,
-								$11,
-								NULL, NIL, NIL,
-								true, false, false, false, false,
-								false, false, true, false, false,
-								NULL);
-=======
 								false,
 								false,
 								true, /* skip_build */
 								false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					do_end();
 				}
 		;
