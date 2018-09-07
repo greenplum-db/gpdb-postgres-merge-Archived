@@ -558,19 +558,6 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 static int
 Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath)
 {
-<<<<<<< HEAD
-	UNIXSOCK_PATH(sock_path, portNumber, unixSocketName);
-	if (strlen(sock_path) >= UNIXSOCK_PATH_BUFLEN)
-	{
-		ereport(LOG,
-				(errmsg("Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
-						sock_path,
-						(int) (UNIXSOCK_PATH_BUFLEN - 1))));
-		return STATUS_ERROR;
-	}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Grab an interlock file associated with the socket file.
 	 *

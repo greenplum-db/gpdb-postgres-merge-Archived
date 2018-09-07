@@ -20,6 +20,7 @@
 #define CDBVARS_H
 
 #include "access/xlogdefs.h"  /*XLogRecPtr*/
+#include "catalog/gp_segment_config.h" /* MASTER_CONTENT_ID */
 
 /*
  * ----- Declarations of Greenplum-specific global variables ------

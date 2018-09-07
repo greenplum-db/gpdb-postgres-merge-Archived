@@ -661,20 +661,13 @@ lo_truncate(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
 
-<<<<<<< HEAD
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("large objects are not supported")));
 
-	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("invalid large-object descriptor: %d", fd)));
-=======
 	lo_truncate_internal(fd, len);
 	PG_RETURN_INT32(0);
 }
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 Datum
 lo_truncate64(PG_FUNCTION_ARGS)
