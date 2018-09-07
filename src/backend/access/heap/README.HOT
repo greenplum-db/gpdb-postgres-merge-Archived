@@ -392,9 +392,6 @@ the index.  (indcheckxmin is only needed because non-concurrent CREATE
 INDEX doesn't want to wait; its stronger lock would create too much risk of
 deadlock if it did.)
 
-<<<<<<< HEAD
-=======
-
 DROP INDEX CONCURRENTLY
 -----------------------
 
@@ -416,7 +413,6 @@ of CREATE INDEX CONCURRENTLY --- but in that state, we *do* want
 transactions to examine the index, since they must consider it in
 HOT-safety checks.
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 Limitations and Restrictions
 ----------------------------
