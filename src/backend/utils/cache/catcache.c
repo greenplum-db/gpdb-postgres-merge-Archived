@@ -1057,7 +1057,7 @@ CrossCheckTuple(int cacheId,
 				elog(ERROR, "pg_class_oid_index is broken, oid=%d is pointing to tuple with oid=%d (xmin:%u xmax:%u)",
 					DatumGetObjectId(key1), HeapTupleGetOid(tuple),
 					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetXmax((tuple)->t_data));
+					HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 		case RELNAMENSP:
@@ -1068,7 +1068,7 @@ CrossCheckTuple(int cacheId,
 					" (xmin:%u xmax:%u)",
 					DatumGetCString(key1), rd_rel->relname.data,
 					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetXmax((tuple)->t_data));
+					HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 		case TYPEOID:
@@ -1077,7 +1077,7 @@ CrossCheckTuple(int cacheId,
 				elog(ERROR, "pg_type_oid_index is broken, oid=%d is pointing to tuple with oid=%d (xmin:%u xmax:%u)",
 					DatumGetObjectId(key1), HeapTupleGetOid(tuple),
 					HeapTupleHeaderGetXmin((tuple)->t_data),
-					HeapTupleHeaderGetXmax((tuple)->t_data));
+					HeapTupleHeaderGetRawXmax((tuple)->t_data));
 			}
 			break;
 	}

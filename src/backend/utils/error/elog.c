@@ -431,17 +431,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 */
 
 	/* Determine whether message is enabled for server log output */
-<<<<<<< HEAD
-	if (IsPostmasterEnvironment)
-		output_to_server = is_log_level_output(elevel, log_min_messages);
-	else
-	{
-		/* In bootstrap/standalone case, do not sort LOG out-of-order */
-		output_to_server = (elevel >= log_min_messages);
-	}
-=======
 	output_to_server = is_log_level_output(elevel, log_min_messages);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Determine whether message is enabled for client output */
 	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
@@ -1208,8 +1198,6 @@ errdetail_internal(const char *fmt,...)
 	return 0;					/* return value does not matter */
 }
 
-<<<<<<< HEAD
-=======
 
 /*
  * errdetail_log --- add a detail_log error message text to the current error
@@ -1228,11 +1216,11 @@ errdetail_log(const char *fmt,...)
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
+	errno = edata->saved_errno; /*CDB*/
 	return 0;					/* return value does not matter */
 }
 
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * errdetail_plural --- add a detail error message text to the current error,
  * with support for pluralization of the message text
@@ -1252,31 +1240,6 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 
 	/* enforce correct encoding */
 	verify_and_replace_mbstr(&(edata->detail), strlen(edata->detail));
-
-	MemoryContextSwitchTo(oldcontext);
-	recursion_depth--;
-	errno = edata->saved_errno; /*CDB*/
-	return 0;					/* return value does not matter */
-}
-
-
-/*
- * errdetail_log --- add a detail_log error message text to the current error
- */
-int
-errdetail_log(const char *fmt,...)
-{
-	ErrorData  *edata = &errordata[errordata_stack_depth];
-	MemoryContext oldcontext;
-
-	recursion_depth++;
-	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
-
-	EVALUATE_MESSAGE(detail_log, false, true);
-
-	/* enforce correct encoding */
-	verify_and_replace_mbstr(&(edata->detail_log), strlen(edata->detail_log));
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;

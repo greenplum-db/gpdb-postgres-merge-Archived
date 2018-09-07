@@ -860,14 +860,11 @@ CheckCachedPlan(CachedPlanSource *plansource)
  * hint rather than a hard constant.
  *
  * Planning work is done in the caller's memory context.  The finished plan
-<<<<<<< HEAD
+ * is in a child memory context, which typically should get reparented
+ * (unless this is a one-shot plan, in which case we don't copy the plan).
  * is in a child memory context, which typically should get reparented.
  *
  * GPDB: See GetCachedPlan() for why intoClause is added here.
-=======
- * is in a child memory context, which typically should get reparented
- * (unless this is a one-shot plan, in which case we don't copy the plan).
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static CachedPlan *
 BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
@@ -1015,19 +1012,15 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams, Into
 {
 	double		avg_custom_cost;
 
-<<<<<<< HEAD
 	/* Force to replan for CTAS */
 	if (intoClause != NULL)
 		return true;
 
-	/* Never any point in a custom plan if there's no parameters */
-=======
 	/* One-shot plans will always be considered custom */
 	if (plansource->is_oneshot)
 		return true;
 
 	/* Otherwise, never any point in a custom plan if there's no parameters */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (boundParams == NULL)
 		return false;
 	/* ... nor for transaction control statements */
