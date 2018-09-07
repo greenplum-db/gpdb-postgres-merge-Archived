@@ -1365,7 +1365,6 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 	/* isReset must be false already */
 	Assert(!header->sharedHeader->context->isReset);
 
-<<<<<<< HEAD
 	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
 
 #ifdef PGTRACE_ENABLED
@@ -1377,13 +1376,6 @@ MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char
 	return ret;
 }
 
-
-=======
-	return (*header->context->methods->realloc) (header->context,
-												 pointer, size);
-}
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * MemoryContextStrdup
  *		Like strdup(), but allocate from the specified context
@@ -1421,8 +1413,6 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
-<<<<<<< HEAD
-
 
 /*
  * floor_log2_Size
@@ -1475,5 +1465,3 @@ pgport_pfree(void *pointer)
 }
 
 #endif
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
