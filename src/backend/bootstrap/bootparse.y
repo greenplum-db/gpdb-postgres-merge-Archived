@@ -268,15 +268,11 @@ Boot_CreateStmt:
 													  (Datum) 0,
 													  false,
 													  true,
-<<<<<<< HEAD
+													  false,
 													  /* valid_opts */ false,
 													  /* is_part_child */ false,
 													  /* is_part_parent */ false);
 						elog(DEBUG4, "relation created with oid %u", id);
-=======
-													  false);
-						elog(DEBUG4, "relation created with OID %u", id);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					}
 					do_end();
 				}

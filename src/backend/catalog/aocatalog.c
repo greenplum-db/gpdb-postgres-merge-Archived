@@ -149,10 +149,10 @@ CreateAOAuxiliaryTable(
 											     (Datum) 0,
 												 /* use_user_acl */ false,
 											     true,
+												 true,
 												 /* valid_opts */ false,
 												 /* is_part_child */ false,
-												 is_part_parent,
-												 true);
+												 is_part_parent);
 
 	/* Make this table visible, else index creation will fail */
 	CommandCounterIncrement();

@@ -179,6 +179,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 								 false, 0,
 								 ONCOMMIT_NOOP, NULL /* GP Policy */,
 								 (Datum)0, false, true,
+								 false, /* is_internal */
 								 /* valid_opts */ true,
 								 /* is_part_child */ false,
 								 /* is_part_parent */ false);

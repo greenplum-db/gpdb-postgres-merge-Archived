@@ -1367,10 +1367,10 @@ heap_create_with_catalog(const char *relname,
 						 Datum reloptions,
 						 bool use_user_acl,
 						 bool allow_system_table_mods,
+						 bool is_internal,
 						 bool valid_opts,
 						 bool is_part_child,
-						 bool is_part_parent,
-						 bool is_internal)
+						 bool is_part_parent)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;

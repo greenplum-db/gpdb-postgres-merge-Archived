@@ -886,7 +886,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
                                           reloptions,
 										  true,
 										  allowSystemTableMods,
-<<<<<<< HEAD
+										  false,
 										  valid_opts,
 										  stmt->is_part_child,
 										  stmt->is_part_parent);
@@ -902,9 +902,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 		ereport(NOTICE,
 				(errmsg("OIDS=TRUE is not recommended for user-created tables. Use OIDS=FALSE to prevent wrap-around of the OID counter")));
 	}
-=======
-										  false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Store inheritance information for new rel. */
 	StoreCatalogInheritance(relationId, stmt->inhOids);
