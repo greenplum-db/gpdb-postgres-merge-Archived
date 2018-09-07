@@ -2317,8 +2317,6 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 static void
 _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 {
-    int i;
-
 	WRITE_NODE_TYPE("INDEXOPTINFO");
 
 	/* NB: this isn't a complete set of fields */
@@ -2328,26 +2326,7 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_INT_FIELD(tree_height);
 	WRITE_INT_FIELD(ncolumns);
-<<<<<<< HEAD
-
-	appendStringInfoLiteral(str, " :opfamily");
-	for (i = 0; i < node->ncolumns; i++)
-		appendStringInfo(str, " %u", node->opfamily[i]);
-
-	appendStringInfoLiteral(str, " :indexkeys");
-	for (i = 0; i < node->ncolumns; i++)
-		appendStringInfo(str, " %d", node->indexkeys[i]);
-
-	appendStringInfoLiteral(str, " :sortopfamily");
-	for (i = 0; i < node->ncolumns; i++)
-		appendStringInfo(str, " %u", node->sortopfamily[i]);
-
-	WRITE_BOOL_FIELD(reverse_sort);
-	WRITE_BOOL_FIELD(nulls_first);
-
-=======
 	/* array fields aren't really worth the trouble to print */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	WRITE_OID_FIELD(relam);
 	WRITE_OID_FIELD(amcostestimate);
 	/* indexprs is redundant since we print indextlist */
@@ -2357,12 +2336,7 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(immediate);
 	WRITE_BOOL_FIELD(hypothetical);
-<<<<<<< HEAD
-
-	WRITE_BOOL_FIELD(amoptionalkey);
-=======
 	/* we don't bother with fields copied from the pg_am entry */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
@@ -2893,7 +2867,6 @@ _outAlterOwnerStmt(StringInfo str, const AlterOwnerStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(object);
 	WRITE_NODE_FIELD(objarg);
-	WRITE_STRING_FIELD(addname);
 	WRITE_STRING_FIELD(newowner);
 }
 
@@ -2925,7 +2898,6 @@ _outAlterObjectSchemaStmt(StringInfo str, const AlterObjectSchemaStmt *node)
 	WRITE_NODE_FIELD(relation);
 	WRITE_NODE_FIELD(object);
 	WRITE_NODE_FIELD(objarg);
-	WRITE_STRING_FIELD(addname);
 	WRITE_STRING_FIELD(newschema);
 	WRITE_BOOL_FIELD(missing_ok);
 	WRITE_ENUM_FIELD(objectType,ObjectType);
@@ -3917,7 +3889,6 @@ _outSetOperationStmt(StringInfo str, const SetOperationStmt *node)
 	WRITE_NODE_FIELD(groupClauses);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 {
@@ -3954,11 +3925,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_NODE_FIELD(funccoltypes);
 			WRITE_NODE_FIELD(funccoltypmods);
 			WRITE_NODE_FIELD(funccolcollations);
-			if (node->funcuserdata)
-			{
-				appendStringInfoLiteral(str, " :funcuserdata ");
-				WRITE_BYTEA_FIELD(funcuserdata);
-			}
+			WRITE_BYTEA_FIELD(funcuserdata);
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
@@ -3993,7 +3960,6 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	 * stage, so no need to transfer it to the QEs.
 	 */
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 #ifndef COMPILING_BINARY_FUNCS
 static void

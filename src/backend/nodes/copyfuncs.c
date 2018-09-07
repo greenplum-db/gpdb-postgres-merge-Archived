@@ -3474,10 +3474,7 @@ _copyCopyStmt(const CopyStmt *from)
 	COPY_NODE_FIELD(attlist);
 	COPY_SCALAR_FIELD(is_from);
 	COPY_SCALAR_FIELD(is_program);
-<<<<<<< HEAD
 	COPY_SCALAR_FIELD(skip_ext_partition);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	COPY_STRING_FIELD(filename);
 	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(sreh);
@@ -4645,11 +4642,8 @@ _copyCreateSchemaStmt(const CreateSchemaStmt *from)
 	COPY_STRING_FIELD(schemaname);
 	COPY_STRING_FIELD(authid);
 	COPY_NODE_FIELD(schemaElts);
-<<<<<<< HEAD
-	COPY_SCALAR_FIELD(istemp);
-=======
 	COPY_SCALAR_FIELD(if_not_exists);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	COPY_SCALAR_FIELD(istemp);
 
 	return newnode;
 }

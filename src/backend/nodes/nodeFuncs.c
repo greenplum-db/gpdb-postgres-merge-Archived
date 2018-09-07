@@ -3217,11 +3217,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(stmt->havingClause, context))
 					return true;
-<<<<<<< HEAD
-				if (walker(stmt->withClause, context))
-=======
 				if (walker(stmt->windowClause, context))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					return true;
 				if (walker(stmt->valuesLists, context))
 					return true;

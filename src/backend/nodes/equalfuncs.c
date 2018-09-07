@@ -272,20 +272,7 @@ _equalFuncExpr(const FuncExpr *a, const FuncExpr *b)
 	COMPARE_SCALAR_FIELD(funcresulttype);
 	COMPARE_SCALAR_FIELD(funcretset);
 	COMPARE_SCALAR_FIELD(funcvariadic);
-<<<<<<< HEAD
-
-	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
-	 * that are equal() to both explicit and implicit coercions.
-	 */
-	if (a->funcformat != b->funcformat &&
-		a->funcformat != COERCE_DONTCARE &&
-		b->funcformat != COERCE_DONTCARE)
-		return false;
-
-=======
 	COMPARE_COERCIONFORM_FIELD(funcformat);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	COMPARE_SCALAR_FIELD(funccollid);
 	COMPARE_SCALAR_FIELD(inputcollid);
 	COMPARE_NODE_FIELD(args);
@@ -1208,10 +1195,7 @@ _equalCopyStmt(const CopyStmt *a, const CopyStmt *b)
 	COMPARE_NODE_FIELD(attlist);
 	COMPARE_SCALAR_FIELD(is_from);
 	COMPARE_SCALAR_FIELD(is_program);
-<<<<<<< HEAD
 	COMPARE_SCALAR_FIELD(skip_ext_partition);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	COMPARE_STRING_FIELD(filename);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(sreh);
@@ -2075,11 +2059,8 @@ _equalCreateSchemaStmt(const CreateSchemaStmt *a, const CreateSchemaStmt *b)
 	COMPARE_STRING_FIELD(schemaname);
 	COMPARE_STRING_FIELD(authid);
 	COMPARE_NODE_FIELD(schemaElts);
-<<<<<<< HEAD
-	COMPARE_SCALAR_FIELD(istemp);
-=======
 	COMPARE_SCALAR_FIELD(if_not_exists);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	COMPARE_SCALAR_FIELD(istemp);
 
 	return true;
 }

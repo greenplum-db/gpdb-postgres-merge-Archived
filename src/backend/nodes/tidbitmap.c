@@ -31,13 +31,10 @@
 
 #include <limits.h>
 
-<<<<<<< HEAD
 #include "access/htup.h"
+#include "access/htup_details.h"
 #include "access/bitmap.h"		/* XXX: remove once pull_stream is generic */
 #include "executor/instrument.h"	/* Instrumentation */
-=======
-#include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
