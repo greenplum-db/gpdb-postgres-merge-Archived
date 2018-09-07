@@ -39,10 +39,7 @@ PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 SHLIB_LINK = $(perl_embed_ldflags)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=plperl  --load-extension=plperlu
-<<<<<<< HEAD
 REGRESS_OPTS += --init-file=init_file
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 REGRESS = plperl plperl_lc plperl_trigger plperl_shared plperl_elog plperl_util plperl_init plperlu plperl_array
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases

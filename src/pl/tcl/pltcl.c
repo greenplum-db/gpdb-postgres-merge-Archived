@@ -18,17 +18,14 @@
 #define CONST84
 #endif
 
-<<<<<<< HEAD
-#include "catalog/namespace.h"
-=======
 /* ... and for Tcl 8.6. */
 #ifndef CONST86
 #define CONST86
 #endif
 
 #include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/xact.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"

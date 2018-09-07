@@ -22,12 +22,8 @@
 #include "access/tupconvert.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
-#include "executor/spi_priv.h"
-=======
 #include "executor/spi.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -286,29 +282,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 
 					if (!fcinfo->argnull[i])
 					{
-<<<<<<< HEAD
-						HeapTupleHeader td;
-						Oid			tupType;
-						int32		tupTypmod;
-						TupleDesc	tupdesc;
-						HeapTupleData tmptup;
-
-						td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
-						/* Extract rowtype info and find a tupdesc */
-						tupType = HeapTupleHeaderGetTypeId(td);
-						tupTypmod = HeapTupleHeaderGetTypMod(td);
-						tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-						/* Build a temporary HeapTuple control structure */
-						tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-						ItemPointerSetInvalid(&(tmptup.t_self));
-						tmptup.t_data = td;
-						exec_move_row(&estate, NULL, row, &tmptup, tupdesc);
-						ReleaseTupleDesc(tupdesc);
-=======
 						/* Assign row value from composite datum */
 						exec_move_row_from_datum(&estate, NULL, row,
 												 fcinfo->arg[i]);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					}
 					else
 					{
@@ -3988,22 +3964,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a row variable")));
-<<<<<<< HEAD
-					/* Source is a tuple Datum, so safe to do this: */
-					td = DatumGetHeapTupleHeader(value);
-					/* Extract rowtype info and find a tupdesc */
-					tupType = HeapTupleHeaderGetTypeId(td);
-					tupTypmod = HeapTupleHeaderGetTypMod(td);
-					tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-					/* Build a temporary HeapTuple control structure */
-					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-					ItemPointerSetInvalid(&(tmptup.t_self));
-					tmptup.t_data = td;
-					exec_move_row(estate, NULL, row, &tmptup, tupdesc);
-					ReleaseTupleDesc(tupdesc);
-=======
 					exec_move_row_from_datum(estate, NULL, row, value);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 				break;
 			}
@@ -4027,23 +3988,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a record variable")));
-<<<<<<< HEAD
-
-					/* Source is a tuple Datum, so safe to do this: */
-					td = DatumGetHeapTupleHeader(value);
-					/* Extract rowtype info and find a tupdesc */
-					tupType = HeapTupleHeaderGetTypeId(td);
-					tupTypmod = HeapTupleHeaderGetTypMod(td);
-					tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-					/* Build a temporary HeapTuple control structure */
-					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-					ItemPointerSetInvalid(&(tmptup.t_self));
-					tmptup.t_data = td;
-					exec_move_row(estate, rec, NULL, &tmptup, tupdesc);
-					ReleaseTupleDesc(tupdesc);
-=======
 					exec_move_row_from_datum(estate, rec, NULL, value);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 				break;
 			}
@@ -5064,18 +5009,12 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	cplan = SPI_plan_get_cached_plan(expr->plan);
 
-<<<<<<< HEAD
-	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, true, NULL);
-	Assert(cplan == plansource->gplan);
-=======
 	/*
 	 * We can't get a failure here, because the number of CachedPlanSources in
 	 * the SPI plan can't change from what exec_simple_check_plan saw; it's a
 	 * property of the raw parsetree generated from the query text.
 	 */
 	Assert(cplan != NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (cplan->generation != expr->expr_simple_generation)
 	{
@@ -5522,7 +5461,6 @@ get_tuple_from_datum(Datum value)
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_tableOid = InvalidOid;
 	tmptup.t_data = td;
 
 	/* Build a copy and return it */
@@ -5578,7 +5516,6 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 	ItemPointerSetInvalid(&(tmptup.t_self));
-	tmptup.t_tableOid = InvalidOid;
 	tmptup.t_data = td;
 
 	/* Do the move */
@@ -6043,15 +5980,10 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 
 	/* Get the generic plan for the query */
-<<<<<<< HEAD
-	cplan = GetCachedPlan(plansource, NULL, true, NULL);
-	Assert(cplan == plansource->gplan);
-=======
 	cplan = SPI_plan_get_cached_plan(expr->plan);
 
 	/* Can't fail, because we checked for a single CachedPlanSource above */
 	Assert(cplan != NULL);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Share the remaining work with recheck code path */
 	exec_simple_recheck_plan(expr, cplan);

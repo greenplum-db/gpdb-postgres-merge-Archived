@@ -28,27 +28,24 @@ python_includespec := $(subst \,/,$(python_includespec))
 override python_libspec =
 endif
 
-<<<<<<< HEAD
+# GPDB_93_MERGE_FIXME: This OS X block was removed in upstream, but we had some
+# GPDB hacks in it. Do we still need something special here?
 # Darwin (OS X) has its own ideas about how to do this.
-ifeq ($(PORTNAME), darwin)
-shared_libpython = yes
-# Replaced to allow use of Greenplum-provided Python
-#override python_libspec = -framework Python
-#override python_additional_libs =
-# sys.prefix reflects the runtime location of the python tree;
-# the GP install has the dylib in the lib directory of that tree.
-override python_libspec = -L$(shell ${PYTHON} -c "import sys, os; print (os.path.join(sys.prefix, 'lib'))") -lpython${python_version}
-endif
+
+# ifeq ($(PORTNAME), darwin)
+# shared_libpython = yes
+# # Replaced to allow use of Greenplum-provided Python
+# #override python_libspec = -framework Python
+# #override python_additional_libs =
+# # sys.prefix reflects the runtime location of the python tree;
+# # the GP install has the dylib in the lib directory of that tree.
+# override python_libspec = -L$(shell ${PYTHON} -c "import sys, os; print (os.path.join(sys.prefix, 'lib'))") -lpython${python_version}
+# endif
 
 override python_libspec := -L${python_configdir}/../.. ${python_libspec}
 
-# If we don't have a shared library and the platform doesn't allow it
-# to work without, we have to skip it.
-ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
-=======
 # If we don't have a shared library, we have to skip it.
 ifeq ($(shared_libpython),yes)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 # do not fail build due to warnings in this code
 #override CPPFLAGS := -Wno-error -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS) -DPLPYTHON_SHOW_DEBUG_INFO

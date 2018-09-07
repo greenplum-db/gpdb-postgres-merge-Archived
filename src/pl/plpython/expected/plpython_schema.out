@@ -4,56 +4,29 @@ CREATE TABLE users (
 	fname text not null,
 	lname text not null,
 	username text,
-<<<<<<< HEAD
 	userid serial
 	-- , PRIMARY KEY(lname, fname)
 	) DISTRIBUTED BY (userid);
-NOTICE:  CREATE TABLE will create implicit sequence "users_userid_seq" for serial column "users.userid"
-=======
-	userid serial,
-	PRIMARY KEY(lname, fname)
-	) ;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE INDEX users_username_idx ON users(username);
 CREATE INDEX users_fname_idx ON users(fname);
 CREATE INDEX users_lname_idx ON users(lname);
 CREATE INDEX users_userid_idx ON users(userid);
 CREATE TABLE taxonomy (
 	id serial primary key,
-<<<<<<< HEAD
 	name text
 	) DISTRIBUTED BY (id);
-NOTICE:  CREATE TABLE will create implicit sequence "taxonomy_id_seq" for serial column "taxonomy.id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "taxonomy_pkey" for table "taxonomy"
 CREATE TABLE entry (
 	accession text not null primary key,
 	eid serial,
 	txid int2 not null
 	) DISTRIBUTED BY (accession);
-NOTICE:  CREATE TABLE will create implicit sequence "entry_eid_seq" for serial column "entry.eid"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "entry_pkey" for table "entry"
-=======
-	name text unique
-	) ;
-CREATE TABLE entry (
-	accession text not null primary key,
-	eid serial unique,
-	txid int2 not null references taxonomy(id)
-	) ;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TABLE sequences (
 	eid int4 not null,
 	pid serial primary key,
 	product text not null,
 	sequence text not null,
 	multipart bool default 'false'
-<<<<<<< HEAD
 	) DISTRIBUTED BY (pid);
-NOTICE:  CREATE TABLE will create implicit sequence "sequences_pid_seq" for serial column "sequences.pid"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "sequences_pkey" for table "sequences"
-=======
-	) ;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE INDEX sequences_product_idx ON sequences(product) ;
 CREATE TABLE xsequences (
 	pid int4 not null,

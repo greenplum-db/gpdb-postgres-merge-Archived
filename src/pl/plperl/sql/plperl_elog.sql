@@ -76,7 +76,6 @@ return $a + $b;
 $$;
 
 select indirect_die_caller();
-<<<<<<< HEAD
 
 -- Test non-ASCII error messages
 --
@@ -92,5 +91,3 @@ create or replace function error_with_nbsp() returns void language plperl as $$
 $$;
 
 select error_with_nbsp();
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
