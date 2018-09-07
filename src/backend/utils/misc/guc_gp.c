@@ -4279,7 +4279,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&repl_catchup_within_range,
-		1, 0, XLogSegsPerFile,
+		1, 0, UINT_MAX / XLogSegSize,
 		NULL, NULL, NULL
 	},
 	{

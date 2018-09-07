@@ -1696,13 +1696,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxConnections,
-<<<<<<< HEAD
 		200, 10, MAX_BACKENDS,
-		check_maxconnections, assign_maxconnections, NULL
-=======
-		100, 1, MAX_BACKENDS,
 		check_maxconnections, NULL, NULL
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	},
 
 	{
@@ -2131,13 +2126,8 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-<<<<<<< HEAD
-		{"replication_timeout", PGC_SUSET, REPLICATION_SENDING,
-			gettext_noop("Sets the maximum time to wait for WAL replication (Master Mirroring)"),
-=======
 		{"wal_sender_timeout", PGC_SIGHUP, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum time to wait for WAL replication."),
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			NULL,
 			GUC_UNIT_MS | GUC_SUPERUSER_ONLY
 		},
@@ -2150,13 +2140,9 @@ static struct config_int ConfigureNamesInt[] =
 		{"commit_delay", PGC_SUSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
-<<<<<<< HEAD
 			NULL,
 			GUC_GPDB_ADDOPT | GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_DISALLOW_USER_SET
-=======
-			NULL
 			/* we have no microseconds designation, so can't supply units here */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		},
 		&CommitDelay,
 		0, 0, 100000,
@@ -2325,8 +2311,8 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_max_workers,
-		3, 1, INT_MAX / 4,
-		NULL, assign_autovacuum_max_workers, NULL
+		3, 1, MAX_BACKENDS,
+		check_autovacuum_max_workers, NULL, NULL
 	},
 
 	{

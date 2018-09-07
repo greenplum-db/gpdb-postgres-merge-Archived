@@ -155,8 +155,6 @@ max_prepared_transactions = 250		# can be 0 or more
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 
-<<<<<<< HEAD
-=======
 
 #------------------------------------------------------------------------------
 # WRITE AHEAD LOG
@@ -246,7 +244,6 @@ max_prepared_transactions = 250		# can be 0 or more
 					# in milliseconds; 0 disables
 
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #------------------------------------------------------------------------------
 # QUERY TUNING
 #------------------------------------------------------------------------------
@@ -540,13 +537,9 @@ log_autostats=off	# print additional autostats information
 #default_transaction_read_only = off
 #default_transaction_deferrable = off
 #session_replication_role = 'origin'
-<<<<<<< HEAD
-#statement_timeout = 0			# 0 is disabled
 #idle_session_gang_timeout = 18s 	# in milliseconds, 0 is disabled
-=======
 #statement_timeout = 0			# in milliseconds, 0 is disabled
 #lock_timeout = 0			# in milliseconds, 0 is disabled
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
 #bytea_output = 'hex'			# hex, escape
