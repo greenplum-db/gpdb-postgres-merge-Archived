@@ -38,11 +38,8 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_proc.h"
-<<<<<<< HEAD
 #include "executor/instrument.h"
-=======
 #include "lib/ilist.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
@@ -281,18 +278,13 @@ static void pgstat_sighup_handler(SIGNAL_ARGS);
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
 					 Oid tableoid, bool create);
-<<<<<<< HEAD
 
 static PgStat_StatQueueEntry *pgstat_get_queue_entry(Oid queueid, bool create); /*GPDB*/
 
-static void pgstat_write_statsfile(bool permanent);
-static HTAB *pgstat_read_statsfile(Oid onlydb, bool permanent);
-=======
 static void pgstat_write_statsfiles(bool permanent, bool allDbs);
 static void pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent);
 static HTAB *pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep);
 static void pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash, bool permanent);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void backend_read_statsfile(void);
 static void pgstat_read_current_status(void);
 
@@ -3590,13 +3582,9 @@ static void
 pgstat_write_statsfiles(bool permanent, bool allDbs)
 {
 	HASH_SEQ_STATUS hstat;
+	HASH_SEQ_STATUS qstat;
 	PgStat_StatDBEntry *dbentry;
-<<<<<<< HEAD
-	PgStat_StatTabEntry *tabentry;
-	PgStat_StatFuncEntry *funcentry;
 	PgStat_StatQueueEntry *queueentry;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	FILE	   *fpout;
 	int32		format_id;
 	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
@@ -3667,8 +3655,8 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	/*
 	 * Walk through resource queue stats.
 	 */
-	hash_seq_init(&fstat, pgStatQueueHash);
-	while ((queueentry = (PgStat_StatQueueEntry *) hash_seq_search(&fstat)) != NULL)
+	hash_seq_init(&qstat, pgStatQueueHash);
+	while ((queueentry = (PgStat_StatQueueEntry *) hash_seq_search(&qstat)) != NULL)
 	{
 		fputc('Q', fpout);
 		fwrite(queueentry, sizeof(PgStat_StatQueueEntry), 1, fpout);
@@ -3880,26 +3868,15 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatDBEntry dbbuf;
-<<<<<<< HEAD
-	PgStat_StatTabEntry *tabentry;
-	PgStat_StatTabEntry tabbuf;
-	PgStat_StatFuncEntry funcbuf;
-	PgStat_StatFuncEntry *funcentry;
-	PgStat_StatQueueEntry queuebuf;	/* GPDB */
-	PgStat_StatQueueEntry *queueentry; /* GPDB */
 	HASHCTL		hash_ctl;
 	HTAB	   *dbhash;
-	HTAB	   *tabhash = NULL;
-	HTAB	   *funchash = NULL;
-	HTAB      *queuehash = NULL;  /* GPDB */	
-=======
-	HASHCTL		hash_ctl;
-	HTAB	   *dbhash;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
+	PgStat_StatQueueEntry queuebuf;	/* GPDB */
+	PgStat_StatQueueEntry *queueentry; /* GPDB */
+	HTAB	   *queuehash = NULL;  /* GPDB */
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -4073,6 +4050,38 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 
 				break;
 
+				/*
+				 * 'Q'	A PgStat_StatQueueEntry follows.  (GPDB)
+				 */
+			case 'Q':
+				if (fread(&queuebuf, 1, sizeof(PgStat_StatQueueEntry),
+						  fpin) != sizeof(PgStat_StatQueueEntry))
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					goto done;
+				}
+
+				if (queuehash == NULL)
+					break;
+
+				/*
+				 * Add it to the queue hash.
+				 */
+				queueentry = (PgStat_StatQueueEntry *) hash_search(queuehash,
+													(void *) &queuebuf.queueid,
+														 HASH_ENTER, &found);
+
+				if (found)
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					goto done;
+				}
+
+				memcpy(queueentry, &queuebuf, sizeof(PgStat_StatQueueEntry));
+				break;
+
 			case 'E':
 				goto done;
 
@@ -4227,38 +4236,6 @@ pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
 				}
 
 				memcpy(funcentry, &funcbuf, sizeof(funcbuf));
-				break;
-
-				/*
-				 * 'Q'	A PgStat_StatQueueEntry follows.  (GPDB)
-				 */
-			case 'Q':
-				if (fread(&queuebuf, 1, sizeof(PgStat_StatQueueEntry),
-						  fpin) != sizeof(PgStat_StatQueueEntry))
-				{
-					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
-					goto done;
-				}
-
-				if (queuehash == NULL)
-					break;
-
-				/*
-				 * Add it to the queue hash.
-				 */
-				queueentry = (PgStat_StatQueueEntry *) hash_search(queuehash,
-													(void *) &queuebuf.queueid,
-														 HASH_ENTER, &found);
-				
-				if (found)
-				{
-					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
-					goto done;
-				}
-
-				memcpy(queueentry, &queuebuf, sizeof(PgStat_StatQueueEntry));
 				break;
 
 				/*

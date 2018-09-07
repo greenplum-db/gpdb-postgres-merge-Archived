@@ -198,16 +198,6 @@ main(int argc, char *argv[])
 
 	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 		AuxiliaryProcessMain(argc, argv);		/* does not return */
-<<<<<<< HEAD
-
-	if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
-		exit(GucInfoMain());
-
-	if (argc > 1 && strcmp(argv[1], "--single") == 0)
-		exit(PostgresMain(argc, argv, NULL, get_current_username(progname)));
-
-	exit(PostmasterMain(argc, argv));
-=======
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();			/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
@@ -217,7 +207,6 @@ main(int argc, char *argv[])
 	else
 		PostmasterMain(argc, argv);		/* does not return */
 	abort();					/* should not get here */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -319,14 +308,9 @@ help(const char *progname)
 	printf(_("  -V, --version      output version information, then exit\n"));
 	printf(_("  --NAME=VALUE       set run-time parameter\n"));
 	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
-<<<<<<< HEAD
-	printf(_("  --help             show this help, then exit\n"));
-	printf(_("  --version          output version information, then exit\n"));
+	printf(_("  -?, --help         show this help, then exit\n"));
 	printf(_("  --gp-version       output Greenplum version information, then exit\n"));
 	printf(_("  --catalog-version  output the catalog version, then exit\n"));
-=======
-	printf(_("  -?, --help         show this help, then exit\n"));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	printf(_("\nDeveloper options:\n"));
 	printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));

@@ -32,13 +32,9 @@
  *	  clients.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -115,11 +111,8 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
-<<<<<<< HEAD
-#include "postmaster/bgwriter.h"
-=======
 #include "postmaster/bgworker.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "postmaster/bgwriter.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
@@ -520,14 +513,9 @@ static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-<<<<<<< HEAD
-static int	BackendRun(Port *port);
-static void ExitPostmaster(int status);
-static bool ServiceStartable(PMSubProc *subProc);
-=======
 static void BackendRun(Port *port) __attribute__((noreturn));
 static void ExitPostmaster(int status) __attribute__((noreturn));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+static bool ServiceStartable(PMSubProc *subProc);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
@@ -2261,8 +2249,7 @@ retry1:
 						{
 							time_t counter = time(NULL);
 
-							recptr.xlogid = counter;
-							recptr.xrecoff = counter;
+							recptr = counter;
 						}
 
 						ereport(FATAL,
@@ -2903,13 +2890,10 @@ pmdie(SIGNAL_ARGS)
 				signal_child(BgWriterPID, SIGTERM);
 			if (WalReceiverPID != 0)
 				signal_child(WalReceiverPID, SIGTERM);
-<<<<<<< HEAD
+			SignalUnconnectedWorkers(SIGTERM);
 			/* The GPDB-specific service processes use SIGUSR2 for shutdown. */
 			/* WALREP_FIXME: should switch to using SIGTERM for consistency */
 			StopServices(0, SIGUSR2);
-=======
-			SignalUnconnectedWorkers(SIGTERM);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (pmState == PM_RECOVERY)
 			{
 				/*
@@ -2980,11 +2964,8 @@ pmdie(SIGNAL_ARGS)
 				signal_child(PgArchPID, SIGQUIT);
 			if (PgStatPID != 0)
 				signal_child(PgStatPID, SIGQUIT);
-<<<<<<< HEAD
-			StopServices(0, SIGQUIT);
-=======
 			SignalUnconnectedWorkers(SIGQUIT);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			StopServices(0, SIGQUIT);
 			ExitPostmaster(0);
 			break;
 	}
@@ -3006,27 +2987,6 @@ reaper(SIGNAL_ARGS)
 	int			exitstatus;		/* its exit status */
 	bool        wasServiceProcess = false;
 
-<<<<<<< HEAD
-	/* These macros hide platform variations in getting child status. */
-#ifdef HAVE_WAITPID
-	int			status;			/* child exit status */
-
-#define LOOPTEST()		((pid = waitpid(-1, &status, WNOHANG)) > 0)
-#define LOOPHEADER()	(exitstatus = status)
-#else							/* !HAVE_WAITPID */
-#ifndef WIN32
-	union wait	status;			/* child exit status */
-
-#define LOOPTEST()		((pid = wait3(&status, WNOHANG, NULL)) > 0)
-#define LOOPHEADER()	(exitstatus = status.w_status)
-#else							/* WIN32 */
-#define LOOPTEST()		((pid = win32_waitpid(&exitstatus)) > 0)
-#define LOOPHEADER()
-#endif   /* WIN32 */
-#endif   /* HAVE_WAITPID */
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	PG_SETMASK(&BlockSig);
 
 	ereport(DEBUG4,
@@ -3068,20 +3028,6 @@ reaper(SIGNAL_ARGS)
 			}
 
 			/*
-<<<<<<< HEAD
-			 * Startup process exited in response to a shutdown request (or it
-			 * completed normally regardless of the shutdown request).
-			 */
-			if (Shutdown > NoShutdown &&
-				(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
-			{
-				/* PostmasterStateMachine logic does the rest */
-				continue;
-			}
-
-			/*
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			 * After PM_STARTUP, any unexpected exit (including FATAL exit) of
 			 * the startup process is catastrophic, so kill other children,
 			 * and set RecoveryError so we don't try to reinitialize after
@@ -3389,19 +3335,6 @@ reaper(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-<<<<<<< HEAD
-static bool
-ServiceProcessesExist(int excludeFlags)
-{
-	int s;
-
-	for (s=0; s < MaxPMSubType; s++)
-	{
-		PMSubProc *subProc = &PMSubProcList[s];
-		if (subProc->pid != 0 &&
-			(subProc->flags & excludeFlags) == 0)
-			return true;
-=======
 /*
  * Scan the bgworkers list and see if the given PID (which has just stopped
  * or crashed) is in it.  Handle its shutdown if so, and return true.  If not a
@@ -3485,12 +3418,26 @@ CleanupBackgroundWorker(int pid,
 		LogChildExit(LOG, namebuf, pid, exitstatus);
 
 		return true;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	return false;
 }
-<<<<<<< HEAD
+
+static bool
+ServiceProcessesExist(int excludeFlags)
+{
+	int s;
+
+	for (s=0; s < MaxPMSubType; s++)
+	{
+		PMSubProc *subProc = &PMSubProcList[s];
+		if (subProc->pid != 0 &&
+			(subProc->flags & excludeFlags) == 0)
+			return true;
+	}
+
+	return false;
+}
 
 static bool
 StopServices(int excludeFlags, int signal)
@@ -3512,8 +3459,6 @@ StopServices(int excludeFlags, int signal)
 
 	return signaled;
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * CleanupBackend -- cleanup after terminated backend.
@@ -4669,11 +4614,7 @@ BackendRun(Port *port)
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
-<<<<<<< HEAD
-	return PostgresMain(ac, av, port->database_name, port->user_name);
-=======
 	PostgresMain(ac, av, port->database_name, port->user_name);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -5097,14 +5038,10 @@ SubPostmasterMain(int argc, char *argv[])
 	if (strcmp(argv[1], "--forkbackend") == 0   ||
 		strcmp(argv[1], "--forkavlauncher") == 0 ||
 		strcmp(argv[1], "--forkavworker") == 0 ||
-<<<<<<< HEAD
 		strcmp(argv[1], "--forkautovac") == 0   ||
 		strcmp(argv[1], "--forkglobaldeadlockdetector") == 0 ||
-		strcmp(argv[1], "--forkboot") == 0)
-=======
 		strcmp(argv[1], "--forkboot") == 0 ||
 		strncmp(argv[1], "--forkbgworker=", 15) == 0)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		PGSharedMemoryReAttach();
 
 	/* autovacuum needs this set before calling InitProcess */
@@ -5424,25 +5361,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		signal_child(SysLoggerPID, SIGUSR1);
 	}
 
-<<<<<<< HEAD
-	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
-		WalReceiverPID == 0 &&
-		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
-		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY) &&
-		Shutdown == NoShutdown)
-	{
-		/* Startup Process wants us to start the walreceiver process. */
-		WalReceiverPID = StartWalReceiver();
-
-		/* wal receiver has been launched */
-		pm_launch_walreceiver = true;
-	}
-
-	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER))
-=======
 	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER) &&
 		Shutdown == NoShutdown)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		/*
 		 * Start one iteration of the autovacuum daemon, even if autovacuuming
@@ -5463,16 +5383,21 @@ sigusr1_handler(SIGNAL_ARGS)
 		StartAutovacuumWorker();
 	}
 
-<<<<<<< HEAD
-	Assert(FTSSubProc->procType == FtsProbeProc);
-	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FTSSubProc->pid != 0)
-=======
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
 		WalReceiverPID == 0 &&
 		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
 		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY) &&
 		Shutdown == NoShutdown)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	{
+		/* Startup Process wants us to start the walreceiver process. */
+		WalReceiverPID = StartWalReceiver();
+
+		/* wal receiver has been launched */
+		pm_launch_walreceiver = true;
+	}
+
+	Assert(FTSSubProc->procType == FtsProbeProc);
+	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FTSSubProc->pid != 0)
 	{
 		signal_child(FTSSubProc->pid, SIGINT);
 	}
@@ -5504,7 +5429,6 @@ sigusr1_handler(SIGNAL_ARGS)
 }
 
 /*
-<<<<<<< HEAD
  * GPDB_90_MERGE_FIXME: This function should be removed once hot
  * standby can and will be enabled for mirrors.
  */
@@ -5519,12 +5443,8 @@ void SignalPromote(void)
 }
 
 /*
- * Timeout or shutdown signal from postmaster while processing startup packet.
- * Cleanup and exit(1).
-=======
  * SIGTERM or SIGQUIT while processing startup packet.
  * Clean up and exit(1).
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * XXX: possible future improvement: try to send a message indicating
  * why we are disconnecting.  Problem is to be sure we don't block while

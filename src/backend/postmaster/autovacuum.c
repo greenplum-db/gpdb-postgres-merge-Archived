@@ -1623,14 +1623,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 		MyWorkerInfo->wi_proc = MyProc;
 
 		/* insert into the running list */
-<<<<<<< HEAD
-		SHMQueueInsertBefore(&AutoVacuumShmem->av_runningWorkers,
-							 &MyWorkerInfo->wi_links);
-=======
 		dlist_push_head(&AutoVacuumShmem->av_runningWorkers,
 						&MyWorkerInfo->wi_links);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/*
 		 * remove from the "starting" pointer, so that the launcher can start
 		 * a new worker if required

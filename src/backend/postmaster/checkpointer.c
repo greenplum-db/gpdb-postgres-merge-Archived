@@ -1278,14 +1278,9 @@ AbsorbFsyncRequests(void)
 	CheckpointerRequest *request;
 	int			n;
 
-<<<<<<< HEAD
 	if (IsUnderPostmaster && !AmStartupProcess() && !AmCheckpointerProcess())
 		elog(ERROR, "AbsorbFsyncRequests() called in process %d (type %d)",
 			 MyProcPid, MyAuxProcType);
-=======
-	if (!AmCheckpointerProcess())
-		return;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * We have to PANIC if we fail to absorb all the pending requests (eg,
