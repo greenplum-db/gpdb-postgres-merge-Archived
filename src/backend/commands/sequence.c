@@ -234,13 +234,9 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->relation = seq->sequence;
 	stmt->inhRelations = NIL;
 	stmt->constraints = NIL;
-<<<<<<< HEAD
 	stmt->inhOids = NIL;
 	stmt->parentOidCount = 0;
-	stmt->options = list_make1(defWithOids(false));
-=======
 	stmt->options = NIL;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	stmt->oncommit = ONCOMMIT_NOOP;
 	stmt->tablespacename = NULL;
 	stmt->if_not_exists = false;
@@ -521,10 +517,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	if (owned_by)
 		process_owned_by(seqrel, owned_by);
 
-<<<<<<< HEAD
 	bSeqIsTemp = (seqrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP);
-
-	relation_close(seqrel, NoLock);
 
 	numopts = list_length(stmt->options);
 	if (numopts > 1)
@@ -566,13 +559,11 @@ AlterSequence(AlterSeqStmt *stmt)
 									DF_NEED_TWO_PHASE,
 									NIL,
 									NULL);
-=======
 	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
 
 	relation_close(seqrel, NoLock);
 
 	return relid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -642,7 +633,6 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 				next,
 				rescnt = 0;
 	bool            logit = false;
-	HeapTupleData seqtuple;
 
 	/* open and AccessShareLock sequence */
 	init_sequence(relid, &elm, &seqrel);
@@ -654,11 +644,7 @@ nextval_internal(Oid relid, bool called_from_dispatcher)
 						RelationGetRelationName(seqrel))));
 
 	/* read-only transactions may only modify temp sequences */
-<<<<<<< HEAD
-	if (seqrel->rd_backend != TempRelBackendId)
-=======
 	if (!seqrel->rd_islocaltemp)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		PreventCommandIfReadOnly("nextval()");
 
 	if (elm->last != elm->cached 		/* some numbers were cached */
@@ -990,19 +976,11 @@ do_setval(Oid relid, int64 next, bool iscalled)
 						RelationGetRelationName(seqrel))));
 
 	/* read-only transactions may only modify temp sequences */
-<<<<<<< HEAD
-	if (seqrel->rd_backend != TempRelBackendId)
-=======
 	if (!seqrel->rd_islocaltemp)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		PreventCommandIfReadOnly("setval()");
 
 	/* lock page' buffer and read tuple */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
-<<<<<<< HEAD
-	elm->increment = seq->increment_by;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 	{
@@ -1257,12 +1235,8 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 	 * bit update, ie, don't bother to WAL-log it, since we can certainly do
 	 * this again if the update gets lost.
 	 */
-<<<<<<< HEAD
-	if (HeapTupleHeaderGetXmax(seqtuple->t_data) != InvalidTransactionId)
-=======
 	Assert(!(seqtuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
 	if (HeapTupleHeaderGetRawXmax(seqtuple->t_data) != InvalidTransactionId)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		HeapTupleHeaderSetXmax(seqtuple->t_data, InvalidTransactionId);
 		seqtuple->t_data->t_infomask &= ~HEAP_XMAX_COMMITTED;

@@ -265,7 +265,6 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 static void
 intorel_startup_dummy(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
-<<<<<<< HEAD
 	/* no-op */
 
 	/* See intorel_initplan() for explanation */
@@ -286,12 +285,8 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	DR_intorel *myState;
 	/* Get 'into' from the dispatched plan */
 	IntoClause *into = queryDesc->plannedstmt->intoClause;
-=======
-	DR_intorel *myState = (DR_intorel *) self;
-	IntoClause *into = myState->into;
 	bool		is_matview;
 	char		relkind;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	CreateStmt *create;
 	Oid			intoRelationId;
 	Relation	intoRelationDesc;
@@ -453,17 +448,13 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	 *
 	 * Pass the policy that was computed by the planner.
 	 */
-<<<<<<< HEAD
 	intoRelationId = DefineRelation(create,
-									RELKIND_RELATION,
+									relkind,
 									InvalidOid,
 									relstorage,
 									false,
 									queryDesc->ddesc ? queryDesc->ddesc->useChangedAOOpts : true,
 									queryDesc->plannedstmt->intoPolicy);
-=======
-	intoRelationId = DefineRelation(create, relkind, InvalidOid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that

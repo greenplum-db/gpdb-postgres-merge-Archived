@@ -57,6 +57,7 @@
 #include "utils/tqual.h"
 
 #include "catalog/pg_inherits_fn.h"
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbcat.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
@@ -82,11 +83,9 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  bool isconstraint);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
-static char *ChooseIndexName(const char *tabname, Oid namespaceId,
-				List *colnames, List *exclusionOpNames,
-				bool primary, bool isconstraint);
 static char *ChooseIndexNameAddition(List *colnames);
-<<<<<<< HEAD
+static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
+								Oid relId, Oid oldRelId, void *arg);
 static bool relationHasUniqueIndex(Relation rel);
 
 
@@ -176,11 +175,6 @@ cdb_sync_indcheckxmin_with_segments(Oid indexRelationId)
 		heap_close(pg_index, RowExclusiveLock);
 	}
 }
-=======
-static List *ChooseIndexColumnNames(List *indexElems);
->>>>>>> e472b921406407794bab911c64655b8b82375196
-static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
-								Oid relId, Oid oldRelId, void *arg);
 
 /*
  * CheckIndexCompatible
@@ -435,13 +429,10 @@ DefineIndex(IndexStmt *stmt,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-<<<<<<< HEAD
 	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
 	bool		shouldDispatch;
 	char	   *altconname = stmt ? stmt->altconname : NULL;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	int			i;
 
 	if (Gp_role == GP_ROLE_DISPATCH && !IsBootstrapProcessingMode() &&
@@ -471,30 +462,22 @@ DefineIndex(IndexStmt *stmt,
 	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
 	 * (but not VACUUM).
 	 */
-<<<<<<< HEAD
-	if (RangeVarIsAppendOptimizedTable(heapRelation))
+	if (RangeVarIsAppendOptimizedTable(stmt->relation))
 		heap_lockmode = ShareRowExclusiveLock;
 	else
-		heap_lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
+		heap_lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 
-	rel = heap_openrv(heapRelation, heap_lockmode);
-=======
-	rel = heap_openrv(stmt->relation,
-				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	rel = heap_openrv(stmt->relation, heap_lockmode);
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
 
-<<<<<<< HEAD
 	if(RelationIsExternal(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot create indexes on external tables.")));
 		
 	/* Note: during bootstrap may see uncataloged relation */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
 		rel->rd_rel->relkind != RELKIND_MATVIEW)
 	{
@@ -598,13 +581,7 @@ DefineIndex(IndexStmt *stmt,
 	/*
 	 * Select name for index if caller didn't specify
 	 */
-<<<<<<< HEAD
-	if (stmt != NULL)
-		indexRelationName = stmt->idxname;
-
-=======
 	indexRelationName = stmt->idxname;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (indexRelationName == NULL)
 		indexRelationName = ChooseIndexName(RelationGetRelationName(rel),
 											namespaceId,
@@ -641,16 +618,12 @@ DefineIndex(IndexStmt *stmt,
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 
-<<<<<<< HEAD
 	if (accessMethodId == HASH_AM_OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("hash indexes are not supported")));
 
-	if (unique && !accessMethodForm->amcanunique)
-=======
 	if (stmt->unique && !accessMethodForm->amcanunique)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			   errmsg("access method \"%s\" does not support unique indexes",
@@ -666,7 +639,7 @@ DefineIndex(IndexStmt *stmt,
 		errmsg("access method \"%s\" does not support exclusion constraints",
 			   accessMethodName)));
 
-    if  (unique && RelationIsAppendOptimized(rel))
+    if  (stmt->unique && RelationIsAppendOptimized(rel))
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("append-only tables do not support unique indexes")));
@@ -726,21 +699,21 @@ DefineIndex(IndexStmt *stmt,
 	if (stmt->primary)
 		index_check_primary_key(rel, indexInfo, is_alter_table);
 
-	if ((primary || unique) && rel->rd_cdbpolicy)
+	if ((stmt->primary || stmt->unique) && rel->rd_cdbpolicy)
 		checkPolicyForUniqueIndex(rel,
 								  indexInfo->ii_KeyAttrNumbers,
 								  indexInfo->ii_NumIndexAttrs,
-								  primary,
+								  stmt->primary,
 								  list_length(indexInfo->ii_Expressions),
 								  relationHasPrimaryKey(rel),
 								  relationHasUniqueIndex(rel));
 
 	/* We don't have to worry about constraints on parts.  Already checked. */
-	if ( isconstraint && rel_is_partitioned(relationId) )
+	if ( stmt->isconstraint && rel_is_partitioned(relationId) )
 		checkUniqueConstraintVsPartitioning(rel,
 											indexInfo->ii_KeyAttrNumbers,
 											indexInfo->ii_NumIndexAttrs,
-											primary);
+											stmt->primary);
 
 	if (Gp_role == GP_ROLE_EXECUTE && stmt)
 		quiet = true;
@@ -749,11 +722,7 @@ DefineIndex(IndexStmt *stmt,
 	 * Report index creation if appropriate (delay this till after most of the
 	 * error checks)
 	 */
-<<<<<<< HEAD
-	if (isconstraint && !quiet && Gp_role != GP_ROLE_EXECUTE)
-=======
-	if (stmt->isconstraint && !quiet)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	if (stmt->isconstraint && !quiet && Gp_role != GP_ROLE_EXECUTE)
 	{
 		const char *constraint_type;
 
@@ -792,7 +761,7 @@ DefineIndex(IndexStmt *stmt,
 	if (rel_needs_long_lock(RelationGetRelid(rel)))
 		need_longlock = true;
 	/* if this is a concurrent build, we must lock you long time */
-	else if (concurrent)
+	else if (stmt->concurrent)
 		need_longlock = true;
 	else
 		need_longlock = false;
@@ -815,9 +784,8 @@ DefineIndex(IndexStmt *stmt,
 					 coloptions, reloptions, stmt->primary,
 					 stmt->isconstraint, stmt->deferrable, stmt->initdeferred,
 					 allowSystemTableMods,
-<<<<<<< HEAD
-					 skip_build || concurrent,
-					 concurrent,
+					 skip_build || stmt->concurrent,
+					 stmt->concurrent, !check_rights,
 					 altconname);
 
 	if (shouldDispatch)
@@ -835,10 +803,6 @@ DefineIndex(IndexStmt *stmt,
 		if (!indexInfo->ii_BrokenHotChain)
 			cdb_sync_indcheckxmin_with_segments(indexRelationId);
 	}
-=======
-					 skip_build || stmt->concurrent,
-					 stmt->concurrent, !check_rights);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
@@ -1069,13 +1033,8 @@ DefineIndex(IndexStmt *stmt,
 	 * GetCurrentVirtualXIDs.  If, during any iteration, a particular vxid
 	 * doesn't show up in the output, we know we can forget about it.
 	 */
-<<<<<<< HEAD
-	old_snapshots = GetCurrentVirtualXIDs(snapshot->xmin, true, false,
-										  PROC_IS_AUTOVACUUM /* not in GPDB: | PROC_IN_VACUUM */,
-=======
 	old_snapshots = GetCurrentVirtualXIDs(limitXmin, true, false,
-										  PROC_IS_AUTOVACUUM | PROC_IN_VACUUM,
->>>>>>> e472b921406407794bab911c64655b8b82375196
+										  PROC_IS_AUTOVACUUM /* not in GPDB: | PROC_IN_VACUUM */,
 										  &n_old_snapshots);
 
 	for (i = 0; i < n_old_snapshots; i++)
@@ -1827,7 +1786,7 @@ ChooseRelationNameWithCache(const char *name1, const char *name2,
  *
  * The argument list is pretty ad-hoc :-(
  */
-static char *
+char *
 ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint)
@@ -1909,7 +1868,7 @@ ChooseIndexNameAddition(List *colnames)
  *
  * Returns a List of plain strings (char *, not String nodes).
  */
-static List *
+List *
 ChooseIndexColumnNames(List *indexElems)
 {
 	List	   *result = NIL;
@@ -2004,13 +1963,8 @@ relationHasUniqueIndex(Relation rel)
  * ReindexIndex
  *		Recreate a specific index.
  */
-<<<<<<< HEAD
-void
-ReindexIndex(ReindexStmt *stmt)
-=======
 Oid
-ReindexIndex(RangeVar *indexRelation)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+ReindexIndex(ReindexStmt *stmt)
 {
 	Oid			indOid;
 	Oid			heapOid = InvalidOid;
@@ -2023,7 +1977,6 @@ ReindexIndex(RangeVar *indexRelation)
 
 	reindex_index(indOid, false);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -2032,6 +1985,8 @@ ReindexIndex(RangeVar *indexRelation)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
+
+	return indOid;
 }
 
 /*
@@ -2107,9 +2062,6 @@ ReindexRelationList(List *relids)
 	 * returning.
 	 */
 	StartTransactionCommand();
-=======
-	return indOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -2175,13 +2127,8 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * ReindexTable
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
-<<<<<<< HEAD
-void
-ReindexTable(ReindexStmt *stmt)
-=======
 Oid
-ReindexTable(RangeVar *relation)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+ReindexTable(ReindexStmt *stmt)
 {
 	MemoryContext	private_context, oldcontext;
 	List	   *prels = NIL, *relids = NIL;
@@ -2192,14 +2139,13 @@ ReindexTable(RangeVar *relation)
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
 		reindex_relation(stmt->relid, REINDEX_REL_PROCESS_TOAST);
-		return;
+		return stmt->relid;
 	}
 
 	/* The lock level used here should match reindex_relation(). */
 	heapOid = RangeVarGetRelidExtended(stmt->relation, ShareLock, false, false,
 									   RangeVarCallbackOwnsTable, NULL);
 
-<<<<<<< HEAD
 	/*
 	 * Gather child partition relations.
 	 */
@@ -2262,14 +2208,8 @@ ReindexTable(RangeVar *relation)
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
-=======
-	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
 
 	return heapOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -2280,13 +2220,8 @@ ReindexTable(RangeVar *relation)
  * separate transaction, so we can release the lock on it right away.
  * That means this must not be called within a user transaction block!
  */
-<<<<<<< HEAD
-void
-ReindexDatabase(ReindexStmt *stmt)
-=======
 Oid
-ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+ReindexDatabase(ReindexStmt *stmt)
 {
 	Relation	relationRelation;
 	HeapScanDesc scan;

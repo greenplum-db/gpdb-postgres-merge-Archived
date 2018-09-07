@@ -22,12 +22,9 @@
 #include "access/bitmap.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "access/nbtree.h"
-=======
 #include "access/heapam_xlog.h"
 #include "access/multixact.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
@@ -118,6 +115,7 @@
 #include "utils/tqual.h"
 #include "utils/typcache.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
@@ -286,10 +284,6 @@ static void truncate_check_rel(Relation rel);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel,
 						List *inhAttrNameList, bool is_partition);
 static bool MergeCheckConstraint(List *constraints, char *name, Node *expr);
-<<<<<<< HEAD
-=======
-static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
@@ -722,8 +716,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-<<<<<<< HEAD
-	localHasOids = interpretOidsOption(stmt->options);
+	localHasOids = interpretOidsOption(stmt->options,
+									   (relkind == RELKIND_RELATION ||
+										relkind == RELKIND_FOREIGN_TABLE));
 	descriptor->tdhasoid = (localHasOids || stmt->parentOidCount > 0);
 
 
@@ -738,12 +733,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	}
 	else
 		policy = getPolicyForDistributedBy(stmt->distributedBy, descriptor);
-=======
-	localHasOids = interpretOidsOption(stmt->options,
-									   (relkind == RELKIND_RELATION ||
-										relkind == RELKIND_FOREIGN_TABLE));
-	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Find columns with default values and prepare for insertion of the
@@ -1045,8 +1034,8 @@ DefinePartitionedRelation(CreateStmt *stmt, Oid relOid)
 
 		ProcessUtility((Node *)(((Query *)pUtl)->utilityStmt),
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 	}
@@ -1082,8 +1071,8 @@ EvaluateDeferredStatements(List *deferredStmts)
 
 		ProcessUtility((Node*)uquery->utilityStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false,
 					   dest,
 					   NULL);
 	}
@@ -1426,8 +1415,14 @@ relid_set_new_relfilenode(Oid relid, TransactionId recentXmin)
 {
 	if (OidIsValid(relid))
 	{
-		Relation rel = relation_open(relid, AccessExclusiveLock);
-		RelationSetNewRelfilenode(rel, recentXmin);
+		MultiXactId minmulti;
+		Relation rel;
+
+		rel = relation_open(relid, AccessExclusiveLock);
+
+		minmulti = GetOldestMultiXactId();
+
+		RelationSetNewRelfilenode(rel, recentXmin, minmulti);
 		heap_close(rel, NoLock);
 	}
 }
@@ -2396,15 +2391,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitio
 										   &found_whole_row);
 
 				/*
-<<<<<<< HEAD
-				 * For the moment we have to reject whole-row variables.
-				 * We could convert them, if we knew the new table's rowtype
-				 * OID, but that hasn't been assigned yet.
-=======
 				 * For the moment we have to reject whole-row variables. We
 				 * could convert them, if we knew the new table's rowtype OID,
 				 * but that hasn't been assigned yet.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				 */
 				if (found_whole_row)
 					ereport(ERROR,
@@ -2620,10 +2609,7 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
 	return false;
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
@@ -5733,18 +5719,13 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			 * in the case of ALTER TABLE rewrites as the temp relfile will
 			 * not have correct stats.
 			 */
-<<<<<<< HEAD
-			finish_heap_swap(tab->relid, OIDNewHeap, false, false,
+			finish_heap_swap(tab->relid, OIDNewHeap,
+							 false, false,
 							 false /* swap_stats */,
 							 true,
-							 RecentXmin);
-=======
-			finish_heap_swap(tab->relid, OIDNewHeap,
-							 false, false, true,
 							 !OidIsValid(tab->newTableSpace),
 							 RecentXmin,
 							 ReadNextMultiXactId());
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 		else
 		{
@@ -14155,8 +14136,8 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, DistributedBy *distro, List
 		q = parse_analyze((Node *) cs, synthetic_sql, NULL, 0);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 		CommandCounterIncrement();
@@ -15745,8 +15726,8 @@ ATPExecPartDrop(Relation rel,
 
 		ProcessUtility((Node *) ds,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 
@@ -16227,8 +16208,8 @@ ATPExecPartRename(Relation rel,
 
 		ProcessUtility((Node *) renStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 
@@ -16250,8 +16231,8 @@ ATPExecPartRename(Relation rel,
 
 				ProcessUtility((Node *) renStmt,
 							   synthetic_sql,
+							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
-							   false, /* not top level */
 							   dest,
 							   NULL);
 				renamed++;
@@ -17142,8 +17123,8 @@ ATPExecPartSplit(Relation *rel,
 		q = parse_analyze((Node *) ct, synthetic_sql, NULL, 0);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 		CommandCounterIncrement();
@@ -17187,8 +17168,8 @@ ATPExecPartSplit(Relation *rel,
 		heap_close(*rel, NoLock);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 		*rel = heap_open(relid, AccessExclusiveLock);
@@ -17243,8 +17224,8 @@ ATPExecPartSplit(Relation *rel,
 
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 
@@ -18845,8 +18826,8 @@ ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recur
 
 				ProcessUtility((Node *)ats,
 							   synthetic_sql,
+							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
-							   false, /* not top level */
 							   dest,
 							   NULL);
 			}

@@ -91,6 +91,7 @@
 #include "utils/tqual.h"
 
 #include "catalog/heap.h"
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbutil.h"
@@ -980,7 +981,6 @@ RenameTableSpace(const char *oldname, const char *newname)
 	simple_heap_update(rel, &newtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(TableSpaceRelationId,
@@ -989,118 +989,8 @@ RenameTableSpace(const char *oldname, const char *newname)
 						   "ALTER", "RENAME"
 				);
 
-	heap_close(rel, NoLock);
-}
-
-/*
- * Change tablespace owner
- */
-void
-AlterTableSpaceOwner(const char *name, Oid newOwnerId)
-{
-	Relation	rel;
-	ScanKeyData entry[1];
-	HeapScanDesc scandesc;
-	Oid			tablespaceoid;
-	Form_pg_tablespace spcForm;
-	HeapTuple	tup;
-
-	/* Search pg_tablespace */
-	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
-
-	ScanKeyInit(&entry[0],
-				Anum_pg_tablespace_spcname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(name));
-	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
-	tup = heap_getnext(scandesc, ForwardScanDirection);
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace \"%s\" does not exist", name)));
-
-	tablespaceoid = HeapTupleGetOid(tup);
-	spcForm = (Form_pg_tablespace) GETSTRUCT(tup);
-
-	/*
-	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is for dump restoration purposes.
-	 */
-	if (spcForm->spcowner != newOwnerId)
-	{
-		Datum		repl_val[Natts_pg_tablespace];
-		bool		repl_null[Natts_pg_tablespace];
-		bool		repl_repl[Natts_pg_tablespace];
-		Acl		   *newAcl;
-		Datum		aclDatum;
-		bool		isNull;
-		HeapTuple	newtuple;
-
-		/* Otherwise, must be owner of the existing object */
-		if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
-						   name);
-
-		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(), newOwnerId);
-
-		/*
-		 * Normally we would also check for create permissions here, but there
-		 * are none for tablespaces so we follow what rename tablespace does
-		 * and omit the create permissions check.
-		 *
-		 * NOTE: Only superusers may create tablespaces to begin with and so
-		 * initially only a superuser would be able to change its ownership
-		 * anyway.
-		 */
-
-		memset(repl_null, false, sizeof(repl_null));
-		memset(repl_repl, false, sizeof(repl_repl));
-
-		repl_repl[Anum_pg_tablespace_spcowner - 1] = true;
-		repl_val[Anum_pg_tablespace_spcowner - 1] = ObjectIdGetDatum(newOwnerId);
-
-		/*
-		 * Determine the modified ACL for the new owner.  This is only
-		 * necessary when the ACL is non-null.
-		 */
-		aclDatum = heap_getattr(tup,
-								Anum_pg_tablespace_spcacl,
-								RelationGetDescr(rel),
-								&isNull);
-		if (!isNull)
-		{
-			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 spcForm->spcowner, newOwnerId);
-			repl_repl[Anum_pg_tablespace_spcacl - 1] = true;
-			repl_val[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(newAcl);
-		}
-
-		newtuple = heap_modify_tuple(tup, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
-
-		simple_heap_update(rel, &newtuple->t_self, newtuple);
-		CatalogUpdateIndexes(rel, newtuple);
-
-		/* MPP-6929: metadata tracking */
-		if (Gp_role == GP_ROLE_DISPATCH)
-			MetaTrackUpdObject(TableSpaceRelationId,
-							   tablespaceoid,
-							   GetUserId(),
-							   "ALTER", "OWNER"
-					);
-
-		heap_freetuple(newtuple);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(TableSpaceRelationId, HeapTupleGetOid(tup),
-								newOwnerId);
-	}
-
-	heap_endscan(scandesc);
-=======
 	InvokeObjectPostAlterHook(TableSpaceRelationId, tspId, 0);
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	heap_close(rel, NoLock);
 
 	return tspId;
@@ -1594,18 +1484,17 @@ get_tablespace_oid(const char *tablespacename, bool missing_ok)
 	{
 		Buffer			buffer = InvalidBuffer;
 		HTSU_Result		lockTest;
-		ItemPointerData	update_ctid;
-		TransactionId	update_xmax;
+		HeapUpdateFailureData hufd;
 
 		/*
 		 * Unfortunately locking of objects other than relations doesn't
 		 * really work, the work around is to lock the tuple in pg_tablespace
 		 * to prevent drops from getting the exclusive lock they need.
 		 */
-		lockTest = heap_lock_tuple(rel, tuple, &buffer,
-								   &update_ctid, &update_xmax,
+		lockTest = heap_lock_tuple(rel, tuple,
 								   GetCurrentCommandId(true),
-								   LockTupleShared, LockTupleWait);
+								   LockTupleKeyShare, LockTupleWait,
+								   false,  &buffer, &hufd);
 		ReleaseBuffer(buffer);
 		switch (lockTest)
 		{
@@ -1744,29 +1633,3 @@ tblspc_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "tblspc_redo: unknown op code %u", info);
 }
-<<<<<<< HEAD
-
-void
-tblspc_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-
-	if (info == XLOG_TBLSPC_CREATE)
-	{
-		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) rec;
-
-		appendStringInfo(buf, "create tablespace: %u \"%s\"",
-						 xlrec->ts_id, xlrec->ts_path);
-	}
-	else if (info == XLOG_TBLSPC_DROP)
-	{
-		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) rec;
-
-		appendStringInfo(buf, "drop tablespace: %u", xlrec->ts_id);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

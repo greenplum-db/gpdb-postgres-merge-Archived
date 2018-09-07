@@ -32,15 +32,12 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
+#include "catalog/objectaccess.h"
 #include "catalog/pg_appendonly_fn.h"
 #include "catalog/pg_attribute_encoding.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
-=======
-#include "catalog/objectaccess.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
@@ -63,6 +60,7 @@
 #include "utils/tqual.h"
 #include "utils/tuplesort.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdboidsync.h"
@@ -450,7 +448,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose, bool printEr
 		!RelationIsPopulated(OldHeap))
 	{
 		relation_close(OldHeap, AccessExclusiveLock);
-		return;
+		return false;
 	}
 
 	/*
@@ -657,15 +655,11 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
-<<<<<<< HEAD
 					 swap_toast_by_content,
 					 true /* swap_stats */,
 					 false,
-					 frozenXid);
-=======
-					 swap_toast_by_content, false, true,
+					 true,
 					 frozenXid, frozenMulti);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1279,11 +1273,8 @@ changeDependencyLinks(Oid baseOid1, Oid baseOid2, Oid oid1, Oid oid2,
 void
 swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 					bool swap_toast_by_content,
-<<<<<<< HEAD
 					bool swap_stats,
-=======
 					bool is_internal,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					TransactionId frozenXid,
 					MultiXactId frozenMulti,
 					Oid *mapped_tables)
@@ -1417,18 +1408,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * and then fail to commit the pg_class update.
 	 */
 
-<<<<<<< HEAD
-=======
-	/* set rel1's frozen Xid and minimum MultiXid */
-	if (relform1->relkind != RELKIND_INDEX)
-	{
-		Assert(TransactionIdIsNormal(frozenXid));
-		relform1->relfrozenxid = frozenXid;
-		Assert(MultiXactIdIsValid(frozenMulti));
-		relform1->relminmxid = frozenMulti;
-	}
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	if (swap_stats)
 	{
@@ -1465,6 +1444,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	{
 		Assert(TransactionIdIsNormal(frozenXid));
 		relform1->relfrozenxid = frozenXid;
+		Assert(MultiXactIdIsValid(frozenMulti));
+		relform1->relminmxid = frozenMulti;
 		/*
 		 * Don't know partition parent or not here but passing false is perfect
 		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
@@ -1523,11 +1504,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 									relform2->reltoastrelid,
 									target_is_pg_class,
 									swap_toast_by_content,
-<<<<<<< HEAD
 									swap_stats,
-=======
 									is_internal,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 									frozenXid,
 									frozenMulti,
 									mapped_tables);
@@ -1578,11 +1556,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 							relform2->reltoastidxid,
 							target_is_pg_class,
 							swap_toast_by_content,
-<<<<<<< HEAD
 							swap_stats,
-=======
 							is_internal,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 							InvalidTransactionId,
 							InvalidMultiXactId,
 							mapped_tables);
@@ -1641,14 +1616,10 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 */
 	swap_relation_files(OIDOldHeap, OIDNewHeap,
 						(OIDOldHeap == RelationRelationId),
-<<<<<<< HEAD
 						swap_toast_by_content,
 						swap_stats,
-						frozenXid, mapped_tables);
-=======
-						swap_toast_by_content, is_internal,
+						is_internal,
 						frozenXid, frozenMulti, mapped_tables);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If it's a system catalog, queue an sinval message to flush all
