@@ -14,23 +14,17 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
+#include "access/htup_details.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_partition_rule.h"
-=======
-#include "access/htup_details.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
-<<<<<<< HEAD
 #include "miscadmin.h"
-=======
 #include "lib/stringinfo.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_agg.h"

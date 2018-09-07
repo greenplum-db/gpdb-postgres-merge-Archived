@@ -974,11 +974,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	else if (lexpr && IsA(lexpr, RowExpr) &&
 			 rexpr && IsA(rexpr, RowExpr))
 	{
-<<<<<<< HEAD
-		/* "row op row" */
-=======
 		/* ROW() op ROW() is handled specially */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		lexpr = transformExprRecurse(pstate, lexpr);
 		rexpr = transformExprRecurse(pstate, rexpr);
 		Assert(IsA(lexpr, RowExpr));
@@ -1204,10 +1200,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	 * Vars.
 	 */
 	lexpr = transformExprRecurse(pstate, a->lexpr);
-<<<<<<< HEAD
-	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
@@ -1341,7 +1333,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	{
 		targs = lappend(targs, transformExprRecurse(pstate,
 													(Node *) lfirst(args)));
-<<<<<<< HEAD
 	}
 
 	/*
@@ -1362,8 +1353,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 			targs = lappend(targs, transformExpr(pstate, arg->node,
 												 EXPR_KIND_ORDER_BY));
 		}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* ... and hand off to ParseFuncOrColumn */
@@ -1483,7 +1472,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 													 warg,
 													 w->location);
 		}
-<<<<<<< HEAD
 		else
 		{
 			if (isWhenIsNotDistinctFromExpr(warg))
@@ -1493,8 +1481,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\""),
 						 parser_errposition(pstate, exprLocation((Node *) warg))));
 		}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		neww->expr = (Expr *) transformExprRecurse(pstate, warg);
 
 		neww->expr = (Expr *) coerce_to_boolean(pstate,
@@ -1571,15 +1557,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		return result;
 
 	/*
-<<<<<<< HEAD
-	 * Check to see if the sublink is in an invalid place within the query.
-	 * We allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but
-	 * generally not in utility statements.
-=======
 	 * Check to see if the sublink is in an invalid place within the query. We
 	 * allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but generally
 	 * not in utility statements.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	err = NULL;
 	switch (pstate->p_expr_kind)
@@ -1596,10 +1576,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_FROM_FUNCTION:
 		case EXPR_KIND_WHERE:
 		case EXPR_KIND_HAVING:
-<<<<<<< HEAD
 		case EXPR_KIND_FILTER:
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case EXPR_KIND_WINDOW_PARTITION:
 		case EXPR_KIND_WINDOW_ORDER:
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
@@ -1619,11 +1596,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:
-<<<<<<< HEAD
-			err = _("cannot use subquery in CHECK constraint");
-=======
 			err = _("cannot use subquery in check constraint");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 		case EXPR_KIND_COLUMN_DEFAULT:
 		case EXPR_KIND_FUNCTION_DEFAULT:
@@ -1644,7 +1617,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_TRIGGER_WHEN:
 			err = _("cannot use subquery in trigger WHEN condition");
 			break;
-<<<<<<< HEAD
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			err = _("cannot use subquery in partition key expression");
 			break;
@@ -1652,8 +1624,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_SCATTER_BY:
 			/* okay */
 			break;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			/*
 			 * There is intentionally no default: case here, so that the
@@ -1674,11 +1644,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	/*
 	 * OK, let's transform the sub-SELECT.
 	 */
-<<<<<<< HEAD
 	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, NULL);
-=======
-	qtree = parse_sub_analyze(sublink->subselect, pstate, NULL, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
@@ -2851,11 +2817,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "WHERE";
 		case EXPR_KIND_HAVING:
 			return "HAVING";
-<<<<<<< HEAD
 		case EXPR_KIND_FILTER:
 			return "FILTER";
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case EXPR_KIND_WINDOW_PARTITION:
 			return "window PARTITION BY";
 		case EXPR_KIND_WINDOW_ORDER:
@@ -2901,14 +2864,11 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "EXECUTE";
 		case EXPR_KIND_TRIGGER_WHEN:
 			return "WHEN";
-<<<<<<< HEAD
 		case EXPR_KIND_PARTITION_EXPRESSION:
 			return "PARTITION BY";
 
 		case EXPR_KIND_SCATTER_BY:
 			return "SCATTER BY";
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			/*
 			 * There is intentionally no default: case here, so that the

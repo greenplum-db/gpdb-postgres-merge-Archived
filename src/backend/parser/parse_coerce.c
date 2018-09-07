@@ -729,7 +729,7 @@ fixup_unknown_vars_in_exprlist(ParseState *pstate, List *exprlist)
         {
             lfirst(cell) = coerce_unknown_var(pstate, (Var *)lfirst(cell),
                                               UNKNOWNOID, -1,
-                                              COERCION_IMPLICIT, COERCE_DONTCARE,
+                                              COERCION_IMPLICIT, COERCE_EXPLICIT_CALL,
                                               0);
         }
     }
@@ -751,7 +751,7 @@ fixup_unknown_vars_in_targetlist(ParseState *pstate, List *targetlist)
         {
             tle->expr = (Expr *)coerce_unknown_var(pstate, (Var *)tle->expr,
                                                    UNKNOWNOID, -1,
-                                                   COERCION_IMPLICIT, COERCE_DONTCARE,
+                                                   COERCION_IMPLICIT, COERCE_EXPLICIT_CALL,
                                                    0);
         }
     }
@@ -790,7 +790,7 @@ fixup_unknown_vars_in_RangeTblRef(ParseState *pstate, RangeTblRef *rtr,
 		{
 			tle->expr = (Expr *)coerce_unknown_var(pstate, (Var *)tle->expr,
 												   colType, colTypmod,
-												   COERCION_IMPLICIT, COERCE_DONTCARE,
+												   COERCION_IMPLICIT, COERCE_EXPLICIT_CALL,
 												   0);
 		}
 

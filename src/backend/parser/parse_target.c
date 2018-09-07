@@ -986,13 +986,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
 		 * need not handle the make_target_entry==false case here.
 		 */
-<<<<<<< HEAD
-		if (!targetlist)
+		if (!make_target_entry)
 			elog(ERROR, "invalid use of *");
 
-=======
-		Assert(make_target_entry);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		return ExpandAllTables(pstate, cref->location);
 	}
 	else

@@ -585,7 +585,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 					case T_Aggref:
 						{
 							/*
-<<<<<<< HEAD
 							 * Aggref is messy enough that we give it its own
 							 * function, in fact three of them.  The FILTER
 							 * clause is independent of the rest of the
@@ -630,47 +629,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 							assign_expr_collations(context->pstate,
 												   (Node *) wfunc->aggfilter);
-						}
-						break;
-					default:
-						(void) expression_tree_walker(node,
-													  assign_collations_walker,
-													  (void *) &loccontext);
-						break;
-				}
-=======
-							 * Aggref is a special case because expressions
-							 * used only for ordering shouldn't be taken to
-							 * conflict with each other or with regular args.
-							 * So we apply assign_expr_collations() to them
-							 * rather than passing down our loccontext.
-							 *
-							 * Note that we recurse to each TargetEntry, not
-							 * directly to its contained expression, so that
-							 * the case above for T_TargetEntry will apply
-							 * appropriate checks to agg ORDER BY items.
-							 *
-							 * We need not recurse into the aggorder or
-							 * aggdistinct lists, because those contain only
-							 * SortGroupClause nodes which we need not
-							 * process.
-							 */
-							Aggref	   *aggref = (Aggref *) node;
-							ListCell   *lc;
->>>>>>> e472b921406407794bab911c64655b8b82375196
-
-							foreach(lc, aggref->args)
-							{
-								TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-								Assert(IsA(tle, TargetEntry));
-								if (tle->resjunk)
-									assign_expr_collations(context->pstate,
-														   (Node *) tle);
-								else
-									(void) assign_collations_walker((Node *) tle,
-																&loccontext);
-							}
 						}
 						break;
 					case T_CaseExpr:

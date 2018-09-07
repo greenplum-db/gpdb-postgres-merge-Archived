@@ -44,16 +44,13 @@
 #include "utils/syscache.h"
 #include "utils/rel.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbpartition.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
-=======
 
 /* Convenience macro for the most common makeNamespaceItem() case */
 #define makeDefaultNSItem(rte)	makeNamespaceItem(rte, true, true, false, true)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 static void extractRemainingColumns(List *common_colnames,
 						List *src_colnames, List *src_colvars,
@@ -86,16 +83,12 @@ static void checkExprIsVarFree(ParseState *pstate, Node *n,
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
 						 List **tlist, ParseExprKind exprKind);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
-<<<<<<< HEAD
 					List **tlist, ParseExprKind exprKind);
 static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 									   List **tlist, bool in_grpext,
 									   bool ignore_in_grpext,
 									   ParseExprKind exprKind,
                                        bool useSQL99);
-=======
-						 List **tlist, ParseExprKind exprKind);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static int get_matching_location(int sortgroupref,
 					  List *sortgrouprefs, List *exprs);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
@@ -160,16 +153,9 @@ transformFromClause(ParseState *pstate, List *frmList)
 	foreach(fl, frmList)
 	{
 		Node	   *n = lfirst(fl);
-<<<<<<< HEAD
 		RangeTblEntry *rte = NULL;
 		int			rtindex = 0;
-		List	   *relnamespace = NULL;
-		Relids		containedRels = NULL;
-=======
-		RangeTblEntry *rte;
-		int			rtindex;
-		List	   *namespace;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		List	   *namespace = NULL;
 
 		n = transformFromClauseItem(pstate, n,
 									&rte,
@@ -705,8 +691,6 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_expr_kind = EXPR_KIND_FROM_SUBSELECT;
 
 	/*
-<<<<<<< HEAD
-=======
 	 * If the subselect is LATERAL, make lateral_only names of this level
 	 * visible to it.  (LATERAL can't nest within a single pstate level, so we
 	 * don't need save/restore logic here.)
@@ -715,7 +699,6 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_lateral_active = r->lateral;
 
 	/*
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * Analyze and transform the subquery.
 	 */
 	query = parse_sub_analyze(r->subquery, pstate, NULL,
@@ -842,11 +825,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * Transform the raw expression.
 	 */
 	funcexpr = transformExpr(pstate, r->funccallnode, EXPR_KIND_FROM_FUNCTION);
-<<<<<<< HEAD
-=======
 
 	pstate->p_lateral_active = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * We must assign collations now so that we can fill funccolcollations.
@@ -857,19 +837,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * Mark the RTE as LATERAL if the user said LATERAL explicitly, or if
 	 * there are any lateral cross-references in it.
 	 */
-<<<<<<< HEAD
-	if (pstate->p_relnamespace || pstate->p_varnamespace)
-	{
-		if (contain_vars_of_level(funcexpr, 0))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("function expression in FROM cannot refer to other relations of same query level"),
-					 parser_errposition(pstate,
-										locate_var_of_level(funcexpr, 0))));
-	}
-=======
 	is_lateral = r->lateral || contain_vars_of_level(funcexpr, 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * OK, build an RTE for the function.
@@ -1593,7 +1561,6 @@ checkTargetlistEntrySQL92(ParseState *pstate, TargetEntry *tle,
 						  ParseExprKind exprKind)
 {
 	switch (exprKind)
-<<<<<<< HEAD
 	{
 		case EXPR_KIND_GROUP_BY:
 			/* reject aggregates and window functions */
@@ -1689,42 +1656,8 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 
 			result_list = list_concat(result_list, subresult_list);
 		}
-=======
-	{
-		case EXPR_KIND_GROUP_BY:
-			/* reject aggregates and window functions */
-			if (pstate->p_hasAggs &&
-				contain_aggs_of_level((Node *) tle->expr, 0))
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-				/* translator: %s is name of a SQL construct, eg GROUP BY */
-						 errmsg("aggregate functions are not allowed in %s",
-								ParseExprKindName(exprKind)),
-						 parser_errposition(pstate,
-							   locate_agg_of_level((Node *) tle->expr, 0))));
-			if (pstate->p_hasWindowFuncs &&
-				contain_windowfuncs((Node *) tle->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-				/* translator: %s is name of a SQL construct, eg GROUP BY */
-						 errmsg("window functions are not allowed in %s",
-								ParseExprKindName(exprKind)),
-						 parser_errposition(pstate,
-									locate_windowfunc((Node *) tle->expr))));
-			break;
-		case EXPR_KIND_ORDER_BY:
-			/* no extra checks needed */
-			break;
-		case EXPR_KIND_DISTINCT_ON:
-			/* no extra checks needed */
-			break;
-		default:
-			elog(ERROR, "unexpected exprKind in checkTargetlistEntrySQL92");
-			break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
-<<<<<<< HEAD
 	/*
 	 * In GROUP BY clause, we handle RowExpr specially here. When
 	 * RowExprs appears immediately inside a grouping extension, we do
@@ -1776,8 +1709,6 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
 	return result_list;
 }
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  *	findTargetlistEntrySQL92 -
  *	  Returns the targetlist entry matching the given (untransformed) node.
@@ -2401,33 +2332,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 											   result, *targetlist);
 		}
 
-<<<<<<< HEAD
 		else
-=======
-		if (useSQL99)
-			tle = findTargetlistEntrySQL99(pstate, gexpr,
-										   targetlist, exprKind);
-		else
-			tle = findTargetlistEntrySQL92(pstate, gexpr,
-										   targetlist, exprKind);
-
-		/* Eliminate duplicates (GROUP BY x, x) */
-		if (targetIsInSortList(tle, InvalidOid, result))
-			continue;
-
-		/*
-		 * If the GROUP BY tlist entry also appears in ORDER BY, copy operator
-		 * info from the (first) matching ORDER BY item.  This means that if
-		 * you write something like "GROUP BY foo ORDER BY foo USING <<<", the
-		 * GROUP BY operation silently takes on the equality semantics implied
-		 * by the ORDER BY.  There are two reasons to do this: it improves the
-		 * odds that we can implement both GROUP BY and ORDER BY with a single
-		 * sort step, and it allows the user to choose the equality semantics
-		 * used by GROUP BY, should she be working with a datatype that has
-		 * more than one equality operator.
-		 */
-		if (tle->ressortgroupref > 0)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			TargetEntry *tle;
 			SortGroupClause *gc;
@@ -2436,11 +2341,11 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 			bool		hashable;
 
 			if (useSQL99)
-				tle = findTargetlistEntrySQL99(pstate, node, targetlist,
-											   exprKind);
+				tle = findTargetlistEntrySQL99(pstate, node,
+											   targetlist, exprKind);
 			else
-				tle = findTargetlistEntrySQL92(pstate, node, targetlist, 
-											   exprKind);
+				tle = findTargetlistEntrySQL92(pstate, node,
+											   targetlist, exprKind);
 
 			/*
 			 * Avoid making duplicate grouplist entries.  Note that we don't
@@ -2641,21 +2546,12 @@ transformWindowDefinitions(ParseState *pstate,
 										  EXPR_KIND_WINDOW_ORDER,
 										  true /* fix unknowns */ ,
 										  true /* force SQL99 rules */ );
-<<<<<<< HEAD
 		partitionClause = transformSortClause(pstate,
 											  windef->partitionClause,
 											  targetlist,
 											  EXPR_KIND_WINDOW_PARTITION,
 											  true /* fix unknowns */ ,
 											  true /* force SQL99 rules */ );
-=======
-		partitionClause = transformGroupClause(pstate,
-											   windef->partitionClause,
-											   targetlist,
-											   orderClause,
-											   EXPR_KIND_WINDOW_PARTITION,
-											   true /* force SQL99 rules */ );
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/*
 		 * And prepare the new WindowClause.
@@ -3663,7 +3559,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
 	}
 	else if (frameOptions & FRAMEOPTION_RANGE)
 	{
-<<<<<<< HEAD
 		TargetEntry *te;
 		Oid			otype;
 		Oid			rtype;
@@ -3674,8 +3569,6 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
 		Operator	tup;
 		int32		typmod;
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/* Transform the raw expression tree */
 		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_RANGE);
 
@@ -3835,11 +3728,8 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause,
 		node = NULL;
 	}
 
-<<<<<<< HEAD
 	/* In GPDB, we allow this. */
 #if 0
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* Disallow variables in frame offsets */
 	checkExprIsVarFree(pstate, node, constructName);
 #endif

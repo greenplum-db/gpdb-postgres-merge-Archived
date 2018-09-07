@@ -14,13 +14,9 @@
  * contain optimizable statements, which we should transform.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/parser/analyze.c
@@ -55,6 +51,7 @@
 
 #include "cdb/cdbvars.h"
 #include "catalog/gp_policy.h"
+#include "access/htup_details.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_func.h"
@@ -795,10 +792,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	assign_query_collations(pstate, qry);
 
@@ -1611,7 +1605,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* initial processing of HAVING clause is much like WHERE clause */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause,
 										   EXPR_KIND_HAVING, "HAVING");
-<<<<<<< HEAD
 
     /*
      * CDB: Untyped Const or Param nodes in a subquery in the FROM clause
@@ -1619,8 +1612,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
      * clause, targetlist, etc.  Bring targetlist Var types up to date.
      */
     fixup_unknown_vars_in_targetlist(pstate, qry->targetList);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
@@ -1712,10 +1703,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
@@ -1953,10 +1941,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	assign_query_collations(pstate, qry);
 
@@ -1980,7 +1965,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	SelectStmt *leftmostSelect;
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
-	WithClause *withClause;
 	SetOperationStmt *sostmt;
 	List	   *sortClause;
 	Node	   *limitOffset;
@@ -2045,11 +2029,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
-<<<<<<< HEAD
-	/* process the WITH clause independently of all else */
-=======
 	/* Process the WITH clause independently of all else */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (withClause)
 	{
 		qry->hasRecursive = withClause->recursive;
@@ -2195,11 +2175,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
@@ -2973,10 +2949,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-<<<<<<< HEAD
 	qry->hasFuncsWithExecRestrictions = pstate->p_hasFuncsWithExecRestrictions;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
@@ -3052,10 +3025,6 @@ transformReturningList(ParseState *pstate, List *returningList)
 {
 	List	   *rlist;
 	int			save_next_resno;
-<<<<<<< HEAD
-	int			length_rtable;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (returningList == NIL)
 		return NIL;				/* nothing to do */
@@ -3068,34 +3037,8 @@ transformReturningList(ParseState *pstate, List *returningList)
 	save_next_resno = pstate->p_next_resno;
 	pstate->p_next_resno = 1;
 
-<<<<<<< HEAD
-	length_rtable = list_length(pstate->p_rtable);
-
 	/* transform RETURNING identically to a SELECT targetlist */
 	rlist = transformTargetList(pstate, returningList, EXPR_KIND_RETURNING);
-
-	/* no new relation references please */
-	if (list_length(pstate->p_rtable) != length_rtable)
-	{
-		int			vlocation = -1;
-		int			relid;
-
-		/* try to locate such a reference to point to */
-		for (relid = length_rtable + 1; relid <= list_length(pstate->p_rtable); relid++)
-		{
-			vlocation = locate_var_of_relation((Node *) rlist, relid, 0);
-			if (vlocation >= 0)
-				break;
-		}
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("RETURNING cannot contain references to other relations"),
-				 parser_errposition(pstate, vlocation)));
-	}
-=======
-	/* transform RETURNING identically to a SELECT targetlist */
-	rlist = transformTargetList(pstate, returningList, EXPR_KIND_RETURNING);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
@@ -3368,18 +3311,11 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-<<<<<<< HEAD
-					/* ignore foreign tables */
-					if (rte->relkind == RELKIND_FOREIGN_TABLE)
-						break;
-
 					if (get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					applyLockingClause(qry, i,
 									   lc->strength, lc->noWait, pushedDown);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
@@ -3429,20 +3365,10 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-<<<<<<< HEAD
-							if (rte->relkind == RELKIND_FOREIGN_TABLE)
-								ereport(ERROR,
-									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									  errmsg("SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\"",
-											 rte->eref->aliasname),
-									  parser_errposition(pstate, thisrel->location)));
-
 							if (get_rel_relstorage(rte->relid) == RELSTORAGE_EXTERNAL)
 								ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 										 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to external tables")));
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 							applyLockingClause(qry, i,
 											   lc->strength, lc->noWait,
 											   pushedDown);

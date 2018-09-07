@@ -52,6 +52,7 @@ typedef struct
 	Relation	rel;			/* opened/locked rel, if ALTER */
 	List	   *inhRelations;	/* relations to inherit from */
 	bool		hasoids;		/* does relation have an OID column? */
+	bool		isforeign;		/* true if CREATE/ALTER FOREIGN TABLE */
 	bool		isalter;		/* true if altering existing table */
 	bool		iscreatepart;	/* true if create in service of creating a part */
 	bool		issplitpart;
@@ -71,8 +72,6 @@ typedef struct
 
 	MemoryContext tempCtx;
 } CreateStmtContext;
-
-#define MaxPolicyAttributeNumber MaxHeapAttributeNumber
 
 extern int validate_partition_spec(CreateStmtContext *cxt, 
 							CreateStmt 			*stmt, 

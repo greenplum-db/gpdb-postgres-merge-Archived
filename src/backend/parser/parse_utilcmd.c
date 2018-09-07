@@ -75,32 +75,6 @@
 #include "utils/guc.h"
 #include "utils/tqual.h"
 
-<<<<<<< HEAD
-=======
-/* State shared by transformCreateStmt and its subroutines */
-typedef struct
-{
-	ParseState *pstate;			/* overall parser state */
-	const char *stmtType;		/* "CREATE [FOREIGN] TABLE" or "ALTER TABLE" */
-	RangeVar   *relation;		/* relation to create */
-	Relation	rel;			/* opened/locked rel, if ALTER */
-	List	   *inhRelations;	/* relations to inherit from */
-	bool		isforeign;		/* true if CREATE/ALTER FOREIGN TABLE */
-	bool		isalter;		/* true if altering existing table */
-	bool		hasoids;		/* does relation have an OID column? */
-	List	   *columns;		/* ColumnDef items */
-	List	   *ckconstraints;	/* CHECK constraints */
-	List	   *fkconstraints;	/* FOREIGN KEY constraints */
-	List	   *ixconstraints;	/* index-creating constraints */
-	List	   *inh_indexes;	/* cloned indexes from INCLUDING INDEXES */
-	List	   *blist;			/* "before list" of things to do before
-								 * creating the table */
-	List	   *alist;			/* "after list" of things to do after creating
-								 * the table */
-	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
-} CreateStmtContext;
->>>>>>> e472b921406407794bab911c64655b8b82375196
-
 /* State shared by transformCreateSchemaStmt and its subroutines */
 typedef struct
 {
@@ -1497,19 +1471,12 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert whole-row table reference"),
-<<<<<<< HEAD
-					 errdetail("Index \"%s\" contains a whole-row table reference.",
-							   RelationGetRelationName(source_idx))));
-
-		index->whereClause = pred_tree;
-		/* Adjust attribute numbers */
-		change_varattnos_of_a_node(index->whereClause, attmap);
-=======
 			  errdetail("Index \"%s\" contains a whole-row table reference.",
 						RelationGetRelationName(source_idx))));
 
 		index->whereClause = pred_tree;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		/* Adjust attribute numbers */
+		change_varattnos_of_a_node(index->whereClause, attmap);
 	}
 
 	/* Clean up */
@@ -3132,8 +3099,8 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 			ScanKeyData scankey;
 			SysScanDesc sscan;
 			char	   *parname;
-			int2		position;
-			int4		depth;
+			int16		position;
+			int32		depth;
 			NameData	name;
 			Oid			paroid;
 			char		depthstr[NAMEDATALEN];

@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -438,11 +434,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <boolean> opt_dxl
 %type <defelt>	opt_binary opt_oids copy_delimiter
 
-<<<<<<< HEAD
 %type <boolean> copy_from opt_program skip_external_partition
-=======
-%type <boolean> copy_from opt_program
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
 %type <objtype>	reindex_type drop_type comment_type security_label_type
@@ -517,19 +509,13 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text notify_payload
-<<<<<<< HEAD
-%type <str>		RoleId opt_granted_by opt_boolean_or_string ColId_or_Sconst
+%type <str>		RoleId opt_granted_by opt_boolean_or_string
 %type <str>		QueueId
 %type <list>	var_list
 %type <str>		ColId ColLabel ColLabelNoAs var_name type_function_name param_name
 %type <keyword> PartitionIdentKeyword	
 %type <str>		PartitionColId
-=======
-%type <str>		RoleId opt_granted_by opt_boolean_or_string
-%type <list>	var_list
-%type <str>		ColId ColLabel var_name type_function_name param_name
 %type <str>		NonReservedWord NonReservedWord_or_Sconst
->>>>>>> e472b921406407794bab911c64655b8b82375196
 %type <node>	var_value zone_value
 
 %type <keyword> unreserved_keyword type_func_name_keyword
@@ -596,12 +582,9 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <windef>	window_definition over_clause window_specification
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
-<<<<<<< HEAD
 %type <ival>	window_frame_exclusion
 
-=======
 %type <boolean> opt_if_not_exists
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -668,12 +651,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P
 
-<<<<<<< HEAD
-	MAPPING MATCH MAXVALUE MEMORY_LIMIT MEMORY_SHARED_QUOTA MEMORY_SPILL_RATIO
+	MAPPING MATCH MATERIALIZED MAXVALUE MEMORY_LIMIT MEMORY_SHARED_QUOTA MEMORY_SPILL_RATIO
 	MINUTE_P MINVALUE MODE MONTH_P MOVE
-=======
-	MAPPING MATCH MATERIALIZED MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEXT NO NONE
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
@@ -3702,10 +3681,7 @@ ClosePortalStmt:
 
 CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
-<<<<<<< HEAD
 			OptSingleRowErrorHandling skip_external_partition
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
@@ -3714,18 +3690,15 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					n->is_from = $6;
 					n->is_program = $7;
 					n->filename = $8;
-<<<<<<< HEAD
 					n->sreh = $12;
 					n->partitions = NULL;
 					n->ao_segnos = NIL;
-=======
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
 								 parser_errposition(@8)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 					n->options = NIL;
 					n->skip_ext_partition = $13;
@@ -3739,10 +3712,6 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 						n->options = lappend(n->options, $9);
 					if ($11)
 						n->options = list_concat(n->options, $11);
-<<<<<<< HEAD
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					$$ = (Node *)n;
 				}
 			| COPY select_with_parens TO opt_program copy_file_name opt_with copy_options
@@ -3755,18 +3724,15 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					n->is_program = $4;
 					n->filename = $5;
 					n->options = $7;
-<<<<<<< HEAD
 					n->partitions = NULL;
 					n->ao_segnos = NIL;
 					n->skip_ext_partition = false;
-=======
 
 					if (n->is_program && n->filename == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
 								 parser_errposition(@5)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 					$$ = (Node *)n;
 				}
@@ -3782,13 +3748,11 @@ opt_program:
 			| /* EMPTY */							{ $$ = FALSE; }
 		;
 
-<<<<<<< HEAD
 skip_external_partition:
 			IGNORE_P EXTERNAL PARTITIONS			{ $$ = TRUE; }
 			| /*EMPTY*/								{ $$ = FALSE; }
 		;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
 /*
  * copy_file_name NULL indicates stdio is used. Whether stdin or stdout is
  * used depends on the direction. (It really doesn't make sense to copy from
@@ -5973,19 +5937,11 @@ create_extension_opt_item:
 				{
 					$$ = makeDefElem("schema", (Node *)makeString($2));
 				}
-<<<<<<< HEAD
-			| VERSION_P Sconst
-				{
-					$$ = makeDefElem("new_version", (Node *)makeString($2));
-				}
-			| FROM Sconst
-=======
 			| VERSION_P NonReservedWord_or_Sconst
 				{
 					$$ = makeDefElem("new_version", (Node *)makeString($2));
 				}
 			| FROM NonReservedWord_or_Sconst
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					$$ = makeDefElem("old_version", (Node *)makeString($2));
 				}
@@ -6014,11 +5970,7 @@ alter_extension_opt_list:
 		;
 
 alter_extension_opt_item:
-<<<<<<< HEAD
-			TO Sconst
-=======
 			TO NonReservedWord_or_Sconst
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					$$ = makeDefElem("new_version", (Node *)makeString($2));
 				}
@@ -7524,9 +7476,6 @@ DropStmt:	DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-<<<<<<< HEAD
-			/*GPDB_92_MERGE_FIXME: remove syntax for DROP INDEX CONCURRENTLY*/	
-=======
 			| DROP INDEX CONCURRENTLY any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
@@ -7549,7 +7498,6 @@ DropStmt:	DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = true;
 					$$ = (Node *)n;
 				}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		;
 
 
@@ -7783,16 +7731,13 @@ comment_type:
 			| FOREIGN TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
 			| FOREIGN DATA_P WRAPPER			{ $$ = OBJECT_FDW; }
-<<<<<<< HEAD
-			| RESOURCE QUEUE                    { $$ = OBJECT_RESQUEUE; }
-			| RESOURCE GROUP_P					{ $$ = OBJECT_RESGROUP; }
-=======
 			| EVENT TRIGGER						{ $$ = OBJECT_EVENT_TRIGGER; }
 			| TEXT_P SEARCH CONFIGURATION		{ $$ = OBJECT_TSCONFIGURATION; }
 			| TEXT_P SEARCH DICTIONARY			{ $$ = OBJECT_TSDICTIONARY; }
 			| TEXT_P SEARCH PARSER				{ $$ = OBJECT_TSPARSER; }
 			| TEXT_P SEARCH TEMPLATE			{ $$ = OBJECT_TSTEMPLATE; }
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			| RESOURCE QUEUE                    { $$ = OBJECT_RESQUEUE; }
+			| RESOURCE GROUP_P					{ $$ = OBJECT_RESGROUP; }
 		;
 
 comment_text:
@@ -8530,7 +8475,11 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
-<<<<<<< HEAD
+					n->oldNode = InvalidOid;
+					n->primary = false;
+					n->isconstraint = false;
+					n->deferrable = false;
+					n->initdeferred = false;
 
                     if (n->concurrent)
 					{
@@ -8540,13 +8489,6 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 
 					}
 
-=======
-					n->oldNode = InvalidOid;
-					n->primary = false;
-					n->isconstraint = false;
-					n->deferrable = false;
-					n->initdeferred = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					$$ = (Node *)n;
 				}
 		;
@@ -13727,14 +13669,9 @@ c_expr:		columnref								{ $$ = $1; }
 					n->testexpr = NULL;
 					n->operName = NIL;
 					n->subselect = $1;
-<<<<<<< HEAD
-					a->arg = (Node *)n;
-					a->indirection = $2;
-=======
 					n->location = @1;
 					a->arg = (Node *)n;
 					a->indirection = check_indirection($2, yyscanner);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					$$ = (Node *)a;
 				}
 			| EXISTS select_with_parens
@@ -15526,12 +15463,8 @@ AexprConst: Iconst
 
 Iconst:		ICONST									{ $$ = $1; };
 Sconst:		SCONST									{ $$ = $1; };
-<<<<<<< HEAD
-RoleId:		ColId									{ $$ = $1; };
-QueueId:	ColId									{ $$ = $1; };
-=======
 RoleId:		NonReservedWord							{ $$ = $1; };
->>>>>>> e472b921406407794bab911c64655b8b82375196
+QueueId:	NonReservedWord							{ $$ = $1; };
 
 SignedIconst: Iconst								{ $$ = $1; }
 			| '+' Iconst							{ $$ = + $2; }
@@ -15676,13 +15609,9 @@ unreserved_keyword:
 			| ENUM_P
 			| ERRORS
 			| ESCAPE
-<<<<<<< HEAD
+			| EVENT
 			| EVERY
 			| EXCHANGE
-=======
-			| EVENT
-			| EXCLUDE
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			| EXCLUDING
 			| EXCLUSIVE
 			| EXECUTE
@@ -15796,11 +15725,8 @@ unreserved_keyword:
 			| PROCEDURAL
 			| PROCEDURE
 			| PROGRAM
-<<<<<<< HEAD
 			| PROTOCOL
 			| QUEUE
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			| QUOTE
 			| RANDOMLY /* gp */
 			| RANGE

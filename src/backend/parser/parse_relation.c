@@ -1017,8 +1017,8 @@ addRangeTableEntry(ParseState *pstate,
 	locking = getLockedRefname(pstate, refname);
 	if (locking)
 	{
-		lockmode = locking->forUpdate ? RowExclusiveLock : RowShareLock;
-		if (locking->forUpdate)
+		lockmode = (locking->strength >= LCS_FORNOKEYUPDATE) ? RowExclusiveLock : RowShareLock;
+		if (locking->strength >= LCS_FORNOKEYUPDATE)
 		{
 			Oid relid;
 			
@@ -1029,7 +1029,7 @@ addRangeTableEntry(ParseState *pstate,
 			rel = try_heap_open(relid, NoLock, true);
 			if (!rel)
 				elog(ERROR, "open relation(%u) fail", relid);
-			if (locking->forUpdate)
+			if (locking->strength >= LCS_FORNOKEYUPDATE)
 				lockmode = IsSystemRelation(rel) ? RowExclusiveLock : ExclusiveLock;
 			else
 				lockmode = RowShareLock;
