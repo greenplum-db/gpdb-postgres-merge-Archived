@@ -355,13 +355,9 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 	 * expected to have buffers in shared memory ? Can check only for
 	 * RELSTORAGE_HEAP below.
 	 */
-<<<<<<< HEAD
 	if ((relstorage != RELSTORAGE_AOROWS) &&
 		(relstorage != RELSTORAGE_AOCOLS))
-		DropRelFileNodeAllBuffers(rnode);
-=======
-	DropRelFileNodesAllBuffers(&rnode, 1);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		DropRelFileNodesAllBuffers(&rnode, 1);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget it immediately, too.
@@ -387,11 +383,8 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
-<<<<<<< HEAD
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		mdunlink(rnode, forknum, isRedo, relstorage);
-=======
-	(*(smgrsw[which].smgr_unlink)) (rnode, InvalidForkNumber, isRedo);
 }
 
 /*
@@ -406,13 +399,17 @@ smgrdounlink(SMgrRelation reln, bool isRedo, char relstorage)
  *
  *		This is equivalent to calling smgrdounlink for each relation, but it's
  *		significantly quicker so should be preferred when possible.
+ *
+ * 'relstorages' is an array of pg_class.relstorage fields. It must have the
+ * same size as 'rels'.
  */
 void
-smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
+smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo, char *relstorages)
 {
 	int			i = 0;
 	RelFileNodeBackend *rnodes;
 	ForkNumber	forknum;
+	bool		has_heaps = false;
 
 	if (nrels == 0)
 		return;
@@ -425,20 +422,24 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
-		int			which = rels[i]->smgr_which;
 
 		rnodes[i] = rnode;
 
 		/* Close the forks at smgr level */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			(*(smgrsw[which].smgr_close)) (rels[i], forknum);
+			mdclose(rels[i], forknum);
+
+		if ((relstorages[i] != RELSTORAGE_AOROWS) &&
+			(relstorages[i] != RELSTORAGE_AOCOLS))
+			has_heaps = true;
 	}
 
 	/*
 	 * Get rid of any remaining buffers for the relations.	bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
-	DropRelFileNodesAllBuffers(rnodes, nrels);
+	if (has_heaps)
+		DropRelFileNodesAllBuffers(rnodes, nrels);
 
 	/*
 	 * It'd be nice to tell the stats collector to forget them immediately,
@@ -466,14 +467,11 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 
 	for (i = 0; i < nrels; i++)
 	{
-		int			which = rels[i]->smgr_which;
-
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			(*(smgrsw[which].smgr_unlink)) (rnodes[i], forknum, isRedo);
+			mdunlink(rnodes[i], forknum, isRedo, relstorages[i]);
 	}
 
 	pfree(rnodes);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

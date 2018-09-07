@@ -66,10 +66,14 @@ EnableClientWaitTimeoutInterrupt(void)
 	 */
 }
 
-void
+bool
 DisableClientWaitTimeoutInterrupt(void)
 {
+	bool		result = (clientWaitTimeoutInterruptEnabled != 0);
+
 	clientWaitTimeoutInterruptEnabled = 0;
+
+	return result;
 }
 
 /*

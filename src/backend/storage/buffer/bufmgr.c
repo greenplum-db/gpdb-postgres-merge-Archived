@@ -53,8 +53,7 @@
 #include "storage/smgr.h"
 #include "storage/standby.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
-#include "utils/resowner.h"
+#include "utils/resowner_private.h"
 #include "utils/faultinjector.h"
 #include "pgstat.h"
 #include "access/heapam.h"
@@ -62,9 +61,6 @@
 #include "access/aosegfiles.h"
 #include "access/aocssegfiles.h"
 #include "cdb/cdbappendonlyam.h"
-=======
-#include "utils/resowner_private.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "utils/timestamp.h"
 
 
@@ -101,8 +97,6 @@ static bool IsForInput;
 
 /* local state for LockBufferForCleanup */
 static volatile BufferDesc *PinCountWaitBuf = NULL;
-
-static XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 static Buffer ReadBuffer_common(SMgrRelation reln, char relpersistence,
 				  ForkNumber forkNum, BlockNumber blockNum,
@@ -2063,14 +2057,7 @@ static void
 FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 {
 	XLogRecPtr	recptr;
-<<<<<<< HEAD
-	ErrorContextCallback errcontext;
-	XLogRecPtr GistXLogRecPtrForTemp = {1, 1};	/* Magic GIST value */
-	Block		bufBlock;
-	char		*bufToWrite;
-=======
 	ErrorContextCallback errcallback;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	instr_time	io_start,
 				io_time;
 	Block		bufBlock;
@@ -2092,7 +2079,6 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
-<<<<<<< HEAD
 	{
 		/* it's OK to check this flag without the buffer header lock,
 		 * it cannot change while we hold a pin on it
@@ -2101,11 +2087,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 		reln = smgropen(buf->tag.rnode,
 						istemp ? TempRelBackendId : InvalidBackendId);
-		smgrsettransient(reln);
 	}
-=======
-		reln = smgropen(buf->tag.rnode, InvalidBackendId);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
@@ -2142,16 +2124,8 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	 * disastrous system-wide consequences.  To make sure that can't happen,
 	 * skip the flush if the buffer isn't permanent.
 	 */
-<<<<<<< HEAD
-	if (recptr.xlogid != GistXLogRecPtrForTemp.xlogid ||
-		recptr.xrecoff != GistXLogRecPtrForTemp.xrecoff)
-	{
-		XLogFlush(recptr);
-	}
-=======
 	if (buf->flags & BM_PERMANENT)
 		XLogFlush(recptr);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Now it's safe to write buffer to disk. Note that no one else should
@@ -2240,40 +2214,6 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 }
 
 /*
- * BufferGetLSNAtomic
- *		Retrieves the LSN of the buffer atomically using a buffer header lock.
- *		This is necessary for some callers who may not have an exclusive lock
- *		on the buffer.
- */
-XLogRecPtr
-BufferGetLSNAtomic(Buffer buffer)
-{
-	volatile BufferDesc *bufHdr;
-	char				*page = BufferGetPage(buffer);
-	XLogRecPtr			 lsn;
-
-	/*
-	 * If we don't need locking for correctness, fastpath out.
-	 */
-	if (!DataChecksumsEnabled() || BufferIsLocal(buffer))
-		return PageGetLSN(page);
-
-	/* Make sure we've got a real buffer, and that we hold a pin on it. */
-	Assert(BufferIsValid(buffer));
-	Assert(BufferIsPinned(buffer));
-
-	/* Caller should hold share lock on the buffer contents. */
-	bufHdr = &BufferDescriptors[buffer - 1];
-	Assert(LWLockHeldByMe(bufHdr->content_lock));
-
-	LockBufHdr(bufHdr);
-	lsn = PageGetLSN(page);
-	UnlockBufHdr(bufHdr);
-
-	return lsn;
-}
-
-/*
  * BufferIsPermanent
  *		Determines whether a buffer will potentially still be around after
  *		a crash.  Caller must hold a buffer pin.
@@ -2302,8 +2242,6 @@ BufferIsPermanent(Buffer buffer)
 	return (bufHdr->flags & BM_PERMANENT) != 0;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * BufferGetLSNAtomic
  *		Retrieves the LSN of the buffer atomically using a buffer header lock.
@@ -2333,7 +2271,6 @@ BufferGetLSNAtomic(Buffer buffer)
 
 	return lsn;
 }
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /* ---------------------------------------------------------------------
  *		DropRelFileNodeBuffers
@@ -2369,12 +2306,7 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 
 	/* Temp tables use shared buffers in Greenplum */
 	/* If it's a local relation, it's localbuf.c's problem. */
-<<<<<<< HEAD
-	if (rnode.backend != InvalidBackendId &&
-		rnode.backend != TempRelBackendId)
-=======
 	if (RelFileNodeBackendIsTemp(rnode))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		if (rnode.backend == MyBackendId)
 			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
@@ -2438,12 +2370,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 
 	/* Temp tables use shared buffers in Greenplum */
 	/* If it's a local relation, it's localbuf.c's problem. */
-<<<<<<< HEAD
-	if (rnode.backend != InvalidBackendId &&
-		rnode.backend != TempRelBackendId)
-=======
 	for (i = 0; i < nnodes; i++)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		if (RelFileNodeBackendIsTemp(rnodes[i]))
 		{
@@ -2872,20 +2799,6 @@ MarkBufferDirtyHint(Buffer buffer)
 	{
 		XLogRecPtr	lsn = InvalidXLogRecPtr;
 		bool		dirtied = false;
-<<<<<<< HEAD
-		bool		saved_inCommit = false;
-
-		/*
-		 * If checksums are enabled, and the buffer is permanent, then a full
-		 * page image may be required even for some hint bit updates to protect
-		 * against torn pages. This full page image is only necessary if the
-		 * hint bit update is the first change to the page since the last
-		 * checkpoint.
-		 *
-		 * We don't check full_page_writes here because that logic is
-		 * included when we call XLogInsert() since the value changes
-		 * dynamically.
-=======
 		bool		delayChkpt = false;
 
 		/*
@@ -2897,49 +2810,22 @@ MarkBufferDirtyHint(Buffer buffer)
 		 *
 		 * We don't check full_page_writes here because that logic is included
 		 * when we call XLogInsert() since the value changes dynamically.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 */
 		if (DataChecksumsEnabled() && (bufHdr->flags & BM_PERMANENT))
 		{
 			/*
 			 * If we're in recovery we cannot dirty a page because of a hint.
-<<<<<<< HEAD
-			 * We can set the hint, just not dirty the page as a result so
-			 * the hint is lost when we evict the page or shutdown.
-			 *
-			 * See src/backend/storage/page/README for longer discussion.
-			 */
-			if (RecoveryInProgress() || IsInitProcessingMode())
-=======
 			 * We can set the hint, just not dirty the page as a result so the
 			 * hint is lost when we evict the page or shutdown.
 			 *
 			 * See src/backend/storage/page/README for longer discussion.
 			 */
-			if (RecoveryInProgress())
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			if (RecoveryInProgress() || IsInitProcessingMode())
 				return;
 
 			/*
 			 * If the block is already dirty because we either made a change
 			 * or set a hint already, then we don't need to write a full page
-<<<<<<< HEAD
-			 * image.  Note that aggressive cleaning of blocks
-			 * dirtied by hint bit setting would increase the call rate.
-			 * Bulk setting of hint bits would reduce the call rate...
-			 *
-			 * We must issue the WAL record before we mark the buffer dirty.
-			 * Otherwise we might write the page before we write the WAL.
-			 * That causes a race condition, since a checkpoint might occur
-			 * between writing the WAL record and marking the buffer dirty.
-			 * We solve that with a kluge, but one that is already in use
-			 * during transaction commit to prevent race conditions.
-			 * Basically, we simply prevent the checkpoint WAL record from
-			 * being written until we have marked the buffer dirty. We don't
-			 * start the checkpoint flush until we have marked dirty, so our
-			 * checkpoint must flush the change to disk successfully or the
-			 * checkpoint never gets written, so crash recovery will fix.
-=======
 			 * image.  Note that aggressive cleaning of blocks dirtied by hint
 			 * bit setting would increase the call rate. Bulk setting of hint
 			 * bits would reduce the call rate...
@@ -2955,19 +2841,12 @@ MarkBufferDirtyHint(Buffer buffer)
 			 * checkpoint flush until we have marked dirty, so our checkpoint
 			 * must flush the change to disk successfully or the checkpoint
 			 * never gets written, so crash recovery will fix.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			 *
 			 * It's possible we may enter here without an xid, so it is
 			 * essential that CreateCheckpoint waits for virtual transactions
 			 * rather than full transactionids.
 			 */
-<<<<<<< HEAD
-			Assert(MyPgXact);
-			saved_inCommit = MyPgXact->inCommit;
-			MyPgXact->inCommit = true;
-=======
 			MyPgXact->delayChkpt = delayChkpt = true;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			lsn = XLogSaveBufferForHint(buffer);
 		}
 
@@ -2978,15 +2857,6 @@ MarkBufferDirtyHint(Buffer buffer)
 			dirtied = true;		/* Means "will be dirtied by this action" */
 
 			/*
-<<<<<<< HEAD
-			 * Set the page LSN if we wrote a backup block. We aren't
-			 * supposed to set this when only holding a share lock but
-			 * as long as we serialise it somehow we're OK. We choose to
-			 * set LSN while holding the buffer header lock, which causes
-			 * any reader of an LSN who holds only a share lock to also
-			 * obtain a buffer header lock before using PageGetLSN(),
-			 * which is enforced in BufferGetLSNAtomic().
-=======
 			 * Set the page LSN if we wrote a backup block. We aren't supposed
 			 * to set this when only holding a share lock but as long as we
 			 * serialise it somehow we're OK. We choose to set LSN while
@@ -2994,7 +2864,6 @@ MarkBufferDirtyHint(Buffer buffer)
 			 * LSN who holds only a share lock to also obtain a buffer header
 			 * lock before using PageGetLSN(), which is enforced in
 			 * BufferGetLSNAtomic().
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			 *
 			 * If checksums are enabled, you might think we should reset the
 			 * checksum here. That will happen when the page is written
@@ -3002,9 +2871,6 @@ MarkBufferDirtyHint(Buffer buffer)
 			 */
 			if (!XLogRecPtrIsInvalid(lsn))
 				PageSetLSN(page, lsn);
-<<<<<<< HEAD
-			/* Do vacuum cost accounting */
-=======
 		}
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 		UnlockBufHdr(bufHdr);
@@ -3014,28 +2880,10 @@ MarkBufferDirtyHint(Buffer buffer)
 
 		if (dirtied)
 		{
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			VacuumPageDirty++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
 		}
-<<<<<<< HEAD
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr(bufHdr);
-
-		if (!saved_inCommit)
-		{
-			Assert(MyPgXact);
-			MyPgXact->inCommit = false;
-		}
-
-		if (dirtied)
-		{
-			if (VacuumCostActive)
-				VacuumCostBalance += VacuumCostPageDirty;
-		}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 }
 

@@ -284,13 +284,7 @@ restart:
 				exclusive_lock_held = true;
 			}
 			fsm_rebuild_page(page);
-<<<<<<< HEAD
-			/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
-			 * Backport commit 20723ce80 to fix. */
-			MarkBufferDirty(buf);
-=======
 			MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			goto restart;
 		}
 	}

@@ -21,7 +21,7 @@ extern void	CancelIdleResourceCleanupTimers(void);
 extern void IdleGangTimeoutHandler(void);
 
 extern void EnableClientWaitTimeoutInterrupt(void);
-extern void DisableClientWaitTimeoutInterrupt(void);
+extern bool DisableClientWaitTimeoutInterrupt(void);
 
 extern int	IdleSessionGangTimeout;
 

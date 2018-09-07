@@ -216,13 +216,7 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 		PageInit(page, BLCKSZ, 0);
 
 	if (fsm_set_avail(page, slot, new_cat))
-<<<<<<< HEAD
-		/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
-		 * Backport commit 20723ce80 to fix. */
-		MarkBufferDirty(buf);
-=======
 		MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	UnlockReleaseBuffer(buf);
 }
 
@@ -292,13 +286,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 			return;				/* nothing to do; the FSM was already smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
-<<<<<<< HEAD
-		/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
-		 * Backport commit 20723ce80 to fix. */
-		MarkBufferDirty(buf);
-=======
 		MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		UnlockReleaseBuffer(buf);
 
 		new_nfsmblocks = fsm_logical_to_physical(first_removed_address) + 1;
@@ -650,13 +638,7 @@ fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 	page = BufferGetPage(buf);
 
 	if (fsm_set_avail(page, slot, newValue))
-<<<<<<< HEAD
-		/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
-		 * Backport commit 20723ce80 to fix. */
-		MarkBufferDirty(buf);
-=======
 		MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (minValue != 0)
 	{
@@ -807,13 +789,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 			{
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 				fsm_set_avail(BufferGetPage(buf), slot, child_avail);
-<<<<<<< HEAD
-				/* GPDB_84_MERGE_FIXME: upstream calls MarkBufferDirtyHint instead.
-				 * Backport commit 20723ce80 to fix. */
-				MarkBufferDirty(buf);
-=======
 				MarkBufferDirtyHint(buf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 		}

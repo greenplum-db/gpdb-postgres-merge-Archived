@@ -473,28 +473,14 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid, bool isCommit)
 			pgxact->xmin = InvalidTransactionId;
 			/* must be cleared with xid/xmin: */
 			pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-			pgxact->inCommit = false;		/* be sure this is cleared in abort */
+			pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
 			proc->recoveryConflictPending = false;
 			proc->serializableIsoLevel = false;
 
-<<<<<<< HEAD
 			/* Clear the subtransaction-XID cache too while holding the lock */
 			pgxact->nxids = 0;
 			pgxact->overflowed = false;
 		}
-=======
-		pgxact->xid = InvalidTransactionId;
-		proc->lxid = InvalidLocalTransactionId;
-		pgxact->xmin = InvalidTransactionId;
-		/* must be cleared with xid/xmin: */
-		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
-		proc->recoveryConflictPending = false;
-
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		pgxact->nxids = 0;
-		pgxact->overflowed = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/* Also advance global latestCompletedXid while holding the lock */
 		/*
@@ -563,12 +549,8 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 
 	/* redundant, but just in case */
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-<<<<<<< HEAD
-	pgxact->inCommit = false;
-	proc->serializableIsoLevel = false;
-=======
 	pgxact->delayChkpt = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	proc->serializableIsoLevel = false;
 
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
@@ -2275,7 +2257,6 @@ GetSnapshotData(Snapshot snapshot)
 	/* initialize xmin calculation with xmax */
 	globalxmin = xmin = xmax;
 
-<<<<<<< HEAD
 	ereport((Debug_print_full_dtm ? LOG : DEBUG5),
 			(errmsg("GetSnapshotData setting globalxmin and xmin to %u",
 					xmin)));
@@ -2329,16 +2310,6 @@ GetSnapshotData(Snapshot snapshot)
 			snapshot->haveDistribSnapshot = false;
 	}
 
-	/*
-	 * If we're in recovery then snapshot data comes from a different place,
-	 * so decide which route we take before grab the lock. It is possible for
-	 * recovery to end before we finish taking snapshot, and for newly
-	 * assigned transaction ids to be added to the procarray. Xmax cannot
-	 * change while we hold ProcArrayLock, so those newly added transaction
-	 * ids would be filtered away, so we need not be concerned about them.
-	 */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	snapshot->takenDuringRecovery = RecoveryInProgress();
 
 	if (!snapshot->takenDuringRecovery)

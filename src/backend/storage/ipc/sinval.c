@@ -23,6 +23,7 @@
 #include "utils/inval.h"
 
 #include "cdb/cdbtm.h"          /* DtxContext */
+#include "tcop/idle_resource_cleaner.h"
 
 uint64		SharedInvalidMessageCounter;
 

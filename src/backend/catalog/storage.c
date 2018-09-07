@@ -319,6 +319,7 @@ smgrDoPendingDeletes(bool isCommit)
 				i = 0,
 				maxrels = 8;
 	SMgrRelation *srels = palloc(maxrels * sizeof(SMgrRelation));
+	char relstorages = palloc(maxrels * sizeof(char));
 
 	prev = NULL;
 	for (pending = pendingDeletes; pending != NULL; pending = next)
@@ -347,8 +348,10 @@ smgrDoPendingDeletes(bool isCommit)
 				{
 					maxrels *= 2;
 					srels = repalloc(srels, sizeof(SMgrRelation) * maxrels);
+					relstorages = repalloc(relstorages, sizeof(char) * maxrels);
 				}
 
+				relstorages[nrels] = pending->relnode.relstorage;
 				srels[nrels++] = srel;
 			}
 			/* must explicitly free the list entry */
@@ -359,7 +362,7 @@ smgrDoPendingDeletes(bool isCommit)
 
 	if (nrels > 0)
 	{
-		smgrdounlinkall(srels, nrels, false, pending->relnode.relstorage);
+		smgrdounlinkall(srels, nrels, false, relstorages);
 
 		for (i = 0; i < nrels; i++)
 			smgrclose(srels[i]);

@@ -145,16 +145,6 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * (Regular backends do not track pending operations locally, but forward
  * them to the checkpointer.)
  */
-<<<<<<< HEAD
-typedef struct
-{
-	RelFileNode	rnode;			/* the targeted relation */
-	ForkNumber	forknum;		/* which fork */
-	BlockNumber segno;			/* which segment */
-} PendingOperationTag;
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 typedef uint16 CycleCtr;		/* can be any convenient integer size */
 
 typedef struct
@@ -189,7 +179,7 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
-			 bool isRedo);
+			 bool isRedo, char relstorage);
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum,
 	   ExtensionBehavior behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
@@ -380,12 +370,9 @@ mdcreate_ao(RelFileNodeBackend rnode, int32 segmentFileNum, bool isRedo)
  * Note that we're passed a RelFileNodeBackend --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
-<<<<<<< HEAD
-=======
  * forkNum can be a fork number to delete a specific fork, or InvalidForkNumber
  * to delete all forks.
  *
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * For regular relations, we don't unlink the first segment file of the rel,
  * but just truncate it to zero length, and record a request to unlink it after
  * the next checkpoint.  Additional segments can be unlinked immediately,
@@ -429,38 +416,30 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstor
 {
 	/*
 	 * We have to clean out any pending fsync requests for the doomed
-<<<<<<< HEAD
-	 * relation, else the next mdsync() will fail.  There can't be any such
-	 * requests for a temp relation, though.
-	 */
-	if (!RelFileNodeBackendIsTemp(rnode) &&
-		!relstorage_is_ao(relstorage))
-		ForgetRelationFsyncRequests(rnode.node, forkNum);
-=======
 	 * relation, else the next mdsync() will fail.	There can't be any such
 	 * requests for a temp relation, though.  We can send just one request
 	 * even when deleting multiple forks, since the fsync queuing code accepts
 	 * the "InvalidForkNumber = all forks" convention.
 	 */
-	if (!RelFileNodeBackendIsTemp(rnode))
+	if (!RelFileNodeBackendIsTemp(rnode) &&
+		!relstorage_is_ao(relstorage))
 		ForgetRelationFsyncRequests(rnode.node, forkNum);
 
 	/* Now do the per-fork work */
 	if (forkNum == InvalidForkNumber)
 	{
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			mdunlinkfork(rnode, forkNum, isRedo);
+			mdunlinkfork(rnode, forkNum, isRedo, relstorage);
 	}
 	else
-		mdunlinkfork(rnode, forkNum, isRedo);
+		mdunlinkfork(rnode, forkNum, isRedo, relstorage);
 }
 
 static void
-mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
+mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo, char relstorage)
 {
 	char	   *path;
 	int			ret;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	path = relpath(rnode, forkNum);
 
@@ -1153,13 +1132,13 @@ mdsync(void)
 		{
 			if (MyAuxProcType == CheckpointerProcess)
 				elog(LOG, "checkpoint performing fsync for %d/%d/%d",
-					 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
-					 entry->tag.rnode.relNode);
+					 entry->rnode.spcNode, entry->rnode.dbNode,
+					 entry->rnode.relNode);
 			else
 				elog(ERROR, "non checkpoint process trying to fsync "
 					 "%d/%d/%d when fsync_counter fault is set",
-					 entry->tag.rnode.spcNode, entry->tag.rnode.dbNode,
-					 entry->tag.rnode.relNode);
+					 entry->rnode.spcNode, entry->rnode.dbNode,
+					 entry->rnode.relNode);
 		}
 #endif
 
@@ -1191,12 +1170,8 @@ mdsync(void)
 				 * file at all.  (We delay checking until this point so that
 				 * changing fsync on the fly behaves sensibly.)
 				 */
-<<<<<<< HEAD
-				reln = smgropen(entry->tag.rnode, InvalidBackendId);
-=======
 				if (!enableFsync)
 					continue;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/*
 				 * If in checkpointer, we want to absorb pending requests
@@ -1442,11 +1417,7 @@ mdpostckpt(void)
  *
  * If there is a local pending-ops table, just make an entry in it for
  * mdsync to process later.  Otherwise, try to pass off the fsync request
-<<<<<<< HEAD
- * to the background writer process.  If that fails, just do the fsync
-=======
  * to the checkpointer process.  If that fails, just do the fsync
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * locally before returning (we hope this will not happen often enough
  * to be a performance problem).
  */
@@ -1551,10 +1522,6 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 													  NULL);
 		if (entry)
 		{
-<<<<<<< HEAD
-			if (RelFileNodeEquals(entry->tag.rnode, rnode) &&
-				entry->tag.forknum == forknum)
-=======
 			/*
 			 * We can't just delete the entry since mdsync could have an
 			 * active hashtable scan.  Instead we delete the bitmapsets; this
@@ -1563,7 +1530,6 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 			 * for the fork(s).
 			 */
 			if (forknum == InvalidForkNumber)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				/* remove requests for all forks */
 				for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
@@ -1595,12 +1561,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 		hash_seq_init(&hstat, pendingOpsTable);
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-<<<<<<< HEAD
-			if ((!OidIsValid(rnode.spcNode) || entry->tag.rnode.spcNode == rnode.spcNode) &&
-				entry->tag.rnode.dbNode == rnode.dbNode)
-=======
 			if (entry->rnode.dbNode == rnode.dbNode)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			{
 				/* remove requests for all forks */
 				for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
@@ -1679,12 +1640,9 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 
 /*
  * ForgetRelationFsyncRequests -- forget any fsyncs for a relation fork
-<<<<<<< HEAD
-=======
  *
  * forknum == InvalidForkNumber means all forks, although this code doesn't
  * actually know that, since it's just forwarding the request elsewhere.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 void
 ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
