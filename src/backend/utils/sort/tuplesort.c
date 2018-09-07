@@ -317,7 +317,7 @@ struct Tuplesortstate
 	SortTuple  *memtuples;		/* array of SortTuple structs */
 	int			memtupcount;	/* number of tuples currently present */
 	int			memtupsize;		/* allocated length of memtuples array */
-<<<<<<< HEAD
+	bool		growmemtuples;	/* memtuples' growth still underway? */
 	bool		memtupblimited; /* true when hit the limit */
 	int64  		discardcount;   /* count of discards */ /*CDB*/
 	int64  		totalNumTuples;    /* count of all input tuples */ /*CDB*/
@@ -331,9 +331,6 @@ struct Tuplesortstate
 	 * has been finalized.
 	 */
 	bool statsFinalized;
-=======
-	bool		growmemtuples;	/* memtuples' growth still underway? */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * While building initial runs, this is the current output run number
@@ -645,17 +642,13 @@ tuplesort_begin_common(int workMem, bool randomAccess, bool allocmemtuple)
 
 	state->memtupcount = 0;
 	state->memtupsize = 1024;	/* initial guess */
-<<<<<<< HEAD
+	state->growmemtuples = true;
 	state->memtupblimited = false;
 	state->discardcount = 0; /*CDB*/
 	state->totalNumTuples  = 0; /*CDB*/
 	state->mppsortflags = 0;   /* special sort flags*//* CDB */
 	state->standardsort = true; /* normal sort *//* CDB */
 	state->gpmaxdistinct = 20000; /* maximum distinct values *//* CDB */
-=======
-	state->growmemtuples = true;
-	state->memtuples = (SortTuple *) palloc(state->memtupsize * sizeof(SortTuple));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if(allocmemtuple)
 	{

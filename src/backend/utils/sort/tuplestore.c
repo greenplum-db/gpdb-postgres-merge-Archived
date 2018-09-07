@@ -185,7 +185,6 @@ struct Tuplestorestate
      * CDB: EXPLAIN ANALYZE reporting interface and statistics.
      */
 	struct Instrumentation *instrument;
-	long		allowedMem;		/* total memory allowed, in bytes */
 	long        availMemMin;    /* availMem low water mark (bytes) */
 	int64       spilledBytes;   /* memory used for spilled tuples */
 
@@ -280,21 +279,15 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->eflags = eflags;
 	state->interXact = interXact;
 	state->truncated = false;
-<<<<<<< HEAD
-	state->availMem = maxKBytes * 1024L;
-	state->availMemMin = state->availMem;
-	state->allowedMem = state->availMem;
-=======
 	state->allowedMem = maxKBytes * 1024L;
 	state->availMem = state->allowedMem;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	state->availMemMin = state->availMem;
 	state->myfile = NULL;
 	state->context = CurrentMemoryContext;
 	state->resowner = CurrentResourceOwner;
 
 	state->memtupdeleted = 0;
 	state->memtupcount = 0;
-<<<<<<< HEAD
 	/*
 	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
 	 * see comments in grow_memtuples().
@@ -302,10 +295,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->memtupsize = Max(16384 / sizeof(void *),
 							ALLOCSET_SEPARATE_THRESHOLD / sizeof(void *) + 1);
 
-=======
-	state->memtupsize = 1024;	/* initial guess */
 	state->growmemtuples = true;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
@@ -830,27 +820,8 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			 */
 			if (state->memtupcount >= state->memtupsize - 1)
 			{
-<<<<<<< HEAD
-				/*
-				 * See grow_memtuples() in tuplesort.c for the rationale
-				 * behind these two tests.
-				 */
-				if (state->availMem > (long) (state->memtupsize * sizeof(void *)) &&
-					(Size) (state->memtupsize * 2) < MaxAllocSize / sizeof(void *))
-				{
-					FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
-					state->memtupsize *= 2;
-					state->memtuples = (void **)
-						repalloc(state->memtuples,
-								 state->memtupsize * sizeof(void *));
-					USEMEM(state, GetMemoryChunkSpace(state->memtuples));
-					if (LACKMEM(state))
-						elog(ERROR, "unexpected out-of-memory situation in tuplestore");
-				}
-=======
 				(void) grow_memtuples(state);
 				Assert(state->memtupcount < state->memtupsize);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 
 			/* Stash the tuple in the in-memory array */
