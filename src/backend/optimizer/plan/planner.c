@@ -2894,10 +2894,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 }
 
 /*
-<<<<<<< HEAD
- * Entry is through is_dummy_plan().
- *
-=======
  * add_tlist_costs_to_plan
  *
  * Estimate the execution costs associated with evaluating the targetlist
@@ -2953,7 +2949,8 @@ add_tlist_costs_to_plan(PlannerInfo *root, Plan *plan, List *tlist)
 }
 
 /*
->>>>>>> e472b921406407794bab911c64655b8b82375196
+ * Entry is through is_dummy_plan().
+ *
  * Detect whether a plan node is a "dummy" plan created when a relation
  * is deemed not to need scanning due to constraint exclusion.
  *
