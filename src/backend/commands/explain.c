@@ -706,16 +706,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 void
 ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
-<<<<<<< HEAD
 	EState     *estate = queryDesc->estate;
-=======
 	Bitmapset  *rels_used = NULL;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
-<<<<<<< HEAD
 	es->showstatctx = queryDesc->showstatctx;
 
 	/* CDB: Find slice table entry for the root slice. */
@@ -735,10 +731,8 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
                                      es->showstatctx);
 	}
 
-=======
 	ExplainPreScanNode(queryDesc->planstate, &rels_used);
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
 }
 
@@ -2646,11 +2640,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	char	   *namespace = NULL;
 	const char *objecttag = NULL;
 	RangeTblEntry *rte;
-<<<<<<< HEAD
-	int			dynamicScanId = 0;
-=======
 	char	   *refname;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	int			dynamicScanId = 0;
 
 	rte = rt_fetch(rti, es->rtable);
 	refname = (char *) list_nth(es->rtable_names, rti - 1);
@@ -2770,19 +2761,12 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 							 quote_identifier(objectname));
 		else if (objectname != NULL)
 			appendStringInfo(es->str, " %s", quote_identifier(objectname));
-<<<<<<< HEAD
-		if (objectname == NULL ||
-			strcmp(rte->eref->aliasname, objectname) != 0)
-			appendStringInfo(es->str, " %s",
-							 quote_identifier(rte->eref->aliasname));
+		if (objectname == NULL || strcmp(refname, objectname) != 0)
+			appendStringInfo(es->str, " %s", quote_identifier(refname));
 
 		if (dynamicScanId != 0)
 			appendStringInfo(es->str, " (dynamic scan id: %d)",
 							 dynamicScanId);
-=======
-		if (objectname == NULL || strcmp(refname, objectname) != 0)
-			appendStringInfo(es->str, " %s", quote_identifier(refname));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 	else
 	{
@@ -2790,13 +2774,10 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			ExplainPropertyText(objecttag, objectname, es);
 		if (namespace != NULL)
 			ExplainPropertyText("Schema", namespace, es);
-<<<<<<< HEAD
-		ExplainPropertyText("Alias", rte->eref->aliasname, es);
+		ExplainPropertyText("Alias", refname, es);
 
 		if (dynamicScanId != 0)
 			ExplainPropertyInteger("Dynamic Scan Id", dynamicScanId, es);
-=======
-		ExplainPropertyText("Alias", refname, es);
 	}
 }
 
@@ -2825,7 +2806,6 @@ show_modifytable_info(ModifyTableState *mtstate, ExplainState *es)
 										 fdw_private,
 										 0,
 										 es);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 }
 

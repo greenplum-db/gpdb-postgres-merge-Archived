@@ -2698,12 +2698,8 @@ ltrmark:;
 		tuple.t_self = *tid;
 		test = heap_lock_tuple(relation, &tuple,
 							   estate->es_output_cid,
-<<<<<<< HEAD
-							   LockTupleExclusive, LockTupleWait);
-=======
-							   lockmode, false /* wait */ ,
+							   lockmode, LockTupleWait,
 							   false, &buffer, &hufd);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:

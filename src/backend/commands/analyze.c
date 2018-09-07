@@ -296,13 +296,9 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * used to do this in get_rel_oids() but seems safer to check after we've
 	 * locked the relation.
 	 */
-<<<<<<< HEAD
-	if (onerel->rd_rel->relkind == RELKIND_RELATION &&
+	if ((onerel->rd_rel->relkind == RELKIND_RELATION ||
+		 onerel->rd_rel->relkind == RELKIND_MATVIEW) &&
 		!RelationIsExternal(onerel))
-=======
-	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
-		onerel->rd_rel->relkind == RELKIND_MATVIEW)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		/* Regular table, so we'll use the regular row acquisition function */
 		acquirefunc = acquire_sample_rows_by_query;
@@ -862,7 +858,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							visibilitymap_count(onerel),
 							hasindex,
 							InvalidTransactionId,
-<<<<<<< HEAD
+							InvalidMultiXactId,
 							false /* isvacuum */);
 	else
 	{
@@ -872,11 +868,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							visibilitymap_count(onerel),
 							onerel->rd_rel->relhasindex,
 							InvalidTransactionId,
+							InvalidMultiXactId,
 							false /* isvacuum */);
 	}
-=======
-							InvalidMultiXactId);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -916,18 +910,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
-<<<<<<< HEAD
 								estimatedIndexPages,
-								totalindexrows, 0, false, InvalidTransactionId,
-								false /* isvacuum */);
-=======
-								RelationGetNumberOfBlocks(Irel[ind]),
 								totalindexrows,
 								0,
 								false,
 								InvalidTransactionId,
-								InvalidMultiXactId);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+								InvalidMultiXactId,
+								false /* isvacuum */);
 		}
 	}
 

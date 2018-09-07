@@ -39,13 +39,10 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
-#include "access/nbtree.h"
-=======
 #include "access/heapam_xlog.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "access/nbtree.h"
 #include "access/transam.h"
 #include "access/aosegfiles.h"
 #include "access/aocssegfiles.h"
@@ -172,7 +169,7 @@ static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr);
 static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static int	vac_cmp_itemptr(const void *left, const void *right);
-static bool heap_page_is_all_visible(Buffer buf,
+static bool heap_page_is_all_visible(Relation onerel, Buffer buf,
 						 TransactionId *visibility_cutoff_xid);
 
 
@@ -273,10 +270,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vacrelstats->old_rel_tuples = onerel->rd_rel->reltuples;
 	vacrelstats->num_index_scans = 0;
 	vacrelstats->pages_removed = 0;
-<<<<<<< HEAD
-=======
 	vacrelstats->lock_waiter_detected = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
@@ -346,11 +340,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						new_rel_allvisible,
 						vacrelstats->hasindex,
 						new_frozen_xid,
-<<<<<<< HEAD
+						new_min_multi,
 						true /* isvacuum */);
-=======
-						new_min_multi);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
@@ -503,6 +494,7 @@ lazy_vacuum_aorel(Relation onerel, VacuumStmt *vacstmt)
 							visibilitymap_count(onerel),
 							vacrelstats->hasindex,
 							FreezeLimit,
+							MultiXactFrzLimit,
 							true /* isvacuum */);
 
 		/* report results to the stats collector, too */
@@ -1080,12 +1072,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			vacrelstats->num_dead_tuples > 0)
 		{
 			/* Remove tuples from heap */
-<<<<<<< HEAD
-			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
-			has_dead_tuples = false;
-=======
 			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats, &vmbuffer);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			has_dead_tuples = false;
 
 			/*
 			 * Forget the now-vacuumed tuples, and press on, but be careful
@@ -1359,7 +1347,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	 * check if the page has become all-visible.
 	 */
 	if (!visibilitymap_test(onerel, blkno, vmbuffer) &&
-		heap_page_is_all_visible(buffer, &visibility_cutoff_xid))
+		heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid))
 	{
 		Assert(BufferIsValid(*vmbuffer));
 		PageSetAllVisible(page);
@@ -1499,11 +1487,8 @@ lazy_cleanup_index(Relation indrel,
 							0,
 							false,
 							InvalidTransactionId,
-<<<<<<< HEAD
+							InvalidMultiXactId,
 							true /* isvacuum */);
-=======
-							InvalidMultiXactId);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -2029,7 +2014,7 @@ vac_cmp_itemptr(const void *left, const void *right)
  * xmin amongst the visible tuples.
  */
 static bool
-heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
+heap_page_is_all_visible(Relation onerel, Buffer buf, TransactionId *visibility_cutoff_xid)
 {
 	Page		page = BufferGetPage(buf);
 	OffsetNumber offnum,
@@ -2072,7 +2057,7 @@ heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
 
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 
-		switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
+		switch (HeapTupleSatisfiesVacuum(onerel, tuple.t_data, OldestXmin, buf))
 		{
 			case HEAPTUPLE_LIVE:
 				{

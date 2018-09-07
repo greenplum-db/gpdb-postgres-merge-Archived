@@ -27,15 +27,11 @@
 #include "access/clog.h"
 #include "access/genam.h"
 #include "access/heapam.h"
-<<<<<<< HEAD
 #include "access/appendonlywriter.h"
 #include "access/appendonlytid.h"
 #include "access/visibilitymap.h"
-#include "catalog/heap.h"
-=======
 #include "access/htup_details.h"
 #include "access/multixact.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/appendonly_compaction.h"
@@ -77,6 +73,8 @@
 #include "utils/tqual.h"
 
 #include "access/distributedlog.h"
+#include "catalog/heap.h"
+#include "catalog/oid_dispatch.h"
 #include "catalog/pg_inherits_fn.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -116,15 +114,9 @@ static MemoryContext vac_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-<<<<<<< HEAD
 static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype);
-static void vac_truncate_clog(TransactionId frozenXID);
-static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-=======
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
 static void vac_truncate_clog(TransactionId frozenXID, MultiXactId frozenMulti);
-static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
->>>>>>> e472b921406407794bab911c64655b8b82375196
+static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		   bool for_wraparound);
 static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
@@ -1035,7 +1027,6 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 	}
 	else if (vacstmt->relation)
 	{
-<<<<<<< HEAD
 		if (stmttype == VACOPT_VACUUM)
 		{
 			/* Process a specific relation */
@@ -1046,10 +1037,10 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			 * Since we don't take a lock here, the relation might be gone, or the
 			 * RangeVar might no longer refer to the OID we look up here.  In the
 			 * former case, VACUUM will do nothing; in the latter case, it will
-			 * process the OID we looked up here, rather than the new one.
-			 * Neither is ideal, but there's little practical alternative, since
-			 * we're going to commit this transaction and begin a new one between
-			 * now and then.
+			 * process the OID we looked up here, rather than the new one. Neither
+			 * is ideal, but there's little practical alternative, since we're
+			 * going to commit this transaction and begin a new one between now
+			 * and then.
 			 */
 			relid = RangeVarGetRelid(vacstmt->relation, NoLock, false);
 
@@ -1165,26 +1156,6 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 			}
 			MemoryContextSwitchTo(oldcontext);
 		}
-=======
-		/* Process a specific relation */
-		Oid			relid;
-
-		/*
-		 * Since we don't take a lock here, the relation might be gone, or the
-		 * RangeVar might no longer refer to the OID we look up here.  In the
-		 * former case, VACUUM will do nothing; in the latter case, it will
-		 * process the OID we looked up here, rather than the new one. Neither
-		 * is ideal, but there's little practical alternative, since we're
-		 * going to commit this transaction and begin a new one between now
-		 * and then.
-		 */
-		relid = RangeVarGetRelid(vacrel, NoLock, false);
-
-		/* Make a relation list entry for this guy */
-		oldcontext = MemoryContextSwitchTo(vac_context);
-		oid_list = lappend_oid(oid_list, relid);
-		MemoryContextSwitchTo(oldcontext);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 	else
 	{
@@ -1195,16 +1166,7 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 		Relation	pgclass;
 		HeapScanDesc scan;
 		HeapTuple	tuple;
-<<<<<<< HEAD
-		ScanKeyData key;
 		Oid candidateOid;
-
-		ScanKeyInit(&key,
-					Anum_pg_class_relkind,
-					BTEqualStrategyNumber, F_CHAREQ,
-					CharGetDatum(RELKIND_RELATION));
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		pgclass = heap_open(RelationRelationId, AccessShareLock);
 
@@ -1214,21 +1176,18 @@ get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype)
 		{
 			Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-<<<<<<< HEAD
 			/*
 			 * Don't include non-vacuum-able relations:
 			 *   - External tables
 			 *   - Foreign tables
 			 *   - etc.
 			 */
-			if (classForm->relkind == RELKIND_RELATION && (
-					classForm->relstorage == RELSTORAGE_EXTERNAL ||
-					classForm->relstorage == RELSTORAGE_FOREIGN  ||
-					classForm->relstorage == RELSTORAGE_VIRTUAL))
-=======
 			if (classForm->relkind != RELKIND_RELATION &&
 				classForm->relkind != RELKIND_MATVIEW)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+				continue;
+			if (classForm->relstorage == RELSTORAGE_EXTERNAL ||
+				classForm->relstorage == RELSTORAGE_FOREIGN  ||
+				classForm->relstorage == RELSTORAGE_VIRTUAL)
 				continue;
 
 			/* Make a relation list entry for this guy */
@@ -1474,7 +1433,9 @@ vac_update_relstats_from_list(List *updated_stats)
 		vac_update_relstats(rel,
 							stats->rel_pages, stats->rel_tuples,
 							stats->relallvisible,
-							rel->rd_rel->relhasindex, InvalidTransactionId,
+							rel->rd_rel->relhasindex,
+							InvalidTransactionId,
+							InvalidMultiXactId,
 							false /* isvacuum */);
 		relation_close(rel, AccessShareLock);
 	}
@@ -1700,17 +1661,13 @@ vac_update_datfrozenxid(void)
 	 * Initialize the "min" calculation with GetOldestXmin, which is a
 	 * reasonable approximation to the minimum relfrozenxid for not-yet-
 	 * committed pg_class entries for new tables; see AddNewRelationTuple().
-<<<<<<< HEAD
-	 * Se we cannot produce a wrong minimum by starting with this.
+	 * So we cannot produce a wrong minimum by starting with this.
 	 *
 	 * GPDB: Use GetLocalOldestXmin here, rather than GetOldestXmin. We don't
 	 * want to include effects of distributed transactions in this. If a
 	 * database's datfrozenxid is past the oldest XID as determined by
 	 * distributed transactions, we will nevertheless never encounter such
 	 * XIDs on disk.
-=======
-	 * So we cannot produce a wrong minimum by starting with this.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	newFrozenXid = GetLocalOldestXmin(true, true);
 
@@ -1733,30 +1690,17 @@ vac_update_datfrozenxid(void)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(classTup);
 
-<<<<<<< HEAD
 		if (!TransactionIdIsValid(classForm->relfrozenxid))
 			continue;
 
 		Assert(TransactionIdIsNormal(classForm->relfrozenxid));
+		Assert(MultiXactIdIsValid(classForm->relminmxid));
 		/*
 		 * Don't know partition parent or not here but passing false is perfect
 		 * for assertion, as valid relfrozenxid means it shouldn't be parent.
 		 */
 		Assert(should_have_valid_relfrozenxid(classForm->relkind,
 											  classForm->relstorage, false));
-=======
-		/*
-		 * Only consider heap and TOAST tables (anything else should have
-		 * InvalidTransactionId in relfrozenxid anyway.)
-		 */
-		if (classForm->relkind != RELKIND_RELATION &&
-			classForm->relkind != RELKIND_MATVIEW &&
-			classForm->relkind != RELKIND_TOASTVALUE)
-			continue;
-
-		Assert(TransactionIdIsNormal(classForm->relfrozenxid));
-		Assert(MultiXactIdIsValid(classForm->relminmxid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		if (TransactionIdPrecedes(classForm->relfrozenxid, newFrozenXid))
 			newFrozenXid = classForm->relfrozenxid;
@@ -2090,18 +2034,13 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	 * Check that it's a plain table; we used to do this in get_rel_oids() but
 	 * seems safer to check after we've locked the relation.
 	 */
-<<<<<<< HEAD
 	if ((onerel->rd_rel->relkind != RELKIND_RELATION &&
+		 onerel->rd_rel->relkind != RELKIND_MATVIEW &&
 		 onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
 		 onerel->rd_rel->relkind != RELKIND_AOSEGMENTS &&
 		 onerel->rd_rel->relkind != RELKIND_AOBLOCKDIR &&
 		 onerel->rd_rel->relkind != RELKIND_AOVISIMAP)
 		|| RelationIsExternal(onerel))
-=======
-	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
-		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
-		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables or special system tables",
@@ -2436,7 +2375,6 @@ static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
 }
 
 /*
-<<<<<<< HEAD
  * vacuum_appendonly_indexes()
  *
  * Perform a vacuum on all indexes of an append-only relation.
@@ -2607,7 +2545,9 @@ scan_index(Relation indrel, double num_tuples, bool check_stats, int elevel)
 		vac_update_relstats(indrel,
 							stats->num_pages, stats->num_index_tuples,
 							visibilitymap_count(indrel),
-							false, InvalidTransactionId,
+							false,
+							InvalidTransactionId,
+							InvalidMultiXactId,
 							true /* isvacuum */);
 
 	ereport(elevel,
@@ -2688,7 +2628,9 @@ vacuum_appendonly_index(Relation indexRelation,
 		vac_update_relstats(indexRelation,
 							stats->num_pages, stats->num_index_tuples,
 							visibilitymap_count(indexRelation),
-							false, InvalidTransactionId,
+							false,
+							InvalidTransactionId,
+							InvalidMultiXactId,
 							true /* isvacuum */);
 
 	ereport(elevel,
@@ -2770,8 +2712,6 @@ appendonly_tid_reaped(ItemPointer itemptr, void *state)
 }
 
 /*
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Open all the vacuumable indexes of the given relation, obtaining the
  * specified kind of lock on each.	Return an array of Relation pointers for
  * the indexes into *Irel, and the number of indexes into *nindexes.

@@ -65,6 +65,7 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbhash.h"
@@ -117,16 +118,10 @@ createdb(const CreatedbStmt *stmt)
 	char	   *src_ctype = NULL;
 	bool		src_istemplate;
 	bool		src_allowconn;
-<<<<<<< HEAD
 	Oid			src_lastsysoid = InvalidOid;
 	TransactionId src_frozenxid = InvalidTransactionId;
-	Oid			src_deftablespace = InvalidOid;
-=======
-	Oid			src_lastsysoid;
-	TransactionId src_frozenxid;
 	MultiXactId src_minmxid;
-	Oid			src_deftablespace;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	Oid			src_deftablespace = InvalidOid;
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
@@ -153,11 +148,8 @@ createdb(const CreatedbStmt *stmt)
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
-<<<<<<< HEAD
-	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	Snapshot	snapshot;
+	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -603,11 +595,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Take an MVCC snapshot to use while scanning through pg_tablespace.  For
-<<<<<<< HEAD
-	 * safety, copy the snapshot (this prevents it from changing if
-=======
 	 * safety, register the snapshot (this prevents it from changing if
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * something else were to request a snapshot during the loop).
 	 *
 	 * Traversing pg_tablespace with an MVCC snapshot is necessary to provide
@@ -752,11 +740,8 @@ createdb(const CreatedbStmt *stmt)
 
 	/* Free our snapshot */
 	UnregisterSnapshot(snapshot);
-<<<<<<< HEAD
-=======
 
 	return dboid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -862,11 +847,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-<<<<<<< HEAD
-					 &db_istemplate, NULL, NULL, NULL, &defaultTablespace, NULL, NULL))
-=======
-				   &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
->>>>>>> e472b921406407794bab911c64655b8b82375196
+					 &db_istemplate, NULL, NULL, NULL, NULL, &defaultTablespace, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -1471,7 +1452,6 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	Datum		new_record[Natts_pg_database];
 	bool		new_record_nulls[Natts_pg_database];
 	bool		new_record_repl[Natts_pg_database];
-	Oid			dboid;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -1538,11 +1518,7 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 
 	dboid = HeapTupleGetOid(tuple);
 
-<<<<<<< HEAD
-	if (!pg_database_ownercheck(dboid, GetUserId()))
-=======
 	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
