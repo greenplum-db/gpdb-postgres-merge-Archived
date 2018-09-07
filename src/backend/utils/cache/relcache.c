@@ -1883,19 +1883,13 @@ RelationReloadIndexInfo(Relation relation)
 		 */
 		relation->rd_index->indisunique = index->indisunique;
 		relation->rd_index->indisprimary = index->indisprimary;
-<<<<<<< HEAD
-=======
 		relation->rd_index->indisexclusion = index->indisexclusion;
 		relation->rd_index->indimmediate = index->indimmediate;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		relation->rd_index->indisclustered = index->indisclustered;
 		relation->rd_index->indisvalid = index->indisvalid;
 		relation->rd_index->indcheckxmin = index->indcheckxmin;
 		relation->rd_index->indisready = index->indisready;
-<<<<<<< HEAD
-=======
 		relation->rd_index->indislive = index->indislive;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/* Copy xmin too, as that is needed to make sense of indcheckxmin */
 		HeapTupleHeaderSetXmin(relation->rd_indextuple->t_data,
@@ -1951,14 +1945,11 @@ RelationDestroyRelation(Relation relation)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
 		MemoryContextDelete(relation->rd_rulescxt);
-<<<<<<< HEAD
+	if (relation->rd_fdwroutine)
+		pfree(relation->rd_fdwroutine);
 	if (relation->rd_cdbpolicy)
 		pfree(relation->rd_cdbpolicy);
 
-=======
-	if (relation->rd_fdwroutine)
-		pfree(relation->rd_fdwroutine);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	pfree(relation);
 }
 
@@ -4154,13 +4145,9 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 	 * Note: we consider all indexes returned by RelationGetIndexList, even if
 	 * they are not indisready or indisvalid.  This is important because an
 	 * index for which CREATE INDEX CONCURRENTLY has just started must be
-<<<<<<< HEAD
-	 * included in HOT-safety decisions (see README.HOT).
-=======
 	 * included in HOT-safety decisions (see README.HOT).  If a DROP INDEX
 	 * CONCURRENTLY is far enough along that we should ignore the index, it
 	 * won't be returned at all by RelationGetIndexList.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 */
 	indexattrs = NULL;
 	uindexattrs = NULL;

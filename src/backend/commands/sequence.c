@@ -16,12 +16,9 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
 #include "access/bufmask.h"
-=======
 #include "access/htup_details.h"
 #include "access/multixact.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "access/transam.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
@@ -1754,26 +1751,6 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 
 	pfree(localpage);
 }
-<<<<<<< HEAD
-
-void
-seq_desc(StringInfo buf, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-	char		*rec = XLogRecGetData(record);
-	xl_seq_rec *xlrec = (xl_seq_rec *) rec;
-
-	if (info == XLOG_SEQ_LOG)
-		appendStringInfo(buf, "log: ");
-	else
-	{
-		appendStringInfo(buf, "UNKNOWN");
-		return;
-	}
-
-	appendStringInfo(buf, "rel %u/%u/%u",
-			   xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
-}
 
 /*
  * Mask last_value and log_cnt for consistency checking
@@ -1934,5 +1911,3 @@ cdb_sequence_nextval_qe(Relation	seqrel,
 	*pincrement = increment;
 	*pvalid = true;
 }
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

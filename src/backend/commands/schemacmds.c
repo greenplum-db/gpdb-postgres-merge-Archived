@@ -316,7 +316,6 @@ RenameSchema(const char *oldname, const char *newname)
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(NamespaceRelationId,
@@ -324,17 +323,13 @@ RenameSchema(const char *oldname, const char *newname)
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
-=======
+
 	InvokeObjectPostAlterHook(NamespaceRelationId, HeapTupleGetOid(tup), 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 
-<<<<<<< HEAD
-=======
 	return nspOid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 void
@@ -375,7 +370,6 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
 
-<<<<<<< HEAD
 	if (!allowSystemTableMods && IsReservedName(name))
 	{
 		ereport(ERROR,
@@ -383,9 +377,8 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 				 errmsg("permission denied to ALTER SCHEMA \"%s\"", name),
 				 errdetail("Schema %s is reserved for system use.", name)));
 	}
-=======
+
 	nspOid = HeapTupleGetOid(tup);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	AlterSchemaOwner_internal(tup, rel, newOwnerId);
 

@@ -312,7 +312,8 @@ PortalCleanup(Portal portal)
 			saveResourceOwner = CurrentResourceOwner;
 			PG_TRY();
 			{
-<<<<<<< HEAD
+				if (portal->resowner)
+					CurrentResourceOwner = portal->resowner;
 				CurrentResourceOwner = portal->resowner;
 
 				/*
@@ -320,10 +321,6 @@ PortalCleanup(Portal portal)
 				 */
 				queryDesc->estate->cancelUnfinished = true;
 
-=======
-				if (portal->resowner)
-					CurrentResourceOwner = portal->resowner;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				ExecutorFinish(queryDesc);
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);

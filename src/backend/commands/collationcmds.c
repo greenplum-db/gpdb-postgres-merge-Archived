@@ -35,12 +35,8 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "cdb/cdbdisp_query.h"
-
-static void AlterCollationOwner_internal(Relation rel, Oid collationOid,
-							 Oid newOwnerId);
 
 typedef struct
 {
@@ -53,15 +49,8 @@ typedef struct
 /*
  * CREATE COLLATION
  */
-void
-DefineCollation(List *names, List *parameters, bool if_not_exists)
-=======
-/*
- * CREATE COLLATION
- */
 Oid
-DefineCollation(List *names, List *parameters)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+DefineCollation(List *names, List *parameters, bool if_not_exists)
 {
 	char	   *collName;
 	Oid			collNamespace;
@@ -163,12 +152,11 @@ DefineCollation(List *names, List *parameters)
 							 false);	/* not quiet */
 
 	if (!OidIsValid(newoid))
-		return;
+		return InvalidOid;
 
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
-<<<<<<< HEAD
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -186,105 +174,6 @@ DefineCollation(List *names, List *parameters)
 		                            GetAssignedOidsForDispatch(),
 		                            NULL);
 	}
-}
-
-/*
- * Rename collation
- */
-void
-RenameCollation(List *name, const char *newname)
-{
-	Oid			collationOid;
-	Oid			namespaceOid;
-	HeapTuple	tup;
-	Relation	rel;
-	AclResult	aclresult;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	collationOid = get_collation_oid(name, false);
-
-	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collationOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for collation %u", collationOid);
-
-	namespaceOid = ((Form_pg_collation) GETSTRUCT(tup))->collnamespace;
-
-	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(newname),
-							  Int32GetDatum(GetDatabaseEncoding()),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" for encoding \"%s\" already exists in schema \"%s\"",
-						newname,
-						GetDatabaseEncodingName(),
-						get_namespace_name(namespaceOid))));
-
-	/* mustn't match an any-encoding entry, either */
-	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(newname),
-							  Int32GetDatum(-1),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" already exists in schema \"%s\"",
-						newname,
-						get_namespace_name(namespaceOid))));
-
-	/* must be owner */
-	if (!pg_collation_ownercheck(collationOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
-					   NameListToString(name));
-
-	/* must have CREATE privilege on namespace */
-	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					   get_namespace_name(namespaceOid));
-
-	/* rename */
-	namestrcpy(&(((Form_pg_collation) GETSTRUCT(tup))->collname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_freetuple(tup);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-/*
- * Change collation owner, by name
- */
-void
-AlterCollationOwner(List *name, Oid newOwnerId)
-{
-	Oid			collationOid;
-	Relation	rel;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	collationOid = get_collation_oid(name, false);
-
-	AlterCollationOwner_internal(rel, collationOid, newOwnerId);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-/*
- * Change collation owner, by oid
- */
-void
-AlterCollationOwner_oid(Oid collationOid, Oid newOwnerId)
-{
-	Relation	rel;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	AlterCollationOwner_internal(rel, collationOid, newOwnerId);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	return newoid;
 }

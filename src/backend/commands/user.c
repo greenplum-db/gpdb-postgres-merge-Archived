@@ -637,7 +637,6 @@ CreateRole(CreateRoleStmt *stmt)
 	 */
 	heap_close(pg_authid_rel, NoLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		Assert(stmt->type == T_CreateRoleStmt);
@@ -655,9 +654,8 @@ CreateRole(CreateRoleStmt *stmt)
 						   GetUserId(),
 						   "CREATE", "ROLE");
 	}
-=======
+
 	return roleid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1323,7 +1321,6 @@ AlterRole(AlterRoleStmt *stmt)
 	 */
 	heap_close(pg_authid_rel, NoLock);
 
-<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -1333,9 +1330,8 @@ AlterRole(AlterRoleStmt *stmt)
 									NIL,
 									NULL);
 	}
-=======
+
 	return roleid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1725,7 +1721,6 @@ RenameRole(const char *oldname, const char *newname)
 	 */
 	heap_close(rel, NoLock);
 
-<<<<<<< HEAD
 	/* MPP-6929: metadata tracking */
 	if (Gp_role == GP_ROLE_DISPATCH)
 		MetaTrackUpdObject(AuthIdRelationId,
@@ -1733,9 +1728,8 @@ RenameRole(const char *oldname, const char *newname)
 						   GetUserId(),
 						   "ALTER", "RENAME"
 				);
-=======
+
 	return roleid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

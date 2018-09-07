@@ -536,12 +536,8 @@ InitializeSessionUserIdStandalone(void)
 	 * This function should only be called in single-user mode, in autovacuum
 	 * workers, and in background workers.
 	 */
-<<<<<<< HEAD
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || am_startup
-				|| (am_ftshandler && am_mirror));
-=======
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker
+				|| am_startup || (am_ftshandler && am_mirror));
 
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
@@ -1048,20 +1044,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 * one, set up the on_proc_exit function to do it; then add this lock file
 	 * to the list of files to unlink.
 	 */
-<<<<<<< HEAD
-	 {
-		 char *tmpptr = strdup(filename);
-		 if(!tmpptr)
-			 ereport(ERROR, (errcode(ERRCODE_OUT_OF_MEMORY),
-			 		errmsg("Create lock file failed: out of memory")));
-		 on_proc_exit(UnlinkLockFile, CStringGetDatum(tmpptr)); 
-	 }
-=======
 	if (lock_files == NIL)
 		on_proc_exit(UnlinkLockFiles, 0);
 
 	lock_files = lappend(lock_files, pstrdup(filename));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

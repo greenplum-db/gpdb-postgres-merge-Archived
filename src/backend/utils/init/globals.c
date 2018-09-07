@@ -121,12 +121,7 @@ int			maintenance_work_mem = 65536;
  * MaxBackends is computed by PostmasterMain after modules have had a chance to
  * register background workers.
  */
-<<<<<<< HEAD
 int			NBuffers = 4096;
-int			MaxBackends = 200;
-=======
-int			NBuffers = 1000;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 int			MaxConnections = 90;
 int			MaxBackends = 0;
 
@@ -146,7 +141,6 @@ int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
 
 int			GinFuzzySearchLimit = 0;
-<<<<<<< HEAD
 
 /* gpperfmon port number */
 int 	gpperfmon_port = 8888;
@@ -163,11 +157,3 @@ bool	pljava_classpath_insecure = false;
 /* Memory protection GUCs*/
 int gp_vmem_protect_limit = 8192;
 int gp_vmem_protect_gang_cache_limit = 500;
-
-/*
- * Hook on object accesses.  This is intended as infrastructure for security
- * and logging plugins.
- */
-object_access_hook_type object_access_hook = NULL;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

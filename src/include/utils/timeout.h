@@ -30,7 +30,6 @@ typedef enum TimeoutId
 	STANDBY_DEADLOCK_TIMEOUT,
 	STANDBY_TIMEOUT,
 	GANG_TIMEOUT,
-	IDLE_SESSION_TIMEOUT,
 	/* First user-definable timeout reason */
 	USER_TIMEOUT,
 	/* Maximum number of timeout reasons */

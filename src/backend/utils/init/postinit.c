@@ -56,6 +56,7 @@
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
+#include "tcop/idle_resource_cleaner.h"
 #include "utils/acl.h"
 #include "utils/backend_cancel.h"
 #include "utils/fmgroids.h"
@@ -636,7 +637,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLock);
 		RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);
 		RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);
-		RegisterTimeout(CLIENT_WAIT_TIMEOUT, ClientWaitTimeoutHandler);
+		RegisterTimeout(GANG_TIMEOUT, IdleGangTimeoutHandler);
 	}
 
 	/*
@@ -759,19 +760,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username)));
 	}
-<<<<<<< HEAD
-	else if (am_mirror)
-	{
-		Assert(am_ftshandler);
-		/*
-		 * A mirror must receive and act upon FTS messages.  Performing proper
-		 * authentication involves reading pg_authid.  Heap access is not
-		 * possible on mirror, which is in standby mode.
-		 */
-		FakeClientAuthentication(MyProcPort);
-		InitializeSessionUserIdStandalone();
-		am_superuser = true;
-=======
 	else if (IsBackgroundWorker)
 	{
 		if (username == NULL)
@@ -784,7 +772,18 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			InitializeSessionUserId(username);
 			am_superuser = superuser();
 		}
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	}
+	else if (am_mirror)
+	{
+		Assert(am_ftshandler);
+		/*
+		 * A mirror must receive and act upon FTS messages.  Performing proper
+		 * authentication involves reading pg_authid.  Heap access is not
+		 * possible on mirror, which is in standby mode.
+		 */
+		FakeClientAuthentication(MyProcPort);
+		InitializeSessionUserIdStandalone();
+		am_superuser = true;
 	}
 	else
 	{
@@ -857,19 +856,15 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		Assert(!bootstrap);
 
-<<<<<<< HEAD
 		/*
 		 * must have authenticated as a replication role
 		 *
 		 * In Greenplum, this code path is overloaded for handling FTS messages
 		 * on primary as well as mirror.
-		 * is_authenticated_user_replication_role() performs a syscache lookup,
+		 * has_rolreplication() performs a syscache lookup,
 		 * which cannot happen on mirror/standby.
 		 */
-		if (am_walsender && !superuser() && !is_authenticated_user_replication_role())
-=======
-		if (!superuser() && !has_rolreplication(GetUserId()))
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		if (am_walsender && !superuser() && !has_rolreplication(GetUserId()))
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser or replication role to start walsender")));
