@@ -629,189 +629,8 @@ standard_ProcessUtility(Node *parsetree,
 							   completionTag);
 			break;
 
-<<<<<<< HEAD
-			/*
-			 * relation and attribute manipulation
-			 */
-		case T_CreateSchemaStmt:
-			CreateSchemaCommand((CreateSchemaStmt *) parsetree,
-								queryString);
-			break;
-
-		case T_CreateStmt:
-		case T_CreateForeignTableStmt:
-			{
-				List	   *stmts;
-				ListCell   *l;
-				Oid			relOid;
-
-				/* Run parse analysis ... */
-				/*
-				 * GPDB: Only do parse analysis in the Query Dispatcher. The Executor
-				 * nodes receive an already-transformed statement from the QD. We only
-				 * want to process the main CreateStmt here, not any auxiliary IndexStmts
-				 * or other such statements that would be created from the main
-				 * CreateStmt by parse analysis. The QD will dispatch those other statements
-				 * separately.
-				 *
-				 * Also, when processing an ALTER TABLE ADD PARTITION, atpxPartAddList()
-				 * passes us an already-transformed statement.
-				 */
-				if (Gp_role == GP_ROLE_EXECUTE || ((CreateStmt *) parsetree)->is_add_part)
-					stmts = list_make1(parsetree);
-				else
-					stmts = transformCreateStmt((CreateStmt *) parsetree,
-												queryString, false);
-
-				/* ... and do it */
-				foreach(l, stmts)
-				{
-					Node	   *stmt = (Node *) lfirst(l);
-
-					if (IsA(stmt, CreateStmt))
-					{
-						CreateStmt *cstmt = (CreateStmt *) stmt;
-						char		relKind = RELKIND_RELATION;
-						char		relStorage = RELSTORAGE_HEAP;
-						Datum		toast_options;
-						static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-
-						/*
-						 * If this T_CreateStmt was dispatched and we're a QE
-						 * receiving it, extract the relkind and relstorage from
-						 * it
-						 */
-						if (Gp_role == GP_ROLE_EXECUTE)
-						{
-							if (cstmt->relKind != 0)
-								relKind = cstmt->relKind;
-
-							if (cstmt->relStorage != 0)
-								relStorage = cstmt->relStorage;
-
-							/* sanity check */
-							switch(relKind)
-							{
-								case RELKIND_VIEW:
-								case RELKIND_COMPOSITE_TYPE:
-									Assert(relStorage == RELSTORAGE_VIRTUAL);
-									break;
-								default:
-									Assert(relStorage == RELSTORAGE_HEAP ||
-										   relStorage == RELSTORAGE_AOROWS ||
-										   relStorage == RELSTORAGE_AOCOLS ||
-										   relStorage == RELSTORAGE_EXTERNAL ||
-										   relStorage == RELSTORAGE_FOREIGN);
-							}
-						}
-
-						/*
-						 * Create the table itself. Don't dispatch it yet, as we haven't
-						 * created the toast and other auxiliary tables yet.
-						 */
-						relOid = DefineRelation((CreateStmt *) stmt,
-												relKind,
-												((CreateStmt *) stmt)->ownerid,
-												relStorage, false, true, NULL);
-
-						/*
-						 * Let AlterTableCreateToastTable decide if this one
-						 * needs a secondary relation too.
-						 */
-						CommandCounterIncrement();
-
-						DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
-
-						if (relKind != RELKIND_COMPOSITE_TYPE)
-						{
-							/* parse and validate reloptions for the toast table */
-							toast_options = transformRelOptions((Datum) 0,
-																((CreateStmt *) stmt)->options,
-																"toast",
-																validnsps,
-																true, false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
-
-							AlterTableCreateToastTable(relOid,
-													   toast_options,
-													   true,
- 													   cstmt->is_part_child,
-													   cstmt->is_part_parent);
-							/*
-							 * If the master relation is a non-leaf relation in
-							 * a partition hierarchy, then this auxiliary
-							 * relation, like its master relation, will not
-							 * contain any data.  Therefore, like the master
-							 * relation, exclude this auxiliary table from
-							 * database age calculation, by passing master
-							 * relation's is_part_parent flag.
-							 */
-							AlterTableCreateAoSegTable(relOid,
-													   cstmt->is_part_child,
-													   cstmt->is_part_parent);
-
-							if (cstmt->buildAoBlkdir)
-								AlterTableCreateAoBlkdirTable(relOid,
-															  cstmt->is_part_child,
-															  cstmt->is_part_parent);
-
-							AlterTableCreateAoVisimapTable(relOid,
-														   cstmt->is_part_child,
-														   cstmt->is_part_parent);
-						}
-
-						if (Gp_role == GP_ROLE_DISPATCH)
-							CdbDispatchUtilityStatement((Node *) stmt,
-														DF_CANCEL_ON_ERROR |
-														DF_NEED_TWO_PHASE |
-														DF_WITH_SNAPSHOT,
-														GetAssignedOidsForDispatch(),
-														NULL);
-
-						CommandCounterIncrement();
-						/*
-						 * Deferred statements should be evaluated *after* AO tables
-						 * are updated correctly.  Otherwise, they may not have
-						 * segment information yet and operations like create_index
-						 * in the deferred statements cannot see the relfile.
-						 */
-						EvaluateDeferredStatements(cstmt->deferredStmts);
-					}
-					else if (IsA(stmt, CreateForeignTableStmt))
-					{
-						/* Create the table itself */
-						relOid = DefineRelation((CreateStmt *) stmt,
-												RELKIND_FOREIGN_TABLE,
-												((CreateStmt *) stmt)->ownerid,
-												RELSTORAGE_FOREIGN,
-												true,
-												true,
-												NULL);
-						CreateForeignTable((CreateForeignTableStmt *) stmt,
-										   relOid);
-					}
-					else
-					{
-						/* Recurse for anything else */
-						ProcessUtility(stmt,
-									   queryString,
-									   params,
-									   false,
-									   None_Receiver,
-									   NULL);
-					}
-
-					/* Need CCI between commands */
-					if (lnext(l) != NULL)
-						CommandCounterIncrement();
-				}
-			}
-=======
 		case T_DoStmt:
 			ExecuteDoStmt((DoStmt *) parsetree);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 
 		case T_CreateExternalStmt:
@@ -868,7 +687,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropTableSpaceStmt:
-<<<<<<< HEAD
+			/* no event triggers for global objects */
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
@@ -877,10 +696,6 @@ standard_ProcessUtility(Node *parsetree,
 				 */
 				PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
 			}
-=======
-			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
@@ -889,91 +704,6 @@ standard_ProcessUtility(Node *parsetree,
 			AlterTableSpaceOptions((AlterTableSpaceOptionsStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
-		case T_CreateExtensionStmt:
-			CreateExtension((CreateExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionStmt:
-			ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree);
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
-			break;
-
-		case T_CreateFdwStmt:
-			CreateForeignDataWrapper((CreateFdwStmt *) parsetree);
-			break;
-
-		case T_AlterFdwStmt:
-			AlterForeignDataWrapper((AlterFdwStmt *) parsetree);
-			break;
-
-		case T_CreateForeignServerStmt:
-			CreateForeignServer((CreateForeignServerStmt *) parsetree);
-			break;
-
-		case T_AlterForeignServerStmt:
-			AlterForeignServer((AlterForeignServerStmt *) parsetree);
-			break;
-
-		case T_CreateUserMappingStmt:
-			CreateUserMapping((CreateUserMappingStmt *) parsetree);
-			break;
-
-		case T_AlterUserMappingStmt:
-			AlterUserMapping((AlterUserMappingStmt *) parsetree);
-			break;
-
-		case T_DropUserMappingStmt:
-			RemoveUserMapping((DropUserMappingStmt *) parsetree);
-			break;
-
-		case T_DropStmt:
-			{
-				DropStmt   *stmt = (DropStmt *) parsetree;
-				DropStmt   *copyStmt;
-
-				/* stmt->objects could be modified (e.g.
-				 * CREATE TABLE test_exists(a int, b int);
-				 * DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;)
-				 * so copy for later use. */
-				copyStmt = copyObject(stmt);
-
-				switch (stmt->removeType)
-				{
-					case OBJECT_INDEX:
-						if (((DropStmt *) parsetree)->concurrent)
-						PreventTransactionChain(isTopLevel,
-											"DROP INDEX CONCURRENTLY");
-						/* fall through */
-
-					case OBJECT_EXTTABLE:
-					case OBJECT_TABLE:
-					case OBJECT_SEQUENCE:
-					case OBJECT_VIEW:
-					case OBJECT_FOREIGN_TABLE:
-						RemoveRelations((DropStmt *) parsetree);
-						break;
-					default:
-						RemoveObjects((DropStmt *) parsetree);
-						break;
-				}
-
-				/* we modify the object in the loop below, so make a copy */
-				if (Gp_role == GP_ROLE_DISPATCH)
-					CdbDispatchUtilityStatement((Node *) copyStmt,
-												DF_CANCEL_ON_ERROR|
-												DF_WITH_SNAPSHOT|
-												DF_NEED_TWO_PHASE,
-												NIL,
-												NULL);
-			}
-			break;
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case T_TruncateStmt:
 			ExecuteTruncate((TruncateStmt *) parsetree);
 			break;
@@ -1014,145 +744,6 @@ standard_ProcessUtility(Node *parsetree,
 			DeallocateQuery((DeallocateStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
-			/*
-			 * schema
-			 */
-		case T_RenameStmt:
-			ExecRenameStmt((RenameStmt *) parsetree);
-			break;
-
-		case T_AlterObjectSchemaStmt:
-			ExecAlterObjectSchemaStmt((AlterObjectSchemaStmt *) parsetree);
-			break;
-
-		case T_AlterOwnerStmt:
-			ExecAlterOwnerStmt((AlterOwnerStmt *) parsetree);
-			break;
-
-		case T_AlterTableStmt:
-			{
-				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-				Oid			relid;
-				List	   *stmts;
-				ListCell   *l;
-				LOCKMODE	lockmode;
-
-				/*
-				 * Figure out lock mode, and acquire lock.	This also does
-				 * basic permissions checks, so that we won't wait for a lock
-				 * on (for example) a relation on which we have no
-				 * permissions.
-				 */
-				lockmode = AlterTableGetLockLevel(atstmt->cmds);
-				relid = AlterTableLookupRelation(atstmt, lockmode);
-
-				if (OidIsValid(relid))
-				{
-					/*
-					 * GPDB: Like for CREATE TABLE, only do parse analysis in the Query Dispatcher.
-					 */
-					if (Gp_role == GP_ROLE_EXECUTE)
-						stmts = list_make1(parsetree);
-					else
-						/* Run parse analysis ... */
-						stmts = transformAlterTableStmt(atstmt, queryString);
-
-					/* ... and do it */
-					foreach(l, stmts)
-					{
-						Node	   *stmt = (Node *) lfirst(l);
-
-						if (IsA(stmt, AlterTableStmt))
-						{
-							/* Do the table alteration proper */
-							AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
-						}
-						else
-						{
-							/* Recurse for anything else */
-							ProcessUtility(stmt,
-										   queryString,
-										   params,
-										   false,
-										   None_Receiver,
-										   NULL);
-						}
-
-						/* Need CCI between commands */
-						if (lnext(l) != NULL)
-							CommandCounterIncrement();
-					}
-				}
-				else
-					ereport(NOTICE,
-						  (errmsg("relation \"%s\" does not exist, skipping",
-								  atstmt->relation->relname)));
-			}
-			break;
-
-		case T_AlterDomainStmt:
-			{
-				AlterDomainStmt *stmt = (AlterDomainStmt *) parsetree;
-
-				/*
-				 * Some or all of these functions are recursive to cover
-				 * inherited things, so permission checks are done there.
-				 */
-				switch (stmt->subtype)
-				{
-					case 'T':	/* ALTER DOMAIN DEFAULT */
-
-						/*
-						 * Recursively alter column default for table and, if
-						 * requested, for descendants
-						 */
-						AlterDomainDefault(stmt->typeName,
-										   stmt->def);
-						break;
-					case 'N':	/* ALTER DOMAIN DROP NOT NULL */
-						AlterDomainNotNull(stmt->typeName,
-										   false);
-						break;
-					case 'O':	/* ALTER DOMAIN SET NOT NULL */
-						AlterDomainNotNull(stmt->typeName,
-										   true);
-						break;
-					case 'C':	/* ADD CONSTRAINT */
-						AlterDomainAddConstraint(stmt->typeName,
-												 stmt->def);
-						break;
-					case 'X':	/* DROP CONSTRAINT */
-						AlterDomainDropConstraint(stmt->typeName,
-												  stmt->name,
-												  stmt->behavior,
-												  stmt->missing_ok);
-						break;
-					case 'V':	/* VALIDATE CONSTRAINT */
-						AlterDomainValidateConstraint(stmt->typeName,
-													  stmt->name);
-						break;
-					default:	/* oops */
-						elog(ERROR, "unrecognized alter domain type: %d",
-							 (int) stmt->subtype);
-						break;
-				}
-
-				if (Gp_role == GP_ROLE_DISPATCH)
-				{
-					/* ADD CONSTRAINT will assign a new OID for the constraint */
-					CdbDispatchUtilityStatement((Node *) stmt,
-												DF_CANCEL_ON_ERROR|
-												DF_WITH_SNAPSHOT|
-												DF_NEED_TWO_PHASE,
-												GetAssignedOidsForDispatch(),
-												NULL);
-				}
-			}
-			break;
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		case T_GrantStmt:
 			/* no event triggers for global objects */
 			ExecuteGrantStmt((GrantStmt *) parsetree);
@@ -1163,182 +754,8 @@ standard_ProcessUtility(Node *parsetree,
 			GrantRole((GrantRoleStmt *) parsetree);
 			break;
 
-<<<<<<< HEAD
-		case T_AlterDefaultPrivilegesStmt:
-			ExecAlterDefaultPrivilegesStmt((AlterDefaultPrivilegesStmt *) parsetree);
-			break;
-
-			/*
-			 * **************** object creation / destruction *****************
-			 */
-		case T_DefineStmt:
-			{
-				DefineStmt *stmt = (DefineStmt *) parsetree;
-
-				switch (stmt->kind)
-				{
-					case OBJECT_AGGREGATE:
-						DefineAggregate(stmt->defnames, stmt->args,
-										stmt->oldstyle, stmt->definition,
-										false, /* FIXME: GPDB-specific ordered flag */
-										queryString);
-						break;
-					case OBJECT_OPERATOR:
-						Assert(stmt->args == NIL);
-						DefineOperator(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TYPE:
-						Assert(stmt->args == NIL);
-						DefineType(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_EXTPROTOCOL:
-						Assert(stmt->args == NIL);
-						DefineExtProtocol(stmt->defnames, stmt->definition, stmt->trusted);
-						break;						
-					case OBJECT_TSPARSER:
-						Assert(stmt->args == NIL);
-						DefineTSParser(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSDICTIONARY:
-						Assert(stmt->args == NIL);
-						DefineTSDictionary(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSTEMPLATE:
-						Assert(stmt->args == NIL);
-						DefineTSTemplate(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSCONFIGURATION:
-						Assert(stmt->args == NIL);
-						DefineTSConfiguration(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_COLLATION:
-						Assert(stmt->args == NIL);
-						DefineCollation(stmt->defnames, stmt->definition, false);
-						break;
-					default:
-						elog(ERROR, "unrecognized define stmt type: %d",
-							 (int) stmt->kind);
-						break;
-				}
-			}
-			break;
-
-		case T_CompositeTypeStmt:		/* CREATE TYPE (composite) */
-			{
-				CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
-
-				DefineCompositeType(stmt->typevar, stmt->coldeflist);
-			}
-			break;
-
-		case T_CreateEnumStmt:	/* CREATE TYPE AS ENUM */
-			DefineEnum((CreateEnumStmt *) parsetree);
-			break;
-
-		case T_CreateRangeStmt:	/* CREATE TYPE AS RANGE */
-			DefineRange((CreateRangeStmt *) parsetree);
-			break;
-
-		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
-
-			/*
-			 * We disallow this in transaction blocks, because we can't cope
-			 * with enum OID values getting into indexes and then having their
-			 * defining pg_enum entries go away.
-			 */
-			if (Gp_role != GP_ROLE_EXECUTE && !IsBinaryUpgrade)
-			{
-				/*
-				 * Don't allow master to call this in a transaction block.  Segments are ok as
-				 * distributed transaction participants.
-				 */
-				PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
-			}
-			AlterEnum((AlterEnumStmt *) parsetree);
-			break;
-
-		case T_ViewStmt:		/* CREATE VIEW */
-			DefineView((ViewStmt *) parsetree, queryString);
-			break;
-
-		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
-			CreateFunction((CreateFunctionStmt *) parsetree, queryString);
-			break;
-
-		case T_AlterFunctionStmt:		/* ALTER FUNCTION */
-			AlterFunction((AlterFunctionStmt *) parsetree);
-			break;
-
-		case T_IndexStmt:		/* CREATE INDEX */
-		{
-			IndexStmt  *stmt = (IndexStmt *) parsetree;
-			ListCell   *lc;
-			List	   *stmts;
-
-			/* Run parse analysis ... */
-			stmts = transformIndexStmt(stmt, queryString);
-			foreach(lc, stmts)
-			{
-				IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
-
-				if (stmt->concurrent)
-					PreventTransactionChain(isTopLevel,
-											"CREATE INDEX CONCURRENTLY");
-
-				CheckRelationOwnership(stmt->relation, true);
-
-				/* ... and do it */
-				DefineIndex(stmt->relation,		/* relation */
-							stmt->idxname,		/* index name */
-							InvalidOid, /* no predefined OID */
-							InvalidOid, /* no previous storage */
-							stmt->accessMethod, /* am name */
-							stmt->tableSpace,
-							stmt->indexParams,	/* parameters */
-							(Expr *) stmt->whereClause,
-							stmt->options,
-							stmt->excludeOpNames,
-							stmt->unique,
-							stmt->primary,
-							stmt->isconstraint,
-							stmt->deferrable,
-							stmt->initdeferred,
-							false,		/* is_alter_table */
-							true,		/* check_rights */
-							false,		/* skip_build */
-							stmt->is_split_part,		/* quiet */
-							stmt->concurrent,	/* concurrent */
-							stmt);
-			}
-			break;
-		}
-
-		case T_RuleStmt:		/* CREATE RULE */
-			DefineRule((RuleStmt *) parsetree, queryString);
-			if (Gp_role == GP_ROLE_DISPATCH)
-			{
-				CdbDispatchUtilityStatement((Node *) parsetree,
-											DF_CANCEL_ON_ERROR|
-											DF_WITH_SNAPSHOT|
-											DF_NEED_TWO_PHASE,
-											GetAssignedOidsForDispatch(),
-											NULL);
-			}
-			break;
-
-		case T_CreateSeqStmt:
-			DefineSequence((CreateSeqStmt *) parsetree);
-			break;
-
-		case T_AlterSeqStmt:
-			AlterSequence((AlterSeqStmt *) parsetree);
-			break;
-
-		case T_DoStmt:
-			ExecuteDoStmt((DoStmt *) parsetree);
-			break;
-
 		case T_CreatedbStmt:
+			/* no event triggers for global objects */
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
@@ -1347,11 +764,6 @@ standard_ProcessUtility(Node *parsetree,
 				 */
 				PreventTransactionChain(isTopLevel, "CREATE DATABASE");
 			}
-=======
-		case T_CreatedbStmt:
-			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "CREATE DATABASE");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			createdb((CreatedbStmt *) parsetree);
 			break;
 
@@ -1789,8 +1201,22 @@ ProcessUtilitySlow(Node *parsetree,
 					Oid			relOid;
 
 					/* Run parse analysis ... */
-					stmts = transformCreateStmt((CreateStmt *) parsetree,
-												queryString);
+					/*
+					 * GPDB: Only do parse analysis in the Query Dispatcher. The Executor
+					 * nodes receive an already-transformed statement from the QD. We only
+					 * want to process the main CreateStmt here, not any auxiliary IndexStmts
+					 * or other such statements that would be created from the main
+					 * CreateStmt by parse analysis. The QD will dispatch those other statements
+					 * separately.
+					 *
+					 * Also, when processing an ALTER TABLE ADD PARTITION, atpxPartAddList()
+					 * passes us an already-transformed statement.
+					 */
+					if (Gp_role == GP_ROLE_EXECUTE || ((CreateStmt *) parsetree)->is_add_part)
+						stmts = list_make1(parsetree);
+					else
+						stmts = transformCreateStmt((CreateStmt *) parsetree,
+													queryString, false);
 
 					/* ... and do it */
 					foreach(l, stmts)
@@ -1799,10 +1225,45 @@ ProcessUtilitySlow(Node *parsetree,
 
 						if (IsA(stmt, CreateStmt))
 						{
+							CreateStmt *cstmt = (CreateStmt *) stmt;
+							char		relKind = RELKIND_RELATION;
+							char		relStorage = RELSTORAGE_HEAP;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
-							/* Create the table itself */
+							/*
+							 * If this T_CreateStmt was dispatched and we're a QE
+							 * receiving it, extract the relkind and relstorage from
+							 * it
+							 */
+							if (Gp_role == GP_ROLE_EXECUTE)
+							{
+								if (cstmt->relKind != 0)
+									relKind = cstmt->relKind;
+
+								if (cstmt->relStorage != 0)
+									relStorage = cstmt->relStorage;
+
+								/* sanity check */
+								switch(relKind)
+								{
+									case RELKIND_VIEW:
+									case RELKIND_COMPOSITE_TYPE:
+										Assert(relStorage == RELSTORAGE_VIRTUAL);
+										break;
+									default:
+										Assert(relStorage == RELSTORAGE_HEAP ||
+											   relStorage == RELSTORAGE_AOROWS ||
+											   relStorage == RELSTORAGE_AOCOLS ||
+											   relStorage == RELSTORAGE_EXTERNAL ||
+											   relStorage == RELSTORAGE_FOREIGN);
+								}
+							}
+
+							/*
+							 * Create the table itself. Don't dispatch it yet, as we haven't
+							 * created the toast and other auxiliary tables yet.
+							 */
 							relOid = DefineRelation((CreateStmt *) stmt,
 													RELKIND_RELATION,
 													InvalidOid);
@@ -1813,21 +1274,62 @@ ProcessUtilitySlow(Node *parsetree,
 							 */
 							CommandCounterIncrement();
 
-							/*
-							 * parse and validate reloptions for the toast
-							 * table
-							 */
-							toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-																"toast",
-																validnsps,
-																true,
-																false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
+							DefinePartitionedRelation((CreateStmt *) parsetree, relOid);
 
-							AlterTableCreateToastTable(relOid, toast_options);
+							if (relKind != RELKIND_COMPOSITE_TYPE)
+							{
+								/*
+								 * parse and validate reloptions for the toast
+								 * table
+								 */
+								toast_options = transformRelOptions((Datum) 0,
+																	((CreateStmt *) stmt)->options,
+																	"toast",
+																	validnsps,
+																	true,
+																	false);
+								(void) heap_reloptions(RELKIND_TOASTVALUE,
+													   toast_options,
+													   true);
+
+								AlterTableCreateToastTable(relOid, toast_options);
+								/*
+								 * If the master relation is a non-leaf relation in
+								 * a partition hierarchy, then this auxiliary
+								 * relation, like its master relation, will not
+								 * contain any data.  Therefore, like the master
+								 * relation, exclude this auxiliary table from
+								 * database age calculation, by passing master
+								 * relation's is_part_parent flag.
+								 */
+								AlterTableCreateAoSegTable(relOid,
+														   cstmt->is_part_child,
+														   cstmt->is_part_parent);
+
+								if (cstmt->buildAoBlkdir)
+									AlterTableCreateAoBlkdirTable(relOid,
+																  cstmt->is_part_child,
+																  cstmt->is_part_parent);
+
+								AlterTableCreateAoVisimapTable(relOid,
+															   cstmt->is_part_child,
+															   cstmt->is_part_parent);
+							}
+							if (Gp_role == GP_ROLE_DISPATCH)
+								CdbDispatchUtilityStatement((Node *) stmt,
+															DF_CANCEL_ON_ERROR |
+															DF_NEED_TWO_PHASE |
+															DF_WITH_SNAPSHOT,
+															GetAssignedOidsForDispatch(),
+															NULL);
+							CommandCounterIncrement();
+							/*
+							 * Deferred statements should be evaluated *after* AO tables
+							 * are updated correctly.  Otherwise, they may not have
+							 * segment information yet and operations like create_index
+							 * in the deferred statements cannot see the relfile.
+							 */
+							EvaluateDeferredStatements(cstmt->deferredStmts);
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
@@ -1876,7 +1378,14 @@ ProcessUtilitySlow(Node *parsetree,
 					if (OidIsValid(relid))
 					{
 						/* Run parse analysis ... */
-						stmts = transformAlterTableStmt(atstmt, queryString);
+						/*
+						 * GPDB: Like for CREATE TABLE, only do parse analysis
+						 * in the Query Dispatcher.
+						 */
+						if (Gp_role == GP_ROLE_EXECUTE)
+							stmts = list_make1(parsetree);
+						else
+							stmts = transformAlterTableStmt(atstmt, queryString);
 
 						/* ... and do it */
 						foreach(l, stmts)
@@ -1958,6 +1467,16 @@ ProcessUtilitySlow(Node *parsetree,
 								 (int) stmt->subtype);
 							break;
 					}
+					if (Gp_role == GP_ROLE_DISPATCH)
+					{
+						/* ADD CONSTRAINT will assign a new OID for the constraint */
+						CdbDispatchUtilityStatement((Node *) stmt,
+													DF_CANCEL_ON_ERROR|
+													DF_WITH_SNAPSHOT|
+													DF_NEED_TWO_PHASE,
+													GetAssignedOidsForDispatch(),
+													NULL);
+					}
 				}
 				break;
 
@@ -1972,7 +1491,9 @@ ProcessUtilitySlow(Node *parsetree,
 					{
 						case OBJECT_AGGREGATE:
 							DefineAggregate(stmt->defnames, stmt->args,
-											stmt->oldstyle, stmt->definition);
+											stmt->oldstyle, stmt->definition,
+											false, /* FIXME: GPDB-specific ordered flag */
+											queryString);
 							break;
 						case OBJECT_OPERATOR:
 							Assert(stmt->args == NIL);
@@ -2005,6 +1526,10 @@ ProcessUtilitySlow(Node *parsetree,
 							Assert(stmt->args == NIL);
 							DefineCollation(stmt->defnames, stmt->definition);
 							break;
+						case OBJECT_EXTPROTOCOL:
+							Assert(stmt->args == NIL);
+							DefineExtProtocol(stmt->defnames, stmt->definition, stmt->trusted);
+							break;						
 						default:
 							elog(ERROR, "unrecognized define stmt type: %d",
 								 (int) stmt->kind);
@@ -2013,6 +1538,51 @@ ProcessUtilitySlow(Node *parsetree,
 				}
 				break;
 
+<<<<<<< HEAD
+			case T_IndexStmt:		/* CREATE INDEX */
+				{
+					IndexStmt  *stmt = (IndexStmt *) parsetree;
+					ListCell   *lc;
+					List	   *stmts;
+
+					/* Run parse analysis ... */
+					stmts = transformIndexStmt(stmt, queryString);
+					foreach(lc, stmts)
+					{
+						IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
+
+						if (stmt->concurrent)
+							PreventTransactionChain(isTopLevel,
+													"CREATE INDEX CONCURRENTLY");
+
+						CheckRelationOwnership(stmt->relation, true);
+
+						/* ... and do it */
+						DefineIndex(stmt->relation,		/* relation */
+									stmt->idxname,		/* index name */
+									InvalidOid, /* no predefined OID */
+									InvalidOid, /* no previous storage */
+									stmt->accessMethod, /* am name */
+									stmt->tableSpace,
+									stmt->indexParams,	/* parameters */
+									(Expr *) stmt->whereClause,
+									stmt->options,
+									stmt->excludeOpNames,
+									stmt->unique,
+									stmt->primary,
+									stmt->isconstraint,
+									stmt->deferrable,
+									stmt->initdeferred,
+									false,		/* is_alter_table */
+									true,		/* check_rights */
+									false,		/* skip_build */
+									stmt->is_split_part,		/* quiet */
+									stmt->concurrent,	/* concurrent */
+									stmt);
+					}
+					break;
+				}
+=======
 			case T_IndexStmt:	/* CREATE INDEX */
 				{
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
@@ -2035,6 +1605,7 @@ ProcessUtilitySlow(Node *parsetree,
 								false); /* quiet */
 				}
 				break;
+>>>>>>>
 
 			case T_CreateExtensionStmt:
 				CreateExtension((CreateExtensionStmt *) parsetree);
@@ -2093,6 +1664,20 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_AlterEnumStmt:		/* ALTER TYPE (enum) */
+
+				/*
+				 * We disallow this in transaction blocks, because we can't cope
+				 * with enum OID values getting into indexes and then having their
+				 * defining pg_enum entries go away.
+				 */
+				if (Gp_role != GP_ROLE_EXECUTE && !IsBinaryUpgrade)
+				{
+					/*
+					 * Don't allow master to call this in a transaction block.  Segments are ok as
+					 * distributed transaction participants.
+					 */
+					PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
+				}
 				AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
 				break;
 
@@ -2110,6 +1695,15 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_RuleStmt:	/* CREATE RULE */
 				DefineRule((RuleStmt *) parsetree, queryString);
+				if (Gp_role == GP_ROLE_DISPATCH)
+				{
+					CdbDispatchUtilityStatement((Node *) parsetree,
+												DF_CANCEL_ON_ERROR|
+												DF_WITH_SNAPSHOT|
+												DF_NEED_TWO_PHASE,
+												GetAssignedOidsForDispatch(),
+												NULL);
+				}
 				break;
 
 			case T_CreateSeqStmt:
@@ -2225,6 +1819,14 @@ ProcessUtilitySlow(Node *parsetree,
 static void
 ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 {
+	DropStmt   *copyStmt;
+
+	/* stmt->objects could be modified (e.g.
+	 * CREATE TABLE test_exists(a int, b int);
+	 * DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;)
+	 * so copy for later use. */
+	copyStmt = copyObject(stmt);
+
 	switch (stmt->removeType)
 	{
 		case OBJECT_INDEX:
@@ -2244,6 +1846,15 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 			RemoveObjects(stmt);
 			break;
 	}
+
+	/* dispatch the original, unmodified statement */
+	if (Gp_role == GP_ROLE_DISPATCH)
+		CdbDispatchUtilityStatement((Node *) copyStmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
 }
 
 
