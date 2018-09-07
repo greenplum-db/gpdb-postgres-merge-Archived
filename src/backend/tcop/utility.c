@@ -70,6 +70,7 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
+#include "catalog/oid_dispatch.h"
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbvars.h"
@@ -664,8 +665,8 @@ standard_ProcessUtility(Node *parsetree,
 						/* Recurse for anything else */
 						ProcessUtility(stmt,
 									   queryString,
+									   PROCESS_UTILITY_SUBCOMMAND,
 									   params,
-									   false,
 									   None_Receiver,
 									   NULL);
 					}
@@ -904,29 +905,9 @@ standard_ProcessUtility(Node *parsetree,
 			DiscardCommand((DiscardStmt *) parsetree, isTopLevel);
 			break;
 
-<<<<<<< HEAD
-		case T_CreateTrigStmt:
-			{
-				Oid			trigOid;
-
-				trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-										InvalidOid, InvalidOid, false);
-				if (Gp_role == GP_ROLE_DISPATCH)
-				{
-					((CreateTrigStmt *) parsetree)->trigOid = trigOid;
-					CdbDispatchUtilityStatement((Node *) parsetree,
-												DF_CANCEL_ON_ERROR|
-												DF_WITH_SNAPSHOT|
-												DF_NEED_TWO_PHASE,
-												GetAssignedOidsForDispatch(),
-												NULL);
-				}
-			}
-=======
 		case T_CreateEventTrigStmt:
 			/* no event triggers on event triggers */
 			CreateEventTrigger((CreateEventTrigStmt *) parsetree);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 
 		case T_AlterEventTrigStmt:
@@ -1126,14 +1107,6 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
-<<<<<<< HEAD
-		case T_AlterTypeStmt:
-			AlterType((AlterTypeStmt *) parsetree);
-			break;
-
-		case T_AlterTSDictionaryStmt:
-			AlterTSDictionary((AlterTSDictionaryStmt *) parsetree);
-=======
 		case T_AlterOwnerStmt:
 			{
 				AlterOwnerStmt *stmt = (AlterOwnerStmt *) parsetree;
@@ -1145,7 +1118,6 @@ standard_ProcessUtility(Node *parsetree,
 				else
 					ExecAlterOwnerStmt(stmt);
 			}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 
 		default:
@@ -1265,8 +1237,9 @@ ProcessUtilitySlow(Node *parsetree,
 							 * created the toast and other auxiliary tables yet.
 							 */
 							relOid = DefineRelation((CreateStmt *) stmt,
-													RELKIND_RELATION,
-													InvalidOid);
+													relKind,
+													((CreateStmt *) stmt)->ownerid,
+													relStorage, false, true, NULL);
 
 							/*
 							 * Let AlterTableCreateToastTable decide if this
@@ -1292,7 +1265,12 @@ ProcessUtilitySlow(Node *parsetree,
 													   toast_options,
 													   true);
 
-								AlterTableCreateToastTable(relOid, toast_options);
+								AlterTableCreateToastTable(relOid,
+														   toast_options,
+														   true,
+														   cstmt->is_part_child,
+														   cstmt->is_part_parent);
+
 								/*
 								 * If the master relation is a non-leaf relation in
 								 * a partition hierarchy, then this auxiliary
@@ -1336,7 +1314,11 @@ ProcessUtilitySlow(Node *parsetree,
 							/* Create the table itself */
 							relOid = DefineRelation((CreateStmt *) stmt,
 													RELKIND_FOREIGN_TABLE,
-													InvalidOid);
+													((CreateStmt *) stmt)->ownerid,
+													RELSTORAGE_FOREIGN,
+													true,
+													true,
+													NULL);
 							CreateForeignTable((CreateForeignTableStmt *) stmt,
 											   relOid);
 						}
@@ -1524,7 +1506,7 @@ ProcessUtilitySlow(Node *parsetree,
 							break;
 						case OBJECT_COLLATION:
 							Assert(stmt->args == NIL);
-							DefineCollation(stmt->defnames, stmt->definition);
+							DefineCollation(stmt->defnames, stmt->definition, false);
 							break;
 						case OBJECT_EXTPROTOCOL:
 							Assert(stmt->args == NIL);
@@ -1538,54 +1520,11 @@ ProcessUtilitySlow(Node *parsetree,
 				}
 				break;
 
-<<<<<<< HEAD
-			case T_IndexStmt:		/* CREATE INDEX */
+			case T_IndexStmt:	/* CREATE INDEX */
 				{
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
 					ListCell   *lc;
 					List	   *stmts;
-
-					/* Run parse analysis ... */
-					stmts = transformIndexStmt(stmt, queryString);
-					foreach(lc, stmts)
-					{
-						IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
-
-						if (stmt->concurrent)
-							PreventTransactionChain(isTopLevel,
-													"CREATE INDEX CONCURRENTLY");
-
-						CheckRelationOwnership(stmt->relation, true);
-
-						/* ... and do it */
-						DefineIndex(stmt->relation,		/* relation */
-									stmt->idxname,		/* index name */
-									InvalidOid, /* no predefined OID */
-									InvalidOid, /* no previous storage */
-									stmt->accessMethod, /* am name */
-									stmt->tableSpace,
-									stmt->indexParams,	/* parameters */
-									(Expr *) stmt->whereClause,
-									stmt->options,
-									stmt->excludeOpNames,
-									stmt->unique,
-									stmt->primary,
-									stmt->isconstraint,
-									stmt->deferrable,
-									stmt->initdeferred,
-									false,		/* is_alter_table */
-									true,		/* check_rights */
-									false,		/* skip_build */
-									stmt->is_split_part,		/* quiet */
-									stmt->concurrent,	/* concurrent */
-									stmt);
-					}
-					break;
-				}
-=======
-			case T_IndexStmt:	/* CREATE INDEX */
-				{
-					IndexStmt  *stmt = (IndexStmt *) parsetree;
 
 					if (stmt->concurrent)
 						PreventTransactionChain(isTopLevel,
@@ -1594,18 +1533,28 @@ ProcessUtilitySlow(Node *parsetree,
 					CheckRelationOwnership(stmt->relation, true);
 
 					/* Run parse analysis ... */
-					stmt = transformIndexStmt(stmt, queryString);
+					stmts = transformIndexStmt(stmt, queryString);
 
-					/* ... and do it */
-					DefineIndex(stmt,
+					/*
+					 * In GPDB, a single IndexStmt can be expanded to several
+					 * IndexStmts, if the table is partitioned.
+					 */
+					foreach (lc, stmts)
+					{
+						IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
+
+						CheckRelationOwnership(stmt->relation, true);
+
+						/* ... and do it */
+						DefineIndex(stmt,
 								InvalidOid,		/* no predefined OID */
 								false,	/* is_alter_table */
 								true,	/* check_rights */
 								false,	/* skip_build */
-								false); /* quiet */
+								stmt->is_split_part); /* quiet */
+					}
 				}
 				break;
->>>>>>>
 
 			case T_CreateExtensionStmt:
 				CreateExtension((CreateExtensionStmt *) parsetree);
@@ -1725,8 +1674,22 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_CreateTrigStmt:
-				(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-									 InvalidOid, InvalidOid, false);
+				{
+					Oid			trigOid;
+
+					trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
+											InvalidOid, InvalidOid, false);
+					if (Gp_role == GP_ROLE_DISPATCH)
+					{
+						((CreateTrigStmt *) parsetree)->trigOid = trigOid;
+						CdbDispatchUtilityStatement((Node *) parsetree,
+													DF_CANCEL_ON_ERROR|
+													DF_WITH_SNAPSHOT|
+													DF_NEED_TWO_PHASE,
+													GetAssignedOidsForDispatch(),
+													NULL);
+					}
+				}
 				break;
 
 			case T_CreatePLangStmt:
@@ -1763,6 +1726,10 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_AlterTSConfigurationStmt:
 				AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
+				break;
+
+			case T_AlterTypeStmt:
+				AlterType((AlterTypeStmt *) parsetree);
 				break;
 
 			case T_DropStmt:

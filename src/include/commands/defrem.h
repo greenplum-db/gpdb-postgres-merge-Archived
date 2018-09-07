@@ -28,8 +28,7 @@ extern Oid DefineIndex(IndexStmt *stmt,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-			bool quiet,
-			bool concurrent);
+			bool quiet);
 extern Oid	ReindexIndex(ReindexStmt *stmt);
 extern Oid	ReindexTable(ReindexStmt *stmt);
 extern Oid	ReindexDatabase(ReindexStmt *stmt);

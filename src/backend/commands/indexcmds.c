@@ -397,13 +397,6 @@ CheckIndexCompatible(Oid oldId,
  * 'skip_build': make the catalog entries but leave the index file empty;
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
-<<<<<<< HEAD
- * 'concurrent': avoid blocking writers to the table while building.
- * 'stmt': the IndexStmt for this index.  Many other arguments are just values
- *		of fields in here.  
- *		XXX One day it might pay to eliminate the redundancy.
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *
  * Returns the OID of the created index.
  */
@@ -413,13 +406,7 @@ DefineIndex(IndexStmt *stmt,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-<<<<<<< HEAD
-			bool quiet,
-			bool concurrent,
-			IndexStmt *stmt)
-=======
 			bool quiet)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	char	   *indexRelationName;
 	char	   *accessMethodName;
