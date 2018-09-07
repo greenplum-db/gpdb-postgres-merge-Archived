@@ -78,17 +78,13 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
-<<<<<<< HEAD
-#include "utils/resowner.h"
+#include "utils/resowner_private.h"
 #include "utils/workfile_mgr.h"
 #include "utils/faultinjector.h"
 
 // Provide some indirection here in case we have problems with lseek and
 // 64 bits on some platforms
 #define pg_lseek64(a,b,c) (int64)lseek(a,b,c)
-=======
-#include "utils/resowner_private.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /*
@@ -296,14 +292,10 @@ static File AllocateVfd(void);
 static void FreeVfd(File file);
 
 static int	FileAccess(File file);
-<<<<<<< HEAD
 static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError,
 										  const char *filename, bool makenameunique, bool create);
-=======
-static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname);
@@ -1051,7 +1043,7 @@ OpenNamedTemporaryFile(const char *fileName,
 		VfdCache[file].resowner = CurrentResourceOwner;
 
 		/* ensure cleanup happens at eoxact */
-		have_pending_fd_cleanup = true;
+		have_xact_temporary_files = true;
 	}
 
 	return file;
@@ -1920,22 +1912,6 @@ OpenTransientFile(FileName fileName, int fileFlags, int fileMode)
 {
 	int			fd;
 
-<<<<<<< HEAD
-
-	DO_DB(elog(LOG, "OpenTransientFile: Allocated %d (%s)",
-			   numAllocatedDescs, fileName));
-
-	/*
-	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
-	 * allocatedFiles[]; the test against max_safe_fds prevents BasicOpenFile
-	 * from hogging every one of the available FDs, which'd lead to infinite
-	 * looping.
-	 */
-	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
-		numAllocatedDescs >= max_safe_fds - 1)
-		elog(ERROR, "exceeded MAX_ALLOCATED_DESCS while trying to open file \"%s\"",
-			 fileName);
-=======
 	DO_DB(elog(LOG, "OpenTransientFile: Allocated %d (%s)",
 			   numAllocatedDescs, fileName));
 
@@ -1948,7 +1924,6 @@ OpenTransientFile(FileName fileName, int fileFlags, int fileMode)
 
 	/* Close excess kernel FDs. */
 	ReleaseLruFiles();
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	fd = BasicOpenFile(fileName, fileFlags, fileMode);
 
@@ -1968,8 +1943,6 @@ OpenTransientFile(FileName fileName, int fileFlags, int fileMode)
 }
 
 /*
-<<<<<<< HEAD
-=======
  * Routines that want to initiate a pipe stream should use OpenPipeStream
  * rather than plain popen().  This lets fd.c deal with freeing FDs if
  * necessary.  When done, call ClosePipeStream rather than pclose.
@@ -2024,7 +1997,6 @@ TryAgain:
 }
 
 /*
->>>>>>> e472b921406407794bab911c64655b8b82375196
  * Free an AllocateDesc of any type.
  *
  * The argument *must* point into the allocatedDescs[] array.

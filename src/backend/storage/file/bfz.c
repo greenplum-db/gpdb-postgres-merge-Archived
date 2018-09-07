@@ -5,6 +5,8 @@
 #include "storage/fd.h"
 #include "miscadmin.h"
 
+#include "utils/pg_crc.h"
+#include "port/pg_crc32c.h"
 #include "utils/memutils.h"		/* For MemoryContext stuff */
 #include "cdb/cdbvars.h"
 #include "utils/workfile_mgr.h"

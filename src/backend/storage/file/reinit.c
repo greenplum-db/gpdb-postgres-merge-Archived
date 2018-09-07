@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "catalog/catalog.h"
+#include "catalog/pg_tablespace.h"
 #include "common/relpath.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
