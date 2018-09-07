@@ -636,6 +636,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLock);
 		RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);
 		RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);
+		RegisterTimeout(CLIENT_WAIT_TIMEOUT, ClientWaitTimeoutHandler);
 	}
 
 	/*

@@ -39,23 +39,16 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
-<<<<<<< HEAD
 #include "storage/lmgr.h"
-#include "storage/procarray.h"
-=======
 #include "storage/proc.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
 #include "storage/standby.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-<<<<<<< HEAD
 #include "utils/resscheduler.h"
-#include "utils/resowner.h"
-=======
 #include "utils/resowner_private.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /* This configuration variable is used to set the lock table size */
@@ -1404,12 +1397,11 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		if (locallock->lockOwners[i].owner != NULL)
 			ResourceOwnerForgetLock(locallock->lockOwners[i].owner, locallock);
 	}
-<<<<<<< HEAD
-	if (locallock->lockOwners != NULL) // TODO FIX_COMMIT^ does not have this check, why?
+
+	// GPDB_93_MERGE_FIXME: where did this TODO come from? Action needed?
+	// TODO FIX_COMMTI^ does not have this check, why?
+	if (locallock->lockOwners != NULL)
 		pfree(locallock->lockOwners);
-=======
-	pfree(locallock->lockOwners);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	locallock->lockOwners = NULL;
 
 	if (locallock->holdsStrongLockCount)

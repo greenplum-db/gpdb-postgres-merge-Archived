@@ -313,9 +313,6 @@ extern void LockErrorCleanup(void);
 extern void ProcWaitForSignal(void);
 extern void ProcSendSignal(int pid);
 
-extern void EnableClientWaitTimeoutInterrupt(void);
-extern bool DisableClientWaitTimeoutInterrupt(void);
-
 extern int ResProcSleep(LOCKMODE lockmode, LOCALLOCK *locallock, void *incrementSet);
 
 extern void ResLockWaitCancel(void);

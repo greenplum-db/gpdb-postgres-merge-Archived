@@ -102,30 +102,10 @@ static LOCALLOCK *lockAwaited = NULL;
 
 /* Mark this volatile because it can be changed by signal handler */
 static volatile DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
-<<<<<<< HEAD
-static volatile sig_atomic_t clientWaitTimeoutInterruptEnabled = 0;
-static volatile sig_atomic_t clientWaitTimeoutInterruptOccurred = 0;
-volatile bool cancel_from_timeout = false;
-
-/* timeout_start_time is set when log_lock_waits is true */
-static TimestampTz timeout_start_time;
-
-/* statement_fin_time is valid only if statement_timeout_active is true */
-static TimestampTz statement_fin_time;
-static TimestampTz statement_fin_time2; /* valid only in recovery */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void AuxiliaryProcKill(int code, Datum arg);
-<<<<<<< HEAD
-static bool CheckStatementTimeout(void);
-static bool CheckStandbyTimeout(void);
-static void ClientWaitTimeoutInterruptHandler(void);
-static void ProcessClientWaitTimeout(void);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 
 /*
@@ -655,14 +635,10 @@ InitAuxiliaryProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-<<<<<<< HEAD
     MyProc->mppLocalProcessSerial = 0;
     MyProc->mppSessionId = 0;
     MyProc->mppIsWriter = false;
-	MyPgXact->inCommit = false;
-=======
 	MyPgXact->delayChkpt = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	MyPgXact->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
@@ -807,15 +783,11 @@ LockErrorCleanup(void)
 	if (lockAwaited == NULL)
 		return;
 
-<<<<<<< HEAD
 	/* Don't try to cancel resource locks.*/
 	if (Gp_role == GP_ROLE_DISPATCH && IsResQueueEnabled() &&
 		LOCALLOCK_LOCKMETHOD(*lockAwaited) == RESOURCE_LOCKMETHOD)
 		return;
 
-	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
-	disable_sig_alarm(false);
-=======
 	/*
 	 * Turn off the deadlock and lock timeout timers, if they are still
 	 * running (see ProcSleep).  Note we must preserve the LOCK_TIMEOUT
@@ -829,7 +801,6 @@ LockErrorCleanup(void)
 	timeouts[1].id = LOCK_TIMEOUT;
 	timeouts[1].keep_indicator = true;
 	disable_timeouts(timeouts, 2);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
 	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
@@ -1651,6 +1622,23 @@ CheckDeadLock(void)
 	int			i;
 
 	/*
+	 * This check was added in GPDB a long time ago. Not sure if it's still
+	 * needed, but seems like it can't hurt.
+	 *
+	 * From old pre-open sourcing git repository:
+	 * commit d628fac161d0536b344348927915335bbcd38c1a
+	 * Date:   Wed Aug 19 03:26:36 2015 -0400
+	 *
+	 *    [JIRA: MPP-25646] Add proc_exit_inprogress check in handle_sig_alarm.
+	 *
+	 *    If SIGALRM happens in the middle if handling SIGTERM, there are risks causing
+	 *    SIGSEGV, for instance, double free gang, or accessing MyProc while it was freed
+	 *    already. The solution is to ignore SIGALRM while we are dying.
+	 */
+	if (proc_exit_inprogress)
+		return;
+
+	/*
 	 * Acquire exclusive lock on the entire shared lock data structures. Must
 	 * grab LWLocks in partition-number order to avoid LWLock deadlock.
 	 *
@@ -1808,361 +1796,6 @@ ProcSendSignal(int pid)
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);
 }
-<<<<<<< HEAD
-
-
-/*****************************************************************************
- * SIGALRM interrupt support
- *
- * Maybe these should be in pqsignal.c?
- *****************************************************************************/
-
-/*
- * Enable the SIGALRM interrupt to fire after the specified delay
- *
- * Delay is given in milliseconds.	Caller should be sure a SIGALRM
- * signal handler is installed before this is called.
- *
- * This code properly handles nesting of deadlock timeout alarms within
- * statement timeout alarms.
- *
- * Returns TRUE if okay, FALSE on failure.
- */
-bool
-enable_sig_alarm(int delayms, bool is_statement_timeout)
-{
-	TimestampTz fin_time;
-	struct itimerval timeval;
-
-	if (is_statement_timeout)
-	{
-		/*
-		 * Begin statement-level timeout
-		 *
-		 * Note that we compute statement_fin_time with reference to the
-		 * statement_timestamp, but apply the specified delay without any
-		 * correction; that is, we ignore whatever time has elapsed since
-		 * statement_timestamp was set.  In the normal case only a small
-		 * interval will have elapsed and so this doesn't matter, but there
-		 * are corner cases (involving multi-statement query strings with
-		 * embedded COMMIT or ROLLBACK) where we might re-initialize the
-		 * statement timeout long after initial receipt of the message. In
-		 * such cases the enforcement of the statement timeout will be a bit
-		 * inconsistent.  This annoyance is judged not worth the cost of
-		 * performing an additional gettimeofday() here.
-		 */
-		Assert(!deadlock_timeout_active);
-		fin_time = GetCurrentStatementStartTimestamp();
-		fin_time = TimestampTzPlusMilliseconds(fin_time, delayms);
-		statement_fin_time = fin_time;
-		cancel_from_timeout = false;
-		statement_timeout_active = true;
-	}
-	else if (statement_timeout_active)
-	{
-		/*
-		 * Begin deadlock timeout with statement-level timeout active
-		 *
-		 * Here, we want to interrupt at the closer of the two timeout times.
-		 * If fin_time >= statement_fin_time then we need not touch the
-		 * existing timer setting; else set up to interrupt at the deadlock
-		 * timeout time.
-		 *
-		 * NOTE: in this case it is possible that this routine will be
-		 * interrupted by the previously-set timer alarm.  This is okay
-		 * because the signal handler will do only what it should do according
-		 * to the state variables.	The deadlock checker may get run earlier
-		 * than normal, but that does no harm.
-		 */
-		timeout_start_time = GetCurrentTimestamp();
-		fin_time = TimestampTzPlusMilliseconds(timeout_start_time, delayms);
-		deadlock_timeout_active = true;
-		if (fin_time >= statement_fin_time)
-			return true;
-	}
-	else
-	{
-		/* Begin deadlock timeout with no statement-level timeout */
-		deadlock_timeout_active = true;
-		/* GetCurrentTimestamp can be expensive, so only do it if we must */
-		if (log_lock_waits)
-			timeout_start_time = GetCurrentTimestamp();
-	}
-
-	/* If we reach here, okay to set the timer interrupt */
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = delayms / 1000;
-	timeval.it_value.tv_usec = (delayms % 1000) * 1000;
-	if (setitimer(ITIMER_REAL, &timeval, NULL))
-		return false;
-	return true;
-}
-
-/*
- * Cancel the SIGALRM timer, either for a deadlock timeout or a statement
- * timeout.  If a deadlock timeout is canceled, any active statement timeout
- * remains in force.
- *
- * Returns TRUE if okay, FALSE on failure.
- */
-bool
-disable_sig_alarm(bool is_statement_timeout)
-{
-	/*
-	 * Always disable the interrupt if it is active; this avoids being
-	 * interrupted by the signal handler and thereby possibly getting
-	 * confused.
-	 *
-	 * We will re-enable the interrupt if necessary in CheckStatementTimeout.
-	 */
-	if (statement_timeout_active || deadlock_timeout_active)
-	{
-		struct itimerval timeval;
-
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		if (setitimer(ITIMER_REAL, &timeval, NULL))
-		{
-			statement_timeout_active = false;
-			cancel_from_timeout = false;
-			deadlock_timeout_active = false;
-			return false;
-		}
-	}
-
-	/* Always cancel deadlock timeout, in case this is error cleanup */
-	deadlock_timeout_active = false;
-
-	/* Cancel or reschedule statement timeout */
-	if (is_statement_timeout)
-	{
-		statement_timeout_active = false;
-		cancel_from_timeout = false;
-	}
-	else if (statement_timeout_active)
-	{
-		if (!CheckStatementTimeout())
-			return false;
-	}
-	return true;
-}
-
-/*
- * Check for statement timeout.  If the timeout time has come,
- * trigger a query-cancel interrupt; if not, reschedule the SIGALRM
- * interrupt to occur at the right time.
- *
- * Returns true if okay, false if failed to set the interrupt.
- */
-static bool
-CheckStatementTimeout(void)
-{
-	TimestampTz now;
-
-	if (!statement_timeout_active)
-		return true;			/* do nothing if not active */
-
-	/* QD takes care of timeouts for QE. */
-	if (Gp_role == GP_ROLE_EXECUTE)
-		return true;
-
-	now = GetCurrentTimestamp();
-
-	if (now >= statement_fin_time)
-	{
-		/* Time to die */
-		statement_timeout_active = false;
-		cancel_from_timeout = true;
-#ifdef HAVE_SETSID
-		/* try to signal whole process group */
-		kill(-MyProcPid, SIGINT);
-#endif
-		kill(MyProcPid, SIGINT);
-	}
-	else
-	{
-		/* Not time yet, so (re)schedule the interrupt */
-		long		secs;
-		int			usecs;
-		struct itimerval timeval;
-
-		TimestampDifference(now, statement_fin_time,
-							&secs, &usecs);
-
-		/*
-		 * It's possible that the difference is less than a microsecond;
-		 * ensure we don't cancel, rather than set, the interrupt.
-		 */
-		if (secs == 0 && usecs == 0)
-			usecs = 1;
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		timeval.it_value.tv_sec = secs;
-		timeval.it_value.tv_usec = usecs;
-		if (setitimer(ITIMER_REAL, &timeval, NULL))
-			return false;
-	}
-
-	return true;
-}
-
-/*
- * need DoingCommandRead to be extern so we can test it here.
- * Or would it be better to have some routine to call to get the
- * value of the bool?  This is simpler.
- */
-extern bool DoingCommandRead;
-
-/*
- * Signal handler for SIGALRM for normal user backends
- *
- * Process deadlock check and/or statement timeout check, as needed.
- * To avoid various edge cases, we must be careful to do nothing
- * when there is nothing to be done.  We also need to be able to
- * reschedule the timer interrupt if called before end of statement.
- */
-void
-handle_sig_alarm(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	/* SIGALRM is cause for waking anything waiting on the process latch */
-	if (MyProc)
-		SetLatch(&MyProc->procLatch);
-
-	/* don't joggle the elbow of proc_exit */
-	if (!proc_exit_inprogress)
-	{
-		/*
-		 * Idle session timeout shares with the deadlock timeout.
-		 * If DoingCommandRead is true, we are deciding the session is idle
-		 * In that case, we can't possibly be in a deadlock, so no point
-		 * in running the deadlock detection.
-		 */
-
-		if (deadlock_timeout_active && !DoingCommandRead)
-		{
-			deadlock_timeout_active = false;
-			CheckDeadLock();
-		}
-
-		if (statement_timeout_active)
-			(void) CheckStatementTimeout();
-
-		/*
-		 * If we are DoingCommandRead, it means we are sitting idle waiting for
-		 * the user to send us some SQL.
-		 */
-		if (DoingCommandRead)
-		{
-			(void) ClientWaitTimeoutInterruptHandler();
-			deadlock_timeout_active = false;
-		}
-	}
-
-	errno = save_errno;
-}
-
-static void
-ClientWaitTimeoutInterruptHandler(void)
-{
-	int save_errno = errno;
-
-	/* Don't joggle the elbow of proc_exit */
-	if (proc_exit_inprogress)
-		return;
-
-	if (clientWaitTimeoutInterruptEnabled)
-	{
-		bool save_ImmediateInterruptOK = ImmediateInterruptOK;
-
-		/*
-		 * We may be called while ImmediateInterruptOK is true; turn it off
-		 * while messing with the client wait timeout state.
-		 */
-		ImmediateInterruptOK = false;
-
-		/*
-		 * I'm not sure whether some flavors of Unix might allow another
-		 * SIGALRM occurrence to recursively interrupt this routine. To cope
-		 * with the possibility, we do the same sort of dance that
-		 * EnableNotifyInterrupt must do -- see that routine for comments.
-		 */
-		clientWaitTimeoutInterruptEnabled = 0; /* disable any recursive signal */
-		clientWaitTimeoutInterruptOccurred = 1; /* do at least one iteration */
-		for (;;)
-		{
-			clientWaitTimeoutInterruptEnabled = 1;
-			if (!clientWaitTimeoutInterruptOccurred)
-				break;
-			clientWaitTimeoutInterruptEnabled = 0;
-			if (clientWaitTimeoutInterruptOccurred)
-			{
-				ProcessClientWaitTimeout();
-			}
-		}
-
-		/*
-		 * Restore ImmediateInterruptOK, and check for interrupts if needed.
-		 */
-		ImmediateInterruptOK = save_ImmediateInterruptOK;
-		if (save_ImmediateInterruptOK)
-			CHECK_FOR_INTERRUPTS();
-	}
-	else
-	{
-		/*
-		 * In this path it is NOT SAFE to do much of anything, except this:
-		 */
-		clientWaitTimeoutInterruptOccurred = 1;
-	}
-
-	errno = save_errno;
-}
-
-void
-EnableClientWaitTimeoutInterrupt(void)
-{
-	for (;;)
-	{
-		clientWaitTimeoutInterruptEnabled = 1;
-		if (!clientWaitTimeoutInterruptOccurred)
-			break;
-		clientWaitTimeoutInterruptEnabled = 0;
-		if (clientWaitTimeoutInterruptOccurred)
-		{
-			ProcessClientWaitTimeout();
-		}
-	}
-}
-
-bool
-DisableClientWaitTimeoutInterrupt(void)
-{
-	bool result = (clientWaitTimeoutInterruptEnabled != 0);
-
-	clientWaitTimeoutInterruptEnabled = 0;
-
-	return result;
-}
-
-static void
-ProcessClientWaitTimeout(void)
-{
-	bool notify_enabled;
-	bool catchup_enabled;
-
-	/* Must prevent SIGUSR1 and SIGUSR2 interrupt while I am running */
-	notify_enabled = DisableNotifyInterrupt();
-	catchup_enabled = DisableCatchupInterrupt();
-
-	clientWaitTimeoutInterruptOccurred = 0;
-
-	DoIdleResourceCleanup();
-
-	if (notify_enabled)
-		EnableNotifyInterrupt();
-	if (catchup_enabled)
-		EnableCatchupInterrupt();
-}
 
 /*
  * ResProcSleep -- put a process to sleep (that is waiting for a resource lock).
@@ -2223,16 +1856,38 @@ ResProcSleep(LOCKMODE lockmode, LOCALLOCK *locallock, void *incrementSet)
 	/* Ok to wait.*/
 	LWLockRelease(partitionLock);
 
-	if (!enable_sig_alarm(DeadlockTimeout, false))
-   		elog(FATAL, "could not set timer for (resource lock) process wakeup");
+	if (LockTimeout > 0)
+	{
+		EnableTimeoutParams timeouts[2];
+
+		timeouts[0].id = DEADLOCK_TIMEOUT;
+		timeouts[0].type = TMPARAM_AFTER;
+		timeouts[0].delay_ms = DeadlockTimeout;
+		timeouts[1].id = LOCK_TIMEOUT;
+		timeouts[1].type = TMPARAM_AFTER;
+		timeouts[1].delay_ms = LockTimeout;
+		enable_timeouts(timeouts, 2);
+	}
+	else
+		enable_timeout_after(DEADLOCK_TIMEOUT, DeadlockTimeout);
 
 	/*
 	 * Sleep on the semaphore.
 	 */
 	PGSemaphoreLock(&MyProc->sem, true);
 
-	if (!disable_sig_alarm(false))
-		elog(FATAL, "could not disable timer for (resource lock) process wakeup");
+	if (LockTimeout > 0)
+	{
+		DisableTimeoutParams timeouts[2];
+
+		timeouts[0].id = DEADLOCK_TIMEOUT;
+		timeouts[0].keep_indicator = false;
+		timeouts[1].id = LOCK_TIMEOUT;
+		timeouts[1].keep_indicator = false;
+		disable_timeouts(timeouts, 2);
+	}
+	else
+		disable_timeout(DEADLOCK_TIMEOUT, false);
 
 	/*
 	 * Have been awakened, so continue.
@@ -2324,182 +1979,3 @@ void ProcNewMppSessionId(int *newSessionId)
     	MySessionState->sessionId = *newSessionId;
     }
 }
-
-/*
- * Signal handler for SIGALRM in Startup process
- *
- * To avoid various edge cases, we must be careful to do nothing
- * when there is nothing to be done.  We also need to be able to
- * reschedule the timer interrupt if called before end of statement.
- *
- * We set either deadlock_timeout_active or statement_timeout_active
- * or both. Interrupts are enabled if standby_timeout_active.
- */
-bool
-enable_standby_sig_alarm(TimestampTz now, TimestampTz fin_time, bool deadlock_only)
-{
-	TimestampTz deadlock_time = TimestampTzPlusMilliseconds(now,
-															DeadlockTimeout);
-
-	if (deadlock_only)
-	{
-		/*
-		 * Wake up at deadlock_time only, then wait forever
-		 */
-		statement_fin_time = deadlock_time;
-		deadlock_timeout_active = true;
-		statement_timeout_active = false;
-	}
-	else if (fin_time > deadlock_time)
-	{
-		/*
-		 * Wake up at deadlock_time, then again at fin_time
-		 */
-		statement_fin_time = deadlock_time;
-		statement_fin_time2 = fin_time;
-		deadlock_timeout_active = true;
-		statement_timeout_active = true;
-	}
-	else
-	{
-		/*
-		 * Wake only at fin_time because its fairly soon
-		 */
-		statement_fin_time = fin_time;
-		deadlock_timeout_active = false;
-		statement_timeout_active = true;
-	}
-
-	if (deadlock_timeout_active || statement_timeout_active)
-	{
-		long		secs;
-		int			usecs;
-		struct itimerval timeval;
-
-		TimestampDifference(now, statement_fin_time,
-							&secs, &usecs);
-		if (secs == 0 && usecs == 0)
-			usecs = 1;
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		timeval.it_value.tv_sec = secs;
-		timeval.it_value.tv_usec = usecs;
-		if (setitimer(ITIMER_REAL, &timeval, NULL))
-			return false;
-		standby_timeout_active = true;
-	}
-
-	return true;
-}
-
-bool
-disable_standby_sig_alarm(void)
-{
-	/*
-	 * Always disable the interrupt if it is active; this avoids being
-	 * interrupted by the signal handler and thereby possibly getting
-	 * confused.
-	 *
-	 * We will re-enable the interrupt if necessary in CheckStandbyTimeout.
-	 */
-	if (standby_timeout_active)
-	{
-		struct itimerval timeval;
-
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		if (setitimer(ITIMER_REAL, &timeval, NULL))
-		{
-			standby_timeout_active = false;
-			return false;
-		}
-	}
-
-	standby_timeout_active = false;
-
-	return true;
-}
-
-/*
- * CheckStandbyTimeout() runs unconditionally in the Startup process
- * SIGALRM handler. Timers will only be set when InHotStandby.
- * We simply ignore any signals unless the timer has been set.
- */
-static bool
-CheckStandbyTimeout(void)
-{
-	TimestampTz now;
-	bool		reschedule = false;
-
-	standby_timeout_active = false;
-
-	now = GetCurrentTimestamp();
-
-	/*
-	 * Reschedule the timer if its not time to wake yet, or if we have both
-	 * timers set and the first one has just been reached.
-	 */
-	if (now >= statement_fin_time)
-	{
-		if (deadlock_timeout_active)
-		{
-			/*
-			 * We're still waiting when we reach deadlock timeout, so send out
-			 * a request to have other backends check themselves for deadlock.
-			 * Then continue waiting until statement_fin_time, if that's set.
-			 */
-			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
-			deadlock_timeout_active = false;
-
-			/*
-			 * Begin second waiting period if required.
-			 */
-			if (statement_timeout_active)
-			{
-				reschedule = true;
-				statement_fin_time = statement_fin_time2;
-			}
-		}
-		else
-		{
-			/*
-			 * We've now reached statement_fin_time, so ask all conflicts to
-			 * leave, so we can press ahead with applying changes in recovery.
-			 */
-			SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
-		}
-	}
-	else
-		reschedule = true;
-
-	if (reschedule)
-	{
-		long		secs;
-		int			usecs;
-		struct itimerval timeval;
-
-		TimestampDifference(now, statement_fin_time,
-							&secs, &usecs);
-		if (secs == 0 && usecs == 0)
-			usecs = 1;
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		timeval.it_value.tv_sec = secs;
-		timeval.it_value.tv_usec = usecs;
-		if (setitimer(ITIMER_REAL, &timeval, NULL))
-			return false;
-		standby_timeout_active = true;
-	}
-
-	return true;
-}
-
-void
-handle_standby_sig_alarm(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	if (standby_timeout_active)
-		(void) CheckStandbyTimeout();
-
-	errno = save_errno;
-}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

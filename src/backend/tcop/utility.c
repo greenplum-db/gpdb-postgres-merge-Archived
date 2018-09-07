@@ -40,11 +40,8 @@
 #include "commands/event_trigger.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
-<<<<<<< HEAD
 #include "commands/extprotocolcmds.h"
-=======
 #include "commands/matview.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -858,7 +855,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTableSpaceStmt:
-<<<<<<< HEAD
+			/* no event triggers for global objects */
 			if (Gp_role != GP_ROLE_EXECUTE)
 			{
 				/*
@@ -867,10 +864,6 @@ standard_ProcessUtility(Node *parsetree,
 				 */
 				PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
 			}
-=======
-			/* no event triggers for global objects */
-			PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
 			break;
 
@@ -1376,7 +1369,7 @@ standard_ProcessUtility(Node *parsetree,
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
-<<<<<<< HEAD
+				/* no event triggers for global objects */
 				if (Gp_role != GP_ROLE_EXECUTE)
 				{
 					/*
@@ -1385,10 +1378,6 @@ standard_ProcessUtility(Node *parsetree,
 					 */
 					PreventTransactionChain(isTopLevel, "DROP DATABASE");
 				}
-=======
-				/* no event triggers for global objects */
-				PreventTransactionChain(isTopLevel, "DROP DATABASE");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				dropdb(stmt->dbname, stmt->missing_ok);
 			}
 			break;
@@ -1657,12 +1646,8 @@ standard_ProcessUtility(Node *parsetree,
 						ReindexIndex(stmt);
 						break;
 					case OBJECT_TABLE:
-<<<<<<< HEAD
-						ReindexTable(stmt);
-=======
 					case OBJECT_MATVIEW:
-						ReindexTable(stmt->relation);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+						ReindexTable(stmt);
 						break;
 					case OBJECT_DATABASE:
 
@@ -2555,7 +2540,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_VIEW:
 			tag = "ALTER VIEW";
 			break;
-<<<<<<< HEAD
+		case OBJECT_MATVIEW:
+			tag = "ALTER MATERIALIZED VIEW";
+			break;
 
 		case OBJECT_EXTPROTOCOL:
 			tag = "ALTER PROTOCOL";
@@ -2564,11 +2551,6 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 			tag = "ALTER EXTERNAL TABLE";
 			break;
 
-=======
-		case OBJECT_MATVIEW:
-			tag = "ALTER MATERIALIZED VIEW";
-			break;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		default:
 			tag = "???";
 			break;

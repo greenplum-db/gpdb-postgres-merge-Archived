@@ -597,12 +597,8 @@ FetchStatementTargetList(Node *stmt)
  */
 void
 PortalStart(Portal portal, ParamListInfo params,
-<<<<<<< HEAD
 			int eflags, Snapshot snapshot,
 			QueryDispatchDesc *ddesc)
-=======
-			int eflags, Snapshot snapshot)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 {
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
@@ -1392,12 +1388,8 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	ResHandleUtilityStmt(portal, utilityStmt);
 
 	ProcessUtility(utilityStmt,
-<<<<<<< HEAD
 				   portal->sourceText ? portal->sourceText : "(Source text for portal is not available)",
-=======
-				   portal->sourceText,
 			   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				   portal->portalParams,
 				   dest,
 				   completionTag);

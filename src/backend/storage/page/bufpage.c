@@ -14,13 +14,6 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "access/htup.h"
-#include "storage/bufpage.h"
-#include "access/xlog.h"
-#include "storage/checksum.h"
-#include "utils/memutils.h"
-=======
 #include "access/htup_details.h"
 #include "access/xlog.h"
 #include "storage/checksum.h"
@@ -29,10 +22,7 @@
 
 /* GUC variable */
 bool		ignore_checksum_failure = false;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
-/* GUC variable */
-bool		ignore_checksum_failure = false;
 
 /* ----------------------------------------------------------------
  *						Page support functions
