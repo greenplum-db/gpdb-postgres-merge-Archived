@@ -302,20 +302,10 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo)
 
 	SpinLockRelease(&walrcv->mutex);
 
-<<<<<<< HEAD
-	SendPostmasterSignal(PMSIGNAL_START_WALRECEIVER);
-
-	elogif(debug_xlog_record_read, LOG,
-		   "request streaming -- spawning walreceiver requested with "
-		   "receivestart = %X/%X",
-		   walrcv->receiveStart.xlogid, walrcv->receiveStart.xrecoff);
-
-=======
 	if (launch)
 		SendPostmasterSignal(PMSIGNAL_START_WALRECEIVER);
 	else
 		SetLatch(&walrcv->latch);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*

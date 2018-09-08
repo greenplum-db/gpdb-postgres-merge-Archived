@@ -171,13 +171,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * condition but we'll be fetching that cache line anyway so its likely to
 	 * be a low cost check.
 	 */
-<<<<<<< HEAD
 	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
-		XLByteLE(XactCommitLSN, WalSndCtl->lsn[mode]))
-=======
-	if (!WalSndCtl->sync_standbys_defined ||
-		XactCommitLSN <= WalSndCtl->lsn[mode])
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		XactCommitLSN <= WalSndCtl->lsn[mode]))
 	{
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wait -- Not waiting for syncrep because xlog upto LSN (%X/%X) which is "
@@ -215,13 +210,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 */
 		new_status = (char *) palloc(len + 32 + 12 + 1);
 		memcpy(new_status, old_status, len);
-<<<<<<< HEAD
 		sprintf(new_status + len, " waiting for %X/%X replication",
-				XactCommitLSN.xlogid, XactCommitLSN.xrecoff);
-=======
-		sprintf(new_status + len, " waiting for %X/%X",
 				(uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		set_ps_display(new_status, false);
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
@@ -540,20 +530,10 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
-<<<<<<< HEAD
-	elogif(debug_walrepl_syncrep, LOG,
-		"syncrep release -- Released %d processe(s) up to write %X/%X, %d processe(s) up to flush %X/%X",
-		 numwrite,
-		 MyWalSnd->write.xlogid,
-		 MyWalSnd->write.xrecoff,
-		 numflush,
-		 MyWalSnd->flush.xlogid,
-		 MyWalSnd->flush.xrecoff);
-=======
-	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
-		 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
-	   numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			elog(debug_walrepl_syncrep, LOG,
+				 DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
+				 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
+				 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
 
 	/*
 	 * If we are managing the highest priority standby, though we weren't
@@ -726,11 +706,7 @@ SyncRepQueueIsOrderedByLSN(int mode)
 		 * upstream and in GPDB except from FinishPreparedTransaction(), but
 		 * not required for correct functioning of the code.
 		 */
-<<<<<<< HEAD
-		if (XLByteLT(proc->waitLSN, lastLSN))
-=======
-		if (proc->waitLSN <= lastLSN)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+		if (proc->waitLSN < lastLSN)
 			return false;
 
 		lastLSN = proc->waitLSN;
