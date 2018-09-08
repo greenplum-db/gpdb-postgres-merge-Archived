@@ -75,11 +75,7 @@ PROGRESS			{ return K_PROGRESS; }
 WAL			{ return K_WAL; }
 TIMELINE			{ return K_TIMELINE; }
 START_REPLICATION	{ return K_START_REPLICATION; }
-<<<<<<< HEAD
-SYNC			{ return K_SYNC; }
-=======
 TIMELINE_HISTORY	{ return K_TIMELINE_HISTORY; }
->>>>>>> e472b921406407794bab911c64655b8b82375196
 ","				{ return ','; }
 ";"				{ return ';'; }
 

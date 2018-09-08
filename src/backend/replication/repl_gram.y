@@ -80,22 +80,13 @@ Node *replication_parse_result;
 %token K_NOWAIT
 %token K_EXCLUDE
 %token K_WAL
-<<<<<<< HEAD
-%token K_START_REPLICATION
-%token K_SYNC
-=======
 %token K_TIMELINE
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 %type <node>	command
 %type <node>	base_backup start_replication identify_system timeline_history
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
-<<<<<<< HEAD
-%type <boolval> sync_opt
-=======
 %type <intval>	opt_timeline
->>>>>>> e472b921406407794bab911c64655b8b82375196
 %%
 
 firstcmd: command opt_semicolon
@@ -177,19 +168,12 @@ base_backup_opt:
  * START_REPLICATION %X/%X [TIMELINE %d]
  */
 start_replication:
-<<<<<<< HEAD
-			K_START_REPLICATION RECPTR sync_opt
-=======
 			K_START_REPLICATION RECPTR opt_timeline
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				{
 					StartReplicationCmd *cmd;
 
 					cmd = makeNode(StartReplicationCmd);
 					cmd->startpoint = $2;
-<<<<<<< HEAD
-					cmd->sync = $3;
-=======
 					cmd->timeline = $3;
 
 					$$ = (Node *) cmd;
@@ -223,7 +207,6 @@ timeline_history:
 
 					cmd = makeNode(TimeLineHistoryCmd);
 					cmd->timeline = $2;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 					$$ = (Node *) cmd;
 				}
