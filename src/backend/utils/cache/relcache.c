@@ -898,9 +898,13 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			relation->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-<<<<<<< HEAD
 			relation->rd_backend = TempRelBackendId;
-=======
+			/*
+			 * GPDB_93_MERGE_FIXME currently if it is temp we directly set it s
+			 * TempRelBackendId but upstream does below logic. Check if this is
+			 * fine to do in Greenplum.
+			 */
+#if 0
 			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
 			{
 				relation->rd_backend = MyBackendId;
@@ -926,7 +930,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 				Assert(relation->rd_backend != InvalidBackendId);
 				relation->rd_islocaltemp = false;
 			}
->>>>>>> e472b921406407794bab911c64655b8b82375196
+#endif
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c",
@@ -2421,32 +2425,6 @@ AtEOXact_RelationCache(bool isCommit)
 	int			i;
 
 	/*
-<<<<<<< HEAD
-	 * To speed up transaction exit, we want to avoid scanning the relcache
-	 * unless there is actually something for this routine to do.  Other than
-	 * the debug-only Assert checks, most transactions don't create any work
-	 * for us to do here, so we keep a static flag that gets set if there is
-	 * anything to do.	(Currently, this means either a relation is created in
-	 * the current xact, or one is given a new relfilenode, or an index list
-	 * is forced.)  For simplicity, the flag remains set till end of top-level
-	 * transaction, even though we could clear it at subtransaction end in
-	 * some cases.
-	 *
-	 * MPP-3333: READERS need to *always* scan, otherwise they will not be able
-	 * to maintain a coherent view of the storage layer.
-	 */
-	if (!need_eoxact_work
-		&& DistributedTransactionContext != DTX_CONTEXT_QE_READER
-#ifdef USE_ASSERT_CHECKING
-		&& !assert_enabled
-#endif
-		)
-		return;
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
-=======
 	 * Unless the eoxact_list[] overflowed, we only need to examine the rels
 	 * listed in it.  Otherwise fall back on a hash_seq_search scan.
 	 *
@@ -2456,56 +2434,17 @@ AtEOXact_RelationCache(bool isCommit)
 	 * they are cleared for other reasons.	Therefore we should expect the
 	 * case that list entries are not found in the hashtable; if not, there's
 	 * nothing to do for them.
+	 *
+	 * MPP-3333: READERS need to *always* scan, otherwise they will not be able
+	 * to maintain a coherent view of the storage layer.
 	 */
-	if (eoxact_list_overflowed)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	if (eoxact_list_overflowed || DistributedTransactionContext == DTX_CONTEXT_QE_READER)
 	{
 		hash_seq_init(&status, RelationIdCache);
 		while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 		{
 			AtEOXact_cleanup(idhentry->reldesc, isCommit);
 		}
-<<<<<<< HEAD
-#endif
-
-		/*
-		 * QE-readers aren't properly enrolled in transactions, they
-		 * just get the snapshot which corresponds -- so here, where
-		 * we are maintaining their relcache, we want to just clean
-		 * up (almost as if we had aborted). (MPP-3338)
-		 */
-		if (DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON ||
-			DistributedTransactionContext == DTX_CONTEXT_QE_READER)
-		{
-			RelationClearRelation(relation, relation->rd_isnailed ? true : false);
-			continue;
-		}
-
-		/*
-		 * Is it a relation created in the current transaction?
-		 *
-		 * During commit, reset the flag to zero, since we are now out of the
-		 * creating transaction.  During abort, simply delete the relcache
-		 * entry --- it isn't interesting any longer.  (NOTE: if we have
-		 * forgotten the new-ness of a new relation due to a forced cache
-		 * flush, the entry will get deleted anyway by shared-cache-inval
-		 * processing of the aborted pg_class insertion.)
-		 */
-		if (relation->rd_createSubid != InvalidSubTransactionId)
-		{
-			if (isCommit)
-				relation->rd_createSubid = InvalidSubTransactionId;
-			else
-			{
-				/*
-				 * In abort, delete the error log file before forgetting
-				 * this relation.
-				 */
-				ErrorLogDelete(MyDatabaseId, RelationGetRelid(relation));
-				RelationClearRelation(relation, false);
-				continue;
-			}
-=======
 	}
 	else
 	{
@@ -2517,7 +2456,6 @@ AtEOXact_RelationCache(bool isCommit)
 													 NULL);
 			if (idhentry != NULL)
 				AtEOXact_cleanup(idhentry->reldesc, isCommit);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 	}
 
@@ -2560,6 +2498,19 @@ AtEOXact_cleanup(Relation relation, bool isCommit)
 		Assert(relation->rd_refcnt == expected_refcnt);
 	}
 #endif
+
+	/*
+	 * QE-readers aren't properly enrolled in transactions, they
+	 * just get the snapshot which corresponds -- so here, where
+	 * we are maintaining their relcache, we want to just clean
+	 * up (almost as if we had aborted). (MPP-3338)
+	 */
+	if (DistributedTransactionContext == DTX_CONTEXT_QE_ENTRY_DB_SINGLETON ||
+		DistributedTransactionContext == DTX_CONTEXT_QE_READER)
+	{
+		RelationClearRelation(relation, relation->rd_isnailed ? true : false);
+		return;
+	}
 
 	/*
 	 * Is it a relation created in the current transaction?
@@ -2619,69 +2570,13 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 	 * listed in it.  Otherwise fall back on a hash_seq_search scan.  Same
 	 * logic as in AtEOXact_RelationCache.
 	 */
-<<<<<<< HEAD
-	if (!need_eoxact_work &&
-		DistributedTransactionContext != DTX_CONTEXT_QE_READER)
-		return;
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Relation	relation = idhentry->reldesc;
-
-		/*
-		 * As opposed to AtEOXact_RelationCache, subtransactions
-		 * in readers are only caused by internal commands, and
-		 * there shouldn't be interaction with global transactions,
-		 * (reader gangs commit their transaction independently)
-		 * we must not clear the relcache here.
-		 */
-
-		/*
-		 * Is it a relation created in the current subtransaction?
-		 *
-		 * During subcommit, mark it as belonging to the parent, instead.
-		 * During subabort, simply delete the relcache entry.
-		 */
-		if (relation->rd_createSubid == mySubid)
-		{
-			if (isCommit)
-				relation->rd_createSubid = parentSubid;
-			else if (RelationHasReferenceCountZero(relation))
-			{
-				/*
-				 * In abort, delete the error log file before forgetting
-				 * this relation.
-				 */
-				ErrorLogDelete(MyDatabaseId, RelationGetRelid(relation));
-
-				RelationClearRelation(relation, false);
-				continue;
-			}
-			else
-			{
-				/*
-				 * Hmm, somewhere there's a (leaked?) reference to the
-				 * relation.  We daren't remove the entry for fear of
-				 * dereferencing a dangling pointer later.  Bleat, and mark it
-				 * as not belonging to the current transaction.  Hopefully
-				 * it'll get cleaned up eventually.  This must be just a
-				 * WARNING to avoid error-during-error-recovery loops.
-				 */
-				relation->rd_createSubid = InvalidSubTransactionId;
-				elog(WARNING, "cannot remove relcache entry for \"%s\" because it has nonzero refcount",
-					 RelationGetRelationName(relation));
-			}
-=======
-	if (eoxact_list_overflowed)
+	if (eoxact_list_overflowed || DistributedTransactionContext == DTX_CONTEXT_QE_READER)
 	{
 		hash_seq_init(&status, RelationIdCache);
 		while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 		{
 			AtEOSubXact_cleanup(idhentry->reldesc, isCommit,
 								mySubid, parentSubid);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 	}
 	else
@@ -2713,6 +2608,14 @@ static void
 AtEOSubXact_cleanup(Relation relation, bool isCommit,
 					SubTransactionId mySubid, SubTransactionId parentSubid)
 {
+	/*
+	 * As opposed to AtEOXact_RelationCache, subtransactions
+	 * in readers are only caused by internal commands, and
+	 * there shouldn't be interaction with global transactions,
+	 * (reader gangs commit their transaction independently)
+	 * we must not clear the relcache here.
+	 */
+
 	/*
 	 * Is it a relation created in the current subtransaction?
 	 *
@@ -2766,7 +2669,6 @@ RelationBuildLocalRelation(const char *relname,
 						   Oid relid,
 						   Oid relfilenode,
 						   Oid reltablespace,
-			               char relkind,            /*CDB*/
 						   bool shared_relation,
 						   bool mapped_relation,
 						   char relpersistence,
@@ -2874,12 +2776,8 @@ RelationBuildLocalRelation(const char *relname,
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;
 
-<<<<<<< HEAD
-	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relstorage = RELSTORAGE_HEAP;
-=======
 	rel->rd_rel->relkind = relkind;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	rel->rd_rel->relhasoids = rel->rd_att->tdhasoid;
 	rel->rd_rel->relnatts = natts;
 	rel->rd_rel->reltype = InvalidOid;
@@ -2896,13 +2794,9 @@ RelationBuildLocalRelation(const char *relname,
 			rel->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-<<<<<<< HEAD
-			rel->rd_backend = TempRelBackendId;
-=======
 			Assert(isTempOrToastNamespace(relnamespace));
-			rel->rd_backend = MyBackendId;
+			rel->rd_backend = TempRelBackendId;
 			rel->rd_islocaltemp = true;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
@@ -3082,7 +2976,6 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 		classform->reltuples = 0;
 		classform->relallvisible = 0;
 	}
-<<<<<<< HEAD
 
 	if (TransactionIdIsValid(classform->relfrozenxid))
 	{
@@ -3095,10 +2988,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
 		Assert(should_have_valid_relfrozenxid(classform->relkind,
 											  classform->relstorage, false));
 	}
-=======
-	classform->relfrozenxid = freezeXid;
 	classform->relminmxid = minmulti;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
