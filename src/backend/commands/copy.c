@@ -171,13 +171,8 @@ static void CopyFromInsertBatch(CopyState cstate, EState *estate,
 					CommandId mycid, int hi_options,
 					ResultRelInfo *resultRelInfo, TupleTableSlot *myslot,
 					BulkInsertState bistate,
-<<<<<<< HEAD
-					int nBufferedTuples, HeapTuple *bufferedTuples);
-=======
 					int nBufferedTuples, HeapTuple *bufferedTuples,
 					int firstBufferedLineNo);
-static bool CopyReadLine(CopyState cstate);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate);
 static int	CopyReadAttributesCSV(CopyState cstate);
@@ -951,8 +946,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	bool		is_from = stmt->is_from;
 	bool		pipe = (stmt->filename == NULL || Gp_role == GP_ROLE_EXECUTE);
 	Relation	rel;
-<<<<<<< HEAD
-	uint64		processed;
+	Oid			relid;
 	List	   *range_table = NIL;
 	List	   *attnamelist = stmt->attlist;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
@@ -981,10 +975,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		options = lappend(options, makeDefElem("sreh", (Node *) sreh));
 	}
 
-=======
-	Oid			relid;
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/* Disallow COPY to/from file or program except to superusers. */
 	if (!pipe && !superuser())
 	{
@@ -993,22 +983,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to COPY to or from an external program"),
 					 errhint("Anyone can COPY to stdout or from stdin. "
-<<<<<<< HEAD
-							 "psql's \\copy command also works for anyone.")));
-		else
-			ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to COPY to or from a file"),
-				 errhint("Anyone can COPY to stdout or from stdin. "
-						 "psql's \\copy command also works for anyone.")));
-	}
-
-	/* GPDB_91_MERGE_FIXME: why not ? */
-	if (stmt->is_program && stmt->filename == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("STDIN/STDOUT not allowed with PROGRAM")));
-=======
 						   "psql's \\copy command also works for anyone.")));
 		else
 			ereport(ERROR,
@@ -1017,7 +991,12 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 					 errhint("Anyone can COPY to stdout or from stdin. "
 						   "psql's \\copy command also works for anyone.")));
 	}
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+	/* GPDB_91_MERGE_FIXME: why not ? */
+	if (stmt->is_program && stmt->filename == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("STDIN/STDOUT not allowed with PROGRAM")));
 
 	if (stmt->relation)
 	{
@@ -1031,12 +1010,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		rel = heap_openrv(stmt->relation,
 						  (is_from ? RowExclusiveLock : AccessShareLock));
 
-<<<<<<< HEAD
-		/* save relation oid for auto-stats call later */
-		relationOid = RelationGetRelid(rel);
-=======
 		relid = RelationGetRelid(rel);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
@@ -1077,13 +1051,12 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 					 errmsg("COPY single row error handling only available for distributed user tables")));
 
 		/* check read-only transaction */
-<<<<<<< HEAD
 		/*
 		 * GPDB_91_MERGE_FIXME: is it possible to get to this point in the code
 		 * with a temporary relation that belongs to another session? If so, the
 		 * following code doesn't function as expected.
 		 */
-		if (XactReadOnly && rel->rd_backend != TempRelBackendId)
+		if (XactReadOnly && !rel->rd_islocaltemp)
 			PreventCommandIfReadOnly("COPY FROM");
 
 		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,
@@ -1140,11 +1113,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		PG_TRY();
 		{
 			if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
-			{
-				processed = CopyDispatchOnSegment(cstate, stmt);
-			}
+				*processed = CopyDispatchOnSegment(cstate, stmt);
 			else
-				processed = CopyFrom(cstate);	/* copy from file to database */
+				*processed = CopyFrom(cstate);	/* copy from file to database */
 		}
 		PG_CATCH();
 		{
@@ -1159,19 +1130,10 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-=======
-		if (XactReadOnly && !rel->rd_islocaltemp)
-			PreventCommandIfReadOnly("COPY FROM");
-
-		cstate = BeginCopyFrom(rel, stmt->filename, stmt->is_program,
-							   stmt->attlist, stmt->options);
-		*processed = CopyFrom(cstate);	/* copy from file to database */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		EndCopyFrom(cstate);
 	}
 	else
 	{
-<<<<<<< HEAD
 		/*
 		 * GPDB_91_MERGE_FIXME: ExecutorStart() is called in BeginCopyTo,
 		 * but the TRY-CATCH block only starts here. If an error is
@@ -1191,11 +1153,9 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 			cstate->partitions = stmt->partitions;
 
 			if (Gp_role == GP_ROLE_DISPATCH && cstate->on_segment)
-			{
-				processed = CopyDispatchOnSegment(cstate, stmt);
-			}
+				*processed = CopyDispatchOnSegment(cstate, stmt);
 			else
-				processed = DoCopyTo(cstate);	/* copy from database to file */
+				*processed = DoCopyTo(cstate);	/* copy from database to file */
 		}
 		PG_CATCH();
 		{
@@ -1208,12 +1168,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		}
 		PG_END_TRY();
 
-=======
-		cstate = BeginCopyTo(rel, stmt->query, queryString,
-							 stmt->filename, stmt->is_program,
-							 stmt->attlist, stmt->options);
-		*processed = DoCopyTo(cstate);	/* copy from database to file */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		EndCopyTo(cstate);
 	}
 
@@ -1225,15 +1179,11 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	if (rel != NULL)
 		heap_close(rel, (is_from ? NoLock : AccessShareLock));
 
-<<<<<<< HEAD
 	/* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
 	if (Gp_role == GP_ROLE_DISPATCH && is_from)
-		auto_stats(AUTOSTATS_CMDTYPE_COPY, relationOid, processed, false /* inFunction */);
+		auto_stats(AUTOSTATS_CMDTYPE_COPY, relationOid, *processed, false /* inFunction */);
 
-	return processed;
-=======
 	return relid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -2036,7 +1986,6 @@ BeginCopy(bool is_from,
 }
 
 /*
-<<<<<<< HEAD
  * Dispatch a COPY ON SEGMENT statement to QEs.
  */
 static uint64
@@ -2151,7 +2100,9 @@ MangleCopyFileName(CopyState cstate)
 				 sizeof(cstate->cdbsreh->filename), "%s",
 				 filepath.data);
 	}
-=======
+}
+
+/*
  * Closes the pipe to an external program, checking the pclose() return code.
  */
 static void
@@ -2170,7 +2121,6 @@ ClosePipeToProgram(CopyState cstate)
 				(errmsg("program \"%s\" failed",
 						cstate->filename),
 				 errdetail_internal("%s", wait_result_to_str(pclose_rc))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -2195,13 +2145,10 @@ EndCopy(CopyState cstate)
 					 errmsg("could not close file \"%s\": %m",
 							cstate->filename)));
 	}
-<<<<<<< HEAD
 
 	/* Clean up single row error handling related memory */
 	if (cstate->cdbsreh)
 		destroyCdbSreh(cstate->cdbsreh);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	MemoryContextDelete(cstate->copycontext);
 	pfree(cstate);
@@ -2359,13 +2306,8 @@ BeginCopyTo(Relation rel,
 			struct stat st;
 
 			/*
-<<<<<<< HEAD
-			 * Prevent write to relative path ... too easy to shoot oneself in the
-			 * foot by overwriting a database file ...
-=======
 			 * Prevent write to relative path ... too easy to shoot oneself in
 			 * the foot by overwriting a database file ...
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			 */
 			if (!is_absolute_path(filename))
 				ereport(ERROR,
@@ -4393,11 +4335,8 @@ CopyState
 BeginCopyFrom(Relation rel,
 			  const char *filename,
 			  bool is_program,
-<<<<<<< HEAD
 			  copy_data_source_cb data_source_cb,
 			  void *data_source_cb_extra,
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			  List *attnamelist,
 			  List *options,
 			  List *ao_segnos)
@@ -4527,11 +4466,7 @@ BeginCopyFrom(Relation rel,
 	}
 	else if (pipe)
 	{
-<<<<<<< HEAD
 		Assert(!is_program || cstate->dispatch_mode == COPY_EXECUTOR);	/* the grammar does not allow this */
-=======
-		Assert(!is_program);	/* the grammar does not allow this */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (whereToSendOutput == DestRemote)
 			ReceiveCopyBegin(cstate);
 		else

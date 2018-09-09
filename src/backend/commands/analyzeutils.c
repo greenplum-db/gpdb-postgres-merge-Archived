@@ -124,7 +124,7 @@ get_rel_reltuples(Oid relid)
 	return relTuples;
 }
 
-int4
+int32
 get_rel_relpages(Oid relid)
 {
 	int32		relPages = 0.0;

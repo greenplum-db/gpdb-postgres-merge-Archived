@@ -135,6 +135,8 @@
 #include "utils/ps_status.h"
 #include "utils/timestamp.h"
 
+#include "tcop/idle_resource_cleaner.h"
+
 
 /*
  * Maximum size of a NOTIFY payload, including terminating NULL.  This

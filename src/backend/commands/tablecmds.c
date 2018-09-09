@@ -924,7 +924,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 	 * unless we have a pre-existing relation. So, the transformation has to be
 	 * postponed to this final step of CREATE TABLE.
 	 */
-<<<<<<< HEAD
 	if (Gp_role != GP_ROLE_EXECUTE &&
 		(rawDefaults || stmt->constraints))
 	{
@@ -932,12 +931,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId, char relstorage, boo
 
 		newCookedDefaults =
 			AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true);
-=======
-	if (rawDefaults || stmt->constraints)
-		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+									  true, true, false);
 
 		cooked_constraints = list_concat(cooked_constraints, newCookedDefaults);
 	}
@@ -1808,13 +1802,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 			 */
 			if (OidIsValid(toast_relid))
 			{
-<<<<<<< HEAD
 				Relation toast_rel = relation_open(toast_relid, AccessExclusiveLock);
-				RelationSetNewRelfilenode(toast_rel, RecentXmin);
-=======
-				rel = relation_open(toast_relid, AccessExclusiveLock);
-				RelationSetNewRelfilenode(rel, RecentXmin, minmulti);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+				RelationSetNewRelfilenode(toast_rel, RecentXmin, minmulti);
 				if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
 					heap_create_init_fork(rel);
 				heap_close(toast_rel, NoLock);
@@ -2171,14 +2160,13 @@ MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitio
 					 errmsg("cannot inherit from temporary relation \"%s\"",
 							parent->relname)));
 
-<<<<<<< HEAD
 		/* Reject if parent is CO for non-partitioned table */
 		if (RelationIsAoCols(relation) && !isPartitioned)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot inherit relation \"%s\" as it is column oriented",
 							parent->relname)));
-=======
+
 		/* If existing rel is temp, it must belong to this session */
 		if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
 			!relation->rd_islocaltemp)
@@ -2186,7 +2174,6 @@ MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitio
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot inherit from temporary relation of another session")));
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/*
 		 * We should have an UNDER permission flag for this, but for now,
 		 * demand that creator of a child table own the parent.
@@ -2398,15 +2385,9 @@ MergeAttributes(List *schema, List *supers, char relpersistence, bool isPartitio
 				if (found_whole_row)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-<<<<<<< HEAD
-							 errmsg("cannot convert whole-row table reference"),
-							 errdetail("Constraint \"%s\" contains a whole-row reference to table \"%s\".",
-									   check[i].ccname,
-=======
 						  errmsg("cannot convert whole-row table reference"),
 							 errdetail("Constraint \"%s\" contains a whole-row reference to table \"%s\".",
 									   name,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 									   RelationGetRelationName(relation))));
 
 				/* check for duplicate */
@@ -3276,8 +3257,7 @@ RenameRelation(RenameStmt *stmt)
 	}
 
 	/* Do the work */
-<<<<<<< HEAD
-	RenameRelationInternal(relid, stmt->newname);
+	RenameRelationInternal(relid, stmt->newname, false);
 
 	/* MPP-3059: recursive rename of partitioned table */
 	/* Note: the top-level RENAME has bAllowPartn=FALSE, while the
@@ -3351,11 +3331,8 @@ RenameRelation(RenameStmt *stmt)
 	 */
 	if (!gp_allow_rename_relation_without_lock)
 		relation_close(targetrelation, NoLock);
-=======
-	RenameRelationInternal(relid, stmt->newname, false);
 
 	return relid;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -8679,36 +8656,12 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	/* The IndexStmt has already been through transformIndexStmt */
 
-<<<<<<< HEAD
-	new_index = DefineIndex(stmt->relation, /* relation */
-							stmt->idxname,	/* index name */
-							InvalidOid,		/* no predefined OID */
-							stmt->oldNode,
-							stmt->accessMethod,		/* am name */
-							stmt->tableSpace,
-							stmt->indexParams,		/* parameters */
-							(Expr *) stmt->whereClause,
-							stmt->options,
-							stmt->excludeOpNames,
-							stmt->unique,
-							stmt->primary,
-							stmt->isconstraint,
-							stmt->deferrable,
-							stmt->initdeferred,
-							true,			/* is_alter_table */
-							check_rights,
-							skip_build,
-							quiet,
-							false,
-							stmt);
-=======
 	new_index = DefineIndex(stmt,
 							InvalidOid, /* no predefined OID */
 							true,		/* is_alter_table */
 							check_rights,
 							skip_build,
 							quiet);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
@@ -9102,15 +9055,9 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			/* Find or create work queue entry for this table */
 			childtab = ATGetQueueEntry(wqueue, childrel);
 
-<<<<<<< HEAD
 			/* Recurse to child */
 			ATAddCheckConstraint(wqueue, childtab, childrel,
-								 constr, recurse, true, lockmode);
-=======
-		/* Recurse to child */
-		ATAddCheckConstraint(wqueue, childtab, childrel,
-							 constr, recurse, true, is_readd, lockmode);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+								 constr, recurse, true, is_readd, lockmode);
 
 			heap_close(childrel, NoLock);
 		}
@@ -10712,11 +10659,8 @@ ATPrepAlterColumnType(List **wqueue,
 			addRTEtoQuery(pstate, rte, false, true, true);
 		}
 
-<<<<<<< HEAD
 		if (transform)
 		{
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			transform = transformExpr(pstate, transform,
 									  EXPR_KIND_ALTER_COL_TRANSFORM);
 
@@ -11889,15 +11833,11 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		 * relation, as well as its toast table (if it has one).
 		 */
 		if (tuple_class->relkind == RELKIND_RELATION ||
-<<<<<<< HEAD
+			tuple_class->relkind == RELKIND_MATVIEW ||
 			tuple_class->relkind == RELKIND_TOASTVALUE ||
 			tuple_class->relkind == RELKIND_AOSEGMENTS ||
 			tuple_class->relkind == RELKIND_AOBLOCKDIR ||
 			tuple_class->relkind == RELKIND_AOVISIMAP)
-=======
-			tuple_class->relkind == RELKIND_MATVIEW ||
-			tuple_class->relkind == RELKIND_TOASTVALUE)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			List	   *index_oid_list;
 			ListCell   *i;
@@ -12134,8 +12074,7 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 	check_index_is_clusterable(rel, indexOid, false, lockmode);
 
 	/* And do the work */
-<<<<<<< HEAD
-	mark_index_clustered(rel, indexOid);
+	mark_index_clustered(rel, indexOid, false);
 
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -12145,9 +12084,6 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 						   GetUserId(),
 						   "ALTER", "CLUSTER ON"
 				);
-=======
-	mark_index_clustered(rel, indexOid, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -12159,8 +12095,7 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 static void
 ATExecDropCluster(Relation rel, LOCKMODE lockmode)
 {
-<<<<<<< HEAD
-	mark_index_clustered(rel, InvalidOid);
+	mark_index_clustered(rel, InvalidOid, false);
 
 	/* MPP-6929: metadata tracking */
 	if ((Gp_role == GP_ROLE_DISPATCH)
@@ -12170,10 +12105,6 @@ ATExecDropCluster(Relation rel, LOCKMODE lockmode)
 						   GetUserId(),
 						   "ALTER", "SET WITHOUT CLUSTER"
 				);
-
-=======
-	mark_index_clustered(rel, InvalidOid, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -12379,7 +12310,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_VIEW:
-<<<<<<< HEAD
+		case RELKIND_MATVIEW:
 		case RELKIND_AOSEGMENTS:
 		case RELKIND_AOBLOCKDIR:
 		case RELKIND_AOVISIMAP:
@@ -12389,9 +12320,6 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 						 errmsg("altering reloptions for append only tables"
 								" is not permitted")));
 
-=======
-		case RELKIND_MATVIEW:
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 			break;
 		case RELKIND_INDEX:
@@ -12765,14 +12693,10 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("invalid page in block %u of relation %s",
-<<<<<<< HEAD
-							blkno, relpath(src->smgr_rnode, forkNum))));
-=======
 							blkno,
 							relpathbackend(src->smgr_rnode.node,
 										   src->smgr_rnode.backend,
 										   forkNum))));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/* XLOG stuff */
 		if (use_wal)
@@ -18161,10 +18085,6 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	Oid			relid;
 	Oid			oldNspOid;
 	Oid			nspOid;
-<<<<<<< HEAD
-	ObjectAddresses *objsMoved;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	RangeVar   *newrv;
 	ObjectAddresses *objsMoved;
 
@@ -18292,20 +18212,12 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 void
 AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 							   Oid oldNspOid, Oid newNspOid,
-<<<<<<< HEAD
-							   bool hasDependEntry, ObjectAddresses *objsMoved)
-{
-	HeapTuple	classTup;
-	Form_pg_class classForm;
-	ObjectAddress	thisobj;
-=======
 							   bool hasDependEntry,
 							   ObjectAddresses *objsMoved)
 {
 	HeapTuple	classTup;
 	Form_pg_class classForm;
 	ObjectAddress thisobj;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(classTup))
@@ -18340,25 +18252,17 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 
 		/* Update dependency on schema if caller said so */
 		if (hasDependEntry &&
-<<<<<<< HEAD
-			changeDependencyFor(RelationRelationId, relOid,
-								NamespaceRelationId, oldNspOid, newNspOid) != 1)
-=======
 			changeDependencyFor(RelationRelationId,
 								relOid,
 								NamespaceRelationId,
 								oldNspOid,
 								newNspOid) != 1)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			elog(ERROR, "failed to change schema dependency for relation \"%s\"",
 				 NameStr(classForm->relname));
 
 		add_exact_object_address(&thisobj, objsMoved);
-<<<<<<< HEAD
-=======
 
 		InvokeObjectPostAlterHook(RelationRelationId, relOid, 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	heap_freetuple(classTup);
@@ -18391,11 +18295,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
 		/*
 		 * Note: currently, the index will not have its own dependency on the
 		 * namespace, so we don't need to do changeDependencyFor(). There's no
-<<<<<<< HEAD
-		 * rowtype in pg_type, either.
-=======
 		 * row type in pg_type, either.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 *
 		 * XXX this objsMoved test may be pointless -- surely we have a single
 		 * dependency link from a relation to each index?

@@ -337,7 +337,8 @@ transientrel_receive(TupleTableSlot *slot, DestReceiver *self)
 				tuple,
 				myState->output_cid,
 				myState->hi_options,
-				myState->bistate);
+				myState->bistate,
+				GetCurrentTransactionId());
 
 	/* We know this is a newly created relation, so there are no indexes */
 }
