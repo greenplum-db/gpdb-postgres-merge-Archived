@@ -22,6 +22,8 @@
 #include "access/tupdesc.h"
 #include "access/bitmap.h"
 #include "access/heapam.h"
+#include "access/heapam_xlog.h"
+#include "access/multixact.h"
 #include "access/nbtree.h"
 #include "access/xact.h"
 #include "access/transam.h"
@@ -119,7 +121,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		lovIndex = index_open(idxid, AccessExclusiveLock);
 
 		RelationSetNewRelfilenode(lovHeap, RecentXmin);
-		RelationSetNewRelfilenode(lovIndex, InvalidTransactionId);
+		RelationSetNewRelfilenode(lovIndex, InvalidTransactionId, InvalidMultiXactId);
 
 		/*
 		 * After creating the new relfilenode for a btee index, this is not
