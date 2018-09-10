@@ -20,7 +20,7 @@
 # way, new rows can have all the columns, but there's no need to modify rows
 # inherited from upstream.
 #
-# The ProcesDataLine function modifies each DATA row, injecting the defaults
+# The ProcessDataLine function modifies each DATA row, injecting the defaults
 # and extra values.
 
 package Catalog;
@@ -90,7 +90,8 @@ sub Catalogs
 			{
 				my $bki_values = $3;
 				$bki_values = ProcessDataLine(\%catalog, $bki_values, \%coldefaults, \%extra_values);
-				push @{ $catalog{data} }, { oid => $2, bki_values => $3 };
+
+				push @{ $catalog{data} }, { oid => $2, bki_values => $bki_values };
 			}
 			elsif (/^DESCR\(\"(.*)\"\)$/)
 			{
@@ -169,7 +170,7 @@ sub Catalogs
 				$catalog{schema_macro} = /BKI_SCHEMA_MACRO/ ? 'True' : '';
 				$declaring_attributes = 1;
 			}
-			# GPDB_EXTRA_COL(<colname>, <default>)
+			# GPDB_COLUMN_DEFAULT(<colname>, <default>)
 			elsif (m/GPDB_COLUMN_DEFAULT\s*\(\s*([[:word:]]+),\s*(.*)\)/)
 			{
 				my $colname = $1;
