@@ -46,6 +46,7 @@
 #include "access/htup.h"
 #include "access/htup_details.h"
 #include "access/subtrans.h"
+#include "access/timeline.h"
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
@@ -1420,7 +1421,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
     XLogReadRecoveryCommandFile(DEBUG5);
 
     /* Now we can determine the list of expected TLIs */
-    expectedTLIs = XLogReadTimeLineHistory(ThisTimeLineID);
+    expectedTLIs = readTimeLineHistory(ThisTimeLineID);
 
     /* get the two phase information from the xlog */
 	/*

@@ -4756,9 +4756,8 @@ reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_map,
 													  0,
 													  NULL,
 													  true);
-				new_pathkey = makePathKey(new_eclass, pathkey->pk_opfamily, pathkey->pk_strategy,
-										  pathkey->pk_nulls_first);
-
+				new_pathkey = copyObject(pathkey);
+				new_pathkey->pk_eclass = new_eclass;
 				new_pathkeys = lappend(new_pathkeys, new_pathkey);
 				found = true;
 				break;
