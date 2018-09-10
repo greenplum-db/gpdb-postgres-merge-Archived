@@ -172,6 +172,104 @@ walrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint)
 }
 
 /*
+ * Stop streaming WAL data. Returns the next timeline's ID in *next_tli, as
+ * reported by the server, or 0 if it did not report it.
+ */
+void
+walrcv_endstreaming(TimeLineID *next_tli)
+{
+	PGresult   *res;
+
+	if (PQputCopyEnd(streamConn, NULL) <= 0 || PQflush(streamConn))
+		ereport(ERROR,
+			(errmsg("could not send end-of-streaming message to primary: %s",
+					PQerrorMessage(streamConn))));
+
+	/*
+	 * After COPY is finished, we should receive a result set indicating the
+	 * next timeline's ID, or just CommandComplete if the server was shut
+	 * down.
+	 *
+	 * If we had not yet received CopyDone from the backend, PGRES_COPY_IN
+	 * would also be possible. However, at the moment this function is only
+	 * called after receiving CopyDone from the backend - the walreceiver
+	 * never terminates replication on its own initiative.
+	 */
+	res = PQgetResult(streamConn);
+	if (PQresultStatus(res) == PGRES_TUPLES_OK)
+	{
+		/*
+		 * Read the next timeline's ID. The server also sends the timeline's
+		 * starting point, but it is ignored.
+		 */
+		if (PQnfields(res) < 2 || PQntuples(res) != 1)
+			ereport(ERROR,
+					(errmsg("unexpected result set after end-of-streaming")));
+		*next_tli = pg_atoi(PQgetvalue(res, 0, 0), sizeof(uint32), 0);
+		PQclear(res);
+
+		/* the result set should be followed by CommandComplete */
+		res = PQgetResult(streamConn);
+	}
+	else
+		*next_tli = 0;
+
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		ereport(ERROR,
+				(errmsg("error reading result of streaming command: %s",
+						PQerrorMessage(streamConn))));
+
+	/* Verify that there are no more results */
+	res = PQgetResult(streamConn);
+	if (res != NULL)
+		ereport(ERROR,
+				(errmsg("unexpected result after CommandComplete: %s",
+						PQerrorMessage(streamConn))));
+}
+
+/*
+ * Fetch the timeline history file for 'tli' from primary.
+ */
+void
+walrcv_readtimelinehistoryfile(TimeLineID tli,
+								 char **filename, char **content, int *len)
+{
+	PGresult   *res;
+	char		cmd[64];
+
+	/*
+	 * Request the primary to send over the history file for given timeline.
+	 */
+	snprintf(cmd, sizeof(cmd), "TIMELINE_HISTORY %u", tli);
+	res = libpqrcv_PQexec(cmd);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		PQclear(res);
+		ereport(ERROR,
+				(errmsg("could not receive timeline history file from "
+						"the primary server: %s",
+						PQerrorMessage(streamConn))));
+	}
+	if (PQnfields(res) != 2 || PQntuples(res) != 1)
+	{
+		int			ntuples = PQntuples(res);
+		int			nfields = PQnfields(res);
+
+		PQclear(res);
+		ereport(ERROR,
+				(errmsg("invalid response from primary server"),
+				 errdetail("Expected 1 tuple with 2 fields, got %d tuples with %d fields.",
+						   ntuples, nfields)));
+	}
+	*filename = pstrdup(PQgetvalue(res, 0, 0));
+
+	*len = PQgetlength(res, 0, 1);
+	*content = palloc(*len);
+	memcpy(*content, PQgetvalue(res, 0, 1), *len);
+	PQclear(res);
+}
+
+/*
  * Wait until we can read WAL stream, or timeout.
  *
  * Returns true if data has become available for reading, false if timed out
