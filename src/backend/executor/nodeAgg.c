@@ -194,6 +194,20 @@ static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
 static void ExecAggExplainEnd(PlanState *planstate, struct StringInfoData *buf);
 
+static void *
+cxt_alloc(void *manager, Size len)
+{
+	return MemoryContextAlloc((MemoryContext)manager, len);
+}
+
+static void
+cxt_free(void *manager, void *pointer)
+{
+    UnusedArg(manager);
+	if (pointer != NULL)
+		pfree(pointer);
+}
+
 
 Datum
 datumCopyWithMemManager(Datum oldvalue, Datum value, bool typByVal, int typLen,

@@ -815,18 +815,6 @@ typedef struct MemoryManagerContainer
 	int realloc_ratio;
 } MemoryManagerContainer;
 
-static inline void *cxt_alloc(void *manager, Size len)
-{
-	return MemoryContextAlloc((MemoryContext)manager, len);
-}
-
-static inline void cxt_free(void *manager, void *pointer)
-{
-    UnusedArg(manager);
-	if (pointer != NULL)
-		pfree(pointer);
-}
-
 /* ----------------------------------------------------------------
  *				 Expression State Trees
  *
