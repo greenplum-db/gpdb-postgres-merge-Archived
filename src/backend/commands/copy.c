@@ -548,21 +548,12 @@ CopySendEndOfRow(CopyState cstate)
 						 * error message from the subprocess' exit code than
 						 * just "Broken Pipe"
 						 */
-<<<<<<< HEAD
 						close_program_pipes(cstate, true);
 
 						/*
 						 * If close_program_pipes() didn't throw an error,
 						 * the program terminated normally, but closed the
 						 * pipe first. Restore errno, and throw an error.
-=======
-						ClosePipeToProgram(cstate);
-
-						/*
-						 * If ClosePipeToProgram() didn't throw an error, the
-						 * program terminated normally, but closed the pipe
-						 * first. Restore errno, and throw an error.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 						 */
 						errno = EPIPE;
 					}
@@ -572,16 +563,9 @@ CopySendEndOfRow(CopyState cstate)
 				}
 				else
 					ereport(ERROR,
-<<<<<<< HEAD
-						(errcode_for_file_access(),
-						 errmsg("could not write to COPY file: %m")));
-			}
-
-=======
 							(errcode_for_file_access(),
 							 errmsg("could not write to COPY file: %m")));
 			}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 		case COPY_OLD_FE:
 			/* The FE/BE protocol uses \n as newline for all platforms */
@@ -2131,11 +2115,7 @@ EndCopy(CopyState cstate)
 {
 	if (cstate->is_program)
 	{
-<<<<<<< HEAD
 		close_program_pipes(cstate, true);
-=======
-		ClosePipeToProgram(cstate);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 	else
 	{
@@ -2220,7 +2200,6 @@ BeginCopyTo(Relation rel,
 	if (Gp_role == GP_ROLE_DISPATCH && !cstate->on_segment &&
 		cstate->rel && cstate->rel->rd_cdbpolicy)
 	{
-<<<<<<< HEAD
 		cstate->dispatch_mode = COPY_DISPATCH;
 	}
 	else
@@ -2269,9 +2248,6 @@ BeginCopyTo(Relation rel,
 	else if (pipe)
 	{
 		Assert(!is_program || Gp_role == GP_ROLE_EXECUTE);	/* the grammar does not allow this */
-=======
-		Assert(!is_program);	/* the grammar does not allow this */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		if (whereToSendOutput != DestRemote)
 			cstate->copy_file = stdout;
 	}
@@ -2280,7 +2256,6 @@ BeginCopyTo(Relation rel,
 		cstate->filename = pstrdup(filename);
 		cstate->is_program = is_program;
 
-<<<<<<< HEAD
 		if (cstate->on_segment)
 			MangleCopyFileName(cstate);
 		filename = cstate->filename;
@@ -2290,11 +2265,6 @@ BeginCopyTo(Relation rel,
 			cstate->program_pipes = open_program_pipes(cstate->filename, true);
 			cstate->copy_file = fdopen(cstate->program_pipes->pipes[0], PG_BINARY_W);
 
-=======
-		if (is_program)
-		{
-			cstate->copy_file = OpenPipeStream(cstate->filename, PG_BINARY_W);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errmsg("could not execute command \"%s\": %m",
@@ -2312,41 +2282,24 @@ BeginCopyTo(Relation rel,
 			if (!is_absolute_path(filename))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
-<<<<<<< HEAD
 						 errmsg("relative path not allowed for COPY to file")));
 
 			oumask = umask(S_IWGRP | S_IWOTH);
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_W);
-=======
-					  errmsg("relative path not allowed for COPY to file")));
-
-			oumask = umask(S_IWGRP | S_IWOTH);
-			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			umask(oumask);
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-<<<<<<< HEAD
 						 errmsg("could not open file \"%s\" for writing: %m", filename)));
 
 			// Increase buffer size to improve performance  (cmcdevitt)
 			setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
-=======
-						 errmsg("could not open file \"%s\" for writing: %m",
-								cstate->filename)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			fstat(fileno(cstate->copy_file), &st);
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-<<<<<<< HEAD
 						 errmsg("\"%s\" is a directory", filename)));
-=======
-						 errmsg("\"%s\" is a directory", cstate->filename)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
-		}
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -3213,7 +3166,6 @@ CopyFromErrorCallback(void *arg)
 			}
 			else
 			{
-<<<<<<< HEAD
 				/*
 				 * Here, the line buffer is still in a foreign encoding,
 				 * and indeed it's quite likely that the error is precisely
@@ -3225,10 +3177,6 @@ CopyFromErrorCallback(void *arg)
 				errcontext("COPY %s, line %s",
 						   cstate->cur_relname,
 						   linenumber_atoi(buffer, cstate->cur_lineno));
-=======
-				errcontext("COPY %s, line %d",
-						   cstate->cur_relname, cstate->cur_lineno);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 		}
 	}
@@ -3332,7 +3280,6 @@ CopyFrom(CopyState cstate)
 	uint64		processed = 0;
     bool		useHeapMultiInsert;
 #define MAX_BUFFERED_TUPLES 1000
-<<<<<<< HEAD
 	int			nTotalBufferedTuples = 0;
 	Size		totalBufferedTuplesSize = 0;
 	int			i;
@@ -3340,11 +3287,6 @@ CopyFrom(CopyState cstate)
 	bool	   *baseNulls;
 	PartitionData *partitionData = NULL;
 	GpDistributionData *part_distData = NULL;
-=======
-	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
-	Size		bufferedTuplesSize = 0;
-	int			firstBufferedLineNo = 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	Assert(cstate->rel);
 
@@ -3464,27 +3406,13 @@ CopyFrom(CopyState cstate)
 	 * here that basically duplicated execUtils.c ...)
 	 */
 	resultRelInfo = makeNode(ResultRelInfo);
-<<<<<<< HEAD
-	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
-	resultRelInfo->ri_RelationDesc = cstate->rel;
-	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(cstate->rel->trigdesc);
-	if (resultRelInfo->ri_TrigDesc)
-	{
-		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(resultRelInfo->ri_TrigDesc->numtriggers * sizeof(FmgrInfo));
-		resultRelInfo->ri_TrigWhenExprs = (List **)
-			palloc0(resultRelInfo->ri_TrigDesc->numtriggers * sizeof(List *));
-	}
-	resultRelInfo->ri_TrigInstrument = NULL;
-	ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
-
-	parentResultRelInfo = resultRelInfo;
-=======
 	InitResultRelInfo(resultRelInfo,
 					  cstate->rel,
 					  1,		/* dummy rangetable index */
 					  0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	ResultRelInfoSetSegno(resultRelInfo, cstate->ao_segnos);
+
+	parentResultRelInfo = resultRelInfo;
 
 	ExecOpenIndices(resultRelInfo);
 
@@ -3959,18 +3887,11 @@ CopyFrom(CopyState cstate)
 
 				MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 				/* Add this tuple to the tuple buffer */
-<<<<<<< HEAD
 				resultRelInfo->bufferedTuples[resultRelInfo->nBufferedTuples++] = heap_copytuple(tuple);
 				resultRelInfo->bufferedTuplesSize += tuple->t_len;
 				nTotalBufferedTuples++;
 				totalBufferedTuplesSize += tuple->t_len;
 				MemoryContextSwitchTo(estate->es_query_cxt);
-=======
-				if (nBufferedTuples == 0)
-					firstBufferedLineNo = cstate->cur_lineno;
-				bufferedTuples[nBufferedTuples++] = tuple;
-				bufferedTuplesSize += tuple->t_len;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/*
 				 * If the buffer filled up, flush it. Also flush if the total
@@ -3985,18 +3906,9 @@ CopyFrom(CopyState cstate)
 				if (nTotalBufferedTuples == MAX_BUFFERED_TUPLES ||
 					totalBufferedTuplesSize > 65535)
 				{
-<<<<<<< HEAD
 					cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, slot);
 					nTotalBufferedTuples = 0;
 					totalBufferedTuplesSize = 0;
-=======
-					CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-										resultRelInfo, myslot, bistate,
-										nBufferedTuples, bufferedTuples,
-										firstBufferedLineNo);
-					nBufferedTuples = 0;
-					bufferedTuplesSize = 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 			} else {
 				List	   *recheckIndexes = NIL;
@@ -4084,16 +3996,8 @@ CopyFrom(CopyState cstate)
 	}
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, processed);
 	/* Flush any remaining buffered tuples */
-<<<<<<< HEAD
 	if (useHeapMultiInsert)
 		cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, baseSlot);
-=======
-	if (nBufferedTuples > 0)
-		CopyFromInsertBatch(cstate, estate, mycid, hi_options,
-							resultRelInfo, myslot, bistate,
-							nBufferedTuples, bufferedTuples,
-							firstBufferedLineNo);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
@@ -4285,12 +4189,8 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 		{
 			List	   *recheckIndexes;
 
-<<<<<<< HEAD
-			ExecStoreHeapTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
-=======
 			cstate->cur_lineno = firstBufferedLineNo + i;
-			ExecStoreTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			ExecStoreHeapTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
 			recheckIndexes =
 				ExecInsertIndexTuples(myslot, &(bufferedTuples[i]->t_self),
 									  estate);
@@ -4476,7 +4376,6 @@ BeginCopyFrom(Relation rel,
 	{
 		cstate->filename = pstrdup(filename);
 
-<<<<<<< HEAD
 		if (cstate->on_segment)
 			MangleCopyFileName(cstate);
 
@@ -4484,12 +4383,6 @@ BeginCopyFrom(Relation rel,
 		{
 			cstate->program_pipes = open_program_pipes(cstate->filename, false);
 			cstate->copy_file = fdopen(cstate->program_pipes->pipes[0], PG_BINARY_R);
-
-=======
-		if (cstate->is_program)
-		{
-			cstate->copy_file = OpenPipeStream(cstate->filename, PG_BINARY_R);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errmsg("could not execute command \"%s\": %m",
@@ -4498,7 +4391,6 @@ BeginCopyFrom(Relation rel,
 		else
 		{
 			struct stat st;
-<<<<<<< HEAD
 			char	   *filename = cstate->filename;
 
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_R);
@@ -4603,23 +4495,6 @@ BeginCopyFrom(Relation rel,
 			ereport(ERROR,
 					(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 					errmsg("invalid QD->QD COPY communication header")));
-=======
-
-			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_R);
-			if (cstate->copy_file == NULL)
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\" for reading: %m",
-								cstate->filename)));
-
-			fstat(fileno(cstate->copy_file), &st);
-			if (S_ISDIR(st.st_mode))
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is a directory", cstate->filename)));
-		}
-	}
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		cstate->file_has_oids = header_frame.file_has_oids;
 	}
