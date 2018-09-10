@@ -117,21 +117,21 @@ typedef struct
 extern WalRcvData *WalRcv;
 
 /* libpqwalreceiver hooks */
-typedef void walrcv_connect_type (char *conninfo);
+void walrcv_connect (char *conninfo);
 
-void walrcv_identify_system_type (TimeLineID *primary_tli);
+void walrcv_identify_system (TimeLineID *primary_tli);
 
-void walrcv_readtimelinehistoryfile_type (TimeLineID tli, char **filename, char **content, int *size);
+void walrcv_readtimelinehistoryfile (TimeLineID tli, char **filename, char **content, int *size);
 
-bool walrcv_startstreaming_type (TimeLineID tli, XLogRecPtr startpoint);
+bool walrcv_startstreaming (TimeLineID tli, XLogRecPtr startpoint);
 
-void walrcv_endstreaming_type (TimeLineID *next_tli);
+void walrcv_endstreaming (TimeLineID *next_tli);
 
-int walrcv_receive_type (int timeout, char **buffer);
+bool walrcv_receive (int timeout, char **buffer);
 
-void walrcv_send_type (const char *buffer, int nbytes);
+void walrcv_send (const char *buffer, int nbytes);
 
-void walrcv_disconnect_type (void);
+void walrcv_disconnect (void);
 
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) __attribute__((noreturn));

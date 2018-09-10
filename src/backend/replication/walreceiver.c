@@ -62,28 +62,13 @@
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
 #include "utils/faultinjector.h"
+#include "storage/fd.h"
 
 
 /* GUC variables */
-<<<<<<< HEAD
 int			wal_receiver_status_interval = 10;
-bool		hot_standby_feedback;
-
-=======
-int			wal_receiver_status_interval;
 int			wal_receiver_timeout;
 bool		hot_standby_feedback;
-
-/* libpqreceiver hooks to these when loaded */
-walrcv_connect_type walrcv_connect = NULL;
-walrcv_identify_system_type walrcv_identify_system = NULL;
-walrcv_startstreaming_type walrcv_startstreaming = NULL;
-walrcv_endstreaming_type walrcv_endstreaming = NULL;
-walrcv_readtimelinehistoryfile_type walrcv_readtimelinehistoryfile = NULL;
-walrcv_receive_type walrcv_receive = NULL;
-walrcv_send_type walrcv_send = NULL;
-walrcv_disconnect_type walrcv_disconnect = NULL;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
@@ -93,14 +78,8 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
  * corresponding the filename of recvFile.
  */
 static int	recvFile = -1;
-<<<<<<< HEAD
-static TimeLineID	recvFileTLI = 0;
-static uint32 recvId = 0;
-static uint32 recvSeg = 0;
-=======
 static TimeLineID recvFileTLI = 0;
 static XLogSegNo recvSegNo = 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static uint32 recvOff = 0;
 
 /*
@@ -209,13 +188,6 @@ WalReceiverMain(void)
 {
 	char		conninfo[MAXCONNINFO];
 	XLogRecPtr	startpoint;
-<<<<<<< HEAD
-	File		pid_file;
-
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalRcvData *walrcv = WalRcv;
-	sigjmp_buf	local_sigjmp_buf;
-=======
 	TimeLineID	startpointTLI;
 	TimeLineID	primaryTLI;
 	bool		first_stream;
@@ -224,7 +196,8 @@ WalReceiverMain(void)
 	volatile WalRcvData *walrcv = WalRcv;
 	TimestampTz last_recv_timestamp;
 	bool		ping_sent;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	File		pid_file;
+	sigjmp_buf	local_sigjmp_buf;
 
 	/*
 	 * WalRcv should be set up already (if we are a backend, we inherit this
@@ -306,13 +279,8 @@ WalReceiverMain(void)
 	pqsignal(SIGQUIT, WalRcvQuickDieHandler);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-<<<<<<< HEAD
-	pqsignal(SIGUSR1, SIG_IGN);
-	pqsignal(SIGUSR2, WalRcvUsr2Handler);
-=======
 	pqsignal(SIGUSR1, WalRcvSigUsr1Handler);
-	pqsignal(SIGUSR2, SIG_IGN);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	pqsignal(SIGUSR2, WalRcvUsr2Handler);
 
 	/* Reset some signals that are accepted by postmaster but not here */
 	pqsignal(SIGCHLD, SIG_DFL);
@@ -334,19 +302,6 @@ WalReceiverMain(void)
 	/* We allow SIGQUIT (quickdie) at all times */
 	sigdelset(&BlockSig, SIGQUIT);
 
-<<<<<<< HEAD
-=======
-	/* Load the libpq-specific functions */
-	load_file("libpqwalreceiver", false);
-	if (walrcv_connect == NULL || walrcv_startstreaming == NULL ||
-		walrcv_endstreaming == NULL ||
-		walrcv_identify_system == NULL ||
-		walrcv_readtimelinehistoryfile == NULL ||
-		walrcv_receive == NULL || walrcv_send == NULL ||
-		walrcv_disconnect == NULL)
-		elog(ERROR, "libpqwalreceiver didn't initialize correctly");
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Create a resource owner to keep track of our resources (not clear that
 	 * we need this, but may as well have one).
@@ -372,7 +327,6 @@ WalReceiverMain(void)
 
 	/* Establish the connection to the primary for XLOG streaming */
 	EnableWalRcvImmediateExit();
-<<<<<<< HEAD
 
 	/*
 	 * (Testing Purpose) - Create a PID file under $PGDATA directory
@@ -392,7 +346,7 @@ WalReceiverMain(void)
 	else
 		FileClose(pid_file);
 
-	walrcv_connect(conninfo, startpoint);
+	walrcv_connect(conninfo);
 
 	/* (Testing Purpose) - Now drop the PID file */
 	unlink("wal_rcv.pid");
@@ -403,13 +357,7 @@ WalReceiverMain(void)
 	LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
 	MemSet(&reply_message, 0, sizeof(reply_message));
 
-	/* Loop until end-of-streaming or error */
-=======
-	walrcv_connect(conninfo);
-	DisableWalRcvImmediateExit();
-
 	first_stream = true;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	for (;;)
 	{
 		/*
@@ -543,6 +491,22 @@ WalReceiverMain(void)
 							endofwal = true;
 							break;
 						}
+
+						/* Perform suspend if signaled by an external entity (Testing Purpose) */
+						if (wait_before_rcv)
+						{
+							while(true)
+							{
+								if (resume)
+								{
+									resume = false;
+									break;
+								}
+								pg_usleep(5000);
+							}
+							wait_before_rcv = false;
+						}
+
 						len = walrcv_receive(0, &buf);
 					}
 
@@ -600,6 +564,21 @@ WalReceiverMain(void)
 								ping_sent = true;
 							}
 						}
+					}
+
+					/* Perform suspend if signaled by an external entity (Testing Purpose) */
+					if (wait_before_send_ack)
+					{
+						while(true)
+						{
+							if (resume)
+							{
+								resume = false;
+								break;
+							}
+							pg_usleep(5000);
+						}
+						wait_before_send_ack = false;
 					}
 
 					XLogWalRcvSendReply(requestReply, requestReply);
@@ -701,19 +680,6 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 		if (!PostmasterIsAlive())
 			exit(1);
 
-<<<<<<< HEAD
-		/*
-		 * Exit walreceiver if we're not in recovery. This should not happen,
-		 * but cross-check the status here.
-		 */
-		if (!RecoveryInProgress())
-			ereport(FATAL,
-					(errmsg("cannot continue WAL streaming, recovery has already ended"),
-					errSendAlert(true)));
-
-		/* Process any requests or signals received recently */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		ProcessWalRcvInterrupts();
 
 		SpinLockAcquire(&walrcv->mutex);
@@ -747,25 +713,6 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 	{
 		char		activitymsg[50];
 
-<<<<<<< HEAD
-		/* Perform suspend if signaled by an external entity (Testing Purpose) */
-		if (wait_before_rcv)
-		{
-			while(true)
-			{
-				if (resume)
-				{
-					resume = false;
-					break;
-				}
-				pg_usleep(5000);
-			}
-			wait_before_rcv = false;
-		}
-
-		/* Wait a while for data to arrive */
-		if (walrcv_receive(NAPTIME_PER_CYCLE, &type, &buf, &len))
-=======
 		snprintf(activitymsg, sizeof(activitymsg), "restarting at %X/%X",
 				 (uint32) (*startpoint >> 32),
 				 (uint32) *startpoint);
@@ -786,7 +733,6 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 	{
 		/* there's no history file for timeline 1 */
 		if (tli != 1 && !existsTimeLineHistory(tli))
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{
 			char	   *fname;
 			char	   *content;
@@ -899,15 +845,10 @@ WalRcvDie(int code, Datum arg)
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Terminate the connection gracefully. */
-<<<<<<< HEAD
 	walrcv_disconnect();
-=======
-	if (walrcv_disconnect != NULL)
-		walrcv_disconnect();
 
 	/* Wake up the startup process to notice promptly that we're gone */
 	WakeupRecovery();
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
@@ -1004,19 +945,8 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				if (len < hdrlen)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-<<<<<<< HEAD
 							 errmsg_internal("invalid WAL message received from primary"),
 							 errSendAlert(true)));
-				/* memcpy is required here for alignment reasons */
-				memcpy(&msghdr, buf, sizeof(WalDataMessageHeader));
-
-				elogif(debug_walrepl_rcv, LOG,
-					   "walrcv msg metadata -- datastart %s, buflen %d",
-					    XLogLocationToString(&(msghdr.dataStart)),(int)len);
-
-				ProcessWalSndrMessage(msghdr.walEnd, msghdr.sendTime);
-=======
-							 errmsg_internal("invalid WAL message received from primary")));
 				appendBinaryStringInfo(&incoming_message, buf, hdrlen);
 
 				/* read the fields */
@@ -1025,7 +955,6 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				sendTime = IntegerTimestampToTimestampTz(
 										  pq_getmsgint64(&incoming_message));
 				ProcessWalSndrMessage(walEnd, sendTime);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				buf += hdrlen;
 				len -= hdrlen;
@@ -1039,16 +968,9 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len)
 				if (len != hdrlen)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-<<<<<<< HEAD
 							 errmsg_internal("invalid keepalive message received from primary"),
 							 errSendAlert(true)));
-
-				/* memcpy is required here for alignment reasons */
-				memcpy(&keepalive, buf, sizeof(PrimaryKeepaliveMessage));
-=======
-							 errmsg_internal("invalid keepalive message received from primary")));
 				appendBinaryStringInfo(&incoming_message, buf, hdrlen);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 				/* read the fields */
 				walEnd = pq_getmsgint64(&incoming_message);
@@ -1106,16 +1028,6 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				if (close(recvFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-<<<<<<< HEAD
-						errmsg("could not close log file %u, segment %u: %m",
-							   recvId, recvSeg)));
-
-				/*
-				 * Create .done file forcibly to prevent the restored segment from
-				 * being archived again later.
-				 */
-				XLogFileName(xlogfname, recvFileTLI, recvId, recvSeg);
-=======
 							 errmsg("could not close log segment %s: %m",
 									XLogFileNameP(recvFileTLI, recvSegNo))));
 
@@ -1125,19 +1037,13 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				 */
 				XLogFileName(xlogfname, recvFileTLI, recvSegNo);
 				XLogArchiveForceDone(xlogfname);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 			recvFile = -1;
 
 			/* Create/use new log file */
 			XLByteToSeg(recptr, recvSegNo);
 			use_existent = true;
-<<<<<<< HEAD
-			/* For now this only happens on master, so don't care mirror */
-			recvFile = XLogFileInit(recvId, recvSeg, &use_existent, true);
-=======
 			recvFile = XLogFileInit(recvSegNo, &use_existent, true);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			recvFileTLI = ThisTimeLineID;
 			recvOff = 0;
 		}
@@ -1156,16 +1062,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			if (lseek(recvFile, (off_t) startoff, SEEK_SET) < 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-<<<<<<< HEAD
-						 errmsg("could not seek in log file %u, "
-								"segment %u to offset %u: %m",
-								recvId, recvSeg, startoff),
-								errSendAlert(true)));
-=======
 				 errmsg("could not seek in log segment %s, to offset %u: %m",
 						XLogFileNameP(recvFileTLI, recvSegNo),
 						startoff)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			recvOff = startoff;
 		}
 
@@ -1182,14 +1081,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 					(errcode_for_file_access(),
 					 errmsg("could not write to log segment %s "
 							"at offset %u, length %lu: %m",
-<<<<<<< HEAD
-							recvId, recvSeg,
-							recvOff, (unsigned long) segbytes),
-							errSendAlert(true)));
-=======
 							XLogFileNameP(recvFileTLI, recvSegNo),
 							recvOff, (unsigned long) segbytes)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 
 		/* Update state for write */
@@ -1202,10 +1095,13 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		LogstreamResult.Write = recptr;
 
 		elogif(debug_walrepl_rcv, LOG,
-			   "walrcv write -- Wrote %d bytes in file (logid %u, seg %u, offset %d)."
+			   "walrcv write -- Wrote %d bytes in file %s, offset %d."
 			   "Latest write location is %X/%X.",
-			   byteswritten, recvId, recvSeg, startoff,
-			   LogstreamResult.Write.xlogid, LogstreamResult.Write.xrecoff);
+			   byteswritten,
+			   XLogFileNameP(recvFileTLI, recvSegNo),
+			   startoff,
+			   (uint32) (LogstreamResult.Write >> 32),
+			   (uint32) LogstreamResult.Write);
 	}
 }
 
@@ -1255,36 +1151,7 @@ XLogWalRcvFlush(bool dying)
 
 		/* Also let the master know that we made some progress */
 		if (!dying)
-<<<<<<< HEAD
-		{
-			/* Perform suspend if signaled by an external entity (Testing Purpose) */
-			if (wait_before_send_ack)
-			{
-				while(true)
-				{
-					if (resume)
-					{
-						resume = false;
-						break;
-					}
-					pg_usleep(5000);
-				}
-				wait_before_send_ack = false;
-			}
-			XLogWalRcvSendReply();
-			XLogWalRcvSendHSFeedback();
-		}
-
-		elogif(debug_walrepl_rcv, LOG,
-			   "walrcv fsync -- Fsync'd xlog file (logid %u seg %u). "
-			   "Latest flush location is %X/%X with latestchunkstart(%X/%X) receivedupto(%X/%X).",
-			   recvId, recvSeg,
-			   LogstreamResult.Flush.xlogid, LogstreamResult.Flush.xrecoff,
-			   walrcv->latestChunkStart.xlogid, walrcv->latestChunkStart.xrecoff,
-			   walrcv->receivedUpto.xlogid, walrcv->receivedUpto.xrecoff);
-=======
 			XLogWalRcvSendReply(false, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 }
 
@@ -1342,11 +1209,6 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	flushPtr = LogstreamResult.Flush;
 	applyPtr = GetXLogReplayRecPtr(NULL);
 
-<<<<<<< HEAD
-	/* Prepend with the message type and send it. */
-	buf[0] = 'r';
-	memcpy(&buf[1], &reply_message, sizeof(StandbyReplyMessage));
-
 	/* Perform suspend if signaled by an external entity (Testing Purpose) */
 	if (wait_before_send)
 	{
@@ -1362,14 +1224,6 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 		wait_before_send = false;
 	}
 
-	walrcv_send(buf, sizeof(StandbyReplyMessage) + 1);
-
-	elogif(debug_walrepl_rcv, LOG,
-		   "walrcv reply -- Sent write %X/%X flush %X/%X apply %X/%X",
-		   reply_message.write.xlogid, reply_message.write.xrecoff,
-		   reply_message.flush.xlogid, reply_message.flush.xrecoff,
-		   reply_message.apply.xlogid, reply_message.apply.xrecoff);
-=======
 	resetStringInfo(&reply_message);
 	pq_sendbyte(&reply_message, 'r');
 	pq_sendint64(&reply_message, writePtr);
@@ -1386,7 +1240,6 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 		 requestReply ? " (reply requested)" : "");
 
 	walrcv_send(reply_message.data, reply_message.len);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1472,7 +1325,6 @@ XLogWalRcvSendHSFeedback(bool immed)
 }
 
 /*
-<<<<<<< HEAD
  * Return a string constant representing the state.
  */
 const char *
@@ -1484,8 +1336,12 @@ WalRcvGetStateString(WalRcvState state)
 			return "stopped";
 		case WALRCV_STARTING:
 			return "starting";
-		case WALRCV_RUNNING:
-			return "running";
+		case WALRCV_STREAMING:
+			return "streaming";
+		case WALRCV_WAITING:
+			return "waiting";
+		case WALRCV_RESTARTING:
+			return "restarting";
 		case WALRCV_STOPPING:
 			return "stopping";
 	}
@@ -1493,13 +1349,10 @@ WalRcvGetStateString(WalRcvState state)
 }
 
 /*
- * Keep track of important messages from primary.
-=======
  * Update shared memory status upon receiving a message from primary.
  *
  * 'walEnd' and 'sendTime' are the end-of-WAL and timestamp of the latest
  * message, reported by primary.
->>>>>>> e472b921406407794bab911c64655b8b82375196
  */
 static void
 ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)

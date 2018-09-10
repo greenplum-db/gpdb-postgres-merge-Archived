@@ -211,11 +211,6 @@ timeline_history:
 					$$ = (Node *) cmd;
 				}
 			;
-
-sync_opt:
-		K_SYNC				{ $$ = true; }
-		| /* EMPTY */		{ $$ = false; }
-		;
 %%
 
 #include "repl_scanner.c"

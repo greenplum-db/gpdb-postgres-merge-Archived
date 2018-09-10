@@ -114,7 +114,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	Assert(!am_walsender);
 	elogif(debug_walrepl_syncrep, LOG,
 			"syncrep wait -- This backend's commit LSN for syncrep is %X/%X.",
-			XactCommitLSN.xlogid,XactCommitLSN.xrecoff);
+		   (uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
 
 	/* Fast exit if user has not requested sync replication. */
 	if (!SyncRepRequested())
@@ -172,14 +172,14 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * be a low cost check.
 	 */
 	if (((!IS_QUERY_DISPATCHER()) && !WalSndCtl->sync_standbys_defined) ||
-		XactCommitLSN <= WalSndCtl->lsn[mode]))
+		XactCommitLSN <= WalSndCtl->lsn[mode])
 	{
 		elogif(debug_walrepl_syncrep, LOG,
 				"syncrep wait -- Not waiting for syncrep because xlog upto LSN (%X/%X) which is "
 				"greater than this backend's commit LSN (%X/%X) has already "
 				"been replicated.",
-				WalSndCtl->lsn[mode].xlogid, WalSndCtl->lsn[mode].xrecoff,
-				XactCommitLSN.xlogid, XactCommitLSN.xrecoff);
+			   (uint32) (WalSndCtl->lsn[mode] >> 32), (uint32) WalSndCtl->lsn[mode],
+			   (uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
 
 		LWLockRelease(SyncRepLock);
 		return;
@@ -530,10 +530,10 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
-			elog(debug_walrepl_syncrep, LOG,
-				 DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
-				 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
-				 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
+	elogif(debug_walrepl_syncrep, LOG,
+		 "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
+		 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
+		 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
 
 	/*
 	 * If we are managing the highest priority standby, though we weren't
