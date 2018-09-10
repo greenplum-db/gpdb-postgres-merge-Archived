@@ -11,7 +11,7 @@ include $(top_builddir)/src/Makefile.global
 $(call recurse,all install,src config)
 
 all:
-	$(MAKE) -C contrib/xlogdump all
+	#$(MAKE) -C contrib/xlogdump all # GPDB_93_MERGE_FIXME: still needed? We got the upstream pg_xlogdump utility in this merge.
 	$(MAKE) -C contrib/file_fdw all
 	$(MAKE) -C contrib/formatter all
 	$(MAKE) -C contrib/formatter_fixedwidth all
@@ -47,7 +47,7 @@ html man:
 	$(MAKE) -C doc $@
 
 install:
-	$(MAKE) -C contrib/xlogdump $@
+	#$(MAKE) -C contrib/xlogdump $@ # GPDB_93_MERGE_FIXME: still needed? We got the upstream pg_xlogdump utility in this merge.
 	#$(MAKE) -C contrib/file_fdw $@ # GPDB_91_MERGE_FIXME: disable installation until it's officially supported.
 	$(MAKE) -C contrib/formatter $@
 	$(MAKE) -C contrib/formatter_fixedwidth $@
