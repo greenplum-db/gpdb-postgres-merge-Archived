@@ -588,18 +588,12 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 */
 	cstate = BeginCopyFrom(node->ss.ss_currentRelation,
 						   filename,
-<<<<<<< HEAD
 						   false, /* is_program */
 						   NULL,  /* data_source_cb */
 						   NULL,  /* data_source_cb_extra */
 						   NIL,   /* attnamelist */
 						   options,
 						   NIL);  /* ao_segnos */
-=======
-						   false,
-						   NIL,
-						   options);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Save state in node->fdw_state.  We must save enough information to call
@@ -670,18 +664,12 @@ fileReScanForeignScan(ForeignScanState *node)
 
 	festate->cstate = BeginCopyFrom(node->ss.ss_currentRelation,
 									festate->filename,
-<<<<<<< HEAD
 									false, /* is_program */
 									NULL,  /* data_source_cb */
 									NULL,  /* data_source_cb_extra */
 									NIL,   /* attnamelist */
 									festate->options,
 									NIL);  /* ao_segnos */
-=======
-									false,
-									NIL,
-									festate->options);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 /*
@@ -1014,14 +1002,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Create CopyState from FDW options.
 	 */
-<<<<<<< HEAD
 	/*
 	 * GPDB_92_MERGE_FIXME: what is the expected args?
 	 */
 	cstate = BeginCopyFrom(onerel, filename, false, NULL, NULL, NIL, options, NIL);
-=======
-	cstate = BeginCopyFrom(onerel, filename, false, NIL, options);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
