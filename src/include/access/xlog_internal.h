@@ -228,6 +228,13 @@ typedef struct xl_end_of_recovery
 	TimeLineID	PrevTimeLineID; /* previous TLI we forked off from */
 } xl_end_of_recovery;
 
+typedef struct CheckpointExtendedRecord
+{
+	struct TMGXACT_CHECKPOINT *dtxCheckpoint;
+	uint32				dtxCheckpointLen;
+	struct prepared_transaction_agg_state  *ptas;
+} CheckpointExtendedRecord;
+
 /*
  * XLogRecord is defined in xlog.h, but we avoid #including that to keep
  * this file includable in stand-alone programs.
@@ -292,5 +299,7 @@ extern void XLogArchiveForceDone(const char *xlog);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
+
+extern void UnpackCheckPointRecord(struct XLogRecord *record, CheckpointExtendedRecord *ckptExtended);
 
 #endif   /* XLOG_INTERNAL_H */

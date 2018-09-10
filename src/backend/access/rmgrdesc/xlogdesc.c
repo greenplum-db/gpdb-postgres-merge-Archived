@@ -21,6 +21,9 @@
 #include "utils/guc.h"
 #include "utils/timestamp.h"
 
+#include "access/twophase.h"
+#include "cdb/cdbpublic.h"
+
 /*
  * GUC support
  */
@@ -45,7 +48,7 @@ xlog_desc(StringInfo buf, XLogRecord *record)
 		CheckpointExtendedRecord ckptExtended;
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
-						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; multi %u; offset %u; "
+						 "tli %u; prev tli %u; fpw %s; xid %u/%u; oid %u; relfilenode %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest running xid %u; %s",
 				(uint32) (checkpoint->redo >> 32), (uint32) checkpoint->redo,

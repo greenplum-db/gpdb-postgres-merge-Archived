@@ -743,16 +743,6 @@ static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
 static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		   int emode, bool fetching_ckpt);
 #endif
-
-typedef struct CheckpointExtendedRecord
-{
-	TMGXACT_CHECKPOINT	*dtxCheckpoint;
-	uint32				dtxCheckpointLen;
-	prepared_transaction_agg_state  *ptas;
-} CheckpointExtendedRecord;
-
-static void UnpackCheckPointRecord(XLogRecord *record,
-								   CheckpointExtendedRecord *ckptExtended);
 static void ControlFileWatcherSaveInitial(void);
 static void ControlFileWatcherCheckForChange(void);
 static bool XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc);
@@ -7146,10 +7136,8 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	return record;
 }
 
-static void
-UnpackCheckPointRecord(
-	XLogRecord			*record,
-	CheckpointExtendedRecord *ckptExtended)
+void
+UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtended)
 {
 	char *current_record_ptr;
 	int remainderLen;

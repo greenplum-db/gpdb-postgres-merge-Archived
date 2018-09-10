@@ -94,13 +94,15 @@ xact_desc_distributed_commit(StringInfo buf, xl_xact_commit *xlrec)
 	 */
 	gxact_log = (TMGXACT_LOG *) xact_desc_commit(buf, xlrec);
 
-	descDistributedCommitRecord(buf, gxact_log);
+	appendStringInfo(buf, " gid = %s, gxid = %u",
+					 gxact_log->gid, gxact_log->gxid);
 }
 
 static void
 xact_desc_distributed_forget(StringInfo buf, xl_xact_distributed_forget *xlrec)
 {
-	descDistributedForgetCommitRecord(buf, &xlrec->gxact_log);
+	appendStringInfo(buf, " gid = %s, gxid = %u",
+					 xlrec->gxact_log.gid, xlrec->gxact_log.gxid);
 }
 
 
@@ -231,15 +233,4 @@ xact_desc(StringInfo buf, XLogRecord *record)
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
-}
-
-static void
-xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
-{
-	int			i;
-
-	appendStringInfo(buf, "subxacts:");
-
-	for (i = 0; i < xlrec->nsubxacts; i++)
-		appendStringInfo(buf, " %u", xlrec->xsub[i]);
 }

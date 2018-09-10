@@ -2257,7 +2257,7 @@ retry1:
 								 errSendAlert(true),
 								 errmsg(POSTMASTER_IN_RECOVERY_MSG),
 								 errdetail(POSTMASTER_IN_RECOVERY_DETAIL_MSG " %s",
-										   XLogLocationToString(&recptr))));
+										   XLogLocationToString(recptr))));
 					}
 #endif
 				}
@@ -2394,7 +2394,7 @@ retry1:
 					 errSendAlert(true),
 					 errmsg(POSTMASTER_IN_RECOVERY_MSG),
 					 errdetail(POSTMASTER_IN_RECOVERY_DETAIL_MSG " %s",
-						   XLogLocationToString(&recptr))));
+						   XLogLocationToString(recptr))));
 			break;
 		case CAC_TOOMANY:
 			ereport(FATAL,
@@ -2419,7 +2419,7 @@ retry1:
 					 errSendAlert(true),
 					 errmsg(POSTMASTER_IN_RECOVERY_MSG),
 					 errdetail(POSTMASTER_IN_RECOVERY_DETAIL_MSG " %s",
-						   XLogLocationToString(&recptr))));
+						   XLogLocationToString(recptr))));
 			break;
 		case CAC_OK:
 			break;
@@ -5402,25 +5402,19 @@ sigusr1_handler(SIGNAL_ARGS)
 		signal_child(FTSSubProc->pid, SIGINT);
 	}
 
-	/*
-	 * Check if we are being promoted.  Don't check and delete promote file
-	 * until we start the recovery.  This allows users to indicate promote
-	 * early, even before the database start.  We do delete it after the
-	 * recovery, though, for cleanness.
-	 */
-	if (pmState != PM_INIT &&
-		CheckPromoteSignal(!(pmState == PM_STARTUP || pmState == PM_RECOVERY))
-		&& StartupPID != 0)
-	{
-		/* Tell startup process to finish recovery */
-		signal_child(StartupPID, SIGUSR2);
-	}
-
 	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE) &&
 		(pmState == PM_WAIT_BACKUP || pmState == PM_WAIT_BACKENDS))
 	{
 		/* Advance postmaster's state machine */
 		PostmasterStateMachine();
+	}
+
+	if (CheckPromoteSignal() && StartupPID != 0 &&
+		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
+		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY))
+	{
+		/* Tell startup process to finish recovery */
+		signal_child(StartupPID, SIGUSR2);
 	}
 
 	PG_SETMASK(&UnBlockSig);
