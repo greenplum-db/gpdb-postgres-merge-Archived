@@ -66,13 +66,8 @@ GetConnection(void)
 				argcount++;
 		}
 
-<<<<<<< HEAD
-		keywords = xmalloc0((argcount + 1) * sizeof(*keywords));
-		values = xmalloc0((argcount + 1) * sizeof(*values));
-=======
 		keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
 		values = pg_malloc0((argcount + 1) * sizeof(*values));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
@@ -86,13 +81,8 @@ GetConnection(void)
 	}
 	else
 	{
-<<<<<<< HEAD
-		keywords = xmalloc0((argcount + 1) * sizeof(*keywords));
-		values = xmalloc0((argcount + 1) * sizeof(*values));
-=======
 		keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
 		values = pg_malloc0((argcount + 1) * sizeof(*values));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	keywords[i] = "dbname";

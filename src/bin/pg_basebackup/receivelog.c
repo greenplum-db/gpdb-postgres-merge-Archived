@@ -832,28 +832,8 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 											standby_message_timeout))
 		{
 			/* Time to send feedback! */
-<<<<<<< HEAD
-			char		replybuf[sizeof(StandbyReplyMessage) + 1];
-			StandbyReplyMessage *replymsg = (StandbyReplyMessage *) (replybuf + 1);
-
-			replymsg->write = blockpos;
-			replymsg->flush = InvalidXLogRecPtr;
-			replymsg->apply = InvalidXLogRecPtr;
-			replymsg->sendTime = now;
-			replybuf[0] = 'r';
-
-			if (PQputCopyData(conn, replybuf, sizeof(replybuf)) <= 0 ||
-				PQflush(conn))
-			{
-				fprintf(stderr, _("%s: could not send feedback packet: %s"),
-						progname, PQerrorMessage(conn));
-				return false;
-			}
-
-=======
 			if (!sendFeedback(conn, blockpos, now, false))
 				goto error;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			last_status = now;
 		}
 

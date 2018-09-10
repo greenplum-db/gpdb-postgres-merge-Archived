@@ -13,13 +13,8 @@
 
 #include "postgres_fe.h"
 #include "libpq-fe.h"
-<<<<<<< HEAD
-#include "pgtar.h"
-#include "pqexpbuffer.h"
-=======
 #include "pqexpbuffer.h"
 #include "pgtar.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 #include <unistd.h>
 #include <dirent.h>
@@ -49,10 +44,7 @@ bool		includewal = false;
 bool		streamwal = false;
 bool		fastcheckpoint = false;
 bool		writerecoveryconf = false;
-<<<<<<< HEAD
 bool		forceoverwrite = false;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 #define MAX_EXCLUDE 255
 int			num_exclude = 0;
@@ -146,12 +138,8 @@ usage(void)
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-<<<<<<< HEAD
 	printf(_("  -E, --exclude          exclude path names\n"));
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -491,13 +479,9 @@ progress_report(int tablespacenum, const char *filename)
 				ngettext("%*s/%s kB (%d%%), %d/%d tablespace",
 						 "%*s/%s kB (%d%%), %d/%d tablespaces",
 						 tablespacecount),
-<<<<<<< HEAD
-	totaldone_str, totalsize_str, percent, tablespacenum, tablespacecount);
-=======
 				(int) strlen(totalsize_str),
 				totaldone_str, totalsize_str, percent,
 				tablespacenum, tablespacecount);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	fprintf(stderr, "\r");
 }
@@ -909,11 +893,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	FILE	   *file = NULL;
 
 	if (basetablespace)
-<<<<<<< HEAD
 		strlcpy(current_path, basedir, sizeof(current_path));
-=======
-		strcpy(current_path, basedir);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	else
 		strlcpy(current_path, PQgetvalue(res, rownum, 1), sizeof(current_path));
 
@@ -1202,27 +1182,16 @@ escapeConnectionParameter(const char *src)
 	}
 
 	if (*src == '\0')
-<<<<<<< HEAD
-		return xstrdup("''");
-
-	if (!need_quotes && !need_escaping)
-		return xstrdup(src);	/* no quoting or escaping needed */
-=======
 		return pg_strdup("''");
 
 	if (!need_quotes && !need_escaping)
 		return pg_strdup(src);	/* no quoting or escaping needed */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Allocate a buffer large enough for the worst case that all the source
 	 * characters need to be escaped, plus quotes.
 	 */
-<<<<<<< HEAD
-	dstbuf = xmalloc0(strlen(src) * 2 + 2 + 1);
-=======
 	dstbuf = pg_malloc(strlen(src) * 2 + 2 + 1);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	dst = dstbuf;
 	if (need_quotes)
@@ -1332,40 +1301,6 @@ GenerateRecoveryConf(PGconn *conn)
 	termPQExpBuffer(&conninfo_buf);
 
 	PQconninfoFree(connOptions);
-<<<<<<< HEAD
-=======
-}
-
-
-/*
- * Write a recovery.conf file into the directory specified in basedir,
- * with the contents already collected in memory.
- */
-static void
-WriteRecoveryConf(void)
-{
-	char		filename[MAXPGPATH];
-	FILE	   *cf;
-
-	sprintf(filename, "%s/recovery.conf", basedir);
-
-	cf = fopen(filename, "w");
-	if (cf == NULL)
-	{
-		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
-		disconnect_and_exit(1);
-	}
-
-	if (fwrite(recoveryconfcontents->data, recoveryconfcontents->len, 1, cf) != 1)
-	{
-		fprintf(stderr,
-				_("%s: could not write to file \"%s\": %s\n"),
-				progname, filename, strerror(errno));
-		disconnect_and_exit(1);
-	}
-
-	fclose(cf);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -1447,13 +1382,10 @@ BaseBackup(void)
 	int			i;
 	char		xlogstart[64];
 	char		xlogend[64];
-<<<<<<< HEAD
-	char 	   *exclude_list;
-=======
 	int			minServerMajor,
 				maxServerMajor;
 	int			serverMajor;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	char 	   *exclude_list;
 
 	/*
 	 * Connect in replication mode to the server
@@ -1464,8 +1396,6 @@ BaseBackup(void)
 		exit(1);
 
 	/*
-<<<<<<< HEAD
-=======
 	 * Check server version. BASE_BACKUP command was introduced in 9.1, so we
 	 * can't work with servers older than 9.1.
 	 */
@@ -1492,7 +1422,6 @@ BaseBackup(void)
 	}
 
 	/*
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * Build contents of recovery.conf if requested
 	 */
 	if (writerecoveryconf)
@@ -1565,13 +1494,7 @@ BaseBackup(void)
 				progname, PQntuples(res), PQnfields(res), 1, 2);
 		disconnect_and_exit(1);
 	}
-<<<<<<< HEAD
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
-	if (verbose && includewal)
-		fprintf(stderr, "transaction log start point: %s\n", xlogstart);
-=======
-
-	strcpy(xlogstart, PQgetvalue(res, 0, 0));
 
 	/*
 	 * 9.3 and later sends the TLI of the starting point. With older servers,
@@ -1582,7 +1505,6 @@ BaseBackup(void)
 		starttli = atoi(PQgetvalue(res, 0, 1));
 	else
 		starttli = latesttli;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	PQclear(res);
 	MemSet(xlogend, 0, sizeof(xlogend));
 
@@ -1793,10 +1715,7 @@ BaseBackup(void)
 
 	/* Free the recovery.conf contents */
 	destroyPQExpBuffer(recoveryconfcontents);
-<<<<<<< HEAD
-=======
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * End of copy data. Final result is already checked inside the loop.
 	 */
@@ -1858,12 +1777,8 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
 	num_exclude = 0;
 	while ((c = getopt_long(argc, argv, "D:F:RxX:l:zZ:d:c:h:p:U:s:wWvPE:",
-=======
-	while ((c = getopt_long(argc, argv, "D:F:RxX:l:zZ:d:c:h:p:U:s:wWvP",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -1955,11 +1870,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'd':
-<<<<<<< HEAD
-				connection_string = xstrdup(optarg);
-=======
 				connection_string = pg_strdup(optarg);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				break;
 			case 'h':
 				dbhost = pg_strdup(optarg);
@@ -1999,7 +1910,7 @@ main(int argc, char **argv)
 					exit(1);
 				}
 
-				excludes[num_exclude++] = xstrdup(optarg);
+				excludes[num_exclude++] = pg_strdup(optarg);
 				break;
 			case 128:
 				forceoverwrite = true;

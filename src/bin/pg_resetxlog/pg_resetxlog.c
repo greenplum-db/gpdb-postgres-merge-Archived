@@ -55,11 +55,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
-<<<<<<< HEAD
-#include "storage/bufpage.h"
-=======
 #include "common/fe_memutils.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 extern int	optind;
 extern char *optarg;
@@ -99,15 +95,9 @@ main(int argc, char *argv[])
 	MultiXactId set_mxid = 0;
 	MultiXactId set_oldestmxid = 0;
 	MultiXactOffset set_mxoff = (MultiXactOffset) -1;
-<<<<<<< HEAD
-	uint32		minXlogTli = 0,
-				minXlogId = 0,
-				minXlogSeg = 0;
-	uint32		data_checksum_version = (uint32) PG_DATA_CHECKSUM_VERSION + 1;
-=======
 	uint32		minXlogTli = 0;
 	XLogSegNo	minXlogSegNo = 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	uint32		data_checksum_version = (uint32) PG_DATA_CHECKSUM_VERSION + 1;
 	char	   *endptr;
 	char	   *endptr2;
 	char	   *DataDir;
@@ -408,15 +398,13 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.PrevTimeLineID = minXlogTli;
 	}
 
-<<<<<<< HEAD
+	if (minXlogSegNo > newXlogSegNo)
+		newXlogSegNo = minXlogSegNo;
+
 	if (data_checksum_version <= PG_DATA_CHECKSUM_VERSION)
 	{
 		ControlFile.data_checksum_version = data_checksum_version;
 	}
-=======
-	if (minXlogSegNo > newXlogSegNo)
-		newXlogSegNo = minXlogSegNo;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * If we had to guess anything, and -f was not given, just print the
@@ -1085,17 +1073,10 @@ WriteEmptyXLOG(void)
 	memcpy(XLogRecGetData(record), &ControlFile.checkPointCopy,
 		   sizeof(CheckPoint));
 
-<<<<<<< HEAD
 	INIT_CRC32C(crc);
 	COMP_CRC32C(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
-	COMP_CRC32C(crc, (char *) record + sizeof(pg_crc32), SizeOfXLogRecord - sizeof(pg_crc32));
+	COMP_CRC32C(crc, (char *) record, offsetof(XLogRecord, xl_crc));
 	FIN_CRC32C(crc);
-=======
-	INIT_CRC32(crc);
-	COMP_CRC32(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
-	COMP_CRC32(crc, (char *) record, offsetof(XLogRecord, xl_crc));
-	FIN_CRC32(crc);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	record->xl_crc = crc;
 
 	/* Write the first page */
@@ -1154,32 +1135,18 @@ usage(void)
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
-<<<<<<< HEAD
-	printf(_("  -e XIDEPOCH     set next transaction ID epoch\n"));
-	printf(_("  -f              force update to be done\n"));
-	printf(_("  -k data_checksum_version     set data_checksum_version\n"));
-	printf(_("  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"));
-	printf(_("  -m XID          set next multitransaction ID\n"));
-	printf(_("  -n              no update, just show extracted control values (for testing)\n"));
-	printf(_("  -o OID          set next OID\n"));
-	printf(_("  -r RELFILENODE  set next RELFILENODE\n"));
-	printf(_("  -O OFFSET       set next multitransaction offset\n"));
-	printf(_("  -x XID          set next transaction ID\n"));
-	printf(_("  --help          show this help, then exit\n"));
-	printf(_("  --version       output version information, then exit\n"));
-	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));
+	printf(_("  -k data_checksum_version     set data_checksum_version\n"));
 	printf(_("  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"));
 	printf(_("  -m XID,OLDEST    set next multitransaction ID and oldest value\n"));
 	printf(_("  -n               no update, just show extracted control values (for testing)\n"));
 	printf(_("  -o OID           set next OID\n"));
+	printf(_("  -r RELFILENODE  set next RELFILENODE\n"));
 	printf(_("  -O OFFSET        set next multitransaction offset\n"));
 	printf(_("  -V, --version    output version information, then exit\n"));
 	printf(_("  -x XID           set next transaction ID\n"));
 	printf(_("  -?, --help       show this help, then exit\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	printf(_("  --gp-version    output Greenplum version information, then exit\n"));
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
