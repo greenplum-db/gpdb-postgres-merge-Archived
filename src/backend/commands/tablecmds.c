@@ -4214,15 +4214,14 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			 * substitutes default values into INSERTs before it expands
 			 * rules.
 			 */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
 			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			ATPrepColumnDefault(rel, recurse, cmd);
 			pass = ((ColumnDef *)(cmd->def))->raw_default ?
 					AT_PASS_ADD_CONSTR : AT_PASS_DROP;
 			break;
 		case AT_ColumnDefaultRecurse:	/* ALTER COLUMN DEFAULT */
-			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
 			/*
 			 * This is an internal Alter Table command to add default into child
 			 * tables. Therefore, no need to do ATPartitionCheck.
@@ -4230,12 +4229,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepColumnDefault(rel, recurse, cmd);
 			pass = ((ColumnDef *)(cmd->def))->raw_default ?
 					AT_PASS_ADD_CONSTR : AT_PASS_DROP;
-=======
-			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
-			/* No command-specific prep needed */
-			pass = cmd->def ? AT_PASS_ADD_CONSTR : AT_PASS_DROP;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			break;
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
@@ -4283,8 +4276,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, ATT_TABLE);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
 			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 			/*
 			 * Any recursion for partitioning is done in ATExecAddIndex()
@@ -4326,11 +4318,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
  					}
 				}
 			}
-=======
-			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
-			/* This command never recurses */
-			/* No command-specific prep needed */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			pass = AT_PASS_ADD_INDEX;
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
@@ -4445,8 +4432,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, ATT_TABLE | ATT_INDEX);
+			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX);
 			/* This command never recurses, but the offered relation may be partitioned, 
 			 * in which case, we need to act as if the command specified the top-level
 			 * list of parts.
@@ -4481,11 +4467,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			}
 			else
 				ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
-=======
-			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX);
-			/* This command never recurses */
-			ATPrepSetTableSpace(tab, rel, cmd->name, lockmode);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
 		case AT_SetRelOptions:	/* SET (...) */
@@ -5271,8 +5252,9 @@ ATAddToastIfNeeded(List **wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 
-<<<<<<< HEAD
-		if (tab->relkind == RELKIND_RELATION)
+		if (tab->relkind == RELKIND_RELATION ||
+			tab->relkind == RELKIND_MATVIEW)
+
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
@@ -5289,11 +5271,6 @@ ATAddToastIfNeeded(List **wqueue)
 			AlterTableCreateToastTable(tab->relid, (Datum) 0,
 									   false /* is_create */, is_part, false);
 		}
-=======
-		if (tab->relkind == RELKIND_RELATION ||
-			tab->relkind == RELKIND_MATVIEW)
-			AlterTableCreateToastTable(tab->relid, (Datum) 0);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 }
 
@@ -6404,16 +6381,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 				ResetExprContext(econtext);
 
-<<<<<<< HEAD
 				CHECK_FOR_INTERRUPTS();
-=======
-				if (heap_attisnull(tuple, attn + 1))
-					ereport(ERROR,
-							(errcode(ERRCODE_NOT_NULL_VIOLATION),
-							 errmsg("column \"%s\" contains null values",
-								  NameStr(newTupDesc->attrs[attn]->attname)),
-							 errtablecol(oldrel, attn + 1)));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			}
 
 			MemoryContextSwitchTo(oldCxt);
@@ -6497,7 +6465,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 				foreach(l, notnull_attrs)
 				{
-<<<<<<< HEAD
 					int					attn = lfirst_int(l);
 					
 					if (memtuple_attisnull(mtuple, mt_bind, attn + 1))
@@ -6505,22 +6472,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" contains null values",
 										NameStr(newTupDesc->attrs[attn]->attname))));
-=======
-					case CONSTR_CHECK:
-						if (!ExecQual(con->qualstate, econtext, true))
-							ereport(ERROR,
-									(errcode(ERRCODE_CHECK_VIOLATION),
-									 errmsg("check constraint \"%s\" is violated by some row",
-											con->name),
-									 errtableconstraint(oldrel, con->name)));
-						break;
-					case CONSTR_FOREIGN:
-						/* Nothing to do here */
-						break;
-					default:
-						elog(ERROR, "unrecognized constraint type: %d",
-							 (int) con->contype);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				}
 
 				foreach(l, tab->constraints)
@@ -12845,7 +12796,6 @@ ATExecAddInherit(Relation child_rel, Node *node, LOCKMODE lockmode)
 				 errmsg("cannot inherit from temporary relation \"%s\"",
 						RelationGetRelationName(parent_rel))));
 
-<<<<<<< HEAD
 	if (is_partition)
 	{
 		/* lookup all attrs */
@@ -12913,21 +12863,6 @@ inherit_parent(Relation parent_rel, Relation child_rel, bool is_partition, List 
 	HeapTuple	inheritsTuple;
 	int32		inhseqno;
 	List	   *children;
-=======
-	/* If parent rel is temp, it must belong to this session */
-	if (parent_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!parent_rel->rd_islocaltemp)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		errmsg("cannot inherit from temporary relation of another session")));
-
-	/* Ditto for the child */
-	if (child_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!child_rel->rd_islocaltemp)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		 errmsg("cannot inherit to temporary relation of another session")));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/*
 	 * Check for duplicates in the list of parents, and determine the highest
