@@ -2402,27 +2402,3 @@ getObjectClass(const ObjectAddress *object)
 	elog(ERROR, "unrecognized object class: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
-
-/*
- * SQL-level callable version of getObjectDescription
- */
-Datum
-pg_describe_object(PG_FUNCTION_ARGS)
-{
-	Oid			classid = PG_GETARG_OID(0);
-	Oid			objid = PG_GETARG_OID(1);
-	int32		subobjid = PG_GETARG_INT32(2);
-	char	   *description = NULL;
-	ObjectAddress address;
-
-	/* for "pinned" items in pg_depend, return null */
-	if (!OidIsValid(classid) && !OidIsValid(objid))
-		PG_RETURN_NULL();
-
-	address.classId = classid;
-	address.objectId = objid;
-	address.objectSubId = subobjid;
-
-	description = getObjectDescription(&address);
-	PG_RETURN_TEXT_P(cstring_to_text(description));
-}
