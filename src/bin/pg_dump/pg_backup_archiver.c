@@ -3884,37 +3884,7 @@ parallel_restore(ParallelArgs *args)
 	ArchiveHandle *AH = args->AH;
 	TocEntry   *te = args->te;
 	RestoreOptions *ropt = AH->ropt;
-<<<<<<< HEAD
-	int			retval;
-
-	setProcessIdentifier(args->pse, AH);
-
-	/*
-	 * Close and reopen the input file so we have a private file pointer that
-	 * doesn't stomp on anyone else's file pointer, if we're actually going to
-	 * need to read from the file. Otherwise, just close it except on Windows,
-	 * where it will possibly be needed by other threads.
-	 *
-	 * Note: on Windows, since we are using threads not processes, the reopen
-	 * call *doesn't* close the original file pointer but just open a new one.
-	 */
-	if (te->section == SECTION_DATA)
-		(AH->ReopenPtr) (AH);
-#ifndef WIN32
-	else
-		(AH->ClosePtr) (AH);
-#endif
-
-	/*
-	 * We need our own database connection, too
-	 */
-	ConnectDatabase((Archive *) AH, ropt->dbname,
-					ropt->pghost, ropt->pgport, ropt->username,
-					ropt->promptPassword,
-					false);
-=======
 	int			status;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	_doSetFixedOutputState(AH);
 
@@ -4287,7 +4257,7 @@ CloneArchive(ArchiveHandle *AH)
 		/* this also sets clone->connection */
 		ConnectDatabase((Archive *) clone, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
-						ropt->promptPassword);
+						ropt->promptPassword, false);
 	}
 	else
 	{
@@ -4312,7 +4282,7 @@ CloneArchive(ArchiveHandle *AH)
 		encname = pg_encoding_to_char(AH->public.encoding);
 
 		/* this also sets clone->connection */
-		ConnectDatabase((Archive *) clone, dbname, pghost, pgport, username, TRI_NO);
+		ConnectDatabase((Archive *) clone, dbname, pghost, pgport, username, TRI_NO, false);
 
 		/*
 		 * Set the same encoding, whatever we set here is what we got from

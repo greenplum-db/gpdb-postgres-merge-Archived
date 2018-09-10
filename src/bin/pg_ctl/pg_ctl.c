@@ -2214,10 +2214,10 @@ main(int argc, char **argv)
 					allow_core_files = true;
 					break;
 				case 'q':
-					wrapper = xstrdup(optarg);
+					wrapper = pg_strdup(optarg);
 					break;
 				case 'Q':
-					wrapper_args = xstrdup(optarg);
+					wrapper_args = pg_strdup(optarg);
 					break;
 				default:
 					/* getopt_long already issued a suitable error message */

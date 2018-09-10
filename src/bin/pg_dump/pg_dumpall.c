@@ -94,40 +94,12 @@ static int	server_version;
 static FILE *OPF;
 static char *filename = NULL;
 
-<<<<<<< HEAD
-int
-main(int argc, char *argv[])
-{
-	char	   *pghost = NULL;
-	char	   *pgport = NULL;
-	char	   *pguser = NULL;
-	char	   *pgdb = NULL;
-	char	   *use_role = NULL;
-	enum trivalue prompt_password = TRI_DEFAULT;
-	bool		data_only = false;
-	bool		globals_only = false;
-	bool		output_clean = false;
-	int			roles_only = 0;
-	bool		tablespaces_only = false;
-	bool		gp_syntax = false;
-	bool		no_gp_syntax = false;
-	PGconn	   *conn;
-	int			encoding;
-	const char *std_strings;
-	int			c,
-				ret;
-	int			optindex;
-
-	struct option long_options[] = {
-		{"binary-upgrade", no_argument, &binary_upgrade, 1},	/* not documented */
-=======
 #define exit_nicely(code) exit(code)
 
 int
 main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
 		{"file", required_argument, NULL, 'f'},
@@ -160,7 +132,7 @@ main(int argc, char *argv[])
 		{"inserts", no_argument, &inserts, 1},
 		{"resource-queues", no_argument, &resource_queues, 1},
 		{"resource-groups", no_argument, &resource_groups, 1},
-		{"roles-only", no_argument, &roles_only, 1},
+		{"roles-only", no_argument, NULL, 999},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
@@ -194,6 +166,8 @@ main(int argc, char *argv[])
 	int			c,
 				ret;
 	int			optindex;
+	bool		gp_syntax = false;
+	bool		no_gp_syntax = false;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
 
@@ -239,11 +213,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "acf:Fgh:il:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
-=======
 	while ((c = getopt_long(argc, argv, "acd:f:gh:i:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		switch (c)
 		{
@@ -302,6 +272,10 @@ main(int argc, char *argv[])
 			case 'r':
 				fprintf(stderr, _("-r option is not supported. Did you mean --roles-only or --resource-queues?\n"));
 				exit(1);
+				break;
+
+			case 999:	/* --roles-only */
+				roles_only = true;
 				break;
 
 			case 's':
@@ -1096,7 +1070,6 @@ dumpRoles(PGconn *conn)
 				i_rolvaliduntil,
 				i_rolreplication,
 				i_rolcomment,
-<<<<<<< HEAD
 				i_rolqueuename = -1,	/* keep compiler quiet */
 				i_rolgroupname = -1,	/* keep compiler quiet */
 				i_rolcreaterextgpfd = -1,
@@ -1104,8 +1077,6 @@ dumpRoles(PGconn *conn)
 				i_rolcreatewextgpfd = -1,
 				i_rolcreaterexthdfs = -1,
 				i_rolcreatewexthdfs = -1,
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				i_is_current_user;
 	int			i;
 	bool		exttab_auth = (server_version >= 80214);
@@ -1131,14 +1102,9 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
-<<<<<<< HEAD
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
-						  " %s %s %s %s"
-=======
 			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
 						  "rolname = current_user AS is_current_user "
->>>>>>> e472b921406407794bab911c64655b8b82375196
+						  " %s %s %s %s"
 						  "FROM pg_authid "
 						  "ORDER BY 2",
 						  resq_col, resgroup_col, extauth_col, hdfs_col);
@@ -1148,62 +1114,14 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
-<<<<<<< HEAD
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
+			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+						  "rolname = current_user AS is_current_user "
 						  " %s %s %s %s"
 						  "FROM pg_authid "
 						  "ORDER BY 2",
 						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else
 		error_unsupported_server_version(conn);
-=======
-			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
-						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
-	else if (server_version >= 80100)
-		printfPQExpBuffer(buf,
-						  "SELECT oid, rolname, rolsuper, rolinherit, "
-						  "rolcreaterole, rolcreatedb, "
-						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, false as rolreplication, "
-						  "null as rolcomment, "
-						  "rolname = current_user AS is_current_user "
-						  "FROM pg_authid "
-						  "ORDER BY 2");
-	else
-		printfPQExpBuffer(buf,
-						  "SELECT 0, usename as rolname, "
-						  "usesuper as rolsuper, "
-						  "true as rolinherit, "
-						  "usesuper as rolcreaterole, "
-						  "usecreatedb as rolcreatedb, "
-						  "true as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, "
-						  "rolname = current_user AS is_current_user "
-						  "FROM pg_shadow "
-						  "UNION ALL "
-						  "SELECT 0, groname as rolname, "
-						  "false as rolsuper, "
-						  "true as rolinherit, "
-						  "false as rolcreaterole, "
-						  "false as rolcreatedb, "
-						  "false as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, false "
-						  "FROM pg_group "
-						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
-						  " WHERE usename = groname) "
-						  "ORDER BY 2");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	res = executeQuery(conn, buf->data);
 
@@ -1220,7 +1138,6 @@ dumpRoles(PGconn *conn)
 	i_rolreplication = PQfnumber(res, "rolreplication");
 	i_rolcomment = PQfnumber(res, "rolcomment");
 	i_is_current_user = PQfnumber(res, "is_current_user");
-<<<<<<< HEAD
 
 	if (resource_queues)
 		i_rolqueuename = PQfnumber(res, "rolqueuename");
@@ -1239,8 +1156,6 @@ dumpRoles(PGconn *conn)
 			i_rolcreatewexthdfs = PQfnumber(res, "rolcreatewexthdfs");
 		}
 	}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Roles\n--\n\n");
@@ -1268,11 +1183,7 @@ dumpRoles(PGconn *conn)
 		 * will acquire the right properties even if it already exists (ie, it
 		 * won't hurt for the CREATE to fail).  This is particularly important
 		 * for the role we are connected as, since even with --clean we will
-<<<<<<< HEAD
-		 * have failed to drop it.  binary_upgrade cannot generate any errors,
-=======
 		 * have failed to drop it.	binary_upgrade cannot generate any errors,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * so we assume the current role is already created.
 		 */
 		if (!binary_upgrade ||
@@ -2223,29 +2134,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 	 */
 	do
 	{
-<<<<<<< HEAD
-#define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-
-		keywords[0] = "host";
-		values[0] = pghost;
-		keywords[1] = "port";
-		values[1] = pgport;
-		keywords[2] = "user";
-		values[2] = pguser;
-		keywords[3] = "password";
-		values[3] = password;
-		keywords[4] = "dbname";
-		values[4] = dbname;
-		keywords[5] = "fallback_application_name";
-		values[5] = progname;
-		keywords[6] = "options";
-		values[6] = "-c gp_session_role=utility";
-		keywords[7] = NULL;
-		values[7] = NULL;
-=======
-		int			argcount = 6;
+		int			argcount = 6 + 1;	/* one extra GPDB option */
 		PQconninfoOption *conn_opt;
 		char	   *err_msg = NULL;
 		int			i = 0;
@@ -2325,10 +2214,14 @@ connectDatabase(const char *dbname, const char *connection_string,
 			values[i] = dbname;
 			i++;
 		}
+
 		keywords[i] = "fallback_application_name";
 		values[i] = progname;
 		i++;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+		keywords[i] = "options";
+		values[i] = "-c gp_session_role=utility";
+		i++;
 
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);

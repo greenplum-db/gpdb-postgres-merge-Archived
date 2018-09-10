@@ -67,17 +67,11 @@ static const int oldObjectTypePriority[] =
 	4,							/* DO_FOREIGN_SERVER */
 	19,							/* DO_DEFAULT_ACL */
 	9,							/* DO_BLOB */
-<<<<<<< HEAD
-	11,							/* DO_BLOB_DATA */
-	2,							/* DO_COLLATION */
-	3,							/* DO_EXTPROTOCOL */
-=======
 	12,							/* DO_BLOB_DATA */
 	10,							/* DO_PRE_DATA_BOUNDARY */
 	13,							/* DO_POST_DATA_BOUNDARY */
 	20,							/* DO_EVENT_TRIGGER */
 	15							/* DO_REFRESH_MATVIEW */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 };
 #endif
 
@@ -122,21 +116,16 @@ static const int newObjectTypePriority[] =
 	17,							/* DO_FOREIGN_SERVER */
 	31,							/* DO_DEFAULT_ACL */
 	21,							/* DO_BLOB */
-<<<<<<< HEAD
-	23,							/* DO_BLOB_DATA */
-	3							/* DO_COLLATION */
-
-	,
-	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
-	8,							/* DO_EXTPROTOCOL */
-	22							/* DO_TYPE_STORAGE_OPTIONS */
-=======
 	24,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	25,							/* DO_POST_DATA_BOUNDARY */
 	32,							/* DO_EVENT_TRIGGER */
 	33							/* DO_REFRESH_MATVIEW */
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+	,
+	/* GPDB_84_MERGE_FIXME: Are these priorities sensible? */
+	8,							/* DO_EXTPROTOCOL */
+	22							/* DO_TYPE_STORAGE_OPTIONS */
 };
 
 static DumpId preDataBoundId;

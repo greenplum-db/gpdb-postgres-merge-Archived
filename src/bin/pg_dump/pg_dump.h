@@ -112,16 +112,12 @@ typedef enum
 	DO_DEFAULT_ACL,
 	DO_BLOB,
 	DO_BLOB_DATA,
-<<<<<<< HEAD
-	DO_COLLATION,
 	DO_EXTPROTOCOL,
-	DO_TYPE_STORAGE_OPTIONS
-=======
+	DO_TYPE_STORAGE_OPTIONS,
 	DO_PRE_DATA_BOUNDARY,
 	DO_POST_DATA_BOUNDARY,
 	DO_EVENT_TRIGGER,
 	DO_REFRESH_MATVIEW
->>>>>>> e472b921406407794bab911c64655b8b82375196
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -606,12 +602,8 @@ extern void sortDumpableObjects(DumpableObject **objs, int numObjs,
 extern void sortDumpableObjectsByTypeName(DumpableObject **objs, int numObjs);
 #if 0 /* GPDB_100_MERGE_FIXME: we don't support pre-7.3 dumps. */
 extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
-<<<<<<< HEAD
 #endif
-
-=======
 extern void sortDataAndIndexObjectsBySize(DumpableObject **objs, int numObjs);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * version specific routines
@@ -648,17 +640,15 @@ extern ForeignServerInfo *getForeignServers(Archive *fout,
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
-<<<<<<< HEAD
 extern void processExtensionTables(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
+extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 /* START MPP ADDITION */
 extern TypeStorageOptions *getTypeStorageOptions(Archive *fout, int *numTypes);
 extern ExtProtInfo *getExtProtocols(Archive *fout, int *numExtProtocols);
 
 extern bool	testExtProtocolSupport(Archive *fout);
 /* END MPP ADDITION */
-=======
-extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
 
 #endif   /* PG_DUMP_H */
