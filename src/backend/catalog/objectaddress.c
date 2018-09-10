@@ -2187,6 +2187,18 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
+		case OCLASS_EXTPROTOCOL:
+			{
+				appendStringInfo(&buffer, _("protocol %s"),
+								 ExtProtocolGetNameByOid(object->objectId));
+				break;
+			}
+		case OCLASS_COMPRESSION:
+			{
+				elog(NOTICE, "NOT YET IMPLEMENTED");
+				break;
+			}
+
 		default:
 			appendStringInfo(&buffer, "unrecognized object %u %u %d",
 							 object->classId,
@@ -2241,8 +2253,14 @@ getRelationDescription(StringInfo buffer, Oid relid)
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
-			appendStringInfo(buffer, _("table %s"),
-							 relname);
+			if (relForm->relstorage == RELSTORAGE_AOROWS)
+				appendStringInfo(buffer, _("append only table %s"), relname);
+			else if (relForm->relstorage == RELSTORAGE_AOCOLS)
+				appendStringInfo(buffer, _("append only columnar table %s"), relname);
+			else if (relForm->relstorage == RELSTORAGE_EXTERNAL)
+				appendStringInfo(buffer, _("external table %s"), relname);
+			else
+				appendStringInfo(buffer, _("table %s"), relname);
 			break;
 		case RELKIND_INDEX:
 			appendStringInfo(buffer, _("index %s"),
@@ -2254,6 +2272,18 @@ getRelationDescription(StringInfo buffer, Oid relid)
 			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfo(buffer, _("toast table %s"),
+							 relname);
+			break;
+		case RELKIND_AOSEGMENTS:
+			appendStringInfo(buffer, _("append only file segment listing %s"),
+							 relname);
+			break;
+		case RELKIND_AOBLOCKDIR:
+			appendStringInfo(buffer, _("append only file block directory %s"),
+							 relname);
+			break;
+		case RELKIND_AOVISIMAP:
+			appendStringInfo(buffer, _("append only file visibility map %s"),
 							 relname);
 			break;
 		case RELKIND_VIEW:
