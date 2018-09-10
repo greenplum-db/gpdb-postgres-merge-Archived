@@ -6508,7 +6508,7 @@ log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno, Page page)
  * Relation object available.
  */
 XLogRecPtr
-log_newpage_relFileNode(RelFileNode *relFileNode, ForkNumber forkNum, BlockNumber blkno,
+log_newpage(RelFileNode *relFileNode, ForkNumber forkNum, BlockNumber blkno,
 						Page page)
 {
 	xl_heap_newpage xlrec;
@@ -6621,7 +6621,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have a full-page image, restore it (using a cleanup lock) and
 	 * we're done.
 	 */
-	if (IsBkpBlockApplied(record, 0))
+	if (record->xl_info & XLR_BKP_BLOCK(0))
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, true, false);
 		return;
@@ -6692,7 +6692,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 		ResolveRecoveryConflictWithSnapshot(cutoff_xid, xlrec->node);
 
 	/* If we have a full-page image, restore it and we're done */
-	if (IsBkpBlockApplied(record, 0))
+	if (record->xl_info & XLR_BKP_BLOCK(0))
 	{
 		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;

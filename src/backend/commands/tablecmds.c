@@ -12652,7 +12652,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 		/* XLOG stuff */
 		if (use_wal)
-			log_newpage_relFileNode(&dst->smgr_rnode.node, forkNum, blkno, page);
+			log_newpage(&dst->smgr_rnode.node, forkNum, blkno, page);
 
 		PageSetChecksumInplace(page, blkno);
 

@@ -54,14 +54,14 @@ out_insert(StringInfo buf, bool isleaf, bool ismeta, XLogRecord *record)
 		datalen -= sizeof(xl_btree_metadata);
 	}
 
-	if ((IsBkpBlockApplied(record, 0)) && !ismeta && isleaf)
+	if ((record->xl_info & XLR_BKP_BLOCK(0)) != 0 && !ismeta && isleaf)
 	{
 		appendStringInfo(buf, "; page %u",
 						 ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 		return;					/* nothing to do */
 	}
 
-	if (!(IsBkpBlockApplied(record, 0)))
+	if ((record->xl_info & XLR_BKP_BLOCK(0)) == 0)
 	{
 		appendStringInfo(buf, "; add length %d item at offset %d in page %u",
 						 datalen, 
@@ -91,7 +91,7 @@ out_delete(StringInfo buf, XLogRecord *record)
 	char			*rec = XLogRecGetData(record);
 	xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-	if (IsBkpBlockApplied(record, 0))
+	if ((record->xl_info & XLR_BKP_BLOCK(0)) != 0)
 		return;
 
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);

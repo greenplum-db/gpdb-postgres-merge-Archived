@@ -404,8 +404,6 @@ extern bool IsStandbyMode(void);
 extern DBState GetCurrentDBState(void);
 extern bool IsRoleMirror(void);
 
-extern bool IsBkpBlockApplied(XLogRecord *record, uint8 block_id);
-
 extern XLogRecPtr
 last_xlog_replay_location(void);
 
