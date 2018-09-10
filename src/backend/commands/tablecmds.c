@@ -55,6 +55,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
 #include "catalog/storage.h"
+#include "catalog/storage_xlog.h"
 #include "catalog/toasting.h"
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbappendonlyxlog.h"
@@ -3305,8 +3306,8 @@ RenameRelation(RenameStmt *stmt)
 
 					ProcessUtility((Node *) renStmt,
 								   synthetic_sql,
+								   PROCESS_UTILITY_QUERY,
 								   NULL,
-								   false, /* not top level */
 								   dest,
 								   NULL);
 					renamed++;
@@ -7984,9 +7985,9 @@ ATPrepColumnDefault(Relation rel, bool recurse, AlterTableCmd *cmd)
 			heap_close(childrel, NoLock);
 
 			ProcessUtility((Node *)ats,
-							synthetic_sql,
+						    synthetic_sql,
+						    PROCESS_UTILITY_QUERY,
 							NULL,
-							false, /* not top level */
 							dest,
 							NULL);
 		}
@@ -8708,8 +8709,8 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 			ProcessUtility((Node *) ats,
 						   synthetic_sql,
+						   PROCESS_UTILITY_QUERY,
 						   NULL,
-						   false, /* not top level */
 						   None_Receiver,
 						   NULL);
 		}
@@ -14688,7 +14689,9 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 						false, /* target_is_pg_class */
 						false, /* swap_toast_by_content */
 						false, /* swap_stats */
+						true,
 						RecentXmin,
+						ReadNextMultiXactId(),
 						NULL);
 
 	/*
@@ -15861,7 +15864,7 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 		heap_close(oldrel, NoLock);
 
 		/* RenameRelation renames the type too */
-		RenameRelationInternal(oldrelid, tmpname1);
+		RenameRelationInternal(oldrelid, tmpname1, true);
 		CommandCounterIncrement();
 		RelationForgetRelation(oldrelid);
 
@@ -15884,7 +15887,7 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 			 * collision.  It would be nice to have an atomic
 			 * operation to rename and renamespace a relation... 
 			 */
-			RenameRelationInternal(newrelid, tmpname2);
+			RenameRelationInternal(newrelid, tmpname2, true);
 			CommandCounterIncrement();
 			RelationForgetRelation(newrelid);
 
@@ -15897,11 +15900,11 @@ ATPExecPartExchange(AlteredTableInfo *tab, Relation rel, AlterPartitionCmd *pc)
 			free_object_addresses(objsMoved);
 		}
 
-		RenameRelationInternal(newrelid, oldname);
+		RenameRelationInternal(newrelid, oldname, true);
 		CommandCounterIncrement();
 		RelationForgetRelation(newrelid);
 
-		RenameRelationInternal(oldrelid, newname);
+		RenameRelationInternal(oldrelid, newname, true);
 		CommandCounterIncrement();
 		RelationForgetRelation(oldrelid);
 
@@ -17455,8 +17458,8 @@ ATPExecPartSplit(Relation *rel,
 			heap_close(*rel, NoLock);
 			ProcessUtility((Node *)q->utilityStmt,
 						   synthetic_sql,
+						   PROCESS_UTILITY_QUERY,
 						   NULL,
-						   false, /* not top level */
 						   dest,
 						   NULL);
 			*rel = heap_open(relid, AccessExclusiveLock);
@@ -17986,8 +17989,8 @@ ATPExecPartTruncate(Relation rel,
 
 		ProcessUtility( (Node *) ts,
 					   synthetic_sql,
+					   PROCESS_UTILITY_QUERY,
 					   NULL,
-					   false, /* not top level */
 					   dest,
 					   NULL);
 
@@ -18070,37 +18073,6 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	relation_close(rel, NoLock);
 
 	return relid;
-}
-
-/*
- * The guts of relocating a table or materialized view to another namespace:
- * besides moving the relation itself, its dependent objects are relocated to
- * the new schema.
- */
-void
-AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
-							ObjectAddresses *objsMoved)
-{
-	Relation	classRel;
-
-	Assert(objsMoved != NULL);
-
-	/* OK, modify the pg_class row and pg_depend entry */
-	objsMoved = new_object_addresses();
-	AlterTableNamespaceInternal(rel, oldNspOid, nspOid, objsMoved);
-	free_object_addresses(objsMoved);
-
-	/* MPP-7825, MPP-6929, MPP-7600: metadata tracking */
-	if ((Gp_role == GP_ROLE_DISPATCH)
-		&& MetaTrackValidKindNsp(rel->rd_rel))
-		MetaTrackUpdObject(RelationRelationId,
-						   RelationGetRelid(rel),
-						   GetUserId(),
-						   "ALTER", "SET SCHEMA"
-				);
-
-	/* close rel, but keep lock until commit */
-	relation_close(rel, NoLock);
 }
 
 /*
@@ -18424,6 +18396,7 @@ PreCommit_on_commit_actions(void)
 				/* Do nothing (there shouldn't be such entries, actually) */
 				break;
 			case ONCOMMIT_DELETE_ROWS:
+				#if 0
 
 				/*
 				 * If this transaction hasn't accessed any temporary
@@ -18431,7 +18404,8 @@ PreCommit_on_commit_actions(void)
 				 * tables, as they must still be empty.
 				 */
 				if (MyXactAccessedTempRel)
-					oids_to_truncate = lappend_oid(oids_to_truncate, oc->relid);
+				#endif
+				oids_to_truncate = lappend_oid(oids_to_truncate, oc->relid);
 				break;
 			case ONCOMMIT_DROP:
 				{
@@ -18763,6 +18737,7 @@ char *alterTableCmdString(AlterTableType subtype)
 			break;
 
 		case AT_AddConstraint: /* add constraint */
+		case AT_ReAddConstraint: /* add constraint */
 		case AT_AddConstraintRecurse: /* internal to commands/tablecmds.c */
 		case AT_AddIndexConstraint:
 			cmdstring = pstrdup("add a constraint to");

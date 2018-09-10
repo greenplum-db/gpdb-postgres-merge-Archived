@@ -945,6 +945,11 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_TYPE:
 		case OBJECT_VIEW:
 			return true;
+		case OBJECT_EXTTABLE:
+		case OBJECT_EXTPROTOCOL:
+		case OBJECT_RESQUEUE:
+		case OBJECT_RESGROUP:
+			return false; /*GPDB_93_MERGE_FIXME is these gp types support trigger? */
 	}
 	return true;
 }
@@ -993,6 +998,9 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_DEFACL:
 		case OCLASS_EXTENSION:
 			return true;
+		case OCLASS_EXTPROTOCOL:
+		case OCLASS_COMPRESSION:
+			return false;/*GPDB_93_MERGE_FIXME is these gp types support trigger? */
 
 		case MAX_OCLASS:
 

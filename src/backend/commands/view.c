@@ -513,6 +513,18 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	StoreViewQuery(viewOid, viewParse, stmt->replace);
 
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		ViewStmt *dispatchStmt = (ViewStmt *) copyObject(stmt);
+		dispatchStmt->query = (Node *) viewParse_orig;
+		CdbDispatchUtilityStatement((Node *) dispatchStmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									GetAssignedOidsForDispatch(),
+									NULL);
+	}
+
 	return viewOid;
 }
 
@@ -533,15 +545,5 @@ StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 	 */
 	DefineViewRules(viewOid, viewParse, replace);
 
-	if (Gp_role == GP_ROLE_DISPATCH)
-	{
-		ViewStmt *dispatchStmt = (ViewStmt *) copyObject(stmt);
-		dispatchStmt->query = (Node *) viewParse_orig;
-		CdbDispatchUtilityStatement((Node *) dispatchStmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
-									GetAssignedOidsForDispatch(),
-									NULL);
-	}
+
 }

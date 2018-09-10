@@ -157,7 +157,6 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 static CopyState BeginCopy(bool is_from, Relation rel, Node *raw_query,
 		  const char *queryString, List *attnamelist, List *options);
 static void EndCopy(CopyState cstate);
-static void ClosePipeToProgram(CopyState cstate);
 static CopyState BeginCopyTo(Relation rel, Node *query, const char *queryString,
 			const char *filename, bool is_program, List *attnamelist,
 			List *options, bool skip_ext_partition);
@@ -246,7 +245,8 @@ static void cdbFlushInsertBatches(List *resultRels,
 					  EState *estate,
 					  CommandId mycid,
 					  int hi_options,
-					  TupleTableSlot *baseSlot);
+					  TupleTableSlot *baseSlot,
+					  int firstBufferedLineNo);
 
 /* ==========================================================================
  * The following macros aid in major refactoring of data processing code (in
@@ -2087,27 +2087,6 @@ MangleCopyFileName(CopyState cstate)
 }
 
 /*
- * Closes the pipe to an external program, checking the pclose() return code.
- */
-static void
-ClosePipeToProgram(CopyState cstate)
-{
-	int			pclose_rc;
-
-	Assert(cstate->is_program);
-
-	pclose_rc = ClosePipeStream(cstate->copy_file);
-	if (pclose_rc == -1)
-		ereport(ERROR,
-				(errmsg("could not close pipe to external command: %m")));
-	else if (pclose_rc != 0)
-		ereport(ERROR,
-				(errmsg("program \"%s\" failed",
-						cstate->filename),
-				 errdetail_internal("%s", wait_result_to_str(pclose_rc))));
-}
-
-/*
  * Release resources allocated in a cstate for COPY TO/FROM.
  */
 static void
@@ -2272,7 +2251,7 @@ BeginCopyTo(Relation rel,
 		}
 		else
 		{
-			mode_t		oumask; /* Pre-existing umask value */
+			mode_t oumask; /* Pre-existing umask value */
 			struct stat st;
 
 			/*
@@ -2282,7 +2261,7 @@ BeginCopyTo(Relation rel,
 			if (!is_absolute_path(filename))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
-						 errmsg("relative path not allowed for COPY to file")));
+								errmsg("relative path not allowed for COPY to file")));
 
 			oumask = umask(S_IWGRP | S_IWOTH);
 			cstate->copy_file = AllocateFile(filename, PG_BINARY_W);
@@ -2290,7 +2269,7 @@ BeginCopyTo(Relation rel,
 			if (cstate->copy_file == NULL)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not open file \"%s\" for writing: %m", filename)));
+								errmsg("could not open file \"%s\" for writing: %m", filename)));
 
 			// Increase buffer size to improve performance  (cmcdevitt)
 			setvbuf(cstate->copy_file, NULL, _IOFBF, 393216); // 384 Kbytes
@@ -2299,7 +2278,8 @@ BeginCopyTo(Relation rel,
 			if (S_ISDIR(st.st_mode))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is a directory", filename)));
+								errmsg("\"%s\" is a directory", filename)));
+		}
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -3228,7 +3208,8 @@ cdbFlushInsertBatches(List *resultRels,
 					  EState *estate,
 					  CommandId mycid,
 					  int hi_options,
-					  TupleTableSlot *baseSlot)
+					  TupleTableSlot *baseSlot,
+					  int firstBufferedLineNo)
 {
 	ListCell *cell;
 	ResultRelInfo *oldRelInfo;
@@ -3244,7 +3225,8 @@ cdbFlushInsertBatches(List *resultRels,
 								baseSlot,
 								relInfo->biState,
 								relInfo->nBufferedTuples,
-								relInfo->bufferedTuples);
+								relInfo->bufferedTuples,
+								firstBufferedLineNo);
 		}
 		relInfo->nBufferedTuples = 0;
 		relInfo->bufferedTuplesSize = 0;
@@ -3287,6 +3269,7 @@ CopyFrom(CopyState cstate)
 	bool	   *baseNulls;
 	PartitionData *partitionData = NULL;
 	GpDistributionData *part_distData = NULL;
+	int			firstBufferedLineNo = 0;
 
 	Assert(cstate->rel);
 
@@ -3875,6 +3858,8 @@ CopyFrom(CopyState cstate)
 			/* OK, store the tuple and create index entries for it */
 			if (useHeapMultiInsert) {
 				HeapTuple	tuple;
+				if (resultRelInfo->nBufferedTuples == 0)
+					firstBufferedLineNo = cstate->cur_lineno;
 				tuple = ExecFetchSlotHeapTuple(slot);
 
 				resultRelInfoList = list_append_unique_ptr(resultRelInfoList, resultRelInfo);
@@ -3906,7 +3891,8 @@ CopyFrom(CopyState cstate)
 				if (nTotalBufferedTuples == MAX_BUFFERED_TUPLES ||
 					totalBufferedTuplesSize > 65535)
 				{
-					cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, slot);
+					cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options,
+										  slot, firstBufferedLineNo);
 					nTotalBufferedTuples = 0;
 					totalBufferedTuplesSize = 0;
 				}
@@ -3997,7 +3983,8 @@ CopyFrom(CopyState cstate)
 	elog(DEBUG1, "Segment %u, Copied %lu rows.", GpIdentity.segindex, processed);
 	/* Flush any remaining buffered tuples */
 	if (useHeapMultiInsert)
-		cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options, baseSlot);
+		cdbFlushInsertBatches(resultRelInfoList, cstate, estate, mycid, hi_options,
+							  baseSlot, firstBufferedLineNo);
 
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;

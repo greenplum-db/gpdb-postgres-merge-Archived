@@ -291,9 +291,13 @@ extern XLogRecPtr log_newpage_buffer(Buffer buffer);
 extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
 								  Page page);
 
+
+extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
+										  ForkNumber forkNum,
+										  BlockNumber blkno, Page page);
 // GPDB_93_MERGE_FIXME: resolve these with the above (moved from heapam.h)
 #if 0
-extern void log_heap_newpage(Relation rel, 
+extern void log_heap_newpage(Relation rel,
 							 Page page,
 							 BlockNumber bno);
 extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
@@ -311,10 +315,6 @@ extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 				TransactionId cutoff_xid,
 				OffsetNumber *offsets, int offcnt);
 
-
-extern XLogRecPtr log_newpage_relFileNode(RelFileNode *relFileNode,
-										  ForkNumber forkNum,
-										  BlockNumber blkno, Page page);
 
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
 				 Buffer vm_buffer, TransactionId cutoff_xid);

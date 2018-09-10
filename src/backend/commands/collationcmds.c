@@ -45,6 +45,7 @@ typedef struct
 	int			enc;			/* encoding */
 } CollAliasData;
 
+Datum pg_import_system_collations(PG_FUNCTION_ARGS);
 
 /*
  * CREATE COLLATION
