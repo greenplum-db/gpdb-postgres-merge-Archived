@@ -1515,6 +1515,9 @@ make_setop_translation_list(Query *query, Index newvarno,
  * (Note subquery is not necessarily equal to rte->subquery; it could be a
  * processed copy of that.)
  * lowest_outer_join is the lowest outer join above the subquery, or NULL.
+ *
+ * In GPDB, 'rte' can be passed as NULL, if this is a sublink, rather
+ * than a subselect in the FROM list, that we are trying to pull up.
  */
 bool
 is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
@@ -1565,7 +1568,7 @@ is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
 	 * couldn't prevent information leakage once the RTE's Vars are scattered
 	 * about in the upper query.
 	 */
-	if (rte->security_barrier)
+	if (rte && rte->security_barrier)
 		return false;
 
 	/*
@@ -1575,7 +1578,7 @@ is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
 	 * contain references to rels outside the outer join, which is a semantic
 	 * mess that doesn't seem worth addressing at the moment.
 	 */
-	if (rte->lateral && lowest_outer_join != NULL)
+	if (rte && rte->lateral && lowest_outer_join != NULL)
 	{
 		Relids		lvarnos = pull_varnos_of_level((Node *) subquery, 1);
 		Relids		jvarnos = get_relids_in_jointree((Node *) lowest_outer_join,

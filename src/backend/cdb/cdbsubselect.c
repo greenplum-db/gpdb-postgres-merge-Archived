@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
@@ -789,6 +790,7 @@ add_notin_subquery_rte(Query *parse, Query *subselect)
 	subq_rte = addRangeTableEntryForSubquery(NULL,	/* pstate */
 											 subselect,
 											 makeAlias("NotIn_SUBQUERY", NIL),
+											 false, /* not lateral */ // GPDB_93_MERGE_FIXME: is that right?
 											 false /* inFromClause */ );
 	parse->rtable = lappend(parse->rtable, subq_rte);
 
@@ -831,6 +833,7 @@ add_expr_subquery_rte(Query *parse, Query *subselect)
 	subq_rte = addRangeTableEntryForSubquery(NULL,	/* pstate */
 											 subselect,
 											 makeAlias("Expr_SUBQUERY", NIL),
+											 false, /* not lateral */ // GPDB_93_MERGE_FIXME: is that right?
 											 false /* inFromClause */ );
 	parse->rtable = lappend(parse->rtable, subq_rte);
 

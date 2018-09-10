@@ -6926,8 +6926,8 @@ atpxPartAddList(Relation rel,
 			if (!bSetTemplate)
 				ProcessUtility(q,
 							   synthetic_sql,
+							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
-							   false,	/* not top level */
 							   dest,
 							   NULL);
 			else
@@ -8428,7 +8428,8 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  consrc,
 									  con->conislocal,
 									  con->coninhcount,
-									  false);
+									  false, /* conNoInherit */
+									  false /* is_internal */); /* GPDB_93_MERGE_FIXME: should this be considered internal? */
 				break;
 			}
 
@@ -8482,7 +8483,8 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  NULL,
 									  con->conislocal,
 									  con->coninhcount,
-									  true);
+									  true, /* conNoInherit */
+									  false /* is_internal */); /* GPDB_93_MERGE_FIXME: should this be considered internal? */
 
 				heap_close(frel, AccessExclusiveLock);
 				break;

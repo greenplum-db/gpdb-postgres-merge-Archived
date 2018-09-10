@@ -13,6 +13,7 @@
 #ifndef SHAREDSNAPSHOT_H
 #define SHAREDSNAPSHOT_H
 
+#include "storage/proc.h"
 #include "utils/combocid.h"
 #include "utils/tqual.h"
 

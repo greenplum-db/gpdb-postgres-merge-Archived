@@ -778,8 +778,7 @@ cdb_grouping_planner(PlannerInfo *root,
 				   list_length((List *) agg_costs->dqaArgs) == 1);
 			distinct_pathkey = cdb_make_pathkey_for_expr(root,
 														 linitial(agg_costs->dqaArgs),
-														 list_make1(makeString("=")),
-														 true);
+														 list_make1(makeString("=")));
 			l = list_make1(distinct_pathkey);
 
 			if (!cdbpathlocus_collocates(root, plan_2p.input_locus, l, false /* exact_match */ ))
@@ -882,8 +881,7 @@ cdb_grouping_planner(PlannerInfo *root,
 			 */
 			distinct_pathkey = cdb_make_pathkey_for_expr(root,
 														 ctx.dqaArgs[i].distinctExpr,
-														 list_make1(makeString("=")),
-														 true);
+														 list_make1(makeString("=")));
 			l = list_make1(distinct_pathkey);
 
 			if (cdbpathlocus_collocates(root, plan_3p.input_locus, l, false /* exact_match */ ))
@@ -4537,6 +4535,7 @@ add_second_stage_agg(PlannerInfo *root,
 	newrte = addRangeTableEntryForSubquery(NULL,
 										   subquery,
 										   makeAlias(alias, NULL),
+										   false, /* lateral? */ // GPDB_93_MERGE_FIXME: can this handle laterals? does it need to?
 										   TRUE);
 	newrtable = list_make1(newrte);
 
@@ -4770,8 +4769,6 @@ reconstruct_pathkeys(PlannerInfo *root, List *pathkeys, int *resno_map,
 			new_pathkeys = lappend(new_pathkeys, copyObject(pathkey));
 		}
 	}
-
-	new_pathkeys = canonicalize_pathkeys(root, new_pathkeys);
 
 	return new_pathkeys;
 }
