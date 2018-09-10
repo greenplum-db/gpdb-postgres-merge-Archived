@@ -42,17 +42,12 @@
 #include "storage/proc.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
-<<<<<<< HEAD
-#include "utils/memutils.h"
 #include "utils/fmgroids.h"
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
-=======
-#include "utils/ps_status.h"
 #include "pgtar.h"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 typedef struct
 {
@@ -65,12 +60,8 @@ typedef struct
 } basebackup_options;
 
 
-<<<<<<< HEAD
 static bool match_exclude_list(char *path, List *exclude);
 static int64 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces, List *exclude);
-=======
-static int64 sendDir(char *path, int basepathlen, bool sizeonly);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static int64 sendTablespace(char *path, bool sizeonly);
 static bool sendFile(char *readfilename, char *tarfilename,
 		 struct stat * statbuf, bool missing_ok);
@@ -130,14 +121,16 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	datadirpathlen = strlen(DataDir);
 
-<<<<<<< HEAD
-	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &labelfile);
+	backup_started_in_recovery = RecoveryInProgress();
+
+	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
+								  &labelfile);
 	Assert(!XLogRecPtrIsInvalid(startptr));
 
 	elogif(!debug_basebackup, LOG,
 		   "basebackup perform -- "
 		   "Basebackup start xlog location = %X/%X",
-		   startptr.xlogid, startptr.xrecoff);
+		   (uint32) (startptr >> 32), (uint32) startptr);
 
 	/*
 	 * Set xlogCleanUpTo so that checkpoint process knows
@@ -146,13 +139,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	WalSndSetXLogCleanUpTo(startptr);
 
 	SIMPLE_FAULT_INJECTOR(BaseBackupPostCreateCheckpoint);
-=======
-	backup_started_in_recovery = RecoveryInProgress();
-
-	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
-								  &labelfile);
-	SendXlogRecPtrResult(startptr, starttli);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -161,7 +147,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		struct dirent *de;
 		tablespaceinfo *ti;
 
-		SendXlogRecPtrResult(startptr);
+		SendXlogRecPtrResult(startptr, starttli);
 
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
@@ -209,10 +195,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(linkpath);
-<<<<<<< HEAD
 			ti->rpath = relpath ? pstrdup(relpath) : NULL;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
@@ -248,7 +231,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			pq_sendint(&buf, 0, 2);		/* natts */
 			pq_endmessage(&buf);
 
-<<<<<<< HEAD
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
@@ -265,35 +247,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 							(errcode_for_file_access(),
 							 errmsg("could not stat control file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
-				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
-			}
-			else
-				sendTablespace(ti->path, false);
-
-			/* In the main tar, include pg_control last. */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
-			if (ti->path == NULL)
-			{
-				struct stat statbuf;
-
-				/* In the main tar, include the backup_label first... */
-				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
-
-				/* ... then the bulk of the files ... */
-				sendDir(".", 1, false);
-
-				/* ... and pg_control after everything else. */
-				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
-					ereport(ERROR,
-							(errcode_for_file_access(),
-							 errmsg("could not stat control file \"%s\": %m",
-									XLOG_CONTROL_FILE)));
-<<<<<<< HEAD
-				}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
 			else
@@ -497,10 +450,9 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 					errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
 			}
 
-<<<<<<< HEAD
 			elogif(debug_basebackup, LOG,
-				   "basebackup perform -- Sent xlog file %s", fn);
-=======
+				   "basebackup perform -- Sent xlog file %s", walFiles[i]);
+
 			/* XLogSegSize is a multiple of 512, so no need for padding */
 			FreeFile(fp);
 		}
@@ -519,7 +471,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			char	   *fname = lfirst(lc);
 
 			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", fname);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 			if (lstat(pathbuf, &statbuf) != 0)
 				ereport(ERROR,
@@ -879,7 +830,8 @@ sendTablespace(char *path, bool sizeonly)
 			 tablespace_version_directory());
 
 	/*
-	 * Store a directory entry in the tar file so we get the permissions right.
+	 * Store a directory entry in the tar file so we get the permissions
+	 * right.
 	 */
 	if (lstat(pathbuf, &statbuf) != 0)
 	{
@@ -921,50 +873,6 @@ match_exclude_list(char *path, List *exclude)
 	}
 
 	return false;
-}
-
-/*
- * Include the tablespace directory pointed to by 'path' in the output tar
- * stream.	If 'sizeonly' is true, we just calculate a total length and return
- * it, without actually sending anything.
- */
-static int64
-sendTablespace(char *path, bool sizeonly)
-{
-	int64		size;
-	char		pathbuf[MAXPGPATH];
-	struct stat statbuf;
-
-	/*
-	 * 'path' points to the tablespace location, but we only want to include
-	 * the version directory in it that belongs to us.
-	 */
-	snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path,
-			 TABLESPACE_VERSION_DIRECTORY);
-
-	/*
-	 * Store a directory entry in the tar file so we get the permissions
-	 * right.
-	 */
-	if (lstat(pathbuf, &statbuf) != 0)
-	{
-		if (errno != ENOENT)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file or directory \"%s\": %m",
-							pathbuf)));
-
-		/* If the tablespace went away while scanning, it's no error. */
-		return 0;
-	}
-	if (!sizeonly)
-		_tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf);
-	size = 512;					/* Size of the header just added */
-
-	/* Send all the files in the tablespace version directory */
-	size += sendDir(pathbuf, strlen(path), sizeonly);
-
-	return size;
 }
 
 /*
@@ -1016,12 +924,8 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 * dp_pg_stop_backup() will check that too, but it's better to stop
 		 * the backup early than continue to the end and fail there.
 		 */
-<<<<<<< HEAD
-		if (ProcDiePending || walsender_ready_to_stop)
-=======
 		CHECK_FOR_INTERRUPTS();
 		if (RecoveryInProgress() != backup_started_in_recovery)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("the standby was promoted during online backup"),
@@ -1210,22 +1114,6 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
  */
 #define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
 
-<<<<<<< HEAD
-static int
-_tarChecksum(char *header)
-{
-	int			i,
-				sum;
-
-	sum = 0;
-	for (i = 0; i < 512; i++)
-		if (i < 148 || i >= 156)
-			sum += 0xFF & header[i];
-	return sum + 256;			/* Assume 8 blanks in checksum field */
-}
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 /*
  * Given the member, write the TAR header & send the file.
  *
@@ -1235,11 +1123,7 @@ _tarChecksum(char *header)
  * and the file did not exist.
  */
 static bool
-<<<<<<< HEAD
-sendFile(char *readfilename, char *tarfilename, struct stat *statbuf,
-=======
 sendFile(char *readfilename, char *tarfilename, struct stat * statbuf,
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 bool missing_ok)
 {
 	FILE	   *fp;

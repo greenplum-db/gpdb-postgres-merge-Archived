@@ -104,7 +104,11 @@ bool		am_cascading_walsender = false;		/* Am I cascading WAL to
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
 int			wal_sender_timeout = 60 * 1000;		/* maximum time to send one
 												 * WAL data message */
-int			repl_catchup_within_range = XLogSegsPerFile;
+// GPDB_93_MERGE_FIXME: This was XLogSegsPerFile. But I don't understand why.
+// What was so special about crossing the xlogid boundary? I kept the old
+// value, and maybe it's a suitable one, but it should probably be just a
+// constant like '64' or something.
+int			repl_catchup_within_range = ((uint32) 0xffffffff) / XLogSegSize;
 
 static bool replication_started = false; 	/* Started streaming yet? */
 
