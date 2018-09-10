@@ -418,10 +418,9 @@ namespace gpdb {
 	Var *MakeVar(Index varno, AttrNumber varattno, Oid vartype, int32 vartypmod, Index varlevelsup);
 
 	// memory allocation functions
-	void *MemCtxtAllocImpl(MemoryContext context, Size size, const char* file, const char * func, int line);
-	void *MemCtxtAllocZeroAlignedImpl(MemoryContext context, Size size, const char* file, const char * func, int line);
-	void *MemCtxtAllocZeroImpl(MemoryContext context, Size size, const char* file, const char * func, int line);
-	void *MemCtxtReallocImpl(void *pointer, Size size, const char* file, const char * func, int line);
+	void *MemCtxtAllocZeroAligned(MemoryContext context, Size size);
+	void *MemCtxtAllocZero(MemoryContext context, Size size);
+	void *MemCtxtRealloc(void *pointer, Size size);
 	void *GPDBAlloc(Size size);
 	void GPDBFree(void *ptr);
 
@@ -622,7 +621,7 @@ namespace gpdb {
 	Expr *EvaluateExpr(Expr *expr, Oid result_type, int32 typmod);
 	
 	// interpret the value of "With oids" option from a list of defelems
-	bool InterpretOidsOption(List *options);
+	bool InterpretOidsOption(List *options, bool allowOids);
 	
 	// extract string value from defelem's value
 	char *DefGetString(DefElem *defelem);
@@ -691,8 +690,8 @@ namespace gpdb {
 
 #define Palloc0Fast(sz) \
 	( MemSetTest(0, (sz)) ? \
-		gpdb::MemCtxtAllocZeroAlignedImpl(CurrentMemoryContext, (sz), __FILE__, PG_FUNCNAME_MACRO, __LINE__) : \
-		gpdb::MemCtxtAllocZeroImpl(CurrentMemoryContext, (sz), __FILE__, PG_FUNCNAME_MACRO, __LINE__))
+		gpdb::MemCtxtAllocZeroAligned(CurrentMemoryContext, (sz)) : \
+		gpdb::MemCtxtAllocZero(CurrentMemoryContext, (sz)))
 
 #ifdef __GNUC__
 

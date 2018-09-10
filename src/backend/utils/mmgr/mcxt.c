@@ -1112,7 +1112,7 @@ MemoryContextCreate(NodeTag tag, Size size,
  * nodes/memnodes.h into postgres.h which seems a bad idea.
  */
 void *
-MemoryContextAllocImpl(MemoryContext context, Size size, const char* sfile, const char *sfunc, int sline)
+MemoryContextAlloc(MemoryContext context, Size size)
 {
 	void *ret;
 
@@ -1152,7 +1152,7 @@ MemoryContextAllocImpl(MemoryContext context, Size size, const char* sfile, cons
  *	is a very common combination, so we provide the combined operation.
  */
 void *
-MemoryContextAllocZeroImpl(MemoryContext context, Size size, const char* sfile, const char *sfunc, int sline)
+MemoryContextAllocZero(MemoryContext context, Size size)
 {
 	void	   *ret;
 
@@ -1195,7 +1195,7 @@ MemoryContextAllocZeroImpl(MemoryContext context, Size size, const char* sfile, 
  *	is so often called with compile-time-constant sizes.
  */
 void *
-MemoryContextAllocZeroAlignedImpl(MemoryContext context, Size size, const char* sfile, const char *sfunc, int sline)
+MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 {
 	void	   *ret;
 
@@ -1243,7 +1243,7 @@ palloc(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-	return (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	return (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 }
 
 void *
@@ -1260,7 +1260,7 @@ palloc0(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 
 	MemSetAligned(ret, 0, size);
 
@@ -1272,7 +1272,7 @@ palloc0(Size size)
  *		Release an allocated chunk.
  */
 void
-MemoryContextFreeImpl(void *pointer, const char *sfile, const char *sfunc, int sline)
+pfree(void *pointer)
 {
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
@@ -1316,7 +1316,7 @@ MemoryContextFreeImpl(void *pointer, const char *sfile, const char *sfunc, int s
  *		Adjust the size of a previously allocated chunk.
  */
 void *
-MemoryContextReallocImpl(void *pointer, Size size, const char *sfile, const char *sfunc, int sline)
+repalloc(void *pointer, Size size)
 {
 	StandardChunkHeader *header;
 	void *ret;

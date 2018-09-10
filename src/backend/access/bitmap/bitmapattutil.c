@@ -120,7 +120,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 		lovHeap = heap_open(heapid, AccessExclusiveLock);
 		lovIndex = index_open(idxid, AccessExclusiveLock);
 
-		RelationSetNewRelfilenode(lovHeap, RecentXmin);
+		RelationSetNewRelfilenode(lovHeap, RecentXmin, GetOldestMultiXactId());
 		RelationSetNewRelfilenode(lovIndex, InvalidTransactionId, InvalidMultiXactId);
 
 		/*
@@ -248,7 +248,10 @@ _bitmap_create_lov_heapandindex(Relation rel,
 						 /* deferrable */ false,
 						 /* initdeferred */ false,
 						 /* allow_system_table_mods */ true,
-						 false, false, NULL);
+						 /* skip_build */ false,
+						 /* concurrent */ false,
+						 /* is_internal */ false,	/* GPDB_93_MERGE_FIXME: What's the appropriate is_internal flag? */
+						 NULL);
 	*lovIndexOid = idxid;
 
 	heap_close(lov_heap_rel, NoLock);

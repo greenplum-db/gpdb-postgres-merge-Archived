@@ -251,7 +251,7 @@ checkIfFailedDueToRecoveryInProgress(fts_segment_info *ftsInfo)
 			elogif(gp_log_fts >= GPVARS_VERBOSITY_VERBOSE, LOG,
 				 "FTS: detected segment is in recovery mode replayed (%s) (content=%d) "
 				 "primary dbid=%d, mirror dbid=%d",
-				 XLogLocationToString(&tmpptr),
+				 XLogLocationToString(tmpptr),
 				 ftsInfo->primary_cdbinfo->segindex,
 				 ftsInfo->mirror_cdbinfo->dbid,
 				 ftsInfo->mirror_cdbinfo->dbid);

@@ -55,8 +55,9 @@
 #define CDB_PALLOC_CALLER_ID
 */
 
+// GPDB_93_MERGE_FIXME: This mechanism got broken.
 #ifdef USE_ASSERT_CHECKING
-#define CDB_PALLOC_TAGS
+//#define CDB_PALLOC_TAGS
 #endif
 
 /* CDB_PALLOC_TAGS implies CDB_PALLOC_CALLER_ID */
