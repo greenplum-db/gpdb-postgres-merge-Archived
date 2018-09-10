@@ -118,6 +118,7 @@ install-data: $(BKIFILES) installdirs
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(datadir)'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/cdb_init.d'
 
 .PHONY: uninstall-data
 uninstall-data:
