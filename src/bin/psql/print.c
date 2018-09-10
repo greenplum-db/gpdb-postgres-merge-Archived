@@ -131,38 +131,7 @@ static void IsPagerNeeded(const printTableContent *cont, const int extra_lines, 
 static void print_aligned_vertical(const printTableContent *cont, FILE *fout);
 
 
-<<<<<<< HEAD
-static void *
-pg_local_malloc(size_t size)
-{
-	void	   *tmp;
-
-	tmp = malloc(size);
-	if (!tmp)
-	{
-		fprintf(stderr, _("out of memory\n"));
-		exit(EXIT_FAILURE);
-	}
-	return tmp;
-}
-
-static void *
-pg_local_calloc(int count, size_t size)
-{
-	void	   *tmp;
-
-	tmp = calloc(count, size);
-	if (!tmp)
-	{
-		fprintf(stderr, _("out of memory\n"));
-		exit(EXIT_FAILURE);
-	}
-	return tmp;
-}
-
 /* Count number of digits in integral part of number */
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static int
 integer_digits(const char *my_str)
 {
@@ -202,7 +171,6 @@ additional_numeric_locale_len(const char *my_str)
 static char *
 format_numeric_locale(const char *my_str)
 {
-<<<<<<< HEAD
 	char	   *new_str;
 	int			new_len,
 				int_len,
@@ -218,7 +186,7 @@ format_numeric_locale(const char *my_str)
 		return pg_strdup(my_str);
 
 	new_len = strlen(my_str) + additional_numeric_locale_len(my_str);
-	new_str = pg_local_malloc(new_len + 1);
+	new_str = pg_malloc(new_len + 1);
 	new_str_pos = 0;
 	int_len = integer_digits(my_str);
 
@@ -229,21 +197,6 @@ format_numeric_locale(const char *my_str)
 
 	/* process sign */
 	if (my_str[0] == '-' || my_str[0] == '+')
-=======
-	int			i,
-				j,
-				int_len = integer_digits(my_str),
-				leading_digits;
-	int			groupdigits = atoi(grouping);
-	int			new_str_start = 0;
-	char	   *new_str = pg_malloc(strlen_with_numeric_locale(my_str) + 1);
-
-	leading_digits = (int_len % groupdigits != 0) ?
-		int_len % groupdigits : groupdigits;
-
-	if (my_str[0] == '-')		/* skip over sign, affects grouping
-								 * calculations */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	{
 		new_str[new_str_pos++] = my_str[0];
 		my_str++;

@@ -16,17 +16,13 @@ subdir = src/bin/scripts
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-<<<<<<< HEAD
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
 
-PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb reindexdb
-=======
 PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb reindexdb pg_isready
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 

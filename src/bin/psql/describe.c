@@ -1510,22 +1510,15 @@ describeOneTableDetails(const char *schemaname,
 		pg_strdup(PQgetvalue(res, 0, 6)) : NULL;
 	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 7)) : 0;
-<<<<<<< HEAD
-	tableinfo.reloftype = (pset.sversion >= 90000 && strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
-		strdup(PQgetvalue(res, 0, 8)) : 0;
-	tableinfo.relpersistence = (pset.sversion >= 90100 && strcmp(PQgetvalue(res, 0, 9), "") != 0) ?
-		PQgetvalue(res, 0, 9)[0] : 0;
-
-	/* GPDB Only:  relstorage  */
-	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
-
-=======
 	tableinfo.reloftype = (pset.sversion >= 90000 &&
 						   strcmp(PQgetvalue(res, 0, 8), "") != 0) ?
 		pg_strdup(PQgetvalue(res, 0, 8)) : NULL;
 	tableinfo.relpersistence = (pset.sversion >= 90100) ?
 		*(PQgetvalue(res, 0, 9)) : 0;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+	/* GPDB Only:  relstorage  */
+	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
+
 	PQclear(res);
 	res = NULL;
 
@@ -1612,18 +1605,9 @@ describeOneTableDetails(const char *schemaname,
 	{
 		appendPQExpBuffer(&buf, ",\n  a.attstorage ");
 		appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
-<<<<<<< HEAD
 		if (tableinfo.relstorage == 'c')
 			if (isGE42 == true)
 		     appendPQExpBuffer(&buf, ",\n pg_catalog.array_to_string(e.attoptions, ',')");
-		appendPQExpBuffer(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
-	}
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a ");
-	if (isGE42 == true)
-	{
-	  appendPQExpBuffer(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
-	  appendPQExpBuffer(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
-=======
 
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
@@ -1632,8 +1616,13 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 			tableinfo.relkind == 'm' ||
 			tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
-			appendPQExpBuffer(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			appendPQExpBuffer(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
+	}
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a ");
+	if (isGE42 == true)
+	{
+	  appendPQExpBuffer(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
+	  appendPQExpBuffer(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
 	}
 
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
@@ -1740,9 +1729,9 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
-<<<<<<< HEAD
 
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
+		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'm' ||
+			tableinfo.relkind == 'f')
 			headers[cols++] = gettext_noop("Stats target");
 
 		if(tableinfo.relstorage == 'c')
@@ -1752,17 +1741,11 @@ describeOneTableDetails(const char *schemaname,
 		  headers[cols++] = gettext_noop("Block Size");
 		}
 
-		headers[cols++] = gettext_noop("Description");
-=======
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'm' ||
-			tableinfo.relkind == 'f')
-			headers[cols++] = gettext_noop("Stats target");
 		/* Column comments, if the relkind supports this feature. */
 		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 			tableinfo.relkind == 'm' ||
 			tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
 			headers[cols++] = gettext_noop("Description");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	printTableInit(&cont, &myopt, title.data, cols, numrows);
@@ -1869,7 +1852,6 @@ describeOneTableDetails(const char *schemaname,
 								  false, false);
 			}
 
-<<<<<<< HEAD
 			if (tableinfo.relstorage == 'c')
 			{
 
@@ -1887,7 +1869,7 @@ describeOneTableDetails(const char *schemaname,
 				   includeAOCS = 1;
 				}
 				else
-					 attributeOptions = pg_malloc_zero(1);  /* Make an empty options string so the reset of the code works correctly. */
+					 attributeOptions = pg_malloc0(1);  /* Make an empty options string so the reset of the code works correctly. */
 				char *key = strtok(attributeOptions, ",=");
 				char *value = NULL;
 				char *compressionType = NULL;
@@ -1925,17 +1907,12 @@ describeOneTableDetails(const char *schemaname,
 					printTableAddCell(&cont, blockSize, false, false);
 			}
 
-			/* Description */
-			printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2 + includeAOCS),
-							  false, false);
-=======
 			/* Column comments, if the relkind supports this feature. */
 			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 				tableinfo.relkind == 'm' ||
 				tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2),
+				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2 + includeAOCS),
 								  false, false);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 	}
 
@@ -2029,7 +2006,6 @@ describeOneTableDetails(const char *schemaname,
 
 		PQclear(result);
 	}
-<<<<<<< HEAD
 	else if (tableinfo.relstorage == 'x')
 	{
 		/* Footer information about an external table */
@@ -2310,46 +2286,6 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result);
 
 	}
-	else if (view_def)
-	{
-		PGresult   *result = NULL;
-
-		/* Footer information about a view */
-		printTableAddFooter(&cont, _("View definition:"));
-		printTableAddFooter(&cont, view_def);
-
-		/* print rules */
-		if (tableinfo.hasrules)
-		{
-			printfPQExpBuffer(&buf,
-							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
-							  "FROM pg_catalog.pg_rewrite r\n"
-			"WHERE r.ev_class = '%s' AND r.rulename != '_RETURN' ORDER BY 1;",
-							  oid);
-			result = PSQLexec(buf.data, false);
-			if (!result)
-				goto error_return;
-
-			if (PQntuples(result) > 0)
-			{
-				printTableAddFooter(&cont, _("Rules:"));
-				for (i = 0; i < PQntuples(result); i++)
-				{
-					const char *ruledef;
-
-					/* Everything after "CREATE RULE" is echoed verbatim */
-					ruledef = PQgetvalue(result, i, 1);
-					ruledef += 12;
-
-					printfPQExpBuffer(&buf, " %s", ruledef);
-					printTableAddFooter(&cont, buf.data);
-				}
-			}
-			PQclear(result);
-		}
-	}
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	else if (tableinfo.relkind == 'S')
 	{
 		/* Footer information about a sequence */
@@ -3001,7 +2937,6 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddFooter(&cont, buf.data);
 		}
 
-<<<<<<< HEAD
 		/* mpp addition start: dump distributed by clause */
 		add_distributed_by_footer(&cont, oid);
 
@@ -3009,9 +2944,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tuples > 0)
 			add_partition_by_footer(&cont, oid);
 
-=======
 		/* Tablespace info */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,
 							  true);
 	}

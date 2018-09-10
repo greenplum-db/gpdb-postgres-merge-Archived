@@ -1867,13 +1867,8 @@ do_help(void)
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -w                     wait until operation completes\n"));
 	printf(_("  -W                     do not wait until operation completes\n"));
-<<<<<<< HEAD
-	printf(_("  --help                 show this help, then exit\n"));
-	printf(_("  --version              output version information, then exit\n"));
-	printf(_("  --gp-version           output Greenplum version information, then exit\n"));
-=======
 	printf(_("  -?, --help             show this help, then exit\n"));
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	printf(_("  --gp-version           output Greenplum version information, then exit\n"));
 	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
 	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
 

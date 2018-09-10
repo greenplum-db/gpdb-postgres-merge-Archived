@@ -35,13 +35,9 @@ OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	sql_help.o \
 	$(WIN32RES)
 
-<<<<<<< HEAD
-FLEXFLAGS = -Cfe -b -p -p
-
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
 
 all: psql
 
@@ -63,17 +59,8 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 # psqlscan is compiled as part of mainloop
 mainloop.o: psqlscan.c
 
-<<<<<<< HEAD
-psqlscan.c: psqlscan.l
-ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -o'$(srcdir)/psqlscan.c' $<
-else
-	@$(missing) flex $< $@
-endif
-=======
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 distprep: sql_help.h psqlscan.c
 
