@@ -152,6 +152,8 @@ typedef struct TupleTableSlot
     Oid         tts_tableOid;
 } TupleTableSlot;
 
+#ifndef FRONTEND
+
 static inline bool TupIsNull(TupleTableSlot *slot)
 {
 	return (slot == NULL || (slot->PRIVATE_tts_flags & TTS_ISEMPTY) != 0);
@@ -427,5 +429,7 @@ extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 
 extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
+
+#endif /* !FRONTEND */
 
 #endif   /* TUPTABLE_H */
