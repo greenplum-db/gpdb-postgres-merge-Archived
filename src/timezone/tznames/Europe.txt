@@ -155,11 +155,7 @@ EETDST  10800 D  # East-Egypt Summertime
                  #     (Europe/Uzhgorod)
                  #     (Europe/Vilnius)
                  #     (Europe/Zaporozhye)
-<<<<<<< HEAD
 FET     10800    # Further-eastern European Time (obsolete)
-=======
-FET     10800    # Further-eastern European Time
->>>>>>> e472b921406407794bab911c64655b8b82375196
                  #     (Europe/Kaliningrad)
                  #     (Europe/Minsk)
 GMT         0    # Greenwich Mean Time
@@ -186,7 +182,6 @@ GMT         0    # Greenwich Mean Time
 # - IST: Israel Standard Time (Asia)
 IST      3600    # Irish Standard Time
                  #     (Europe/Dublin)
-<<<<<<< HEAD
 MEST     7200 D  # Middle Europe Summer Time
                  #     (MET)
 MESZ     7200 D  # Mitteleuropäische Sommerzeit (German)
@@ -203,22 +198,6 @@ MSK     Europe/Moscow  # Moscow Time
 SAMST   Europe/Samara  # Samara Summer Time (obsolete)
 SAMT    Europe/Samara  # Samara Time (obsolete)
 VOLT    Europe/Volgograd  # Volgograd Time (obsolete)
-=======
-MEST     7200 D  # Middle Europe Summer Time (not in zic)
-MET      3600    # Middle Europe Time (not in zic)
-METDST   7200 D  # Middle Europe Summer Time (not in zic)
-MEZ      3600    # Mitteleuropäische Zeit (German) (not in zic)
-MSD     14400 D  # Moscow Daylight Time (obsolete)
-                 #     (Europe/Moscow)
-MSK     14400    # Moscow Time (caution: this used to mean 10800)
-                 #     (Europe/Moscow)
-SAMST   18000 D  # Samara Summer Time (obsolete)
-                 #     (Europe/Samara)
-SAMT    14400    # Samara Time
-                 #     (Europe/Samara)
-VOLT    14400    # Volgograd Time
-                 #     (Europe/Volgograd)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 WEST     3600 D  # Western Europe Summer Time
                  #     (Africa/Casablanca)
                  #     (Atlantic/Canary)
