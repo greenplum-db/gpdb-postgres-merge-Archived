@@ -2,7 +2,6 @@
 -- STRINGS
 -- Test various data entry syntaxes.
 --
-<<<<<<< HEAD
 -- create required tables
 CREATE TABLE CHAR_STRINGS_TBL(f1 char(4));
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
@@ -23,10 +22,7 @@ NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' a
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 INSERT INTO TEXT_STRINGS_TBL VALUES ('doh!'),
 ('hi de ho neighbor');
--- SQL92 string continuation syntax
-=======
 -- SQL string continuation syntax
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- E021-03 character string literals
 SELECT 'first line'
 ' - next line'

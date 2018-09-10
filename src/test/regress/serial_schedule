@@ -95,12 +95,9 @@ ignore: prepared_xacts
 test: privileges
 test: security_label
 test: collate
-<<<<<<< HEAD
-test: lock
-=======
 test: matview
+test: lock
 test: alter_generic
->>>>>>> e472b921406407794bab911c64655b8b82375196
 test: misc
 test: psql
 test: rules

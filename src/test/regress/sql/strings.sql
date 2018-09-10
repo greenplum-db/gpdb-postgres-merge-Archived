@@ -3,7 +3,6 @@
 -- Test various data entry syntaxes.
 --
 
-<<<<<<< HEAD
 -- create required tables
 CREATE TABLE CHAR_STRINGS_TBL(f1 char(4));
 INSERT INTO CHAR_STRINGS_TBL (f1) VALUES ('a'),
@@ -21,10 +20,7 @@ CREATE TABLE TEXT_STRINGS_TBL (f1 text);
 INSERT INTO TEXT_STRINGS_TBL VALUES ('doh!'),
 ('hi de ho neighbor');
 
--- SQL92 string continuation syntax
-=======
 -- SQL string continuation syntax
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- E021-03 character string literals
 SELECT 'first line'
 ' - next line'

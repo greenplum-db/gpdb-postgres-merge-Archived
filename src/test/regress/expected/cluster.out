@@ -2,26 +2,14 @@
 --  CLUSTER
 --
 CREATE TABLE clstr_tst_s (rf_a SERIAL PRIMARY KEY,
-<<<<<<< HEAD
 	b INT) DISTRIBUTED BY (rf_a);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_s_rf_a_seq" for serial column "clstr_tst_s.rf_a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_s_pkey" for table "clstr_tst_s"
-=======
-	b INT);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TABLE clstr_tst (a SERIAL PRIMARY KEY,
 	b INT,
 	c TEXT,
 	d TEXT,
-<<<<<<< HEAD
 	CONSTRAINT clstr_tst_con FOREIGN KEY (b) REFERENCES clstr_tst_s)
 	DISTRIBUTED BY (a);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_a_seq" for serial column "clstr_tst.a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_pkey" for table "clstr_tst"
 WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
-=======
-	CONSTRAINT clstr_tst_con FOREIGN KEY (b) REFERENCES clstr_tst_s);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE INDEX clstr_tst_b ON clstr_tst (b);
 CREATE INDEX clstr_tst_c ON clstr_tst (c);
 CREATE INDEX clstr_tst_c_b ON clstr_tst (c,b);
@@ -320,19 +308,10 @@ WHERE pg_class.oid=indexrelid
 
 -- Verify that clustering all tables does in fact cluster the right ones
 CREATE USER clstr_user;
-<<<<<<< HEAD
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 CREATE TABLE clstr_1 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_1_pkey" for table "clstr_1"
 CREATE TABLE clstr_2 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_2_pkey" for table "clstr_2"
 CREATE TABLE clstr_3 (a INT PRIMARY KEY) DISTRIBUTED BY (a);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_3_pkey" for table "clstr_3"
-=======
-CREATE TABLE clstr_1 (a INT PRIMARY KEY);
-CREATE TABLE clstr_2 (a INT PRIMARY KEY);
-CREATE TABLE clstr_3 (a INT PRIMARY KEY);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 ALTER TABLE clstr_1 OWNER TO clstr_user;
 ALTER TABLE clstr_3 OWNER TO clstr_user;
 GRANT SELECT ON clstr_2 TO clstr_user;
@@ -401,7 +380,6 @@ SELECT * FROM clstr_1;
 
 -- Test MVCC-safety of cluster. There isn't much we can do to verify the
 -- results with a single backend...
-<<<<<<< HEAD
 CREATE TABLE clustertest (key int, distkey int) DISTRIBUTED BY (distkey);
 CREATE INDEX clustertest_pkey ON clustertest (key);
 INSERT INTO clustertest VALUES (10, 1);
@@ -409,14 +387,6 @@ INSERT INTO clustertest VALUES (20, 2);
 INSERT INTO clustertest VALUES (30, 1);
 INSERT INTO clustertest VALUES (40, 2);
 INSERT INTO clustertest VALUES (50, 3);
-=======
-CREATE TABLE clustertest (key int PRIMARY KEY);
-INSERT INTO clustertest VALUES (10);
-INSERT INTO clustertest VALUES (20);
-INSERT INTO clustertest VALUES (30);
-INSERT INTO clustertest VALUES (40);
-INSERT INTO clustertest VALUES (50);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- Use a transaction so that updates are not committed when CLUSTER sees 'em
 BEGIN;
 -- Test update where the old row version is found first in the scan
