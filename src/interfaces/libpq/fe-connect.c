@@ -175,13 +175,8 @@ typedef struct _internalPQconninfoOption
 	int			dispsize;		/* Field size in characters for dialog	*/
 	/* ---
 	 * Anything above this comment must be synchronized with
-<<<<<<< HEAD
-	 * PQconninfoOption in libpq-fe.h with defining FRONTEND, since we FE
-	 * memcpy() data between them!
-=======
 	 * PQconninfoOption in libpq-fe.h, since we memcpy() data
 	 * between them!
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 * ---
 	 */
 	off_t		connofs;		/* Offset into PGconn struct, -1 if not there */

@@ -13,7 +13,8 @@ override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPF
 
 OBJS =  specparse.o isolationtester.o
 
-<<<<<<< HEAD
+all: isolationtester$(X) pg_isolation_regress$(X)
+
 gpstringsubs.pl:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/gpstringsubs.pl
 
@@ -28,9 +29,6 @@ atmsort.pm:
 
 explain.pm:
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/explain.pm
-=======
-all: isolationtester$(X) pg_isolation_regress$(X)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 submake-regress:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
