@@ -68,11 +68,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">user_na
       <listitem>
        <para>
         The name of a schema to be created.  If this is omitted, the
-<<<<<<< HEAD
-        <replaceable class="parameter">username</replaceable>
-=======
         <replaceable class="parameter">user_name</replaceable>
->>>>>>> e472b921406407794bab911c64655b8b82375196
         is used as the schema name.  The name cannot
         begin with <literal>pg_</literal>, as such names
         are reserved for system schemas.
@@ -205,14 +201,11 @@ CREATE VIEW hollywood.winners AS
    schema owner.  This can happen only if the schema owner grants the
    <literal>CREATE</> privilege on his schema to someone else, or a
    superuser chooses to create objects in it.
-<<<<<<< HEAD
-=======
   </para>
 
   <para>
    The <literal>IF NOT EXISTS</literal> option is a
    <productname>PostgreSQL</productname> extension.
->>>>>>> e472b921406407794bab911c64655b8b82375196
   </para>
  </refsect1>
 

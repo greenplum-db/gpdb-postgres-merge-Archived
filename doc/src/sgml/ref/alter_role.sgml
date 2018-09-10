@@ -21,13 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER ROLE name RENAME TO new_name
-ALTER ROLE name [ IN DATABASE database_name ] SET config_parameter {TO | =} {value | DEFAULT}
-ALTER ROLE name [ IN DATABASE database_name ] RESET config_parameter
-ALTER ROLE name RESOURCE QUEUE {queue_name | NONE}
-ALTER ROLE name RESOURCE GROUP {group_name | NONE}
-ALTER ROLE name [ [WITH] option [ ... ] ]
-where option can be:
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
     | CREATEROLE | NOCREATEROLE
@@ -39,11 +36,6 @@ where option can be:
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION
-<<<<<<< HEAD
-    | CONNECTION LIMIT connlimit
-    | [ENCRYPTED | UNENCRYPTED] PASSWORD 'password'
-    | VALID UNTIL 'timestamp'
-=======
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
@@ -54,7 +46,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ IN DATABASE <repl
 ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET <replaceable>configuration_parameter</replaceable>
 ALTER ROLE { <replaceable class="PARAMETER">name</replaceable> | ALL } [ IN DATABASE <replaceable class="PARAMETER">database_name</replaceable> ] RESET ALL
->>>>>>> e472b921406407794bab911c64655b8b82375196
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESOURCE QUEUE {<replaceable class="PARAMETER">queue_name</replaceable> | NONE}
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESOURCE GROUP {<replaceable class="PARAMETER">group_name</replaceable> | NONE}
 </synopsis>
  </refsynopsisdiv>
 

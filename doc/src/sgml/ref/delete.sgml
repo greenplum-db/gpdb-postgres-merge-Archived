@@ -22,11 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-<<<<<<< HEAD
-DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-=======
 DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
->>>>>>> e472b921406407794bab911c64655b8b82375196
     [ USING <replaceable class="PARAMETER">using_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -94,11 +90,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-    <term><replaceable class="parameter">table</replaceable></term>
-=======
     <term><replaceable class="parameter">table_name</replaceable></term>
->>>>>>> e472b921406407794bab911c64655b8b82375196
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to delete rows
