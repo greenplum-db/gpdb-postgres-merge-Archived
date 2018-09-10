@@ -172,12 +172,7 @@ int			use_unique_key=1;	/* indexes will be primary key if set, otherwise non-uni
 
 char	   *pghost = "";
 char	   *pgport = "";
-<<<<<<< HEAD
 char	   *storage_clause = "appendonly=false";
-char	   *pgoptions = NULL;
-char	   *pgtty = NULL;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 char	   *login = NULL;
 char	   *dbName;
 const char *progname;
@@ -1480,18 +1475,12 @@ init(bool is_no_vacuum)
 	};
 	struct ddlinfo DDLs[] = {
 		{
-<<<<<<< HEAD
-			"pgbench_branches",
-			"bid int not null,bbalance int,filler char(88)",
-			1,
-			"bid"
-=======
 			"pgbench_history",
 			scale >= SCALE_32BIT_THRESHOLD
 			? "tid int,bid int,aid bigint,delta int,mtime timestamp,filler char(22)"
 			: "tid int,bid int,aid    int,delta int,mtime timestamp,filler char(22)",
 			0
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			, "bid"
 		},
 		{
 			"pgbench_tellers",
@@ -1501,27 +1490,17 @@ init(bool is_no_vacuum)
 		},
 		{
 			"pgbench_accounts",
-<<<<<<< HEAD
-			"aid int not null,bid int,abalance int,filler char(84)",
-			1,
-			"aid"
-		},
-		{
-			"pgbench_history",
-			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
-			0,
-			"tid"
-=======
 			scale >= SCALE_32BIT_THRESHOLD
 			? "aid bigint not null,bid int,abalance int,filler char(84)"
 			: "aid    int not null,bid int,abalance int,filler char(84)",
 			1
+			, "aid"
 		},
 		{
 			"pgbench_branches",
 			"bid int not null,bbalance int,filler char(88)",
 			1
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			, "tid"
 		}
 	};
 	static char *DDLAFTERs[] = {
@@ -1529,19 +1508,17 @@ init(bool is_no_vacuum)
 		"alter table pgbench_tellers add primary key (tid)",
 		"alter table pgbench_accounts add primary key (aid)"
 	};
-<<<<<<< HEAD
 	static char *NON_UNIQUE_INDEX_DDLAFTERs[] = {
 		"CREATE INDEX branch_idx ON pgbench_branches (bid) ",
 		"CREATE INDEX teller_idx ON pgbench_tellers (tid) ",
 		"CREATE INDEX account_idx ON pgbench_accounts (aid) "
-=======
+	};
 	static char *DDLKEYs[] = {
 		"alter table pgbench_tellers add foreign key (bid) references pgbench_branches",
 		"alter table pgbench_accounts add foreign key (bid) references pgbench_branches",
 		"alter table pgbench_history add foreign key (bid) references pgbench_branches",
 		"alter table pgbench_history add foreign key (tid) references pgbench_tellers",
 		"alter table pgbench_history add foreign key (aid) references pgbench_accounts"
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	};
 
 	PGconn	   *con;
@@ -1577,11 +1554,11 @@ init(bool is_no_vacuum)
 		if (ddl->declare_fillfactor)
 			snprintf(opts + strlen(opts), 256 - strlen(opts),
 					 " with (fillfactor=%d, %s) DISTRIBUTED BY (%s)",
-					 fillfactor, storage_clause, ddl->declare_fillfactor);
+					 fillfactor, storage_clause, ddl->distributed_col);
 		else
 			snprintf(opts + strlen(opts), 256 - strlen(opts),
 					 " with (%s) DISTRIBUTED BY (%s)",
-					 storage_clause, ddl->declare_fillfactor);
+					 storage_clause, ddl->distributed_col);
 		if (tablespace != NULL)
 		{
 			char	   *escape_tablespace;
@@ -2160,6 +2137,7 @@ main(int argc, char **argv)
 {
 	static struct option long_options[] = {
 		{"foreign-keys", no_argument, &foreign_keys, 1},
+		{"use-unique-keys", no_argument, &use_unique_key, 1},
 		{"index-tablespace", required_argument, NULL, 3},
 		{"tablespace", required_argument, NULL, 2},
 		{"unlogged-tables", no_argument, &unlogged_tables, 1},
@@ -2231,19 +2209,12 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD
-	while ((c = getopt(argc, argv, "ih:nvp:dSNc:Crs:t:T:U:lf:D:F:M:j:x:q")) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:x:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
 			case 'i':
 				is_init_mode++;
-				break;
-			case 'q':
-				use_unique_key = 0;
 				break;
 			case 'x':
 				storage_clause = optarg;
