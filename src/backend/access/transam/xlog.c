@@ -289,10 +289,8 @@ static char *master_image_masked = NULL;
  * to decrease.
  */
 static TimeLineID recoveryTargetTLI;
+static bool recoveryTargetIsLatest = false; // GPDB_93_MERGE_FIXME: should this be set somewhere?
 List *expectedTLIs;
-#if 0
-static bool recoveryTargetIsLatest = false;
-#endif
 
 static List *expectedTLEs;
 static TimeLineID curFileTLI;
@@ -782,7 +780,7 @@ static int	get_sync_bit(int method);
 /* New functions added for WAL replication */
 static void XLogProcessCheckpointRecord(XLogRecord *rec);
 
-static void GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg);
+static void GetXLogCleanUpTo(XLogRecPtr recptr, XLogSegNo *_logSegNo);
 static void checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr);
 
 #ifdef WAL_DEBUG
@@ -6336,7 +6334,7 @@ StartupXLOG(void)
 	XLByteToPrevSeg(EndOfLog, endLogSegNo);
 
 	elog(LOG,"end of transaction log location is %s",
-		 XLogLocationToString(&EndOfLog));
+		 XLogLocationToString(EndOfLog));
 
 	/*
 	 * Complain if we did not roll forward far enough to render the backup
@@ -7032,7 +7030,7 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	 * by WAL receiver (when StandbyMode is on). See comments
 	 * for fetching_ckpt in XLogReadPage()
 	 */
-	record = GP_ReadRecord(&xlogreader, RecPtr, LOG, true /* fetching_checkpoint */);
+	record = GP_ReadRecord(xlogreader, RecPtr, LOG, true /* fetching_checkpoint */);
 
 	if (record == NULL)
 	{
@@ -7366,63 +7364,6 @@ ShutdownXLOG(int code __attribute__((unused)) , Datum arg __attribute__((unused)
 	/* Don't be chatty in standalone mode */
 	ereport(IsPostmasterEnvironment ? LOG : NOTICE,
 			(errmsg("database system is shut down"), errSendAlert(true)));
-}
-
-/*
- * Calculate the last segment that we need to retain because of
- * keep_wal_segments, by subtracting keep_wal_segments from the passed
- * xlog location
- */
-static void
-CheckKeepWalSegments(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg)
-{
-	uint32	log;
-	uint32	seg;
-	uint32	keep_log;
-	uint32	keep_seg;
-
-	if (keep_wal_segments <= 0)
-		return;
-
-	XLByteToSeg(recptr, log, seg);
-
-	keep_seg = keep_wal_segments % XLogSegsPerFile;
-	keep_log = keep_wal_segments / XLogSegsPerFile;
-	ereport(DEBUG1,
-			(errmsg("%s: Input %d %d (Keep %d %d) (current %d %d)",
-					PG_FUNCNAME_MACRO, *_logId, *_logSeg, keep_log,
-					keep_seg, log, seg)));
-	if (seg < keep_seg)
-	{
-		keep_log += 1;
-		seg = seg - keep_seg + XLogSegsPerFile;
-	}
-	else
-	{
-		seg = seg - keep_seg;
-	}
-
-	/* Avoid underflow, don't go below (0,1) */
-	if (log < keep_log || (log == keep_log && seg == 0))
-	{
-		log = 0;
-		seg = 1;
-	}
-	else
-	{
-		log = log - keep_log;
-	}
-
-	/* check not to delete WAL segments newer than the calculated segment */
-	if (log < *_logId || (log == *_logId && seg < *_logSeg))
-	{
-		*_logId = log;
-		*_logSeg = seg;
-	}
-
-	ereport(DEBUG1,
-			(errmsg("%s: Output %d %d",
-					PG_FUNCNAME_MACRO, *_logId, *_logSeg)));
 }
 
 /*
@@ -8285,7 +8226,7 @@ CreateRestartPoint(int flags)
 		 * Select point at which we can truncate the log, which we base on the
 		 * prior checkpoint's earliest info.
 		*/
-		XLByteToSeg(ControlFile->checkPointCopy.redo, _logId, _logSeg);
+		XLByteToSeg(ControlFile->checkPointCopy.redo, _logSegNo);
 	}
 
 	/*
@@ -8400,12 +8341,16 @@ CreateRestartPoint(int flags)
 	}
 	LWLockRelease(ControlFileLock);
 
+	elog((Debug_print_qd_mirroring ? LOG : DEBUG1), "RecoveryRestartPoint: checkpoint copy redo location %s, previous checkpoint location %s",
+		 XLogLocationToString(ControlFile->checkPointCopy.redo),
+		 XLogLocationToString(ControlFile->prevCheckPoint));
+
 	/*
 	 * Delete old log files (those no longer needed even for previous
 	 * checkpoint/restartpoint) to prevent the disk holding the xlog from
 	 * growing full.
 	 */
-	if (_logSegNo)
+	if (IsStandbyMode() && gp_keep_all_xlog == false && _logSegNo)
 	{
 		XLogRecPtr	receivePtr;
 		XLogRecPtr	replayPtr;
@@ -8477,28 +8422,6 @@ CreateRestartPoint(int flags)
 		 (uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo),
 		   xtime ? errdetail("last completed transaction was at log time %s",
 							 timestamptz_to_str(xtime)) : 0));
-
-	elog((Debug_print_qd_mirroring ? LOG : DEBUG1), "RecoveryRestartPoint: checkpoint copy redo location %s, previous checkpoint location %s",
-		 XLogLocationToString(&ControlFile->checkPointCopy.redo),
-		 XLogLocationToString2(&ControlFile->prevCheckPoint));
-
-	if (IsStandbyMode())
-	{
-		/*
-		 * Delete offline log files (those no longer needed even for previous
-		 * checkpoint).
-		 */
-		if (gp_keep_all_xlog == false && _logSegNo))
-		{
-			XLogRecPtr endptr;
-
-			/* Get the current (or recent) end of xlog */
-			endptr = GetStandbyFlushRecPtr(NULL);
-
-			PrevLogSeg(_logSegNo);
-			RemoveOldXlogFiles(_logSegNo, endptr);
-		}
-	}
 
 	LWLockRelease(CheckpointLock);
 
@@ -8615,95 +8538,6 @@ RequestXLogSwitch(void)
 	RecPtr = XLogInsert(RM_XLOG_ID, XLOG_SWITCH, &rdata);
 
 	return RecPtr;
-}
-
-/*
- * Write a backup block if needed when we are setting a hint. Note that
- * this may be called for a variety of page types, not just heaps.
- *
- * Callable while holding just share lock on the buffer content.
- *
- * We can't use the plain backup block mechanism since that relies on the
- * Buffer being exclusively locked. Since some modifications (setting LSN, hint
- * bits) are allowed in a sharelocked buffer that can lead to wal checksum
- * failures. So instead we copy the page and insert the copied data as normal
- * record data.
- *
- * We only need to do something if page has not yet been full page written in
- * this checkpoint round. The LSN of the inserted wal record is returned if we
- * had to write, InvalidXLogRecPtr otherwise.
- *
- * It is possible that multiple concurrent backends could attempt to write WAL
- * records. In that case, multiple copies of the same block would be recorded
- * in separate WAL records by different backends, though that is still OK from
- * a correctness perspective.
- *
- * Note that this only works for buffers that fit the standard page model,
- * i.e. those for which buffer_std == true
- */
-XLogRecPtr
-XLogSaveBufferForHint(Buffer buffer) 
-{
-	XLogRecPtr recptr = InvalidXLogRecPtr;
-	XLogRecPtr lsn;
-	XLogRecData rdata[2];
-	BkpBlock	bkpb;
-
-	/*
-	 * Ensure no checkpoint can change our view of RedoRecPtr.
-	 */
-	Assert(MyPgXact->delayChkpt);
-
-	/*
-	 * Update RedoRecPtr so XLogCheckBuffer can make the right decision
-	 */
-	GetRedoRecPtr();
-
-	/*
-	 * Setup phony rdata element for use within XLogCheckBuffer only.
-	 * We reuse and reset rdata for any actual WAL record insert.
-	 */
-	rdata[0].buffer = buffer;
-	rdata[0].buffer_std = true;
-
-	/*
-	 * Check buffer while not holding an exclusive lock.
-	 */
-	if (XLogCheckBuffer(rdata, false, &lsn, &bkpb))
-	{
-		char copied_buffer[BLCKSZ];
-		char *origdata = (char *) BufferGetBlock(buffer);
-
-		/*
-		 * Copy buffer so we don't have to worry about concurrent hint bit or
-		 * lsn updates. We assume pd_lower/upper cannot be changed without an
-		 * exclusive lock, so the contents bkp are not racy.
-		 */
-		memcpy(copied_buffer, origdata, bkpb.hole_offset);
-		memcpy(copied_buffer + bkpb.hole_offset,
-			   origdata + bkpb.hole_offset + bkpb.hole_length,
-			   BLCKSZ - bkpb.hole_offset - bkpb.hole_length);
-
-		/*
-		 * Header for backup block.
-		 */
-		rdata[0].data = (char *) &bkpb;
-		rdata[0].len = sizeof(BkpBlock);
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-
-		/*
-		 * Save copy of the buffer.
-		 */
-		rdata[1].data = copied_buffer;
-		rdata[1].len = BLCKSZ - bkpb.hole_length;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
-
-		recptr = XLogInsert(RM_XLOG_ID, XLOG_HINT, rdata);
-	}
-
-	return recptr;
 }
 
 /*
@@ -10074,7 +9908,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	stoptli = ThisTimeLineID;
 
 	elog(LOG, "Basebackup stop point is at %X/%X.",
-			   stoppoint.xlogid, stoppoint.xrecoff);
+		 (uint32) (stoppoint >> 32), (uint32) stoppoint);
 
 	/*
 	 * Force a switch to a new xlog segment file, so that the backup is valid
@@ -10460,10 +10294,10 @@ XLogLocationToBuffer(char *buffer, XLogRecPtr loc, bool longFormat)
 
 	if (longFormat)
 	{
-		uint32 seg = loc->xrecoff / XLogSegSize;
-		uint32 offset = loc->xrecoff % XLogSegSize;
+		uint64 seg = loc / XLogSegSize;
+		uint32 offset = loc % XLogSegSize;
 		sprintf(buffer,
-			    "%X/%X (==> seg %d, offset 0x%X)",
+			    "%X/%X (==> seg " UINT64_FORMAT ", offset 0x%X)",
 			    (uint32) (loc >> 32), (uint32) loc,
 			    seg, offset);
 	}
@@ -10584,9 +10418,9 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	{
 		elogif(debug_xlog_record_read, LOG,
 			   "xlog page read -- Requested record %X/%X does not exist in"
-			   "current read xlog file (readlog %u, readseg %u)",
+			   "current read xlog file (readsegno " UINT64_FORMAT ")",
 			   (uint32) (targetRecPtr >> 32), (uint32) targetRecPtr,
-			   readId, readSeg);
+			   readSegNo);
 
 		/*
 		 * Request a restartpoint if we've replayed too much xlog since the
@@ -10610,10 +10444,10 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	XLByteToSeg(targetPagePtr, readSegNo);
 
 	elogif(debug_xlog_record_read, LOG,
-		   "xlog page read -- Requested record %X/%X has targetlogid %u, "
-		   "targetseg %u, targetpageoff %u, targetrecoff %u",
-		   (uint32) (RecPtr >> 32), (uint32) RecPtr,
-		   targetId, targetSeg, targetPageOff, targetRecOff);
+		   "xlog page read -- Requested record %X/%X has "
+		   "targetsegno " UINT64_FORMAT ", targetpageoff %u",
+		   (uint32) (targetRecPtr >> 32), (uint32) targetRecPtr,
+		   readSegNo, targetPageOff);
 
 retry:
 	/* See if we need to retrieve more data */
@@ -11138,7 +10972,7 @@ CheckForStandbyTrigger(void)
 	if (triggered)
 		return true;
 
-	if (CheckPromoteSignal(true))
+	if (IsPromoteTriggered())
 	{
 		/*
 		 * In 9.1 and 9.2 the postmaster unlinked the promote file inside the
@@ -11234,7 +11068,7 @@ IsStandbyMode(void)
 }
 
 static void
-GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg)
+GetXLogCleanUpTo(XLogRecPtr recptr, XLogSegNo *_logSegNo)
 {
 	/*
 	 * See if we have a live WAL sender and see if it has a
@@ -11252,7 +11086,7 @@ GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg)
 	else
 		xlogCleanUpTo = recptr;
 
-	CheckKeepWalSegments(xlogCleanUpTo, _logId, _logSeg);
+	KeepLogSeg(xlogCleanUpTo, _logSegNo);
 }
 
 /*
@@ -11283,7 +11117,7 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		Page		page;
 		char       *src_buffer;
 
-		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
+		if (!(record->xl_info & XLR_BKP_BLOCK(i)))
 		{
 			/*
 			 * WAL record doesn't contain a block do nothing.
