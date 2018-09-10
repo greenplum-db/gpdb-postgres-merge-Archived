@@ -25,7 +25,7 @@ all:
 	$(MAKE) -C contrib/gp_cancel_query all
 	$(MAKE) -C contrib/indexscan all
 	$(MAKE) -C contrib/pg_upgrade_support all
-	$(MAKE) -C contrib/pg_upgrade all
+#	$(MAKE) -C contrib/pg_upgrade all # GPDB_93_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
 	$(MAKE) -C contrib/hstore all
 	$(MAKE) -C contrib/pgcrypto all
 	$(MAKE) -C gpAux/extensions all
@@ -61,7 +61,7 @@ install:
 	$(MAKE) -C contrib/gp_cancel_query $@
 	$(MAKE) -C contrib/indexscan $@ 
 	$(MAKE) -C contrib/pg_upgrade_support $@
-	$(MAKE) -C contrib/pg_upgrade $@
+#	$(MAKE) -C contrib/pg_upgrade $@ # GPDB_93_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
 	$(MAKE) -C contrib/hstore $@
 	$(MAKE) -C contrib/pgcrypto $@
 	$(MAKE) -C gpMgmt $@
