@@ -319,7 +319,7 @@ smgrDoPendingDeletes(bool isCommit)
 				i = 0,
 				maxrels = 8;
 	SMgrRelation *srels = palloc(maxrels * sizeof(SMgrRelation));
-	char relstorages = palloc(maxrels * sizeof(char));
+	char	   *relstorages = palloc(maxrels * sizeof(char));
 
 	prev = NULL;
 	for (pending = pendingDeletes; pending != NULL; pending = next)

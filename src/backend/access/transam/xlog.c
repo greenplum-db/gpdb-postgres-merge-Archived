@@ -3634,9 +3634,9 @@ ControlFileWatcherSaveInitial(void)
 
 	if (Debug_print_control_checkpoints)
 		elog(LOG,"pg_control checkpoint: initial values (checkpoint loc %s, previous loc %s, copy's redo loc %s)",
-			 XLogLocationToString_Long(&ControlFile->checkPoint),
-			 XLogLocationToString2_Long(&ControlFile->prevCheckPoint),
-			 XLogLocationToString3_Long(&ControlFile->checkPointCopy.redo));
+			 XLogLocationToString_Long(ControlFile->checkPoint),
+			 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
+			 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo));
 
 	ControlFileWatcher->watcherInitialized = true;
 }
@@ -3647,9 +3647,9 @@ ControlFileWatcherCheckForChange(void)
 	XLogRecPtr  writeLoc;
 	XLogRecPtr  flushedLoc;
 
-	if (!XLByteEQ(ControlFileWatcher->current_checkPointLoc,ControlFile->checkPoint) ||
-		!XLByteEQ(ControlFileWatcher->current_prevCheckPointLoc,ControlFile->prevCheckPoint) ||
-		!XLByteEQ(ControlFileWatcher->current_checkPointCopy_redo,ControlFile->checkPointCopy.redo))
+	if (ControlFileWatcher->current_checkPointLoc != ControlFile->checkPoint ||
+		ControlFileWatcher->current_prevCheckPointLoc != ControlFile->prevCheckPoint ||
+		ControlFileWatcher->current_checkPointCopy_redo != ControlFile->checkPointCopy.redo)
 	{
 		ControlFileWatcher->current_checkPointLoc = ControlFile->checkPoint;
 		ControlFileWatcher->current_prevCheckPointLoc = ControlFile->prevCheckPoint;
@@ -3657,28 +3657,28 @@ ControlFileWatcherCheckForChange(void)
 
 		if (XLogGetWriteAndFlushedLoc(&writeLoc, &flushedLoc))
 		{
-			bool problem = XLByteLE(flushedLoc,ControlFile->checkPoint);
+			bool problem = (flushedLoc <= ControlFile->checkPoint);
 			if (problem)
 				elog(PANIC,"Checkpoint location %s for pg_control file is not flushed (write loc %s, flushed loc is %s)",
-				     XLogLocationToString_Long(&ControlFile->checkPoint),
-				     XLogLocationToString2_Long(&writeLoc),
-				     XLogLocationToString3_Long(&flushedLoc));
+				     XLogLocationToString_Long(ControlFile->checkPoint),
+				     XLogLocationToString2_Long(writeLoc),
+				     XLogLocationToString3_Long(flushedLoc));
 
 			if (Debug_print_control_checkpoints)
 				elog(LOG,"pg_control checkpoint: change (checkpoint loc %s, previous loc %s, copy's redo loc %s, write loc %s, flushed loc %s)",
-					 XLogLocationToString_Long(&ControlFile->checkPoint),
-					 XLogLocationToString2_Long(&ControlFile->prevCheckPoint),
-					 XLogLocationToString3_Long(&ControlFile->checkPointCopy.redo),
-					 XLogLocationToString4_Long(&writeLoc),
-					 XLogLocationToString5_Long(&flushedLoc));
+					 XLogLocationToString_Long(ControlFile->checkPoint),
+					 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
+					 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo),
+					 XLogLocationToString4_Long(writeLoc),
+					 XLogLocationToString5_Long(flushedLoc));
 		}
 		else
 		{
 			if (Debug_print_control_checkpoints)
 				elog(LOG,"pg_control checkpoint: change (checkpoint loc %s, previous loc %s, copy's redo loc %s)",
-					 XLogLocationToString_Long(&ControlFile->checkPoint),
-					 XLogLocationToString2_Long(&ControlFile->prevCheckPoint),
-					 XLogLocationToString3_Long(&ControlFile->checkPointCopy.redo));
+					 XLogLocationToString_Long(ControlFile->checkPoint),
+					 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
+					 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo));
 		}
 	}
 }
@@ -3990,7 +3990,7 @@ XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc)
 	*flushedLoc = xlogctl->LogwrtResult.Flush;
 	SpinLockRelease(&xlogctl->info_lck);
 
-	return (writeLoc->xlogid != 0 || writeLoc->xrecoff != 0);
+	return (writeLoc != 0);
 }
 
 void
@@ -5019,13 +5019,13 @@ ApplyStartupRedo(
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
-	ErrorContextCallback errcontext;
+	ErrorContextCallback errcontext_cb;
 
 	/* Setup error traceback support for ereport() */
-	errcontext.callback = rm_redo_error_callback;
-	errcontext.arg = (void *) record;
-	errcontext.previous = error_context_stack;
-	error_context_stack = &errcontext;
+	errcontext_cb.callback = rm_redo_error_callback;
+	errcontext_cb.arg = (void *) record;
+	errcontext_cb.previous = error_context_stack;
+	error_context_stack = &errcontext_cb;
 
 	/* nextXid must be beyond record's xid */
 	if (TransactionIdFollowsOrEquals(record->xl_xid,
@@ -5054,7 +5054,7 @@ ApplyStartupRedo(
 	if ((record->xl_extended_info & XLR_CHECK_CONSISTENCY) != 0)
 		checkXLogConsistency(record, *lsn);
 	/* Pop the error context stack */
-	error_context_stack = errcontext.previous;
+	error_context_stack = errcontext_cb.previous;
 
 }
 
@@ -6442,9 +6442,9 @@ StartupXLOG(void)
 		ereport(LOG,
 				(errmsg("selected new timeline ID: %u", ThisTimeLineID)));
 		writeTimeLineHistory(ThisTimeLineID, recoveryTargetTLI,
-							 curFileTLI, endLogId, endLogSeg);
+							 EndRecPtr, "standby promoted");
 
-		XLogFileCopy(endLogId, endLogSeg, curFileTLI, endLogId, endLogSeg);
+		XLogFileCopy(endLogSegNo, curFileTLI, endLogSegNo);
 	}
 
 	/* Save the selected TimeLineID in shared memory, too */
@@ -7044,17 +7044,17 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 			case 1:
 				ereport(LOG,
 						(errmsg("invalid primary checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 			case 2:
 				ereport(LOG,
 						(errmsg("invalid secondary checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 			default:
 				ereport(LOG,
 						(errmsg("invalid checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 		}
 		return NULL;
@@ -7066,17 +7066,17 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 			case 1:
 				ereport(LOG,
 						(errmsg("invalid resource manager ID in primary checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 			case 2:
 				ereport(LOG,
 						(errmsg("invalid resource manager ID in secondary checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 			default:
 				ereport(LOG,
 				(errmsg("invalid resource manager ID in checkpoint record at location %s",
-				        XLogLocationToString_Long(&RecPtr))));
+				        XLogLocationToString_Long(RecPtr))));
 				break;
 		}
 		return NULL;
@@ -7089,17 +7089,17 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 			case 1:
 				ereport(LOG,
 				   (errmsg("invalid xl_info in primary checkpoint record at location %s",
-				           XLogLocationToString_Long(&RecPtr))));
+				           XLogLocationToString_Long(RecPtr))));
 				break;
 			case 2:
 				ereport(LOG,
 				 (errmsg("invalid xl_info in secondary checkpoint record at location %s",
-				         XLogLocationToString_Long(&RecPtr))));
+				         XLogLocationToString_Long(RecPtr))));
 				break;
 			default:
 				ereport(LOG,
 						(errmsg("invalid xl_info in checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 		}
 		return NULL;
@@ -7130,17 +7130,17 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 			case 1:
 				ereport(LOG,
 					(errmsg("invalid length of primary checkpoint at location %s",
-					        XLogLocationToString_Long(&RecPtr))));
+					        XLogLocationToString_Long(RecPtr))));
 				break;
 			case 2:
 				ereport(LOG,
 				  (errmsg("invalid length of secondary checkpoint record at location %s",
-				          XLogLocationToString_Long(&RecPtr))));
+				          XLogLocationToString_Long(RecPtr))));
 				break;
 			default:
 				ereport(LOG,
 						(errmsg("invalid length of checkpoint record at location %s",
-						        XLogLocationToString_Long(&RecPtr))));
+						        XLogLocationToString_Long(RecPtr))));
 				break;
 		}
 		return NULL;
@@ -8388,7 +8388,7 @@ CreateRestartPoint(int flags)
 	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 	if ((ControlFile->state == DB_IN_ARCHIVE_RECOVERY
 		     || ControlFile->state == DB_IN_STANDBY_MODE) &&
-		XLByteLT(ControlFile->checkPointCopy.redo, lastCheckPoint.redo))
+	    ControlFile->checkPointCopy.redo < lastCheckPoint.redo)
 	{
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
 		ControlFile->checkPoint = lastCheckPointRecPtr;
@@ -8652,7 +8652,7 @@ XLogSaveBufferForHint(Buffer buffer)
 	/*
 	 * Ensure no checkpoint can change our view of RedoRecPtr.
 	 */
-	Assert(MyPgXact->inCommit);
+	Assert(MyPgXact->delayChkpt);
 
 	/*
 	 * Update RedoRecPtr so XLogCheckBuffer can make the right decision
@@ -8669,7 +8669,7 @@ XLogSaveBufferForHint(Buffer buffer)
 	/*
 	 * Check buffer while not holding an exclusive lock.
 	 */
-	if (XLogCheckBuffer(rdata, false, false, &lsn, &bkpb))
+	if (XLogCheckBuffer(rdata, false, &lsn, &bkpb))
 	{
 		char copied_buffer[BLCKSZ];
 		char *origdata = (char *) BufferGetBlock(buffer);
@@ -10455,7 +10455,7 @@ CancelBackup(void)
 }
 
 static char *
-XLogLocationToBuffer(char *buffer, XLogRecPtr *loc, bool longFormat)
+XLogLocationToBuffer(char *buffer, XLogRecPtr loc, bool longFormat)
 {
 
 	if (longFormat)
@@ -10464,13 +10464,13 @@ XLogLocationToBuffer(char *buffer, XLogRecPtr *loc, bool longFormat)
 		uint32 offset = loc->xrecoff % XLogSegSize;
 		sprintf(buffer,
 			    "%X/%X (==> seg %d, offset 0x%X)",
-			    loc->xlogid, loc->xrecoff,
+			    (uint32) (loc >> 32), (uint32) loc,
 			    seg, offset);
 	}
 	else
 		sprintf(buffer,
 			    "%X/%X",
-			    loc->xlogid, loc->xrecoff);
+			    (uint32) (loc >> 32), (uint32) loc);
 
 	return buffer;
 }
@@ -10482,61 +10482,61 @@ static char xlogLocationBuffer4[50];
 static char xlogLocationBuffer5[50];
 
 char *
-XLogLocationToString(XLogRecPtr *loc)
+XLogLocationToString(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer, loc, Debug_print_qd_mirroring);
 }
 
 char *
-XLogLocationToString2(XLogRecPtr *loc)
+XLogLocationToString2(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer2, loc, Debug_print_qd_mirroring);
 }
 
 char *
-XLogLocationToString3(XLogRecPtr *loc)
+XLogLocationToString3(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer3, loc, Debug_print_qd_mirroring);
 }
 
 char *
-XLogLocationToString4(XLogRecPtr *loc)
+XLogLocationToString4(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer4, loc, Debug_print_qd_mirroring);
 }
 
 char *
-XLogLocationToString5(XLogRecPtr *loc)
+XLogLocationToString5(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer5, loc, Debug_print_qd_mirroring);
 }
 
 char *
-XLogLocationToString_Long(XLogRecPtr *loc)
+XLogLocationToString_Long(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer, loc, true);
 }
 
 char *
-XLogLocationToString2_Long(XLogRecPtr *loc)
+XLogLocationToString2_Long(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer2, loc, true);
 }
 
 char *
-XLogLocationToString3_Long(XLogRecPtr *loc)
+XLogLocationToString3_Long(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer3, loc, true);
 }
 
 char *
-XLogLocationToString4_Long(XLogRecPtr *loc)
+XLogLocationToString4_Long(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer4, loc, true);
 }
 
 char *
-XLogLocationToString5_Long(XLogRecPtr *loc)
+XLogLocationToString5_Long(XLogRecPtr loc)
 {
 	return XLogLocationToBuffer(xlogLocationBuffer5, loc, true);
 }
@@ -10585,7 +10585,8 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 		elogif(debug_xlog_record_read, LOG,
 			   "xlog page read -- Requested record %X/%X does not exist in"
 			   "current read xlog file (readlog %u, readseg %u)",
-			   RecPtr->xlogid, RecPtr->xrecoff, readId, readSeg);
+			   (uint32) (targetRecPtr >> 32), (uint32) targetRecPtr,
+			   readId, readSeg);
 
 		/*
 		 * Request a restartpoint if we've replayed too much xlog since the
@@ -10611,7 +10612,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	elogif(debug_xlog_record_read, LOG,
 		   "xlog page read -- Requested record %X/%X has targetlogid %u, "
 		   "targetseg %u, targetpageoff %u, targetrecoff %u",
-		   RecPtr->xlogid, RecPtr->xrecoff,
+		   (uint32) (RecPtr >> 32), (uint32) RecPtr,
 		   targetId, targetSeg, targetPageOff, targetRecOff);
 
 retry:
@@ -11010,8 +11011,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						elogif(debug_xlog_record_read, LOG,
 							   "xlog page read -- There is enough xlog data to be "
 							   "read (receivedupto %X/%X, requestedrec %X/%X)",
-							   receivedUpto.xlogid, receivedUpto.xrecoff,
-							   RecPtr->xlogid, RecPtr->xrecoff);
+							   (uint32) (receivedUpto >> 32), (uint32) receivedUpto,
+							   (uint32) (RecPtr >> 32), (uint32) RecPtr);
 
 						/*
 						 * Great, streamed far enough.	Open the file if it's
@@ -11245,7 +11246,7 @@ GetXLogCleanUpTo(XLogRecPtr recptr, uint32 *_logId, uint32 *_logSeg)
 	XLogRecPtr xlogCleanUpTo = WalSndCtlGetXLogCleanUpTo();
 	if (!XLogRecPtrIsInvalid(xlogCleanUpTo))
 	{
-		if (XLByteLT(recptr, xlogCleanUpTo))
+		if (recptr < xlogCleanUpTo)
 			xlogCleanUpTo = recptr;
 	}
 	else
@@ -11330,7 +11331,7 @@ checkXLogConsistency(XLogRecord *record, XLogRecPtr EndRecPtr)
 		 * expect contents to match.  This can happen if recovery is
 		 * restarted.
 		 */
-		if (XLByteLT(EndRecPtr, PageGetLSN(replay_image_masked)))
+		if (EndRecPtr < PageGetLSN(replay_image_masked))
 			continue;
 
 		/*

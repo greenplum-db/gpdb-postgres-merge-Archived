@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/xlog.h"
 #include "libpq/pqformat.h"
 #include "libpq/libpq.h"
 #include "postmaster/fts.h"

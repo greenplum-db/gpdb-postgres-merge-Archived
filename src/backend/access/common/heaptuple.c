@@ -550,7 +550,7 @@ nocachegetattr(HeapTuple tuple,
  * ----------------
  */
 Datum
-heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
+heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
 	Datum		result;
 
