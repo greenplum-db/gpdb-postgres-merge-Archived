@@ -417,7 +417,7 @@ MarkAsPreparing(TransactionId xid,
 				LocalDistribXactData *localDistribXactRef,
 				const char *gid,
 				TimestampTz prepared_at, Oid owner, Oid databaseid
-                , XLogRecPtr *xlogrecptr)
+                , XLogRecPtr xlogrecptr)
 {
 	GlobalTransaction gxact;
 	int	i;
@@ -506,15 +506,7 @@ MarkAsPreparing(TransactionId xid,
 	gxact->prepared_at = prepared_at;
 	/* initialize LSN to 0 (start of WAL) */
 	gxact->prepare_lsn = 0;
-	if (xlogrecptr == NULL)
-	{
-		gxact->prepare_begin_lsn = 0;
-	}
-	else
-	{
-		gxact->prepare_begin_lsn = *xlogrecptr;
-		/* Assert(*xlogrecptr > 0); */
-	}
+	gxact->prepare_begin_lsn = xlogrecptr;	/* might be invalid */
 	gxact->owner = owner;
 	gxact->locking_backend = MyBackendId;
 	gxact->valid = false;
@@ -1276,6 +1268,84 @@ StandbyTransactionIdIsPrepared(TransactionId xid)
 #endif
 }
 
+
+typedef struct XLogPageReadPrivate
+{
+	int			readFile;
+	XLogSegNo	readSegNo;
+} XLogPageReadPrivate;
+
+/*
+ * This is simpler than XLogPageRead: no retry logic is needed, as the WAL should be
+ * present in pg_xlog.
+ */
+static int
+twophase_XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
+					  XLogRecPtr targetRecPtr, char *readBuf, TimeLineID *readTLI)
+{
+	XLogPageReadPrivate *private =
+	(XLogPageReadPrivate *) xlogreader->private_data;
+	uint32		targetPageOff;
+	XLogSegNo targetSegNo PG_USED_FOR_ASSERTS_ONLY;
+	char		path[MAXPGPATH];
+
+	XLByteToSeg(targetPagePtr, targetSegNo);
+	targetPageOff = targetPagePtr % XLogSegSize;
+
+	/*
+	 * See if we need to switch to a new segment because the requested record
+	 * is not in the currently open one.
+	 */
+	if (private->readFile >= 0 && !XLByteInSeg(targetPagePtr, private->readSegNo))
+	{
+		elogif(debug_xlog_record_read, LOG,
+			   "twophase xlog page read -- Requested record %X/%X does not exist in"
+			   "current read xlog file (readsegno " UINT64_FORMAT ")",
+			   (uint32) (targetRecPtr >> 32), (uint32) targetRecPtr,
+			   private->readSegNo);
+
+		close(private->readFile);
+		private->readFile = -1;
+	}
+
+	XLByteToSeg(targetPagePtr, private->readSegNo);
+
+	elogif(debug_xlog_record_read, LOG,
+		   "twophase xlog page read -- Requested record %X/%X has "
+		   "targetsegno " UINT64_FORMAT ", targetpageoff %u",
+		   (uint32) (targetRecPtr >> 32), (uint32) targetRecPtr,
+		   private->readSegNo, targetPageOff);
+
+	if (private->readFile == -1)
+	{
+		// GPDB_93_MERGE_FIXME: Is ThisTimeLineID correct here? Do we need to
+		// fetch prepare records for past timelines, after promotion?
+
+		XLogFilePath(path, ThisTimeLineID, private->readSegNo);
+
+		private->readFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
+		if (private->readFile < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open file \"%s\": %m", path)));
+	}
+
+	/* Read the requested page */
+	if (lseek(private->readFile, (off_t) targetPageOff, SEEK_SET) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not seek in log segment %s to offset %u: %m",
+						path, targetPageOff)));
+
+	if (read(private->readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read from log segment %s, offset %u: %m",
+						path, targetPageOff)));
+
+	return reqLen;
+}
+
 /*
  * FinishPreparedTransaction: execute COMMIT PREPARED or ROLLBACK PREPARED
  */
@@ -1298,6 +1368,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	SharedInvalidationMessage *invalmsgs;
 	int			i;
 
+	XLogReaderState *xlogreader;
+	struct XLogPageReadPrivate private;
+	char	   *errormsg;
     XLogRecPtr   tfXLogRecPtr;
     XLogRecord  *tfRecord  = NULL;
 
@@ -1354,7 +1427,12 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	 * GPDB_93_MERGE_FIXME: GPDB used to do XLogCloseReadRecord() and then read,
 	 * do we need to perform something similar with new interface.
 	 */
-	tfRecord = GP_ReadRecord(&tfXLogRecPtr, LOG, false);
+
+	private.readFile = -1;
+	private.readSegNo = 0;
+	xlogreader = XLogReaderAllocate(&twophase_XLogPageRead, &private);
+
+	tfRecord = XLogReadRecord(xlogreader, tfXLogRecPtr, &errormsg);
 	if (tfRecord == NULL)
 	{
 		/*
@@ -1362,25 +1440,17 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 		 * Failover is required, hopefully mirror is in healthy state.
 		 */
 		ereport(WARNING,
-				(errmsg("primary failure, "
-						"xlog record is invalid, "
-						"failover requested"),
+				(errmsg("primary failure, xlog record is invalid, failover requested"),
 				 errhint("run gprecoverseg to re-establish mirror connectivity")));
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("xlog record is invalid"),
+				 errdetail("%s", errormsg),
 				 errSendAlert(true)));
 	}
 
 	buf = XLogRecGetData(tfRecord);
-
-	if (buf == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("two-phase state information for transaction %u is corrupt",
-						xid),
-				 errSendAlert(true)));
 
 	/*
 	 * Disassemble the header area
@@ -1491,6 +1561,11 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	SIMPLE_FAULT_INJECTOR(FinishPreparedAfterRecordCommitPrepared);
 
 	/* Need to figure out the memory allocation and deallocationfor "buffer". For now, just let it leak. */
+
+
+	XLogReaderFree(xlogreader);
+	if (private.readFile != -1)
+		close(private.readFile);
 
 	return true;
 }
@@ -1604,12 +1679,15 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	prpt_map	*entry = NULL;
 	TransactionId origNextXid = ShmemVariableCache->nextXid;
 	TransactionId result = origNextXid;
-	XLogRecPtr *tfXLogRecPtr = NULL;
+	XLogRecPtr tfXLogRecPtr = InvalidXLogRecPtr;
 	XLogRecord *tfRecord = NULL;
 	HASH_SEQ_STATUS hsStatus;
 	TransactionId *xids = NULL;
 	int			nxids = 0;
 	int			allocsize = 0;
+	XLogReaderState *xlogreader;
+	struct XLogPageReadPrivate private;
+	char	   *errormsg;
 
 	if (crashRecoverPostCheckpointPreparedTransactions_map_ht != NULL)
 	{
@@ -1618,17 +1696,37 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 		entry = (prpt_map *)hash_seq_search(&hsStatus);
 
 		if (entry != NULL)
-			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
+			tfXLogRecPtr = entry->xlogrecptr;
 	}
 
-	while (tfXLogRecPtr != NULL)
+	private.readFile = -1;
+	private.readSegNo = 0;
+	xlogreader = XLogReaderAllocate(&twophase_XLogPageRead, &private);
+
+	while (tfXLogRecPtr != InvalidXLogRecPtr)
 	{
 		TwoPhaseFileHeader *hdr;
 		TransactionId xid;
 
-		tfRecord = GP_ReadRecord(tfXLogRecPtr, LOG, false);
+		tfRecord = XLogReadRecord(xlogreader, tfXLogRecPtr, &errormsg);
 		hdr = (TwoPhaseFileHeader *) XLogRecGetData(tfRecord);
 		xid = hdr->xid;
+
+		if (tfRecord == NULL)
+		{
+			if (errormsg)
+				ereport(WARNING,
+						(errmsg("%s", errormsg)));
+			else
+				ereport(WARNING,
+						(errmsg("could not load prepare WAL record for distributed transaction")));
+
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("xlog record is invalid"),
+					 errormsg ? (errdetail("%s", errormsg)) : 0,
+					 errSendAlert(true)));
+		}
 
 		if (TransactionIdDidCommit(xid) == false && TransactionIdDidAbort(xid) == false)
 		{
@@ -1687,13 +1785,17 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 		}
 
 		/* Get the next entry */
-		entry = (prpt_map *)hash_seq_search(&hsStatus);
+		entry = (prpt_map *) hash_seq_search(&hsStatus);
 
 		if (entry != NULL)
-			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
+			tfXLogRecPtr = entry->xlogrecptr;
 		else
-			tfXLogRecPtr = NULL;
+			tfXLogRecPtr = InvalidXLogRecPtr;
 	}
+
+	XLogReaderFree(xlogreader);
+	if (private.readFile != -1)
+		close(private.readFile);
 
 	if (xids_p)
 	{
@@ -1756,11 +1858,18 @@ void
 RecoverPreparedTransactions(void)
 {
 	prpt_map   *entry        = NULL;
-	XLogRecPtr *tfXLogRecPtr = NULL;
+	XLogRecPtr tfXLogRecPtr = InvalidXLogRecPtr;
 	XLogRecord *tfRecord     = NULL;
 	LocalDistribXactData localDistribXactData;
 	HASH_SEQ_STATUS hsStatus;
 	bool		overwriteOK = false;
+	XLogReaderState *xlogreader;
+	struct XLogPageReadPrivate private;
+	char	   *errormsg;
+
+	private.readFile = -1;
+	private.readSegNo = 0;
+	xlogreader = XLogReaderAllocate(&twophase_XLogPageRead, &private);
 
 	if (crashRecoverPostCheckpointPreparedTransactions_map_ht != NULL)
 	{
@@ -1769,10 +1878,10 @@ RecoverPreparedTransactions(void)
 		entry = (prpt_map *)hash_seq_search(&hsStatus);
 
 		if (entry != NULL)
-			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
+			tfXLogRecPtr = entry->xlogrecptr;
 	}
 
-	while (tfXLogRecPtr != NULL)
+	while (tfXLogRecPtr != InvalidXLogRecPtr)
 	{
 		TransactionId xid;
 		char	   *buf;
@@ -1784,7 +1893,15 @@ RecoverPreparedTransactions(void)
 		DistributedTransactionId distribXid;
 		int			i;
 
-		tfRecord = GP_ReadRecord(tfXLogRecPtr, LOG, false);
+		tfRecord = XLogReadRecord(xlogreader, tfXLogRecPtr, &errormsg);
+		if (!tfRecord)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("xlog record is invalid"),
+					 errdetail("%s", errormsg),
+					 errSendAlert(true)));
+		}
 
 		buf = XLogRecGetData(tfRecord);
 
@@ -1858,11 +1975,15 @@ RecoverPreparedTransactions(void)
 		entry = (prpt_map *)hash_seq_search(&hsStatus);
 
 		if (entry != NULL)
-			tfXLogRecPtr = (XLogRecPtr *) &entry->xlogrecptr;
+			tfXLogRecPtr = entry->xlogrecptr;
 		else
-			tfXLogRecPtr = NULL;
+			tfXLogRecPtr = InvalidXLogRecPtr;
 
 	}  /* end while (xlogrecptr = (XLogRecPtr *)hash_seq_search(&hsStatus)) */
+
+	XLogReaderFree(xlogreader);
+	if (private.readFile != -1)
+		close(private.readFile);
 }
 
 /*

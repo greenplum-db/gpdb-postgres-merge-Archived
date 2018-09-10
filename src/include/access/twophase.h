@@ -71,7 +71,7 @@ extern GlobalTransaction MarkAsPreparing(TransactionId xid,
 				const char *gid,
 				TimestampTz prepared_at,
 				Oid owner, Oid databaseid
-			      , XLogRecPtr *xlogrecptr);
+			      , XLogRecPtr xlogrecptr);
 
 extern void StartPrepare(GlobalTransaction gxact);
 extern void EndPrepare(GlobalTransaction gxact);

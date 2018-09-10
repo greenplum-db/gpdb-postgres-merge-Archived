@@ -2908,7 +2908,7 @@ PrepareTransaction(void)
 	 */
 	gxact = MarkAsPreparing(xid, &MyProc->localDistribXactData,
 							prepareGID, prepared_at,
-				GetUserId(), MyDatabaseId, NULL);
+				GetUserId(), MyDatabaseId, InvalidXLogRecPtr);
 	prepareGID = NULL;
 
 	/*
