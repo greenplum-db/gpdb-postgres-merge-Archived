@@ -599,15 +599,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	/* zap unneeded sub-structure */
 	newrte->subquery = NULL;
 	newrte->joinaliasvars = NIL;
-	/*
-	 * GPDB_93_MERGE_FIXME: The newrte would be added into glob->finalrtable
-	 * and then be asserted in set_plan_references_output_asserts with
-	 * expandRTE, in which a valid funcexpr is needed for RTE_FUNCTION.
-	 *
-	 * This is only a workaround to bypass this issue and make cluster up.
-	 * Please revisit this and fix it.
-	 */
-	//newrte->funcexpr = NULL;
+	newrte->funcexpr = NULL;
 	newrte->funccoltypes = NIL;
 	newrte->funccoltypmods = NIL;
 	newrte->funccolcollations = NIL;
