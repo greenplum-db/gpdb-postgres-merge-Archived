@@ -127,7 +127,6 @@ bool		XLOG_DEBUG = false;
  */
 #define XLOGfileslop	(2*CheckPointSegments + 1)
 
-bool am_startup = false;
 
 /*
  * GUC support

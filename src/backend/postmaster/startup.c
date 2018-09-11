@@ -33,6 +33,7 @@
 #include "utils/guc.h"
 #include "utils/timeout.h"
 
+bool am_startup = false;
 
 /*
  * Flags set by interrupt handlers for later service in the redo loop.
