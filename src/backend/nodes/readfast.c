@@ -2882,6 +2882,7 @@ _readModifyTable(void)
 	READ_INT_FIELD(resultRelIndex);
 	READ_NODE_FIELD(plans);
 	READ_NODE_FIELD(returningLists);
+	READ_NODE_FIELD(fdwPrivLists);
 	READ_NODE_FIELD(rowMarks);
 	READ_INT_FIELD(epqParam);
 	READ_NODE_FIELD(action_col_idxes);
