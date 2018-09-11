@@ -1320,8 +1320,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
     Assert(rte->rtekind == RTE_SUBQUERY);
     rte->rtekind = RTE_VOID;
     rte->subquery = NULL;
-    rte->alias = NULL;
-    rte->eref = NULL;
 
 	/*
 	 * Return the adjusted subquery jointree to replace the RangeTblRef entry
