@@ -2454,28 +2454,16 @@ create temp table a (
      code char not null,
      constraint a_pk primary key (code)
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 create temp table b (
      a char not null,
      num integer not null,
      constraint b_pk primary key (a, num)
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 create temp table c (
      name char not null,
      a char,
      constraint c_pk primary key (name)
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pkey" for table "c"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 insert into a (code) values ('p');
 insert into a (code) values ('q');
 insert into b (a, num) values ('p', 1);

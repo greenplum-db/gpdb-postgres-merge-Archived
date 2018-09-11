@@ -998,12 +998,7 @@ select 33 = all ('{33,null,33}');
 (1 row)
 
 -- test indexes on arrays
-<<<<<<< HEAD
 create temp table arr_tbl (f1 int[] unique) DISTRIBUTED BY (f1);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "arr_tbl_f1_key" for table "arr_tbl"
-=======
-create temp table arr_tbl (f1 int[] unique);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 insert into arr_tbl values ('{1,2,3}');
 insert into arr_tbl values ('{1,2}');
 -- failure expected:

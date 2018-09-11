@@ -2062,7 +2062,6 @@ CREATE TABLE product (
          quantity_on_hand decimal(5,0),
          last_stock_date  DATE
     ) distributed by (product_name);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "product_pkey" for table "product"
 INSERT INTO product VALUES ('Product 1', 99,  1,    '15-JAN-03');
 INSERT INTO product VALUES ('Product 2', 75,  1000, '15-JAN-02');
 INSERT INTO product VALUES ('Product 3', 50,  100,  '15-JAN-03');
@@ -2099,7 +2098,6 @@ CREATE TABLE product (
          quantity_on_hand decimal(5,0),
          last_stock_date  DATE
     ) distributed by (product_name);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "product_pkey" for table "product"
 INSERT INTO product VALUES ('Product 1', 99,  1,    '15-JAN-03');
 INSERT INTO product VALUES ('Product 2', 75,  1000, '15-JAN-02');
 INSERT INTO product VALUES ('Product 3', 50,  100,  '15-JAN-03');

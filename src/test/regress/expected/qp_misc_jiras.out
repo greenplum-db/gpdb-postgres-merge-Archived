@@ -148,7 +148,6 @@ CREATE TABLE qp_misc_jiras.tbl1544
   pval TEXT
 )
 ;
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "tbl1544_pid_key" for table "tbl1544"
 -- 
 -- Child tables
 -- 
@@ -411,7 +410,6 @@ CREATE SEQUENCE qp_misc_jiras.satelliteupdatelog_id_seq
 ALTER SEQUENCE qp_misc_jiras.satelliteupdatelog_id_seq OWNED BY qp_misc_jiras.satelliteupdatelog.id;
 ALTER TABLE qp_misc_jiras.satelliteupdatelog ALTER COLUMN id SET DEFAULT nextval('qp_misc_jiras.satelliteupdatelog_id_seq'::regclass);
 ALTER TABLE ONLY qp_misc_jiras.satelliteupdatelog ADD CONSTRAINT satelliteupdatelog_pk PRIMARY KEY (id);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "satelliteupdatelog_pkey" for table "satelliteupdatelog"
 CREATE INDEX fki_satelliteupdatelog_idadvertiser_fk ON qp_misc_jiras.satelliteupdatelog USING btree (idadvertiser);
 CREATE INDEX fki_satelliteupdatelog_idaffiliate_fk ON qp_misc_jiras.satelliteupdatelog USING btree (idaffiliate);
 CREATE INDEX fki_satelliteupdatelog_idrep_fk ON qp_misc_jiras.satelliteupdatelog USING btree (idrep);
@@ -423,7 +421,6 @@ CREATE TABLE qp_misc_jiras.satelliteupdatelogkey (
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'idsatelliteupdatelog' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 ALTER TABLE ONLY qp_misc_jiras.satelliteupdatelogkey ADD CONSTRAINT satelliteupdatelogkey_pk PRIMARY KEY (idsatelliteupdatelog, columnname);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "satelliteupdatelogkey_pkey" for table "satelliteupdatelogkey"
 ALTER TABLE ONLY qp_misc_jiras.satelliteupdatelogkey ADD CONSTRAINT satelliteupdatelogkey_idsatelliteupdatelog_fk FOREIGN KEY (idsatelliteupdatelog) REFERENCES qp_misc_jiras.satelliteupdatelog(id);
 WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
 CREATE TABLE qp_misc_jiras.satellite (
@@ -453,7 +450,6 @@ CREATE TABLE qp_misc_jiras.satelliteupdatelogserver (
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'idsatelliteupdatelog' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 ALTER TABLE ONLY qp_misc_jiras.satelliteupdatelogserver ADD CONSTRAINT satelliteupdatelogserver_pk PRIMARY KEY (idsatelliteupdatelog, idsatellite); 
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "satelliteupdatelogserver_pkey" for table "satelliteupdatelogserver"
 CREATE INDEX fki_satelliteupdatelogserver_idsatelliteupdatelog_fk ON qp_misc_jiras.satelliteupdatelogserver USING btree (idsatelliteupdatelog);
 ALTER TABLE ONLY qp_misc_jiras.satelliteupdatelogserver ADD CONSTRAINT satelliteupdatelogserver_idsatellite_fk FOREIGN KEY (idsatellite) REFERENCES qp_misc_jiras.satellite(id);
 ERROR:  there is no unique constraint matching given keys for referenced table "satellite"
@@ -1189,7 +1185,6 @@ create table qp_misc_jiras.tbl5246_sale
         primary key (cn, vn, pn)
         
 ) distributed by (cn,vn,pn);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl5246_sale_pkey" for table "tbl5246_sale"
 insert into qp_misc_jiras.tbl5246_sale values
   ( 2, 40, 100, '1401-1-1', 1100, 2400),
   ( 1, 10, 200, '1401-3-1', 1, 0),
@@ -1225,7 +1220,6 @@ create table qp_misc_jiras.tbl4896_customer
         cloc text,
         primary key (cn)
 ) distributed by (cn);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl4896_customer_pkey" for table "tbl4896_customer"
 create table qp_misc_jiras.tbl4896_sale
 (
         cn int not null,
@@ -1238,7 +1232,6 @@ create table qp_misc_jiras.tbl4896_sale
         primary key (cn, vn, pn)
         
 ) distributed by (cn,vn,pn);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl4896_sale_pkey" for table "tbl4896_sale"
 insert into qp_misc_jiras.tbl4896_customer values
   ( 1, 'Macbeth', 'Inverness'),
   ( 2, 'Duncan', 'Forres'),
@@ -2365,7 +2358,6 @@ CREATE TABLE qp_misc_jiras.one_of_every_data_type (
     ) 
  DISTRIBUTED BY (id)
  ;
-NOTICE:  CREATE TABLE will create implicit sequence "one_of_every_data_type_serial_col_seq" for serial column "one_of_every_data_type.serial_col"
 CREATE FUNCTION TO_LSEG(TEXT) RETURNS LSEG AS
   $$
     SELECT lseg_in(textout($1))
@@ -3679,9 +3671,6 @@ partition d_2010_09_28 start (date '2010-09-28') end (date '2010-09-29')
 );
 NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_default_partition" for table "tbl1_tbl_11257"
 NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_d_2010_09_28" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl1_tbl_11257_pkey" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl1_tbl_11257_1_prt_default_partition_pkey" for table "tbl1_tbl_11257_1_prt_default_partition"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl1_tbl_11257_1_prt_d_2010_09_28_pkey" for table "tbl1_tbl_11257_1_prt_d_2010_09_28"
 select relname, attrnums as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl1_tbl_11257%' ;
                 relname                 | distribution_attributes 
 ----------------------------------------+-------------------------
@@ -3698,9 +3687,7 @@ into (partition d_2010_09_27, partition default_partition);
 NOTICE:  exchanged partition "default_partition" of relation "tbl1_tbl_11257" with relation "pg_temp_37266"
 NOTICE:  dropped partition "default_partition" for relation "tbl1_tbl_11257"
 NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_d_2010_09_27" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl1_tbl_11257_1_prt_d_2010_09_27_pkey" for table "tbl1_tbl_11257_1_prt_d_2010_09_27"
 NOTICE:  CREATE TABLE will create partition "tbl1_tbl_11257_1_prt_default_partition" for table "tbl1_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl1_tbl_11257_1_prt_default_partition_pkey1" for table "tbl1_tbl_11257_1_prt_default_partition"
 -- end_ignore
 select relname, attrnums as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl1_tbl_11257%' ;
                 relname                 | distribution_attributes 
@@ -3725,9 +3712,6 @@ partition p1 start (1) end (2)
  );
 NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_default_partition" for table "tbl2_tbl_11257"
 NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_p1" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl2_tbl_11257_pkey" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl2_tbl_11257_1_prt_default_partition_pkey" for table "tbl2_tbl_11257_1_prt_default_partition"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl2_tbl_11257_1_prt_p1_pkey" for table "tbl2_tbl_11257_1_prt_p1"
 insert into qp_misc_jiras.tbl2_tbl_11257 values(1,2,3);
 select * from qp_misc_jiras.tbl2_tbl_11257;
  a | b | c 
@@ -3758,9 +3742,7 @@ into (partition p2, partition default_partition);
 NOTICE:  exchanged partition "default_partition" of relation "tbl2_tbl_11257" with relation "pg_temp_37629"
 NOTICE:  dropped partition "default_partition" for relation "tbl2_tbl_11257"
 NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_p2" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl2_tbl_11257_1_prt_p2_pkey" for table "tbl2_tbl_11257_1_prt_p2"
 NOTICE:  CREATE TABLE will create partition "tbl2_tbl_11257_1_prt_default_partition" for table "tbl2_tbl_11257"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tbl2_tbl_11257_1_prt_default_partition_pkey1" for table "tbl2_tbl_11257_1_prt_default_partition"
 -- end_ignore
 select relname, attrnums as distribution_attributes from gp_distribution_policy p, pg_class c where p.localoid = c.oid and relname like 'tbl2_tbl_11257%' ;
                 relname                 | distribution_attributes 

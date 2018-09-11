@@ -1265,7 +1265,6 @@ CREATE TABLE customer (
        dist_key int default 1,
        unique (dist_key, cid)
 ) DISTRIBUTED BY (dist_key);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "customer_dist_key_cid_key" for table "customer"
 CREATE TABLE credit_card (
        cid      int,
        cnum     text,

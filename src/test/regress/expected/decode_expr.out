@@ -300,10 +300,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -421,10 +417,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -492,10 +484,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -542,10 +530,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -694,10 +678,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
@@ -774,10 +754,6 @@ default partition other
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_women" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_men" for table "employees"
 NOTICE:  CREATE TABLE will create partition "employees_1_prt_other" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_pkey" for table "employees"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_women_pkey" for table "employees_1_prt_women"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_men_pkey" for table "employees_1_prt_men"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "employees_1_prt_other_pkey" for table "employees_1_prt_other"
 CREATE TABLE emp_start_dates
 (
    empid integer,
