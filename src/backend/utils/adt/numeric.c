@@ -404,7 +404,7 @@ static const char *init_var_from_str(const char *str, const char *cp, NumericVar
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
-/*static void set_var_from_num(Numeric value, NumericVar *dest);*/
+static void set_var_from_num(Numeric value, NumericVar *dest);
 static void init_var_from_num(Numeric value, NumericVar *dest);
 static void init_ro_var_from_num(Numeric value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var);
@@ -885,8 +885,9 @@ numeric		(PG_FUNCTION_ARGS)
 	 * We really need to fiddle with things - unpack the number into a
 	 * variable and let apply_typmod() do it.
 	 */
+	init_var(&var);
 
-	init_var_from_num(num, &var);
+	set_var_from_num(num, &var);
 	apply_typmod(&var, typmod);
 	new = make_result(&var);
 
@@ -1114,7 +1115,8 @@ numeric_round(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the argument and round it at the proper digit position
 	 */
-	init_var_from_num(num, &arg);
+	init_var(&arg);
+	set_var_from_num(num, &arg);
 
 	round_var(&arg, scale);
 
@@ -1161,7 +1163,8 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the argument and truncate it at the proper digit position
 	 */
-	init_var_from_num(num, &arg);
+	init_var(&arg);
+	set_var_from_num(num, &arg);
 
 	trunc_var(&arg, scale);
 
@@ -5124,7 +5127,6 @@ init_var_from_str(const char *str, const char *cp, NumericVar *dest)
  *
  *	Convert the packed db format into a variable
  */
-#if 0
 static void
 set_var_from_num(Numeric num, NumericVar *dest)
 {
@@ -5140,7 +5142,6 @@ set_var_from_num(Numeric num, NumericVar *dest)
 
 	memcpy(dest->digits, NUMERIC_DIGITS(num), ndigits * sizeof(NumericDigit));
 }
-#endif
 
 /*
  * init_ro_var_from_num() -
