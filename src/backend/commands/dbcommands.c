@@ -120,7 +120,7 @@ createdb(const CreatedbStmt *stmt)
 	bool		src_allowconn;
 	Oid			src_lastsysoid = InvalidOid;
 	TransactionId src_frozenxid = InvalidTransactionId;
-	MultiXactId src_minmxid;
+	MultiXactId src_minmxid = InvalidTransactionId;
 	Oid			src_deftablespace = InvalidOid;
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
