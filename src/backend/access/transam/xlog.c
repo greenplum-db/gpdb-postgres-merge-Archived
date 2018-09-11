@@ -4002,7 +4002,8 @@ UpdateControlFile(void)
 				 errmsg("could not close control file: %m")));
 
 	Assert (ControlFileWatcher->watcherInitialized);
-	ControlFileWatcherCheckForChange();
+	if (!InRecovery)
+		ControlFileWatcherCheckForChange();
 }
 
 /*
