@@ -721,8 +721,8 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
  * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object
  * type, the function appropriate to that type is executed.
  */
-Oid
-ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
+static Oid
+ExecAlterOwnerStmt_internal(AlterOwnerStmt *stmt)
 {
 	Oid			newowner = get_role_oid(stmt->newowner, false);
 
@@ -808,6 +808,15 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 			return InvalidOid;	/* keep compiler happy */
 	}
+}
+
+Oid
+ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
+{
+	Oid			result;
+
+	result = ExecAlterOwnerStmt_internal(stmt);
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -817,7 +826,8 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 									NIL,
 									NULL);
 	}
-	
+
+	return result;
 }
 
 /*
