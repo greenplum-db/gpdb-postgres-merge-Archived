@@ -731,10 +731,8 @@ static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
-#ifdef NOT_USED
 static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		   int emode, bool fetching_ckpt);
-#endif
 static void ControlFileWatcherSaveInitial(void);
 static void ControlFileWatcherCheckForChange(void);
 static bool XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc);
@@ -3388,9 +3386,9 @@ RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb, char *blk,
  * The record is copied into readRecordBuf, so that on successful return,
  * the returned record pointer always points there.
  */
-XLogRecord *
-GP_ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
-		bool fetching_ckpt)
+static XLogRecord *
+ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
+		   bool fetching_ckpt)
 {
 	XLogRecord *record;
 	XLogPageReadPrivate *private = (XLogPageReadPrivate *) xlogreader->private_data;
@@ -5513,7 +5511,7 @@ StartupXLOG(void)
 			 */
 			if (checkPoint.redo < checkPointLoc)
 			{
-				if (!GP_ReadRecord(xlogreader, checkPoint.redo, LOG, false))
+				if (!ReadRecord(xlogreader, checkPoint.redo, LOG, false))
 					ereport(FATAL,
 							(errmsg("could not find redo location referenced by checkpoint record"),
 							 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
@@ -6019,12 +6017,12 @@ StartupXLOG(void)
 		if (checkPoint.redo < RecPtr)
 		{
 			/* back up to find the record */
-			record = GP_ReadRecord(xlogreader, checkPoint.redo, PANIC, false);
+			record = ReadRecord(xlogreader, checkPoint.redo, PANIC, false);
 		}
 		else
 		{
 			/* just have to read next record after CheckPoint */
-			record = GP_ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
+			record = ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
 		}
 
 		/*
@@ -6245,7 +6243,7 @@ StartupXLOG(void)
 					break;
 
 				/* Else, try to fetch the next WAL record */
-				record = GP_ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
+				record = ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
 			} while (record != NULL);
 
 			/*
@@ -6311,7 +6309,7 @@ StartupXLOG(void)
 	 * Re-fetch the last valid or last applied record, so we can identify the
 	 * exact endpoint of what we consider the valid portion of WAL.
 	 */
-	record = GP_ReadRecord(xlogreader, LastRec, PANIC, false);
+	record = ReadRecord(xlogreader, LastRec, PANIC, false);
 	EndOfLog = EndRecPtr;
 	XLByteToPrevSeg(EndOfLog, endLogSegNo);
 
@@ -7007,12 +7005,12 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	}
 
 	/*
-	 * Set fetching_ckpt to true here, so that GP_ReadRecord()
+	 * Set fetching_ckpt to true here, so that ReadRecord()
 	 * uses RedoStartLSN as the start replication location used
 	 * by WAL receiver (when StandbyMode is on). See comments
 	 * for fetching_ckpt in XLogReadPage()
 	 */
-	record = GP_ReadRecord(xlogreader, RecPtr, LOG, true /* fetching_checkpoint */);
+	record = ReadRecord(xlogreader, RecPtr, LOG, true /* fetching_checkpoint */);
 
 	if (record == NULL)
 	{

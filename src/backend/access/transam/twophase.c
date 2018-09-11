@@ -1427,6 +1427,11 @@ FinishPreparedTransaction(const char *gid, bool isCommit, bool raiseErrorIfNotFo
 	/*
 	 * GPDB_93_MERGE_FIXME: GPDB used to do XLogCloseReadRecord() and then read,
 	 * do we need to perform something similar with new interface.
+	 *
+	 * GPDB_93_MERGE_FIXME: It's a bit inefficient to allocate a new XLogReader
+	 * object for every call. We could avoid opening+closing every WAL segment,
+	 * if we kept the XLogReader object around. Or reused xlog.c's openLogFile
+	 * file descriptor here.
 	 */
 
 	private.readFile = -1;
