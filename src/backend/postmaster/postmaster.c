@@ -1837,7 +1837,6 @@ ServerLoop(void)
 		checkPgDir("/pg_twophase");
 		checkPgDir("/pg_utilitymodedtmredo");
 		checkPgDir("/pg_distributedlog");
-		checkPgDir("/pg_distributedxidmap");
 		checkPgDir("/pg_multixact");
 		checkPgDir("/pg_subtrans");
 		checkPgDir("/pg_xlog");
