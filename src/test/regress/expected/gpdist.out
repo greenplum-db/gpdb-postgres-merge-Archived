@@ -466,13 +466,9 @@ ERROR:  UNIQUE constraint and DISTRIBUTED BY definitions incompatible
 HINT:  When there is both a UNIQUE constraint, and a DISTRIBUTED BY clause, the DISTRIBUTED BY clause must be equal to or a left-subset of the UNIQUE columns
 -- these are allowed
 create table distby_with_constraint1 (col1 int4 PRIMARY KEY, col2 int4) DISTRIBUTED BY (col1);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "distby_with_constraint1_pkey" for table "distby_with_constraint1"
 create table distby_with_constraint2 (col1 int4 UNIQUE, col2 int4) DISTRIBUTED BY (col1);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "distby_with_constraint2_col1_key" for table "distby_with_constraint2"
 create table distby_with_constraint3 (col1 int4 PRIMARY KEY, col2 int4) DISTRIBUTED REPLICATED;
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "distby_with_constraint3_pkey" for table "distby_with_constraint3"
 create table distby_with_constraint4 (col1 int4 UNIQUE, col2 int4) DISTRIBUTED REPLICATED;
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "distby_with_constraint4_col1_key" for table "distby_with_constraint4"
 --
 -- Test that DISTRIBUTED BY is interpreted correctly with inheritance.
 --

@@ -8,10 +8,6 @@ CREATE TEMP TABLE articles (
     body text /* UNIQUE */,
     created date
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "articles_pkey" for table "articles"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TEMP TABLE articles_in_category (
     article_id int,
     category_id int,
@@ -149,10 +145,6 @@ CREATE TEMP TABLE users (
     PRIMARY KEY (uid)
     /* , UNIQUE (name) */
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "users_pkey" for table "users"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- OK
 SELECT u.uid, u.name FROM node n
 INNER JOIN users u ON u.uid = n.uid

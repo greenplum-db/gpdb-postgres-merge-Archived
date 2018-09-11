@@ -91,9 +91,7 @@ DROP TABLE copy_regression_hash7;
 -- ######################################################
 CREATE TABLE copy_regression_default1(a text not null default 'a default data', b text not null default 'b default data') distributed by(a);
 CREATE TABLE copy_regression_default2(a text, b serial, c text) distributed by(a);
-NOTICE:  CREATE TABLE will create implicit sequence "copy_regression_default2_b_seq" for serial column "copy_regression_default2.b"
 CREATE TABLE copy_regression_default3(a serial, b text, c text) distributed by(a);
-NOTICE:  CREATE TABLE will create implicit sequence "copy_regression_default3_a_seq" for serial column "copy_regression_default3.a"
 -- constant defaults on key and non key attributes
 COPY copy_regression_default1(a) from stdin;
 COPY copy_regression_default1(b) from stdin;
