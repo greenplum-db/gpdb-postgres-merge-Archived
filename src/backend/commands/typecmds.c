@@ -1323,6 +1323,14 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 	if (HeapTupleHeaderGetXmin(tup->t_data) == GetCurrentTransactionId() &&
 		!(tup->t_data->t_infomask & HEAP_UPDATED))
 		 /* safe to do inside transaction block */ ;
+	else if (Gp_role == GP_ROLE_EXECUTE)
+	{
+		/*
+		 * GPDB: allow this in query executor, as distributed transaction
+		 * participants. The QD already checked this, and should've prevented
+		 * running this in any genuine transaction block.
+		 */
+	}
 	else
 		PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
 

@@ -1613,20 +1613,6 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_AlterEnumStmt:		/* ALTER TYPE (enum) */
-
-				/*
-				 * We disallow this in transaction blocks, because we can't cope
-				 * with enum OID values getting into indexes and then having their
-				 * defining pg_enum entries go away.
-				 */
-				if (Gp_role != GP_ROLE_EXECUTE && !IsBinaryUpgrade)
-				{
-					/*
-					 * Don't allow master to call this in a transaction block.  Segments are ok as
-					 * distributed transaction participants.
-					 */
-					PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
-				}
 				AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
 				break;
 
