@@ -2246,7 +2246,6 @@ partition aa start(1) end(100) inclusive,
 partition bb start(101) end(200) inclusive,
 partition cc start(201) end (300) inclusive
 );
-NOTICE:  CREATE TABLE will create implicit sequence "mpp10847_pkeyconstraints_pkid_seq" for serial column "mpp10847_pkeyconstraints.pkid"
 NOTICE:  CREATE TABLE will create partition "mpp10847_pkeyconstraints_1_prt_aa" for table "mpp10847_pkeyconstraints"
 NOTICE:  CREATE TABLE will create partition "mpp10847_pkeyconstraints_1_prt_bb" for table "mpp10847_pkeyconstraints"
 NOTICE:  CREATE TABLE will create partition "mpp10847_pkeyconstraints_1_prt_cc" for table "mpp10847_pkeyconstraints"

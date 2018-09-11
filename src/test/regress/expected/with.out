@@ -977,7 +977,6 @@ LINE 1: WITH RECURSIVE x(n) AS (SELECT 1 EXCEPT ALL SELECT n+1 FROM ...
 -- where there is a motion between the RecursiveUnion node and the
 -- WorkTableScan node.
 CREATE TEMPORARY TABLE z(x int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "z_pkey" for table "z"
 WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * FROM x UNION SELECT * FROM z)foo)
 	SELECT * FROM x;
 ERROR:  recursive reference to query "x" must not appear within a subquery
@@ -986,7 +985,6 @@ LINE 1: ...SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * FROM x UNION SE...
 -- Set operation in recursive term that does not have a self-reference
 -- This is supported
 CREATE TEMPORARY TABLE u(x int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "u_pkey" for table "u"
 WITH RECURSIVE x(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM (SELECT * from z UNION SELECT * FROM u)foo, x where foo.x = x.n)
 	SELECT * FROM x;
  n 
