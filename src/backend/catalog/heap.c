@@ -2333,13 +2333,6 @@ heap_drop_with_catalog(Oid relid)
 
 	/*
 	 * There can no longer be anyone *else* touching the relation, but we
-	 * might still have open queries or cursors, or pending trigger events,
-	 * in our own session.
-	 */
-	CheckTableNotInUse(rel, "DROP TABLE");
-
-	/*
-	 * There can no longer be anyone *else* touching the relation, but we
 	 * might still have open queries or cursors, or pending trigger events, in
 	 * our own session.
 	 */
