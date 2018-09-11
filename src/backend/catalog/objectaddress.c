@@ -509,6 +509,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_VIEW:
 			case OBJECT_MATVIEW:
 			case OBJECT_FOREIGN_TABLE:
+			case OBJECT_EXTTABLE:
 				address =
 					get_relation_by_qualified_name(objtype, objname,
 												   &relation, lockmode,
@@ -912,6 +913,14 @@ get_relation_by_qualified_name(ObjectType objtype, List *objname,
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a foreign table",
+								RelationGetRelationName(relation))));
+			break;
+		case OBJECT_EXTTABLE:
+			if (relation->rd_rel->relkind != RELKIND_RELATION ||
+				relation->rd_rel->relstorage != RELSTORAGE_EXTERNAL)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not an external table",
 								RelationGetRelationName(relation))));
 			break;
 		default:
