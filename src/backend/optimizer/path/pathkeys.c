@@ -1322,10 +1322,8 @@ make_distribution_keys_for_groupclause(PlannerInfo *root, List *groupclause, Lis
  *	 Generate a pathkeys list that represents the sort order specified by
  *	 a list of GroupClauses or GroupingClauses.
  *
- * Note: similar to make_pathkeys_for_sortclauses, the result is NOT in
- * canonical form. However, if the same column appears twice anywhere in
- * the grouping clause or withing grouping sets, only one PathKey is
- * generated for it.
+ * Note: If the same column appears twice anywhere in the grouping clause or
+ * withing grouping sets, only one PathKey is generated for it.
  */
 
 typedef struct

@@ -3645,7 +3645,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 	if (parse->groupClause &&
 		grouping_is_sortable(parse->groupClause))
 		root->group_pathkeys =
-			make_pathkeys_for_sortclauses(root,
+			make_pathkeys_for_groupclause(root,
 										  parse->groupClause,
 										  tlist);
 	else
