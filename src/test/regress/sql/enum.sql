@@ -235,8 +235,6 @@ SELECT echo_me('red');
 DROP FUNCTION echo_me(rainbow);
 
 --
-<<<<<<< HEAD
-=======
 -- RI triggers on enum types
 --
 CREATE TABLE enumtest_parent (id rainbow PRIMARY KEY);
@@ -280,9 +278,10 @@ ALTER TYPE bogus ADD VALUE 'ugly';
 ROLLBACK;
 
 --
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- Cleanup
 --
+DROP TABLE enumtest_child;
+DROP TABLE enumtest_parent;
 DROP TABLE enumtest;
 DROP TYPE rainbow;
 

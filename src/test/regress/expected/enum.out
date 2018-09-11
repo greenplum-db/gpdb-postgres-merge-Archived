@@ -524,8 +524,6 @@ SELECT echo_me('red');
 
 DROP FUNCTION echo_me(rainbow);
 --
-<<<<<<< HEAD
-=======
 -- RI triggers on enum types
 --
 CREATE TABLE enumtest_parent (id rainbow PRIMARY KEY);
@@ -533,11 +531,10 @@ CREATE TABLE enumtest_child (parent rainbow REFERENCES enumtest_parent);
 INSERT INTO enumtest_parent VALUES ('red');
 INSERT INTO enumtest_child VALUES ('red');
 INSERT INTO enumtest_child VALUES ('blue');  -- fail
-ERROR:  insert or update on table "enumtest_child" violates foreign key constraint "enumtest_child_parent_fkey"
-DETAIL:  Key (parent)=(blue) is not present in table "enumtest_parent".
+-- start_ignore
+-- foreign keys are not checked in GPDB, hence these pass.
+-- end_ignore
 DELETE FROM enumtest_parent;  -- fail
-ERROR:  update or delete on table "enumtest_parent" violates foreign key constraint "enumtest_child_parent_fkey" on table "enumtest_child"
-DETAIL:  Key (id)=(red) is still referenced from table "enumtest_child".
 --
 -- cross-type RI should fail
 --
@@ -571,9 +568,10 @@ ALTER TYPE bogus ADD VALUE 'good';
 ALTER TYPE bogus ADD VALUE 'ugly';
 ROLLBACK;
 --
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- Cleanup
 --
+DROP TABLE enumtest_child;
+DROP TABLE enumtest_parent;
 DROP TABLE enumtest;
 DROP TYPE rainbow;
 --
