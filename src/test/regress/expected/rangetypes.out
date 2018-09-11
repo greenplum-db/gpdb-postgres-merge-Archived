@@ -1072,13 +1072,7 @@ create table test_range_excl(
   during tsrange,
   exclude using gist (room with =, during with &&),
   exclude using gist (speaker with =, during with &&)
-<<<<<<< HEAD
 ) DISTRIBUTED BY (id);
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_room_during_excl" for table "test_range_excl"
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_speaker_during_excl" for table "test_range_excl"
-=======
-);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 insert into test_range_excl
   values(1, int4range(123, 123, '[]'), int4range(1, 1, '[]'), '[2010-01-02 10:00, 2010-01-02 11:00)');
 insert into test_range_excl
@@ -1321,8 +1315,7 @@ DETAIL:  A function returning "anyrange" must have at least one "anyrange" argum
 create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 ERROR:  cannot determine result data type
-<<<<<<< HEAD
-DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.
+DETAIL:  A function returning "anyrange" must have at least one "anyrange" argument.
 --
 -- DISTRIBUTED BY
 --
@@ -1374,6 +1367,3 @@ select * from distribute_by_text_range where tr = '[aaa,aab)'::textrange3;
  [aaa,aab)
 (1 row)
 
-=======
-DETAIL:  A function returning "anyrange" must have at least one "anyrange" argument.
->>>>>>> e472b921406407794bab911c64655b8b82375196
