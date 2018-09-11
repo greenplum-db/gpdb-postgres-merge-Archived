@@ -652,10 +652,6 @@ CREATE TABLE deferred_excl (
   f1 int,
   CONSTRAINT deferred_excl_con EXCLUDE (f1 WITH =) INITIALLY DEFERRED
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "deferred_excl_f1_excl" for table "deferred_excl"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 INSERT INTO deferred_excl VALUES(1);
 INSERT INTO deferred_excl VALUES(2);
 INSERT INTO deferred_excl VALUES(1); -- fail
