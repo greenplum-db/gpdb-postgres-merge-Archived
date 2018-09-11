@@ -9924,7 +9924,6 @@ id serial,
 code character varying(25),
 name character varying(40)
 );
-NOTICE:  CREATE TABLE will create implicit sequence "outer_tab_id_seq" for serial column "outer_tab.id"
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into bm.outer_tab select i % 10, i % 5, i % 2 from generate_series(1, 100) i;
@@ -10099,7 +10098,6 @@ id serial,
 code character varying(25),
 name character varying(40)
 );
-NOTICE:  CREATE TABLE will create implicit sequence "idxscan_outer_id_seq" for serial column "idxscan_outer.id"
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'id' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 drop table if exists idxscan_inner;
@@ -10110,7 +10108,6 @@ ordernum int unique,
 productid int,
 comment character varying(40)
 );
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "idxscan_inner_ordernum_key" for table "idxscan_inner"
 -- Have more rows in one table, so that the planner will
 -- choose to make that the outer side of the join.
 insert into idxscan_outer values (1, 'a', 'aaa');
@@ -10184,7 +10181,6 @@ select to_char(c1, 'YYYY-MM-DD HH24:MI:SS') from orca.t3 where c1 = '2015-07-03'
 
 -- MPP-25806: multi-column index
 create table orca.index_test (a int, b int, c int, d int, e int, constraint index_test_pkey PRIMARY KEY (a, b, c, d));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "index_test_pkey" for table "index_test"
 insert into orca.index_test select i,i%2,i%3,i%4,i%5 from generate_series(1,100) i;
 -- force_explain
 explain select * from orca.index_test where a = 5;

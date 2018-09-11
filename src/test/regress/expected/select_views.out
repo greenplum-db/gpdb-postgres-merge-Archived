@@ -1261,16 +1261,10 @@ CREATE TABLE customer (
        cid      int,
        name     text not null,
        tel      text,
-<<<<<<< HEAD
        passwd	text,
        dist_key int default 1,
        unique (dist_key, cid)
 ) DISTRIBUTED BY (dist_key);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "customer_dist_key_cid_key" for table "customer"
-=======
-       passwd	text
-);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TABLE credit_card (
        cid      int,
        cnum     text,

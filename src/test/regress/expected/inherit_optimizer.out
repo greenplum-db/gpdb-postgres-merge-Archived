@@ -2,7 +2,6 @@
 -- Test inheritance features
 --
 CREATE TABLE a (dummy serial, aa TEXT);
-NOTICE:  CREATE TABLE will create implicit sequence "a_dummy_seq" for serial column "a.dummy"
 CREATE TABLE b (bb TEXT) INHERITS (a);
 CREATE TABLE c (cc TEXT) INHERITS (a);
 CREATE TABLE d (dd TEXT) INHERITS (b,c,a);
@@ -1076,7 +1075,6 @@ drop cascades to table patest2
 -- Test merge-append plans for inheritance trees
 --
 create table matest0 (id serial primary key, name text);
-NOTICE:  CREATE TABLE will create implicit sequence "matest0_id_seq" for serial column "matest0.id"
 create table matest1 (id integer primary key) inherits (matest0);
 NOTICE:  merging column "id" with inherited definition
 create table matest2 (id integer primary key) inherits (matest0);
