@@ -177,6 +177,18 @@ select concat_ws(',', variadic array[1,2,3]);
  1,2,3
 (1 row)
 
+select concat_ws(',', variadic NULL::int[]);
+ concat_ws 
+-----------
+ 
+(1 row)
+
+select concat(variadic NULL::int[]) is NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
 select concat(variadic '{}'::int[]) = '';
  ?column? 
 ----------
@@ -331,6 +343,13 @@ select format('%2$s, %1$s', variadic array[1, 2]);
  format 
 --------
  2, 1
+(1 row)
+
+-- variadic argument can be array type NULL, but should not be referenced
+select format('Hello', variadic NULL::int[]);
+ format 
+--------
+ Hello
 (1 row)
 
 -- variadic argument allows simulating more than FUNC_MAX_ARGS parameters
