@@ -105,15 +105,14 @@ add_paths_to_joinrel(PlannerInfo *root,
 	ListCell   *lc;
 
     Assert(outerrel->pathlist &&
-           outerrel->cheapest_startup_path &&
            outerrel->cheapest_total_path);
     Assert(innerrel->pathlist &&
-           innerrel->cheapest_startup_path &&
            innerrel->cheapest_total_path);
 
 	/* Don't consider paths that have WorkTableScan as inner rel */
-	if (cdbpath_contains_wts(innerrel->cheapest_startup_path) ||
-		cdbpath_contains_wts(innerrel->cheapest_total_path))
+	if (innerrel->cheapest_startup_path && cdbpath_contains_wts(innerrel->cheapest_startup_path))
+		return;
+	if (cdbpath_contains_wts(innerrel->cheapest_total_path))
 		return;
 
 	/*
