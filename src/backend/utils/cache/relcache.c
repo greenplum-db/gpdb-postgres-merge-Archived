@@ -899,6 +899,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			break;
 		case RELPERSISTENCE_TEMP:
 			relation->rd_backend = TempRelBackendId;
+			relation->rd_islocaltemp = true;
 			/*
 			 * GPDB_93_MERGE_FIXME currently if it is temp we directly set it s
 			 * TempRelBackendId but upstream does below logic. Check if this is
