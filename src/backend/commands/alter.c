@@ -303,8 +303,8 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
  * Executes an ALTER OBJECT / RENAME TO statement.	Based on the object
  * type, the function appropriate to that type is executed.
  */
-Oid
-ExecRenameStmt(RenameStmt *stmt)
+static Oid
+ExecRenameStmt_internal(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
@@ -391,6 +391,15 @@ ExecRenameStmt(RenameStmt *stmt)
 				 (int) stmt->renameType);
 			return InvalidOid;	/* keep compiler happy */
 	}
+}
+
+Oid
+ExecRenameStmt(RenameStmt *stmt)
+{
+	Oid			result;
+
+	result = ExecRenameStmt_internal(stmt);
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -401,14 +410,15 @@ ExecRenameStmt(RenameStmt *stmt)
 									NULL);
 	}
 
+	return result;
 }
 
 /*
  * Executes an ALTER OBJECT / SET SCHEMA statement.  Based on the object
  * type, the function appropriate to that type is executed.
  */
-Oid
-ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
+static Oid
+ExecAlterObjectSchemaStmt_internal(AlterObjectSchemaStmt *stmt)
 {
 	switch (stmt->objectType)
 	{
@@ -470,6 +480,14 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 				 (int) stmt->objectType);
 			return InvalidOid;	/* keep compiler happy */
 	}
+}
+Oid
+ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
+{
+	Oid			result;
+
+	result = ExecAlterObjectSchemaStmt_internal(stmt);
+
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -479,6 +497,8 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 									NIL,
 									NULL);
 	}
+
+	return result;
 }
 
 /*
