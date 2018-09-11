@@ -7,8 +7,6 @@
 
 #include "catalog/pg_tablespace.h"
 
-static const XLogRecPtr InvalidXLogRecPtr = {0, 0};
-
 /*
  * Test that calling appendonly_redo with XLOG_APPENDONLY_INSERT record will
  * call ao_insert_replay.
