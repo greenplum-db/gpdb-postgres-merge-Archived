@@ -1031,11 +1031,6 @@ CREATE TABLE country_table (
     country_name    text not null,
     continent        text not null
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE will create implicit sequence "country_table_country_id_seq" for serial column "country_table.country_id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "country_table_pkey" for table "country_table"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 INSERT INTO country_table (country_name, continent)
     VALUES ('Japan', 'Asia'),
            ('UK', 'Europe'),
@@ -1054,12 +1049,7 @@ CREATE TABLE city_table (
     population    bigint,
     country_id    int references country_table
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE will create implicit sequence "city_table_city_id_seq" for serial column "city_table.city_id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "city_table_pkey" for table "city_table"
 WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE VIEW city_view AS
     SELECT city_id, city_name, population, country_name, continent
     FROM city_table ci

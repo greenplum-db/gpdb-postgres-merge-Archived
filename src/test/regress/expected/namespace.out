@@ -9,7 +9,6 @@ CREATE SCHEMA test_schema_1
               a serial,
               b int UNIQUE
        ) DISTRIBUTED BY (b);
-NOTICE:  CREATE TABLE will create implicit sequence "abc_a_seq" for serial column "abc.a"
 -- verify that the objects were created
 SELECT COUNT(*) FROM pg_class WHERE relnamespace =
     (SELECT oid FROM pg_namespace WHERE nspname = 'test_schema_1');
