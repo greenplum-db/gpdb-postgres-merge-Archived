@@ -725,13 +725,6 @@ static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
 
-#ifdef NOT_USED
-static bool RestoreArchivedFile(char *path, const char *xlogfname,
-					const char *recovername, off_t expectedSize);
-static void ExecuteRecoveryCommand(char *command, char *commandName,
-					   bool failOnerror);
-#endif
-
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr);
 static void UpdateLastRemovedPtr(char *filename);
