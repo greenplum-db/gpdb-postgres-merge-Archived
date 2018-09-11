@@ -1806,10 +1806,10 @@ DATA(insert OID = 3330 (  ">="    PGNSP PGUID b f f 3310 3310	16 3329 3327 gpxlo
 DESCR("greater than or equal");
 
 /* operators for complex data type */
-DATA(insert OID = 6469 (  "="	   PGNSP PGUID b t f 7198 7198 16 3469 3470 complex_eq eqsel eqjoinsel)); 
+DATA(insert OID = 6469 (  "="	   PGNSP PGUID b t f 7198 7198 16 6469 6470 complex_eq eqsel eqjoinsel)); 
 DESCR("equal");
 #define ComplexEqualOperator 3469
-DATA(insert OID = 6470 (  "<>"	   PGNSP PGUID b f f 7198 7198 16 3470 3469 complex_ne  neqsel neqjoinsel)); 
+DATA(insert OID = 6470 (  "<>"	   PGNSP PGUID b f f 7198 7198 16 6470 6469 complex_ne  neqsel neqjoinsel)); 
 DESCR("not equal");
 DATA(insert OID = 6471 (  "@"	   PGNSP PGUID l f f 0   7198 701 0	0	 complexabs  - -)); 
 DESCR("absolute value");
@@ -1831,13 +1831,13 @@ DATA(insert OID = 6479 (  "|/"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_s
 DESCR("square root");
 DATA(insert OID = 6480 (  "||/"	   PGNSP PGUID l f f 0   7198 7198 0	0	 complex_cbrt	- -));
 DESCR("cube root");
-DATA(insert OID = 6481 (  "<<"	   PGNSP PGUID b f f 7198 7198 16 3482 3484 complex_lt  scalarltsel scalarltjoinsel));
+DATA(insert OID = 6481 (  "<<"	   PGNSP PGUID b f f 7198 7198 16 6482 6484 complex_lt  scalarltsel scalarltjoinsel));
 DESCR("less than (for btree indexes)");
-DATA(insert OID = 6482 (  ">>"	   PGNSP PGUID b f f 7198 7198 16 3481 3483 complex_gt  scalargtsel scalargtjoinsel));
+DATA(insert OID = 6482 (  ">>"	   PGNSP PGUID b f f 7198 7198 16 6481 6483 complex_gt  scalargtsel scalargtjoinsel));
 DESCR("greater than (for btree indexes)");
-DATA(insert OID = 6483 (  "<<="	   PGNSP PGUID b f f 7198 7198 16 3484 3482 complex_lte  scalarltsel scalarltjoinsel));
+DATA(insert OID = 6483 (  "<<="	   PGNSP PGUID b f f 7198 7198 16 6484 6482 complex_lte  scalarltsel scalarltjoinsel));
 DESCR("less than or equal (for btree indexes)");
-DATA(insert OID = 6484 (  ">>="	   PGNSP PGUID b f f 7198 7198 16 3483 3481 complex_gte  scalargtsel scalargtjoinsel));
+DATA(insert OID = 6484 (  ">>="	   PGNSP PGUID b f f 7198 7198 16 6483 6481 complex_gte  scalargtsel scalargtjoinsel));
 DESCR("greater than or equal (for btree indexes)");
 
 DATA(insert OID = 7095 (  "/"    PGNSP PGUID b f f 1186  1186 701          0  0 interval_interval_div - - ));
