@@ -471,7 +471,7 @@ typedef struct StdRdOptions
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP && \
-	 (relation)->rd_backend != TempRelBackendId)
+	 !(relation)->rd_islocaltemp)
 
 
 /*
