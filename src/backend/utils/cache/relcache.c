@@ -898,17 +898,9 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 			relation->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
-			relation->rd_backend = TempRelBackendId;
-			relation->rd_islocaltemp = true;
-			/*
-			 * GPDB_93_MERGE_FIXME currently if it is temp we directly set it s
-			 * TempRelBackendId but upstream does below logic. Check if this is
-			 * fine to do in Greenplum.
-			 */
-#if 0
 			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
 			{
-				relation->rd_backend = MyBackendId;
+				relation->rd_backend = TempRelBackendId;
 				relation->rd_islocaltemp = true;
 			}
 			else
@@ -926,12 +918,10 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 				 * if/when we clean out the corresponding temp table namespace
 				 * in preparation for using it.
 				 */
-				relation->rd_backend =
-					GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
+				relation->rd_backend = TempRelBackendId;
 				Assert(relation->rd_backend != InvalidBackendId);
 				relation->rd_islocaltemp = false;
 			}
-#endif
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c",
