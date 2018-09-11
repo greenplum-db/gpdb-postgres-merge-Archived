@@ -9126,6 +9126,7 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 }
 
 #ifdef WAL_DEBUG
+
 static void
 xlog_outrec(StringInfo buf, XLogRecord *record)
 {
@@ -9147,7 +9148,7 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 
 	appendStringInfo(buf, ": %s", RmgrTable[record->xl_rmid].rm_name);
 }
-#endif
+#endif   /* WAL_DEBUG */
 
 
 /*
