@@ -207,7 +207,6 @@ extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool gp_keep_all_xlog;
-extern int keep_wal_segments;
 
 extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;

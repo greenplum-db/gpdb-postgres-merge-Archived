@@ -2505,17 +2505,6 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
-	{
-		{"keep_wal_segments", PGC_SIGHUP, WAL_SETTINGS,
-			gettext_noop("Sets the number of WAL files held for standby servers."),
-			NULL,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-		},
-		&keep_wal_segments,
-		5, 0, INT_MAX,
-		NULL, NULL, NULL
-	},
-
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
