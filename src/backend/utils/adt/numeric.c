@@ -2535,7 +2535,7 @@ numeric_int4(PG_FUNCTION_ARGS)
 				 errmsg("cannot convert NaN to integer")));
 
 	/* Convert to variable format, then convert to int4 */
-	init_var_from_num(num, &x);
+	init_ro_var_from_num(num, &x);
 	result = numericvar_to_int32(&x);
 	PG_RETURN_INT32(result);
 }
