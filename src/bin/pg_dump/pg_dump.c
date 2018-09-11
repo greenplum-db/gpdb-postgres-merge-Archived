@@ -13957,6 +13957,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 				appendPQExpBuffer(q, "\nSERVER %s", fmtId(srvname));
 		}
+		else
+			actual_atts = 0;
 
 		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
 		  (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
