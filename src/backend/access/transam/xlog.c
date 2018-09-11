@@ -5410,13 +5410,6 @@ StartupXLOG(void)
 				(errmsg("entering standby mode")));
 
 	/*
-	 * Take ownership of the wakeup latch if we're going to sleep during
-	 * recovery.
-	 */
-	if (StandbyModeRequested)
-		OwnLatch(&XLogCtl->recoveryWakeupLatch);
-
-	/*
 	 * Allocate pages dedicated to WAL consistency checks, those had better
 	 * be aligned.
 	 */
