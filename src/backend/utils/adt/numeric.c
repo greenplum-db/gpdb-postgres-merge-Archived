@@ -404,9 +404,7 @@ static const char *init_var_from_str(const char *str, const char *cp, NumericVar
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
-#if 0
 static void set_var_from_num(Numeric value, NumericVar *dest);
-#endif
 static void init_var_from_num(Numeric value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var);
 static char *get_str_from_var_sci(NumericVar *var, int rscale);
@@ -886,9 +884,13 @@ numeric		(PG_FUNCTION_ARGS)
 	 * We really need to fiddle with things - unpack the number into a
 	 * variable and let apply_typmod() do it.
 	 */
-	init_var_from_num(num, &var);
+	init_var(&var);
+
+	set_var_from_num(num, &var);
 	apply_typmod(&var, typmod);
 	new = make_result(&var);
+
+	free_var(&var);
 
 	PG_RETURN_NUMERIC(new);
 }
@@ -5125,7 +5127,6 @@ init_var_from_str(const char *str, const char *cp, NumericVar *dest)
  *
  *	Convert the packed db format into a variable
  */
-#if 0
 static void
 set_var_from_num(Numeric num, NumericVar *dest)
 {
@@ -5141,7 +5142,6 @@ set_var_from_num(Numeric num, NumericVar *dest)
 
 	memcpy(dest->digits, NUMERIC_DIGITS(num), ndigits * sizeof(NumericDigit));
 }
-#endif
 
 
 /*
