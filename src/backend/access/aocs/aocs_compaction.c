@@ -33,6 +33,7 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/guc.h"
+#include "limits.h"
 #include "miscadmin.h"
 
 /*
