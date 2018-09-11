@@ -243,7 +243,7 @@ typedef struct NumericVar
 	int			weight;			/* weight of first digit */
 	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
 	int			dscale;			/* display scale */
-	NumericDigit *buf			/* start of space for digits[] */;
+	NumericDigit *buf;			/* start of space for digits[] */
 	NumericDigit *digits;		/* base-NBASE digits */
 	NumericDigit ndb[NUMERIC_LOCAL_NDIG];	/* local space for digits[] */
 } NumericVar;
@@ -404,9 +404,10 @@ static const char *init_var_from_str(const char *str, const char *cp, NumericVar
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_ro_var_from_var(NumericVar *value, NumericVar *dest);
+#if 0
 static void set_var_from_num(Numeric value, NumericVar *dest);
+#endif
 static void init_var_from_num(Numeric value, NumericVar *dest);
-static void init_ro_var_from_num(Numeric value, NumericVar *dest);
 static char *get_str_from_var(NumericVar *var);
 static char *get_str_from_var_sci(NumericVar *var, int rscale);
 
@@ -580,7 +581,7 @@ numeric_out(PG_FUNCTION_ARGS)
 	/*
 	 * Get the number in the variable format.
 	 */
-	init_ro_var_from_num(num, &x);
+	init_var_from_num(num, &x);
 
 	str = get_str_from_var(&x);
 
@@ -751,7 +752,7 @@ numeric_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 	int			i;
 
-	init_ro_var_from_num(num, &x);
+	init_var_from_num(num, &x);
 
 	pq_begintypsend(&buf);
 
@@ -885,9 +886,7 @@ numeric		(PG_FUNCTION_ARGS)
 	 * We really need to fiddle with things - unpack the number into a
 	 * variable and let apply_typmod() do it.
 	 */
-	init_var(&var);
-
-	set_var_from_num(num, &var);
+	init_var_from_num(num, &var);
 	apply_typmod(&var, typmod);
 	new = make_result(&var);
 
@@ -1115,8 +1114,7 @@ numeric_round(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the argument and round it at the proper digit position
 	 */
-	init_var(&arg);
-	set_var_from_num(num, &arg);
+	init_var_from_num(num, &arg);
 
 	round_var(&arg, scale);
 
@@ -1163,8 +1161,7 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the argument and truncate it at the proper digit position
 	 */
-	init_var(&arg);
-	set_var_from_num(num, &arg);
+	init_var_from_num(num, &arg);
 
 	trunc_var(&arg, scale);
 
@@ -1196,7 +1193,7 @@ numeric_ceil(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	init_ro_var_from_num(num, &result);
+	init_var_from_num(num, &result);
 	ceil_var(&result, &result);
 
 	res = make_result(&result);
@@ -1220,7 +1217,7 @@ numeric_floor(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	init_ro_var_from_num(num, &result);
+	init_var_from_num(num, &result);
 	floor_var(&result, &result);
 
 	res = make_result(&result);
@@ -1322,9 +1319,9 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 	NumericVar	bound2_var;
 	NumericVar	operand_var;
 
-	init_ro_var_from_num(bound1, &bound1_var);
-	init_ro_var_from_num(bound2, &bound2_var);
-	init_ro_var_from_num(operand, &operand_var);
+	init_var_from_num(bound1, &bound1_var);
+	init_var_from_num(bound2, &bound2_var);
+	init_var_from_num(operand, &operand_var);
 
 	if (cmp_var(&bound1_var, &bound2_var) < 0)
 	{
@@ -1609,8 +1606,8 @@ numeric_add(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the values, let add_var() compute the result and return it.
 	 */
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	quick_init_var(&result);
 	add_var(&arg1, &arg2, &result);
@@ -1647,8 +1644,8 @@ numeric_sub(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the values, let sub_var() compute the result and return it.
 	 */
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	quick_init_var(&result);
 	sub_var(&arg1, &arg2, &result);
@@ -1689,8 +1686,8 @@ numeric_mul(PG_FUNCTION_ARGS)
 	 * we request exact representation for the product (rscale = sum(dscale of
 	 * arg1, dscale of arg2)).
 	 */
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	quick_init_var(&result);
 	mul_var(&arg1, &arg2, &result, arg1.dscale + arg2.dscale);
@@ -1728,8 +1725,8 @@ numeric_div(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the arguments
 	 */
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	quick_init_var(&result);
 
@@ -1811,8 +1808,8 @@ numeric_mod(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 
 	quick_init_var(&result);
 
@@ -1824,6 +1821,7 @@ numeric_mod(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NUMERIC(res);
 }
+
 
 /*
  * numeric_inc() -
@@ -1846,7 +1844,7 @@ numeric_inc(PG_FUNCTION_ARGS)
 	/*
 	 * Compute the result and return it
 	 */
-	init_ro_var_from_num(num, &arg);
+	init_var_from_num(num, &arg);
 
 	add_var(&arg, &const_one, &arg);
 
@@ -1985,9 +1983,9 @@ numeric_fac(PG_FUNCTION_ARGS)
 		mul_var(&result, &fact, &result, 0);
 	}
 
-	free_var(&fact);
-
 	res = make_result(&result);
+
+	free_var(&fact);
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -2019,7 +2017,7 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
-	init_ro_var_from_num(num, &arg);
+	init_var_from_num(num, &arg);
 
 	quick_init_var(&result);
 
@@ -2126,7 +2124,7 @@ numeric_ln(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(num))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	init_ro_var_from_num(num, &arg);
+	init_var_from_num(num, &arg);
 	quick_init_var(&result);
 
 	/* Approx decimal digits before decimal point */
@@ -2177,8 +2175,8 @@ numeric_log(PG_FUNCTION_ARGS)
 	/*
 	 * Initialize things
 	 */
-	init_ro_var_from_num(num1, &arg1);
-	init_ro_var_from_num(num2, &arg2);
+	init_var_from_num(num1, &arg1);
+	init_var_from_num(num2, &arg2);
 	quick_init_var(&result);
 
 	/*
@@ -2289,12 +2287,12 @@ numeric_interval_bound_common(Numeric value, Numeric width,
 	/* result = result - rbound */
 	if (rbound != NULL)
 	{
-		init_ro_var_from_num(rbound, &regvar);
+		init_var_from_num(rbound, &regvar);
 		sub_var(&result, &regvar, &result);
 	}
 
 	/* result = floor(result / width) * width */
-	init_ro_var_from_num(width, &widvar);
+	init_var_from_num(width, &widvar);
 
 	if (cmp_var(&widvar, &const_zero) <= 0)
 		ereport(ERROR,
@@ -2354,9 +2352,9 @@ numeric_li_fraction(Numeric x, Numeric x0, Numeric x1,
 		NumericVar v1;
 		int rscale;
 		
-		init_ro_var_from_num(x, &v);
-		init_ro_var_from_num(x0, &v0);
-		init_ro_var_from_num(x1, &v1);
+		init_var_from_num(x, &v);
+		init_var_from_num(x0, &v0);
+		init_var_from_num(x1, &v1);
 		
 		sub_var(&v, &v0, &v);
 		sub_var(&v1, &v0, &v1);
@@ -2376,7 +2374,7 @@ numeric_li_fraction(Numeric x, Numeric x0, Numeric x1,
 		
 		if ( *eq_bounds )
 		{
-			init_ro_var_from_num(x, &v);
+			init_var_from_num(x, &v);
 			*eq_abscissas = ( cmp_var(&v, &v0) == 0 );
 			set_var_from_var(&const_zero, &v);
 		}
@@ -2413,8 +2411,8 @@ numeric_li_value(float8 f, Numeric y0, Numeric y1)
 		NumericVar vf;
 		char buf[DBL_DIG + 100];
 		
-		init_ro_var_from_num(y0, &v0);
-		init_ro_var_from_num(y1, &v1);
+		init_var_from_num(y0, &v0);
+		init_var_from_num(y1, &v1);
 		sub_var(&v1, &v0, &v1);
 		
 		/* Make a numeric version of f */
@@ -2535,7 +2533,7 @@ numeric_int4(PG_FUNCTION_ARGS)
 				 errmsg("cannot convert NaN to integer")));
 
 	/* Convert to variable format, then convert to int4 */
-	init_ro_var_from_num(num, &x);
+	init_var_from_num(num, &x);
 	result = numericvar_to_int32(&x);
 	PG_RETURN_INT32(result);
 }
@@ -5127,6 +5125,7 @@ init_var_from_str(const char *str, const char *cp, NumericVar *dest)
  *
  *	Convert the packed db format into a variable
  */
+#if 0
 static void
 set_var_from_num(Numeric num, NumericVar *dest)
 {
@@ -5142,22 +5141,7 @@ set_var_from_num(Numeric num, NumericVar *dest)
 
 	memcpy(dest->digits, NUMERIC_DIGITS(num), ndigits * sizeof(NumericDigit));
 }
-
-/*
- * init_ro_var_from_num() -
- *
- *	Convert the packed db format into a variable
- */
-static void
-init_ro_var_from_num(Numeric num, NumericVar *dest)
-{
-	dest->ndigits = NUMERIC_NDIGITS(num);
-	dest->weight = NUMERIC_WEIGHT(num);
-	dest->sign = NUMERIC_SIGN(num);
-	dest->dscale = NUMERIC_DSCALE(num);
-	dest->digits = NUMERIC_DIGITS(num);
-	dest->buf = dest->ndb;
-}
+#endif
 
 
 /*
@@ -5182,7 +5166,7 @@ init_var_from_num(Numeric num, NumericVar *dest)
 	dest->sign = NUMERIC_SIGN(num);
 	dest->dscale = NUMERIC_DSCALE(num);
 	dest->digits = NUMERIC_DIGITS(num);
-	dest->buf = NULL;			/* digits array is not palloc'd */
+	dest->buf = dest->ndb;
 }
 
 
@@ -5721,7 +5705,6 @@ numericvar_to_int64(NumericVar *var, int64 *result)
 	free_var(&rounded);
 
 	*result = neg ? -val : val;
-	free_var(var);
 	return true;
 }
 
