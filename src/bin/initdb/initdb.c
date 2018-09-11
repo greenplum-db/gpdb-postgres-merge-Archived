@@ -200,14 +200,15 @@ const char *subdirs[] = {
 	"pg_twophase",
 	"pg_multixact/members",
 	"pg_multixact/offsets",
-	"pg_distributedxidmap",		// Old directory.
-	"pg_distributedlog",		// New directory.
-	"pg_utilitymodedtmredo",
 	"base",
 	"base/1",
 	"pg_tblspc",
 	"pg_stat",
-	"pg_stat_tmp"
+	"pg_stat_tmp",
+/* GPDB needs these directories */
+	"pg_distributedlog",
+	"pg_utilitymodedtmredo",
+	"pg_log"
 };
 
 
