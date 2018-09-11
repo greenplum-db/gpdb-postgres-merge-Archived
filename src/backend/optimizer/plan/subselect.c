@@ -1449,11 +1449,14 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * to the inner (necessarily true, other than the Vars that we build
 	 * below). Therefore this is a lot easier than what pull_up_subqueries has
 	 * to go through.
+	 *
+	 * If the subquery is correlated, i.e. it refers to any Vars of the
+	 * parent query, mark it as lateral.
 	 */
 	rte = addRangeTableEntryForSubquery(NULL,
 										subselect,
 										makeAlias("ANY_subquery", NIL),
-										false,
+										correlated,	/* lateral */
 										false);
 	parse->rtable = lappend(parse->rtable, rte);
 	rtindex = list_length(parse->rtable);
