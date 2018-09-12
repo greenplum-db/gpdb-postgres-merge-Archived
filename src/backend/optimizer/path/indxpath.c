@@ -442,7 +442,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 			Path	   *bitmapqual;
 			Relids		required_outer;
 			double		loop_count;
-			BitmapHeapPath *bpath;
+			Path		*bpath;
 			ListCell   *lcp;
 			ListCell   *lco;
 
@@ -469,7 +469,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 			/* And push that path into the mix */
 			required_outer = get_bitmap_tree_required_outer(bitmapqual);
 			loop_count = get_loop_count(root, required_outer);
-			bpath = create_bitmap_heap_path(root, rel, bitmapqual,
+			bpath = create_bitmap_scan_path(root, rel, bitmapqual,
 											required_outer, loop_count);
 			add_path(rel, (Path *) bpath);
 		}
