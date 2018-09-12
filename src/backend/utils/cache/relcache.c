@@ -984,8 +984,9 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
     /*
      * initialize Greenplum Database partitioning info
      */
-    if (relation->rd_rel->relkind == RELKIND_RELATION &&
-        !IsSystemRelation(relation))
+    if ((relation->rd_rel->relkind == RELKIND_RELATION &&
+        !IsSystemRelation(relation)) ||
+		relation->rd_rel->relkind == RELKIND_MATVIEW)
         relation->rd_cdbpolicy = GpPolicyFetch(CacheMemoryContext, targetRelId);
 
     relation->rd_cdbDefaultStatsWarningIssued = false;
