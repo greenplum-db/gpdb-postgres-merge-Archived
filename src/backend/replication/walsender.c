@@ -197,7 +197,6 @@ static void ProcessRepliesIfAny(void);
 static const char *WalSndGetStateString(WalSndState state);
 static void WalSndKeepalive(bool requestReply);
 
-static void WalSndSetSync(bool sync);
 static void WalSndSetCaughtupWithinRange(bool catchup_within_range);
 static bool WalSndIsCatchupWithinRange(XLogRecPtr currRecPtr, XLogRecPtr catchupRecPtr);
 
@@ -541,7 +540,6 @@ StartReplication(StartReplicationCmd *cmd)
 		 * still here.
 		 */
 		WalSndSetState(WALSNDSTATE_CATCHUP);
-		WalSndSetSync(cmd->sync);
 
 		/* Send a CopyBothResponse message, and start streaming */
 		pq_beginmessage(&buf, 'W');
@@ -662,8 +660,6 @@ exec_replication_command(const char *cmd_string)
 
 	ereport(LOG,
 			(errmsg("Received replication command: %s", cmd_string)));
-
-	CHECK_FOR_INTERRUPTS();
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -2009,24 +2005,6 @@ WalSndGetStateString(WalSndState state)
 			return "streaming";
 	}
 	return "UNKNOWN";
-}
-
-/* Mark this walsender needs to be synchronous */
-static void
-WalSndSetSync(bool sync)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile WalSnd *walsnd = MyWalSnd;
-
-	Assert(am_walsender);
-
-	elogif(debug_walrepl_snd, LOG,
-			"walsnd sync -- Setting the WAL sender sync attribute to %s.",
-			sync ? "true" : "false");
-
-	SpinLockAcquire(&walsnd->mutex);
-	walsnd->synchronous = sync;
-	SpinLockRelease(&walsnd->mutex);
 }
 
 /* Set the caught_within_range value for this WAL sender */

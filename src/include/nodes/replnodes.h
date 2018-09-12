@@ -48,7 +48,6 @@ typedef struct StartReplicationCmd
 	NodeTag		type;
 	TimeLineID	timeline;
 	XLogRecPtr	startpoint;
-	bool        sync;
 } StartReplicationCmd;
 
 
