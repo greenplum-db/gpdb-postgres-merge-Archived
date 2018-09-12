@@ -127,7 +127,7 @@ bool walrcv_startstreaming (TimeLineID tli, XLogRecPtr startpoint);
 
 void walrcv_endstreaming (TimeLineID *next_tli);
 
-bool walrcv_receive (int timeout, char **buffer);
+int walrcv_receive (int timeout, char **buffer);
 
 void walrcv_send (const char *buffer, int nbytes);
 

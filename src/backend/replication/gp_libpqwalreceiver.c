@@ -436,7 +436,7 @@ walrcv_disconnect(void)
  *
  * ereports on error.
  */
-bool
+int
 walrcv_receive(int timeout, char **buffer)
 {
 	int			rawlen;
@@ -459,7 +459,7 @@ walrcv_receive(int timeout, char **buffer)
 			{
 				elogif(debug_walrepl_rcv, LOG,
 					   "walrcv receive -- No data available yet even after timeout period. ")
-				return false;
+				return 0;
 			}
 		}
 
@@ -476,7 +476,7 @@ walrcv_receive(int timeout, char **buffer)
 			elogif(debug_walrepl_rcv, LOG,
 				   "walrcv receive -- No data available.")
 
-			return false;
+			return 0;
 		}
 	}
 	if (rawlen == -1)			/* end-of-streaming or error */
@@ -484,18 +484,20 @@ walrcv_receive(int timeout, char **buffer)
 		PGresult   *res;
 
 		res = PQgetResult(streamConn);
-		if (PQresultStatus(res) == PGRES_COMMAND_OK)
+		if (PQresultStatus(res) == PGRES_COMMAND_OK ||
+			PQresultStatus(res) == PGRES_COPY_IN)
+		{
+			PQclear(res);
+			return -1;
+		}
+		else
 		{
 			PQclear(res);
 			ereport(ERROR,
-					(errmsg("replication terminated by primary server"),
+					(errmsg("could not receive data from WAL stream: %s",
+							PQerrorMessage(streamConn)),
 					 errSendAlert(true)));
 		}
-		PQclear(res);
-		ereport(ERROR,
-				(errmsg("could not receive data from WAL stream: %s",
-						PQerrorMessage(streamConn)),
-				 errSendAlert(true)));
 	}
 	if (rawlen < -1)
 		ereport(ERROR,
