@@ -1902,7 +1902,12 @@ generate_list_subplans(PlannerInfo *root, int num_subplans,
 
 	for(group_no = 0; group_no < num_subplans; ++group_no)
 	{
-		context->pathkeys = copyObject(context->current_pathkeys);
+		/* GPDB_93_MERGE_FIXME: Check whether we could just use
+		 * context->current_pathkeys for the function's caller
+		 * since the list includes duplicates.
+		 */
+		context->pathkeys = lappend(context->pathkeys,
+									copyObject(context->current_pathkeys));
 	}
 
 	return subplans;
