@@ -3371,13 +3371,13 @@ CopyFrom(CopyState cstate)
 	{
 		if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
 			ereport(ERROR,
-					(ERRCODE_INVALID_TRANSACTION_STATE,
+					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 					 errmsg("cannot perform FREEZE because of prior transaction activity")));
 
 		if (cstate->rel->rd_createSubid != GetCurrentSubTransactionId() &&
 		 cstate->rel->rd_newRelfilenodeSubid != GetCurrentSubTransactionId())
 			ereport(ERROR,
-					(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("cannot perform FREEZE because the table was not created or truncated in the current subtransaction")));
 
 		hi_options |= HEAP_INSERT_FROZEN;
