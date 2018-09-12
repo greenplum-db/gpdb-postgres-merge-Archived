@@ -1140,9 +1140,7 @@ PortalRunSelect(Portal portal,
 	if (forward)
 	{
 		if (portal->atEnd || count <= 0)
-		{
 			direction = NoMovementScanDirection;
-                }
 		else
 			direction = ForwardScanDirection;
 
@@ -1178,9 +1176,7 @@ PortalRunSelect(Portal portal,
 					 errhint("Declare it with SCROLL option to enable backward scan.")));
 
 		if (portal->atStart || count <= 0)
-                {
 			direction = NoMovementScanDirection;
-                }
 		else
 			direction = BackwardScanDirection;
 
