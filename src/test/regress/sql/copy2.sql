@@ -178,18 +178,6 @@ COPY testnull FROM stdin WITH NULL AS E'\\0';
 
 SELECT * FROM testnull;
 
-<<<<<<< HEAD
--- "unknown" types can be dumped and restored: these attributes are
--- NULL-terminated in memory (attlen == -2), so the COPY code needs to handle
--- them explicitly.
-CREATE TEMP TABLE type_unknown ( a unknown );
-
-COPY type_unknown FROM stdin;
-unknown
-\.
-
-COPY type_unknown TO stdout;
-=======
 BEGIN;
 CREATE TABLE vistest (LIKE testeoc);
 COPY vistest FROM stdin CSV;
@@ -214,7 +202,6 @@ e
 SELECT * FROM vistest;
 COMMIT;
 SELECT * FROM vistest;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 BEGIN;
 TRUNCATE vistest;
