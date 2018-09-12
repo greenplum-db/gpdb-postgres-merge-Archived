@@ -474,7 +474,6 @@ explain (costs off)
   UNION ALL
   SELECT * FROM t2) t
  WHERE ab = 'ab';
-<<<<<<< HEAD
                    QUERY PLAN                    
 -------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -485,16 +484,6 @@ explain (costs off)
                Index Cond: ab = 'ab'::text
  Optimizer: legacy query optimizer
 (7 rows)
-=======
-                 QUERY PLAN                  
----------------------------------------------
- Append
-   ->  Index Scan using t1_ab_idx on t1
-         Index Cond: ((a || b) = 'ab'::text)
-   ->  Index Only Scan using t2_pkey on t2
-         Index Cond: (ab = 'ab'::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 explain (costs off)
  SELECT * FROM
@@ -529,7 +518,6 @@ explain (costs off)
    UNION ALL
    SELECT 2 AS t, * FROM tenk1 b) c
  WHERE t = 2;
-<<<<<<< HEAD
                 QUERY PLAN                
 ------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
@@ -537,12 +525,6 @@ explain (costs off)
          ->  Seq Scan on tenk1 b
  Optimizer: legacy query optimizer
 (4 rows)
-=======
-        QUERY PLAN         
----------------------------
- Append
-   ->  Seq Scan on tenk1 b
-(2 rows)
 
 -- Test that we push quals into UNION sub-selects only when it's safe
 explain (costs off)
