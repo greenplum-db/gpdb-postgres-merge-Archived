@@ -360,19 +360,6 @@ from
   int4_tbl i4 on dummy = i4.f1;
 
 --
-<<<<<<< HEAD
--- Check that whole-row Vars reading the result of a subselect don't include
--- any junk columns therein
---
-
-select q from (select max(f1) from int4_tbl group by f1 order by f1) q
-  order by max;
-with q as (select max(f1) from int4_tbl group by f1 order by f1)
-  select q from q;
-
---
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- Test case for cross-type partial matching in hashed subplan (bug #7597)
 --
 
