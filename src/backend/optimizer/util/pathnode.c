@@ -2920,6 +2920,14 @@ create_nestloop_path(PlannerInfo *root,
 	 */
 	inner_must_be_local = path_contains_inner_index(inner_path);
 
+	/*
+	 * If the inner path is parameterized by the outer, we can't insert
+	 * a Motion node in between, because the parameter cannot be transferred
+	 * through the Motion
+	 */
+	if (bms_overlap(inner_req_outer, outer_path->parent->relids))
+		inner_must_be_local = true;
+
 	/* Add motion nodes above subpaths and decide where to join. */
 	join_locus = cdbpath_motion_for_join(root,
 										 jointype,
