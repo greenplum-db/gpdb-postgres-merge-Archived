@@ -1063,26 +1063,16 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t = 'P0123456789abcdef'::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
-                         QUERY PLAN                         
-------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t = 'P0123456789abcdef'::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
@@ -1091,26 +1081,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t = 'P0123456789abcde'::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
-                         QUERY PLAN                         
-------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t = 'P0123456789abcde'::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
  count 
@@ -1119,92 +1099,52 @@ SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t = 'P0123456789abcdefF'::text
  Optimizer: legacy query optimizer
 (6 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
 -------
      1
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t < 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (6 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
 -------
    272
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t ~<~ 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
-                         QUERY PLAN                         
-------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t = 'P0123456789abcdefF'::text)
-(3 rows)
-
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
- count 
--------
-     1
-(1 row)
-
-EXPLAIN (COSTS OFF)
-SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t < 'Aztec                         Ct  '::text)
-(3 rows)
-
-SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
- count 
--------
-   272
-(1 row)
-
-EXPLAIN (COSTS OFF)
-SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t ~<~ 'Aztec                         Ct  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
@@ -1213,26 +1153,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t <= 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
-                              QUERY PLAN                               
------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t <= 'Aztec                         Ct  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
@@ -1241,26 +1171,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
                                     QUERY PLAN                                     
 -----------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t ~<=~ 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
@@ -1269,26 +1189,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t = 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t = 'Aztec                         Ct  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
  count 
@@ -1297,26 +1207,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t = 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t = 'Worth                         St  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
  count 
@@ -1325,26 +1225,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t >= 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
-                              QUERY PLAN                               
------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t >= 'Worth                         St  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
  count 
@@ -1353,26 +1243,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
                                     QUERY PLAN                                     
 -----------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t ~>=~ 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t ~>=~ 'Worth                         St  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
  count 
@@ -1381,26 +1261,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t > 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t > 'Worth                         St  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
  count 
@@ -1409,26 +1279,16 @@ SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
+               ->  Index Only Scan using sp_radix_ind on radix_text_tbl
                      Index Cond: t ~>~ 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (6 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Aggregate
-   ->  Index Only Scan using sp_radix_ind on radix_text_tbl
-         Index Cond: (t ~>~ 'Worth                         St  '::text)
-(3 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
  count 
@@ -1803,30 +1663,18 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t = 'P0123456789abcdef'::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t = 'P0123456789abcdef'::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
-                        QUERY PLAN                         
------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcdef'::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t = 'P0123456789abcdef'::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
@@ -1835,30 +1683,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdef';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t = 'P0123456789abcde'::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t = 'P0123456789abcde'::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
-                        QUERY PLAN                        
-----------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcde'::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t = 'P0123456789abcde'::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
  count 
@@ -1867,30 +1703,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcde';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t = 'P0123456789abcdefF'::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t = 'P0123456789abcdefF'::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
-                         QUERY PLAN                         
-------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t = 'P0123456789abcdefF'::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t = 'P0123456789abcdefF'::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
@@ -1899,30 +1723,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t = 'P0123456789abcdefF';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t < 'Aztec                         Ct  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t < 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t < 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t < 'Aztec                         Ct  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
@@ -1931,30 +1743,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t <    'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
                                        QUERY PLAN                                       
 ----------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t ~<~ 'Aztec                         Ct  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t ~<~ 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t ~<~ 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t ~<~ 'Aztec                         Ct  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
@@ -1963,30 +1763,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~<~  'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t <= 'Aztec                         Ct  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t <= 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t <= 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t <= 'Aztec                         Ct  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
@@ -1995,30 +1783,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t <=   'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
                                        QUERY PLAN                                        
 -----------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t ~<=~ 'Aztec                         Ct  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t ~<=~ 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t ~<=~ 'Aztec                         Ct  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
@@ -2027,30 +1803,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~<=~ 'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t = 'Aztec                         Ct  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t = 'Aztec                         Ct  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t = 'Aztec                         Ct  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t = 'Aztec                         Ct  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         Ct  ';
  count 
@@ -2059,30 +1823,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t =    'Aztec                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 1:1  (slice1; segments: 1)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t = 'Worth                         St  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t = 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t = 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t = 'Worth                         St  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         St  ';
  count 
@@ -2091,30 +1843,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t =    'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t >= 'Worth                         St  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t >= 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t >= 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t >= 'Worth                         St  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         St  ';
  count 
@@ -2123,30 +1863,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t >=   'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
                                        QUERY PLAN                                        
 -----------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t ~>=~ 'Worth                         St  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t ~>=~ 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t ~>=~ 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t ~>=~ 'Worth                         St  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
  count 
@@ -2155,30 +1883,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t ~>=~ 'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t > 'Worth                         St  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t > 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t > 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t > 'Worth                         St  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         St  ';
  count 
@@ -2187,30 +1903,18 @@ SELECT count(*) FROM radix_text_tbl WHERE t >    'Worth                         
 (1 row)
 
 EXPLAIN (COSTS OFF)
-<<<<<<< HEAD
-SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
                                        QUERY PLAN                                       
 ----------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
-               ->  Bitmap Heap Scan on suffix_text_tbl
+               ->  Bitmap Heap Scan on radix_text_tbl
                      Recheck Cond: t ~>~ 'Worth                         St  '::text
-                     ->  Bitmap Index Scan on sp_suff_ind
+                     ->  Bitmap Index Scan on sp_radix_ind
                            Index Cond: t ~>~ 'Worth                         St  '::text
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on radix_text_tbl
-         Recheck Cond: (t ~>~ 'Worth                         St  '::text)
-         ->  Bitmap Index Scan on sp_radix_ind
-               Index Cond: (t ~>~ 'Worth                         St  '::text)
-(5 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 SELECT count(*) FROM radix_text_tbl WHERE t ~>~  'Worth                         St  ';
  count 
@@ -3283,12 +2987,6 @@ SELECT count(*) FROM dupindexcols
     97
 (1 row)
 
-<<<<<<< HEAD
-RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
-RESET enable_indexscan;
-RESET enable_bitmapscan;
-=======
 --
 -- Check ordering of =ANY indexqual results (bug in 9.2.0)
 --
@@ -3297,11 +2995,18 @@ explain (costs off)
 SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
 ORDER BY unique1;
-                      QUERY PLAN                       
--------------------------------------------------------
- Index Only Scan using tenk1_unique1 on tenk1
-   Index Cond: (unique1 = ANY ('{1,42,7}'::integer[]))
-(2 rows)
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: unique1
+   ->  Sort
+         Sort Key: unique1
+         ->  Bitmap Heap Scan on tenk1
+               Recheck Cond: unique1 = ANY ('{1,42,7}'::integer[])
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: unique1 = ANY ('{1,42,7}'::integer[])
+ Optimizer: legacy query optimizer
+(9 rows)
 
 SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
@@ -3317,13 +3022,16 @@ explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
-                                      QUERY PLAN                                      
---------------------------------------------------------------------------------------
- Sort
-   Sort Key: thousand
-   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-         Index Cond: ((thousand < 2) AND (tenthous = ANY ('{1001,3000}'::integer[])))
-(4 rows)
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   Merge Key: thousand
+   ->  Sort
+         Sort Key: thousand
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+               Index Cond: thousand < 2 AND (tenthous = ANY ('{1001,3000}'::integer[]))
+ Optimizer: legacy query optimizer
+(7 rows)
 
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -3334,4 +3042,7 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
+RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;

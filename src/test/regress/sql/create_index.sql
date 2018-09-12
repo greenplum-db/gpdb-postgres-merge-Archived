@@ -905,12 +905,6 @@ EXPLAIN (COSTS OFF)
 SELECT count(*) FROM dupindexcols
   WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
 
-<<<<<<< HEAD
-RESET enable_seqscan;
-RESET optimizer_enable_tablescan;
-RESET enable_indexscan;
-RESET enable_bitmapscan;
-=======
 --
 -- Check ordering of =ANY indexqual results (bug in 9.2.0)
 --
@@ -934,4 +928,8 @@ ORDER BY thousand;
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
->>>>>>> e472b921406407794bab911c64655b8b82375196
+
+RESET enable_seqscan;
+RESET optimizer_enable_tablescan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
