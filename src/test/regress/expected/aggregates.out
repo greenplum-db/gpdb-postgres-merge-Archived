@@ -516,7 +516,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique1
+                 Merge Key: tenk1.unique1
                  ->  Index Only Scan using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL
  Optimizer: legacy query optimizer
@@ -536,7 +536,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique1
+                 Merge Key: tenk1.unique1
                  ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL
  Optimizer: legacy query optimizer
@@ -556,7 +556,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique1
+                 Merge Key: tenk1.unique1
                  ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 < 42
  Optimizer: legacy query optimizer
@@ -576,7 +576,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique1
+                 Merge Key: tenk1.unique1
                  ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 > 42
  Optimizer: legacy query optimizer
@@ -598,7 +598,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique1
+                 Merge Key: tenk1.unique1
                  ->  Index Only Scan Backward using tenk1_unique1 on tenk1
                        Index Cond: unique1 IS NOT NULL AND unique1 > 42000
  Optimizer: legacy query optimizer
@@ -620,7 +620,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.tenthous
+                 Merge Key: tenk1.tenthous
                  ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1
                        Index Cond: thousand = 33 AND tenthous IS NOT NULL
  Optimizer: legacy query optimizer
@@ -640,7 +640,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.tenthous
+                 Merge Key: tenk1.tenthous
                  ->  Index Only Scan using tenk1_thous_tenthous on tenk1
                        Index Cond: thousand = 33 AND tenthous IS NOT NULL
  Optimizer: legacy query optimizer
@@ -693,7 +693,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique2
+                 Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
    ->  Result
@@ -715,7 +715,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique2
+                 Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
    ->  Result
@@ -737,7 +737,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique2
+                 Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
    ->  Result
@@ -759,7 +759,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique2
+                 Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
    ->  Result
@@ -781,7 +781,7 @@ explain (costs off)
    InitPlan 1 (returns $0)  (slice2)
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
-                 Merge Key: public.tenk1.unique2
+                 Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: unique2 IS NOT NULL
    ->  Result
