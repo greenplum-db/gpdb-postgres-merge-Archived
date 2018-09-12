@@ -385,8 +385,6 @@ static void get_func_expr(FuncExpr *expr, deparse_context *context,
 static void get_groupingfunc_expr(GroupingFunc *grpfunc,
 								  deparse_context *context);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
-static void get_sortlist_expr(List *l, List *targetList, bool force_colno,
-                              deparse_context *context, char *keyword_clause);
 static void get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context);
 static void get_coercion_expr(Node *arg, deparse_context *context,
 				  Oid resulttype, int32 resulttypmod,
@@ -1882,6 +1880,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+
 /*
  * pg_get_functiondef
  *		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
@@ -2120,6 +2119,31 @@ pg_get_function_identity_arguments(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_get_function_result
+ *		Get a nicely-formatted version of the result type of a function.
+ *		This is what would appear after RETURNS in CREATE FUNCTION.
+ */
+Datum
+pg_get_function_result(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple	proctup;
+
+	initStringInfo(&buf);
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	print_function_rettype(&buf, proctup);
+
+	ReleaseSysCache(proctup);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+/*
  * Guts of pg_get_function_result: append the function's return type
  * to the specified buffer.
  */
@@ -2301,31 +2325,6 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	}
 
 	return argsprinted;
-}
-
-/*
- * pg_get_function_result
- *		Get a nicely-formatted version of the result type of a function.
- *		This is what would appear after RETURNS in CREATE FUNCTION.
- */
-Datum
-pg_get_function_result(PG_FUNCTION_ARGS)
-{
-	Oid			funcid = PG_GETARG_OID(0);
-	StringInfoData buf;
-	HeapTuple	proctup;
-
-	initStringInfo(&buf);
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcid);
-
-	print_function_rettype(&buf, proctup);
-
-	ReleaseSysCache(proctup);
-
-	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
 
 
@@ -4314,11 +4313,10 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the ORDER BY clause if given */
 	if (query->sortClause != NIL)
 	{
-		get_sortlist_expr(query->sortClause,
-						  query->targetList,
-						  force_colno,
-						  context,
-						  " ORDER BY ");
+		appendContextKeyword(context, " ORDER BY ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		get_rule_orderby(query->sortClause, query->targetList,
+						 force_colno, context);
 	}
 
 	/* Add the LIMIT clause if given */
@@ -4920,6 +4918,60 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 	return expr;
 }
 
+/*
+ * Display an ORDER BY list.
+ */
+static void
+get_rule_orderby(List *orderList, List *targetList,
+				 bool force_colno, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	const char *sep;
+	ListCell   *l;
+
+	sep = "";
+	foreach(l, orderList)
+	{
+		SortGroupClause *srt = (SortGroupClause *) lfirst(l);
+		Node	   *sortexpr;
+		Oid			sortcoltype;
+		TypeCacheEntry *typentry;
+
+		appendStringInfoString(buf, sep);
+		sortexpr = get_rule_sortgroupclause(srt, targetList,
+											force_colno, context);
+		sortcoltype = exprType(sortexpr);
+		/* See whether operator is default < or > for datatype */
+		typentry = lookup_type_cache(sortcoltype,
+									 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+		if (srt->sortop == typentry->lt_opr)
+		{
+			/* ASC is default, so emit nothing for it */
+			if (srt->nulls_first)
+				appendStringInfo(buf, " NULLS FIRST");
+		}
+		else if (srt->sortop == typentry->gt_opr)
+		{
+			appendStringInfo(buf, " DESC");
+			/* DESC defaults to NULLS FIRST */
+			if (!srt->nulls_first)
+				appendStringInfo(buf, " NULLS LAST");
+		}
+		else
+		{
+			appendStringInfo(buf, " USING %s",
+							 generate_operator_name(srt->sortop,
+													sortcoltype,
+													sortcoltype));
+			/* be specific to eliminate ambiguity */
+			if (srt->nulls_first)
+				appendStringInfo(buf, " NULLS FIRST");
+			else
+				appendStringInfo(buf, " NULLS LAST");
+		}
+		sep = ", ";
+	}
+}
 
 /*
  * Display a window definition
@@ -4930,6 +4982,8 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 {
 	StringInfo	buf = context->buf;
 	bool		needspace = false;
+	const char *sep;
+	ListCell   *l;
 
 	appendStringInfoChar(buf, '(');
 
@@ -4943,11 +4997,17 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 	{
 		if (needspace)
 			appendStringInfoChar(buf, ' ');
-		get_sortlist_expr(wc->partitionClause,
-						  targetList,
-						  false,  /* force_colno */
-						  context,
-						  "PARTITION BY ");
+		appendStringInfoString(buf, "PARTITION BY ");
+		sep = "";
+		foreach(l, wc->partitionClause)
+		{
+			SortGroupClause *grp = (SortGroupClause *) lfirst(l);
+
+			appendStringInfoString(buf, sep);
+			get_rule_sortgroupclause(grp, targetList,
+									 false, context);
+			sep = ", ";
+		}
 		needspace = true;
 	}
 	/* print ordering clause only if not inherited */
@@ -4955,11 +5015,8 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 	{
 		if (needspace)
 			appendStringInfoChar(buf, ' ');
-		get_sortlist_expr(wc->orderClause,
-						  targetList,
-						  false,  /* force_colno */
-						  context,
-						  "ORDER BY ");
+		appendStringInfoString(buf, "ORDER BY ");
+		get_rule_orderby(wc->orderClause, targetList, false, context);
 		needspace = true;
 	}
 	/* framing clause is never inherited, so print unless it's default */
@@ -7685,14 +7742,6 @@ get_groupingfunc_expr(GroupingFunc *grpfunc, deparse_context *context)
 	appendStringInfoString(buf, ")");
 }
 
-static void
-get_rule_orderby(List *orderList, List *targetList,
-				 bool force_colno, deparse_context *context)
-{
-	get_sortlist_expr(orderList, targetList, force_colno,
-					  context, "");
-}
-
 /*
  * Deparse an Aggref as a special MEDIAN() construct, if it looks like
  * one.
@@ -7839,60 +7888,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	}
 
 	appendStringInfoChar(buf, ')');
-}
-
-static void
-get_sortlist_expr(List *l, List *targetList, bool force_colno,
-                  deparse_context *context, char *keyword_clause)
-{
-	ListCell *cell;
-	char *sep;
-	StringInfo buf = context->buf;
-
-	appendContextKeyword(context, keyword_clause,
-						 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-	sep = "";
-	foreach(cell, l)
-	{
-		SortGroupClause *srt = (SortGroupClause *) lfirst(cell);
-		Node	   *sortexpr;
-		Oid			sortcoltype;
-		TypeCacheEntry *typentry;
-
-		appendStringInfoString(buf, sep);
-		sortexpr = get_rule_sortgroupclause(srt, targetList, force_colno,
-										    context);
-		sortcoltype = exprType(sortexpr);
-		/* See whether operator is default < or > for datatype */
-		typentry = lookup_type_cache(sortcoltype,
-									 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
-		if (srt->sortop == typentry->lt_opr)
-		{
-			/* ASC is default, so emit nothing for it */
-			if (srt->nulls_first)
-				appendStringInfo(buf, " NULLS FIRST");
-		}
-		else if (srt->sortop == typentry->gt_opr)
-		{
-			appendStringInfo(buf, " DESC");
-			/* DESC defaults to NULLS FIRST */
-			if (!srt->nulls_first)
-				appendStringInfo(buf, " NULLS LAST");
-		}
-		else
-		{
-			appendStringInfo(buf, " USING %s",
-							 generate_operator_name(srt->sortop,
-													sortcoltype,
-													sortcoltype));
-			/* be specific to eliminate ambiguity */
-			if (srt->nulls_first)
-				appendStringInfo(buf, " NULLS FIRST");
-			else
-				appendStringInfo(buf, " NULLS LAST");
-		}
-		sep = ", ";
-	}
 }
 
 /*
