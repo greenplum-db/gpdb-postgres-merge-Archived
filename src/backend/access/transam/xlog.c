@@ -8307,7 +8307,14 @@ CreateRestartPoint(int flags)
 	 * checkpoint/restartpoint) to prevent the disk holding the xlog from
 	 * growing full.
 	 */
-	if (IsStandbyMode() && gp_keep_all_xlog == false && _logSegNo)
+	/*
+	 * In GPDB, CreateRestartPoint() gets called from startup process, unlike
+	 * upstream.  When called from startup process, we are only interested in
+	 * flushing shared buffers to disk.  So don't do anything else.
+	 * xlog_redo() depends on ThisTimeLineID to be valid, which is reset in the
+	 * if block below.
+	 */
+	if (!am_startup && IsStandbyMode() && gp_keep_all_xlog == false && _logSegNo)
 	{
 		XLogRecPtr	receivePtr;
 		XLogRecPtr	replayPtr;
@@ -8356,6 +8363,7 @@ CreateRestartPoint(int flags)
 		 * on. Reset it now, to restore the normal state of affairs for
 		 * debugging purposes.
 		 */
+
 		if (RecoveryInProgress())
 			ThisTimeLineID = 0;
 	}
