@@ -649,9 +649,10 @@ SELECT j, maxodd(i) FILTER (WHERE TRUE) from filter_test group by j order by j;
 -- TEST view deparsing of FILTER expressions.
 CREATE VIEW filter_view AS SELECT count(*) FILTER (WHERE TRUE) FROM filter_test;
 SELECT definition from pg_views WHERE viewname='filter_view';
-                           definition                           
-----------------------------------------------------------------
- SELECT count(*) FILTER (WHERE true) AS count FROM filter_test;
+                  definition                   
+-----------------------------------------------
+  SELECT count(*) FILTER (WHERE true) AS count+
+    FROM filter_test;
 (1 row)
 
 drop aggregate maxodd(int);
