@@ -1214,7 +1214,7 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
-   Output: matest0.id, public.matest0.name, ((1 - matest0.id))
+   Output: matest0.id, matest0.name, ((1 - matest0.id))
    Merge Key: (1 - matest0.id)
    ->  Sort
          Output: matest0.id, matest0.name, ((1 - matest0.id))
@@ -1256,7 +1256,7 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
 ------------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    Output: matest0.id, matest0.name, ((1 - matest0.id))
-   Merge Key: (1 - public.matest0.id)
+   Merge Key: (1 - matest0.id)
    ->  Merge Append
          Sort Key: (1 - matest0.id)
          ->  Index Scan using matest0i on public.matest0
