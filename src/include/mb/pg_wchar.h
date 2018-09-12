@@ -353,10 +353,6 @@ typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
 														unsigned char *to,
 														int len);
 
-typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
-														unsigned char *to,
-														int len);
-
 typedef int (*mblen_converter) (const unsigned char *mbstr);
 
 typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
