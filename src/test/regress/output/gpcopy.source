@@ -706,6 +706,8 @@ COPY segment_reject_limit_from from STDIN on segment;
 ERROR:  STDIN is not supported by 'COPY ON SEGMENT'
 COPY segment_reject_limit_from from PROGRAM STDIN;
 ERROR:  STDIN/STDOUT not allowed with PROGRAM
+LINE 1: COPY segment_reject_limit_from from PROGRAM STDIN;
+                                                    ^
 SELECT * FROM segment_reject_limit_from;
  a | b 
 ---+---
@@ -718,6 +720,8 @@ COPY segment_reject_limit_from to STDOUT on segment;
 ERROR:  STDOUT is not supported by 'COPY ON SEGMENT'
 COPY segment_reject_limit_from to PROGRAM STDOUT;
 ERROR:  STDIN/STDOUT not allowed with PROGRAM
+LINE 1: COPY segment_reject_limit_from to PROGRAM STDOUT;
+                                                  ^
 -- 'COPY (SELECT ...) TO' doesn't support 'ON SEGMENT'
 COPY (SELECT * FROM segment_reject_limit_from) TO '/tmp/segment_reject_limit<SEGID>.csv' ON SEGMENT;
 ERROR:  'COPY (SELECT ...) TO' doesn't support 'ON SEGMENT'.
