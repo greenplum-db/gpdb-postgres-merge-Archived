@@ -764,6 +764,23 @@ ProcessRepliesIfAny(void)
 				 * 'd' means a standby reply wrapped in a CopyData packet.
 				 */
 			case 'd':
+				/*
+				 * GPDB_93_MERGE_FIXME: invoking pq_getmessage() seems to be
+				 * necessary here.  It avoids failures during walreceiver reply
+				 * processing in ProcessStandbyMessage().  If pq_getmessage()
+				 * is not called, reply_message is not populated with what's
+				 * received on the libpq connection and we get "no data left in
+				 * message" error.
+				 */
+				/* consume the CopyData message */
+				resetStringInfo(&reply_message);
+				if (pq_getmessage(&reply_message, 0))
+				{
+					ereport(COMMERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("unexpected EOF on standby connection")));
+					proc_exit(0);
+				}
 				ProcessStandbyMessage();
 				received = true;
 				break;
