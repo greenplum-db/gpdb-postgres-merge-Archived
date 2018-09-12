@@ -685,21 +685,15 @@ SELECT user_relns() AS user_relns
  tm
  tmm
  toyemp
-<<<<<<< HEAD
- usr_define_type
- varchar_tbl
-(167 rows)
-=======
  tv
  tvm
  tvmm
  tvv
  tvvm
  tvvmv
+ usr_define_type
  varchar_tbl
- xacttest
-(118 rows)
->>>>>>> e472b921406407794bab911c64655b8b82375196
+(178 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

@@ -36,7 +36,20 @@ SELECT * FROM test_schema_1.abc_view;
  4 |  
 (3 rows)
 
-<<<<<<< HEAD
+-- test IF NOT EXISTS cases
+CREATE SCHEMA test_schema_1; -- fail, already exists
+ERROR:  schema "test_schema_1" already exists
+CREATE SCHEMA IF NOT EXISTS test_schema_1; -- ok with notice
+NOTICE:  schema "test_schema_1" already exists, skipping
+CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
+       CREATE TABLE abc (
+              a serial,
+              b int UNIQUE
+       );
+ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
+LINE 2:        CREATE TABLE abc (
+               ^
+DROP SCHEMA test_schema_1 CASCADE;
 -- Test GRANT/REVOKE 
 CREATE SCHEMA test_schema_2;
 CREATE TABLE test_schema_2.abc as select * from test_schema_1.abc DISTRIBUTED BY (a);
@@ -109,22 +122,6 @@ DETAIL:  table test_schema_2.abc depends on schema test_schema_2
 view test_schema_2.abc_view depends on schema test_schema_2
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP SCHEMA test_schema_2 CASCADE;
-=======
--- test IF NOT EXISTS cases
-CREATE SCHEMA test_schema_1; -- fail, already exists
-ERROR:  schema "test_schema_1" already exists
-CREATE SCHEMA IF NOT EXISTS test_schema_1; -- ok with notice
-NOTICE:  schema "test_schema_1" already exists, skipping
-CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
-       CREATE TABLE abc (
-              a serial,
-              b int UNIQUE
-       );
-ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
-LINE 2:        CREATE TABLE abc (
-               ^
-DROP SCHEMA test_schema_1 CASCADE;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table test_schema_2.abc
 drop cascades to view test_schema_2.abc_view

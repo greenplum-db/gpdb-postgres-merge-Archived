@@ -1061,10 +1061,6 @@ CREATE TEMP TABLE pktable (
         id3     REAL /*UNIQUE,*/
         /*UNIQUE(id1, id2, id3)*/
 );
-<<<<<<< HEAD
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TEMP TABLE fktable (
         x1      INT4 REFERENCES pktable(id1),
         x2      VARCHAR(4) REFERENCES pktable(id2),
