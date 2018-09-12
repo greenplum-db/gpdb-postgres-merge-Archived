@@ -626,12 +626,20 @@ explain (costs off)
 select first_value(max(x)) over (), y
   from (select unique1 as x, ten+four as y from tenk1) ss
   group by y;
-          QUERY PLAN           
--------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  WindowAgg
-   ->  HashAggregate
-         ->  Seq Scan on tenk1
-(3 rows)
+   ->  Gather Motion 3:1  (slice2; segments: 3)
+         ->  Subquery Scan on "Window"
+               ->  HashAggregate
+                     Group Key: (tenk1.ten + tenk1.four)
+                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                           Hash Key: (tenk1.ten + tenk1.four)
+                           ->  HashAggregate
+                                 Group Key: tenk1.ten + tenk1.four
+                                 ->  Seq Scan on tenk1
+ Optimizer: legacy query optimizer
+(11 rows)
 
 -- test non-default frame specifications
 SELECT four, ten,
@@ -1010,11 +1018,7 @@ ERROR:  window functions are not allowed in GROUP BY
 LINE 1: SELECT rank() OVER (ORDER BY 1), count(*) FROM empsalary GRO...
                ^
 SELECT * FROM rank() OVER (ORDER BY random());
-<<<<<<< HEAD
 ERROR:  syntax error at or near "ORDER"
-=======
-ERROR:  window functions are not allowed in functions in FROM
->>>>>>> e472b921406407794bab911c64655b8b82375196
 LINE 1: SELECT * FROM rank() OVER (ORDER BY random());
                                    ^
 DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())) > 10;
