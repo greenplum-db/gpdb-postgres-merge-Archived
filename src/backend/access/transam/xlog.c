@@ -2761,8 +2761,6 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 
 	switch (source)
 	{
-/* Archive recovery not supported in GPDB */
-#if 0
 		case XLOG_FROM_ARCHIVE:
 			/* Report recovery progress in PS display */
 			snprintf(activitymsg, sizeof(activitymsg), "waiting for %s",
@@ -2776,8 +2774,6 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 			if (!restoredFromArchive)
 				return -1;
 			break;
-#endif
-
 		case XLOG_FROM_PG_XLOG:
 		case XLOG_FROM_STREAM:
 			XLogFilePath(path, tli, segno);
