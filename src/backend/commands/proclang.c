@@ -64,8 +64,8 @@ static PLTemplate *find_language_template(const char *languageName);
  * CREATE PROCEDURAL LANGUAGE
  * ---------------------------------------------------------------------
  */
-Oid
-CreateProceduralLanguage(CreatePLangStmt *stmt)
+static Oid
+CreateProceduralLanguage_internal(CreatePLangStmt *stmt)
 {
 	PLTemplate *pltemplate;
 	Oid			handlerOid,
@@ -321,6 +321,14 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 								handlerOid, inlineOid,
 								valOid, stmt->pltrusted);
 	}
+}
+
+Oid
+CreateProceduralLanguage(CreatePLangStmt *stmt)
+{
+	Oid			result;
+
+	result = CreateProceduralLanguage_internal(stmt);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
@@ -331,6 +339,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 									GetAssignedOidsForDispatch(),
 									NULL);
 	}
+
+	return result;
 }
 
 /*
