@@ -795,7 +795,7 @@ add_notin_subquery_rte(Query *parse, Query *subselect)
 	subq_rte = addRangeTableEntryForSubquery(NULL,	/* pstate */
 											 subselect,
 											 makeAlias("NotIn_SUBQUERY", NIL),
-											 true, /* not lateral */
+											 false, /* not lateral */
 											 false /* inFromClause */ );
 	parse->rtable = lappend(parse->rtable, subq_rte);
 
