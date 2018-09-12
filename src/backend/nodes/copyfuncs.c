@@ -1159,6 +1159,12 @@ _copyTableFunctionScan(const TableFunctionScan *from)
 	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
 
 	CopyScanFields((Scan *) from, (Scan *) newnode);
+	COPY_NODE_FIELD(funcexpr);
+	COPY_NODE_FIELD(funccolnames);
+	COPY_NODE_FIELD(funccoltypes);
+	COPY_NODE_FIELD(funccoltypmods);
+	COPY_NODE_FIELD(funccolcollations);
+	COPY_VARLENA_FIELD(funcuserdata, -1);
 
 	return newnode;
 }

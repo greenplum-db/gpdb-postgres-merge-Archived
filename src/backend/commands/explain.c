@@ -2720,8 +2720,9 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 				 * Unlike RTE_FUNCTION there should be no cases where the
 				 * optimizer could have evaluated away the function call.
 				 */
-				Insist(rte->funcexpr && IsA(rte->funcexpr, FuncExpr));
-				funcexpr = (FuncExpr *) rte->funcexpr;
+				funcexpr = (FuncExpr *) ((TableFunctionScan *) plan)->funcexpr;
+				if (!funcexpr || !IsA(funcexpr, FuncExpr))
+					elog(ERROR, "unexpected expression in TableFunctionScan");
 				objectname = get_func_name(funcexpr->funcid);
 
 				if (es->verbose)

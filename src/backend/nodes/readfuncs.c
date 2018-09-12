@@ -2181,7 +2181,7 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(funccoltypes);
 			READ_NODE_FIELD(funccoltypmods);
 			READ_NODE_FIELD(funccolcollations);
-			READ_BYTEA_FIELD(funcuserdata);
+			/* 'funcuserdata' is not serialized */
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);

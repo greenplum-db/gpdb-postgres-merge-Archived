@@ -603,6 +603,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->funccoltypes = NIL;
 	newrte->funccoltypmods = NIL;
 	newrte->funccolcollations = NIL;
+	newrte->funcuserdata = NULL;
 	newrte->values_lists = NIL;
 	newrte->values_collations = NIL;
 	newrte->ctecoltypes = NIL;
@@ -867,6 +868,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, tplan->scan.plan.targetlist, rtoffset);
 				tplan->scan.plan.qual =
 					fix_scan_list(root, tplan->scan.plan.qual, rtoffset);
+				tplan->funcexpr =
+					fix_scan_expr(root, tplan->funcexpr, rtoffset);
 
 				return plan;
 			}

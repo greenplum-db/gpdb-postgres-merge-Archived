@@ -974,6 +974,12 @@ _outTableFunctionScan(StringInfo str, const TableFunctionScan *node)
 	WRITE_NODE_TYPE("TABLEFUNCTIONSCAN");
 
 	_outScanInfo(str, (Scan *) node);
+	WRITE_NODE_FIELD(funcexpr);
+	WRITE_NODE_FIELD(funccolnames);
+	WRITE_NODE_FIELD(funccoltypes);
+	WRITE_NODE_FIELD(funccoltypmods);
+	WRITE_NODE_FIELD(funccolcollations);
+	WRITE_BYTEA_FIELD(funcuserdata);
 }
 
 static void
@@ -3925,7 +3931,10 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_NODE_FIELD(funccoltypes);
 			WRITE_NODE_FIELD(funccoltypmods);
 			WRITE_NODE_FIELD(funccolcollations);
-			WRITE_BYTEA_FIELD(funcuserdata);
+			/*
+			 * 'funcuserdata' is intentionally not serialized.
+			 * It is zapped away in setrefs.c, so would be NULL here.
+			 */
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
