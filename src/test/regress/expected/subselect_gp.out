@@ -642,11 +642,29 @@ SELECT * FROM csq_r WHERE a <= ALL (SELECT csq_f FROM csq_f(csq_r.a));
  1
 (1 row)
 
--- fails: correlation in distributed subplan
 -- force_explain
 explain SELECT * FROM csq_r WHERE a IN (SELECT csq_f FROM csq_f(csq_r.a),csq_r);
-ERROR:  Cannot parallelize that query yet.
-DETAIL:  In a subquery FROM clause, a function invocation cannot contain a correlated reference.
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..10000000001.53 rows=1 width=4)
+   ->  Seq Scan on csq_r  (cost=0.00..10000000001.53 rows=1 width=4)
+         Filter: (SubPlan 1)
+         SubPlan 1  (slice2; segments: 3)
+           ->  Nested Loop  (cost=10000000000.00..10000000001.03 rows=2 width=4)
+                 ->  Function Scan on csq_f  (cost=0.00..0.01 rows=1 width=4)
+                 ->  Result  (cost=0.00..1.01 rows=1 width=0)
+                       ->  Materialize  (cost=0.00..1.01 rows=1 width=0)
+                             ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..1.01 rows=1 width=0)
+                                   ->  Seq Scan on csq_r csq_r_1  (cost=0.00..1.01 rows=1 width=0)
+ Optimizer: legacy query optimizer
+(11 rows)
+
+SELECT * FROM csq_r WHERE a IN (SELECT csq_f FROM csq_f(csq_r.a),csq_r);
+ a 
+---
+ 1
+(1 row)
+
 --
 -- Test pullup of expr CSQs to joins
 --
