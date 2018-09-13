@@ -469,22 +469,22 @@ explain (costs off) select count(distinct c), count(distinct dt) from dqa_t1;
    ->  Aggregate
          ->  Gather Motion 3:1  (slice2; segments: 3)
                ->  HashAggregate
-                     Group Key: share0_ref1.c
+                     Group Key: c
                      ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                           Hash Key: share0_ref1.c
+                           Hash Key: c
                            ->  HashAggregate
-                                 Group Key: share0_ref1.c
+                                 Group Key: c
                                  ->  Shared Scan (share slice:id 1:0)
                                        ->  Materialize
                                              ->  Seq Scan on dqa_t1
    ->  Aggregate
          ->  Gather Motion 3:1  (slice4; segments: 3)
                ->  HashAggregate
-                     Group Key: share0_ref2.dt
+                     Group Key: dt
                      ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                           Hash Key: share0_ref2.dt
+                           Hash Key: dt
                            ->  HashAggregate
-                                 Group Key: share0_ref2.dt
+                                 Group Key: dt
                                  ->  Shared Scan (share slice:id 3:0)
  Optimizer: legacy query optimizer
 (22 rows)
@@ -565,25 +565,25 @@ select count(distinct i), count(distinct c), d from dqa_t1 group by d;
 (23 rows)
 
 explain (costs off) select count(distinct i), count(distinct c), d from dqa_t1 group by d;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Hash Join
-         Hash Cond: NOT share0_ref2.d IS DISTINCT FROM share0_ref1.d
+         Hash Cond: NOT d IS DISTINCT FROM d
          ->  HashAggregate
-               Group Key: share0_ref2.d
+               Group Key: d
                ->  HashAggregate
-                     Group Key: share0_ref2.d, share0_ref2.i
+                     Group Key: d, i
                      ->  HashAggregate
-                           Group Key: share0_ref2.d, share0_ref2.i
+                           Group Key: d, i
                            ->  Shared Scan (share slice:id 1:0)
          ->  Hash
                ->  HashAggregate
-                     Group Key: share0_ref1.d
+                     Group Key: d
                      ->  HashAggregate
-                           Group Key: share0_ref1.d, share0_ref1.c
+                           Group Key: d, c
                            ->  HashAggregate
-                                 Group Key: share0_ref1.d, share0_ref1.c
+                                 Group Key: d, c
                                  ->  Shared Scan (share slice:id 1:0)
                                        ->  Materialize
                                              ->  Seq Scan on dqa_t1
