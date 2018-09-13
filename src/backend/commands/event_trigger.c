@@ -100,6 +100,13 @@ static event_trigger_support_data event_trigger_support[] = {
 	{"TYPE", true},
 	{"USER MAPPING", true},
 	{"VIEW", true},
+
+	/* GPDB additions */
+	// GPDB_93_MERGE_FIXME: do these actually work? Needs testing, at least. I just
+	// added these to the list to silence "unexpected command tag" errors.
+	{"EXTERNAL TABLE", true},
+	{"PROTOCOL", true},
+
 	{NULL, false}
 };
 
