@@ -684,7 +684,7 @@ WITH RECURSIVE
       SELECT 0, 'base', 17
     UNION ALL (
       WITH remaining(id_key, row_type, link, min) AS (
-        SELECT tab.id_key, 'true'::text, iter.link, MIN(tab.id_key) OVER ()
+        SELECT tab.id_key, 'true'::text, iter.link, tab.id_key
         FROM tab INNER JOIN iter USING (link)
         WHERE tab.id_key > iter.id_key
       ),
@@ -710,7 +710,7 @@ WITH RECURSIVE
       SELECT 0, 'base', 17
     UNION (
       WITH remaining(id_key, row_type, link, min) AS (
-        SELECT tab.id_key, 'true'::text, iter.link, MIN(tab.id_key) OVER ()
+        SELECT tab.id_key, 'true'::text, iter.link, tab.id_key
         FROM tab INNER JOIN iter USING (link)
         WHERE tab.id_key > iter.id_key
       ),

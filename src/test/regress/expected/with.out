@@ -1392,7 +1392,7 @@ WITH RECURSIVE
       SELECT 0, 'base', 17
     UNION ALL (
       WITH remaining(id_key, row_type, link, min) AS (
-        SELECT tab.id_key, 'true'::text, iter.link, MIN(tab.id_key) OVER ()
+        SELECT tab.id_key, 'true'::text, iter.link, tab.id_key
         FROM tab INNER JOIN iter USING (link)
         WHERE tab.id_key > iter.id_key
       ),
@@ -1414,13 +1414,70 @@ SELECT * FROM iter;
  id_key | row_type | link 
 --------+----------+------
       0 | base     |   17
-      1 | true     |   17
-      2 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
       3 | true     |   17
+      2 | true     |   17
+      1 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
       4 | true     |   17
       5 | true     |   17
       6 | true     |   17
-(7 rows)
+      4 | true     |   17
+      3 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
+      3 | true     |   17
+      2 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
+      3 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      4 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+      5 | true     |   17
+      6 | true     |   17
+      6 | true     |   17
+(64 rows)
 
 WITH RECURSIVE
   tab(id_key,link) AS (VALUES (1,17), (2,17), (3,17), (4,17), (6,17), (5,17)),
@@ -1428,7 +1485,7 @@ WITH RECURSIVE
       SELECT 0, 'base', 17
     UNION (
       WITH remaining(id_key, row_type, link, min) AS (
-        SELECT tab.id_key, 'true'::text, iter.link, MIN(tab.id_key) OVER ()
+        SELECT tab.id_key, 'true'::text, iter.link, tab.id_key
         FROM tab INNER JOIN iter USING (link)
         WHERE tab.id_key > iter.id_key
       ),
