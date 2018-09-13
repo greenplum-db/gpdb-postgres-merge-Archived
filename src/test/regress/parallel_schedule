@@ -115,8 +115,6 @@ test: privileges security_label collate matview
 # ----------
 test: alter_generic misc psql
 
-test: misc
-
 # rules cannot run concurrently with any test that creates a view
 #
 # 'rules' test is disabled in GPDB. Maintaining the list of views in it is
