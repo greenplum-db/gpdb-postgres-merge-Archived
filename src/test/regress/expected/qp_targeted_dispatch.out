@@ -1050,22 +1050,21 @@ explain select * from table_a where a0=3;
 (5 rows)
 
 explain select a0 from table_a where a0 in (select max(a1) from table_a);
-                                                QUERY PLAN                                                
-----------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)  (cost=1.13..2.18 rows=4 width=4)
-   ->  Hash Semi Join  (cost=1.13..2.18 rows=2 width=4)
-         Hash Cond: public.table_a.a0 = "IN_subquery".max
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice3; segments: 3)  (cost=1.13..2.17 rows=4 width=4)
+   ->  Hash Semi Join  (cost=1.13..2.17 rows=2 width=4)
+         Hash Cond: table_a.a0 = (max((max(table_a_1.a1))))
          ->  Seq Scan on table_a  (cost=0.00..1.01 rows=1 width=4)
-         ->  Hash  (cost=1.12..1.12 rows=1 width=4)
-               ->  Redistribute Motion 1:3  (slice2; segments: 1)  (cost=1.08..1.12 rows=1 width=4)
-                     Hash Key: "IN_subquery".max
-                     ->  Aggregate  (cost=1.08..1.09 rows=1 width=4)
+         ->  Hash  (cost=1.11..1.11 rows=1 width=4)
+               ->  Redistribute Motion 1:3  (slice2; segments: 1)  (cost=1.07..1.11 rows=1 width=4)
+                     Hash Key: (max((max(table_a_1.a1))))
+                     ->  Aggregate  (cost=1.07..1.08 rows=1 width=4)
                            ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=1.01..1.06 rows=1 width=4)
                                  ->  Aggregate  (cost=1.01..1.02 rows=1 width=4)
-                                       ->  Seq Scan on table_a  (cost=0.00..1.01 rows=1 width=4)
- Settings:  optimizer=off
- Optimizer status: legacy query optimizer
-(13 rows)
+                                       ->  Seq Scan on table_a table_a_1  (cost=0.00..1.01 rows=1 width=4)
+ Optimizer: legacy query optimizer
+(12 rows)
 
 select a0 from table_a where a0 in (select max(a1) from table_a);
 INFO:  Dispatch command to ALL contents
