@@ -54,16 +54,15 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 set optimizer_enable_dml_constraints=on;
 explain update constr_tab set b = 10;
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
  Update  (cost=0.00..431.09 rows=1 width=1)
    ->  Result  (cost=0.00..431.00 rows=1 width=34)
          ->  Split  (cost=0.00..431.00 rows=1 width=30)
                ->  Result  (cost=0.00..431.00 rows=1 width=30)
-                     ->  Table Scan on constr_tab  (cost=0.00..431.00 rows=1 width=26)
- Settings:  optimizer=on
- Optimizer status: PQO version 2.48.0
-(7 rows)
+                     ->  Table Scan on constr_tab constr_tab_1  (cost=0.00..431.00 rows=1 width=26)
+ Optimizer: PQO version 2.74.0
+(6 rows)
 
 -- Same, with NOT NULL constraint.
 DROP TABLE IF EXISTS constr_tab;
@@ -107,8 +106,8 @@ INSERT INTO constr_tab VALUES(1,5,3,4);
 INSERT INTO constr_tab VALUES(1,5,3,4);
 set optimizer_enable_dml_constraints=off;
 explain update constr_tab set a = 10;
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
+                                                   QUERY PLAN                                                   
+----------------------------------------------------------------------------------------------------------------
  Update  (cost=0.00..431.09 rows=1 width=1)
    ->  Result  (cost=0.00..431.00 rows=1 width=34)
          ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=30)
@@ -116,8 +115,8 @@ explain update constr_tab set a = 10;
                ->  Result  (cost=0.00..431.00 rows=1 width=30)
                      ->  Split  (cost=0.00..431.00 rows=1 width=30)
                            ->  Result  (cost=0.00..431.00 rows=1 width=30)
-                                 ->  Table Scan on constr_tab  (cost=0.00..431.00 rows=1 width=26)
- Optimizer: PQO version 2.55.21
+                                 ->  Table Scan on constr_tab constr_tab_1  (cost=0.00..431.00 rows=1 width=26)
+ Optimizer: PQO version 2.74.0
 (9 rows)
 
 -- Test ORCA fallback on "FROM ONLY"
