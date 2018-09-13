@@ -756,6 +756,12 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				splan->scan.scanrelid += rtoffset;
 
 #ifdef USE_ASSERT_CHECKING
+				/*
+				 * GPDB_93_MERGE_FIXME: This is a requirement of enhancement,
+				 * instead of fixing. The code and assert below is confusing
+				 * people who do not know the context. In all, maybe for ao/co
+				 * bitmapHeap code should go here?
+				 */
 				RangeTblEntry *rte = rt_fetch(splan->scan.scanrelid, root->glob->finalrtable);
 				char relstorage = get_rel_relstorage(rte->relid);
 				Assert(relstorage != RELSTORAGE_AOROWS &&
