@@ -676,6 +676,10 @@ select * from C;
 
 --
 -- Test CTEs read in non-initialization orders
+-- gpdb
+-- Remove window funtions from Recursive CTE's test case.
+-- Currently Recursive CTE's do not support the Window Functions,
+-- So we remove it from the test cases.
 --
 
 WITH RECURSIVE
