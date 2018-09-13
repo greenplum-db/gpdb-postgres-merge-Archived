@@ -733,6 +733,7 @@ explain select * from t, pt where tid = ptid;
                      ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..2.08 rows=2 width=19)
                            ->  Seq Scan on t  (cost=0.00..2.02 rows=1 width=19)
  Optimizer: legacy query optimizer
+(28 rows)
 
 select * from t, pt where tid = ptid;
  dist | tid |   t1   | t2  | dist |   pt1   |  pt2  |    pt3    | ptid 
