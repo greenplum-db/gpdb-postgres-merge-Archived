@@ -636,12 +636,7 @@ INSERT INTO circles VALUES('<(20,20), 1>', '<(0,0), 5>');
 INSERT INTO circles VALUES('<(20,20), 10>', '<(1,1), 5>');
 -- should fail on existing data without the WHERE clause
 ALTER TABLE circles ADD EXCLUDE USING gist
-<<<<<<< HEAD
   (c1 WITH &&, (c2::circle) WITH ~=);
-NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "circles_c1_c2_excl1" for table "circles"
-=======
-  (c1 WITH &&, (c2::circle) WITH &&);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 ERROR:  could not create exclusion constraint "circles_c1_c2_excl1"
 DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>).
 -- try reindexing an existing constraint
