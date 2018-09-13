@@ -999,6 +999,7 @@ Indexes:
     "test_constraints_val1_val2_key" UNIQUE CONSTRAINT, btree (val1, val2)
 Child tables: test_constraints_inh
 Has OIDs: no
+Distributed by: (val1, val2)
 
 ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key;
 \d+ test_constraints
@@ -1010,6 +1011,7 @@ ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key
  val2   | integer           |           | plain    |              | 
 Child tables: test_constraints_inh
 Has OIDs: no
+Distributed by: (val1, val2)
 
 \d+ test_constraints_inh
                       Table "public.test_constraints_inh"
@@ -1020,6 +1022,7 @@ Has OIDs: no
  val2   | integer           |           | plain    |              | 
 Inherits: test_constraints
 Has OIDs: no
+Distributed by: (val1, val2)
 
 DROP TABLE test_constraints_inh;
 DROP TABLE test_constraints;
@@ -1037,6 +1040,7 @@ Indexes:
     "test_ex_constraints_c_excl" EXCLUDE USING gist (c WITH &&)
 Child tables: test_ex_constraints_inh
 Has OIDs: no
+Distributed randomly
 
 ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
 \d+ test_ex_constraints
@@ -1046,6 +1050,7 @@ ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
  c      | circle |           | plain   |              | 
 Child tables: test_ex_constraints_inh
 Has OIDs: no
+Distributed randomly
 
 \d+ test_ex_constraints_inh
                Table "public.test_ex_constraints_inh"
@@ -1054,6 +1059,7 @@ Has OIDs: no
  c      | circle |           | plain   |              | 
 Inherits: test_ex_constraints
 Has OIDs: no
+Distributed randomly
 
 DROP TABLE test_ex_constraints_inh;
 DROP TABLE test_ex_constraints;
@@ -1071,6 +1077,7 @@ Indexes:
 Referenced by:
     TABLE "test_foreign_constraints" CONSTRAINT "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
 Has OIDs: no
+Distributed by: (id)
 
 \d+ test_foreign_constraints
                Table "public.test_foreign_constraints"
@@ -1081,6 +1088,7 @@ Foreign-key constraints:
     "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
 Child tables: test_foreign_constraints_inh
 Has OIDs: no
+Distributed by: (id1)
 
 ALTER TABLE test_foreign_constraints DROP CONSTRAINT test_foreign_constraints_id1_fkey;
 \d+ test_foreign_constraints
@@ -1090,6 +1098,7 @@ ALTER TABLE test_foreign_constraints DROP CONSTRAINT test_foreign_constraints_id
  id1    | integer |           | plain   |              | 
 Child tables: test_foreign_constraints_inh
 Has OIDs: no
+Distributed by: (id1)
 
 \d+ test_foreign_constraints_inh
              Table "public.test_foreign_constraints_inh"
@@ -1098,6 +1107,7 @@ Has OIDs: no
  id1    | integer |           | plain   |              | 
 Inherits: test_foreign_constraints
 Has OIDs: no
+Distributed by: (id1)
 
 DROP TABLE test_foreign_constraints_inh;
 DROP TABLE test_foreign_constraints;
