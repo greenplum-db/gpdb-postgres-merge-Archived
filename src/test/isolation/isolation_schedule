@@ -3,27 +3,27 @@
 # E.g. an UPDATE step executed by isolationtester never returns because another
 # session run in the same permutation holds ExclusiveLock that blocks the step.
 
-test: simple-write-skew
-test: receipt-report
-test: temporal-range-integrity
-test: project-manager
-test: classroom-scheduling
-test: total-cash
-test: referential-integrity
-test: ri-trigger
-test: partial-index
-test: two-ids
-test: multiple-row-versions
-test: index-only-scan
-test: fk-contention
-test: fk-deadlock
-test: fk-deadlock2
-test: eval-plan-qual
-test: lock-update-delete
-test: lock-update-traversal
+#test: simple-write-skew
+#test: receipt-report
+#test: temporal-range-integrity
+#test: project-manager
+#test: classroom-scheduling
+#test: total-cash
+#test: referential-integrity
+#test: ri-trigger
+#test: partial-index
+#test: two-ids
+#test: multiple-row-versions
+#test: index-only-scan
+#test: fk-contention
+#test: fk-deadlock
+#test: fk-deadlock2
+#test: eval-plan-qual
+#test: lock-update-delete
+#test: lock-update-traversal
 test: delete-abort-savept
-test: delete-abort-savept-2
-test: aborted-keyrevoke
+#test: delete-abort-savept-2
+#test: aborted-keyrevoke
 test: drop-index-concurrently-1
 test: timeouts
 
