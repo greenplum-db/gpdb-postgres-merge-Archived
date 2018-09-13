@@ -51,7 +51,8 @@ SELECT * FROM myview ORDER BY a,b;
 select pg_get_viewdef('myview',true); 
                                    pg_get_viewdef                                    
 -------------------------------------------------------------------------------------
-  SELECT mytable.a, mytable.b,                                                      +
+  SELECT mytable.a,                                                                 +
+     mytable.b,                                                                     +
          CASE mytable.a                                                             +
              WHEN IS NOT DISTINCT FROM mytable.b THEN (mytable.b * 10)::numeric     +
              WHEN IS NOT DISTINCT FROM mytable.b + 1 THEN (mytable.b * 100)::numeric+
