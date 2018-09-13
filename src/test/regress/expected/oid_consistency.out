@@ -575,8 +575,8 @@ Check constraints:
     "constraint_pt3_month_check" CHECK (month > 0)
 Inherits: constraint_pt3_1_prt_2_2_prt_3
 Has OIDs: no
-Options: appendonly=true
 Distributed by: (id)
+Options: appendonly=true
 
 CREATE DOMAIN const_domain1 AS TEXT
       CONSTRAINT cons_check1 check (char_length(VALUE) = 5);
