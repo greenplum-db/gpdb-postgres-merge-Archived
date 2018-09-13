@@ -1,13 +1,14 @@
 /*-------------------------------------------------------------------------
  *
- * cdbappendonlystorage.c
+ * appendonlydesc.c
+ *	  rmgr descriptor routines for cdb/cdbappendonlystorage.c
  *
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  *
  *
  * IDENTIFICATION
- *	    src/backend/cdb/cdbappendonlystorage.c
+ *	    src/backend/access/rmgrdesc/appendonlydesc.c
  *
  *-------------------------------------------------------------------------
  */
@@ -16,35 +17,6 @@
 #include "cdb/cdbappendonlystorage_int.h"
 #include "cdb/cdbappendonlystorage.h"
 #include "cdb/cdbappendonlyxlog.h"
-
-#include "cdb/cdbappendonlyam.h"
-
-void
-appendonly_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
-{
-	uint8         xl_info = record->xl_info;
-	uint8         info = xl_info & ~XLR_INFO_MASK;
-
-	/*
-	 * Perform redo of AO XLOG records only for standby mode. We do
-	 * not need to replay AO XLOG records in normal mode because fsync
-	 * is performed on file close.
-	 */
-	if (!IsStandbyMode())
-		return;
-
-	switch (info)
-	{
-		case XLOG_APPENDONLY_INSERT:
-			ao_insert_replay(record);
-			break;
-		case XLOG_APPENDONLY_TRUNCATE:
-			ao_truncate_replay(record);
-			break;
-		default:
-			elog(PANIC, "appendonly_redo: unknown code %u", info);
-	}
-}
 
 void
 appendonly_desc(StringInfo buf, XLogRecord *record)

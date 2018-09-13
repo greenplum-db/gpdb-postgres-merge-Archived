@@ -27,6 +27,10 @@
 #include "storage/standby.h"
 #include "utils/relmapper.h"
 
+#include "access/bitmap.h"
+#include "access/distributedlog.h"
+#include "cdb/cdbappendonlyxlog.h"
+
 #define PG_RMGR(symname,name,redo,desc,startup,cleanup,restartpoint) \
 	{ name, desc, },
 

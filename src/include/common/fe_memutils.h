@@ -9,6 +9,7 @@
 #ifndef FE_MEMUTILS_H
 #define FE_MEMUTILS_H
 
+/* "Safe" memory allocation functions --- these exit(1) on failure */
 extern char *pg_strdup(const char *in);
 extern void *pg_malloc(size_t size);
 extern void *pg_malloc0(size_t size);

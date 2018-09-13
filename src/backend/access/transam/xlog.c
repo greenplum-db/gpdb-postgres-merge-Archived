@@ -7105,6 +7105,12 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 	return record;
 }
 
+/*
+ * NOTE: There's a copy of this in contrib/pg_xlogdump/compat.c. If you change
+ * this, update the copy as well!
+ *
+ * GPDB_93_MERGE_FIXME: refactor this to avoid the duplication.
+ */
 void
 UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtended)
 {

@@ -26,7 +26,7 @@
 #include "utils/relmapper.h"
 
 #include "access/bitmap.h"
-#include "cdb/cdbappendonlyam.h"
+#include "cdb/cdbappendonlyxlog.h"
 
 
 /* must be kept in sync with RmgrData definition in xlog_internal.h */

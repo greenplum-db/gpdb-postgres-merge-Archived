@@ -87,12 +87,10 @@ typedef uint32 OOMTimeType;
  */
 typedef struct MemoryContextData *MemoryContext;
 
-#ifndef FRONTEND
-
 /*
  * CurrentMemoryContext is the default allocation context for palloc().
- * We declare it here so that palloc() can be a macro.	Avoid accessing it
- * directly!  Instead, use MemoryContextSwitchTo() to change the setting.
+ * Avoid accessing it directly!  Instead, use MemoryContextSwitchTo()
+ * to change the setting.
  */
 extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
 
@@ -158,7 +156,6 @@ MemoryContextSwitchTo(MemoryContext context)
  * allocated in a context, not with malloc().
  */
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
-#endif   /* !FRONTEND */
 
 extern char *pstrdup(const char *in);
 extern char *pnstrdup(const char *in, Size len);

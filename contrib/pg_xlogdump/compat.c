@@ -23,6 +23,11 @@
 #include "utils/datetime.h"
 #include "lib/stringinfo.h"
 
+#include "access/twophase.h"
+#include "access/xlog.h"
+#include "catalog/pg_tablespace.h"
+#include "common/relpath.h"
+
 /* copied from timestamp.c */
 pg_time_t
 timestamptz_to_time_t(TimestampTz t)
@@ -96,4 +101,66 @@ void
 appendStringInfoChar(StringInfo str, char ch)
 {
 	appendStringInfo(str, "%c", ch);
+}
+
+
+const char *
+tablespace_version_directory(void)
+{
+	static char path[MAXPGPATH] = "";
+
+	// GPDB_93_MERGE_FIXME: I hardcoded dbid 0 here, just to make this compile.
+	// Where do we get the actual value?
+	if (!path[0])
+		snprintf(path, MAXPGPATH, "%s_db%d", GP_TABLESPACE_VERSION_DIRECTORY,
+				 0 /* GpIdentity.dbid */);
+
+	return path;
+}
+
+/* copied from xlog.c */
+void
+UnpackCheckPointRecord(XLogRecord *record, CheckpointExtendedRecord *ckptExtended)
+{
+	char *current_record_ptr;
+	int remainderLen;
+
+	if (record->xl_len == sizeof(CheckPoint))
+	{
+		/* Special (for bootstrap, xlog switch, maybe others) */
+		ckptExtended->dtxCheckpoint = NULL;
+		ckptExtended->dtxCheckpointLen = 0;
+		ckptExtended->ptas = NULL;
+		return;
+	}
+
+	/* Normal checkpoint Record */
+	Assert(record->xl_len > sizeof(CheckPoint));
+
+	current_record_ptr = ((char*)XLogRecGetData(record)) + sizeof(CheckPoint);
+	remainderLen = record->xl_len - sizeof(CheckPoint);
+
+	/* Start of distributed transaction information */
+	ckptExtended->dtxCheckpoint = (TMGXACT_CHECKPOINT *)current_record_ptr;
+	ckptExtended->dtxCheckpointLen =
+		TMGXACT_CHECKPOINT_BYTES((ckptExtended->dtxCheckpoint)->committedCount);
+
+	/*
+	 * The master prepared transaction aggregate state (ptas) will be skipped
+	 * when gp_before_filespace_setup is ON.
+	 */
+	if (remainderLen > ckptExtended->dtxCheckpointLen)
+	{
+		current_record_ptr = current_record_ptr + ckptExtended->dtxCheckpointLen;
+		remainderLen -= ckptExtended->dtxCheckpointLen;
+
+		/* Finally, point to prepared transaction information */
+		ckptExtended->ptas = (prepared_transaction_agg_state *) current_record_ptr;
+		Assert(remainderLen == PREPARED_TRANSACTION_CHECKPOINT_BYTES(ckptExtended->ptas->count));
+	}
+	else
+	{
+		Assert(remainderLen == ckptExtended->dtxCheckpointLen);
+		ckptExtended->ptas = NULL;
+	}
 }
