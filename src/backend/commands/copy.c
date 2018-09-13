@@ -936,8 +936,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	TupleDesc	tupDesc;
 	List	   *options;
-	/* save relationOid for auto-stats */
-	Oid         relationOid = InvalidOid;
 
 	glob_cstate = NULL;
 	glob_copystmt = (CopyStmt *) stmt;
@@ -1165,7 +1163,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 
 	/* Issue automatic ANALYZE if conditions are satisfied (MPP-4082). */
 	if (Gp_role == GP_ROLE_DISPATCH && is_from)
-		auto_stats(AUTOSTATS_CMDTYPE_COPY, relationOid, *processed, false /* inFunction */);
+		auto_stats(AUTOSTATS_CMDTYPE_COPY, relid, *processed, false /* inFunction */);
 
 	return relid;
 }
