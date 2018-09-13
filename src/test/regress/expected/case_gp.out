@@ -234,7 +234,9 @@ SELECT * FROM myview ORDER BY id, location;
 select pg_get_viewdef('myview',true); 
                            pg_get_viewdef                           
 --------------------------------------------------------------------
-  SELECT products.id, products.name, products.price,               +
+  SELECT products.id,                                              +
+     products.name,                                                +
+     products.price,                                               +
          CASE products.id                                          +
              WHEN IS NOT DISTINCT FROM 1 THEN 'Southlake'::text    +
              WHEN IS NOT DISTINCT FROM 2 THEN 'San Francisco'::text+
