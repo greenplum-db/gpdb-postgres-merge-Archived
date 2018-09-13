@@ -686,10 +686,7 @@ DETAIL:  Key (test)=(2) already exists.
 insert into atacc1 select i from generate_series(3,10)i;
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
-<<<<<<< HEAD
 ERROR:  cannot create unique index on system column
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- try to create duplicates via alter table using - should fail
 alter table atacc1 alter column test type integer using 0;
 ERROR:  could not create unique index "atacc1_test_key"  (seg2 172.17.0.2:25434 pid=389538)
@@ -762,10 +759,7 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 alter table atacc1 drop constraint atacc_test1 restrict;
 -- try adding a primary key on oid (should fail)
 alter table atacc1 add constraint atacc_oid1 primary key(oid);
-<<<<<<< HEAD
 ERROR:  cannot create primary key on system column
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 drop table atacc1;
 -- let's do one where the primary key constraint fails when added
 create table atacc1 ( test int ) distributed by (test);
@@ -800,16 +794,10 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
-<<<<<<< HEAD
 ERROR:  cannot add column with primary key constraint
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
 ERROR:  cannot add column with primary key constraint
-=======
-ERROR:  column "test2" contains null values
--- now add a primary key column with a default (succeeds).
-alter table atacc1 add column test2 int default 0 primary key;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int) distributed by (test);
@@ -1873,6 +1861,7 @@ Table "public.test_inh_check"
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Number of child tables: 1 (Use \d+ to list them.)
+Distributed by: (a)
 
 \d test_inh_check_child
 Table "public.test_inh_check_child"
@@ -1882,6 +1871,7 @@ Table "public.test_inh_check_child"
 Check constraints:
     "test_inh_check_a_check" CHECK (a::double precision > 10.2::double precision)
 Inherits: test_inh_check
+Distributed by: (a)
 
 --
 -- lock levels
