@@ -183,7 +183,7 @@ static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
 
-bool
+static bool
 querytree_safe_for_qe_walker(Node *expr, void *context)
 {
 	Assert(context == NULL);

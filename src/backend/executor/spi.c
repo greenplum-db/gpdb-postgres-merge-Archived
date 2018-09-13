@@ -1843,7 +1843,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 											   plan->nargs);
 		}
 
-
+		/* Check that all the queries are safe to execute on QE. */
+		if (Gp_role == GP_ROLE_EXECUTE)
 		{
 			ListCell *lc;
 
@@ -1851,14 +1852,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 			{
 				Query *query = (Query *) lfirst(lc);
 
-				if (Gp_role == GP_ROLE_EXECUTE)
-				{
-					/*
-					 * This method will error out if the query cannot be
-					 * safely executed on segment.
-					 */
-					querytree_safe_for_qe((Node *) query);
-				}
+				querytree_safe_for_qe((Node *) query);
 			}
 		}
 
@@ -2055,6 +2049,19 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 												   src,
 												   plan->argtypes,
 												   plan->nargs);
+			}
+
+			/* Check that all the queries are safe to execute on QE. */
+			if (Gp_role == GP_ROLE_EXECUTE)
+			{
+				ListCell *lc;
+
+				foreach (lc, stmt_list)
+				{
+					Query *query = (Query *) lfirst(lc);
+
+					querytree_safe_for_qe((Node *) query);
+				}
 			}
 
 			/* Finish filling in the CachedPlanSource */
