@@ -6,17 +6,17 @@ create table nhtest (i numeric(10, 2)) distributed by (i);
 insert into nhtest values(100000.22);
 insert into nhtest values(300000.19);
 explain select * from nhtest a join nhtest b using (i);
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..862.00 rows=1 width=11)
-   ->  Hash Join  (cost=0.00..862.00 rows=1 width=11)
-         Hash Cond: public.nhtest.i = public.nhtest.i
-         ->  Table Scan on nhtest  (cost=0.00..431.00 rows=1 width=11)
-         ->  Hash  (cost=431.00..431.00 rows=1 width=11)
-               ->  Table Scan on nhtest  (cost=0.00..431.00 rows=1 width=11)
- Settings:  enable_hashjoin=on; enable_mergejoin=off; enable_nestloop=off; optimizer=on
- Optimizer status: PQO version 2.39.2
-(8 rows)
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..862.00 rows=1 width=9)
+   ->  Hash Join  (cost=0.00..862.00 rows=1 width=9)
+         Hash Cond: nhtest.i = nhtest_1.i
+         ->  Table Scan on nhtest  (cost=0.00..431.00 rows=1 width=9)
+         ->  Hash  (cost=431.00..431.00 rows=1 width=9)
+               ->  Table Scan on nhtest nhtest_1  (cost=0.00..431.00 rows=1 width=9)
+ Optimizer: PQO version 2.74.0
+(7 rows)
+
 
 select * from nhtest a join nhtest b using (i);
      i     
