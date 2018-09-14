@@ -31,6 +31,8 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
+#include "catalog/pg_exttable.h"
+
 
 /* We use a list of these to detect recursion in RewriteQuery */
 typedef struct rewrite_event
@@ -2133,7 +2135,23 @@ relation_is_updatable(Oid reloid, bool include_triggers)
 	if (rel == NULL)
 		return 0;
 
+	/* If this is an external table, check if it's writeable */
+	if (rel->rd_rel->relkind == RELKIND_RELATION &&
+		rel->rd_rel->relstorage == RELSTORAGE_EXTERNAL)
+	{
+		ExtTableEntry	   *extentry;
+
+		extentry = GetExtTableEntry(reloid);
+
+		if (extentry->iswritable)
+			events |= (1 << CMD_INSERT);
+
+		pfree(extentry);
+		return events;
+	}
+
 	/* If the relation is a table, it is always updatable */
+	/* GPDB: except if it's an external table, which we checked above */
 	if (rel->rd_rel->relkind == RELKIND_RELATION)
 	{
 		relation_close(rel, AccessShareLock);

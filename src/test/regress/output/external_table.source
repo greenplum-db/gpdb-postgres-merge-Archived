@@ -312,9 +312,6 @@ ERROR:  ON clause may not be used with a writable external table
 select * from wet_pos4;
 ERROR:  cannot read from a WRITABLE external table
 HINT:  Create the table as READABLE instead.
-drop external table check_ps;
-drop external table check_env;
-drop external table wet_pos4;
 -- Dropping an external table, both via DROP EXTERNAL TABLE and as a result
 -- from a cascading deletion must result in the deletion of the relation
 -- pg_exttable row.
@@ -4863,5 +4860,17 @@ CONTEXT:  External table tbl_ext_gpformatter
 ----
  0
  1
+(2 rows)
+
+--
+-- Test information_schema views for external tables
+--
+SELECT * FROM information_schema.tables WHERE table_name IN ('wet_pos4', 'exttab_basic_1');
+WARNING:  relcache reference leak: relation "exttab_basic_1" not closed
+WARNING:  relcache reference leak: relation "wet_pos4" not closed
+ table_catalog | table_schema |   table_name   | table_type | self_referencing_column_name | reference_generation | user_defined_type_catalog | user_defined_type_schema | user_defined_type_name | is_insertable_into | is_typed | commit_action 
+---------------+--------------+----------------+------------+------------------------------+----------------------+---------------------------+--------------------------+------------------------+--------------------+----------+---------------
+ regression    | public       | exttab_basic_1 | BASE TABLE |                              |                      |                           |                          |                        | NO                 | NO       | 
+ regression    | public       | wet_pos4       | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
 (2 rows)
 
