@@ -131,18 +131,11 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		/* must hold a buffer lock to call HeapTupleSatisfiesUpdate */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-<<<<<<< HEAD
-		if (HeapTupleSatisfiesUpdate(rel, tuple->t_data,
-									 GetCurrentCommandId(false),
-									 scan->rs_cbuf) == HeapTupleBeingUpdated)
-		{
-=======
-		htsu = HeapTupleSatisfiesUpdate(tuple->t_data,
+		htsu = HeapTupleSatisfiesUpdate(rel, tuple->t_data,
 										GetCurrentCommandId(false),
 										scan->rs_cbuf);
 		xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
 		infomask = tuple->t_data->t_infomask;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		/*
 		 * a tuple is locked if HTSU returns BeingUpdated, and if it returns
