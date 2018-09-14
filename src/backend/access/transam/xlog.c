@@ -1055,7 +1055,7 @@ begin:;
 	 * Construct record header (prev-link and CRC are filled in later), and
 	 * make that the first chunk in the chain.
 	 */
-	rechdr->xl_xid = GetCurrentTransactionIdIfAny();
+	rechdr->xl_xid = headerXid;
 	rechdr->xl_tot_len = SizeOfXLogRecord + write_len;
 	rechdr->xl_len = len;		/* doesn't include backup blocks */
 	rechdr->xl_info = info;
