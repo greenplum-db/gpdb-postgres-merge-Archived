@@ -978,13 +978,15 @@ CREATE TRIGGER rw_view1_ins_trig AFTER INSERT ON base_tbl
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
 CREATE VIEW rw_view1 AS SELECT a AS aa, b AS bb FROM base_tbl;
 INSERT INTO rw_view1 VALUES (3, 'Row 3');
+ERROR:  function cannot execute on a QE slice because it issues a non-SELECT statement
+CONTEXT:  SQL statement "UPDATE base_tbl SET b=NEW.b WHERE a=1"
+PL/pgSQL function rw_view1_trig_fn() line 4 at SQL statement
 select * from base_tbl;
  a |   b   
 ---+-------
  2 | Row 2
- 3 | Row 3
- 1 | Row 3
-(3 rows)
+ 1 | Row 1
+(2 rows)
 
 DROP VIEW rw_view1;
 DROP TRIGGER rw_view1_ins_trig on base_tbl;
