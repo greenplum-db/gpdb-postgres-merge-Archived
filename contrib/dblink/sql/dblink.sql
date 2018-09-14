@@ -328,21 +328,13 @@ SELECT * FROM result;
 SELECT * FROM (SELECT * FROM dblink('dbname=contrib_regression','select * from foo') AS t(f1 int, f2 text, f3 text[])) AS t1;
 
 -- test foreign data wrapper functionality
-<<<<<<< HEAD
-CREATE ROLE dblink_regression_test;
-
-CREATE FOREIGN DATA WRAPPER postgresql;
-CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression', host 'localhost');
-CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
-=======
 CREATE USER dblink_regression_test;
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (dbname 'contrib_regression');
+  OPTIONS (dbname 'contrib_regression', host 'localhost');
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
-CREATE USER MAPPING FOR public SERVER fdtest;
+CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
 
->>>>>>> e472b921406407794bab911c64655b8b82375196
 GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
 
@@ -425,6 +417,8 @@ FROM dblink('myconn',
   AS t(a timestamptz);
 
 -- single-row asynchronous case
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT *
 FROM dblink_send_query('myconn',
     'SELECT * FROM
@@ -435,8 +429,11 @@ UNION ALL
 (SELECT * from dblink_get_result('myconn') as t(t timestamptz));
 SELECT * FROM result;
 DROP TABLE result;
+-- end_ignore
 
 -- multi-row asynchronous case
+-- start_ignore
+-- Async more not supported in GPDB
 SELECT *
 FROM dblink_send_query('myconn',
     'SELECT * FROM
@@ -450,6 +447,7 @@ UNION ALL
 (SELECT * from dblink_get_result('myconn') as t(t timestamptz));
 SELECT * FROM result;
 DROP TABLE result;
+-- end_ignore
 
 -- Try an ambiguous interval
 SELECT dblink_exec('myconn', 'SET intervalstyle = sql_standard;');
@@ -462,6 +460,10 @@ FROM dblink('myconn',
 -- properly through a change.
 CREATE TEMPORARY TABLE result (t timestamptz);
 
+-- These don't work correctly in GPDB. The first dblink_exec() is executed
+-- in the QE node, while the second, in the INSERT statement, is executed
+-- in an entrydb worker process. The 'myconn' connection established earlier
+-- is only visible in the QE process.
 SELECT dblink_exec('myconn', 'SET datestyle = ISO, MDY;');
 INSERT INTO result
   SELECT *
