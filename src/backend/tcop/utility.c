@@ -1783,7 +1783,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 	switch (stmt->removeType)
 	{
 		case OBJECT_INDEX:
-			if (stmt->concurrent)
+			if (stmt->concurrent && Gp_role != GP_ROLE_EXECUTE)
 				PreventTransactionChain(isTopLevel,
 										"DROP INDEX CONCURRENTLY");
 			/* fall through */
@@ -1803,12 +1803,33 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 
 	/* dispatch the original, unmodified statement */
 	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		int			flags;
+
+		flags = DF_CANCEL_ON_ERROR | DF_NEED_TWO_PHASE;
+
+		if (stmt->removeType == OBJECT_INDEX && stmt->concurrent)
+		{
+			/*
+			 * Don't send a snapshot in DROP INDEX CONCURRENTLY. The QE is
+			 * responsible for planning queries, so as soon as we have
+			 * finished the dance on QD to drop the index, none of the QEs
+			 * should need it either. So all the coordination we need across
+			 * nodes is to complete the command in QD first, and QEs only
+			 * after that.
+			 */
+		}
+		else
+		{
+			/* all other commands run normally, in a distributed transaction */
+			flags = DF_WITH_SNAPSHOT;
+		}
+
 		CdbDispatchUtilityStatement((Node *) copyStmt,
-									DF_CANCEL_ON_ERROR|
-									DF_WITH_SNAPSHOT|
-									DF_NEED_TWO_PHASE,
+									flags,
 									NIL,
 									NULL);
+	}
 }
 
 
