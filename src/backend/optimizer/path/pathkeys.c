@@ -1329,6 +1329,7 @@ make_distribution_keys_for_groupclause(PlannerInfo *root, List *groupclause, Lis
 typedef struct
 {
 	PlannerInfo *root;
+	bool		canonicalize;
 	List	   *tlist;
 	Bitmapset *used_refs;
 	List	   *result;
@@ -1368,7 +1369,7 @@ make_pathkeys_for_groupclause_recurse(pathkeys_for_groupclause_context *cxt,
 				 * The pathkey becomes a one-element sublist. canonicalize_pathkeys() might
 				 * replace it with a longer sublist later.
 				 */
-				if (!pathkey_is_redundant(pathkey, cxt->result))
+				if (!cxt->canonicalize || !pathkey_is_redundant(pathkey, cxt->result))
 					cxt->result = lappend(cxt->result, pathkey);
 				cxt->used_refs = bms_add_member(cxt->used_refs, sortcl->tleSortGroupRef);
 			}
@@ -1396,6 +1397,31 @@ make_pathkeys_for_groupclause(PlannerInfo *root,
 	cxt.tlist = tlist;
 	cxt.used_refs = NULL;
 	cxt.result = NIL;
+	cxt.canonicalize = true;
+
+	make_pathkeys_for_groupclause_recurse(&cxt, groupclause);
+
+	return cxt.result;
+}
+
+/*
+ * Like make_pathkeys_for_groupclause, but doesn't remove duplicate pathkeys
+ * from the list. This is needed in plangroupext.c, because the logic there
+ * gets confused unless there's a one-to-one match between the columns in
+ * groupClause and grouping_pathkeys.
+ */
+List *
+make_pathkeys_for_groupclause_noncanonical(PlannerInfo *root,
+										   List *groupclause,
+										   List *tlist)
+{
+	pathkeys_for_groupclause_context cxt;
+
+	cxt.root = root;
+	cxt.tlist = tlist;
+	cxt.used_refs = NULL;
+	cxt.result = NIL;
+	cxt.canonicalize = false;
 
 	make_pathkeys_for_groupclause_recurse(&cxt, groupclause);
 

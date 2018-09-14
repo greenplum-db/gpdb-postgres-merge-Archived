@@ -469,9 +469,9 @@ plan_grouping_extension(PlannerInfo *root,
 	if (context.numGroupCols != list_length(root->group_pathkeys))
 	{
 		root->group_pathkeys =
-			make_pathkeys_for_groupclause(root,
-										  root->parse->groupClause,
-										  tlist);
+			make_pathkeys_for_groupclause_noncanonical(root,
+													   root->parse->groupClause,
+													   tlist);
 
 		/* now they really should match. */
 		if (context.numGroupCols != list_length(root->group_pathkeys))
