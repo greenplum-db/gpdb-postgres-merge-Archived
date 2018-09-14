@@ -1873,21 +1873,21 @@ explain SELECT * FROM multiset_5( TABLE( SELECT count(*)::integer, 'hello'::text
 (6 rows)
 
 explain SELECT * FROM example_r WHERE (10, 'hello') in (SELECT * FROM multiset_5( TABLE( SELECT count(*)::integer, 'hello'::text from example_r )));
-                                                   QUERY PLAN                                                   
-----------------------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)  (cost=3.27..6.37 rows=10 width=16)
    ->  Result  (cost=3.27..6.37 rows=4 width=16)
-         One-Time Filter: (hashed subplan)
+         One-Time Filter: (hashed SubPlan 1)
          ->  Seq Scan on example_r  (cost=3.27..6.37 rows=4 width=16)
-         SubPlan 1
-           ->  Materialize  (cost=3.27..3.28 rows=1 width=36)
-                 ->  Broadcast Motion 1:3  (slice2; segments: 1)  (cost=3.24..3.27 rows=1 width=36)
-                       ->  Table Function Scan on multiset_5  (cost=3.24..3.27 rows=1 width=36)
+         SubPlan 1  (slice3; segments: 3)
+           ->  Materialize  (cost=3.24..3.26 rows=1 width=36)
+                 ->  Broadcast Motion 1:3  (slice2; segments: 1)  (cost=3.24..3.26 rows=1 width=36)
+                       ->  Table Function Scan on multiset_5  (cost=3.24..3.26 rows=1 width=36)
                              ->  Aggregate  (cost=3.24..3.25 rows=1 width=36)
-                                   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=3.13..3.23 rows=1 width=8)
-                                         ->  Aggregate  (cost=3.13..3.14 rows=1 width=8)
-                                               ->  Seq Scan on example_r  (cost=0.00..3.10 rows=4 width=0)
- Settings:  gp_segments_for_planner=8
+                                   ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=3.12..3.22 rows=1 width=8)
+                                         ->  Aggregate  (cost=3.12..3.13 rows=1 width=8)
+                                               ->  Seq Scan on example_r example_r_1  (cost=0.00..3.10 rows=4 width=0)
+ Optimizer: legacy query optimizer
 (13 rows)
 
 explain SELECT * FROM multiset_5( TABLE( SELECT * from example_v) );
