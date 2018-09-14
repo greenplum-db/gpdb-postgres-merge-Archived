@@ -683,7 +683,6 @@ SELECT user_relns() AS user_relns
  timetz_tbl
  tinterval_tbl
  tm
- tmm
  toyemp
  tv
  tvm
@@ -693,7 +692,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  usr_define_type
  varchar_tbl
-(178 rows)
+(177 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
