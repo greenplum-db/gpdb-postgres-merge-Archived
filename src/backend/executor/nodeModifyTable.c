@@ -757,8 +757,14 @@ ldelete:;
 				 * If a trigger actually intends this type of interaction, it
 				 * can re-execute the DELETE and then return NULL to cancel
 				 * the outer delete.
+				 *
+				 * In GPDB, for AO tables HeapTupleSelfUpdated is returned only
+				 * in case of same command tuple update based on visimap dirty
+				 * list checking. Also, hufd is not initialized and can't be for
+				 * AO case, as visimap update within same command happens at end
+				 * of command.
 				 */
-				if (hufd.cmax != estate->es_output_cid)
+				if (!isAORowsTable && !isAOColsTable && hufd.cmax != estate->es_output_cid)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
@@ -1359,8 +1365,14 @@ lreplace:;
 				 * If a trigger actually intends this type of interaction, it
 				 * can re-execute the UPDATE (assuming it can figure out how)
 				 * and then return NULL to cancel the outer update.
+				 *
+				 * In GPDB, for AO tables HeapTupleSelfUpdated is returned only
+				 * in case of same command tuple update based on visimap dirty
+				 * list checking. Also, hufd is not initialized and can't be for
+				 * AO case, as visimap update within same command happens at end
+				 * of command.
 				 */
-				if (hufd.cmax != estate->es_output_cid)
+				if (!rel_is_aorows && !rel_is_aocols && hufd.cmax != estate->es_output_cid)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
 							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
