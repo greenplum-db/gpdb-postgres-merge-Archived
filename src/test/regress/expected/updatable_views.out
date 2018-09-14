@@ -135,7 +135,7 @@ SELECT table_name, column_name, is_updatable
 
 DELETE FROM ro_view1;
 ERROR:  cannot delete from view "ro_view1"
-DETAIL:  Views containing DISTINCT are not automatically updatable.
+DETAIL:  Views containing GROUP BY are not automatically updatable.
 HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 DELETE FROM ro_view2;
 ERROR:  cannot delete from view "ro_view2"
@@ -199,7 +199,7 @@ DETAIL:  Views that return the same column more than once are not automatically 
 HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view1"
-DETAIL:  Views containing DISTINCT are not automatically updatable.
+DETAIL:  Views containing GROUP BY are not automatically updatable.
 HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
 INSERT INTO ro_view18 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view18"
