@@ -33,8 +33,6 @@ CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
               b int UNIQUE
        );
 
-DROP SCHEMA test_schema_1 CASCADE;
-
 -- Test GRANT/REVOKE 
 CREATE SCHEMA test_schema_2;
 CREATE TABLE test_schema_2.abc as select * from test_schema_1.abc DISTRIBUTED BY (a);

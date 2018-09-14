@@ -49,7 +49,6 @@ CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
 ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
 LINE 2:        CREATE TABLE abc (
                ^
-DROP SCHEMA test_schema_1 CASCADE;
 -- Test GRANT/REVOKE 
 CREATE SCHEMA test_schema_2;
 CREATE TABLE test_schema_2.abc as select * from test_schema_1.abc DISTRIBUTED BY (a);
