@@ -13,7 +13,7 @@ teardown
 
 session "s1"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "rdtbl"	{ SELECT * FROM accounts; }
+step "rdtbl"	{ SELECT * FROM accounts ORDER BY accountid; }
 step "wrtbl"	{ UPDATE accounts SET balance = balance + 100; }
 teardown	{ ABORT; }
 
@@ -43,3 +43,9 @@ permutation "wrtbl" "lto" "update"
 permutation "wrtbl" "lsto" "update"
 # statement timeout expires first, row-level lock
 permutation "wrtbl" "slto" "update"
+
+# GPDB_93_MERGE_FIXME: The expected output of this test looks slightly
+# different from upstream. There are no "<waiting>" lines. I believe that's
+# because the pg_locks query that isolationtester uses to detect waiting
+# doesn't work correctly in GPDB. It uses pg_backend_id() to get the QE
+# process PID, but if the lock is held by a QE process, it won't match.
