@@ -37,7 +37,7 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	/*
 	 * Transfering files by tablespace is tricky because a single database can
 	 * use multiple tablespaces.  For non-parallel mode, we just pass a NULL
-	 * tablespace path, which matches all tablespaces.	In parallel mode, we
+	 * tablespace path, which matches all tablespaces.  In parallel mode, we
 	 * pass the default tablespace and all user-created tablespaces and let
 	 * those operations happen in parallel.
 	 */
@@ -215,13 +215,8 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 				 const char *type_suffix)
 {
 	const char *msg;
-<<<<<<< HEAD
 	char		old_file[MAXPGPATH * 3];
 	char		new_file[MAXPGPATH * 3];
-=======
-	char		old_file[MAXPGPATH];
-	char		new_file[MAXPGPATH];
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	int			fd;
 	int			segno;
 	char		extent_suffix[65];
@@ -271,7 +266,6 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		}
 
 		unlink(new_file);
-<<<<<<< HEAD
 
 		/* Copying files might take some time, so give feedback. */
 		pg_log(PG_STATUS, "%s", old_file);
@@ -293,11 +287,6 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 	
 			return;
 		}
-=======
-
-		/* Copying files might take some time, so give feedback. */
-		pg_log(PG_STATUS, "%s", old_file);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
 			pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
@@ -305,7 +294,6 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 
 		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 		{
-<<<<<<< HEAD
 			if (user_opts.checksum_mode != CHECKSUM_NONE && map->type == HEAP)
 			{
 				pg_log(PG_VERBOSE, "copying and checksumming \"%s\" to \"%s\"\n", old_file, new_file);
@@ -321,13 +309,6 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 					pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						   map->nspname, map->relname, old_file, new_file, msg);
 			}
-=======
-			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
-
-			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-				pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					   map->nspname, map->relname, old_file, new_file, msg);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		}
 		else
 		{

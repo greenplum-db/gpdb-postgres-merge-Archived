@@ -2,10 +2,7 @@
  *	pg_upgrade.h
  *
  *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *	contrib/pg_upgrade/pg_upgrade.h
  */
 
@@ -40,7 +37,6 @@
 #define GLOBALS_DUMP_FILE	"pg_upgrade_dump_globals.sql"
 #define DB_DUMP_FILE_MASK	"pg_upgrade_dump_%u.custom"
 
-<<<<<<< HEAD
 #define GLOBALS_OIDS_DUMP_FILE	"pg_upgrade_dump_globals_oids.sql"
 #define DB_OIDS_DUMP_FILE_MASK	"pg_upgrade_dump_%u_oids.sql"
 
@@ -49,8 +45,6 @@
 #define RELSTORAGE_AOROWS	'a'
 #define RELSTORAGE_AOCOLS	'c'
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 #define DB_DUMP_LOG_FILE_MASK	"pg_upgrade_dump_%u.log"
 #define SERVER_LOG_FILE		"pg_upgrade_server.log"
 #define UTILITY_LOG_FILE	"pg_upgrade_utility.log"
@@ -131,11 +125,8 @@ extern char *output_files[];
  * ("Improve concurrency of foreign key locking") which also updated catalog
  * version to this value.  pg_upgrade behavior depends on whether old and new
  * server versions are both newer than this, or only the new one is.
-<<<<<<< HEAD
- *
- * GPDB_93_MERGE_FIXME
-#define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
  */
+#define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
 
 /*
  * Extra information stored for each Append-only table.
@@ -190,7 +181,7 @@ typedef struct
 	char		attalign;
 	bool		is_numeric;
 } AttInfo;
- 
+
 typedef enum
 {
 	HEAP,
@@ -199,10 +190,6 @@ typedef enum
 	FSM
 } RelType;
 
-=======
- */
-#define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 /*
  * Each relation is represented by a relinfo structure.
@@ -263,7 +250,6 @@ typedef struct
 	/* the rest are used only for logging and error reporting */
 	char	   *nspname;		/* namespaces */
 	char	   *relname;
-<<<<<<< HEAD
 
 	bool		missing_seg0_ok;
 
@@ -274,8 +260,6 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 } FileNameMap;
 
 /*
@@ -307,10 +291,6 @@ typedef struct
 	uint32		ctrl_ver;
 	uint32		cat_ver;
 	char		nextxlogfile[25];
-<<<<<<< HEAD
-=======
-	uint32		chkpnt_tli;
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	uint32		chkpnt_nxtxid;
 	uint32		chkpnt_nxtepoch;
 	uint32		chkpnt_nxtoid;
@@ -331,12 +311,6 @@ typedef struct
 	char	   *lc_collate;
 	char	   *lc_ctype;
 	char	   *encoding;
-	/*
-	 * GPDB_93_MERGE_FIXME: the below two variables are replaced by
-	 * nextxlogfile in 9.3.
-	 */
-	uint32		nxtlogseg;
-	uint32		logid;
 } ControlData;
 
 /*
@@ -443,14 +417,11 @@ typedef struct
 								 * changes */
 	transferMode transfer_mode; /* copy files or link them? */
 	int			jobs;
-<<<<<<< HEAD
 
 	bool		progress;
 	segmentMode	segment_mode;
 	checksumMode checksum_mode;
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 } UserOpts;
 
 
@@ -661,7 +632,6 @@ void parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							  char *old_pgdata, char *new_pgdata,
 							  char *old_tablespace);
 bool		reap_child(bool wait_for_child);
-<<<<<<< HEAD
 
 /*
  * Hack to make backend macros that check for assertions to work.
@@ -709,18 +679,3 @@ void check_greenplum(void);
 void report_progress(ClusterInfo *cluster, progress_type op, char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 void close_progress(void);
-
-/*
- * GPDB_93_MERGE_FIXME: Remove these local definitions when 8396447cdbdff0b62
- * is merged.
- */
-
-/* fe_memutils.c (which is src/common/fe_memutils.c in 9.3) */
-void *pg_malloc(size_t size);
-void *pg_malloc0(size_t size);
-void *pg_realloc(void *ptr, size_t size);
-char *pg_strdup(const char *in);
-void pg_free(void *ptr);
-
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196

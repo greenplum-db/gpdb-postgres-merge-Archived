@@ -4,10 +4,7 @@
  *	main source file
  *
  *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
-<<<<<<< HEAD
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
  *	contrib/pg_upgrade/pg_upgrade.c
  */
 
@@ -51,11 +48,7 @@ static void prepare_new_cluster(void);
 static void prepare_new_databases(void);
 static void create_new_objects(void);
 static void copy_clog_xlog_xid(void);
-<<<<<<< HEAD
 static void set_frozenxids(bool minmxid_only);
-=======
-static void set_frozenxids(void);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 static void	get_restricted_token(const char *progname);
@@ -111,12 +104,8 @@ main(int argc, char **argv)
 	adjust_data_dir(&new_cluster);
 
 	setup(argv[0], &live_check);
-<<<<<<< HEAD
 	
 	report_progress(NULL, CHECK, "Checking cluster compatibility");
-=======
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	output_check_banner(live_check);
 
 	check_cluster_versions();
@@ -157,13 +146,9 @@ main(int argc, char **argv)
 	/* New now using xids of the old system */
 
 	/* -- NEW -- */
-<<<<<<< HEAD
 	if (user_opts.segment_mode == DISPATCHER)
 	{
 		start_postmaster(&new_cluster, true);
-=======
-	start_postmaster(&new_cluster, true);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		prepare_new_databases();
 
@@ -192,31 +177,16 @@ main(int argc, char **argv)
 	 */
 	prep_status("Setting next OID for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "\"%s/pg_resetxlog\" -y -o %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
 			  new_cluster.pgdata);
-=======
-			  "\"%s/pg_resetxlog\" -o %u \"%s\"",
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
-			  new_cluster.pgdata);
 	check_ok();
 
 	prep_status("Sync data directory to disk");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 			  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
 			  new_cluster.pgdata);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	check_ok();
-
-/* GPDB_93_MERGE_FIXME */
-#if 0
-	prep_status("Sync data directory to disk");
-	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/initdb\" --sync-only \"%s\"", new_cluster.bindir,
-			  new_cluster.pgdata);
-	check_ok();
-#endif
 
 	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
@@ -416,11 +386,7 @@ setup(char *argv0, bool *live_check)
 	{
 		/*
 		 * If we have a postmaster.pid file, try to start the server.  If it
-<<<<<<< HEAD
 		 * starts, the pid file was stale, so stop the server.  If it doesn't
-=======
-		 * starts, the pid file was stale, so stop the server.	If it doesn't
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		 * start, assume the server is running.  If the pid file is left over
 		 * from a server crash, this also allows any committed transactions
 		 * stored in the WAL to be replayed so they are not lost, because WAL
@@ -469,11 +435,7 @@ prepare_new_cluster(void)
 	 */
 	prep_status("Analyzing all rows in the new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" %s --all --analyze %s",
-=======
-			  "\"%s/vacuumdb\" %s --all --analyze %s",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  log_opts.verbose ? "--verbose" : "");
 	check_ok();
@@ -486,10 +448,7 @@ prepare_new_cluster(void)
 	 */
 	prep_status("Freezing all rows on the new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "PGOPTIONS='-c gp_session_role=utility' "
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			  "\"%s/vacuumdb\" %s --all --freeze %s",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  log_opts.verbose ? "--verbose" : "");
@@ -507,14 +466,9 @@ prepare_new_databases(void)
 	 */
 	set_frozenxids(false);
 
-<<<<<<< HEAD
 	/*
 	 * Now restore global objects (roles and tablespaces).
 	 */
-=======
-	set_frozenxids();
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	prep_status("Restoring global objects in the new cluster");
 
 	/*
@@ -532,10 +486,7 @@ prepare_new_databases(void)
 	 * the template0 template.
 	 */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  "PGOPTIONS='-c gp_session_role=utility' "
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  GLOBALS_DUMP_FILE);
@@ -575,7 +526,6 @@ create_new_objects(void)
 		char		sql_file_name[MAXPGPATH],
 					log_file_name[MAXPGPATH];
 		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
-<<<<<<< HEAD
 		PQExpBufferData connstr,
 					escaped_connstr;
 
@@ -585,8 +535,6 @@ create_new_objects(void)
 		initPQExpBuffer(&escaped_connstr);
 		appendShellString(&escaped_connstr, connstr.data);
 		termPQExpBuffer(&connstr);
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
@@ -598,7 +546,6 @@ create_new_objects(void)
 		 */
 		parallel_exec_prog(log_file_name,
 						   NULL,
-<<<<<<< HEAD
 		 "PGOPTIONS='-c gp_session_role=utility' "
 		 "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
 						   new_cluster.bindir,
@@ -607,13 +554,6 @@ create_new_objects(void)
 						   sql_file_name);
 
 		termPQExpBuffer(&escaped_connstr);
-=======
-						   "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname \"%s\" \"%s\"",
-						   new_cluster.bindir,
-						   cluster_conn_opts(&new_cluster),
-						   old_db->db_name,
-						   sql_file_name);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	}
 
 	/* reap all children */
@@ -629,11 +569,8 @@ create_new_objects(void)
 	 * We don't have minmxids for databases or relations in pre-9.3
 	 * clusters, so set those after we have restored the schema.
 	 */
-	/* GPDB_93_MERGE_FIXME
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
 		set_frozenxids(true);
-	*/
-
 
 	/* regenerate now that we have objects in the databases */
 	get_db_and_rel_infos(&new_cluster);
@@ -658,7 +595,6 @@ create_new_objects(void)
 }
 
 /*
-<<<<<<< HEAD
  * Delete the given subdirectory contents from the new cluster
  */
 static void
@@ -672,27 +608,9 @@ remove_new_subdir(char *subdir, bool rmtopdir)
 	if (!rmtree(new_path, rmtopdir))
 		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
 
-=======
- * Delete the given subdirectory contents from the new cluster, and copy the
- * files from the old cluster into it.
- */
-static void
-copy_subdir_files(char *subdir)
-{
-	char		old_path[MAXPGPATH];
-	char		new_path[MAXPGPATH];
-
-	prep_status("Deleting files from new %s", subdir);
-
-	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
-	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
-	if (!rmtree(new_path, true))
-		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	check_ok();
 }
 
-<<<<<<< HEAD
 /*
  * Copy the files from the old cluster into it
  */
@@ -707,8 +625,6 @@ copy_subdir_files(char *subdir)
 	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
 	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	prep_status("Copying old %s to new server", subdir);
 
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
@@ -729,7 +645,6 @@ copy_clog_xlog_xid(void)
 	/* copy old commit logs to new data dir */
 	copy_subdir_files("pg_clog");
 
-<<<<<<< HEAD
 	/* set the next transaction id and epoch of the new cluster */
 	prep_status("Setting next transaction ID and epoch for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
@@ -742,18 +657,6 @@ copy_clog_xlog_xid(void)
 			  new_cluster.pgdata);
 	check_ok();
 
-/* GPDB_93_MERGE_FIXME */
-#if 0
-=======
-	/* set the next transaction id of the new cluster */
-	prep_status("Setting next transaction ID for new cluster");
-	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -f -x %u \"%s\"",
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
-			  new_cluster.pgdata);
-	check_ok();
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * If the old server is before the MULTIXACT_FORMATCHANGE_CAT_VER change
 	 * (see pg_upgrade.h) and the new server is after, then we don't copy
@@ -765,10 +668,7 @@ copy_clog_xlog_xid(void)
 	{
 		copy_subdir_files("pg_multixact/offsets");
 		copy_subdir_files("pg_multixact/members");
-<<<<<<< HEAD
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		prep_status("Setting next multixact ID and offset for new cluster");
 
 		/*
@@ -776,11 +676,7 @@ copy_clog_xlog_xid(void)
 		 * counters here and the oldest multi present on system.
 		 */
 		exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 				  "\"%s/pg_resetxlog\" -y -O %u -m %u,%u \"%s\"",
-=======
-				  "\"%s/pg_resetxlog\" -O %u -m %u,%u \"%s\"",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				  new_cluster.bindir,
 				  old_cluster.controldata.chkpnt_nxtmxoff,
 				  old_cluster.controldata.chkpnt_nxtmulti,
@@ -790,7 +686,6 @@ copy_clog_xlog_xid(void)
 	}
 	else if (new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 	{
-<<<<<<< HEAD
 		/*
 		 * Remove offsets/0000 file created by initdb that no longer matches
 		 * the new multi-xid value.  "members" starts at zero so no need to
@@ -798,8 +693,6 @@ copy_clog_xlog_xid(void)
 		 */
 		remove_new_subdir("pg_multixact/offsets", false);
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		prep_status("Setting oldest multixact ID on new cluster");
 
 		/*
@@ -811,33 +704,20 @@ copy_clog_xlog_xid(void)
 		 * next=MaxMultiXactId, but multixact.c can cope with that just fine.
 		 */
 		exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 				  "\"%s/pg_resetxlog\" -y -m %u,%u \"%s\"",
-=======
-				  "\"%s/pg_resetxlog\" -m %u,%u \"%s\"",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 				  new_cluster.bindir,
 				  old_cluster.controldata.chkpnt_nxtmulti + 1,
 				  old_cluster.controldata.chkpnt_nxtmulti,
 				  new_cluster.pgdata);
 		check_ok();
 	}
-<<<<<<< HEAD
-#endif
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 			  /* use timeline 1 to match controldata and no WAL history file */
-			  "\"%s/pg_resetxlog\" -y -l 1,%u,%u \"%s\"", new_cluster.bindir,
-			  old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
-=======
-			  "\"%s/pg_resetxlog\" -l %s \"%s\"", new_cluster.bindir,
-			  old_cluster.controldata.nextxlogfile,
->>>>>>> e472b921406407794bab911c64655b8b82375196
+			  "\"%s/pg_resetxlog\" -y -l 00000001%s \"%s\"", new_cluster.bindir,
+			  old_cluster.controldata.nextxlogfile + 8,
 			  new_cluster.pgdata);
 	check_ok();
 }
@@ -875,14 +755,10 @@ set_frozenxids(bool minmxid_only)
 	int			i_datname;
 	int			i_datallowconn;
 
-/* GPDB_93_MERGE_FIXME */
-	prep_status("Setting frozenxid counters in new cluster");
-#if 0
 	if (!minmxid_only)
 		prep_status("Setting frozenxid and minmxid counters in new cluster");
 	else
 		prep_status("Setting minmxid counter in new cluster");
-#endif
 
 	conn_template1 = connectToServer(&new_cluster, "template1");
 
@@ -899,14 +775,12 @@ set_frozenxids(bool minmxid_only)
 								  "UPDATE pg_catalog.pg_database "
 								  "SET	datfrozenxid = '%u'",
 								  old_cluster.controldata.chkpnt_nxtxid));
-/* GPDB_93_MERGE_FIXME */
-#if 0
+
 	/* set pg_database.datminmxid */
 	PQclear(executeQueryOrDie(conn_template1,
 							  "UPDATE pg_catalog.pg_database "
 							  "SET	datminmxid = '%u'",
 							  old_cluster.controldata.chkpnt_nxtmulti));
-#endif
 
 	/* get database names */
 	dbres = executeQueryOrDie(conn_template1,
@@ -961,24 +835,14 @@ set_frozenxids(bool minmxid_only)
 									  "OR (relkind IN ('t', 'o', 'b', 'm'))",
 									  old_cluster.controldata.chkpnt_nxtxid));
 
-/* GPDB_93_MERGE_FIXME */
-#if 0
 		/* set pg_class.relminmxid */
 		PQclear(executeQueryOrDie(conn,
 								  "UPDATE	pg_catalog.pg_class "
-<<<<<<< HEAD
 								  "SET	relminmxid = '%u' "
 		/* only heap, materialized view, and TOAST are vacuumed */
 								  "WHERE	relkind IN ('r', 'm', 't')",
 								  old_cluster.controldata.chkpnt_nxtmulti));
-#endif
 
-=======
-								  "SET	relfrozenxid = '%u' "
-		/* only heap, materialized view, and TOAST are vacuumed */
-								  "WHERE	relkind IN ('r', 'm', 't')",
-								  old_cluster.controldata.chkpnt_nxtxid));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		PQfinish(conn);
 
 		/* Reset datallowconn flag */

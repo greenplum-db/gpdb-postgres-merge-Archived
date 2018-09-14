@@ -71,12 +71,9 @@ get_tablespace_paths(void)
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
-<<<<<<< HEAD
 	{
 		struct stat statBuf;
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		os_info.old_tablespaces[tblnum] = pg_strdup(
 									 PQgetvalue(res, tblnum, i_spclocation));
 

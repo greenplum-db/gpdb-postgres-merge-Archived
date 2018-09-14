@@ -158,11 +158,7 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	 * While not a check option, we do this now because this is the only time
 	 * the old server is running.
 	 */
-<<<<<<< HEAD
 	if (!user_opts.check && user_opts.segment_mode == DISPATCHER)
-=======
-	if (!user_opts.check)
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		generate_old_dump();
 
 	if (!live_check)
@@ -243,20 +239,12 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-<<<<<<< HEAD
-=======
-		start_postmaster(&new_cluster, true);
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
 		{
 			prep_status("Adjusting sequences");
 			exec_prog(UTILITY_LOG_FILE, NULL, true,
-<<<<<<< HEAD
 					  "PGOPTIONS='-c gp_session_role=utility' "
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
 					  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 					  sequence_script_file_name);
@@ -272,11 +260,6 @@ issue_warnings_and_set_wal_level(char *sequence_script_file_name)
 	/* GPDB_90_MERGE_FIXME: See earlier comment on large objects */
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-<<<<<<< HEAD
-=======
-	{
-		start_postmaster(&new_cluster, true);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
 
 	stop_postmaster(false);
@@ -307,16 +290,10 @@ output_completion_banner(char *analyze_script_file_name,
 			   deletion_script_file_name);
 	else
 		pg_log(PG_REPORT,
-<<<<<<< HEAD
 		  "Could not create a script to delete the old cluster's data files\n"
 		  "because user-defined tablespaces or the new cluster's data directory\n"
 		  "exist in the old cluster directory.  The old cluster's contents must\n"
 		  "be deleted manually.\n");
-=======
-			   "Could not create a script to delete the old cluster's data\n"
-		  "files because user-defined tablespaces exist in the old cluster\n"
-		"directory.  The old cluster's contents must be deleted manually.\n");
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -443,23 +420,8 @@ set_locale_and_encoding(ClusterInfo *cluster)
 		i_datcollate = PQfnumber(res, "datcollate");
 		i_datctype = PQfnumber(res, "datctype");
 
-		if (GET_MAJOR_VERSION(cluster->major_version) < 902)
-		{
-			/*
-			 * Pre-9.2 did not canonicalize the supplied locale names to match
-			 * what the system returns, while 9.2+ does, so convert pre-9.2 to
-			 * match.
-			 */
-			ctrl->lc_collate = get_canonical_locale_name(LC_COLLATE,
-								pg_strdup(PQgetvalue(res, 0, i_datcollate)));
-			ctrl->lc_ctype = get_canonical_locale_name(LC_CTYPE,
-								  pg_strdup(PQgetvalue(res, 0, i_datctype)));
-		}
-		else
-		{
-			ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
-			ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
-		}
+		ctrl->lc_collate = pg_strdup(PQgetvalue(res, 0, i_datcollate));
+		ctrl->lc_ctype = pg_strdup(PQgetvalue(res, 0, i_datctype));
 
 		PQclear(res);
 	}
@@ -489,7 +451,6 @@ static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-<<<<<<< HEAD
 	if (!equivalent_locale(LC_COLLATE, oldctrl->lc_collate, newctrl->lc_collate))
 		pg_log(PG_FATAL,
 			   "lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
@@ -577,25 +538,6 @@ equivalent_encoding(const char *chara, const char *charb)
 		return false;
 
 	return (enca == encb);
-=======
-	/*
-	 * These are often defined with inconsistent case, so use pg_strcasecmp().
-	 * They also often use inconsistent hyphenation, which we cannot fix, e.g.
-	 * UTF-8 vs. UTF8, so at least we display the mismatching values.
-	 */
-	if (pg_strcasecmp(oldctrl->lc_collate, newctrl->lc_collate) != 0)
-		pg_log(PG_FATAL,
-		 "lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_collate, newctrl->lc_collate);
-	if (pg_strcasecmp(oldctrl->lc_ctype, newctrl->lc_ctype) != 0)
-		pg_log(PG_FATAL,
-		   "lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_ctype, newctrl->lc_ctype);
-	if (pg_strcasecmp(oldctrl->encoding, newctrl->encoding) != 0)
-		pg_log(PG_FATAL,
-		   "encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->encoding, newctrl->encoding);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -819,18 +761,13 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 {
 	FILE	   *script = NULL;
 	int			tblnum;
-<<<<<<< HEAD
 	char		old_cluster_pgdata[MAXPGPATH], new_cluster_pgdata[MAXPGPATH];
-=======
-	char		old_cluster_pgdata[MAXPGPATH];
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	*deletion_script_file_name = pg_malloc(MAXPGPATH);
 
 	snprintf(*deletion_script_file_name, MAXPGPATH, "delete_old_cluster.%s",
 			 SCRIPT_EXT);
 
-<<<<<<< HEAD
 	strlcpy(old_cluster_pgdata, old_cluster.pgdata, MAXPGPATH);
 	canonicalize_path(old_cluster_pgdata);
 
@@ -850,18 +787,11 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 		return;
 	}
 
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	/*
 	 * Some users (oddly) create tablespaces inside the cluster data
 	 * directory.  We can't create a proper old cluster delete script in that
 	 * case.
 	 */
-<<<<<<< HEAD
-=======
-	strlcpy(old_cluster_pgdata, old_cluster.pgdata, MAXPGPATH);
-	canonicalize_path(old_cluster_pgdata);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 	{
 		char		old_tablespace_dir[MAXPGPATH];
@@ -890,11 +820,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 #endif
 
 	/* delete old cluster's default tablespace */
-<<<<<<< HEAD
 	fprintf(script, RMDIR_CMD " \"%s\"\n", fix_path_separator(old_cluster.pgdata));
-=======
-	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(old_cluster.pgdata));
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
@@ -918,11 +844,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
-<<<<<<< HEAD
 				fprintf(script, RMDIR_CMD " \"%s%s%c%d\"\n",
-=======
-				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
 						fix_path_separator(old_cluster.tablespace_suffix),
 						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
@@ -934,11 +856,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 * Simply delete the tablespace directory, which might be ".old"
 			 * or a version-specific subdirectory.
 			 */
-<<<<<<< HEAD
 			fprintf(script, RMDIR_CMD " \"%s%s\"\n",
-=======
-			fprintf(script, RMDIR_CMD " %s%s\n",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 					fix_path_separator(os_info.old_tablespaces[tblnum]),
 					fix_path_separator(old_cluster.tablespace_suffix));
 	}
@@ -1274,7 +1192,7 @@ get_canonical_locale_name(int category, const char *locale)
 		pg_log(PG_FATAL, "failed to get the current locale\n");
 
 	/* 'save' may be pointing at a modifiable scratch variable, so copy it. */
-	save = pg_strdup(save);
+	save = (char *) pg_strdup(save);
 
 	/* set the locale with setlocale, to see if it accepts it. */
 	res = setlocale(category, locale);

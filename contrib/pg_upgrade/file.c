@@ -154,7 +154,6 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 	if ((dest_fd = open(dstfile, O_RDWR | O_CREAT | (force ? 0 : O_EXCL), S_IRUSR | S_IWUSR)) < 0)
 	{
-<<<<<<< HEAD
 		save_errno = errno;
 
 		if (src_fd != 0)
@@ -163,15 +162,6 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 		errno = save_errno;
 		return -1;
 	}
-=======
-		if (src_fd != 0)
-			close(src_fd);
-
-		return -1;
-	}
-
-	buffer = (char *) pg_malloc(COPY_BUF_SIZE);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	buffer = (char *) pg_malloc(COPY_BUF_SIZE);
 
@@ -194,12 +184,9 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (write(dest_fd, buffer, nbytes) != nbytes)
 		{
-<<<<<<< HEAD
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 			save_errno = errno;
 			ret = -1;
 			break;

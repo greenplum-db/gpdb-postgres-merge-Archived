@@ -62,7 +62,6 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
 {
-<<<<<<< HEAD
 	PQExpBufferData conn_opts;
 	PGconn	   *conn;
 
@@ -78,18 +77,6 @@ get_db_conn(ClusterInfo *cluster, const char *db_name)
 		appendPQExpBufferStr(&conn_opts, " host=");
 		appendConnStrVal(&conn_opts, cluster->sockdir);
 	}
-=======
-	char		conn_opts[2 * NAMEDATALEN + MAXPGPATH + 100];
-
-	if (cluster->sockdir)
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "dbname = '%s' user = '%s' host = '%s' port = %d",
-				 db_name, os_info.user, cluster->sockdir, cluster->port);
-	else
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "dbname = '%s' user = '%s' port = %d",
-				 db_name, os_info.user, cluster->port);
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	appendPQExpBuffer(&conn_opts, " options=");
 	appendConnStrVal(&conn_opts, "-c gp_session_role=utility");
@@ -130,34 +117,6 @@ cluster_conn_opts(ClusterInfo *cluster)
 	appendShellString(buf, os_info.user);
 
 	return buf->data;
-}
-
-
-/*
- * cluster_conn_opts()
- *
- * Return standard command-line options for connecting to this cluster when
- * using psql, pg_dump, etc.  Ideally this would match what get_db_conn()
- * sets, but the utilities we need aren't very consistent about the treatment
- * of database name options, so we leave that out.
- *
- * Note result is in static storage, so use it right away.
- */
-char *
-cluster_conn_opts(ClusterInfo *cluster)
-{
-	static char conn_opts[MAXPGPATH + NAMEDATALEN + 100];
-
-	if (cluster->sockdir)
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "--host \"%s\" --port %d --username \"%s\"",
-				 cluster->sockdir, cluster->port, os_info.user);
-	else
-		snprintf(conn_opts, sizeof(conn_opts),
-				 "--port %d --username \"%s\"",
-				 cluster->port, os_info.user);
-
-	return conn_opts;
 }
 
 
@@ -241,16 +200,10 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 {
 	char		cmd[MAXPGPATH * 4 + 1000];
 	PGconn	   *conn;
-<<<<<<< HEAD
 	bool		pg_ctl_return = false;
 	char		socket_string[MAXPGPATH + 200];
 
 	static bool exit_hook_registered = false;
-=======
-	bool		exit_hook_registered = false;
-	bool		pg_ctl_return = false;
-	char		socket_string[MAXPGPATH + 200];
->>>>>>> e472b921406407794bab911c64655b8b82375196
 
 	if (!exit_hook_registered)
 	{
@@ -277,7 +230,6 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 #endif
 
 	/*
-<<<<<<< HEAD
 	 * Since PG 9.1, we have used -b to disable autovacuum.  For earlier
 	 * releases, setting autovacuum=off disables cleanup vacuum and analyze,
 	 * but freeze vacuums can still happen, so we set autovacuum_freeze_max_age
@@ -285,13 +237,6 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * after 9.1, so there is no need to set that.)  We assume all datfrozenxid
 	 * and relfrozenxid values are less than a gap of 2000000000 from the current
 	 * xid counter, so autovacuum will not touch them.
-=======
-	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
-	 * vacuums can still happen, so we set autovacuum_freeze_max_age to its
-	 * maximum.  We assume all datfrozenxid and relfrozen values are less than
-	 * a gap of 2000000000 from the current xid counter, so autovacuum will
-	 * not touch them.
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	 *
 	 * Turn off durability requirements to improve object creation speed, and
 	 * we only modify the new cluster, so only use it there.  If there is a
@@ -299,11 +244,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * win on ext4.
 	 */
 	snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
 		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d --gp_dbid=1 --gp_num_contents_in_cluster=0 --gp_contentid=%d -c gp_role=utility -c synchronous_standby_names='' --xid_warn_limit=10000000 %s%s %s%s \" start",
-=======
-		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s\" start",
->>>>>>> e472b921406407794bab911c64655b8b82375196
 		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (user_opts.segment_mode == DISPATCHER ? -1 : 0),
 			 (cluster->controldata.cat_ver >=
@@ -325,7 +266,6 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 							  false,
 							  "%s", cmd);
 
-<<<<<<< HEAD
 	/* Did it fail and we are just testing if the server could be started? */
 	if (!pg_ctl_return && !throw_error)
 		return false;
@@ -354,12 +294,6 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * and test for connectivity in case we get a connection reason for the
 	 * failure.
 	 */
-=======
-	if (!pg_ctl_return && !throw_error)
-		return false;
-
-	/* Check to see if we can connect to the server; if not, report it. */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
 	{
@@ -373,23 +307,14 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	}
 	PQfinish(conn);
 
-<<<<<<< HEAD
 	/*
 	 * If pg_ctl failed, and the connection didn't fail, and throw_error is
 	 * enabled, fail now.  This could happen if the server was already running.
 	 */
-=======
-	/* If the connection didn't fail, fail now */
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	if (!pg_ctl_return)
 		pg_log(PG_FATAL, "pg_ctl failed to start the %s server, or connection failed\n",
 			   CLUSTER_NAME(cluster));
 
-<<<<<<< HEAD
-=======
-	os_info.running_cluster = cluster;
-
->>>>>>> e472b921406407794bab911c64655b8b82375196
 	return true;
 }
 

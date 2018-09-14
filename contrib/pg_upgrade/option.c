@@ -257,14 +257,11 @@ parseCommandLine(int argc, char *argv[])
 							 "PGDATAOLD", "-d", "old cluster data resides");
 	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
 							 "PGDATANEW", "-D", "new cluster data resides");
-<<<<<<< HEAD
 
 	/* Ensure we are only adding checksums in copy mode */
 	if (user_opts.transfer_mode != TRANSFER_MODE_COPY &&
 		user_opts.checksum_mode != CHECKSUM_NONE)
 		pg_log(PG_FATAL, "Adding and removing checksums only supported in copy mode.\n");
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 }
 
 
@@ -291,13 +288,10 @@ Options:\n\
   -u, --user=NAME               cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
   -V, --version                 display version information, then exit\n\
-<<<<<<< HEAD
       --mode=TYPE               designate node type to upgrade, \"segment\" or \"dispatcher\" (default \"segment\")\n\
       --progress                enable progress reporting\n\
       --remove-checksum         remove data checksums when creating new cluster\n\
       --add-checksum            add data checksumming to the new cluster\n\
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
   -?, -h, --help                show this help, then exit\n\
 \n\
 Before running pg_upgrade you must:\n\
