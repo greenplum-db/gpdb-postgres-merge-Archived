@@ -8,9 +8,9 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "access/xlog_internal.h"
-#include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
 #include "cdb/cdbappendonlyam.h"
+#include "cdb/cdbappendonlyxlog.h"
 #include "funcapi.h"
 
 PG_MODULE_MAGIC;
@@ -59,29 +59,27 @@ PG_FUNCTION_INFO_V1(test_xlog_ao);
 static void
 string_to_xlogrecptr(text *location, XLogRecPtr *rec)
 {
+	uint32 hi, lo;
 	char *locationstr = DatumGetCString(
 		DirectFunctionCall1(textout,
 							PointerGetDatum(location)));
 
-	if (sscanf(locationstr, "%X/%X", &rec->xlogid, &rec->xrecoff) != 2)
+	if (sscanf(locationstr, "%X/%X", &hi, &lo) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not parse transaction log location \"%s\"",
 						locationstr)));
+	rec = ((uint64) hi) << 32 | lo;
 }
 
 Datum
 test_connect(PG_FUNCTION_ARGS)
 {
 	char *conninfo = TextDatumGetCString(PG_GETARG_DATUM(0));
-	text *location = PG_GETARG_TEXT_P(1);
-	bool result;
-	XLogRecPtr startpoint;
+	int result;
 
-	string_to_xlogrecptr(location, &startpoint);
-
-	result = walrcv_connect(conninfo, startpoint);
-	PG_RETURN_BOOL(result);
+	walrcv_connect(conninfo);
+	PG_RETURN_BOOL(true);
 }
 
 Datum
@@ -95,14 +93,12 @@ test_disconnect(PG_FUNCTION_ARGS)
 Datum
 test_receive(PG_FUNCTION_ARGS)
 {
-	bool		result;
-	unsigned char type;
+	int		result;
 	char	   *buf;
-	int			len;
 
-	result = walrcv_receive(NAPTIME_PER_CYCLE, &type, &buf, &len);
+	result = walrcv_receive(NAPTIME_PER_CYCLE, &buf);
 
-	PG_RETURN_BOOL(result);
+	PG_RETURN_INT32(result);
 }
 
 Datum
@@ -131,7 +127,8 @@ test_receive_and_verify(PG_FUNCTION_ARGS)
 
 	for (int i=0; i < NUM_RETRIES; i++)
 	{
-		if (walrcv_receive(NAPTIME_PER_CYCLE, &type, &buf, &len))
+		len = walrcv_receive(NAPTIME_PER_CYCLE, &buf);
+		if (len > 0)
 		{
 			XLogRecPtr logStreamStart = {};
 			/* Accept the received data, and process it */

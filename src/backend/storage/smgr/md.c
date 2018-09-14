@@ -1126,22 +1126,6 @@ mdsync(void)
 		/* Else assert we haven't missed it */
 		Assert((CycleCtr) (entry->cycle_ctr + 1) == mdsync_cycle_ctr);
 
-#ifdef FAULT_INJECTOR
-		if (!entry->canceled &&
-			SIMPLE_FAULT_INJECTOR(FsyncCounter) == FaultInjectorTypeSkip)
-		{
-			if (MyAuxProcType == CheckpointerProcess)
-				elog(LOG, "checkpoint performing fsync for %d/%d/%d",
-					 entry->rnode.spcNode, entry->rnode.dbNode,
-					 entry->rnode.relNode);
-			else
-				elog(ERROR, "non checkpoint process trying to fsync "
-					 "%d/%d/%d when fsync_counter fault is set",
-					 entry->rnode.spcNode, entry->rnode.dbNode,
-					 entry->rnode.relNode);
-		}
-#endif
-
 		/*
 		 * Scan over the forks and segments represented by the entry.
 		 *
@@ -1165,6 +1149,20 @@ mdsync(void)
 			{
 				int			failures;
 
+#ifdef FAULT_INJECTOR
+		if (SIMPLE_FAULT_INJECTOR(FsyncCounter) == FaultInjectorTypeSkip)
+		{
+			if (MyAuxProcType == CheckpointerProcess)
+				elog(LOG, "checkpoint performing fsync for %d/%d/%d",
+					 entry->rnode.spcNode, entry->rnode.dbNode,
+					 entry->rnode.relNode);
+			else
+				elog(ERROR, "non checkpoint process trying to fsync "
+					 "%d/%d/%d when fsync_counter fault is set",
+					 entry->rnode.spcNode, entry->rnode.dbNode,
+					 entry->rnode.relNode);
+		}
+#endif
 				/*
 				 * If fsync is off then we don't have to bother opening the
 				 * file at all.  (We delay checking until this point so that
