@@ -633,6 +633,7 @@ $$
 LANGUAGE plpgsql;
 CREATE TRIGGER rw_view1_ins_trig INSTEAD OF INSERT ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
+ERROR:  INSTEAD OF triggers are not supported in Greenplum
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name LIKE 'rw_view%'
@@ -651,7 +652,7 @@ SELECT table_name, is_updatable, is_insertable_into,
  ORDER BY table_name;
  table_name | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
 ------------+--------------+--------------------+----------------------+----------------------+----------------------------
- rw_view1   | NO           | NO                 | NO                   | NO                   | YES
+ rw_view1   | NO           | NO                 | NO                   | NO                   | NO
  rw_view2   | NO           | NO                 | NO                   | NO                   | NO
 (2 rows)
 
@@ -669,6 +670,7 @@ SELECT table_name, column_name, is_updatable
 
 CREATE TRIGGER rw_view1_upd_trig INSTEAD OF UPDATE ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
+ERROR:  INSTEAD OF triggers are not supported in Greenplum
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name LIKE 'rw_view%'
@@ -687,7 +689,7 @@ SELECT table_name, is_updatable, is_insertable_into,
  ORDER BY table_name;
  table_name | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
 ------------+--------------+--------------------+----------------------+----------------------+----------------------------
- rw_view1   | NO           | NO                 | YES                  | NO                   | YES
+ rw_view1   | NO           | NO                 | NO                   | NO                   | NO
  rw_view2   | NO           | NO                 | NO                   | NO                   | NO
 (2 rows)
 
@@ -705,6 +707,7 @@ SELECT table_name, column_name, is_updatable
 
 CREATE TRIGGER rw_view1_del_trig INSTEAD OF DELETE ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
+ERROR:  INSTEAD OF triggers are not supported in Greenplum
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name LIKE 'rw_view%'
@@ -723,7 +726,7 @@ SELECT table_name, is_updatable, is_insertable_into,
  ORDER BY table_name;
  table_name | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
 ------------+--------------+--------------------+----------------------+----------------------+----------------------------
- rw_view1   | NO           | NO                 | YES                  | YES                  | YES
+ rw_view1   | NO           | NO                 | NO                   | NO                   | NO
  rw_view2   | NO           | NO                 | NO                   | NO                   | NO
 (2 rows)
 
@@ -740,31 +743,24 @@ SELECT table_name, column_name, is_updatable
 (4 rows)
 
 INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING *;
+ERROR:  cannot insert into view "rw_view1"
+DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
+HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
+ERROR:  cannot update view "rw_view1"
+DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
+HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+SELECT * FROM rw_view2;
  a |   b   
 ---+-------
- 3 | Row 3
-(1 row)
-
-UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
-(1 row)
-
-SELECT * FROM rw_view2;
- a |     b     
----+-----------
  1 | Row 1
  2 | Row 2
- 3 | Row three
-(3 rows)
+(2 rows)
 
 DELETE FROM rw_view2 WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
-(1 row)
-
+ERROR:  cannot delete from view "rw_view1"
+DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
+HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 SELECT * FROM rw_view2;
  a |   b   
 ---+-------
@@ -773,29 +769,13 @@ SELECT * FROM rw_view2;
 (2 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Update on rw_view1 rw_view1_1
-   ->  Subquery Scan on rw_view1
-         Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-         ->  Bitmap Heap Scan on base_tbl
-               Recheck Cond: (a > 0)
-               ->  Bitmap Index Scan on base_tbl_pkey
-                     Index Cond: (a > 0)
-(7 rows)
-
+ERROR:  cannot update view "rw_view1"
+DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
+HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE a=2;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Delete on rw_view1 rw_view1_1
-   ->  Subquery Scan on rw_view1
-         Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-         ->  Bitmap Heap Scan on base_tbl
-               Recheck Cond: (a > 0)
-               ->  Bitmap Index Scan on base_tbl_pkey
-                     Index Cond: (a > 0)
-(7 rows)
-
+ERROR:  cannot delete from view "rw_view1"
+DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
+HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view rw_view1
