@@ -1822,7 +1822,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 		else
 		{
 			/* all other commands run normally, in a distributed transaction */
-			flags = DF_WITH_SNAPSHOT;
+			flags |= DF_WITH_SNAPSHOT;
 		}
 
 		CdbDispatchUtilityStatement((Node *) copyStmt,
