@@ -120,9 +120,14 @@ test_receive_and_verify(PG_FUNCTION_ARGS)
 	XLogRecPtr endpoint;
 	char   *buf;
 	int     len;
+	TimeLineID  startpointTLI;
 
 	string_to_xlogrecptr(start_location, &startpoint);
 	string_to_xlogrecptr(end_location, &endpoint);
+
+	/* For now hard-coding it to 1 */
+	startpointTLI = 1;
+	walrcv_startstreaming(startpointTLI, startpoint);
 
 	for (int i=0; i < NUM_RETRIES; i++)
 	{
@@ -190,7 +195,6 @@ test_XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len,
 				sendTime = IntegerTimestampToTimestampTz(
 										  pq_getmsgint64(&incoming_message));
 				*logStreamStart = dataStart;
-//				ProcessWalSndrMessage(walEnd, sendTime);
 
 				test_PrintLog("wal start records", dataStart, sendTime);
 				test_PrintLog("wal end records", walEnd, sendTime);
@@ -222,11 +226,6 @@ test_XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len,
 						timestamptz_to_str(sendTime));
 				test_PrintLog("keep alive", walEnd, sendTime);
 
-//				ProcessWalSndrMessage(walEnd, sendTime);
-
-//				/* If the primary requested a reply, send one immediately */
-//				if (replyRequested)
-//					XLogWalRcvSendReply(true, false);
 				break;
 			}
 		default:
@@ -243,7 +242,6 @@ test_XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len,
 static void
 test_XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 {
-	static char		   *recvFilePath = NULL;
 	static XLogSegNo recvSegNo = 0;
 	int			startoff;
 	int			byteswritten;
@@ -251,19 +249,6 @@ test_XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 	while (nbytes > 0)
 	{
 		int			segbytes;
-
-		if (recvFilePath == NULL || !XLByteInSeg(recptr, recvSegNo))
-		{
-			if (recvFilePath == NULL)
-			{
-				recvFilePath = palloc0(MAXFNAMELEN);
-			}
-
-//			XLByteToSeg(recptr, recvId, recvSeg);
-//			XLogFileName(recvFilePath, recvFileTLI, recvId, recvSeg);
-//			elog(DEBUG1, "would open: %s", recvFilePath);
-//			recvFileTLI = 1;
-		}
 
 		startoff = recptr % XLogSegSize;
 
@@ -360,6 +345,7 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 		text         *start_location = PG_GETARG_TEXT_P(1);
 
 		XLogRecPtr    startpoint;
+		TimeLineID  startpointTLI;
 		char         *buf;
 		int           len;
 		uint32        xrecoff;
@@ -368,6 +354,9 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 		xrecoff = (uint32)startpoint;
 
 		walrcv_connect(conninfo);
+		/* For now hard-coding it to 1 */
+		startpointTLI = 1;
+		walrcv_startstreaming(startpointTLI, startpoint);
 
 		for (int i = 0; i < NUM_RETRIES; i++)
 		{
