@@ -2299,6 +2299,7 @@ pgstat_fetch_stat_beentry(int beid)
 	return &localBackendStatusTable[beid - 1];
 }
 
+
 /* ----------
  * pgstat_fetch_stat_numbackends() -
  *
@@ -2806,6 +2807,7 @@ gpstat_report_waiting(char reason)
 	 */
 	beentry->st_waiting = reason;
 }
+
 
 /* ----------
  * pgstat_read_current_status() -
@@ -3336,11 +3338,11 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_BGWRITER:
 					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) &msg, len);
-                    break;
+					break;
 
 				case PGSTAT_MTYPE_QUEUESTAT:  /* GPDB */
 					pgstat_recv_queuestat((PgStat_MsgQueuestat *) &msg, len);
-                    break;
+					break;
 
 				case PGSTAT_MTYPE_FUNCSTAT:
 					pgstat_recv_funcstat((PgStat_MsgFuncstat *) &msg, len);
@@ -3894,12 +3896,6 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 	dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl,
 						 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
-	/*
-	 * Clear out global statistics so they start from zero in case we can't
-	 * load an existing statsfile.
-	 */
-	memset(&globalStats, 0, sizeof(globalStats));
-
 	/**
 	 ** Create the Queue hashtable
 	 **/
@@ -4058,7 +4054,8 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 						  fpin) != sizeof(PgStat_StatQueueEntry))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -4075,7 +4072,8 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 				if (found)
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
-							(errmsg("corrupted pgstat.stat file")));
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
 					goto done;
 				}
 
@@ -4286,6 +4284,7 @@ pgstat_read_db_statsfile_timestamp(Oid databaseid, bool permanent,
 								   TimestampTz *ts)
 {
 	PgStat_StatDBEntry dbentry;
+	PgStat_StatQueueEntry queuebuf;	/* GPDB */
 	PgStat_GlobalStats myGlobalStats;
 	FILE	   *fpin;
 	int32		format_id;
@@ -4364,6 +4363,20 @@ pgstat_read_db_statsfile_timestamp(Oid databaseid, bool permanent,
 					goto done;
 				}
 
+				break;
+
+				/*
+				 * 'Q'	A PgStat_StatQueueEntry follows.  (GPDB)
+				 */
+			case 'Q':
+				if (fread(&queuebuf, 1, sizeof(PgStat_StatQueueEntry),
+						  fpin) != sizeof(PgStat_StatQueueEntry))
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted statistics file \"%s\"",
+									statfile)));
+					goto done;
+				}
 				break;
 
 			case 'E':
