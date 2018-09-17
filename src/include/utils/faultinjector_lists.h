@@ -190,8 +190,6 @@ FI_IDENT(OptRelcacheTranslatorCatalogAccess, "opt_relcache_translator_catalog_ac
 FI_IDENT(SendQEDetailsInitBackend, "send_qe_details_init_backend")
 /* inject fault in ProcessStartupPacket() */
 FI_IDENT(ProcessStartupPacketFault, "process_startup_packet")
-/* inject fault in quickdie*/
-FI_IDENT(QuickDie, "quickdie")
 /* inject fault in cdbdisp_dispatchX*/
 FI_IDENT(AfterOneSliceDispatched, "after_one_slice_dispatched")
 /* inject fault in interconnect to skip sending the stop ack */
@@ -253,6 +251,8 @@ FI_IDENT(BeforeAcquireLockDuringCreateAoBlkdirTable, "before_acquire_lock_during
 FI_IDENT(CreateGangInProgress, "create_gang_in_progress")
 /* inject fault when creating new TOAST tables, to modify the chunk size */
 FI_IDENT(DecreaseToastMaxChunkSize, "decrease_toast_max_chunk_size")
+/* inject fault to let cleanupGang return false */
+FI_IDENT(CleanupGang, "cleanup_gang")
 #endif
 
 /*

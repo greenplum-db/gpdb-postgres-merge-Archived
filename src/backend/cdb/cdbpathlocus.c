@@ -235,8 +235,6 @@ cdb_build_distribution_pathkeys(PlannerInfo *root,
 		/* Find or create a Var node that references the specified column. */
 		Var		   *expr = find_indexkey_var(root, rel, attrs[i]);
 
-		Assert(expr);
-
 		/*
 		 * Find or create a pathkey.
 		 */

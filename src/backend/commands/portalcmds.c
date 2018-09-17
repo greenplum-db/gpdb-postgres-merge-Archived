@@ -339,7 +339,6 @@ PortalCleanup(Portal portal)
 				 */
 				if (Gp_role == GP_ROLE_DISPATCH)
 				{
-					freeGangsForPortal((char *) portal->name);
 					cleanupPortalGangs(portal);
 				}
 
@@ -359,9 +358,8 @@ PortalCleanup(Portal portal)
 	/* 
 	 * If resource scheduling is enabled, release the resource lock. 
 	 */
-	if (portal->releaseResLock)
+	if (IsResQueueLockedForPortal(portal))
 	{
-		portal->releaseResLock = false;
         ResUnLockPortal(portal);
 	}
 

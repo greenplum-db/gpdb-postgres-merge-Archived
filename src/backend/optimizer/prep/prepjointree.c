@@ -336,19 +336,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		/* Is it a convertible ANY or EXISTS clause? */
 		if (sublink->subLinkType == ANY_SUBLINK)
 		{
-			/*
-			 * GPDB_92_MERGE_FIXME: debug with the following two queries:
-			 *
-			 * select * from A where exists
-			 * 		(select * from B where A.i in
-			 * 			(select C.i from C where C.i = B.i));
-			 *
-			 *
-			 * select * from C,A where C.i in
-			 * 		(select C.i from C where C.i = A.i);
-			 */
-			if (available_rels2 == NULL &&
-					(j = convert_ANY_sublink_to_join(root, sublink,
+			if ((j = convert_ANY_sublink_to_join(root, sublink,
 												 available_rels1)) != NULL)
 			{
 				/* Yes; insert the new join node into the join tree */
@@ -472,10 +460,15 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 		else if (sublink->subLinkType == ALL_SUBLINK)
 		{
 			/*
-			 * GPDB_92_MERGE_FIXME: Should the ALL SUBLINK below be converted?
+			 * GPDB_92_MERGE_FIXME: This is bogus but works.
 			 *
 			 * 	select * from A,B where exists
 			 *     (select * from C where B.i not in (select C.i from C where C.i != 10))
+			 *
+			 * The ALL SUBLINK in above query would not be converted. Otherwise, the Query tree
+			 * would be messed up.
+			 *
+			 * Future work: look into the implementation of `convert_IN_to_antijoin`.
 			 */
 			if (available_rels2 == NULL &&
 					(j = convert_IN_to_antijoin(root, sublink, available_rels1)) != NULL)

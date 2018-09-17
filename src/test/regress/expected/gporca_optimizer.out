@@ -10129,15 +10129,15 @@ explain select id, comment from idxscan_outer as o join idxscan_inner as i on o.
 where ordernum between 10 and 20;
                                                  QUERY PLAN                                                 
 ------------------------------------------------------------------------------------------------------------
- Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..435.91 rows=3 width=9)
-   ->  Nested Loop  (cost=0.00..435.91 rows=1 width=9)
-         Join Filter: true
-         ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=9 width=4)
-               ->  Table Scan on idxscan_outer  (cost=0.00..431.00 rows=3 width=4)
-         ->  Index Scan using idxscan_inner_ordernum_key on idxscan_inner  (cost=0.00..4.91 rows=1 width=5)
+ Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..888833.77 rows=3 width=9)
+   ->  Nested Loop  (cost=0.00..888833.77 rows=1 width=9)
+         Join Filter: idxscan_outer.id = idxscan_inner.productid
+         ->  Index Scan using idxscan_inner_ordernum_key on idxscan_inner  (cost=0.00..6.00 rows=1 width=9)
                Index Cond: ordernum >= 10 AND ordernum <= 20
-               Filter: idxscan_outer.id = productid
- Optimizer: PQO version 2.64.0
+         ->  Materialize  (cost=0.00..431.00 rows=9 width=4)
+               ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=9 width=4)
+                     ->  Table Scan on idxscan_outer  (cost=0.00..431.00 rows=3 width=4)
+ Optimizer: PQO version 2.73.0
 (9 rows)
 
 select id, comment from idxscan_outer as o join idxscan_inner as i on o.id = i.productid
@@ -10686,6 +10686,54 @@ FROM   (SELECT *
      4
 (1 row)
 
+--
+-- Test to ensure that ORCA produces correct results with both blocking and
+-- streaming materialze as controlled by optimizer_enable_streaming_material
+-- GUC.
+--
+-- start_ignore
+create table t_outer (c1 integer);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+create table t_inner (c2 integer);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c2' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+insert into t_outer values (generate_series (1,10));
+insert into t_inner values (generate_series (1,300));
+-- end_ignore
+set optimizer_enable_streaming_material = on;
+select c1 from t_outer where not c1 =all (select c2 from t_inner);
+ c1 
+----
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+(10 rows)
+
+set optimizer_enable_streaming_material = off;
+select c1 from t_outer where not c1 =all (select c2 from t_inner);
+ c1 
+----
+  8
+  9
+ 10
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+(10 rows)
+
+reset optimizer_enable_streaming_material;
 -- start_ignore
 drop table bar;
 ERROR:  table "bar" does not exist

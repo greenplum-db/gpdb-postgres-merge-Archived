@@ -6578,12 +6578,12 @@ make_modifytable(PlannerInfo *root,
 				 List *rowMarks, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
-	Plan	   *plan = &node->plan;
-	double		total_size;
-	List	   *fdw_private_list;
+	Plan       *plan = &node->plan;
+	double      total_size;
+	List       *fdw_private_list;
 	ListCell   *subnode;
 	ListCell   *lc;
-	int			i;
+	int         i;
 
 	Assert(list_length(resultRelations) == list_length(subplans));
 	Assert(returningLists == NIL ||
@@ -6598,9 +6598,9 @@ make_modifytable(PlannerInfo *root,
 	total_size = 0;
 	foreach(subnode, subplans)
 	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
+		Plan       *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == list_head(subplans))		/* first node? */
+		if (subnode == list_head(subplans))     /* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
@@ -6620,7 +6620,7 @@ make_modifytable(PlannerInfo *root,
 	node->operation = operation;
 	node->canSetTag = canSetTag;
 	node->resultRelations = resultRelations;
-	node->resultRelIndex = -1;	/* will be set correctly in setrefs.c */
+	node->resultRelIndex = -1;  /* will be set correctly in setrefs.c */
 	node->plans = subplans;
 	node->returningLists = returningLists;
 	node->rowMarks = rowMarks;
@@ -6632,16 +6632,16 @@ make_modifytable(PlannerInfo *root,
 	adjust_modifytable_flow(root, node);
 
 	/*
-	 * For each result relation that is a foreign table, allow the FDW to
-	 * construct private plan data, and accumulate it all into a list.
-	 */
+     * For each result relation that is a foreign table, allow the FDW to
+     * construct private plan data, and accumulate it all into a list.
+     */
 	fdw_private_list = NIL;
 	i = 0;
 	foreach(lc, resultRelations)
 	{
-		Index		rti = lfirst_int(lc);
+		Index       rti = lfirst_int(lc);
 		FdwRoutine *fdwroutine;
-		List	   *fdw_private;
+		List       *fdw_private;
 
 		/*
 		 * If possible, we want to get the FdwRoutine from our RelOptInfo for

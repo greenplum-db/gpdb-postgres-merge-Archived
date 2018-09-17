@@ -535,15 +535,11 @@ ResDestroyQueue(Oid queueid)
 
 /*
  * ResLockPortal -- get a resource lock for Portal execution.
- *
- * Returns:
- *	true if the lock has been taken
- *	false if the lock has been skipped.
  */
-bool
+void
 ResLockPortal(Portal portal, QueryDesc *qDesc)
 {
-	bool		returnReleaseOk = false;	/* Release resource lock? */
+	bool		shouldReleaseLock = false;	/* Release resource lock? */
 	bool		takeLock;					/* Take resource lock? */
 	LOCKTAG		tag;
 	Oid			queueid;
@@ -555,6 +551,8 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 	Assert(qDesc->plannedstmt);
 
 	plan = qDesc->plannedstmt->planTree;
+
+	portal->status = PORTAL_QUEUE;
 
 	queueid = portal->queueId;
 
@@ -582,7 +580,7 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 				if (ResourceSelectOnly)
 				{
 					takeLock = false;
-					returnReleaseOk = false;
+					shouldReleaseLock = false;
 					break;
 				}
 			}
@@ -618,7 +616,7 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 					incData.increments[RES_MEMORY_LIMIT] = (Cost) 0.0;				
 				}
 				takeLock = true;
-				returnReleaseOk = true;
+				shouldReleaseLock = true;
 			}
 			break;
 	
@@ -658,7 +656,7 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 				}
 
 				takeLock = true;
-				returnReleaseOk = true;
+				shouldReleaseLock = true;
 			}
 			break;
 	
@@ -669,7 +667,7 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 			{
 	
 				takeLock = false;
-				returnReleaseOk = false;
+				shouldReleaseLock = false;
 			}
 			break;
 	
@@ -745,27 +743,27 @@ ResLockPortal(Portal portal, QueryDesc *qDesc)
 				 */
 				portal->queueId = InvalidOid;
 				portal->portalId = INVALID_PORTALID;
-				returnReleaseOk = false;
+				shouldReleaseLock = false;
 			}
 
 			/* Count holdable cursors (if we are locking this one) .*/
-			if (portal->cursorOptions & CURSOR_OPT_HOLD && returnReleaseOk)
+			if (portal->cursorOptions & CURSOR_OPT_HOLD && shouldReleaseLock)
 				numHoldPortals++;
 
 		}
 
 	}
-	return returnReleaseOk;
 
+	portal->hasResQueueLock = shouldReleaseLock;
 }
 
 /* This function is a simple version of ResLockPortal, which is used specially
  * for utility statements; the main logic is same as ResLockPortal, but remove
  * some unnecessary lines and make some tiny adjustments for utility stmts */
-bool
+void
 ResLockUtilityPortal(Portal portal, float4 ignoreCostLimit)
 {
-	bool returnReleaseOk = false;
+	bool shouldReleaseLock = false;
 	LOCKTAG		tag;
 	Oid			queueid;
 	int32		lockResult = 0;
@@ -786,7 +784,7 @@ ResLockUtilityPortal(Portal portal, float4 ignoreCostLimit)
 		incData.increments[RES_COUNT_LIMIT] = 1;
 		incData.increments[RES_COST_LIMIT] = ignoreCostLimit;
 		incData.increments[RES_MEMORY_LIMIT] = (Cost) 0.0;
-		returnReleaseOk = true;
+		shouldReleaseLock = true;
 
 		/*
 		 * Get the resource lock.
@@ -830,7 +828,8 @@ ResLockUtilityPortal(Portal portal, float4 ignoreCostLimit)
 		}
 		PG_END_TRY();
 	}
-	return returnReleaseOk;
+	
+	portal->hasResQueueLock = shouldReleaseLock;
 }
 
 /*
@@ -864,6 +863,8 @@ ResUnLockPortal(Portal portal)
 			numHoldPortals--;
 		}
 	}
+	
+	portal->hasResQueueLock = false;
 
 	return;
 }
@@ -1103,7 +1104,7 @@ ResHandleUtilityStmt(Portal portal, Node *stmt)
 		{
 			portal->status = PORTAL_QUEUE;
 
-			portal->releaseResLock = ResLockUtilityPortal(portal, resQueue->ignorecostlimit);
+			ResLockUtilityPortal(portal, resQueue->ignorecostlimit);
 		}
 		portal->status = PORTAL_ACTIVE;
 	}

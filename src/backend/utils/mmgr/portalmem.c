@@ -523,9 +523,8 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 */
 	PortalHashTableDelete(portal);
 
-	if (portal->releaseResLock)
+	if (IsResQueueLockedForPortal(portal))
 	{
-		portal->releaseResLock = false;
 		ResUnLockPortal(portal);
 	}
 
@@ -1029,7 +1028,7 @@ AtExitCleanup_ResPortals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		if (portal->releaseResLock)
+		if (IsResQueueLockedForPortal(portal))
 			ResUnLockPortal(portal);
 
 	}

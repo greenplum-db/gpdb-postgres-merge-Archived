@@ -21,6 +21,7 @@
 #include "parser/parse_expr.h"	/* for expr_type() */
 #include "parser/parse_oper.h"	/* for compatible_oper_opid() */
 #include "utils/relcache.h"		/* RelationGetPartitioningKey() */
+#include "optimizer/cost.h"
 #include "optimizer/tlist.h"	/* get_sortgroupclause_tle() */
 #include "optimizer/planmain.h"
 #include "optimizer/predtest.h"
@@ -1247,10 +1248,6 @@ add_absent_targetlist_mutator(Plan *plan,
 
 	Assert(is_plan_node(node));
 
-	/*
-	 * GPDB_90_MERGE_FIXME: We also need to change width and cost here. But since the plan has been
-	 * generated at this stage, it is not clear how we could recalculate the cost.
-	 */
 	if (node->type >= T_SeqScan && node->type <=T_WorkTableScan)
 	{
 		Scan		*scan;
@@ -1685,7 +1682,7 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	 *   is not correct after process_targetlist_for_splitupdate function, we will
 	 *   correct it in correct_delete_idxes function.)
 	 * 2.we need to get the old value which would be used to compute the segment ID,
-	 *   but the lower plan node have no TargetEntry for old values, so we need to add
+	 *   but the lower plan node have no TargetEntry for old values, so we need to
 	 *   add the TargetEntry of old values to the lower plan node, we use the varsAbsent
 	 *   to record the TargetEntry for old values.
 	 */
@@ -1706,8 +1703,8 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	add_absent_targetlist(root, subplan, varsAbsent, resultRelationsIdx);
 
 	/*
-	 * the deleteColIdx which is returned by process_targetlist_for_splitupdate funciton
-	 * is not correct, now we correct it to the index of old values
+	 * The deleteColIdx which is returned by process_targetlist_for_splitupdate
+	 * function is not correct, now we correct it to the index of old values.
 	 */
 	correct_delete_idxes(deleteColIdx, subplan->targetlist, varsAbsent, absentAttrStart);
 
@@ -1735,14 +1732,17 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 
 	/*
 	 * Now the plan tree has been determined, we have no choice, so use the
-	 * cost of lower plan node directly.
+	 * cost of lower plan node directly, plus the cpu_tuple_cost of each row.
+	 * GPDB_96_MERGE_FIXME: width here is incorrect, until we merge
+	 * upstream commit 3fc6e2d
 	 */
 	splitupdate->plan.startup_cost = subplan->startup_cost;
 	splitupdate->plan.total_cost = subplan->total_cost;
 	splitupdate->plan.plan_rows = 2 * subplan->plan_rows;
+	splitupdate->plan.total_cost += (splitupdate->plan.plan_rows * cpu_tuple_cost);
 	splitupdate->plan.plan_width = subplan->plan_width;
 
-	/* we need an motion node above the SplitUpdate, so mark it as strewn */
+	/* We need a motion node above the SplitUpdate, so mark it as strewn */
 	mark_plan_strewn((Plan *) splitupdate);
 
 	mt->action_col_idxes = lappend_int(mt->action_col_idxes, actionColIdx);

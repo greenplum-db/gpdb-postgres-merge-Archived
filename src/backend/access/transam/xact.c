@@ -74,6 +74,7 @@
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h" /* Gp_role, Gp_is_writer, interconnect_setup_timeout */
 #include "utils/vmem_tracker.h"
+#include "cdb/cdbdisp.h"
 
 /*
  *	User-tweakable parameters
@@ -2746,7 +2747,7 @@ CommitTransaction(void)
 	/* we're now in a consistent state to handle an interrupt. */
 	RESUME_INTERRUPTS();
 
-	freeGangsForPortal(NULL);
+	AvailableWriterGangValidation();
 
 	/* Release resource group slot at the end of a transaction */
 	if (ShouldUnassignResGroup())
@@ -3130,7 +3131,7 @@ AbortTransaction(void)
 	 */
 	AfterTriggerEndXact(false); /* 'false' means it's abort */
 	AtAbort_Portals();
-
+	AtAbort_DispatcherState();
 	AtEOXact_SharedSnapshot();
 
 	/* Perform any Resource Scheduler abort procesing. */
@@ -3222,8 +3223,6 @@ AbortTransaction(void)
 	 * State remains TRANS_ABORT until CleanupTransaction().
 	 */
 	RESUME_INTERRUPTS();
-
-	freeGangsForPortal(NULL);
 
 	/* If a query was cancelled, then cleanup reader gangs. */
 	if (QueryCancelCleanup)
@@ -4784,7 +4783,8 @@ DispatchRollbackToSavepoint(char *name)
 	 * either exit via elog()/ereport() or return false
 	 */
 	if (!dispatchDtxCommand(cmd))
-		elog(ERROR, "Could not rollback to savepoint (%s)", cmd);
+		ereport(ERROR, (errcode(ERRCODE_GP_INTERCONNECTION_ERROR),
+						errmsg("Could not rollback to savepoint (%s)", cmd)));
 
 	pfree(cmd);
 }
@@ -4948,8 +4948,8 @@ RollbackAndReleaseCurrentSubTransaction(void)
 		if (!doDispatchSubtransactionInternalCmd(
 				DTX_PROTOCOL_COMMAND_SUBTRANSACTION_ROLLBACK_INTERNAL))
 		{
-			elog(ERROR,
-				 "Could not RollbackAndReleaseCurrentSubTransaction dispatch failed");
+			ereport(ERROR, (errcode(ERRCODE_GP_INTERCONNECTION_ERROR),
+							errmsg("DTX RollbackAndReleaseCurrentSubTransaction dispatch failed")));
 		}
 	}
 }
@@ -5361,6 +5361,7 @@ AbortSubTransaction(void)
 		AtSubAbort_Portals(s->subTransactionId,
 						   s->parent->subTransactionId,
 						   s->parent->curTransactionOwner);
+		AtSubAbort_DispatcherState();
 		AtEOXact_DispatchOids(false);
 		AtEOSubXact_LargeObject(false, s->subTransactionId,
 								s->parent->subTransactionId);

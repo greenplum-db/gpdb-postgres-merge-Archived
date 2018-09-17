@@ -1183,3 +1183,19 @@ unknown
 \.
 
 COPY type_unknown TO stdout;
+--
+-- Test row counts
+--
+-- We have to disable QUIET mode for these, so that we get the command tags,
+-- like "COPY 10", in the output.
+\set QUIET off
+copy (select generate_series(1, 10)) to '/tmp/a';
+
+create temp table t (id int4);
+copy t from '/tmp/a';
+copy t to '/tmp/b';
+copy t to '/tmp/b<SEGID>' on segment;
+copy t from '/tmp/b<SEGID>' on segment;
+select count(*) from t;
+
+\set QUIET on

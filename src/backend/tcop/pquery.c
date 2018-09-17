@@ -114,17 +114,8 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	qd->gpmon_pkt = NULL;
 	
 	if (Gp_role != GP_ROLE_EXECUTE)
-	{
 		increment_command_count();
 
-		MyProc->queryCommandId = gp_command_count;
-		if (gp_cancel_query_print_log)
-		{
-			elog(NOTICE, "running query (sessionId, commandId): (%d, %d)",
-				 MyProc->mppSessionId, gp_command_count);
-		}
-	}
-	
 	if(gp_enable_gpperfmon && Gp_role == GP_ROLE_DISPATCH)
 	{
 		qd->gpmon_pkt = (gpmon_packet_t *) palloc0(sizeof(gpmon_packet_t));
@@ -262,14 +253,12 @@ ProcessQuery(Portal portal,
 		 * queries, or this is a SELECT INTO then lock the portal here.  Skip
 		 * if this query is added by the rewriter or we are superuser.
 		 */
-		if (IsResQueueEnabled() && !superuser())
+		if (IsResQueueEnabled() && !superuser() && !IsResQueueLockedForPortal(portal))
 		{
 			if ((!ResourceSelectOnly || portal->sourceTag == T_SelectStmt) &&
 				stmt->canSetTag)
 			{
-				portal->status = PORTAL_QUEUE;
-
-				portal->releaseResLock = ResLockPortal(portal, queryDesc);
+				ResLockPortal(portal, queryDesc);
 			}
 			else
 			{
@@ -610,7 +599,7 @@ PortalStart(Portal portal, ParamListInfo params,
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->status == PORTAL_DEFINED);
 
-	portal->releaseResLock = false;
+	portal->hasResQueueLock = false;
     
 	portal->ddesc = ddesc;
 
@@ -702,7 +691,6 @@ PortalStart(Portal portal, ParamListInfo params,
 					 */
 					if (IsResQueueEnabled() && !superuser())
 					{
-						portal->status = PORTAL_QUEUE;
 						/*
 						 * MPP-16369 - If we are in SPI context, only acquire
 						 * resource queue lock if the outer portal hasn't
@@ -715,8 +703,8 @@ PortalStart(Portal portal, ParamListInfo params,
 						 * If not in SPI context, acquire resource queue lock with
 						 * no additional checks.
 						 */
-						if (!SPI_context() || !saveActivePortal || !saveActivePortal->releaseResLock)
-							portal->releaseResLock = ResLockPortal(portal, queryDesc);
+						if (!SPI_context() || !saveActivePortal || !IsResQueueLockedForPortal(saveActivePortal))
+							ResLockPortal(portal, queryDesc);
 					}
 				}
 

@@ -1040,3 +1040,15 @@ select f1,g from int4_tbl a right join lateral generate_series(0, a.f1) g on tru
 select f1,g from int4_tbl a full join lateral generate_series(0, a.f1) g on true;
 -- LATERAL can be used to put an aggregate into the FROM clause of its query
 select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;
+-- github issue 5370 cases
+drop table if exists t5370;
+drop table if exists t5370_2;
+create table t5370(id int,name text) distributed by(id);
+insert into t5370 select i,i from  generate_series(1,1000) i;
+create table t5370_2 as select * from t5370 distributed by (id);
+analyze t5370_2;
+analyze t5370;
+explain select * from t5370 a , t5370_2 b where a.name=b.name;
+
+drop table t5370;
+drop table t5370_2;

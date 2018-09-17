@@ -229,7 +229,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\do[S]  [PATTERN]      list operators\n"));
 	fprintf(output, _("  \\dO[S+] [PATTERN]      list collations\n"));
 	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
-	fprintf(output, _("  \\dr[S+] [PATTERN]      list foreign tables\n"));  /* GPDB Only */
 	fprintf(output, _("  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"));
 	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
 	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));

@@ -37,6 +37,28 @@ master_data_dir = os.environ.get('MASTER_DATA_DIRECTORY')
 if master_data_dir is None:
     raise Exception('Please set MASTER_DATA_DIRECTORY in environment')
 
+@given('the cluster config is generated with HBA_HOSTNAMES "{hba_hostnames_toggle}"')
+def impl(context, hba_hostnames_toggle):
+    stop_database(context)
+
+    cmd = """
+    cd ../gpAux/gpdemo; \
+        export MASTER_DEMO_PORT={master_port} && \
+        export DEMO_PORT_BASE={port_base} && \
+        export NUM_PRIMARY_MIRROR_PAIRS={num_primary_mirror_pairs} && \
+        export WITH_MIRRORS={with_mirrors} && \
+        ./demo_cluster.sh -d && ./demo_cluster.sh -c && \
+        env EXTRA_CONFIG="HBA_HOSTNAMES={hba_hostnames_toggle}" ONLY_PREPARE_CLUSTER_ENV=true ./demo_cluster.sh
+    """.format(master_port=os.getenv('MASTER_PORT', 15432),
+               port_base=os.getenv('PORT_BASE', 25432),
+               num_primary_mirror_pairs=os.getenv('NUM_PRIMARY_MIRROR_PAIRS', 3),
+               with_mirrors='true',
+               hba_hostnames_toggle=hba_hostnames_toggle)
+
+    run_command(context, cmd)
+
+    if context.ret_code != 0:
+        raise Exception('%s' % context.error_message)
 
 @given('the cluster config is generated with data_checksums "{checksum_toggle}"')
 def impl(context, checksum_toggle):
@@ -60,7 +82,6 @@ def impl(context, checksum_toggle):
 
     if context.ret_code != 0:
         raise Exception('%s' % context.error_message)
-
 
 @given('the database is running')
 @then('the database is running')
@@ -1240,6 +1261,38 @@ def impl(context, cmd):
     thread.start_new_thread(run_command, (context, cmd))
 
 
+# For any pg_hba.conf line with `host ... trust`, its address should only contain FQDN
+@then('verify that the file "{filename}" contains FQDN only for trusted host')
+def impl(context, filename):
+    with open(filename) as fr:
+        for line in fr:
+            contents = line.strip()
+            # for example: host all all hostname    trust
+            if contents.startswith("host") and contents.endswith("trust"):
+                tokens = contents.split()
+                if tokens.__len__() != 5:
+                    raise Exception("failed to parse pg_hba.conf line '%s'" % contents)
+                hostname = tokens[3]
+                if hostname.__contains__("/"):
+                    raise Exception("'%s' is not valid FQDN" % hostname)
+
+
+# For any pg_hba.conf line with `host ... trust`, its address should only contain CIDR
+@then('verify that the file "{filename}" contains CIDR only for trusted host')
+def impl(context, filename):
+    with open(filename) as fr:
+        for line in fr:
+            contents = line.strip()
+            # for example: host all all hostname    trust
+            if contents.startswith("host") and contents.endswith("trust"):
+                tokens = contents.split()
+                if tokens.__len__() != 5:
+                    raise Exception("failed to parse pg_hba.conf line '%s'" % contents)
+                cidr = tokens[3]
+                if not cidr.__contains__("/") and cidr not in ["samenet", "samehost"]:
+                    raise Exception("'%s' is not valid CIDR" % cidr)
+
+
 @then('verify that the file "{filename}" contains the string "{output}"')
 def impl(context, filename, output):
     contents = ''
@@ -2175,3 +2228,23 @@ def step_impl(context, options):
                     raise Exception("gpstate -m output missing expected mirror info, datadir %s port %d" %(datadir, port))
     else:
         raise Exception("no verification for gpstate option given")
+
+@given('ensure the standby directory does not exist')
+def impl(context):
+    run_command(context, 'rm -rf $MASTER_DATA_DIRECTORY/newstandby')
+    run_command(context, 'rm -rf /tmp/gpinitsystemtest && mkdir /tmp/gpinitsystemtest')
+
+@when('initialize a cluster with standby using "{config_file}"')
+def impl(context, config_file):
+    run_gpcommand(context, 'gpinitsystem -a -I %s -l /tmp/gpinitsystemtest -s localhost -P 21100 -F $MASTER_DATA_DIRECTORY/newstandby -h ../gpAux/gpdemo/hostfile' % config_file)
+    check_return_code(context, 0)
+
+@when('initialize a cluster using "{config_file}"')
+def impl(context, config_file):
+    run_gpcommand(context, 'gpinitsystem -a -I %s -l /tmp/' % config_file)
+    check_return_code(context, 0)
+
+@when('generate cluster config file "{config_file}"')
+def impl(context, config_file):
+    run_gpcommand(context, 'gpinitsystem -a -c ../gpAux/gpdemo/clusterConfigFile -O %s' % config_file)
+    check_return_code(context, 0)
