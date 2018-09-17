@@ -2581,13 +2581,7 @@ ERROR:  syntax error at or near "CONCURRENTLY"
 LINE 1: DROP INDEX CONCURRENTLY "concur_index2";
                    ^
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
-<<<<<<< HEAD
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";
-                   ^
-=======
 NOTICE:  index "concur_index2" does not exist, skipping
->>>>>>> e472b921406407794bab911c64655b8b82375196
 -- failures
 DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
 ERROR:  syntax error at or near "CONCURRENTLY"

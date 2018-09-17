@@ -1133,10 +1133,7 @@ CREATE TEMP TABLE pktable (
     id int primary key,
     other int
 );
-<<<<<<< HEAD
 ERROR:  relation "pktable" already exists
-=======
->>>>>>> e472b921406407794bab911c64655b8b82375196
 CREATE TEMP TABLE fktable (
     id int primary key,
     fk int references pktable deferrable initially deferred
