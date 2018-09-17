@@ -1332,18 +1332,16 @@ explain select * from r_part r1, r_part r2 where r1.a=1; -- should eliminate par
          ->  Sequence  (cost=0.00..431.00 rows=1 width=8)
                ->  Partition Selector for r_part (dynamic scan id: 2)  (cost=10.00..100.00 rows=34 width=4)
                      Partitions selected: 9 (out of 9)
-               ->  Dynamic Table Scan on r_part (dynamic scan id: 2)  (cost=0.00..431.00 rows=1 width=8)
+               ->  Dynamic Table Scan on r_part r_part_1 (dynamic scan id: 2)  (cost=0.00..431.00 rows=1 width=8)
          ->  Materialize  (cost=0.00..431.00 rows=1 width=8)
                ->  Broadcast Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
                      ->  Sequence  (cost=0.00..431.00 rows=1 width=8)
                            ->  Partition Selector for r_part (dynamic scan id: 1)  (cost=10.00..100.00 rows=34 width=4)
-                                 Filter: bfv_partition.r_part.a = 1
                                  Partitions selected: 1 (out of 9)
                            ->  Dynamic Table Scan on r_part (dynamic scan id: 1)  (cost=0.00..431.00 rows=1 width=8)
                                  Filter: a = 1
- Settings:  optimizer=on
- Optimizer status: PQO version 2.47.1
-(17 rows)
+ Optimizer: PQO version 2.74.0
+(15 rows)
 
 explain select * from r_part where a in (1,2); -- should eliminate partitions
                                               QUERY PLAN                                              
