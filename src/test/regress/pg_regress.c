@@ -928,10 +928,12 @@ load_resultmap(void)
  */
 static
 const char *
-get_expectfile(const char *testname, const char *file)
+get_expectfile(const char *testname, const char *file, const char *default_expectfile)
 {
+	char		expectpath[MAXPGPATH];
 	char	   *file_type;
 	_resultmap *rm;
+	char		buf[MAXPGPATH];
 
 	/*
 	 * Determine the file type from the file name. This is just what is
@@ -942,12 +944,46 @@ get_expectfile(const char *testname, const char *file)
 
 	file_type++;
 
+	/*
+	 * Find the directory the default expected file is in. That is, everything
+	 * up to the last slash.
+	 */
+	{
+		char	   *p = strrchr(default_expectfile, '/');
+
+		if (!p)
+			return NULL;
+
+		strlcpy(expectpath, default_expectfile, p - default_expectfile + 1);
+	}
+
 	for (rm = resultmap; rm != NULL; rm = rm->next)
 	{
 		if (strcmp(testname, rm->test) == 0 && strcmp(file_type, rm->type) == 0)
 		{
-			return rm->resultfile;
+			snprintf(buf, sizeof(buf), "%s/%s", expectpath, rm->resultfile);
+			return strdup(buf);
 		}
+	}
+
+	/* Use ORCA or resgroup expected outputs, if available */
+	if  (optimizer_enabled && resgroup_enabled)
+	{
+		snprintf(buf, sizeof(buf), "%s/%s_optimizer_resgroup.%s", expectpath, testname, file_type);
+		if (file_exists(buf))
+			return strdup(buf);
+	}
+	if  (optimizer_enabled)
+	{
+		snprintf(buf, sizeof(buf), "%s/%s_optimizer.%s", expectpath, testname, file_type);
+		if (file_exists(buf))
+			return strdup(buf);
+	}
+	if  (resgroup_enabled)
+	{
+		snprintf(buf, sizeof(buf), "%s/%s_resgroup.%s", expectpath, testname, file_type);
+		if (file_exists(buf))
+			return strdup(buf);
 	}
 
 	return NULL;
@@ -1540,20 +1576,12 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 * We can pass either the resultsfile or the expectfile, they should have
 	 * the same type (filename.type) anyway.
 	 */
-	platform_expectfile = get_expectfile(testname, resultsfile);
+	platform_expectfile = get_expectfile(testname, resultsfile, default_expectfile);
 
-	strlcpy(expectfile, default_expectfile, sizeof(expectfile));
 	if (platform_expectfile)
-	{
-		/*
-		 * Replace everything afer the last slash in expectfile with what the
-		 * platform_expectfile contains.
-		 */
-		char	   *p = strrchr(expectfile, '/');
-
-		if (p)
-			strcpy(++p, platform_expectfile);
-	}
+		strlcpy(expectfile, platform_expectfile, sizeof(expectfile));
+	else
+		strlcpy(expectfile, default_expectfile, sizeof(expectfile));
 
 	/* Name to use for temporary diff file */
 	snprintf(diff, sizeof(diff), "%s.diff", resultsfile);
