@@ -910,6 +910,7 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_TableScan:
 		case T_DynamicTableScan:
 		case T_DynamicIndexScan:
+		case T_ShareInputScan:
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
@@ -960,6 +961,11 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 		case T_MergeAppend:
 			ExplainPreScanMemberNodes(((MergeAppend *) plan)->mergeplans,
 								((MergeAppendState *) planstate)->mergeplans,
+									  rels_used);
+			break;
+		case T_Sequence:
+			ExplainPreScanMemberNodes(((Sequence *) plan)->subplans,
+									((SequenceState *) planstate)->subplans,
 									  rels_used);
 			break;
 		case T_BitmapAnd:
