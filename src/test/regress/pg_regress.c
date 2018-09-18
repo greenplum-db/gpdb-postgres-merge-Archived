@@ -932,6 +932,8 @@ get_expectfile(const char *testname, const char *file, const char *default_expec
 {
 	char		expectpath[MAXPGPATH];
 	char	   *file_type;
+	char	   *file_name;
+	char		base_file[MAXPGPATH];
 	_resultmap *rm;
 	char		buf[MAXPGPATH];
 
@@ -943,6 +945,18 @@ get_expectfile(const char *testname, const char *file, const char *default_expec
 		return NULL;
 
 	file_type++;
+
+	/*
+	 * Also determine the base file name from the result full path.
+	 */
+	if (!(file_name = strrchr(file, '/')))
+		return NULL;
+
+	file_name ++;
+
+	if (file_type < file_name)
+		return NULL;
+	strlcpy(base_file, file_name, (file_type) - file_name);
 
 	/*
 	 * Find the directory the default expected file is in. That is, everything
@@ -969,19 +983,19 @@ get_expectfile(const char *testname, const char *file, const char *default_expec
 	/* Use ORCA or resgroup expected outputs, if available */
 	if  (optimizer_enabled && resgroup_enabled)
 	{
-		snprintf(buf, sizeof(buf), "%s/%s_optimizer_resgroup.%s", expectpath, testname, file_type);
+		snprintf(buf, sizeof(buf), "%s/%s_optimizer_resgroup.%s", expectpath, base_file, file_type);
 		if (file_exists(buf))
 			return strdup(buf);
 	}
 	if  (optimizer_enabled)
 	{
-		snprintf(buf, sizeof(buf), "%s/%s_optimizer.%s", expectpath, testname, file_type);
+		snprintf(buf, sizeof(buf), "%s/%s_optimizer.%s", expectpath, base_file, file_type);
 		if (file_exists(buf))
 			return strdup(buf);
 	}
 	if  (resgroup_enabled)
 	{
-		snprintf(buf, sizeof(buf), "%s/%s_resgroup.%s", expectpath, testname, file_type);
+		snprintf(buf, sizeof(buf), "%s/%s_resgroup.%s", expectpath, base_file, file_type);
 		if (file_exists(buf))
 			return strdup(buf);
 	}
