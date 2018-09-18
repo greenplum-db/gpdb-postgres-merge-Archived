@@ -606,7 +606,7 @@ CTranslatorDXLToScalar::TranslateDXLScalarFuncExprToScalar
 	FuncExpr *func_expr = MakeNode(FuncExpr);
 	func_expr->funcid = CMDIdGPDB::CastMdid(dxlop->FuncMdId())->Oid();
 	func_expr->funcretset = dxlop->ReturnsSet();
-	func_expr->funcformat = COERCE_IMPLICIT_CAST;
+	func_expr->funcformat = COERCE_EXPLICIT_CALL;
 	func_expr->funcresulttype = CMDIdGPDB::CastMdid(dxlop->ReturnTypeMdId())->Oid();
 	func_expr->args = TranslateScalarChildren(func_expr->args, scalar_func_expr_node, colid_var);
 
