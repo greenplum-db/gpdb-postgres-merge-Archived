@@ -476,12 +476,12 @@ explain (costs off)
   UNION ALL
   SELECT * FROM t2) t
  WHERE ab = 'ab';
-                 QUERY PLAN                  
----------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Gather Motion 3:1  (slice1; segments: 3)
    ->  Append
          ->  Result
-               Filter: (a || b) = 'ab'::text
+               Filter: (t1.a || t1.b) = 'ab'::text
                ->  Result
                      ->  Table Scan on t1
          ->  Index Scan using t2_pkey on t2
@@ -495,22 +495,22 @@ explain (costs off)
   UNION
   SELECT * FROM t2) t
  WHERE ab = 'ab';
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
    ->  GroupAggregate
-         Group Key: (a || b)
+         Group Key: (t1.a || t1.b)
          ->  Sort
-               Sort Key: (a || b)
+               Sort Key: (t1.a || t1.b)
                ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                     Hash Key: (a || b)
+                     Hash Key: (t1.a || t1.b)
                      ->  GroupAggregate
-                           Group Key: (a || b)
+                           Group Key: (t1.a || t1.b)
                            ->  Sort
-                                 Sort Key: (a || b)
+                                 Sort Key: (t1.a || t1.b)
                                  ->  Append
                                        ->  Result
-                                             Filter: (a || b) = 'ab'::text
+                                             Filter: (t1.a || t1.b) = 'ab'::text
                                              ->  Result
                                                    ->  Table Scan on t1
                                        ->  Index Scan using t2_pkey on t2
@@ -579,17 +579,17 @@ SELECT * FROM
    SELECT 2 AS t, 4 AS x) ss
 WHERE x < 4
 ORDER BY x;
-                       QUERY PLAN                       
---------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  GroupAggregate
-   Group Key: t, (1::integer)
+   Group Key: t, (generate_series(1, 10))
    ->  GroupAggregate
-         Group Key: t, (1::integer)
+         Group Key: t, (generate_series(1, 10))
          ->  Sort
-               Sort Key: (1::integer), t
+               Sort Key: (generate_series(1, 10)), t
                ->  Append
                      ->  Result
-                           Filter: (1::integer) < 4
+                           Filter: (generate_series(1, 10)) < 4
                            ->  Result
                                  ->  Result
                      ->  Result
