@@ -1000,8 +1000,12 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Check for invalid combinations of GUC settings.
+	 *
+	 * In GPDB, restricted mode gpstart uses superuser_reserved_connections ==
+	 * max_connections. Hence, in gpdb below check is modified from upstream to
+	 * allow equal setting.
 	 */
-	if (ReservedBackends >= MaxConnections)
+	if (ReservedBackends > MaxConnections)
 	{
 		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
 		ExitPostmaster(1);
