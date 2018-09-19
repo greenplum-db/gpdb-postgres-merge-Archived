@@ -68,7 +68,7 @@ maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
 installcheck: all gpdiff.pl gpstringsubs.pl
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
 
 # Version of the install check test that includes the prepared_transactions test
 # It only makes sense to run this if set up to use prepared transactions,
