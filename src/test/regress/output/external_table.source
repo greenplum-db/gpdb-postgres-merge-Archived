@@ -4865,17 +4865,10 @@ CONTEXT:  External table tbl_ext_gpformatter
 --
 -- Test information_schema views for external tables
 --
-SELECT * FROM information_schema.tables WHERE table_name = 'wet_pos4';
-WARNING:  relcache reference leak: relation "wet_pos4" not closed
- table_catalog | table_schema | table_name | table_type | self_referencing_column_name | reference_generation | user_defined_type_catalog | user_defined_type_schema | user_defined_type_name | is_insertable_into | is_typed | commit_action 
----------------+--------------+------------+------------+------------------------------+----------------------+---------------------------+--------------------------+------------------------+--------------------+----------+---------------
- regression    | public       | wet_pos4   | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
-(1 row)
-
-SELECT * FROM information_schema.tables WHERE table_name = 'exttab_basic_1';
-WARNING:  relcache reference leak: relation "exttab_basic_1" not closed
+SELECT * FROM information_schema.tables WHERE table_name IN ('wet_pos4', 'exttab_basic_1');
  table_catalog | table_schema |   table_name   | table_type | self_referencing_column_name | reference_generation | user_defined_type_catalog | user_defined_type_schema | user_defined_type_name | is_insertable_into | is_typed | commit_action 
 ---------------+--------------+----------------+------------+------------------------------+----------------------+---------------------------+--------------------------+------------------------+--------------------+----------+---------------
  regression    | public       | exttab_basic_1 | BASE TABLE |                              |                      |                           |                          |                        | NO                 | NO       | 
-(1 row)
+ regression    | public       | wet_pos4       | BASE TABLE |                              |                      |                           |                          |                        | YES                | NO       | 
+(2 rows)
 

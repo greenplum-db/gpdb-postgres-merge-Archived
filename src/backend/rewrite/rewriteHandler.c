@@ -2147,6 +2147,7 @@ relation_is_updatable(Oid reloid, bool include_triggers)
 			events |= (1 << CMD_INSERT);
 
 		pfree(extentry);
+		relation_close(rel, AccessShareLock);
 		return events;
 	}
 

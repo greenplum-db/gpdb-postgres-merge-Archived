@@ -3520,5 +3520,4 @@ SELECT * FROM tbl_ext_gpformatter;
 --
 -- Test information_schema views for external tables
 --
-SELECT * FROM information_schema.tables WHERE table_name = 'wet_pos4';
-SELECT * FROM information_schema.tables WHERE table_name = 'exttab_basic_1';
+SELECT * FROM information_schema.tables WHERE table_name IN ('wet_pos4', 'exttab_basic_1');
