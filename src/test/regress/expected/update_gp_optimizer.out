@@ -102,17 +102,17 @@ WHERE t1.user_vie_project_code_pk = keo1.user_vie_project_code_pk;
                      ->  Split
                            ->  Result
                                  ->  Hash Join
-                                       Hash Cond: keo1_1.user_vie_project_code_pk::text = keo1_2.user_vie_project_code_pk::text
-                                       ->  Table Scan on keo1 keo1_1
+                                       Hash Cond: keo1.user_vie_project_code_pk::text = keo1_1.user_vie_project_code_pk::text
+                                       ->  Table Scan on keo1
                                        ->  Hash
                                              ->  Broadcast Motion 3:3  (slice7; segments: 3)
                                                    ->  Hash Join
-                                                         Hash Cond: keo1_2.user_vie_project_code_pk::text = keo2.projects_pk::text
+                                                         Hash Cond: keo1_1.user_vie_project_code_pk::text = keo2.projects_pk::text
                                                          ->  Redistribute Motion 1:3  (slice5)
                                                                ->  Hash Join
-                                                                     Hash Cond: keo1_2.user_vie_fiscal_year_period_sk::text = (max(keo3.sky_per::text))
+                                                                     Hash Cond: keo1_1.user_vie_fiscal_year_period_sk::text = (max(keo3.sky_per::text))
                                                                      ->  Gather Motion 3:1  (slice1; segments: 3)
-                                                                           ->  Table Scan on keo1 keo1_2
+                                                                           ->  Table Scan on keo1 keo1_1
                                                                      ->  Hash
                                                                            ->  Aggregate
                                                                                  ->  Hash Join
@@ -162,17 +162,17 @@ EXPLAIN (COSTS OFF) DELETE FROM keo5 WHERE x IN (SELECT x FROM keo5 WHERE EXISTS
  Delete
    ->  Result
          ->  Hash Semi Join
-               Hash Cond: keo5_1.x = keo5_3.x
-               ->  Table Scan on keo5 keo5_1
+               Hash Cond: keo5.x = keo5_2.x
+               ->  Table Scan on keo5
                ->  Hash
                      ->  Nested Loop Semi Join
                            Join Filter: true
-                           ->  Table Scan on keo5 keo5_3
+                           ->  Table Scan on keo5 keo5_2
                            ->  Materialize
                                  ->  Broadcast Motion 1:3  (slice2)
                                        ->  Limit
                                              ->  Gather Motion 3:1  (slice1; segments: 3)
-                                                   ->  Table Scan on keo5 keo5_2
+                                                   ->  Table Scan on keo5 keo5_1
                                                          Filter: x < 2
  Optimizer: PQO version 2.74.0
 (16 rows)

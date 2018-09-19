@@ -8281,13 +8281,13 @@ explain insert into window_preds select k from ( select row_number() over()+2 as
                            ->  Result  (cost=0.00..431.00 rows=1 width=8)
                                  ->  WindowAgg  (cost=0.00..431.00 rows=1 width=8)
                                        ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=1)
-                                             ->  Table Scan on window_preds window_preds_1  (cost=0.00..431.00 rows=1 width=1)
+                                             ->  Table Scan on window_preds  (cost=0.00..431.00 rows=1 width=1)
                      ->  Result  (cost=0.00..431.00 rows=1 width=8)
                            Filter: ((row_number() OVER (?)) + 2) = 3
                            ->  Result  (cost=0.00..431.00 rows=1 width=8)
                                  ->  WindowAgg  (cost=0.00..431.00 rows=1 width=8)
                                        ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=1)
-                                             ->  Table Scan on window_preds window_preds_2  (cost=0.00..431.00 rows=1 width=1)
+                                             ->  Table Scan on window_preds window_preds_1  (cost=0.00..431.00 rows=1 width=1)
  Optimizer: PQO version 2.74.0
 (18 rows)
 
@@ -8410,12 +8410,12 @@ explain insert into window_preds select k from ( select k from (select row_numbe
                            Filter: (row_number() OVER (?)) = 1
                            ->  WindowAgg  (cost=0.00..431.00 rows=1 width=8)
                                  ->  Gather Motion 3:1  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=1)
-                                       ->  Table Scan on window_preds window_preds_1  (cost=0.00..431.00 rows=1 width=1)
+                                       ->  Table Scan on window_preds  (cost=0.00..431.00 rows=1 width=1)
                      ->  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
                            ->  Result  (cost=0.00..431.00 rows=1 width=8)
                                  Filter: "outer".k = 1
                                  ->  Result  (cost=0.00..431.00 rows=1 width=8)
-                                       ->  Table Scan on window_preds window_preds_2  (cost=0.00..431.00 rows=1 width=1)
+                                       ->  Table Scan on window_preds window_preds_1  (cost=0.00..431.00 rows=1 width=1)
  Optimizer: PQO version 2.74.0
 (16 rows)
 
