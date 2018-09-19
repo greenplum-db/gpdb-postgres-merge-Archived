@@ -6589,28 +6589,6 @@ make_modifytable(PlannerInfo *root,
 	Assert(returningLists == NIL ||
 		   list_length(resultRelations) == list_length(returningLists));
 
-	/*
-	 * Compute cost as sum of subplan costs.
-	 */
-	plan->startup_cost = 0;
-	plan->total_cost = 0;
-	plan->plan_rows = 0;
-	total_size = 0;
-	foreach(subnode, subplans)
-	{
-		Plan       *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == list_head(subplans))     /* first node? */
-			plan->startup_cost = subplan->startup_cost;
-		plan->total_cost += subplan->total_cost;
-		plan->plan_rows += subplan->plan_rows;
-		total_size += subplan->plan_width * subplan->plan_rows;
-	}
-	if (plan->plan_rows > 0)
-		plan->plan_width = rint(total_size / plan->plan_rows);
-	else
-		plan->plan_width = 0;
-
 	node->plan.lefttree = NULL;
 	node->plan.righttree = NULL;
 	node->plan.qual = NIL;
@@ -6630,6 +6608,28 @@ make_modifytable(PlannerInfo *root,
 	node->oid_col_idxes = NIL;
 
 	adjust_modifytable_flow(root, node);
+
+	/*
+	 * Compute cost as sum of subplan costs.
+	 */
+	plan->startup_cost = 0;
+	plan->total_cost = 0;
+	plan->plan_rows = 0;
+	total_size = 0;
+	foreach(subnode, subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(subnode);
+
+		if (subnode == list_head(subplans))		/* first node? */
+			plan->startup_cost = subplan->startup_cost;
+		plan->total_cost += subplan->total_cost;
+		plan->plan_rows += subplan->plan_rows;
+		total_size += subplan->plan_width * subplan->plan_rows;
+	}
+	if (plan->plan_rows > 0)
+		plan->plan_width = rint(total_size / plan->plan_rows);
+	else
+		plan->plan_width = 0;
 
 	/*
      * For each result relation that is a foreign table, allow the FDW to
@@ -7169,17 +7169,16 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 
 		if (path->path.pathkeys)
 		{
-			/*
-			 * Build a dummy Sort node.  We'll take its sort key info to
-			 * define our Merge Receive keys.  Unchanged subplan ptr is
-			 * returned to us if ordering is degenerate (all cols constant).
-			 */
-			Plan *prep;
-			int numSortCols;
+			Plan	   *prep;
+			int			numSortCols;
 			AttrNumber *sortColIdx;
-			Oid *sortOperators;
-			Oid *collations;
-			bool *nullsFirst;
+			Oid		   *sortOperators;
+			Oid		   *collations;
+			bool		*nullsFirst;
+
+			/*
+			 * Build sort key info to define our Merge Receive keys.
+			 */
 			prep = prepare_sort_from_pathkeys(root,
 											  subplan,
 											  path->path.pathkeys,
@@ -7192,10 +7191,21 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 											  &collations,
 											  &nullsFirst,
 											  true /* add_keys_to_targetlist */);
-			/* Merge Receive to preserve ordering */
+
 			if (prep)
 			{
-				/* Result node might have been added below the Sort */
+				/*
+				 * Create a Merge Receive to preserve ordering.
+				 *
+				 * prepare_sort_from_pathkeys() might return a Result node, if
+				 * one would needs to be inserted above the Sort. We don't
+				 * create an actual Sort node here, the input is already
+				 * ordered, but use the Result node, if any, as the input to
+				 * the Motion node. (I'm not sure if that is possible with
+				 * Gather Motion nodes. Since the input is already ordered,
+				 * presumably the target list already contains the expressions
+				 * for the key columns. But better safe than sorry.)
+				 */
 				subplan = prep;
 				motion = make_sorted_union_motion(root,
 												  subplan,
@@ -7207,13 +7217,13 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 												  destSegIndex,
 												  false /* useExecutorVarFormat */);
 			}
-
-			/* Degenerate ordering... build unordered Union Receive */
 			else
+			{
+				/* Degenerate ordering... build unordered Union Receive */
 				motion = make_union_motion(subplan,
 										   destSegIndex,
-										   false	/* useExecutorVarFormat */
-					);
+										   false	/* useExecutorVarFormat */);
+			}
 		}
 
 		/* Unordered Union Receive */

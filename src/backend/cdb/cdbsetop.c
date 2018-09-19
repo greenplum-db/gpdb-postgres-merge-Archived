@@ -343,11 +343,19 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, int segindex, List *sortPat
 	{
 		Sort	   *sort;
 
+		/*
+		 * The input is pre-sorted, so we don't need to do any real sorting
+		 * here. But make_sort_for_pathkeys() is a convenient way to construct
+		 * the 'sortColIdx', 'sortOperators', etc. fields that we need in the
+		 * Motion node. They represent the input order that the Motion node
+		 * will preserve, when it receives and merges the inputs.
+		 */
 		sort = make_sort_from_pathkeys(root,
 									   subplan,
 									   sortPathKeys,
 									   -1.0,
 									   false /* useExecutorVarFormat */ );
+
 		motion = make_sorted_union_motion(root,
 										  subplan,
 										  sort->numCols,
@@ -357,6 +365,9 @@ make_motion_gather(PlannerInfo *root, Plan *subplan, int segindex, List *sortPat
 										  sort->nullsFirst,
 										  segindex,
 										  false /* useExecutorVarFormat */ );
+
+		/* throw away the Sort */
+		pfree(sort);
 	}
 	else
 	{

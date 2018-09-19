@@ -341,7 +341,7 @@ usage(void)
 		   "  --foreign-keys\n"
 		   "               create foreign key constraints between tables\n"
 		   "  --use-unique-keys"
-           "               make the indexes that are created non-unique indexes (default: unique)\n"
+		   "               make the indexes that are created non-unique indexes (default: unique)\n"
 		   "  --index-tablespace=TABLESPACE\n"
 		   "               create indexes in the specified tablespace\n"
 		   "  --tablespace=TABLESPACE\n"
