@@ -10565,9 +10565,22 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	 * values for "check trigger", "rescan timelines", and "sleep" states,
 	 * those actions are taken when reading from the previous source fails, as
 	 * part of advancing to the next state.
+	 *
+	 * GPDB_93_MERGE_FIXME: In GPDB, currently with no work load running on
+	 * primary, mirror goes in tight loop reading xlog files and switching
+	 * between XLOG_FROM_PG_XLOG to XLOG_FROM_STREAM and back to
+	 * XLOG_FROM_PG_XLOG. This causes 100% cpu utilization on mirror for idle
+	 * primaries. Intended behavior is wait in XLOG_FROM_STREAM for more xlog to
+	 * arrive and receive signal from walreceiver to move forward. So, to
+	 * suppress the behavior for now as GPDB doesn't support archive recovery,
+	 * nor anyone expects to drops xlog files into pg_xlog directory, adding
+	 * code to not move currentSource to XLOG_FROM_PG_XLOG. Once it reaches
+	 * XLOG_FROM_STREAM, stays in XLOG_FROM_STREAM and waits for walreceiver
+	 * correctly. Need to find why GPDB is facing this issue and not upstream.
+	 *
 	 *-------
 	 */
-	if (!InArchiveRecovery)
+	if (!InArchiveRecovery && currentSource != XLOG_FROM_STREAM)
 		currentSource = XLOG_FROM_PG_XLOG;
 	else if (currentSource == 0)
 		currentSource = XLOG_FROM_ARCHIVE;
@@ -10893,7 +10906,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		 * process.
 		 */
 		HandleStartupProcInterrupts();
-	} while (StandbyMode);
+	}
 
 	return false;
 }
