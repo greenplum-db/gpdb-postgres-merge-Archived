@@ -339,8 +339,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
 		naliases = 0;
 
-		//GPDB_93_MERGE_FIXME: put back use of OpenPipeStream after it has been merged in
-		locale_a_handle = popen("locale -a", "r");
+		locale_a_handle = OpenPipeStream("locale -a", "r");
 		if (locale_a_handle == NULL)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -449,9 +448,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			}
 		}
 
-
-		//GPDB_93_MERGE_FIXME: put back use of ClosePipestream after it has been merged in
-		pclose(locale_a_handle);
+		ClosePipeStream(locale_a_handle);
 
 		/*
 		 * Before processing the aliases, sort them by locale name.  The point
