@@ -90,15 +90,10 @@ if ($opt{v})
 	print "$sql\n";
 }
 
-<<<<<<< HEAD
-if ( $opt{e} ) {
-	my @plan = map { "$_->[0]\n" } @{$dbi->selectall_arrayref("explain $sql")};
-	print @plan;
-=======
 if ($opt{e})
 {
-	$dbi->do("explain $sql");
->>>>>>> e472b921406407794bab911c64655b8b82375196
+	my @plan = map { "$_->[0]\n" } @{$dbi->selectall_arrayref("explain $sql")};
+	print @plan;
 }
 
 my $t0    = [gettimeofday];
