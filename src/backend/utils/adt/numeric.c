@@ -687,6 +687,12 @@ numeric_out_sci(Numeric num, int scale)
  * long format that was in use before Postgres 9.1 (commit 14534353). If the
  * Numeric is already in long format, it will be returned directly; otherwise a
  * new Numeric will be allocated.
+ *
+ * GPDB_93_MERGE_FIXME: The output result for ap_upgrade test had to be updated
+ * for 9.3 merge compared to before the merge. Since 9.3 should not have
+ * introduced any user-visible change to numeric format, the reason for the
+ * change in values should be investigated and impact of the same should be
+ * evaluated.
  */
 Numeric
 numeric_force_long_format(Numeric num)
@@ -737,7 +743,7 @@ numeric_force_long_format(Numeric num)
 		if (NUMERIC_WEIGHT(result) != weight ||
 			NUMERIC_DSCALE(result) != var.dscale)
 		{
-			char *ntp = get_str_from_var(&var, var.dscale);
+			char *ntp = get_str_from_var(&var);
 
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
