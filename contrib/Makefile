@@ -50,7 +50,6 @@ SUBDIRS = \
 
 # Greenplum-specific additions (to ease merge pain).
 SUBDIRS += \
-		xlogdump \
 		formatter \
 		formatter_fixedwidth \
 		extprotocol \
