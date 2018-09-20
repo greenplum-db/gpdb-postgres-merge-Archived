@@ -619,7 +619,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 	 * If result is pass-by-ref, make sure it is in the right context.
 	 */
 	if (!peraggstate->resulttypeByVal && !*isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
+		!MemoryContextContainsGenericAllocation(CurrentMemoryContext,
 							   DatumGetPointer(*result)))
 		*result = datumCopy(*result,
 							peraggstate->resulttypeByVal,
