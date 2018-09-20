@@ -537,8 +537,6 @@ extern void process_local_preload_libraries(void);
 extern void pg_bindtextdomain(const char *domain);
 extern bool has_rolreplication(Oid roleid);
 
-extern int64 db_dir_size(const char *path); /* implemented in dbsize.c */
-
 /* in access/transam/xlog.c */
 extern bool BackupInProgress(void);
 extern void CancelBackup(void);
