@@ -125,8 +125,11 @@ extern char *output_files[];
  * ("Improve concurrency of foreign key locking") which also updated catalog
  * version to this value.  pg_upgrade behavior depends on whether old and new
  * server versions are both newer than this, or only the new one is.
+ *
+ * In GPDB: that upstream change was merged into GPDB in the big 9.3 merge
+ * commit.
  */
-#define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
+#define MULTIXACT_FORMATCHANGE_CAT_VER 301809211
 
 /*
  * Extra information stored for each Append-only table.
