@@ -981,14 +981,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	locallock->lock = lock;
 
 	/*
-<<<<<<< HEAD
 	 * We shouldn't already hold the desired lock; else locallock table is
 	 * broken.
-=======
-	 * If lock requested conflicts with locks requested by waiters, must join
-	 * wait queue.  Otherwise, check for conflict with already-held locks.
-	 * (That's last because most complex check.)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (Gp_role != GP_ROLE_UTILITY)
 	{
@@ -1048,10 +1042,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			status = STATUS_FOUND;
 		else
 			status = LockCheckConflicts(lockMethodTable, lockmode,
-										lock, proclock, MyProc);
+										lock, proclock);
 	}
 	else
-<<<<<<< HEAD
 	{
 		/*
 		 * We are a reader, check waitMask conflict only if the writer doesn't
@@ -1083,7 +1076,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		{
 			/* Writer holds the same lock, bypass waitMask check. */
 			status = LockCheckConflicts(lockMethodTable, lockmode,
-										lock, proclock, MyProc);
+										lock, proclock);
 		}
 		else
 		{
@@ -1099,13 +1092,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 				status = STATUS_FOUND;
 			else
 				status = LockCheckConflicts(lockMethodTable, lockmode,
-											lock, proclock, MyProc);
+											lock, proclock);
 		}
 	}
-=======
-		status = LockCheckConflicts(lockMethodTable, lockmode,
-									lock, proclock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (status == STATUS_OK)
 	{
@@ -1485,11 +1474,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Rats.  Something conflicts.	But it could still be our own lock. We have
-=======
 	 * Rats.  Something conflicts.  But it could still be my own lock. We have
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * to construct a conflict mask that does not reflect our own locks, but
 	 * only lock types held by other sessions.
 	 */
@@ -1502,7 +1487,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 		 * If I'm not part of MPP session, consider I am only one process
 		 * in a session.
 		 */
-		if (proc->mppSessionId <= 0)
+		if (MyProc->mppSessionId <= 0)
 		{
 			LOCKMASK	myLocks = proclock->holdMask;
 			if (myLocks & LOCKBIT_ON(i))
@@ -1526,7 +1511,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 				 * If processes in my session are holding the lock, mask
 				 * it out so that we won't be blocked by them.
 				 */
-				if (otherProc->mppSessionId == proc->mppSessionId &&
+				if (otherProc->mppSessionId == MyProc->mppSessionId &&
 					otherProclock->holdMask & LOCKBIT_ON(i))
 					ourHolding++;
 
@@ -3546,7 +3531,7 @@ PostPrepare_Locks(TransactionId xid)
 			 * skip over it.
 			 */
 			if (proclock->releaseMask != proclock->holdMask)
-				goto next_item;
+				continue;
 
 			/* Ignore VXID locks */
 			if (lock->tag.locktag_type == LOCKTAG_VIRTUALTRANSACTION)

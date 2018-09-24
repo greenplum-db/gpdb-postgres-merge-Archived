@@ -44,11 +44,7 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
-<<<<<<< HEAD
-#include "postmaster/fts.h"
-=======
 #include "replication/slot.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
@@ -69,9 +65,10 @@
 #include "cdb/cdbtm.h"
 #include "cdb/cdbvars.h"  /*Gp_is_writer*/
 #include "port/atomics.h"
-#include "utils/session_state.h"
+#include "postmaster/fts.h"
 #include "tcop/idle_resource_cleaner.h"
 #include "utils/resscheduler.h"
+#include "utils/session_state.h"
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;
@@ -965,17 +962,15 @@ ProcKill(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 
-<<<<<<< HEAD
 	MyProc->localDistribXactData.state = LOCALDISTRIBXACT_STATE_NONE;
     MyProc->mppLocalProcessSerial = 0;
     MyProc->mppSessionId = 0;
     MyProc->mppIsWriter = false;
 	MyProc->pid = 0;
-=======
+
 	/* Make sure active replication slots are released */
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Clear MyProc first; then disown the process latch.  This is so that
@@ -1057,11 +1052,7 @@ AuxiliaryProcKill(int code, Datum arg)
 	SpinLockAcquire(ProcStructLock);
 
 	/* Mark auxiliary proc no longer in use */
-<<<<<<< HEAD
-	MyProc->pid = 0;
-=======
 	proc->pid = 0;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Update shared estimate of spins_per_delay */
 	update_spins_per_delay();
