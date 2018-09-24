@@ -19,16 +19,20 @@
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *	In some cases ExecutorRun may be called multiple times to process all
- *	the tuples for a plan.	It is also acceptable to stop short of executing
+ *	the tuples for a plan.  It is also acceptable to stop short of executing
  *	the whole plan (but only if it is a SELECT).
  *
  *	ExecutorFinish must be called after the final ExecutorRun call and
  *	before ExecutorEnd.  This can be omitted only in case of EXPLAIN,
  *	which should also omit ExecutorRun.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -47,6 +51,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
+<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
 #include "catalog/aoseg.h"
 #include "catalog/aoblkdir.h"
@@ -59,6 +64,9 @@
 #include "commands/createas.h"
 #include "commands/tablecmds.h" /* XXX: temp for get_parts() */
 #include "commands/tablespace.h"
+=======
+#include "commands/matview.h"
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
@@ -132,6 +140,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			DestReceiver *dest);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
+							  TupleDesc tupdesc,
 							  int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
@@ -1054,12 +1063,12 @@ standard_ExecutorRun(QueryDesc *queryDesc,
  *		ExecutorFinish
  *
  *		This routine must be called after the last ExecutorRun call.
- *		It performs cleanup such as firing AFTER triggers.	It is
+ *		It performs cleanup such as firing AFTER triggers.  It is
  *		separate from ExecutorEnd because EXPLAIN ANALYZE needs to
  *		include these actions in the total runtime.
  *
  *		We provide a function hook variable that lets loadable plugins
- *		get control when ExecutorFinish is called.	Such a plugin would
+ *		get control when ExecutorFinish is called.  Such a plugin would
  *		normally call standard_ExecutorFinish().
  *
  * ----------------------------------------------------------------
@@ -1404,7 +1413,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * userid to check as: current user unless we have a setuid indication.
 	 *
 	 * Note: GetUserId() is presently fast enough that there's no harm in
-	 * calling it separately for each RTE.	If that stops being true, we could
+	 * calling it separately for each RTE.  If that stops being true, we could
 	 * call it once in ExecCheckRTPerms and pass the userid down from there.
 	 * But for now, no need for the extra clutter.
 	 */
@@ -1966,6 +1975,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * If alien elimination is not turned on, then all subplans are considered
 		 * reachable.
 		 */
+<<<<<<< HEAD
 		if (!estate->eliminateAliens || bms_is_member(subplan_idx, locallyExecutableSubplans))
 		{
 			/*
@@ -1974,6 +1984,11 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 * GPDB: We always set the REWIND flag, to delay eagerfree.
 			 */
 			sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
+=======
+		sp_eflags = eflags
+			& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
+		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			sp_eflags |= EXEC_FLAG_REWIND;
 
 			Plan	   *subplan = (Plan *) lfirst(l);
@@ -2139,7 +2154,7 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						   errmsg("cannot insert into view \"%s\"",
 								  RelationGetRelationName(resultRel)),
-						   errhint("To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
+						   errhint("To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.")));
 					break;
 				case CMD_UPDATE:
 					if (!trigDesc || !trigDesc->trig_update_instead_row)
@@ -2147,7 +2162,7 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						   errmsg("cannot update view \"%s\"",
 								  RelationGetRelationName(resultRel)),
-						   errhint("To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
+						   errhint("To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.")));
 					break;
 				case CMD_DELETE:
 					if (!trigDesc || !trigDesc->trig_delete_instead_row)
@@ -2155,7 +2170,7 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						   errmsg("cannot delete from view \"%s\"",
 								  RelationGetRelationName(resultRel)),
-						   errhint("To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
+						   errhint("To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.")));
 					break;
 				default:
 					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
@@ -2163,10 +2178,11 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 			}
 			break;
 		case RELKIND_MATVIEW:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change materialized view \"%s\"",
-							RelationGetRelationName(resultRel))));
+			if (!MatViewIncrementalMaintenanceIsEnabled())
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("cannot change materialized view \"%s\"",
+								RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			/* Okay only if the FDW supports it */
@@ -2286,14 +2302,15 @@ CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 							RelationGetRelationName(rel))));
 			break;
 		case RELKIND_MATVIEW:
-			/* Should not get here */
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot lock rows in materialized view \"%s\"",
-							RelationGetRelationName(rel))));
+			/* Allow referencing a matview, but not actual locking clauses */
+			if (markType != ROW_MARK_REFERENCE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					   errmsg("cannot lock rows in materialized view \"%s\"",
+							  RelationGetRelationName(rel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			/* Should not get here */
+			/* Should not get here; planner should have used ROW_MARK_COPY */
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot lock rows in foreign table \"%s\"",
@@ -2499,7 +2516,7 @@ ResultRelInfoSetSegno(ResultRelInfo *resultRelInfo, List *mapping)
  * if so it doesn't matter which one we pick.)  However, it is sometimes
  * necessary to fire triggers on other relations; this happens mainly when an
  * RI update trigger queues additional triggers on other relations, which will
- * be processed in the context of the outer query.	For efficiency's sake,
+ * be processed in the context of the outer query.  For efficiency's sake,
  * we want to have a ResultRelInfo for those triggers too; that can avoid
  * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
  * ANALYZE to report the runtimes of such triggers.)  So we make additional
@@ -2536,7 +2553,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	/*
 	 * Open the target relation's relcache entry.  We assume that an
 	 * appropriate lock is still held by the backend from whenever the trigger
-	 * event got queued, so we need take no new lock here.	Also, we need not
+	 * event got queued, so we need take no new lock here.  Also, we need not
 	 * recheck the relkind, so no need for CheckValidResultRel.
 	 */
 	rel = heap_open(relid, NoLock);
@@ -2716,7 +2733,7 @@ ExecPostprocessPlan(EState *estate)
 
 	/*
 	 * Run any secondary ModifyTable nodes to completion, in case the main
-	 * query did not fetch all rows from them.	(We do this to ensure that
+	 * query did not fetch all rows from them.  (We do this to ensure that
 	 * such nodes have predictable results.)
 	 */
 	foreach(lc, estate->es_auxmodifytables)
@@ -3026,25 +3043,28 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
-	TupleConstr *constr = rel->rd_att->constr;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	TupleConstr *constr = tupdesc->constr;
 
 	Assert(constr);
 
 	if (constr->has_not_null)
 	{
-		int			natts = rel->rd_att->natts;
+		int			natts = tupdesc->natts;
 		int			attrChk;
 
 		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
-			if (rel->rd_att->attrs[attrChk - 1]->attnotnull &&
+			if (tupdesc->attrs[attrChk - 1]->attnotnull &&
 				slot_attisnull(slot, attrChk))
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						  NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
+							  NameStr(tupdesc->attrs[attrChk - 1]->attname)),
 						 errdetail("Failing row contains %s.",
-								   ExecBuildSlotValueDescription(slot, 64)),
+								   ExecBuildSlotValueDescription(slot,
+																 tupdesc,
+																 64)),
 						 errtablecol(rel, attrChk)));
 		}
 	}
@@ -3059,8 +3079,56 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
 					 errdetail("Failing row contains %s.",
-							   ExecBuildSlotValueDescription(slot, 64)),
+							   ExecBuildSlotValueDescription(slot,
+															 tupdesc,
+															 64)),
 					 errtableconstraint(rel, failed)));
+	}
+}
+
+/*
+ * ExecWithCheckOptions -- check that tuple satisfies any WITH CHECK OPTIONs
+ */
+void
+ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
+					 TupleTableSlot *slot, EState *estate)
+{
+	ExprContext *econtext;
+	ListCell   *l1,
+			   *l2;
+
+	/*
+	 * We will use the EState's per-tuple context for evaluating constraint
+	 * expressions (creating it if it's not already there).
+	 */
+	econtext = GetPerTupleExprContext(estate);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
+
+	/* Check each of the constraints */
+	forboth(l1, resultRelInfo->ri_WithCheckOptions,
+			l2, resultRelInfo->ri_WithCheckOptionExprs)
+	{
+		WithCheckOption *wco = (WithCheckOption *) lfirst(l1);
+		ExprState  *wcoExpr = (ExprState *) lfirst(l2);
+
+		/*
+		 * WITH CHECK OPTION checks are intended to ensure that the new tuple
+		 * is visible in the view.  If the view's qual evaluates to NULL, then
+		 * the new tuple won't be included in the view.  Therefore we need to
+		 * tell ExecQual to return FALSE for NULL (the opposite of what we do
+		 * above for CHECK constraints).
+		 */
+		if (!ExecQual((List *) wcoExpr, econtext, false))
+			ereport(ERROR,
+					(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
+				 errmsg("new row violates WITH CHECK OPTION for view \"%s\"",
+						wco->viewname),
+					 errdetail("Failing row contains %s.",
+							   ExecBuildSlotValueDescription(slot,
+							RelationGetDescr(resultRelInfo->ri_RelationDesc),
+															 64))));
 	}
 }
 
@@ -3068,15 +3136,22 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
  * ExecBuildSlotValueDescription -- construct a string representing a tuple
  *
  * This is intentionally very similar to BuildIndexValueDescription, but
- * unlike that function, we truncate long field values.  That seems necessary
- * here since heap field values could be very long, whereas index entries
- * typically aren't so wide.
+ * unlike that function, we truncate long field values (to at most maxfieldlen
+ * bytes).  That seems necessary here since heap field values could be very
+ * long, whereas index entries typically aren't so wide.
+ *
+ * Also, unlike the case with index entries, we need to be prepared to ignore
+ * dropped columns.  We used to use the slot's tuple descriptor to decode the
+ * data, but the slot's descriptor doesn't identify dropped columns, so we
+ * now need to be passed the relation's descriptor.
  */
 static char *
-ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
+ExecBuildSlotValueDescription(TupleTableSlot *slot,
+							  TupleDesc tupdesc,
+							  int maxfieldlen)
 {
 	StringInfoData buf;
-	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
+	bool		write_comma = false;
 	int			i;
 
 	/* Make sure the tuple is fully deconstructed */
@@ -3091,7 +3166,15 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 		char	   *val;
 		int			vallen;
 
+<<<<<<< HEAD
 		if (slot->PRIVATE_tts_isnull[i])
+=======
+		/* ignore dropped columns */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		if (slot->tts_isnull[i])
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			val = "null";
 		else
 		{
@@ -3103,8 +3186,10 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 			val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
 		}
 
-		if (i > 0)
+		if (write_comma)
 			appendStringInfoString(&buf, ", ");
+		else
+			write_comma = true;
 
 		/* truncate if needed */
 		vallen = strlen(val);
@@ -3250,7 +3335,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	*tid = copyTuple->t_self;
 
 	/*
-	 * Need to run a recheck subquery.	Initialize or reinitialize EPQ state.
+	 * Need to run a recheck subquery.  Initialize or reinitialize EPQ state.
 	 */
 	EvalPlanQualBegin(epqstate, estate);
 
@@ -3333,7 +3418,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
-			 * recycled and reused for an unrelated tuple.	This implies that
+			 * recycled and reused for an unrelated tuple.  This implies that
 			 * the latest version of the row was deleted, so we need do
 			 * nothing.  (Should be safe to examine xmin without getting
 			 * buffer's content lock, since xmin never changes in an existing
@@ -3357,7 +3442,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			if (TransactionIdIsValid(SnapshotDirty.xmax))
 			{
 				ReleaseBuffer(buffer);
-				XactLockTableWait(SnapshotDirty.xmax);
+				XactLockTableWait(SnapshotDirty.xmax,
+								  relation, &tuple.t_data->t_ctid,
+								  XLTW_FetchUpdated);
 				continue;		/* loop back to repeat heap_fetch */
 			}
 
@@ -3572,7 +3659,7 @@ EvalPlanQualGetTuple(EPQState *epqstate, Index rti)
 
 /*
  * Fetch the current row values for any non-locked relations that need
- * to be scanned by an EvalPlanQual operation.	origslot must have been set
+ * to be scanned by an EvalPlanQual operation.  origslot must have been set
  * to contain the current result row (top-level row) that we need to recheck.
  */
 void
@@ -3800,7 +3887,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 
 	/*
 	 * Each EState must have its own es_epqScanDone state, but if we have
-	 * nested EPQ checks they should share es_epqTuple arrays.	This allows
+	 * nested EPQ checks they should share es_epqTuple arrays.  This allows
 	 * sub-rechecks to inherit the values being examined by an outer recheck.
 	 */
 	estate->es_epqScanDone = (bool *) palloc0(rtsize * sizeof(bool));
@@ -3857,7 +3944,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
  *
  * This is a cut-down version of ExecutorEnd(); basically we want to do most
  * of the normal cleanup, but *not* close result relations (which we are
- * just sharing from the outer query).	We do, however, have to close any
+ * just sharing from the outer query).  We do, however, have to close any
  * trigger target relations that got opened, since those are not shared.
  * (There probably shouldn't be any of the latter, but just in case...)
  */

@@ -1585,6 +1585,7 @@ SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
             | 2001 1 1 1 1 1 1
 (65 rows)
 
+<<<<<<< HEAD
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
  to_timestamp_1 |         to_timestamp         
@@ -1758,3 +1759,12 @@ select '200906251230021.111111111111'::timestamp;
 ERROR:  invalid input syntax for type timestamp: "200906251230021.111111111111"
 LINE 1: select '200906251230021.111111111111'::timestamp;
                ^
+=======
+-- timestamp numeric fields constructor
+SELECT make_timestamp(2014,12,28,6,30,45.887);
+        make_timestamp        
+------------------------------
+ Sun Dec 28 06:30:45.887 2014
+(1 row)
+
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237

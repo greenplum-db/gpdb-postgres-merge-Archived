@@ -3,9 +3,13 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -310,11 +314,11 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * The fuzz_factor argument must be 1.0 plus delta, where delta is the
  * fraction of the smaller cost that is considered to be a significant
- * difference.	For example, fuzz_factor = 1.01 makes the fuzziness limit
+ * difference.  For example, fuzz_factor = 1.01 makes the fuzziness limit
  * be 1% of the smaller cost.
  *
  * The two paths are said to have "equal" costs if both startup and total
- * costs are fuzzily the same.	Path1 is said to be better than path2 if
+ * costs are fuzzily the same.  Path1 is said to be better than path2 if
  * it has fuzzily better startup cost and fuzzily no worse total cost,
  * or if it has fuzzily better total cost and fuzzily no worse startup cost.
  * Path2 is better than path1 if the reverse holds.  Finally, if one path
@@ -390,12 +394,12 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor,
  *
  * cheapest_total_path is normally the cheapest-total-cost unparameterized
  * path; but if there are no unparameterized paths, we assign it to be the
- * best (cheapest least-parameterized) parameterized path.	However, only
+ * best (cheapest least-parameterized) parameterized path.  However, only
  * unparameterized paths are considered candidates for cheapest_startup_path,
  * so that will be NULL if there are no unparameterized paths.
  *
  * The cheapest_parameterized_paths list collects all parameterized paths
- * that have survived the add_path() tournament for this relation.	(Since
+ * that have survived the add_path() tournament for this relation.  (Since
  * add_path ignores pathkeys and startup cost for a parameterized path,
  * these will be paths that have best total cost or best row count for their
  * parameterization.)  cheapest_parameterized_paths always includes the
@@ -625,7 +629,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		p1_next = lnext(p1);
 
 		/*
-		 * Do a fuzzy cost comparison with 1% fuzziness limit.	(XXX does this
+		 * Do a fuzzy cost comparison with 1% fuzziness limit.  (XXX does this
 		 * percentage need to be user-configurable?)
 		 */
 		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01,
@@ -858,7 +862,7 @@ cdb_add_join_path(PlannerInfo *root, RelOptInfo *parent_rel, JoinType orig_joint
  *	  and have lower bounds for its costs.
  *
  * Note that we do not know the path's rowcount, since getting an estimate for
- * that is too expensive to do before prechecking.	We assume here that paths
+ * that is too expensive to do before prechecking.  We assume here that paths
  * of a superset parameterization will generate fewer rows; if that holds,
  * then paths with different parameterizations cannot dominate each other
  * and so we can simply ignore existing paths of another parameterization.
@@ -1258,7 +1262,7 @@ create_append_path(PlannerInfo *root, RelOptInfo *rel, List *subpaths, Relids re
 	 * Compute rows and costs as sums of subplan rows and costs.  We charge
 	 * nothing extra for the Append itself, which perhaps is too optimistic,
 	 * but since it doesn't do any selection or projection, it is a pretty
-	 * cheap node.	If you change this, see also make_append().
+	 * cheap node.  If you change this, see also make_append().
 	 */
 	pathnode->path.rows = 0;
 	pathnode->path.startup_cost = 0;
@@ -2290,7 +2294,7 @@ translate_sub_tlist(List *tlist, int relid)
  *
  * colnos is an integer list of output column numbers (resno's).  We are
  * interested in whether rows consisting of just these columns are certain
- * to be distinct.	"Distinctness" is defined according to whether the
+ * to be distinct.  "Distinctness" is defined according to whether the
  * corresponding upper-level equality operators listed in opids would think
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
@@ -2428,7 +2432,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
  * distinct_col_search - subroutine for query_is_distinct_for
  *
  * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.	(We expect colnos does not contain duplicates,
+ * else return InvalidOid.  (We expect colnos does not contain duplicates,
  * so the result is well-defined.)
  */
 static Oid
@@ -2479,8 +2483,12 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
  */
 Path *
 create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
+<<<<<<< HEAD
 						 RangeTblEntry *rte,
 						 Relids required_outer)
+=======
+						 List *pathkeys, Relids required_outer)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -2488,7 +2496,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
-	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
+	pathnode->pathkeys = pathkeys;
 
 	/*
 	 * If the function desires to run on segments, mark randomly-distributed.
@@ -3225,10 +3233,10 @@ create_hashjoin_path(PlannerInfo *root,
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
-	 * unpredictable due to possible batching.	XXX If the inner relation is
+	 * unpredictable due to possible batching.  XXX If the inner relation is
 	 * small enough, we could instruct the executor that it must not batch,
 	 * and then we could assume that the output inherits the outer relation's
-	 * ordering, which might save a sort step.	However there is considerable
+	 * ordering, which might save a sort step.  However there is considerable
 	 * downside if our estimate of the inner relation size is badly off. For
 	 * the moment we don't risk it.  (Note also that if we wanted to take this
 	 * seriously, joinpath.c would have to consider many more paths for the
@@ -3280,7 +3288,7 @@ create_hashjoin_path(PlannerInfo *root,
  * same parameterization level, ensuring that they all enforce the same set
  * of join quals (and thus that that parameterization can be attributed to
  * an append path built from such paths).  Currently, only a few path types
- * are supported here, though more could be added at need.	We return NULL
+ * are supported here, though more could be added at need.  We return NULL
  * if we can't reparameterize the given path.
  *
  * Note: we intentionally do not pass created paths to add_path(); it would
@@ -3312,7 +3320,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				/*
 				 * We can't use create_index_path directly, and would not want
 				 * to because it would re-compute the indexqual conditions
-				 * which is wasted effort.	Instead we hack things a bit:
+				 * which is wasted effort.  Instead we hack things a bit:
 				 * flat-copy the path node, revise its param_info, and redo
 				 * the cost estimate.
 				 */

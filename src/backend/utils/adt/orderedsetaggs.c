@@ -3,7 +3,11 @@
  * orderedsetaggs.c
  *		Ordered-set aggregate functions.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,7 +27,10 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
+<<<<<<< HEAD
 #include "parser/parse_expr.h"
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -33,6 +40,7 @@
 
 /*
  * Generic support for ordered-set aggregates
+<<<<<<< HEAD
  */
 
 typedef struct OrderedSetAggState
@@ -43,6 +51,27 @@ typedef struct OrderedSetAggState
 	Tuplesortstate *sortstate;
 	/* Number of normal rows inserted into sortstate: */
 	int64		number_of_rows;
+=======
+ *
+ * The state for an ordered-set aggregate is divided into a per-group struct
+ * (which is the internal-type transition state datum returned to nodeAgg.c)
+ * and a per-query struct, which contains data and sub-objects that we can
+ * create just once per query because they will not change across groups.
+ * The per-query struct and subsidiary data live in the executor's per-query
+ * memory context, and go away implicitly at ExecutorEnd().
+ */
+
+typedef struct OSAPerQueryState
+{
+	/* Aggref for this aggregate: */
+	Aggref	   *aggref;
+	/* Memory context containing this struct and other per-query data: */
+	MemoryContext qcontext;
+	/* Memory context containing per-group data: */
+	MemoryContext gcontext;
+	/* Agg plan node's output econtext: */
+	ExprContext *peraggecontext;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* These fields are used only when accumulating tuples: */
 
@@ -50,10 +79,23 @@ typedef struct OrderedSetAggState
 	TupleDesc	tupdesc;
 	/* Tuple slot we can use for inserting/extracting tuples: */
 	TupleTableSlot *tupslot;
+<<<<<<< HEAD
+=======
+	/* Per-sort-column sorting information */
+	int			numSortCols;
+	AttrNumber *sortColIdx;
+	Oid		   *sortOperators;
+	Oid		   *eqOperators;
+	Oid		   *sortCollations;
+	bool	   *sortNullsFirsts;
+	/* Equality operator call info, created only if needed: */
+	FmgrInfo   *equalfns;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* These fields are used only when accumulating datums: */
 
 	/* Info about datatype of datums being sorted: */
+<<<<<<< HEAD
 	Oid			datumtype;
 	int16		typLen;
 	bool		typByVal;
@@ -61,6 +103,30 @@ typedef struct OrderedSetAggState
 	/* Info about equality operator associated with sort operator: */
 	Oid			eqOperator;
 } OrderedSetAggState;
+=======
+	Oid			sortColType;
+	int16		typLen;
+	bool		typByVal;
+	char		typAlign;
+	/* Info about sort ordering: */
+	Oid			sortOperator;
+	Oid			eqOperator;
+	Oid			sortCollation;
+	bool		sortNullsFirst;
+	/* Equality operator call info, created only if needed: */
+	FmgrInfo	equalfn;
+} OSAPerQueryState;
+
+typedef struct OSAPerGroupState
+{
+	/* Link to the per-query state for this aggregate: */
+	OSAPerQueryState *qstate;
+	/* Sort object we're accumulating data in: */
+	Tuplesortstate *sortstate;
+	/* Number of normal rows inserted into sortstate: */
+	int64		number_of_rows;
+} OSAPerGroupState;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 static void ordered_set_shutdown(Datum arg);
 
@@ -68,6 +134,7 @@ static void ordered_set_shutdown(Datum arg);
 /*
  * Set up working state for an ordered-set aggregate
  */
+<<<<<<< HEAD
 static OrderedSetAggState *
 ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 {
@@ -125,10 +192,156 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		{
 			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
 			TargetEntry *tle = get_sortgroupclause_tle(sortcl, aggref->args);
+=======
+static OSAPerGroupState *
+ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
+{
+	OSAPerGroupState *osastate;
+	OSAPerQueryState *qstate;
+	MemoryContext oldcontext;
+
+	/*
+	 * We keep a link to the per-query state in fn_extra; if it's not there,
+	 * create it, and do the per-query setup we need.
+	 */
+	qstate = (OSAPerQueryState *) fcinfo->flinfo->fn_extra;
+	if (qstate == NULL)
+	{
+		Aggref	   *aggref;
+		MemoryContext qcontext;
+		MemoryContext gcontext;
+		ExprContext *peraggecontext;
+		List	   *sortlist;
+		int			numSortCols;
+
+		/*
+		 * Check we're called as aggregate (and not a window function), and
+		 * get the Agg node's group-lifespan context
+		 */
+		if (AggCheckCallContext(fcinfo, &gcontext) != AGG_CONTEXT_AGGREGATE)
+			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+		/* Need the Aggref as well */
+		aggref = AggGetAggref(fcinfo);
+		if (!aggref)
+			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+		if (!AGGKIND_IS_ORDERED_SET(aggref->aggkind))
+			elog(ERROR, "ordered-set aggregate support function called for non-ordered-set aggregate");
+		/* Also get output exprcontext so we can register shutdown callback */
+		peraggecontext = AggGetPerAggEContext(fcinfo);
+		if (!peraggecontext)
+			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+
+		/*
+		 * Prepare per-query structures in the fn_mcxt, which we assume is the
+		 * executor's per-query context; in any case it's the right place to
+		 * keep anything found via fn_extra.
+		 */
+		qcontext = fcinfo->flinfo->fn_mcxt;
+		oldcontext = MemoryContextSwitchTo(qcontext);
+
+		qstate = (OSAPerQueryState *) palloc0(sizeof(OSAPerQueryState));
+		qstate->aggref = aggref;
+		qstate->qcontext = qcontext;
+		qstate->gcontext = gcontext;
+		qstate->peraggecontext = peraggecontext;
+
+		/* Extract the sort information */
+		sortlist = aggref->aggorder;
+		numSortCols = list_length(sortlist);
+
+		if (use_tuples)
+		{
+			bool		ishypothetical = (aggref->aggkind == AGGKIND_HYPOTHETICAL);
+			ListCell   *lc;
+			int			i;
+
+			if (ishypothetical)
+				numSortCols++;	/* make space for flag column */
+			qstate->numSortCols = numSortCols;
+			qstate->sortColIdx = (AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
+			qstate->sortOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->eqOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->sortCollations = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->sortNullsFirsts = (bool *) palloc(numSortCols * sizeof(bool));
+
+			i = 0;
+			foreach(lc, sortlist)
+			{
+				SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc);
+				TargetEntry *tle = get_sortgroupclause_tle(sortcl,
+														   aggref->args);
+
+				/* the parser should have made sure of this */
+				Assert(OidIsValid(sortcl->sortop));
+
+				qstate->sortColIdx[i] = tle->resno;
+				qstate->sortOperators[i] = sortcl->sortop;
+				qstate->eqOperators[i] = sortcl->eqop;
+				qstate->sortCollations[i] = exprCollation((Node *) tle->expr);
+				qstate->sortNullsFirsts[i] = sortcl->nulls_first;
+				i++;
+			}
+
+			if (ishypothetical)
+			{
+				/* Add an integer flag column as the last sort column */
+				qstate->sortColIdx[i] = list_length(aggref->args) + 1;
+				qstate->sortOperators[i] = Int4LessOperator;
+				qstate->eqOperators[i] = Int4EqualOperator;
+				qstate->sortCollations[i] = InvalidOid;
+				qstate->sortNullsFirsts[i] = false;
+				i++;
+			}
+
+			Assert(i == numSortCols);
+
+			/*
+			 * Get a tupledesc corresponding to the aggregated inputs
+			 * (including sort expressions) of the agg.
+			 */
+			qstate->tupdesc = ExecTypeFromTL(aggref->args, false);
+
+			/* If we need a flag column, hack the tupledesc to include that */
+			if (ishypothetical)
+			{
+				TupleDesc	newdesc;
+				int			natts = qstate->tupdesc->natts;
+
+				newdesc = CreateTemplateTupleDesc(natts + 1, false);
+				for (i = 1; i <= natts; i++)
+					TupleDescCopyEntry(newdesc, i, qstate->tupdesc, i);
+
+				TupleDescInitEntry(newdesc,
+								   (AttrNumber) ++natts,
+								   "flag",
+								   INT4OID,
+								   -1,
+								   0);
+
+				FreeTupleDesc(qstate->tupdesc);
+				qstate->tupdesc = newdesc;
+			}
+
+			/* Create slot we'll use to store/retrieve rows */
+			qstate->tupslot = MakeSingleTupleTableSlot(qstate->tupdesc);
+		}
+		else
+		{
+			/* Sort single datums */
+			SortGroupClause *sortcl;
+			TargetEntry *tle;
+
+			if (numSortCols != 1 || aggref->aggkind == AGGKIND_HYPOTHETICAL)
+				elog(ERROR, "ordered-set aggregate support function does not support multiple aggregated columns");
+
+			sortcl = (SortGroupClause *) linitial(sortlist);
+			tle = get_sortgroupclause_tle(sortcl, aggref->args);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			/* the parser should have made sure of this */
 			Assert(OidIsValid(sortcl->sortop));
 
+<<<<<<< HEAD
 			sortColIdx[i] = tle->resno;
 			sortOperators[i] = sortcl->sortop;
 			sortCollations[i] = exprCollation((Node *) tle->expr);
@@ -239,6 +452,53 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 
 	/* Now register a shutdown callback to clean it all up */
 	RegisterExprContextCallback(peraggecontext,
+=======
+			/* Save sort ordering info */
+			qstate->sortColType = exprType((Node *) tle->expr);
+			qstate->sortOperator = sortcl->sortop;
+			qstate->eqOperator = sortcl->eqop;
+			qstate->sortCollation = exprCollation((Node *) tle->expr);
+			qstate->sortNullsFirst = sortcl->nulls_first;
+
+			/* Save datatype info */
+			get_typlenbyvalalign(qstate->sortColType,
+								 &qstate->typLen,
+								 &qstate->typByVal,
+								 &qstate->typAlign);
+		}
+
+		fcinfo->flinfo->fn_extra = (void *) qstate;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* Now build the stuff we need in group-lifespan context */
+	oldcontext = MemoryContextSwitchTo(qstate->gcontext);
+
+	osastate = (OSAPerGroupState *) palloc(sizeof(OSAPerGroupState));
+	osastate->qstate = qstate;
+
+	/* Initialize tuplesort object */
+	if (use_tuples)
+		osastate->sortstate = tuplesort_begin_heap(qstate->tupdesc,
+												   qstate->numSortCols,
+												   qstate->sortColIdx,
+												   qstate->sortOperators,
+												   qstate->sortCollations,
+												   qstate->sortNullsFirsts,
+												   work_mem, false);
+	else
+		osastate->sortstate = tuplesort_begin_datum(qstate->sortColType,
+													qstate->sortOperator,
+													qstate->sortCollation,
+													qstate->sortNullsFirst,
+													work_mem, false);
+
+	osastate->number_of_rows = 0;
+
+	/* Now register a shutdown callback to clean things up */
+	RegisterExprContextCallback(qstate->peraggecontext,
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 								ordered_set_shutdown,
 								PointerGetDatum(osastate));
 
@@ -250,9 +510,17 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 /*
  * Clean up when evaluation of an ordered-set aggregate is complete.
  *
+<<<<<<< HEAD
  * We don't need to bother freeing objects in the aggcontext memory context,
  * since that will get reset anyway by nodeAgg.c, but we should take care to
  * release any potential non-memory resources.
+=======
+ * We don't need to bother freeing objects in the per-group memory context,
+ * since that will get reset anyway by nodeAgg.c; nor should we free anything
+ * in the per-query context, which will get cleared (if this was the last
+ * group) by ExecutorEnd.  But we must take care to release any potential
+ * non-memory resources.
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * This callback is arguably unnecessary, since we don't support use of
  * ordered-set aggs in AGG_HASHED mode and there is currently no non-error
@@ -266,16 +534,25 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 static void
 ordered_set_shutdown(Datum arg)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate = (OrderedSetAggState *) DatumGetPointer(arg);
+=======
+	OSAPerGroupState *osastate = (OSAPerGroupState *) DatumGetPointer(arg);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Tuplesort object might have temp files. */
 	if (osastate->sortstate)
 		tuplesort_end(osastate->sortstate);
 	osastate->sortstate = NULL;
 	/* The tupleslot probably can't be holding a pin, but let's be safe. */
+<<<<<<< HEAD
 	if (osastate->tupslot)
 		ExecDropSingleTupleTableSlot(osastate->tupslot);
 	osastate->tupslot = NULL;
+=======
+	if (osastate->qstate->tupslot)
+		ExecClearTuple(osastate->qstate->tupslot);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 
@@ -286,18 +563,26 @@ ordered_set_shutdown(Datum arg)
 Datum
 ordered_set_transition(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If first call, create the transition state workspace */
 	if (PG_ARGISNULL(0))
 		osastate = ordered_set_startup(fcinfo, false);
 	else
+<<<<<<< HEAD
 	{
 		/* safety check */
 		if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 			elog(ERROR, "ordered-set aggregate called in non-aggregate context");
 		osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
 	}
+=======
+		osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Load the datum into the tuplesort object, but only if it's not null */
 	if (!PG_ARGISNULL(1))
@@ -316,7 +601,11 @@ ordered_set_transition(PG_FUNCTION_ARGS)
 Datum
 ordered_set_transition_multi(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	TupleTableSlot *slot;
 	int			nargs;
 	int			i;
@@ -325,6 +614,7 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		osastate = ordered_set_startup(fcinfo, true);
 	else
+<<<<<<< HEAD
 	{
 		/* safety check */
 		if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
@@ -334,10 +624,17 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 
 	/* Form a tuple from all the other inputs besides the transition value */
 	slot = osastate->tupslot;
+=======
+		osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+
+	/* Form a tuple from all the other inputs besides the transition value */
+	slot = osastate->qstate->tupslot;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ExecClearTuple(slot);
 	nargs = PG_NARGS() - 1;
 	for (i = 0; i < nargs; i++)
 	{
+<<<<<<< HEAD
 		slot->PRIVATE_tts_values[i] = PG_GETARG_DATUM(i + 1);
 		slot->PRIVATE_tts_isnull[i] = PG_ARGISNULL(i + 1);
 	}
@@ -346,6 +643,16 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 		/* Add a zero flag value to mark this row as a normal input row */
 		slot->PRIVATE_tts_values[i] = Int32GetDatum(0);
 		slot->PRIVATE_tts_isnull[i] = false;
+=======
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
+	}
+	if (osastate->qstate->aggref->aggkind == AGGKIND_HYPOTHETICAL)
+	{
+		/* Add a zero flag value to mark this row as a normal input row */
+		slot->tts_values[i] = Int32GetDatum(0);
+		slot->tts_isnull[i] = false;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		i++;
 	}
 	Assert(i == slot->tts_tupleDescriptor->natts);
@@ -365,15 +672,23 @@ ordered_set_transition_multi(PG_FUNCTION_ARGS)
 Datum
 percentile_disc_final(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	double		percentile;
 	Datum		val;
 	bool		isnull;
 	int64		rownum;
 
+<<<<<<< HEAD
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Get and check the percentile argument */
 	if (PG_ARGISNULL(1))
@@ -391,7 +706,11 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* number_of_rows could be zero if we only saw NULL input values */
 	if (osastate->number_of_rows == 0)
@@ -420,7 +739,11 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 
 	/*
 	 * Note: we *cannot* clean up the tuplesort object here, because the value
+<<<<<<< HEAD
 	 * to be returned is allocated inside its sortcontext.	We could use
+=======
+	 * to be returned is allocated inside its sortcontext.  We could use
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * datumCopy to copy it out of there, but it doesn't seem worth the
 	 * trouble, since the cleanup callback will clear the tuplesort later.
 	 */
@@ -460,6 +783,7 @@ interval_lerp(Datum lo, Datum hi, double pct)
 	return DirectFunctionCall2(interval_pl, mul_result, lo);
 }
 
+<<<<<<< HEAD
 static Datum
 timestamp_lerp(Datum lo, Datum hi, double pct)
 {
@@ -496,6 +820,8 @@ timestamptz_lerp(Datum lo, Datum hi, double pct)
 	return TimestampTzGetDatum(lo + mul_result);
 }
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * Continuous percentile
  */
@@ -504,7 +830,11 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 							 Oid expect_type,
 							 LerpFunc lerpfunc)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	double		percentile;
 	int64		first_row = 0;
 	int64		second_row = 0;
@@ -514,9 +844,13 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 	double		proportion;
 	bool		isnull;
 
+<<<<<<< HEAD
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Get and check the percentile argument */
 	if (PG_ARGISNULL(1))
@@ -534,13 +868,21 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* number_of_rows could be zero if we only saw NULL input values */
 	if (osastate->number_of_rows == 0)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	Assert(expect_type == osastate->datumtype);
+=======
+	Assert(expect_type == osastate->qstate->sortColType);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Finish the sort */
 	tuplesort_performsort(osastate->sortstate);
@@ -576,15 +918,23 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 
 	/*
 	 * Note: we *cannot* clean up the tuplesort object here, because the value
+<<<<<<< HEAD
 	 * to be returned may be allocated inside its sortcontext.	We could use
+=======
+	 * to be returned may be allocated inside its sortcontext.  We could use
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * datumCopy to copy it out of there, but it doesn't seem worth the
 	 * trouble, since the cleanup callback will clear the tuplesort later.
 	 */
 
+<<<<<<< HEAD
 	if (isnull)
 		PG_RETURN_NULL();
 	else
 		PG_RETURN_DATUM(val);
+=======
+	PG_RETURN_DATUM(val);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -605,6 +955,7 @@ percentile_cont_interval_final(PG_FUNCTION_ARGS)
 	return percentile_cont_final_common(fcinfo, INTERVALOID, interval_lerp);
 }
 
+<<<<<<< HEAD
 /*
  * percentile_cont(float8) within group (timestamp)	- continuous percentile
  */
@@ -623,6 +974,8 @@ percentile_cont_timestamptz_final(PG_FUNCTION_ARGS)
 	return percentile_cont_final_common(fcinfo, TIMESTAMPTZOID, timestamptz_lerp);
 }
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * Support code for handling arrays of percentiles
@@ -729,7 +1082,11 @@ setup_pct_info(int num_percentiles,
 Datum
 percentile_disc_multi_final(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ArrayType  *param;
 	Datum	   *percentiles_datum;
 	bool	   *percentiles_null;
@@ -742,15 +1099,23 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 	bool		isnull = true;
 	int			i;
 
+<<<<<<< HEAD
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If there were no regular rows, the result is NULL */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* number_of_rows could be zero if we only saw NULL input values */
 	if (osastate->number_of_rows == 0)
@@ -769,7 +1134,11 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 					  &num_percentiles);
 
 	if (num_percentiles == 0)
+<<<<<<< HEAD
 		PG_RETURN_POINTER(construct_empty_array(osastate->datumtype));
+=======
+		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	pct_info = setup_pct_info(num_percentiles,
 							  percentiles_datum,
@@ -836,10 +1205,17 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 										 ARR_NDIM(param),
 										 ARR_DIMS(param),
 										 ARR_LBOUND(param),
+<<<<<<< HEAD
 										 osastate->datumtype,
 										 osastate->typLen,
 										 osastate->typByVal,
 										 osastate->typAlign));
+=======
+										 osastate->qstate->sortColType,
+										 osastate->qstate->typLen,
+										 osastate->qstate->typByVal,
+										 osastate->qstate->typAlign));
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -851,7 +1227,11 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 								   int16 typLen, bool typByVal, char typAlign,
 								   LerpFunc lerpfunc)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ArrayType  *param;
 	Datum	   *percentiles_datum;
 	bool	   *percentiles_null;
@@ -865,21 +1245,33 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 	bool		isnull;
 	int			i;
 
+<<<<<<< HEAD
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If there were no regular rows, the result is NULL */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* number_of_rows could be zero if we only saw NULL input values */
 	if (osastate->number_of_rows == 0)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	Assert(expect_type == osastate->datumtype);
+=======
+	Assert(expect_type == osastate->qstate->sortColType);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Deconstruct the percentile-array input */
 	if (PG_ARGISNULL(1))
@@ -894,7 +1286,11 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 					  &num_percentiles);
 
 	if (num_percentiles == 0)
+<<<<<<< HEAD
 		PG_RETURN_POINTER(construct_empty_array(osastate->datumtype));
+=======
+		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	pct_info = setup_pct_info(num_percentiles,
 							  percentiles_datum,
@@ -1017,6 +1413,7 @@ percentile_cont_interval_multi_final(PG_FUNCTION_ARGS)
 											  interval_lerp);
 }
 
+<<<<<<< HEAD
 /*
  * percentile_cont(float8[]) within group (timestamp)  - continuous percentiles
  */
@@ -1043,6 +1440,8 @@ percentile_cont_timestamptz_multi_final(PG_FUNCTION_ARGS)
 											  timestamptz_lerp);
 }
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * mode() within group (anyelement) - most common value
@@ -1050,7 +1449,11 @@ percentile_cont_timestamptz_multi_final(PG_FUNCTION_ARGS)
 Datum
 mode_final(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	Datum		val;
 	bool		isnull;
 	Datum		mode_val = (Datum) 0;
@@ -1058,27 +1461,48 @@ mode_final(PG_FUNCTION_ARGS)
 	Datum		last_val = (Datum) 0;
 	int64		last_val_freq = 0;
 	bool		last_val_is_mode = false;
+<<<<<<< HEAD
 	FmgrInfo	equalfn;
 	bool		shouldfree;
 
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	FmgrInfo   *equalfn;
+	bool		shouldfree;
+
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If there were no regular rows, the result is NULL */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* number_of_rows could be zero if we only saw NULL input values */
 	if (osastate->number_of_rows == 0)
 		PG_RETURN_NULL();
 
+<<<<<<< HEAD
 	/* Look up the equality function for the datatype */
 	fmgr_info(get_opcode(osastate->eqOperator), &equalfn);
 
 	shouldfree = !(osastate->typByVal);
+=======
+	/* Look up the equality function for the datatype, if we didn't already */
+	equalfn = &(osastate->qstate->equalfn);
+	if (!OidIsValid(equalfn->fn_oid))
+		fmgr_info_cxt(get_opcode(osastate->qstate->eqOperator), equalfn,
+					  osastate->qstate->qcontext);
+
+	shouldfree = !(osastate->qstate->typByVal);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Finish the sort */
 	tuplesort_performsort(osastate->sortstate);
@@ -1097,7 +1521,11 @@ mode_final(PG_FUNCTION_ARGS)
 			mode_freq = last_val_freq = 1;
 			last_val_is_mode = true;
 		}
+<<<<<<< HEAD
 		else if (DatumGetBool(FunctionCall2(&equalfn, val, last_val)))
+=======
+		else if (DatumGetBool(FunctionCall2(equalfn, val, last_val)))
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		{
 			/* value equal to previous value, count it */
 			if (last_val_is_mode)
@@ -1132,7 +1560,11 @@ mode_final(PG_FUNCTION_ARGS)
 
 	/*
 	 * Note: we *cannot* clean up the tuplesort object here, because the value
+<<<<<<< HEAD
 	 * to be returned is allocated inside its sortcontext.	We could use
+=======
+	 * to be returned is allocated inside its sortcontext.  We could use
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * datumCopy to copy it out of there, but it doesn't seem worth the
 	 * trouble, since the cleanup callback will clear the tuplesort later.
 	 */
@@ -1182,6 +1614,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 {
 	int			nargs = PG_NARGS() - 1;
 	int64		rank = 1;
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
 	TupleTableSlot *slot;
 	int			i;
@@ -1189,6 +1622,13 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	OSAPerGroupState *osastate;
+	TupleTableSlot *slot;
+	int			i;
+
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If there were no regular rows, the rank is always 1 */
 	if (PG_ARGISNULL(0))
@@ -1197,7 +1637,11 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 		return 1;
 	}
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	*number_of_rows = osastate->number_of_rows;
 
 	/* Adjust nargs to be the number of direct (or aggregated) args */
@@ -1205,6 +1649,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 		elog(ERROR, "wrong number of arguments in hypothetical-set function");
 	nargs /= 2;
 
+<<<<<<< HEAD
 	hypothetical_check_argtypes(fcinfo, nargs, osastate->tupdesc);
 
 	/* insert the hypothetical row into the sort */
@@ -1217,6 +1662,20 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	}
 	slot->PRIVATE_tts_values[i] = Int32GetDatum(flag);
 	slot->PRIVATE_tts_isnull[i] = false;
+=======
+	hypothetical_check_argtypes(fcinfo, nargs, osastate->qstate->tupdesc);
+
+	/* insert the hypothetical row into the sort */
+	slot = osastate->qstate->tupslot;
+	ExecClearTuple(slot);
+	for (i = 0; i < nargs; i++)
+	{
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
+	}
+	slot->tts_values[i] = Int32GetDatum(flag);
+	slot->tts_isnull[i] = false;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ExecStoreVirtualTuple(slot);
 
 	tuplesort_puttupleslot(osastate->sortstate, slot);
@@ -1308,8 +1767,12 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	int			nargs = PG_NARGS() - 1;
 	int64		rank = 1;
 	int64		duplicate_count = 0;
+<<<<<<< HEAD
 	OrderedSetAggState *osastate;
 	List	   *sortlist;
+=======
+	OSAPerGroupState *osastate;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	int			numDistinctCols;
 	AttrNumber *sortColIdx;
 	FmgrInfo   *equalfns;
@@ -1317,24 +1780,35 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	TupleTableSlot *extraslot;
 	TupleTableSlot *slot2;
 	MemoryContext tmpcontext;
+<<<<<<< HEAD
 	ListCell   *lc;
 	int			i;
 
 	/* safety check */
 	if (AggCheckCallContext(fcinfo, NULL) != AGG_CONTEXT_AGGREGATE)
 		elog(ERROR, "ordered-set aggregate called in non-aggregate context");
+=======
+	int			i;
+
+	Assert(AggCheckCallContext(fcinfo, NULL) == AGG_CONTEXT_AGGREGATE);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* If there were no regular rows, the rank is always 1 */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_INT64(rank);
 
+<<<<<<< HEAD
 	osastate = (OrderedSetAggState *) PG_GETARG_POINTER(0);
+=======
+	osastate = (OSAPerGroupState *) PG_GETARG_POINTER(0);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Adjust nargs to be the number of direct (or aggregated) args */
 	if (nargs % 2 != 0)
 		elog(ERROR, "wrong number of arguments in hypothetical-set function");
 	nargs /= 2;
 
+<<<<<<< HEAD
 	hypothetical_check_argtypes(fcinfo, nargs, osastate->tupdesc);
 
 	/*
@@ -1357,11 +1831,39 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 		fmgr_info(get_opcode(sortcl->eqop), &equalfns[i]);
 		i++;
 	}
+=======
+	hypothetical_check_argtypes(fcinfo, nargs, osastate->qstate->tupdesc);
+
+	/*
+	 * When comparing tuples, we can omit the flag column since we will only
+	 * compare rows with flag == 0.
+	 */
+	numDistinctCols = osastate->qstate->numSortCols - 1;
+
+	/* Look up the equality function(s), if we didn't already */
+	equalfns = osastate->qstate->equalfns;
+	if (equalfns == NULL)
+	{
+		MemoryContext qcontext = osastate->qstate->qcontext;
+
+		equalfns = (FmgrInfo *)
+			MemoryContextAlloc(qcontext, numDistinctCols * sizeof(FmgrInfo));
+		for (i = 0; i < numDistinctCols; i++)
+		{
+			fmgr_info_cxt(get_opcode(osastate->qstate->eqOperators[i]),
+						  &equalfns[i],
+						  qcontext);
+		}
+		osastate->qstate->equalfns = equalfns;
+	}
+	sortColIdx = osastate->qstate->sortColIdx;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Get short-term context we can use for execTuplesMatch */
 	tmpcontext = AggGetPerTupleEContext(fcinfo)->ecxt_per_tuple_memory;
 
 	/* insert the hypothetical row into the sort */
+<<<<<<< HEAD
 	slot = osastate->tupslot;
 	ExecClearTuple(slot);
 	for (i = 0; i < nargs; i++)
@@ -1371,6 +1873,17 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	}
 	slot->PRIVATE_tts_values[i] = Int32GetDatum(-1);
 	slot->PRIVATE_tts_isnull[i] = false;
+=======
+	slot = osastate->qstate->tupslot;
+	ExecClearTuple(slot);
+	for (i = 0; i < nargs; i++)
+	{
+		slot->tts_values[i] = PG_GETARG_DATUM(i + 1);
+		slot->tts_isnull[i] = PG_ARGISNULL(i + 1);
+	}
+	slot->tts_values[i] = Int32GetDatum(-1);
+	slot->tts_isnull[i] = false;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ExecStoreVirtualTuple(slot);
 
 	tuplesort_puttupleslot(osastate->sortstate, slot);
@@ -1379,11 +1892,19 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	tuplesort_performsort(osastate->sortstate);
 
 	/*
+<<<<<<< HEAD
 	 * We alternate fetching into osastate->tupslot and extraslot so that we
 	 * have the previous row available for comparisons.  This is accomplished
 	 * by swapping the slot pointer variables after each row.
 	 */
 	extraslot = MakeSingleTupleTableSlot(osastate->tupdesc);
+=======
+	 * We alternate fetching into tupslot and extraslot so that we have the
+	 * previous row available for comparisons.  This is accomplished by
+	 * swapping the slot pointer variables after each row.
+	 */
+	extraslot = MakeSingleTupleTableSlot(osastate->qstate->tupdesc);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	slot2 = extraslot;
 
 	/* iterate till we find the hypothetical row */

@@ -11,7 +11,7 @@
  * Transactions on Mathematical Software, Vol. 24, No. 4, December 1998,
  * pages 359-367.
  *
- * Copyright (c) 1998-2013, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/numeric.c
@@ -50,7 +50,7 @@
  * Numeric values are represented in a base-NBASE floating point format.
  * Each "digit" ranges from 0 to NBASE-1.  The type NumericDigit is signed
  * and wide enough to store a digit.  We assume that NBASE*NBASE can fit in
- * an int.	Although the purely calculational routines could handle any even
+ * an int.  Although the purely calculational routines could handle any even
  * NBASE that's less than sqrt(INT_MAX), in practice we are only interested
  * in NBASE a power of ten, so that I/O conversions and decimal rounding
  * are easy.  Also, it's actually more efficient if NBASE is rather less than
@@ -76,11 +76,11 @@ typedef int16 NumericDigit;
  * If the high bits of the first word of a NumericChoice (n_header, or
  * n_short.n_header, or n_long.n_sign_dscale) are NUMERIC_SHORT, then the
  * numeric follows the NumericShort format; if they are NUMERIC_POS or
- * NUMERIC_NEG, it follows the NumericLong format.	If they are NUMERIC_NAN,
+ * NUMERIC_NEG, it follows the NumericLong format.  If they are NUMERIC_NAN,
  * it is a NaN.  We currently always store a NaN using just two bytes (i.e.
  * only n_header), but previous releases used only the NumericLong format,
  * so we might find 4-byte NaNs on disk if a database has been migrated using
- * pg_upgrade.	In either case, when the high bits indicate a NaN, the
+ * pg_upgrade.  In either case, when the high bits indicate a NaN, the
  * remaining bits are never examined.  Currently, we always initialize these
  * to zero, but it might be possible to use them for some other purpose in
  * the future.
@@ -188,21 +188,27 @@ struct NumericData
 	: ((n)->choice.n_long.n_weight))
 
 /* ----------
- * NumericVar is the format we use for arithmetic.	The digit-array part
+ * NumericVar is the format we use for arithmetic.  The digit-array part
  * is the same as the NumericData storage format, but the header is more
  * complex.
  *
  * The value represented by a NumericVar is determined by the sign, weight,
  * ndigits, and digits[] array.
  * Note: the first digit of a NumericVar's value is assumed to be multiplied
- * by NBASE ** weight.	Another way to say it is that there are weight+1
+ * by NBASE ** weight.  Another way to say it is that there are weight+1
  * digits before the decimal point.  It is possible to have weight < 0.
  *
+<<<<<<< HEAD
  * buf: points at the physical start of the digit buffer for the NumericVar.
  * This is either the local buffer (ndb) or a palloc'd buffer.
  *
  * digits: points at the first digit in actual use (the one with the
  * specified weight).	We normally leave an unused digit or two
+=======
+ * buf points at the physical start of the palloc'd digit buffer for the
+ * NumericVar.  digits points at the first digit in actual use (the one
+ * with the specified weight).  We normally leave an unused digit or two
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * (preset to zeroes) between buf and digits, so that there is room to store
  * a carry out of the top digit without reallocating space.  We just need to
  * decrement digits (and increment weight) to make room for the carry digit.
@@ -652,7 +658,7 @@ numeric_maximum_size(int32 typmod)
 	 * In most cases, the size of a numeric will be smaller than the value
 	 * computed below, because the varlena header will typically get toasted
 	 * down to a single byte before being stored on disk, and it may also be
-	 * possible to use a short numeric header.	But our job here is to compute
+	 * possible to use a short numeric header.  But our job here is to compute
 	 * the worst case.
 	 */
 	return NUMERIC_HDRSZ + (numeric_digits * sizeof(NumericDigit));
@@ -683,6 +689,7 @@ numeric_out_sci(Numeric num, int scale)
 }
 
 /*
+<<<<<<< HEAD
  * GPDB: for testing purposes, this function will force any Numeric into the old
  * long format that was in use before Postgres 9.1 (commit 14534353). If the
  * Numeric is already in long format, it will be returned directly; otherwise a
@@ -756,6 +763,44 @@ numeric_force_long_format(Numeric num)
 	free_var(&var);
 	dump_numeric("numeric_force_long_format()", result);
 	return result;
+=======
+ * numeric_normalize() -
+ *
+ *	Output function for numeric data type without trailing zeroes.
+ */
+char *
+numeric_normalize(Numeric num)
+{
+	NumericVar	x;
+	char	   *str;
+	int			orig,
+				last;
+
+	/*
+	 * Handle NaN
+	 */
+	if (NUMERIC_IS_NAN(num))
+		return pstrdup("NaN");
+
+	init_var_from_num(num, &x);
+
+	str = get_str_from_var(&x);
+
+	orig = last = strlen(str) - 1;
+
+	for (;;)
+	{
+		if (last == 0 || str[last] != '0')
+			break;
+
+		last--;
+	}
+
+	if (last > 0 && last != orig)
+		str[last] = '\0';
+
+	return str;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -846,7 +891,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *
  * Flatten calls to numeric's length coercion function that solely represent
  * increases in allowable precision.  Scale changes mutate every datum, so
- * they are unoptimizable.	Some values, e.g. 1E-1001, can only fit into an
+ * they are unoptimizable.  Some values, e.g. 1E-1001, can only fit into an
  * unconstrained numeric, so a change from an unconstrained numeric to any
  * constrained numeric is also unoptimizable.
  */
@@ -876,7 +921,7 @@ numeric_transform(PG_FUNCTION_ARGS)
 		 * If new_typmod < VARHDRSZ, the destination is unconstrained; that's
 		 * always OK.  If old_typmod >= VARHDRSZ, the source is constrained,
 		 * and we're OK if the scale is unchanged and the precision is not
-		 * decreasing.	See further notes in function header comment.
+		 * decreasing.  See further notes in function header comment.
 		 */
 		if (new_typmod < (int32) VARHDRSZ ||
 			(old_typmod >= (int32) VARHDRSZ &&
@@ -1088,7 +1133,7 @@ numeric_uminus(PG_FUNCTION_ARGS)
 
 	/*
 	 * The packed format is known to be totally zero digit trimmed always. So
-	 * we can identify a ZERO by the fact that there are no digits at all.	Do
+	 * we can identify a ZERO by the fact that there are no digits at all.  Do
 	 * nothing to a zero.
 	 */
 	if (NUMERIC_NDIGITS(num) != 0)
@@ -2091,7 +2136,7 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Unpack the argument and determine the result scale.	We choose a scale
+	 * Unpack the argument and determine the result scale.  We choose a scale
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
@@ -2142,7 +2187,7 @@ numeric_exp(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Unpack the argument and determine the result scale.	We choose a scale
+	 * Unpack the argument and determine the result scale.  We choose a scale
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
@@ -2846,9 +2891,12 @@ numeric_float4(PG_FUNCTION_ARGS)
  * The transition datatype for all these aggregates is declared as INTERNAL.
  * Actually, it's a pointer to a NumericAggState allocated in the aggregate
  * context.  The digit buffers for the NumericVars will be there too.
+<<<<<<< HEAD
  *
  * On platforms which support 128-bit integers some aggregates instead use a
  * 128-bit integer based transition datatype to speed up calculations.
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * ----------------------------------------------------------------------
  */
@@ -2884,8 +2932,11 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 	state = (NumericAggState *) palloc0(sizeof(NumericAggState));
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = agg_context;
+<<<<<<< HEAD
 	quick_init_var(&state->sumX);
 	quick_init_var(&state->sumX2);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemoryContextSwitchTo(old_context);
 
@@ -2998,8 +3049,13 @@ do_numeric_discard(NumericAggState *state, Numeric newval)
 		if (state->maxScaleCount > 1 || state->maxScale == 0)
 		{
 			/*
+<<<<<<< HEAD
 			 * Some remaining inputs have same dscale, or dscale hasn't
 			 * gotten above zero anyway
+=======
+			 * Some remaining inputs have same dscale, or dscale hasn't gotten
+			 * above zero anyway
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			 */
 			state->maxScaleCount--;
 		}
@@ -3063,6 +3119,7 @@ numeric_accum(PG_FUNCTION_ARGS)
 		do_numeric_accum(state, PG_GETARG_NUMERIC(1));
 
 	PG_RETURN_POINTER(state);
+<<<<<<< HEAD
 }
 
 /*
@@ -3134,6 +3191,8 @@ numeric_combine(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(old_context);
 	}
 	PG_RETURN_POINTER(state1);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -3157,6 +3216,7 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 }
 
 /*
+<<<<<<< HEAD
  * Combine function for numeric aggregates which don't require sumX2
  */
 Datum
@@ -3330,9 +3390,35 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 
 	PG_RETURN_POINTER(result);
+=======
+ * Generic inverse transition function for numeric aggregates
+ * (with or without requirement for X^2).
+ */
+Datum
+numeric_accum_inv(PG_FUNCTION_ARGS)
+{
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Should not get here with no state */
+	if (state == NULL)
+		elog(ERROR, "numeric_accum_inv called with NULL state");
+
+	if (!PG_ARGISNULL(1))
+	{
+		/* If we fail to perform the inverse transition, return NULL */
+		if (!do_numeric_discard(state, PG_GETARG_NUMERIC(1)))
+			PG_RETURN_NULL();
+	}
+
+	PG_RETURN_POINTER(state);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
+
 /*
+<<<<<<< HEAD
  * numeric_serialize
  *		Serialization function for NumericAggState for numeric aggregates that
  *		require sumX2. Serializes NumericAggState into bytea using the standard
@@ -3340,6 +3426,14 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
  *
  * numeric_deserialize(numeric_serialize(state)) must result in a state which
  * matches the original input state.
+=======
+ * Integer data types all use Numeric accumulators to share code and
+ * avoid risk of overflow.  For int2 and int4 inputs, Numeric accumulation
+ * is overkill for the N and sum(X) values, but definitely not overkill
+ * for the sum(X*X) value.  Hence, we use int2_accum and int4_accum only
+ * for stddev/variance --- there are faster special-purpose accumulator
+ * routines for SUM and AVG of these datatypes.
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 Datum
 numeric_serialize(PG_FUNCTION_ARGS)
@@ -3568,6 +3662,7 @@ typedef NumericAggState PolyNumAggState;
 Datum
 int2_accum(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -3581,12 +3676,27 @@ int2_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT16(1));
 #else
+=======
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Create the state data on the first call */
+	if (state == NULL)
+		state = makeNumericAggState(fcinfo, true);
+
+	if (!PG_ARGISNULL(1))
+	{
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	PG_RETURN_POINTER(state);
@@ -3595,6 +3705,7 @@ int2_accum(PG_FUNCTION_ARGS)
 Datum
 int4_accum(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -3608,12 +3719,27 @@ int4_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT32(1));
 #else
+=======
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Create the state data on the first call */
+	if (state == NULL)
+		state = makeNumericAggState(fcinfo, true);
+
+	if (!PG_ARGISNULL(1))
+	{
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	PG_RETURN_POINTER(state);
@@ -3640,6 +3766,7 @@ int8_accum(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_POINTER(state);
+<<<<<<< HEAD
 }
 
 /*
@@ -3849,6 +3976,8 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 
 	PG_RETURN_POINTER(result);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -3857,6 +3986,7 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 Datum
 int8_avg_accum(PG_FUNCTION_ARGS)
 {
+<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -3870,17 +4000,90 @@ int8_avg_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT64(1));
 #else
+=======
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Create the state data on the first call */
+	if (state == NULL)
+		state = makeNumericAggState(fcinfo, false);
+
+	if (!PG_ARGISNULL(1))
+	{
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
+<<<<<<< HEAD
 #endif
+=======
 	}
 
 	PG_RETURN_POINTER(state);
 }
 
+
+/*
+ * Inverse transition functions to go with the above.
+ */
+
+Datum
+int2_accum_inv(PG_FUNCTION_ARGS)
+{
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Should not get here with no state */
+	if (state == NULL)
+		elog(ERROR, "int2_accum_inv called with NULL state");
+
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Should never fail, all inputs have dscale 0 */
+		if (!do_numeric_discard(state, newval))
+			elog(ERROR, "do_numeric_discard failed unexpectedly");
+	}
+
+	PG_RETURN_POINTER(state);
+}
+
+Datum
+int4_accum_inv(PG_FUNCTION_ARGS)
+{
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	/* Should not get here with no state */
+	if (state == NULL)
+		elog(ERROR, "int4_accum_inv called with NULL state");
+
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Should never fail, all inputs have dscale 0 */
+		if (!do_numeric_discard(state, newval))
+			elog(ERROR, "do_numeric_discard failed unexpectedly");
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	}
+
+	PG_RETURN_POINTER(state);
+}
+
+<<<<<<< HEAD
 /*
  * Combine function for PolyNumAggState for aggregates which don't require
  * sumX2
@@ -4119,6 +4322,8 @@ int4_accum_inv(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(state);
 }
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 Datum
 int8_accum_inv(PG_FUNCTION_ARGS)
 {
@@ -4144,6 +4349,7 @@ int8_accum_inv(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(state);
 }
+<<<<<<< HEAD
 
 Datum
 int8_avg_accum_inv(PG_FUNCTION_ARGS)
@@ -4233,6 +4439,8 @@ numeric_poly_avg(PG_FUNCTION_ARGS)
 	return numeric_avg(fcinfo);
 #endif
 }
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 Datum
 numeric_avg(PG_FUNCTION_ARGS)
@@ -4313,7 +4521,11 @@ numeric_stddev_internal(NumericAggState *state,
 	init_var(&vsumX);
 	init_var(&vsumX2);
 
+<<<<<<< HEAD
 	int64_to_numericvar(state->N, &vN);
+=======
+	int8_to_numericvar(state->N, &vN);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	set_var_from_var(&(state->sumX), &vsumX);
 	set_var_from_var(&(state->sumX2), &vsumX2);
 
@@ -4429,6 +4641,7 @@ numeric_stddev_pop(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
 	res = numeric_stddev_internal(state, false, false, &is_null);
+<<<<<<< HEAD
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -4544,6 +4757,8 @@ numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
 	res = numeric_poly_stddev_internal(state, false, false, &is_null);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -4567,7 +4782,7 @@ numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
  * the initial condition of the transition data value needs to be NULL. This
  * means we can't rely on ExecAgg to automatically insert the first non-null
  * data value into the transition data: it doesn't know how to do the type
- * conversion.	The upshot is that these routines have to be marked non-strict
+ * conversion.  The upshot is that these routines have to be marked non-strict
  * and handle substitution of the first non-null input themselves.
  *
  * Note: these functions are used only in plain aggregation mode.
@@ -4782,6 +4997,7 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 }
 
 Datum
+<<<<<<< HEAD
 int4_avg_combine(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray1;
@@ -4813,6 +5029,8 @@ int4_avg_combine(PG_FUNCTION_ARGS)
 }
 
 Datum
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 int2_avg_accum_inv(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray;
@@ -4914,6 +5132,10 @@ int2int4_sum(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(Int64GetDatumFast(transdata->sum));
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* ----------------------------------------------------------------------
  *
@@ -5065,7 +5287,7 @@ init_var_from_str(const char *str, const char *cp, NumericVar *dest)
 
 	/*
 	 * We first parse the string to extract decimal digits and determine the
-	 * correct decimal weight.	Then convert to NBASE representation.
+	 * correct decimal weight.  Then convert to NBASE representation.
 	 */
 	switch (*cp)
 	{
@@ -5712,7 +5934,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 /*
  * Convert numeric to int8, rounding if needed.
  *
- * If overflow, return FALSE (no error is raised).	Return TRUE if okay.
+ * If overflow, return FALSE (no error is raised).  Return TRUE if okay.
  */
 static bool
 numericvar_to_int64(NumericVar *var, int64 *result)
@@ -6303,7 +6525,7 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
  * mul_var() -
  *
  *	Multiplication on variable level. Product of var1 * var2 is stored
- *	in result.	Result is rounded to no more than rscale fractional digits.
+ *	in result.  Result is rounded to no more than rscale fractional digits.
  */
 static void
 mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
@@ -6348,7 +6570,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	/*
 	 * Determine number of result digits to compute.  If the exact result
 	 * would have more than rscale fractional digits, truncate the computation
-	 * with MUL_GUARD_DIGITS guard digits.	We do that by pretending that one
+	 * with MUL_GUARD_DIGITS guard digits.  We do that by pretending that one
 	 * or both inputs have fewer digits than they really do.
 	 */
 	res_ndigits = var1ndigits + var2ndigits + 1;
@@ -6601,7 +6823,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 		 *
 		 * We need the first divisor digit to be >= NBASE/2.  If it isn't,
 		 * make it so by scaling up both the divisor and dividend by the
-		 * factor "d".	(The reason for allocating dividend[0] above is to
+		 * factor "d".  (The reason for allocating dividend[0] above is to
 		 * leave room for possible carry here.)
 		 */
 		if (divisor[1] < HALF_NBASE)
@@ -6645,7 +6867,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 
 			/*
 			 * If next2digits are 0, then quotient digit must be 0 and there's
-			 * no need to adjust the working dividend.	It's worth testing
+			 * no need to adjust the working dividend.  It's worth testing
 			 * here to fall out ASAP when processing trailing zeroes in a
 			 * dividend.
 			 */
@@ -6663,7 +6885,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 			/*
 			 * Adjust quotient digit if it's too large.  Knuth proves that
 			 * after this step, the quotient digit will be either correct or
-			 * just one too large.	(Note: it's OK to use dividend[j+2] here
+			 * just one too large.  (Note: it's OK to use dividend[j+2] here
 			 * because we know the divisor length is at least 2.)
 			 */
 			while (divisor2 * qhat >
@@ -6839,7 +7061,7 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * dividend's digits (plus appended zeroes to reach the desired precision
 	 * including guard digits).  Each step of the main loop computes an
 	 * (approximate) quotient digit and stores it into div[], removing one
-	 * position of dividend space.	A final pass of carry propagation takes
+	 * position of dividend space.  A final pass of carry propagation takes
 	 * care of any mistaken quotient digits.
 	 */
 	i = (div_ndigits + 1) * sizeof(int);
@@ -7686,7 +7908,7 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 
 	/*
 	 * The general case repeatedly multiplies base according to the bit
-	 * pattern of exp.	We do the multiplications with some extra precision.
+	 * pattern of exp.  We do the multiplications with some extra precision.
 	 */
 	neg = (exp < 0);
 	exp = Abs(exp);

@@ -3,7 +3,7 @@
  * timestamp.h
  *	  Definitions for the SQL "timestamp" and "interval" types.
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/timestamp.h
@@ -136,6 +136,10 @@ extern Datum timestamp_gt_timestamptz(PG_FUNCTION_ARGS);
 extern Datum timestamp_ge_timestamptz(PG_FUNCTION_ARGS);
 extern Datum timestamp_cmp_timestamptz(PG_FUNCTION_ARGS);
 
+extern Datum make_timestamp(PG_FUNCTION_ARGS);
+extern Datum make_timestamptz(PG_FUNCTION_ARGS);
+extern Datum make_timestamptz_at_timezone(PG_FUNCTION_ARGS);
+
 extern Datum timestamptz_eq_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_ne_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_lt_timestamp(PG_FUNCTION_ARGS);
@@ -166,9 +170,13 @@ extern Datum interval_larger(PG_FUNCTION_ARGS);
 extern Datum interval_justify_interval(PG_FUNCTION_ARGS);
 extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
 extern Datum interval_justify_days(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern float8 interval_li_fraction(Interval *x, Interval *x0, Interval *x1, 
 								   bool *eq_bounds, bool *eq_abscissas);
 extern Interval *interval_li_value(float8 f, Interval *y0, Interval *y1);
+=======
+extern Datum make_interval(PG_FUNCTION_ARGS);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
 extern Datum interval_trunc(PG_FUNCTION_ARGS);
@@ -204,7 +212,10 @@ extern int interval_cmp_internal(const Interval *interval1, const Interval *inte
 extern Datum interval_interval_div(PG_FUNCTION_ARGS);  /*GPDB*/
 extern Datum interval_interval_mod(PG_FUNCTION_ARGS);		/*GPDB*/
 extern Datum interval_accum(PG_FUNCTION_ARGS);
+<<<<<<< HEAD
 extern Datum interval_combine(PG_FUNCTION_ARGS);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Datum interval_accum_inv(PG_FUNCTION_ARGS);
 extern Datum interval_avg(PG_FUNCTION_ARGS);
 

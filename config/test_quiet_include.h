@@ -7,6 +7,7 @@ fun()
 {
 	return 0;
 }
+<<<<<<< HEAD
 
 /*
  * "IBM XL C/C++ for AIX, V12.1" miscompiles, for 32-bit, some inline
@@ -16,3 +17,5 @@ fun()
 #if defined(__ILP32__) && defined(__IBMC__)
 #error "known inlining bug"
 #endif
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237

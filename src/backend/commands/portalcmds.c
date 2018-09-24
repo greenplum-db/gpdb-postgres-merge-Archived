@@ -4,14 +4,18 @@
  *	  Utility commands affecting portals (that is, SQL cursor commands)
  *
  * Note: see also tcop/pquery.c, which implements portal operations for
- * the FE/BE protocol.	This module uses pquery.c for some operations.
+ * the FE/BE protocol.  This module uses pquery.c for some operations.
  * And both modules depend on utils/mmgr/portalmem.c, which controls
  * storage management for portals (but doesn't run any queries in them).
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -119,7 +123,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 
 	/*----------
 	 * Also copy the outer portal's parameter list into the inner portal's
-	 * memory context.	We want to pass down the parameter values in case we
+	 * memory context.  We want to pass down the parameter values in case we
 	 * had a command like
 	 *		DECLARE c CURSOR FOR SELECT ... WHERE foo = $1
 	 * This will have been parsed using the outer parameter set and the
@@ -138,11 +142,15 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
+<<<<<<< HEAD
 	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
 	 *
 	 * GPDB: we do not allow backward scans at the moment regardless
 	 * of any additional runtime overhead. We forced CURSOR_OPT_NO_SCROLL
 	 * above. Comment out this logic.
+=======
+	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 #if 0
 	portal->cursorOptions = cstmt->options;
@@ -452,7 +460,7 @@ PersistHoldablePortal(Portal portal)
 			ExecutorRewind(queryDesc);
 
 		/*
-		 * Change the destination to output to the tuplestore.	Note we tell
+		 * Change the destination to output to the tuplestore.  Note we tell
 		 * the tuplestore receiver to detoast all data passed through it.
 		 */
 		queryDesc->dest = CreateDestReceiver(DestTuplestore);
@@ -488,6 +496,7 @@ PersistHoldablePortal(Portal portal)
 		 */
 		if(Gp_role == GP_ROLE_UTILITY)
 		{
+<<<<<<< HEAD
 			if (portal->atEnd)
 			{
 				/*
@@ -509,6 +518,29 @@ PersistHoldablePortal(Portal portal)
 						elog(ERROR, "unexpected end of tuple stream");
 				}
 			}
+=======
+			/*
+			 * We can handle this case even if posOverflow: just force the
+			 * tuplestore forward to its end.  The size of the skip request
+			 * here is arbitrary.
+			 */
+			while (tuplestore_skiptuples(portal->holdStore, 1000000, true))
+				 /* continue */ ;
+		}
+		else
+		{
+			if (portal->posOverflow)	/* oops, cannot trust portalPos */
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not reposition held cursor")));
+
+			tuplestore_rescan(portal->holdStore);
+
+			if (!tuplestore_skiptuples(portal->holdStore,
+									   portal->portalPos,
+									   true))
+				elog(ERROR, "unexpected end of tuple stream");
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 	}
 	PG_CATCH();

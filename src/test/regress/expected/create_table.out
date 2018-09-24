@@ -245,8 +245,14 @@ CREATE TABLE array_index_op_test (
 	i			int4[],
 	t			text[]
 );
+<<<<<<< HEAD
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'seqno' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
+=======
+CREATE TABLE testjsonb (
+       j jsonb
+);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 CREATE TABLE IF NOT EXISTS test_tsvector(
 	t text,
 	a tsvector

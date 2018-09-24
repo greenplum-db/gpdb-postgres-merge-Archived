@@ -5,7 +5,7 @@
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/pg_receivexlog.c
@@ -32,11 +32,11 @@
 #define RECONNECT_SLEEP_TIME 5
 
 /* Global options */
-char	   *basedir = NULL;
-int			verbose = 0;
-int			noloop = 0;
-int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
-volatile bool time_to_abort = false;
+static char *basedir = NULL;
+static int	verbose = 0;
+static int	noloop = 0;
+static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static volatile bool time_to_abort = false;
 
 
 static void usage(void);
@@ -44,6 +44,13 @@ static XLogRecPtr FindStreamingStart(uint32 *tli);
 static void StreamLog();
 static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
 			   bool segment_finished);
+
+#define disconnect_and_exit(code)				\
+	{											\
+	if (conn != NULL) PQfinish(conn);			\
+	exit(code);									\
+	}
+
 
 static void
 usage(void)
@@ -67,7 +74,12 @@ usage(void)
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
+<<<<<<< HEAD
 	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
+=======
+	printf(_("      --slot=SLOTNAME    replication slot to use\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 static bool
@@ -131,7 +143,7 @@ FindStreamingStart(uint32 *tli)
 		disconnect_and_exit(1);
 	}
 
-	while ((dirent = readdir(dir)) != NULL)
+	while (errno = 0, (dirent = readdir(dir)) != NULL)
 	{
 		uint32		tli;
 		XLogSegNo	segno;
@@ -171,7 +183,11 @@ FindStreamingStart(uint32 *tli)
 		if (!ispartial)
 		{
 			struct stat statbuf;
+<<<<<<< HEAD
 			char		fullpath[MAXPGPATH * 2];
+=======
+			char		fullpath[MAXPGPATH];
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 			if (stat(fullpath, &statbuf) != 0)
@@ -201,7 +217,19 @@ FindStreamingStart(uint32 *tli)
 		}
 	}
 
-	closedir(dir);
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
+				progname, basedir, strerror(errno));
+		disconnect_and_exit(1);
+	}
+
+	if (closedir(dir))
+	{
+		fprintf(stderr, _("%s: could not close directory \"%s\": %s\n"),
+				progname, basedir, strerror(errno));
+		disconnect_and_exit(1);
+	}
 
 	if (high_segno > 0)
 	{
@@ -267,10 +295,10 @@ StreamLog(void)
 				progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
-	if (PQntuples(res) != 1 || PQnfields(res) != 3)
+	if (PQntuples(res) != 1 || PQnfields(res) < 3)
 	{
 		fprintf(stderr,
-				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"),
+				_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"),
 				progname, PQntuples(res), PQnfields(res), 1, 3);
 		disconnect_and_exit(1);
 	}
@@ -343,6 +371,7 @@ main(int argc, char **argv)
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"status-interval", required_argument, NULL, 's'},
+		{"slot", required_argument, NULL, 'S'},
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -408,6 +437,9 @@ main(int argc, char **argv)
 							progname, optarg);
 					exit(1);
 				}
+				break;
+			case 'S':
+				replication_slot = pg_strdup(optarg);
 				break;
 			case 'n':
 				noloop = 1;

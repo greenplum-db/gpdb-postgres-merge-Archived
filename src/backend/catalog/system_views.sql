@@ -1,9 +1,13 @@
 /*
  * PostgreSQL System Views
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * src/backend/catalog/system_views.sql
  */
@@ -414,6 +418,7 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_tuples_hot_updated(C.oid) AS n_tup_hot_upd,
             pg_stat_get_live_tuples(C.oid) AS n_live_tup,
             pg_stat_get_dead_tuples(C.oid) AS n_dead_tup,
+            pg_stat_get_mod_since_analyze(C.oid) AS n_mod_since_analyze,
             pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
             pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
             pg_stat_get_last_analyze_time(C.oid) as last_analyze,
@@ -482,16 +487,16 @@ CREATE VIEW pg_statio_all_tables AS
             pg_stat_get_blocks_fetched(T.oid) -
                     pg_stat_get_blocks_hit(T.oid) AS toast_blks_read,
             pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit,
-            pg_stat_get_blocks_fetched(X.oid) -
-                    pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read,
-            pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit
+            sum(pg_stat_get_blocks_fetched(X.indexrelid) -
+                    pg_stat_get_blocks_hit(X.indexrelid))::bigint AS tidx_blks_read,
+            sum(pg_stat_get_blocks_hit(X.indexrelid))::bigint AS tidx_blks_hit
     FROM pg_class C LEFT JOIN
             pg_index I ON C.oid = I.indrelid LEFT JOIN
             pg_class T ON C.reltoastrelid = T.oid LEFT JOIN
-            pg_class X ON T.reltoastidxid = X.oid
+            pg_index X ON T.oid = X.indrelid
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
     WHERE C.relkind IN ('r', 't', 'm')
-    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.oid;
+    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.indrelid;
 
 CREATE VIEW pg_statio_sys_tables AS
     SELECT * FROM pg_statio_all_tables
@@ -595,12 +600,18 @@ CREATE VIEW pg_stat_activity AS
             S.state_change,
             S.waiting,
             S.state,
+<<<<<<< HEAD
             S.query,
 
             S.waiting_reason,
             S.rsgid,
             S.rsgname,
             S.rsgqueueduration
+=======
+            S.backend_xid,
+            s.backend_xmin,
+            S.query
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;
@@ -615,6 +626,7 @@ CREATE VIEW pg_stat_replication AS
             S.client_hostname,
             S.client_port,
             S.backend_start,
+            S.backend_xmin,
             W.state,
             W.sent_location,
             W.write_location,
@@ -627,6 +639,7 @@ CREATE VIEW pg_stat_replication AS
     WHERE S.usesysid = U.oid AND
             S.pid = W.pid;
 
+<<<<<<< HEAD
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
 $$
     SELECT pg_catalog.gp_execution_segment() AS gp_segment_id, *
@@ -678,6 +691,21 @@ CREATE VIEW gp_stat_replication AS
          replay_location text, sync_priority integer, sync_state text)
          ON G.gp_segment_id = R.gp_segment_id
     );
+=======
+CREATE VIEW pg_replication_slots AS
+    SELECT
+            L.slot_name,
+            L.plugin,
+            L.slot_type,
+            L.datoid,
+            D.datname AS database,
+            L.active,
+            L.xmin,
+            L.catalog_xmin,
+            L.restart_lsn
+    FROM pg_get_replication_slots() AS L
+            LEFT JOIN pg_database D ON (L.datoid = D.oid);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE VIEW pg_stat_database AS
     SELECT
@@ -1166,6 +1194,17 @@ CREATE VIEW pg_stat_xact_user_functions AS
     WHERE P.prolang != 12  -- fast check to eliminate built-in functions
           AND pg_stat_get_xact_function_calls(P.oid) IS NOT NULL;
 
+CREATE VIEW pg_stat_archiver AS
+    SELECT
+        s.archived_count,
+        s.last_archived_wal,
+        s.last_archived_time,
+        s.failed_count,
+        s.last_failed_wal,
+        s.last_failed_time,
+        s.stats_reset
+    FROM pg_stat_get_archiver() s;
+
 CREATE VIEW pg_stat_bgwriter AS
     SELECT
         pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
@@ -1281,7 +1320,7 @@ COMMENT ON FUNCTION ts_debug(text) IS
 
 CREATE OR REPLACE FUNCTION
   pg_start_backup(label text, fast boolean DEFAULT false)
-  RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
+  RETURNS pg_lsn STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
 
 CREATE OR REPLACE FUNCTION
   json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
@@ -1291,6 +1330,7 @@ CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
 
+<<<<<<< HEAD
 -- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
 CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
 AS 'SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
@@ -1303,3 +1343,69 @@ AS
    UNION ALL
    SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
 LANGUAGE SQL EXECUTE ON MASTER;
+=======
+CREATE OR REPLACE FUNCTION
+  jsonb_populate_record(base anyelement, from_json jsonb, use_json_as_text boolean DEFAULT false)
+  RETURNS anyelement LANGUAGE internal STABLE AS 'jsonb_populate_record';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_populate_recordset(base anyelement, from_json jsonb, use_json_as_text boolean DEFAULT false)
+  RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'jsonb_populate_recordset';
+
+CREATE OR REPLACE FUNCTION
+  json_to_record(from_json json, nested_as_text boolean DEFAULT false)
+  RETURNS record LANGUAGE internal STABLE AS 'json_to_record';
+
+CREATE OR REPLACE FUNCTION
+  json_to_recordset(from_json json, nested_as_text boolean DEFAULT false)
+  RETURNS SETOF record LANGUAGE internal STABLE ROWS 100  AS 'json_to_recordset';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_to_record(from_json jsonb, nested_as_text boolean DEFAULT false)
+  RETURNS record LANGUAGE internal STABLE AS 'jsonb_to_record';
+
+CREATE OR REPLACE FUNCTION
+  jsonb_to_recordset(from_json jsonb, nested_as_text boolean DEFAULT false)
+  RETURNS SETOF record LANGUAGE internal STABLE ROWS 100  AS 'jsonb_to_recordset';
+
+CREATE OR REPLACE FUNCTION pg_logical_slot_get_changes(
+    IN slot_name name, IN upto_lsn pg_lsn, IN upto_nchanges int, VARIADIC options text[] DEFAULT '{}',
+    OUT location pg_lsn, OUT xid xid, OUT data text)
+RETURNS SETOF RECORD
+LANGUAGE INTERNAL
+VOLATILE ROWS 1000 COST 1000
+AS 'pg_logical_slot_get_changes';
+
+CREATE OR REPLACE FUNCTION pg_logical_slot_peek_changes(
+    IN slot_name name, IN upto_lsn pg_lsn, IN upto_nchanges int, VARIADIC options text[] DEFAULT '{}',
+    OUT location pg_lsn, OUT xid xid, OUT data text)
+RETURNS SETOF RECORD
+LANGUAGE INTERNAL
+VOLATILE ROWS 1000 COST 1000
+AS 'pg_logical_slot_peek_changes';
+
+CREATE OR REPLACE FUNCTION pg_logical_slot_get_binary_changes(
+    IN slot_name name, IN upto_lsn pg_lsn, IN upto_nchanges int, VARIADIC options text[] DEFAULT '{}',
+    OUT location pg_lsn, OUT xid xid, OUT data bytea)
+RETURNS SETOF RECORD
+LANGUAGE INTERNAL
+VOLATILE ROWS 1000 COST 1000
+AS 'pg_logical_slot_get_binary_changes';
+
+CREATE OR REPLACE FUNCTION pg_logical_slot_peek_binary_changes(
+    IN slot_name name, IN upto_lsn pg_lsn, IN upto_nchanges int, VARIADIC options text[] DEFAULT '{}',
+    OUT location pg_lsn, OUT xid xid, OUT data bytea)
+RETURNS SETOF RECORD
+LANGUAGE INTERNAL
+VOLATILE ROWS 1000 COST 1000
+AS 'pg_logical_slot_peek_binary_changes';
+
+CREATE OR REPLACE FUNCTION
+  make_interval(years int4 DEFAULT 0, months int4 DEFAULT 0, weeks int4 DEFAULT 0,
+                days int4 DEFAULT 0, hours int4 DEFAULT 0, mins int4 DEFAULT 0,
+                secs double precision DEFAULT 0.0)
+RETURNS interval
+LANGUAGE INTERNAL
+STRICT IMMUTABLE
+AS 'make_interval';
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237

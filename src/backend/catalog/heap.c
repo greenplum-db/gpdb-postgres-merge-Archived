@@ -3,9 +3,13 @@
  * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,7 +27,7 @@
  *	  the old heap_create_with_catalog, amcreate, and amdestroy.
  *	  those routines will soon call these routines using the function
  *	  manager,
- *	  just like the poorly named "NewXXX" routines do.	The
+ *	  just like the poorly named "NewXXX" routines do.  The
  *	  "New" routines are all going to die soon, once and for all!
  *		-cim 1/13/91
  *
@@ -37,6 +41,7 @@
 #include "access/transam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/gp_policy.h"
@@ -238,7 +243,7 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 
 /*
  * If the given name is a system attribute name, return a Form_pg_attribute
- * pointer for a prototype definition.	If not, return NULL.
+ * pointer for a prototype definition.  If not, return NULL.
  */
 Form_pg_attribute
 SystemAttributeByName(const char *attname, bool relhasoids)
@@ -298,11 +303,23 @@ heap_create(const char *relname,
 	Assert(OidIsValid(relid));
 
 	/*
-	 * sanity checks
+	 * Don't allow creating relations in pg_catalog directly, even though it
+	 * is allowed to move user defined relations there. Semantics with search
+	 * paths including pg_catalog are too confusing for now.
+	 *
+	 * But allow creating indexes on relations in pg_catalog even if
+	 * allow_system_table_mods = off, upper layers already guarantee it's on a
+	 * user defined relation, not a system one.
 	 */
 	if (!allow_system_table_mods &&
+<<<<<<< HEAD
 		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace) ||
 		 IsAoSegmentNamespace(relnamespace)) && IsNormalProcessingMode())
+=======
+		((IsSystemNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
+		 IsToastNamespace(relnamespace)) &&
+		IsNormalProcessingMode())
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create \"%s.%s\"",
@@ -585,7 +602,7 @@ CheckAttributeType(const char *attname,
 		int			i;
 
 		/*
-		 * Check for self-containment.	Eventually we might be able to allow
+		 * Check for self-containment.  Eventually we might be able to allow
 		 * this (just return without complaint, if so) but it's not clear how
 		 * many other places would require anti-recursion defenses before it
 		 * would be safe to allow tables to contain their own rowtype.
@@ -914,7 +931,7 @@ void MetaTrackDropObject(Oid		classid,
  * attribute to insert (but we ignore attacl and attoptions, which are always
  * initialized to NULL).
  *
- * indstate is the index state for CatalogIndexInsert.	It can be passed as
+ * indstate is the index state for CatalogIndexInsert.  It can be passed as
  * NULL, in which case we'll fetch the necessary info.  (Don't do this when
  * inserting multiple attributes, because it's a tad more expensive.)
  */
@@ -1081,7 +1098,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
  * Tuple data is taken from new_rel_desc->rd_rel, except for the
  * variable-width fields which are not present in a cached reldesc.
  * relacl and reloptions are passed in Datum form (to avoid having
- * to reference the data types in heap.h).	Pass (Datum) 0 to set them
+ * to reference the data types in heap.h).  Pass (Datum) 0 to set them
  * to NULL.
  * --------------------------------
  */
@@ -1113,7 +1130,6 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_reltuples - 1] = Float4GetDatum(rd_rel->reltuples);
 	values[Anum_pg_class_relallvisible - 1] = Int32GetDatum(rd_rel->relallvisible);
 	values[Anum_pg_class_reltoastrelid - 1] = ObjectIdGetDatum(rd_rel->reltoastrelid);
-	values[Anum_pg_class_reltoastidxid - 1] = ObjectIdGetDatum(rd_rel->reltoastidxid);
 	values[Anum_pg_class_relhasindex - 1] = BoolGetDatum(rd_rel->relhasindex);
 	values[Anum_pg_class_relisshared - 1] = BoolGetDatum(rd_rel->relisshared);
 	values[Anum_pg_class_relpersistence - 1] = CharGetDatum(rd_rel->relpersistence);
@@ -1127,6 +1143,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhastriggers - 1] = BoolGetDatum(rd_rel->relhastriggers);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
 	values[Anum_pg_class_relispopulated - 1] = BoolGetDatum(rd_rel->relispopulated);
+	values[Anum_pg_class_relreplident - 1] = CharGetDatum(rd_rel->relreplident);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	values[Anum_pg_class_relminmxid - 1] = MultiXactIdGetDatum(rd_rel->relminmxid);
 	if (relacl != (Datum) 0)
@@ -1141,7 +1158,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	tup = heap_form_tuple(RelationGetDescr(pg_class_desc), values, nulls);
 
 	/*
-	 * The new tuple must have the oid already chosen for the rel.	Sure would
+	 * The new tuple must have the oid already chosen for the rel.  Sure would
 	 * be embarrassing to do this sort of thing in polite company.
 	 */
 	HeapTupleSetOid(tup, new_rel_oid);
@@ -1247,7 +1264,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		 * commands/sequence.c.)
 		 */
 		new_rel_reltup->relfrozenxid = InvalidTransactionId;
-		new_rel_reltup->relfrozenxid = InvalidMultiXactId;
+		new_rel_reltup->relminmxid = InvalidMultiXactId;
 	}
 
 	new_rel_reltup->relowner = relowner;
@@ -1534,6 +1551,7 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Decide whether to create an array type over the relation's rowtype. We
 	 * do not create any array types for system catalogs (ie, those made
+<<<<<<< HEAD
 	 * during initdb).	We create array types for regular relations, views,
 	 * composite types and foreign tables ... but not, eg, for toast tables or
 	 * sequences.
@@ -1546,6 +1564,10 @@ heap_create_with_catalog(const char *relname,
 	 * which can cause typname collisions very easily. If there are a lot of
 	 * typname collisions, it's possible that makeArrayTypeName could fail to
 	 * create a typname and error us out.
+=======
+	 * during initdb). We do not create them where the use of a relation as
+	 * such is an implementation detail: toast tables, sequences and indexes.
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (IsUnderPostmaster && ((relkind == RELKIND_RELATION && !appendOnlyRel) ||
 							  relkind == RELKIND_VIEW ||
@@ -1879,8 +1901,8 @@ heap_create_init_fork(Relation rel)
  *		RelationRemoveInheritance
  *
  * Formerly, this routine checked for child relations and aborted the
- * deletion if any were found.	Now we rely on the dependency mechanism
- * to check for or delete child relations.	By the time we get here,
+ * deletion if any were found.  Now we rely on the dependency mechanism
+ * to check for or delete child relations.  By the time we get here,
  * there are no children and we need only remove any pg_inherits rows
  * linking this relation to its parent(s).
  */
@@ -1900,7 +1922,7 @@ RelationRemoveInheritance(Oid relid)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId, true,
-							  SnapshotNow, 1, &key);
+							  NULL, 1, &key);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		simple_heap_delete(catalogRelation, &tuple->t_self);
@@ -2031,7 +2053,7 @@ DeleteAttributeTuples(Oid relid)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	/* Delete all the matching tuples */
 	while ((atttup = systable_getnext(scan)) != NULL)
@@ -2072,7 +2094,7 @@ DeleteSystemAttributeTuples(Oid relid)
 				Int16GetDatum(0));
 
 	scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true,
-							  SnapshotNow, 2, key);
+							  NULL, 2, key);
 
 	/* Delete all the matching tuples */
 	while ((atttup = systable_getnext(scan)) != NULL)
@@ -2204,7 +2226,7 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 				Int16GetDatum(attnum));
 
 	scan = systable_beginscan(attrdef_rel, AttrDefaultIndexId, true,
-							  SnapshotNow, 2, scankeys);
+							  NULL, 2, scankeys);
 
 	/* There should be at most one matching tuple, but we loop anyway */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
@@ -2232,7 +2254,7 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 /*
  *		RemoveAttrDefaultById
  *
- * Remove a pg_attrdef entry specified by OID.	This is the guts of
+ * Remove a pg_attrdef entry specified by OID.  This is the guts of
  * attribute-default removal.  Note it should be called via performDeletion,
  * not directly.
  */
@@ -2258,7 +2280,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 				ObjectIdGetDatum(attrdefId));
 
 	scan = systable_beginscan(attrdef_rel, AttrDefaultOidIndexId, true,
-							  SnapshotNow, 1, scankeys);
+							  NULL, 1, scankeys);
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
@@ -2744,7 +2766,7 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
  * the default and constraint expressions added to the relation.
  *
  * NB: caller should have opened rel with AccessExclusiveLock, and should
- * hold that lock till end of transaction.	Also, we assume the caller has
+ * hold that lock till end of transaction.  Also, we assume the caller has
  * done a CommandCounterIncrement if necessary to make the relation's catalog
  * tuples visible.
  */
@@ -2889,7 +2911,7 @@ AddRelationNewConstraints(Relation rel,
 			checknames = lappend(checknames, ccname);
 
 			/*
-			 * Check against pre-existing constraints.	If we are allowed to
+			 * Check against pre-existing constraints.  If we are allowed to
 			 * merge with an existing constraint, there's no more to do here.
 			 * (We omit the duplicate constraint from the result, which is
 			 * what ATAddCheckConstraint wants.)
@@ -2906,7 +2928,7 @@ AddRelationNewConstraints(Relation rel,
 			 * column constraint and "tab_check" for a table constraint.  We
 			 * no longer have any info about the syntactic positioning of the
 			 * constraint phrase, so we approximate this by seeing whether the
-			 * expression references more than one column.	(If the user
+			 * expression references more than one column.  (If the user
 			 * played by the rules, the result is the same...)
 			 *
 			 * Note: pull_var_clause() doesn't descend into sublinks, but we
@@ -3011,7 +3033,7 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 				ObjectIdGetDatum(RelationGetNamespace(rel)));
 
 	conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
-								 SnapshotNow, 2, skey);
+								 NULL, 2, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
 	{
@@ -3277,7 +3299,7 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
 	}
 
 	scan = systable_beginscan(pgstatistic, StatisticRelidAttnumInhIndexId, true,
-							  SnapshotNow, nkeys, key);
+							  NULL, nkeys, key);
 
 	/* we must loop even when attnum != 0, in case of inherited stats */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
@@ -3294,7 +3316,7 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
  * with the heap relation to zero tuples.
  *
  * The routine will truncate and then reconstruct the indexes on
- * the specified relation.	Caller must hold exclusive lock on rel.
+ * the specified relation.  Caller must hold exclusive lock on rel.
  */
 static void
 RelationTruncateIndexes(Relation heapRelation)
@@ -3332,7 +3354,7 @@ RelationTruncateIndexes(Relation heapRelation)
  *	 This routine deletes all data within all the specified relations.
  *
  * This is not transaction-safe!  There is another, transaction-safe
- * implementation in commands/tablecmds.c.	We now use this only for
+ * implementation in commands/tablecmds.c.  We now use this only for
  * ON COMMIT truncation of temporary tables, where it doesn't matter.
  */
 void
@@ -3476,7 +3498,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.	We make one pass with all the
+	 * Otherwise, must scan pg_constraint.  We make one pass with all the
 	 * relations considered; if this finds nothing, then all is well.
 	 */
 	dependents = heap_truncate_find_FKs(oids);
@@ -3537,7 +3559,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
  * behavior to change depending on chance locations of rows in pg_constraint.)
  *
  * Note: caller should already have appropriate lock on all rels mentioned
- * in relationIds.	Since adding or dropping an FK requires exclusive lock
+ * in relationIds.  Since adding or dropping an FK requires exclusive lock
  * on both rels, this ensures that the answer will be stable.
  */
 List *
@@ -3555,7 +3577,7 @@ heap_truncate_find_FKs(List *relationIds)
 	fkeyRel = heap_open(ConstraintRelationId, AccessShareLock);
 
 	fkeyScan = systable_beginscan(fkeyRel, InvalidOid, false,
-								  SnapshotNow, 0, NULL);
+								  NULL, 0, NULL);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
 	{

@@ -57,6 +57,11 @@ CREATE FUNCTION test_atomic_ops()
     AS '@libdir@/regress@DLSUFFIX@'
     LANGUAGE C IMMUTABLE STRICT NO SQL;
 
+CREATE FUNCTION make_tuple_indirect (record)
+        RETURNS record
+        AS '@libdir@/regress@DLSUFFIX@'
+        LANGUAGE C STRICT;
+
 -- Things that shouldn't work:
 
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL CONTAINS SQL

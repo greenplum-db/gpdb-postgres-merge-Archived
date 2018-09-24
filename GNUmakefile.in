@@ -111,6 +111,7 @@ distclean maintainer-clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
+<<<<<<< HEAD
 installcheck-resgroup:
 	$(MAKE) -C src/test/isolation2 $@
 
@@ -126,12 +127,16 @@ create-tinc-test-cluster: destroy-demo-cluster
 	. gpAux/gpdemo/gpdemo-env.sh && createdb gptest
 
 check: all
+=======
+check check-tests: all
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
-check installcheck installcheck-parallel:
+check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
 
-$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
 
+<<<<<<< HEAD
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
 .PHONY: installcheck-world
@@ -169,6 +174,9 @@ $(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
 $(call recurse,installcheck-world,contrib/pg_upgrade,check)
 
 $(call recurse,maintainer-check,doc src config contrib)
+=======
+$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib src/bin,installcheck)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 # Run mock tests, that don't require a running server. Arguably these should
 # be part of [install]check-world, but we treat them more like part of
@@ -213,10 +221,15 @@ distdir:
 	  fi || exit; \
 	done
 	$(MAKE) -C $(distdir) distprep
+<<<<<<< HEAD
 	#$(MAKE) -C $(distdir)/doc/src/sgml/ HISTORY INSTALL regress_README
 	#cp $(distdir)/doc/src/sgml/HISTORY $(distdir)/
 	#cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
 	#cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
+=======
+	$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
+	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	$(MAKE) -C $(distdir) distclean
 	#rm -f $(distdir)/README.git
 

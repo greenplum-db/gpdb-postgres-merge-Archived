@@ -379,7 +379,11 @@ mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
 	 * ok, we got the hash, now check
 	 */
 	px_md_finish(ctx->mdc_ctx, hash);
+<<<<<<< HEAD
 	res = memcmp(hash, data, 20);
+=======
+	res = memcmp(hash, *data_p, 20);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	px_memset(hash, 0, 20);
 	px_memset(tmpbuf, 0, sizeof(tmpbuf));
 	if (res != 0)

@@ -3,7 +3,7 @@
  * nodeModifyTable.c
  *	  routines to handle ModifyTable nodes.
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -30,7 +30,7 @@
  *
  *		If the query specifies RETURNING, then the ModifyTable returns a
  *		RETURNING tuple after completing each row insert, update, or delete.
- *		It must be called again to continue the operation.	Without RETURNING,
+ *		It must be called again to continue the operation.  Without RETURNING,
  *		we just loop within the node until all the work is done, then
  *		return NULL.  This avoids useless call/return overhead.
  */
@@ -410,6 +410,12 @@ ExecInsert(TupleTableSlot *parentslot,
 	else
 	{
 		/*
+		 * Constraints might reference the tableoid column, so initialize
+		 * t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+
+		/*
 		 * Check the constraints of the tuple
 		 */
 		if (resultRelationDesc->rd_att->constr)
@@ -522,6 +528,10 @@ ExecInsert(TupleTableSlot *parentslot,
 
 	list_free(recheckIndexes);
 
+	/* Check any WITH CHECK OPTION constraints */
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+		ExecWithCheckOptions(resultRelInfo, slot, estate);
+
 	/* Process RETURNING if present */
 	if (projectReturning)
 		return ExecProcessReturning(projectReturning,
@@ -540,8 +550,10 @@ ExecInsert(TupleTableSlot *parentslot,
  *		delete and oldtuple is NULL.  When deleting from a view,
  *		oldtuple is passed to the INSTEAD OF triggers and identifies
  *		what to delete, and tupleid is invalid.  When deleting from a
- *		foreign table, both tupleid and oldtuple are NULL; the FDW has
- *		to figure out which row to delete using data from the planSlot.
+ *		foreign table, tupleid is invalid; the FDW has to figure out
+ *		which row to delete using data from the planSlot.  oldtuple is
+ *		passed to foreign table triggers; it is NULL when the foreign
+ *		table has no relevant triggers.
  *
  *		In GPDB, DELETE can be part of an update operation when
  *		there is a preceding SplitUpdate node.
@@ -551,7 +563,7 @@ ExecInsert(TupleTableSlot *parentslot,
  */
 TupleTableSlot *
 ExecDelete(ItemPointer tupleid,
-		   HeapTupleHeader oldtuple,
+		   HeapTuple oldtuple,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
 		   EState *estate,
@@ -601,8 +613,13 @@ ExecDelete(ItemPointer tupleid,
 		{
 			bool		dodelete;
 
+<<<<<<< HEAD
 			dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 											tupleid);
+=======
+		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
+										tupleid, oldtuple);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			if (!dodelete)			/* "do nothing" */
 				return NULL;
@@ -626,15 +643,18 @@ ExecDelete(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_delete_instead_row)
 	{
-		HeapTupleData tuple;
 		bool		dodelete;
 
 		Assert(oldtuple != NULL);
+<<<<<<< HEAD
 		tuple.t_data = oldtuple;
 		tuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 		ItemPointerSetInvalid(&(tuple.t_self));
 
 		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, &tuple);
+=======
+		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, oldtuple);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (!dodelete)			/* "do nothing" */
 			return NULL;
@@ -749,7 +769,7 @@ ldelete:;
 				 * proceed.  We don't want to discard the original DELETE
 				 * while keeping the triggered actions based on its deletion;
 				 * and it would be no better to allow the original DELETE
-				 * while discarding updates that it triggered.	The row update
+				 * while discarding updates that it triggered.  The row update
 				 * carries some information that might be important according
 				 * to business rules; so throwing an error is the only safe
 				 * course.
@@ -847,6 +867,7 @@ ldelete:;
 	if (canSetTag)
 		(estate->es_processed)++;
 
+<<<<<<< HEAD
 	if (!isUpdate)
 	{
 		/*
@@ -869,6 +890,10 @@ ldelete:;
 		/* AFTER ROW DELETE Triggers */
 		ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
 	}
+=======
+	/* AFTER ROW DELETE Triggers */
+	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Process RETURNING if present */
 	/*
@@ -879,7 +904,7 @@ ldelete:;
 	{
 		/*
 		 * We have to put the target tuple into a slot, which means first we
-		 * gotta fetch it.	We can use the trigger tuple slot.
+		 * gotta fetch it.  We can use the trigger tuple slot.
 		 */
 		TupleTableSlot *rslot;
 		HeapTupleData deltuple;
@@ -909,9 +934,13 @@ ldelete:;
 			slot = estate->es_trig_tuple_slot;
 			if (oldtuple != NULL)
 			{
+<<<<<<< HEAD
 				deltuple.t_data = oldtuple;
 				deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 				ItemPointerSetInvalid(&(deltuple.t_self));
+=======
+				deltuple = *oldtuple;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				delbuffer = InvalidBuffer;
 			}
 			else
@@ -1129,7 +1158,7 @@ checkPartitionUpdate(EState *estate, TupleTableSlot *partslot,
  *		note: we can't run UPDATE queries with transactions
  *		off because UPDATEs are actually INSERTs and our
  *		scan will mistakenly loop forever, updating the tuple
- *		it just inserted..	This should be fixed but until it
+ *		it just inserted..  This should be fixed but until it
  *		is, we don't want to get stuck in an infinite loop
  *		which corrupts your database..
  *
@@ -1137,15 +1166,17 @@ checkPartitionUpdate(EState *estate, TupleTableSlot *partslot,
  *		update and oldtuple is NULL.  When updating a view, oldtuple
  *		is passed to the INSTEAD OF triggers and identifies what to
  *		update, and tupleid is invalid.  When updating a foreign table,
- *		both tupleid and oldtuple are NULL; the FDW has to figure out
- *		which row to update using data from the planSlot.
+ *		tupleid is invalid; the FDW has to figure out which row to
+ *		update using data from the planSlot.  oldtuple is passed to
+ *		foreign table triggers; it is NULL when the foreign table has
+ *		no relevant triggers.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecUpdate(ItemPointer tupleid,
-		   HeapTupleHeader oldtuple,
+		   HeapTuple oldtuple,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
@@ -1212,7 +1243,7 @@ ExecUpdate(ItemPointer tupleid,
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-									tupleid, slot);
+									tupleid, oldtuple, slot);
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
@@ -1222,6 +1253,7 @@ ExecUpdate(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 	{
+<<<<<<< HEAD
 		HeapTupleData oldtup;
 
 		Assert(oldtuple != NULL);
@@ -1229,8 +1261,10 @@ ExecUpdate(ItemPointer tupleid,
 		oldtup.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
 		ItemPointerSetInvalid(&(oldtup.t_self));
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		slot = ExecIRUpdateTriggers(estate, resultRelInfo,
-									&oldtup, slot);
+									oldtuple, slot);
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
@@ -1257,11 +1291,17 @@ ExecUpdate(ItemPointer tupleid,
 		LockTupleMode lockmode;
 
 		/*
+		 * Constraints might reference the tableoid column, so initialize
+		 * t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+
+		/*
 		 * Check the constraints of the tuple
 		 *
 		 * If we generate a new candidate tuple after EvalPlanQual testing, we
 		 * must loop back here and recheck constraints.  (We don't need to
-		 * redo triggers, however.	If there are any BEFORE triggers then
+		 * redo triggers, however.  If there are any BEFORE triggers then
 		 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
 		 * so there's no need to do them again.)
 		 */
@@ -1444,6 +1484,7 @@ lreplace:;
 		(estate->es_processed)++;
 
 	/* AFTER ROW UPDATE Triggers */
+<<<<<<< HEAD
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_after_row &&
 		rel_is_heap)
@@ -1451,10 +1492,17 @@ lreplace:;
 		HeapTuple tuple = ExecMaterializeSlot(slot);
 
 		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,
+=======
+	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 						 recheckIndexes);
 	}
 
 	list_free(recheckIndexes);
+
+	/* Check any WITH CHECK OPTION constraints */
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+		ExecWithCheckOptions(resultRelInfo, slot, estate);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
@@ -1532,7 +1580,8 @@ ExecModifyTable(ModifyTableState *node)
 	TupleTableSlot *planSlot;
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
-	HeapTupleHeader oldtuple = NULL;
+	HeapTupleData oldtupdata;
+	HeapTuple	oldtuple;
 
 	/*
 	 * This should NOT get called during EvalPlanQual; we should have passed a
@@ -1576,7 +1625,7 @@ ExecModifyTable(ModifyTableState *node)
 
 	/*
 	 * es_result_relation_info must point to the currently active result
-	 * relation while we are within this ModifyTable node.	Even though
+	 * relation while we are within this ModifyTable node.  Even though
 	 * ModifyTable nodes can't be nested statically, they can be nested
 	 * dynamically (since our subplan could include a reference to a modifying
 	 * CTE).  So we have to save and restore the caller's value.
@@ -1592,7 +1641,7 @@ ExecModifyTable(ModifyTableState *node)
 	for (;;)
 	{
 		/*
-		 * Reset the per-output-tuple exprcontext.	This is needed because
+		 * Reset the per-output-tuple exprcontext.  This is needed because
 		 * triggers expect to use that context as workspace.  It's a bit ugly
 		 * to do this below the top level of the plan, however.  We might need
 		 * to rethink this later.
@@ -1622,6 +1671,7 @@ ExecModifyTable(ModifyTableState *node)
 		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
 		slot = planSlot;
 
+		oldtuple = NULL;
 		if (junkfilter != NULL)
 		{
 			/*
@@ -1634,7 +1684,7 @@ ExecModifyTable(ModifyTableState *node)
 				bool		isNull;
 
 				relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
-				if (relkind == RELKIND_RELATION)
+				if (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW)
 				{
 					datum = ExecGetJunkAttribute(slot,
 												 junkfilter->jf_junkAttNo,
@@ -1648,11 +1698,22 @@ ExecModifyTable(ModifyTableState *node)
 												 * ctid!! */
 					tupleid = &tuple_ctid;
 				}
-				else if (relkind == RELKIND_FOREIGN_TABLE)
-				{
-					/* do nothing; FDW must fetch any junk attrs it wants */
-				}
-				else
+
+				/*
+				 * Use the wholerow attribute, when available, to reconstruct
+				 * the old relation tuple.
+				 *
+				 * Foreign table updates have a wholerow attribute when the
+				 * relation has an AFTER ROW trigger.  Note that the wholerow
+				 * attribute does not carry system columns.  Foreign table
+				 * triggers miss seeing those, except that we know enough here
+				 * to set t_tableOid.  Quite separately from this, the FDW may
+				 * fetch its own junk attrs to identify the row.
+				 *
+				 * Other relevant relkinds, currently limited to views, always
+				 * have a wholerow attribute.
+				 */
+				else if (AttributeNumberIsValid(junkfilter->jf_junkAttNo))
 				{
 					datum = ExecGetJunkAttribute(slot,
 												 junkfilter->jf_junkAttNo,
@@ -1661,8 +1722,19 @@ ExecModifyTable(ModifyTableState *node)
 					if (isNull)
 						elog(ERROR, "wholerow is NULL");
 
-					oldtuple = DatumGetHeapTupleHeader(datum);
+					oldtupdata.t_data = DatumGetHeapTupleHeader(datum);
+					oldtupdata.t_len =
+						HeapTupleHeaderGetDatumLength(oldtupdata.t_data);
+					ItemPointerSetInvalid(&(oldtupdata.t_self));
+					/* Historically, view triggers see invalid t_tableOid. */
+					oldtupdata.t_tableOid =
+						(relkind == RELKIND_VIEW) ? InvalidOid :
+						RelationGetRelid(resultRelInfo->ri_RelationDesc);
+
+					oldtuple = &oldtupdata;
 				}
+				else
+					Assert(relkind == RELKIND_FOREIGN_TABLE);
 			}
 
 			/*
@@ -1839,7 +1911,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "mt_plans".  This is also a convenient place to
 	 * verify that the proposed target relations are valid and open their
-	 * indexes for insertion of new index entries.	Note we *must* set
+	 * indexes for insertion of new index entries.  Note we *must* set
 	 * estate->es_result_relation_info correctly while we initialize each
 	 * sub-plan; ExecContextForcesOids depends on that!
 	 */
@@ -1859,7 +1931,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * If there are indices on the result relation, open them and save
 		 * descriptors in the result relation info, so that we can add new
-		 * index entries for the tuples we add/update.	We need not do this
+		 * index entries for the tuples we add/update.  We need not do this
 		 * for a DELETE, however, since deletion doesn't affect indexes. Also,
 		 * inside an EvalPlanQual operation, the indexes might be open
 		 * already, since we share the resultrel state with the original
@@ -1894,6 +1966,32 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	estate->es_result_relation_info = saved_resultRelInfo;
 
 	/*
+	 * Initialize any WITH CHECK OPTION constraints if needed.
+	 */
+	resultRelInfo = mtstate->resultRelInfo;
+	i = 0;
+	foreach(l, node->withCheckOptionLists)
+	{
+		List	   *wcoList = (List *) lfirst(l);
+		List	   *wcoExprs = NIL;
+		ListCell   *ll;
+
+		foreach(ll, wcoList)
+		{
+			WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
+			ExprState  *wcoExpr = ExecInitExpr((Expr *) wco->qual,
+											   mtstate->mt_plans[i]);
+
+			wcoExprs = lappend(wcoExprs, wcoExpr);
+		}
+
+		resultRelInfo->ri_WithCheckOptions = wcoList;
+		resultRelInfo->ri_WithCheckOptionExprs = wcoExprs;
+		resultRelInfo++;
+		i++;
+	}
+
+	/*
 	 * Initialize RETURNING projections if needed.
 	 */
 	if (node->returningLists)
@@ -1903,7 +2001,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/*
 		 * Initialize result tuple slot and assign its rowtype using the first
-		 * RETURNING list.	We assume the rest will look the same.
+		 * RETURNING list.  We assume the rest will look the same.
 		 */
 		tupDesc = ExecTypeFromTL((List *) linitial(node->returningLists),
 								 false);
@@ -1949,7 +2047,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * If we have any secondary relations in an UPDATE or DELETE, they need to
 	 * be treated like non-locked relations in SELECT FOR UPDATE, ie, the
-	 * EvalPlanQual mechanism needs to be told about them.	Locate the
+	 * EvalPlanQual mechanism needs to be told about them.  Locate the
 	 * relevant ExecRowMarks.
 	 */
 	foreach(l, node->rowMarks)
@@ -2022,7 +2120,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * attribute present --- no need to look first.
 	 *
 	 * If there are multiple result relations, each one needs its own junk
-	 * filter.	Note multiple rels are only possible for UPDATE/DELETE, so we
+	 * filter.  Note multiple rels are only possible for UPDATE/DELETE, so we
 	 * can't be fooled by some needing a filter and some not.
 	 *
 	 * This section of code is also a convenient place to verify that the
@@ -2076,7 +2174,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					char		relkind;
 
 					relkind = resultRelInfo->ri_RelationDesc->rd_rel->relkind;
-					if (relkind == RELKIND_RELATION)
+					if (relkind == RELKIND_RELATION ||
+						relkind == RELKIND_MATVIEW)
 					{
 						j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
 						if (!AttributeNumberIsValid(j->jf_junkAttNo))
@@ -2084,7 +2183,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					}
 					else if (relkind == RELKIND_FOREIGN_TABLE)
 					{
-						/* FDW must fetch any junk attrs it wants */
+						/*
+						 * When there is an AFTER trigger, there should be a
+						 * wholerow attribute.
+						 */
+						j->jf_junkAttNo = ExecFindJunkAttribute(j, "wholerow");
 					}
 					else
 					{

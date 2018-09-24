@@ -122,8 +122,11 @@ CREATE TABLE ctlt12_storage (LIKE ctlt1 INCLUDING STORAGE, LIKE ctlt2 INCLUDING 
  a      | text | not null  | main     |              | 
  b      | text |           | extended |              | 
  c      | text |           | external |              | 
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDING COMMENTS);
 \d+ ctlt12_comments
@@ -133,8 +136,11 @@ CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDIN
  a      | text | not null  | extended |              | A
  b      | text |           | extended |              | B
  c      | text |           | extended |              | C
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE TABLE ctlt1_inh (LIKE ctlt1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
@@ -149,8 +155,11 @@ NOTICE:  merging constraint "ctlt1_a_check" with inherited definition
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
 Inherits: ctlt1
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt1_inh'::regclass;
  description 
@@ -172,8 +181,11 @@ Check constraints:
     "ctlt3_a_check" CHECK (length(a) < 5)
 Inherits: ctlt1,
           ctlt3
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE TABLE ctlt13_like (LIKE ctlt3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
@@ -188,8 +200,11 @@ Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt3_a_check" CHECK (length(a) < 5)
 Inherits: ctlt1
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt13_like'::regclass;
  description 
@@ -210,8 +225,11 @@ Indexes:
     "ctlt_all_expr_idx" btree ((a || b))
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
+<<<<<<< HEAD
 Has OIDs: no
 Distributed by: (a)
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 'ctlt_all'::regclass ORDER BY c.relname, objsubid;
     relname     | objsubid | description 
@@ -234,7 +252,7 @@ NOTICE:  drop cascades to table inhe
 CREATE TABLE ctlt4 (a int, b text);
 CREATE SEQUENCE ctlseq1;
 CREATE TABLE ctlt10 (LIKE ctlseq1);  -- fail
-ERROR:  "ctlseq1" is not a table, view, composite type, or foreign table
+ERROR:  "ctlseq1" is not a table, view, materialized view, composite type, or foreign table
 LINE 1: CREATE TABLE ctlt10 (LIKE ctlseq1);
                                   ^
 CREATE VIEW ctlv1 AS SELECT * FROM ctlt4;

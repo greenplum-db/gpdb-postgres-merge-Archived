@@ -7,7 +7,7 @@
  * accessed via the extended FE/BE query protocol.
  *
  *
- * Copyright (c) 2002-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/commands/prepare.c
@@ -184,7 +184,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
  * ExecuteQuery --- implement the 'EXECUTE' utility statement.
  *
  * This code also supports CREATE TABLE ... AS EXECUTE.  That case is
- * indicated by passing a non-null intoClause.	The DestReceiver is already
+ * indicated by passing a non-null intoClause.  The DestReceiver is already
  * set up correctly for CREATE TABLE AS, but we still have to make a few
  * other adjustments here.
  *
@@ -221,7 +221,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
-		 * of query, in case parameters are pass-by-reference.	Note that the
+		 * of query, in case parameters are pass-by-reference.  Note that the
 		 * passed-in "params" could possibly be referenced in the parameter
 		 * expressions.
 		 */
@@ -245,10 +245,21 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	plan_list = cplan->stmt_list;
 
 	/*
+<<<<<<< HEAD
 	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
 	 * so that we can modify its destination (yech, but this has always been
 	 * ugly).  For regular EXECUTE we can just use the cached query, since the
 	 * executor is read-only.
+=======
+	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
+	 * statement is one that produces tuples.  Currently we insist that it be
+	 * a plain old SELECT.  In future we might consider supporting other
+	 * things such as INSERT ... RETURNING, but there are a couple of issues
+	 * to be settled first, notably how WITH NO DATA should be handled in such
+	 * a case (do we really want to suppress execution?) and how to pass down
+	 * the OID-determining eflags (PortalStart won't handle them in such a
+	 * case, and for that matter it's not clear the executor will either).
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 *
 	 * In GPDB, we use the current parameter values in the planning, because
 	 * that potentially gives a better plan. It also means that we have to
@@ -552,7 +563,7 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 
 /*
  * Given a prepared statement that returns tuples, extract the query
- * targetlist.	Returns NIL if the statement doesn't have a determinable
+ * targetlist.  Returns NIL if the statement doesn't have a determinable
  * targetlist.
  *
  * Note: this is pretty ugly, but since it's only used in corner cases like
@@ -686,7 +697,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
-		 * of query, in case parameters are pass-by-reference.	Note that the
+		 * of query, in case parameters are pass-by-reference.  Note that the
 		 * passed-in "params" could possibly be referenced in the parameter
 		 * expressions.
 		 */
@@ -707,7 +718,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
 
 		if (IsA(pstmt, PlannedStmt))
-			ExplainOnePlan(pstmt, into, es, query_string, paramLI);
+			ExplainOnePlan(pstmt, into, es, query_string, paramLI, NULL);
 		else
 			ExplainOneUtility((Node *) pstmt, into, es, query_string, paramLI);
 

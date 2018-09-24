@@ -4,9 +4,13 @@
  *	  Relation descriptor cache definitions.
  *
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/relcache.h
@@ -27,7 +31,7 @@ typedef struct RelationData *Relation;
 /* ----------------
  *		RelationPtr is used in the executor to support index scans
  *		where we have to keep track of several index relations in an
- *		array.	-cim 9/10/89
+ *		array.  -cim 9/10/89
  * ----------------
  */
 typedef Relation *RelationPtr;
@@ -44,9 +48,20 @@ extern void RelationClose(Relation relation);
 struct GpPolicy *RelationGetPartitioningKey(Relation relation);
 extern List *RelationGetIndexList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
+extern Oid	RelationGetReplicaIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
-extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs);
+
+typedef enum IndexAttrBitmapKind
+{
+	INDEX_ATTR_BITMAP_ALL,
+	INDEX_ATTR_BITMAP_KEY,
+	INDEX_ATTR_BITMAP_IDENTITY_KEY
+} IndexAttrBitmapKind;
+
+extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation,
+						   IndexAttrBitmapKind keyAttrs);
+
 extern void RelationGetExclusionInfo(Relation indexRelation,
 						 Oid **operators,
 						 Oid **procs,

@@ -153,6 +153,9 @@ SELECT nextval('sequence_test'::text);
       99
 (1 row)
 
+DISCARD SEQUENCES;
+SELECT currval('sequence_test'::regclass);
+ERROR:  currval of sequence "sequence_test" is not yet defined in this session
 DROP SEQUENCE sequence_test;
 -- renaming sequences
 CREATE SEQUENCE foo_seq;
@@ -320,7 +323,19 @@ SELECT setval('seq', 99);
      99
 (1 row)
 
+<<<<<<< HEAD
 --SELECT lastval();
+=======
+SELECT lastval();
+ lastval 
+---------
+      99
+(1 row)
+
+DISCARD SEQUENCES;
+SELECT lastval();
+ERROR:  lastval is not yet defined in this session
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');
  nextval 

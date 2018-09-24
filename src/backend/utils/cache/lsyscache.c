@@ -3,9 +3,13 @@
  * lsyscache.c
  *	  Convenience routines for common queries in the system catalog cache.
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2007-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -203,13 +207,13 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
  * (This indicates that the operator is not a valid ordering operator.)
  *
  * Note: the operator could be registered in multiple families, for example
- * if someone were to build a "reverse sort" opfamily.	This would result in
+ * if someone were to build a "reverse sort" opfamily.  This would result in
  * uncertainty as to whether "ORDER BY USING op" would default to NULLS FIRST
  * or NULLS LAST, as well as inefficient planning due to failure to match up
  * pathkeys that should be the same.  So we want a determinate result here.
  * Because of the way the syscache search works, we'll use the interpretation
  * associated with the opfamily with smallest OID, which is probably
- * determinate enough.	Since there is no longer any particularly good reason
+ * determinate enough.  Since there is no longer any particularly good reason
  * to build reverse-sort opfamilies, it doesn't seem worth expending any
  * additional effort on ensuring consistency.
  */
@@ -463,7 +467,7 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
  *
  * The planner currently uses simple equal() tests to compare the lists
  * returned by this function, which makes the list order relevant, though
- * strictly speaking it should not be.	Because of the way syscache list
+ * strictly speaking it should not be.  Because of the way syscache list
  * searches are handled, in normal operation the result will be sorted by OID
  * so everything works fine.  If running with system index usage disabled,
  * the result ordering is unspecified and hence the planner might fail to
@@ -1282,7 +1286,7 @@ op_mergejoinable(Oid opno, Oid inputtype)
  *
  * In some cases (currently only array_eq), hashjoinability depends on the
  * specific input data type the operator is invoked for, so that must be
- * passed as well.	We currently assume that only one input's type is needed
+ * passed as well.  We currently assume that only one input's type is needed
  * to check this --- by convention, pass the left input's data type.
  */
 bool
@@ -1891,6 +1895,7 @@ get_func_signature(Oid funcid, Oid **argtypes, int *nargs)
 }
 
 /*
+<<<<<<< HEAD
  * pfree_ptr_array
  * 		Free an array of pointers, after freeing each individual element
  */
@@ -1990,6 +1995,8 @@ get_func_arg_types(Oid funcid)
 }
 
 /*
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * get_func_variadictype
  *		Given procedure id, return the function's provariadic field.
  */
@@ -2431,7 +2438,7 @@ get_typbyval(Oid typid)
  *		A two-fer: given the type OID, return both typlen and typbyval.
  *
  *		Since both pieces of info are needed to know how to copy a Datum,
- *		many places need both.	Might as well get them with one cache lookup
+ *		many places need both.  Might as well get them with one cache lookup
  *		instead of two.  Also, this routine raises an error instead of
  *		returning a bogus value when given a bad type OID.
  */

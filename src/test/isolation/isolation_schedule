@@ -22,9 +22,18 @@
 #test: lock-update-delete
 #test: lock-update-traversal
 test: delete-abort-savept
+<<<<<<< HEAD
 #test: delete-abort-savept-2
 #test: aborted-keyrevoke
+=======
+test: delete-abort-savept-2
+test: aborted-keyrevoke
+test: multixact-no-deadlock
+test: multixact-no-forget
+test: propagate-lock-delete
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 test: drop-index-concurrently-1
+test: alter-table-1
 test: timeouts
 
 #test: prepared-transactions

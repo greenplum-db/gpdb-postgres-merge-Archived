@@ -20,9 +20,12 @@ PG_LIBS = $(libpq_pgport)
 EXTRA_CLEAN = analyze_new_cluster.sh delete_old_cluster.sh log/ tmp_check/ \
               pg_upgrade_dump_globals.sql \
               pg_upgrade_dump_*.custom pg_upgrade_*.log
+<<<<<<< HEAD
 
 EXTRA_CLEAN += clusterConfigPostgresAddonsFile clusterConfigFile gpdemo-env.sh \
               hostfile regression.diffs
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -34,8 +37,13 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+<<<<<<< HEAD
 check: test_gpdb.sh all
 	bash $< -C -s -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)
+=======
+check: test.sh all
+	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< --install
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 installcheck: test_gpdb.sh all
 	bash $< -o $(top_builddir)/gpAux/gpdemo/datadirs/ -b $(DESTDIR)$(bindir)

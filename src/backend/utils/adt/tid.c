@@ -3,9 +3,13 @@
  * tid.c
  *	  Functions for the built-in type tuple id
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,6 +36,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
 #define PG_GETARG_ITEMPOINTER(n) DatumGetItemPointer(PG_GETARG_DATUM(n))
@@ -360,6 +365,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	ItemPointer result;
 	Relation	rel;
 	AclResult	aclresult;
+	Snapshot	snapshot;
 
 	/*
 	 * Immediately inform client that the function is not supported
@@ -387,7 +393,10 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 		return currtid_for_view(rel, tid);
 
 	ItemPointerCopy(tid, result);
-	heap_get_latest_tid(rel, SnapshotNow, result);
+
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	heap_get_latest_tid(rel, snapshot, result);
+	UnregisterSnapshot(snapshot);
 
 	heap_close(rel, AccessShareLock);
 
@@ -412,6 +421,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 	AclResult	aclresult;
+	Snapshot	snapshot;
 
 	/*
 	 * Immediately inform client that the function is not supported
@@ -435,7 +445,9 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	ItemPointerCopy(tid, result);
 
-	heap_get_latest_tid(rel, SnapshotNow, result);
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	heap_get_latest_tid(rel, snapshot, result);
+	UnregisterSnapshot(snapshot);
 
 	heap_close(rel, AccessShareLock);
 

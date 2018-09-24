@@ -4,7 +4,7 @@
  *	  "Catalog version number" for PostgreSQL.
  *
  * The catalog version number is used to flag incompatible changes in
- * the PostgreSQL system catalogs.	Whenever anyone changes the format of
+ * the PostgreSQL system catalogs.  Whenever anyone changes the format of
  * a system catalog relation, or adds, deletes, or modifies standard
  * catalog entries in such a way that an updated backend wouldn't work
  * with an old database (or vice versa), the catalog version number
@@ -34,7 +34,7 @@
  * database contents or layout, such as altering tuple headers.
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/catversion.h
@@ -55,7 +55,12 @@
  * catalog versions from Greenplum.
  */
 
+<<<<<<< HEAD
 /*							3yyymmddN */
 #define CATALOG_VERSION_NO	301809211
+=======
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201406051
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #endif

@@ -7,7 +7,7 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/include/postgres.h
@@ -33,7 +33,7 @@
  *	in the backend environment, but are of no interest outside the backend.
  *
  *	Simple type definitions live in c.h, where they are shared with
- *	postgres_fe.h.	We do that since those type definitions are needed by
+ *	postgres_fe.h.  We do that since those type definitions are needed by
  *	frontend modules that want to deal with binary data transmission to or
  *	from the backend.  Type definitions in this file should be for
  *	representations that never escape the backend, such as Datum or
@@ -61,23 +61,53 @@ extern "C" {
  */
 
 /*
- * struct varatt_external is a "TOAST pointer", that is, the information
- * needed to fetch a stored-out-of-line Datum.	The data is compressed
- * if and only if va_extsize < va_rawsize - VARHDRSZ.  This struct must not
- * contain any padding, because we sometimes compare pointers using memcmp.
+ * struct varatt_external is a "TOAST pointer", that is, the information needed
+ * to fetch a Datum stored in an out-of-line on-disk Datum. The data is
+ * compressed if and only if va_extsize < va_rawsize - VARHDRSZ.  This struct
+ * must not contain any padding, because we sometimes compare pointers using
+ * memcmp.
  *
  * Note that this information is stored unaligned within actual tuples, so
  * you need to memcpy from the tuple into a local struct variable before
  * you can look at these fields!  (The reason we use memcmp is to avoid
  * having to do that just to detect equality of two TOAST pointers...)
  */
-struct varatt_external
+typedef struct varatt_external
 {
 	int32		va_rawsize;		/* Original data size (includes header) */
 	int32		va_extsize;		/* External saved size (doesn't) */
 	Oid			va_valueid;		/* Unique ID of value within TOAST table */
 	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
-};
+}	varatt_external;
+
+/*
+ * Out-of-line Datum thats stored in memory in contrast to varatt_external
+ * pointers which points to data in an external toast relation.
+ *
+ * Note that just as varatt_external's this is stored unaligned within the
+ * tuple.
+ */
+typedef struct varatt_indirect
+{
+	struct varlena *pointer;	/* Pointer to in-memory varlena */
+}	varatt_indirect;
+
+
+/*
+ * Type of external toast datum stored. The peculiar value for VARTAG_ONDISK
+ * comes from the requirement for on-disk compatibility with the older
+ * definitions of varattrib_1b_e where v_tag was named va_len_1be...
+ */
+typedef enum vartag_external
+{
+	VARTAG_INDIRECT = 1,
+	VARTAG_ONDISK = 18
+} vartag_external;
+
+#define VARTAG_SIZE(tag) \
+	((tag) == VARTAG_INDIRECT ? sizeof(varatt_indirect) :		\
+	 (tag) == VARTAG_ONDISK ? sizeof(varatt_external) : \
+	 TrapMacro(true, "unknown vartag"))
 
 /*
  * These structs describe the header of a varlena object that may have been
@@ -109,6 +139,7 @@ typedef struct
 	char		va_data[1];		/* Data begins here */
 } varattrib_1b;
 
+<<<<<<< HEAD
 /* NOT Like Postgres! ...In GPDB, We waste a few bytes of padding, and don't always set the va_len_1be to anything */
 typedef struct
 {
@@ -116,6 +147,14 @@ typedef struct
 	uint8		va_len_1be;		/*** PG only:  Len of toast pointer w/ 1b header, ignored in GPDB  ***/ /* Physical length of datum */
 	uint8		va_padding[2];	/*** GPDB only:  Alignment padding ***/
 	char		va_data[1];		/* Data (for now always a TOAST pointer) */
+=======
+/* inline portion of a short varlena pointing to an external resource */
+typedef struct
+{
+	uint8		va_header;		/* Always 0x80 or 0x01 */
+	uint8		va_tag;			/* Type of datum */
+	char		va_data[1];		/* Data (of the type indicated by va_tag) */
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } varattrib_1b_e;
 
 /*
@@ -135,11 +174,20 @@ typedef struct
  * all our customers to initdb.
  *
  * The "xxx" bits are the length field (which includes itself in all cases).
+<<<<<<< HEAD
  * In the big-endian case we mask to extract the length.
  * Note that in both cases the flag bits are in the physically
  * first byte.	Also, it is not possible for a 1-byte length word to be zero;
+=======
+ * In the big-endian case we mask to extract the length, in the little-endian
+ * case we shift.  Note that in both cases the flag bits are in the physically
+ * first byte.  Also, it is not possible for a 1-byte length word to be zero;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * this lets us disambiguate alignment padding bytes from the start of an
  * unaligned datum.  (We now *require* pad bytes to be filled with zero!)
+ *
+ * In TOAST datums the tag field in varattrib_1b_e is used to discern whether
+ * its an indirection pointer or more commonly an on-disk tuple.
  */
 
 /*
@@ -169,8 +217,13 @@ typedef struct
 	(ntohl(((varattrib_4b *) (PTR))->va_4byte.va_header) & 0x3FFFFFFF)
 #define VARSIZE_1B(PTR) \
 	(((varattrib_1b *) (PTR))->va_header & 0x7F)
+<<<<<<< HEAD
 /* In GPDB, VARSIZE_1B_E() is always the size of a toast pointer plus the 4 byte header */
 #define VARSIZE_1B_E(PTR) (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
+=======
+#define VARTAG_1B_E(PTR) \
+	(((varattrib_1b_e *) (PTR))->va_tag)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = htonl( (len) & 0x3FFFFFFF ))
@@ -178,6 +231,7 @@ typedef struct
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = htonl( ((len) & 0x3FFFFFFF) | 0x40000000 ))
 #define SET_VARSIZE_1B(PTR,len) \
 	(((varattrib_1b *) (PTR))->va_header = (len) | 0x80)
+<<<<<<< HEAD
 /*
  * Although this macro sets var_len_1be, data stored in GPDB might
  * not have anything set in this byte, so you can't count on it's value
@@ -186,8 +240,46 @@ typedef struct
 #define SET_VARSIZE_1B_E(PTR,len) \
 	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
 	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
+=======
+#define SET_VARTAG_1B_E(PTR,tag) \
+	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
+	 ((varattrib_1b_e *) (PTR))->va_tag = (tag))
+#else							/* !WORDS_BIGENDIAN */
 
-#define VARHDRSZ_SHORT			1
+#define VARATT_IS_4B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x01) == 0x00)
+#define VARATT_IS_4B_U(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x03) == 0x00)
+#define VARATT_IS_4B_C(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x03) == 0x02)
+#define VARATT_IS_1B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x01) == 0x01)
+#define VARATT_IS_1B_E(PTR) \
+	((((varattrib_1b *) (PTR))->va_header) == 0x01)
+#define VARATT_NOT_PAD_BYTE(PTR) \
+	(*((uint8 *) (PTR)) != 0)
+
+/* VARSIZE_4B() should only be used on known-aligned data */
+#define VARSIZE_4B(PTR) \
+	((((varattrib_4b *) (PTR))->va_4byte.va_header >> 2) & 0x3FFFFFFF)
+#define VARSIZE_1B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header >> 1) & 0x7F)
+#define VARTAG_1B_E(PTR) \
+	(((varattrib_1b_e *) (PTR))->va_tag)
+
+#define SET_VARSIZE_4B(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2))
+#define SET_VARSIZE_4B_C(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2) | 0x02)
+#define SET_VARSIZE_1B(PTR,len) \
+	(((varattrib_1b *) (PTR))->va_header = (((uint8) (len)) << 1) | 0x01)
+#define SET_VARTAG_1B_E(PTR,tag) \
+	(((varattrib_1b_e *) (PTR))->va_header = 0x01, \
+	 ((varattrib_1b_e *) (PTR))->va_tag = (tag))
+#endif   /* WORDS_BIGENDIAN */
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+#define VARHDRSZ_SHORT			offsetof(varattrib_1b, va_data)
 #define VARATT_SHORT_MAX		0x7F
 #define VARATT_CAN_MAKE_SHORT(PTR) \
 	(VARATT_IS_4B_U(PTR) && \
@@ -195,8 +287,12 @@ typedef struct
 #define VARATT_CONVERTED_SHORT_SIZE(PTR) \
 	(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT)
 
+<<<<<<< HEAD
 /* In Postgres, this is 2 */
 #define VARHDRSZ_EXTERNAL		4
+=======
+#define VARHDRSZ_EXTERNAL		offsetof(varattrib_1b_e, va_data)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
 #define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
@@ -230,26 +326,33 @@ typedef struct
 #define VARSIZE_SHORT(PTR)					VARSIZE_1B(PTR)
 #define VARDATA_SHORT(PTR)					VARDATA_1B(PTR)
 
-#define VARSIZE_EXTERNAL(PTR)				VARSIZE_1B_E(PTR)
+#define VARTAG_EXTERNAL(PTR)				VARTAG_1B_E(PTR)
+#define VARSIZE_EXTERNAL(PTR)				(VARHDRSZ_EXTERNAL + VARTAG_SIZE(VARTAG_EXTERNAL(PTR)))
 #define VARDATA_EXTERNAL(PTR)				VARDATA_1B_E(PTR)
 
 #define VARATT_IS_COMPRESSED(PTR)			VARATT_IS_4B_C(PTR)
 #define VARATT_IS_EXTERNAL(PTR)				VARATT_IS_1B_E(PTR)
+#define VARATT_IS_EXTERNAL_ONDISK(PTR) \
+	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK)
+#define VARATT_IS_EXTERNAL_INDIRECT(PTR) \
+	(VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_INDIRECT)
 #define VARATT_IS_SHORT(PTR)				VARATT_IS_1B(PTR)
 #define VARATT_IS_EXTENDED(PTR)				(!VARATT_IS_4B_U(PTR))
 
 #define SET_VARSIZE(PTR, len)				SET_VARSIZE_4B(PTR, len)
 #define SET_VARSIZE_SHORT(PTR, len)			SET_VARSIZE_1B(PTR, len)
 #define SET_VARSIZE_COMPRESSED(PTR, len)	SET_VARSIZE_4B_C(PTR, len)
-#define SET_VARSIZE_EXTERNAL(PTR, len)		SET_VARSIZE_1B_E(PTR, len)
+
+#define SET_VARTAG_EXTERNAL(PTR, tag)		SET_VARTAG_1B_E(PTR, tag)
 
 #define VARSIZE_ANY(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR) : \
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_EXTERNAL(PTR) : \
 	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR) : \
 	  VARSIZE_4B(PTR)))
 
+/* Size of a varlena data, excluding header */
 #define VARSIZE_ANY_EXHDR(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-VARHDRSZ_EXTERNAL : \
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_EXTERNAL(PTR)-VARHDRSZ_EXTERNAL : \
 	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-VARHDRSZ_SHORT : \
 	  VARSIZE_4B(PTR)-VARHDRSZ))
 

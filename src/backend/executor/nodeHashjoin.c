@@ -3,9 +3,13 @@
  * nodeHashjoin.c
  *	  Routines to handle hash join nodes
  *
+<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+=======
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -139,7 +143,7 @@ ExecHashJoin(HashJoinState *node)
 				 * check this when the outer relation's startup cost is less
 				 * than the projected cost of building the hash table.
 				 * Otherwise it's best to build the hash table first and see
-				 * if the inner relation is empty.	(When it's a left join, we
+				 * if the inner relation is empty.  (When it's a left join, we
 				 * should always make this check, since we aren't going to be
 				 * able to skip the join on the strength of an empty inner
 				 * relation anyway.)
@@ -665,7 +669,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * tuple slot of the Hash node (which is our inner plan).  we can do this
 	 * because Hash nodes don't return tuples via ExecProcNode() -- instead
 	 * the hash join node uses ExecScanHashBucket() to get at the contents of
-	 * the hash table.	-cim 6/9/91
+	 * the hash table.  -cim 6/9/91
 	 */
 	{
 		HashState  *hashstate = (HashState *) innerPlanState(hjstate);
@@ -1131,7 +1135,7 @@ ExecHashJoinSaveTuple(PlanState *ps, MemTuple tuple, uint32 hashvalue,
 
 /*
  * ExecHashJoinGetSavedTuple
- *		read the next tuple from a batch file.	Return NULL if no more.
+ *		read the next tuple from a batch file.  Return NULL if no more.
  *
  * On success, *hashvalue is set to the tuple's hash value, and the tuple
  * itself is stored in the given slot.

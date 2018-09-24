@@ -5,13 +5,17 @@
  *	to control oid and relfilenode assignment, and do other special
  *	hacks needed for pg_upgrade.
  *
- *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *	contrib/pg_upgrade_support/pg_upgrade_support.c
  */
 
 #include "postgres.h"
 
+<<<<<<< HEAD
 #include "fmgr.h"
+=======
+#include "catalog/binary_upgrade.h"
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/namespace.h"
 #include "catalog/oid_dispatch.h"
 #include "catalog/pg_authid.h"
@@ -30,6 +34,7 @@
 PG_MODULE_MAGIC;
 #endif
 
+<<<<<<< HEAD
 extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_type_oid;
 
 extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_class_oid;
@@ -51,6 +56,8 @@ Datum		create_empty_extension(PG_FUNCTION_ARGS);
 
 Datum		set_next_pg_namespace_oid(PG_FUNCTION_ARGS);
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 PG_FUNCTION_INFO_V1(set_next_pg_type_oid);
 PG_FUNCTION_INFO_V1(set_next_array_pg_type_oid);
 PG_FUNCTION_INFO_V1(set_next_toast_pg_type_oid);

@@ -3,7 +3,7 @@
  * pg_aggregate.c
  *	  routines to support manipulation of the pg_aggregate relation
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -58,9 +58,12 @@ AggregateCreate(const char *aggName,
 				Oid variadicArgType,
 				List *aggtransfnName,
 				List *aggfinalfnName,
+<<<<<<< HEAD
 				List *aggcombinefnName,
 				List *aggserialfnName,
 				List *aggdeserialfnName,
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				List *aggmtransfnName,
 				List *aggminvtransfnName,
 				List *aggmfinalfnName,
@@ -81,9 +84,12 @@ AggregateCreate(const char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
+<<<<<<< HEAD
 	Oid			combinefn = InvalidOid;	/* can be omitted */
 	Oid			serialfn = InvalidOid;	/* can be omitted */
 	Oid			deserialfn = InvalidOid;	/* can be omitted */
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
 	Oid			minvtransfn = InvalidOid;		/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
@@ -159,10 +165,17 @@ AggregateCreate(const char *aggName,
 				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
 
 	/*
+<<<<<<< HEAD
 	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.	In
 	 * principle we could support regular variadic types, but it would make
 	 * things much more complicated because we'd have to assemble the correct
 	 * subsets of arguments into array values.	Since no standard aggregates
+=======
+	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.  In
+	 * principle we could support regular variadic types, but it would make
+	 * things much more complicated because we'd have to assemble the correct
+	 * subsets of arguments into array values.  Since no standard aggregates
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * have use for such a case, we aren't bothering for now.
 	 */
 	if (AGGKIND_IS_ORDERED_SET(aggKind) && OidIsValid(variadicArgType) &&
@@ -174,7 +187,11 @@ AggregateCreate(const char *aggName,
 	/*
 	 * If it's a hypothetical-set aggregate, there must be at least as many
 	 * direct arguments as aggregated ones, and the last N direct arguments
+<<<<<<< HEAD
 	 * must match the aggregated ones in type.	(We have to check this again
+=======
+	 * must match the aggregated ones in type.  (We have to check this again
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * when the aggregate is called, in case ANY is involved, but it makes
 	 * sense to reject the aggregate definition now if the declared arg types
 	 * don't match up.)  It's unconditionally OK if numDirectArgs == numArgs,
@@ -331,9 +348,15 @@ AggregateCreate(const char *aggName,
 		if (rettype != aggmTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
+<<<<<<< HEAD
 					 errmsg("return type of inverse transition function %s is not %s",
 							NameListToString(aggminvtransfnName),
 							format_type_be(aggmTransType))));
+=======
+			errmsg("return type of inverse transition function %s is not %s",
+				   NameListToString(aggminvtransfnName),
+				   format_type_be(aggmTransType))));
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(minvtransfn));
 		if (!HeapTupleIsValid(tup))
@@ -352,7 +375,11 @@ AggregateCreate(const char *aggName,
 
 		ReleaseSysCache(tup);
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
@@ -537,7 +564,11 @@ AggregateCreate(const char *aggName,
 			}
 
 			mfinalfn = lookup_agg_function(aggmfinalfnName, nargs_finalfn,
+<<<<<<< HEAD
 										   fnArgs, variadicArgType,
+=======
+										   fnArgs, ffnVariadicArgType,
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 										   &rettype);
 
 			/* As above, check strictness if mfinalfnExtraArgs is given */
@@ -592,8 +623,12 @@ AggregateCreate(const char *aggName,
 	{
 		aclresult = pg_type_aclcheck(aggmTransType, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
+<<<<<<< HEAD
 			aclcheck_error(aclresult, ACL_KIND_TYPE,
 						   format_type_be(aggmTransType));
+=======
+			aclcheck_error_type(aclresult, aggmTransType);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	aclresult = pg_type_aclcheck(finaltype, GetUserId(), ACL_USAGE);
@@ -651,9 +686,12 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggnumdirectargs - 1] = Int16GetDatum(numDirectArgs);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
+<<<<<<< HEAD
 	values[Anum_pg_aggregate_aggcombinefn - 1] = ObjectIdGetDatum(combinefn);
 	values[Anum_pg_aggregate_aggserialfn - 1] = ObjectIdGetDatum(serialfn);
 	values[Anum_pg_aggregate_aggdeserialfn - 1] = ObjectIdGetDatum(deserialfn);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	values[Anum_pg_aggregate_aggmtransfn - 1] = ObjectIdGetDatum(mtransfn);
 	values[Anum_pg_aggregate_aggminvtransfn - 1] = ObjectIdGetDatum(minvtransfn);
 	values[Anum_pg_aggregate_aggmfinalfn - 1] = ObjectIdGetDatum(mfinalfn);
@@ -708,6 +746,7 @@ AggregateCreate(const char *aggName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
+<<<<<<< HEAD
 	/* Depends on combine function, if any */
 	if (OidIsValid(combinefn))
 	{
@@ -735,6 +774,8 @@ AggregateCreate(const char *aggName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Depends on forward transition function, if any */
 	if (OidIsValid(mtransfn))
 	{
@@ -776,11 +817,15 @@ AggregateCreate(const char *aggName,
 
 /*
  * lookup_agg_function
+<<<<<<< HEAD
  * common code for finding aggregate support functions
  *
  * fnName: possibly-schema-qualified function name
  * nargs, input_types: expected function argument types
  * variadicArgType: type of variadic argument if any, else InvalidOid
+=======
+ * common code for finding transfn, invtransfn and finalfn
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * Returns OID of function, and stores its return type into *rettype
  *

@@ -1,8 +1,12 @@
 /*
  *	pg_upgrade.h
  *
+<<<<<<< HEAD
  *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
+=======
+ *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *	contrib/pg_upgrade/pg_upgrade.h
  */
 
@@ -94,7 +98,6 @@ extern char *output_files[];
 #else
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
-#define sleep(x)			Sleep(x * 1000)
 #define PATH_SEPARATOR		'\\'
 #define RM_CMD				"DEL /q"
 #define RMDIR_CMD			"RMDIR /s/q"
@@ -206,6 +209,7 @@ typedef struct
 	char		relstorage;
 	Oid			relfilenode;	/* relation relfile node */
 	/* relation tablespace path, or "" for the cluster default */
+<<<<<<< HEAD
 	char		tablespace[MAXPGPATH];
 
 	RelType		reltype;
@@ -224,6 +228,11 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
+=======
+	char	   *tablespace;
+	bool		nsp_alloc;
+	bool		tblsp_alloc;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } RelInfo;
 
 typedef struct
@@ -237,10 +246,10 @@ typedef struct
  */
 typedef struct
 {
-	char		old_tablespace[MAXPGPATH];
-	char		new_tablespace[MAXPGPATH];
-	char		old_tablespace_suffix[MAXPGPATH];
-	char		new_tablespace_suffix[MAXPGPATH];
+	const char *old_tablespace;
+	const char *new_tablespace;
+	const char *old_tablespace_suffix;
+	const char *new_tablespace_suffix;
 	Oid			old_db_oid;
 	Oid			new_db_oid;
 
@@ -272,7 +281,8 @@ typedef struct
 {
 	Oid			db_oid;			/* oid of the database */
 	char	   *db_name;		/* database name */
-	char		db_tblspace[MAXPGPATH]; /* database default tablespace path */
+	char		db_tablespace[MAXPGPATH];		/* database default tablespace
+												 * path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 
 	char	   *reserved_oids;	/* as a string */
@@ -394,9 +404,13 @@ typedef struct
 	Oid			pg_database_oid;	/* OID of pg_database relation */
 	Oid			install_role_oid;		/* OID of connected role */
 	Oid			role_count;		/* number of roles defined in the cluster */
+<<<<<<< HEAD
 	char	   *tablespace_suffix;		/* directory specification */
 
 	char	   *global_reserved_oids; /* OID preassign calls for shared objects */
+=======
+	const char *tablespace_suffix;		/* directory specification */
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } ClusterInfo;
 
 
@@ -436,6 +450,7 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
+	bool		user_specified; /* user specified on command-line */
 	char	  **old_tablespaces;	/* tablespaces */
 	int			num_old_tablespaces;
 	char	  **libraries;		/* loadable libraries */
@@ -589,17 +604,24 @@ void		check_pghost_envvar(void);
 /* util.c */
 
 char	   *quote_identifier(const char *s);
+<<<<<<< HEAD
 extern void appendShellString(PQExpBuffer buf, const char *str);
 extern void appendConnStrVal(PQExpBuffer buf, const char *str);
 extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
 int			get_user_info(char **user_name);
+=======
+int			get_user_info(char **user_name_p);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 void		check_ok(void);
 void
 report_status(eLogType type, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void
-pg_log(eLogType type, char *fmt,...)
+pg_log(eLogType type, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+void
+pg_fatal(const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2), noreturn));
 void		end_progress_output(void);
 void
 prep_status(const char *fmt,...)
@@ -614,6 +636,7 @@ void		pg_putenv(const char *var, const char *val);
 
 void new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster,
 										 bool check_mode);
+void old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster);
 
 /* version_old_8_3.c */
 

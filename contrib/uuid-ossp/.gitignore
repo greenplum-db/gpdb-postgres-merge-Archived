@@ -1,1 +1,10 @@
+<<<<<<< HEAD
 /uuid-ossp.sql
+=======
+/md5.c
+/sha1.c
+# Generated subdirectories
+/log/
+/results/
+/tmp_check/
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237

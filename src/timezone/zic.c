@@ -8,6 +8,7 @@
 
 #include "postgres_fe.h"
 
+<<<<<<< HEAD
 /* GPDB_95_MERGE_FIXME: Remove when commit 60ff2fdd99 is merged */
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -20,6 +21,13 @@
 extern int     optind;
 extern char *optarg;
 /* #include "pg_getopt.h" */
+=======
+#include <limits.h>
+#include <locale.h>
+#include <time.h>
+
+#include "pg_getopt.h"
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #include "private.h"
 #include "tzfile.h"

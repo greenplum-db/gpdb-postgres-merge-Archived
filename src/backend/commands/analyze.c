@@ -3,7 +3,7 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,7 +22,11 @@
 #include "access/tuptoaster.h"
 #include "access/visibilitymap.h"
 #include "access/xact.h"
+<<<<<<< HEAD
 #include "catalog/heap.h"
+=======
+#include "catalog/catalog.h"
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_collation.h"
@@ -528,7 +532,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	/*
 	 * Open all indexes of the relation, and see if there are any analyzable
-	 * columns in the indexes.	We do not analyze index columns if there was
+	 * columns in the indexes.  We do not analyze index columns if there was
 	 * an explicit column list in the ANALYZE command, however.  If we are
 	 * doing a recursive scan, we don't want to touch the parent's indexes at
 	 * all.
@@ -585,7 +589,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	/*
 	 * Determine how many rows we need to sample, using the worst case from
-	 * all analyzable columns.	We use a lower bound of 100 rows to avoid
+	 * all analyzable columns.  We use a lower bound of 100 rows to avoid
 	 * possible overflow in Vitter's algorithm.  (Note: that will also be the
 	 * target in the corner case where there are no analyzable columns.)
 	 */
@@ -667,7 +671,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 		rows = NULL;
 	}
 	/*
-	 * Compute the statistics.	Temporary results during the calculations for
+	 * Compute the statistics.  Temporary results during the calculations for
 	 * each column are stored in a child context.  The calc routines are
 	 * responsible to make sure that whatever they store into the VacAttrStats
 	 * structure is allocated in anl_context.
@@ -824,7 +828,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 
 		/*
 		 * Emit the completed stats rows into pg_statistic, replacing any
-		 * previous statistics for the target columns.	(If there are stats in
+		 * previous statistics for the target columns.  (If there are stats in
 		 * pg_statistic for columns we didn't process, we leave them alone.)
 		 */
 		update_attstats(RelationGetRelid(onerel), inh,
@@ -922,7 +926,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	}
 
 	/*
-	 * Report ANALYZE to the stats collector, too.	However, if doing
+	 * Report ANALYZE to the stats collector, too.  However, if doing
 	 * inherited stats we shouldn't report, because the stats collector only
 	 * tracks per-table stats.
 	 */
@@ -1184,7 +1188,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		return NULL;
 
 	/*
-	 * Create the VacAttrStats struct.	Note that we only have a copy of the
+	 * Create the VacAttrStats struct.  Note that we only have a copy of the
 	 * fixed fields of the pg_attribute tuple.
 	 */
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
@@ -1194,7 +1198,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	/*
 	 * When analyzing an expression index, believe the expression tree's type
 	 * not the column datatype --- the latter might be the opckeytype storage
-	 * type of the opclass, which is not interesting for our purposes.	(Note:
+	 * type of the opclass, which is not interesting for our purposes.  (Note:
 	 * if we did anything with non-expression index columns, we'd need to
 	 * figure out where to get the correct type info from, but for now that's
 	 * not a problem.)	It's not clear whether anyone will care about the
@@ -1234,6 +1238,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * The last slots of statistics is reserved for hyperloglog counter which
 	 * is saved as a bytea. Therefore the type information is hardcoded for the
 	 * bytea.
@@ -1245,6 +1250,9 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 
 	/*
 	 * Call the type-specific typanalyze function.	If none is specified, use
+=======
+	 * Call the type-specific typanalyze function.  If none is specified, use
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * std_typanalyze().
 	 */
 	if (OidIsValid(stats->attrtype->typanalyze))
@@ -1320,7 +1328,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * If we are to skip, we should advance t (hence decrease K), and
 	 * repeat the same probabilistic test for the next block.  The naive
 	 * implementation thus requires an anl_random_fract() call for each block
-	 * number.	But we can reduce this to one anl_random_fract() call per
+	 * number.  But we can reduce this to one anl_random_fract() call per
 	 * selected block, by noting that each time the while-test succeeds,
 	 * we can reinterpret V as a uniform random number in the range 0 to p.
 	 * Therefore, instead of choosing a new V, we just adjust p to be
@@ -1411,7 +1419,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	totalblocks = RelationGetNumberOfBlocks(onerel);
 
 	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
-	OldestXmin = GetOldestXmin(onerel->rd_rel->relisshared, true);
+	OldestXmin = GetOldestXmin(onerel, true);
 
 	/* Prepare for sampling block numbers */
 	BlockSampler_Init(&bs, totalblocks, targrows);
@@ -1456,7 +1464,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 			/*
 			 * We ignore unused and redirect line pointers.  DEAD line
 			 * pointers should be counted as dead, because we need vacuum to
-			 * run to get rid of them.	Note that this rule agrees with the
+			 * run to get rid of them.  Note that this rule agrees with the
 			 * way that heap_page_prune() counts things.
 			 */
 			if (!ItemIdIsNormal(itemid))
@@ -1468,11 +1476,16 @@ acquire_sample_rows(Relation onerel, int elevel,
 
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
 
+			targtuple.t_tableOid = RelationGetRelid(onerel);
 			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 			targtuple.t_len = ItemIdGetLength(itemid);
 
+<<<<<<< HEAD
 			switch (HeapTupleSatisfiesVacuum(onerel,
 											 targtuple.t_data,
+=======
+			switch (HeapTupleSatisfiesVacuum(&targtuple,
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 											 OldestXmin,
 											 targbuffer))
 			{
@@ -1502,7 +1515,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 					 * is the safer option.
 					 *
 					 * A special case is that the inserting transaction might
-					 * be our own.	In this case we should count and sample
+					 * be our own.  In this case we should count and sample
 					 * the row, to accommodate users who load a table and
 					 * analyze it in one transaction.  (pgstat_report_analyze
 					 * has to adjust the numbers we send to the stats
@@ -1544,7 +1557,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 				/*
 				 * The first targrows sample rows are simply copied into the
 				 * reservoir. Then we start replacing tuples in the sample
-				 * until we reach the end of the relation.	This algorithm is
+				 * until we reach the end of the relation.  This algorithm is
 				 * from Jeff Vitter's paper (see full citation below). It
 				 * works by repeatedly computing the number of tuples to skip
 				 * before selecting a tuple, which replaces a randomly chosen
@@ -1603,7 +1616,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.	For live rows, use
+	 * Estimate total numbers of rows in relation.  For live rows, use
 	 * vac_estimate_reltuples; for dead rows, we have no source of old
 	 * information, so we have to assume the density is the same in unseen
 	 * pages as in the pages we scanned.
@@ -2446,7 +2459,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
  *		Statistics are stored in several places: the pg_class row for the
  *		relation has stats about the whole relation, and there is a
  *		pg_statistic row for each (non-system) attribute that has ever
- *		been analyzed.	The pg_class values are updated by VACUUM, not here.
+ *		been analyzed.  The pg_class values are updated by VACUUM, not here.
  *
  *		pg_statistic rows are just added or updated normally.  This means
  *		that pg_statistic will probably contain some deleted rows at the
@@ -2864,7 +2877,7 @@ compute_minimal_stats(VacAttrStatsP stats,
 			/*
 			 * If the value is toasted, we want to detoast it just once to
 			 * avoid repeated detoastings and resultant excess memory usage
-			 * during the comparisons.	Also, check to see if the value is
+			 * during the comparisons.  Also, check to see if the value is
 			 * excessively wide, and if so don't detoast at all --- just
 			 * ignore the value.
 			 */
@@ -2988,7 +3001,7 @@ compute_minimal_stats(VacAttrStatsP stats,
 			 * We assume (not very reliably!) that all the multiply-occurring
 			 * values are reflected in the final track[] list, and the other
 			 * nonnull values all appeared but once.  (XXX this usually
-			 * results in a drastic overestimate of ndistinct.	Can we do
+			 * results in a drastic overestimate of ndistinct.  Can we do
 			 * any better?)
 			 *----------
 			 */
@@ -3025,7 +3038,7 @@ compute_minimal_stats(VacAttrStatsP stats,
 		 * Decide how many values are worth storing as most-common values. If
 		 * we are able to generate a complete MCV list (all the values in the
 		 * sample will fit, and we think these are all the ones in the table),
-		 * then do so.	Otherwise, store only those values that are
+		 * then do so.  Otherwise, store only those values that are
 		 * significantly more common than the (estimated) average. We set the
 		 * threshold rather arbitrarily at 25% more than average, with at
 		 * least 2 instances in the sample.
@@ -3290,7 +3303,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 			/*
 			 * If the value is toasted, we want to detoast it just once to
 			 * avoid repeated detoastings and resultant excess memory usage
-			 * during the comparisons.	Also, check to see if the value is
+			 * during the comparisons.  Also, check to see if the value is
 			 * excessively wide, and if so don't detoast at all --- just
 			 * ignore the value.
 			 */
@@ -3335,7 +3348,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * accumulate ordering-correlation statistics.
 		 *
 		 * To determine which are most common, we first have to count the
-		 * number of duplicates of each value.	The duplicates are adjacent in
+		 * number of duplicates of each value.  The duplicates are adjacent in
 		 * the sorted list, so a brute-force approach is to compare successive
 		 * datum values until we find two that are not equal. However, that
 		 * requires N-1 invocations of the datum comparison routine, which are
@@ -3344,7 +3357,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * that are adjacent in the sorted order; otherwise it could not know
 		 * that it's ordered the pair correctly.) We exploit this by having
 		 * compare_scalars remember the highest tupno index that each
-		 * ScalarItem has been found equal to.	At the end of the sort, a
+		 * ScalarItem has been found equal to.  At the end of the sort, a
 		 * ScalarItem's tupnoLink will still point to itself if and only if it
 		 * is the last item of its group of duplicates (since the group will
 		 * be ordered by tupno).
@@ -3486,7 +3499,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * Decide how many values are worth storing as most-common values. If
 		 * we are able to generate a complete MCV list (all the values in the
 		 * sample will fit, and we think these are all the ones in the table),
-		 * then do so.	Otherwise, store only those values that are
+		 * then do so.  Otherwise, store only those values that are
 		 * significantly more common than the (estimated) average. We set the
 		 * threshold rather arbitrarily at 25% more than average, with at
 		 * least 2 instances in the sample.  Also, we won't suppress values
@@ -3641,7 +3654,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			/*
 			 * The object of this loop is to copy the first and last values[]
-			 * entries along with evenly-spaced values in between.	So the
+			 * entries along with evenly-spaced values in between.  So the
 			 * i'th value is values[(i * (nvals - 1)) / (num_hist - 1)].  But
 			 * computing that subscript directly risks integer overflow when
 			 * the stats target is more than a couple thousand.  Instead we
@@ -3725,7 +3738,21 @@ compute_scalar_stats(VacAttrStatsP stats,
 			slot_idx++;
 		}
 	}
-	else if (nonnull_cnt == 0 && null_cnt > 0)
+	else if (nonnull_cnt > 0)
+	{
+		/* We found some non-null values, but they were all too wide */
+		Assert(nonnull_cnt == toowide_cnt);
+		stats->stats_valid = true;
+		/* Do the simple null-frac and width stats */
+		stats->stanullfrac = (double) null_cnt / (double) samplerows;
+		if (is_varwidth)
+			stats->stawidth = total_width / (double) nonnull_cnt;
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		/* Assume all too-wide values are distinct, so it's a unique column */
+		stats->stadistinct = -1.0;
+	}
+	else if (null_cnt > 0)
 	{
 		/* We found only nulls; assume the column is entirely null */
 		stats->stats_valid = true;
@@ -4139,7 +4166,7 @@ merge_leaf_stats(VacAttrStatsP stats,
  * qsort_arg comparator for sorting ScalarItems
  *
  * Aside from sorting the items, we update the tupnoLink[] array
- * whenever two ScalarItems are found to contain equal datums.	The array
+ * whenever two ScalarItems are found to contain equal datums.  The array
  * is indexed by tupno; for each ScalarItem, it contains the highest
  * tupno that that item's datum has been found to be equal to.  This allows
  * us to avoid additional comparisons in compute_scalar_stats().

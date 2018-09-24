@@ -72,6 +72,8 @@ SELECT setval('sequence_test'::regclass, 32);
 SELECT nextval('sequence_test'::text);
 SELECT setval('sequence_test'::regclass, 99, false);
 SELECT nextval('sequence_test'::text);
+DISCARD SEQUENCES;
+SELECT currval('sequence_test'::regclass);
 
 DROP SEQUENCE sequence_test;
 
@@ -151,7 +153,13 @@ CREATE SEQUENCE seq;
 SELECT nextval('seq');
 --SELECT lastval();
 SELECT setval('seq', 99);
+<<<<<<< HEAD
 --SELECT lastval();
+=======
+SELECT lastval();
+DISCARD SEQUENCES;
+SELECT lastval();
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');

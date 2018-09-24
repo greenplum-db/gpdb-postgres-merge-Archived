@@ -3,7 +3,7 @@
  * parse_agg.c
  *	  handle aggregates in parser
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -29,8 +29,11 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+<<<<<<< HEAD
 
 #include "optimizer/walkers.h"
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 
 typedef struct
@@ -52,11 +55,14 @@ typedef struct
 	bool		in_agg_direct_args;
 } check_ungrouped_columns_context;
 
+<<<<<<< HEAD
 typedef struct
 {
 	int sublevels_up;
 } checkHasGroupExtFuncs_context;
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static int check_agg_arguments(ParseState *pstate,
 					List *directargs,
 					List *args,
@@ -872,7 +878,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * If there are join alias vars involved, we have to flatten them to the
 	 * underlying vars, so that aliased and unaliased vars will be correctly
-	 * taken as equal.	We can skip the expense of doing this if no rangetable
+	 * taken as equal.  We can skip the expense of doing this if no rangetable
 	 * entries are RTE_JOIN kind. We use the planner's flatten_join_alias_vars
 	 * routine to do the flattening; it wants a PlannerInfo root node, which
 	 * fortunately can be mostly dummy.
@@ -907,6 +913,14 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	/*
 	 * Check the targetlist and HAVING clause for ungrouped variables.
+<<<<<<< HEAD
+=======
+	 *
+	 * Note: because we check resjunk tlist elements as well as regular ones,
+	 * this will also find ungrouped variables that came from ORDER BY and
+	 * WINDOW clauses.  For that matter, it's also going to examine the
+	 * grouping expressions themselves --- but they'll all pass the test ...
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	clause = (Node *) qry->targetList;
 	if (hasJoinRTEs)
@@ -1036,7 +1050,7 @@ check_ungrouped_columns_walker(Node *node,
 	/*
 	 * If we have an ungrouped Var of the original query level, we have a
 	 * failure.  Vars below the original query level are not a problem, and
-	 * neither are Vars from above it.	(If such Vars are ungrouped as far as
+	 * neither are Vars from above it.  (If such Vars are ungrouped as far as
 	 * their own query level is concerned, that's someone else's problem...)
 	 */
 	if (IsA(node, Var))
@@ -1067,7 +1081,7 @@ check_ungrouped_columns_walker(Node *node,
 
 		/*
 		 * Check whether the Var is known functionally dependent on the GROUP
-		 * BY columns.	If so, we can allow the Var to be used, because the
+		 * BY columns.  If so, we can allow the Var to be used, because the
 		 * grouping is really a no-op for this table.  However, this deduction
 		 * depends on one or more constraints of the table, so we have to add
 		 * those constraints to the query's constraintDeps list, because it's
@@ -1262,8 +1276,12 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 						Oid combinefn_oid,
 						Expr **transfnexpr,
 						Expr **invtransfnexpr,
+<<<<<<< HEAD
 						Expr **finalfnexpr,
 						Expr **combinefnexpr)
+=======
+						Expr **finalfnexpr)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	Param	   *argp;
 	List	   *args;
@@ -1455,6 +1473,7 @@ make_agg_arg(Oid argtype, Oid argcollation)
 	argp->paramtypmod = -1;
 	argp->paramcollid = argcollation;
 	argp->location = -1;
+<<<<<<< HEAD
 	return (Node *) argp;
 }
 
@@ -1560,4 +1579,28 @@ checkExprHasGroupExtFuncs(Node *node)
 	return query_or_expression_tree_walker(node,
 										   checkExprHasGroupExtFuncs_walker,
 										   (void *) &context, 0);
+=======
+	args = list_make1(argp);
+
+	/* finalfn may take additional args, which match agg's input types */
+	for (i = 0; i < num_finalfn_inputs - 1; i++)
+	{
+		argp = makeNode(Param);
+		argp->paramkind = PARAM_EXEC;
+		argp->paramid = -1;
+		argp->paramtype = agg_input_types[i];
+		argp->paramtypmod = -1;
+		argp->paramcollid = agg_input_collation;
+		argp->location = -1;
+		args = lappend(args, argp);
+	}
+
+	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
+										 agg_result_type,
+										 args,
+										 InvalidOid,
+										 agg_input_collation,
+										 COERCE_EXPLICIT_CALL);
+	/* finalfn is currently never treated as variadic */
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }

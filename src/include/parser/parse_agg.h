@@ -3,7 +3,7 @@
  * parse_agg.h
  *	  handle aggregates and window functions in parser
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_agg.h
@@ -44,6 +44,7 @@ extern void build_aggregate_fnexprs(Oid *agg_input_types,
 						Oid combinefn_oid,
 						Expr **transfnexpr,
 						Expr **invtransfnexpr,
+<<<<<<< HEAD
 						Expr **finalfnexpr,
 						Expr **combinefnexpr);
 
@@ -54,5 +55,8 @@ extern void build_aggregate_deserialfn_expr(Oid deserialfn_oid,
 								Expr **deserialfnexpr);
 
 extern bool checkExprHasGroupExtFuncs(Node *node);
+=======
+						Expr **finalfnexpr);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #endif   /* PARSE_AGG_H */

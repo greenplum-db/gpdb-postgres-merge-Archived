@@ -3,7 +3,7 @@
  * nodeFuncs.c
  *		Various general-purpose manipulations of Node trees
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -274,7 +274,7 @@ exprType(const Node *expr)
 /*
  *	exprTypmod -
  *	  returns the type-specific modifier of the expression's result type,
- *	  if it can be determined.	In many cases, it can't and we return -1.
+ *	  if it can be determined.  In many cases, it can't and we return -1.
  */
 int32
 exprTypmod(const Node *expr)
@@ -604,6 +604,65 @@ relabel_to_typmod(Node *expr, int32 typmod)
 	/* Apply new typmod, preserving the previous exposed type and collation */
 	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
 									COERCE_EXPLICIT_CAST);
+}
+
+/*
+ * strip_implicit_coercions: remove implicit coercions at top level of tree
+ *
+ * This doesn't modify or copy the input expression tree, just return a
+ * pointer to a suitable place within it.
+ *
+ * Note: there isn't any useful thing we can do with a RowExpr here, so
+ * just return it unchanged, even if it's marked as an implicit coercion.
+ */
+Node *
+strip_implicit_coercions(Node *node)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *f = (FuncExpr *) node;
+
+		if (f->funcformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions(linitial(f->args));
+	}
+	else if (IsA(node, RelabelType))
+	{
+		RelabelType *r = (RelabelType *) node;
+
+		if (r->relabelformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) r->arg);
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *c = (CoerceViaIO *) node;
+
+		if (c->coerceformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *c = (ArrayCoerceExpr *) node;
+
+		if (c->coerceformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		ConvertRowtypeExpr *c = (ConvertRowtypeExpr *) node;
+
+		if (c->convertformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
+	else if (IsA(node, CoerceToDomain))
+	{
+		CoerceToDomain *c = (CoerceToDomain *) node;
+
+		if (c->coercionformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
+	return node;
 }
 
 /*
@@ -1469,12 +1528,21 @@ exprLocation(const Node *expr)
 		case T_TypeName:
 			loc = ((const TypeName *) expr)->location;
 			break;
+<<<<<<< HEAD
 		case T_FunctionParameter:
 			/* just use typename's location */
 			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
+=======
+		case T_ColumnDef:
+			loc = ((const ColumnDef *) expr)->location;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 		case T_Constraint:
 			loc = ((const Constraint *) expr)->location;
+			break;
+		case T_FunctionParameter:
+			/* just use typename's location */
+			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
 			break;
 		case T_XmlSerialize:
 			/* XMLSERIALIZE keyword should always be the first thing */
@@ -1563,8 +1631,8 @@ leftmostLoc(int loc1, int loc2)
  *
  * The walker routine should return "false" to continue the tree walk, or
  * "true" to abort the walk and immediately return "true" to the top-level
- * caller.	This can be used to short-circuit the traversal if the walker
- * has found what it came for.	"false" is returned to the top-level caller
+ * caller.  This can be used to short-circuit the traversal if the walker
+ * has found what it came for.  "false" is returned to the top-level caller
  * iff no invocation of the walker returned "true".
  *
  * The node types handled by expression_tree_walker include all those
@@ -1602,7 +1670,7 @@ leftmostLoc(int loc1, int loc2)
  *
  * expression_tree_walker will handle SubPlan nodes by recursing normally
  * into the "testexpr" and the "args" list (which are expressions belonging to
- * the outer plan).  It will not touch the completed subplan, however.	Since
+ * the outer plan).  It will not touch the completed subplan, however.  Since
  * there is no link to the original Query, it is not possible to recurse into
  * subselects of an already-planned expression tree.  This is OK for current
  * uses, but may need to be revisited in future.
@@ -1650,6 +1718,8 @@ expression_tree_walker(Node *node,
 		case T_PartListNullTestExpr:
 			/* primitive node types with no expression subnodes */
 			break;
+		case T_WithCheckOption:
+			return walker(((WithCheckOption *) node)->qual, context);
 		case T_Aggref:
 			{
 				Aggref	   *expr = (Aggref *) node;
@@ -1681,7 +1751,10 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker((Node *) expr->aggfilter, context))
 					return true;
+<<<<<<< HEAD
 				/* don't recurse on implicit args under winspec */
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			}
 			break;
 		case T_ArrayRef:
@@ -1924,6 +1997,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_PlaceHolderInfo:
 			return walker(((PlaceHolderInfo *) node)->ph_var, context);
+<<<<<<< HEAD
 
 		case T_GroupingClause:
 			{
@@ -1990,6 +2064,10 @@ expression_tree_walker(Node *node,
 			}
 			break;
 
+=======
+		case T_RangeTblFunction:
+			return walker(((RangeTblFunction *) node)->funcexpr, context);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2022,6 +2100,8 @@ query_tree_walker(Query *query,
 	Assert(query != NULL && IsA(query, Query));
 
 	if (walker((Node *) query->targetList, context))
+		return true;
+	if (walker((Node *) query->withCheckOptions, context))
 		return true;
 	if (walker((Node *) query->returningList, context))
 		return true;
@@ -2124,7 +2204,7 @@ range_table_walker(List *rtable,
 						return true;
 				break;
 			case RTE_FUNCTION:
-				if (walker(rte->funcexpr, context))
+				if (walker(rte->functions, context))
 					return true;
 				break;
 			case RTE_TABLEFUNCTION:
@@ -2138,6 +2218,9 @@ range_table_walker(List *rtable,
 					return true;
 				break;
 		}
+
+		if (walker(rte->securityQuals, context))
+			return true;
 	}
 	return false;
 }
@@ -2277,6 +2360,15 @@ expression_tree_mutator(Node *node,
 		case T_PartListRuleExpr:
 		case T_PartListNullTestExpr:
 			return (Node *) copyObject(node);
+		case T_WithCheckOption:
+			{
+				WithCheckOption *wco = (WithCheckOption *) node;
+				WithCheckOption *newnode;
+
+				FLATCOPY(newnode, wco, WithCheckOption);
+				MUTATE(newnode->qual, wco->qual, Node *);
+				return (Node *) newnode;
+			}
 		case T_Aggref:
 			{
 				Aggref	   *aggref = (Aggref *) node;
@@ -2760,6 +2852,7 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+<<<<<<< HEAD
 
 		case T_GroupingFunc:
 			{
@@ -2837,6 +2930,19 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(new_action_expr, action_expr, DMLActionExpr);
 				return (Node *)new_action_expr;
 			}
+=======
+		case T_RangeTblFunction:
+			{
+				RangeTblFunction *rtfunc = (RangeTblFunction *) node;
+				RangeTblFunction *newnode;
+
+				FLATCOPY(newnode, rtfunc, RangeTblFunction);
+				MUTATE(newnode->funcexpr, rtfunc->funcexpr, Node *);
+				/* Assume we need not copy the coldef info lists */
+				return (Node *) newnode;
+			}
+			break;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2853,7 +2959,7 @@ expression_tree_mutator(Node *node,
  * This routine exists just to reduce the number of places that need to know
  * where all the expression subtrees of a Query are.  Note it can be used
  * for starting a walk at top level of a Query regardless of whether the
- * mutator intends to descend into subqueries.	It is also useful for
+ * mutator intends to descend into subqueries.  It is also useful for
  * descending into subqueries within a mutator.
  *
  * Some callers want to suppress mutating of certain items in the Query,
@@ -2863,7 +2969,7 @@ expression_tree_mutator(Node *node,
  * indicated items.  (More flag bits may be added as needed.)
  *
  * Normally the Query node itself is copied, but some callers want it to be
- * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.	All
+ * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.  All
  * modified substructure is safely copied in any case.
  */
 Query *
@@ -2883,6 +2989,7 @@ query_tree_mutator(Query *query,
 	}
 
 	MUTATE(query->targetList, query->targetList, List *);
+	MUTATE(query->withCheckOptions, query->withCheckOptions, List *);
 	MUTATE(query->returningList, query->returningList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
@@ -2950,7 +3057,7 @@ range_table_mutator(List *rtable,
 				}
 				break;
 			case RTE_FUNCTION:
-				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
+				MUTATE(newrte->functions, rte->functions, List *);
 				break;
 			case RTE_TABLEFUNCTION:
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
@@ -2960,6 +3067,7 @@ range_table_mutator(List *rtable,
 				MUTATE(newrte->values_lists, rte->values_lists, List *);
 				break;
 		}
+		MUTATE(newrte->securityQuals, rte->securityQuals, List *);
 		newrt = lappend(newrt, newrte);
 	}
 	return newrt;
@@ -3342,9 +3450,11 @@ raw_expression_tree_walker(Node *node,
 			{
 				RangeFunction *rf = (RangeFunction *) node;
 
-				if (walker(rf->funccallnode, context))
+				if (walker(rf->functions, context))
 					return true;
 				if (walker(rf->alias, context))
+					return true;
+				if (walker(rf->coldeflist, context))
 					return true;
 			}
 			break;

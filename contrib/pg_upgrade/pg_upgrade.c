@@ -3,8 +3,12 @@
  *
  *	main source file
  *
+<<<<<<< HEAD
  *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
  *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
+=======
+ *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *	contrib/pg_upgrade/pg_upgrade.c
  */
 
@@ -16,6 +20,7 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
+<<<<<<< HEAD
  *	FYI, while pg_class.oid and pg_class.relfilenode are initially the same
  *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
  *	FULL.  The new cluster will have matching pg_class.oid and
@@ -23,6 +28,14 @@
  *	cause the old and new pg_class.relfilenode values to differ.  In summary,
  *	old and new pg_class.oid and new pg_class.relfilenode will have the
  *	same value, and old pg_class.relfilenode might differ.
+=======
+ *	While pg_class.oid and pg_class.relfilenode are initially the same
+ *	in a cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM
+ *	FULL.  In the new cluster, pg_class.oid and pg_class.relfilenode will
+ *	be the same and will match the old pg_class.oid value.  Because of
+ *	this, old/new pg_class.relfilenode values will not match if CLUSTER,
+ *	REINDEX, or VACUUM FULL have been performed in the old cluster.
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  *	We control all assignments of pg_type.oid because these oids are stored
  *	in user composite type values.
@@ -397,8 +410,8 @@ setup(char *argv0, bool *live_check)
 		else
 		{
 			if (!user_opts.check)
-				pg_log(PG_FATAL, "There seems to be a postmaster servicing the old cluster.\n"
-					   "Please shutdown that postmaster and try again.\n");
+				pg_fatal("There seems to be a postmaster servicing the old cluster.\n"
+						 "Please shutdown that postmaster and try again.\n");
 			else
 				*live_check = true;
 		}
@@ -410,13 +423,13 @@ setup(char *argv0, bool *live_check)
 		if (start_postmaster(&new_cluster, false))
 			stop_postmaster(false);
 		else
-			pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
-				   "Please shutdown that postmaster and try again.\n");
+			pg_fatal("There seems to be a postmaster servicing the new cluster.\n"
+					 "Please shutdown that postmaster and try again.\n");
 	}
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
-		pg_log(PG_FATAL, "Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
+		pg_fatal("Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
 
 	/* Trim off program name and keep just path */
 	*last_dir_separator(exec_path) = '\0';
@@ -624,6 +637,12 @@ copy_subdir_files(char *subdir)
 
 	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
 	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
+<<<<<<< HEAD
+=======
+	if (!rmtree(new_path, true))
+		pg_fatal("could not delete directory \"%s\"\n", new_path);
+	check_ok();
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	prep_status("Copying old %s to new server", subdir);
 

@@ -4,7 +4,7 @@
  *	  This file provides some definitions to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/toasting.h
@@ -14,12 +14,22 @@
 #ifndef TOASTING_H
 #define TOASTING_H
 
+#include "storage/lock.h"
+
 /*
  * toasting.c prototypes
  */
+<<<<<<< HEAD
 extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
 									   bool is_create, bool is_part_child,
 									   bool is_part_parent);
+=======
+extern void NewRelationCreateToastTable(Oid relOid, Datum reloptions);
+extern void NewHeapCreateToastTable(Oid relOid, Datum reloptions,
+						LOCKMODE lockmode);
+extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
+						   LOCKMODE lockmode);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 

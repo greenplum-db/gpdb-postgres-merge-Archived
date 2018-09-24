@@ -101,6 +101,7 @@ CREATE AGGREGATE sumdouble (float8)
     msfunc = float8pl,
     minvfunc = float8mi
 );
+<<<<<<< HEAD
 -- aggregate combine and serialization functions
 -- can't specify just one of serialfunc and deserialfunc
 CREATE AGGREGATE myavg (numeric)
@@ -158,6 +159,8 @@ WHERE aggfnoid = 'myavg'::REGPROC;
 (1 row)
 
 DROP AGGREGATE myavg (numeric);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 -- invalid: nonstrict inverse with strict forward function
 CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS
 $$ SELECT $1 - $2; $$
@@ -184,6 +187,7 @@ CREATE AGGREGATE wrongreturntype (float8)
     minvfunc = float8mi_int
 );
 ERROR:  return type of inverse transition function float8mi_int is not double precision
+<<<<<<< HEAD
 -- Negative test: "ordered aggregate prefunc is not supported"
 create ordered aggregate should_error(integer,integer,text) (
    stype = aggtype[],
@@ -216,3 +220,5 @@ select string_concat(t) from (select * from aggtest2 limit 2000) tmp;
 drop table aggtest2;
 drop aggregate string_concat(text);
 drop function str_concat(text, text);
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237

@@ -16,7 +16,7 @@
  * a quick copyObject() call before manipulating the query tree.
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/parser/parse_utilcmd.c
@@ -184,7 +184,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	stmt = (CreateStmt *) copyObject(stmt);
 
 	/*
-	 * Look up the creation namespace.	This also checks permissions on the
+	 * Look up the creation namespace.  This also checks permissions on the
 	 * target namespace, locks it against concurrent drops, checks for a
 	 * preexisting relation in that namespace with the same name, and updates
 	 * stmt->relation->relpersistence if the select namespace is temporary.
@@ -210,7 +210,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartit
 	 * If the target relation name isn't schema-qualified, make it so.  This
 	 * prevents some corner cases in which added-on rewritten commands might
 	 * think they should apply to other relations that have the same name and
-	 * are earlier in the search path.	But a local temp table is effectively
+	 * are earlier in the search path.  But a local temp table is effectively
 	 * specified to be in pg_temp, so no need for anything extra in that case.
 	 */
 	if (stmt->relation->schemaname == NULL
@@ -608,6 +608,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		castnode->typeName = SystemTypeName("regclass");
 		castnode->arg = (Node *) snamenode;
 		castnode->location = -1;
+<<<<<<< HEAD
 		funccallnode = makeNode(FuncCall);
 		funccallnode->funcname = SystemFuncName("nextval");
 		funccallnode->args = list_make1(castnode);
@@ -617,6 +618,11 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		funccallnode->func_variadic = false;
 		funccallnode->location = -1;
 
+=======
+		funccallnode = makeFuncCall(SystemFuncName("nextval"),
+									list_make1(castnode),
+									-1);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
 		constraint->location = -1;
@@ -841,7 +847,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	if (cxt->isforeign)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("LIKE is not supported for foreign tables")));
+			   errmsg("LIKE is not supported for creating foreign tables")));
 
 	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
 
@@ -852,7 +858,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
+				 errmsg("\"%s\" is not a table, view, materialized view, composite type, or foreign table",
 						RelationGetRelationName(relation))));
 
 	cancel_parser_errposition_callback(&pcbstate);
@@ -893,7 +899,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
 
 	/*
-	 * Initialize column number map for map_variable_attnos().	We need this
+	 * Initialize column number map for map_variable_attnos().  We need this
 	 * since dropped columns in the source table aren't copied, so the new
 	 * table can have different column numbers.
 	 */
@@ -935,6 +941,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		def->collClause = NULL;
 		def->collOid = attribute->attcollation;
 		def->constraints = NIL;
+		def->location = -1;
 
 		/*
 		 * Add to column list
@@ -1107,7 +1114,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	/*
 	 * Close the parent rel, but keep our AccessShareLock on it until xact
-	 * commit.	That will prevent someone else from deleting or ALTERing the
+	 * commit.  That will prevent someone else from deleting or ALTERing the
 	 * parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
@@ -1150,6 +1157,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 		n->collClause = NULL;
 		n->collOid = attr->attcollation;
 		n->constraints = NIL;
+		n->location = -1;
 		cxt->columns = lappend(cxt->columns, n);
 	}
 	DecrTupleDescRefCount(tupdesc);
@@ -2708,7 +2716,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/*
-		 * Insist on it being a btree.	That's the only kind that supports
+		 * Insist on it being a btree.  That's the only kind that supports
 		 * uniqueness at the moment anyway; but we must have an index that
 		 * exactly matches what you'd get from plain ADD CONSTRAINT syntax,
 		 * else dump and reload will produce a different index (breaking
@@ -2735,7 +2743,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 			/*
 			 * We shouldn't see attnum == 0 here, since we already rejected
-			 * expression indexes.	If we do, SystemAttributeDefinition will
+			 * expression indexes.  If we do, SystemAttributeDefinition will
 			 * throw an error.
 			 */
 			if (attnum > 0)
@@ -2749,7 +2757,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			attname = pstrdup(NameStr(attform->attname));
 
 			/*
-			 * Insist on default opclass and sort options.	While the index
+			 * Insist on default opclass and sort options.  While the index
 			 * would still work as a constraint with non-default settings, it
 			 * might not provide exactly the same uniqueness semantics as
 			 * you'd get from a normally-created constraint; and there's also
@@ -3000,10 +3008,11 @@ transformFKConstraints(CreateStmtContext *cxt,
  * transformIndexStmt - parse analysis for CREATE INDEX and ALTER TABLE
  *
  * Note: this is a no-op for an index not using either index expressions or
- * a predicate expression.	There are several code paths that create indexes
+ * a predicate expression.  There are several code paths that create indexes
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
  *
+<<<<<<< HEAD
  * In GPDB, this returns a list, because the single statement can be
  * expanded into multiple IndexStmts, if the table is a partitioned table.
  */
@@ -3044,6 +3053,19 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 	ListCell   *l;
 	List	   *result = NIL;
 	LOCKMODE	lockmode;
+=======
+ * To avoid race conditions, it's important that this function rely only on
+ * the passed-in relid (and not on stmt->relation) to determine the target
+ * relation.
+ */
+IndexStmt *
+transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
+{
+	ParseState *pstate;
+	RangeTblEntry *rte;
+	ListCell   *l;
+	Relation	rel;
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
@@ -3051,6 +3073,7 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 	 */
 	stmt = (IndexStmt *) copyObject(stmt);
 
+<<<<<<< HEAD
 	/*
 	 * Open the parent table with appropriate locking.	We must do this
 	 * because addRangeTableEntry() would acquire only AccessShareLock,
@@ -3062,6 +3085,8 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_openrv(stmt->relation, lockmode);
 
+=======
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -3187,8 +3212,13 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 
 	/*
 	 * Put the parent table into the rtable so that the expressions can refer
-	 * to its fields without qualification.
+	 * to its fields without qualification.  Caller is responsible for locking
+	 * relation, but we still need to open it.
 	 */
+<<<<<<< HEAD
+=======
+	rel = relation_open(relid, NoLock);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
 
 	/* no to join list, yes to namespaces */
@@ -3250,6 +3280,7 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 
 	free_parsestate(pstate);
 
+<<<<<<< HEAD
 	/*
 	 * Close relation, but keep the lock. Unless this is a CREATE INDEX
 	 * for a partitioned table, and we're processing a partition. In that
@@ -3262,6 +3293,10 @@ transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
 		heap_close(rel, lockmode);
 	else
 		heap_close(rel, NoLock);
+=======
+	/* Close relation */
+	heap_close(rel, NoLock);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	result = lcons(stmt, result);
 
@@ -3292,7 +3327,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
-	 * AccessExclusiveLock on the target relation.	This will be needed by
+	 * AccessExclusiveLock on the target relation.  This will be needed by
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
 	 * beforehand.
 	 */
@@ -3581,9 +3616,14 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
  * Returns a List of utility commands to be done in sequence.  One of these
  * will be the transformed AlterTableStmt, but there may be additional actions
  * to be done before and after the actual AlterTable() call.
+ *
+ * To avoid race conditions, it's important that this function rely only on
+ * the passed-in relid (and not on stmt->relation) to determine the target
+ * relation.
  */
 List *
-transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
+transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
+						const char *queryString)
 {
 	Relation	rel;
 	ParseState *pstate;
@@ -3595,7 +3635,6 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
-	LOCKMODE	lockmode;
 
 	/*
 	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
@@ -3603,6 +3642,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 */
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
+<<<<<<< HEAD
 	/*
 	 * Determine the appropriate lock level for this list of subcommands.
 	 */
@@ -3629,6 +3669,10 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 						stmt->relation->relname)));
 		return NIL;
 	}
+=======
+	/* Caller is responsible for locking the relation */
+	rel = relation_open(relid, NoLock);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);
@@ -3801,6 +3845,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		List	   *idxstmts;
 		ListCell   *li;
 
+<<<<<<< HEAD
 		idxstmts = transformIndexStmt(idxstmt, queryString);
 		/*
 		 * This is a loop in GPDB because transformIndexStmt() returns a list.
@@ -3814,6 +3859,14 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 			newcmd->def = lfirst(li);
 			newcmds = lappend(newcmds, newcmd);
 		}
+=======
+		Assert(IsA(idxstmt, IndexStmt));
+		idxstmt = transformIndexStmt(relid, idxstmt, queryString);
+		newcmd = makeNode(AlterTableCmd);
+		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
+		newcmd->def = (Node *) idxstmt;
+		newcmds = lappend(newcmds, newcmd);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 	cxt.alist = NIL;
 
@@ -3833,6 +3886,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		newcmds = lappend(newcmds, newcmd);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Close rel but keep lock
 	 *
@@ -3847,6 +3901,10 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		relation_close(rel, AccessExclusiveLock);
 	else
 		relation_close(rel, NoLock);
+=======
+	/* Close rel */
+	relation_close(rel, NoLock);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Output results.

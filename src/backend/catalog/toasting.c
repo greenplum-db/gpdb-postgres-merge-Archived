@@ -4,7 +4,7 @@
  *	  This file contains routines to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -16,6 +16,7 @@
 
 #include "access/tuptoaster.h"
 #include "access/xact.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -27,24 +28,32 @@
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+<<<<<<< HEAD
 #include "storage/lmgr.h"
+=======
+#include "storage/lock.h"
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
 /* Potentially set by contrib/pg_upgrade_support functions */
-extern Oid	binary_upgrade_next_toast_pg_class_oid;
-
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
+static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
+						 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
+<<<<<<< HEAD
 							   Datum reloptions, bool is_part_child,
 							   bool is_part_parent);
+=======
+				   Datum reloptions, LOCKMODE lockmode, bool check);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static bool needs_toast_table(Relation rel);
 
 
 /*
- * AlterTableCreateToastTable
+ * CreateToastTable variants
  *		If the table needs a toast table, and doesn't already have one,
  *		then create a toast table for it.
  *
@@ -69,6 +78,7 @@ static bool needs_toast_table(Relation rel);
  * computation.
  */
 void
+<<<<<<< HEAD
 AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_create,
 						   bool is_part_child, bool is_part_parent)
 {
@@ -94,6 +104,34 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_create,
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions,
 							  is_part_child, is_part_parent);
+=======
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
+{
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, true);
+}
+
+void
+NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
+{
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, false);
+}
+
+void
+NewRelationCreateToastTable(Oid relOid, Datum reloptions)
+{
+	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false);
+}
+
+static void
+CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check)
+{
+	Relation	rel;
+
+	rel = heap_open(relOid, lockmode);
+
+	/* create_toast_table does all the work */
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check);
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	heap_close(rel, NoLock);
 }
@@ -118,7 +156,12 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
+<<<<<<< HEAD
 	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false, false))
+=======
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,
+							AccessExclusiveLock, false))
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -134,8 +177,13 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
+<<<<<<< HEAD
 create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions,
 				   bool is_part_child, bool is_part_parent)
+=======
+create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
+				   Datum reloptions, LOCKMODE lockmode, bool check)
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -234,6 +282,13 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 	 */
 	if (!needs_toast_table(rel) && !IsBinaryUpgrade)
 		return false;
+
+	/*
+	 * If requested check lockmode is sufficient. This is a cross check in
+	 * case of errors or conflicting decisions in earlier code.
+	 */
+	if (check && lockmode != AccessExclusiveLock)
+		elog(ERROR, "AccessExclusiveLock required to add toast table.");
 
 	/*
 	 * Create the toast table and its index
@@ -434,7 +489,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 }
 
 /*
- * Check to see whether the table needs a TOAST table.	It does only if
+ * Check to see whether the table needs a TOAST table.  It does only if
  * (1) there are any toastable attributes, and (2) the maximum length
  * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
  * create a toast table for something like "f1 varchar(20)".)

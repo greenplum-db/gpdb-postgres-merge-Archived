@@ -67,6 +67,7 @@ clean distclean:
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
+<<<<<<< HEAD
 installcheck: all gpdiff.pl gpstringsubs.pl
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
 
@@ -75,16 +76,20 @@ installcheck: all gpdiff.pl gpstringsubs.pl
 # via the postgresql.conf.
 installcheck-prepared-txns: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+=======
+installcheck: all
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
+>>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 check: all
-	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule
+	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule
 
 # Versions of the check tests that include the prepared_transactions test
 # It only makes sense to run these if set up to use prepared transactions,
 # via TEMP_CONFIG for the check case, or via the postgresql.conf for the
 # installcheck case.
 installcheck-prepared-txns: all
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
 
 check-prepared-txns: all
-	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+	./pg_isolation_regress --temp-install=./tmp_check $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
