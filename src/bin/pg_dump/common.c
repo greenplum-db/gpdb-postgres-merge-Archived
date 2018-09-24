@@ -296,11 +296,7 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 
 	for (i = 0; i < numTables; i++)
 	{
-<<<<<<< HEAD
-		/* Sequences, views and external tables never have parents */
-=======
 		/* Some kinds never have parents */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
 			tblinfo[i].relkind == RELKIND_VIEW ||
 			tblinfo[i].relkind == RELKIND_MATVIEW ||
@@ -348,11 +344,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 		int			numParents;
 		TableInfo **parents;
 
-<<<<<<< HEAD
-		/* Sequences, views and external tables never have parents */
-=======
 		/* Some kinds never have parents */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
 			tbinfo->relkind == RELKIND_VIEW ||
 			tbinfo->relkind == RELKIND_MATVIEW ||

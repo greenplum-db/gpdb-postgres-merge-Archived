@@ -56,15 +56,12 @@
 #include <signal.h>
 #include <time.h>
 
-<<<<<<< HEAD
-#include "common/relpath.h"
-=======
 #ifdef HAVE_SHM_OPEN
 #include "sys/mman.h"
 #endif
 
+#include "common/relpath.h"
 #include "common/username.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"
@@ -173,14 +170,9 @@ static int	output_errno = 0;
 static char *pgdata_native;
 
 /* defaults */
-<<<<<<< HEAD
 static int	n_connections = 0;
 static int	n_buffers = 0;
-=======
-static int	n_connections = 10;
-static int	n_buffers = 50;
 static char *dynamic_shared_memory_type = NULL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * Warning messages for authentication methods
@@ -227,16 +219,13 @@ static const char *subdirs[] = {
 	"pg_tblspc",
 	"pg_stat",
 	"pg_stat_tmp",
-<<<<<<< HEAD
+	"pg_llog",
+	"pg_llog/snapshots",
+	"pg_llog/mappings",
 /* GPDB needs these directories */
 	"pg_distributedlog",
 	"pg_utilitymodedtmredo",
 	"pg_log"
-=======
-	"pg_llog",
-	"pg_llog/snapshots",
-	"pg_llog/mappings"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 };
 
 
@@ -721,16 +710,12 @@ walkdir(const char *path,
 		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
 				progname, path, strerror(errno));
 
-<<<<<<< HEAD
-	(void) closedir(dir);
-=======
 	if (closedir(dir))
 	{
 		fprintf(stderr, _("%s: could not close directory \"%s\": %s\n"),
 				progname, path, strerror(errno));
 		exit_nicely();
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * It's important to fsync the destination directory itself as individual
@@ -772,14 +757,8 @@ pre_sync_fname(const char *fname, bool isdir)
 	}
 
 	/*
-<<<<<<< HEAD
-	 * We do what pg_flush_data() would do in the backend: prefer to use
-	 * sync_file_range, but fall back to posix_fadvise.  We ignore errors
-	 * because this is only a hint.
-=======
 	 * Prefer sync_file_range, else use posix_fadvise.  We ignore any error
 	 * here since this operation is only a hint anyway.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 #if defined(HAVE_SYNC_FILE_RANGE)
 	(void) sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WRITE);
@@ -1195,12 +1174,7 @@ set_null_conf(const char *conf_name)
 	FILE	   *conf_file;
 	char	   *path;
 
-<<<<<<< HEAD
-	path = pg_malloc(strlen(pg_data) + strlen(conf_name) + 2);
-	sprintf(path, "%s/%s", pg_data, conf_name);
-=======
-	path = psprintf("%s/postgresql.conf", pg_data);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	path = psprintf("%s/%s", pg_data, conf_name);
 	conf_file = fopen(path, PG_BINARY_W);
 	if (conf_file == NULL)
 	{

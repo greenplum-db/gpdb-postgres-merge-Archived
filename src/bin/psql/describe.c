@@ -1393,14 +1393,11 @@ describeOneTableDetails(const char *schemaname,
 		char	   *reloptions;
 		char	   *reloftype;
 		char		relpersistence;
-<<<<<<< HEAD
+		char		relreplident;
 		char	   *compressionType;
 		char	   *compressionLevel;
 		char	   *blockSize;
 		char	   *checksum;
-=======
-		char		relreplident;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1553,15 +1550,12 @@ describeOneTableDetails(const char *schemaname,
 		pg_strdup(PQgetvalue(res, 0, 8)) : NULL;
 	tableinfo.relpersistence = (pset.sversion >= 90100) ?
 		*(PQgetvalue(res, 0, 9)) : 0;
-<<<<<<< HEAD
+	tableinfo.relreplident = (pset.sversion >= 90400) ?
+		*(PQgetvalue(res, 0, 10)) : 'd';
 
 	/* GPDB Only:  relstorage  */
 	tableinfo.relstorage = (isGPDB()) ? *(PQgetvalue(res, 0, PQfnumber(res, "relstorage"))) : 'h';
 
-=======
-	tableinfo.relreplident = (pset.sversion >= 90400) ?
-		*(PQgetvalue(res, 0, 10)) : 'd';
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	PQclear(res);
 	res = NULL;
 
@@ -1646,16 +1640,13 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBufferStr(&buf, ",\n  NULL AS attfdwoptions");
 	if (verbose)
 	{
-<<<<<<< HEAD
-		appendPQExpBuffer(&buf, ",\n  a.attstorage ");
-		appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
-		if (tableinfo.relstorage == 'c')
-			if (isGE42 == true)
-		     appendPQExpBuffer(&buf, ",\n pg_catalog.array_to_string(e.attoptions, ',')");
-=======
-		appendPQExpBufferStr(&buf, ",\n  a.attstorage");
+		appendPQExpBufferStr(&buf, ",\n  a.attstorage ");
 		appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		if (tableinfo.relstorage == 'c')
+		{
+			if (isGE42 == true)
+				appendPQExpBufferStr(&buf, ",\n pg_catalog.array_to_string(e.attoptions, ',')");
+		}
 
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
@@ -1664,22 +1655,15 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 			tableinfo.relkind == 'm' ||
 			tableinfo.relkind == 'f' || tableinfo.relkind == 'c')
-<<<<<<< HEAD
-			appendPQExpBuffer(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
+			appendPQExpBufferStr(&buf, ",\n  pg_catalog.col_description(a.attrelid, a.attnum)");
 	}
-	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_attribute a ");
+	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_attribute a ");
 	if (isGE42 == true)
 	{
-	  appendPQExpBuffer(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
-	  appendPQExpBuffer(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
+	  appendPQExpBufferStr(&buf, "\nLEFT OUTER JOIN pg_catalog.pg_attribute_encoding e");
+	  appendPQExpBufferStr(&buf, "\nON   e.attrelid = a .attrelid AND e.attnum = a.attnum");
 	}
 
-=======
-			appendPQExpBufferStr(&buf, ", pg_catalog.col_description(a.attrelid, a.attnum)");
-	}
-
-	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_attribute a");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	appendPQExpBuffer(&buf, "\nWHERE a.attrelid = '%s' AND a.attnum > 0 AND NOT a.attisdropped", oid);
 	appendPQExpBufferStr(&buf, "\nORDER BY a.attnum;");
 
@@ -3730,15 +3714,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 			 "\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid"
 		   "\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid");
 
-<<<<<<< HEAD
-	appendPQExpBuffer(&buf, "\nWHERE c.relkind IN (");
+	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
 	if (showTables || showExternal)
 		appendPQExpBuffer(&buf, "'r',");
-=======
-	appendPQExpBufferStr(&buf, "\nWHERE c.relkind IN (");
-	if (showTables)
-		appendPQExpBufferStr(&buf, "'r',");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (showViews)
 		appendPQExpBufferStr(&buf, "'v',");
 	if (showMatViews)

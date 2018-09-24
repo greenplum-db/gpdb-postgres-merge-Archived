@@ -416,19 +416,11 @@ readfile(const char *path)
 /*
  * Free memory allocated for optlines through readfile()
  */
-<<<<<<< HEAD
-void
-free_readfile(char **optlines)
-{
-	char   *curr_line = NULL;
-	int		i = 0;
-=======
 static void
 free_readfile(char **optlines)
 {
 	char	   *curr_line = NULL;
 	int			i = 0;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (!optlines)
 		return;
@@ -817,17 +809,10 @@ read_post_opts(void)
 				{
 					*arg1 = '\0';		/* terminate so we get only program
 										 * name */
-<<<<<<< HEAD
-					post_opts = strdup(arg1 + 1); /* point past whitespace */
-				}
-				if (exec_path == NULL)
-					exec_path = strdup(optline);
-=======
 					post_opts = pg_strdup(arg1 + 1);	/* point past whitespace */
 				}
 				if (exec_path == NULL)
 					exec_path = pg_strdup(optline);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			}
 
 			/* Free the results of readfile. */

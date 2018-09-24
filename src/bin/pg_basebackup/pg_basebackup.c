@@ -51,23 +51,6 @@ typedef struct TablespaceList
 } TablespaceList;
 
 /* Global options */
-<<<<<<< HEAD
-char	   *basedir = NULL;
-char		format = 'p';		/* p(lain)/t(ar) */
-char	   *label = "pg_basebackup base backup";
-bool		showprogress = false;
-int			verbose = 0;
-int			compresslevel = 0;
-bool		includewal = false;
-bool		streamwal = false;
-bool		fastcheckpoint = false;
-bool		writerecoveryconf = false;
-bool		forceoverwrite = false;
-int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
-#define MAX_EXCLUDE 255
-int			num_exclude = 0;
-char	   *excludes[MAX_EXCLUDE];
-=======
 static char *basedir = NULL;
 static TablespaceList tablespace_dirs = {NULL, NULL};
 static char *xlog_dir = "";
@@ -84,7 +67,10 @@ static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static pg_time_t last_progress_report = 0;
 static int32 maxrate = 0;		/* no limit by default */
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+static bool forceoverwrite = false;
+#define MAX_EXCLUDE 255
+static int	num_exclude = 0;
+static char *excludes[MAX_EXCLUDE];
 
 /* Progress counters */
 static uint64 totalsize;
@@ -1809,10 +1795,7 @@ BaseBackup(void)
 				progname, PQntuples(res), PQnfields(res), 1, 2);
 		disconnect_and_exit(1);
 	}
-<<<<<<< HEAD
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
 
 	/*
@@ -2087,12 +2070,9 @@ main(int argc, char **argv)
 		{"status-interval", required_argument, NULL, 's'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"progress", no_argument, NULL, 'P'},
-<<<<<<< HEAD
+		{"xlogdir", required_argument, NULL, 1},
 		{"exclude", required_argument, NULL, 'E'},
 		{"force-overwrite", no_argument, NULL, 128},
-=======
-		{"xlogdir", required_argument, NULL, 1},
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		{NULL, 0, NULL, 0}
 	};
 	int			c;

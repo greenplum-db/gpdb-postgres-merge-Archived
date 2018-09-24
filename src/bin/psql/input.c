@@ -389,17 +389,10 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 			/* truncate what we have ... */
 			if (max_lines >= 0)
 				stifle_history(max_lines);
-<<<<<<< HEAD
-
-			/* ... and overwrite file.  Tough luck for concurrent sessions. */
-			errnum = write_history(fname);
-			if (errnum == 0)
-=======
 			/* ... and overwrite file.  Tough luck for concurrent sessions. */
 			errno = 0;
 			(void) write_history(fname);
 			if (errno == 0)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				return true;
 		}
 

@@ -80,7 +80,6 @@
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
-#include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
@@ -3823,20 +3822,11 @@ AlterTableGetLockLevel(List *cmds)
 				 */
 			case AT_AddColumn:	/* may rewrite heap, in some cases and visible
 								 * to SELECT */
-<<<<<<< HEAD
 			case AT_AddColumnRecurse:
-			case AT_DropColumn:	/* change visible to SELECT */
-			case AT_DropColumnRecurse:
-			case AT_AddColumnToView:	/* CREATE VIEW */
-			case AT_AlterColumnType:	/* must rewrite heap */
-			case AT_DropConstraint:		/* as DROP INDEX */
-			case AT_DropConstraintRecurse:		/* as DROP INDEX */
-			case AT_AddOids:	/* must rewrite heap */
-			case AT_AddOidsRecurse:
-=======
 			case AT_SetTableSpace:		/* must rewrite heap */
 			case AT_AlterColumnType:	/* must rewrite heap */
 			case AT_AddOids:	/* must rewrite heap */
+			case AT_AddOidsRecurse:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -3865,7 +3855,6 @@ AlterTableGetLockLevel(List *cmds)
 				 */
 			case AT_DropColumn:	/* change visible to SELECT */
 			case AT_AddColumnToView:	/* CREATE VIEW */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
@@ -4003,20 +3992,6 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
-<<<<<<< HEAD
-				/* GPDB additions */
-			case AT_SetDistributedBy:
-			case AT_PartAdd:
-			case AT_PartAddForSplit:
-			case AT_PartAlter:
-			case AT_PartDrop:
-			case AT_PartExchange:
-			case AT_PartRename:
-			case AT_PartSetTemplate:
-			case AT_PartSplit:
-			case AT_PartTruncate:
-			case AT_PartAddInternal:
-=======
 			case AT_ValidateConstraint: /* Uses MVCC in
 												 * getConstraints() */
 				cmd_lockmode = ShareUpdateExclusiveLock;
@@ -4036,8 +4011,22 @@ AlterTableGetLockLevel(List *cmds)
 										 * getTables() */
 			case AT_ResetRelOptions:	/* Uses MVCC in getIndexes() and
 										 * getTables() */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/* GPDB additions */
+			case AT_SetDistributedBy:
+			case AT_PartAdd:
+			case AT_PartAddForSplit:
+			case AT_PartAlter:
+			case AT_PartDrop:
+			case AT_PartExchange:
+			case AT_PartRename:
+			case AT_PartSetTemplate:
+			case AT_PartSplit:
+			case AT_PartTruncate:
+			case AT_PartAddInternal:
+				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
 			default:			/* oops */
@@ -4361,8 +4350,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_AddIndex:		/* ADD INDEX */
-<<<<<<< HEAD
-			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
+			ATSimplePermissions(rel, ATT_TABLE);
 			ATExternalPartitionCheck(cmd->subtype, rel, recursing);
 			/*
 			 * Any recursion for partitioning is done in ATExecAddIndex()
@@ -4404,11 +4392,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
  					}
 				}
 			}
-=======
-			ATSimplePermissions(rel, ATT_TABLE);
-			/* This command never recurses */
-			/* No command-specific prep needed */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			pass = AT_PASS_ADD_INDEX;
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
@@ -4670,20 +4653,18 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				cmd->subtype = AT_ValidateConstraintRecurse;
 			pass = AT_PASS_MISC;
 			break;
-<<<<<<< HEAD
 		case AT_ValidateConstraintRecurse: /* ADD validate CONSTRAINT internal */
 			/* Parent/Base CHECK constraints apply to child/part tables here.
 			 * No need for ATPartitionCheck
 			 */
 			ATSimplePermissions(rel, ATT_TABLE);
 			pass = AT_PASS_MISC;
-=======
+			break;
 		case AT_ReplicaIdentity:		/* REPLICA IDENTITY ... */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW);
 			pass = AT_PASS_MISC;
 			/* This command never recurses */
 			/* No command-specific prep needed */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER variants */
 		case AT_EnableAlwaysTrig:
@@ -4693,14 +4674,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
-<<<<<<< HEAD
-			ATSimplePermissions(rel, ATT_TABLE);
-			ATPartitionCheck(cmd->subtype, rel, false, recursing);
-			/* These commands never recurse */
-			/* No command-specific prep needed */
-=======
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			ATPartitionCheck(cmd->subtype, rel, false, recursing);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableRule:		/* ENABLE/DISABLE RULE variants */
@@ -5362,8 +5337,6 @@ ATAddToastIfNeeded(List **wqueue)
 
 		if (tab->relkind == RELKIND_RELATION ||
 			tab->relkind == RELKIND_MATVIEW)
-<<<<<<< HEAD
-
 		{
 			bool is_part = !rel_needs_long_lock(tab->relid);
 
@@ -5377,12 +5350,9 @@ ATAddToastIfNeeded(List **wqueue)
 			 * relation's OID, whether an auxiliary table needs valid
 			 * relfrozenxid or not?
 			 */
-			AlterTableCreateToastTable(tab->relid, (Datum) 0,
+			AlterTableCreateToastTable(tab->relid, (Datum) 0, lockmode,
 									   false /* is_create */, is_part, false);
 		}
-=======
-			AlterTableCreateToastTable(tab->relid, (Datum) 0, lockmode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 }
 
@@ -5774,12 +5744,8 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			Oid         OIDNewHeap;
 
 			/* Create transient table that will receive the modified data */
-<<<<<<< HEAD
-			OIDNewHeap = make_new_heap(tab->relid, newTableSpace, hasIndexes);
-=======
-			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace, false,
-									   lockmode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			OIDNewHeap = make_new_heap(tab->relid, newTableSpace, false,
+									   lockmode, hasIndexes);
 
 			/*
 			 * Copy the heap data into the new table with the desired
@@ -6353,11 +6319,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		MemoryContext oldCxt;
 		List	   *dropped_attrs = NIL;
 		ListCell   *lc;
-<<<<<<< HEAD
-		char		relstorage = oldrel->rd_rel->relstorage;
-=======
 		Snapshot	snapshot;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		char		relstorage = oldrel->rd_rel->relstorage;
 
 		if (newrel)
 			ereport(DEBUG1,
@@ -6409,14 +6372,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		 * Scan through the rows, generating a new row if needed and then
 		 * checking all the constraints.
 		 */
-<<<<<<< HEAD
-		if(relstorage == RELSTORAGE_HEAP) 
-		{
-			heapscan = heap_beginscan(oldrel, SnapshotNow, 0, NULL);
-=======
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
-		scan = heap_beginscan(oldrel, snapshot, 0, NULL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		if (relstorage == RELSTORAGE_HEAP)
+		{
+			heapscan = heap_beginscan(oldrel, snapshot, 0, NULL);
 
 			/*
 			 * Switch to per-tuple memory context and reset it for each tuple
@@ -6486,7 +6445,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				{
 					NewConstraint *con = lfirst(l);
 
-<<<<<<< HEAD
 					switch (con->contype)
 					{
 						case CONSTR_CHECK:
@@ -6512,18 +6470,16 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 								 (int) con->contype);
 					}
 				}
-=======
-				/* Preserve OID, if any */
-				if (newTupDesc->tdhasoid)
-					HeapTupleSetOid(tuple, tupOid);
 
 				/*
 				 * Constraints might reference the tableoid column, so
 				 * initialize t_tableOid before evaluating them.
 				 */
+				// GPDB_94_MERGE_FIXME: tableoid removed. should we put it back? It's used
+				// in a lot more places in 9.4
+#if 0
 				tuple->t_tableOid = RelationGetRelid(oldrel);
-			}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#endif
 
 				/* Write the tuple out to the new relation */
 				if (newrel)
@@ -6731,7 +6687,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 										 NULL
 								);
 
-<<<<<<< HEAD
 						if (ex->attnum > nv)
 							TupSetVirtualTupleNValid(newslot, ex->attnum);
 					}
@@ -6819,11 +6774,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		{
 			Assert(!"Invalid relstorage type");
 		}
-=======
-		MemoryContextSwitchTo(oldCxt);
-		heap_endscan(scan);
+
 		UnregisterSnapshot(snapshot);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		ExecDropSingleTupleTableSlot(oldslot);
 		ExecDropSingleTupleTableSlot(newslot);
@@ -9137,14 +9089,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 
 	/*
-<<<<<<< HEAD
 	 * If we are told not to recurse, there had better not be any child tables;
 	 * else the addition would put them out of step.
-=======
-	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
-	 * contraint creation only if there are no children currently.  Error out
-	 * otherwise.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && children && !recurse)
 		ereport(ERROR,
@@ -10433,17 +10379,13 @@ CreateFKCheckTrigger(Oid myRelOid, Oid refRelOid, Constraint *fkconstraint,
 	fk_trigger->constrrel = NULL;
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
-	trigobj = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
+	trigobj = CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
+							indexOid, true);
 
 	if (on_insert)
 		fkconstraint->trig1Oid = trigobj;
 	else
 		fkconstraint->trig2Oid = trigobj;
-=======
-	(void) CreateTrigger(fk_trigger, NULL, myRelOid, refRelOid, constraintOid,
-						 indexOid, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10459,7 +10401,6 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 	Oid			myRelOid;
 	CreateTrigStmt *fk_trigger;
 
-<<<<<<< HEAD
 	/*
 	 * Special for Greenplum Database: Ignore foreign keys for now, with warning
 	 */
@@ -10472,15 +10413,7 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 						"will not be enforced.")));
 	}
 
-	/*
-	 * Reconstruct a RangeVar for my relation (not passed in, unfortunately).
-	 */
-	myRel = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-						 pstrdup(RelationGetRelationName(rel)),
-						 -1);
-=======
 	myRelOid = RelationGetRelid(rel);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10544,12 +10477,8 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 	fk_trigger->args = NIL;
 	fk_trigger->trigOid = fkconstraint->trig3Oid;
 
-<<<<<<< HEAD
-	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
-						 indexOid, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	fkconstraint->trig3Oid = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
+										   indexOid, true);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -10602,14 +10531,10 @@ createForeignKeyTriggers(Relation rel, Oid refRelOid, Constraint *fkconstraint,
 	}
 	fk_trigger->args = NIL;
 
-<<<<<<< HEAD
 	fk_trigger->trigOid = fkconstraint->trig4Oid;
 
-	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, constraintOid, indexOid, true);
-=======
-	(void) CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
-						 indexOid, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	fkconstraint->trig4Oid = CreateTrigger(fk_trigger, NULL, refRelOid, myRelOid, constraintOid,
+										   indexOid, true);
 
 	/* Make changes-so-far visible */
 	CommandCounterIncrement();
@@ -11695,10 +11620,10 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		ATPostAlterTypeParse(oldId, relid, confrelid,
 							 (char *) lfirst(def_item),
 							 wqueue, lockmode, tab->rewrite);
-<<<<<<< HEAD
-
+	}
 	forboth(oid_item, tab->changedIndexOids,
 			def_item, tab->changedIndexDefs)
+	{
 		/*
 		 * Temporary workaround for MPP-1318. INDEX CREATE is dispatched
 		 * immediately, which unfortunately breaks the ALTER work queue.
@@ -11708,20 +11633,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 						errmsg("cannot alter indexed column"),
 						errhint("DROP the index first, and recreate it after the ALTER")));
 		/*ATPostAlterTypeParse((char *) lfirst(l), wqueue, lockmode);*/
-=======
 	}
-	forboth(oid_item, tab->changedIndexOids,
-			def_item, tab->changedIndexDefs)
-	{
-		Oid			oldId = lfirst_oid(oid_item);
-		Oid			relid;
-
-		relid = IndexGetRelation(oldId, false);
-		ATPostAlterTypeParse(oldId, relid, InvalidOid,
-							 (char *) lfirst(def_item),
-							 wqueue, lockmode, tab->rewrite);
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Now we can drop the existing constraints and indexes --- constraints
@@ -11775,14 +11687,9 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 		Node	   *stmt = (Node *) lfirst(list_item);
 
 		if (IsA(stmt, IndexStmt))
-<<<<<<< HEAD
 			querytree_list = list_concat(querytree_list,
-									 transformIndexStmt((IndexStmt *) stmt,
-=======
-			querytree_list = lappend(querytree_list,
 									 transformIndexStmt(oldRelId,
 														(IndexStmt *) stmt,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 														cmd));
 		else if (IsA(stmt, AlterTableStmt))
 			querytree_list = list_concat(querytree_list,
@@ -12797,7 +12704,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	Relation    rel;
 	Oid			oldTableSpace;
 	Oid			reltoastrelid;
-<<<<<<< HEAD
 	Oid			reltoastidxid;
 	Oid			relaosegrelid = InvalidOid;
 	Oid			relaoblkdirrelid = InvalidOid;
@@ -12806,8 +12712,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	Oid         relaovisimapidxid = InvalidOid;
 	Oid			relbmrelid = InvalidOid;
 	Oid			relbmidxid = InvalidOid;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	Oid			newrelfilenode;
 	RelFileNode newrnode;
 	SMgrRelation dstrel;
@@ -12986,9 +12890,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	/* Move associated toast relation and/or indexes, too */
 	if (OidIsValid(reltoastrelid))
 		ATExecSetTableSpace(reltoastrelid, newTableSpace, lockmode);
-<<<<<<< HEAD
-	if (OidIsValid(reltoastidxid))
-		ATExecSetTableSpace(reltoastidxid, newTableSpace, lockmode);
+	foreach(lc, reltoastidxids)
+		ATExecSetTableSpace(lfirst_oid(lc), newTableSpace, lockmode);
 
 	/* Move associated ao subobjects */
 	if (OidIsValid(relaosegrelid))
@@ -13012,13 +12915,9 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	}
 	if (OidIsValid(relbmidxid))
 		ATExecSetTableSpace(relbmidxid, newTableSpace, lockmode);
-=======
-	foreach(lc, reltoastidxids)
-		ATExecSetTableSpace(lfirst_oid(lc), newTableSpace, lockmode);
 
 	/* Clean up */
 	list_free(reltoastidxids);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*

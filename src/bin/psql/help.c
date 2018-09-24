@@ -432,18 +432,12 @@ void
 print_copyright(void)
 {
 	puts(
-<<<<<<< HEAD
 		 "Greenplum Database version of PostgreSQL Database Management System\n"
-		 "Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group\n\n"
+		 "Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 2014-Present Pivotal Software, Inc.\n\n"
 		 "Portions Copyright (c) 2011-2014 EMC\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
-=======
-		 "PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
-		 "Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group\n\n"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 	"Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"

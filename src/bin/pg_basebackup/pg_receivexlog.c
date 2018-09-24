@@ -74,12 +74,8 @@ usage(void)
 	printf(_("  -U, --username=NAME    connect as specified database user\n"));
 	printf(_("  -w, --no-password      never prompt for password\n"));
 	printf(_("  -W, --password         force password prompt (should happen automatically)\n"));
-<<<<<<< HEAD
-	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
-=======
 	printf(_("      --slot=SLOTNAME    replication slot to use\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	printf(_("\nReport bugs to <bugs@greenplum.org>.\n"));
 }
 
 static bool
@@ -183,11 +179,7 @@ FindStreamingStart(uint32 *tli)
 		if (!ispartial)
 		{
 			struct stat statbuf;
-<<<<<<< HEAD
 			char		fullpath[MAXPGPATH * 2];
-=======
-			char		fullpath[MAXPGPATH];
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", basedir, dirent->d_name);
 			if (stat(fullpath, &statbuf) != 0)
