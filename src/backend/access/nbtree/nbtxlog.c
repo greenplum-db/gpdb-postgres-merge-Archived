@@ -1165,83 +1165,6 @@ btree_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 			elog(PANIC, "btree_redo: unknown op code %u", info);
 	}
 }
-<<<<<<< HEAD
-
-void
-btree_xlog_startup(void)
-{
-	incomplete_actions = NIL;
-}
-
-void
-btree_xlog_cleanup(void)
-{
-	ListCell   *l;
-
-	foreach(l, incomplete_actions)
-	{
-		bt_incomplete_action *action = (bt_incomplete_action *) lfirst(l);
-
-		if (action->is_split)
-		{
-			/* finish an incomplete split */
-			Buffer		lbuf,
-						rbuf;
-			Page		lpage,
-						rpage;
-			BTPageOpaque lpageop,
-						rpageop;
-			bool		is_only;
-			Relation	reln;
-
-			lbuf = XLogReadBuffer(action->node, action->leftblk, false);
-			/* failure is impossible because we wrote this page earlier */
-			if (!BufferIsValid(lbuf))
-				elog(PANIC, "btree_xlog_cleanup: left block unfound");
-			lpage = (Page) BufferGetPage(lbuf);
-			lpageop = (BTPageOpaque) PageGetSpecialPointer(lpage);
-			rbuf = XLogReadBuffer(action->node, action->rightblk, false);
-			/* failure is impossible because we wrote this page earlier */
-			if (!BufferIsValid(rbuf))
-				elog(PANIC, "btree_xlog_cleanup: right block unfound");
-			rpage = (Page) BufferGetPage(rbuf);
-			rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
-
-			/* if the pages are all of their level, it's a only-page split */
-			is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(rpageop);
-
-			reln = CreateFakeRelcacheEntry(action->node);
-			_bt_insert_parent(reln, lbuf, rbuf, NULL,
-							  action->is_root, is_only);
-			FreeFakeRelcacheEntry(reln);
-		}
-		else
-		{
-			/* finish an incomplete deletion (of a half-dead page) */
-			Buffer		buf;
-
-			buf = XLogReadBuffer(action->node, action->delblk, false);
-			if (BufferIsValid(buf))
-			{
-				Relation	reln;
-
-				reln = CreateFakeRelcacheEntry(action->node);
-				if (_bt_pagedel(reln, buf, NULL) == 0)
-					elog(PANIC, "btree_xlog_cleanup: _bt_pagedel failed");
-				FreeFakeRelcacheEntry(reln);
-			}
-		}
-	}
-	incomplete_actions = NIL;
-}
-
-bool
-btree_safe_restartpoint(void)
-{
-	if (incomplete_actions)
-		return false;
-	return true;
-}
 
 /*
  * Mask a btree page before performing consistency checks on it.
@@ -1291,5 +1214,3 @@ btree_mask(char *pagedata, BlockNumber blkno)
 	maskopaq->btpo_flags &= ~BTP_SPLIT_END;
 	maskopaq->btpo_cycleid = 0;
 }
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

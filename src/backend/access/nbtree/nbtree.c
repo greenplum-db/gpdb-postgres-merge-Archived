@@ -217,13 +217,8 @@ btbuildempty(PG_FUNCTION_ARGS)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	if (XLogIsNeeded())
-<<<<<<< HEAD
-		log_newpage_rel(index, INIT_FORKNUM,
-					BTREE_METAPAGE, metapage);
-=======
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
 					BTREE_METAPAGE, metapage, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * An immediate sync is required even if we xlog'd the page, because the

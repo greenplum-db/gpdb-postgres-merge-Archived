@@ -401,7 +401,9 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 			bool		valid;
 			HeapTupleHeader theader = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 
+#if 0
 			loctup.t_tableOid = RelationGetRelid(scan->rs_rd);
+#endif
 			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 			loctup.t_len = ItemIdGetLength(lpp);
 			ItemPointerSet(&(loctup.t_self), page, lineoff);
@@ -2093,15 +2095,10 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
-<<<<<<< HEAD
 #if 0
-		heapTuple->t_tableOid = relation->rd_id;
-#endif
-		heapTuple->t_self = *tid;
-=======
 		heapTuple->t_tableOid = RelationGetRelid(relation);
+#endif
 		ItemPointerSetOffsetNumber(&heapTuple->t_self, offnum);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
@@ -2290,7 +2287,9 @@ heap_get_latest_tid(Relation relation,
 		tp.t_self = ctid;
 		tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 		tp.t_len = ItemIdGetLength(lp);
+#if 0
 		tp.t_tableOid = RelationGetRelid(relation);
+#endif
 
 		/*
 		 * After following a t_ctid link, we might arrive at an unrelated
@@ -3148,17 +3147,15 @@ heap_delete(Relation relation, ItemPointer tid,
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsNormal(lp));
 
+#if 0
 	tp.t_tableOid = RelationGetRelid(relation);
+#endif
 	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
 
 l1:
-<<<<<<< HEAD
-	result = HeapTupleSatisfiesUpdate(relation, tp.t_data, cid, buffer);
-=======
-	result = HeapTupleSatisfiesUpdate(&tp, cid, buffer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	result = HeapTupleSatisfiesUpdate(relation, &tp, cid, buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -3373,9 +3370,6 @@ l1:
 		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
-<<<<<<< HEAD
-		recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata, xid);
-=======
 		/*
 		 * Log replica identity of the deleted tuple if there is one
 		 */
@@ -3407,8 +3401,7 @@ l1:
 				xlrec.flags |= XLOG_HEAP_CONTAINS_OLD_KEY;
 		}
 
-		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		recptr = XLogInsert_OverrideXid(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata, xid);
 
 		PageSetLSN(page, recptr);
 	}
@@ -3683,11 +3676,7 @@ heap_update_internal(Relation relation, ItemPointer otid, HeapTuple newtup,
 l2:
 	checked_lockers = false;
 	locker_remains = false;
-<<<<<<< HEAD
-	result = HeapTupleSatisfiesUpdate(relation, oldtup.t_data, cid, buffer);
-=======
-	result = HeapTupleSatisfiesUpdate(&oldtup, cid, buffer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	result = HeapTupleSatisfiesUpdate(relation, &oldtup, cid, buffer);
 
 	/* see below about the "no wait" case */
 	Assert(result != HeapTupleBeingUpdated || wait);
@@ -3992,13 +3981,8 @@ l2:
 	 * on the same page as the old, then we need to release the content lock
 	 * (but not the pin!) on the old tuple's buffer while we are off doing
 	 * TOAST and/or table-file-extension work.  We must mark the old tuple to
-<<<<<<< HEAD
-	 * show that it's locked, else other processes may try to update it
-	 * themselves.
-=======
 	 * show that it's already being updated, else other processes may try to
 	 * update it themselves.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 *
 	 * We need to invoke the toaster if there are already any out-of-line
 	 * toasted values present, or if the new tuple is over-threshold.
@@ -4616,11 +4600,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 static MultiXactStatus
 get_mxact_status_for_lock(LockTupleMode mode, bool is_update)
 {
-<<<<<<< HEAD
-	int		retval;
-=======
 	int			retval;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (is_update)
 		retval = tupleLockExtraInfo[mode].updstatus;
@@ -4699,11 +4679,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple,
 	tuple->t_len = ItemIdGetLength(lp);
 
 l3:
-<<<<<<< HEAD
-	result = HeapTupleSatisfiesUpdate(relation, tuple->t_data, cid, *buffer);
-=======
-	result = HeapTupleSatisfiesUpdate(tuple, cid, *buffer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	result = HeapTupleSatisfiesUpdate(relation, tuple, cid, *buffer);
 
 	if (result == HeapTupleInvisible)
 	{
@@ -7492,15 +7468,11 @@ log_heap_update(Relation reln, Buffer oldbuf,
  * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
  * the unused space to be left out from the WAL record, making it smaller.
  */
-<<<<<<< HEAD
-static XLogRecPtr
-log_newpage_internal(xl_heap_newpage *xlrec, Page page)
-=======
 XLogRecPtr
 log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 			Page page, bool page_std)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
+	xl_heap_newpage xlrec;
 	XLogRecPtr	recptr;
 	XLogRecData rdata[3];
 
@@ -7509,15 +7481,12 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	 * not do anything that assumes we are touching a heap.
 	 */
 
-	Assert(!RelFileNode_IsEmpty(&xlrec->node));
-	Assert(BlockNumberIsValid(xlrec->blkno));
+	Assert(!RelFileNode_IsEmpty(rnode));
+	Assert(BlockNumberIsValid(blkno));
 
 	/* NO ELOG(ERROR) from here till newpage op is logged */
 	START_CRIT_SECTION();
 
-<<<<<<< HEAD
-	rdata[0].data = (char *) xlrec;
-=======
 	xlrec.node = *rnode;
 	xlrec.forknum = forkNum;
 	xlrec.blkno = blkno;
@@ -7550,7 +7519,6 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	}
 
 	rdata[0].data = (char *) &xlrec;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	rdata[0].len = SizeOfHeapNewpage;
 	rdata[0].buffer = InvalidBuffer;
 	rdata[0].next = &(rdata[1]);
@@ -7591,40 +7559,6 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 
 	return recptr;
 }
-
-
-/*
- * This is a wrapper over log_newpage_internal() to be used when you have
- * Relation object at hand.
- */
-XLogRecPtr
-log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno, Page page)
-{
-	xl_heap_newpage xlrec;
-
-	xlrec.node = rel->rd_node;
-	xlrec.forknum = forkNum;
-	xlrec.blkno = blkno;
-	return log_newpage_internal(&xlrec, page);
-}
-
-
-/*
- * This is a wrapper over log_newpage_internal to be used when we don't have a
- * Relation object available.
- */
-XLogRecPtr
-log_newpage(RelFileNode *relFileNode, ForkNumber forkNum, BlockNumber blkno,
-						Page page)
-{
-	xl_heap_newpage xlrec;
-
-	xlrec.node = *relFileNode;
-	xlrec.forknum = forkNum;
-	xlrec.blkno = blkno;
-	return log_newpage_internal(&xlrec, page);
-}
-
 
 /*
  * Perform XLogInsert of a HEAP_NEWPAGE record to WAL.
@@ -7668,7 +7602,9 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 	HeapTupleHeader hdr = tup->t_data;
 
 	Assert(ItemPointerIsValid(&tup->t_self));
+#if 0
 	Assert(tup->t_tableOid != InvalidOid);
+#endif
 
 	xlrec.top_xid = GetTopTransactionId();
 	xlrec.target.node = relation->rd_node;

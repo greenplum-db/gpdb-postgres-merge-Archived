@@ -56,12 +56,8 @@ extern RunningTransactions GetRunningTransactionData(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
-<<<<<<< HEAD
-extern TransactionId GetOldestXmin(bool allDbs, bool ignoreVacuum);
-extern TransactionId GetLocalOldestXmin(bool allDbs, bool ignoreVacuum);
-=======
 extern TransactionId GetOldestXmin(Relation rel, bool ignoreVacuum);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+extern TransactionId GetLocalOldestXmin(Relation rel, bool ignoreVacuum);
 extern TransactionId GetOldestActiveTransactionId(void);
 extern TransactionId GetOldestSafeDecodingTransactionId(void);
 

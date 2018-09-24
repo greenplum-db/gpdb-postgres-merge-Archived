@@ -170,16 +170,7 @@ top:
 		{
 			/* Have to wait for the other guy ... */
 			_bt_relbuf(rel, buf);
-<<<<<<< HEAD
-			/*
-			 * We have to unlock it to resume interrupts.  In case we wait for
-			 * the lock in XactLockTableWait and a cancellation is requested,
-			 * we should be able to respond it.
-			 */
-			XactLockTableWait(xwait);
-=======
 			XactLockTableWait(xwait, rel, &itup->t_tid, XLTW_InsertIndex);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			/* start over... */
 			_bt_freestack(stack);
 			goto top;

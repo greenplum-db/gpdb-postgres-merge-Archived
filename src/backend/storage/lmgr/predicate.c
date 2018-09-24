@@ -3895,11 +3895,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 	 * tuple is visible to us, while HeapTupleSatisfiesVacuum checks what else
 	 * is going on with it.
 	 */
-<<<<<<< HEAD
-	htsvResult = HeapTupleSatisfiesVacuum(relation, tuple->t_data, TransactionXmin, buffer);
-=======
-	htsvResult = HeapTupleSatisfiesVacuum(tuple, TransactionXmin, buffer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	htsvResult = HeapTupleSatisfiesVacuum(relation, tuple, TransactionXmin, buffer);
 	switch (htsvResult)
 	{
 		case HEAPTUPLE_LIVE:

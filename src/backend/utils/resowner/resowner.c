@@ -1276,23 +1276,6 @@ PrintFileLeakWarning(File file)
 }
 
 /*
-<<<<<<< HEAD
- * Cdb: walk through a resource owner and it's childrens
- */
-void
-CdbResourceOwnerWalker(ResourceOwner owner, ResourceWalkerCallback callback)
-{
-	ResourceOwner child;
-
-	if (!owner)
-		return;
-
-	(*callback)(owner);
-
-	/* Recurse to handle descendants */
-	for (child = owner->firstchild; child != NULL; child = child->nextchild)
-		CdbResourceOwnerWalker(child, callback);
-=======
  * Make sure there is room for at least one more entry in a ResourceOwner's
  * dynamic shmem segment reference array.
  *
@@ -1375,5 +1358,22 @@ PrintDSMLeakWarning(dsm_segment *seg)
 	elog(WARNING,
 		 "dynamic shared memory leak: segment %u still referenced",
 		 dsm_segment_handle(seg));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+}
+
+/*
+ * Cdb: walk through a resource owner and it's childrens
+ */
+void
+CdbResourceOwnerWalker(ResourceOwner owner, ResourceWalkerCallback callback)
+{
+	ResourceOwner child;
+
+	if (!owner)
+		return;
+
+	(*callback)(owner);
+
+	/* Recurse to handle descendants */
+	for (child = owner->firstchild; child != NULL; child = child->nextchild)
+		CdbResourceOwnerWalker(child, callback);
 }

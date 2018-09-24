@@ -1344,16 +1344,12 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-<<<<<<< HEAD
 	 * Greenplum Database needs this
 	 */
 	portal->is_extended_query = true;
 
 	/*
-	 * Disallow SCROLL with SELECT FOR UPDATE.	This is not redundant with the
-=======
 	 * Disallow SCROLL with SELECT FOR UPDATE.  This is not redundant with the
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * check in transformDeclareCursorStmt because the cursor options might
 	 * not have come through there.
 	 */

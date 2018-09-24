@@ -79,7 +79,7 @@ extern bool HeapTupleSatisfiesToast(Relation relation, HeapTuple htup,
 						Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesDirty(Relation relation, HeapTuple htup,
 						Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesHistoricMVCC(HeapTuple htup,
+extern bool HeapTupleSatisfiesHistoricMVCC(Relation relation, HeapTuple htup,
 							   Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */

@@ -21,10 +21,7 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
-<<<<<<< HEAD
 #include "storage/latch.h"
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/sinval.h"

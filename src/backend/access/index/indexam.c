@@ -522,17 +522,8 @@ index_fetch_heap(IndexScanDesc scan)
 		/*
 		 * Prune page, but only if we weren't already on this page
 		 */
-<<<<<<< HEAD
-		if (prev_buf != scan->xs_cbuf &&
-			TransactionIdIsValid(RecentGlobalXmin))
-		{
-			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf,
-								RecentGlobalXmin);
-		}
-=======
 		if (prev_buf != scan->xs_cbuf)
 			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */

@@ -398,12 +398,7 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 		Assert(BufferIsValid(scan->xs_cbuf));
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-<<<<<<< HEAD
-		result = HeapTupleSatisfiesVisibility(NULL, tup, scan->xs_snapshot,
-											  scan->xs_cbuf);
-=======
-		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->xs_cbuf);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		result = HeapTupleSatisfiesVisibility(NULL, tup, freshsnap, scan->xs_cbuf);
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 	else
@@ -415,12 +410,7 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 		Assert(BufferIsValid(scan->rs_cbuf));
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-<<<<<<< HEAD
-		result = HeapTupleSatisfiesVisibility(NULL, tup, scan->rs_snapshot,
-											  scan->rs_cbuf);
-=======
-		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->rs_cbuf);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		result = HeapTupleSatisfiesVisibility(NULL, tup, freshsnap, scan->rs_cbuf);
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 	return result;

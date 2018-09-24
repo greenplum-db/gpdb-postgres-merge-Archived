@@ -670,17 +670,10 @@ add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
 List *
 deconstruct_jointree(PlannerInfo *root)
 {
-<<<<<<< HEAD
-	List		*result = NIL;
-	Relids		qualscope;
-	Relids		inner_join_rels;
-	List		*postponed_qual_list = NIL;
-=======
 	List	   *result;
 	Relids		qualscope;
 	Relids		inner_join_rels;
 	List	   *postponed_qual_list = NIL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Start recursion at top of jointree */
 	Assert(root->parse->jointree != NULL &&
@@ -959,11 +952,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
 												   &leftids, &left_inners,
-<<<<<<< HEAD
-													&child_postponed_quals);
-=======
 												   &child_postponed_quals);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													true,
 													&rightids, &right_inners,

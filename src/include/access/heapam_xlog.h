@@ -398,7 +398,5 @@ extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, Page page, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
-extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
-								  Page page);
 
 #endif   /* HEAPAM_XLOG_H */

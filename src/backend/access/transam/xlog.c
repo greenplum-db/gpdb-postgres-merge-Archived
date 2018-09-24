@@ -97,12 +97,9 @@ bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 bool		EnableHotStandby = false;
 bool		fullPageWrites = true;
-<<<<<<< HEAD
+bool		wal_log_hints = false;
 char   *wal_consistency_checking_string = NULL;
 bool   *wal_consistency_checking = NULL;
-=======
-bool		wal_log_hints = false;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
@@ -7924,11 +7921,7 @@ StartupXLOG(void)
 static void
 CheckRecoveryConsistency(void)
 {
-<<<<<<< HEAD
-	XLogRecPtr lastReplayedEndRecPtr;
-=======
 	XLogRecPtr	lastReplayedEndRecPtr;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * During crash recovery, we don't reach a consistent state until we've
@@ -9225,11 +9218,7 @@ CreateCheckPoint(int flags)
 	 * StartupSUBTRANS hasn't been called yet.
 	 */
 	if (!RecoveryInProgress())
-<<<<<<< HEAD
-		TruncateSUBTRANS(GetLocalOldestXmin(true, false));
-=======
-		TruncateSUBTRANS(GetOldestXmin(NULL, false));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		TruncateSUBTRANS(GetLocalOldestXmin(NULL, false));
 
 	/* Real work is done, but log and update stats before releasing lock. */
 	LogCheckpointEnd(false);
@@ -9311,15 +9300,12 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
 	CheckPointMultiXact();
+	DistributedLog_CheckPoint();
 	CheckPointPredicate();
 	CheckPointRelationMap();
-<<<<<<< HEAD
-	DistributedLog_CheckPoint();
-=======
 	CheckPointReplicationSlots();
 	CheckPointSnapBuild();
 	CheckPointLogicalRewriteHeap();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	CheckPointBuffers(flags);	/* performs all required fsyncs */
 	/* We deliberately delay 2PC checkpointing as long as possible */
 	CheckPointTwoPhase(checkPointRedo);
@@ -9341,35 +9327,12 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
-	/*
-<<<<<<< HEAD
-	 * Is it safe to restartpoint?	We must ask each of the resource managers
-	 * whether they have any partial state information that might prevent a
-	 * correct restart from this point.  If so, we skip this opportunity, but
-	 * return at the next checkpoint record for another try.
-	 */
-	for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
-	{
-		if (RmgrTable[rmid].rm_safe_restartpoint != NULL)
-			if (!(RmgrTable[rmid].rm_safe_restartpoint()))
-			{
-				elog(trace_recovery(DEBUG2),
-					 "RM %d not safe to record restart point at %X/%X",
-					 rmid,
-					 (uint32) (checkPoint->redo >> 32),
-					 (uint32) checkPoint->redo);
-				return;
-			}
-	}
-
 	/* Update the shared RedoRecPtr */
 	 SpinLockAcquire(&xlogctl->info_lck);
 	 xlogctl->Insert.RedoRecPtr = checkPoint->redo;
 	 SpinLockRelease(&xlogctl->info_lck);
 
 	/*
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * Also refrain from creating a restartpoint if we have seen any
 	 * references to non-existent pages. Restarting recovery from the
 	 * restartpoint would not see the references, so we would lose the
@@ -10096,12 +10059,8 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 		 * We used to try to take the maximum of ShmemVariableCache->nextOid
 		 * and the recorded nextOid, but that fails if the OID counter wraps
 		 * around.  Since no OID allocation should be happening during replay
-<<<<<<< HEAD
-		 * anyway, better to just believe the record exactly.
-=======
 		 * anyway, better to just believe the record exactly.  We still take
 		 * OidGenLock while setting the variable, just in case.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid));
 		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
