@@ -215,15 +215,11 @@ typedef struct TwoPhasePgStatRecord
  */
 static MemoryContext pgStatLocalContext = NULL;
 static HTAB *pgStatDBHash = NULL;
-<<<<<<< HEAD
 
 static HTAB *pgStatQueueHash = NULL;		/* GPDB */
 static HTAB *localStatPortalHash = NULL;	/* GPDB. per backend portal queue stats.*/
 
-static PgBackendStatus *localBackendStatusTable = NULL;
-=======
 static LocalPgBackendStatus *localBackendStatusTable = NULL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static int	localNumBackends = 0;
 
 /*
@@ -313,11 +309,8 @@ static void pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, in
 static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
 static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
 static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
-<<<<<<< HEAD
-static void pgstat_recv_queuestat(PgStat_MsgQueuestat *msg, int len); /* GPDB */
-=======
 static void pgstat_recv_archiver(PgStat_MsgArchiver *msg, int len);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+static void pgstat_recv_queuestat(PgStat_MsgQueuestat *msg, int len); /* GPDB */
 static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 static void pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len);
 static void pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len);
@@ -356,14 +349,6 @@ pgstat_init(void)
 #define TESTBYTEVAL ((char) 199)
 
 	/*
-<<<<<<< HEAD
-	 * Create stats temp directory if not present; ignore errors.
-	 * This avoids the need to initdb... This is temporary code, and
-	 * can be removed in the future, as initdb does this for us.
-	 */
-	mkdir("pg_stat_tmp", 0700);
-	
-=======
 	 * This static assertion verifies that we didn't mess up the calculations
 	 * involved in selecting maximum payload sizes for our UDP messages.
 	 * Because the only consequence of overrunning PGSTAT_MAX_MSG_SIZE would
@@ -373,7 +358,13 @@ pgstat_init(void)
 	StaticAssertStmt(sizeof(PgStat_Msg) <= PGSTAT_MAX_MSG_SIZE,
 				   "maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE");
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	/*
+	 * Create stats temp directory if not present; ignore errors.
+	 * This avoids the need to initdb... This is temporary code, and
+	 * can be removed in the future, as initdb does this for us.
+	 */
+	mkdir("pg_stat_tmp", 0700);
+
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
 	 */
@@ -2614,17 +2605,12 @@ pgstat_bestart(void)
 	beentry->st_userid = userid;
 	beentry->st_session_id = gp_session_id;  /* GPDB only */
 	beentry->st_clientaddr = clientaddr;
-<<<<<<< HEAD
-	beentry->st_clienthostname[0] = '\0';
-	beentry->st_waiting = PGBE_WAITING_NONE;
-=======
 	if (MyProcPort && MyProcPort->remote_hostname)
 		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname,
 				NAMEDATALEN);
 	else
 		beentry->st_clienthostname[0] = '\0';
-	beentry->st_waiting = false;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	beentry->st_waiting = PGBE_WAITING_NONE;
 	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
@@ -2637,17 +2623,11 @@ pgstat_bestart(void)
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
 
-<<<<<<< HEAD
-	if (MyProcPort && MyProcPort->remote_hostname)
-		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname, NAMEDATALEN);
-
 	/*
 	 * GPDB: Initialize per-portal statistics hash for resource queues.
 	 */
 	pgstat_init_localportalhash();
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Update app name to current GUC setting */
 	if (application_name)
 		pgstat_report_appname(application_name);

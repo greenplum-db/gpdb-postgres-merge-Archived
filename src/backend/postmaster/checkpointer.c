@@ -179,6 +179,7 @@ static void UpdateSharedMemoryConfig(void);
 
 /* Signal handlers */
 
+static void chkpt_quickdie(SIGNAL_ARGS);
 static void ChkptSigHupHandler(SIGNAL_ARGS);
 static void ReqCheckpointHandler(SIGNAL_ARGS);
 static void chkpt_sigusr1_handler(SIGNAL_ARGS);
@@ -223,7 +224,7 @@ CheckpointerMain(void)
 												 * file */
 	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
-	pqsignal(SIGQUIT, quickdie);		/* hard crash time */
+	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, chkpt_sigusr1_handler);
@@ -812,8 +813,6 @@ IsCheckpointOnSchedule(double progress)
  * --------------------------------
  */
 
-<<<<<<< HEAD
-=======
 /*
  * chkpt_quickdie() occurs when signalled SIGQUIT by the postmaster.
  *
@@ -846,7 +845,6 @@ chkpt_quickdie(SIGNAL_ARGS)
 	exit(2);
 }
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 ChkptSigHupHandler(SIGNAL_ARGS)

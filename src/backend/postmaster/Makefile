@@ -13,14 +13,10 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
-<<<<<<< HEAD
-OBJS = autovacuum.o bgwriter.o checkpointer.o fork_process.o pgarch.o pgstat.o \
-	postmaster.o syslogger.o startup.o \
-	perfmon.o backoff.o perfmon_segmentinfo.o \
-	sendalert.o alertseverity.o autostats.o walwriter.o
-=======
 OBJS = autovacuum.o bgworker.o bgwriter.o checkpointer.o fork_process.o \
 	pgarch.o pgstat.o postmaster.o startup.o syslogger.o walwriter.o
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+OBJS += perfmon.o backoff.o perfmon_segmentinfo.o  sendalert.o \
+	alertseverity.o autostats.o
 
 include $(top_srcdir)/src/backend/common.mk

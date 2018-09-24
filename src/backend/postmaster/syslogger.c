@@ -39,20 +39,17 @@
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
-<<<<<<< HEAD
-#include "postmaster/sendalert.h"
-=======
 #include "storage/dsm.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/timestamp.h"
-#include "cdb/cdbvars.h"
 
-<<<<<<< HEAD
+#include "cdb/cdbvars.h"
+#include "postmaster/sendalert.h"
+
 #define READ_BUF_SIZE (2 * PIPE_CHUNK_SIZE)
 
 /* The maximum bytes for error message */
@@ -60,8 +57,6 @@
 
 extern bool Gp_entry_postmaster;
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * We read() into a temp buffer twice as big as a chunk, so that any fragment
  * left after processing can be moved down to the front and we'll still have
@@ -771,9 +766,8 @@ SysLoggerMain(int argc, char *argv[])
 			ereport(DEBUG1,
 					(errmsg("logger shutting down")));
 
-<<<<<<< HEAD
             /*
-             * Normal exit from the syslogger is here.	Note that we
+             * Normal exit from the syslogger is here.  Note that we
              * deliberately do not close syslogFile before exiting; this is to
              * allow for the possibility of elog messages being generated
              * inside proc_exit.  Regular exit() will take care of flushing
@@ -798,16 +792,6 @@ open_alert_log_file()
 			        (errcode_for_file_access(),
 			         (errmsg("could not create log file directory \"%s\": %m",
 					  gp_perf_mon_directory))));
-=======
-			/*
-			 * Normal exit from the syslogger is here.  Note that we
-			 * deliberately do not close syslogFile before exiting; this is to
-			 * allow for the possibility of elog messages being generated
-			 * inside proc_exit.  Regular exit() will take care of flushing
-			 * and closing stdio channels.
-			 */
-			proc_exit(0);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
         char *alert_file_name = logfile_getname(time(NULL), NULL, gp_perf_mon_directory, alert_file_pattern);
         alertLogFile = fopen(alert_file_name, "a");
@@ -920,14 +904,9 @@ SysLogger_Start(void)
                 /* Lose the postmaster's on-exit routines */
                 on_exit_reset();
 
-<<<<<<< HEAD
-                /* Drop our connection to postmaster's shared memory, as well */
-                PGSharedMemoryDetach();
-=======
-			/* Drop our connection to postmaster's shared memory, as well */
-			dsm_detach_all();
-			PGSharedMemoryDetach();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				/* Drop our connection to postmaster's shared memory, as well */
+				dsm_detach_all();
+				PGSharedMemoryDetach();
 
                 /* do the work */
                 SysLoggerMain(0, NULL);
@@ -937,29 +916,23 @@ SysLogger_Start(void)
             default:
                 /* success, in postmaster */
 
-<<<<<<< HEAD
-                /* now we redirect stderr, if not done already */
-                if (!redirection_done)
-                {
-=======
-			/* now we redirect stderr, if not done already */
-			if (!redirection_done)
-			{
+				/* now we redirect stderr, if not done already */
+				if (!redirection_done)
+				{
 #ifdef WIN32
-				int			fd;
+					int			fd;
 #endif
 
-				/*
-				 * Leave a breadcrumb trail when redirecting, in case the user
-				 * forgets that redirection is active and looks only at the
-				 * original stderr target file.
-				 */
-				ereport(LOG,
-						(errmsg("redirecting log output to logging collector process"),
-				errhint("Future log output will appear in directory \"%s\".",
-						Log_directory)));
+					/*
+					 * Leave a breadcrumb trail when redirecting, in case the user
+					 * forgets that redirection is active and looks only at the
+					 * original stderr target file.
+					 */
+					ereport(LOG,
+							(errmsg("redirecting log output to logging collector process"),
+							 errhint("Future log output will appear in directory \"%s\".",
+									 Log_directory)));
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #ifndef WIN32
                     fflush(stdout);
                     if (dup2(syslogPipe[1], fileno(stdout)) < 0)
@@ -975,10 +948,6 @@ SysLogger_Start(void)
                     close(syslogPipe[1]);
                     syslogPipe[1] = -1;
 #else
-<<<<<<< HEAD
-                    int			fd;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
                     /*
 				 	 * open the pipe in binary mode and make sure stderr is binary
@@ -1084,7 +1053,7 @@ syslogger_forkexec(void)
  *
  * Extract data from the arglist for exec'ed syslogger process
  */
-    static void
+static void
 syslogger_parseArgs(int argc, char *argv[])
 {
     int			fd;
@@ -1094,46 +1063,6 @@ syslogger_parseArgs(int argc, char *argv[])
     argv += 3;
 
 #ifndef WIN32
-<<<<<<< HEAD
-    fd = atoi(*argv++);
-    if (fd != -1)
-    {
-        syslogFile = fdopen(fd, "a");
-        setvbuf(syslogFile, NULL, LBF_MODE, 0);
-    }
-#else							/* WIN32 */
-    fd = atoi(*argv++);
-    if (fd != 0)
-    {
-        fd = _open_osfhandle(fd, _O_APPEND | _O_TEXT);
-        if (fd > 0)
-        {
-            syslogFile = fdopen(fd, "a");
-            setvbuf(syslogFile, NULL, LBF_MODE, 0);
-        }
-    }
-#endif
-
-    if (alert_log_level_opened)
-    {
-        alertFd = atoi(*argv++);
-#ifndef WIN32
-        if (alertFd != -1)
-        {
-            alertLogFile = fdopen(alertFd, "a");
-            setvbuf(alertLogFile, NULL, LBF_MODE, 0);
-        }
-#else							/* WIN32 */
-        if (alertFd != 0)
-        {
-            alertFd = _open_osfhandle(alertFd, _O_APPEND | _O_TEXT);
-            if (alertFd > 0)
-            {
-                alertLogFile = fdopen(alertFd, "a");
-                setvbuf(alertLogFile, NULL, LBF_MODE, 0);
-            }
-        }
-=======
 	fd = atoi(*argv++);
 	if (fd != -1)
 	{
@@ -1151,7 +1080,27 @@ syslogger_parseArgs(int argc, char *argv[])
 			setvbuf(syslogFile, NULL, PG_IOLBF, 0);
 		}
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#endif   /* WIN32 */
+
+    if (alert_log_level_opened)
+    {
+        alertFd = atoi(*argv++);
+#ifndef WIN32
+        if (alertFd != -1)
+        {
+            alertLogFile = fdopen(alertFd, "a");
+            setvbuf(alertLogFile, NULL, PG_IOLBF, 0);
+        }
+#else							/* WIN32 */
+        if (alertFd != 0)
+        {
+            alertFd = _open_osfhandle(alertFd, _O_APPEND | _O_TEXT);
+            if (alertFd > 0)
+            {
+                alertLogFile = fdopen(alertFd, "a");
+                setvbuf(alertLogFile, NULL, PG_IOLBF, 0);
+            }
+        }
 #endif   /* WIN32 */
     }
 }
@@ -2378,19 +2327,10 @@ set_next_rotation_time(void)
     struct pg_tm *tm;
     int			rotinterval;
 
-    /* nothing to do if time-based rotation is disabled */
-    if (Log_RotationAge <= 0)
-        return;
+	/* nothing to do if time-based rotation is disabled */
+	if (Log_RotationAge <= 0)
+		return;
 
-<<<<<<< HEAD
-    /*
-     * The requirements here are to choose the next time > now that is a
-     * "multiple" of the log rotation interval.  "Multiple" can be interpreted
-     * fairly loosely.	In this version we align to log_timezone rather than
-     * GMT.
-     */
-    rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
-=======
 	/*
 	 * The requirements here are to choose the next time > now that is a
 	 * "multiple" of the log rotation interval.  "Multiple" can be interpreted
@@ -2398,7 +2338,6 @@ set_next_rotation_time(void)
 	 * GMT.
 	 */
 	rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	now = (pg_time_t) time(NULL);
     tm = pg_localtime(&now, log_timezone);
     now += tm->tm_gmtoff;

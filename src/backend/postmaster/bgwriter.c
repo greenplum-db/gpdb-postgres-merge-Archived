@@ -58,11 +58,8 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
-<<<<<<< HEAD
 #include "utils/faultinjector.h"
-=======
 #include "utils/timestamp.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #include "tcop/tcopprot.h" /* quickdie() */
 
@@ -99,6 +96,7 @@ static volatile sig_atomic_t shutdown_requested = false;
 
 /* Signal handlers */
 
+static void bg_quickdie(SIGNAL_ARGS);
 static void BgSigHupHandler(SIGNAL_ARGS);
 static void ReqShutdownHandler(SIGNAL_ARGS);
 static void bgwriter_sigusr1_handler(SIGNAL_ARGS);
@@ -136,7 +134,7 @@ BackgroundWriterMain(void)
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, ReqShutdownHandler);		/* shutdown */
-	pqsignal(SIGQUIT, quickdie);		/* hard crash time: nothing bg-writer specific, just use the standard */
+	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, bgwriter_sigusr1_handler);
@@ -406,8 +404,6 @@ BackgroundWriterMain(void)
  * --------------------------------
  */
 
-<<<<<<< HEAD
-=======
 /*
  * bg_quickdie() occurs when signalled SIGQUIT by the postmaster.
  *
@@ -440,7 +436,6 @@ bg_quickdie(SIGNAL_ARGS)
 	exit(2);
 }
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 BgSigHupHandler(SIGNAL_ARGS)

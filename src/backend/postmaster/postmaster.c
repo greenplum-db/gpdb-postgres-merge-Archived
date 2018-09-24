@@ -108,12 +108,8 @@
 #include "pg_getopt.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
-<<<<<<< HEAD
-#include "postmaster/bgworker.h"
-#include "postmaster/bgwriter.h"
-=======
 #include "postmaster/bgworker_internals.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#include "postmaster/bgwriter.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
@@ -132,12 +128,9 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-<<<<<<< HEAD
+#include "utils/dynamic_loader.h"
 #include "utils/faultinjector.h"
 #include "utils/gdd.h"
-=======
-#include "utils/dynamic_loader.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
@@ -281,17 +274,11 @@ bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
 
-<<<<<<< HEAD
-char	   *output_config_variable = NULL;
-
 /*
  * PIDs of special child processes; 0 when not running. When adding a new PID
  * to the list, remember to add the process title to GetServerProcessTitle()
  * as well.
  */
-=======
-/* PIDs of special child processes; 0 when not running */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
@@ -377,7 +364,10 @@ typedef enum
 
 static PMState pmState = PM_INIT;
 
-<<<<<<< HEAD
+/* Start time of abort processing at immediate shutdown or child crash */
+static time_t AbortStartTime;
+#define SIGKILL_CHILDREN_AFTER_SECS		5
+
 /* CDB */
 
 /* Set at database system is ready to accept connections */
@@ -425,11 +415,6 @@ static PMSubProc PMSubProcList[MaxPMSubType] =
 };
 
 static PMSubProc *FTSSubProc = &PMSubProcList[FtsProbeProc];
-=======
-/* Start time of abort processing at immediate shutdown or child crash */
-static time_t AbortStartTime;
-#define SIGKILL_CHILDREN_AFTER_SECS		5
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
@@ -456,22 +441,11 @@ static volatile bool HaveCrashedWorker = false;
 static unsigned int random_seed = 0;
 static struct timeval random_start_time;
 
-<<<<<<< HEAD
-extern char *optarg;
-extern int	optind,
-			opterr;
-
-#ifdef HAVE_INT_OPTRESET
-extern int	optreset;			/* might not be declared by system headers */
-#endif
-
 /* some GUC values used in fetching status from status transition */
 extern char	   *locale_monetary;
 extern char	   *locale_numeric;
 extern char    *locale_collate;
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #ifdef USE_BONJOUR
 static DNSServiceRef bonjour_sdref = NULL;
 #endif
@@ -589,15 +563,11 @@ typedef struct
 	slock_t    *ShmemLock;
 	VariableCache ShmemVariableCache;
 	Backend    *ShmemBackendArray;
-<<<<<<< HEAD
-	LWLock	   *LWLockArray;
-=======
 #ifndef HAVE_SPINLOCKS
 	PGSemaphore SpinlockSemaArray;
 #endif
 	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
@@ -2409,10 +2379,6 @@ retry1:
 	if (strlen(port->user_name) >= NAMEDATALEN)
 		port->user_name[NAMEDATALEN - 1] = '\0';
 
-<<<<<<< HEAD
-	/* Walsender is not related to a particular database */
-	if (am_walsender || am_ftshandler)
-=======
 	/*
 	 * Normal walsender backends, e.g. for streaming replication, are not
 	 * connected to a particular database. But walsenders used for logical
@@ -2421,8 +2387,7 @@ retry1:
 	 * can make sense to first make a basebackup and then stream changes
 	 * starting from that.
 	 */
-	if (am_walsender && !am_db_walsender)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	if ((am_walsender && !am_db_walsender) || am_ftshandler)
 		port->database_name[0] = '\0';
 
 	/*
@@ -3029,32 +2994,8 @@ pmdie(SIGNAL_ARGS)
 				break;
 			Shutdown = ImmediateShutdown;
 			ereport(LOG,
-<<<<<<< HEAD
 					(errmsg("received immediate shutdown request"),
 				     errSendAlert(true)));
-
-			SignalChildren(SIGQUIT);
-			if (StartupPID != 0)
-				signal_child(StartupPID, SIGQUIT);
-			if (BgWriterPID != 0)
-				signal_child(BgWriterPID, SIGQUIT);
-			if (CheckpointerPID != 0)
-				signal_child(CheckpointerPID, SIGQUIT);
-			if (WalWriterPID != 0)
-				signal_child(WalWriterPID, SIGQUIT);
-			if (WalReceiverPID != 0)
-				signal_child(WalReceiverPID, SIGQUIT);
-			if (AutoVacPID != 0)
-				signal_child(AutoVacPID, SIGQUIT);
-			if (PgArchPID != 0)
-				signal_child(PgArchPID, SIGQUIT);
-			if (PgStatPID != 0)
-				signal_child(PgStatPID, SIGQUIT);
-			SignalUnconnectedWorkers(SIGQUIT);
-			StopServices(0, SIGQUIT);
-			ExitPostmaster(0);
-=======
-					(errmsg("received immediate shutdown request")));
 
 			TerminateChildren(SIGQUIT);
 			pmState = PM_WAIT_BACKENDS;
@@ -3067,7 +3008,6 @@ pmdie(SIGNAL_ARGS)
 			 * PostmasterStateMachine will take the next step.
 			 */
 			PostmasterStateMachine();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 	}
 
@@ -4395,6 +4335,7 @@ TerminateChildren(int signal)
 	if (PgStatPID != 0)
 		signal_child(PgStatPID, signal);
 	SignalUnconnectedWorkers(signal);
+	StopServices(0, SIGQUIT);
 }
 
 /*
@@ -6386,12 +6327,8 @@ PostmasterMarkPIDForWorkerNotify(int pid)
  * functions.  They are marked NON_EXEC_STATIC in their home modules.
  */
 extern slock_t *ShmemLock;
-<<<<<<< HEAD
-extern LWLock *LWLockArray;
-extern PROC_HDR *ProcGlobal;
-=======
 extern slock_t *ProcStructLock;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+extern PROC_HDR *ProcGlobal;
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
 extern pgsocket pgStatSock;
@@ -6436,15 +6373,11 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->ShmemVariableCache = ShmemVariableCache;
 	param->ShmemBackendArray = ShmemBackendArray;
 
-<<<<<<< HEAD
-	param->LWLockArray = LWLockArray;
-=======
 #ifndef HAVE_SPINLOCKS
 	param->SpinlockSemaArray = SpinlockSemaArray;
 #endif
 	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	param->ProcGlobal = ProcGlobal;
 	param->AuxiliaryProcs = AuxiliaryProcs;
 	param->PreparedXactProcs = PreparedXactProcs;
@@ -6671,15 +6604,11 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	ShmemVariableCache = param->ShmemVariableCache;
 	ShmemBackendArray = param->ShmemBackendArray;
 
-<<<<<<< HEAD
-	LWLockArray = param->LWLockArray;
-=======
 #ifndef HAVE_SPINLOCKS
 	SpinlockSemaArray = param->SpinlockSemaArray;
 #endif
 	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ProcGlobal = param->ProcGlobal;
 	AuxiliaryProcs = param->AuxiliaryProcs;
 	PreparedXactProcs = param->PreparedXactProcs;
