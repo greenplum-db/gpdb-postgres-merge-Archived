@@ -197,11 +197,7 @@ static const datetkn datetktbl[] = {
 
 static int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
-<<<<<<< HEAD
-static datetkn deltatktbl[] = {
-=======
 static const datetkn deltatktbl[] = {
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* token, type, value */
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */

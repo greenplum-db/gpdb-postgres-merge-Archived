@@ -26,11 +26,8 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
-<<<<<<< HEAD
 #include "common/relpath.h"
 #include "executor/spi.h"
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
@@ -40,11 +37,8 @@
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
-<<<<<<< HEAD
 #include "utils/relcache.h"
-=======
 #include "utils/relfilenodemap.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
@@ -52,6 +46,7 @@
 #include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbvars.h"
+#include "utils/snapmgr.h"
 
 static int64 calculate_total_relation_size(Relation rel);
 
@@ -428,11 +423,11 @@ else if (forknum == MAIN_FORKNUM)
 {
 	if (RelationIsAoRows(rel))
 	{
-		totalsize = GetAOTotalBytes(rel, SnapshotNow);
+		totalsize = GetAOTotalBytes(rel, GetActiveSnapshot());
 	}
 	else if (RelationIsAoCols(rel))
 	{
-		totalsize = GetAOCSTotalBytes(rel, SnapshotNow, true);
+		totalsize = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
 	}
 }
 
@@ -516,13 +511,7 @@ calculate_toast_table_size(Oid toastrelid)
 		size += calculate_relation_size(toastRel, forkNum);
 
 	/* toast index size, including FSM and VM size */
-<<<<<<< HEAD
-	toastIdxRel = relation_open(toastRel->rd_rel->reltoastidxid, AccessShareLock);
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		size += calculate_relation_size(toastIdxRel, forkNum);
-=======
 	indexlist = RelationGetIndexList(toastRel);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Size is calculated using all the indexes available */
 	foreach(lc, indexlist)
@@ -532,8 +521,7 @@ calculate_toast_table_size(Oid toastrelid)
 		toastIdxRel = relation_open(lfirst_oid(lc),
 									AccessShareLock);
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			size += calculate_relation_size(&(toastIdxRel->rd_node),
-											toastIdxRel->rd_backend, forkNum);
+			size += calculate_relation_size(toastIdxRel, forkNum);
 
 		relation_close(toastIdxRel, AccessShareLock);
 	}

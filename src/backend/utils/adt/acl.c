@@ -5048,11 +5048,7 @@ is_member_of_role_nosuper(Oid member, Oid role)
 
 
 /*
-<<<<<<< HEAD
- * Is member an admin of role?  That is, is member the role itself (subject to
-=======
  * Is member an admin of role?	That is, is member the role itself (subject to
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * restrictions below), a member (directly or indirectly) WITH ADMIN OPTION,
  * or a superuser?
  */
@@ -5067,10 +5063,7 @@ is_admin_of_role(Oid member, Oid role)
 		return true;
 
 	if (member == role)
-<<<<<<< HEAD
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		/*
 		 * A role can admin itself when it matches the session user and we're
 		 * outside any security-restricted operation, SECURITY DEFINER or

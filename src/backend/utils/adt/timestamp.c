@@ -42,17 +42,6 @@
 #endif
 
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
-<<<<<<< HEAD
-=======
-
-#ifndef INT64_MAX
-#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#endif
-
-#ifndef INT64_MIN
-#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#endif
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* Set at postmaster start */
 TimestampTz PgStartTime;
@@ -78,7 +67,6 @@ typedef struct
 
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-static void EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
@@ -1852,7 +1840,7 @@ make_interval(PG_FUNCTION_ARGS)
 /* EncodeSpecialTimestamp()
  * Convert reserved timestamp data type to string.
  */
-static void
+void
 EncodeSpecialTimestamp(Timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_NOBEGIN(dt))
@@ -3755,7 +3743,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->day += (int32) month_remainder_days;
 #ifdef HAVE_INT64_TIMESTAMP
 	result_double = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
-	if (result_double > INT64_MAX || result_double < INT64_MIN)
+	if (result_double > PG_INT64_MAX || result_double < PG_INT64_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("interval out of range")));
@@ -3982,7 +3970,6 @@ interval_accum(PG_FUNCTION_ARGS)
 }
 
 Datum
-<<<<<<< HEAD
 interval_combine(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray1 = PG_GETARG_ARRAYTYPE_P(0);
@@ -4032,8 +4019,6 @@ interval_combine(PG_FUNCTION_ARGS)
 }
 
 Datum
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 interval_accum_inv(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);

@@ -25,6 +25,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/json.h"
@@ -55,13 +56,10 @@ typedef enum					/* type categories for datum_to_json */
 	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
 	JSONTYPE_BOOL,				/* boolean (built-in types only) */
 	JSONTYPE_NUMERIC,			/* numeric (ditto) */
-<<<<<<< HEAD
-	JSONTYPE_JSON,				/* JSON itself */
-=======
+	JSONTYPE_DATE,				/* we use special formatting for datetimes */
 	JSONTYPE_TIMESTAMP,         /* we use special formatting for timestamp */
 	JSONTYPE_TIMESTAMPTZ,       /* ... and timestamptz */
 	JSONTYPE_JSON,				/* JSON itself (and JSONB) */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	JSONTYPE_ARRAY,				/* array */
 	JSONTYPE_COMPOSITE,			/* composite */
 	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
@@ -70,12 +68,8 @@ typedef enum					/* type categories for datum_to_json */
 
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
-<<<<<<< HEAD
 static inline void json_lex_number(JsonLexContext *lex, char *s,
 				bool *num_err, int *total_len);
-=======
-static inline void json_lex_number(JsonLexContext *lex, char *s, bool *num_err);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static inline void parse_scalar(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
 static void parse_object(JsonLexContext *lex, JsonSemAction *sem);
@@ -97,15 +91,11 @@ static void json_categorize_type(Oid typoid,
 					 JsonTypeCategory *tcategory,
 					 Oid *outfuncoid);
 static void datum_to_json(Datum val, bool is_null, StringInfo result,
-<<<<<<< HEAD
-			  JsonTypeCategory tcategory, Oid outfuncoid);
-static text *catenate_stringinfo_string(StringInfo buffer, const char *addon);
-=======
 			  JsonTypeCategory tcategory, Oid outfuncoid,
 			  bool key_scalar);
 static void add_json(Datum val, bool is_null, StringInfo result,
 		 Oid val_type, bool key_scalar);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+static text *catenate_stringinfo_string(StringInfo buffer, const char *addon);
 
 /* the null action object used for pure validation */
 static JsonSemAction nullSemAction =
@@ -280,11 +270,7 @@ json_recv(PG_FUNCTION_ARGS)
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	/* Validate it. */
-<<<<<<< HEAD
-	lex = makeJsonLexContext(result, false);
-=======
 	lex = makeJsonLexContextCstringLen(str, nbytes, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	pg_parse_json(lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));
@@ -643,11 +629,7 @@ json_lex(JsonLexContext *lex)
 				break;
 			case '-':
 				/* Negative number. */
-<<<<<<< HEAD
 				json_lex_number(lex, s + 1, NULL, NULL);
-=======
-				json_lex_number(lex, s + 1, NULL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			case '0':
@@ -661,11 +643,7 @@ json_lex(JsonLexContext *lex)
 			case '8':
 			case '9':
 				/* Positive number. */
-<<<<<<< HEAD
 				json_lex_number(lex, s, NULL, NULL);
-=======
-				json_lex_number(lex, s, NULL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				lex->token_type = JSON_TOKEN_NUMBER;
 				break;
 			default:
@@ -954,11 +932,7 @@ json_lex_string(JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
-<<<<<<< HEAD
-		errdetail("Unicode low surrogate must follow a high surrogate."),
-=======
 			errdetail("Unicode low surrogate must follow a high surrogate."),
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */
@@ -995,12 +969,8 @@ json_lex_string(JsonLexContext *lex)
  * the distance from lex->input to the token end+1 is returned to *total_len.
  */
 static inline void
-<<<<<<< HEAD
 json_lex_number(JsonLexContext *lex, char *s,
 				bool *num_err, int *total_len)
-=======
-json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	bool		error = false;
 	int			len = s - lex->input;
@@ -1072,31 +1042,20 @@ json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
 	for (; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*s); s++, len++)
 		error = true;
 
-<<<<<<< HEAD
 	if (total_len != NULL)
 		*total_len = len;
 
 	if (num_err != NULL)
 	{
 		/* let the caller handle any error */
-=======
-	if (num_err != NULL)
-	{
-		/* let the caller handle the error */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		*num_err = error;
 	}
 	else
 	{
-<<<<<<< HEAD
 		/* return token endpoint */
 		lex->prev_token_terminator = lex->token_terminator;
 		lex->token_terminator = s;
 		/* handle error if any */
-=======
-		lex->prev_token_terminator = lex->token_terminator;
-		lex->token_terminator = p;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (error)
 			report_invalid_token(lex);
 	}
@@ -1358,9 +1317,10 @@ json_categorize_type(Oid typoid,
 			*tcategory = JSONTYPE_NUMERIC;
 			break;
 
-<<<<<<< HEAD
-		case JSONOID:
-=======
+		case DATEOID:
+			*tcategory = JSONTYPE_DATE;
+			break;
+
 		case TIMESTAMPOID:
 			*tcategory = JSONTYPE_TIMESTAMP;
 			break;
@@ -1371,7 +1331,6 @@ json_categorize_type(Oid typoid,
 
 		case JSONOID:
 		case JSONBOID:
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			*tcategory = JSONTYPE_JSON;
 			break;
 
@@ -1416,12 +1375,6 @@ json_categorize_type(Oid typoid,
  *
  * tcategory and outfuncoid are from a previous call to json_categorize_type,
  * except that if is_null is true then they can be invalid.
-<<<<<<< HEAD
- */
-static void
-datum_to_json(Datum val, bool is_null, StringInfo result,
-			  JsonTypeCategory tcategory, Oid outfuncoid)
-=======
  *
  * If key_scalar is true, the value is being printed as a key, so insist
  * it's of an acceptable type, and force it to be quoted.
@@ -1430,7 +1383,6 @@ static void
 datum_to_json(Datum val, bool is_null, StringInfo result,
 			  JsonTypeCategory tcategory, Oid outfuncoid,
 			  bool key_scalar)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	char	   *outputstr;
 	text	   *jsontext;
@@ -1463,11 +1415,11 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			composite_to_json(val, result, false);
 			break;
 		case JSONTYPE_BOOL:
-<<<<<<< HEAD
-			if (DatumGetBool(val))
-				appendStringInfoString(result, "true");
+			outputstr = DatumGetBool(val) ? "true" : "false";
+			if (key_scalar)
+				escape_json(result, outputstr);
 			else
-				appendStringInfoString(result, "false");
+				appendStringInfoString(result, outputstr);
 			break;
 		case JSONTYPE_NUMERIC:
 			outputstr = OidOutputFunctionCall(outfuncoid, val);
@@ -1477,41 +1429,30 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			 * number.
 			 */
 			if (IsValidJsonNumber(outputstr, strlen(outputstr)))
-=======
-			outputstr = DatumGetBool(val) ? "true" : "false";
-			if (key_scalar)
-				escape_json(result, outputstr);
-			else
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				appendStringInfoString(result, outputstr);
-			break;
-		case JSONTYPE_NUMERIC:
-			outputstr = OidOutputFunctionCall(outfuncoid, val);
-			if (key_scalar)
-			{
-				/* always quote keys */
-				escape_json(result, outputstr);
-			}
 			else
-			{
-				/*
-				 * Don't call escape_json for a non-key if it's a valid JSON
-				 * number.
-				 */
-				dummy_lex.input = *outputstr == '-' ? outputstr + 1 : outputstr;
-				dummy_lex.input_length = strlen(dummy_lex.input);
-				json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
-				if (!numeric_error)
-					appendStringInfoString(result, outputstr);
-				else
-					escape_json(result, outputstr);
-			}
+				escape_json(result, outputstr);
 			pfree(outputstr);
 			break;
-<<<<<<< HEAD
-		case JSONTYPE_JSON:
-			/* JSON will already be escaped */
-=======
+		case JSONTYPE_DATE:
+			{
+				DateADT		date;
+				struct pg_tm tm;
+				char		buf[MAXDATELEN + 1];
+
+				date = DatumGetDateADT(val);
+				/* Same as date_out(), but forcing DateStyle */
+				if (DATE_NOT_FINITE(date))
+					EncodeSpecialDate(date, buf);
+				else
+				{
+					j2date(date + POSTGRES_EPOCH_JDATE,
+						   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+					EncodeDateOnly(&tm, USE_XSD_DATES, buf);
+				}
+				appendStringInfo(result, "\"%s\"", buf);
+			}
+			break;
 		case JSONTYPE_TIMESTAMP:
 			{
 				Timestamp	timestamp;
@@ -1520,21 +1461,16 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				char		buf[MAXDATELEN + 1];
 
 				timestamp = DatumGetTimestamp(val);
-
-				/* XSD doesn't support infinite values */
+				/* Same as timestamp_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range"),
-							 errdetail("JSON does not support infinite timestamp values.")));
+					EncodeSpecialTimestamp(timestamp, buf);
 				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
 					EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
-
-				appendStringInfo(result,"\"%s\"",buf);
+				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
 		case JSONTYPE_TIMESTAMPTZ:
@@ -1546,27 +1482,21 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				const char *tzn = NULL;
 				char		buf[MAXDATELEN + 1];
 
-				timestamp = DatumGetTimestamp(val);
-
-				/* XSD doesn't support infinite values */
+				timestamp = DatumGetTimestampTz(val);
+				/* Same as timestamptz_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
-					ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("timestamp out of range"),
-							 errdetail("JSON does not support infinite timestamp values.")));
+					EncodeSpecialTimestamp(timestamp, buf);
 				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
 					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
-
-				appendStringInfo(result,"\"%s\"",buf);
+				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
 		case JSONTYPE_JSON:
 			/* JSON and JSONB output will already be escaped */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			outputstr = OidOutputFunctionCall(outfuncoid, val);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
@@ -1581,13 +1511,6 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			break;
 		default:
 			outputstr = OidOutputFunctionCall(outfuncoid, val);
-<<<<<<< HEAD
-=======
-			if (key_scalar && *outputstr == '\0')
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("key value must not be empty")));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			escape_json(result, outputstr);
 			pfree(outputstr);
 			break;
@@ -1621,11 +1544,7 @@ array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
 		if (dim + 1 == ndims)
 		{
 			datum_to_json(vals[*valcount], nulls[*valcount], result, tcategory,
-<<<<<<< HEAD
-						  outfuncoid);
-=======
 						  outfuncoid, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			(*valcount)++;
 		}
 		else
@@ -1751,11 +1670,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			json_categorize_type(tupdesc->attrs[i]->atttypid,
 								 &tcategory, &outfuncoid);
 
-<<<<<<< HEAD
-		datum_to_json(val, isnull, result, tcategory, outfuncoid);
-=======
 		datum_to_json(val, isnull, result, tcategory, outfuncoid, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	appendStringInfoChar(result, '}');
@@ -1881,15 +1796,9 @@ to_json(PG_FUNCTION_ARGS)
 
 	result = makeStringInfo();
 
-<<<<<<< HEAD
-	datum_to_json(val, false, result, tcategory, outfuncoid);
-
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
-=======
 	datum_to_json(val, false, result, tcategory, outfuncoid, false);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -1942,11 +1851,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	/* fast path for NULLs */
 	if (PG_ARGISNULL(1))
 	{
-<<<<<<< HEAD
-		datum_to_json((Datum) 0, true, state, JSONTYPE_NULL, InvalidOid);
-=======
 		datum_to_json((Datum) 0, true, state, JSONTYPE_NULL, InvalidOid, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		PG_RETURN_POINTER(state);
 	}
 
@@ -1963,11 +1868,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 		appendStringInfoString(state, "\n ");
 	}
 
-<<<<<<< HEAD
-	datum_to_json(val, false, state, tcategory, outfuncoid);
-=======
 	datum_to_json(val, false, state, tcategory, outfuncoid, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal", which
@@ -1996,30 +1897,6 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 
 	/* Else return state with appropriate array terminator added */
 	PG_RETURN_TEXT_P(catenate_stringinfo_string(state, "]"));
-}
-
-<<<<<<< HEAD
-/*
- * Helper function for aggregates: return given StringInfo's contents plus
- * specified trailing string, as a text datum.  We need this because aggregate
- * final functions are not allowed to modify the aggregate state.
- */
-static text *
-catenate_stringinfo_string(StringInfo buffer, const char *addon)
-{
-	/* custom version of cstring_to_text_with_len */
-	int			buflen = buffer->len;
-	int			addlen = strlen(addon);
-	text	   *result = (text *) palloc(buflen + addlen + VARHDRSZ);
-
-	SET_VARSIZE(result, buflen + addlen + VARHDRSZ);
-	memcpy(VARDATA(result), buffer->data, buflen);
-	memcpy(VARDATA(result) + buflen, addon, addlen);
-
-	return result;
-=======
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -2138,6 +2015,26 @@ json_object_agg_finalfn(PG_FUNCTION_ARGS)
 	appendStringInfoString(state, " }");
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
+}
+
+/*
+ * Helper function for aggregates: return given StringInfo's contents plus
+ * specified trailing string, as a text datum.  We need this because aggregate
+ * final functions are not allowed to modify the aggregate state.
+ */
+static text *
+catenate_stringinfo_string(StringInfo buffer, const char *addon)
+{
+	/* custom version of cstring_to_text_with_len */
+	int			buflen = buffer->len;
+	int			addlen = strlen(addon);
+	text	   *result = (text *) palloc(buflen + addlen + VARHDRSZ);
+
+	SET_VARSIZE(result, buflen + addlen + VARHDRSZ);
+	memcpy(VARDATA(result), buffer->data, buflen);
+	memcpy(VARDATA(result) + buflen, addon, addlen);
+
+	return result;
 }
 
 /*

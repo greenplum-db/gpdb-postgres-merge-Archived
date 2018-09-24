@@ -198,17 +198,11 @@ struct NumericData
  * by NBASE ** weight.  Another way to say it is that there are weight+1
  * digits before the decimal point.  It is possible to have weight < 0.
  *
-<<<<<<< HEAD
  * buf: points at the physical start of the digit buffer for the NumericVar.
  * This is either the local buffer (ndb) or a palloc'd buffer.
  *
  * digits: points at the first digit in actual use (the one with the
  * specified weight).	We normally leave an unused digit or two
-=======
- * buf points at the physical start of the palloc'd digit buffer for the
- * NumericVar.  digits points at the first digit in actual use (the one
- * with the specified weight).  We normally leave an unused digit or two
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * (preset to zeroes) between buf and digits, so that there is room to store
  * a carry out of the top digit without reallocating space.  We just need to
  * decrement digits (and increment weight) to make room for the carry digit.
@@ -689,7 +683,6 @@ numeric_out_sci(Numeric num, int scale)
 }
 
 /*
-<<<<<<< HEAD
  * GPDB: for testing purposes, this function will force any Numeric into the old
  * long format that was in use before Postgres 9.1 (commit 14534353). If the
  * Numeric is already in long format, it will be returned directly; otherwise a
@@ -763,7 +756,9 @@ numeric_force_long_format(Numeric num)
 	free_var(&var);
 	dump_numeric("numeric_force_long_format()", result);
 	return result;
-=======
+}
+
+/*
  * numeric_normalize() -
  *
  *	Output function for numeric data type without trailing zeroes.
@@ -800,7 +795,6 @@ numeric_normalize(Numeric num)
 		str[last] = '\0';
 
 	return str;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -2891,12 +2885,9 @@ numeric_float4(PG_FUNCTION_ARGS)
  * The transition datatype for all these aggregates is declared as INTERNAL.
  * Actually, it's a pointer to a NumericAggState allocated in the aggregate
  * context.  The digit buffers for the NumericVars will be there too.
-<<<<<<< HEAD
  *
  * On platforms which support 128-bit integers some aggregates instead use a
  * 128-bit integer based transition datatype to speed up calculations.
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * ----------------------------------------------------------------------
  */
@@ -2932,11 +2923,8 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 	state = (NumericAggState *) palloc0(sizeof(NumericAggState));
 	state->calcSumX2 = calcSumX2;
 	state->agg_context = agg_context;
-<<<<<<< HEAD
 	quick_init_var(&state->sumX);
 	quick_init_var(&state->sumX2);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemoryContextSwitchTo(old_context);
 
@@ -3049,13 +3037,8 @@ do_numeric_discard(NumericAggState *state, Numeric newval)
 		if (state->maxScaleCount > 1 || state->maxScale == 0)
 		{
 			/*
-<<<<<<< HEAD
-			 * Some remaining inputs have same dscale, or dscale hasn't
-			 * gotten above zero anyway
-=======
 			 * Some remaining inputs have same dscale, or dscale hasn't gotten
 			 * above zero anyway
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			 */
 			state->maxScaleCount--;
 		}
@@ -3119,7 +3102,6 @@ numeric_accum(PG_FUNCTION_ARGS)
 		do_numeric_accum(state, PG_GETARG_NUMERIC(1));
 
 	PG_RETURN_POINTER(state);
-<<<<<<< HEAD
 }
 
 /*
@@ -3191,8 +3173,6 @@ numeric_combine(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(old_context);
 	}
 	PG_RETURN_POINTER(state1);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -3216,7 +3196,6 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 }
 
 /*
-<<<<<<< HEAD
  * Combine function for numeric aggregates which don't require sumX2
  */
 Datum
@@ -3390,35 +3369,10 @@ numeric_avg_deserialize(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 
 	PG_RETURN_POINTER(result);
-=======
- * Generic inverse transition function for numeric aggregates
- * (with or without requirement for X^2).
- */
-Datum
-numeric_accum_inv(PG_FUNCTION_ARGS)
-{
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Should not get here with no state */
-	if (state == NULL)
-		elog(ERROR, "numeric_accum_inv called with NULL state");
-
-	if (!PG_ARGISNULL(1))
-	{
-		/* If we fail to perform the inverse transition, return NULL */
-		if (!do_numeric_discard(state, PG_GETARG_NUMERIC(1)))
-			PG_RETURN_NULL();
-	}
-
-	PG_RETURN_POINTER(state);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 
 /*
-<<<<<<< HEAD
  * numeric_serialize
  *		Serialization function for NumericAggState for numeric aggregates that
  *		require sumX2. Serializes NumericAggState into bytea using the standard
@@ -3426,14 +3380,6 @@ numeric_accum_inv(PG_FUNCTION_ARGS)
  *
  * numeric_deserialize(numeric_serialize(state)) must result in a state which
  * matches the original input state.
-=======
- * Integer data types all use Numeric accumulators to share code and
- * avoid risk of overflow.  For int2 and int4 inputs, Numeric accumulation
- * is overkill for the N and sum(X) values, but definitely not overkill
- * for the sum(X*X) value.  Hence, we use int2_accum and int4_accum only
- * for stddev/variance --- there are faster special-purpose accumulator
- * routines for SUM and AVG of these datatypes.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 Datum
 numeric_serialize(PG_FUNCTION_ARGS)
@@ -3662,7 +3608,6 @@ typedef NumericAggState PolyNumAggState;
 Datum
 int2_accum(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -3676,27 +3621,12 @@ int2_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT16(1));
 #else
-=======
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Create the state data on the first call */
-	if (state == NULL)
-		state = makeNumericAggState(fcinfo, true);
-
-	if (!PG_ARGISNULL(1))
-	{
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	PG_RETURN_POINTER(state);
@@ -3705,7 +3635,6 @@ int2_accum(PG_FUNCTION_ARGS)
 Datum
 int4_accum(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -3719,27 +3648,12 @@ int4_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT32(1));
 #else
-=======
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Create the state data on the first call */
-	if (state == NULL)
-		state = makeNumericAggState(fcinfo, true);
-
-	if (!PG_ARGISNULL(1))
-	{
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
-<<<<<<< HEAD
 #endif
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	PG_RETURN_POINTER(state);
@@ -3766,7 +3680,6 @@ int8_accum(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_POINTER(state);
-<<<<<<< HEAD
 }
 
 /*
@@ -3976,8 +3889,6 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 
 	PG_RETURN_POINTER(result);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -3986,7 +3897,6 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 Datum
 int8_avg_accum(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	PolyNumAggState *state;
 
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
@@ -4000,90 +3910,17 @@ int8_avg_accum(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT128
 		do_int128_accum(state, (int128) PG_GETARG_INT64(1));
 #else
-=======
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Create the state data on the first call */
-	if (state == NULL)
-		state = makeNumericAggState(fcinfo, false);
-
-	if (!PG_ARGISNULL(1))
-	{
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		Numeric		newval;
 
 		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
 													 PG_GETARG_DATUM(1)));
 		do_numeric_accum(state, newval);
-<<<<<<< HEAD
 #endif
-=======
 	}
 
 	PG_RETURN_POINTER(state);
 }
 
-
-/*
- * Inverse transition functions to go with the above.
- */
-
-Datum
-int2_accum_inv(PG_FUNCTION_ARGS)
-{
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Should not get here with no state */
-	if (state == NULL)
-		elog(ERROR, "int2_accum_inv called with NULL state");
-
-	if (!PG_ARGISNULL(1))
-	{
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
-													 PG_GETARG_DATUM(1)));
-
-		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
-			elog(ERROR, "do_numeric_discard failed unexpectedly");
-	}
-
-	PG_RETURN_POINTER(state);
-}
-
-Datum
-int4_accum_inv(PG_FUNCTION_ARGS)
-{
-	NumericAggState *state;
-
-	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
-
-	/* Should not get here with no state */
-	if (state == NULL)
-		elog(ERROR, "int4_accum_inv called with NULL state");
-
-	if (!PG_ARGISNULL(1))
-	{
-		Numeric		newval;
-
-		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
-													 PG_GETARG_DATUM(1)));
-
-		/* Should never fail, all inputs have dscale 0 */
-		if (!do_numeric_discard(state, newval))
-			elog(ERROR, "do_numeric_discard failed unexpectedly");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-	}
-
-	PG_RETURN_POINTER(state);
-}
-
-<<<<<<< HEAD
 /*
  * Combine function for PolyNumAggState for aggregates which don't require
  * sumX2
@@ -4322,8 +4159,6 @@ int4_accum_inv(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(state);
 }
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 Datum
 int8_accum_inv(PG_FUNCTION_ARGS)
 {
@@ -4349,7 +4184,6 @@ int8_accum_inv(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(state);
 }
-<<<<<<< HEAD
 
 Datum
 int8_avg_accum_inv(PG_FUNCTION_ARGS)
@@ -4439,8 +4273,6 @@ numeric_poly_avg(PG_FUNCTION_ARGS)
 	return numeric_avg(fcinfo);
 #endif
 }
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 Datum
 numeric_avg(PG_FUNCTION_ARGS)
@@ -4521,11 +4353,7 @@ numeric_stddev_internal(NumericAggState *state,
 	init_var(&vsumX);
 	init_var(&vsumX2);
 
-<<<<<<< HEAD
 	int64_to_numericvar(state->N, &vN);
-=======
-	int8_to_numericvar(state->N, &vN);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	set_var_from_var(&(state->sumX), &vsumX);
 	set_var_from_var(&(state->sumX2), &vsumX2);
 
@@ -4641,7 +4469,6 @@ numeric_stddev_pop(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
 	res = numeric_stddev_internal(state, false, false, &is_null);
-<<<<<<< HEAD
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -4757,8 +4584,6 @@ numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 
 	res = numeric_poly_stddev_internal(state, false, false, &is_null);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -4997,7 +4822,6 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 }
 
 Datum
-<<<<<<< HEAD
 int4_avg_combine(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray1;
@@ -5029,8 +4853,6 @@ int4_avg_combine(PG_FUNCTION_ARGS)
 }
 
 Datum
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 int2_avg_accum_inv(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray;
@@ -5132,10 +4954,7 @@ int2int4_sum(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(Int64GetDatumFast(transdata->sum));
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* ----------------------------------------------------------------------
  *

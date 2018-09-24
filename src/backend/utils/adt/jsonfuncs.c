@@ -126,11 +126,7 @@ typedef struct OkeysState
 	int			result_size;
 	int			result_count;
 	int			sent_count;
-<<<<<<< HEAD
-}	OkeysState;
-=======
 } OkeysState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* state for json_get* functions */
 typedef struct GetState
@@ -151,22 +147,14 @@ typedef struct GetState
 	bool	   *pathok;
 	int		   *array_level_index;
 	int		   *path_level_index;
-<<<<<<< HEAD
-}	GetState;
-=======
 } GetState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* state for json_array_length */
 typedef struct AlenState
 {
 	JsonLexContext *lex;
 	int			count;
-<<<<<<< HEAD
-}	AlenState;
-=======
 } AlenState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* state for json_each */
 typedef struct EachState
@@ -179,11 +167,7 @@ typedef struct EachState
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
-<<<<<<< HEAD
-}	EachState;
-=======
 } EachState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* state for json_array_elements */
 typedef struct ElementsState
@@ -193,14 +177,10 @@ typedef struct ElementsState
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
 	char	   *result_start;
-<<<<<<< HEAD
-}	ElementsState;
-=======
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
 } ElementsState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* state for get_json_object_as_hash */
 typedef struct JhashState
@@ -211,11 +191,7 @@ typedef struct JhashState
 	char	   *save_json_start;
 	bool		use_json_as_text;
 	char	   *function_name;
-<<<<<<< HEAD
-}	JHashState;
-=======
 } JHashState;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* used to build the hashtable */
 typedef struct JsonHashEntry
@@ -224,11 +200,7 @@ typedef struct JsonHashEntry
 	char	   *val;
 	char	   *json;
 	bool		isnull;
-<<<<<<< HEAD
-}	JsonHashEntry;
-=======
 } JsonHashEntry;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* these two are stolen from hstore / record_out, used in populate_record* */
 typedef struct ColumnIOData
@@ -260,15 +232,11 @@ typedef struct PopulateRecordsetState
 	HeapTupleHeader rec;
 	RecordIOData *my_extra;
 	MemoryContext fn_mcxt;		/* used to stash IO funcs */
-<<<<<<< HEAD
-}	PopulateRecordsetState;
-=======
 } PopulateRecordsetState;
 
 /* Turn a jsonb object into a record */
 static void make_row_from_rec_and_jsonb(Jsonb *element,
 							PopulateRecordsetState *state);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * SQL function json_object_keys
@@ -1240,17 +1208,11 @@ json_array_length(PG_FUNCTION_ARGS)
 	text	   *json;
 
 	AlenState  *state;
-<<<<<<< HEAD
-	JsonLexContext *lex = makeJsonLexContext(json, false);
-	JsonSemAction *sem;
-
-=======
 	JsonLexContext *lex;
 	JsonSemAction *sem;
 
 	json = PG_GETARG_TEXT_P(0);
 	lex = makeJsonLexContext(json, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	state = palloc0(sizeof(AlenState));
 	sem = palloc0(sizeof(JsonSemAction));
 
@@ -1503,25 +1465,17 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 static inline Datum
 each_worker(FunctionCallInfo fcinfo, bool as_text)
 {
-<<<<<<< HEAD
-	text	   *json = PG_GETARG_TEXT_P(0);
-	JsonLexContext *lex = makeJsonLexContext(json, true);
-=======
 	text	   *json;
 	JsonLexContext *lex;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	TupleDesc	tupdesc;
 	EachState  *state;
 
-<<<<<<< HEAD
-=======
 	json = PG_GETARG_TEXT_P(0);
 
 	lex = makeJsonLexContext(json, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	state = palloc0(sizeof(EachState));
 	sem = palloc0(sizeof(JsonSemAction));
 
@@ -1569,11 +1523,7 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	pg_parse_json(lex, sem);
 
-<<<<<<< HEAD
-	MemoryContextDelete(state->tmp_cxt); 
-=======
 	MemoryContextDelete(state->tmp_cxt);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	rsi->setResult = state->tuple_store;
 	rsi->setDesc = state->ret_tdesc;
@@ -1841,13 +1791,8 @@ elements_worker(FunctionCallInfo fcinfo, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 
-<<<<<<< HEAD
-	/* elements doesn't need any escaped strings, so use false here */
-	JsonLexContext *lex = makeJsonLexContext(json, false);
-=======
 	/* elements only needs escaped strings when as_text */
 	JsonLexContext *lex = makeJsonLexContext(json, as_text);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
@@ -1902,11 +1847,7 @@ elements_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	pg_parse_json(lex, sem);
 
-<<<<<<< HEAD
-	MemoryContextDelete(state->tmp_cxt); 
-=======
 	MemoryContextDelete(state->tmp_cxt);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	rsi->setResult = state->tuple_store;
 	rsi->setDesc = state->ret_tdesc;
@@ -2063,23 +2004,11 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	int			i;
 	Datum	   *values;
 	bool	   *nulls;
-<<<<<<< HEAD
-	char		fname[NAMEDATALEN];
-	JsonHashEntry *hashentry;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	Assert(jtype == JSONOID || jtype == JSONBOID);
 
-<<<<<<< HEAD
-	if (!type_is_rowtype(argtype))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("first argument of json_populate_record must be a row type")));
-=======
 	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false :
 		PG_GETARG_BOOL(json_arg_num + 1);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (have_record_arg)
 	{
@@ -2157,25 +2086,6 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 			PG_RETURN_POINTER(rec);
 	}
 
-<<<<<<< HEAD
-	json = PG_GETARG_TEXT_P(1);
-
-	json_hash = get_json_object_as_hash(json, "json_populate_record", use_json_as_text);
-
-	/*
-	 * if the input json is empty, we can only skip the rest if we were passed
-	 * in a non-null record, since otherwise there may be issues with domain
-	 * nulls.
-	 */
-	if (hash_get_num_entries(json_hash) == 0 && rec)
-	{
-		hash_destroy(json_hash);
-		PG_RETURN_POINTER(rec);
-	}
-
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	ncolumns = tupdesc->natts;
 
 	if (rec)
@@ -2540,7 +2450,9 @@ make_row_from_rec_and_jsonb(Jsonb *element, PopulateRecordsetState *state)
 		/* Build a temporary HeapTuple control structure */
 		tuple.t_len = HeapTupleHeaderGetDatumLength(state->rec);
 		ItemPointerSetInvalid(&(tuple.t_self));
+#if 0
 		tuple.t_tableOid = InvalidOid;
+#endif
 		tuple.t_data = state->rec;
 
 		/* Break down the tuple into fields */
@@ -2657,21 +2569,10 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	TupleDesc	tupdesc;
 	RecordIOData *my_extra;
 	int			ncolumns;
-<<<<<<< HEAD
-	JsonLexContext *lex;
-	JsonSemAction *sem;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	PopulateRecordsetState *state;
 
 	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false : PG_GETARG_BOOL(json_arg_num + 1);
 
-<<<<<<< HEAD
-	if (!type_is_rowtype(argtype))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("first argument of json_populate_recordset must be a row type")));
-=======
 	if (have_record_arg)
 	{
 		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
@@ -2681,7 +2582,6 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("first argument must be a row type")));
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -2701,30 +2601,11 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	 * because we already checked that arg1 is a record type, or we're in a
 	 * to_record function which returns a setof record.
 	 */
-<<<<<<< HEAD
-	(void) get_call_result_type(fcinfo, NULL, &tupdesc);
-
-	state = palloc0(sizeof(PopulateRecordsetState));
-	sem = palloc0(sizeof(JsonSemAction));
-
-
-	/* make these in a sufficiently long-lived memory context */
-	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-
-	state->ret_tdesc = CreateTupleDescCopy(tupdesc);
-	BlessTupleDesc(state->ret_tdesc);
-	state->tuple_store =
-		tuplestore_begin_heap(rsi->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
-
-	MemoryContextSwitchTo(old_cxt);
-=======
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("function returning record called in context "
 						"that cannot accept type record")));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* if the json is null send back an empty set */
 	if (PG_ARGISNULL(json_arg_num))
@@ -3008,11 +2889,7 @@ populate_recordset_array_element_start(void *state, bool isnull)
 		_state->lex->token_type != JSON_TOKEN_OBJECT_START)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-<<<<<<< HEAD
-			 errmsg("must call json_populate_recordset on an array of objects")));
-=======
 		errmsg("must call json_populate_recordset on an array of objects")));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 static void

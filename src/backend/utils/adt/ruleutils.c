@@ -1314,7 +1314,6 @@ pg_get_constraintdef_string(Oid constraintId)
 	return pg_get_constraintdef_worker(constraintId, true, 0);
 }
 
-<<<<<<< HEAD
 /* Internal version that returns a palloc'd C string */
 char *
 pg_get_constraintexpr_string(Oid constraintId)
@@ -1322,11 +1321,9 @@ pg_get_constraintexpr_string(Oid constraintId)
 	return pg_get_constraintdef_worker(constraintId, false, 0);
 }
 
-=======
 /*
  * As of 9.4, we now use an MVCC snapshot for this.
  */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static char *
 pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags)
@@ -7276,7 +7273,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfoChar(buf, ' ');
 					appendContextKeyword(context, "WHEN ",
 										 0, 0, 0);
-<<<<<<< HEAD
 
 					/* WHEN IS NOT DISTINCT FROM */
 					if (not_clause(w))
@@ -7288,7 +7284,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							DistinctExpr 	*dexpr = (DistinctExpr *) arg;
 							Node			*rhs;
 
-							appendStringInfo(buf, "IS NOT DISTINCT FROM ");
+							appendStringInfoString(buf, "IS NOT DISTINCT FROM ");
 							rhs = (Node *) lsecond(dexpr->args);
 							get_rule_expr(rhs, context, false);
 						}
@@ -7297,11 +7293,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					}
 					else
 						get_rule_expr(w, context, false);
-					appendStringInfo(buf, " THEN ");
-=======
-					get_rule_expr(w, context, false);
 					appendStringInfoString(buf, " THEN ");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					get_rule_expr((Node *) when->result, context, true);
 				}
 				if (!PRETTY_INDENT(context))
@@ -8021,7 +8013,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	bool		use_variadic;
-<<<<<<< HEAD
 	Oid fnoid;
 
 	/* Special handling of MEDIAN */
@@ -8057,12 +8048,6 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	/* Extract the argument types as seen by the parser */
 	nargs = get_aggregate_argtypes(aggref, argtypes);
 
-=======
-
-	/* Extract the argument types as seen by the parser */
-	nargs = get_aggregate_argtypes(aggref, argtypes);
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Print the aggregate name, schema-qualified if needed */
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(fnoid, nargs,
@@ -8070,10 +8055,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 											aggref->aggvariadic,
 											&use_variadic),
 					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
-<<<<<<< HEAD
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
 	{
 		/*
@@ -8081,10 +8063,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 		 * worry about inserting VARIADIC.  So we can just dump the direct
 		 * args as-is.
 		 */
-<<<<<<< HEAD
-=======
 		Assert(!aggref->aggvariadic);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		get_rule_expr((Node *) aggref->aggdirectargs, context, true);
 		Assert(aggref->aggorder != NIL);
 		appendStringInfoString(buf, ") WITHIN GROUP (ORDER BY ");
@@ -8106,10 +8085,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
 				Node	   *arg = (Node *) tle->expr;
 
-<<<<<<< HEAD
-=======
 				Assert(!IsA(arg, NamedArgExpr));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				if (tle->resjunk)
 					continue;
 				if (i++ > 0)
@@ -8224,19 +8200,11 @@ get_coercion_expr(Node *arg, deparse_context *context,
 
 	/*
 	 * Since parse_coerce.c doesn't immediately collapse application of
-<<<<<<< HEAD
-	 * length-coercion functions to constants, what we'll typically see
-	 * in such cases is a Const with typmod -1 and a length-coercion
-	 * function right above it.  Avoid generating redundant output.
-	 * However, beware of suppressing casts when the user actually wrote
-	 * something like 'foo'::text::char(3).
-=======
 	 * length-coercion functions to constants, what we'll typically see in
 	 * such cases is a Const with typmod -1 and a length-coercion function
 	 * right above it.  Avoid generating redundant output. However, beware of
 	 * suppressing casts when the user actually wrote something like
 	 * 'foo'::text::char(3).
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (arg && IsA(arg, Const) &&
 		((Const *) arg)->consttype == resulttype &&
@@ -8864,12 +8832,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			appendStringInfo(buf, " %s", quote_identifier(refname));
 
 		/* Print the column definitions or aliases, if needed */
-<<<<<<< HEAD
-		if ((rte->rtekind == RTE_FUNCTION || rte->rtekind == RTE_TABLEFUNCTION) &&
-			rte->funccoltypes != NIL)
-=======
 		if (rtfunc1 && rtfunc1->funccolnames != NIL)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		{
 			/* Reconstruct the columndef list, which is also the aliases */
 			get_from_clause_coldeflist(rtfunc1, colinfo, context);
@@ -9438,24 +9401,11 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	 * Determine whether VARIADIC should be printed.  We must do this first
 	 * since it affects the lookup rules in func_get_detail().
 	 *
-<<<<<<< HEAD
 	 * We always print VARIADIC if the function has a merged variadic-array
 	 * argument.  Note that this is always the case for functions taking a
 	 * VARIADIC argument type other than VARIADIC ANY.  If we omitted VARIADIC
 	 * and printed the array elements as separate arguments, the call could
 	 * match a newer non-VARIADIC function.
-=======
-	 * Currently, we always print VARIADIC if the function has a merged
-	 * variadic-array argument.  Note that this is always the case for
-	 * functions taking a VARIADIC argument type other than VARIADIC ANY.
-	 *
-	 * In principle, if VARIADIC wasn't originally specified and the array
-	 * actual argument is deconstructable, we could print the array elements
-	 * separately and not print VARIADIC, thus more nearly reproducing the
-	 * original input.  For the moment that seems like too much complication
-	 * for the benefit, and anyway we do not know whether VARIADIC was
-	 * originally specified if it's a non-ANY type.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (use_variadic_p)
 	{

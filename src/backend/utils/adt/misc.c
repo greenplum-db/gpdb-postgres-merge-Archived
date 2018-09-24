@@ -288,14 +288,6 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		fctx = palloc(sizeof(ts_db_fctx));
 
-<<<<<<< HEAD
-		/*
-		 * size = tablespace dirname length + dir sep char + oid + terminator
-		 */
-		fctx->location = (char *) palloc(9 + 1 + OIDCHARS + 1 +
-										 strlen(tablespace_version_directory()) + 1);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
@@ -307,13 +299,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 			if (tablespaceOid == DEFAULTTABLESPACE_OID)
 				fctx->location = psprintf("base");
 			else
-<<<<<<< HEAD
-				sprintf(fctx->location, "pg_tblspc/%u/%s", tablespaceOid,
-						tablespace_version_directory());
-=======
 				fctx->location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
-										  TABLESPACE_VERSION_DIRECTORY);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+										  tablespace_version_directory());
 
 			fctx->dirdesc = AllocateDir(fctx->location);
 

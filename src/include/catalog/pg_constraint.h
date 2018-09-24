@@ -256,15 +256,12 @@ extern char * GetConstraintNameByOid(Oid constraintId);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 					  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
-<<<<<<< HEAD
 /**
  * Identify primary key column from foreign key column.
  */
 extern bool ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, 
 					Oid *pkrelid, AttrNumber *pkattno);
-=======
 extern void get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 

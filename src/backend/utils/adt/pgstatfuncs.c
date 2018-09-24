@@ -562,17 +562,13 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	{
 		MemoryContext oldcontext;
 		TupleDesc	tupdesc;
-		int			nattr = 19;
+		int			nattr = 21;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-<<<<<<< HEAD
 		tupdesc = CreateTemplateTupleDesc(nattr, false);
-=======
-		tupdesc = CreateTemplateTupleDesc(16, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "pid",
@@ -606,17 +602,17 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "backend_xmin",
 						   XIDOID, -1, 0);
 
-		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "sess_id",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "sess_id",
 						   INT4OID, -1, 0);  /* GPDB */
 
-		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "waiting_reason",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "waiting_reason",
 						   TEXTOID, -1, 0);
 
-		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "rsgid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgid",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 18, "rsgname",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 20, "rsgname",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 19, "rsgqueueduration",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 21, "rsgqueueduration",
 						   INTERVALOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -669,13 +665,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-<<<<<<< HEAD
-		Datum		values[19];
-		bool		nulls[19];
-=======
-		Datum		values[16];
-		bool		nulls[16];
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		Datum		values[21];
+		bool		nulls[21];
 		HeapTuple	tuple;
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
@@ -813,14 +804,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[11] = DirectFunctionCall1(inet_in,
-<<<<<<< HEAD
-														 CStringGetDatum(remote_host));
-						if (beentry->st_clienthostname)
-=======
 											   CStringGetDatum(remote_host));
 						if (beentry->st_clienthostname &&
 							beentry->st_clienthostname[0])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 							values[12] = CStringGetTextDatum(beentry->st_clienthostname);
 						else
 							nulls[12] = true;
@@ -853,9 +839,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[13] = true;
 				}
 			}
-			values[14] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
 
-			if (funcctx->tuple_desc->natts > 15)
+			values[16] = Int32GetDatum(beentry->st_session_id);  /* GPDB */
+
+			if (funcctx->tuple_desc->natts > 17)
 			{
 				char	st_waiting = beentry->st_waiting;
 				char   *reason;
@@ -863,28 +850,28 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				reason = pgstat_waiting_string(st_waiting);
 
 				if (reason != NULL)
-					values[15] = CStringGetTextDatum(reason);
+					values[17] = CStringGetTextDatum(reason);
 				else
-					nulls[15] = true;
+					nulls[17] = true;
 			}
 
-			if (funcctx->tuple_desc->natts > 16)
+			if (funcctx->tuple_desc->natts > 18)
 			{
 				Datum now = TimestampTzGetDatum(GetCurrentTimestamp());
 				char *groupName = GetResGroupNameForId(beentry->st_rsgid);
 
-				values[16] = ObjectIdGetDatum(beentry->st_rsgid);
+				values[18] = ObjectIdGetDatum(beentry->st_rsgid);
 
 				if (groupName != NULL)
-					values[17] = CStringGetTextDatum(groupName);
+					values[19] = CStringGetTextDatum(groupName);
 				else
-					nulls[17] = true;
+					nulls[19] = true;
 
 				if (beentry->st_waiting == PGBE_WAITING_RESGROUP)
-					values[18] = DirectFunctionCall2(timestamptz_age, now,
+					values[20] = DirectFunctionCall2(timestamptz_age, now,
 													 TimestampTzGetDatum(beentry->st_resgroup_queue_start_timestamp));
 				else
-					nulls[18] = true;
+					nulls[20] = true;
 			}
 		}
 		else
@@ -900,15 +887,17 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[11] = true;
 			nulls[12] = true;
 			nulls[13] = true;
+			nulls[14] = true;
+			nulls[15] = true;
 
-			values[14] = Int32GetDatum(beentry->st_session_id);
-			if (funcctx->tuple_desc->natts > 15)
-				nulls[15] = true;
-			if (funcctx->tuple_desc->natts > 16)
-			{
-				nulls[16] = true;
+			values[16] = Int32GetDatum(beentry->st_session_id);
+			if (funcctx->tuple_desc->natts > 17)
 				nulls[17] = true;
+			if (funcctx->tuple_desc->natts > 18)
+			{
 				nulls[18] = true;
+				nulls[19] = true;
+				nulls[20] = true;
 			}
 		}
 

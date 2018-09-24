@@ -518,13 +518,9 @@ do { \
  * Suffixes definition for DATE-TIME TO/FROM CHAR
  * ----------
  */
-<<<<<<< HEAD
 #define TM_SUFFIX_LEN	2
 
-static KeySuffix DCH_suff[] = {
-=======
 static const KeySuffix DCH_suff[] = {
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{"FM", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"fm", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"TM", TM_SUFFIX_LEN, DCH_S_TM, SUFFTYPE_PREFIX},
@@ -949,18 +945,11 @@ typedef struct NUMProc
  */
 static const KeyWord *index_seq_search(char *str, const KeyWord *kw,
 				 const int *index);
-<<<<<<< HEAD
-static KeySuffix *suff_search(char *str, KeySuffix *suf, int type);
+static const KeySuffix *suff_search(char *str, const KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func);
 static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num,
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num,
 			 char *func);
-=======
-static const KeySuffix *suff_search(char *str, const KeySuffix *suf, int type);
-static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
-static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
 			TmToChar *in, char *out, Oid collid);
@@ -1244,12 +1233,8 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n, char *func)
  */
 static void
 parse_format(FormatNode *node, char *str, const KeyWord *kw,
-<<<<<<< HEAD
-			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num,
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num,
 			 char *func)
-=======
-			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	const KeySuffix *s;
 	FormatNode *n;
