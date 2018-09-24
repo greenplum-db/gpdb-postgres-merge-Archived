@@ -908,10 +908,7 @@ ProcKill(int code, Datum arg)
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
 	PGPROC	   *proc;
-<<<<<<< HEAD
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	Assert(MyProc != NULL);
 
 	/* Make sure we're out of the sync rep lists */
@@ -1008,10 +1005,6 @@ ProcKill(int code, Datum arg)
 		procglobal->freeProcs = proc;
 	}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Update shared estimate of spins_per_delay */
 	update_spins_per_delay();
 

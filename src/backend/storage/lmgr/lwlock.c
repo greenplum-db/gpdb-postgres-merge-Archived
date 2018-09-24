@@ -36,46 +36,24 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-<<<<<<< HEAD
-#include "storage/barrier.h"
-=======
 #include "replication/slot.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#include "storage/barrier.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
-<<<<<<< HEAD
 #include "utils/sharedsnapshot.h"
 #include "pg_trace.h"
-=======
 #include "utils/memutils.h"
 
 #ifdef LWLOCK_STATS
 #include "utils/hsearch.h"
 #endif
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
 extern slock_t *ShmemLock;
 
-<<<<<<< HEAD
-
-typedef struct LWLock
-{
-	slock_t		mutex;			/* Protects LWLock and queue of PGPROCs */
-	bool		releaseOK;		/* T if ok to release waiters */
-	char		exclusive;		/* # of exclusive holders (0 or 1) */
-	int			shared;			/* # of shared holders (0..MaxBackends) */
-	int			exclusivePid;	/* PID of the exclusive holder. */
-	PGPROC	   *head;			/* head of list of waiting PGPROCs */
-	PGPROC	   *tail;			/* tail of list of waiting PGPROCs */
-	/* tail is undefined when head is NULL */
-} LWLock;
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
  * to the current backend.
@@ -108,17 +86,13 @@ static LWLockTranche MainLWLockTranche;
 #define MAX_FRAME_DEPTH  	64
 
 static int	num_held_lwlocks = 0;
-<<<<<<< HEAD
-static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
+static LWLock *held_lwlocks[MAX_SIMUL_LWLOCKS];
 static bool held_lwlocks_exclusive[MAX_SIMUL_LWLOCKS];
 
 #ifdef USE_TEST_UTILS_X86
 static void *held_lwlocks_addresses[MAX_SIMUL_LWLOCKS][MAX_FRAME_DEPTH];
 static int32 held_lwlocks_depth[MAX_SIMUL_LWLOCKS];
 #endif /* USE_TEST_UTILS_X86 */
-=======
-static LWLock *held_lwlocks[MAX_SIMUL_LWLOCKS];
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 static int	lock_addin_request = 0;
 static bool lock_addin_request_allowed = true;
@@ -153,15 +127,9 @@ inline static void
 PRINT_LWDEBUG(const char *where, const volatile LWLock *lock)
 {
 	if (Trace_lwlocks)
-<<<<<<< HEAD
-		elog(LOG, "%s(%d): excl %d excl pid %d shared %d head %p rOK %d",
-			 where, (int) lockid,
-			 (int) lock->exclusive, lock->exclusivePid, lock->shared, lock->head,
-=======
 		elog(LOG, "%s(%s %d): excl %d shared %d head %p rOK %d",
 			 where, T_NAME(lock), T_ID(lock),
 			 (int) lock->exclusive, lock->shared, lock->head,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			 (int) lock->releaseOK);
 }
 
@@ -299,16 +267,14 @@ NumLWLocks(void)
 	/* predicate.c needs one per old serializable xid buffer */
 	numLocks += NUM_OLDSERXID_BUFFERS;
 
-<<<<<<< HEAD
 	/* cdbdistributedlog.c needs one per DistributedLog buffer */
 	numLocks += NUM_DISTRIBUTEDLOG_BUFFERS;
 
 	/* sharedsnapshot.c needs one per shared snapshot slot */
 	numLocks += NUM_SHARED_SNAPSHOT_SLOTS;
-=======
+
 	/* slot.c needs one for each slot */
 	numLocks += max_replication_slots;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility
@@ -448,7 +414,6 @@ LWLockAssign(void)
 	return result;
 }
 
-<<<<<<< HEAD
 #ifdef LOCK_DEBUG
 
 static void
@@ -511,7 +476,7 @@ LWLockTryLockWaiting(
 }
 
 #endif
-=======
+
 /*
  * Allocate a new tranche ID.
  */
@@ -573,7 +538,6 @@ LWLockInitialize(LWLock *lock, int tranche_id)
 	lock->tail = NULL;
 }
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * LWLockAcquire - acquire a lightweight lock in the specified mode
@@ -681,7 +645,6 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 			if (lock->exclusive == 0 && lock->shared == 0)
 			{
 				lock->exclusive++;
-				lock->exclusivePid = MyProcPid;
 				mustwait = false;
 			}
 			else
@@ -699,10 +662,7 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 		}
 
 		if (!mustwait)
-		{
-			LOG_LWDEBUG("LWLockAcquire", lockid, "acquired!");
 			break;				/* got the lock */
-		}
 
 		/*
 		 * Add myself to wait queue.
@@ -744,17 +704,13 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 		lwstats->block_count++;
 #endif
 
-<<<<<<< HEAD
 		for (c = 0; c < num_held_lwlocks; c++)
 		{
-			if (held_lwlocks[c] == lockid)
+			if (held_lwlocks[c] == lock  )
 				elog(PANIC, "Waiting on lock already held!");
 		}
 
-		TRACE_POSTGRESQL_LWLOCK_WAIT_START(lockid, mode);
-=======
 		TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(l), T_ID(l), mode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		for (;;)
 		{
@@ -794,12 +750,8 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 #endif /* USE_TEST_UTILS_X86 */
 
 	/* Add lock to list of locks held by this backend */
-<<<<<<< HEAD
 	held_lwlocks_exclusive[num_held_lwlocks] = (mode == LW_EXCLUSIVE);
-	held_lwlocks[num_held_lwlocks++] = lockid;
-=======
 	held_lwlocks[num_held_lwlocks++] = l;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
@@ -845,7 +797,6 @@ LWLockConditionalAcquire(LWLock *l, LWLockMode mode)
 		if (lock->exclusive == 0 && lock->shared == 0)
 		{
 			lock->exclusive++;
-			lock->exclusivePid = MyProcPid;
 			mustwait = false;
 		}
 		else
@@ -881,14 +832,9 @@ LWLockConditionalAcquire(LWLock *l, LWLockMode mode)
 #endif /* USE_TEST_UTILS_X86 */
 
 		/* Add lock to list of locks held by this backend */
-<<<<<<< HEAD
 		held_lwlocks_exclusive[num_held_lwlocks] = (mode == LW_EXCLUSIVE);
-		held_lwlocks[num_held_lwlocks++] = lockid;
-		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE(lockid, mode);
-=======
 		held_lwlocks[num_held_lwlocks++] = l;
 		TRACE_POSTGRESQL_LWLOCK_CONDACQUIRE(T_NAME(l), T_ID(l), mode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	return !mustwait;
@@ -1293,19 +1239,15 @@ LWLockRelease(LWLock *l)
 			break;
 	}
 	if (i < 0)
-<<<<<<< HEAD
-		elog(ERROR, "lock %d is not held", (int) lockid);
+		elog(ERROR, "lock %s %d is not held", T_NAME(l), T_ID(l));
 
 	saveExclusive = held_lwlocks_exclusive[i];
 	if (InterruptHoldoffCount <= 0)
-		elog(PANIC, "upon entering lock release, the interrupt holdoff count is bad (%d) for release of lock %d (%s)", 
+		elog(PANIC, "upon entering lock release, the interrupt holdoff count is bad (%d) for release of lock %p (%s)", 
 			 InterruptHoldoffCount,
-			 (int)lockid,
+			 lock, /* GPDB_94_MERGE_FIXME: can we have a human-readable name for the lock somehow? */
 			 (saveExclusive ? "Exclusive" : "Shared"));
 
-=======
-		elog(ERROR, "lock %s %d is not held", T_NAME(l), T_ID(l));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	num_held_lwlocks--;
 	for (; i < num_held_lwlocks; i++)
 	{
@@ -1336,10 +1278,7 @@ LWLockRelease(LWLock *l)
 
 	/* Release my hold on lock */
 	if (lock->exclusive > 0)
-	{
 		lock->exclusive--;
-		lock->exclusivePid = 0;
-	}
 	else
 	{
 		Assert(lock->shared > 0);
@@ -1429,9 +1368,9 @@ LWLockRelease(LWLock *l)
 	 * Now okay to allow cancel/die interrupts.
 	 */
 	if (InterruptHoldoffCount <= 0)
-		elog(PANIC, "upon exiting lock release, the interrupt holdoff count is bad (%d) for release of lock %d (%s)", 
+		elog(PANIC, "upon exiting lock release, the interrupt holdoff count is bad (%d) for release of lock %p (%s)", 
 			 InterruptHoldoffCount,
-			 (int)lockid,
+			 lock, /* GPDB_94_MERGE_FIXME: can we have a human-readable name for the lock somehow? */
 			 (saveExclusive ? "Exclusive" : "Shared"));
 	RESUME_INTERRUPTS();
 }

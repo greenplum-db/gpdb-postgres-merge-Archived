@@ -141,6 +141,10 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 #define RelfilenodeGenLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 9].lock)
 #define TablespaceHashLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 10].lock)
 #define GpReplicationConfigFileLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 11].lock)
+#define GP_NUM_INDIVIDUAL_LWLOCKS		11
+
+#define NUM_INDIVIDUAL_LWLOCKS (PG_NUM_INDIVIDUAL_LWLOCKS + GP_NUM_INDIVIDUAL_LWLOCKS)
+
 
 // GPDB_94_MERGE_FIXME: where to put this?
 //FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
