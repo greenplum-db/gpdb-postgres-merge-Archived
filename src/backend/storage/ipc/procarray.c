@@ -58,11 +58,8 @@
 #include "storage/procarray.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-<<<<<<< HEAD
 #include "utils/combocid.h"
-=======
 #include "utils/rel.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 #include "utils/guc.h"
@@ -569,7 +566,6 @@ ProcArrayClearTransaction(PGPROC *proc, bool commit)
 }
 
 /*
-<<<<<<< HEAD
  * Clears the current transaction from PGPROC.
  *
  * Must be called while holding the ProcArrayLock.
@@ -582,7 +578,9 @@ ClearTransactionFromPgProc_UnderLock(PGPROC *proc, bool commit)
 	 * directly.
 	 */
 	ProcArrayClearTransaction(proc, commit);
-=======
+}
+
+/*
  * ProcArrayInitRecovery -- initialize recovery xid mgmt environment
  *
  * Remember up to where the startup process initialized the CLOG and subtrans
@@ -603,7 +601,6 @@ ProcArrayInitRecovery(TransactionId initializedUptoXID)
 	 */
 	latestObservedXid = initializedUptoXID;
 	TransactionIdRetreat(latestObservedXid);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -1323,7 +1320,7 @@ GetOldestXmin(Relation rel, bool ignoreVacuum)
 {
 	TransactionId result;
 
-	result = GetLocalOldestXmin(allDbs, ignoreVacuum);
+	result = GetLocalOldestXmin(rel, ignoreVacuum);
 
 	/*
 	 * In QD node, all distributed transactions have an entry in the proc array,
@@ -1352,7 +1349,7 @@ GetOldestXmin(Relation rel, bool ignoreVacuum)
  * distributed transactions into account.
  */
 TransactionId
-GetLocalOldestXmin(bool allDbs, bool ignoreVacuum)
+GetLocalOldestXmin(Relation rel, bool ignoreVacuum)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId result;
@@ -1390,9 +1387,6 @@ GetLocalOldestXmin(bool allDbs, bool ignoreVacuum)
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
-<<<<<<< HEAD
-#if 0
-=======
 		/*
 		 * Backend is doing logical decoding which manages xmin separately,
 		 * check below.
@@ -1400,7 +1394,7 @@ GetLocalOldestXmin(bool allDbs, bool ignoreVacuum)
 		if (pgxact->vacuumFlags & PROC_IN_LOGICAL_DECODING)
 			continue;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#if 0
 		if (ignoreVacuum && (pgxact->vacuumFlags & PROC_IN_VACUUM))
 			continue;
 #endif
@@ -2469,9 +2463,6 @@ GetSnapshotData(Snapshot snapshot)
 			volatile PGXACT *pgxact = &allPgXact[pgprocno];
 			TransactionId xid;
 
-<<<<<<< HEAD
-#if 0 /* Upstream code not applicable to GPDB, why explained in vacuumStatement_Relation */
-=======
 			/*
 			 * Backend is doing logical decoding which manages xmin
 			 * separately, check below.
@@ -2479,7 +2470,7 @@ GetSnapshotData(Snapshot snapshot)
 			if (pgxact->vacuumFlags & PROC_IN_LOGICAL_DECODING)
 				continue;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#if 0 /* Upstream code not applicable to GPDB, why explained in vacuumStatement_Relation */
 			/* Ignore procs running LAZY VACUUM */
 			if (pgxact->vacuumFlags & PROC_IN_VACUUM)
 				continue;
@@ -2600,7 +2591,6 @@ GetSnapshotData(Snapshot snapshot)
 		/* Not that these values are not set atomically. However,
 		 * each of these assignments is itself assumed to be atomic. */
 		MyPgXact->xmin = TransactionXmin = xmin;
-<<<<<<< HEAD
 	}
 	if (IsolationUsesXactSnapshot())
 	{
@@ -2610,8 +2600,6 @@ GetSnapshotData(Snapshot snapshot)
 				(errmsg("Got serializable snapshot: database %d, pid %d, xid %d, xmin %d",
 						MyProc->databaseId, MyProc->pid, MyPgXact->xid, MyPgXact->xmin)));
 	}
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	LWLockRelease(ProcArrayLock);
 

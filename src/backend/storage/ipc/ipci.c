@@ -128,12 +128,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 * request doesn't overflow size_t.  If this gets through, we don't
 		 * need to be so careful during the actual allocation phase.
 		 */
-<<<<<<< HEAD
 		size = 150000;
-=======
-		size = 100000;
 		size = add_size(size, SpinlockSemaSize());
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 												 sizeof(ShmemIndexEnt)));
 		size = add_size(size, BufferShmemSize());
@@ -198,15 +194,13 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/* might as well round it off to a multiple of a typical page size */
 		size = add_size(size, BLCKSZ - (size % BLCKSZ));
 
-<<<<<<< HEAD
 		/* Consider the size of the SessionState array */
 		size = add_size(size, SessionState_ShmemSize());
 
 		/* size of Instrumentation slots */
 		size = add_size(size, InstrShmemSize());
-=======
+
 		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		/*
 		 * Create the shmem segment
@@ -359,14 +353,12 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		ShmemBackendArrayAllocation();
 #endif
 
-<<<<<<< HEAD
 	if (gp_enable_resqueue_priority)
 		BackoffStateInit();
-=======
+
 	/* Initialize dynamic shared memory facilities. */
 	if (!IsUnderPostmaster)
 		dsm_postmaster_startup(shim);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Now give loadable modules a chance to set up their shmem allocations

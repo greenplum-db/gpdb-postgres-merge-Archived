@@ -57,7 +57,7 @@ struct XidCache
 
 /* flags reset at EOXact */
 #define		PROC_VACUUM_STATE_MASK \
-	(PROC_IN_VACUUM | PROC_IN_ANALYZE | PROC_VACUUM_FOR_WRAPAROUND)
+	(/* PROC_IN_VACUUM | */ PROC_IN_ANALYZE | PROC_VACUUM_FOR_WRAPAROUND)
 
 /*
  * We allow a small number of "weak" relation locks (AccesShareLock,
