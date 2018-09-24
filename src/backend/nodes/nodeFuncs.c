@@ -1528,14 +1528,8 @@ exprLocation(const Node *expr)
 		case T_TypeName:
 			loc = ((const TypeName *) expr)->location;
 			break;
-<<<<<<< HEAD
-		case T_FunctionParameter:
-			/* just use typename's location */
-			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
-=======
 		case T_ColumnDef:
 			loc = ((const ColumnDef *) expr)->location;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 		case T_Constraint:
 			loc = ((const Constraint *) expr)->location;
@@ -1751,10 +1745,6 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker((Node *) expr->aggfilter, context))
 					return true;
-<<<<<<< HEAD
-				/* don't recurse on implicit args under winspec */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			}
 			break;
 		case T_ArrayRef:
@@ -1997,7 +1987,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_PlaceHolderInfo:
 			return walker(((PlaceHolderInfo *) node)->ph_var, context);
-<<<<<<< HEAD
+		case T_RangeTblFunction:
+			return walker(((RangeTblFunction *) node)->funcexpr, context);
 
 		case T_GroupingClause:
 			{
@@ -2064,10 +2055,6 @@ expression_tree_walker(Node *node,
 			}
 			break;
 
-=======
-		case T_RangeTblFunction:
-			return walker(((RangeTblFunction *) node)->funcexpr, context);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2210,7 +2197,7 @@ range_table_walker(List *rtable,
 			case RTE_TABLEFUNCTION:
 				if (walker(rte->subquery, context))
 					return true;
-				if (walker(rte->funcexpr, context))
+				if (walker(rte->functions, context))
 					return true;
 				break;
 			case RTE_VALUES:
@@ -2852,7 +2839,17 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-<<<<<<< HEAD
+		case T_RangeTblFunction:
+			{
+				RangeTblFunction *rtfunc = (RangeTblFunction *) node;
+				RangeTblFunction *newnode;
+
+				FLATCOPY(newnode, rtfunc, RangeTblFunction);
+				MUTATE(newnode->funcexpr, rtfunc->funcexpr, Node *);
+				/* Assume we need not copy the coldef info lists */
+				return (Node *) newnode;
+			}
+			break;
 
 		case T_GroupingFunc:
 			{
@@ -2930,19 +2927,6 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(new_action_expr, action_expr, DMLActionExpr);
 				return (Node *)new_action_expr;
 			}
-=======
-		case T_RangeTblFunction:
-			{
-				RangeTblFunction *rtfunc = (RangeTblFunction *) node;
-				RangeTblFunction *newnode;
-
-				FLATCOPY(newnode, rtfunc, RangeTblFunction);
-				MUTATE(newnode->funcexpr, rtfunc->funcexpr, Node *);
-				/* Assume we need not copy the coldef info lists */
-				return (Node *) newnode;
-			}
-			break;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3060,7 +3044,7 @@ range_table_mutator(List *rtable,
 				MUTATE(newrte->functions, rte->functions, List *);
 				break;
 			case RTE_TABLEFUNCTION:
-				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
+				MUTATE(newrte->functions, rte->functions, List *);
 				MUTATE(newrte->subquery, rte->subquery, Query *);
 				break;
 			case RTE_VALUES:

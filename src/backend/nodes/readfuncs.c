@@ -13,9 +13,8 @@
  *	  src/backend/nodes/readfuncs.c
  *
  * NOTES
-<<<<<<< HEAD
  *	  Path and Plan nodes do not need to have any readfuncs support, because we
- *	  never have occasion to read them in.	 We never read executor state trees, either.
+ *	  never have occasion to read them in.  We never read executor state trees, either.
  *
  *    But due to the use of this routine in older version of CDB/MPP/GPDB,
  *    there are routines that do read those types of nodes (unlike PostgreSQL)
@@ -25,12 +24,6 @@
  *
  *    The purpose of these routines is to read serialized trees that were stored
  *    in the catalog, and reconstruct the trees.
-=======
- *	  Path and Plan nodes do not have any readfuncs support, because we
- *	  never have occasion to read them in.  (There was once code here that
- *	  claimed to read them, but it was broken as well as unused.)  We
- *	  never read executor state trees, either.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  *	  Parse location fields are written out by outfuncs.c, but only for
  *	  possible debugging use.  When reading a location field, we discard
@@ -2200,11 +2193,8 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_TABLEFUNCTION:
 			READ_NODE_FIELD(subquery);
-			READ_NODE_FIELD(funcexpr);
-			READ_NODE_FIELD(funccoltypes);
-			READ_NODE_FIELD(funccoltypmods);
-			READ_NODE_FIELD(funccolcollations);
-			/* 'funcuserdata' is not serialized */
+			READ_NODE_FIELD(functions);
+			READ_BOOL_FIELD(funcordinality);
 			break;
 		case RTE_VALUES:
 			READ_NODE_FIELD(values_lists);
@@ -2233,6 +2223,10 @@ _readRangeTblEntry(void)
 	READ_OID_FIELD(checkAsUser);
 	READ_BITMAPSET_FIELD(selectedCols);
 	READ_BITMAPSET_FIELD(modifiedCols);
+
+	READ_BOOL_FIELD(forceDistRandom);
+	/* 'pseudocols' is intentionally missing, see out function */
+
 	READ_NODE_FIELD(securityQuals);
 
 	READ_DONE();
@@ -2252,10 +2246,9 @@ _readRangeTblFunction(void)
 	READ_NODE_FIELD(funccoltypes);
 	READ_NODE_FIELD(funccoltypmods);
 	READ_NODE_FIELD(funccolcollations);
+	/* 'funcuserdata' is not serialized */
 	READ_BITMAPSET_FIELD(funcparams);
 
-	READ_BOOL_FIELD(forceDistRandom);
-	/* 'pseudocols' is intentionally missing, see out function */
 	READ_DONE();
 }
 

@@ -833,42 +833,6 @@ _outAlterDefaultPrivilegesStmt(StringInfo str, AlterDefaultPrivilegesStmt *node)
 }
 
 static void
-_outColumnDef(StringInfo str, ColumnDef *node)
-{
-	WRITE_NODE_TYPE("COLUMNDEF");
-
-	WRITE_STRING_FIELD(colname);
-	WRITE_NODE_FIELD(typeName);
-	WRITE_INT_FIELD(inhcount);
-	WRITE_BOOL_FIELD(is_local);
-	WRITE_BOOL_FIELD(is_not_null);
-	WRITE_BOOL_FIELD(is_from_type);
-	WRITE_INT_FIELD(attnum);
-	WRITE_CHAR_FIELD(storage);
-	WRITE_NODE_FIELD(raw_default);
-	WRITE_NODE_FIELD(cooked_default);
-	WRITE_NODE_FIELD(collClause);
-	WRITE_OID_FIELD(collOid);
-	WRITE_NODE_FIELD(constraints);
-	WRITE_NODE_FIELD(encoding);
-}
-
-static void
-_outTypeName(StringInfo str, TypeName *node)
-{
-	WRITE_NODE_TYPE("TYPENAME");
-
-	WRITE_NODE_FIELD(names);
-	WRITE_OID_FIELD(typeOid);
-	WRITE_BOOL_FIELD(setof);
-	WRITE_BOOL_FIELD(pct_type);
-	WRITE_NODE_FIELD(typmods);
-	WRITE_INT_FIELD(typemod);
-	WRITE_NODE_FIELD(arrayBounds);
-	WRITE_LOCATION_FIELD(location);
-}
-
-static void
 _outQuery(StringInfo str, Query *node)
 {
 	WRITE_NODE_TYPE("QUERY");
@@ -1595,6 +1559,9 @@ _outNode(StringInfo str, void *obj)
 			case T_RangeTblRef:
 				_outRangeTblRef(str, obj);
 				break;
+			case T_RangeTblFunction:
+				_outRangeTblFunction(str, obj);
+				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
@@ -1961,6 +1928,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Query:
 				_outQuery(str, obj);
+				break;
+			case T_WithCheckOption:
+				_outWithCheckOption(str, obj);
 				break;
 			case T_SortGroupClause:
 				_outSortGroupClause(str, obj);

@@ -37,7 +37,6 @@
 
 
 /*
-<<<<<<< HEAD
  * outfuncs.c is compiled normally into outfuncs.o, but it's also
  * #included from outfast.c. When #included, outfast.c defines
  * COMPILING_BINARY_FUNCS, and provides replacements WRITE_* macros. See
@@ -46,12 +45,8 @@
 #ifndef COMPILING_BINARY_FUNCS
 
 /*
- * Macros to simplify output of different kinds of fields.	Use these
- * wherever possible to reduce the chance for silly typos.	Note that these
-=======
  * Macros to simplify output of different kinds of fields.  Use these
  * wherever possible to reduce the chance for silly typos.  Note that these
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * hard-wire conventions about the names of the local variables in an Out
  * routine.
  */
@@ -160,11 +155,7 @@ _outToken(StringInfo str, const char *s)
 {
 	if (s == NULL || *s == '\0')
 	{
-<<<<<<< HEAD
-		appendStringInfoLiteral(str, "<>");
-=======
 		appendStringInfoString(str, "<>");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		return;
 	}
 
@@ -273,11 +264,7 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 	{
 		s = (char *) DatumGetPointer(value);
 		if (!PointerIsValid(s))
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "0 [ ]");
-=======
 			appendStringInfoString(str, "0 [ ]");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		else
 		{
 			appendStringInfo(str, "%u [ ", (unsigned int) length);
@@ -928,19 +915,11 @@ _outWindowAgg(StringInfo str, const WindowAgg *node)
 	WRITE_UINT_FIELD(winref);
 	WRITE_INT_FIELD(partNumCols);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :partColIdx");
-	for (i = 0; i < node->partNumCols; i++)
-		appendStringInfo(str, " %d", node->partColIdx[i]);
-
-	appendStringInfoLiteral(str, " :partOperators");
-=======
 	appendStringInfoString(str, " :partColIdx");
 	for (i = 0; i < node->partNumCols; i++)
 		appendStringInfo(str, " %d", node->partColIdx[i]);
 
 	appendStringInfoString(str, " :partOperations");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	for (i = 0; i < node->partNumCols; i++)
 		appendStringInfo(str, " %u", node->partOperators[i]);
 
@@ -967,33 +946,12 @@ _outWindowAgg(StringInfo str, const WindowAgg *node)
 static void
 _outTableFunctionScan(StringInfo str, const TableFunctionScan *node)
 {
-<<<<<<< HEAD
 	WRITE_NODE_TYPE("TABLEFUNCTIONSCAN");
 
 	_outScanInfo(str, (Scan *) node);
-	WRITE_NODE_FIELD(funcexpr);
-	WRITE_NODE_FIELD(funccolnames);
-	WRITE_NODE_FIELD(funccoltypes);
-	WRITE_NODE_FIELD(funccoltypmods);
-	WRITE_NODE_FIELD(funccolcollations);
-	WRITE_BYTEA_FIELD(funcuserdata);
-=======
-	int			i;
 
-	WRITE_NODE_TYPE("GROUP");
-
-	_outPlanInfo(str, (const Plan *) node);
-
-	WRITE_INT_FIELD(numCols);
-
-	appendStringInfoString(str, " :grpColIdx");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %d", node->grpColIdx[i]);
-
-	appendStringInfoString(str, " :grpOperators");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %u", node->grpOperators[i]);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	WRITE_NODE_FIELD(functions);
+	WRITE_BOOL_FIELD(funcordinality);
 }
 
 static void
@@ -1036,19 +994,11 @@ _outSort(StringInfo str, const Sort *node)
 
 	WRITE_INT_FIELD(numCols);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :sortColIdx");
-	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, " %d", node->sortColIdx[i]);
-
-	appendStringInfoLiteral(str, " :sortOperators");
-=======
 	appendStringInfoString(str, " :sortColIdx");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->sortColIdx[i]);
 
 	appendStringInfoString(str, " :sortOperators");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %u", node->sortOperators[i]);
 
@@ -1083,11 +1033,7 @@ _outUnique(StringInfo str, const Unique *node)
 
 	WRITE_INT_FIELD(numCols);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :uniqColIdx");
-=======
 	appendStringInfoString(str, " :uniqColIdx");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->uniqColIdx[i]);
 
@@ -1127,11 +1073,7 @@ _outSetOp(StringInfo str, const SetOp *node)
 	WRITE_ENUM_FIELD(strategy, SetOpStrategy);
 	WRITE_INT_FIELD(numCols);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :dupColIdx");
-=======
 	appendStringInfoString(str, " :dupColIdx");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->dupColIdx[i]);
 
@@ -1406,15 +1348,9 @@ _outConst(StringInfo str, const Const *node)
 	WRITE_BOOL_FIELD(constisnull);
 	WRITE_LOCATION_FIELD(location);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :constvalue ");
-	if (node->constisnull)
-		appendStringInfoLiteral(str, "<>");
-=======
 	appendStringInfoString(str, " :constvalue ");
 	if (node->constisnull)
 		appendStringInfoString(str, "<>");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	else
 		_outDatum(str, node->constvalue, node->constlen, node->constbyval);
 }
@@ -1595,11 +1531,7 @@ _outBoolExpr(StringInfo str, const BoolExpr *node)
 			opstr = "not";
 			break;
 	}
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :boolop ");
-=======
 	appendStringInfoString(str, " :boolop ");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	_outToken(str, opstr);
 
 	WRITE_NODE_FIELD(args);
@@ -3620,14 +3552,13 @@ _outPartListNullTestExpr(StringInfo str, const PartListNullTestExpr *node)
 	WRITE_ENUM_FIELD(nulltesttype, NullTestType);
 }
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outColumnDef(StringInfo str, const ColumnDef *node)
 {
 	WRITE_NODE_TYPE("COLUMNDEF");
 
 	WRITE_STRING_FIELD(colname);
-	WRITE_NODE_FIELD_AS(typeName, typename);
+	WRITE_NODE_FIELD(typeName);
 	WRITE_INT_FIELD(inhcount);
 	WRITE_BOOL_FIELD(is_local);
 	WRITE_BOOL_FIELD(is_not_null);
@@ -3643,9 +3574,7 @@ _outColumnDef(StringInfo str, const ColumnDef *node)
 	WRITE_NODE_FIELD(fdwoptions);
 	WRITE_LOCATION_FIELD(location);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
-#ifndef COMPILING_BINARY_FUNCS
 static void
 _outTypeName(StringInfo str, const TypeName *node)
 {
@@ -3660,7 +3589,6 @@ _outTypeName(StringInfo str, const TypeName *node)
 	WRITE_NODE_FIELD(arrayBounds);
 	WRITE_LOCATION_FIELD(location);
 }
-#endif /* COMPILING_BINARY_FUNCS */
 
 static void
 _outTypeCast(StringInfo str, const TypeCast *node)
@@ -3786,21 +3714,13 @@ _outQuery(StringInfo str, const Query *node)
 				WRITE_NODE_FIELD(utilityStmt);
 				break;
 			default:
-<<<<<<< HEAD
-				appendStringInfoLiteral(str, " :utilityStmt ?");
-				appendStringInfo(str, "%u", nodeTag(node->utilityStmt));
-=======
 				appendStringInfoString(str, " :utilityStmt ?");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				appendStringInfo(str, "%u", nodeTag(node->utilityStmt));
 				break;
 		}
 	}
 	else
-<<<<<<< HEAD
-		appendStringInfoLiteral(str, " :utilityStmt <>");
-=======
 		appendStringInfoString(str, " :utilityStmt <>");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	WRITE_INT_FIELD(resultRelation);
 	WRITE_BOOL_FIELD(hasAggs);
@@ -3987,14 +3907,8 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			break;
 		case RTE_TABLEFUNCTION:
 			WRITE_NODE_FIELD(subquery);
-			WRITE_NODE_FIELD(funcexpr);
-			WRITE_NODE_FIELD(funccoltypes);
-			WRITE_NODE_FIELD(funccoltypmods);
-			WRITE_NODE_FIELD(funccolcollations);
-			/*
-			 * 'funcuserdata' is intentionally not serialized.
-			 * It is zapped away in setrefs.c, so would be NULL here.
-			 */
+			WRITE_NODE_FIELD(functions);
+			WRITE_BOOL_FIELD(funcordinality);
 			break;
 		case RTE_VALUES:
 			WRITE_NODE_FIELD(values_lists);
@@ -4022,14 +3936,12 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	WRITE_OID_FIELD(checkAsUser);
 	WRITE_BITMAPSET_FIELD(selectedCols);
 	WRITE_BITMAPSET_FIELD(modifiedCols);
-<<<<<<< HEAD
 
 	WRITE_BOOL_FIELD(forceDistRandom);
 	/*
 	 * pseudocols is intentionally not serialized. It's only used in the planning
 	 * stage, so no need to transfer it to the QEs.
 	 */
-=======
 	WRITE_NODE_FIELD(securityQuals);
 }
 
@@ -4044,8 +3956,8 @@ _outRangeTblFunction(StringInfo str, const RangeTblFunction *node)
 	WRITE_NODE_FIELD(funccoltypes);
 	WRITE_NODE_FIELD(funccoltypmods);
 	WRITE_NODE_FIELD(funccolcollations);
+	/* funcuserdata is not serialized */
 	WRITE_BITMAPSET_FIELD(funcparams);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 #ifndef COMPILING_BINARY_FUNCS
@@ -4057,40 +3969,6 @@ _outAExpr(StringInfo str, const A_Expr *node)
 	switch (node->kind)
 	{
 		case AEXPR_OP:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, " OPER ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_AND:
-			appendStringInfoLiteral(str, " AND ");
-			break;
-		case AEXPR_OR:
-			appendStringInfoLiteral(str, " OR ");
-			break;
-		case AEXPR_NOT:
-			appendStringInfoLiteral(str, " NOT ");
-			break;
-		case AEXPR_OP_ANY:
-			appendStringInfoLiteral(str, " ANY ");
-			WRITE_NODE_FIELD(name);
-
-			break;
-		case AEXPR_OP_ALL:
-			appendStringInfoLiteral(str, " ALL ");
-			WRITE_NODE_FIELD(name);
-
-			break;
-		case AEXPR_DISTINCT:
-			appendStringInfoLiteral(str, " DISTINCT ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_NULLIF:
-			appendStringInfoLiteral(str, " NULLIF ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_OF:
-			appendStringInfoLiteral(str, " OF ");
-=======
 			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);
 			break;
@@ -4123,7 +4001,6 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			break;
 		case AEXPR_OF:
 			appendStringInfoString(str, " OF ");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_IN:
@@ -4131,11 +4008,7 @@ _outAExpr(StringInfo str, const A_Expr *node)
 			WRITE_NODE_FIELD(name);
 			break;
 		default:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, " ??");
-=======
 			appendStringInfoString(str, " ??");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 	}
 
@@ -4214,12 +4087,7 @@ _outAConst(StringInfo str, const A_Const *node)
 {
 	WRITE_NODE_TYPE("A_CONST");
 
-<<<<<<< HEAD
-	appendStringInfoChar(str, ' ');
-
-=======
 	appendStringInfoString(str, " :val ");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	_outValue(str, &(node->val));
 	WRITE_LOCATION_FIELD(location);
 }
@@ -4333,21 +4201,6 @@ _outConstraint(StringInfo str, const Constraint *node)
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_LOCATION_FIELD(location);
 
-<<<<<<< HEAD
-	appendStringInfoLiteral(str, " :contype ");
-	switch (node->contype)
-	{
-		case CONSTR_NULL:
-			appendStringInfoLiteral(str, "NULL");
-			break;
-
-		case CONSTR_NOTNULL:
-			appendStringInfoLiteral(str, "NOT_NULL");
-			break;
-
-		case CONSTR_DEFAULT:
-			appendStringInfoLiteral(str, "DEFAULT");
-=======
 	appendStringInfoString(str, " :contype ");
 	switch (node->contype)
 	{
@@ -4361,14 +4214,12 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_DEFAULT:
 			appendStringInfoString(str, "DEFAULT");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			break;
 
 		case CONSTR_CHECK:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "CHECK");
+			appendStringInfoString(str, "CHECK");
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			/*
@@ -4377,18 +4228,11 @@ _outConstraint(StringInfo str, const Constraint *node)
 			 * ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 			 */
 			WRITE_BOOL_FIELD(skip_validation);
-=======
-			appendStringInfoString(str, "CHECK");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_BOOL_FIELD(is_no_inherit);
 			break;
 
 		case CONSTR_PRIMARY:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "PRIMARY_KEY");
-=======
 			appendStringInfoString(str, "PRIMARY_KEY");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
@@ -4397,11 +4241,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		case CONSTR_UNIQUE:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "UNIQUE");
-=======
 			appendStringInfoString(str, "UNIQUE");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(keys);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
@@ -4410,11 +4250,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		case CONSTR_EXCLUSION:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "EXCLUSION");
-=======
 			appendStringInfoString(str, "EXCLUSION");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(exclusions);
 			WRITE_NODE_FIELD(options);
 			WRITE_STRING_FIELD(indexname);
@@ -4424,11 +4260,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		case CONSTR_FOREIGN:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "FOREIGN_KEY");
-=======
 			appendStringInfoString(str, "FOREIGN_KEY");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			WRITE_NODE_FIELD(pktable);
 			WRITE_NODE_FIELD(fk_attrs);
 			WRITE_NODE_FIELD(pk_attrs);
@@ -4446,21 +4278,6 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
-<<<<<<< HEAD
-			appendStringInfoLiteral(str, "ATTR_DEFERRABLE");
-			break;
-
-		case CONSTR_ATTR_NOT_DEFERRABLE:
-			appendStringInfoLiteral(str, "ATTR_NOT_DEFERRABLE");
-			break;
-
-		case CONSTR_ATTR_DEFERRED:
-			appendStringInfoLiteral(str, "ATTR_DEFERRED");
-			break;
-
-		case CONSTR_ATTR_IMMEDIATE:
-			appendStringInfoLiteral(str, "ATTR_IMMEDIATE");
-=======
 			appendStringInfoString(str, "ATTR_DEFERRABLE");
 			break;
 
@@ -4474,7 +4291,6 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_ATTR_IMMEDIATE:
 			appendStringInfoString(str, "ATTR_IMMEDIATE");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 
 		default:
@@ -4784,11 +4600,7 @@ static void
 _outNode(StringInfo str, const void *obj)
 {
 	if (obj == NULL)
-<<<<<<< HEAD
-		appendStringInfoLiteral(str, "<>");
-=======
 		appendStringInfoString(str, "<>");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
 		_outList(str, obj);
 	else if (IsA(obj, Integer) ||
@@ -5101,6 +4913,9 @@ _outNode(StringInfo str, const void *obj)
 			case T_RangeTblRef:
 				_outRangeTblRef(str, obj);
 				break;
+			case T_RangeTblFunction:
+				_outRangeTblFunction(str, obj);
+				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
@@ -5337,8 +5152,6 @@ _outNode(StringInfo str, const void *obj)
 			case T_CreateConversionStmt:
 				_outCreateConversionStmt(str,obj);
 				break;
-
-
 			case T_ViewStmt:
 				_outViewStmt(str, obj);
 				break;
@@ -5516,9 +5329,6 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
-				break;
-			case T_RangeTblFunction:
-				_outRangeTblFunction(str, obj);
 				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);

@@ -737,12 +737,8 @@ typedef struct FunctionScan
 typedef struct TableFunctionScan
 {
 	Scan		scan;
-	Node	   *funcexpr;		/* expression tree for func call */
-	List	   *funccolnames;	/* output column names (string Value nodes) */
-	List	   *funccoltypes;	/* OID list of column type OIDs */
-	List	   *funccoltypmods; /* integer list of column typmods */
-	List	   *funccolcollations;		/* OID list of column collation OIDs */
-	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
+	List	   *functions;		/* list of RangeTblFunction nodes */
+	bool		funcordinality; /* WITH ORDINALITY */
 } TableFunctionScan;
 
 /* ----------------

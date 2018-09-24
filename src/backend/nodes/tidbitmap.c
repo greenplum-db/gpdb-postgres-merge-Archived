@@ -19,18 +19,6 @@
  * of lossiness.  In theory we could fall back to page ranges at some
  * point, but for now that seems useless complexity.
  *
-<<<<<<< HEAD
-=======
- * We also support the notion of candidate matches, or rechecking.  This
- * means we know that a search need visit only some tuples on a page,
- * but we are not certain that all of those tuples are real matches.
- * So the eventual heap scan must recheck the quals for these tuples only,
- * rather than rechecking the quals for all tuples on the page as in the
- * lossy-bitmap case.  Rechecking can be specified when TIDs are inserted
- * into a bitmap, and it can also happen internally when we AND a lossy
- * and a non-lossy page.
- *
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * Copyright (c) 2003-2014, PostgreSQL Global Development Group
  *
@@ -51,71 +39,12 @@
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
 
-<<<<<<< HEAD
 #define WORDNUM(x)	((x) / TBM_BITS_PER_BITMAPWORD)
 #define BITNUM(x)	((x) % TBM_BITS_PER_BITMAPWORD)
 
 static bool tbm_iterate_page(PagetableEntry *page, TBMIterateResult *output);
 static PagetableEntry *tbm_next_page(TBMIterator *iterator, bool *more);
 static void tbm_upd_instrument(TIDBitmap *tbm);
-=======
-/*
- * The maximum number of tuples per page is not large (typically 256 with
- * 8K pages, or 1024 with 32K pages).  So there's not much point in making
- * the per-page bitmaps variable size.  We just legislate that the size
- * is this:
- */
-#define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
-
-/*
- * When we have to switch over to lossy storage, we use a data structure
- * with one bit per page, where all pages having the same number DIV
- * PAGES_PER_CHUNK are aggregated into one chunk.  When a chunk is present
- * and has the bit set for a given page, there must not be a per-page entry
- * for that page in the page table.
- *
- * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.  (This is because dynahash.c's
- * memory management doesn't allow space to be transferred easily from one
- * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.  But we
- * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
- * remainder operations.  So, define it like this:
- */
-#define PAGES_PER_CHUNK  (BLCKSZ / 32)
-
-/* We use BITS_PER_BITMAPWORD and typedef bitmapword from nodes/bitmapset.h */
-
-#define WORDNUM(x)	((x) / BITS_PER_BITMAPWORD)
-#define BITNUM(x)	((x) % BITS_PER_BITMAPWORD)
-
-/* number of active words for an exact page: */
-#define WORDS_PER_PAGE	((MAX_TUPLES_PER_PAGE - 1) / BITS_PER_BITMAPWORD + 1)
-/* number of active words for a lossy chunk: */
-#define WORDS_PER_CHUNK  ((PAGES_PER_CHUNK - 1) / BITS_PER_BITMAPWORD + 1)
-
-/*
- * The hashtable entries are represented by this data structure.  For
- * an exact page, blockno is the page number and bit k of the bitmap
- * represents tuple offset k+1.  For a lossy chunk, blockno is the first
- * page in the chunk (this must be a multiple of PAGES_PER_CHUNK) and
- * bit k represents page blockno+k.  Note that it is not possible to
- * have exact storage for the first page of a chunk if we are using
- * lossy storage for any page in the chunk's range, since the same
- * hashtable entry has to serve both purposes.
- *
- * recheck is used only on exact pages --- it indicates that although
- * only the stated tuples need be checked, the full index qual condition
- * must be checked for each (ie, these are candidate matches).
- */
-typedef struct PagetableEntry
-{
-	BlockNumber blockno;		/* page number (hashtable key) */
-	bool		ischunk;		/* T = lossy storage, F = exact */
-	bool		recheck;		/* should the tuples be rechecked? */
-	bitmapword	words[Max(WORDS_PER_PAGE, WORDS_PER_CHUNK)];
-} PagetableEntry;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * dynahash.c is optimized for relatively large, long-lived hash tables.

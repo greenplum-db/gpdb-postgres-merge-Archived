@@ -772,6 +772,21 @@ _copyFunctionScan(const FunctionScan *from)
 }
 
 /*
+ * _copyTableFunctionScan
+ */
+static TableFunctionScan *
+_copyTableFunctionScan(const TableFunctionScan *from)
+{
+	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
+
+	CopyScanFields((const Scan *) from, (Scan *) newnode);
+	COPY_NODE_FIELD(functions);
+	COPY_SCALAR_FIELD(funcordinality);
+
+	return newnode;
+}
+
+/*
  * _copyValuesScan
  */
 static ValuesScan *
@@ -1103,25 +1118,6 @@ _copyWindowAgg(const WindowAgg *from)
 	COPY_SCALAR_FIELD(frameOptions);
 	COPY_NODE_FIELD(startOffset);
 	COPY_NODE_FIELD(endOffset);
-
-	return newnode;
-}
-
-/*
- * _copyTableFunctionScan
- */
-static TableFunctionScan *
-_copyTableFunctionScan(const TableFunctionScan *from)
-{
-	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
-
-	CopyScanFields((Scan *) from, (Scan *) newnode);
-	COPY_NODE_FIELD(funcexpr);
-	COPY_NODE_FIELD(funccolnames);
-	COPY_NODE_FIELD(funccoltypes);
-	COPY_NODE_FIELD(funccoltypmods);
-	COPY_NODE_FIELD(funccolcollations);
-	COPY_VARLENA_FIELD(funcuserdata, -1);
 
 	return newnode;
 }
@@ -2488,16 +2484,8 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_SCALAR_FIELD(security_barrier);
 	COPY_SCALAR_FIELD(jointype);
 	COPY_NODE_FIELD(joinaliasvars);
-<<<<<<< HEAD
-	COPY_NODE_FIELD(funcexpr);
-	COPY_NODE_FIELD(funccoltypes);
-	COPY_NODE_FIELD(funccoltypmods);
-	COPY_NODE_FIELD(funccolcollations);
-	COPY_VARLENA_FIELD(funcuserdata, -1);
-=======
 	COPY_NODE_FIELD(functions);
 	COPY_SCALAR_FIELD(funcordinality);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	COPY_NODE_FIELD(values_lists);
 	COPY_NODE_FIELD(values_collations);
 	COPY_STRING_FIELD(ctename);
@@ -2517,6 +2505,15 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_BITMAPSET_FIELD(modifiedCols);
 	COPY_NODE_FIELD(securityQuals);
 
+	COPY_STRING_FIELD(ctename);
+	COPY_SCALAR_FIELD(ctelevelsup);
+	COPY_SCALAR_FIELD(self_reference);
+	COPY_NODE_FIELD(ctecoltypes);
+	COPY_NODE_FIELD(ctecoltypmods);
+
+	COPY_SCALAR_FIELD(forceDistRandom);
+	COPY_NODE_FIELD(pseudocols);                /*CDB*/
+
 	return newnode;
 }
 
@@ -2531,6 +2528,7 @@ _copyRangeTblFunction(const RangeTblFunction *from)
 	COPY_NODE_FIELD(funccoltypes);
 	COPY_NODE_FIELD(funccoltypmods);
 	COPY_NODE_FIELD(funccolcollations);
+	COPY_VARLENA_FIELD(funcuserdata, -1);
 	COPY_BITMAPSET_FIELD(funcparams);
 
 	return newnode;
@@ -2544,15 +2542,6 @@ _copyWithCheckOption(const WithCheckOption *from)
 	COPY_STRING_FIELD(viewname);
 	COPY_NODE_FIELD(qual);
 	COPY_SCALAR_FIELD(cascaded);
-
-	COPY_STRING_FIELD(ctename);
-	COPY_SCALAR_FIELD(ctelevelsup);
-	COPY_SCALAR_FIELD(self_reference);
-	COPY_NODE_FIELD(ctecoltypes);
-	COPY_NODE_FIELD(ctecoltypmods);
-
-	COPY_SCALAR_FIELD(forceDistRandom);
-    COPY_NODE_FIELD(pseudocols);                /*CDB*/
 
 	return newnode;
 }
@@ -2945,8 +2934,8 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_SCALAR_FIELD(collOid);
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(fdwoptions);
-<<<<<<< HEAD
 	COPY_NODE_FIELD(encoding);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -2960,9 +2949,6 @@ _copyColumnReferenceStorageDirective(const ColumnReferenceStorageDirective *from
 	COPY_STRING_FIELD(column);
 	COPY_SCALAR_FIELD(deflt);
 	COPY_NODE_FIELD(encoding);
-=======
-	COPY_LOCATION_FIELD(location);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	return newnode;
 }

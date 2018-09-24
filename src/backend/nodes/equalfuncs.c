@@ -2540,16 +2540,8 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(security_barrier);
 	COMPARE_SCALAR_FIELD(jointype);
 	COMPARE_NODE_FIELD(joinaliasvars);
-<<<<<<< HEAD
-	COMPARE_NODE_FIELD(funcexpr);
-	COMPARE_NODE_FIELD(funccoltypes);
-	COMPARE_NODE_FIELD(funccoltypmods);
-	COMPARE_NODE_FIELD(funccolcollations);
-	COMPARE_VARLENA_FIELD(funcuserdata, -1);
-=======
 	COMPARE_NODE_FIELD(functions);
 	COMPARE_SCALAR_FIELD(funcordinality);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	COMPARE_NODE_FIELD(values_lists);
 	COMPARE_NODE_FIELD(values_collations);
 	COMPARE_STRING_FIELD(ctename);
@@ -2581,6 +2573,7 @@ _equalRangeTblFunction(const RangeTblFunction *a, const RangeTblFunction *b)
 	COMPARE_NODE_FIELD(funccoltypes);
 	COMPARE_NODE_FIELD(funccoltypmods);
 	COMPARE_NODE_FIELD(funccolcollations);
+	COMPARE_VARLENA_FIELD(funcuserdata, -1);
 	COMPARE_BITMAPSET_FIELD(funcparams);
 
 	return true;
