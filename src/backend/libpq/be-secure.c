@@ -18,12 +18,8 @@
  *	  backend can restart automatically, it is important that
  *	  we select an algorithm that continues to provide confidentiality
  *	  even if the attacker has the server's private key.  Ephemeral
- *	  DH (EDH) keys provide this, and in fact provide Perfect Forward
- *	  Secrecy (PFS) except for situations where the session can
- *	  be hijacked during a periodic handshake/renegotiation.
- *	  Even that backdoor can be closed if client certificates
- *	  are used (since the imposter will be unable to successfully
- *	  complete renegotiation).
+ *	  DH (EDH) keys provide this and more (Perfect Forward Secrecy
+ *	  aka PFS).
  *
  *	  N.B., the static private key should still be protected to
  *	  the largest extent possible, to minimize the risk of
@@ -38,12 +34,6 @@
  *	  use ssldump(1) if there's a problem establishing an SSL
  *	  session.  In this case you'll need to temporarily disable
  *	  EDH by commenting out the callback.
- *
- *	  ...
- *
- *	  Because the risk of cryptanalysis increases as large
- *	  amounts of data are sent with the same session key, the
- *	  session keys are periodically renegotiated.
  *
  *-------------------------------------------------------------------------
  */
@@ -100,17 +90,7 @@ char	   *ssl_key_file;
 char	   *ssl_ca_file;
 char	   *ssl_crl_file;
 
-/*
- *	How much data can be sent across a secure connection
- *	(total in both directions) before we require renegotiation.
- *	Set to 0 to disable renegotiation completely.
- */
-int			ssl_renegotiation_limit;
-
 #ifdef USE_SSL
-/* are we in the middle of a renegotiation? */
-static bool in_ssl_renegotiation = false;
-
 static SSL_CTX *SSL_context = NULL;
 static bool ssl_loaded_verify_locations = false;
 #endif
@@ -358,82 +338,6 @@ secure_write(Port *port, void *ptr, size_t len)
 	{
 		int			err;
 
-		/*
-		 * If SSL renegotiations are enabled and we're getting close to the
-		 * limit, start one now; but avoid it if there's one already in
-		 * progress.  Request the renegotiation 1kB before the limit has
-		 * actually expired.
-		 */
-		if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
-			port->count > (ssl_renegotiation_limit - 1) * 1024L)
-		{
-			in_ssl_renegotiation = true;
-
-			/*
-			 * The way we determine that a renegotiation has completed is by
-			 * observing OpenSSL's internal renegotiation counter.  Make sure
-			 * we start out at zero, and assume that the renegotiation is
-			 * complete when the counter advances.
-			 *
-			 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
-			 * seem to work in testing.
-			 */
-			SSL_clear_num_renegotiations(port->ssl);
-
-			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
-									   sizeof(SSL_context));
-			if (SSL_renegotiate(port->ssl) <= 0)
-<<<<<<< HEAD
-			{
-				report_commerror("SSL renegotiation failure");
-			}
-
-			if (SSL_do_handshake(port->ssl) <= 0)
-			{
-				report_commerror("SSL renegotiation failure");
-			}
-
-			if (port->ssl->state != SSL_ST_OK)
-			{
-				report_commerror("SSL failed to send renegotiation request");
-			}
-
-			port->ssl->state |= SSL_ST_ACCEPT;
-			SSL_do_handshake(port->ssl);
-			if (port->ssl->state != SSL_ST_OK)
-			{
-				report_commerror("SSL renegotiation failure");
-			}
-
-			port->count = 0;
-=======
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL failure during renegotiation start")));
-			else
-			{
-				int			retries;
-
-				/*
-				 * A handshake can fail, so be prepared to retry it, but only
-				 * a few times.
-				 */
-				for (retries = 0;; retries++)
-				{
-					if (SSL_do_handshake(port->ssl) > 0)
-						break;	/* done */
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL handshake failure on renegotiation, retrying")));
-					if (retries >= 20)
-						ereport(FATAL,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("unable to complete SSL handshake")));
-				}
-			}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-		}
-
 wloop:
 		errno = 0;
 		n = SSL_write(port->ssl, ptr, len);
@@ -486,28 +390,6 @@ wloop:
 >>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				n = -1;
 				break;
-		}
-
-		if (n >= 0)
-		{
-			/* is renegotiation complete? */
-			if (in_ssl_renegotiation &&
-				SSL_num_renegotiations(port->ssl) >= 1)
-			{
-				in_ssl_renegotiation = false;
-				port->count = 0;
-			}
-
-			/*
-			 * if renegotiation is still ongoing, and we've gone beyond the
-			 * limit, kill the connection now -- continuing to use it can be
-			 * considered a security problem.
-			 */
-			if (in_ssl_renegotiation &&
-				port->count > ssl_renegotiation_limit * 1024L)
-				ereport(FATAL,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL failed to renegotiate connection before limit expired")));
 		}
 	}
 	else
