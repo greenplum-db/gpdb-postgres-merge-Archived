@@ -829,7 +829,6 @@ build_index_pathkeys(PlannerInfo *root,
 }
 
 /*
-<<<<<<< HEAD
  * Find or make a Var node for the specified attribute of the rel.
  *
  * We first look for the var in the rel's target list, because that's
@@ -862,7 +861,10 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 	get_atttypetypmodcoll(reloid, varattno, &vartypeid, &type_mod, &varcollid);
 
 	return makeVar(relid, varattno, vartypeid, type_mod, varcollid, 0);
-=======
+}
+
+
+/*
  * build_expression_pathkey
  *	  Build a pathkeys list that describes an ordering by a single expression
  *	  using the given sort operator.
@@ -911,7 +913,6 @@ build_expression_pathkey(PlannerInfo *root,
 		pathkeys = NIL;
 
 	return pathkeys;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*

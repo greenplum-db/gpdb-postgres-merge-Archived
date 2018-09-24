@@ -4260,13 +4260,9 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-<<<<<<< HEAD
 	/* CDB: Could the function return more than one row? */
 	rel->onerow = !expression_returns_set(rte->funcexpr);
 
-	/* Estimate number of rows the function itself will return */
-	rel->tuples = expression_returns_set_rows(rte->funcexpr);
-=======
 	/*
 	 * Estimate number of rows the functions will return. The rowcount of the
 	 * node is that of the largest function result.
@@ -4280,7 +4276,6 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 		if (ntup > rel->tuples)
 			rel->tuples = ntup;
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

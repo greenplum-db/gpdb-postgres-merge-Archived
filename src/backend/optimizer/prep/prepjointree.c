@@ -1583,11 +1583,7 @@ is_simple_subquery(PlannerInfo *root, Query *subquery, RangeTblEntry *rte,
 	/*
 	 * If the subquery is LATERAL, check for pullup restrictions from that.
 	 */
-<<<<<<< HEAD
-	if (rte && rte->lateral && lowest_outer_join != NULL)
-=======
-	if (rte->lateral)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	if (rte && rte->lateral)
 	{
 		bool		restricted;
 		Relids		safe_upper_varnos;
@@ -1905,14 +1901,9 @@ replace_vars_in_jointree(Node *jtnode,
 														 context);
 						break;
 					case RTE_FUNCTION:
-<<<<<<< HEAD
 					case RTE_TABLEFUNCTION:
-						rte->funcexpr =
-							pullup_replace_vars(rte->funcexpr,
-=======
 						rte->functions = (List *)
 							pullup_replace_vars((Node *) rte->functions,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 												context);
 						break;
 					case RTE_VALUES:

@@ -1417,8 +1417,8 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	}
 
 	/* Generate appropriate path */
-<<<<<<< HEAD
-	add_path(rel, create_functionscan_path(root, rel, rte, required_outer));
+	add_path(rel, create_functionscan_path(root, rel, rte,
+										   pathkeys, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
@@ -1481,11 +1481,8 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 	set_table_function_size_estimates(root, rel);
 
 	/* Generate appropriate path */
-	add_path(rel, create_tablefunction_path(root, rel, rte, required_outer));
-=======
-	add_path(rel, create_functionscan_path(root, rel,
-										   pathkeys, required_outer));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	add_path(rel, create_tablefunction_path(root, rel, rte,
+											pathkeys, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);

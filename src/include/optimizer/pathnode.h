@@ -98,15 +98,11 @@ extern UniquePath *create_unique_rowid_path(PlannerInfo *root,
 extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 List *pathkeys, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
-<<<<<<< HEAD
 						 RangeTblEntry *rte,
-						 Relids required_outer);
+						 List *pathkeys, Relids required_outer);
 extern Path *create_tablefunction_path(PlannerInfo *root, RelOptInfo *rel,
 						 RangeTblEntry *rte,
-						 Relids required_outer);
-=======
 						 List *pathkeys, Relids required_outer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte,
 					   Relids required_outer);
@@ -185,7 +181,7 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 			   RelOptInfo *inner_rel,
 			   SpecialJoinInfo *sjinfo,
 			   List **restrictlist_ptr);
-<<<<<<< HEAD
+extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
 extern void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel, List *input_tlist);
 
 extern Var *cdb_define_pseudo_column(PlannerInfo   *root,
@@ -198,9 +194,6 @@ extern CdbRelColumnInfo *cdb_find_pseudo_column(PlannerInfo *root, Var *var);
 
 extern CdbRelColumnInfo *cdb_rte_find_pseudo_column(RangeTblEntry *rte, AttrNumber attno);
 
-=======
-extern RelOptInfo *build_empty_join_rel(PlannerInfo *root);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern AppendRelInfo *find_childrel_appendrelinfo(PlannerInfo *root,
 							RelOptInfo *rel);
 extern ParamPathInfo *get_baserel_parampathinfo(PlannerInfo *root,
