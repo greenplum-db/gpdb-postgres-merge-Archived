@@ -23,11 +23,7 @@ standard_targets = all install installdirs uninstall distprep clean distclean ma
 # these targets should recurse even into subdirectories not being built:
 standard_always_targets = distprep clean distclean maintainer-clean
 
-<<<<<<< HEAD
-.PHONY: $(standard_targets) install-strip html man installcheck-parallel installcheck-good
-=======
-.PHONY: $(standard_targets) install-strip html man installcheck-parallel maintainer-check
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+.PHONY: $(standard_targets) install-strip html man installcheck-parallel maintainer-check installcheck-good
 
 # make `all' the default target
 all:
@@ -346,7 +342,6 @@ BZIP2	= bzip2
 
 # Testing
 
-<<<<<<< HEAD
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
@@ -375,22 +370,6 @@ prove_installcheck = @echo "TAP tests not enabled"
 prove_check = $(prove_installcheck)
 endif
 
-=======
-PROVE = @PROVE@
-PG_PROVE_FLAGS = --ext='.pl' -I $(top_srcdir)/src/test/perl/
-PROVE_FLAGS = --verbose
-
-define prove_installcheck
-PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
-endef
-
-define prove_check
-$(MKDIR_P) tmp_check/log
-$(MAKE) -C $(top_builddir) DESTDIR=$(CURDIR)/tmp_check/install install >$(CURDIR)/tmp_check/log/install.log 2>&1
-PATH="$(CURDIR)/tmp_check/install$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS)
-endef
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 # Installation.
 
 install_bin = @install_bin@
@@ -619,14 +598,10 @@ endif
 
 LIBOBJS = @LIBOBJS@
 
-<<<<<<< HEAD
 # files needed for the chosen CRC-32C implementation
 PG_CRC32C_OBJS = @PG_CRC32C_OBJS@
 
-LIBS := -lpgport -lpgcommon $(LIBS)
-=======
 LIBS := -lpgcommon -lpgport $(LIBS)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 # to make ws2_32.lib the last library, and always link with shfolder,
 # so SHGetFolderName isn't picked up from shell32.dll

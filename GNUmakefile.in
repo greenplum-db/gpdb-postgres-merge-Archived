@@ -111,7 +111,6 @@ distclean maintainer-clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
-<<<<<<< HEAD
 installcheck-resgroup:
 	$(MAKE) -C src/test/isolation2 $@
 
@@ -126,17 +125,13 @@ create-tinc-test-cluster: destroy-demo-cluster
 	$(MAKE) -C gpAux/gpdemo DEFAULT_QD_MAX_CONNECT=150 NUM_PRIMARY_MIRROR_PAIRS=2
 	. gpAux/gpdemo/gpdemo-env.sh && createdb gptest
 
-check: all
-=======
 check check-tests: all
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
 
 $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
 
-<<<<<<< HEAD
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
 .PHONY: installcheck-world
@@ -146,14 +141,12 @@ $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,c
 # which probably indicates that we're relying on undefined behavior... we should
 # probably pull anything order-dependent out of recurse() and back into the
 # recipe body).
+# GPDB_94_MERGE_FIXME: We should stop listing each contrib module here separately.
 $(call recurse,installcheck-world,src/test/regress,installcheck-good)
 $(call recurse,installcheck-world, \
-			   src/test/fsync \
-			   src/test/walrep \
-			   src/test/heap_checksum \
-			   src/test/isolation \
-			   src/test/isolation2 \
+			   src/test/ \
 			   src/pl \
+			   src/interfaces/gppc \
 			   contrib/formatter_fixedwidth \
 			   contrib/extprotocol \
 			   contrib/dblink \
@@ -162,9 +155,7 @@ $(call recurse,installcheck-world, \
 			   contrib/pgcrypto \
 			   contrib/gp_internal_tools \
 			   gpAux/extensions \
-			   src/bin/gpfdist \
-			   src/interfaces/gppc \
-			   src/test/kerberos \
+			   src/bin/ \
 			   gpMgmt/bin,installcheck)
 .PHONY: installcheck-gpcheckcat
 installcheck-world: installcheck-gpcheckcat
@@ -173,10 +164,6 @@ installcheck-gpcheckcat:
 $(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
 $(call recurse,installcheck-world,contrib/pg_upgrade,check)
 
-$(call recurse,maintainer-check,doc src config contrib)
-=======
-$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib src/bin,installcheck)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 # Run mock tests, that don't require a running server. Arguably these should
 # be part of [install]check-world, but we treat them more like part of
@@ -221,15 +208,8 @@ distdir:
 	  fi || exit; \
 	done
 	$(MAKE) -C $(distdir) distprep
-<<<<<<< HEAD
-	#$(MAKE) -C $(distdir)/doc/src/sgml/ HISTORY INSTALL regress_README
-	#cp $(distdir)/doc/src/sgml/HISTORY $(distdir)/
+	#$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
 	#cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
-	#cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
-=======
-	$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
-	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	$(MAKE) -C $(distdir) distclean
 	#rm -f $(distdir)/README.git
 

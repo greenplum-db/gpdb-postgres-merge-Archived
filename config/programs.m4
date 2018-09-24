@@ -23,16 +23,6 @@ if test "$BISON"; then
 *** Bison version 1.875 or later is required, but this is $pgac_bison_version.])
     BISON=""
   fi
-<<<<<<< HEAD
- # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead
- # of the now preferred %name-prefix "base_yy", but the latter
- # doesn't work with Bison 2.3 or less.  So for now we silence the
- # deprecation warnings.
- if echo "$pgac_bison_version" | $AWK '{ if ([$]4 >= 3) exit 0; else exit 1;}'
- then
-   BISONFLAGS="$BISONFLAGS -Wno-deprecated"
- fi
-=======
   # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead
   # of the now preferred %name-prefix "base_yy", but the latter
   # doesn't work with Bison 2.3 or less.  So for now we silence the
@@ -41,7 +31,6 @@ if test "$BISON"; then
   then
     BISONFLAGS="$BISONFLAGS -Wno-deprecated"
   fi
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 fi
 
 if test -z "$BISON"; then

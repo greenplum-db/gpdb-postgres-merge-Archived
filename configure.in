@@ -17,34 +17,23 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
-[PG_PACKAGE_VERSION=9.3beta1]
+[PG_PACKAGE_VERSION=9.4beta1]
 AC_SUBST(PG_PACKAGE_VERSION)
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
 dnl recommended.  You can remove the check from 'configure.in' but it is then
 dnl your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2013, PostgreSQL Global Development Group])
-=======
-AC_INIT([PostgreSQL], [9.4beta1], [pgsql-bugs@postgresql.org])
-
-m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
-Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
-your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2014, PostgreSQL Global Development Group])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/gpdb)
 AC_SUBST(configure_args, [$ac_configure_args])
 
-<<<<<<< HEAD
 [PG_MAJORVERSION=`expr "$PG_PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`]
 AC_SUBST(PG_MAJORVERSION)
 AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major version as a string])
@@ -53,16 +42,6 @@ AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major versio
 dnl Greenplum co-opts the --with-extra-version value to append to Only the Greenplum version
 PGAC_ARG_REQ(with, extra-version, [STRING], [append STRING to version], [], [])
 AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_PACKAGE_VERSION", [Postgres version Greenplum Database is based on])
-=======
-[PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`]
-AC_SUBST(PG_MAJORVERSION)
-AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major version as a string])
-
-PGAC_ARG_REQ(with, extra-version, [STRING], [append STRING to version],
-             [PG_VERSION="$PACKAGE_VERSION$withval"],
-             [PG_VERSION="$PACKAGE_VERSION"])
-AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_VERSION", [PostgreSQL version as a string])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 AC_CANONICAL_HOST
 
@@ -1319,19 +1298,6 @@ if test "$with_gssapi" = yes ; then
   fi
 fi
 
-<<<<<<< HEAD
-if test "$with_krb5" = yes ; then
-  if test "$PORTNAME" != "win32"; then
-     AC_SEARCH_LIBS(com_err, [krb5 'krb5 -lcrypto -ldes -lasn1 -lroken' com_err 'com_err -lssl -lcrypto'], [],
-                    [AC_MSG_ERROR([could not find function 'com_err' required for Kerberos 5])])
-     AC_SEARCH_LIBS(krb5_sendauth, [krb5 'krb5 -lcrypto -ldes -lasn1 -lroken'], [],
-                    [AC_MSG_ERROR([could not find function 'krb5_sendauth' required for Kerberos 5])])
-  else
-     AC_SEARCH_LIBS(com_err, 'comerr32 -lkrb5_32', [],
-                    [AC_MSG_ERROR([could not find function 'com_err' required for Kerberos 5])])
-  fi
-fi
-
 AC_DEFUN([CHECK_APR], [
   GPAC_PATH_APR_1_CONFIG
   # If the 'apr-1-config --link-ld' produced correct output, -lapr-1 is already
@@ -1370,8 +1336,6 @@ if test "$enable_gpperfmon" = yes; then
 fi
 
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 if test "$with_openssl" = yes ; then
   dnl Order matters!
   if test "$PORTNAME" != "win32"; then
@@ -1465,11 +1429,7 @@ fi
 ##
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-<<<<<<< HEAD
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/ucred.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h ])
-=======
-AC_CHECK_HEADERS([crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h ])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
@@ -1685,12 +1645,7 @@ fi
 m4_defun([AC_PROG_CC_STDC], []) dnl We don't want that.
 AC_C_BIGENDIAN
 PGAC_C_INLINE
-<<<<<<< HEAD
 PGAC_PRINTF_ARCHETYPE
-AC_C_CONST
-AC_C_STRINGIZE
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 AC_C_FLEXIBLE_ARRAY_MEMBER
 PGAC_C_SIGNED
 PGAC_C_FUNCNAME_SUPPORT
@@ -1785,14 +1740,10 @@ PGAC_FUNC_GETTIMEOFDAY_1ARG
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat readlink setproctitle setsid sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
-=======
 AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -2332,7 +2283,6 @@ operating system;  use --disable-thread-safety to disable thread safety.])
 fi
 fi
 
-<<<<<<< HEAD
 if test $ac_cv_func_fseeko = yes; then
 AC_SYS_LARGEFILE
 enable_largefile=yes
@@ -2351,11 +2301,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
 fi
 fi
 
-# SunOS doesn't handle negative byte comparisons properly with +/- return
-AC_FUNC_MEMCMP
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 # Select semaphore implementation type.
 if test "$PORTNAME" != "win32"; then
@@ -2463,7 +2408,6 @@ AC_CHECK_PROGS(OSX, [osx sgml2xml sx])
 #
 # Check for test tools
 #
-<<<<<<< HEAD
 if test "$enable_tap_tests" = yes; then
   AC_CHECK_PROGS(PROVE, prove)
   if test -z "$PROVE"; then
@@ -2476,10 +2420,6 @@ if test "$enable_tap_tests" = yes; then
   AX_PROG_PERL_MODULES(IPC::Run, ,
     AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
 fi
-=======
-AC_CHECK_PROGS(PROVE, prove)
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 # Thread testing
 
 # We have to run the thread test near the end so we have all our symbols
@@ -2606,11 +2546,7 @@ else
 fi
 
 AC_DEFINE_UNQUOTED(PG_VERSION_STR,
-<<<<<<< HEAD
                    ["PostgreSQL $PG_VERSION (Greenplum Database $GP_VERSION) on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"],
-=======
-                   ["PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"],
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
                    [A string containing the version number, platform, and C compiler])
 
 # Supply a numeric version string for use by 3rd party add-ons
