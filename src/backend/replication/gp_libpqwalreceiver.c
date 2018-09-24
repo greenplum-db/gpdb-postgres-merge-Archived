@@ -138,15 +138,20 @@ walrcv_identify_system(TimeLineID *primary_tli)
  * throws an ERROR.
  */
 bool
-walrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint)
+walrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint, char *slotname)
 {
 	char		cmd[64];
 	PGresult   *res;
 
 	/* Start streaming from the point requested by startup process */
-	snprintf(cmd, sizeof(cmd), "START_REPLICATION %X/%X TIMELINE %u",
-			 (uint32) (startpoint >> 32), (uint32) startpoint,
-			 tli);
+	if (slotname != NULL)
+		snprintf(cmd, sizeof(cmd),
+				 "START_REPLICATION SLOT \"%s\" %X/%X TIMELINE %u", slotname,
+				 (uint32) (startpoint >> 32), (uint32) startpoint, tli);
+	else
+		snprintf(cmd, sizeof(cmd),
+				 "START_REPLICATION %X/%X TIMELINE %u",
+				 (uint32) (startpoint >> 32), (uint32) startpoint, tli);
 	res = libpqrcv_PQexec(cmd);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)

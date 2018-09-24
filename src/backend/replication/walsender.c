@@ -50,12 +50,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-<<<<<<< HEAD
-#include "access/transam.h"
-#include "access/xlog_internal.h"
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "funcapi.h"
@@ -182,6 +177,8 @@ static bool streamingDoneReceiving;
 
 /* Are we there yet? */
 static bool WalSndCaughtUp = false;
+static bool WalSndCaughtUpWithinRange = false;
+
 
 /* Flags set by signal handlers for later service in main loop */
 static volatile sig_atomic_t got_SIGHUP = false;
@@ -208,14 +205,10 @@ typedef void (*WalSndSendDataCallback) (void);
 static void WalSndLoop(WalSndSendDataCallback send_data);
 static void InitWalSenderSlot(void);
 static void WalSndKill(int code, Datum arg);
-<<<<<<< HEAD
-static void XLogSend(bool *caughtup,  bool *catchup_in_range);
-=======
 static void WalSndShutdown(void) __attribute__((noreturn));
 static void XLogSendPhysical(void);
 static void XLogSendLogical(void);
 static void WalSndDone(WalSndSendDataCallback send_data);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static XLogRecPtr GetStandbyFlushRecPtr(void);
 static void IdentifySystem(void);
 static void CreateReplicationSlot(CreateReplicationSlotCmd *cmd);
@@ -347,14 +340,13 @@ IdentifySystem(void)
 
 	snprintf(xpos, sizeof(xpos), "%X/%X", (uint32) (logptr >> 32), (uint32) logptr);
 
-<<<<<<< HEAD
 	elogif(debug_walrepl_snd, LOG,
 			"walsnd identifysystem -- "
 			"SysId = %s, "
 			"ThisTimelineID = %s, "
 			"XLog InsertRecPtr = %s will be sent.",
 			sysid, tli, xpos);
-=======
+
 	if (MyDatabaseId != InvalidOid)
 	{
 		MemoryContext cur = CurrentMemoryContext;
@@ -368,7 +360,6 @@ IdentifySystem(void)
 		/* CommitTransactionCommand switches to TopMemoryContext */
 		MemoryContextSwitchTo(cur);
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Send a RowDescription message */
 	pq_beginmessage(&buf, 'T');
@@ -1294,10 +1285,6 @@ exec_replication_command(const char *cmd_string)
 	MemoryContext cmd_context;
 	MemoryContext old_context;
 
-<<<<<<< HEAD
-	ereport(LOG,
-			(errmsg("Received replication command: %s", cmd_string)));
-=======
 	/*
 	 * CREATE_REPLICATION_SLOT ... LOGICAL exports a snapshot until the next
 	 * command arrives. Clean up the old stuff if there's anything.
@@ -1305,7 +1292,6 @@ exec_replication_command(const char *cmd_string)
 	SnapBuildClearExportedSnapshot();
 
 	elog(DEBUG1, "received replication command: %s", cmd_string);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -1588,7 +1574,6 @@ ProcessStandbyReplyMessage(void)
 		SpinLockRelease(&walsnd->mutex);
 	}
 
-<<<<<<< HEAD
 	/*
 	 * Set xlogCleanUpTo to flush point so that the old
 	 * xlog seg files can be cleaned up-to this point
@@ -1596,8 +1581,6 @@ ProcessStandbyReplyMessage(void)
 	 */
 	WalSndSetXLogCleanUpTo(flushPtr);
 
-	SyncRepReleaseWaiters();
-=======
 	if (!am_cascading_walsender)
 		SyncRepReleaseWaiters();
 
@@ -1643,7 +1626,6 @@ PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin)
 		ReplicationSlotMarkDirty();
 		ReplicationSlotsComputeRequiredXmin(false);
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -1804,7 +1786,8 @@ WalSndCheckTimeOut(TimestampTz now)
 		 * standby.
 		 */
 		ereport(COMMERROR,
-		(errmsg("terminating walsender process due to replication timeout")));
+				(errmsg("terminating walsender process due to replication timeout"),
+				 errSendAlert(true)));
 
 		WalSndShutdown();
 	}
@@ -1814,12 +1797,6 @@ WalSndCheckTimeOut(TimestampTz now)
 static void
 WalSndLoop(WalSndSendDataCallback send_data)
 {
-<<<<<<< HEAD
-	bool		caughtup = false;
-	bool		caughtup_within_range = false;
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/*
 	 * Allocate buffers that will be used for each outgoing and incoming
 	 * message.  We do this just once to reduce palloc overhead.
@@ -1841,14 +1818,9 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		SIMPLE_FAULT_INJECTOR(WalSenderLoop);
-
-		/* Clear any already-pending wakeups */
-		ResetLatch(&MyWalSnd->latch);
-=======
 		TimestampTz now;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+		SIMPLE_FAULT_INJECTOR(WalSenderLoop);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -1888,11 +1860,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 		 * caught up.
 		 */
 		if (!pq_is_send_pending())
-<<<<<<< HEAD
-			XLogSend(&caughtup, &caughtup_within_range);
-=======
 			send_data();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		else
 			WalSndCaughtUp = false;
 
@@ -1900,10 +1868,10 @@ WalSndLoop(WalSndSendDataCallback send_data)
 		 * Set caught up within range if not already done. Once we catch
 		 * up within range we never go back.
 		 */
-		if (!MyWalSnd->caughtup_within_range && caughtup_within_range)
-				WalSndSetCaughtupWithinRange(true);
+		if (!MyWalSnd->caughtup_within_range && WalSndCaughtUpWithinRange)
+			WalSndSetCaughtupWithinRange(true);
 
-		Assert(!caughtup || caughtup_within_range);
+		Assert(!WalSndCaughtUp || WalSndCaughtUpWithinRange);
 
 		/* Try to flush pending output to the client */
 		if (pq_flush_if_writable() != 0)
@@ -1936,26 +1904,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			 * is not sure which.
 			 */
 			if (walsender_ready_to_stop)
-<<<<<<< HEAD
-			{
-				elogif(debug_walrepl_snd, LOG,
-						"walsnd -- This WAL sender has been requested to stop, hence "
-						"flushing out every before performing shutdown.");
-
-				/* ... let's just be real sure we're caught up ... */
-				XLogSend(&caughtup, &caughtup_within_range);
-				if (caughtup && !pq_is_send_pending())
-				{
-					/* Inform the standby that XLOG streaming is done */
-					EndCommand("COPY 0", DestRemote);
-					pq_flush();
-
-					proc_exit(0);
-				}
-			}
-=======
 				WalSndDone(send_data);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 
 		now = GetCurrentTimestamp();
@@ -1993,27 +1942,6 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			WaitLatchOrSocket(&MyWalSnd->latch, wakeEvents,
 							  MyProcPort->sock, sleeptime);
 			ImmediateInterruptOK = false;
-<<<<<<< HEAD
-
-			/*
-			 * Check for replication timeout.  Note we ignore the corner case
-			 * possibility that the client replied just as we reached the
-			 * timeout ... he's supposed to reply *before* that.
-			 */
-			if (wal_sender_timeout > 0 && GetCurrentTimestamp() >= timeout)
-			{
-				/*
-				 * Since typically expiration of replication timeout means
-				 * communication problem, we don't send the error message to
-				 * the standby.
-				 */
-				ereport(COMMERROR,
-						(errmsg("terminating walsender process due to replication timeout"),
-						 errSendAlert(true)));
-				goto send_failure;
-			}
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 	}
 	return;
@@ -2087,7 +2015,6 @@ WalSndKill(int code, Datum arg)
 
 	Assert(walsnd != NULL);
 
-<<<<<<< HEAD
 	if (IS_QUERY_DISPATCHER())
 	{
 		/*
@@ -2124,8 +2051,6 @@ WalSndKill(int code, Datum arg)
 		return;
 	}
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/*
 	 * Clear MyWalSnd first; then disown the latch.  This is so that signal
 	 * handlers won't try to touch the latch after it's no longer ours.
@@ -2138,10 +2063,7 @@ WalSndKill(int code, Datum arg)
 	 * Mark WalSnd struct no longer in use. Assume that no lock is required
 	 * for this.
 	 */
-<<<<<<< HEAD
 	walsnd->replica_disconnected_at = (pg_time_t) time(NULL);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	walsnd->pid = 0;
 }
 
@@ -2313,22 +2235,14 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
  * but not yet sent to the client, and buffer it in the libpq output
  * buffer.
  *
-<<<<<<< HEAD
- * If there is no unsent WAL remaining, *caughtup is set to true, otherwise
- * *caughtup is set to false.
- *
- * If we've sent enough WAL (although we may not have completely caughtup)
- * we set caughtup_within_range to true.
- */
-static void
-XLogSend(bool *caughtup, bool *caughtup_within_range)
-=======
  * If there is no unsent WAL remaining, WalSndCaughtUp is set to true,
  * otherwise WalSndCaughtUp is set to false.
+ *
+ * If we've sent enough WAL (although we may not have completely caughtup)
+ * we set WalSndCaughtUpWithinRange to true.
  */
 static void
 XLogSendPhysical(void)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	XLogRecPtr	SendRqstPtr;
 	XLogRecPtr	startptr;
@@ -2466,19 +2380,14 @@ XLogSendPhysical(void)
 	Assert(sentPtr <= SendRqstPtr);
 	if (SendRqstPtr <= sentPtr)
 	{
-<<<<<<< HEAD
-		*caughtup = true;
-		*caughtup_within_range = true;
+		WalSndCaughtUp = true;
+		WalSndCaughtUpWithinRange = true;
 
 		elogif(debug_walrepl_snd, LOG,
 				"walsnd xlogSend -- "
 				"SendRqstPtr equals sentPtr (%X/%X). Nothing to read from "
 				"xlog. Setting caughtup and caughtup_within_range before return.",
 			   (uint32) (sentPtr >> 32), (uint32) sentPtr);
-
-=======
-		WalSndCaughtUp = true;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		return;
 	}
 
@@ -2548,8 +2457,8 @@ XLogSendPhysical(void)
 	sentPtr = endptr;
 
 	/* See if we're within catchup range */
-	if (!(*caughtup_within_range))
-		*caughtup_within_range = WalSndIsCatchupWithinRange(sentPtr, SendRqstPtr);
+	if (!WalSndCaughtUpWithinRange)
+		WalSndCaughtUpWithinRange = WalSndIsCatchupWithinRange(sentPtr, SendRqstPtr);
 
 	/* Update shared memory status */
 	{
@@ -2583,8 +2492,8 @@ XLogSendPhysical(void)
 		   (uint32) (startptr >> 32), (uint32) startptr,
 		   (uint32) (endptr >> 32), (uint32) endptr,
 			(int)nbytes,
-			caughtup_within_range ? "true" : "false",
-			caughtup ? "true" : "false");
+			WalSndCaughtUpWithinRange ? "true" : "false",
+			WalSndCaughtUp ? "true" : "false");
 
 	return;
 }

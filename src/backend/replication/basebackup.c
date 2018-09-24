@@ -21,15 +21,11 @@
 #include "access/genam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"		/* for pg_start/stop_backup */
-<<<<<<< HEAD
 #include "cdb/cdbvars.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
-=======
-#include "catalog/catalog.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
@@ -51,13 +47,9 @@
 #include "utils/faultinjector.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
-<<<<<<< HEAD
 #include "utils/snapmgr.h"
-#include "pgtar.h"
-=======
 #include "utils/timestamp.h"
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 typedef struct
 {
@@ -66,20 +58,13 @@ typedef struct
 	bool		fastcheckpoint;
 	bool		nowait;
 	bool		includewal;
-<<<<<<< HEAD
+	uint32		maxrate;
 	List	   *exclude;
 } basebackup_options;
 
 
 static bool match_exclude_list(char *path, List *exclude);
 static int64 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces, List *exclude);
-=======
-	uint32		maxrate;
-} basebackup_options;
-
-
-static int64 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static int64 sendTablespace(char *path, bool sizeonly);
 static bool sendFile(char *readfilename, char *tarfilename,
 		 struct stat * statbuf, bool missing_ok);
@@ -164,7 +149,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
 								  &labelfile);
-<<<<<<< HEAD
 	Assert(!XLogRecPtrIsInvalid(startptr));
 
 	elogif(!debug_basebackup, LOG,
@@ -179,14 +163,13 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	WalSndSetXLogCleanUpTo(startptr);
 
 	SIMPLE_FAULT_INJECTOR(BaseBackupPostCreateCheckpoint);
-=======
+
 	/*
 	 * Once do_pg_start_backup has been called, ensure that any failure causes
 	 * us to abort the backup so we don't "leak" a backup counter. For this reason,
 	 * *all* functionality between do_pg_start_backup() and do_pg_stop_backup()
 	 * should be inside the error cleanup block!
 	 */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	PG_ENSURE_ERROR_CLEANUP(base_backup_cleanup, (Datum) 0);
 	{
@@ -197,8 +180,6 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 		SendXlogRecPtrResult(startptr, starttli);
 
-<<<<<<< HEAD
-=======
 		/*
 		 * Calculate the relative path of temporary statistics directory in order
 		 * to skip the files which are located in that directory later.
@@ -211,17 +192,12 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		else
 			statrelpath = pgstat_stat_directory;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		/* Collect information about all tablespaces */
 		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
 		{
 			char		fullpath[MAXPGPATH];
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
-<<<<<<< HEAD
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			int			rllen;
 
 			/* Skip special stuff */
@@ -279,11 +255,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 		/* Add a node for the base directory at the end */
 		ti = palloc0(sizeof(tablespaceinfo));
-<<<<<<< HEAD
 		ti->size = opt->progress ? sendDir(".", 1, true, tablespaces, opt->exclude) : -1;
-=======
-		ti->size = opt->progress ? sendDir(".", 1, true, tablespaces) : -1;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		tablespaces = lappend(tablespaces, ti);
 
 		/* Send tablespace header */
@@ -333,11 +305,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
 
 				/* ... then the bulk of the files ... */
-<<<<<<< HEAD
 				sendDir(".", 1, false, tablespaces, opt->exclude);
-=======
-				sendDir(".", 1, false, tablespaces);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
@@ -672,12 +640,6 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 			opt->includewal = true;
 			o_wal = true;
 		}
-<<<<<<< HEAD
-		else if (strcmp(defel->defname, "exclude") == 0)
-		{
-			/* EXCLUDE option can be specified multiple times */
-			opt->exclude = lappend(opt->exclude, defel->arg);
-=======
 		else if (strcmp(defel->defname, "max_rate") == 0)
 		{
 			long		maxrate;
@@ -696,7 +658,11 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		}
+		else if (strcmp(defel->defname, "exclude") == 0)
+		{
+			/* EXCLUDE option can be specified multiple times */
+			opt->exclude = lappend(opt->exclude, defel->arg);
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -979,11 +945,7 @@ sendTablespace(char *path, bool sizeonly)
 	size = 512;		/* Size of the header just added */
 
 	/* Send all the files in the tablespace version directory */
-<<<<<<< HEAD
 	size += sendDir(pathbuf, strlen(path), sizeonly, NIL, NIL);
-=======
-	size += sendDir(pathbuf, strlen(path), sizeonly, NIL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	return size;
 }
@@ -1016,18 +978,12 @@ match_exclude_list(char *path, List *exclude)
  *
  * Omit any directory in the tablespaces list, to avoid backing up
  * tablespaces twice when they were created inside PGDATA.
-<<<<<<< HEAD
  *
  * GPDB: Also omit any files in the 'exclude' list.
  */
 static int64
 sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		List *exclude)
-=======
- */
-static int64
-sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -1243,11 +1199,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 				}
 			}
 			if (!skip_this_dir)
-<<<<<<< HEAD
 				size += sendDir(pathbuf, basepathlen, sizeonly, tablespaces, exclude);
-=======
-				size += sendDir(pathbuf, basepathlen, sizeonly, tablespaces);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 		else if (S_ISREG(statbuf.st_mode))
 		{

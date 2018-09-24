@@ -69,11 +69,8 @@ Node *replication_parse_result;
 %token K_PROGRESS
 %token K_FAST
 %token K_NOWAIT
-<<<<<<< HEAD
 %token K_EXCLUDE
-=======
 %token K_MAX_RATE
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 %token K_WAL
 %token K_TIMELINE
 %token K_PHYSICAL
@@ -172,6 +169,11 @@ base_backup_opt:
 				  $$ = makeDefElem("max_rate",
 								   (Node *)makeInteger($2));
 				}
+			| K_EXCLUDE SCONST
+				{
+				  $$ = makeDefElem("exclude",
+						  (Node *) makeString($2));
+				}
 			;
 
 create_replication_slot:
@@ -204,11 +206,6 @@ drop_replication_slot:
 					cmd = makeNode(DropReplicationSlotCmd);
 					cmd->slotname = $2;
 					$$ = (Node *) cmd;
-				}
-			| K_EXCLUDE SCONST
-				{
-				  $$ = makeDefElem("exclude",
-						  (Node *)makeString($2));
 				}
 			;
 

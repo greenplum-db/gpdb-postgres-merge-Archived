@@ -16,14 +16,11 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = walsender.o walreceiverfuncs.o walreceiver.o basebackup.o \
-<<<<<<< HEAD
-	repl_gram.o syncrep.o
-OBJS += gp_libpqwalreceiver.o gp_replication.o
-=======
 	repl_gram.o slot.o slotfuncs.o syncrep.o
 
+OBJS += gp_libpqwalreceiver.o gp_replication.o
+
 SUBDIRS = logical
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 include $(top_srcdir)/src/backend/common.mk
 
