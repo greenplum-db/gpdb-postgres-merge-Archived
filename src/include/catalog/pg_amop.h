@@ -845,7 +845,21 @@ DATA(insert (	3474   3831 2283 16 s	3889 4000 0 ));
 DATA(insert (	3474   3831 3831 18 s	3882 4000 0 ));
 
 /*
-<<<<<<< HEAD
+ * GiST inet_ops
+ */
+DATA(insert (	3550	869 869 3 s		3552 783 0 ));
+DATA(insert (	3550	869 869 18 s	1201 783 0 ));
+DATA(insert (	3550	869 869 19 s	1202 783 0 ));
+DATA(insert (	3550	869 869 20 s	1203 783 0 ));
+DATA(insert (	3550	869 869 21 s	1204 783 0 ));
+DATA(insert (	3550	869 869 22 s	1205 783 0 ));
+DATA(insert (	3550	869 869 23 s	1206 783 0 ));
+DATA(insert (	3550	869 869 24 s	931 783 0 ));
+DATA(insert (	3550	869 869 25 s	932 783 0 ));
+DATA(insert (	3550	869 869 26 s	933 783 0 ));
+DATA(insert (	3550	869 869 27 s	934 783 0 ));
+
+/*
  * the operators for the on-disk bitmap index.
  */
 /*
@@ -1261,20 +1275,5 @@ DATA(insert (	7080	3310 3310 2 s 3329 403 0 ));
 DATA(insert (	7080	3310 3310 3 s 6325 403 0 ));
 DATA(insert (	7080	3310 3310 4 s 3330 403 0 ));
 DATA(insert (	7080	3310 3310 5 s 3328 403 0 ));
-=======
- * GiST inet_ops
- */
-DATA(insert (	3550	869 869 3 s		3552 783 0 ));
-DATA(insert (	3550	869 869 18 s	1201 783 0 ));
-DATA(insert (	3550	869 869 19 s	1202 783 0 ));
-DATA(insert (	3550	869 869 20 s	1203 783 0 ));
-DATA(insert (	3550	869 869 21 s	1204 783 0 ));
-DATA(insert (	3550	869 869 22 s	1205 783 0 ));
-DATA(insert (	3550	869 869 23 s	1206 783 0 ));
-DATA(insert (	3550	869 869 24 s	931 783 0 ));
-DATA(insert (	3550	869 869 25 s	932 783 0 ));
-DATA(insert (	3550	869 869 26 s	933 783 0 ));
-DATA(insert (	3550	869 869 27 s	934 783 0 ));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #endif   /* PG_AMOP_H */

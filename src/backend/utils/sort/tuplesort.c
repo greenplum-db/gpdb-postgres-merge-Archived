@@ -87,13 +87,9 @@
  * above.  Nonetheless, with large workMem we can have many tapes.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -254,15 +250,10 @@ struct Tuplesortstate
 								 * tuples to return? */
 	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
-<<<<<<< HEAD
-	long		availMem;		/* remaining memory available, in bytes */
-	long        availMemMin;    /* CDB: availMem low water mark (bytes) */
-	long        availMemMin01;  /* MPP-1559: initial low water mark */
-	long		allowedMem;		/* total memory allowed, in bytes */
-=======
 	int64		availMem;		/* remaining memory available, in bytes */
+	int64		availMemMin;	/* CDB: availMem low water mark (bytes) */
+	int64		availMemMin01;	/* MPP-1559: initial low water mark */
 	int64		allowedMem;		/* total memory allowed, in bytes */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	int			maxTapes;		/* number of tapes (Knuth's T) */
 	int			tapeRange;		/* maxTapes-1 (Knuth's P) */
 	MemoryContext sortcontext;	/* memory context holding all sort data */
@@ -643,14 +634,10 @@ tuplesort_begin_common(int workMem, bool randomAccess, bool allocmemtuple)
 	state->randomAccess = randomAccess;
 	state->bounded = false;
 	state->boundUsed = false;
-<<<<<<< HEAD
-	state->allowedMem = workMem * 1024L;
-	state->availMemMin = state->availMem = state->allowedMem;
-	state->availMemMin01 = state->availMemMin;
-=======
 	state->allowedMem = workMem * (int64) 1024;
 	state->availMem = state->allowedMem;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	state->availMemMin = state->allowedMem;
+	state->availMemMin01 = state->availMemMin;
 	state->sortcontext = sortcontext;
 	state->tapeset = NULL;
 
@@ -1910,11 +1897,7 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 
 	/*
 	 * We don't actually support backwards skip yet, because no callers need
-<<<<<<< HEAD
-	 * it.	The API is designed to allow for that later, though.
-=======
 	 * it.  The API is designed to allow for that later, though.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	Assert(forward);
 	Assert(ntuples >= 0);
@@ -1922,7 +1905,6 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 	switch (state->status)
 	{
 		case TSS_SORTEDINMEM:
-<<<<<<< HEAD
 			if (state->memtupcount - state->pos.current >= ntuples)
 			{
 				state->pos.current += ntuples;
@@ -1937,22 +1919,6 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 			 * returning EOF here might be the wrong thing.
 			 */
 			if (state->bounded && state->pos.current >= state->bound)
-=======
-			if (state->memtupcount - state->current >= ntuples)
-			{
-				state->current += ntuples;
-				return true;
-			}
-			state->current = state->memtupcount;
-			state->eof_reached = true;
-
-			/*
-			 * Complain if caller tries to retrieve more tuples than
-			 * originally asked for in a bounded sort.  This is because
-			 * returning EOF here might be the wrong thing.
-			 */
-			if (state->bounded && state->current >= state->bound)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				elog(ERROR, "retrieved too many tuples in a bounded sort");
 
 			return false;
@@ -1970,11 +1936,7 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 				SortTuple	stup;
 				bool		should_free;
 
-<<<<<<< HEAD
 				if (!tuplesort_gettuple_common_pos(state, &state->pos, forward,
-=======
-				if (!tuplesort_gettuple_common(state, forward,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 											   &stup, &should_free))
 				{
 					MemoryContextSwitchTo(oldcontext);
