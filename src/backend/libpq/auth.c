@@ -871,11 +871,7 @@ recv_and_check_password_packet(Port *port, char **logdetail)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-<<<<<<< HEAD
-	result = hashed_passwd_verify(port, port->user_name, passwd);
-=======
-	result = md5_crypt_verify(port, port->user_name, passwd, logdetail);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	result = hashed_passwd_verify(port, port->user_name, passwd, logdetail);
 
 	pfree(passwd);
 

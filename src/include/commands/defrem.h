@@ -92,7 +92,7 @@ extern void RemoveOperatorById(Oid operOid);
 
 /* commands/aggregatecmds.c */
 extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
-							List *parameters, bool ordered, const char *queryString);
+						   List *parameters, const char *queryString);
 
 /* commands/opclasscmds.c */
 extern Oid	DefineOpClass(CreateOpClassStmt *stmt);

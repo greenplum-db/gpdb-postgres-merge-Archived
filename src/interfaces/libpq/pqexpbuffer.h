@@ -165,16 +165,6 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 /*------------------------
- * appendPQExpBufferVA
- * A version of appendPQExpBuffer() that takes a variable arguments list
- * (va_list) instead of '...', like vsnprintf().  Caller must do
- * va_start(args, x) before calling, and va_end(args) upon return.
- */
-void
-appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
-
-/*------------------------
  * appendPQExpBufferStr
  * Append the given string to a PQExpBuffer, allocating more space
  * if necessary.

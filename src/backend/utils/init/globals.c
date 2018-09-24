@@ -139,9 +139,6 @@ int			VacuumPageDirty = 0;
 
 int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
-<<<<<<< HEAD
-
-int			GinFuzzySearchLimit = 0;
 
 /* gpperfmon port number */
 int 	gpperfmon_port = 8888;
@@ -158,5 +155,3 @@ bool	pljava_classpath_insecure = false;
 /* Memory protection GUCs*/
 int gp_vmem_protect_limit = 8192;
 int gp_vmem_protect_gang_cache_limit = 500;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

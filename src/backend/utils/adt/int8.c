@@ -763,11 +763,7 @@ int8dec(PG_FUNCTION_ARGS)
 
 /*
  * These functions are exactly like int8inc/int8dec but are used for
-<<<<<<< HEAD
- * aggregates that count only non-null values.	Since the functions are
-=======
  * aggregates that count only non-null values.  Since the functions are
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * declared strict, the null checks happen before we ever get here, and all we
  * need do is increment the state value.  We could actually make these pg_proc
  * entries point right at int8inc/int8dec, but then the opr_sanity regression

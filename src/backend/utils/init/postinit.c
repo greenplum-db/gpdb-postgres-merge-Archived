@@ -859,17 +859,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	if (am_superuser)
 		check_superuser_connection_limit();
 
-<<<<<<< HEAD
-	/*
-	 * If walsender or fts handler, we don't want to connect to any particular database. Just
-	 * finish the backend startup by processing any options from the startup
-	 * packet, and we're done.
-	 */
-	if (am_walsender || am_ftshandler)
-=======
 	/* Check replication permissions needed for walsender processes. */
 	if (am_walsender)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{
 		Assert(!bootstrap);
 
@@ -887,13 +878,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 					 errmsg("must be superuser or replication role to start walsender")));
 	}
 
-<<<<<<< HEAD
-		if (am_ftshandler && !am_superuser)
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser role to handle FTS request")));
+	if (am_ftshandler && !am_superuser)
+		ereport(FATAL,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser role to handle FTS request")));
 
-=======
 	/*
 	 * If this is a plain walsender only supporting physical replication, we
 	 * don't want to connect to any particular database. Just finish the
@@ -902,7 +891,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (am_walsender && !am_db_walsender)
 	{
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		/* process any options passed in the startup packet */
 		if (MyProcPort != NULL)
 			process_startup_options(MyProcPort, am_superuser);

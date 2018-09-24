@@ -1397,19 +1397,6 @@ ThereAreNoPriorRegisteredSnapshots(void)
 	return false;
 }
 
-<<<<<<< HEAD
-DistributedSnapshotWithLocalMapping *
-GetCurrentDistributedSnapshotWithLocalMapping()
-{
-	if (!FirstSnapshotSet)
-		return NULL;
-
-	Assert(CurrentSnapshot);
-	if (CurrentSnapshot->haveDistribSnapshot)
-		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
-
-	return NULL;
-=======
 /*
  * Setup a snapshot that replaces normal catalog snapshots that allows catalog
  * access to behave just like it did at a certain point in the past.
@@ -1450,5 +1437,18 @@ HistoricSnapshotGetTupleCids(void)
 {
 	Assert(HistoricSnapshotActive());
 	return tuplecid_data;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+}
+
+
+DistributedSnapshotWithLocalMapping *
+GetCurrentDistributedSnapshotWithLocalMapping()
+{
+	if (!FirstSnapshotSet)
+		return NULL;
+
+	Assert(CurrentSnapshot);
+	if (CurrentSnapshot->haveDistribSnapshot)
+		return &CurrentSnapshot->distribSnapshotWithLocalMapping;
+
+	return NULL;
 }

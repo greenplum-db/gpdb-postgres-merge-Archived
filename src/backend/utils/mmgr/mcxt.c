@@ -82,10 +82,6 @@ MemoryContext InterconnectContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
-<<<<<<< HEAD
-=======
-static void MemoryContextStatsInternal(MemoryContext context, int level);
-
 /*
  * You should not do memory allocations within a critical section, because
  * an out-of-memory error will be escalated to a PANIC. To enforce that
@@ -99,7 +95,6 @@ static void MemoryContextStatsInternal(MemoryContext context, int level);
 #define AssertNotInCriticalSection(context) \
 	Assert(CritSectionCount == 0 || (context) == ErrorContext || \
 		   AmCheckpointerProcess())
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
@@ -244,12 +239,8 @@ MemoryContextDeleteImpl(MemoryContext context, const char* sfile, const char *fu
 	 */
 	MemoryContextSetParent(context, NULL);
 
-<<<<<<< HEAD
 	(*context->methods.delete_context) (context);
-=======
-	(*context->methods->delete_context) (context);
 	VALGRIND_DESTROY_MEMPOOL(context);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	pfree(context);
 }
 
@@ -954,24 +945,9 @@ MemoryContextContains(MemoryContext context, void *pointer)
 	header = (StandardChunkHeader *)
 		((char *) pointer - STANDARDCHUNKHEADERSIZE);
 
-<<<<<<< HEAD
-	if (header->sharedHeader == NULL || (void*)header->sharedHeader != (void *) MAXALIGN(header->sharedHeader) || !AllocSizeIsValid(header->size))
-	{
-		return false;
-	}
-
 	SharedChunkHeader *sharedHeader = (SharedChunkHeader *)header->sharedHeader;
 
-	/*
-	 * If the context link doesn't match then we certainly have a non-member
-	 * chunk.  Also check for a reasonable-looking size as extra guard against
-	 * being fooled by bogus pointers.
-	 */
-	if (sharedHeader->context == context)
-	{
-		return true;
-	}
-	return false;
+	return sharedHeader->context == context;
 }
 
 /*
@@ -1033,9 +1009,6 @@ MemoryContextContainsGenericAllocation(MemoryContext context, void *pointer)
 	 * context's sharedHeaderList.
 	 */
 	return false;
-=======
-	return header->context == context;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*--------------------
@@ -1152,16 +1125,11 @@ MemoryContextCreate(NodeTag tag, Size size,
 void *
 MemoryContextAlloc(MemoryContext context, Size size)
 {
-<<<<<<< HEAD
-	void *ret;
-
+	void	   *ret;
 #ifdef PGTRACE_ENABLED
 	StandardChunkHeader *header;
 #endif
-=======
-	void	   *ret;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
@@ -1171,7 +1139,6 @@ MemoryContextAlloc(MemoryContext context, Size size)
 #endif
 
 	if (!AllocSizeIsValid(size))
-<<<<<<< HEAD
 		MemoryContextError(ERRCODE_INTERNAL_ERROR,
 				context, CDB_MCXT_WHERE(context),
 				"invalid memory alloc request size %lu",
@@ -1180,19 +1147,13 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods.alloc) (context, size);
+	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
+
 #ifdef PGTRACE_ENABLED
 	header = (StandardChunkHeader *)
 		((char *) ret - STANDARDCHUNKHEADERSIZE);
 	PG_TRACE5(memctxt__alloc, size, header->size, 0, 0, (long) context->name);
 #endif
-=======
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	context->isReset = false;
-
-	ret = (*context->methods->alloc) (context, size);
-	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	return ret;
 }
@@ -1221,7 +1182,6 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 #endif
 
 	if (!AllocSizeIsValid(size))
-<<<<<<< HEAD
 		MemoryContextError(ERRCODE_INTERNAL_ERROR,
 				context, CDB_MCXT_WHERE(context),
 				"invalid memory alloc request size %lu",
@@ -1230,14 +1190,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods.alloc) (context, size);
-=======
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	context->isReset = false;
-
-	ret = (*context->methods->alloc) (context, size);
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemSetAligned(ret, 0, size);
 
@@ -1275,7 +1228,6 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 #endif
 
 	if (!AllocSizeIsValid(size))
-<<<<<<< HEAD
 		MemoryContextError(ERRCODE_INTERNAL_ERROR,
 				context, CDB_MCXT_WHERE(context),
 				"invalid memory alloc request size %lu",
@@ -1284,14 +1236,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	context->isReset = false;
 
 	ret = (*context->methods.alloc) (context, size);
-=======
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	context->isReset = false;
-
-	ret = (*context->methods->alloc) (context, size);
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemSetLoop(ret, 0, size);
 
@@ -1318,14 +1263,10 @@ palloc(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-<<<<<<< HEAD
-	return (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-=======
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
 
 	return ret;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 void *
@@ -1342,12 +1283,8 @@ palloc0(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-<<<<<<< HEAD
 	ret = (*CurrentMemoryContext->methods.alloc) (CurrentMemoryContext, size);
-=======
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
 	VALGRIND_MEMPOOL_ALLOC(CurrentMemoryContext, ret, size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemSetAligned(ret, 0, size);
 
@@ -1361,11 +1298,8 @@ palloc0(Size size)
 void
 pfree(void *pointer)
 {
-<<<<<<< HEAD
-=======
 	MemoryContext context;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
 	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
@@ -1377,11 +1311,11 @@ pfree(void *pointer)
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
-<<<<<<< HEAD
 	StandardChunkHeader* header = (StandardChunkHeader *)
 		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+	context = header->sharedHeader->context;
 
-	AssertArg(MemoryContextIsValid(header->sharedHeader->context));
+	AssertArg(MemoryContextIsValid(context));
 
 #ifdef PGTRACE_ENABLED
 	PG_TRACE5(memctxt__free, 0, 0, 
@@ -1398,19 +1332,11 @@ pfree(void *pointer)
 	header->sharedHeader->context->callerLine = sline;
 #endif
 
-	if (header->sharedHeader->context->methods.free_p)
-		(*header->sharedHeader->context->methods.free_p) (header->sharedHeader->context, pointer);
+	if (context->methods.free_p)
+		(*context->methods.free_p) (context, pointer);
 	else
 		Assert(header);   /* this assert never fails. Just here so we can set breakpoint in debugger. */
-=======
-	context = ((StandardChunkHeader *)
-			   ((char *) pointer - STANDARDCHUNKHEADERSIZE))->context;
-
-	AssertArg(MemoryContextIsValid(context));
-
-	(*context->methods->free_p) (context, pointer);
 	VALGRIND_MEMPOOL_FREE(context, pointer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -1420,14 +1346,9 @@ pfree(void *pointer)
 void *
 repalloc(void *pointer, Size size)
 {
-<<<<<<< HEAD
 	StandardChunkHeader *header;
-	void *ret;
-
-#ifdef PGTRACE_ENABLED 
-	long old_reqsize;
-	long old_size;
-#endif
+	MemoryContext context;
+	void	   *ret;
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
@@ -1442,69 +1363,43 @@ repalloc(void *pointer, Size size)
 	 */
 	header = (StandardChunkHeader *)
 		((char *) pointer - STANDARDCHUNKHEADERSIZE);
-
-	AssertArg(MemoryContextIsValid(header->sharedHeader->context));
-
-#ifdef PGTRACE_ENABLED
-#ifdef MEMORY_CONTEXT_CHECKING
-	old_reqsize = header->requested_size;
-#else
-	old_reqsize = 0;
-#endif
-	old_size = header->size;
-#endif
-
-#ifdef CDB_PALLOC_CALLER_ID
-	header->sharedHeader->context->callerFile = sfile;
-	header->sharedHeader->context->callerLine = sline;
-#endif
+	context = header->sharedHeader->context;
+	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
 		MemoryContextError(ERRCODE_INTERNAL_ERROR,
-				header->sharedHeader->context, CDB_MCXT_WHERE(header->sharedHeader->context),
-				"invalid memory alloc request size %lu",
-				(unsigned long)size);
-
-	/* isReset must be false already */
-	Assert(!header->sharedHeader->context->isReset);
-
-	ret = (*header->sharedHeader->context->methods.realloc) (header->sharedHeader->context, pointer, size);
-
-#ifdef PGTRACE_ENABLED
-	header = (StandardChunkHeader *)
-		((char *) ret - STANDARDCHUNKHEADERSIZE);
-	PG_TRACE5(memctxt__realloc, size, header->size, old_reqsize, old_size, (long) header->sharedHeader->context->name);
-#endif
-
-=======
-	MemoryContext context;
-	void	   *ret;
-
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	/*
-	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-	 * allocated chunk.
-	 */
-	Assert(pointer != NULL);
-	Assert(pointer == (void *) MAXALIGN(pointer));
-
-	/*
-	 * OK, it's probably safe to look at the chunk header.
-	 */
-	context = ((StandardChunkHeader *)
-			   ((char *) pointer - STANDARDCHUNKHEADERSIZE))->context;
-
-	AssertArg(MemoryContextIsValid(context));
-	AssertNotInCriticalSection(context);
+				context, CDB_MCXT_WHERE(context),
+				"invalid memory alloc request size %zu", size);
 
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = (*context->methods->realloc) (context, pointer, size);
+#ifdef PGTRACE_ENABLED
+	{
+		long old_reqsize;
+		long old_size;
+#ifdef MEMORY_CONTEXT_CHECKING
+		old_reqsize = header->requested_size;
+#else
+		old_reqsize = 0;
+#endif
+		old_size = header->size;
+	}
+#endif
+
+#ifdef CDB_PALLOC_CALLER_ID
+	context->callerFile = sfile;
+	context->callerLine = sline;
+#endif
+
+	ret = (*context->methods.realloc) (context, pointer, size);
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
+
+#ifdef PGTRACE_ENABLED
+	header = (StandardChunkHeader *)
+		((char *) ret - STANDARDCHUNKHEADERSIZE);
+	PG_TRACE5(memctxt__realloc, size, header->size, old_reqsize, old_size, (long) context->name);
+#endif
 
 	return ret;
 }
@@ -1528,7 +1423,7 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = (*context->methods.alloc) (context, size);
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	return ret;
@@ -1542,6 +1437,7 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 void *
 repalloc_huge(void *pointer, Size size)
 {
+	StandardChunkHeader *header;
 	MemoryContext context;
 	void	   *ret;
 
@@ -1559,8 +1455,9 @@ repalloc_huge(void *pointer, Size size)
 	/*
 	 * OK, it's probably safe to look at the chunk header.
 	 */
-	context = ((StandardChunkHeader *)
-			   ((char *) pointer - STANDARDCHUNKHEADERSIZE))->context;
+	header = (StandardChunkHeader *)
+		((char *) pointer - STANDARDCHUNKHEADERSIZE);
+	context = header->sharedHeader->context;
 
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
@@ -1568,10 +1465,9 @@ repalloc_huge(void *pointer, Size size)
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = (*context->methods->realloc) (context, pointer, size);
+	ret = (*context->methods.realloc) (context, pointer, size);
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	return ret;
 }
 

@@ -272,35 +272,7 @@ void
 appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 {
 	va_list		args;
-<<<<<<< HEAD
-
-	va_start(args, fmt);
-    appendPQExpBufferVA(str, fmt, args);
-	va_end(args);
-}
-
-/*
- * appendPQExpBufferVA
- *
- * A version of appendPQExpBuffer() that takes a va_list instead of '...'.
- * The caller must do va_start(args, x) before calling, and va_end(args)
- * afterwards.
- */
-void
-appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
-{
-    va_list     saveargs;
-	size_t		avail;
-	int			nprinted;
-=======
 	bool		done;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-
-#ifdef __va_copy
-    __va_copy(saveargs, args);
-#else
-    saveargs = args;
-#endif
 
 	if (PQExpBufferBroken(str))
 		return;					/* already failed */
@@ -360,16 +332,10 @@ appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 		 */
 		if (nprinted >= 0 && (size_t) nprinted < avail - 1)
 		{
-<<<<<<< HEAD
-			avail = str->maxlen - str->len - 1;
-			nprinted = vsnprintf(str->data + str->len, avail,
-								 fmt, args);
-=======
 			/* Success.  Note nprinted does not include trailing null. */
 			str->len += nprinted;
 			return true;
 		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (nprinted >= 0 && (size_t) nprinted > avail)
 		{
@@ -391,19 +357,6 @@ appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 			}
 			needed = nprinted + 2;
 		}
-<<<<<<< HEAD
-		/* Double the buffer size and try again. */
-		if (!enlargePQExpBuffer(str, str->maxlen))
-			return;				/* oops, out of memory */
-
-#ifdef __va_copy
-        __va_copy(args, saveargs);
-#else
-        args = saveargs;
-#endif
-
-    }
-=======
 		else
 		{
 			/*
@@ -431,7 +384,6 @@ appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 		return true;			/* oops, out of memory */
 
 	return false;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*

@@ -696,17 +696,14 @@ client_read_ended(void)
 
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
-<<<<<<< HEAD
 		DisableClientWaitTimeoutInterrupt();
+
+		errno = save_errno;
 	}
 	else
 	{
 		ImmediateDieOK = false;
 		DoingPqReading = false;
-=======
-
-		errno = save_errno;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 }
 
@@ -4611,18 +4608,9 @@ PostgresMain(int argc, char *argv[],
 		MyStartTime = time(NULL);
 	}
 
-<<<<<<< HEAD
 #ifndef WIN32
 	PostmasterPriority = getpriority(PRIO_PROCESS, 0);
 #endif
-
-	/*
-	 * Fire up essential subsystems: error and memory management
-	 *
-	 * If we are running under the postmaster, this is done already.
-	 */
-	if (!IsUnderPostmaster)
-		MemoryContextInit();
 
 	/*
 	 * Do not save the return value in any oldMemoryAccount variable.
@@ -4634,8 +4622,6 @@ PostgresMain(int argc, char *argv[],
 
 	set_ps_display("startup", false);
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	SetProcessingMode(InitProcessing);
 
 	/* Compute paths, if we didn't inherit them from postmaster */
@@ -4961,12 +4947,8 @@ PostgresMain(int argc, char *argv[],
 		 * forgetting a timeout cancel.
 		 */
 		disable_all_timeouts(false);
-<<<<<<< HEAD
-		QueryCancelPending = false;		/* again in case timeout occurred */
-		QueryFinishPending = false;
-=======
 		QueryCancelPending = false;		/* second to avoid race condition */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		QueryFinishPending = false;
 
 		/*
 		 * Turn off these interrupts too.  This is only needed here and not in

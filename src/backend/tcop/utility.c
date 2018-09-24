@@ -1234,7 +1234,7 @@ ProcessUtilitySlow(Node *parsetree,
 													   toast_options,
 													   true);
 
-								AlterTableCreateToastTable(relOid,
+								NewRelationCreateToastTable(relOid,
 														   toast_options,
 														   true,
 														   cstmt->is_part_child,
@@ -1249,18 +1249,18 @@ ProcessUtilitySlow(Node *parsetree,
 								 * database age calculation, by passing master
 								 * relation's is_part_parent flag.
 								 */
-								AlterTableCreateAoSegTable(relOid,
-														   cstmt->is_part_child,
-														   cstmt->is_part_parent);
+								NewRelationCreateAoSegTable(relOid,
+															cstmt->is_part_child,
+															cstmt->is_part_parent);
 
 								if (cstmt->buildAoBlkdir)
-									AlterTableCreateAoBlkdirTable(relOid,
-																  cstmt->is_part_child,
-																  cstmt->is_part_parent);
+									NewRelationCreateAoBlkdirTable(relOid,
+																   cstmt->is_part_child,
+																   cstmt->is_part_parent);
 
-								AlterTableCreateAoVisimapTable(relOid,
-															   cstmt->is_part_child,
-															   cstmt->is_part_parent);
+								NewRelationCreateAoVisimapTable(relOid,
+																cstmt->is_part_child,
+																cstmt->is_part_parent);
 							}
 							if (Gp_role == GP_ROLE_DISPATCH)
 								CdbDispatchUtilityStatement((Node *) stmt,
@@ -1276,21 +1276,7 @@ ProcessUtilitySlow(Node *parsetree,
 							 * segment information yet and operations like create_index
 							 * in the deferred statements cannot see the relfile.
 							 */
-<<<<<<< HEAD
 							EvaluateDeferredStatements(cstmt->deferredStmts);
-=======
-							toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-																"toast",
-																validnsps,
-																true,
-																false);
-							(void) heap_reloptions(RELKIND_TOASTVALUE,
-												   toast_options,
-												   true);
-
-							NewRelationCreateToastTable(relOid, toast_options);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
@@ -1343,7 +1329,6 @@ ProcessUtilitySlow(Node *parsetree,
 					if (OidIsValid(relid))
 					{
 						/* Run parse analysis ... */
-<<<<<<< HEAD
 						/*
 						 * GPDB: Like for CREATE TABLE, only do parse analysis
 						 * in the Query Dispatcher.
@@ -1351,11 +1336,8 @@ ProcessUtilitySlow(Node *parsetree,
 						if (Gp_role == GP_ROLE_EXECUTE)
 							stmts = list_make1(parsetree);
 						else
-							stmts = transformAlterTableStmt(atstmt, queryString);
-=======
-						stmts = transformAlterTableStmt(relid, atstmt,
-														queryString);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+							stmts = transformAlterTableStmt(relid, atstmt,
+															queryString);
 
 						/* ... and do it */
 						foreach(l, stmts)
@@ -1462,10 +1444,6 @@ ProcessUtilitySlow(Node *parsetree,
 						case OBJECT_AGGREGATE:
 							DefineAggregate(stmt->defnames, stmt->args,
 											stmt->oldstyle, stmt->definition,
-<<<<<<< HEAD
-											false, /* FIXME: GPDB-specific ordered flag */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 											queryString);
 							break;
 						case OBJECT_OPERATOR:
@@ -1514,13 +1492,10 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_IndexStmt:	/* CREATE INDEX */
 				{
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
-<<<<<<< HEAD
-					ListCell   *lc;
-					List	   *stmts;
-=======
 					Oid			relid;
 					LOCKMODE	lockmode;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+					ListCell   *lc;
+					List	   *stmts;
 
 					if (stmt->concurrent)
 						PreventTransactionChain(isTopLevel,
@@ -1544,8 +1519,7 @@ ProcessUtilitySlow(Node *parsetree,
 												 NULL);
 
 					/* Run parse analysis ... */
-<<<<<<< HEAD
-					stmts = transformIndexStmt(stmt, queryString);
+					stmts = transformIndexStmt(relid, stmt, queryString);
 
 					/*
 					 * In GPDB, a single IndexStmt can be expanded to several
@@ -1555,17 +1529,9 @@ ProcessUtilitySlow(Node *parsetree,
 					{
 						IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
 
-						CheckRelationOwnership(stmt->relation, true);
-
 						/* ... and do it */
-						DefineIndex(stmt,
-=======
-					stmt = transformIndexStmt(relid, stmt, queryString);
-
-					/* ... and do it */
-					DefineIndex(relid,	/* OID of heap relation */
+						DefineIndex(relid,	/* OID of heap relation */
 								stmt,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 								InvalidOid,		/* no predefined OID */
 								false,	/* is_alter_table */
 								true,	/* check_rights */
@@ -1679,12 +1645,12 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_CreateTrigStmt:
-<<<<<<< HEAD
 				{
 					Oid			trigOid;
 
 					trigOid = CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-											InvalidOid, InvalidOid, false);
+											InvalidOid, InvalidOid, InvalidOid,
+											InvalidOid, false);
 					if (Gp_role == GP_ROLE_DISPATCH)
 					{
 						((CreateTrigStmt *) parsetree)->trigOid = trigOid;
@@ -1696,11 +1662,6 @@ ProcessUtilitySlow(Node *parsetree,
 													NULL);
 					}
 				}
-=======
-				(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-									 InvalidOid, InvalidOid, InvalidOid,
-									 InvalidOid, false);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				break;
 
 			case T_CreatePLangStmt:

@@ -55,12 +55,8 @@ hash_password(const char *passwd, char *salt, size_t salt_len, char *buf)
  * that will be sent to the postmaster log (but not the client).
  */
 int
-<<<<<<< HEAD
-hashed_passwd_verify(const Port *port, const char *role, char *client_pass)
-=======
-md5_crypt_verify(const Port *port, const char *role, char *client_pass,
+hashed_passwd_verify(const Port *port, const char *role, char *client_pass,
 				 char **logdetail)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	int			retval = STATUS_ERROR;
 	char	   *shadow_pass,

@@ -97,7 +97,7 @@ static int	pending_client_encoding = PG_SQL_ASCII;
 
 /* Internal functions */
 static char *
-perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server, 
+perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server,
 									int custom_client_encoding, 
 									FmgrInfo *custom_encoding_proc);
 static int	cliplen(const char *str, int len, int limit);
@@ -616,23 +616,15 @@ pg_any_to_server(const char *s, int len, int encoding)
 		return (char *) s;
 	}
 
-<<<<<<< HEAD
-	if (ClientEncoding->encoding == encoding)
-		return perform_default_encoding_conversion(s, len, true, -1, NULL);
-	else
-		return (char *) pg_do_encoding_conversion(
-			 (unsigned char *) s, len, encoding, DatabaseEncoding->encoding);
-=======
 	/* Fast path if we can use cached conversion function */
 	if (encoding == ClientEncoding->encoding)
-		return perform_default_encoding_conversion(s, len, true);
+		return perform_default_encoding_conversion(s, len, true, -1, NULL);
 
 	/* General case ... will not work outside transactions */
 	return (char *) pg_do_encoding_conversion((unsigned char *) s,
 											  len,
 											  encoding,
 											  DatabaseEncoding->encoding);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -661,13 +653,6 @@ pg_server_to_any(const char *s, int len, int encoding)
 		encoding == PG_SQL_ASCII)
 		return (char *) s;		/* assume data is valid */
 
-<<<<<<< HEAD
-	if (ClientEncoding->encoding == encoding)
-		return perform_default_encoding_conversion(s, len, false, -1, NULL);
-	else
-		return (char *) pg_do_encoding_conversion(
-			 (unsigned char *) s, len, DatabaseEncoding->encoding, encoding);
-=======
 	if (DatabaseEncoding->encoding == PG_SQL_ASCII)
 	{
 		/* No conversion is possible, but we must validate the result */
@@ -677,14 +662,13 @@ pg_server_to_any(const char *s, int len, int encoding)
 
 	/* Fast path if we can use cached conversion function */
 	if (encoding == ClientEncoding->encoding)
-		return perform_default_encoding_conversion(s, len, false);
+		return perform_default_encoding_conversion(s, len, false, -1, NULL);
 
 	/* General case ... will not work outside transactions */
 	return (char *) pg_do_encoding_conversion((unsigned char *) s,
 											  len,
 											  DatabaseEncoding->encoding,
 											  encoding);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -700,14 +684,10 @@ pg_server_to_any(const char *s, int len, int encoding)
  *  See pg_custom_client_to_server for information.
  */
 static char *
-<<<<<<< HEAD
-perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server, 
+perform_default_encoding_conversion(const char *src, int len,
+									bool is_client_to_server,
 									int custom_client_encoding, 
 									FmgrInfo *custom_encoding_proc)
-=======
-perform_default_encoding_conversion(const char *src, int len,
-									bool is_client_to_server)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	char	   *result;
 	int			src_encoding,

@@ -237,11 +237,8 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
-<<<<<<< HEAD
 static void cdb_tidy_message(ErrorData *edata);
-=======
 static const char *process_log_prefix_padding(const char *p, int *padding);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
@@ -556,18 +553,16 @@ errstart(int elevel, const char *filename, int lineno,
 	/* errno is saved here so that error parameter eval can't change it */
 	edata->saved_errno = errno;
 
-<<<<<<< HEAD
 #ifndef WIN32
 	edata->stacktracesize = backtrace(edata->stacktracearray, 30);
 #else
 	edata->stacktracesize = 0;
 #endif
-=======
+
 	/*
 	 * Any allocations for this error state level should go into ErrorContext
 	 */
 	edata->assoc_context = ErrorContext;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	recursion_depth--;
 	return true;
@@ -593,9 +588,7 @@ errfinish(int dummy __attribute__((unused)),...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-<<<<<<< HEAD
 	saved_errno = edata->saved_errno;   /*CDB*/
-=======
 	elevel = edata->elevel;
 
 	/*
@@ -609,7 +602,6 @@ errfinish(int dummy __attribute__((unused)),...)
 	 */
 	save_ImmediateInterruptOK = ImmediateInterruptOK;
 	ImmediateInterruptOK = false;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Do processing in ErrorContext, which we hope has enough reserved space
@@ -1694,7 +1686,6 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	edata->funcname = funcname;
 	/* errno is saved now so that error parameter eval can't change it */
 	edata->saved_errno = errno;
-<<<<<<< HEAD
 #ifdef USE_ASSERT_CHECKING
 	if (IsUnderPostmaster && mainthread() != 0 && !pthread_equal(main_tid, pthread_self()))
 	{
@@ -1705,11 +1696,9 @@ elog_start(const char *filename, int lineno, const char *funcname)
 #endif
 	}
 #endif
-=======
 
 	/* Use ErrorContext for any allocations done at this level. */
 	edata->assoc_context = ErrorContext;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -2100,7 +2089,6 @@ pg_re_throw(void)
 
 
 /*
-<<<<<<< HEAD
  * CDB: elog_demote
  *
  * A PG_CATCH() handler can call this to downgrade the error that it is
@@ -2258,7 +2246,7 @@ elog_message(void)
 				: errordata[errordata_stack_depth].message;
 }
 
-=======
+/*
  * GetErrorContextStack - Return the context stack, for display/diags
  *
  * Returns a pstrdup'd string in the caller's context which includes the PG
@@ -2333,7 +2321,6 @@ GetErrorContextStack(void)
 }
 
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * Initialization of error output file
  */
@@ -2913,15 +2900,8 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 
 	/* has counter been reset in current process? */
 	static int	log_my_pid = 0;
-<<<<<<< HEAD
-
-	int			format_len;
-	int			i;
-	int			j;
-=======
 	int			padding;
 	const char *p;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * This is one of the few places where we'd rather not inherit a static
@@ -3208,7 +3188,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						appendStringInfoString(buf, uname);
 					break;
 				}
-				j = buf->len;
+				int j = buf->len;
 				if (gp_session_id > 0)
 					appendStringInfo(buf, "con%d ", gp_session_id);
 				if (gp_command_count > 0)

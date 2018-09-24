@@ -2215,19 +2215,11 @@ RelationClearRelation(Relation relation, bool rebuild)
 		{
 			/* Should only get here if relation was deleted */
 			RelationCacheDelete(relation);
-<<<<<<< HEAD
-			RelationDestroyRelation(relation);
- 			elog(ERROR, "relation %u deleted while still in use", save_relid);
- 		}
- 
-		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att, true);
-=======
 			RelationDestroyRelation(relation, false);
 			elog(ERROR, "relation %u deleted while still in use", save_relid);
 		}
 
-		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att, true);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
 
 		/*

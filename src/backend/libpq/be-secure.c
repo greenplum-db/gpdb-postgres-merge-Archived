@@ -377,17 +377,10 @@ wloop:
 				n = -1;
 				break;
 			default:
-<<<<<<< HEAD
 				snprintf((char *)&err_msg, ERR_MSG_LEN, "unrecognized SSL error code: %d", err);
 				report_commerror(err_msg);
 
-=======
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("unrecognized SSL error code: %d",
-								err)));
 				errno = ECONNRESET;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				n = -1;
 				break;
 		}
@@ -774,11 +767,7 @@ initialize_SSL(void)
 		 * We use SSLv23_method() because it can negotiate use of the highest
 		 * mutually supported protocol version, while alternatives like
 		 * TLSv1_2_method() permit only one specific version.  Note that we
-<<<<<<< HEAD
-		 * don't actually allow SSL v2, only v3 and TLS protocols (see below).
-=======
 		 * don't actually allow SSL v2 or v3, only TLS protocols (see below).
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)

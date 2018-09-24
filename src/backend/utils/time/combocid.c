@@ -152,21 +152,18 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
 	Assert(!(tup->t_infomask & HEAP_MOVED));
-<<<<<<< HEAD
 
-	/*
-	 * MPP-8317: cursors can't always *tell* that this is the current transaction.
-	 */
-	Assert(QEDtxContextInfo.cursorContext ||
-=======
 	/*
 	 * Because GetUpdateXid() performs memory allocations if xmax is a
 	 * multixact we can't Assert() if we're inside a critical section. This
 	 * weakens the check, but not using GetCmax() inside one would complicate
 	 * things too much.
 	 */
-	Assert(CritSectionCount > 0 ||
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	/*
+	 * MPP-8317: cursors can't always *tell* that this is the current transaction.
+	 */
+	Assert(QEDtxContextInfo.cursorContext ||
+		   CritSectionCount > 0 ||
 		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
 
 	if (tup->t_infomask & HEAP_COMBOCID)

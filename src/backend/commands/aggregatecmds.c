@@ -56,7 +56,7 @@
  */
 Oid
 DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
-				bool ordered, const char *queryString)
+				const char *queryString)
 {
 	char	   *aggName;
 	Oid			aggNamespace;

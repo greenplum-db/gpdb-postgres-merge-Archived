@@ -158,8 +158,6 @@
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	MAXALIGN(sizeof(AllocChunkData))
 
-<<<<<<< HEAD
-=======
 /* Portion of ALLOC_CHUNKHDRSZ examined outside aset.c. */
 #define ALLOC_CHUNK_PUBLIC	\
 	(offsetof(AllocChunkData, size) + sizeof(Size))
@@ -173,10 +171,6 @@
 	(offsetof(AllocChunkData, size) + sizeof(Size))
 #endif
 
-typedef struct AllocBlockData *AllocBlock;		/* forward reference */
-typedef struct AllocChunkData *AllocChunk;
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * AllocPointer
  *		Aligned pointer which may be a member of an allocation set.
@@ -908,7 +902,6 @@ AllocSetContextCreate(MemoryContext parent,
 		/* Mark block as not to be released at reset time */
 		context->keeper = block;
 
-<<<<<<< HEAD
         MemoryContextNoteAlloc(&context->header, blksize);              /*CDB*/
         /*
          * We are allocating new memory in this block, but we are not accounting
@@ -917,11 +910,10 @@ AllocSetContextCreate(MemoryContext parent,
          * allocating memory, which is "unused" by actual consumers. Therefore,
          * memory accounting currently wouldn't track this
          */
-=======
+
 		/* Mark unallocated space NOACCESS; leave the block header alone. */
 		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
 								   blksize - ALLOC_BLOCKHDRSZ);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	context->nullAccountHeader = NULL;
@@ -1130,18 +1122,16 @@ AllocSetDelete(MemoryContext context)
  *		Returns pointer to allocated memory of given size; memory is added
  *		to the set.
  *
-<<<<<<< HEAD
  * Parameters:
  *		context: the context under which the memory was allocated
  *		size: size of the memory to allocate
  *		isHeader: whether the memory will be hosting a shared header
  *
  * Returns the pointer to the memory region.
-=======
+ *
  * No request may exceed:
  *		MAXALIGN_DOWN(SIZE_MAX) - ALLOC_BLOCKHDRSZ - ALLOC_CHUNKHDRSZ
  * All callers use a much-lower limit.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 static void *
 AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
@@ -1175,20 +1165,9 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) gp_malloc(blksize);
 		if (block == NULL)
-<<<<<<< HEAD
-            MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-                               &set->header, CDB_MCXT_WHERE(&set->header),
-                               "Out of memory.  Failed on request of size %lu bytes.",
-                               (unsigned long)size);
-=======
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
-		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+							   &set->header, CDB_MCXT_WHERE(&set->header),
+							   "Out of memory.  Failed on request of size %zu bytes.", size);
 		block->aset = set;
 		block->freeptr = UserPtr_GetEndPtr(block);
 
@@ -1201,17 +1180,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		/* Valgrind: Will be made NOACCESS below. */
 		chunk->requested_size = size;
 		if (size < chunk_size)
-<<<<<<< HEAD
-		{
-			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
-		}
-#endif
-#ifdef RANDOMIZE_ALLOCATED_MEMORY
-		/* fill the allocated space with junk */
-		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
-=======
 			set_sentinel(AllocChunkGetPointer(chunk), size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -1233,12 +1202,9 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 			set->blocks = block;
 		}
 
-<<<<<<< HEAD
         MemoryContextNoteAlloc(&set->header, blksize);              /*CDB*/
 
 		AllocAllocInfo(set, chunk, isHeader);
-=======
-		AllocAllocInfo(set, chunk);
 
 		/*
 		 * Chunk header public fields remain DEFINED.  The requested
@@ -1249,7 +1215,6 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + ALLOC_CHUNK_PUBLIC,
 						 chunk_size + ALLOC_CHUNKHDRSZ - ALLOC_CHUNK_PUBLIC);
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -1282,17 +1247,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 								   sizeof(chunk->requested_size));
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
-<<<<<<< HEAD
-		{
-			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
-		}
-#endif
-#ifdef RANDOMIZE_ALLOCATED_MEMORY
-		/* fill the allocated space with junk */
-		randomize_mem((char *) AllocChunkGetPointer(chunk), size);
-=======
 			set_sentinel(AllocChunkGetPointer(chunk), size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -1409,20 +1364,10 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 		}
 
 		if (block == NULL)
-<<<<<<< HEAD
-            MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-                               &set->header, CDB_MCXT_WHERE(&set->header),
-                               "Out of memory.  Failed on request of size %lu bytes.",
-                               (unsigned long)size);
-=======
-		{
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
-		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+							   &set->header, CDB_MCXT_WHERE(&set->header),
+							   "Out of memory.  Failed on request of size %zu bytes.",
+							   size);
 
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -1467,13 +1412,7 @@ AllocSetAllocImpl(MemoryContext context, Size size, bool isHeader)
 							   sizeof(chunk->requested_size));
 	/* set mark to catch clobber of "unused" space */
 	if (size < chunk->size)
-<<<<<<< HEAD
-	{
-		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
-	}
-=======
 		set_sentinel(AllocChunkGetPointer(chunk), size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 	/* fill the allocated space with junk */
@@ -1544,27 +1483,16 @@ AllocSetFreeImpl(MemoryContext context, void *pointer, bool isHeader)
 #endif
 
 #ifdef MEMORY_CONTEXT_CHECKING
-<<<<<<< HEAD
+	VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
+							  sizeof(chunk->requested_size));
 	Assert(chunk->requested_size != 0xFFFFFFFF);
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < chunk->size)
 	{
-		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-		{
-			Assert(!"Memory error");
+		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p (%s:%d)",
 					set->header.name, chunk, CDB_MCXT_WHERE(&set->header));
-		}
 	}
-=======
-	VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
-							  sizeof(chunk->requested_size));
-	/* Test for someone scribbling on unused space in chunk */
-	if (chunk->requested_size < chunk->size)
-		if (!sentinel_ok(pointer, chunk->requested_size))
-			elog(WARNING, "detected write past chunk end in %s %p",
-				 set->header.name, chunk);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 
 	if (chunk->size > set->allocChunkLimit)
@@ -1675,27 +1603,15 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	}
 #endif
 #ifdef MEMORY_CONTEXT_CHECKING
-<<<<<<< HEAD
-    Assert(chunk->requested_size != 0xFFFFFFFF);
-	/* Test for someone scribbling on unused space in chunk */
-	if (chunk->requested_size < oldsize)
-	{
-		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-		{
-			Assert(!"Memory error");
-			elog(WARNING, "detected write past chunk end in %s %p (%s:%d)",
-				 set->header.name, chunk, CDB_MCXT_WHERE(&set->header));
-		}
-	}
-=======
 	VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
 							  sizeof(chunk->requested_size));
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
+	{
 		if (!sentinel_ok(pointer, chunk->requested_size))
-			elog(WARNING, "detected write past chunk end in %s %p",
-				 set->header.name, chunk);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			elog(WARNING, "detected write past chunk end in %s %p (%s:%d)",
+				 set->header.name, chunk, CDB_MCXT_WHERE(&set->header));
+	}
 #endif
 
 	/*
@@ -1713,17 +1629,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* We can only fill the extra space if we know the prior request */
-<<<<<<< HEAD
-		if (size > chunk->requested_size)
-		{
-			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
-						  size - chunk->requested_size);
-		}
-=======
 		if (size > oldrequest)
 			randomize_mem((char *) pointer + oldrequest,
 						  size - oldrequest);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 
 		chunk->requested_size = size;
@@ -1743,22 +1651,8 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* set mark to catch clobber of "unused" space */
 		if (size < oldsize)
-<<<<<<< HEAD
-		{
-			((char *) pointer)[size] = 0x7E;
-		}
-#endif
-
-		/* isHeader is set to false as we should never require realloc for shared header */
-		AllocAllocInfo(set, chunk, false);
-
-		/*
-		 * Note: we do not adjust the freeptr of the block. This would mess up any "SUPER-SIZED"
-		 * block, as we do not want the "SUPER-SIZED" block as active block and end up allocating
-		 * additional chunk from that.
-		 */
-=======
 			set_sentinel(pointer, size);
+
 #else							/* !MEMORY_CONTEXT_CHECKING */
 
 		/*
@@ -1770,7 +1664,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
 #endif
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		/* isHeader is set to false as we should never require realloc for shared header */
+		AllocAllocInfo(set, chunk, false);
+
 		return pointer;
 	}
 
@@ -1812,20 +1708,12 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		block = (AllocBlock) gp_realloc(block, blksize);
 		if (block == NULL)
 		{
-<<<<<<< HEAD
 			/* we need to set chunk info back*/
 			AllocAllocInfo(set, chunk, false);
-            MemoryContextError(ERRCODE_OUT_OF_MEMORY,
-                               &set->header, CDB_MCXT_WHERE(&set->header),
-                               "Out of memory.  Failed on request of size %lu bytes.",
-                               (unsigned long)size);
-=======
-			MemoryContextStats(TopMemoryContext);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %zu.", size)));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			MemoryContextError(ERRCODE_OUT_OF_MEMORY,
+							   &set->header, CDB_MCXT_WHERE(&set->header),
+							   "Out of memory.  Failed on request of size %zu bytes.",
+							   size);
 		}
 		block->freeptr = UserPtr_GetEndPtr(block);
 
@@ -1870,14 +1758,12 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		VALGRIND_MAKE_MEM_DEFINED(pointer, oldsize);
 #endif
 
-<<<<<<< HEAD
+		/* Make any trailing alignment padding NOACCESS. */
+		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
+
 		AllocAllocInfo(set, chunk, false /* We should never require realloc for shared header */);
 
 		MemoryContextNoteAlloc(&set->header, blksize - oldblksize); /*CDB*/
-=======
-		/* Make any trailing alignment padding NOACCESS. */
-		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		return AllocChunkGetPointer(chunk);
 	}
 	else
@@ -1984,15 +1870,7 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 		uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld)
 {
 	AllocSet	set = (AllocSet) context;
-<<<<<<< HEAD
-    AllocBlock	block;
-=======
-	Size		nblocks = 0;
-	Size		nchunks = 0;
-	Size		totalspace = 0;
-	Size		freespace = 0;
 	AllocBlock	block;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	AllocChunk	chunk;
 	int			fidx;
 	uint64 currentAllocated = 0;
@@ -2028,17 +1906,6 @@ AllocSet_GetStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
 			*currentAvailable += chunk->size;
 		}
 	}
-<<<<<<< HEAD
-=======
-
-	for (i = 0; i < level; i++)
-		fprintf(stderr, "  ");
-
-	fprintf(stderr,
-			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
-			set->header.name, totalspace, nblocks, freespace, nchunks,
-			totalspace - freespace);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -2106,16 +1973,11 @@ AllocSetCheck(MemoryContext context)
 			}
 
 			if (chsize < (1 << ALLOC_MINBITS))
-<<<<<<< HEAD
 			{
 				Assert(!"Memory Context Error");
-				elog(WARNING, "problem in alloc set %s: bad size %lu for chunk %p in block %p (%s:%d)",
-					 name, (unsigned long) chsize, chunk, block, CDB_MCXT_WHERE(&set->header));
+				elog(WARNING, "problem in alloc set %s: bad size %zu for chunk %p in block %p (%s:%d)",
+					 name, chsize, chunk, block, CDB_MCXT_WHERE(&set->header));
 			}
-=======
-				elog(WARNING, "problem in alloc set %s: bad size %zu for chunk %p in block %p",
-					 name, chsize, chunk, block);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			/* single-chunk block? */
 			if (chsize > set->allocChunkLimit &&
@@ -2141,20 +2003,10 @@ AllocSetCheck(MemoryContext context)
 			/*
 			 * Check for overwrite of "unallocated" space in chunk
 			 */
-<<<<<<< HEAD
-			if (dsize != 0xFFFFFFFF && dsize != 0
-                    && dsize < chsize && *chdata_end != 0x7E)
-			{
-//				Assert(!"Memory context error");
-				elog(ERROR, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p (%s:%d)",
-						name, block, chunk, CDB_MCXT_WHERE(&set->header));
-			}
-=======
 			if (dsize > 0 && dsize < chsize &&
 				!sentinel_ok(chunk, ALLOC_CHUNKHDRSZ + dsize))
-				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p",
-					 name, block, chunk);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p (%s:%d)",
+						name, block, chunk, CDB_MCXT_WHERE(&set->header));
 
 			blk_data += chsize;
 			nchunks++;
