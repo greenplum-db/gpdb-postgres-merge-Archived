@@ -102,15 +102,6 @@ forkname_chars(const char *str, ForkNumber *fork)
  *
  * Result is a palloc'd string.
  *
-<<<<<<< HEAD
- * In PostgreSQL, the 'backendid' is embedded in the filename of temporary
- * relations. In GPDB, however, temporary relations are just prefixed with
- * "t_*", without the backend id. For compatibility with upstream code, this
- * function still takes 'backendid' as argument, but we only care whether
- * it's InvalidBackendId or not. If you need to construct the path of a
- * temporary relation, but don't know the real backend ID, pass
- * TempRelBackendId.
-=======
  * XXX this must agree with GetRelationPath()!
  */
 char *
@@ -131,7 +122,7 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	{
 		/* All other tablespaces are accessed via symlinks */
 		return psprintf("pg_tblspc/%u/%s/%u",
-						spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
+						spcNode, tablespace_version_directory(), dbNode);
 	}
 }
 
@@ -143,7 +134,14 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
  * Note: ideally, backendId would be declared as type BackendId, but relpath.h
  * would have to include a backend-only header to do that; doesn't seem worth
  * the trouble considering BackendId is just int anyway.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+ *
+ * In PostgreSQL, the 'backendid' is embedded in the filename of temporary
+ * relations. In GPDB, however, temporary relations are just prefixed with
+ * "t_*", without the backend id. For compatibility with upstream code, this
+ * function still takes 'backendid' as argument, but we only care whether
+ * it's InvalidBackendId or not. If you need to construct the path of a
+ * temporary relation, but don't know the real backend ID, pass
+ * TempRelBackendId.
  */
 char *
 GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
@@ -177,27 +175,13 @@ GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 		}
 		else
 		{
-<<<<<<< HEAD
-			/* OIDCHARS will suffice for an integer, too */
-			pathlen = 5 + OIDCHARS + 2 + OIDCHARS + 1 + OIDCHARS + 1
-				+ FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
-			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "base/%u/t_%u_%s",
-						 rnode.dbNode, rnode.relNode,
-						 forkNames[forknum]);
-			else
-				snprintf(path, pathlen, "base/%u/t_%u",
-						 rnode.dbNode, rnode.relNode);
-=======
 			if (forkNumber != MAIN_FORKNUM)
-				path = psprintf("base/%u/t%d_%u_%s",
-								dbNode, backendId, relNode,
+				path = psprintf("base/%u/t_%u_%s",
+								dbNode, relNode,
 								forkNames[forkNumber]);
 			else
-				path = psprintf("base/%u/t%d_%u",
-								dbNode, backendId, relNode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				path = psprintf("base/%u/t_%u",
+								dbNode, relNode);
 		}
 	}
 	else
@@ -205,60 +189,27 @@ GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 		/* All other tablespaces are accessed via symlinks */
 		if (backendId == InvalidBackendId)
 		{
-<<<<<<< HEAD
-			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(tablespace_version_directory()) + 1 + OIDCHARS + 1
-				+ OIDCHARS + 1 + FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
-			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
-						 rnode.spcNode, tablespace_version_directory(),
-						 rnode.dbNode, rnode.relNode,
-						 forkNames[forknum]);
-			else
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
-						 rnode.spcNode, tablespace_version_directory(),
-						 rnode.dbNode, rnode.relNode);
-		}
-		else
-		{
-			/* OIDCHARS will suffice for an integer, too */
-			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(tablespace_version_directory()) + 1 + OIDCHARS + 2
-				+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
-			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t_%u_%s",
-						 rnode.spcNode, tablespace_version_directory(),
-						 rnode.dbNode, rnode.relNode,
-						 forkNames[forknum]);
-			else
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t_%u",
-						 rnode.spcNode, tablespace_version_directory(),
-						 rnode.dbNode, rnode.relNode);
-=======
 			if (forkNumber != MAIN_FORKNUM)
 				path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
-								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								spcNode, tablespace_version_directory(),
 								dbNode, relNode,
 								forkNames[forkNumber]);
 			else
 				path = psprintf("pg_tblspc/%u/%s/%u/%u",
-								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								spcNode, tablespace_version_directory(),
 								dbNode, relNode);
 		}
 		else
 		{
 			if (forkNumber != MAIN_FORKNUM)
-				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u_%s",
-								spcNode, TABLESPACE_VERSION_DIRECTORY,
-								dbNode, backendId, relNode,
+				path = psprintf("pg_tblspc/%u/%s/%u/t_%u_%s",
+								spcNode, tablespace_version_directory(),
+								dbNode, relNode,
 								forkNames[forkNumber]);
 			else
-				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u",
-								spcNode, TABLESPACE_VERSION_DIRECTORY,
-								dbNode, backendId, relNode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				path = psprintf("pg_tblspc/%u/%s/%u/t_%u",
+								spcNode, tablespace_version_directory(),
+								dbNode, relNode);
 		}
 	}
 	return path;

@@ -20,6 +20,7 @@
  */
 #include "catalog/catversion.h" /* pgrminclude ignore */
 #include "catalog/pg_class.h"
+#include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
 #define OIDCHARS		10		/* max chars printed by %u */

@@ -20,7 +20,7 @@
 #include "storage/relfilenode.h"
 #include "access/sysattr.h"
 
-#include "access/memtup.h"
+//#include "access/memtup.h"
 
 /* typedefs and forward declarations for structs defined in htup_details.h */
 
