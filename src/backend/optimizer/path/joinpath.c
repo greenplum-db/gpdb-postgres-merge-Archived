@@ -49,12 +49,8 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 List *restrictlist,
 					 JoinType jointype, SpecialJoinInfo *sjinfo,
 					 SemiAntiJoinFactors *semifactors,
-<<<<<<< HEAD
-					 Relids param_source_rels,
+					 Relids param_source_rels, Relids extra_lateral_rels,
 					 List *redistribution_clauses /*CDB*/);
-=======
-					 Relids param_source_rels, Relids extra_lateral_rels);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static List *select_mergejoin_clauses(PlannerInfo *root,
 						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
@@ -249,15 +245,10 @@ add_paths_to_joinrel(PlannerInfo *root,
 												&mergejoin_allowed);
 	if (mergejoin_allowed && jointype != JOIN_LASJ_NOTIN)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
-<<<<<<< HEAD
 							 restrictlist, redistribution_clauses,
 							 mergeclause_list, jointype,
-							 sjinfo, param_source_rels);
-=======
-							 restrictlist, mergeclause_list, jointype,
 							 sjinfo,
 							 param_source_rels, extra_lateral_rels);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * 2. Consider paths where the outer relation need not be explicitly
@@ -268,15 +259,10 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	if (mergejoin_allowed)
 		match_unsorted_outer(root, joinrel, outerrel, innerrel,
-<<<<<<< HEAD
 							 restrictlist, redistribution_clauses,
 							 mergeclause_list, jointype,
-							 sjinfo, &semifactors, param_source_rels);
-=======
-							 restrictlist, mergeclause_list, jointype,
 							 sjinfo, &semifactors,
 							 param_source_rels, extra_lateral_rels);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #ifdef NOT_USED
 
@@ -293,15 +279,10 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	if (mergejoin_allowed)
 		match_unsorted_inner(root, joinrel, outerrel, innerrel,
-<<<<<<< HEAD
 							 restrictlist, redistribution_clauses,
 							 mergeclause_list, jointype,
-							 sjinfo, &semifactors, param_source_rels);
-=======
-							 restrictlist, mergeclause_list, jointype,
 							 sjinfo, &semifactors,
 							 param_source_rels, extra_lateral_rels);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #endif
 
 	/*
@@ -316,13 +297,9 @@ add_paths_to_joinrel(PlannerInfo *root,
 	if (root->config->enable_hashjoin || jointype == JOIN_FULL)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, jointype,
-<<<<<<< HEAD
-							 sjinfo, &semifactors, param_source_rels,
-							 redistribution_clauses);
-=======
 							 sjinfo, &semifactors,
-							 param_source_rels, extra_lateral_rels);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+							 param_source_rels, extra_lateral_rels,
+							 redistribution_clauses);
 }
 
 /*
@@ -1267,11 +1244,8 @@ hash_inner_and_outer(PlannerInfo *root,
 					 SpecialJoinInfo *sjinfo,
 					 SemiAntiJoinFactors *semifactors,
 					 Relids param_source_rels,
-<<<<<<< HEAD
+					 Relids extra_lateral_rels,
 					 List *redistribution_clauses     /*CDB*/)
-=======
-					 Relids extra_lateral_rels)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *hashclauses;

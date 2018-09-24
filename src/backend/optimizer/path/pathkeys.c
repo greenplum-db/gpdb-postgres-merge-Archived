@@ -1247,6 +1247,7 @@ cdb_make_pathkey_for_expr(PlannerInfo *root,
 	if (!lc)
 		elog(ERROR, "could not find operator family for equality operator %u", eqopoid);
 	eclass = get_eclass_for_sort_expr(root, (Expr *) expr,
+									  NULL, /* nullable_relids */ /* GPDB_94_MERGE_FIXME: is NULL ok here? */
 									  mergeopfamilies,
 									  typeoid,
 									  exprCollation(expr),
@@ -1344,6 +1345,7 @@ cdb_pull_up_pathkey(PlannerInfo *root,
 
 	outer_ec = get_eclass_for_sort_expr(root,
 										newexpr,
+										NULL, /* nullable_relids */ /* GPDB_94_MERGE_FIXME: is NULL ok here? */
 										pathkey->pk_eclass->ec_opfamilies,
 										exprType((Node *) newexpr),
 										exprCollation((Node *) newexpr),
@@ -1451,6 +1453,7 @@ make_distribution_keys_for_groupclause(PlannerInfo *root, List *groupclause, Lis
 		Assert(OidIsValid(sortcl->sortop));
 		pathkey = make_pathkey_from_sortop(root,
 										   expr,
+										   root->nullable_baserels,
 										   sortcl->sortop,
 										   sortcl->nulls_first,
 										   sortcl->tleSortGroupRef,
@@ -1511,6 +1514,7 @@ make_pathkeys_for_groupclause_recurse(pathkeys_for_groupclause_context *cxt,
 				Assert(OidIsValid(sortcl->sortop));
 				pathkey = make_pathkey_from_sortop(cxt->root,
 												   sortkey,
+												   cxt->root->nullable_baserels,
 												   sortcl->sortop,
 												   sortcl->nulls_first,
 												   sortcl->tleSortGroupRef,

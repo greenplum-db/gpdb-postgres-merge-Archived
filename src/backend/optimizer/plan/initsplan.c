@@ -37,14 +37,6 @@
 int			from_collapse_limit;
 int			join_collapse_limit;
 
-/* a structure to be used in deconstruct_recurse(), records the qual clauses
- * which cannot be distributed to specific relations immediately at that recurse
- * level */
-typedef struct PostponedQual
-{
-	Node	*qual;		/* a qual clause waiting to be processed */
-	Relids	relids;		/* the set of baserels it references */
-} PostponedQual;
 
 /* Elements of the postponed_qual_list used during deconstruct_recurse */
 typedef struct PostponedQual
@@ -196,7 +188,6 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 			RelOptInfo *rel = find_base_rel(root, var->varno);
 			int			attno = var->varattno;
 
-<<<<<<< HEAD
 			/* Pseudo column? */
 			if (attno <= FirstLowInvalidHeapAttributeNumber)
 			{
@@ -216,10 +207,8 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 			}
 
 			/* System-defined attribute, whole row, or user-defined attribute */
-=======
 			if (bms_is_subset(where_needed, rel->relids))
 				continue;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			Assert(attno >= rel->min_attr && attno <= rel->max_attr);
 			attno -= rel->min_attr;
 			if (rel->attr_needed[attno] == NULL)
@@ -679,15 +668,6 @@ deconstruct_jointree(PlannerInfo *root)
 	Assert(root->parse->jointree != NULL &&
 		   IsA(root->parse->jointree, FromExpr));
 
-<<<<<<< HEAD
-	result = deconstruct_recurse(root, (Node *) root->parse->jointree, false,
-					&qualscope, &inner_join_rels, &postponed_qual_list);
-
-	if (postponed_qual_list != NIL)
-	{
-		elog(ERROR, "JOIN qualification may not refer to other relations.");
-	}
-=======
 	/* this is filled as we scan the jointree */
 	root->nullable_baserels = NULL;
 
@@ -696,8 +676,8 @@ deconstruct_jointree(PlannerInfo *root)
 								 &postponed_qual_list);
 
 	/* Shouldn't be any leftover quals */
-	Assert(postponed_qual_list == NIL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	if (postponed_qual_list != NIL)
+		elog(ERROR, "JOIN qualification may not refer to other relations.");
 
 	return result;
 }
@@ -752,7 +732,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		List	   *child_postponed_quals = NIL;
 		int			remaining;
 		ListCell   *l;
-		List	   *child_postponed_quals = NIL;
 
 		/*
 		 * First, recurse to handle child joins.  We collapse subproblems into
@@ -852,29 +831,19 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-<<<<<<< HEAD
+		List	   *child_postponed_quals = NIL;
 		Relids		leftids = NULL;
 		Relids		rightids = NULL;
 		Relids		left_inners = NULL;
 		Relids		right_inners = NULL;
 		Relids		nonnullable_rels;
+		Relids		nullable_rels;
 		Relids		ojscope;
-=======
-		List	   *child_postponed_quals = NIL;
-		Relids		leftids,
-					rightids,
-					left_inners,
-					right_inners,
-					nonnullable_rels,
-					nullable_rels,
-					ojscope;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		List	   *leftjoinlist,
 				   *rightjoinlist;
 		List	   *my_quals;
 		SpecialJoinInfo *sjinfo;
 		ListCell   *l;
-		List *child_postponed_quals = NIL;
 
 		/*
 		 * Order of operations here is subtle and critical.  First we recurse
@@ -936,9 +905,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*inner_join_rels = bms_add_members(*inner_join_rels, rightids);
 				/* Semi join adds no restrictions for quals */
 				nonnullable_rels = NULL;
-<<<<<<< HEAD
- 				break;
-=======
 
 				/*
 				 * Theoretically, a semijoin would null the RHS; but since the
@@ -947,7 +913,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				 */
 				nullable_rels = NULL;
 				break;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			case JOIN_FULL:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
@@ -1031,7 +996,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			ojscope = NULL;
 		}
 
-<<<<<<< HEAD
 		/* Try to process any quals postponed by children. If they need
 		 * further postponement, add them to my output postponed_qual_list */
 		foreach(l, child_postponed_quals)
@@ -1056,12 +1020,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			pfree(child_postponed_quals);
 		}
 
-		/* Process the qual clauses */
-		foreach(l, (List *) j->quals)
-=======
 		/* Process the JOIN's qual clauses */
 		foreach(l, my_quals)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		{
 			Node	   *qual = (Node *) lfirst(l);
 

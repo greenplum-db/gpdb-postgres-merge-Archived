@@ -667,8 +667,8 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
 		case T_CteScan:
 		case T_WorkTableScan:
 		case T_ForeignScan:
-<<<<<<< HEAD
-			plan->targetlist = build_relation_tlist(path->parent);
+			plan->targetlist = build_path_tlist(root, path);
+
 			/**
 			 * If plan has a flow node, ensure all entries of hashExpr
 			 * are in the targetlist.
@@ -677,9 +677,6 @@ disuse_physical_tlist(PlannerInfo *root, Plan *plan, Path *path)
 			{
 				plan->targetlist = add_to_flat_tlist_junk(plan->targetlist, plan->flow->hashExpr, true /* resjunk */);
 			}
-=======
-			plan->targetlist = build_path_tlist(root, path);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			break;
 		default:
 			break;
@@ -1006,10 +1003,22 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 	List	   *tlist;
 	List	   *quals;
 
+
+	/* The tlist will be installed later, since we have no RelOptInfo */
+	Assert(best_path->path.parent == NULL);
+	tlist = NIL;
+	/* GDPB_94_MERGE_FIXME: This assertion was replaced with the below
+	 * in GPDB. I don't understand why. I tried putting the assertion
+	 * back, once we get to run the regression tests again, we'll
+	 * probably find out why. Or if everything works, then we can
+	 * just keep the assertion.
+	 */
+#if 0
 	if (best_path->path.parent)
 		tlist = build_relation_tlist(best_path->path.parent);
 	else
 		tlist = NIL;			/* will be filled in later */
+#endif
 
 	/* best_path->quals is just bare clauses */
 
@@ -1304,7 +1313,7 @@ create_motion_plan(PlannerInfo *root, CdbMotionPath *path)
 	subplan = create_subplan(root, subpath);
 
 	/* Only the needed columns should be projected from base rel. */
-	disuse_physical_tlist(subplan, subpath);
+	disuse_physical_tlist(root, subplan, subpath);
 
 	/* Add motion operator. */
 	motion = cdbpathtoplan_create_motion_plan(root, path, subplan);
@@ -3438,13 +3447,8 @@ create_mergejoin_plan(PlannerInfo *root,
 	 */
 	if (best_path->outersortkeys)
 	{
-<<<<<<< HEAD
-		disuse_physical_tlist(outer_plan, best_path->jpath.outerjoinpath);
-		sort =
-=======
 		disuse_physical_tlist(root, outer_plan, best_path->jpath.outerjoinpath);
-		outer_plan = (Plan *)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		sort =
 			make_sort_from_pathkeys(root,
 									outer_plan,
 									best_path->outersortkeys,
@@ -3459,13 +3463,8 @@ create_mergejoin_plan(PlannerInfo *root,
 
 	if (best_path->innersortkeys)
 	{
-<<<<<<< HEAD
-		disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
-		sort =
-=======
 		disuse_physical_tlist(root, inner_plan, best_path->jpath.innerjoinpath);
-		inner_plan = (Plan *)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		sort =
 			make_sort_from_pathkeys(root,
 									inner_plan,
 									best_path->innersortkeys,
@@ -3770,18 +3769,13 @@ create_hashjoin_plan(PlannerInfo *root,
 	hashclauses = get_switched_clauses(best_path->path_hashclauses,
 							 best_path->jpath.outerjoinpath->parent->relids);
 
-<<<<<<< HEAD
 	/*
 	 * We don't want any excess columns in the hashed tuples, or in the outer
 	 * either!
 	 */
-	disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
-	if (outer_plan)
-		disuse_physical_tlist(outer_plan, best_path->jpath.outerjoinpath);
-=======
-	/* We don't want any excess columns in the hashed tuples */
 	disuse_physical_tlist(root, inner_plan, best_path->jpath.innerjoinpath);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	if (outer_plan)
+		disuse_physical_tlist(root, outer_plan, best_path->jpath.outerjoinpath);
 
 	/* If we expect batching, suppress excess columns in outer tuples too */
 	if (best_path->num_batches > 1)

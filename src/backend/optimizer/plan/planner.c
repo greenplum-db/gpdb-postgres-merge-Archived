@@ -1815,9 +1815,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			List	   *groupExprs;
 
-			groupExprs = get_sortgrouplist_exprs(parse->groupClause,
-												 parse->targetList);
-			dNumGroups = estimate_num_groups(root, groupExprs, path_rows);
+			groupExprs = get_grouplist_exprs(parse->groupClause,
+											 parse->targetList);
+			if (groupExprs == NULL)
+				dNumGroups = 1;
+			else
+				dNumGroups = estimate_num_groups(root, groupExprs, path_rows);
 
 			/*
 			 * In GROUP BY mode, an absolute LIMIT is relative to the number
@@ -4095,17 +4098,10 @@ choose_hashed_grouping(PlannerInfo *root,
 	/*
 	 * Now make the decision using the top-level tuple fraction.
 	 */
-<<<<<<< HEAD
-	if (tuple_fraction >= 1.0)
-		tuple_fraction /= dNumGroups;
-
 	if (!root->config->enable_groupagg)
 		return true;
 
-	if (compare_fractional_path_costs(&hashed_p, &sorted_p, 
-=======
 	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 									  tuple_fraction) < 0)
 	{
 		/* Hashed is cheaper, so use it */
@@ -4185,14 +4181,6 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
-<<<<<<< HEAD
-=======
-
-	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
-	/* plus the per-hash-entry overhead */
-	hashentrysize += hash_agg_entry_size(0);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* 
 	 * Note that HashAgg uses a HHashTable for performing the aggregations. So
@@ -4487,40 +4475,6 @@ make_subplanTargetList(PlannerInfo *root,
 		}
 		Assert(keyno == numCols);
 	}
-<<<<<<< HEAD
-=======
-	else
-	{
-		/*
-		 * With no grouping columns, just pass whole tlist to pull_var_clause.
-		 * Need (shallow) copy to avoid damaging input tlist below.
-		 */
-		non_group_cols = list_copy(tlist);
-	}
-
-	/*
-	 * If there's a HAVING clause, we'll need the Vars it uses, too.
-	 */
-	if (parse->havingQual)
-		non_group_cols = lappend(non_group_cols, parse->havingQual);
-
-	/*
-	 * Pull out all the Vars mentioned in non-group cols (plus HAVING), and
-	 * add them to the result tlist if not already present.  (A Var used
-	 * directly as a GROUP BY item will be present already.)  Note this
-	 * includes Vars used in resjunk items, so we are covering the needs of
-	 * ORDER BY and window specifications.  Vars used within Aggrefs will be
-	 * pulled out here, too.
-	 */
-	non_group_vars = pull_var_clause((Node *) non_group_cols,
-									 PVC_RECURSE_AGGREGATES,
-									 PVC_INCLUDE_PLACEHOLDERS);
-	sub_tlist = add_to_flat_tlist(sub_tlist, non_group_vars);
-
-	/* clean up cruft */
-	list_free(non_group_vars);
-	list_free(non_group_cols);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	return sub_tlist;
 }
@@ -4530,14 +4484,9 @@ make_subplanTargetList(PlannerInfo *root,
  *		Locate grouping columns in the tlist chosen by create_plan.
  *
  * This is only needed if we don't use the sub_tlist chosen by
-<<<<<<< HEAD
- * make_subplanTargetList.	We have to forget the column indexes found
- * by that routine and re-locate the grouping vars in the real sub_tlist.
-=======
  * make_subplanTargetList.  We have to forget the column indexes found
  * by that routine and re-locate the grouping exprs in the real sub_tlist.
  * We assume the grouping exprs are just Vars (see make_subplanTargetList).
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 static void
 locate_grouping_columns(PlannerInfo *root,
@@ -4566,27 +4515,7 @@ locate_grouping_columns(PlannerInfo *root,
 
 	foreach (ge, grouptles)
 	{
-<<<<<<< HEAD
-		TargetEntry *groupte = (TargetEntry *)lfirst(ge);
-		Node	*groupexpr;
-
-		TargetEntry *te = NULL;
-		ListCell   *sl;
-
-		groupexpr = (Node *) groupte->expr;
-
-		foreach(sl, sub_tlist)
-		{
-			te = (TargetEntry *) lfirst(sl);
-			if (equal(groupexpr, te->expr))
-				break;
-		}
-		if (!sl)
-			elog(ERROR, "failed to locate grouping columns");
-
-=======
-		SortGroupClause *grpcl = (SortGroupClause *) lfirst(gl);
-		Var		   *groupexpr = (Var *) get_sortgroupclause_expr(grpcl, tlist);
+		Var		   *groupexpr = (Var *) lfirst(ge);
 		TargetEntry *te;
 
 		/*
@@ -4604,7 +4533,6 @@ locate_grouping_columns(PlannerInfo *root,
 		if (!te)
 			elog(ERROR, "failed to locate grouping columns");
 		Assert(((Var *) te->expr)->vartype == groupexpr->vartype);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		groupColIdx[keyno++] = te->resno;
 	}
 }

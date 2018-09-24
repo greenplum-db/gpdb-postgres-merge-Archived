@@ -560,32 +560,12 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *mminfo)
 	 */
 	plan = create_plan(subroot, mminfo->path);
 
-<<<<<<< HEAD
-	/* Replace the plan's tlist with a copy of the one we built above. */
-	plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
-=======
 	/*
 	 * If the top-level plan node is one that cannot do expression evaluation
 	 * and its existing target list isn't already what we need, we must insert
 	 * a Result node to project the desired tlist.
 	 */
-	if (!is_projection_capable_plan(plan) &&
-		!tlist_same_exprs(subparse->targetList, plan->targetlist))
-	{
-		plan = (Plan *) make_result(subroot,
-									subparse->targetList,
-									NULL,
-									plan);
-	}
-	else
-	{
-		/*
-		 * Otherwise, just replace the subplan's flat tlist with the desired
-		 * tlist.
-		 */
-		plan->targetlist = subparse->targetList;
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	plan = plan_pushdown_tlist(root, plan, copyObject(subparse->targetList));
 
 	if (plan->flow->flotype == FLOW_SINGLETON)
 	{

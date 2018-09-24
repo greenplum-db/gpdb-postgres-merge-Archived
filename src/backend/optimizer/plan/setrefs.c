@@ -570,15 +570,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	/* zap unneeded sub-structure */
 	newrte->subquery = NULL;
 	newrte->joinaliasvars = NIL;
-<<<<<<< HEAD
-	newrte->funcexpr = NULL;
-	newrte->funccoltypes = NIL;
-	newrte->funccoltypmods = NIL;
-	newrte->funccolcollations = NIL;
-	newrte->funcuserdata = NULL;
-=======
 	newrte->functions = NIL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	newrte->values_lists = NIL;
 	newrte->values_collations = NIL;
 	newrte->ctecoltypes = NIL;

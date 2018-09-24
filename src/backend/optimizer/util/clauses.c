@@ -631,16 +631,6 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 			else
 			{
 				/*
-<<<<<<< HEAD
-				 * If transition state is of same type as first input, assume
-				 * it's the same typmod (same width) as well.  This works for
-				 * cases like MAX/MIN and is probably somewhat reasonable
-				 * otherwise.
-				 */
-				int32		aggtranstypmod;
-
-				if (numArguments > 0 && aggtranstype == inputTypes[0])
-=======
 				 * If transition state is of same type as first aggregated
 				 * input, assume it's the same typmod (same width) as well.
 				 * This works for cases like MAX/MIN and is probably somewhat
@@ -651,7 +641,6 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 
 				if (numArguments > numdirectargs &&
 					aggtranstype == inputTypes[numdirectargs])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					aggtranstypmod = exprTypmod((Node *) linitial(aggref->args));
 				else
 					aggtranstypmod = -1;
@@ -680,26 +669,11 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		}
 
 		/*
-<<<<<<< HEAD
-		 * Complain if the aggregate's arguments contain any aggregates;
-		 * nested agg functions are semantically nonsensical.  Aggregates in
-		 * the FILTER clause are detected in transformAggregateCall().
-		 */
-		if (contain_agg_clause((Node *) aggref->args) ||
-			contain_agg_clause((Node *) aggref->aggorder))
-			ereport(ERROR,
-					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("aggregate function calls cannot be nested")));
-
-		/*
-		 * Having checked that, we need not recurse into the argument.
-=======
 		 * We assume that the parser checked that there are no aggregates (of
 		 * this level anyway) in the aggregated arguments, direct arguments,
 		 * or filter clause.  Hence, we need not recurse into any of them. (If
 		 * either the parser or the planner screws up on this point, the
 		 * executor will still catch it; see ExecInitExpr.)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 		return false;
 	}

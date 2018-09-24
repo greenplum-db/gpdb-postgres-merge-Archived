@@ -600,14 +600,14 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			{
 				int64		totalbytes;
 
-				totalbytes = GetAOTotalBytes(rel, SnapshotNow);
+				totalbytes = GetAOTotalBytes(rel, GetActiveSnapshot());
 				curpages = RelationGuessNumberOfBlocks(totalbytes);
 			}
 			else if (RelationIsAoCols(rel))
 			{
 				int64		totalbytes;
 
-				totalbytes = GetAOCSTotalBytes(rel, SnapshotNow, false);
+				totalbytes = GetAOCSTotalBytes(rel, GetActiveSnapshot(), false);
 				curpages = RelationGuessNumberOfBlocks(totalbytes);
 			}
 			else

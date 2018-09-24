@@ -2479,12 +2479,8 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
  */
 Path *
 create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
-<<<<<<< HEAD
 						 RangeTblEntry *rte,
-						 Relids required_outer)
-=======
 						 List *pathkeys, Relids required_outer)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	Path	   *pathnode = makeNode(Path);
 
