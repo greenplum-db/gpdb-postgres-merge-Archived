@@ -1178,19 +1178,11 @@ DecodeNumberField(int len, char *str, int fmask,
 
 		/*
 		 * OK, we have at most six digits to care about. Let's construct a
-<<<<<<< HEAD
-		 * string with those digits, zero-padded on the right, and then do
-		 * the conversion to an integer.
-		 *
-		 * XXX This truncates the seventh digit, unlike rounding it as do
-		 * the backend and the !HAVE_INT64_TIMESTAMP case.
-=======
 		 * string with those digits, zero-padded on the right, and then do the
 		 * conversion to an integer.
 		 *
 		 * XXX This truncates the seventh digit, unlike rounding it as do the
 		 * backend and the !HAVE_INT64_TIMESTAMP case.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 		for (i = 0; i < 6; i++)
 			fstr[i] = *cp != '\0' ? *cp++ : '0';

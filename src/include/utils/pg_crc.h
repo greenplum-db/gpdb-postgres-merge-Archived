@@ -18,7 +18,6 @@
  * COMP_<variant>(crc, data, len)
  *		Accumulate some (more) bytes into a CRC
  *
-<<<<<<< HEAD
  * FIN_<variant>(crc)
  *		Finish a CRC calculation
  *
@@ -28,9 +27,6 @@
  * The CRC-32C variant is in port/pg_crc32c.h.
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc.h
@@ -103,17 +99,8 @@ do {															  \
 } while (0)
 
 /*
-<<<<<<< HEAD
  * Constant table for the CRC-32 polynomials. The same table is used by both
  * the normal and traditional variants.
-=======
- * crc0 represents the LSBs of the 64-bit value, crc1 the MSBs.  Note that
- * with crc0 placed first, the output of 32-bit and 64-bit implementations
- * will be bit-compatible only on little-endian architectures.  If it were
- * important to make the two possible implementations bit-compatible on
- * all machines, we could do a configure test to decide how to order the
- * two fields, but it seems not worth the trouble.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 extern PGDLLIMPORT const uint32 pg_crc32_table[256];
 

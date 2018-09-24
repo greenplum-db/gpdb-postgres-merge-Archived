@@ -28,11 +28,7 @@
  *
  * If the server is shut down, postmaster sends us SIGUSR2 after all
  * regular backends have exited and the shutdown checkpoint has been written.
-<<<<<<< HEAD
- * This instruct walsender to send any outstanding WAL, including the
-=======
  * This instructs walsender to send any outstanding WAL, including the
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * shutdown checkpoint record, wait for it to be replicated to the standby,
  * and then exit.
  *

@@ -13,13 +13,9 @@
  * fact that a particular page needs to be visited.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2007-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2003-2013, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2003-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * src/include/nodes/tidbitmap.h
  *

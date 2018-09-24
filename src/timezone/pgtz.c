@@ -3,11 +3,7 @@
  * pgtz.c
  *	  Timezone Library Integration Functions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
-=======
- * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * IDENTIFICATION
  *	  src/timezone/pgtz.c
@@ -321,14 +317,6 @@ pg_tzset(const char *name)
 	return &tzp->tz;
 }
 
-<<<<<<< HEAD
-#if 0
-/*
- * GPDB_94_MERGE_FIXME: uncomment this code after merging in
- * 631dc390f49909a5c8ebd6002cfb2bcee5415a9d from 9.4 dev
- */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /*
  * Load a fixed-GMT-offset timezone.
  * This is used for SQL-spec SET TIME ZONE INTERVAL 'foo' cases.
@@ -337,12 +325,9 @@ pg_tzset(const char *name)
  * The GMT offset is specified in seconds, positive values meaning west of
  * Greenwich (ie, POSIX not ISO sign convention).  However, we use ISO
  * sign convention in the displayable abbreviation for the zone.
-<<<<<<< HEAD
  *
  * Caution: this can fail (return NULL) if the specified offset is outside
  * the range allowed by the zic library.
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 pg_tz *
 pg_tzset_offset(long gmtoffset)
@@ -352,24 +337,14 @@ pg_tzset_offset(long gmtoffset)
 	char		tzname[128];
 
 	snprintf(offsetstr, sizeof(offsetstr),
-<<<<<<< HEAD
 			 "%02ld", absoffset / SECS_PER_HOUR);
 	absoffset %= SECS_PER_HOUR;
-=======
-			 "%02ld", absoffset / SECSPERHOUR);
-	absoffset %= SECSPERHOUR;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (absoffset != 0)
 	{
 		snprintf(offsetstr + strlen(offsetstr),
 				 sizeof(offsetstr) - strlen(offsetstr),
-<<<<<<< HEAD
 				 ":%02ld", absoffset / SECS_PER_MINUTE);
 		absoffset %= SECS_PER_MINUTE;
-=======
-				 ":%02ld", absoffset / SECSPERMIN);
-		absoffset %= SECSPERMIN;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (absoffset != 0)
 			snprintf(offsetstr + strlen(offsetstr),
 					 sizeof(offsetstr) - strlen(offsetstr),
@@ -384,11 +359,7 @@ pg_tzset_offset(long gmtoffset)
 
 	return pg_tzset(tzname);
 }
-<<<<<<< HEAD
-#endif
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * Initialize timezone library
