@@ -10,13 +10,9 @@
  * the location.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -325,12 +321,6 @@ typedef struct CollateClause
  * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)', or if
  * agg_within_group is true, it was 'foo(...) WITHIN GROUP (ORDER BY ...)'.
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
-<<<<<<< HEAD
- * indicates we saw 'foo(DISTINCT ...)'.  In either case, the construct
- * *must* be an aggregate call.  Otherwise, it might be either an
- * aggregate or some other kind of function.  However, if FILTER or OVER is
- * present it had better be an aggregate or window function.
-=======
  * indicates we saw 'foo(DISTINCT ...)'.  In any of these cases, the
  * construct *must* be an aggregate call.  Otherwise, it might be either an
  * aggregate or some other kind of function.  However, if FILTER or OVER is
@@ -338,7 +328,6 @@ typedef struct CollateClause
  *
  * Normally, you'd initialize this via makeFuncCall() and then only change the
  * parts of the struct its defaults don't match afterwards, as needed.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 typedef struct FuncCall
 {
@@ -840,16 +829,8 @@ typedef struct RangeTblEntry
 	 * implicit, and must be accounted for "by hand" in places such as
 	 * expandRTE().
 	 */
-<<<<<<< HEAD
-	Node	   *funcexpr;		/* expression tree for func call */
-	List	   *funccoltypes;	/* OID list of column type OIDs */
-	List	   *funccoltypmods; /* integer list of column typmods */
-	List	   *funccolcollations;		/* OID list of column collation OIDs */
-	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
-=======
 	List	   *functions;		/* list of RangeTblFunction nodes */
 	bool		funcordinality; /* is this called WITH ORDINALITY? */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -884,7 +865,8 @@ typedef struct RangeTblEntry
 	Oid			checkAsUser;	/* if valid, check access as this role */
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
-<<<<<<< HEAD
+
+	List	   *securityQuals;	/* any security barrier quals to apply */
 
     List       *pseudocols;     /* CDB: List of CdbRelColumnInfo nodes defining
                                  *  pseudo columns for targetlist of scan node.
@@ -893,9 +875,6 @@ typedef struct RangeTblEntry
                                  *  the 0-based position in the list.  Used
                                  *  only in planner & EXPLAIN, not in executor.
                                  */
-=======
-	List	   *securityQuals;	/* any security barrier quals to apply */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } RangeTblEntry;
 
 /*
@@ -925,7 +904,10 @@ typedef struct RangeTblFunction
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
 	List	   *funccolcollations;		/* OID list of column collation OIDs */
-	/* This is set during planning for use by the executor: */
+
+	bytea	   *funcuserdata;	/* describe function user data. assume bytea */
+
+/* This is set during planning for use by the executor: */
 	Bitmapset  *funcparams;		/* PARAM_EXEC Param IDs affecting this func */
 } RangeTblFunction;
 
@@ -1483,7 +1465,7 @@ typedef enum AlterTableType
 	AT_DropInherit,				/* NO INHERIT parent */
 	AT_AddOf,					/* OF <type_name> */
 	AT_DropOf,					/* NOT OF */
-<<<<<<< HEAD
+	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_GenericOptions,			/* OPTIONS (...) */
 	AT_SetDistributedBy,		/* SET DISTRIBUTED BY */
 	/* CDB: Partitioned Tables */
@@ -1497,10 +1479,6 @@ typedef enum AlterTableType
 	AT_PartSplit,				/* Split */
 	AT_PartTruncate,			/* Truncate */
 	AT_PartAddInternal			/* CREATE TABLE time partition addition */
-=======
-	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
-	AT_GenericOptions			/* OPTIONS (...) */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt

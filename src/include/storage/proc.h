@@ -4,13 +4,9 @@
  *	  per-process shared memory data structures
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/proc.h
@@ -161,7 +157,6 @@ struct PGPROC
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
-<<<<<<< HEAD
 	/*
 	 * Info for Resource Scheduling, what portal (i.e statement) we might
 	 * be waiting on.
@@ -182,12 +177,8 @@ struct PGPROC
    							 * NULL indicates the resource group is
 							 * locked for drop. */
 
-	/* Per-backend LWLock.	Protects fields below. */
-	LWLockId	backendLock;	/* protects the fields below */
-=======
 	/* Per-backend LWLock.  Protects fields below. */
 	LWLock	   *backendLock;	/* protects the fields below */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */

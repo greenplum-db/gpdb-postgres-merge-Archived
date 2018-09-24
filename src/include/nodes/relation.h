@@ -4,13 +4,9 @@
  *	  Definitions for planner's internal data structures.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/relation.h
@@ -69,12 +65,9 @@ typedef struct QualCost
 typedef struct AggClauseCosts
 {
 	int			numAggs;		/* total number of aggregate functions */
-<<<<<<< HEAD
-	int			numOrderedAggs; /* number that use DISTINCT or ORDER BY */
-	int			numPureOrderedAggs; /* CDB: number that use ORDER BY, not counting DISTINCT */
-=======
 	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	/* GPDB_94_MERGE_FIXME: does numPureOrderedAggs include WITHIN GROUP aggs? Should it? */
+	int			numPureOrderedAggs; /* CDB: number that use ORDER BY, not counting DISTINCT */
 	QualCost	transCost;		/* total per-input-row execution costs */
 	Cost		finalCost;		/* total per-aggregated-row costs */
 	Size		transitionSpace;	/* space for pass-by-ref transition data */

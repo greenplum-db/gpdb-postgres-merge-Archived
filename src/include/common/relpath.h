@@ -36,19 +36,7 @@ typedef enum ForkNumber
 	 */
 } ForkNumber;
 
-<<<<<<< HEAD
-#define OIDCHARS		10		/* max chars printed by %u */
-/*
- * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY. But in 
- * GPDB, you should use tablespace_version_directory() function instead.
- * This constant has been renamed so that we catch and know to modify all
- * upstream uses of TABLESPACE_VERSION_DIRECTORY.
- */
-#define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
-									CppAsString2(CATALOG_VERSION_NO)
-=======
 #define MAX_FORKNUM		INIT_FORKNUM
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define FORKNAMECHARS	4		/* max chars for a fork name */
 
@@ -78,10 +66,6 @@ extern char *GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 /* First argument is a RelFileNode */
 #define relpathperm(rnode, forknum) \
 	relpathbackend(rnode, InvalidBackendId, forknum)
-
-extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
-					char **dir, char **filename);
-extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
 
 /* First argument is a RelFileNodeBackend */
 #define relpath(rnode, forknum) \

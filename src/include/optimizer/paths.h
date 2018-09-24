@@ -4,13 +4,9 @@
  *	  prototypes for various files in optimizer/path
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2008, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/paths.h
@@ -175,16 +171,13 @@ extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
 										  double fraction);
 extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
 					 ScanDirection scandir);
-<<<<<<< HEAD
 
 Var *
 find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno);
 
-=======
 extern List *build_expression_pathkey(PlannerInfo *root, Expr *expr,
 						 Relids nullable_relids, Oid opno,
 						 Relids rel, bool create_it);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern List *convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						  List *subquery_pathkeys);
 extern List *build_join_pathkeys(PlannerInfo *root,

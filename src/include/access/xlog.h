@@ -307,12 +307,9 @@ extern CheckpointStatsData CheckpointStats;
 #define PROMOTE_SIGNAL_FILE "promote"
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
-<<<<<<< HEAD
 extern XLogRecPtr XLogInsert_OverrideXid(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId overrideXid);
 extern XLogRecPtr XLogLastInsertBeginLoc(void);
-=======
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);

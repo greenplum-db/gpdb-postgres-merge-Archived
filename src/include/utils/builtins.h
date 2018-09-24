@@ -4,13 +4,9 @@
  *	  Declarations for operations on built-in types.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/builtins.h
@@ -554,7 +550,6 @@ extern Datum ordered_set_transition_multi(PG_FUNCTION_ARGS);
 extern Datum percentile_disc_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_float8_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_interval_final(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum percentile_cont_timestamp_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_timestamptz_final(PG_FUNCTION_ARGS);
 extern Datum percentile_disc_multi_final(PG_FUNCTION_ARGS);
@@ -562,11 +557,6 @@ extern Datum percentile_cont_float8_multi_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_interval_multi_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_timestamp_multi_final(PG_FUNCTION_ARGS);
 extern Datum percentile_cont_timestamptz_multi_final(PG_FUNCTION_ARGS);
-=======
-extern Datum percentile_disc_multi_final(PG_FUNCTION_ARGS);
-extern Datum percentile_cont_float8_multi_final(PG_FUNCTION_ARGS);
-extern Datum percentile_cont_interval_multi_final(PG_FUNCTION_ARGS);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Datum mode_final(PG_FUNCTION_ARGS);
 extern Datum hypothetical_rank_final(PG_FUNCTION_ARGS);
 extern Datum hypothetical_percent_rank_final(PG_FUNCTION_ARGS);
@@ -1087,24 +1077,18 @@ extern Datum numeric_float4(PG_FUNCTION_ARGS);
 extern Datum numeric_accum(PG_FUNCTION_ARGS);
 extern Datum numeric_combine(PG_FUNCTION_ARGS);
 extern Datum numeric_avg_accum(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum numeric_avg_combine(PG_FUNCTION_ARGS);
 extern Datum numeric_avg_serialize(PG_FUNCTION_ARGS);
 extern Datum numeric_avg_deserialize(PG_FUNCTION_ARGS);
 extern Datum numeric_serialize(PG_FUNCTION_ARGS);
 extern Datum numeric_deserialize(PG_FUNCTION_ARGS);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Datum numeric_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int2_accum(PG_FUNCTION_ARGS);
 extern Datum int4_accum(PG_FUNCTION_ARGS);
 extern Datum int8_accum(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum numeric_poly_combine(PG_FUNCTION_ARGS);
 extern Datum numeric_poly_serialize(PG_FUNCTION_ARGS);
 extern Datum numeric_poly_deserialize(PG_FUNCTION_ARGS);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Datum int2_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int4_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int8_accum_inv(PG_FUNCTION_ARGS);
@@ -1129,7 +1113,6 @@ extern Datum int4_sum(PG_FUNCTION_ARGS);
 extern Datum int8_sum(PG_FUNCTION_ARGS);
 extern Datum int2_avg_accum(PG_FUNCTION_ARGS);
 extern Datum int4_avg_accum(PG_FUNCTION_ARGS);
-<<<<<<< HEAD
 extern Datum int4_avg_combine(PG_FUNCTION_ARGS);
 extern Datum int2_avg_accum_inv(PG_FUNCTION_ARGS);
 extern Datum int4_avg_accum_inv(PG_FUNCTION_ARGS);
@@ -1138,11 +1121,6 @@ extern Datum float4_avg_accum(PG_FUNCTION_ARGS);
 extern Datum float8_avg_accum(PG_FUNCTION_ARGS);
 extern Datum int8_avg(PG_FUNCTION_ARGS);
 extern Datum float8_avg(PG_FUNCTION_ARGS);
-=======
-extern Datum int2_avg_accum_inv(PG_FUNCTION_ARGS);
-extern Datum int4_avg_accum_inv(PG_FUNCTION_ARGS);
-extern Datum int8_avg(PG_FUNCTION_ARGS);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern Datum int2int4_sum(PG_FUNCTION_ARGS);
 extern Datum width_bucket_numeric(PG_FUNCTION_ARGS);
 extern Datum hash_numeric(PG_FUNCTION_ARGS);

@@ -30,11 +30,7 @@ typedef struct SnapshotData *Snapshot;
  * The specific semantics of a snapshot are encoded by the "satisfies"
  * function.
  */
-<<<<<<< HEAD
-typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTupleHeader tuple,
-=======
-typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+typedef bool (*SnapshotSatisfiesFunc) (Relation relation, HeapTuple htup,
 										   Snapshot snapshot, Buffer buffer);
 
 /*

@@ -280,11 +280,7 @@ struct HeapTupleHeaderData
 
 #define HeapTupleHeaderXminCommitted(tup) \
 ( \
-<<<<<<< HEAD
 	((tup)->t_infomask & HEAP_XMIN_COMMITTED) != 0 \
-=======
-	(tup)->t_infomask & HEAP_XMIN_COMMITTED \
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 )
 
 #define HeapTupleHeaderXminInvalid(tup) \
@@ -753,7 +749,7 @@ static inline HeapTuple heap_copytuple(HeapTuple tuple)
 	return heaptuple_copy_to(tuple, NULL, NULL);
 }
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
-<<<<<<< HEAD
+extern Datum heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc);
 
 extern HeapTuple heaptuple_form_to(TupleDesc tupdesc, Datum* values,
 								   bool *isnull, HeapTuple tup, uint32 *len);
@@ -762,11 +758,6 @@ static inline HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
 {
 	return heaptuple_form_to(tupleDescriptor, values, isnull, NULL, NULL);
 }
-=======
-extern Datum heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc);
-extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
-				Datum *values, bool *isnull);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern HeapTuple heap_modify_tuple(HeapTuple tuple,
 				  TupleDesc tupleDesc,
 				  Datum *replValues,

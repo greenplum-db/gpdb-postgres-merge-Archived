@@ -20,18 +20,13 @@
 #include "port/pg_crc32c.h"
 
 
-<<<<<<< HEAD
 /*
  * Version identifier for this pg_control format.
  *
  * The first three digits is the PostgreSQL version number. The last
  * four digits indicates the GPDB version.
  */
-#define PG_CONTROL_VERSION	9370600
-=======
-/* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	942
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#define PG_CONTROL_VERSION	9420600
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -80,12 +75,8 @@ typedef struct CheckPoint
 #define XLOG_RESTORE_POINT				0x70
 #define XLOG_FPW_CHANGE					0x80
 #define XLOG_END_OF_RECOVERY			0x90
-<<<<<<< HEAD
-#define XLOG_HINT						0xA0
-#define XLOG_NEXTRELFILENODE			0xB0
-=======
 #define XLOG_FPI						0xA0
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#define XLOG_NEXTRELFILENODE			0xB0
 
 
 /*

@@ -258,16 +258,12 @@ typedef struct RmgrData
 	void		(*rm_desc) (StringInfo buf, struct XLogRecord *record);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
-<<<<<<< HEAD
-	bool		(*rm_safe_restartpoint) (void);
 
 	/*
 	 * rm_mask takes as input a page modified by the resource manager and masks
 	 * out bits that shouldn't be flagged by wal_consistency_checking.
 	 */
 	void		(*rm_mask) (char *pagedata, BlockNumber blkno);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } RmgrData;
 
 extern const RmgrData RmgrTable[];

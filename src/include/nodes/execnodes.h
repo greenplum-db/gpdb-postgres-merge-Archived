@@ -4,13 +4,9 @@
  *	  definitions for executor state nodes
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/execnodes.h
@@ -1976,13 +1972,9 @@ typedef struct BitmapHeapScanState
 	Node	   *tbm;
 	GenericBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
-<<<<<<< HEAD
-	GenericBMIterator *prefetch_iterator;
-=======
 	long		exact_pages;
 	long		lossy_pages;
-	TBMIterator *prefetch_iterator;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	GenericBMIterator *prefetch_iterator;
 	int			prefetch_pages;
 	int			prefetch_target;
 } BitmapHeapScanState;
@@ -2083,21 +2075,15 @@ typedef struct SubqueryScanState
  *		function appearing in FROM (typically a function returning set).
  *
  *		eflags				node's capability flags
-<<<<<<< HEAD
- *		tupdesc				expected return tuple description
- *		tuplestorestate		private state of tuplestore.c
- *		funcexpr			state for function expression being evaluated
- *		cdb_want_ctid		true => ctid is referenced in targetlist
- *		cdb_fake_ctid
- *		cdb_mark_ctid
-=======
  *		ordinality			is this scan WITH ORDINALITY?
  *		simple				true if we have 1 function and no ordinality
  *		ordinal				current ordinal column value
  *		nfuncs				number of functions being executed
  *		funcstates			per-function execution states (private in
  *							nodeFunctionscan.c)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+ *		cdb_want_ctid		true => ctid is referenced in targetlist
+ *		cdb_fake_ctid
+ *		cdb_mark_ctid
  * ----------------
  */
 struct FunctionScanPerFuncState;
@@ -2106,21 +2092,15 @@ typedef struct FunctionScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	int			eflags;
-<<<<<<< HEAD
-	TupleDesc	tupdesc;
-	Tuplestorestate *tuplestorestate;
-	ExprState  *funcexpr;
-	bool		cdb_want_ctid;
-	ItemPointerData cdb_fake_ctid;
-	ItemPointerData cdb_mark_ctid;
-=======
 	bool		ordinality;
 	bool		simple;
 	int64		ordinal;
 	int			nfuncs;
 	struct FunctionScanPerFuncState *funcstates;		/* array of length
 														 * nfuncs */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	bool		cdb_want_ctid;
+	ItemPointerData cdb_fake_ctid;
+	ItemPointerData cdb_mark_ctid;
 } FunctionScanState;
 
 

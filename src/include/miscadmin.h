@@ -75,30 +75,19 @@
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
 extern PGDLLIMPORT volatile bool InterruptPending;
-<<<<<<< HEAD
-extern volatile bool QueryCancelPending;
-extern volatile bool QueryCancelCleanup; /* GPDB only */
-extern volatile bool QueryFinishPending;
-extern volatile bool ProcDiePending;
-=======
 extern PGDLLIMPORT volatile bool QueryCancelPending;
+extern PGDLLIMPORT volatile bool QueryCancelCleanup; /* GPDB only */
+extern PGDLLIMPORT volatile bool QueryFinishPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
-<<<<<<< HEAD
-extern volatile bool ImmediateInterruptOK;
-extern volatile bool ImmediateDieOK;
-extern volatile bool TermSignalReceived;
+extern PGDLLIMPORT volatile bool ImmediateInterruptOK;
+extern PGDLLIMPORT volatile bool ImmediateDieOK;
+extern PGDLLIMPORT volatile bool TermSignalReceived;
 extern PGDLLIMPORT volatile int32 InterruptHoldoffCount;
 extern PGDLLIMPORT volatile int32 CritSectionCount;
-=======
-extern PGDLLIMPORT volatile bool ImmediateInterruptOK;
-extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern PGDLLIMPORT volatile uint32 CritSectionCount;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(const char* filename, int lineno);
@@ -214,11 +203,8 @@ extern PGDLLIMPORT char *DataDir;
 extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
 extern int	MaxConnections;
-<<<<<<< HEAD
-extern int gp_workfile_max_entries;
-=======
 extern int	max_worker_processes;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+extern int gp_workfile_max_entries;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
@@ -302,34 +288,7 @@ extern PGDLLIMPORT int DateOrder;
 #define INTSTYLE_SQL_STANDARD		2
 #define INTSTYLE_ISO_8601			3
 
-<<<<<<< HEAD
-extern int	IntervalStyle;
-
-/*
- * IntervalStyles
- *	 INTSTYLE_POSTGRES			   Like Postgres < 8.4 when DateStyle = 'iso'
- *	 INTSTYLE_POSTGRES_VERBOSE	   Like Postgres < 8.4 when DateStyle != 'iso'
- *	 INTSTYLE_SQL_STANDARD		   SQL standard interval literals
- *	 INTSTYLE_ISO_8601			   ISO-8601-basic formatted intervals
- */
-#define INTSTYLE_POSTGRES			0
-#define INTSTYLE_POSTGRES_VERBOSE	1
-#define INTSTYLE_SQL_STANDARD		2
-#define INTSTYLE_ISO_8601			3
-
-extern int	IntervalStyle;
-
-/*
- * HasCTZSet is true if user has set timezone as a numeric offset from UTC.
- * If so, CTimeZone is the timezone offset in seconds (using the Unix-ish
- * sign convention, ie, positive offset is west of UTC, rather than the
- * SQL-ish convention that positive is east of UTC).
- */
-extern bool HasCTZSet;
-extern int	CTimeZone;
-=======
 extern PGDLLIMPORT int IntervalStyle;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 

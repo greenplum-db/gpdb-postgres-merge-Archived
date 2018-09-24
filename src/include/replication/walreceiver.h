@@ -129,12 +129,7 @@ void walrcv_identify_system (TimeLineID *primary_tli);
 
 void walrcv_readtimelinehistoryfile (TimeLineID tli, char **filename, char **content, int *size);
 
-<<<<<<< HEAD
-bool walrcv_startstreaming (TimeLineID tli, XLogRecPtr startpoint);
-=======
-typedef bool (*walrcv_startstreaming_type) (TimeLineID tli, XLogRecPtr startpoint, char *slotname);
-extern PGDLLIMPORT walrcv_startstreaming_type walrcv_startstreaming;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+bool walrcv_startstreaming (TimeLineID tli, XLogRecPtr startpoint, char *slotname);
 
 void walrcv_endstreaming (TimeLineID *next_tli);
 

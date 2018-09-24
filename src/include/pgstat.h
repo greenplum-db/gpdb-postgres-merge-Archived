@@ -56,11 +56,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
 	PGSTAT_MTYPE_ANALYZE,
-<<<<<<< HEAD
-	PGSTAT_MTYPE_QUEUESTAT, /* GPDB */
-=======
 	PGSTAT_MTYPE_ARCHIVER,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	PGSTAT_MTYPE_QUEUESTAT, /* GPDB */
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE,
@@ -374,7 +371,18 @@ typedef struct PgStat_MsgAnalyze
 
 
 /* ----------
-<<<<<<< HEAD
+ * PgStat_MsgArchiver			Sent by the archiver to update statistics.
+ * ----------
+ */
+typedef struct PgStat_MsgArchiver
+{
+	PgStat_MsgHdr m_hdr;
+	bool		m_failed;		/* Failed attempt */
+	char		m_xlog[MAX_XFN_CHARS + 1];
+	TimestampTz m_timestamp;
+} PgStat_MsgArchiver;
+
+/* ----------
  * PgStat_MsgQueuestat			Sent by the backend to report resource queue
  *								activity statistics.
  * ----------  GPDB 
@@ -388,19 +396,6 @@ typedef struct PgStat_MsgQueuestat
 	PgStat_Counter	m_elapsed_exec;
 	PgStat_Counter	m_elapsed_wait;
 } PgStat_MsgQueuestat;
-
-=======
- * PgStat_MsgArchiver			Sent by the archiver to update statistics.
- * ----------
- */
-typedef struct PgStat_MsgArchiver
-{
-	PgStat_MsgHdr m_hdr;
-	bool		m_failed;		/* Failed attempt */
-	char		m_xlog[MAX_XFN_CHARS + 1];
-	TimestampTz m_timestamp;
-} PgStat_MsgArchiver;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* ----------
  * PgStat_MsgBgWriter			Sent by the bgwriter to update statistics.
@@ -549,11 +544,8 @@ typedef union PgStat_Msg
 	PgStat_MsgAutovacStart msg_autovacuum;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
-<<<<<<< HEAD
-	PgStat_MsgQueuestat msg_queuestat;  /* GPDB */
-=======
 	PgStat_MsgArchiver msg_archiver;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	PgStat_MsgQueuestat msg_queuestat;  /* GPDB */
 	PgStat_MsgBgWriter msg_bgwriter;
 	PgStat_MsgFuncstat msg_funcstat;
 	PgStat_MsgFuncpurge msg_funcpurge;

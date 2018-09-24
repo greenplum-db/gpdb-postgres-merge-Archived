@@ -23,7 +23,13 @@
 #include "utils/relcache.h"
 
 #define OIDCHARS		10		/* max chars printed by %u */
-#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
+/*
+ * In PostgreSQL, this is called just TABLESPACE_VERSION_DIRECTORY. But in 
+ * GPDB, you should use tablespace_version_directory() function instead.
+ * This constant has been renamed so that we catch and know to modify all
+ * upstream uses of TABLESPACE_VERSION_DIRECTORY.
+ */
+#define GP_TABLESPACE_VERSION_DIRECTORY	"GPDB_" GP_MAJORVERSION "_" \
 									CppAsString2(CATALOG_VERSION_NO)
 
 extern bool IsSystemRelation(Relation relation);
@@ -48,5 +54,9 @@ extern Oid GetNewOidWithIndex(Relation relation, Oid indexId,
 				   AttrNumber oidcolumn);
 extern Oid GetNewRelFileNode(Oid reltablespace, Relation pg_class,
 				  char relpersistence);
+
+extern void reldir_and_filename(RelFileNode rnode, BackendId backend, ForkNumber forknum,
+					char **dir, char **filename);
+extern char *aorelpathbackend(RelFileNode node, BackendId backend, int32 segno);
 
 #endif   /* CATALOG_H */
