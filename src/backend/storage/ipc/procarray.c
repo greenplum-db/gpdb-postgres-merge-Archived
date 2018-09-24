@@ -1258,14 +1258,6 @@ HasSerializableBackends(bool allDbs)
  * If rel is NULL or a shared relation, all backends are considered, otherwise
  * only backends running in this database are considered.
  *
-<<<<<<< HEAD
- * This is used by VACUUM to decide which deleted tuples must be preserved
- * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
- * FALSE is sufficient for non-shared relations, since only backends in my
- * own database could ever see the tuples in them.	Also, we can ignore
- * concurrently running lazy VACUUMs because (a) they must be working on other
- * tables, and (b) they don't need to do snapshot-based lookups.
-=======
  * If ignoreVacuum is TRUE then backends with the PROC_IN_VACUUM flag set are
  * ignored.
  *
@@ -1275,7 +1267,6 @@ HasSerializableBackends(bool allDbs)
  * backends in my own database could ever see the tuples in them. Also, we can
  * ignore concurrently running lazy VACUUMs because (a) they must be working
  * on other tables, and (b) they don't need to do snapshot-based lookups.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * This is also used to determine where to truncate pg_subtrans.  For that
  * backends in all databases have to be considered, so rel = NULL has to be

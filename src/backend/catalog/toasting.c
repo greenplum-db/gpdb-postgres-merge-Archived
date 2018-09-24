@@ -28,11 +28,8 @@
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-<<<<<<< HEAD
-#include "storage/lmgr.h"
-=======
+//#include "storage/lmgr.h"
 #include "storage/lock.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -43,12 +40,8 @@ Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
 						 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-<<<<<<< HEAD
-							   Datum reloptions, bool is_part_child,
-							   bool is_part_parent);
-=======
-				   Datum reloptions, LOCKMODE lockmode, bool check);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				   Datum reloptions, LOCKMODE lockmode, bool check,
+				   bool is_part_child, bool is_part_parent);
 static bool needs_toast_table(Relation rel);
 
 
@@ -79,8 +72,8 @@ static bool needs_toast_table(Relation rel);
  */
 void
 <<<<<<< HEAD
-AlterTableCreateToastTable(Oid relOid, Datum reloptions, bool is_create,
-						   bool is_part_child, bool is_part_parent)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
+						   bool is_create, bool is_part_child, bool is_part_parent)
 {
 	Relation	rel;
 
@@ -156,12 +149,9 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-<<<<<<< HEAD
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0, false, false))
-=======
 	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,
-							AccessExclusiveLock, false))
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+							AccessExclusiveLock, false,
+							false, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -177,13 +167,9 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
-<<<<<<< HEAD
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions,
-				   bool is_part_child, bool is_part_parent)
-=======
 create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions, LOCKMODE lockmode, bool check)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				   Datum reloptions, LOCKMODE lockmode, bool check,
+				   bool is_part_child, bool is_part_parent)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;

@@ -1859,26 +1859,6 @@ find_expr_references_walker(Node *node,
 					add_object_address(OCLASS_CLASS, rte->relid, 0,
 									   context->addrs);
 					break;
-<<<<<<< HEAD
-				case RTE_TABLEFUNCTION:
-				case RTE_FUNCTION:
-					foreach(ct, rte->funccoltypes)
-					{
-						add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
-										   context->addrs);
-					}
-					foreach(ct, rte->funccolcollations)
-					{
-						Oid			collid = lfirst_oid(ct);
-
-						if (OidIsValid(collid) &&
-							collid != DEFAULT_COLLATION_OID)
-							add_object_address(OCLASS_COLLATION, collid, 0,
-											   context->addrs);
-					}
-					break;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				default:
 					break;
 			}

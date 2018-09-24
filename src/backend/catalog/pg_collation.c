@@ -107,17 +107,11 @@ CollationCreate(const char *collname, Oid collnamespace,
 	rel = heap_open(CollationRelationId, ShareRowExclusiveLock);
 
 	/*
-<<<<<<< HEAD
 	 * Also forbid a specific-encoding collation shadowing an any-encoding
 	 * collation, or an any-encoding collation being shadowed (see
 	 * get_collation_name()).  This test is not backed up by the unique index,
 	 * so we take a ShareRowExclusiveLock earlier, to protect against
 	 * concurrent changes fooling this check.
-=======
-	 * Also forbid matching an any-encoding entry.  This test of course is not
-	 * backed up by the unique index, but it's not a problem since we don't
-	 * support adding any-encoding entries after initdb.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if ((collencoding == -1 &&
 		 SearchSysCacheExists3(COLLNAMEENCNSP,

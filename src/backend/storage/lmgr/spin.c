@@ -68,20 +68,6 @@ SpinlockSemas(void)
 	return NUM_SPINLOCK_SEMAPHORES;
 }
 
-<<<<<<< HEAD
-	/*
-	 * It would be cleaner to distribute this logic into the affected modules,
-	 * similar to the way shmem space estimation is handled.
-	 *
-	 * For now, though, there are few enough users of spinlocks that we just
-	 * keep the knowledge here.
-	 */
-	nsemas = NumLWLocks();		/* one for each lwlock */
-	nsemas += NBuffers;			/* one for each buffer header */
-	nsemas += max_wal_senders;	/* one for each wal sender process */
-	nsemas += 30;				/* plus a bunch for other small-scale use */
-	nsemas += NUM_ATOMICS_SEMAPHORES;
-=======
 /*
  * Initialize semaphores.
  */
@@ -89,7 +75,6 @@ extern void
 SpinlockSemaInit(PGSemaphore spinsemas)
 {
 	int			i;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	for (i = 0; i < NUM_SPINLOCK_SEMAPHORES; ++i)
 		PGSemaphoreCreate(&spinsemas[i]);

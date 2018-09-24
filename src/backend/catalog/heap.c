@@ -308,14 +308,10 @@ heap_create(const char *relname,
 	 * user defined relation, not a system one.
 	 */
 	if (!allow_system_table_mods &&
-<<<<<<< HEAD
-		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace) ||
-		 IsAoSegmentNamespace(relnamespace)) && IsNormalProcessingMode())
-=======
 		((IsSystemNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
-		 IsToastNamespace(relnamespace)) &&
+		 IsToastNamespace(relnamespace) ||
+		 IsAoSegmentNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create \"%s.%s\"",
@@ -1547,10 +1543,8 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Decide whether to create an array type over the relation's rowtype. We
 	 * do not create any array types for system catalogs (ie, those made
-<<<<<<< HEAD
-	 * during initdb).	We create array types for regular relations, views,
-	 * composite types and foreign tables ... but not, eg, for toast tables or
-	 * sequences.
+	 * during initdb). We do not create them where the use of a relation as
+	 * such is an implementation detail: toast tables, sequences and indexes.
 	 *
 	 * Also not for the auxiliary heaps created for bitmap indexes or append-
 	 * only tables.
@@ -1560,10 +1554,6 @@ heap_create_with_catalog(const char *relname,
 	 * which can cause typname collisions very easily. If there are a lot of
 	 * typname collisions, it's possible that makeArrayTypeName could fail to
 	 * create a typname and error us out.
-=======
-	 * during initdb). We do not create them where the use of a relation as
-	 * such is an implementation detail: toast tables, sequences and indexes.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (IsUnderPostmaster && ((relkind == RELKIND_RELATION && !appendOnlyRel) ||
 							  relkind == RELKIND_VIEW ||

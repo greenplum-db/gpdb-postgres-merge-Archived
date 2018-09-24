@@ -4170,24 +4170,16 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
-	 * pg_authid.rolcatupdate is set.   (This is to let superusers protect
+	 * pg_authid.rolcatupdate is set.  (This is to let superusers protect
 	 * themselves from themselves.)  Also allow it if allowSystemTableMods.
 	 *
 	 * As of 7.4 we have some updatable system views; those shouldn't be
 	 * protected in this way.  Assume the view rules can take care of
 	 * themselves.  ACL_USAGE is if we ever have system sequences.
 	 */
-<<<<<<< HEAD
 	if (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE))
-=======
-	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_USAGE)) &&
-		IsSystemClass(table_oid, classForm) &&
-		classForm->relkind != RELKIND_VIEW &&
-		!has_rolcatupdate(roleid) &&
-		!allowSystemTableMods)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{
-		if (IsSystemClass(classForm) &&
+		if (IsSystemClass(table_oid, classForm) &&
 			classForm->relkind != RELKIND_VIEW &&
 			!has_rolcatupdate(roleid) &&
 			!allowSystemTableMods)

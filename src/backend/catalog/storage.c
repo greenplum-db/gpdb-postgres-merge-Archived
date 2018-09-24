@@ -317,14 +317,9 @@ smgrDoPendingDeletes(bool isCommit)
 	PendingRelDelete *next;
 	int			nrels = 0,
 				i = 0,
-<<<<<<< HEAD
-				maxrels = 8;
-	SMgrRelation *srels = palloc(maxrels * sizeof(SMgrRelation));
-	char	   *relstorages = palloc(maxrels * sizeof(char));
-=======
 				maxrels = 0;
 	SMgrRelation *srels = NULL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	char	   *relstorages = NULL;
 
 	prev = NULL;
 	for (pending = pendingDeletes; pending != NULL; pending = next)
@@ -353,6 +348,7 @@ smgrDoPendingDeletes(bool isCommit)
 				{
 					maxrels = 8;
 					srels = palloc(sizeof(SMgrRelation) * maxrels);
+					relstorages = palloc(maxrels * sizeof(char));
 				}
 				else if (maxrels <= nrels)
 				{
@@ -378,6 +374,7 @@ smgrDoPendingDeletes(bool isCommit)
 			smgrclose(srels[i]);
 
 		pfree(srels);
+		pfree(relstorages);
 	}
 }
 

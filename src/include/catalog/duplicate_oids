@@ -3,25 +3,10 @@
 use strict;
 use warnings;
 
-<<<<<<< HEAD
-cat pg_*.h gp_*.h toasting.h indexing.h | \
-egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
-sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\)).*$/\1,\2/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_TOAST([^,]*, *\([0-9][0-9]*\), *\([0-9][0-9]*\).*$/\1,\2/p' | \
-tr ',' '\n' | \
-sort -n | \
-uniq -d | \
-grep '.'
-=======
 BEGIN
 {
-	@ARGV = (glob("pg_*.h"), qw(indexing.h toasting.h));
+	@ARGV = (glob("pg_*.h"), glob("gp_*.h"), qw(indexing.h toasting.h));
 }
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 my %oidcounts;
 

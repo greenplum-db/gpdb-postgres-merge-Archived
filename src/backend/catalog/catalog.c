@@ -66,26 +66,7 @@
 
 #include "cdb/cdbvars.h"
 
-<<<<<<< HEAD
-
-/*
- * forkname_to_number - look up fork number by name
- */
-ForkNumber
-forkname_to_number(char *forkName)
-{
-	ForkNumber	forkNum;
-
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		if (strcmp(forkNames[forkNum], forkName) == 0)
-			return forkNum;
-
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("invalid fork name"),
-			 errhint("Valid fork names are \"main\", \"fsm\", and \"vm\".")));
-	return InvalidForkNumber;	/* keep compiler quiet */
-}
+static bool IsAoSegmentClass(Form_pg_class reltuple);
 
 /*
  * Return directory name within tablespace location to use, for this server.
@@ -159,46 +140,6 @@ aorelpathbackend(RelFileNode node, BackendId backend, int32 segno)
 }
 
 /*
- * GetDatabasePath			- construct path to a database dir
- *
- * Result is a palloc'd string.
- *
- * XXX this must agree with relpath()!
- */
-char *
-GetDatabasePath(Oid dbNode, Oid spcNode)
-{
-	int			pathlen;
-	char	   *path;
-
-	if (spcNode == GLOBALTABLESPACE_OID)
-	{
-		/* Shared system relations live in {datadir}/global */
-		Assert(dbNode == 0);
-		pathlen = 6 + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "global");
-	}
-	else if (spcNode == DEFAULTTABLESPACE_OID)
-	{
-		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "base/%u",
-				 dbNode);
-	}
-	else
-	{
-		/* All other tablespaces are accessed via symlinks */
-		path = psprintf("pg_tblspc/%u/%s/%u",
-						spcNode, tablespace_version_directory(), dbNode);
-	}
-	return path;
-}
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-/*
  * IsSystemRelation
  *		True iff the relation is either a system catalog or toast table.
  *		By a system catalog, we mean one that created in the pg_catalog schema
@@ -213,13 +154,7 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 bool
 IsSystemRelation(Relation relation)
 {
-<<<<<<< HEAD
-	return IsSystemNamespace(RelationGetNamespace(relation)) ||
-		   IsToastNamespace(RelationGetNamespace(relation)) ||
-		   IsAoSegmentNamespace(RelationGetNamespace(relation));
-=======
 	return IsSystemClass(RelationGetRelid(relation), relation->rd_rel);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -231,7 +166,8 @@ IsSystemRelation(Relation relation)
 bool
 IsSystemClass(Oid relid, Form_pg_class reltuple)
 {
-	return IsToastClass(reltuple) || IsCatalogClass(relid, reltuple);
+	return IsToastClass(reltuple) || IsCatalogClass(relid, reltuple) ||
+		IsAoSegmentClass(reltuple);
 }
 
 /*
@@ -262,16 +198,12 @@ IsCatalogClass(Oid relid, Form_pg_class reltuple)
 {
 	Oid			relnamespace = reltuple->relnamespace;
 
-<<<<<<< HEAD
-	return IsSystemNamespace(relnamespace) ||
-		IsToastNamespace(relnamespace) ||
-		IsAoSegmentNamespace(relnamespace);
-=======
 	/*
 	 * Never consider relations outside pg_catalog/pg_toast to be catalog
 	 * relations.
 	 */
-	if (!IsSystemNamespace(relnamespace) && !IsToastNamespace(relnamespace))
+	if (!IsSystemNamespace(relnamespace) && !IsToastNamespace(relnamespace) &&
+		!IsAoSegmentNamespace(relnamespace))
 		return false;
 
 	/* ----
@@ -288,7 +220,6 @@ IsCatalogClass(Oid relid, Form_pg_class reltuple)
 	 * ----
 	 */
 	return relid < FirstNormalObjectId;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -313,6 +244,20 @@ IsToastClass(Form_pg_class reltuple)
 	Oid			relnamespace = reltuple->relnamespace;
 
 	return IsToastNamespace(relnamespace);
+}
+
+/*
+ * IsAoSegmentClass
+ *		Like the above, but takes a Form_pg_class as argument.
+ *		Used when we do not want to open the relation and have to
+ *		search pg_class directly.
+ */
+static bool
+IsAoSegmentClass(Form_pg_class reltuple)
+{
+	Oid			relnamespace = reltuple->relnamespace;
+
+	return IsAoSegmentNamespace(relnamespace);
 }
 
 /*

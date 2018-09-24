@@ -32,11 +32,8 @@
 #include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
-<<<<<<< HEAD
 #include "catalog/aoblkdir.h"
-=======
 #include "catalog/binary_upgrade.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -1177,14 +1174,10 @@ index_create(Relation heapRelation,
 
 	/*
 	 * Close the index; but we keep the lock that we acquired above until end
-<<<<<<< HEAD
-	 * of transaction.	Closing the heap is caller's responsibility.
+	 * of transaction.  Closing the heap is caller's responsibility.
 	 *
 	 * GPDB: if we're dealing with a child of a partitioned table, also release
 	 * the lock. We should be holding a lock on the master, which is sufficient.
-=======
-	 * of transaction.  Closing the heap is caller's responsibility.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (rel_needs_long_lock(RelationGetRelid(heapRelation)))
 	{
@@ -2364,50 +2357,15 @@ IndexBuildHeapScan(Relation heapRelation,
 	checking_uniqueness = (indexInfo->ii_Unique ||
 						   indexInfo->ii_ExclusionOps != NULL);
 
-<<<<<<< HEAD
 	Assert(estate->es_per_tuple_exprcontext != NULL);
 	econtext = estate->es_per_tuple_exprcontext;
 	slot = econtext->ecxt_scantuple;
-=======
-	/*
-	 * Need an EState for evaluation of index expressions and partial-index
-	 * predicates.  Also a slot to hold the current tuple.
-	 */
-	estate = CreateExecutorState();
-	econtext = GetPerTupleExprContext(estate);
-	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation));
-
-	/* Arrange for econtext's scan tuple to be the tuple under test */
-	econtext->ecxt_scantuple = slot;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Set up execution state for predicate, if any. */
 	predicate = (List *)
 		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
 						estate);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Prepare for scan of the base relation.  In a normal index build, we use
-	 * SnapshotAny because we must retrieve all tuples and do our own time
-	 * qual checks (because we have to index RECENTLY_DEAD tuples). In a
-	 * concurrent build, or during bootstrap, we take a regular MVCC snapshot
-	 * and index whatever's live according to that.
-	 */
-	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent)
-	{
-		snapshot = RegisterSnapshot(GetTransactionSnapshot());
-		OldestXmin = InvalidTransactionId;		/* not used */
-	}
-	else
-	{
-		snapshot = SnapshotAny;
-		/* okay to ignore lazy VACUUMs here */
-		OldestXmin = GetOldestXmin(heapRelation, true);
-	}
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	scan = heap_beginscan_strat(heapRelation,	/* relation */
 								snapshot,		/* snapshot */
 								0,		/* number of keys */
@@ -2478,11 +2436,7 @@ IndexBuildHeapScan(Relation heapRelation,
 			 */
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-<<<<<<< HEAD
-			switch (HeapTupleSatisfiesVacuum(heapRelation, heapTuple->t_data, OldestXmin,
-=======
-			switch (HeapTupleSatisfiesVacuum(heapTuple, OldestXmin,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			switch (HeapTupleSatisfiesVacuum(heapRelation, heapTuple, OldestXmin,
 											 scan->rs_cbuf))
 			{
 				case HEAPTUPLE_DEAD:
@@ -2719,7 +2673,6 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
-<<<<<<< HEAD
 	return reltuples;
 }
 
@@ -2761,11 +2714,6 @@ IndexBuildAppendOnlyRowScan(Relation parentRelation,
 								  snapshot,
 								  0,
 								  NULL);
-=======
-	/* we can now forget our snapshot, if set */
-	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent)
-		UnregisterSnapshot(snapshot);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (!OidIsValid(parentRelation->rd_appendonly->blkdirrelid) ||
 		!OidIsValid(parentRelation->rd_appendonly->blkdiridxid))

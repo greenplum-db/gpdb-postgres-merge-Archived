@@ -3908,7 +3908,7 @@ ResetTempNamespace(void)
 	 * namespace is registered. We need to remove it here as the
 	 * namespace has already been reseted. 
 	 */
-	cancel_shmem_exit(RemoveTempRelationsCallback, 0);
+	cancel_before_shmem_exit(RemoveTempRelationsCallback, 0);
 
 	myTempNamespace = InvalidOid;
 	myTempNamespaceSubID = InvalidSubTransactionId;
