@@ -303,13 +303,8 @@ static char *setlocale_perl(int category, char *locale);
 static char *
 hek2cstr(HE *he)
 {
-<<<<<<< HEAD
-	char *ret;
-	SV	 *sv;
-=======
 	char	   *ret;
 	SV		   *sv;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * HeSVKEY_force will return a temporary mortal SV*, so we need to make
@@ -1764,16 +1759,12 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	{
 		current_call_data = &this_call_data;
 		if (CALLED_AS_TRIGGER(fcinfo))
-<<<<<<< HEAD
-			retval = plperl_trigger_handler(fcinfo);
-=======
 			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			plperl_event_trigger_handler(fcinfo);
 			retval = (Datum) 0;
 		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		else
 			retval = plperl_func_handler(fcinfo);
 	}

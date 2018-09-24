@@ -91,14 +91,9 @@ static bool CheckCachedPlan(CachedPlanSource *plansource);
 static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 				ParamListInfo boundParams, IntoClause *intoClause);
 static bool choose_custom_plan(CachedPlanSource *plansource,
-<<<<<<< HEAD
 				   ParamListInfo boundParams,
 				   IntoClause *intoClause);
-static double cached_plan_cost(CachedPlan *plan);
-=======
-				   ParamListInfo boundParams);
 static double cached_plan_cost(CachedPlan *plan, bool include_planner);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);

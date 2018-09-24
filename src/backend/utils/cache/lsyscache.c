@@ -1891,7 +1891,6 @@ get_func_signature(Oid funcid, Oid **argtypes, int *nargs)
 }
 
 /*
-<<<<<<< HEAD
  * pfree_ptr_array
  * 		Free an array of pointers, after freeing each individual element
  */
@@ -1991,8 +1990,6 @@ get_func_arg_types(Oid funcid)
 }
 
 /*
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * get_func_variadictype
  *		Given procedure id, return the function's provariadic field.
  */

@@ -153,11 +153,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidOid,
 							 varlevelsup);
 			break;
-<<<<<<< HEAD
 		case RTE_TABLEFUNCTION:
-=======
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		case RTE_FUNCTION:
 
 			/*

@@ -25,10 +25,6 @@
  * will go away automatically at transaction end.  If the underlying
  * virtual File is made with OpenTemporaryFile, then all resources for
  * the file are certain to be cleaned up even if processing is aborted
-<<<<<<< HEAD
- * by ereport(ERROR).	To avoid confusion, the caller should take care that
- * all calls for a single BufFile are made in the same palloc context.
-=======
  * by ereport(ERROR).  The data structures required are made in the
  * palloc context that was current when the BufFile was created, and
  * any external resources such as temp files are owned by the ResourceOwner
@@ -37,7 +33,6 @@
  * BufFile also supports temporary files that exceed the OS file size limit
  * (by opening multiple fd.c temporary files).  This is an essential feature
  * for sorts and hashjoins on large amounts of data.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *-------------------------------------------------------------------------
  */
 
@@ -47,11 +42,8 @@
 #include "storage/fd.h"
 #include "storage/buffile.h"
 #include "storage/buf_internals.h"
-<<<<<<< HEAD
-#include "miscadmin.h"
-=======
+//#include "miscadmin.h"
 #include "utils/resowner.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #include "cdb/cdbvars.h"
 #include "utils/workfile_mgr.h"
@@ -69,10 +61,9 @@ struct BufFile
 	bool		isWorkfile;		/* true is file is managed by the workfile manager */
 	bool		dirty;			/* does buffer need to be written? */
 
-<<<<<<< HEAD
 	int64		offset;			/* offset part of current pos */
 	int64		pos;			/* next read/write position in buffer */
-=======
+
 	/*
 	 * resowner is the ResourceOwner to use for underlying temp files.  (We
 	 * don't need to remember the memory context we're using explicitly,
@@ -80,14 +71,6 @@ struct BufFile
 	 */
 	ResourceOwner resowner;
 
-	/*
-	 * "current pos" is position of start of buffer within the logical file.
-	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
-	 */
-	int			curFile;		/* file index (0..n) part of current pos */
-	off_t		curOffset;		/* offset part of current pos */
-	int			pos;			/* next read/write position in buffer */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	int			nbytes;			/* total # of valid bytes in buffer */
 	int64		maxoffset;		/* maximum offset that this file has reached, for disk usage */
 
@@ -112,17 +95,12 @@ makeBufFile(File firstfile)
 	file->isTemp = false;
 	file->isWorkfile = false;
 	file->dirty = false;
-<<<<<<< HEAD
 	/*
 	 * "current pos" is a position of start of buffer within the logical file.
 	 * Position as seen by user of Buffile is (offset+pos).
 	 * */
 	file->offset = 0L;
-=======
 	file->resowner = CurrentResourceOwner;
-	file->curFile = 0;
-	file->curOffset = 0L;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	file->pos = 0;
 	file->nbytes = 0;
 	file->maxoffset = 0L;
@@ -145,31 +123,14 @@ BufFileCreateTemp(const char *filePrefix, bool interXact)
 {
 	BufFile	   *file;
 	File		pfile;
-	ResourceOwner oldowner;
-
-	/* Be sure to associate the file with the BufFile's resource owner */
-	oldowner = CurrentResourceOwner;
-	CurrentResourceOwner = file->resowner;
 
 	pfile = OpenTemporaryFile(interXact, filePrefix);
 	Assert(pfile >= 0);
 
-<<<<<<< HEAD
 	file = makeBufFile(pfile);
 	file->isTemp = true;
 
 	return file;
-=======
-	CurrentResourceOwner = oldowner;
-
-	file->files = (File *) repalloc(file->files,
-									(file->numFiles + 1) * sizeof(File));
-	file->offsets = (off_t *) repalloc(file->offsets,
-									   (file->numFiles + 1) * sizeof(off_t));
-	file->files[file->numFiles] = pfile;
-	file->offsets[file->numFiles] = 0L;
-	file->numFiles++;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*

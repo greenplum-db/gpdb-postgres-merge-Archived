@@ -3336,7 +3336,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * Check for error, and set FOUND if appropriate (for historical reasons
-<<<<<<< HEAD
 	 * we set FOUND only for certain query types).
 	 *
 	 * Note: the command type indicated by return code might not match
@@ -3346,10 +3345,6 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	 * zero. We'll set FOUND to false here in that case. If the statement is
 	 * rewritten into a utility statement, however, FOUND is left unchanged.
 	 * Arguably that's a bug, but changing it now could break applications.
-=======
-	 * we set FOUND only for certain query types).  Also Assert that we
-	 * identified the statement type the same as SPI did.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	switch (rc)
 	{

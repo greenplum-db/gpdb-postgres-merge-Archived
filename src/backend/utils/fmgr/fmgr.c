@@ -2488,11 +2488,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	AclResult	aclresult;
 
 	/* Get the function's pg_proc entry */
-<<<<<<< HEAD
-	procTup = SearchSysCache(PROCOID, ObjectIdGetDatum(functionOid), 0, 0, 0);
-=======
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionOid));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", functionOid);
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -2501,12 +2497,7 @@ CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
 	 * Fetch pg_language entry to know if this is the correct validation
 	 * function for that pg_proc entry.
 	 */
-<<<<<<< HEAD
-	langTup = SearchSysCache(LANGOID, ObjectIdGetDatum(procStruct->prolang),
-							 0, 0, 0);
-=======
 	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(procStruct->prolang));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "cache lookup failed for language %u", procStruct->prolang);
 	langStruct = (Form_pg_language) GETSTRUCT(langTup);

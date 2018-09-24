@@ -193,13 +193,8 @@ shutdown_MultiFuncCall(Datum arg)
  *		Given a function's call info record, determine the kind of datatype
  *		it is supposed to return.  If resultTypeId isn't NULL, *resultTypeId
  *		receives the actual datatype OID (this is mainly useful for scalar
-<<<<<<< HEAD
- *		result types).	If resultTupleDesc isn't NULL, *resultTupleDesc
- *		receives a pointer to a TupleDesc when the result is of a composit//
-=======
  *		result types).  If resultTupleDesc isn't NULL, *resultTupleDesc
  *		receives a pointer to a TupleDesc when the result is of a composite
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *		type, or NULL when it's a scalar result.
  *
  * One hard case that this handles is resolution of actual rowtypes for
@@ -1234,7 +1229,6 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 
 		switch (argmodes[i])
 		{
-<<<<<<< HEAD
 			/* input modes */
 			case PROARGMODE_IN:
 			case PROARGMODE_VARIADIC:
@@ -1255,15 +1249,10 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 				if (pname == NULL || pname[0] == '\0')
 				{
 					/* Parameter is not named, so gin up a column name */
-					pname = (char *) palloc(32);
-					snprintf(pname, 32, "column%d", numoutargs + 1);
+					pname = psprintf("column%d", numoutargs + 1);
 				}
 				outargnames[numoutargs] = pname;
 				numoutargs++;
-=======
-			/* Parameter is not named, so gin up a column name */
-			pname = psprintf("column%d", numoutargs + 1);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 	}
 

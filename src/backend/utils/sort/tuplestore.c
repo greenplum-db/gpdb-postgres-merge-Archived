@@ -1174,11 +1174,7 @@ tuplestore_advance(Tuplestorestate *state, bool forward)
 
 /*
  * Advance over N tuples in either forward or back direction,
-<<<<<<< HEAD
- * without returning any data.	N<=0 is a no-op.
-=======
  * without returning any data.  N<=0 is a no-op.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Returns TRUE if successful, FALSE if ran out of tuples.
  */
 bool

@@ -4,13 +4,9 @@
  *	  support for the POSTGRES executor module
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/executor.h
@@ -42,16 +38,8 @@ struct ChunkTransportState;             /* #include "cdb/cdbinterconnect.h" */
  * of startup should occur.  However, error checks (such as permission checks)
  * should be performed.
  *
-<<<<<<< HEAD
  * REWIND indicates that the plan node should expect to be rescanned. This
  * implies delaying freeing up resources when EagerFree is called.
-=======
- * REWIND indicates that the plan node should try to efficiently support
- * rescans without parameter changes.  (Nodes must support ExecReScan calls
- * in any case, but if this flag was not given, they are at liberty to do it
- * through complete recalculation.  Note that a parameter change forces a
- * full recalculation in any case.)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * BACKWARD indicates that the plan node must respect the es_direction flag.
  * When this is not passed, the plan node will only be run forwards.

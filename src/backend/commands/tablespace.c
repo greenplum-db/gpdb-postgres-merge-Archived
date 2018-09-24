@@ -343,13 +343,8 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * 'PG_XXX/<dboid>/<relid>_<fork>.<nnn>'.  FYI, we never actually
 	 * reference the whole path here, but mkdir() uses the first two parts.
 	 */
-<<<<<<< HEAD
 	if (strlen(location) + 1 + strlen(tablespace_version_directory()) + 1 +
-		OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS > MAXPGPATH)
-=======
-	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
 	  OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
@@ -660,23 +655,13 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 static void
 create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
-<<<<<<< HEAD
-	char	   *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
-	char	   *location_with_version_dir = palloc(strlen(location) + 1 +
-										strlen(tablespace_version_directory()) + 1);
-
-	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
-	sprintf(location_with_version_dir, "%s/%s", location,
-										tablespace_version_directory());
-=======
 	char	   *linkloc;
 	char	   *location_with_version_dir;
 	struct stat st;
 
 	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
 	location_with_version_dir = psprintf("%s/%s", location,
-										 TABLESPACE_VERSION_DIRECTORY);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+										tablespace_version_directory());
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.  If this fails,
@@ -797,15 +782,8 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	char	   *subfile;
 	struct stat st;
 
-<<<<<<< HEAD
-	linkloc_with_version_dir = palloc(9 + 1 + OIDCHARS + 1 +
-									strlen(tablespace_version_directory()));
-	sprintf(linkloc_with_version_dir, "pg_tblspc/%u/%s", tablespaceoid,
-									tablespace_version_directory());
-=======
 	linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
-										TABLESPACE_VERSION_DIRECTORY);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+										tablespace_version_directory());
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir each
