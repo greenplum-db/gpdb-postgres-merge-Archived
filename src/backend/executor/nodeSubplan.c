@@ -277,13 +277,8 @@ ExecScanSubPlan(SubPlanState *node,
 	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.
 	 * (ROWCOMPARE_SUBLINK doesn't allow multiple tuples from the subplan.)
 	 * NULL results from the combining operators are handled according to the
-<<<<<<< HEAD
-	 * usual SQL semantics for OR and AND.	The result for no input tuples is
-	 * FALSE for ANY_SUBLINK, TRUE for {ALL_SUBLINK, NOT_EXISTS_SUBLINK}, NULL for
-=======
 	 * usual SQL semantics for OR and AND.  The result for no input tuples is
-	 * FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK, NULL for
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	 * FALSE for ANY_SUBLINK, TRUE for {ALL_SUBLINK, NOT_EXISTS_SUBLINK}, NULL for
 	 * ROWCOMPARE_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one

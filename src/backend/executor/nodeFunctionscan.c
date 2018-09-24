@@ -24,22 +24,17 @@
  */
 #include "postgres.h"
 
-<<<<<<< HEAD
-#include "cdb/cdbvars.h"
-=======
 #include "catalog/pg_type.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
-#include "optimizer/var.h"              /* CDB: contain_ctid_var_reference() */
 #include "nodes/nodeFuncs.h"
-<<<<<<< HEAD
-#include "cdb/memquota.h"
-#include "executor/spi.h"
-=======
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+#include "cdb/cdbvars.h"
+#include "cdb/memquota.h"
+#include "executor/spi.h"
+#include "optimizer/var.h"              /* CDB: contain_ctid_var_reference() */
 
 
 /*

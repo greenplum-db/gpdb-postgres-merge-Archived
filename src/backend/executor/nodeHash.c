@@ -544,8 +544,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 		/*
 		 * Both nbuckets and nbatch must be powers of 2 to make
-		 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
-		 * nbuckets to the next larger power of 2.	We also force nbuckets to not
+		 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
+		 * nbuckets to the next larger power of 2.  We also force nbuckets to not
 		 * be real small, by starting the search at 2^10.
 		 */
 		i = 10;
@@ -622,8 +622,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 		/*
 		 * Both nbuckets and nbatch must be powers of 2 to make
-		 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
-		 * nbuckets to the next larger power of 2.	We also force nbuckets to not
+		 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
+		 * nbuckets to the next larger power of 2.  We also force nbuckets to not
 		 * be real small, by starting the search at 2^10.  (Note: above we made
 		 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
 		 * overflow, nor can the final shift to recalculate nbuckets.)
@@ -636,22 +636,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		nbatch = 1;
 	}
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
-	 * be real small, by starting the search at 2^10.  (Note: above we made
-	 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
-	 * overflow, nor can the final shift to recalculate nbuckets.)
-	 */
-	i = 10;
-	while ((1 << i) < nbuckets)
-		i++;
-	nbuckets = (1 << i);
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
 }

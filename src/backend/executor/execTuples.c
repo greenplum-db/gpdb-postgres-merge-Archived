@@ -288,23 +288,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 					  TupleDesc tupdesc)		/* new tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
-<<<<<<< HEAD
 	cleanup_slot(slot);
-=======
-	ExecClearTuple(slot);
-
-	/*
-	 * Release any old descriptor.  Also release old Datum/isnull arrays if
-	 * present (we don't bother to check if they could be re-used).
-	 */
-	if (slot->tts_tupleDescriptor)
-		ReleaseTupleDesc(slot->tts_tupleDescriptor);
-
-	if (slot->tts_values)
-		pfree(slot->tts_values);
-	if (slot->tts_isnull)
-		pfree(slot->tts_isnull);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Install the new descriptor; if it's refcounted, bump its refcount.
@@ -478,30 +462,21 @@ ExecStoreMinimalTuple(MemTuple mtup,
  *		ExecFetchSlotTupleDatum
  *			Fetch the slot's tuple as a composite-type Datum.
  *
- *		We convert the slot's contents to local physical-tuple form,
- *		and fill in the Datum header fields.  Note that the result
- *		always points to storage owned by the slot.
+ *		The result is always freshly palloc'd in the caller's memory context.
  * --------------------------------
  */
 Datum
 ExecFetchSlotTupleDatum(TupleTableSlot *slot)
 {
 	HeapTuple	tup;
-	HeapTupleHeader td;
 	TupleDesc	tupdesc;
 
-	/* Make sure we can scribble on the slot contents ...
-	 * GPDB: ExecFetchSlotHeapTuple() replaces the Postgres call to
-	 * ExecMaterializeSlot() due to restructuring of the code around
-	 * memtuple support */
+	/* Fetch slot's contents in regular-physical-tuple form */
 	tup = ExecFetchSlotHeapTuple(slot);
-	/* ... and set up the composite-Datum header fields, in case not done */
-	td = tup->t_data;
 	tupdesc = slot->tts_tupleDescriptor;
-	HeapTupleHeaderSetDatumLength(td, tup->t_len);
-	HeapTupleHeaderSetTypeId(td, tupdesc->tdtypeid);
-	HeapTupleHeaderSetTypMod(td, tupdesc->tdtypmod);
-	return PointerGetDatum(td);
+
+	/* Convert to Datum form */
+	return heap_copy_tuple_as_datum(tup, tupdesc);
 }
 
 /* --------------------------------
@@ -778,7 +753,6 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast)
 	newTuple = memtuple_form_to(slot->tts_mt_bind, slot_get_values(slot), slot_get_isnull(slot),
 			(MemTuple) slot->PRIVATE_tts_mtup_buf, &tuplen, inline_toast);
 
-<<<<<<< HEAD
 	if(!newTuple)
 	{
 		if(slot->PRIVATE_tts_mtup_buf)
@@ -798,27 +772,6 @@ ExecFetchSlotMemTuple(TupleTableSlot *slot, bool inline_toast)
 		pfree(oldTuple);
 
 	return newTuple;
-=======
-/* --------------------------------
- *		ExecFetchSlotTupleDatum
- *			Fetch the slot's tuple as a composite-type Datum.
- *
- *		The result is always freshly palloc'd in the caller's memory context.
- * --------------------------------
- */
-Datum
-ExecFetchSlotTupleDatum(TupleTableSlot *slot)
-{
-	HeapTuple	tup;
-	TupleDesc	tupdesc;
-
-	/* Fetch slot's contents in regular-physical-tuple form */
-	tup = ExecFetchSlotTuple(slot);
-	tupdesc = slot->tts_tupleDescriptor;
-
-	/* Convert to Datum form */
-	return heap_copy_tuple_as_datum(tup, tupdesc);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /* --------------------------------

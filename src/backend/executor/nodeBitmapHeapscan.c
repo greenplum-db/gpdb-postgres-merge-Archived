@@ -239,14 +239,12 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 */
 			bitgetpage(scan, tbmres);
 
-<<<<<<< HEAD
-			CheckSendPlanStateGpmonPkt(&node->ss.ps);
-=======
 			if (tbmres->ntuples >= 0)
 				node->exact_pages++;
 			else
 				node->lossy_pages++;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+			CheckSendPlanStateGpmonPkt(&node->ss.ps);
 
 			/*
 			 * Set rs_cindex to first slot to examine
@@ -338,7 +336,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 		scan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		scan->rs_ctup.t_len = ItemIdGetLength(lp);
+#if 0
 		scan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
+#endif
 		ItemPointerSet(&scan->rs_ctup.t_self, tbmres->blockno, targoffset);
 
 		pgstat_count_heap_fetch(scan->rs_rd);

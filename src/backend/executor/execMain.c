@@ -47,7 +47,6 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-<<<<<<< HEAD
 #include "catalog/pg_tablespace.h"
 #include "catalog/aoseg.h"
 #include "catalog/aoblkdir.h"
@@ -58,11 +57,9 @@
 #include "catalog/pg_type.h"
 #include "cdb/cdbpartition.h"
 #include "commands/createas.h"
+#include "commands/matview.h"
 #include "commands/tablecmds.h" /* XXX: temp for get_parts() */
 #include "commands/tablespace.h"
-=======
-#include "commands/matview.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
@@ -1971,7 +1968,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * If alien elimination is not turned on, then all subplans are considered
 		 * reachable.
 		 */
-<<<<<<< HEAD
 		if (!estate->eliminateAliens || bms_is_member(subplan_idx, locallyExecutableSubplans))
 		{
 			/*
@@ -1979,12 +1975,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 *
 			 * GPDB: We always set the REWIND flag, to delay eagerfree.
 			 */
-			sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
-=======
-		sp_eflags = eflags
-			& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
-		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			sp_eflags = eflags
+				& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
 			sp_eflags |= EXEC_FLAG_REWIND;
 
 			Plan	   *subplan = (Plan *) lfirst(l);
@@ -3162,15 +3154,11 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot,
 		char	   *val;
 		int			vallen;
 
-<<<<<<< HEAD
-		if (slot->PRIVATE_tts_isnull[i])
-=======
 		/* ignore dropped columns */
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
 
-		if (slot->tts_isnull[i])
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		if (slot->PRIVATE_tts_isnull[i])
 			val = "null";
 		else
 		{

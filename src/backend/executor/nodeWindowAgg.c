@@ -295,11 +295,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	{
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
-<<<<<<< HEAD
-		 * just keep the prior transValue.	Note transValueCount doesn't
-=======
 		 * just keep the prior transValue.  Note transValueCount doesn't
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 * change either.
 		 */
 		for (i = 1; i <= numArguments; i++)
@@ -349,11 +345,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * OK to call the transition function.	Set winstate->curaggcontext while
-=======
 	 * OK to call the transition function.  Set winstate->curaggcontext while
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * calling it, for possible use by AggCheckCallContext.
 	 */
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
@@ -508,11 +500,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * OK to call the inverse transition function.	Set
-=======
 	 * OK to call the inverse transition function.  Set
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * winstate->curaggcontext while calling it, for possible use by
 	 * AggCheckCallContext.
 	 */
@@ -540,11 +528,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-<<<<<<< HEAD
-	 * pfree the prior transValue.	But if invtransfn returned a pointer to
-=======
 	 * pfree the prior transValue.  But if invtransfn returned a pointer to
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * its first input, we don't need to do anything.
 	 *
 	 * Note: the checks for null values here will never fire, but it seems
@@ -668,11 +652,8 @@ eval_windowaggregates(WindowAggState *winstate)
 	WindowObject agg_winobj;
 	TupleTableSlot *agg_row_slot;
 	TupleTableSlot *temp_slot;
-<<<<<<< HEAD
 	bool		frame_head_moved_backwards;
 	bool		frame_tail_moved_backwards;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	numaggs = winstate->numaggs;
 	if (numaggs == 0)
@@ -729,7 +710,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	 *
 	 * The frame head should never move backwards, and the code below wouldn't
 	 * cope if it did, so for safety we complain if it does.
-<<<<<<< HEAD
 	 *
 	 * GPDB: We accept it if the start offset is not a constant. PostgreSQL
 	 * only allows constant offsets, but we're more flexible. The code below
@@ -738,11 +718,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	update_frameheadpos(agg_winobj, temp_slot);
 	if (winstate->start_offset_var_free &&
 		winstate->frameheadpos < winstate->aggregatedbase)
-=======
-	 */
-	update_frameheadpos(agg_winobj, temp_slot);
-	if (winstate->frameheadpos < winstate->aggregatedbase)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		elog(ERROR, "window frame head moved backward");
 
 	/*
@@ -760,13 +735,9 @@ eval_windowaggregates(WindowAggState *winstate)
 		(winstate->frameOptions & (FRAMEOPTION_END_UNBOUNDED_FOLLOWING |
 								   FRAMEOPTION_END_CURRENT_ROW)) &&
 		winstate->aggregatedbase <= winstate->currentpos &&
-<<<<<<< HEAD
 		winstate->aggregatedupto > winstate->currentpos &&
 		winstate->start_offset_var_free &&
 		winstate->end_offset_var_free)
-=======
-		winstate->aggregatedupto > winstate->currentpos)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{
 		for (i = 0; i < numaggs; i++)
 		{
@@ -776,7 +747,6 @@ eval_windowaggregates(WindowAggState *winstate)
 			econtext->ecxt_aggnulls[wfuncno] = peraggstate->resultValueIsNull;
 		}
 		return;
-<<<<<<< HEAD
 	}
 
 	/*
@@ -975,160 +945,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	{
 		winstate->aggregatedupto = winstate->frameheadpos;
 		ExecClearTuple(agg_row_slot);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-	}
-
-	/*----------
-	 * Initialize restart flags.
-	 *
-	 * We restart the aggregation:
-	 *	 - if we're processing the first row in the partition, or
-	 *	 - if the frame's head moved and we cannot use an inverse
-	 *	   transition function, or
-	 *	 - if the new frame doesn't overlap the old one
-	 *
-	 * Note that we don't strictly need to restart in the last case, but if
-	 * we're going to remove all rows from the aggregation anyway, a restart
-	 * surely is faster.
-	 *----------
-	 */
-	numaggs_restart = 0;
-	for (i = 0; i < numaggs; i++)
-	{
-		peraggstate = &winstate->peragg[i];
-		if (winstate->currentpos == 0 ||
-			(winstate->aggregatedbase != winstate->frameheadpos &&
-			 !OidIsValid(peraggstate->invtransfn_oid)) ||
-			winstate->aggregatedupto <= winstate->frameheadpos)
-		{
-			peraggstate->restart = true;
-			numaggs_restart++;
-		}
-		else
-			peraggstate->restart = false;
-	}
-
-	/*
-	 * If we have any possibly-moving aggregates, attempt to advance
-	 * aggregatedbase to match the frame's head by removing input rows that
-	 * fell off the top of the frame from the aggregations.  This can fail,
-	 * i.e. advance_windowaggregate_base() can return false, in which case
-	 * we'll restart that aggregate below.
-	 */
-	while (numaggs_restart < numaggs &&
-		   winstate->aggregatedbase < winstate->frameheadpos)
-	{
-		/*
-		 * Fetch the next tuple of those being removed. This should never fail
-		 * as we should have been here before.
-		 */
-		if (!window_gettupleslot(agg_winobj, winstate->aggregatedbase,
-								 temp_slot))
-			elog(ERROR, "could not re-fetch previously fetched frame row");
-
-		/* Set tuple context for evaluation of aggregate arguments */
-		winstate->tmpcontext->ecxt_outertuple = temp_slot;
-
-		/*
-		 * Perform the inverse transition for each aggregate function in the
-		 * window, unless it has already been marked as needing a restart.
-		 */
-		for (i = 0; i < numaggs; i++)
-		{
-			bool		ok;
-
-			peraggstate = &winstate->peragg[i];
-			if (peraggstate->restart)
-				continue;
-
-			wfuncno = peraggstate->wfuncno;
-			ok = advance_windowaggregate_base(winstate,
-											  &winstate->perfunc[wfuncno],
-											  peraggstate);
-			if (!ok)
-			{
-				/* Inverse transition function has failed, must restart */
-				peraggstate->restart = true;
-				numaggs_restart++;
-			}
-		}
-
-		/* Reset per-input-tuple context after each tuple */
-		ResetExprContext(winstate->tmpcontext);
-
-		/* And advance the aggregated-row state */
-		winstate->aggregatedbase++;
-		ExecClearTuple(temp_slot);
-	}
-
-	/*
-	 * If we successfully advanced the base rows of all the aggregates,
-	 * aggregatedbase now equals frameheadpos; but if we failed for any, we
-	 * must forcibly update aggregatedbase.
-	 */
-	winstate->aggregatedbase = winstate->frameheadpos;
-
-	/*
-	 * If we created a mark pointer for aggregates, keep it pushed up to frame
-	 * head, so that tuplestore can discard unnecessary rows.
-	 */
-	if (agg_winobj->markptr >= 0)
-		WinSetMarkPosition(agg_winobj, winstate->frameheadpos);
-
-	/*
-	 * Now restart the aggregates that require it.
-	 *
-	 * We assume that aggregates using the shared context always restart if
-	 * *any* aggregate restarts, and we may thus clean up the shared
-	 * aggcontext if that is the case.  Private aggcontexts are reset by
-	 * initialize_windowaggregate() if their owning aggregate restarts. If we
-	 * aren't restarting an aggregate, we need to free any previously saved
-	 * result for it, else we'll leak memory.
-	 */
-	if (numaggs_restart > 0)
-		MemoryContextResetAndDeleteChildren(winstate->aggcontext);
-	for (i = 0; i < numaggs; i++)
-	{
-		peraggstate = &winstate->peragg[i];
-
-		/* Aggregates using the shared ctx must restart if *any* agg does */
-		Assert(peraggstate->aggcontext != winstate->aggcontext ||
-			   numaggs_restart == 0 ||
-			   peraggstate->restart);
-
-		if (peraggstate->restart)
-		{
-			wfuncno = peraggstate->wfuncno;
-			initialize_windowaggregate(winstate,
-									   &winstate->perfunc[wfuncno],
-									   peraggstate);
-		}
-		else if (!peraggstate->resultValueIsNull)
-		{
-			if (!peraggstate->resulttypeByVal)
-				pfree(DatumGetPointer(peraggstate->resultValue));
-			peraggstate->resultValue = (Datum) 0;
-			peraggstate->resultValueIsNull = true;
-		}
-	}
-
-	/*
-	 * Non-restarted aggregates now contain the rows between aggregatedbase
-	 * (i.e., frameheadpos) and aggregatedupto, while restarted aggregates
-	 * contain no rows.  If there are any restarted aggregates, we must thus
-	 * begin aggregating anew at frameheadpos, otherwise we may simply
-	 * continue at aggregatedupto.  We must remember the old value of
-	 * aggregatedupto to know how long to skip advancing non-restarted
-	 * aggregates.  If we modify aggregatedupto, we must also clear
-	 * agg_row_slot, per the loop invariant below.
-	 */
-	aggregatedupto_nonrestarted = winstate->aggregatedupto;
-	if (numaggs_restart > 0 &&
-		winstate->aggregatedupto != winstate->frameheadpos)
-	{
-		winstate->aggregatedupto = winstate->frameheadpos;
-		ExecClearTuple(agg_row_slot);
 	}
 
 	/*
@@ -1180,7 +996,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	}
 
 	/* The frame's end is not supposed to move backwards, ever */
-<<<<<<< HEAD
 	/*
 	 * In GPDB, though, it's entirely possible, if the START or END offset is
 	 * not a constant.
@@ -1188,9 +1003,6 @@ eval_windowaggregates(WindowAggState *winstate)
 	Assert(frame_head_moved_backwards ||
 		   frame_tail_moved_backwards ||
 		   aggregatedupto_nonrestarted <= winstate->aggregatedupto);
-=======
-	Assert(aggregatedupto_nonrestarted <= winstate->aggregatedupto);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * finalize aggregates and fill result/isnull fields.
@@ -2808,12 +2620,8 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 							InvalidOid,             /* prelim */
 							&transfnexpr,
 							&invtransfnexpr,
-<<<<<<< HEAD
 							&finalfnexpr,
 							NULL);
-=======
-							&finalfnexpr);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* set up infrastructure for calling the transfn(s) and finalfn */
 	fmgr_info(transfn_oid, &peraggstate->transfn);
@@ -2871,11 +2679,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	/*
 	 * Insist that forward and inverse transition functions have the same
-<<<<<<< HEAD
-	 * strictness setting.	Allowing them to differ would require handling
-=======
 	 * strictness setting.  Allowing them to differ would require handling
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * more special cases in advance_windowaggregate and
 	 * advance_windowaggregate_base, for no discernible benefit.  This should
 	 * have been checked at agg definition time, but we must check again in

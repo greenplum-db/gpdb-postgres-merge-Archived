@@ -413,7 +413,9 @@ ExecInsert(TupleTableSlot *parentslot,
 		 * Constraints might reference the tableoid column, so initialize
 		 * t_tableOid before evaluating them.
 		 */
+#if 0
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+#endif
 
 		/*
 		 * Check the constraints of the tuple
@@ -613,13 +615,8 @@ ExecDelete(ItemPointer tupleid,
 		{
 			bool		dodelete;
 
-<<<<<<< HEAD
 			dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-											tupleid);
-=======
-		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										tupleid, oldtuple);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+											tupleid, oldtuple);
 
 			if (!dodelete)			/* "do nothing" */
 				return NULL;
@@ -646,15 +643,8 @@ ExecDelete(ItemPointer tupleid,
 		bool		dodelete;
 
 		Assert(oldtuple != NULL);
-<<<<<<< HEAD
-		tuple.t_data = oldtuple;
-		tuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-		ItemPointerSetInvalid(&(tuple.t_self));
 
-		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, &tuple);
-=======
 		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, oldtuple);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (!dodelete)			/* "do nothing" */
 			return NULL;
@@ -867,7 +857,6 @@ ldelete:;
 	if (canSetTag)
 		(estate->es_processed)++;
 
-<<<<<<< HEAD
 	if (!isUpdate)
 	{
 		/*
@@ -888,12 +877,8 @@ ldelete:;
 	if (!(isAORowsTable || isAOColsTable) && planGen == PLANGEN_PLANNER && !isUpdate)
 	{
 		/* AFTER ROW DELETE Triggers */
-		ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
+		ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
 	}
-=======
-	/* AFTER ROW DELETE Triggers */
-	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Process RETURNING if present */
 	/*
@@ -934,13 +919,7 @@ ldelete:;
 			slot = estate->es_trig_tuple_slot;
 			if (oldtuple != NULL)
 			{
-<<<<<<< HEAD
-				deltuple.t_data = oldtuple;
-				deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-				ItemPointerSetInvalid(&(deltuple.t_self));
-=======
 				deltuple = *oldtuple;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				delbuffer = InvalidBuffer;
 			}
 			else
@@ -1253,16 +1232,6 @@ ExecUpdate(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 	{
-<<<<<<< HEAD
-		HeapTupleData oldtup;
-
-		Assert(oldtuple != NULL);
-		oldtup.t_data = oldtuple;
-		oldtup.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-		ItemPointerSetInvalid(&(oldtup.t_self));
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		slot = ExecIRUpdateTriggers(estate, resultRelInfo,
 									oldtuple, slot);
 
@@ -1294,7 +1263,9 @@ ExecUpdate(ItemPointer tupleid,
 		 * Constraints might reference the tableoid column, so initialize
 		 * t_tableOid before evaluating them.
 		 */
+#if 0
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+#endif
 
 		/*
 		 * Check the constraints of the tuple
@@ -1484,17 +1455,13 @@ lreplace:;
 		(estate->es_processed)++;
 
 	/* AFTER ROW UPDATE Triggers */
-<<<<<<< HEAD
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_after_row &&
 		rel_is_heap)
 	{
 		HeapTuple tuple = ExecMaterializeSlot(slot);
 
-		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,
-=======
-	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
 						 recheckIndexes);
 	}
 
@@ -1727,10 +1694,11 @@ ExecModifyTable(ModifyTableState *node)
 						HeapTupleHeaderGetDatumLength(oldtupdata.t_data);
 					ItemPointerSetInvalid(&(oldtupdata.t_self));
 					/* Historically, view triggers see invalid t_tableOid. */
+#if 0
 					oldtupdata.t_tableOid =
 						(relkind == RELKIND_VIEW) ? InvalidOid :
 						RelationGetRelid(resultRelInfo->ri_RelationDesc);
-
+#endif
 					oldtuple = &oldtupdata;
 				}
 				else
