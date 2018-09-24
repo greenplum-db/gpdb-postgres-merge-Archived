@@ -16,11 +16,8 @@
 
 #include "nodes/parsenodes.h"
 #include "utils/array.h"
-<<<<<<< HEAD
 
 struct HTAB;  /* utils/hsearch.h */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* commands/dropcmds.c */
 extern void RemoveObjects(DropStmt *stmt);
@@ -95,11 +92,7 @@ extern void RemoveOperatorById(Oid operOid);
 
 /* commands/aggregatecmds.c */
 extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
-<<<<<<< HEAD
 							List *parameters, bool ordered, const char *queryString);
-=======
-				List *parameters, const char *queryString);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* commands/opclasscmds.c */
 extern Oid	DefineOpClass(CreateOpClassStmt *stmt);

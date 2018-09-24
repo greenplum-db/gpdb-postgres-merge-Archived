@@ -56,11 +56,7 @@
  */
 Oid
 DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
-<<<<<<< HEAD
 				bool ordered, const char *queryString)
-=======
-				const char *queryString)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -68,12 +64,9 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	char		aggKind = AGGKIND_NORMAL;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
-<<<<<<< HEAD
 	List	   *combinefuncName = NIL;
 	List	   *serialfuncName = NIL;
 	List	   *deserialfuncName = NIL;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	List	   *mtransfuncName = NIL;
 	List	   *minvtransfuncName = NIL;
 	List	   *mfinalfuncName = NIL;
@@ -96,12 +89,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	List	   *parameterDefaults;
 	Oid			variadicArgType;
 	Oid			transTypeId;
-	Oid			mtransTypeId = InvalidOid;
 	char		transTypeType;
-<<<<<<< HEAD
 	Oid			mtransTypeId = InvalidOid;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	char		mtransTypeType = 0;
 	ListCell   *pl;
 	List	   *orig_args = args;
@@ -142,7 +131,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			transfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetQualifiedName(defel);
-<<<<<<< HEAD
 		else if (pg_strcasecmp(defel->defname, "combinefunc") == 0)
 			combinefuncName = defGetQualifiedName(defel);
 		/* Alias for COMBINEFUNC, for backwards-compatibility with
@@ -153,8 +141,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			serialfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "deserialfunc") == 0)
 			deserialfuncName = defGetQualifiedName(defel);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		else if (pg_strcasecmp(defel->defname, "msfunc") == 0)
 			mtransfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "minvfunc") == 0)
@@ -216,7 +202,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 				 errmsg("aggregate sfunc must be specified")));
 
 	/*
-<<<<<<< HEAD
 	 * MPP: Ordered aggregates do not support combine functions.
 	 */
 	if (aggKind == AGGKIND_ORDERED_SET && combinefuncName != NIL)
@@ -225,8 +210,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 				 errmsg("ordered aggregate combine function is not supported")));
 
 	/*
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * if mtransType is given, mtransfuncName and minvtransfuncName must be as
 	 * well; if not, then none of the moving-aggregate options should have
 	 * been given.
@@ -247,11 +230,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		if (mtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("aggregate msfunc must not be specified without mstype")));
-=======
 			errmsg("aggregate msfunc must not be specified without mstype")));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (minvtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -405,27 +384,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	}
 
 	/*
-	 * If a moving-aggregate transtype is specified, look that up.  Same
-	 * restrictions as for transtype.
-	 */
-	if (mtransType)
-	{
-		mtransTypeId = typenameTypeId(NULL, mtransType);
-		mtransTypeType = get_typtype(mtransTypeId);
-		if (mtransTypeType == TYPTYPE_PSEUDO &&
-			!IsPolymorphicType(mtransTypeId))
-		{
-			if (mtransTypeId == INTERNALOID && superuser())
-				 /* okay */ ;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("aggregate transition data type cannot be %s",
-								format_type_be(mtransTypeId))));
-		}
-	}
-
-	/*
 	 * If we have an initval, and it's not for a pseudotype (particularly a
 	 * polymorphic type), make sure it's acceptable to the type's input
 	 * function.  We will store the initval as text, because the input
@@ -458,7 +416,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-<<<<<<< HEAD
 	Oid			aggOid;
 	aggOid = AggregateCreate(aggName,	/* aggregate name */
 					aggNamespace,		/* namespace */
@@ -506,31 +463,4 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	}
 
 	return aggOid;
-=======
-	return AggregateCreate(aggName,		/* aggregate name */
-						   aggNamespace,		/* namespace */
-						   aggKind,
-						   numArgs,
-						   numDirectArgs,
-						   parameterTypes,
-						   PointerGetDatum(allParameterTypes),
-						   PointerGetDatum(parameterModes),
-						   PointerGetDatum(parameterNames),
-						   parameterDefaults,
-						   variadicArgType,
-						   transfuncName,		/* step function name */
-						   finalfuncName,		/* final function name */
-						   mtransfuncName,		/* fwd trans function name */
-						   minvtransfuncName,	/* inv trans function name */
-						   mfinalfuncName,		/* final function name */
-						   finalfuncExtraArgs,
-						   mfinalfuncExtraArgs,
-						   sortoperatorName,	/* sort operator name */
-						   transTypeId, /* transition data type */
-						   transSpace,	/* transition space */
-						   mtransTypeId,		/* transition data type */
-						   mtransSpace, /* transition space */
-						   initval,		/* initial condition */
-						   minitval);	/* initial condition */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
