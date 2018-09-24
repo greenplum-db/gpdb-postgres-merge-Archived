@@ -1801,11 +1801,7 @@ pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff)
 {
 	/*
 	 * The zone could have more than one ttinfo, if it's historically used
-<<<<<<< HEAD
 	 * more than one abbreviation.  We return true as long as they all have
-=======
-	 * more than one abbreviation.  We return TRUE as long as they all have
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * the same gmtoff.
 	 */
 	const struct state *sp;
