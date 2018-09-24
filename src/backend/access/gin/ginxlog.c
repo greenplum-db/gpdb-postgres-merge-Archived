@@ -382,32 +382,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		else
 		{
 			Assert(!GinPageIsData(page));
-<<<<<<< HEAD
-
-			if (data->updateBlkno != InvalidBlockNumber)
-			{
-				/* update link to right page after split */
-				Assert(!GinPageIsLeaf(page));
-				Assert(data->offset >= FirstOffsetNumber && data->offset <= PageGetMaxOffsetNumber(page));
-				itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, data->offset));
-				GinSetDownlink(itup, data->updateBlkno);
-			}
-
-			if (data->isDelete)
-			{
-				Assert(GinPageIsLeaf(page));
-				Assert(data->offset >= FirstOffsetNumber && data->offset <= PageGetMaxOffsetNumber(page));
-				PageIndexTupleDelete(page, data->offset);
-			}
-
-			itup = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsert));
-
-			if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), data->offset, false, false) == InvalidOffsetNumber)
-				elog(ERROR, "failed to add item to index page in %u/%u/%u",
-					 data->node.spcNode, data->node.dbNode, data->node.relNode);
-=======
 			ginRedoInsertEntry(buffer, isLeaf, rightChildBlkno, payload);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 
 		PageSetLSN(page, lsn);
@@ -996,81 +971,6 @@ gin_xlog_startup(void)
 								  ALLOCSET_DEFAULT_MAXSIZE);
 }
 
-<<<<<<< HEAD
-static void
-ginContinueSplit(ginIncompleteSplit *split)
-{
-	GinBtreeData btree;
-	GinState	ginstate;
-	Relation	reln;
-	Buffer		buffer;
-	GinBtreeStack stack;
-
-	/*
-	 * elog(NOTICE,"ginContinueSplit root:%u l:%u r:%u",  split->rootBlkno,
-	 * split->leftBlkno, split->rightBlkno);
-	 */
-
-	buffer = XLogReadBuffer(split->node, split->leftBlkno, false);
-
-	/*
-	 * Failure should be impossible here, because we wrote the page earlier.
-	 */
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "ginContinueSplit: left block %u not found",
-			 split->leftBlkno);
-
-	reln = CreateFakeRelcacheEntry(split->node);
-
-	/*
-	 * Failure should be impossible here, because we wrote the page earlier.
-	 */
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "ginContinueSplit: left block %u not found",
-			 split->leftBlkno);
-
-	if (split->rootBlkno == GIN_ROOT_BLKNO)
-	{
-		MemSet(&ginstate, 0, sizeof(ginstate));
-		ginstate.index = reln;
-
-		ginPrepareEntryScan(&btree,
-							InvalidOffsetNumber, (Datum) 0, GIN_CAT_NULL_KEY,
-							&ginstate);
-		btree.entry = ginPageGetLinkItup(buffer);
-	}
-	else
-	{
-		Page		page = BufferGetPage(buffer);
-
-		ginPrepareDataScan(&btree, reln);
-
-		PostingItemSetBlockNumber(&(btree.pitem), split->leftBlkno);
-		if (GinPageIsLeaf(page))
-			btree.pitem.key = *(ItemPointerData *) GinDataPageGetItem(page,
-											 GinPageGetOpaque(page)->maxoff);
-		else
-			btree.pitem.key = ((PostingItem *) GinDataPageGetItem(page,
-									   GinPageGetOpaque(page)->maxoff))->key;
-	}
-
-	btree.rightblkno = split->rightBlkno;
-
-	stack.blkno = split->leftBlkno;
-	stack.buffer = buffer;
-	stack.off = InvalidOffsetNumber;
-	stack.parent = NULL;
-
-	ginFindParents(&btree, &stack, split->rootBlkno);
-	ginInsertValue(&btree, stack.parent, NULL);
-
-	FreeFakeRelcacheEntry(reln);
-
-	UnlockReleaseBuffer(buffer);
-}
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 void
 gin_xlog_cleanup(void)
 {

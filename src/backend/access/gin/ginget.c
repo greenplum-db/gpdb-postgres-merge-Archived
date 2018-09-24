@@ -317,13 +317,7 @@ restartScanEntry:
 	ginPrepareEntryScan(&btreeEntry, entry->attnum,
 						entry->queryKey, entry->queryCategory,
 						ginstate);
-<<<<<<< HEAD
-	btreeEntry.searchMode = TRUE;
-
-	stackEntry = ginFindLeafPage(&btreeEntry, NULL);
-=======
 	stackEntry = ginFindLeafPage(&btreeEntry, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	page = BufferGetPage(stackEntry->buffer);
 	needUnlock = TRUE;
 
@@ -647,16 +641,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 			 * We've processed all the entries on this page. If it was the
 			 * last page in the tree, we're done.
 			 */
-<<<<<<< HEAD
-
-			blkno = GinPageGetOpaque(page)->rightlink;
-
-			LockBuffer(entry->buffer, GIN_UNLOCK);
-
-			if (blkno == InvalidBlockNumber)
-=======
 			if (GinPageRightMost(page))
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			{
 				UnlockReleaseBuffer(entry->buffer);
 				entry->buffer = InvalidBuffer;

@@ -367,7 +367,6 @@ typedef struct xl_heap_rewrite_mapping
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 									   TransactionId *latestRemovedXid);
 
-<<<<<<< HEAD
 extern void heap_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(StringInfo buf, XLogRecord *record);
 extern bool heap_getrelfilenode(
@@ -375,14 +374,8 @@ extern bool heap_getrelfilenode(
 	RelFileNode		*relFileNode);
 extern void heap2_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, XLogRecord *record);
-extern void heap_mask(char *pagedata, BlockNumber blkno);
-=======
-extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
-extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+extern void heap_mask(char *pagedata, BlockNumber blkno);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
 					  TransactionId latestRemovedXid);
@@ -403,14 +396,9 @@ extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-<<<<<<< HEAD
-			BlockNumber blk, Page page);
-extern XLogRecPtr log_newpage_buffer(Buffer buffer);
-extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
-								  Page page);
-=======
 			BlockNumber blk, Page page, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+extern XLogRecPtr log_newpage_rel(Relation rel, ForkNumber forkNum, BlockNumber blkno,
+								  Page page);
 
 #endif   /* HEAPAM_XLOG_H */
