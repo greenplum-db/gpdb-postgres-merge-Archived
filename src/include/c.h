@@ -9,13 +9,9 @@
  *	  polluting the namespace with lots of stuff...
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2011, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/c.h
@@ -608,7 +604,18 @@ typedef NameData *Name;
 #define DOUBLEALIGN_DOWN(LEN)	TYPEALIGN_DOWN(ALIGNOF_DOUBLE, (LEN))
 #define MAXALIGN_DOWN(LEN)		TYPEALIGN_DOWN(MAXIMUM_ALIGNOF, (LEN))
 
-<<<<<<< HEAD
+/*
+ * The above macros will not work with types wider than uintptr_t, like with
+ * uint64 on 32-bit platforms.  That's not problem for the usual use where a
+ * pointer or a length is aligned, but for the odd case that you need to
+ * align something (potentially) wider, use TYPEALIGN64.
+ */
+#define TYPEALIGN64(ALIGNVAL,LEN)  \
+	(((uint64) (LEN) + ((ALIGNVAL) - 1)) & ~((uint64) ((ALIGNVAL) - 1)))
+
+/* we don't currently need wider versions of the other ALIGN macros */
+#define MAXALIGN64(LEN)			TYPEALIGN64(MAXIMUM_ALIGNOF, (LEN))
+
 
 /* ----------------
  * Attribute macros
@@ -651,19 +658,6 @@ typedef NameData *Name;
  */
 #define pg_attribute_noreturn()
 #endif
-=======
-/*
- * The above macros will not work with types wider than uintptr_t, like with
- * uint64 on 32-bit platforms.  That's not problem for the usual use where a
- * pointer or a length is aligned, but for the odd case that you need to
- * align something (potentially) wider, use TYPEALIGN64.
- */
-#define TYPEALIGN64(ALIGNVAL,LEN)  \
-	(((uint64) (LEN) + ((ALIGNVAL) - 1)) & ~((uint64) ((ALIGNVAL) - 1)))
-
-/* we don't currently need wider versions of the other ALIGN macros */
-#define MAXALIGN64(LEN)			TYPEALIGN64(MAXIMUM_ALIGNOF, (LEN))
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* ----------------------------------------------------------------
  *				Section 6:	assertions
@@ -688,15 +682,12 @@ typedef NameData *Name;
 #define AssertMacro(condition)	((void)true)
 #define AssertArg(condition)
 #define AssertState(condition)
-<<<<<<< HEAD
+#define AssertPointerAlignment(ptr, bndr)   ((void)true)
 #define AssertImply(condition1, condition2)
 #define AssertEquivalent(cond1, cond2)
-#define AssertPointerAlignment(ptr, bndr)   ((void)true)
-=======
 #define Trap(condition, errorType)
 #define TrapMacro(condition, errorType) (true)
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #elif defined(FRONTEND)
 
 #include <assert.h>

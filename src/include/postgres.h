@@ -139,22 +139,17 @@ typedef struct
 	char		va_data[1];		/* Data begins here */
 } varattrib_1b;
 
-<<<<<<< HEAD
 /* NOT Like Postgres! ...In GPDB, We waste a few bytes of padding, and don't always set the va_len_1be to anything */
+/* GPDB_94_MERGE_FIXME: The va_len_1be field was changed to va_tag in PostgreSQL 9.4.
+ * There were comments here that va_len_1be was ignored in GPDB. Does this change to
+ * va_tag work correctly with pg_upgrade in GPDB?
+ */
 typedef struct
 {
 	uint8		va_header;		/* Always 0x80  */
-	uint8		va_len_1be;		/*** PG only:  Len of toast pointer w/ 1b header, ignored in GPDB  ***/ /* Physical length of datum */
-	uint8		va_padding[2];	/*** GPDB only:  Alignment padding ***/
-	char		va_data[1];		/* Data (for now always a TOAST pointer) */
-=======
-/* inline portion of a short varlena pointing to an external resource */
-typedef struct
-{
-	uint8		va_header;		/* Always 0x80 or 0x01 */
 	uint8		va_tag;			/* Type of datum */
+	uint8		va_padding[2];	/*** GPDB only:  Alignment padding ***/
 	char		va_data[1];		/* Data (of the type indicated by va_tag) */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } varattrib_1b_e;
 
 /*
@@ -174,15 +169,9 @@ typedef struct
  * all our customers to initdb.
  *
  * The "xxx" bits are the length field (which includes itself in all cases).
-<<<<<<< HEAD
  * In the big-endian case we mask to extract the length.
  * Note that in both cases the flag bits are in the physically
- * first byte.	Also, it is not possible for a 1-byte length word to be zero;
-=======
- * In the big-endian case we mask to extract the length, in the little-endian
- * case we shift.  Note that in both cases the flag bits are in the physically
  * first byte.  Also, it is not possible for a 1-byte length word to be zero;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * this lets us disambiguate alignment padding bytes from the start of an
  * unaligned datum.  (We now *require* pad bytes to be filled with zero!)
  *
@@ -217,13 +206,8 @@ typedef struct
 	(ntohl(((varattrib_4b *) (PTR))->va_4byte.va_header) & 0x3FFFFFFF)
 #define VARSIZE_1B(PTR) \
 	(((varattrib_1b *) (PTR))->va_header & 0x7F)
-<<<<<<< HEAD
-/* In GPDB, VARSIZE_1B_E() is always the size of a toast pointer plus the 4 byte header */
-#define VARSIZE_1B_E(PTR) (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
-=======
 #define VARTAG_1B_E(PTR) \
 	(((varattrib_1b_e *) (PTR))->va_tag)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = htonl( (len) & 0x3FFFFFFF ))
@@ -231,16 +215,6 @@ typedef struct
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = htonl( ((len) & 0x3FFFFFFF) | 0x40000000 ))
 #define SET_VARSIZE_1B(PTR,len) \
 	(((varattrib_1b *) (PTR))->va_header = (len) | 0x80)
-<<<<<<< HEAD
-/*
- * Although this macro sets var_len_1be, data stored in GPDB might
- * not have anything set in this byte, so you can't count on it's value
- * Not really a problem, since it is always based on TOAST_POINTER_LEN
- */
-#define SET_VARSIZE_1B_E(PTR,len) \
-	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
-	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
-=======
 #define SET_VARTAG_1B_E(PTR,tag) \
 	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
 	 ((varattrib_1b_e *) (PTR))->va_tag = (tag))
@@ -277,7 +251,6 @@ typedef struct
 	(((varattrib_1b_e *) (PTR))->va_header = 0x01, \
 	 ((varattrib_1b_e *) (PTR))->va_tag = (tag))
 #endif   /* WORDS_BIGENDIAN */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define VARHDRSZ_SHORT			offsetof(varattrib_1b, va_data)
 #define VARATT_SHORT_MAX		0x7F
@@ -287,12 +260,8 @@ typedef struct
 #define VARATT_CONVERTED_SHORT_SIZE(PTR) \
 	(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT)
 
-<<<<<<< HEAD
-/* In Postgres, this is 2 */
-#define VARHDRSZ_EXTERNAL		4
-=======
+/* In Postgres, this is 2, but in GPDB, it's 4, due to padding */
 #define VARHDRSZ_EXTERNAL		offsetof(varattrib_1b_e, va_data)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
 #define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
