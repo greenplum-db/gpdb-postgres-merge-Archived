@@ -49,19 +49,15 @@
 Datum
 pg_start_backup(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
-	XLogRecPtr	startpoint = InvalidXLogRecPtr;
-	char		startxlogstr[MAXFNAMELEN];
+	text	   *backupid = PG_GETARG_TEXT_P(0);
+	bool		fast = PG_GETARG_BOOL(1);
+	char	   *backupidstr;
+	XLogRecPtr	startpoint;
 
 	ereport(NOTICE,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_start_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
-=======
-	text	   *backupid = PG_GETARG_TEXT_P(0);
-	bool		fast = PG_GETARG_BOOL(1);
-	char	   *backupidstr;
-	XLogRecPtr	startpoint;
 
 	backupidstr = text_to_cstring(backupid);
 
@@ -71,7 +67,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		   errmsg("must be superuser or replication role to run a backup")));
 
 	startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	PG_RETURN_LSN(startpoint);
 }
@@ -94,22 +89,17 @@ pg_start_backup(PG_FUNCTION_ARGS)
 Datum
 pg_stop_backup(PG_FUNCTION_ARGS)
 {
-<<<<<<< HEAD
 	XLogRecPtr	stoppoint = InvalidXLogRecPtr;
-	char		stopxlogstr[MAXFNAMELEN];
-=======
-	XLogRecPtr	stoppoint;
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		 (errmsg("must be superuser or replication role to run a backup"))));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	ereport(NOTICE,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("pg_stop_backup() is not supported in Greenplum Database"),
 			 errhint("Contact support to get more information and resolve the issue")));
+
+	if (!superuser() && !has_rolreplication(GetUserId()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+		 (errmsg("must be superuser or replication role to run a backup"))));
 
 	PG_RETURN_LSN(stoppoint);
 }

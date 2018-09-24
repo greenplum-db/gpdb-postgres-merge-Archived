@@ -853,7 +853,6 @@ static bool read_backup_label(XLogRecPtr *checkPointLoc,
 static void rm_redo_error_callback(void *arg);
 static int	get_sync_bit(int method);
 
-<<<<<<< HEAD
 /* New functions added for WAL replication */
 static void XLogProcessCheckpointRecord(XLogRecord *rec);
 
@@ -899,7 +898,7 @@ static char *XLogContiguousCopy(
 	return buffer;
 }
 #endif
-=======
+
 static void CopyXLogRecordToWAL(int write_len, bool isLogSwitch,
 					XLogRecData *rdata,
 					XLogRecPtr StartPos, XLogRecPtr EndPos);
@@ -917,7 +916,6 @@ static void WALInsertLockAcquire(void);
 static void WALInsertLockAcquireExclusive(void);
 static void WALInsertLockRelease(void);
 static void WALInsertLockUpdateInsertingAt(XLogRecPtr insertingAt);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /*
  * Insert an XLOG record having the specified RMID and info bytes,
@@ -968,11 +966,8 @@ XLogInsert_Internal(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId h
 	unsigned	i;
 	bool		doPageWrites;
 	bool		isLogSwitch = (rmid == RM_XLOG_ID && info == XLOG_SWITCH);
-<<<<<<< HEAD
 	uint8       extended_info = 0;
-=======
 	bool		inserted;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	uint8		info_orig = info;
 	static XLogRecord *rechdr;
 	XLogRecPtr	StartPos;
@@ -1192,7 +1187,7 @@ begin:;
 	rechdr->xl_info = info;
 	rechdr->xl_rmid = rmid;
 	rechdr->xl_prev = InvalidXLogRecPtr;
-	COMP_CRC32(rdata_crc, ((char *) rechdr), offsetof(XLogRecord, xl_prev));
+	COMP_CRC32C(rdata_crc, ((char *) rechdr), offsetof(XLogRecord, xl_prev));
 
 	hdr_rdt.next = rdata;
 	hdr_rdt.data = (char *) rechdr;
@@ -1309,8 +1304,8 @@ begin:;
 		 * Now that xl_prev has been filled in, finish CRC calculation of the
 		 * record header.
 		 */
-		COMP_CRC32(rdata_crc, ((char *) &rechdr->xl_prev), sizeof(XLogRecPtr));
-		FIN_CRC32(rdata_crc);
+		COMP_CRC32C(rdata_crc, ((char *) &rechdr->xl_prev), sizeof(XLogRecPtr));
+		FIN_CRC32C(rdata_crc);
 		rechdr->xl_crc = rdata_crc;
 
 		/*
@@ -1382,17 +1377,6 @@ begin:;
 		}
 	}
 
-<<<<<<< HEAD
-	/* Finish the record header */
-	rechdr->xl_prev = Insert->PrevRecord;
-
-	/* Now we can finish computing the record's CRC */
-	COMP_CRC32C(rdata_crc, (char *) rechdr, offsetof(XLogRecord, xl_crc));
-	FIN_CRC32C(rdata_crc);
-	rechdr->xl_crc = rdata_crc;
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 	{
@@ -1635,18 +1619,8 @@ CopyXLogRecordToWAL(int write_len, bool isLogSwitch, XLogRecData *rdata,
 			}
 			else
 			{
-<<<<<<< HEAD
-				/* enough room to write whole data. do it. */
-				memcpy(Insert->currpos, rdata->data, rdata->len);
-				freespace -= rdata->len;
-				write_len -= rdata->len;
-				Insert->currpos += rdata->len;
-				rdata = rdata->next;
-				continue;
-=======
 				CurrPos += SizeOfXLogShortPHD;
 				currpos += SizeOfXLogShortPHD;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			}
 			freespace = INSERT_FREESPACE(CurrPos);
 		}
@@ -4820,7 +4794,6 @@ ReadControlFile(void)
 	/* Make the initdb settings visible as GUC variables, too */
 	SetConfigOption("data_checksums", DataChecksumsEnabled() ? "yes" : "no",
 					PGC_INTERNAL, PGC_S_OVERRIDE);
-<<<<<<< HEAD
 
 	if (!ControlFileWatcher->watcherInitialized)
 	{
@@ -4844,8 +4817,6 @@ XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc)
 	SpinLockRelease(&xlogctl->info_lck);
 
 	return (writeLoc != 0);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 void
@@ -5546,46 +5517,10 @@ XLogReadRecoveryCommandFile(int emode)
 	}
 	else
 	{
-<<<<<<< HEAD
 		/* Currently, standby mode request is a must if recovery.conf file exists */
 		ereport(FATAL,
 				(errmsg("recovery command file \"%s\" request for standby mode not specified",
 						RECOVERY_COMMAND_FILE)));
-=======
-		if (recoveryRestoreCommand == NULL)
-			ereport(FATAL,
-					(errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
-							RECOVERY_COMMAND_FILE)));
-	}
-
-	/* Enable fetching from archive recovery area */
-	ArchiveRecoveryRequested = true;
-
-	/*
-	 * If user specified recovery_target_timeline, validate it or compute the
-	 * "latest" value.  We can't do this until after we've gotten the restore
-	 * command and set InArchiveRecovery, because we need to fetch timeline
-	 * history files from the archive.
-	 */
-	if (rtliGiven)
-	{
-		if (rtli)
-		{
-			/* Timeline 1 does not have a history file, all else should */
-			if (rtli != 1 && !existsTimeLineHistory(rtli))
-				ereport(FATAL,
-						(errmsg("recovery target timeline %u does not exist",
-								rtli)));
-			recoveryTargetTLI = rtli;
-			recoveryTargetIsLatest = false;
-		}
-		else
-		{
-			/* We start the "latest" search from pg_control's timeline */
-			recoveryTargetTLI = findNewestTimeLine(recoveryTargetTLI);
-			recoveryTargetIsLatest = true;
-		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	FreeConfigVariables(head);
@@ -7096,16 +7031,6 @@ StartupXLOG(void)
 		 * checkpoint record itself, if it's a shutdown checkpoint).
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
-<<<<<<< HEAD
-		/*
-		 * GPDB_93_MERGE_FIXME: GPDB sets replayEndRecPtr and lastReplayedEndRecPtr
-		 * differently from upstream, why ?
-		 */
-		xlogctl->replayEndRecPtr = checkPoint.redo;
-		xlogctl->lastReplayedEndRecPtr = checkPoint.redo;
-		xlogctl->replayEndTLI = ThisTimeLineID;
-		xlogctl->lastReplayedTLI = ThisTimeLineID;
-=======
 		if (checkPoint.redo < RecPtr)
 			xlogctl->replayEndRecPtr = checkPoint.redo;
 		else
@@ -7113,7 +7038,6 @@ StartupXLOG(void)
 		xlogctl->replayEndTLI = ThisTimeLineID;
 		xlogctl->lastReplayedEndRecPtr = xlogctl->replayEndRecPtr;
 		xlogctl->lastReplayedTLI = xlogctl->replayEndTLI;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
@@ -7196,15 +7120,8 @@ StartupXLOG(void)
 							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
 							 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
 					xlog_outrec(&buf, record);
-<<<<<<< HEAD
-					appendStringInfo(&buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(&buf, record);
-=======
 					appendStringInfoString(&buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(&buf,
-													   record->xl_info,
-													 XLogRecGetData(record));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+					RmgrTable[record->xl_rmid].rm_desc(&buf, record);
 					elog(LOG, "%s", buf.data);
 					pfree(buf.data);
 				}
@@ -7688,33 +7605,6 @@ StartupXLOG(void)
 
 	if (InRecovery)
 	{
-<<<<<<< HEAD
-		/*
-		 * Close down Recovery for Startup PASS 1.
-		 */
-		int			rmid;
-
-		/*
-		 * Resource managers might need to write WAL records, eg, to record
-		 * index cleanup actions.  So temporarily enable XLogInsertAllowed in
-		 * this process only.
-		 */
-		LocalSetXLogInsertAllowed();
-
-		/*
-		 * Allow resource managers to do any required cleanup.
-		 */
-		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
-		{
-			if (RmgrTable[rmid].rm_cleanup != NULL)
-				RmgrTable[rmid].rm_cleanup();
-		}
-
-		/* Disallow XLogInsert again */
-		LocalXLogInsertAllowed = -1;
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		/*
 		 * Perform a checkpoint to update all our recovery activity to disk.
 		 *
@@ -7953,13 +7843,10 @@ CheckRecoveryConsistency(void)
 
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 
-<<<<<<< HEAD
 		/*
 		 * GPDB_93_MERGE_FIXME:
 		 * Why GPDB uses lastReplayedEndRecPtr instaed of EndRecPtr upstream ?
 		 */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (ControlFile->minRecoveryPoint < lastReplayedEndRecPtr)
 			ControlFile->minRecoveryPoint = lastReplayedEndRecPtr;
 
@@ -8792,13 +8679,7 @@ CreateCheckPoint(int flags)
 	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY |
 				  CHECKPOINT_FORCE)) == 0)
 	{
-<<<<<<< HEAD
-		XLogRecPtr	curInsert;
-
-		INSERT_RECPTR(curInsert, Insert, Insert->curridx);
 #ifdef originalCheckpointChecking
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (curInsert == ControlFile->checkPoint +
 			MAXALIGN(SizeOfXLogRecord + sizeof(CheckPoint)) &&
 			ControlFile->checkPoint == ControlFile->checkPointCopy.redo)
@@ -8890,46 +8771,6 @@ CreateCheckPoint(int flags)
 	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
 
 	/*
-<<<<<<< HEAD
-	 * In some cases there are groups of actions that must all occur on one
-	 * side or the other of a checkpoint record. Before flushing the
-	 * checkpoint record we must explicitly wait for any backend currently
-	 * performing those groups of actions.
-	 *
-	 * One example is end of transaction, so we must wait for any transactions
-	 * that are currently in commit critical sections.	If an xact inserted
-	 * its commit record into XLOG just before the REDO point, then a crash
-	 * restart from the REDO point would not replay that record, which means
-	 * that our flushing had better include the xact's update of pg_clog.  So
-	 * we wait till he's out of his commit critical section before proceeding.
-	 * See notes in RecordTransactionCommit().
-	 *
-	 * Because we've already released WALInsertLock, this test is a bit fuzzy:
-	 * it is possible that we will wait for xacts we didn't really need to
-	 * wait for.  But the delay should be short and it seems better to make
-	 * checkpoint take a bit longer than to hold locks longer than necessary.
-	 * (In fact, the whole reason we have this issue is that xact.c does
-	 * commit record XLOG insertion and clog update as two separate steps
-	 * protected by different locks, but again that seems best on grounds of
-	 * minimizing lock contention.)
-	 *
-	 * A transaction that has not yet set delayChkpt when we look cannot be at
-	 * risk, since he's not inserted his commit record yet; and one that's
-	 * already cleared it is not at risk either, since he's done fixing clog
-	 * and we will correctly flush the update below.  So we cannot miss any
-	 * xacts we need to wait for.
-	 */
-	vxids = GetVirtualXIDsDelayingChkpt(&nvxids);
-	if (nvxids > 0)
-	{
-		do
-		{
-			pg_usleep(10000L);	/* wait for 10 msec */
-		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids));
-	}
-	pfree(vxids);
-
-	/*
 	 * When the crash happens, we need to handle the transactions that have
 	 * already inserted 'commit' record and haven't inserted 'forget' record.
 	 *
@@ -8956,8 +8797,6 @@ CreateCheckPoint(int flags)
 	getDtxCheckPointInfo(&dtxCheckPointInfo, &dtxCheckPointInfoSize);
 
 	/*
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * Get the other info we need for the checkpoint record.
 	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);

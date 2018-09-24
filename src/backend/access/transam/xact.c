@@ -181,11 +181,8 @@ typedef struct TransactionStateData
 	int			prevSecContext; /* previous SecurityRestrictionContext */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	bool		startedInRecovery;		/* did we start in recovery? */
-<<<<<<< HEAD
-	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
-=======
 	bool		didLogXid;		/* has xid been included in WAL record? */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	bool		executorSaysXactDoesWrites;	/* GP executor says xact does writes */
 	struct TransactionStateData *parent;		/* back link to parent */
 
 	struct TransactionStateData *fastLink;        /* back link to jump to parent for efficient search */
@@ -221,14 +218,9 @@ static TransactionStateData TopTransactionStateData = {
 	0,							/* previous SecurityRestrictionContext */
 	false,						/* entry-time xact r/o state */
 	false,						/* startedInRecovery */
-<<<<<<< HEAD
-	false,						/* executorSaysXactDoesWrites */
-	NULL,						/* link to parent state block */
-	NULL
-=======
 	false,						/* didLogXid */
+	false,						/* executorSaysXactDoesWrites */
 	NULL						/* link to parent state block */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 };
 
 /*
@@ -1373,16 +1365,11 @@ RecordTransactionCommit(void)
 		 * invalidation messages, that's more extensible and degrades more
 		 * gracefully. Till then, it's just 20 bytes of overhead.
 		 */
-<<<<<<< HEAD
 		// GPDB_92_MERGE_FIXME: always use "non
 		// compact" WAL records when in distributed transactions. Can
 		// we use the compact one for non-DDL transactions?
-		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit
-				|| isDtxPrepared)
-=======
 		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit ||
-			XLogLogicalInfoActive())
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			XLogLogicalInfoActive() || isDtxPrepared)
 		{
 			XLogRecData rdata[5];
 			int			lastrdata = 0;
@@ -1498,25 +1485,9 @@ RecordTransactionCommit(void)
 
 #ifdef IMPLEMENT_ASYNC_COMMIT
 	/*
-<<<<<<< HEAD
 	 * In PostgreSQL, we can defer flushing XLOG, if the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit.
-=======
-	 * Check if we want to commit asynchronously.  We can allow the XLOG flush
-	 * to happen asynchronously if synchronous_commit=off, or if the current
-	 * transaction has not performed any WAL-logged operation.  The latter
-	 * case can arise if the current transaction wrote only to temporary
-	 * and/or unlogged tables.  In case of a crash, the loss of such a
-	 * transaction will be irrelevant since temp tables will be lost anyway,
-	 * and unlogged tables will be truncated.  (Given the foregoing, you might
-	 * think that it would be unnecessary to emit the XLOG record at all in
-	 * this case, but we don't currently try to do that.  It would certainly
-	 * cause problems at least in Hot Standby mode, where the
-	 * KnownAssignedXids machinery requires tracking every XID assignment.  It
-	 * might be OK to skip it only when wal_level < hot_standby, but for now
-	 * we don't.)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 *
 	 * In GPDB, however, all user transactions need to be committed synchronously,
 	 * because we use two-phase commit across the nodes. In order to make GPDB support
@@ -4555,11 +4526,7 @@ UserAbortTransactionBlock(void)
 			 * default state.
 			 */
 		case TBLOCK_STARTED:
-<<<<<<< HEAD
-			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : NOTICE,
-=======
-			ereport(WARNING,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			ereport((Gp_role == GP_ROLE_EXECUTE) ? DEBUG2 : WARNING,
 					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 					 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_ABORT_PENDING;

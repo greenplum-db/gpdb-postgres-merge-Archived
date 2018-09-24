@@ -130,17 +130,17 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 #define PG_NUM_INDIVIDUAL_LWLOCKS		38
 
 /* Additional individual locks in GPDB */
-#define SharedSnapshotLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 1].lock)
-#define DistributedLogControlLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 2].lock)
-#define AOSegFileLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 3].lock)
-#define ResQueueLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 4].lock)
-#define ResGroupLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 5].lock)
-#define ErrorLogLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 6].lock)
-#define FirstWorkfileMgrLock		(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 7].lock)
-#define SessionStateLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 8].lock)
-#define RelfilenodeGenLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 9].lock)
-#define TablespaceHashLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 10].lock)
-#define GpReplicationConfigFileLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LOCKS + 11].lock)
+#define SharedSnapshotLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 1].lock)
+#define DistributedLogControlLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 2].lock)
+#define AOSegFileLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 3].lock)
+#define ResQueueLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 4].lock)
+#define ResGroupLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 5].lock)
+#define ErrorLogLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 6].lock)
+#define FirstWorkfileMgrLock		(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 7].lock)
+#define SessionStateLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 8].lock)
+#define RelfilenodeGenLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 9].lock)
+#define TablespaceHashLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 10].lock)
+#define GpReplicationConfigFileLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 11].lock)
 
 // GPDB_94_MERGE_FIXME: where to put this?
 //FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
