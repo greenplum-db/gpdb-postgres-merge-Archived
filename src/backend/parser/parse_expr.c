@@ -24,11 +24,8 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
-<<<<<<< HEAD
 #include "parser/parse_agg.h"
-=======
 #include "parser/parse_clause.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "parser/parse_coerce.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_collate.h"
@@ -1342,13 +1339,8 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	/*
 	 * When WITHIN GROUP is used, we treat its ORDER BY expressions as
 	 * additional arguments to the function, for purposes of function lookup
-<<<<<<< HEAD
-	 * and argument type coercion.	So, transform each such expression and add
-	 * them to the targs list.	We don't explicitly mark where each argument
-=======
 	 * and argument type coercion.  So, transform each such expression and add
 	 * them to the targs list.  We don't explicitly mark where each argument
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * came from, but ParseFuncOrColumn can tell what's what by reference to
 	 * list_length(fn->agg_order).
 	 */

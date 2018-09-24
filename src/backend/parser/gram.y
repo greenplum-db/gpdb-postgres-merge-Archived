@@ -6,13 +6,9 @@
  * gram.y
  *	  POSTGRESQL BISON rules/actions
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -538,13 +534,12 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
 %type <str>		OptTableSpace OptConsTableSpace OptTableSpaceOwner
-<<<<<<< HEAD
 %type <node>    DistributedBy OptDistributedBy 
 %type <ival>	TabPartitionByType OptTabPartitionRangeInclusive
 %type <node>	OptTabPartitionBy TabSubPartitionBy TabSubPartition
 				tab_part_val tab_part_val_no_paran
 %type <node>	opt_list_subparts
-%type <list>	opt_check_option
+%type <ival>	opt_check_option
 %type <node>	OptTabPartitionSpec OptTabSubPartitionSpec TabSubPartitionTemplate      /* PartitionSpec */
 %type <list>	TabPartitionElemList TabSubPartitionElemList /* list of PartitionElem */
 
@@ -565,9 +560,6 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 %type <node>	column_reference_storage_directive
 %type <list>	opt_storage_encoding OptTabPartitionColumnEncList
 				TabPartitionColumnEncList
-=======
-%type <ival>	opt_check_option
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 %type <str>		opt_provider security_label
 
@@ -580,13 +572,8 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 %type <node>	func_application func_expr_common_subexpr
 %type <node>	func_expr func_expr_windowless
-<<<<<<< HEAD
-%type <node> 	common_table_expr
-%type <with> 	with_clause opt_with_clause
-=======
 %type <node>	common_table_expr
 %type <with>	with_clause opt_with_clause
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 %type <list>	cte_list
 
 %type <list>	within_group_clause
@@ -672,11 +659,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
-<<<<<<< HEAD
-	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
-=======
 	ORDER ORDINALITY OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -705,11 +688,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VIEWS VOLATILE
 
-<<<<<<< HEAD
-	WHEN WHERE WHITESPACE_P WITH WITHIN WITHOUT WORK WRAPPER WRITE
-=======
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLEXISTS XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
@@ -731,7 +710,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	ERRORS EVERY EXCHANGE
 
-	FIELDS FILL FILTER FORMAT
+	FIELDS FILL FORMAT
 
 	FULLSCAN
 
@@ -747,7 +726,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	NEWLINE NOCREATEEXTTABLE NOOVERCOMMIT
 
-	ORDERED OTHERS OVER OVERCOMMIT
+	ORDERED OTHERS OVERCOMMIT
 
 	PARTITIONS PERCENT PROTOCOL
 
@@ -762,7 +741,7 @@ static Node *makeIsNotDistinctFromNode(Node *expr, int position);
 
 	VALIDATION
 
-	WEB WINDOW WRITABLE
+	WEB WRITABLE
 
 /*
  * The grammar thinks these are keywords, but they are not in the kwlist.h
@@ -1190,19 +1169,13 @@ stmt :
 			| AlterGroupStmt
 			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
-<<<<<<< HEAD
 			| AlterQueueStmt
 			| AlterResourceGroupStmt
-=======
-			| AlterSeqStmt
-			| AlterSystemStmt
-			| AlterTableStmt
-			| AlterTblSpcStmt
-			| AlterCompositeTypeStmt
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			| AlterRoleSetStmt
 			| AlterRoleStmt
 			| AlterSeqStmt
+			| AlterSystemStmt
+			| AlterTblSpcStmt
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
 			| AlterTableStmt
@@ -5920,17 +5893,18 @@ opt_procedural:
  *
  *****************************************************************************/
 
-<<<<<<< HEAD
-CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst OptTableSpaceOptions
-=======
-CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst opt_reloptions
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+/*
+ * GPDB_94_MERGE_FIXME: Why did GPDB use OPTIONS syntax for the options, while
+ * upstream uses WITH? Is it possible to change that still? Was it done in GPDB 6
+ * or earlier?
+ */
+CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst OptTableSpaceOptions opt_reloptions
 				{
 					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
 					n->tablespacename = $3;
 					n->owner = $4;
 					n->location = $6;
-					n->options = $7;
+					n->options = list_concat($7, $8);
 					$$ = (Node *) n;
 				}
 		;
@@ -7212,7 +7186,6 @@ def_arg:	func_type						{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
 
-<<<<<<< HEAD
 			/* 
 			 * For compresstype=none in ENCODING clauses. Allows us to avoid
 			 * promoting that to a reserved word or adding the column reserved
@@ -7221,8 +7194,6 @@ def_arg:	func_type						{ $$ = (Node *)$1; }
 			| NONE							{ $$ = (Node *)makeString(pstrdup("none")); }
 		;
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 old_aggr_definition: '(' old_aggr_list ')'			{ $$ = $2; }
 		;
 
@@ -12801,9 +12772,6 @@ func_table: func_expr_windowless opt_ordinality
 				}
 		;
 
-<<<<<<< HEAD
-func_table: func_expr_windowless					{ $$ = $1; }
-=======
 rowsfrom_item: func_expr_windowless opt_col_def_list
 				{ $$ = list_make2($1, $2); }
 		;
@@ -12819,7 +12787,6 @@ opt_col_def_list: AS '(' TableFuncElementList ')'	{ $$ = $3; }
 
 opt_ordinality: WITH_ORDINALITY						{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		;
 
 
@@ -13954,7 +13921,6 @@ c_expr:		columnref								{ $$ = $1; }
 				}
 		;
 
-<<<<<<< HEAD
 scatter_clause:
 		/* EMPTY */						{ $$ = NIL; }
 		| SCATTER RANDOMLY				{ $$ = list_make1(NULL); }
@@ -13972,77 +13938,6 @@ table_value_select_clause:
 
 func_application: func_name '(' ')'
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = NIL;
-					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-					$$ = (Node *)n;
-				}
-			| func_name '(' func_arg_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-					$$ = (Node *)n;
-				}
-			| func_name '(' VARIADIC func_arg_expr ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = list_make1($4);
-					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = TRUE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-					$$ = (Node *)n;
-				}
-			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = lappend($3, $6);
-					n->agg_order = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = TRUE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-					$$ = (Node *)n;
-				}
-			| func_name '(' func_arg_list sort_clause ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-                    n->agg_order = $4;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-					$$ = (Node *)n;
-				}
-			| func_name '(' ALL expr_list opt_sort_clause')'
-=======
-func_application: func_name '(' ')'
-				{
 					$$ = (Node *) makeFuncCall($1, NIL, @1);
 				}
 			| func_name '(' func_arg_list opt_sort_clause ')'
@@ -14052,7 +13947,6 @@ func_application: func_name '(' ')'
 					$$ = (Node *)n;
 				}
 			| func_name '(' VARIADIC func_arg_expr opt_sort_clause ')'
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				{
 					FuncCall *n = makeFuncCall($1, list_make1($4), @1);
 					n->func_variadic = TRUE;
@@ -14070,40 +13964,20 @@ func_application: func_name '(' ')'
 				{
 					FuncCall *n = makeFuncCall($1, $4, @1);
 					n->agg_order = $5;
-<<<<<<< HEAD
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->agg_filter = NULL;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					/* Ideally we'd mark the FuncCall node to indicate
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
 					 */
-<<<<<<< HEAD
 					n->func_variadic = FALSE;
 					n->location = @1;
 					n->over = NULL;
 					$$ = (Node *)n;
 				}
-			| func_name '(' DISTINCT func_arg_list opt_sort_clause')'
-=======
-					$$ = (Node *)n;
-				}
 			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')'
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				{
 					FuncCall *n = makeFuncCall($1, $4, @1);
 					n->agg_order = $5;
 					n->agg_distinct = TRUE;
-<<<<<<< HEAD
-					n->agg_filter = NULL;
-					n->func_variadic = FALSE;
-					n->location = @1;
-					n->over = NULL;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					$$ = (Node *)n;
 				}
 			| func_name '(' '*' ')'
@@ -14120,83 +13994,9 @@ func_application: func_name '(' ')'
 					 */
 					FuncCall *n = makeFuncCall($1, NIL, @1);
 					n->agg_star = TRUE;
-<<<<<<< HEAD
-					n->agg_distinct = FALSE;
-					n->func_variadic = FALSE;
-					n->agg_filter = NULL;
-					n->location = @1;
-					n->over = NULL;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					$$ = (Node *)n;
 				}
 		;
-
-<<<<<<< HEAD
-/*
- * func_expr is split out from c_expr just so that we have a classification
- * for "everything that is a function call or looks like one".  This isn't
- * very important, but it saves us having to document which variants are
- * legal in the backwards-compatible functional-index syntax for CREATE INDEX.
- * (Note that many of the special SQL functions wouldn't actually make any
- * sense as functional index entries, but we ignore that consideration here.)
- */
-func_expr:	func_application within_group_clause filter_clause over_clause
-				{
-					FuncCall  *n = (FuncCall *) $1;
-					/*
-					 * The order clause for WITHIN GROUP and the one for
-					 * plain-aggregate ORDER BY share a field, so we have to
-					 * check here that at most one is present.  We also check
-					 * for DISTINCT and VARIADIC here to give a better error
-					 * location.  Other consistency checks are deferred to
-					 * parse analysis.
-					 */
-					if ($2 != NIL)
-					{
-						if (n->agg_order != NIL)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("cannot use multiple ORDER BY clauses with WITHIN GROUP"),
-									 parser_errposition(@2)));
-						if (n->agg_distinct)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("cannot use DISTINCT with WITHIN GROUP"),
-									 parser_errposition(@2)));
-						if (n->func_variadic)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("cannot use VARIADIC with WITHIN GROUP"),
-									 parser_errposition(@2)));
-						n->agg_order = $2;
-						n->agg_within_group = TRUE;
-					}
-					n->agg_filter = $3;
-					n->over = $4;
-					$$ = (Node *) n;
-				}
-			| func_expr_common_subexpr
-				{ $$ = $1; }
-		;
-
-/*
- * As func_expr but does not accept WINDOW functions directly
- * (but they can still be contained in arguments for functions etc).
- * Use this when window expressions are not allowed, where needed to
- * disambiguate the grammar (e.g. in CREATE INDEX).
- */
-func_expr_windowless:
-			func_application						{ $$ = $1; }
-			| func_expr_common_subexpr				{ $$ = $1; }
-		;
-
-/*
- * Special expressions that are considered to be functions.
- */
-func_expr_common_subexpr:
-			COLLATION FOR '(' a_expr ')'
-=======
 
 /*
  * func_expr and its cousin func_expr_windowless are split out from c_expr just
@@ -14208,7 +14008,6 @@ func_expr_common_subexpr:
  * sense as functional index entries, but we ignore that consideration here.)
  */
 func_expr: func_application within_group_clause filter_clause over_clause
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				{
 					FuncCall *n = (FuncCall *) $1;
 					/*
@@ -15820,12 +15619,8 @@ unreserved_keyword:
 			| EXTENSION
 			| EXTERNAL
 			| FAMILY
-<<<<<<< HEAD
 			| FIELDS
 			| FILL
-=======
-			| FILTER
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			| FIRST_P
 			| FORCE
 			| FORMAT
@@ -15909,15 +15704,11 @@ unreserved_keyword:
 			| OPERATOR
 			| OPTION
 			| OPTIONS
-<<<<<<< HEAD
 			| ORDERED
+			| ORDINALITY
 			| OTHERS
 			| OVER
 			| OVERCOMMIT
-=======
-			| ORDINALITY
-			| OVER
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			| OWNED
 			| OWNER
 			| PARSER

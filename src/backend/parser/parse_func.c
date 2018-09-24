@@ -16,12 +16,9 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_aggregate.h"
-<<<<<<< HEAD
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_partition_rule.h"
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "catalog/pg_proc.h"
 #include "catalog/pg_proc_callback.h"
 #include "catalog/pg_type.h"
@@ -115,11 +112,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If there's an aggregate filter, transform it using transformWhereClause
 	 */
 	if (fn && fn->agg_filter != NULL)
-<<<<<<< HEAD
-		agg_filter = (Expr *) transformWhereClause(pstate, (Node *) fn->agg_filter,
-=======
 		agg_filter = (Expr *) transformWhereClause(pstate, fn->agg_filter,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 												   EXPR_KIND_FILTER,
 												   "FILTER");
 
@@ -312,16 +305,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (agg_filter)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-<<<<<<< HEAD
-					 errmsg("FILTER specified, but %s is not an aggregate function",
-							NameListToString(funcname)),
-					 parser_errposition(pstate, location)));
-
-=======
 			  errmsg("FILTER specified, but %s is not an aggregate function",
 					 NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (over)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -637,21 +623,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * When function is called with an explicit VARIADIC labeled parameter,
-	 * and the declared_arg_type is "any", then sanity check the actual
-	 * parameter type now - it must be an array.
-	 */
-	if (nargs > 0 && vatype == ANYOID && func_variadic)
-	{
-		Oid		va_arr_typid = actual_arg_types[nargs - 1];
-
-		if (!OidIsValid(get_element_type(va_arr_typid)))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("VARIADIC argument must be an array"),
-			  parser_errposition(pstate, exprLocation((Node *) llast(fargs)))));
-=======
 	 * If an "any" variadic is called with explicit VARIADIC marking, insist
 	 * that the variadic parameter be of some array type.
 	 */
@@ -665,7 +636,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("VARIADIC argument must be an array"),
 					 parser_errposition(pstate,
 									  exprLocation((Node *) llast(fargs)))));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	/* build the appropriate output structure */
@@ -704,14 +674,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
 		 * syntax.  This is mere pedantry but some folks insisted ...
-<<<<<<< HEAD
 		 *
 		 * GPDB: We allow this in GPDB.
 		 */
 #if 0
-=======
-		 */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (fargs == NIL && !agg_star && !agg_within_group)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -768,13 +734,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
-<<<<<<< HEAD
-		 * syntax.	This is mere pedantry but some folks insisted ...
+		 * syntax.  This is mere pedantry but some folks insisted ...
 		 *
 		 * GPDB: We allow this in GPDB.
-=======
-		 * syntax.  This is mere pedantry but some folks insisted ...
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 #if 0
 		if (wfunc->winagg && fargs == NIL && !agg_star)
@@ -806,11 +768,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-<<<<<<< HEAD
-					 errmsg("window functions may not return sets"),
-=======
 					 errmsg("window functions cannot return sets"),
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					 parser_errposition(pstate, location)));
 
 		/* parse_agg.c does additional window-func-specific processing */

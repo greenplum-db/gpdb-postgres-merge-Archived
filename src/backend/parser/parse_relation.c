@@ -1264,13 +1264,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-<<<<<<< HEAD
-	TypeFuncClass functypclass;
-	Oid			funcrettype;
 	Oid         funcDescribe = InvalidOid;
-	TupleDesc	tupdesc;
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	Alias	   *alias = rangefunc->alias;
 	Alias	   *eref;
 	char	   *aliasname;
@@ -1306,143 +1300,12 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	eref = makeAlias(aliasname, NIL);
 	rte->eref = eref;
 
-<<<<<<< HEAD
-	/*
-	 * If the function has TABLE value expressions in its arguments then it must
-	 * be planned as a TableFunctionScan instead of a normal FunctionScan.  We
-	 * mark this here because this is where we know that the function is being
-	 * used as a RangeTableEntry.
-	 */
-	if (funcexpr && IsA(funcexpr, FuncExpr))
-	{
-		FuncExpr		*func = (FuncExpr *) funcexpr;
-
-		if (func->args && IsA(func->args, List))
-		{
-			ListCell		*arg;
-
-			foreach(arg, (List*) func->args)
-			{
-				Node *n = (Node *) lfirst(arg);
-				if (IsA(n, TableValueExpr))
-				{
-					TableValueExpr *input = (TableValueExpr *) n;
-
-					/* 
-					 * Currently only support single TABLE value expression.
-					 *
-					 * Note: this shouldn't be possible given that we don't
-					 * allow it at function creation so the function parser
-					 * should have already errored due to type mismatch.
-					 */
-					Assert(IsA(input->subquery, Query));
-					if (rte->subquery != NULL)
-						ereport(ERROR, 
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("functions over multiple TABLE value "
-										"expressions not supported")));
-
-					/*
-					 * Convert RTE to a TableFunctionScan over the specified
-					 * input 
-					 */
-					rte->rtekind = RTE_TABLEFUNCTION;
-					rte->subquery = (Query *) input->subquery;
-
-					/* 
-					 * Mark function as a table function so that the second pass
-					 * check, parseCheckTableFunctions(), can correctly detect
-					 * that it is a valid TABLE value expression.
-					 */
-					func->is_tablefunc = true;
-
-					/*
-					 * We do not break from the loop here because we want to
-					 * keep looping to guard against multiple TableValueExpr
-					 * arguments.
-					 */
-				}
-			}
-		}
-	}
-
-	/*
-	 * Now determine if the function returns a simple or composite type.
-	 */
-	functypclass = get_expr_result_type(funcexpr,
-										&funcrettype,
-										&tupdesc);
-
-	/*
-	 * Handle dynamic type resolution for functions with DESCRIBE callbacks.
-	 */
-	if (functypclass == TYPEFUNC_RECORD && IsA(funcexpr, FuncExpr))
-	{
-		FuncExpr *func = (FuncExpr *) funcexpr;
-		Datum     d;
-		int       i;
-
-		Insist(TypeSupportsDescribe(funcrettype));
-
-		funcDescribe = lookupProcCallback(func->funcid, PROMETHOD_DESCRIBE);
-		if (OidIsValid(funcDescribe))
-		{
-			FmgrInfo	flinfo;
-			FunctionCallInfoData fcinfo;
-
-			/*
-			 * Describe functions have the signature  d(internal) => internal
-			 * where the parameter is the untransformed FuncExpr node and the result
-			 * is a tuple descriptor. Its context is RangeTblEntry which has
-			 * funcuserdata field to store arbitrary binary data to transport
-			 * to executor.
-			 */
-			rte->funcuserdata = NULL;
-			fmgr_info(funcDescribe, &flinfo);
-			InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rte, NULL);
-			fcinfo.arg[0] = PointerGetDatum(funcexpr);
-			fcinfo.argnull[0] = false;
-
-			d = FunctionCallInvoke(&fcinfo);
-			if (fcinfo.isnull)
-				elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
-			tupdesc = (TupleDesc) DatumGetPointer(d);
-
-			/* 
-			 * Might want to improve this API so the describe method return 
-			 * value is somehow verifiable 
-			 */
-			if (tupdesc != NULL)
-			{
-				functypclass = TYPEFUNC_COMPOSITE;
-				for (i = 0; i < tupdesc->natts; i++)
-				{
-					Form_pg_attribute attr = tupdesc->attrs[i];
-
-					rte->funccoltypes	= lappend_oid(rte->funccoltypes,
-													  attr->atttypid);
-					rte->funccoltypmods = lappend_int(rte->funccoltypmods,
-													  attr->atttypmod);
-					rte->funccolcollations = lappend_oid(rte->funccolcollations,
-													  attr->attcollation);
-				}
-			}
-		}
-	}
-
-	/*
-	 * A coldeflist is required if the function returns RECORD and hasn't got
-	 * a predetermined record type, and is prohibited otherwise.
-	 */
-	if (coldeflist != NIL)
-=======
 	/* Process each function ... */
 	functupdescs = (TupleDesc *) palloc(nfuncs * sizeof(TupleDesc));
 
 	totalatts = 0;
 	funcno = 0;
 	forthree(lc1, funcexprs, lc2, funcnames, lc3, coldeflists)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{
 		Node	   *funcexpr = (Node *) lfirst(lc1);
 		char	   *funcname = (char *) lfirst(lc2);
@@ -1460,11 +1323,127 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		rtfunc->funcparams = NULL;		/* not set until planning */
 
 		/*
+		 * If the function has TABLE value expressions in its arguments then it must
+		 * be planned as a TableFunctionScan instead of a normal FunctionScan.  We
+		 * mark this here because this is where we know that the function is being
+		 * used as a RangeTableEntry.
+		 */
+		if (funcexpr && IsA(funcexpr, FuncExpr))
+		{
+			FuncExpr		*func = (FuncExpr *) funcexpr;
+
+			if (func->args && IsA(func->args, List))
+			{
+				ListCell		*arg;
+
+				foreach(arg, (List*) func->args)
+				{
+					Node *n = (Node *) lfirst(arg);
+					if (IsA(n, TableValueExpr))
+					{
+						TableValueExpr *input = (TableValueExpr *) n;
+
+						/* 
+						 * Currently only support single TABLE value expression.
+						 *
+						 * Note: this shouldn't be possible given that we don't
+						 * allow it at function creation so the function parser
+						 * should have already errored due to type mismatch.
+						 */
+						Assert(IsA(input->subquery, Query));
+						if (rte->subquery != NULL)
+							ereport(ERROR, 
+									(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									 errmsg("functions over multiple TABLE value "
+											"expressions not supported")));
+
+						/*
+						 * Convert RTE to a TableFunctionScan over the specified
+						 * input 
+						 */
+						rte->rtekind = RTE_TABLEFUNCTION;
+						rte->subquery = (Query *) input->subquery;
+
+						/* 
+						 * Mark function as a table function so that the second pass
+						 * check, parseCheckTableFunctions(), can correctly detect
+						 * that it is a valid TABLE value expression.
+						 */
+						func->is_tablefunc = true;
+
+						/*
+						 * We do not break from the loop here because we want to
+						 * keep looping to guard against multiple TableValueExpr
+						 * arguments.
+						 */
+					}
+				}
+			}
+		}
+
+		/*
 		 * Now determine if the function returns a simple or composite type.
 		 */
 		functypclass = get_expr_result_type(funcexpr,
 											&funcrettype,
 											&tupdesc);
+
+		/*
+		 * Handle dynamic type resolution for functions with DESCRIBE callbacks.
+		 */
+		if (functypclass == TYPEFUNC_RECORD && IsA(funcexpr, FuncExpr))
+		{
+			FuncExpr *func = (FuncExpr *) funcexpr;
+			Datum     d;
+			int       i;
+
+			Insist(TypeSupportsDescribe(funcrettype));
+
+			funcDescribe = lookupProcCallback(func->funcid, PROMETHOD_DESCRIBE);
+			if (OidIsValid(funcDescribe))
+			{
+				FmgrInfo	flinfo;
+				FunctionCallInfoData fcinfo;
+
+				/*
+				 * Describe functions have the signature  d(internal) => internal
+				 * where the parameter is the untransformed FuncExpr node and the result
+				 * is a tuple descriptor. Its context is RangeTblEntry which has
+				 * funcuserdata field to store arbitrary binary data to transport
+				 * to executor.
+				 */
+				rtfunc->funcuserdata = NULL;
+				fmgr_info(funcDescribe, &flinfo);
+				InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rte, NULL);
+				fcinfo.arg[0] = PointerGetDatum(funcexpr);
+				fcinfo.argnull[0] = false;
+
+				d = FunctionCallInvoke(&fcinfo);
+				if (fcinfo.isnull)
+					elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
+				tupdesc = (TupleDesc) DatumGetPointer(d);
+
+				/* 
+				 * Might want to improve this API so the describe method return 
+				 * value is somehow verifiable 
+				 */
+				if (tupdesc != NULL)
+				{
+					functypclass = TYPEFUNC_COMPOSITE;
+					for (i = 0; i < tupdesc->natts; i++)
+					{
+						Form_pg_attribute attr = tupdesc->attrs[i];
+
+						rtfunc->funccoltypes	= lappend_oid(rtfunc->funccoltypes,
+														  attr->atttypid);
+						rtfunc->funccoltypmods = lappend_int(rtfunc->funccoltypmods,
+														  attr->atttypmod);
+						rtfunc->funccolcollations = lappend_oid(rtfunc->funccolcollations,
+															 attr->attcollation);
+					}
+				}
+			}
+		}
 
 		/*
 		 * A coldeflist is required if the function returns RECORD and hasn't

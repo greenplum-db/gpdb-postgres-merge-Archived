@@ -28,11 +28,8 @@
 #include "optimizer/tlist.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
-<<<<<<< HEAD
 #include "parser/parse_agg.h"
-=======
 #include "parser/parser.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
@@ -94,7 +91,6 @@ static List *findListTargetlistEntries(ParseState *pstate, Node *node,
                                        bool useSQL99);
 static int get_matching_location(int sortgroupref,
 					  List *sortgrouprefs, List *exprs);
-<<<<<<< HEAD
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -105,11 +101,6 @@ static List *transformRowExprToList(ParseState *pstate, RowExpr *rowexpr,
 static List *transformRowExprToGroupClauses(ParseState *pstate, RowExpr *rowexpr,
 											List *groupsets, List *targetList);
 static void freeGroupList(List *grouplist);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
-					 List *grouplist, List *targetlist, int location,
-					 bool resolveUnknown);
 static WindowClause *findWindowClause(List *wclist, const char *name);
 static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 								  Node *clause,
@@ -756,59 +747,81 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	RangeTblEntry *rte;
 	ListCell   *lc;
 
-	if (funcname)
+	if (!r->is_rowsfrom && list_length(r->functions) == 1)
 	{
-		if (pg_strncasecmp(funcname, GP_DIST_RANDOM_NAME, sizeof(GP_DIST_RANDOM_NAME)) == 0)
+		List	   *pair = (List *) linitial(r->functions);
+		Node	   *fexpr;
+		List	   *coldeflist;
+		
+		/* Disassemble the function-call/column-def-list pairs */
+		Assert(list_length(pair) == 2);
+		fexpr = (Node *) linitial(pair);
+		coldeflist = (List *) lsecond(pair);
+
+		/* If we see a gp_dist_random('name') call with no special decoration, it actually
+		 * refers to a table.
+		 */
+		if (IsA(fexpr, FuncCall))
 		{
-			/* OK, now we need to check the arguments and generate a RTE */
-			FuncCall *fc;
-			RangeVar *rel;
+			FuncCall   *fc = (FuncCall *) fexpr;
 
-			fc = (FuncCall *)r->funccallnode;
-
-			if (list_length(fc->args) != 1)
-				elog(ERROR, "Invalid %s syntax.", GP_DIST_RANDOM_NAME);
-
-			if (IsA(linitial(fc->args), A_Const))
+			if (list_length(fc->funcname) == 1 &&
+				pg_strcasecmp(strVal(linitial(fc->funcname)), "GP_DIST_RANDOM_NAME") == 0 &&
+				fc->agg_order == NIL &&
+				fc->agg_filter == NULL &&
+				!fc->agg_star &&
+				!fc->agg_distinct &&
+				!fc->func_variadic &&
+				fc->over == NULL &&
+				coldeflist == NIL)
 			{
-				A_Const *arg_val;
-				char *schemaname;
-				char *tablename;
+				/* OK, now we need to check the arguments and generate a RTE */
+				RangeVar *rel;
 
-				arg_val = linitial(fc->args);
-				if (!IsA(&arg_val->val, String))
-				{
-					elog(ERROR, "%s: invalid argument type, non-string in value", GP_DIST_RANDOM_NAME);
-				}
+				if (list_length(fc->args) != 1)
+					elog(ERROR, "Invalid %s syntax.", GP_DIST_RANDOM_NAME);
 
-				schemaname = strVal(&arg_val->val);
-				tablename = strchr(schemaname, '.');
-				if (tablename)
+				if (IsA(linitial(fc->args), A_Const))
 				{
-					*tablename = 0;
-					tablename++;
+					A_Const *arg_val;
+					char *schemaname;
+					char *tablename;
+
+					arg_val = linitial(fc->args);
+					if (!IsA(&arg_val->val, String))
+					{
+						elog(ERROR, "%s: invalid argument type, non-string in value", GP_DIST_RANDOM_NAME);
+					}
+
+					schemaname = strVal(&arg_val->val);
+					tablename = strchr(schemaname, '.');
+					if (tablename)
+					{
+						*tablename = 0;
+						tablename++;
+					}
+					else
+					{
+						/* no schema */
+						tablename = schemaname;
+						schemaname = NULL;
+					}
+
+					/* Got the name of the table, now we need to build the RTE for the table. */
+					rel = makeRangeVar(schemaname, tablename, arg_val->location);
+					rel->location = arg_val->location;
+
+					rte = addRangeTableEntry(pstate, rel, r->alias, false, true);
+
+					/* Now we set our special attribute in the rte. */
+					rte->forceDistRandom = true;
+
+					return rte;
 				}
 				else
 				{
-					/* no schema */
-					tablename = schemaname;
-					schemaname = NULL;
+					elog(ERROR, "%s: invalid argument type", GP_DIST_RANDOM_NAME);
 				}
-
-				/* Got the name of the table, now we need to build the RTE for the table. */
-				rel = makeRangeVar(schemaname, tablename, arg_val->location);
-				rel->location = arg_val->location;
-
-				rte = addRangeTableEntry(pstate, rel, r->alias, false, true);
-
-				/* Now we set our special attribute in the rte. */
-				rte->forceDistRandom = true;
-
-				return rte;
-			}
-			else
-			{
-				elog(ERROR, "%s: invalid argument type", GP_DIST_RANDOM_NAME);
 			}
 		}
 	}
@@ -2757,7 +2770,6 @@ transformWindowDefinitions(ParseState *pstate,
 			/* Else this clause is just OVER (foo), so say this: */
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-<<<<<<< HEAD
 					 errmsg("cannot copy window \"%s\" because it has a frame clause",
 							windef->refname),
 					 errhint("Omit the parentheses in this OVER clause."),
@@ -2786,13 +2798,6 @@ transformWindowDefinitions(ParseState *pstate,
 		 *   +/- <integer> operations and must be merge-joinable.
 		 */
 
-=======
-			errmsg("cannot copy window \"%s\" because it has a frame clause",
-				   windef->refname),
-					 errhint("Omit the parentheses in this OVER clause."),
-					 parser_errposition(pstate, windef->location)));
-		}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		wc->frameOptions = windef->frameOptions;
 		wc->winref = winref;
 		/* Process frame offset expressions */

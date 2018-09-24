@@ -129,7 +129,7 @@ static AlterTableCmd *transformAlterTable_all_PartitionStmt(ParseState *pstate,
 									  AlterTableStmt *stmt,
 									  CreateStmtContext *pCxt,
 									  AlterTableCmd *cmd);
-static List *transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
+static List *transformIndexStmt_recurse(Oid relid, IndexStmt *stmt, const char *queryString,
 						   ParseState *masterpstate, bool recurseToPartitions);
 
 /*
@@ -608,21 +608,9 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		castnode->typeName = SystemTypeName("regclass");
 		castnode->arg = (Node *) snamenode;
 		castnode->location = -1;
-<<<<<<< HEAD
-		funccallnode = makeNode(FuncCall);
-		funccallnode->funcname = SystemFuncName("nextval");
-		funccallnode->args = list_make1(castnode);
-		funccallnode->agg_order = NIL;
-		funccallnode->agg_star = false;
-		funccallnode->agg_distinct = false;
-		funccallnode->func_variadic = false;
-		funccallnode->location = -1;
-
-=======
 		funccallnode = makeFuncCall(SystemFuncName("nextval"),
 									list_make1(castnode),
 									-1);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
 		constraint->location = -1;
@@ -3012,12 +3000,15 @@ transformFKConstraints(CreateStmtContext *cxt,
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
  *
-<<<<<<< HEAD
+ * To avoid race conditions, it's important that this function rely only on
+ * the passed-in relid (and not on stmt->relation) to determine the target
+ * relation.
+
  * In GPDB, this returns a list, because the single statement can be
  * expanded into multiple IndexStmts, if the table is a partitioned table.
  */
 List *
-transformIndexStmt(IndexStmt *stmt, const char *queryString)
+transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 {
 	bool		recurseToPartitions = false;
 
@@ -3040,32 +3031,19 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 			recurseToPartitions = true;
 	}
 
-	return transformIndexStmt_recurse(stmt, queryString, NULL, recurseToPartitions);
+	return transformIndexStmt_recurse(relid, stmt, queryString, NULL, recurseToPartitions);
 
 }
 static List *
-transformIndexStmt_recurse(IndexStmt *stmt, const char *queryString,
+transformIndexStmt_recurse(Oid relid, IndexStmt *stmt, const char *queryString,
 						   ParseState *masterpstate, bool recurseToPartitions)
 {
-	Relation	rel;
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	ListCell   *l;
+	Relation	rel;
 	List	   *result = NIL;
 	LOCKMODE	lockmode;
-=======
- * To avoid race conditions, it's important that this function rely only on
- * the passed-in relid (and not on stmt->relation) to determine the target
- * relation.
- */
-IndexStmt *
-transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
-{
-	ParseState *pstate;
-	RangeTblEntry *rte;
-	ListCell   *l;
-	Relation	rel;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
@@ -3073,7 +3051,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 */
 	stmt = (IndexStmt *) copyObject(stmt);
 
-<<<<<<< HEAD
 	/*
 	 * Open the parent table with appropriate locking.	We must do this
 	 * because addRangeTableEntry() would acquire only AccessShareLock,
@@ -3085,8 +3062,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_openrv(stmt->relation, lockmode);
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
@@ -3205,7 +3180,7 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 														 nameCache);
 
 			result = list_concat(result,
-								 transformIndexStmt_recurse(chidx, queryString,
+								 transformIndexStmt_recurse(relid, chidx, queryString,
 															masterpstate, true));
 		}
 	}
@@ -3215,10 +3190,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * to its fields without qualification.  Caller is responsible for locking
 	 * relation, but we still need to open it.
 	 */
-<<<<<<< HEAD
-=======
-	rel = relation_open(relid, NoLock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
 
 	/* no to join list, yes to namespaces */
@@ -3280,9 +3251,8 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 
 	free_parsestate(pstate);
 
-<<<<<<< HEAD
 	/*
-	 * Close relation, but keep the lock. Unless this is a CREATE INDEX
+	 * Close relation. Unless this is a CREATE INDEX
 	 * for a partitioned table, and we're processing a partition. In that
 	 * case, we want to release the lock on the partition early, so that
 	 * you don't run out of space in the lock manager if there are a lot
@@ -3293,10 +3263,6 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 		heap_close(rel, lockmode);
 	else
 		heap_close(rel, NoLock);
-=======
-	/* Close relation */
-	heap_close(rel, NoLock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	result = lcons(stmt, result);
 
@@ -3642,37 +3608,14 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 */
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
-<<<<<<< HEAD
-	/*
-	 * Determine the appropriate lock level for this list of subcommands.
-	 */
-	lockmode = AlterTableGetLockLevel(stmt->cmds);
-
-	/*
-	 * Acquire appropriate lock on the target relation, which will be held
-	 * until end of transaction.  This ensures any decisions we make here
-	 * based on the state of the relation will still be good at execution. We
-	 * must get lock now because execution will later require it; taking a
-	 * lower grade lock now and trying to upgrade later risks deadlock.  Any
-	 * new commands we add after this must not upgrade the lock level
-	 * requested here.
+	/* Caller is responsible for locking the relation */
+	/* GPDB_94_MERGE_FIXME: this function used to be responsible, and we had some
+	 * more complicated logic here for partitions:
 	 *
 	 * In GPDB, we release the lock early if this command is part of a
 	 * partitioned CREATE TABLE.
 	 */
-	rel = relation_openrv_extended(stmt->relation, lockmode, stmt->missing_ok, false /*GPDB_92_MERGE_FIXME*/);
-	if (rel == NULL)
-	{
-		/* this message is consistent with relation_openrv */
-		ereport(NOTICE,
-				(errmsg("relation \"%s\" does not exist, skipping",
-						stmt->relation->relname)));
-		return NIL;
-	}
-=======
-	/* Caller is responsible for locking the relation */
 	rel = relation_open(relid, NoLock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);
@@ -3845,8 +3788,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		List	   *idxstmts;
 		ListCell   *li;
 
-<<<<<<< HEAD
-		idxstmts = transformIndexStmt(idxstmt, queryString);
+		idxstmts = transformIndexStmt(relid, idxstmt, queryString);
 		/*
 		 * This is a loop in GPDB because transformIndexStmt() returns a list.
 		 * See notes there for more details.
@@ -3859,14 +3801,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 			newcmd->def = lfirst(li);
 			newcmds = lappend(newcmds, newcmd);
 		}
-=======
-		Assert(IsA(idxstmt, IndexStmt));
-		idxstmt = transformIndexStmt(relid, idxstmt, queryString);
-		newcmd = makeNode(AlterTableCmd);
-		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
-		newcmd->def = (Node *) idxstmt;
-		newcmds = lappend(newcmds, newcmd);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 	cxt.alist = NIL;
 
@@ -3886,9 +3820,8 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		newcmds = lappend(newcmds, newcmd);
 	}
 
-<<<<<<< HEAD
 	/*
-	 * Close rel but keep lock
+	 * Close rel
 	 *
 	 * If this is part of a CREATE TABLE of a partitioned table, creating
 	 * the partitions, we release the lock immediately, however. We hold
@@ -3901,10 +3834,6 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		relation_close(rel, AccessExclusiveLock);
 	else
 		relation_close(rel, NoLock);
-=======
-	/* Close rel */
-	relation_close(rel, NoLock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Output results.

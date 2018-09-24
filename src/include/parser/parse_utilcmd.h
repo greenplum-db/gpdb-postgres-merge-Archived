@@ -19,19 +19,12 @@
 #include "parser/parse_node.h"
 
 
-<<<<<<< HEAD
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString, bool createPartition);
 extern List *transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString);
-extern List *transformAlterTableStmt(AlterTableStmt *stmt,
-						const char *queryString);
-extern List *transformIndexStmt(IndexStmt *stmt, const char *queryString);
-=======
-extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
 extern List *transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 						const char *queryString);
-extern IndexStmt *transformIndexStmt(Oid relid, IndexStmt *stmt,
+extern List *transformIndexStmt(Oid relid, IndexStmt *stmt,
 				   const char *queryString);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,
 				  List **actions, Node **whereClause);
 extern List *transformCreateSchemaStmt(CreateSchemaStmt *stmt);
