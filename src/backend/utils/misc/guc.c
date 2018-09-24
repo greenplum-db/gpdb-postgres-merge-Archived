@@ -6,13 +6,9 @@
  * See src/backend/utils/misc/README for more information.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2013, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
@@ -1577,21 +1573,13 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
-<<<<<<< HEAD
-			gettext_noop("Shows whether data checksums are turned on for this cluster"),
-=======
 			gettext_noop("Shows whether data checksums are turned on for this cluster."),
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&data_checksums,
-<<<<<<< HEAD
-		false, NULL, NULL
-=======
 		false,
 		NULL, NULL, NULL
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	},
 
 	/* End-of-list marker */
@@ -1851,11 +1839,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB | GUC_GPDB_ADDOPT
 		},
 		&work_mem,
-<<<<<<< HEAD
         32768, 64, MAX_KILOBYTES,
-=======
-		4096, 64, MAX_KILOBYTES,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		NULL, NULL, NULL
 	},
 
@@ -1867,10 +1851,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&maintenance_work_mem,
 		65536, 1024, MAX_KILOBYTES,
-<<<<<<< HEAD
-=======
 		NULL, NULL, NULL
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	},
 
 	/*
@@ -2647,16 +2628,12 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
-<<<<<<< HEAD
 			NULL
-=======
-			NULL,
 
 			/*
 			 * There is no _bytes_ unit, so the user can't supply units for
 			 * this.
 			 */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,

@@ -317,24 +317,6 @@
 /* Define to 1 if you have isinf(). */
 #undef HAVE_ISINF
 
-<<<<<<< HEAD
-/* Define to 1 if `e_data' is a member of `krb5_error'. */
-#undef HAVE_KRB5_ERROR_E_DATA
-
-/* Define to 1 if `text.data' is a member of `krb5_error'. */
-#undef HAVE_KRB5_ERROR_TEXT_DATA
-
-/* Define to 1 if you have krb5_free_unparsed_name. */
-#undef HAVE_KRB5_FREE_UNPARSED_NAME
-
-/* Define to 1 if `client' is a member of `krb5_ticket'. */
-#undef HAVE_KRB5_TICKET_CLIENT
-
-/* Define to 1 if `enc_part2' is a member of `krb5_ticket'. */
-#undef HAVE_KRB5_TICKET_ENC_PART2
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
@@ -998,14 +980,7 @@
    XLOG_BLCKSZ). Changing XLOG_SEG_SIZE requires an initdb. */
 #undef XLOG_SEG_SIZE
 
-<<<<<<< HEAD
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
-=======
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

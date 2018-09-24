@@ -4,13 +4,9 @@
  *	  POSTGRES error reporting/logging definitions.
  *
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2009, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/elog.h
@@ -514,15 +510,13 @@ typedef struct ErrorData
 	int			internalpos;	/* cursor index into internalquery */
 	char	   *internalquery;	/* text of internally-generated query */
 	int			saved_errno;	/* errno at entry */
-<<<<<<< HEAD
+
 	void	   *stacktracearray[30];
 	size_t		stacktracesize;
 	bool		printstack;		/* force output stack trace */
-=======
 
 	/* context containing associated non-constant strings */
 	struct MemoryContextData *assoc_context;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } ErrorData;
 
 extern void EmitErrorReport(void);

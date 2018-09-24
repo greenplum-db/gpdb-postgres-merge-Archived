@@ -519,13 +519,10 @@ typedef enum NodeTag
 	T_Constraint,
 	T_DefElem,
 	T_RangeTblEntry,
-<<<<<<< HEAD
-	T_GroupingClause,
-	T_GroupingFunc,
-=======
 	T_RangeTblFunction,
 	T_WithCheckOption,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	T_GroupingClause,
+	T_GroupingFunc,
 	T_SortGroupClause,
 	T_WindowClause,
 	T_PrivGrantee,

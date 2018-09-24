@@ -317,12 +317,8 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
 #define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
-<<<<<<< HEAD
-#define PG_RETURN_HEAPTUPLEHEADER(x)  PG_RETURN_POINTER(x)
-#define PG_RETURN_XID(x)	 return TransactionIdGetDatum(x)
-=======
 #define PG_RETURN_HEAPTUPLEHEADER(x)  return HeapTupleHeaderGetDatum(x)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#define PG_RETURN_XID(x)	 return TransactionIdGetDatum(x)
 
 
 /*-------------------------------------------------------------------------

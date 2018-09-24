@@ -57,21 +57,20 @@
 #define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
-<<<<<<< HEAD
- * When we have neither spinlocks nor atomic operations support we're
- * implementing atomic operations on top of spinlock on top of semaphores. To
- * be safe against atomic operations while holding a spinlock separate
- * semaphores have to be used.
- */
-#define NUM_ATOMICS_SEMAPHORES      64
-=======
  * When we don't have native spinlocks, we use semaphores to simulate them.
  * Decreasing this value reduces consumption of OS resources; increasing it
  * may improve performance, but supplying a real spinlock implementation is
  * probably far better.
  */
 #define NUM_SPINLOCK_SEMAPHORES		1024
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+/*
+ * When we have neither spinlocks nor atomic operations support we're
+ * implementing atomic operations on top of spinlock on top of semaphores. To
+ * be safe against atomic operations while holding a spinlock separate
+ * semaphores have to be used.
+ */
+#define NUM_ATOMICS_SEMAPHORES      64
 
 /*
  * Define this if you want to allow the lo_import and lo_export SQL
@@ -219,13 +218,6 @@
  */
 
 /*
-<<<<<<< HEAD
- * Define CLOBBER_FREED_MEMORY to cause pfree()'d memory to be cleared
- * immediately, to facilitate catching bugs that refer to already-freed
- * values. Also, with RELCACHE_FORCE_RELEASE, relcache entries will be freed as
- * soon as their refcount goes to zero. Right now, these get defined
- * automatically if --enable-cassert.
-=======
  * Include Valgrind "client requests", mostly in the memory allocator, so
  * Valgrind understands PostgreSQL memory contexts.  This permits detecting
  * memory errors that Valgrind would not detect on a vanilla build.  See also
@@ -244,7 +236,6 @@
  * Define this to cause pfree()'d memory to be cleared immediately, to
  * facilitate catching bugs that refer to already-freed values.
  * Right now, this gets defined automatically if --enable-cassert.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 #ifdef USE_ASSERT_CHECKING
 #define CLOBBER_FREED_MEMORY
@@ -309,16 +300,15 @@
 /* #define RTDEBUG */
 
 /*
-<<<<<<< HEAD
- * Greenplum replication configuration file name.
- * This file will be used to store values of replication GUCs
- * set by set_gp_replication_config()
- */
-#define GP_REPLICATION_CONFIG_FILENAME "gp_replication.conf"
-=======
  * Automatic configuration file name for ALTER SYSTEM.
  * This file will be used to store values of configuration parameters
  * set by ALTER SYSTEM command.
  */
 #define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+/*
+ * Greenplum replication configuration file name.
+ * This file will be used to store values of replication GUCs
+ * set by set_gp_replication_config()
+ */
+#define GP_REPLICATION_CONFIG_FILENAME "gp_replication.conf"
