@@ -117,15 +117,9 @@ static MemoryContext vac_context = NULL;
 static BufferAccessStrategy vac_strategy;
 
 /* non-export function prototypes */
-<<<<<<< HEAD
 static List *get_rel_oids(Oid relid, VacuumStmt *vacstmt, int stmttype);
-static void vac_truncate_clog(TransactionId frozenXID, MultiXactId frozenMulti);
-static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
-=======
-static List *get_rel_oids(Oid relid, const RangeVar *vacrel);
 static void vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti);
-static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+static bool vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		   bool for_wraparound);
 static void scan_index(Relation indrel, double num_tuples,
 					   bool check_stats, int elevel);
@@ -1756,11 +1750,7 @@ vac_update_datfrozenxid(void)
 	 * distributed transactions, we will nevertheless never encounter such
 	 * XIDs on disk.
 	 */
-<<<<<<< HEAD
-	newFrozenXid = GetLocalOldestXmin(true, true);
-=======
-	newFrozenXid = GetOldestXmin(NULL, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	newFrozenXid = GetLocalOldestXmin(NULL, true);
 
 	/*
 	 * Similarly, initialize the MultiXact "min" with the value that would be
@@ -1781,9 +1771,7 @@ vac_update_datfrozenxid(void)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(classTup);
 
-<<<<<<< HEAD
-		if (!TransactionIdIsValid(classForm->relfrozenxid))
-=======
+#if 0
 		/*
 		 * Only consider relations able to hold unfrozen XIDs (anything else
 		 * should have InvalidTransactionId in relfrozenxid anyway.)
@@ -1791,7 +1779,14 @@ vac_update_datfrozenxid(void)
 		if (classForm->relkind != RELKIND_RELATION &&
 			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_TOASTVALUE)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			continue;
+#endif
+
+		/* GPDB_94_MERGE_FIXME: We have had this check here, instead of the above
+		 * check that upstrem has. I would be more comfortable if we would list
+		 * the relkinds here explicitly, like in upstream..
+		 */
+		if (!TransactionIdIsValid(classForm->relfrozenxid))
 			continue;
 
 		Assert(TransactionIdIsNormal(classForm->relfrozenxid));
@@ -2006,84 +2001,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
-<<<<<<< HEAD
 	MemoryContext oldcontext;
-=======
-
-	/* Begin a transaction for vacuuming this relation */
-	StartTransactionCommand();
-
-	/*
-	 * Functions in indexes may want a snapshot set.  Also, setting a snapshot
-	 * ensures that RecentGlobalXmin is kept truly recent.
-	 */
-	PushActiveSnapshot(GetTransactionSnapshot());
-
-	if (!(vacstmt->options & VACOPT_FULL))
-	{
-		/*
-		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
-		 * other concurrent VACUUMs know that they can ignore this one while
-		 * determining their OldestXmin.  (The reason we don't set it during a
-		 * full VACUUM is exactly that we may have to run user-defined
-		 * functions for functional indexes, and we want to make sure that if
-		 * they use the snapshot set above, any tuples it requires can't get
-		 * removed from other tables.  An index function that depends on the
-		 * contents of other tables is arguably broken, but we won't break it
-		 * here by violating transaction semantics.)
-		 *
-		 * We also set the VACUUM_FOR_WRAPAROUND flag, which is passed down by
-		 * autovacuum; it's used to avoid canceling a vacuum that was invoked
-		 * in an emergency.
-		 *
-		 * Note: these flags remain set until CommitTransaction or
-		 * AbortTransaction.  We don't want to clear them until we reset
-		 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
-		 * which is probably Not Good.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyPgXact->vacuumFlags |= PROC_IN_VACUUM;
-		if (for_wraparound)
-			MyPgXact->vacuumFlags |= PROC_VACUUM_FOR_WRAPAROUND;
-		LWLockRelease(ProcArrayLock);
-	}
-
-	/*
-	 * Check for user-requested abort.  Note we want this to be inside a
-	 * transaction, so xact.c doesn't issue useless WARNING.
-	 */
-	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * Determine the type of lock we want --- hard exclusive lock for a FULL
-	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
-	 * way, we can be sure that no other backend is vacuuming the same table.
-	 */
-	lmode = (vacstmt->options & VACOPT_FULL) ? AccessExclusiveLock : ShareUpdateExclusiveLock;
-
-	/*
-	 * Open the relation and get the appropriate lock on it.
-	 *
-	 * There's a race condition here: the rel may have gone away since the
-	 * last time we saw it.  If so, we don't need to vacuum it.
-	 *
-	 * If we've been asked not to wait for the relation lock, acquire it first
-	 * in non-blocking mode, before calling try_relation_open().
-	 */
-	if (!(vacstmt->options & VACOPT_NOWAIT))
-		onerel = try_relation_open(relid, lmode);
-	else if (ConditionalLockRelationOid(relid, lmode))
-		onerel = try_relation_open(relid, NoLock);
-	else
-	{
-		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
-			ereport(LOG,
-					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				   errmsg("skipping vacuum of \"%s\" --- lock not available",
-						  vacstmt->relation->relname)));
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (!onerel)
 	{
@@ -2138,7 +2056,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 		}
 
 		/*
-		 * Check for user-requested abort.	Note we want this to be inside a
+		 * Check for user-requested abort.  Note we want this to be inside a
 		 * transaction, so xact.c doesn't issue useless WARNING.
 		 */
 		CHECK_FOR_INTERRUPTS();
@@ -2209,14 +2127,9 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	}
 
 	/*
-<<<<<<< HEAD
-	 * Check that it's a plain table; we used to do this in get_rel_oids() but
-	 * seems safer to check after we've locked the relation.
-=======
 	 * Check that it's a vacuumable relation; we used to do this in
 	 * get_rel_oids() but seems safer to check after we've locked the
 	 * relation.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if ((onerel->rd_rel->relkind != RELKIND_RELATION &&
 		 onerel->rd_rel->relkind != RELKIND_MATVIEW &&
@@ -2347,10 +2260,8 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
 		cluster_rel(relid, InvalidOid, false,
-<<<<<<< HEAD
 					(vacstmt->options & VACOPT_VERBOSE) != 0,
-					true /* printError */,
-					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
+					true /* printError */);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
 		{
@@ -2372,9 +2283,6 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 								   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 			dispatchVacuum(vacstmt, &stats_context);
 		}
-=======
-					(vacstmt->options & VACOPT_VERBOSE) != 0);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 	else
 	{
@@ -2440,16 +2348,9 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
-<<<<<<< HEAD
 	 * still hold the session lock on the master table.  We do this in
 	 * cleanup phase when it's AO table or in prepare phase if it's an
 	 * empty AO table.
-=======
-	 * still hold the session lock on the master table.  Note however that
-	 * "analyze" will not get done on the toast table.  This is good, because
-	 * the toaster always uses hardcoded index access and statistics are
-	 * totally unimportant for toast relations.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH && (is_heap ||
 		(!is_heap && (vacstmt->appendonly_phase == AOVAC_CLEANUP ||

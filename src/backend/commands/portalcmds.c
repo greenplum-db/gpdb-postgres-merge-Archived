@@ -138,15 +138,11 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
-<<<<<<< HEAD
-	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
+	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
 	 *
 	 * GPDB: we do not allow backward scans at the moment regardless
 	 * of any additional runtime overhead. We forced CURSOR_OPT_NO_SCROLL
 	 * above. Comment out this logic.
-=======
-	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 #if 0
 	portal->cursorOptions = cstmt->options;
@@ -492,51 +488,24 @@ PersistHoldablePortal(Portal portal)
 		 */
 		if(Gp_role == GP_ROLE_UTILITY)
 		{
-<<<<<<< HEAD
 			if (portal->atEnd)
 			{
 				/*
 				 * Just force the tuplestore forward to its end.  The size of the
 				 * skip request here is arbitrary.
 				 */
-				while (tuplestore_advance(portal->holdStore, true))
+				while (tuplestore_skiptuples(portal->holdStore, 1000000, true))
 					/* continue */ ;
 			}
 			else
 			{
-				int64		store_pos;
-	
 				tuplestore_rescan(portal->holdStore);
-	
-				for (store_pos = 0; store_pos < portal->portalPos; store_pos++)
-				{
-					if (!tuplestore_advance(portal->holdStore, true))
-						elog(ERROR, "unexpected end of tuple stream");
-				}
+
+				if (!tuplestore_skiptuples(portal->holdStore,
+										   portal->portalPos,
+										   true))
+					elog(ERROR, "unexpected end of tuple stream");
 			}
-=======
-			/*
-			 * We can handle this case even if posOverflow: just force the
-			 * tuplestore forward to its end.  The size of the skip request
-			 * here is arbitrary.
-			 */
-			while (tuplestore_skiptuples(portal->holdStore, 1000000, true))
-				 /* continue */ ;
-		}
-		else
-		{
-			if (portal->posOverflow)	/* oops, cannot trust portalPos */
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not reposition held cursor")));
-
-			tuplestore_rescan(portal->holdStore);
-
-			if (!tuplestore_skiptuples(portal->holdStore,
-									   portal->portalPos,
-									   true))
-				elog(ERROR, "unexpected end of tuple stream");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 	}
 	PG_CATCH();

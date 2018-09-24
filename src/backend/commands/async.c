@@ -126,11 +126,7 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-<<<<<<< HEAD
-#include "storage/proc.h"
-=======
 #include "storage/procarray.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "storage/procsignal.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"

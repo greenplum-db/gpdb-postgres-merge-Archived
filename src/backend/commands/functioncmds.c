@@ -220,17 +220,12 @@ interpret_function_parameter_list(List *parameters,
 	int			i;
 	ParseState *pstate;
 
-<<<<<<< HEAD
 	/* default results */
 	*variadicArgType = InvalidOid;		/* default result */
-	*requiredResultType = InvalidOid;
+	*requiredResultType = InvalidOid;	/* default result */
 	*parameterNames		= NULL;
 	*allParameterTypes	= NULL;
 	*parameterModes		= NULL;
-=======
-	*variadicArgType = InvalidOid;		/* default result */
-	*requiredResultType = InvalidOid;	/* default result */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Allocate local memory */
 	inTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
@@ -271,11 +266,7 @@ interpret_function_parameter_list(List *parameters,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("aggregate cannot accept shell type %s",
 									TypeNameToString(t))));
-<<<<<<< HEAD
 				else if (Gp_role != GP_ROLE_EXECUTE)
-=======
-				else
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					ereport(NOTICE,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("argument type %s is only a shell",

@@ -94,13 +94,8 @@ static void show_sort_keys(SortState *sortstate, List *ancestors,
 			   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 					   ExplainState *es);
-<<<<<<< HEAD
-=======
 static void show_agg_keys(AggState *astate, List *ancestors,
 			  ExplainState *es);
-static void show_group_keys(GroupState *gstate, List *ancestors,
-				ExplainState *es);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 					 int nkeys, AttrNumber *keycols,
 					 List *ancestors, ExplainState *es);
@@ -407,18 +402,16 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		/* plan the query */
 		plan = pg_plan_query(query, 0, params);
 
-<<<<<<< HEAD
+		INSTR_TIME_SET_CURRENT(planduration);
+		INSTR_TIME_SUBTRACT(planduration, planstart);
+
 		/*
 		 * GPDB_92_MERGE_FIXME: it really should be an optimizer's responsibility
 		 * to correctly set the into-clause and into-policy of the PlannedStmt.
 		 */
 		if (into != NULL)
 			plan->intoClause = copyObject(into);
-=======
-		INSTR_TIME_SET_CURRENT(planduration);
-		INSTR_TIME_SUBTRACT(planduration, planstart);
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		/* run it (if needed) and produce output */
 		ExplainOnePlan(plan, into, es, queryString, params, &planduration);
 	}
@@ -628,41 +621,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/* Print info about runtime of triggers */
 	if (es->analyze)
-<<<<<<< HEAD
-	{
-		ResultRelInfo *rInfo;
-		bool		show_relname;
-		int			numrels = queryDesc->estate->es_num_result_relations;
-		List	   *targrels = queryDesc->estate->es_trig_target_relations;
-		int			nr;
-		ListCell   *l;
-
-		/*
-		 * GPDB_91_MERGE_FIXME: If the target is a partitioned table, we
-		 * should also report information on the triggers in the partitions.
-		 * I.e. we should scan the the 'ri_partition_hash' of each
-		 * ResultRelInfo as well. This is somewhat academic, though, as long
-		 * as we don't support triggers in GPDB in general..
-		 */
-
-		ExplainOpenGroup("Triggers", "Triggers", false, es);
-
-		show_relname = (numrels > 1 || targrels != NIL);
-		rInfo = queryDesc->estate->es_result_relations;
-		for (nr = 0; nr < numrels; rInfo++, nr++)
-			report_triggers(rInfo, show_relname, es);
-
-		foreach(l, targrels)
-		{
-			rInfo = (ResultRelInfo *) lfirst(l);
-			report_triggers(rInfo, show_relname, es);
-		}
-
-		ExplainCloseGroup("Triggers", "Triggers", false, es);
-	}
-=======
 		ExplainPrintTriggers(es, queryDesc);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
     /*
      * Display per-slice and whole-query statistics.
@@ -790,6 +749,14 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	List	   *targrels = queryDesc->estate->es_trig_target_relations;
 	int			nr;
 	ListCell   *l;
+
+	/*
+	 * GPDB_91_MERGE_FIXME: If the target is a partitioned table, we
+	 * should also report information on the triggers in the partitions.
+	 * I.e. we should scan the the 'ri_partition_hash' of each
+	 * ResultRelInfo as well. This is somewhat academic, though, as long
+	 * as we don't support triggers in GPDB in general..
+	 */
 
 	ExplainOpenGroup("Triggers", "Triggers", false, es);
 
@@ -1748,11 +1715,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (planstate->instrument)
 		InstrEndLoop(planstate->instrument);
 
-<<<<<<< HEAD
 	/* GPDB_90_MERGE_FIXME: In GPDB, these are printed differently. But does that work
 	 * with the new XML/YAML EXPLAIN output */
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (es->analyze &&
 		planstate->instrument && planstate->instrument->nloops > 0)
 	{
@@ -1786,11 +1750,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	else if (es->analyze)
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
-<<<<<<< HEAD
-			appendStringInfo(es->str, " (never executed)");
-=======
 			appendStringInfoString(es->str, " (never executed)");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		else
 		{
 			if (es->timing)
@@ -1871,11 +1831,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (bitmapqualorig)
 				show_instrumentation_count("Rows Removed by Index Recheck", 2,
 										   planstate, es);
-<<<<<<< HEAD
-		}
-
-			/* FALL THRU */
-=======
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
@@ -1883,7 +1838,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (es->analyze)
 				show_tidbitmap_info((BitmapHeapScanState *) planstate, es);
 			break;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		}
 		case T_SeqScan:
 		case T_ExternalScan:
 		case T_DynamicTableScan:
@@ -1991,27 +1946,26 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		}
 		case T_Agg:
-<<<<<<< HEAD
-=======
 			show_agg_keys((AggState *) planstate, ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			show_grouping_keys(planstate,
+							   ((Agg *) plan)->numCols,
+							   ((Agg *) plan)->grpColIdx,
+							   "Group Key",
+							   ancestors, es);
 			break;
+#if 0 /* Group node has been disabled in GPDB */
 		case T_Group:
 			show_group_keys((GroupState *) planstate, ancestors, es);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
-			show_grouping_keys(planstate,
-						       ((Agg *) plan)->numCols,
-						       ((Agg *) plan)->grpColIdx,
-						       "Group Key",
-						       ancestors, es);
 			break;
+#endif
 		case T_WindowAgg:
 			show_windowagg_keys((WindowAggState *) planstate, ancestors, es);
 			break;
@@ -2417,7 +2371,6 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
 	const char *SortKeystr;
 
-<<<<<<< HEAD
 	if (sortstate->noduplicates)
 		SortKeystr = "Sort Key (Distinct)";
 	else
@@ -2427,6 +2380,128 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 						 plan->numCols, plan->sortColIdx,
 						 ancestors, es);
 }
+
+static void
+show_windowagg_keys(WindowAggState *waggstate, List *ancestors, ExplainState *es)
+{
+	WindowAgg *window = (WindowAgg *) waggstate->ss.ps.plan;
+
+	/* The key columns refer to the tlist of the child plan */
+	ancestors = lcons(window, ancestors);
+	if ( window->partNumCols > 0 )
+	{
+		show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Partition By",
+							 window->partNumCols, window->partColIdx,
+							 ancestors, es);
+	}
+
+	show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Order By",
+						 window->ordNumCols, window->ordColIdx,
+						 ancestors, es);
+	ancestors = list_delete_first(ancestors);
+
+	/* XXX don't show framing for now */
+}
+
+
+
+/*
+ * Likewise, for a MergeAppend node.
+ */
+static void
+show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
+					   ExplainState *es)
+{
+	MergeAppend *plan = (MergeAppend *) mstate->ps.plan;
+
+	show_sort_group_keys((PlanState *) mstate, "Sort Key",
+						 plan->numCols, plan->sortColIdx,
+						 ancestors, es);
+}
+
+/*
+ * Show the grouping keys for an Agg node.
+ */
+static void
+show_agg_keys(AggState *astate, List *ancestors,
+			  ExplainState *es)
+{
+	Agg		   *plan = (Agg *) astate->ss.ps.plan;
+
+	if (plan->numCols > 0)
+	{
+		/* The key columns refer to the tlist of the child plan */
+		ancestors = lcons(astate, ancestors);
+		show_sort_group_keys(outerPlanState(astate), "Group Key",
+							 plan->numCols, plan->grpColIdx,
+							 ancestors, es);
+		ancestors = list_delete_first(ancestors);
+	}
+}
+
+/*
+ * Show the grouping keys for a Group node.
+ */
+#if 0
+static void
+show_group_keys(GroupState *gstate, List *ancestors,
+				ExplainState *es)
+{
+	Group	   *plan = (Group *) gstate->ss.ps.plan;
+
+	/* The key columns refer to the tlist of the child plan */
+	ancestors = lcons(gstate, ancestors);
+	show_sort_group_keys(outerPlanState(gstate), "Group Key",
+						 plan->numCols, plan->grpColIdx,
+						 ancestors, es);
+	ancestors = list_delete_first(ancestors);
+}
+#endif
+
+/*
+ * Common code to show sort/group keys, which are represented in plan nodes
+ * as arrays of targetlist indexes
+ */
+static void
+show_sort_group_keys(PlanState *planstate, const char *qlabel,
+					 int nkeys, AttrNumber *keycols,
+					 List *ancestors, ExplainState *es)
+{
+	Plan	   *plan = planstate->plan;
+	List	   *context;
+	List	   *result = NIL;
+	bool		useprefix;
+	int			keyno;
+	char	   *exprstr;
+
+	if (nkeys <= 0)
+		return;
+
+	/* Set up deparsing context */
+	context = deparse_context_for_planstate((Node *) planstate,
+											ancestors,
+											es->rtable,
+											es->rtable_names);
+	useprefix = (list_length(es->rtable) > 1 || es->verbose);
+
+	for (keyno = 0; keyno < nkeys; keyno++)
+	{
+		/* find key expression in tlist */
+		AttrNumber	keyresno = keycols[keyno];
+		TargetEntry *target = get_tle_by_resno(plan->targetlist,
+											   keyresno);
+
+		if (!target)
+			elog(ERROR, "no tlist entry for key %d", keyresno);
+		/* Deparse the expression, showing any top-level cast */
+		exprstr = deparse_expression((Node *) target->expr, context,
+									 useprefix, true);
+		result = lappend(result, exprstr);
+	}
+
+	ExplainPropertyList(qlabel, result, es);
+}
+
 
 /*
  * If it's EXPLAIN ANALYZE, show tuplesort stats for a sort node
@@ -2501,168 +2576,6 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			}
 		}
 	}
-}
-
-static void
-show_windowagg_keys(WindowAggState *waggstate, List *ancestors, ExplainState *es)
-{
-	WindowAgg *window = (WindowAgg *) waggstate->ss.ps.plan;
-
-	/* The key columns refer to the tlist of the child plan */
-	ancestors = lcons(window, ancestors);
-	if ( window->partNumCols > 0 )
-	{
-		show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Partition By",
-							 window->partNumCols, window->partColIdx,
-							 ancestors, es);
-	}
-
-	show_sort_group_keys((PlanState *) outerPlanState(waggstate), "Order By",
-						 window->ordNumCols, window->ordColIdx,
-						 ancestors, es);
-	ancestors = list_delete_first(ancestors);
-
-	/* XXX don't show framing for now */
-=======
-	show_sort_group_keys((PlanState *) sortstate, "Sort Key",
-						 plan->numCols, plan->sortColIdx,
-						 ancestors, es);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-}
-
-
-
-/*
- * Likewise, for a MergeAppend node.
- */
-static void
-show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
-					   ExplainState *es)
-{
-	MergeAppend *plan = (MergeAppend *) mstate->ps.plan;
-
-	show_sort_group_keys((PlanState *) mstate, "Sort Key",
-						 plan->numCols, plan->sortColIdx,
-						 ancestors, es);
-}
-
-/*
- * Show the grouping keys for an Agg node.
- */
-static void
-<<<<<<< HEAD
-=======
-show_agg_keys(AggState *astate, List *ancestors,
-			  ExplainState *es)
-{
-	Agg		   *plan = (Agg *) astate->ss.ps.plan;
-
-	if (plan->numCols > 0)
-	{
-		/* The key columns refer to the tlist of the child plan */
-		ancestors = lcons(astate, ancestors);
-		show_sort_group_keys(outerPlanState(astate), "Group Key",
-							 plan->numCols, plan->grpColIdx,
-							 ancestors, es);
-		ancestors = list_delete_first(ancestors);
-	}
-}
-
-/*
- * Show the grouping keys for a Group node.
- */
-static void
-show_group_keys(GroupState *gstate, List *ancestors,
-				ExplainState *es)
-{
-	Group	   *plan = (Group *) gstate->ss.ps.plan;
-
-	/* The key columns refer to the tlist of the child plan */
-	ancestors = lcons(gstate, ancestors);
-	show_sort_group_keys(outerPlanState(gstate), "Group Key",
-						 plan->numCols, plan->grpColIdx,
-						 ancestors, es);
-	ancestors = list_delete_first(ancestors);
-}
-
-/*
- * Common code to show sort/group keys, which are represented in plan nodes
- * as arrays of targetlist indexes
- */
-static void
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
-show_sort_group_keys(PlanState *planstate, const char *qlabel,
-					 int nkeys, AttrNumber *keycols,
-					 List *ancestors, ExplainState *es)
-{
-	Plan	   *plan = planstate->plan;
-	List	   *context;
-	List	   *result = NIL;
-	bool		useprefix;
-	int			keyno;
-	char	   *exprstr;
-
-	if (nkeys <= 0)
-		return;
-
-	/* Set up deparsing context */
-	context = deparse_context_for_planstate((Node *) planstate,
-											ancestors,
-											es->rtable,
-											es->rtable_names);
-	useprefix = (list_length(es->rtable) > 1 || es->verbose);
-
-	for (keyno = 0; keyno < nkeys; keyno++)
-	{
-		/* find key expression in tlist */
-		AttrNumber	keyresno = keycols[keyno];
-		TargetEntry *target = get_tle_by_resno(plan->targetlist,
-											   keyresno);
-
-		if (!target)
-			elog(ERROR, "no tlist entry for key %d", keyresno);
-		/* Deparse the expression, showing any top-level cast */
-		exprstr = deparse_expression((Node *) target->expr, context,
-									 useprefix, true);
-		result = lappend(result, exprstr);
-	}
-
-	ExplainPropertyList(qlabel, result, es);
-<<<<<<< HEAD
-=======
-}
-
-/*
- * If it's EXPLAIN ANALYZE, show tuplesort stats for a sort node
- */
-static void
-show_sort_info(SortState *sortstate, ExplainState *es)
-{
-	Assert(IsA(sortstate, SortState));
-	if (es->analyze && sortstate->sort_Done &&
-		sortstate->tuplesortstate != NULL)
-	{
-		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
-		const char *sortMethod;
-		const char *spaceType;
-		long		spaceUsed;
-
-		tuplesort_get_stats(state, &sortMethod, &spaceType, &spaceUsed);
-
-		if (es->format == EXPLAIN_FORMAT_TEXT)
-		{
-			appendStringInfoSpaces(es->str, es->indent * 2);
-			appendStringInfo(es->str, "Sort Method: %s  %s: %ldkB\n",
-							 sortMethod, spaceType, spaceUsed);
-		}
-		else
-		{
-			ExplainPropertyText("Sort Method", sortMethod, es);
-			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
-			ExplainPropertyText("Sort Space Type", spaceType, es);
-		}
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*

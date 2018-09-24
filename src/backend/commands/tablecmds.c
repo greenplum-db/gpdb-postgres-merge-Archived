@@ -1146,12 +1146,8 @@ DropErrorMsgNonExistent(RangeVar *rel, char rightkind, bool missing_ok)
 			}
 			else
 			{
-<<<<<<< HEAD
 				if (Gp_role != GP_ROLE_EXECUTE)
-					ereport(NOTICE, (errmsg(rentry->skipping_msg, relname)));
-=======
-				ereport(NOTICE, (errmsg(rentry->skipping_msg, rel->relname)));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+					ereport(NOTICE, (errmsg(rentry->skipping_msg, rel->relname)));
 				break;
 			}
 		}
@@ -3385,20 +3381,15 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
 	Oid			namespaceId;
 
 	/*
-<<<<<<< HEAD
 	 * In Postgres:
-	 * Grab an exclusive lock on the target table, index, sequence or view,
-	 * which we will NOT release until end of transaction.
+	 * Grab an exclusive lock on the target table, index, sequence, view,
+	 * materialized view, or foreign table, which we will NOT release until
+	 * end of transaction.
 	 *
 	 * In GPDB, added supportability feature under GUC to allow rename table
 	 * without AccessExclusiveLock for scenarios like directly modifying system
 	 * catalogs. This will change transaction isolation behaviors, however, this
 	 * won't cause any data corruption.
-=======
-	 * Grab an exclusive lock on the target table, index, sequence, view,
-	 * materialized view, or foreign table, which we will NOT release until
-	 * end of transaction.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (gp_allow_rename_relation_without_lock)
 		targetrelation = fake_relation_open(myrelid);

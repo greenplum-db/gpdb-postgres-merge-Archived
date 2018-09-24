@@ -22,11 +22,8 @@
 #include "access/tuptoaster.h"
 #include "access/visibilitymap.h"
 #include "access/xact.h"
-<<<<<<< HEAD
-#include "catalog/heap.h"
-=======
 #include "catalog/catalog.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_collation.h"
@@ -1238,7 +1235,6 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	}
 
 	/*
-<<<<<<< HEAD
 	 * The last slots of statistics is reserved for hyperloglog counter which
 	 * is saved as a bytea. Therefore the type information is hardcoded for the
 	 * bytea.
@@ -1249,10 +1245,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	stats->statypalign[i] = 'i'; // INT alignment (4-byte)
 
 	/*
-	 * Call the type-specific typanalyze function.	If none is specified, use
-=======
 	 * Call the type-specific typanalyze function.  If none is specified, use
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 * std_typanalyze().
 	 */
 	if (OidIsValid(stats->attrtype->typanalyze))
@@ -1476,16 +1469,13 @@ acquire_sample_rows(Relation onerel, int elevel,
 
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
 
+#if 0
 			targtuple.t_tableOid = RelationGetRelid(onerel);
+#endif
 			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 			targtuple.t_len = ItemIdGetLength(itemid);
 
-<<<<<<< HEAD
-			switch (HeapTupleSatisfiesVacuum(onerel,
-											 targtuple.t_data,
-=======
-			switch (HeapTupleSatisfiesVacuum(&targtuple,
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			switch (HeapTupleSatisfiesVacuum(onerel, &targtuple,
 											 OldestXmin,
 											 targbuffer))
 			{

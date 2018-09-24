@@ -149,11 +149,7 @@ createdb(const CreatedbStmt *stmt)
 	int			notherbackends;
 	int			npreparedxacts;
 	createdb_failure_params fparms;
-<<<<<<< HEAD
-	Snapshot	snapshot;
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)

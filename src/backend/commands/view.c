@@ -454,7 +454,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 		errmsg("views must not contain data-modifying statements in WITH")));
 
 	/*
-<<<<<<< HEAD
 	 * Don't allow creating a view that contains dynamically typed functions.
 	 * We cannot guarantee that the future return type would be the same when
 	 * the view was used, as what it was now.
@@ -464,7 +463,8 @@ DefineView(ViewStmt *stmt, const char *queryString)
 				(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 				 errmsg("CREATE VIEW statements cannot include calls to "
 						"dynamically typed function")));
-=======
+
+	/*
 	 * If the user specified the WITH CHECK OPTION, add it to the list of
 	 * reloptions.
 	 */
@@ -506,7 +506,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 					 errmsg("WITH CHECK OPTION is supported only on auto-updatable views"),
 					 errhint("%s", view_updatable_error)));
 	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * If a list of column names was given, run through and insert these into

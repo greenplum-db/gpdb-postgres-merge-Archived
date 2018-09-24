@@ -18,11 +18,7 @@
 #include "commands/async.h"
 #include "commands/discard.h"
 #include "commands/prepare.h"
-<<<<<<< HEAD
-#include "storage/lock.h"
-=======
 #include "commands/sequence.h"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #include "utils/guc.h"
 #include "utils/portal.h"
 

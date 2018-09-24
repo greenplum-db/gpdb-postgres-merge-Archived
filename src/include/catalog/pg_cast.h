@@ -366,7 +366,10 @@ DATA(insert ( 1560 1560 1685 i f ));
 DATA(insert ( 1562 1562 1687 i f ));
 DATA(insert ( 1700 1700 1703 i f ));
 
-<<<<<<< HEAD
+/* json to/from jsonb */
+DATA(insert ( 114 3802 0 e i ));
+DATA(insert ( 3802 114 0 e i ));
+
 /* complex type */
 DATA(insert (701  7198 3584 i f));
 DATA(insert (700  7198 3585 i f));
@@ -381,10 +384,5 @@ DATA(insert (1700 7198 7597 i f));
  * CDB: Allow explicit cast from tid to int8
  */
 DATA(insert (   27   20 6021 e f ));
-=======
-/* json to/from jsonb */
-DATA(insert ( 114 3802 0 e i ));
-DATA(insert ( 3802 114 0 e i ));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #endif   /* PG_CAST_H */

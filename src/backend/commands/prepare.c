@@ -245,21 +245,10 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	plan_list = cplan->stmt_list;
 
 	/*
-<<<<<<< HEAD
 	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
 	 * so that we can modify its destination (yech, but this has always been
 	 * ugly).  For regular EXECUTE we can just use the cached query, since the
 	 * executor is read-only.
-=======
-	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
-	 * statement is one that produces tuples.  Currently we insist that it be
-	 * a plain old SELECT.  In future we might consider supporting other
-	 * things such as INSERT ... RETURNING, but there are a couple of issues
-	 * to be settled first, notably how WITH NO DATA should be handled in such
-	 * a case (do we really want to suppress execution?) and how to pass down
-	 * the OID-determining eflags (PortalStart won't handle them in such a
-	 * case, and for that matter it's not clear the executor will either).
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 *
 	 * In GPDB, we use the current parameter values in the planning, because
 	 * that potentially gives a better plan. It also means that we have to

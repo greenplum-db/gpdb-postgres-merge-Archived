@@ -19,24 +19,15 @@
 
 
 extern void cluster(ClusterStmt *stmt, bool isTopLevel);
-<<<<<<< HEAD
 extern bool cluster_rel(Oid tableOid, Oid indexOid, bool recheck,
-			bool verbose, bool printError, int freeze_min_age, int freeze_table_age);
-=======
-extern void cluster_rel(Oid tableOid, Oid indexOid, bool recheck,
-			bool verbose);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			bool verbose, bool printError);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 						   bool recheck, LOCKMODE lockmode);
 extern void mark_index_clustered(Relation rel, Oid indexOid, bool is_internal);
 
-<<<<<<< HEAD
-extern Oid	make_new_heap(Oid OIDOldHeap, Oid NewTableSpace,
-			  bool createAoBlockDirectory);
-=======
 extern Oid make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
-			  LOCKMODE lockmode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			  LOCKMODE lockmode,
+			  bool createAoBlockDirectory);
 extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool is_system_catalog,
 				 bool swap_toast_by_content,

@@ -75,13 +75,6 @@ typedef struct sequence_magic
  * session.  This is needed to hold onto nextval/currval state.  (We can't
  * rely on the relcache, since it's only, well, a cache, and may decide to
  * discard entries.)
-<<<<<<< HEAD
- *
- * XXX We use linear search to find pre-existing SeqTable entries.  This is
- * good when only a small number of sequences are touched in a session, but
- * would suck with many different sequences.  Perhaps use a hashtable someday.
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  */
 typedef struct SeqTableData
 {
@@ -377,20 +370,6 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	sm->magic = SEQ_MAGIC;
 
 	/* Now insert sequence tuple */
-<<<<<<< HEAD
-
-	/*
-	 * Since VACUUM does not process sequences, we have to force the tuple
-	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
-	 * invisible to SELECTs after 2G transactions.	It is okay to do this
-	 * because if the current transaction aborts, no other xact will ever
-	 * examine the sequence tuple anyway.
-	 *
-	 */
-
-=======
-
-	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
 	 * Since VACUUM does not process sequences, we have to force the tuple to
@@ -399,7 +378,6 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
 	 */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
 	HeapTupleHeaderSetXminFrozen(tuple->t_data);
 	HeapTupleHeaderSetCmin(tuple->t_data, FirstCommandId);
@@ -1750,7 +1728,21 @@ seq_redo(XLogRecPtr beginLoc, XLogRecPtr lsn, XLogRecord *record)
 }
 
 /*
-<<<<<<< HEAD
+ * Flush cached sequence information.
+ */
+void
+ResetSequenceCaches(void)
+{
+	if (seqhashtab)
+	{
+		hash_destroy(seqhashtab);
+		seqhashtab = NULL;
+	}
+
+	last_used_seq = NULL;
+}
+
+/*
  * Mask last_value and log_cnt for consistency checking
  *
  * To avoid logging every fetch from a sequence, SEQ_LOG_VALS are pre-logged
@@ -1908,18 +1900,4 @@ cdb_sequence_nextval_qe(Relation	seqrel,
 	*pcached = cached;
 	*pincrement = increment;
 	*pvalid = true;
-=======
- * Flush cached sequence information.
- */
-void
-ResetSequenceCaches(void)
-{
-	if (seqhashtab)
-	{
-		hash_destroy(seqhashtab);
-		seqhashtab = NULL;
-	}
-
-	last_used_seq = NULL;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }

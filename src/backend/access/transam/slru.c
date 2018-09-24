@@ -1332,6 +1332,8 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 
 /*
  * Test if a page exists.
+ *
+ * GPDB_94_MERGE_FIXME: Is this redundant with SimpleLruDoesPhysicalPageExist() ?
  */
 bool
 SimpleLruPageExists(SlruCtl ctl, int pageno)
