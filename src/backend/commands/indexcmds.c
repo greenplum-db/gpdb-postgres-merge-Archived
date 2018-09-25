@@ -1234,7 +1234,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			 */
 
 			/*
-			 * Strip any top-level COLLATE clause.	This ensures that we treat
+			 * Strip any top-level COLLATE clause.  This ensures that we treat
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
 			while (IsA(expr, CollateExpr))

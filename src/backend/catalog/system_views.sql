@@ -1,13 +1,9 @@
 /*
  * PostgreSQL System Views
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * src/backend/catalog/system_views.sql
  */
@@ -600,18 +596,14 @@ CREATE VIEW pg_stat_activity AS
             S.state_change,
             S.waiting,
             S.state,
-<<<<<<< HEAD
+            S.backend_xid,
+            s.backend_xmin,
             S.query,
 
             S.waiting_reason,
             S.rsgid,
             S.rsgname,
             S.rsgqueueduration
-=======
-            S.backend_xid,
-            s.backend_xmin,
-            S.query
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND
             S.usesysid = U.oid;
@@ -639,7 +631,6 @@ CREATE VIEW pg_stat_replication AS
     WHERE S.usesysid = U.oid AND
             S.pid = W.pid;
 
-<<<<<<< HEAD
 CREATE FUNCTION gp_stat_get_master_replication() RETURNS SETOF RECORD AS
 $$
     SELECT pg_catalog.gp_execution_segment() AS gp_segment_id, *
@@ -691,7 +682,7 @@ CREATE VIEW gp_stat_replication AS
          replay_location text, sync_priority integer, sync_state text)
          ON G.gp_segment_id = R.gp_segment_id
     );
-=======
+
 CREATE VIEW pg_replication_slots AS
     SELECT
             L.slot_name,
@@ -705,7 +696,6 @@ CREATE VIEW pg_replication_slots AS
             L.restart_lsn
     FROM pg_get_replication_slots() AS L
             LEFT JOIN pg_database D ON (L.datoid = D.oid);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE VIEW pg_stat_database AS
     SELECT
@@ -1330,20 +1320,6 @@ CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
 
-<<<<<<< HEAD
--- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
-CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
-AS 'SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
-LANGUAGE SQL EXECUTE ON ALL SEGMENTS;
-
-CREATE FUNCTION gp_tablespace_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
-RETURNS SETOF RECORD
-AS
-  'SELECT * FROM pg_catalog.gp_tablespace_segment_location($1)
-   UNION ALL
-   SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
-LANGUAGE SQL EXECUTE ON MASTER;
-=======
 CREATE OR REPLACE FUNCTION
   jsonb_populate_record(base anyelement, from_json jsonb, use_json_as_text boolean DEFAULT false)
   RETURNS anyelement LANGUAGE internal STABLE AS 'jsonb_populate_record';
@@ -1408,4 +1384,16 @@ RETURNS interval
 LANGUAGE INTERNAL
 STRICT IMMUTABLE
 AS 'make_interval';
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+-- pg_tablespace_location wrapper functions to see Greenplum cluster-wide tablespace locations
+CREATE FUNCTION gp_tablespace_segment_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
+AS 'SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
+LANGUAGE SQL EXECUTE ON ALL SEGMENTS;
+
+CREATE FUNCTION gp_tablespace_location (IN tblspc_oid oid, OUT gp_segment_id int, OUT tblspc_loc text)
+RETURNS SETOF RECORD
+AS
+  'SELECT * FROM pg_catalog.gp_tablespace_segment_location($1)
+   UNION ALL
+   SELECT pg_catalog.gp_execution_segment() as gp_segment_id, * FROM pg_catalog.pg_tablespace_location($1)'
+LANGUAGE SQL EXECUTE ON MASTER;

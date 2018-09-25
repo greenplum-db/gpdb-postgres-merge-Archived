@@ -20,16 +20,13 @@
  * toasting.c prototypes
  */
 extern void NewRelationCreateToastTable(Oid relOid, Datum reloptions,
-									   bool is_create, bool is_part_child,
-									   bool is_part_parent);
+									   bool is_part_child, bool is_part_parent);
 extern void NewHeapCreateToastTable(Oid relOid, Datum reloptions,
 									LOCKMODE lockmode,
-									bool is_create, bool is_part_child,
-									bool is_part_parent);
+									bool is_part_child, bool is_part_parent);
 extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
 									   LOCKMODE lockmode,
-									   bool is_create, bool is_part_child,
-									   bool is_part_parent);
+									   bool is_part_child, bool is_part_parent);
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 

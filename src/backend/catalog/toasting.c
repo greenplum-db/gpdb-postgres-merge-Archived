@@ -28,7 +28,7 @@
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-//#include "storage/lmgr.h"
+#include "storage/lmgr.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -38,7 +38,8 @@
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
-						 LOCKMODE lockmode, bool check);
+						 LOCKMODE lockmode, bool check,
+						 bool is_part_child, bool is_part_parent);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 				   Datum reloptions, LOCKMODE lockmode, bool check,
 				   bool is_part_child, bool is_part_parent);
@@ -71,11 +72,26 @@ static bool needs_toast_table(Relation rel);
  * computation.
  */
 void
-<<<<<<< HEAD
 AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
-						   bool is_create, bool is_part_child, bool is_part_parent)
+						   bool is_part_child, bool is_part_parent)
 {
-	Relation	rel;
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, true,
+							 is_part_child, is_part_parent);
+}
+
+void
+NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
+							bool is_part_child, bool is_part_parent)
+{
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, false,
+							 is_part_child, is_part_parent);
+}
+
+void
+NewRelationCreateToastTable(Oid relOid, Datum reloptions,
+							bool is_part_child, bool is_part_parent)
+{
+	LOCKMODE	lockmode;
 
 	/*
 	 * Grab a DDL-exclusive lock on the target table, since we'll update the
@@ -88,43 +104,25 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode,
 	 * than both an AccessExlusiveLock and a ShareUpdateExclusiveLock.
 	 */
 	if (is_part_child)
-		rel = heap_open(relOid, NoLock);
-	else if (is_create)
-		rel = heap_open(relOid, AccessExclusiveLock);
+		lockmode = NoLock;
 	else
-		rel = heap_open(relOid, ShareUpdateExclusiveLock);
+		lockmode = AccessExclusiveLock;
 
-	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions,
-							  is_part_child, is_part_parent);
-=======
-AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
-{
-	CheckAndCreateToastTable(relOid, reloptions, lockmode, true);
-}
-
-void
-NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
-{
-	CheckAndCreateToastTable(relOid, reloptions, lockmode, false);
-}
-
-void
-NewRelationCreateToastTable(Oid relOid, Datum reloptions)
-{
-	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false);
+	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false,
+							 is_part_child, is_part_parent);
 }
 
 static void
-CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check)
+CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check,
+							bool is_part_child, bool is_part_parent)
 {
 	Relation	rel;
 
 	rel = heap_open(relOid, lockmode);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check,
+							  is_part_child, is_part_parent);
 
 	heap_close(rel, NoLock);
 }
