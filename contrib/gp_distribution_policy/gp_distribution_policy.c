@@ -171,7 +171,7 @@ gp_distribution_policy_heap_table_check(PG_FUNCTION_ARGS)
 				errmsg("input relation is not a heap table")));
 	}
 
-	HeapScanDesc scandesc = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	HeapScanDesc scandesc = heap_beginscan_catalog(rel, 0, NULL);
 	HeapTuple    tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	while (HeapTupleIsValid(tuple))

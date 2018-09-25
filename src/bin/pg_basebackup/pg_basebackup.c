@@ -1172,11 +1172,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (basetablespace)
 		strlcpy(current_path, basedir, sizeof(current_path));
 	else
-<<<<<<< HEAD
-		strlcpy(current_path, PQgetvalue(res, rownum, 1), sizeof(current_path));
-=======
 		strlcpy(current_path, get_tablespace_mapping(PQgetvalue(res, rownum, 1)), sizeof(current_path));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Get the COPY data
@@ -1738,26 +1734,6 @@ BaseBackup(void)
 	 * Start the actual backup
 	 */
 	PQescapeStringConn(conn, escaped_label, label, sizeof(escaped_label), &i);
-<<<<<<< HEAD
-	snprintf(current_path, sizeof(current_path),
-			 "BASE_BACKUP LABEL '%s' %s %s %s %s",
-			 escaped_label,
-			 showprogress ? "PROGRESS" : "",
-			 includewal && !streamwal ? "WAL" : "",
-			 fastcheckpoint ? "FAST" : "",
-			 includewal ? "NOWAIT" : "");
-	exclude_list = build_exclude_list(excludes, num_exclude);
-	if (strlcat(current_path, exclude_list, sizeof(current_path)) >= sizeof(current_path))
-	{
-		fprintf(stderr, _("%s: exclude list too large\n"), progname);
-		if (num_exclude != 0)
-			free(exclude_list);
-		disconnect_and_exit(1);
-	}
-	if (num_exclude != 0)
-		free(exclude_list);
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
@@ -1771,6 +1747,12 @@ BaseBackup(void)
 				 includewal ? "NOWAIT" : "",
 				 maxrate_clause ? maxrate_clause : "");
 
+	exclude_list = build_exclude_list(excludes, num_exclude);
+	char* tmp = psprintf("%s %s", basebkp, exclude_list);
+
+	if (num_exclude != 0)
+		free(exclude_list);
+	
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
 		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
@@ -2097,12 +2079,8 @@ main(int argc, char **argv)
 		}
 	}
 
-<<<<<<< HEAD
 	num_exclude = 0;
-	while ((c = getopt_long(argc, argv, "D:F:RxX:l:zZ:d:c:h:p:U:s:wWvPE:",
-=======
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:wWvP",
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:wWvPE",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)

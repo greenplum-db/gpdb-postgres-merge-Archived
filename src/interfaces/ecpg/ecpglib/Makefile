@@ -17,25 +17,18 @@ NAME= ecpg
 SO_MAJOR_VERSION= 6
 SO_MINOR_VERSION= 6
 
-<<<<<<< HEAD
-
 # The frontend doesn't need everything that's in LIBS, some are backend only
 LIBS := $(filter-out -lresolv -lbz2, $(LIBS))
 # This program isn't interactive, so doesn't need these
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl -lcrypto -lz, $(LIBS))
 
-override CPPFLAGS := -DFRONTEND \
-	-I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS)
+override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
+	-I$(libpq_srcdir) -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 
 
 ifeq ($(GCC), yes)
 override CFLAGS += -Wno-error
 endif
-=======
-override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
-	-I$(libpq_srcdir) -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 override CFLAGS += $(PTHREAD_CFLAGS)
 
 # Need to recompile any libpgport object files
