@@ -46,40 +46,6 @@
 
 #undef TOAST_DEBUG
 
-<<<<<<< HEAD
-/* Size of an EXTERNAL datum that contains a standard TOAST pointer */
-#define TOAST_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
-
-/*
- * Testing whether an externally-stored value is compressed now requires
- * comparing extsize (the actual length of the external data) to rawsize
- * (the original uncompressed datum's size).  The latter includes VARHDRSZ
- * overhead, the former doesn't.  We never use compression unless it actually
- * saves space, so we expect either equality or less-than.
- */
-#define VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) \
-	((toast_pointer).va_extsize < (toast_pointer).va_rawsize - VARHDRSZ)
-
-/*
- * Macro to fetch the possibly-unaligned contents of an EXTERNAL datum
- * into a local "struct varatt_external" toast pointer.  This should be
- * just a memcpy, but some versions of gcc seem to produce broken code
- * that assumes the datum contents are aligned.  Introducing an explicit
- * intermediate "varattrib_1b_e *" variable seems to fix it.
- */
-#define VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr) \
-do { \
-	varattrib_1b_e *attre = (varattrib_1b_e *) (attr); \
-	Assert(VARATT_IS_EXTERNAL(attre)); \
-	Assert(VARSIZE_EXTERNAL(attre) == sizeof(toast_pointer) + VARHDRSZ_EXTERNAL); \
-	memcpy(&(toast_pointer), VARDATA_EXTERNAL(attre), sizeof(toast_pointer)); \
-} while (0)
-
-
-#define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
-
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static void toast_delete_datum(Relation rel, Datum value);
 static Datum toast_save_datum(Relation rel, Datum value,
 				 struct varlena * oldexternal, bool isFrozen, int options);
@@ -1398,12 +1364,8 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = tup_len;
 	ItemPointerSetInvalid(&(tmptup.t_self));
-<<<<<<< HEAD
-	tmptup.t_data = olddata;
-=======
 	tmptup.t_tableOid = InvalidOid;
 	tmptup.t_data = tup;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Break down the tuple into fields.
@@ -2262,7 +2224,6 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	int			num_indexes;
 	int			validIndex;
 
-<<<<<<< HEAD
 	/*
 	 * GPDB: start with the assumption that chunks max out at
 	 * TOAST_MAX_CHUNK_SIZE. This may later prove false (e.g. if we've upgraded
@@ -2270,10 +2231,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 */
 	int32		actual_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 
-	Assert(VARATT_IS_EXTERNAL(attr));
-=======
 	Assert(VARATT_IS_EXTERNAL_ONDISK(attr));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Must copy to access aligned fields */
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
@@ -2310,7 +2268,12 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	 */
 	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid, AccessShareLock);
+
+	/* Look for the valid index of toast relation */
+	validIndex = toast_open_indexes(toastrel,
+									AccessShareLock,
+									&toastidxs,
+									&num_indexes);
 
 	check_toast_indisvalid(toastrel, toastidx);
 
@@ -2379,25 +2342,8 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 	endchunk = (sliceoffset + length - 1) / actual_max_chunk_size;
 	numchunks = (endchunk - startchunk) + 1;
 
-<<<<<<< HEAD
 	startoffset = sliceoffset % actual_max_chunk_size;
 	endoffset = (sliceoffset + length - 1) % actual_max_chunk_size;
-=======
-	startoffset = sliceoffset % TOAST_MAX_CHUNK_SIZE;
-	endoffset = (sliceoffset + length - 1) % TOAST_MAX_CHUNK_SIZE;
-
-	/*
-	 * Open the toast relation and its indexes
-	 */
-	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
-	toasttupDesc = toastrel->rd_att;
-
-	/* Look for the valid index of toast relation */
-	validIndex = toast_open_indexes(toastrel,
-									AccessShareLock,
-									&toastidxs,
-									&num_indexes);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * Setup a scan key to fetch from the index. This is either two keys or

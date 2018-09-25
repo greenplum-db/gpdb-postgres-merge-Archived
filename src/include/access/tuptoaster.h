@@ -132,6 +132,8 @@ do { \
 	memcpy(&(toast_pointer), VARDATA_EXTERNAL(attre), sizeof(toast_pointer)); \
 } while (0)
 
+#define SET_VARSIZE_C(PTR)			(((varattrib_1b *) (PTR))->va_header |= 0x40)
+
 /* ----------
  * toast_insert_or_update -
  *
