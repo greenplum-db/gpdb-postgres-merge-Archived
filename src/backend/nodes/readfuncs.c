@@ -2095,7 +2095,7 @@ _readColumnDef(void)
 	READ_BOOL_FIELD(is_not_null);
 	READ_BOOL_FIELD(is_from_type);
 	READ_INT_FIELD(attnum);
-	READ_CHAR_FIELD(storage);
+	READ_INT_FIELD(storage);
 	READ_NODE_FIELD(raw_default);
 	READ_NODE_FIELD(cooked_default);
 	READ_NODE_FIELD(collClause);
