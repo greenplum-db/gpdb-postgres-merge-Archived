@@ -32,6 +32,10 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
+#include "access/heapam.h"
+#include "nodes/makefuncs.h"
+#include "parser/parsetree.h"
+
 
 /* These parameters are set by GUC */
 int			from_collapse_limit;
@@ -153,6 +157,46 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 	{
 		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0), true);
 		list_free(tlist_vars);
+	}
+
+
+	/*
+	 * Also add any Vars to final tlist that might be needed for split-updates
+	 */
+	if (root->parse->resultRelation && false)
+	{
+		int			result_relation = root->parse->resultRelation;
+		RangeTblEntry *rte;
+		Relation	relation;
+		int			numattrs;
+		int			attrno;
+		List	   *vars = NIL;
+
+		rte = planner_rt_fetch(result_relation, root);
+
+		/* Assume we already have adequate lock */
+		relation = heap_open(rte->relid, NoLock);
+
+		numattrs = RelationGetNumberOfAttributes(relation);
+		for (attrno = 1; attrno <= numattrs; attrno++)
+		{
+			Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+			Var		   *var;
+
+			if (att_tup->attisdropped)
+				continue;
+
+			var = makeVar(result_relation,
+						  attrno,
+						  att_tup->atttypid,
+						  att_tup->atttypmod,
+						  att_tup->attcollation,
+						  0);
+			vars = lappend(vars, var);
+		}
+		heap_close(relation, NoLock);
+
+		add_vars_to_targetlist(root, vars, bms_make_singleton(0), true);
 	}
 }
 
