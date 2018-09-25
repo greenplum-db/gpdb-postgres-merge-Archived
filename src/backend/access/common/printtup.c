@@ -550,8 +550,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 					 * We called PG_DETOAST_DATUM up above, so we don't need
 					 * to do it again
 					 */
-					s = VARDATA(dptr);
-					len = VARSIZE(dptr) - VARHDRSZ;
+					s = VARDATA_ANY(dptr);
+					len = VARSIZE_ANY_EXHDR(dptr);
 
 					p = pg_server_to_client(s, len);
 					if (p != s)				/* actual conversion has been done? */
