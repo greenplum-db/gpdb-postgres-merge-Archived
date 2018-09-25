@@ -23,7 +23,7 @@ all:
 	$(MAKE) -C contrib/gp_internal_tools all
 	$(MAKE) -C contrib/indexscan all
 	$(MAKE) -C contrib/pg_upgrade_support all
-	$(MAKE) -C contrib/pg_upgrade all
+#	$(MAKE) -C contrib/pg_upgrade all # GPDB_94_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
 	$(MAKE) -C contrib/pg_xlogdump all
 	$(MAKE) -C contrib/hstore all
 	$(MAKE) -C contrib/pgcrypto all
@@ -58,7 +58,7 @@ install:
 	$(MAKE) -C contrib/gp_internal_tools $@
 	$(MAKE) -C contrib/indexscan $@ 
 	$(MAKE) -C contrib/pg_upgrade_support $@
-	$(MAKE) -C contrib/pg_upgrade $@
+#	$(MAKE) -C contrib/pg_upgrade $@ # GPDB_94_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
 	$(MAKE) -C contrib/pg_xlogdump $@
 	$(MAKE) -C contrib/hstore $@
 	$(MAKE) -C contrib/pgcrypto $@
