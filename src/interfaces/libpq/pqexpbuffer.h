@@ -186,4 +186,8 @@ extern void appendPQExpBufferChar(PQExpBuffer str, char ch);
 extern void appendBinaryPQExpBuffer(PQExpBuffer str,
 						const char *data, size_t datalen);
 
+
+extern bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
+
 #endif   /* PQEXPBUFFER_H */
