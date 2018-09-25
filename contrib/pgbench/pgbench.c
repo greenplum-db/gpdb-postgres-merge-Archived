@@ -346,25 +346,16 @@ usage(void)
 		   "Usage:\n"
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
-<<<<<<< HEAD
-		   "  -i           invokes initialization mode\n"
-		   "  -x STRING    append this string to the storage clause e.g. 'appendonly=true, orientation=column'\n"
-		   "  -F NUM       fill factor\n"
-		   "  -n           do not run VACUUM after initialization\n"
-		   "  -q           quiet logging (one message each 5 seconds)\n"
-		   "  -s NUM       scaling factor\n"
-		   "  --foreign-keys\n"
-		   "               create foreign key constraints between tables\n"
-		   "  --use-unique-keys"
-		   "               make the indexes that are created non-unique indexes (default: unique)\n"
-=======
+
 		   "  -i, --initialize         invokes initialization mode\n"
+		   "  -x STRING    append this string to the storage clause e.g. 'appendonly=true, orientation=column'\n"
 		   "  -F, --fillfactor=NUM     set fill factor\n"
 		"  -n, --no-vacuum          do not run VACUUM after initialization\n"
 	"  -q, --quiet              quiet logging (one message each 5 seconds)\n"
 		   "  -s, --scale=NUM          scaling factor\n"
 		   "  --foreign-keys           create foreign key constraints between tables\n"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		   "  --use-unique-keys"
+		   "               make the indexes that are created non-unique indexes (default: unique)\n"
 		   "  --index-tablespace=TABLESPACE\n"
 	"                           create indexes in the specified tablespace\n"
 	 "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
@@ -1603,13 +1594,9 @@ init(bool is_no_vacuum)
 		{
 			"pgbench_tellers",
 			"tid int not null,bid int,tbalance int,filler char(84)",
-<<<<<<< HEAD
+			"tid int not null,bid int,tbalance int,filler char(84)",
 			1,
 			"tid"
-=======
-			"tid int not null,bid int,tbalance int,filler char(84)",
-			1
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		},
 		{
 			"pgbench_accounts",
@@ -1631,16 +1618,12 @@ init(bool is_no_vacuum)
 		"alter table pgbench_tellers add primary key (tid)",
 		"alter table pgbench_accounts add primary key (aid)"
 	};
-<<<<<<< HEAD
-	static char *NON_UNIQUE_INDEX_DDLAFTERs[] = {
+	static const char *const NON_UNIQUE_INDEX_DDLINDEXes[] = {
 		"CREATE INDEX branch_idx ON pgbench_branches (bid) ",
 		"CREATE INDEX teller_idx ON pgbench_tellers (tid) ",
 		"CREATE INDEX account_idx ON pgbench_accounts (aid) "
 	};
-	static char *DDLKEYs[] = {
-=======
 	static const char *const DDLKEYs[] = {
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		"alter table pgbench_tellers add foreign key (bid) references pgbench_branches",
 		"alter table pgbench_accounts add foreign key (bid) references pgbench_branches",
 		"alter table pgbench_history add foreign key (bid) references pgbench_branches",
@@ -1680,18 +1663,13 @@ init(bool is_no_vacuum)
 		/* Construct new create table statement. */
 		opts[0] = '\0';
 		if (ddl->declare_fillfactor)
-<<<<<<< HEAD
-			snprintf(opts + strlen(opts), 256 - strlen(opts),
+			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
 					 " with (fillfactor=%d, %s) DISTRIBUTED BY (%s)",
 					 fillfactor, storage_clause, ddl->distributed_col);
 		else
-			snprintf(opts + strlen(opts), 256 - strlen(opts),
+			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
 					 " with (%s) DISTRIBUTED BY (%s)",
 					 storage_clause, ddl->distributed_col);
-=======
-			snprintf(opts + strlen(opts), sizeof(opts) - strlen(opts),
-					 " with (fillfactor=%d)", fillfactor);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		if (tablespace != NULL)
 		{
 			char	   *escape_tablespace;
@@ -1833,19 +1811,14 @@ init(bool is_no_vacuum)
 	for (i = 0; i < lengthof(DDLINDEXes); i++)
 	{
 		char		buffer[256];
-<<<<<<< HEAD
 		if (use_unique_key)
 		{
-			strncpy(buffer, DDLAFTERs[i], 256);
+			strncpy(buffer, DDLINDEXes[i], sizeof(buffer));
 		}
 		else
 		{
-			strncpy(buffer, NON_UNIQUE_INDEX_DDLAFTERs[i], 256);
+			strncpy(buffer, NON_UNIQUE_INDEX_DDLINDEXes[i], sizeof(buffer));
 		}
-=======
-
-		strlcpy(buffer, DDLINDEXes[i], sizeof(buffer));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (index_tablespace != NULL)
 		{
@@ -2465,11 +2438,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-<<<<<<< HEAD
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:x:", long_options, &optindex)) != -1)
-=======
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:", long_options, &optindex)) != -1)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:R:x:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
