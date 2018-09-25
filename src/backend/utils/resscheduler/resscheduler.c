@@ -67,7 +67,8 @@ bool	ResourceCleanupIdleGangs;				/* Cleanup idle gangs? */
  * Global variables
  */
 ResSchedulerData	*ResScheduler;	/* Resource Scheduler (shared) data .*/
-Oid				MyQueueId = InvalidOid;	/* resource queue for current role. */
+static Oid		MyQueueId = InvalidOid;	/* resource queue for current role. */
+static bool		MyQueueIdIsValid = false; /* Is MyQueueId valid? */
 static uint32	portalId = 0;		/* id of portal, for tracking cursors. */
 static int32	numHoldPortals = 0;	/* # of holdable cursors tracked. */
 
@@ -897,25 +898,8 @@ GetResQueueForRole(Oid roleid)
 void
 SetResQueueId(void)
 {
-	/* to cave the code of cache part, we provide a resource owner here if no
-	 * existing */
-	ResourceOwner owner = NULL;
-
-	if (CurrentResourceOwner == NULL)
-	{
-		owner = ResourceOwnerCreate(NULL, "SetResQueueId");
-		CurrentResourceOwner = owner;
-	}
-
-	MyQueueId = GetResQueueForRole(GetUserId());
-
-	if (owner)
-	{
-		CurrentResourceOwner = NULL;
-		ResourceOwnerDelete(owner);
-	}
-
-	return;
+	MyQueueId = InvalidOid;
+	MyQueueIdIsValid = false;
 }
 
 
@@ -925,6 +909,12 @@ SetResQueueId(void)
 Oid
 GetResQueueId(void)
 {
+	if (!MyQueueIdIsValid)
+	{
+		MyQueueId = GetResQueueForRole(GetUserId());
+		MyQueueIdIsValid = true;
+	}
+
 	return MyQueueId;
 }
 
