@@ -136,18 +136,30 @@ extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 #define ResQueueLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 4].lock)
 #define ResGroupLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 5].lock)
 #define ErrorLogLock				(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 6].lock)
-#define FirstWorkfileMgrLock		(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 7].lock)
 #define SessionStateLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 8].lock)
 #define RelfilenodeGenLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 9].lock)
 #define TablespaceHashLock			(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 10].lock)
 #define GpReplicationConfigFileLock	(&MainLWLockArray[PG_NUM_INDIVIDUAL_LWLOCKS + 11].lock)
 #define GP_NUM_INDIVIDUAL_LWLOCKS		11
 
-#define NUM_INDIVIDUAL_LWLOCKS (PG_NUM_INDIVIDUAL_LWLOCKS + GP_NUM_INDIVIDUAL_LWLOCKS)
+/*
+ * It would probably be better to allocate separate LWLock tranches
+ * for these. But this will do for now.
+ */
+#define FirstWorkfileMgrLock		(&MainLWLockArray[ \
+										 PG_NUM_INDIVIDUAL_LWLOCKS + \
+										 GP_NUM_INDIVIDUAL_LWLOCKS \
+										 ].lock)
+#define FirstWorkfileQuerySpaceLock		(&MainLWLockArray[ \
+										 PG_NUM_INDIVIDUAL_LWLOCKS + \
+										 GP_NUM_INDIVIDUAL_LWLOCKS + \
+										 NUM_WORKFILEMGR_PARTITIONS \
+										 ].lock)
 
-
-// GPDB_94_MERGE_FIXME: where to put this?
-//FirstWorkfileQuerySpaceLock = FirstWorkfileMgrLock + NUM_WORKFILEMGR_PARTITIONS,
+#define NUM_INDIVIDUAL_LWLOCKS (PG_NUM_INDIVIDUAL_LWLOCKS + \
+								GP_NUM_INDIVIDUAL_LWLOCKS + \
+								NUM_WORKFILEMGR_PARTITIONS + \
+								NUM_WORKFILE_QUERYSPACE_PARTITIONS)
 
 /*
  * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS

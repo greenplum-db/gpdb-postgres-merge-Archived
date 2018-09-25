@@ -313,7 +313,7 @@ _bt_validate_vacuum(Relation irel, Relation hrel, TransactionId oldest_xmin)
 						 RelationGetRelationName(irel),
 						 RelationGetRelationName(hrel));
 				}
-				switch (HeapTupleSatisfiesVacuum(hrel, htup.t_data, oldest_xmin, hbuf))
+				switch (HeapTupleSatisfiesVacuum(hrel, &htup, oldest_xmin, hbuf))
 				{
 					case HEAPTUPLE_RECENTLY_DEAD:
 					case HEAPTUPLE_LIVE:
