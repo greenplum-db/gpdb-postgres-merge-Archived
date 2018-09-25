@@ -2932,6 +2932,9 @@ PrepareTransaction(void)
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
+	/* Do some preparaty work on locks, before we change the transaction state. */
+	PrePrepare_Locks();
+
 	/*
 	 * set the current transaction state information appropriately during
 	 * prepare processing
