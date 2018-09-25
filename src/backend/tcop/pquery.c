@@ -1724,25 +1724,10 @@ DoPortalRunFetch(Portal portal,
 			{
 				/*
 				 * Definition: Rewind to start, advance count-1 rows, return
-<<<<<<< HEAD
-				 * next row (if any).
-				 *
-				 * In practice, if the goal is less than halfway back to the
-				 * start, it's better to scan from where we are.
-				 *
-				 * Also, if current portalPos is outside the range of "long",
-				 * do it the hard way to avoid possible overflow of the count
-				 * argument to PortalRunSelect.  We must exclude exactly
-				 * LONG_MAX, as well, lest the count look like FETCH_ALL.
-				 *
-				 * In any case, we arrange to fetch the target row going
-				 * forwards.
-=======
 				 * next row (if any).  In practice, if the goal is less than
 				 * halfway back to the start, it's better to scan from where
 				 * we are.  In any case, we arrange to fetch the target row
 				 * going forwards.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				 */
 				if ((uint64) (count - 1) <= portal->portalPos / 2 ||
 					portal->portalPos >= (uint64) LONG_MAX)

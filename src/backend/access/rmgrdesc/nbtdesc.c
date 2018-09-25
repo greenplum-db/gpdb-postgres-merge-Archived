@@ -109,30 +109,6 @@ out_delete(StringInfo buf, XLogRecord *record)
 	}
 }
 
-/*
- * Print additional information about a DELETE_PAGE record.
- */
-static void
-out_delete_page(StringInfo buf, uint8 info, XLogRecord *record)
-{
-	char					*rec = XLogRecGetData(record);
-	xl_btree_delete_page 	*xlrec = (xl_btree_delete_page *) rec;
-
-	/* Update metapage if needed */
-	if (info == XLOG_BTREE_DELETE_PAGE_META)
-	{
-		xl_btree_metadata md;
-
-		memcpy(&md, (char *) xlrec + SizeOfBtreeDeletePage,
-			   sizeof(xl_btree_metadata));
-		appendStringInfo(buf, "; update metadata page 0 (root page value %u, level %d, fastroot page value %u, fastlevel %d)",
-						 md.root, 
-						 md.level,
-						 md.fastroot, 
-						 md.fastlevel);
-	}
-}
-
 void
 btree_desc(StringInfo buf, XLogRecord *record)
 {
@@ -244,11 +220,6 @@ btree_desc(StringInfo buf, XLogRecord *record)
 
 				appendStringInfoString(buf, "mark_page_halfdead: ");
 				out_target(buf, &(xlrec->target));
-<<<<<<< HEAD
-				appendStringInfo(buf, "; dead %u; left %u; right %u",
-							xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
-				out_delete_page(buf, info, record);
-=======
 				appendStringInfo(buf, "; topparent %u; leaf %u; left %u; right %u",
 								 xlrec->topparent, xlrec->leafblk, xlrec->leftblk, xlrec->rightblk);
 				break;
@@ -264,7 +235,6 @@ btree_desc(StringInfo buf, XLogRecord *record)
 								 xlrec->deadblk, xlrec->leftsib, xlrec->rightsib, xlrec->btpo_xact);
 				appendStringInfo(buf, "leaf %u; leafleft %u; leafright %u; topparent %u",
 								 xlrec->leafblk, xlrec->leafleftsib, xlrec->leafrightsib, xlrec->topparent);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				break;
 			}
 		case XLOG_BTREE_NEWROOT:

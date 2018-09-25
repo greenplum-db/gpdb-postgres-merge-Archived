@@ -156,28 +156,17 @@ AcquireRewriteLocks(Query *parsetree,
 				 * release it until end of transaction. This protects the
 				 * rewriter and planner against schema changes mid-query.
 				 *
-<<<<<<< HEAD
-				 * If the relation is the query's result relation, then we
-				 * need RowExclusiveLock.  Otherwise, check to see if the
-				 * relation is accessed FOR [KEY] UPDATE/SHARE or not.	We
-				 * can't just grab AccessShareLock because then the executor
-				 * would be trying to upgrade the lock, leading to possible
-				 * deadlocks.
+				 * Assuming forExecute is true, this logic must match what the
+				 * executor will do, else we risk lock-upgrade deadlocks.
 				 *
 				 * CDB: The proper lock mode depends on whether the relation is
 				 * local or distributed, which is discovered by heap_open().
 				 * To handle this we make use of CdbOpenRelation().
 				 */
 				needLockUpgrade = false;
-				if (rt_index == parsetree->resultRelation)
-=======
-				 * Assuming forExecute is true, this logic must match what the
-				 * executor will do, else we risk lock-upgrade deadlocks.
-				 */
 				if (!forExecute)
 					lockmode = AccessShareLock;
 				else if (rt_index == parsetree->resultRelation)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 					lockmode = RowExclusiveLock;
 				else if (forUpdatePushedDown ||
 						 get_parse_rowmark(parsetree, rt_index) != NULL)
