@@ -2171,7 +2171,7 @@ analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples, float4 *rel
 		else
 		{
 			appendStringInfo(&sqlstmt, "select pg_catalog.sum(pg_catalog.gp_statistics_estimate_reltuples_relpages_oid(c.oid))::pg_catalog.float4[] "
-					"from pg_catalog.gp_dist_random('pg_catalog.pg_class') c where c.oid=%d", singleOid);
+					"from gp_dist_random('pg_catalog.pg_class') c where c.oid=%d", singleOid);
 		}
 
 		if (SPI_OK_CONNECT != SPI_connect())
@@ -2246,7 +2246,7 @@ analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPa
 	else
 	{
 		appendStringInfo(&sqlstmt, "select pg_catalog.sum(pg_catalog.gp_statistics_estimate_reltuples_relpages_oid(c.oid))::pg_catalog.float4[] "
-						 "from pg_catalog.gp_dist_random('pg_catalog.pg_class') c where c.oid=%d", RelationGetRelid(indrel));
+						 "from gp_dist_random('pg_catalog.pg_class') c where c.oid=%d", RelationGetRelid(indrel));
 	}
 
 	if (SPI_OK_CONNECT != SPI_connect())
