@@ -1074,7 +1074,6 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 		{
 			PyObject   *obj = PySequence_GetItem(list, i);
 
-<<<<<<< HEAD
 			if (obj == Py_None)
 			{
 				nulls[*currelem] = true;
@@ -1089,20 +1088,6 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 			(*currelem)++;
 		}
 	}
-=======
-	lbs = 1;
-	array = construct_md_array(elems, nulls, 1, &len, &lbs,
-							   get_base_element_type(arg->typoid), arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign);
-
-	/*
-	 * If the result type is a domain of array, the resulting array must be
-	 * checked.
-	 */
-	rv = PointerGetDatum(array);
-	if (get_typtype(arg->typoid) == TYPTYPE_DOMAIN)
-		domain_check(rv, false, arg->typoid, &arg->typfunc.fn_extra, arg->typfunc.fn_mcxt);
-	return rv;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 
