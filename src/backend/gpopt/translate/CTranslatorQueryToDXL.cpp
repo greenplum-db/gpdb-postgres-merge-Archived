@@ -3334,16 +3334,26 @@ CTranslatorQueryToDXL::TranslateTVFToDXL
 	ULONG //current_query_level
 	)
 {
-	GPOS_ASSERT(NULL != rte->funcexpr);
+	/*
+	 * GPDB_94_MERGE_FIXME: RangeTblEntry for functions can now contain multiple function calls.
+	 * ORCA isn't prepared for that yet. See upstream commit 784e762e88.
+	 */
+	if (list_length(rte->functions) != 1)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("Multi-argument UNNEST() or TABLE()"));
+	}
+	RangeTblFunction *rtfunc = (RangeTblFunction *) linitial(rte->functions);
+	FuncExpr *funcexpr = (FuncExpr *) rtfunc->funcexpr;
+	GPOS_ASSERT(funcexpr);
 
 	// if this is a folded function expression, generate a project over a CTG
-	if (!IsA(rte->funcexpr, FuncExpr))
+	if (!IsA(funcexpr, FuncExpr))
 	{
 		CDXLNode *const_tbl_get_dxlnode = DXLDummyConstTableGet();
 
 		CDXLNode *project_list_dxlnode = GPOS_NEW(m_mp) CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLScalarProjList(m_mp));
 
-		CDXLNode *project_elem_dxlnode =  TranslateExprToDXLProject((Expr *) rte->funcexpr, rte->eref->aliasname, true /* insist_new_colids */);
+		CDXLNode *project_elem_dxlnode =  TranslateExprToDXLProject((Expr *) funcexpr, rte->eref->aliasname, true /* insist_new_colids */);
 		project_list_dxlnode->AddChild(project_elem_dxlnode);
 
 		CDXLNode *project_dxlnode = GPOS_NEW(m_mp) CDXLNode(m_mp, GPOS_NEW(m_mp) CDXLLogicalProject(m_mp));
@@ -3361,17 +3371,16 @@ CTranslatorQueryToDXL::TranslateTVFToDXL
 	// make note of new columns from function
 	m_var_to_colid_map->LoadColumns(m_query_level, rt_index, tvf_dxlop->GetDXLColumnDescrArray());
 
-	FuncExpr *func_expr = (FuncExpr *) rte->funcexpr;
 	BOOL is_subquery_in_args = false;
 
 	// check if arguments contain SIRV functions
-	if (NIL != func_expr->args && HasSirvFunctions((Node *) func_expr->args))
+	if (NIL != funcexpr->args && HasSirvFunctions((Node *) funcexpr->args))
 	{
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("SIRV functions"));
 	}
 
 	ListCell *lc = NULL;
-	ForEach (lc, func_expr->args)
+	ForEach (lc, funcexpr->args)
 	{
 		Node *arg_node = (Node *) lfirst(lc);
 		is_subquery_in_args = is_subquery_in_args || CTranslatorUtils::HasSubquery(arg_node);
@@ -3381,7 +3390,7 @@ CTranslatorQueryToDXL::TranslateTVFToDXL
 		tvf_dxlnode->AddChild(func_expr_arg_dxlnode);
 	}
 
-	CMDIdGPDB *mdid_func = GPOS_NEW(m_mp) CMDIdGPDB(func_expr->funcid);
+	CMDIdGPDB *mdid_func = GPOS_NEW(m_mp) CMDIdGPDB(funcexpr->funcid);
 	const IMDFunction *pmdfunc = m_md_accessor->RetrieveFunc(mdid_func);
 	if (is_subquery_in_args && IMDFunction::EfsVolatile == pmdfunc->GetFuncStability())
 	{
