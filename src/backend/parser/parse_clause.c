@@ -766,7 +766,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 			FuncCall   *fc = (FuncCall *) fexpr;
 
 			if (list_length(fc->funcname) == 1 &&
-				pg_strcasecmp(strVal(linitial(fc->funcname)), "GP_DIST_RANDOM_NAME") == 0 &&
+				pg_strcasecmp(strVal(linitial(fc->funcname)), GP_DIST_RANDOM_NAME) == 0 &&
 				fc->agg_order == NIL &&
 				fc->agg_filter == NULL &&
 				!fc->agg_star &&
