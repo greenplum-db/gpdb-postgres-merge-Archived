@@ -1362,7 +1362,7 @@ getSuperuser(Oid *userOid)
 				BoolGetDatum(true));
 
 	auth_rel = heap_open(AuthIdRelationId, AccessShareLock);
-	auth_scan = heap_beginscan(auth_rel, SnapshotNow, 2, key);
+	auth_scan = heap_beginscan_catalog(auth_rel, 2, key);
 
 	while (HeapTupleIsValid(auth_tup = heap_getnext(auth_scan,
 													ForwardScanDirection)))

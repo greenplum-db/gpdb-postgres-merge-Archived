@@ -1308,7 +1308,7 @@ check_tablespace(const char *tablespacename)
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(tablespacename));
-	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	scandesc = heap_beginscan_catalog(rel, 1, entry);
 	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	/* If nothing matches then the tablespace doesn't exist */

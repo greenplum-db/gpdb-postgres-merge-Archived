@@ -501,7 +501,7 @@ GpPolicyReplace(Oid tbloid, const GpPolicy *policy)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(tbloid));
 	scan = systable_beginscan(gp_policy_rel, GpPolicyLocalOidIndexId, true,
-							  SnapshotNow, 1, &skey);
+							  NULL, 1, &skey);
 
 	/*
 	 * Read first (and only ) tuple
@@ -557,7 +557,7 @@ GpPolicyRemove(Oid tbloid)
 				ObjectIdGetDatum(tbloid));
 
 	sscan = systable_beginscan(gp_policy_rel, GpPolicyLocalOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	while ((tuple = systable_getnext(sscan)) != NULL)
 	{

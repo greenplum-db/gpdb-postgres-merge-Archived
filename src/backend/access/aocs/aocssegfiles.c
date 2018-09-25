@@ -527,7 +527,7 @@ SetAOCSFileSegInfoState(Relation prel,
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = heap_beginscan(segrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(segrel, 0, NULL);
 	while (segno != tuple_segno && (oldtup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -610,7 +610,7 @@ ClearAOCSFileSegInfo(Relation prel, int segno, FileSegInfoState newState)
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = heap_beginscan(segrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(segrel, 0, NULL);
 	while (segno != tuple_segno && (oldtup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -720,7 +720,7 @@ UpdateAOCSFileSegInfo(AOCSInsertDesc idesc)
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = heap_beginscan(segrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(segrel, 0, NULL);
 	while (idesc->cur_segno != tuple_segno && (oldtup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -897,7 +897,7 @@ AOCSFileSegInfoAddVpe(Relation prel, int32 segno,
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = heap_beginscan(segrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(segrel, 0, NULL);
 	while (segno != tuple_segno && (oldtup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));
@@ -1027,7 +1027,7 @@ AOCSFileSegInfoAddCount(Relation prel, int32 segno,
 	 * Since we have the segment-file entry under lock (with
 	 * LockRelationAppendOnlySegmentFile) we can use SnapshotNow.
 	 */
-	scan = heap_beginscan(segrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(segrel, 0, NULL);
 	while (segno != tuple_segno && (oldtup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(oldtup, Anum_pg_aocs_segno, tupdesc, &isNull));

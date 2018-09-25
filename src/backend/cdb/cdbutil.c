@@ -133,7 +133,7 @@ getCdbComponentInfo(bool DNSLookupAsError)
 
 	gp_seg_config_rel = heap_open(GpSegmentConfigRelationId, AccessShareLock);
 
-	gp_seg_config_scan = heap_beginscan(gp_seg_config_rel, SnapshotNow, 0, NULL);
+	gp_seg_config_scan = heap_beginscan_catalog(gp_seg_config_rel, 0, NULL);
 
 	while (HeapTupleIsValid(gp_seg_config_tuple = heap_getnext(gp_seg_config_scan, ForwardScanDirection)))
 	{

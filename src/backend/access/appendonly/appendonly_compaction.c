@@ -770,7 +770,7 @@ AppendOnlyCompaction_IsRelationEmpty(Relation aorel)
 
 	pg_aoseg_rel = heap_open(aorel->rd_appendonly->segrelid, AccessShareLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
-	aoscan = heap_beginscan(pg_aoseg_rel, SnapshotNow, 0, NULL);
+	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
 	Anum_tupcount = RelationIsAoRows(aorel) ? Anum_pg_aoseg_tupcount : Anum_pg_aocs_tupcount;
 	while ((tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL &&
 		   empty)

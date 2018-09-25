@@ -110,7 +110,7 @@ setAOFormatVersion(PG_FUNCTION_ARGS)
 			 (int) aosegrelid);
 
 	/* Scan over the rows, overriding the formatversion for each entry. */
-	scan = heap_beginscan(aosegrel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan_catalog(aosegrel, 0, NULL);
 	while ((oldtuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		newtuple = heap_modify_tuple(oldtuple, tupdesc, values, isnull, replace);

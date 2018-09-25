@@ -1943,7 +1943,7 @@ parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
 	Relation	irel;
 	HeapTuple	tuple;
 	ScanKeyData scankey[3];
-	IndexScanDesc sd;
+	SysScanDesc sd;
 
 	/*
 	 * Ensure that ruleord argument did not wrap around due to int2
@@ -1980,9 +1980,8 @@ parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
 	ScanKeyInit(&scankey[2], 3,
 				BTLessEqualStrategyNumber, F_INT2LE,
 				Int16GetDatum(ruleord));
-	sd = index_beginscan(rel, irel, SnapshotNow, 3, 0);
-	index_rescan(sd, scankey, 3, NULL, 0);
-	while (HeapTupleIsValid(tuple = index_getnext(sd, BackwardScanDirection)))
+	sd = systable_beginscan_ordered(rel, irel, NULL, 3, 0);
+	while (HeapTupleIsValid(tuple = systable_getnext_ordered(sd, BackwardScanDirection)))
 	{
 		Form_pg_partition_rule rule_desc;
 
@@ -2003,7 +2002,7 @@ parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
 
 		heap_freetuple(tuple);
 	}
-	index_endscan(sd);
+	systable_endscan_ordered(sd);
 	heap_close(irel, RowExclusiveLock);
 	heap_close(rel, RowExclusiveLock);
 

@@ -3393,7 +3393,7 @@ has_functional_dependency(Var *from, Var *to, List *rangeTable)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{

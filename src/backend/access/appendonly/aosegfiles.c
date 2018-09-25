@@ -563,7 +563,7 @@ ClearFileSegInfo(Relation parentrel,
 	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan(pg_aoseg_rel, SnapshotNow, 0, NULL);
+	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
 	while (segno != tuple_segno && (tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
@@ -713,7 +713,7 @@ UpdateFileSegInfo_internal(Relation parentrel,
 	pg_aoseg_rel = heap_open(parentrel->rd_appendonly->segrelid, RowExclusiveLock);
 	pg_aoseg_dsc = RelationGetDescr(pg_aoseg_rel);
 
-	aoscan = heap_beginscan(pg_aoseg_rel, SnapshotNow, 0, NULL);
+	aoscan = heap_beginscan_catalog(pg_aoseg_rel, 0, NULL);
 	while (segno != tuple_segno && (tuple = heap_getnext(aoscan, ForwardScanDirection)) != NULL)
 	{
 		tuple_segno = DatumGetInt32(fastgetattr(tuple, Anum_pg_aoseg_segno, pg_aoseg_dsc, &isNull));
