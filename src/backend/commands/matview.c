@@ -237,10 +237,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	else
 		tableSpace = matviewRel->rd_rel->reltablespace;
 
-<<<<<<< HEAD
-	/* Create the transient table that will receive the regenerated data. */
-	OIDNewHeap = make_new_heap(matviewOid, tableSpace, true /* GPDB_93_MERGE_FIXME Is true?*/);
-=======
 	owner = matviewRel->rd_rel->relowner;
 
 	/*
@@ -249,9 +245,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * will be gone).
 	 */
 	OIDNewHeap = make_new_heap(matviewOid, tableSpace, concurrent,
-							   ExclusiveLock);
+							   ExclusiveLock, true /* GPDB_93_MERGE_FIXME Is true? */);
 	LockRelationOid(OIDNewHeap, AccessExclusiveLock);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);
 
 	/* Generate the data, if wanted. */
@@ -259,16 +254,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 		refresh_matview_datafill(dest, dataQuery, queryString, owner);
 
 	heap_close(matviewRel, NoLock);
-<<<<<<< HEAD
-
-	/*
-	 * Swap the physical files of the target and transient tables, then
-	 * rebuild the target's indexes and throw away the transient table.
-	 */
-	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true, true,
-					 RecentXmin, ReadNextMultiXactId());
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
