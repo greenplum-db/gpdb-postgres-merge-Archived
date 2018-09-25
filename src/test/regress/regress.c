@@ -741,7 +741,105 @@ int44out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
-<<<<<<< HEAD
+PG_FUNCTION_INFO_V1(make_tuple_indirect);
+Datum
+make_tuple_indirect(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
+	HeapTupleData tuple;
+	int			ncolumns;
+	Datum	   *values;
+	bool	   *nulls;
+
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+
+	HeapTuple	newtup;
+
+	int			i;
+
+	MemoryContext old_context;
+
+	/* Extract type info from the tuple itself */
+	tupType = HeapTupleHeaderGetTypeId(rec);
+	tupTypmod = HeapTupleHeaderGetTypMod(rec);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	ncolumns = tupdesc->natts;
+
+	/* Build a temporary HeapTuple control structure */
+	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
+	ItemPointerSetInvalid(&(tuple.t_self));
+#if 0
+	tuple.t_tableOid = InvalidOid;
+#endif
+	tuple.t_data = rec;
+
+	values = (Datum *) palloc(ncolumns * sizeof(Datum));
+	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+
+	heap_deform_tuple(&tuple, tupdesc, values, nulls);
+
+	old_context = MemoryContextSwitchTo(TopTransactionContext);
+
+	for (i = 0; i < ncolumns; i++)
+	{
+		struct varlena *attr;
+		struct varlena *new_attr;
+		struct varatt_indirect redirect_pointer;
+
+		/* only work on existing, not-null varlenas */
+		if (tupdesc->attrs[i]->attisdropped ||
+			nulls[i] ||
+			tupdesc->attrs[i]->attlen != -1)
+			continue;
+
+		attr = (struct varlena *) DatumGetPointer(values[i]);
+
+		/* don't recursively indirect */
+		if (VARATT_IS_EXTERNAL_INDIRECT(attr))
+			continue;
+
+		/* copy datum, so it still lives later */
+		if (VARATT_IS_EXTERNAL_ONDISK(attr))
+			attr = heap_tuple_fetch_attr(attr);
+		else
+		{
+			struct varlena *oldattr = attr;
+
+			attr = palloc0(VARSIZE_ANY(oldattr));
+			memcpy(attr, oldattr, VARSIZE_ANY(oldattr));
+		}
+
+		/* build indirection Datum */
+		new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
+		redirect_pointer.pointer = attr;
+		SET_VARTAG_EXTERNAL(new_attr, VARTAG_INDIRECT);
+		memcpy(VARDATA_EXTERNAL(new_attr), &redirect_pointer,
+			   sizeof(redirect_pointer));
+
+		values[i] = PointerGetDatum(new_attr);
+	}
+
+	newtup = heap_form_tuple(tupdesc, values, nulls);
+	pfree(values);
+	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
+
+	MemoryContextSwitchTo(old_context);
+
+	/*
+	 * We intentionally don't use PG_RETURN_HEAPTUPLEHEADER here, because that
+	 * would cause the indirect toast pointers to be flattened out of the
+	 * tuple immediately, rendering subsequent testing irrelevant.  So just
+	 * return the HeapTupleHeader pointer as-is.  This violates the general
+	 * rule that composite Datums shouldn't contain toast pointers, but so
+	 * long as the regression test scripts don't insert the result of this
+	 * function into a container type (record, array, etc) it should be OK.
+	 */
+	PG_RETURN_POINTER(newtup->t_data);
+}
+
 #ifndef PG_HAVE_ATOMIC_FLAG_SIMULATION
 static void
 test_atomic_flag(void)
@@ -979,102 +1077,3 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
-
-=======
-PG_FUNCTION_INFO_V1(make_tuple_indirect);
-Datum
-make_tuple_indirect(PG_FUNCTION_ARGS)
-{
-	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	HeapTupleData tuple;
-	int			ncolumns;
-	Datum	   *values;
-	bool	   *nulls;
-
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-
-	HeapTuple	newtup;
-
-	int			i;
-
-	MemoryContext old_context;
-
-	/* Extract type info from the tuple itself */
-	tupType = HeapTupleHeaderGetTypeId(rec);
-	tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-	ncolumns = tupdesc->natts;
-
-	/* Build a temporary HeapTuple control structure */
-	tuple.t_len = HeapTupleHeaderGetDatumLength(rec);
-	ItemPointerSetInvalid(&(tuple.t_self));
-	tuple.t_tableOid = InvalidOid;
-	tuple.t_data = rec;
-
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
-
-	heap_deform_tuple(&tuple, tupdesc, values, nulls);
-
-	old_context = MemoryContextSwitchTo(TopTransactionContext);
-
-	for (i = 0; i < ncolumns; i++)
-	{
-		struct varlena *attr;
-		struct varlena *new_attr;
-		struct varatt_indirect redirect_pointer;
-
-		/* only work on existing, not-null varlenas */
-		if (tupdesc->attrs[i]->attisdropped ||
-			nulls[i] ||
-			tupdesc->attrs[i]->attlen != -1)
-			continue;
-
-		attr = (struct varlena *) DatumGetPointer(values[i]);
-
-		/* don't recursively indirect */
-		if (VARATT_IS_EXTERNAL_INDIRECT(attr))
-			continue;
-
-		/* copy datum, so it still lives later */
-		if (VARATT_IS_EXTERNAL_ONDISK(attr))
-			attr = heap_tuple_fetch_attr(attr);
-		else
-		{
-			struct varlena *oldattr = attr;
-
-			attr = palloc0(VARSIZE_ANY(oldattr));
-			memcpy(attr, oldattr, VARSIZE_ANY(oldattr));
-		}
-
-		/* build indirection Datum */
-		new_attr = (struct varlena *) palloc0(INDIRECT_POINTER_SIZE);
-		redirect_pointer.pointer = attr;
-		SET_VARTAG_EXTERNAL(new_attr, VARTAG_INDIRECT);
-		memcpy(VARDATA_EXTERNAL(new_attr), &redirect_pointer,
-			   sizeof(redirect_pointer));
-
-		values[i] = PointerGetDatum(new_attr);
-	}
-
-	newtup = heap_form_tuple(tupdesc, values, nulls);
-	pfree(values);
-	pfree(nulls);
-	ReleaseTupleDesc(tupdesc);
-
-	MemoryContextSwitchTo(old_context);
-
-	/*
-	 * We intentionally don't use PG_RETURN_HEAPTUPLEHEADER here, because that
-	 * would cause the indirect toast pointers to be flattened out of the
-	 * tuple immediately, rendering subsequent testing irrelevant.  So just
-	 * return the HeapTupleHeader pointer as-is.  This violates the general
-	 * rule that composite Datums shouldn't contain toast pointers, but so
-	 * long as the regression test scripts don't insert the result of this
-	 * function into a container type (record, array, etc) it should be OK.
-	 */
-	PG_RETURN_POINTER(newtup->t_data);
-}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

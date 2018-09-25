@@ -626,14 +626,14 @@ generate_uao_sourcefiles(char *src_dir, char *dest_dir, char *suffix, replacemen
 		{
 			char		cmd[MAXPGPATH * 3];
 			snprintf(cmd, sizeof(cmd),
-					 SYSTEMQUOTE "%s %s" SYSTEMQUOTE, gpstringsubsprog, destfile_row);
+					 "%s %s", gpstringsubsprog, destfile_row);
 			if (run_diff(cmd, destfile_row) != 0)
 			{
 				fprintf(stderr, _("%s: could not convert %s\n"),
 						progname, destfile_row);
 			}
 			snprintf(cmd, sizeof(cmd),
-					 SYSTEMQUOTE "%s %s" SYSTEMQUOTE, gpstringsubsprog, destfile_col);
+					 "%s %s", gpstringsubsprog, destfile_col);
 			if (run_diff(cmd, destfile_col) != 0)
 			{
 				fprintf(stderr, _("%s: could not convert %s\n"),
@@ -801,7 +801,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 		{
 			char		cmd[MAXPGPATH * 3];
 			snprintf(cmd, sizeof(cmd),
-					 SYSTEMQUOTE "%s %s" SYSTEMQUOTE, gpstringsubsprog, destfile);
+					 "%s %s", gpstringsubsprog, destfile);
 			if (run_diff(cmd, destfile) != 0)
 			{
 				fprintf(stderr, _("%s: could not convert %s\n"),
@@ -1594,10 +1594,6 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 */
 	platform_expectfile = get_expectfile(testname, resultsfile, default_expectfile);
 
-<<<<<<< HEAD
-=======
-	strlcpy(expectfile, default_expectfile, sizeof(expectfile));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	if (platform_expectfile)
 		strlcpy(expectfile, platform_expectfile, sizeof(expectfile));
 	else
@@ -1626,13 +1622,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 
 	/* OK, run the diff */
 	snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
-			 SYSTEMQUOTE "%s %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
+			 "%s %s \"%s\" \"%s\" > \"%s\"",
 			 gpdiffprog, diff_opts, expectfile, resultsfile, diff);
-=======
-			 "diff %s \"%s\" \"%s\" > \"%s\"",
-			 basic_diff_opts, expectfile, resultsfile, diff);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Is the diff file empty? */
 	if (run_diff(cmd, diff) == 0)
@@ -1664,13 +1655,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		}
 
 		snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
-				 SYSTEMQUOTE "%s %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
+				 "%s %s \"%s\" \"%s\" > \"%s\"",
 				 gpdiffprog, diff_opts, alt_expectfile, resultsfile, diff);
-=======
-				 "diff %s \"%s\" \"%s\" > \"%s\"",
-				 basic_diff_opts, alt_expectfile, resultsfile, diff);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1697,13 +1683,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	if (platform_expectfile)
 	{
 		snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
-				 SYSTEMQUOTE "%s %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
+				 "%s %s \"%s\" \"%s\" > \"%s\"",
 				 gpdiffprog, diff_opts, default_expectfile, resultsfile, diff);
-=======
-				 "diff %s \"%s\" \"%s\" > \"%s\"",
-				 basic_diff_opts, default_expectfile, resultsfile, diff);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1726,13 +1707,8 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 	 * append to the diffs summary file.
 	 */
 	snprintf(cmd, sizeof(cmd),
-<<<<<<< HEAD
-			 SYSTEMQUOTE "%s %s \"%s\" \"%s\" >> \"%s\"" SYSTEMQUOTE,
+			 "%s %s \"%s\" \"%s\" >> \"%s\"",
 			 gpdiffprog, m_pretty_diff_opts, best_expect_file, resultsfile, difffilename);
-=======
-			 "diff %s \"%s\" \"%s\" >> \"%s\"",
-			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	run_diff(cmd, difffilename);
 
 	/* And append a separator */
@@ -2317,35 +2293,6 @@ create_role(const char *rolename, const _stringlist *granted_dbs)
 	}
 }
 
-<<<<<<< HEAD
-static char *
-make_absolute_path(const char *in)
-{
-	char	   *result;
-
-	if (is_absolute_path(in))
-		result = strdup(in);
-	else
-	{
-		static char cwdbuf[MAXPGPATH];
-
-		if (!cwdbuf[0])
-		{
-			if (!getcwd(cwdbuf, sizeof(cwdbuf)))
-			{
-				fprintf(stderr, _("could not get current working directory: %s\n"), strerror(errno));
-				exit(2);
-			}
-		}
-
-		result = malloc(strlen(cwdbuf) + strlen(in) + 2);
-		sprintf(result, "%s/%s", cwdbuf, in);
-	}
-
-	canonicalize_path(result);
-	return result;
-}
-
 static char *
 trim_white_space(char *str)
 {
@@ -2409,10 +2356,10 @@ check_feature_status(const char *feature_name, const char *feature_value,
 
 	header(_("checking %s status"), feature_name);
 
-	snprintf(statusfilename, sizeof(statusfilename), SYSTEMQUOTE "%s/%s_status.out" SYSTEMQUOTE, outputdir, feature_name);
+	snprintf(statusfilename, sizeof(statusfilename), "%s/%s_status.out", outputdir, feature_name);
 
 	len = snprintf(psql_cmd, sizeof(psql_cmd),
-			SYSTEMQUOTE "\"%s%spsql\" -X -t -c \"show %s;\" -o \"%s\" -d \"postgres\"" SYSTEMQUOTE,
+			"\"%s%spsql\" -X -t -c \"show %s;\" -o \"%s\" -d \"postgres\"",
 			psqldir ? psqldir : "",
 			psqldir ? "/" : "",
 			feature_name,
@@ -2451,8 +2398,6 @@ check_feature_status(const char *feature_name, const char *feature_value,
 	return isEnabled;
 }
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static void
 help(void)
 {

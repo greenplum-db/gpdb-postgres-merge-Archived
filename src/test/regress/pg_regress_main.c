@@ -98,12 +98,8 @@ psql_start_test(const char *testname,
 						   "%s ", launcher);
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-<<<<<<< HEAD
-			 "%s " SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 "%s \"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
 			 use_utility_mode ? "env PGOPTIONS='-c gp_session_role=utility'" : "",
-=======
-			 "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1",
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			 psqldir ? psqldir : "",
 			 psqldir ? "/" : "",
 			 dblist->str,
