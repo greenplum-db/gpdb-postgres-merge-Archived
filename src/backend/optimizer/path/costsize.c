@@ -4254,14 +4254,12 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	RangeTblEntry *rte;
 	ListCell   *lc;
+	bool		onerow = true;
 
 	/* Should only be applied to base relations that are functions */
 	Assert(rel->relid > 0);
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
-
-	/* CDB: Could the function return more than one row? */
-	rel->onerow = !expression_returns_set(rte->funcexpr);
 
 	/*
 	 * Estimate number of rows the functions will return. The rowcount of the
@@ -4273,9 +4271,15 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
 		double		ntup = expression_returns_set_rows(rtfunc->funcexpr);
 
+		/* CDB: Could the function return more than one row? */
+		if (onerow)
+			onerow = !expression_returns_set(rtfunc->funcexpr);
+
 		if (ntup > rel->tuples)
 			rel->tuples = ntup;
 	}
+	if (rte->functions)
+		rel->onerow = onerow;
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

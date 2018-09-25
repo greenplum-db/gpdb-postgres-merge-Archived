@@ -2483,6 +2483,9 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 List *pathkeys, Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
+	ListCell   *lc;
+	char		exec_location;
+	bool		contain_mutables = false;
 
 	pathnode->pathtype = T_FunctionScan;
 	pathnode->parent = rel;
@@ -2497,50 +2500,93 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-	if (rte->funcexpr && IsA(rte->funcexpr, FuncExpr))
+	/*
+	 * Decide where to execute the FunctionScan.
+	 */
+	contain_mutables = false;
+	exec_location = PROEXECLOCATION_ANY;
+	foreach (lc, rte->functions)
 	{
-		char		exec_location;
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
 
-		exec_location = func_exec_location(((FuncExpr *) rte->funcexpr)->funcid);
-
-		switch (exec_location)
+		if (rtfunc->funcexpr && IsA(rtfunc->funcexpr, FuncExpr))
 		{
-			case PROEXECLOCATION_ANY:
-				CdbPathLocus_MakeGeneral(&pathnode->locus);
+			FuncExpr   *funcexpr = (FuncExpr *) rtfunc->funcexpr;
+			char		this_exec_location;
 
-				/*
-				 * If the function is ON ANY, we presumably could execute the
-				 * function anywhere. However, historically, before the
-				 * EXECUTE ON syntax was introduced, we always executed
-				 * non-IMMUTABLE functions on the master. Keep that behavior
-				 * for backwards compatibility.
-				 */
-				if (contain_mutable_functions(rte->funcexpr))
-					CdbPathLocus_MakeEntry(&pathnode->locus);
-				else
-					CdbPathLocus_MakeGeneral(&pathnode->locus);
-				break;
-			case PROEXECLOCATION_MASTER:
-				CdbPathLocus_MakeEntry(&pathnode->locus);
-				break;
-			case PROEXECLOCATION_ALL_SEGMENTS:
-				CdbPathLocus_MakeStrewn(&pathnode->locus);
-				break;
-			default:
-				elog(ERROR, "unrecognized proexeclocation '%c'", exec_location);
+			this_exec_location = func_exec_location(funcexpr->funcid);
+
+			switch (this_exec_location)
+			{
+				case PROEXECLOCATION_ANY:
+					/*
+					 * This can be executed anywhere. Remember if it was
+					 * mutable (or contained any mutable arguments), that
+					 * will affect the decision after this loop on where
+					 * to actually execute it.
+					 */
+					if (!contain_mutables)
+						contain_mutables = contain_mutable_functions((Node *) funcexpr);
+					break;
+				case PROEXECLOCATION_MASTER:
+					/*
+					 * This function forces the execution to master.
+					 */
+					if (exec_location == PROEXECLOCATION_ALL_SEGMENTS)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 (errmsg("cannot mix EXECUTE ON MASTER and ALL SEGMENTS functions in same function scan"))));
+					}
+					exec_location = PROEXECLOCATION_MASTER;
+					break;
+				case PROEXECLOCATION_ALL_SEGMENTS:
+					/*
+					 * This function forces the execution to segments.
+					 */
+					if (exec_location == PROEXECLOCATION_MASTER)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 (errmsg("cannot mix EXECUTE ON MASTER and ALL SEGMENTS functions in same function scan"))));
+					}
+					exec_location = PROEXECLOCATION_ALL_SEGMENTS;
+					break;
+				default:
+					elog(ERROR, "unrecognized proexeclocation '%c'", exec_location);
+			}
+		}
+		else
+		{
+			/*
+			 * The expression might've been simplified into a Const. Which can
+			 * be executed anywhere.
+			 */
 		}
 	}
-	else
+	switch (exec_location)
 	{
-		/*
-		 * The expression might've been simplified into a Const. Which can
-		 * be executed anywhere.
-		 */
-		/* The default behavior is */
-		if (contain_mutable_functions(rte->funcexpr))
+		case PROEXECLOCATION_ANY:
+			/*
+			 * If all the functions are ON ANY, we presumably could execute
+			 * the function scan anywhere. However, historically, before the
+			 * EXECUTE ON syntax was introduced, we always executed
+			 * non-IMMUTABLE functions on the master. Keep that behavior
+			 * for backwards compatibility.
+			 */
+			if (contain_mutables)
+				CdbPathLocus_MakeEntry(&pathnode->locus);
+			else
+				CdbPathLocus_MakeGeneral(&pathnode->locus);
+			break;
+		case PROEXECLOCATION_MASTER:
 			CdbPathLocus_MakeEntry(&pathnode->locus);
-		else
-			CdbPathLocus_MakeGeneral(&pathnode->locus);
+			break;
+		case PROEXECLOCATION_ALL_SEGMENTS:
+			CdbPathLocus_MakeStrewn(&pathnode->locus);
+			break;
+		default:
+			elog(ERROR, "unrecognized proexeclocation '%c'", exec_location);
 	}
 
 	pathnode->motionHazard = false;

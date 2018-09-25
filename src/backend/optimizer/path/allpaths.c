@@ -1433,13 +1433,18 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 {
 	PlannerConfig *config;
 	PlannerInfo *subroot = NULL;
-	FuncExpr   *fexpr = (FuncExpr *) rte->funcexpr;
+	RangeTblFunction *rtfunc;
+	FuncExpr   *fexpr;
 	ListCell   *arg;
 	Relids		required_outer;
 
 	/* Cannot be a preplanned subquery from window_planner. */
 	Assert(!rte->subquery_plan);
-	Assert(fexpr && IsA(fexpr, FuncExpr));
+
+	Assert(list_length(rte->functions) == 1);
+	rtfunc = (RangeTblFunction *) linitial(rte->functions);
+	Assert(rtfunc->funcexpr && IsA(rtfunc->funcexpr, FuncExpr));
+	fexpr= (FuncExpr *) rtfunc->funcexpr;
 
 	/*
 	 * We don't support pushing join clauses into the quals of a function
@@ -1475,14 +1480,14 @@ set_tablefunction_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rt
 	}
 
 	/* Could the function return more than one row? */
-	rel->onerow = !expression_returns_set(rte->funcexpr);
+	rel->onerow = !expression_returns_set((Node *) fexpr);
 
 	/* Mark rel with estimated output rows, width, etc */
 	set_table_function_size_estimates(root, rel);
 
 	/* Generate appropriate path */
 	add_path(rel, create_tablefunction_path(root, rel, rte,
-											pathkeys, required_outer));
+											required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
