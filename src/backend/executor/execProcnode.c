@@ -1860,7 +1860,8 @@ planstate_walk_kids(PlanState *planstate,
 			SubPlanState *sps = (SubPlanState *) lfirst(lc);
 			PlanState  *ips = sps->planstate;
 
-			Assert(ips);
+			if (!ips)
+				elog(ERROR, "subplan has no planstate");
 			if (v1 == CdbVisit_Walk)
 			{
 				v1 = planstate_walk_node_extended(ips, walker, context, flags);
