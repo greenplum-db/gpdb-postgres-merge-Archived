@@ -22,8 +22,6 @@
 /*
  * aoseg.c prototypes
  */
-extern void NewRelationCreateAoSegTable(Oid relOid, bool is_part_child,
-									   bool is_part_parent);
 extern void AlterTableCreateAoSegTable(Oid relOid, bool is_part_child,
 									   bool is_part_parent);
 

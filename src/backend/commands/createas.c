@@ -505,9 +505,9 @@ intorel_initplan(struct QueryDesc *queryDesc, int eflags)
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
 	NewRelationCreateToastTable(intoRelationId, toast_options, false, false);
-	NewRelationCreateAoSegTable(intoRelationId, false, false);
+	AlterTableCreateAoSegTable(intoRelationId, false, false);
 	/* don't create AO block directory here, it'll be created when needed. */
-	NewRelationCreateAoVisimapTable(intoRelationId, false, false);
+	AlterTableCreateAoVisimapTable(intoRelationId, false, false);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)

@@ -1248,16 +1248,16 @@ ProcessUtilitySlow(Node *parsetree,
 								 * database age calculation, by passing master
 								 * relation's is_part_parent flag.
 								 */
-								NewRelationCreateAoSegTable(relOid,
+								AlterTableCreateAoSegTable(relOid,
 															cstmt->is_part_child,
 															cstmt->is_part_parent);
 
 								if (cstmt->buildAoBlkdir)
-									NewRelationCreateAoBlkdirTable(relOid,
+									AlterTableCreateAoBlkdirTable(relOid,
 																   cstmt->is_part_child,
 																   cstmt->is_part_parent);
 
-								NewRelationCreateAoVisimapTable(relOid,
+								AlterTableCreateAoVisimapTable(relOid,
 																cstmt->is_part_child,
 																cstmt->is_part_parent);
 							}

@@ -41,7 +41,7 @@ like.o: like.c like_match.c
 
 # GPDB additionso
 OBJS +=	complex_type.o gp_dump_oids.o gp_optimizer_functions.o \
-	gp_partition_functions.o interpolate.o matrix.o orderedsetaggs.o \
+	gp_partition_functions.o interpolate.o matrix.o \
 	pivot.o
 
 include $(top_srcdir)/src/backend/common.mk
