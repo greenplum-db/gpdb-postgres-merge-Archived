@@ -1936,6 +1936,14 @@ PortalSetBackoffWeight(Portal portal)
 		(Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE) &&
 		gp_session_id > -1)
 	{
+		/*
+		 * GPDB_94_MERGE_FIXME: cannot do catalog lookups, if we're not in a
+		 * transaction. superuser() requires a catalog lookup (unless the
+		 * current userid is cached).
+		 */
+		if (!IsTransactionState())
+			return;
+
 		if (superuser())
 		{
 			weight = BackoffSuperuserStatementWeight();

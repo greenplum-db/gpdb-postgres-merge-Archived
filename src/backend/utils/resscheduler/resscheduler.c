@@ -20,6 +20,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_resqueue.h"
@@ -911,6 +912,13 @@ GetResQueueId(void)
 {
 	if (!MyQueueIdIsValid)
 	{
+		/*
+		 * GPDB_94_MERGE_FIXME: cannot do catalog lookups, if we're not in a
+		 * transaction. Just play dumb, then. Arguably, abort processing
+		 * shouldn't be governed by resource queues, anyway.
+		 */
+		if (!IsTransactionState())
+			return InvalidOid;
 		MyQueueId = GetResQueueForRole(GetUserId());
 		MyQueueIdIsValid = true;
 	}
