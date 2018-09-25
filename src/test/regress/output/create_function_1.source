@@ -46,19 +46,15 @@ CREATE FUNCTION ttdummy ()
 CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '@libdir@/regress@DLSUFFIX@'
-<<<<<<< HEAD
         LANGUAGE C STRICT READS SQL DATA;
-CREATE FUNCTION test_atomic_ops()
-    RETURNS bool
-    AS '@libdir@/regress@DLSUFFIX@'
-    LANGUAGE C IMMUTABLE STRICT NO SQL;
-=======
-        LANGUAGE C STRICT;
 CREATE FUNCTION make_tuple_indirect (record)
         RETURNS record
         AS '@libdir@/regress@DLSUFFIX@'
         LANGUAGE C STRICT;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+CREATE FUNCTION test_atomic_ops()
+    RETURNS bool
+    AS '@libdir@/regress@DLSUFFIX@'
+    LANGUAGE C;
 -- Things that shouldn't work:
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL CONTAINS SQL
     AS 'SELECT ''not an integer'';';
