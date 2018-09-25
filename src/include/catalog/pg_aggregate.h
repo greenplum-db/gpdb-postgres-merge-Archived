@@ -308,9 +308,9 @@ DATA(insert ( 6218  n 0 int8_matrix_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1
 DATA(insert ( 6219  n 0 float8_matrix_accum		-	float8_matrix_accum	-	-	-	-	-	f f 0	1022 0	0	0	_null_ _null_ ));
 
 /* pivot_sum(...) */
-DATA(insert ( 3226  n 0 int4_pivot_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1007 0	0	0	_null_ _null_ ));
-DATA(insert ( 3228  n 0 int8_pivot_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1016 0	0	0	_null_ _null_ ));
-DATA(insert ( 3230  n 0 float8_pivot_accum		-	float8_matrix_accum	-	-	-	-	-	f f 0	1022 0	0	0	_null_ _null_ ));
+DATA(insert ( 6226  n 0 int4_pivot_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1007 0	0	0	_null_ _null_ ));
+DATA(insert ( 6228  n 0 int8_pivot_accum		-	int8_matrix_accum	-	-	-	-	-	f f 0	1016 0	0	0	_null_ _null_ ));
+DATA(insert ( 6230  n 0 float8_pivot_accum		-	float8_matrix_accum	-	-	-	-	-	f f 0	1022 0	0	0	_null_ _null_ ));
 
 /* xml */
 DATA(insert ( 2901  n 0 xmlconcat2				-	-					-	-	-	-	-	f f 0	142	0	0	0	_null_ _null_ ));
