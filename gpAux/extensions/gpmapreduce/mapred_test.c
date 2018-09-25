@@ -107,7 +107,6 @@ int8_add(PG_FUNCTION_ARGS)
 }
 
 
-PG_FUNCTION_INFO_V1(tran);
 int
 tran(PG_FUNCTION_ARGS)
 {
@@ -120,7 +119,6 @@ tran(PG_FUNCTION_ARGS)
 	return arg2;
 }
 
-PG_FUNCTION_INFO_V1(cons);
 int
 cons(PG_FUNCTION_ARGS)
 {
@@ -131,7 +129,6 @@ cons(PG_FUNCTION_ARGS)
 	return arg2 + state;
 }
 
-PG_FUNCTION_INFO_V1(final);
 int
 final(PG_FUNCTION_ARGS)
 {
