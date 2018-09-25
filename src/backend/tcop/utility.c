@@ -1236,7 +1236,6 @@ ProcessUtilitySlow(Node *parsetree,
 
 								NewRelationCreateToastTable(relOid,
 														   toast_options,
-														   true,
 														   cstmt->is_part_child,
 														   cstmt->is_part_parent);
 

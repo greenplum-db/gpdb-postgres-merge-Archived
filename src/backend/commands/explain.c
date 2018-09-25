@@ -2826,11 +2826,12 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 			break;
 		case T_FunctionScan:
+		case T_TableFunctionScan:
 			{
 				FunctionScan *fscan = (FunctionScan *) plan;
 
 				/* Assert it's on a RangeFunction */
-				Assert(rte->rtekind == RTE_FUNCTION);
+				Assert(rte->rtekind == RTE_FUNCTION || rte->rtekind == RTE_TABLEFUNCTION);
 
 				/*
 				 * If the expression is still a function call of a single
@@ -2854,34 +2855,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 					}
 				}
 				objecttag = "Function Name";
-			}
-			break;
-		case T_TableFunctionScan:
-			{
-				RangeTblEntry	*rte;
-				FuncExpr		*funcexpr;
 
-				/* Get the range table, it should be a TableFunction */
-				rte = rt_fetch(((Scan *) plan)->scanrelid, es->rtable);
-				Assert(rte->rtekind == RTE_TABLEFUNCTION);
-
-				/*
-				 * Lookup the function name.
-				 *
-				 * Unlike RTE_FUNCTION there should be no cases where the
-				 * optimizer could have evaluated away the function call.
-				 */
-				funcexpr = (FuncExpr *) ((TableFunctionScan *) plan)->funcexpr;
-				if (!funcexpr || !IsA(funcexpr, FuncExpr))
-					elog(ERROR, "unexpected expression in TableFunctionScan");
-				objectname = get_func_name(funcexpr->funcid);
-
-				if (es->verbose)
-					namespace =
-						get_namespace_name(get_func_namespace(funcexpr->funcid));
-
-				/* might be nice to add order by and scatter by info */
-				objecttag = "Function Name";
+				/* might be nice to add order by and scatter by info, if it's a TableFunctionScan */
 			}
 			break;
 		case T_ValuesScan:

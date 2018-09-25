@@ -27,7 +27,7 @@
 
 extern void NewRelationCreateAoVisimapTable(Oid relOid, bool is_part_child,
 										   bool is_part_parent);
-extern void AlterTableCreateAoVisimapTable(Oid relOid, LOCKMODE lockmode, bool is_part_child,
+extern void AlterTableCreateAoVisimapTable(Oid relOid, bool is_part_child,
 										   bool is_part_parent);
 
 #endif

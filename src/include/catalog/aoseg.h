@@ -24,7 +24,7 @@
  */
 extern void NewRelationCreateAoSegTable(Oid relOid, bool is_part_child,
 									   bool is_part_parent);
-extern void AlterTableCreateAoSegTable(Oid relOid, LOCKMODE lockmode, bool is_part_child,
+extern void AlterTableCreateAoSegTable(Oid relOid, bool is_part_child,
 									   bool is_part_parent);
 
 #endif   /* AOSEG_H */

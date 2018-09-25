@@ -755,7 +755,12 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 static void
 refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap)
 {
-	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true,
+	finish_heap_swap(matviewOid, OIDNewHeap,
+					 false, /* is_system_catalog */
+					 false, /* swap_toast_by_content */
+					 false, /* swap_stats */
+					 true, /* check_constraints */
+					 true, /* is_internal */
 					 RecentXmin, ReadNextMultiXactId());
 }
 

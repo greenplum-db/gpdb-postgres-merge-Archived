@@ -430,7 +430,6 @@ DefineIndex(Oid relationId,
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
-	LOCKMODE	heap_lockmode;
 	bool		need_longlock = true;
 	bool		shouldDispatch;
 	char	   *altconname = stmt ? stmt->altconname : NULL;
@@ -468,10 +467,9 @@ DefineIndex(Oid relationId,
 	 * as strong as the one we take here.
 	 */
 	if (RangeVarIsAppendOptimizedTable(stmt->relation))
-		heap_lockmode = ShareRowExclusiveLock;
+		lockmode = ShareRowExclusiveLock;
 	else
-		heap_lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
-
+		lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
 
 	relationId = RelationGetRelid(rel);
@@ -820,7 +818,7 @@ DefineIndex(Oid relationId,
 		if (need_longlock)
 			heap_close(rel, NoLock);
 		else
-			heap_close(rel, heap_lockmode);
+			heap_close(rel, lockmode);
 		return indexRelationId;
 	}
 
@@ -841,7 +839,7 @@ DefineIndex(Oid relationId,
 	if (need_longlock)
 		heap_close(rel, NoLock);
 	else
-		heap_close(rel, heap_lockmode);
+		heap_close(rel, lockmode);
 
 	/*
 	 * For a concurrent build, it's important to make the catalog entries

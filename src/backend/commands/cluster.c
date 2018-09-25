@@ -801,16 +801,16 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
 		if (isNull)
 			reloptions = (Datum) 0;
 		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode,
-								true /* is_create */, is_part_child, is_part_parent);
+								is_part_child, is_part_parent);
 
 		ReleaseSysCache(tuple);
 	}
 	/* GPDB_94_MERGE_FIXME: should we have NewHeap* versions of these functions, too? */
-	AlterTableCreateAoSegTable(OIDNewHeap, lockmode, is_part_child, is_part_parent);
-	AlterTableCreateAoVisimapTable(OIDNewHeap, lockmode, is_part_child, is_part_parent);
+	AlterTableCreateAoSegTable(OIDNewHeap, is_part_child, is_part_parent);
+	AlterTableCreateAoVisimapTable(OIDNewHeap, is_part_child, is_part_parent);
 
     if (createAoBlockDirectory)
-		AlterTableCreateAoBlkdirTable(OIDNewHeap, lockmode, is_part_child, is_part_parent);
+		AlterTableCreateAoBlkdirTable(OIDNewHeap, is_part_child, is_part_parent);
 
 	CacheInvalidateRelcacheByRelid(OIDNewHeap);
 

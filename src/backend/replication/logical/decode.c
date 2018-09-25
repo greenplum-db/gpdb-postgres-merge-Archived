@@ -777,7 +777,9 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 * We can only figure this out after reassembling the
 			 * transactions.
 			 */
+#if 0
 			tuple->tuple.t_tableOid = InvalidOid;
+#endif
 			tuple->tuple.t_data = &tuple->header;
 			tuple->tuple.t_len = datalen
 				+ offsetof(HeapTupleHeaderData, t_bits);
@@ -822,7 +824,9 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	ItemPointerSetInvalid(&tuple->tuple.t_self);
 
 	/* we can only figure this out after reassembling the transactions */
+#if 0
 	tuple->tuple.t_tableOid = InvalidOid;
+#endif
 	tuple->tuple.t_data = &tuple->header;
 
 	/* data is not stored aligned, copy to aligned storage */

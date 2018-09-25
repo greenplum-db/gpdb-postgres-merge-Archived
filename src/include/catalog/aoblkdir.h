@@ -27,7 +27,7 @@
 
 extern void NewRelationCreateAoBlkdirTable(Oid relOid, bool is_part_child,
 										  bool is_part_parent);
-extern void AlterTableCreateAoBlkdirTable(Oid relOid, LOCKMODE lockmode, bool is_part_child,
+extern void AlterTableCreateAoBlkdirTable(Oid relOid, bool is_part_child,
 										  bool is_part_parent);
 
 #endif

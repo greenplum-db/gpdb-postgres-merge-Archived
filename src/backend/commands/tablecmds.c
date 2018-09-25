@@ -320,7 +320,7 @@ static void prepSplitCmd(Relation rel, PgPartRule *prule, bool is_at);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
-static void ATAddToastIfNeeded(List **wqueue);
+static void ATAddToastIfNeeded(List **wqueue, LOCKMODE lockmode);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p,
 		  AlterTableCmd *cmd, LOCKMODE lockmode);
 static void ATRewriteTables(List **wqueue, LOCKMODE lockmode);
@@ -4160,7 +4160,7 @@ ATController(Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
 	{
 		ATRewriteTables(&wqueue, lockmode);
 
-		ATAddToastIfNeeded(&wqueue);
+		ATAddToastIfNeeded(&wqueue, lockmode);
 	}
 }
 
@@ -5326,7 +5326,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 }
 
 static void
-ATAddToastIfNeeded(List **wqueue)
+ATAddToastIfNeeded(List **wqueue, LOCKMODE lockmode)
 {
 	ListCell   *ltab;
 
@@ -5351,7 +5351,7 @@ ATAddToastIfNeeded(List **wqueue)
 			 * relfrozenxid or not?
 			 */
 			AlterTableCreateToastTable(tab->relid, (Datum) 0, lockmode,
-									   false /* is_create */, is_part, false);
+									   is_part, false);
 		}
 	}
 }
@@ -14032,7 +14032,7 @@ build_ctas_with_dist(Relation rel, DistributedBy *dist_clause,
 	else
 		q = (Query *) n;
 
-	AcquireRewriteLocks(q, false);
+	AcquireRewriteLocks(q, true, false);
 
 	/* Rewrite through rule system */
 	rewritten = QueryRewrite(q);
@@ -19278,6 +19278,10 @@ char *alterTableCmdString(AlterTableType subtype)
 			cmdstring = pstrdup("add a constraint to");
 			break;
 
+		case AT_AlterConstraint:
+			cmdstring = pstrdup("alter constraint of");
+			break;
+
 		case AT_ValidateConstraint:
 			cmdstring = pstrdup("validate constraint of");
 			break;
@@ -19330,7 +19334,7 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_DisableTrigUser: /* DISABLE TRIGGER USER */
 			cmdstring = pstrdup("enable or disable triggers on");
 			break;
-
+			
 		case AT_EnableRule: /* ENABLE RULE name */
 		case AT_EnableAlwaysRule: /* ENABLE ALWAYS RULE name */
 		case AT_EnableReplicaRule: /* ENABLE REPLICA RULE  name */
@@ -19346,6 +19350,10 @@ char *alterTableCmdString(AlterTableType subtype)
 		case AT_AddOf:
 		case AT_DropOf:
 			cmdstring = pstrdup("alter OF type on");
+			break;
+
+		case AT_ReplicaIdentity:
+			cmdstring = pstrdup("alter replica identity on");
 			break;
 
 		case AT_GenericOptions:
