@@ -136,8 +136,7 @@ _bitmap_create_lov_heapandindex(Relation rel,
 
 		if (RelationNeedsWAL(lovIndex))
 		{
-			log_newpage_rel(lovIndex, BufferGetBlockNumber(btree_metabuf), MAIN_FORKNUM,
-						btree_metapage);
+			log_newpage_buffer(btree_metabuf, true);
 		}
 
 		/* This cache value is not valid anymore. */

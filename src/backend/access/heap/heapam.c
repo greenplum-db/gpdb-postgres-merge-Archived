@@ -116,8 +116,7 @@ static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 in
 				Relation rel, ItemPointer ctid, XLTW_Oper oper,
 				int *remaining);
 static bool ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-						   uint16 infomask, Relation rel, ItemPointer ctid,
-						   XLTW_Oper oper, int *remaining);
+						   uint16 infomask, Relation rel, int *remaining);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_modified,
 					   bool *copy);
@@ -4945,15 +4944,15 @@ l3:
 				if (waittype == LockTupleIfNotLocked)
 				{
 					if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
-													status, NULL, infomask))
+												  status, infomask, relation,
+													NULL))
 						return HeapTupleBeingUpdated; /* return without a lock */
 				}
 				else if (waittype == LockTupleNoWait)
 				{
 					if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
 												  status, infomask, relation,
-													&tuple->t_data->t_ctid,
-													XLTW_Lock, NULL))
+													NULL))
 						ereport(ERROR,
 								(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 								 errmsg("could not obtain lock on row in relation \"%s\"",
@@ -6764,11 +6763,10 @@ MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
  */
 static bool
 ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-						   uint16 infomask, Relation rel, ItemPointer ctid,
-						   XLTW_Oper oper, int *remaining)
+						   uint16 infomask, Relation rel, int *remaining)
 {
 	return Do_MultiXactIdWait(multi, status, infomask, true,
-							  rel, ctid, oper, remaining);
+							  rel, NULL, XLTW_None, remaining);
 }
 
 /*

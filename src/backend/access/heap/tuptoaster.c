@@ -62,26 +62,6 @@ static void toast_close_indexes(Relation *toastidxs, int num_indexes,
 					LOCKMODE lock);
 
 
-/*
- * GPDB: Check to be sure that a toast table's index is valid before making use
- * of it in a query.
- *
- * GPDB_94_MERGE_FIXME: This function exists only because we don't yet have
- * upstream commit 2ef085d0e. Once that's merged, we can get rid of this.
- */
-static void
-check_toast_indisvalid(Relation toastrel, Relation toastidx)
-{
-	Assert(RelationIsValid(toastidx));
-	Assert(RelationIsValid(toastrel));
-	Assert(PointerIsValid(toastidx->rd_index));
-
-	if (!IndexIsValid(toastidx->rd_index))
-		elog(ERROR, "no valid index found for toast relation with Oid %d",
-			 RelationGetRelid(toastrel));
-}
-
-
 /* ----------
  * heap_tuple_fetch_attr -
  *
@@ -1364,7 +1344,9 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	/* Build a temporary HeapTuple control structure */
 	tmptup.t_len = tup_len;
 	ItemPointerSetInvalid(&(tmptup.t_self));
+#if 0
 	tmptup.t_tableOid = InvalidOid;
+#endif
 	tmptup.t_data = tup;
 
 	/*
@@ -1596,8 +1578,6 @@ toast_save_datum(Relation rel, Datum value,
 									RowExclusiveLock,
 									&toastidxs,
 									&num_indexes);
-
-	check_toast_indisvalid(toastrel, toastidx);
 
 	/*
 	 * Get the data pointer and length, and compute va_rawsize and va_extsize.
@@ -1884,8 +1864,6 @@ toast_delete_datum(Relation rel __attribute__((unused)), Datum value)
 									&toastidxs,
 									&num_indexes);
 
-	check_toast_indisvalid(toastrel, toastidx);
-
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
 	 */
@@ -2051,8 +2029,6 @@ toast_fetch_datum(struct varlena * attr)
 									AccessShareLock,
 									&toastidxs,
 									&num_indexes);
-
-	check_toast_indisvalid(toastrel, toastidx);
 
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid
@@ -2275,8 +2251,6 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 									&toastidxs,
 									&num_indexes);
 
-	check_toast_indisvalid(toastrel, toastidx);
-
 	{
 		/*
 		 * GPDB: because we allow upgrades from clusters with different
@@ -2293,7 +2267,7 @@ toast_fetch_datum_slice(struct varlena * attr, int32 sliceoffset, int32 length)
 					Int32GetDatum(0));
 		nscankeys = 2;
 
-		toastscan = systable_beginscan_ordered(toastrel, toastidx,
+		toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
 											   SnapshotToast, nscankeys, toastkey);
 
 		if ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
