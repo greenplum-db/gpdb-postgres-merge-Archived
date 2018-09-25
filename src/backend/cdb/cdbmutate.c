@@ -3025,6 +3025,7 @@ rte_param_walker(List *rtable, ParamWalkerContext *context)
 {
 	ListCell   *lc;
 	int			rteid = 0;
+	ListCell   *func_lc;
 
 	foreach(lc, rtable)
 	{
@@ -3051,11 +3052,19 @@ rte_param_walker(List *rtable, ParamWalkerContext *context)
 				param_walker((Node *) rte->joinaliasvars, context);
 				break;
 			case RTE_FUNCTION:
-				param_walker(rte->funcexpr, context);
+				foreach(func_lc, rte->functions)
+				{
+					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(func_lc);
+					param_walker(rtfunc->funcexpr, context);
+				}
 				break;
 			case RTE_TABLEFUNCTION:
 				param_walker((Node *) rte->subquery, context);
-				param_walker(rte->funcexpr, context);
+				foreach(func_lc, rte->functions)
+				{
+					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(func_lc);
+					param_walker(rtfunc->funcexpr, context);
+				}
 				break;
 			case RTE_VALUES:
 				param_walker((Node *) rte->values_lists, context);

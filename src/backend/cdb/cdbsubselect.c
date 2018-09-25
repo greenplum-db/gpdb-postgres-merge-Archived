@@ -1356,7 +1356,7 @@ has_correlation_in_funcexpr_rte(List *rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc_rte);
 
-		if (NULL != rte->funcexpr && contain_vars_of_level_or_above(rte->funcexpr, 1))
+		if (rte->functions  && contain_vars_of_level_or_above((Node *) rte->functions, 1))
 		{
 			return true;
 		}
