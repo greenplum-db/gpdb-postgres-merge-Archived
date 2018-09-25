@@ -27,15 +27,11 @@
 #include "storage/standby.h"
 #include "utils/relmapper.h"
 
-<<<<<<< HEAD
 #include "access/bitmap.h"
 #include "access/distributedlog.h"
 #include "cdb/cdbappendonlyxlog.h"
 
-#define PG_RMGR(symname,name,redo,desc,startup,cleanup,restartpoint) \
-=======
 #define PG_RMGR(symname,name,redo,desc,startup,cleanup) \
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	{ name, desc, },
 
 const RmgrDescData RmgrDescTable[RM_MAX_ID + 1] = {
