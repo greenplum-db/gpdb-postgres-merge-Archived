@@ -44,6 +44,7 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/guc.h"
+#include "utils/snapmgr.h"
 #include "miscadmin.h"
 
 /*
@@ -120,6 +121,7 @@ AppendOnlyCompaction_ShouldCompact(
 	AppendOnlyVisimap visiMap;
 	int64		hiddenTupcount;
 	double		hideRatio;
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(RelationIsAppendOptimized(aoRelation));
 
@@ -138,7 +140,7 @@ AppendOnlyCompaction_ShouldCompact(
 						   aoRelation->rd_appendonly->visimaprelid,
 						   aoRelation->rd_appendonly->visimapidxid,
 						   ShareLock,
-						   SnapshotNow);
+						   appendOnlyMetaDataSnapshot);
 	hiddenTupcount = AppendOnlyVisimap_GetSegmentFileHiddenTupleCount(
 																	  &visiMap, segno);
 
@@ -196,6 +198,8 @@ AppendOnlyCompaction_ShouldCompact(
 			   hideRatio, gp_appendonly_compaction_threshold);
 	}
 	AppendOnlyVisimap_Finish(&visiMap, ShareLock);
+
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 	return result;
 }
 
@@ -353,6 +357,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	AOTupleId  *aoTupleId;
 	int64		tupleCount = 0;
 	int64		tuplePerPage = INT_MAX;
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoRows(aorel));
@@ -369,7 +374,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 						   aorel->rd_appendonly->visimaprelid,
 						   aorel->rd_appendonly->visimapidxid,
 						   ShareUpdateExclusiveLock,
-						   SnapshotNow);
+						   appendOnlyMetaDataSnapshot);
 
 	elogif(Debug_appendonly_print_compaction,
 		   LOG, "Compact AO segno %d, relation %s, insert segno %d",
@@ -382,7 +387,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	 * We use SnapshotAny to get visible and invisible tuples.
 	 */
 	scanDesc = appendonly_beginrangescan(aorel,
-										 SnapshotAny, SnapshotNow,
+										 SnapshotAny, appendOnlyMetaDataSnapshot,
 										 &compact_segno, 1, 0, NULL);
 
 	tupDesc = RelationGetDescr(aorel);
@@ -449,7 +454,7 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	if (OidIsValid(aorel->rd_appendonly->blkdirrelid))
 	{
 		AppendOnlyBlockDirectory_DeleteSegmentFile(aorel,
-												   SnapshotNow,
+												   appendOnlyMetaDataSnapshot,
 												   compact_segno,
 												   0);
 	}
@@ -468,6 +473,8 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	destroy_memtuple_binding(mt_bind);
 
 	appendonly_endscan(scanDesc);
+
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 /*
@@ -515,6 +522,7 @@ AppendOnlyDrop(Relation aorel, List *compaction_segno)
 	int			i,
 				segno;
 	FileSegInfo *fsinfo;
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoRows(aorel));
@@ -525,7 +533,7 @@ AppendOnlyDrop(Relation aorel, List *compaction_segno)
 		   "Drop AO relation %s", relname);
 
 	/* Get information about all the file segments we need to scan */
-	segfile_array = GetAllFileSegInfo(aorel, SnapshotNow, &total_segfiles);
+	segfile_array = GetAllFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
 
 	for (i = 0; i < total_segfiles; i++)
 	{
@@ -549,7 +557,7 @@ AppendOnlyDrop(Relation aorel, List *compaction_segno)
 										  false);
 
 		/* Re-fetch under the write lock to get latest committed eof. */
-		fsinfo = GetFileSegInfo(aorel, SnapshotNow, segno);
+		fsinfo = GetFileSegInfo(aorel, appendOnlyMetaDataSnapshot, segno);
 
 		if (fsinfo->state == AOSEG_STATE_AWAITING_DROP)
 		{
@@ -567,6 +575,7 @@ AppendOnlyDrop(Relation aorel, List *compaction_segno)
 		FreeAllSegFileInfo(segfile_array, total_segfiles);
 		pfree(segfile_array);
 	}
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 /*
@@ -584,6 +593,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 				segno;
 	LockAcquireResult acquireResult;
 	FileSegInfo *fsinfo;
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(RelationIsAoRows(aorel));
 
@@ -593,7 +603,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 		   "Compact AO relation %s", relname);
 
 	/* Get information about all the file segments we need to scan */
-	segfile_array = GetAllFileSegInfo(aorel, SnapshotNow, &total_segfiles);
+	segfile_array = GetAllFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
 
 	for (i = 0; i < total_segfiles; i++)
 	{
@@ -619,7 +629,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 		}
 
 		/* Re-fetch under the write lock to get latest committed eof. */
-		fsinfo = GetFileSegInfo(aorel, SnapshotNow, segno);
+		fsinfo = GetFileSegInfo(aorel, appendOnlyMetaDataSnapshot, segno);
 
 		/*
 		 * This should not occur since this segfile info was found by the
@@ -643,6 +653,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 		FreeAllSegFileInfo(segfile_array, total_segfiles);
 		pfree(segfile_array);
 	}
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 /*
@@ -670,6 +681,7 @@ AppendOnlyCompact(Relation aorel,
 	int			i,
 				segno;
 	FileSegInfo *fsinfo;
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(insert_segno >= 0);
@@ -680,7 +692,7 @@ AppendOnlyCompact(Relation aorel,
 		   "Compact AO relation %s", relname);
 
 	/* Get information about all the file segments we need to scan */
-	segfile_array = GetAllFileSegInfo(aorel, SnapshotNow, &total_segfiles);
+	segfile_array = GetAllFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
 
 	insertDesc = appendonly_insert_init(aorel, insert_segno, false);
 
@@ -711,7 +723,7 @@ AppendOnlyCompact(Relation aorel,
 										  false);
 
 		/* Re-fetch under the write lock to get latest committed eof. */
-		fsinfo = GetFileSegInfo(aorel, SnapshotNow, segno);
+		fsinfo = GetFileSegInfo(aorel, appendOnlyMetaDataSnapshot, segno);
 
 		/*
 		 * This should not occur since this segfile info was found by the
@@ -743,6 +755,7 @@ AppendOnlyCompact(Relation aorel,
 		FreeAllSegFileInfo(segfile_array, total_segfiles);
 		pfree(segfile_array);
 	}
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 /*

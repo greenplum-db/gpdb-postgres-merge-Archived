@@ -6037,6 +6037,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	char *basepath;
 	int32 scancol; /* chosen column number to scan from */
 	ListCell *l;
+	Snapshot snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	/*
 	 * only ADD COLUMN subcommand is supported at this time
@@ -6070,7 +6071,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	}
 
 	rel = heap_open(tab->relid, NoLock);
-	segInfos = GetAllAOCSFileSegInfo(rel, SnapshotNow, &nseg);
+	segInfos = GetAllAOCSFileSegInfo(rel, snapshot, &nseg);
 	basepath = relpathbackend(rel->rd_node, rel->rd_backend, MAIN_FORKNUM);
 	if (nseg > 0)
 	{
@@ -6178,6 +6179,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 
 	FreeExecutorState(estate);
 	heap_close(rel, NoLock);
+	UnregisterSnapshot(snapshot);
 	return true;
 }
 
@@ -6510,7 +6512,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			mt_bind = (newrel ? aoInsertDesc->mt_bind : create_memtuple_binding(newTupDesc));
 
-			aoscan = appendonly_beginscan(oldrel, SnapshotNow, SnapshotNow, 0, NULL);
+			aoscan = appendonly_beginscan(oldrel, snapshot, snapshot, 0, NULL);
 
 			/*
 			 * Switch to per-tuple memory context and reset it for each tuple
@@ -6646,7 +6648,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 			if(newrel)
 				idesc = aocs_insert_init(newrel, segno, false);
 
-			sdesc = aocs_beginscan(oldrel, SnapshotNow, SnapshotNow, oldTupDesc, proj);
+			sdesc = aocs_beginscan(oldrel, snapshot, snapshot, oldTupDesc, proj);
 
 			aocs_getnext(sdesc, ForwardScanDirection, oldslot);
 
@@ -12704,7 +12706,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	Relation    rel;
 	Oid			oldTableSpace;
 	Oid			reltoastrelid;
-	Oid			reltoastidxid;
 	Oid			relaosegrelid = InvalidOid;
 	Oid			relaoblkdirrelid = InvalidOid;
 	Oid			relaoblkdiridxid = InvalidOid;
@@ -16711,10 +16712,11 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 	}
 
 	/* be careful about AO vs. normal heap tables */
+	Snapshot snapshot = RegisterSnapshot(GetLatestSnapshot());
 	if (RelationIsHeap(temprel))
-		heapscan = heap_beginscan(temprel, SnapshotNow, 0, NULL);
+		heapscan = heap_beginscan(temprel, snapshot, 0, NULL);
 	else if (RelationIsAoRows(temprel))
-		aoscan = appendonly_beginscan(temprel, SnapshotNow, SnapshotNow, 0, NULL);
+		aoscan = appendonly_beginscan(temprel, snapshot, snapshot, 0, NULL);
 	else if (RelationIsAoCols(temprel))
 	{
 		int nvp = temprel->rd_att->natts;
@@ -16724,7 +16726,7 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		for(i=0; i<nvp; ++i)
 			aocsproj[i] = true;
 
-		aocsscan = aocs_beginscan(temprel, SnapshotNow, SnapshotNow, NULL /* relationTupleDesc */, aocsproj);
+		aocsscan = aocs_beginscan(temprel, snapshot, snapshot, NULL /* relationTupleDesc */, aocsproj);
 	}
 	else
 	{
@@ -16915,6 +16917,8 @@ split_rows(Relation intoa, Relation intob, Relation temprel)
 		pfree(aocsproj);
 		aocs_endscan(aocsscan);
 	}
+
+	UnregisterSnapshot(snapshot);
 
 	destroy_split_resultrel(rria);
 	destroy_split_resultrel(rrib);

@@ -181,6 +181,7 @@ AORelCreateHashEntry(Oid relid)
 	AORelHashEntry aoHashEntry = NULL;
 	Relation	aorel;
 	bool	   *awaiting_drop = NULL;
+	Snapshot	appendOnlyMetaDataSnapshot;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
@@ -197,17 +198,19 @@ AORelCreateHashEntry(Oid relid)
 	aorel = heap_open(relid, RowExclusiveLock);
 
 	/*
-	 * Use SnapshotNow since we have an exclusive lock on the relation.
+	 * Use latest snapshot since we have an exclusive lock on the relation.
 	 */
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 	if (RelationIsAoRows(aorel))
 	{
-		allfsinfo = GetAllFileSegInfo(aorel, SnapshotNow, &total_segfiles);
+		allfsinfo = GetAllFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
 	}
 	else
 	{
 		Assert(RelationIsAoCols(aorel));
-		aocsallfsinfo = GetAllAOCSFileSegInfo(aorel, SnapshotNow, &total_segfiles);
+		aocsallfsinfo = GetAllAOCSFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
 	}
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
 	/* Ask segment DBs about the segfile status */
 	awaiting_drop = GetFileSegStateInfoFromSegments(aorel);
@@ -1571,8 +1574,13 @@ UpdateMasterAosegTotalsFromSegments(Relation parentrel,
 
 			Assert(RelationIsAoCols(parentrel));
 
+			/* GPDB_94_MERGE_FIXME: We used to call this with SnapshotNow,
+			 * even though in the row-oriented case above, we use
+			 * appendOnlyMetaDataSnapshot. Was that on purpose?
+			 * I changed this to also use appendOnlyMetaDataSnapshot.
+			 */
 			seginfo = GetAOCSFileSegInfo(parentrel,
-										 SnapshotNow, qe_segno);
+										 appendOnlyMetaDataSnapshot, qe_segno);
 
 			if (seginfo !=NULL)
 			{
@@ -1616,6 +1624,7 @@ void
 UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 modcount_added)
 {
 	AORelHashEntry aoHashEntry = NULL;
+	Snapshot	appendOnlyMetaDataSnapshot;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 	Assert(segno >= 0);
@@ -1632,17 +1641,18 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 									  AccessExclusiveLock,
 									   /* dontWait */ false);
 
+	/*
+	 * Get the snapshot after locking the segment-file entry.
+	 */
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+
 	if (RelationIsAoRows(parentrel))
 	{
 		FileSegInfo *fsinfo;
 
 		/* get the information for the file segment we inserted into */
 
-		/*
-		 * Since we have an exclusive lock on the segment-file entry, we can
-		 * use SnapshotNow.
-		 */
-		fsinfo = GetFileSegInfo(parentrel, SnapshotNow, segno);
+		fsinfo = GetFileSegInfo(parentrel, appendOnlyMetaDataSnapshot, segno);
 		if (fsinfo == NULL)
 		{
 			InsertInitialSegnoEntry(parentrel, segno);
@@ -1666,9 +1676,8 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 		/* AO column store */
 		Assert(RelationIsAoCols(parentrel));
 
-		seginfo = GetAOCSFileSegInfo(
-									 parentrel,
-									 SnapshotNow,
+		seginfo = GetAOCSFileSegInfo(parentrel,
+									 appendOnlyMetaDataSnapshot,
 									 segno);
 
 		if (seginfo == NULL)

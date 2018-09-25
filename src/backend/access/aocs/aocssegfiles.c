@@ -36,6 +36,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include "cdb/cdbappendonlyblockdirectory.h"
@@ -57,6 +58,14 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/visibility_summary.h"
+
+
+static AOCSFileSegInfo **GetAllAOCSFileSegInfo_pg_aocsseg_rel(
+									 int numOfColumsn,
+									 char *relationName,
+									 Relation pg_aocsseg_rel,
+									 Snapshot appendOnlyMetaDataSnapshot,
+									 int32 *totalseg);
 
 AOCSFileSegInfo *
 NewAOCSFileSegInfo(int32 segno, int32 nvp)
@@ -272,7 +281,7 @@ aocsFileSegInfoCmp(const void *left, const void *right)
 	return 0;
 }
 
-AOCSFileSegInfo **
+static AOCSFileSegInfo **
 GetAllAOCSFileSegInfo_pg_aocsseg_rel(int numOfColumns,
 									 char *relationName,
 									 Relation pg_aocsseg_rel,
@@ -1135,6 +1144,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 		MemoryContext oldcontext;
 		Relation	aocsRel;
 		Relation	pg_aocsseg_rel;
+		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1194,7 +1204,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 																		 aocsRel->rd_rel->relnatts,
 																		 RelationGetRelationName(aocsRel),
 																		 pg_aocsseg_rel,
-																		 SnapshotNow,
+																		 appendOnlyMetaDataSnapshot,
 																		 &context->totalAocsSegFiles);
 
 		heap_close(pg_aocsseg_rel, NoLock);
@@ -1206,6 +1216,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 
 		funcctx->user_fctx = (void *) context;
 
+		UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 		MemoryContextSwitchTo(oldcontext);
 	}
 

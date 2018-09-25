@@ -2192,24 +2192,13 @@ BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
 	/*
-	 * Based on different storage types of the relation, calculate
-	 * the number of blocks accordingly.
+	 * This doesn't do the right thing for AO tables. That's OK, none of
+	 * the callers do that. But let's check.
 	 */
-	if (RelationIsAoRows(relation))
-	{
-		int64		totalbytes;
+	if (RelationIsAppendOptimized(relation))
+		elog(ERROR, "cannot get number of blocks for AO table");
 
-		totalbytes = GetAOTotalBytes(relation, SnapshotNow);
-		return ((BlockNumber) RelationGuessNumberOfBlocks(totalbytes));
-	}
-	
-	if (RelationIsAoCols(relation))
-	{
-		int64 totalBytes = GetAOCSTotalBytes(relation, SnapshotNow, true);
-		return ((BlockNumber)RelationGuessNumberOfBlocks(totalBytes));
-  	}
-	
-	/* For non-AO tables, open it at the smgr level if not already done */
+	/* Open it at the smgr level if not already done */
 	RelationOpenSmgr(relation);
 
 	return smgrnblocks(relation->rd_smgr, forkNum);

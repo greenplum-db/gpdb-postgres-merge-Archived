@@ -106,6 +106,7 @@ typedef struct VacuumStatsContext
  */
 typedef struct AppendOnlyIndexVacuumState
 {
+	Snapshot	appendOnlyMetaDataSnapshot;
 	AppendOnlyVisimap visiMap;
 	AppendOnlyBlockDirectory blockDirectory;
 	AppendOnlyBlockDirectoryEntry blockDirectoryEntry;
@@ -2314,6 +2315,8 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	if (Gp_role == GP_ROLE_DISPATCH && vacstmt->appendonly_compaction_segno &&
 		RelationIsAppendOptimized(onerel))
 	{
+		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+
 		if (vacstmt->appendonly_phase == AOVAC_COMPACT)
 		{
 			/* In the compact phase, we need to update the information of the segment file we inserted into */
@@ -2323,13 +2326,15 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 				/* this was a "pseudo" compaction phase. */
 			}
 			else
-				UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_insert_segno, 0);
+				UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, vacstmt->appendonly_compaction_insert_segno, 0);
 		}
 		else if (vacstmt->appendonly_phase == AOVAC_DROP)
 		{
 			/* In the drop phase, we need to update the information of the compacted segment file(s) */
-			UpdateMasterAosegTotalsFromSegments(onerel, SnapshotNow, vacstmt->appendonly_compaction_segno, 0);
+			UpdateMasterAosegTotalsFromSegments(onerel, appendOnlyMetaDataSnapshot, vacstmt->appendonly_compaction_segno, 0);
 		}
+
+		UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 	}
 
 	/* all done with this class, but hold lock until commit */
@@ -2446,12 +2451,12 @@ static bool vacuum_appendonly_index_should_vacuum(Relation aoRelation,
 
 	if(RelationIsAoRows(aoRelation))
 	{
-		totals = GetSegFilesTotals(aoRelation, SnapshotNow);
+		totals = GetSegFilesTotals(aoRelation, vacuumIndexState->appendOnlyMetaDataSnapshot);
 	}
 	else
 	{
 		Assert(RelationIsAoCols(aoRelation));
-		totals = GetAOCSSSegFilesTotals(aoRelation, SnapshotNow);
+		totals = GetAOCSSSegFilesTotals(aoRelation, vacuumIndexState->appendOnlyMetaDataSnapshot);
 	}
 	hidden_tupcount = AppendOnlyVisimap_GetRelationHiddenTupleCount(&vacuumIndexState->visiMap);
 
@@ -2506,14 +2511,20 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 	else
 		vac_open_indexes(aoRelation, RowExclusiveLock, &nindexes, &Irel);
 
+	vacuumIndexState.appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+
 	if (RelationIsAoRows(aoRelation))
 	{
-		segmentFileInfo = GetAllFileSegInfo(aoRelation, SnapshotNow, &totalSegfiles);
+		segmentFileInfo = GetAllFileSegInfo(aoRelation,
+											vacuumIndexState.appendOnlyMetaDataSnapshot,
+											&totalSegfiles);
 	}
 	else
 	{
 		Assert(RelationIsAoCols(aoRelation));
-		segmentFileInfo = (FileSegInfo **)GetAllAOCSFileSegInfo(aoRelation, SnapshotNow, &totalSegfiles);
+		segmentFileInfo = (FileSegInfo **) GetAllAOCSFileSegInfo(aoRelation,
+																vacuumIndexState.appendOnlyMetaDataSnapshot,
+																&totalSegfiles);
 	}
 
 	AppendOnlyVisimap_Init(
@@ -2521,10 +2532,10 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 			aoRelation->rd_appendonly->visimaprelid,
 			aoRelation->rd_appendonly->visimapidxid,
 			AccessShareLock,
-			SnapshotNow);
+			vacuumIndexState.appendOnlyMetaDataSnapshot);
 
 	AppendOnlyBlockDirectory_Init_forSearch(&vacuumIndexState.blockDirectory,
-			SnapshotNow,
+			vacuumIndexState.appendOnlyMetaDataSnapshot,
 			segmentFileInfo,
 			totalSegfiles,
 			aoRelation,
@@ -2579,6 +2590,8 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 		}
 		pfree(segmentFileInfo);
 	}
+
+	UnregisterSnapshot(vacuumIndexState.appendOnlyMetaDataSnapshot);
 
 	vac_close_indexes(nindexes, Irel, NoLock);
 	return nindexes;
