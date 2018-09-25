@@ -3144,7 +3144,7 @@ transformIndexStmt_recurse(Oid relid, IndexStmt *stmt, const char *queryString,
 						BTEqualStrategyNumber, F_OIDEQ,
 						ObjectIdGetDatum(relid));
 			sscan = systable_beginscan(partrel, PartitionRuleParchildrelidIndexId,
-									   true, SnapshotNow, 1, &scankey);
+									   true, NULL, 1, &scankey);
 			tuple = systable_getnext(sscan);
 			Assert(HeapTupleIsValid(tuple));
 
@@ -4393,7 +4393,7 @@ TypeNameGetStorageDirective(TypeName *typname)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(typid));
 	sscan = systable_beginscan(rel, TypeEncodingTypidIndexId,
-							   true, SnapshotNow, 1, &scankey);
+							   true, NULL, 1, &scankey);
 	tuple = systable_getnext(sscan);
 	if (HeapTupleIsValid(tuple))
 	{

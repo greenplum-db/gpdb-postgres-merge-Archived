@@ -1465,7 +1465,7 @@ get_trigger_name(Oid triggerid)
 				ObjectIdGetDatum(triggerid));
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	tp = systable_getnext(sscan);
 	if (HeapTupleIsValid(tp))
@@ -1498,7 +1498,7 @@ get_trigger_relid(Oid triggerid)
 				ObjectIdGetDatum(triggerid));
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	tp = systable_getnext(sscan);
 	if (HeapTupleIsValid(tp))
@@ -1527,7 +1527,7 @@ get_trigger_funcid(Oid triggerid)
 				ObjectIdGetDatum(triggerid));
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	tp = systable_getnext(sscan);
 	if (HeapTupleIsValid(tp))
@@ -1557,7 +1557,7 @@ get_trigger_type(Oid triggerid)
 				ObjectIdGetDatum(triggerid));
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	tp = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tp))
@@ -1589,7 +1589,7 @@ trigger_enabled(Oid triggerid)
 				ObjectIdGetDatum(triggerid));
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	tp = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tp))
@@ -3680,7 +3680,7 @@ trigger_exists(Oid oid)
 
 	rel = heap_open(TriggerRelationId, AccessShareLock);
 	sscan = systable_beginscan(rel, TriggerOidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	result = (systable_getnext(sscan) != NULL);
 
@@ -3702,20 +3702,14 @@ get_relation_keys(Oid relid)
 
 	// lookup unique constraints for relation from the catalog table
 	ScanKeyData skey[1];
-	ScanKeyInit(&skey[0], Anum_pg_constraint_conrelid, BTEqualStrategyNumber, F_OIDEQ, relid);
 
 	Relation rel = heap_open(ConstraintRelationId, AccessShareLock);
-	SysScanDesc scan = systable_beginscan
-						(
-						rel, 
-						ConstraintRelidIndexId, 
-						true, 
-						SnapshotNow, 
-						1, 
-						skey
-						);
-	
-	HeapTuple	htup = NULL;
+	SysScanDesc scan;
+	HeapTuple	htup;
+
+	ScanKeyInit(&skey[0], Anum_pg_constraint_conrelid, BTEqualStrategyNumber, F_OIDEQ, relid);
+	scan = systable_beginscan(rel, ConstraintRelidIndexId, true,
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(scan)))
 	{
@@ -3816,7 +3810,7 @@ get_check_constraint_oids(Oid oidRel)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oidRel));
 	sscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(sscan)))
 	{
@@ -4011,7 +4005,7 @@ get_comparison_operator(Oid oidLeft, Oid oidRight, CmpType cmpt)
 
 	/* XXX: There is no index for this, so this is slow! */
 	sscan = systable_beginscan(pg_amop, InvalidOid, false,
-							   SnapshotNow, 4, scankey);
+							   NULL, 4, scankey);
 
 	/* XXX: There can be multiple results. Arbitrarily use the first one */
 	while (HeapTupleIsValid(ht = systable_getnext(sscan)))
@@ -4056,7 +4050,7 @@ has_subclass_slow(Oid relationId)
 
 	/* no index on inhparent */
 	sscan = systable_beginscan(rel, InvalidOid, false,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 
 	result = (systable_getnext(sscan) != NULL);
 

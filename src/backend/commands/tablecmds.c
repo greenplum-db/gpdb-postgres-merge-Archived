@@ -1456,7 +1456,7 @@ ao_aux_tables_safe_truncate(Relation rel)
 	Oid aoblkdir_relid = InvalidOid;
 	Oid aovisimap_relid = InvalidOid;
 
-	GetAppendOnlyEntryAuxOids(relid, SnapshotNow, &aoseg_relid,
+	GetAppendOnlyEntryAuxOids(relid, NULL, &aoseg_relid,
 							  &aoblkdir_relid, NULL, &aovisimap_relid,
 							  NULL);
 
@@ -12083,7 +12083,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 			{
 				Oid segrelid, blkdirrelid;
 				Oid visimap_relid;
-				GetAppendOnlyEntryAuxOids(relationOid, SnapshotNow,
+				GetAppendOnlyEntryAuxOids(relationOid, NULL,
 										  &segrelid,
 										  &blkdirrelid, NULL,
 										  &visimap_relid, NULL);
@@ -12778,7 +12778,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 
 	/* Get the ao sub objects */
 	if (RelationIsAppendOptimized(rel))
-		GetAppendOnlyEntryAuxOids(tableOid, SnapshotNow,
+		GetAppendOnlyEntryAuxOids(tableOid, NULL,
 								  &relaosegrelid,
 								  &relaoblkdirrelid, &relaoblkdiridxid,
 								  &relaovisimaprelid, &relaovisimapidxid);
@@ -13897,7 +13897,7 @@ change_dropped_col_datatypes(Relation rel)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
 	scan = systable_beginscan(catalogRelation, AttributeRelidNumIndexId,
-							  true, SnapshotNow, 1, &key);
+							  true, NULL, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
@@ -15185,7 +15185,7 @@ rel_get_table_oid(Relation rel)
 					ObjectIdGetDatum(toid));
 
 		sscan = systable_beginscan(deprel, DependDependerIndexId, true,
-								   SnapshotNow, 2, scankey);
+								   NULL, 2, scankey);
 
 		while (HeapTupleIsValid(tup = systable_getnext(sscan)))
 		{
@@ -15223,7 +15223,7 @@ rel_is_parent(Oid relid)
 	inhrel = heap_open(InheritsRelationId, AccessShareLock);
 
 	sscan = systable_beginscan(inhrel, InheritsParentIndexId,
-							   true, SnapshotNow, 1, &scankey);
+							   true, NULL, 1, &scankey);
 
 	if (systable_getnext(sscan))
 		is_parent = true;
@@ -15268,7 +15268,7 @@ rel_needs_long_lock(Oid relid)
 		inhrel = heap_open(InheritsRelationId, AccessShareLock);
 
 		sscan = systable_beginscan(inhrel, InheritsRelidSeqnoIndexId,
-								   true, SnapshotNow, 2, scankey);
+								   true, NULL, 2, scankey);
 
 		if (systable_getnext(sscan))
 			needs_lock = false;
@@ -15962,7 +15962,7 @@ exchange_part_inheritance(Oid oldrelid, Oid newrelid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(oldrelid));
 	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
-							  true, SnapshotNow, 1, &scankey);
+							  true, NULL, 1, &scankey);
 
 	/* should be one and only one parent when it comes to inheritance */
 	tuple = systable_getnext(scan);
@@ -19107,7 +19107,7 @@ ATPrepDropConstraint(List **wqueue, Relation rel, AlterTableCmd *cmd, bool recur
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(RelationGetRelid(rel)));
 		scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-								  true, SnapshotNow, 1, &key);
+								  true, NULL, 1, &key);
 
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{

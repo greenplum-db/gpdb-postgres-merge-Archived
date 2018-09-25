@@ -582,7 +582,7 @@ InitResGroups(void)
 	}
 
 	numGroups = 0;
-	sscan = systable_beginscan(relResGroup, InvalidOid, false, SnapshotNow, 0, NULL);
+	sscan = systable_beginscan(relResGroup, InvalidOid, false, NULL, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
 		ResGroupData	*group;

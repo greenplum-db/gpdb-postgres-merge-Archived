@@ -2178,7 +2178,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	if (!is_heap)
 	{
 		Assert(RelationIsAppendOptimized(onerel));
-		GetAppendOnlyEntryAuxOids(RelationGetRelid(onerel), SnapshotNow,
+		GetAppendOnlyEntryAuxOids(RelationGetRelid(onerel), NULL,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
 								  &aovisimap_relid, NULL);

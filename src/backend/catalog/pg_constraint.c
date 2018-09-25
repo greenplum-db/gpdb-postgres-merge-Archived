@@ -1066,7 +1066,7 @@ ConstraintGetPrimaryKeyOf(Oid relid, AttrNumber attno, Oid *pkrelid, AttrNumber 
 				ObjectIdGetDatum(relid));
 
 	conscan = systable_beginscan(conDesc, ConstraintRelidIndexId, true,
-								 SnapshotNow, 1, &skey);
+								 NULL, 1, &skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
 	{

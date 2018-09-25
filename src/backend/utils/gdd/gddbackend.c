@@ -434,7 +434,7 @@ findSuperuser(char *superuser, bool try_bootstrap)
 
 	/* FIXME: perform indexed scan here? */
 	sscan = systable_beginscan(auth_rel, InvalidOid, false,
-							   SnapshotNow, nkeys, scankey);
+							   NULL, nkeys, scankey);
 
 	while (HeapTupleIsValid(auth_tup = systable_getnext(sscan)))
 	{

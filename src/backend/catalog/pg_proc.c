@@ -581,7 +581,7 @@ ProcedureCreate(const char *procedureName,
 						ObjectIdGetDatum(oldOid));
 
 			scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-									  SnapshotNow, 2, key);
+									  NULL, 2, key);
 
 			while (HeapTupleIsValid(depTup = systable_getnext(scan)))
 			{

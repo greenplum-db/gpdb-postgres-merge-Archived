@@ -2959,7 +2959,7 @@ check_auth_time_constraints_internal(char *rolname, TimestampTz timestamp)
 	 * another example of this sort of logic.
 	 */
 	scan = systable_beginscan(reltimeconstr, AuthTimeConstraintAuthIdIndexId,
-							  criticalSharedRelcachesBuilt, SnapshotNow, 1,
+							  criticalSharedRelcachesBuilt, NULL, 1,
 							  entry);
 
 	/*

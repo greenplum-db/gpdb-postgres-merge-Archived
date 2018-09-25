@@ -225,7 +225,7 @@ InitResQueues(void)
 		return;
 	}
 
-	sscan = systable_beginscan(relResqueue, InvalidOid, false, SnapshotNow, 0, NULL);
+	sscan = systable_beginscan(relResqueue, InvalidOid, false, NULL, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
 		Form_pg_resqueue	queueform;
@@ -966,7 +966,7 @@ GetResQueueIdForName(char	*name)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(name));
 	scan = systable_beginscan(rel, ResQueueRsqnameIndexId, true,
-							  SnapshotNow, 1, &scankey);
+							  NULL, 1, &scankey);
 
 	tuple = systable_getnext(scan);
 	if (tuple)

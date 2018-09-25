@@ -3604,7 +3604,7 @@ ExecGrant_ExtProtocol(InternalGrant *istmt)
                     BTEqualStrategyNumber, F_OIDEQ,
                     ObjectIdGetDatum(ptcid));
         scan = systable_beginscan(relation, ExtprotocolOidIndexId, true,
-                                  SnapshotNow, 1, entry);
+                                  NULL, 1, entry);
         tuple = systable_getnext(scan);
         if (!HeapTupleIsValid(tuple))
             elog(ERROR, "lookup failed for external protocol %u", ptcid);
@@ -4848,7 +4848,7 @@ pg_extprotocol_aclmask(Oid ptcOid, Oid roleid,
                 BTEqualStrategyNumber, F_OIDEQ,
                 ObjectIdGetDatum(ptcOid));
     sscan = systable_beginscan(rel, ExtprotocolOidIndexId, true,
-                               SnapshotNow, 1, &scankey);
+                               NULL, 1, &scankey);
     tuple = systable_getnext(sscan);
 
     /* We assume that there can be at most one matching tuple */
@@ -5717,7 +5717,7 @@ pg_extprotocol_ownercheck(Oid protOid, Oid roleid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(protOid));
 	scan = systable_beginscan(pg_extprotocol, ExtprotocolOidIndexId, true,
-							  SnapshotNow, 1, entry);
+							  NULL, 1, entry);
 
 	eptuple = systable_getnext(scan);
 

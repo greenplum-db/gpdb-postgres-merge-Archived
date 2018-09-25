@@ -1689,7 +1689,7 @@ RelationInitAppendOnlyInfo(Relation relation)
 	 * we do something here to obey it?
 	 */
 	scan = systable_beginscan(pg_appendonly_rel, AppendOnlyRelidIndexId, true,
-							  SnapshotNow, 1, &skey);
+							  NULL, 1, &skey);
 
 	tuple = systable_getnext(scan);
 	if (!tuple)

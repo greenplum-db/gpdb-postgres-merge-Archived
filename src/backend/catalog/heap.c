@@ -814,7 +814,7 @@ void MetaTrackUpdObject(Oid		classid,
 		desc = systable_beginscan(rel,
 								  StatLastShOpClassidObjidStaactionnameIndexId,
 								  true,
-								  SnapshotNow, 3, key);
+								  NULL, 3, key);
 	}
 	else
 	{
@@ -836,7 +836,7 @@ void MetaTrackUpdObject(Oid		classid,
 		desc = systable_beginscan(rel,
 								  StatLastOpClassidObjidStaactionnameIndexId,
 								  true,
-								  SnapshotNow, 3, key);
+								  NULL, 3, key);
 	}
 
 	/* should be a unique index - only 1 answer... */
@@ -885,7 +885,7 @@ void MetaTrackDropObject(Oid		classid,
 		desc = systable_beginscan(rel,
 								  StatLastShOpClassidObjidStaactionnameIndexId,
 								  true,
-								  SnapshotNow, 2, key);
+								  NULL, 2, key);
 	}
 	else
 	{
@@ -904,7 +904,7 @@ void MetaTrackDropObject(Oid		classid,
 		desc = systable_beginscan(rel,
 								  StatLastOpClassidObjidStaactionnameIndexId,
 								  true,
-								  SnapshotNow, 2, key);
+								  NULL, 2, key);
 	}
 
 	while (HeapTupleIsValid(tuple = systable_getnext(desc)))
@@ -1942,7 +1942,7 @@ RemovePartitioning(Oid relid)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(rel, PartitionParrelidIndexId, true,
-							  SnapshotNow, 1, &key);
+							  NULL, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		Oid			paroid = HeapTupleGetOid(tuple);
@@ -1956,7 +1956,7 @@ RemovePartitioning(Oid relid)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(paroid));
 		rule_scan = systable_beginscan(pgrule, PartitionRuleParoidParparentruleParruleordIndexId, true,
-									   SnapshotNow, 1, &rule_key);
+									   NULL, 1, &rule_key);
 		while (HeapTupleIsValid(rule_tuple = systable_getnext(rule_scan)))
 			simple_heap_delete(pgrule, &rule_tuple->t_self);
 		systable_endscan(rule_scan);
@@ -1975,7 +1975,7 @@ RemovePartitioning(Oid relid)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(pgrule, PartitionRuleParchildrelidIndexId, true,
-							  SnapshotNow, 1, &key);
+							  NULL, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		simple_heap_delete(pgrule, &tuple->t_self);
 	systable_endscan(scan);
@@ -3398,7 +3398,7 @@ ao_aux_tables_truncate(Relation rel)
 	if (!RelationIsAppendOptimized(rel))
 		return;
 
-	GetAppendOnlyEntryAuxOids(ao_base_relid, SnapshotNow,
+	GetAppendOnlyEntryAuxOids(ao_base_relid, NULL,
 							  &aoseg_relid,
 							  &aoblkdir_relid, NULL,
 							  &aovisimap_relid, NULL);

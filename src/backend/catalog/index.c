@@ -2234,18 +2234,13 @@ IndexBuildScan(Relation parentRelation,
 	 * Prepare for scan of the base relation.  In a normal index build, we use
 	 * SnapshotAny because we must retrieve all tuples and do our own time
 	 * qual checks (because we have to index RECENTLY_DEAD tuples). In a
-	 * concurrent build, we take a regular MVCC snapshot and index whatever's
-	 * live according to that.	During bootstrap we just use SnapshotNow.
+	 * concurrent build, or during bootstrap, we take a regular MVCC snapshot
+	 * and index whatever's live according to that.
 	 *
-	 * If the relation is an append-only table, we use a regular MVCC snapshot
-	 * and index what is actually in the table.
+	 * If the relation is an append-only table, we also use a regular MVCC
+	 * snapshot.
 	 */
-	if (IsBootstrapProcessingMode())
-	{
-		snapshot = SnapshotNow;
-		OldestXmin = InvalidTransactionId;		/* not used */
-	}
-	else if (indexInfo->ii_Concurrent ||
+	if (IsBootstrapProcessingMode() || indexInfo->ii_Concurrent ||
 			 RelationIsAppendOptimized(parentRelation))
 	{
 		snapshot = RegisterSnapshot(GetTransactionSnapshot());
@@ -2256,7 +2251,7 @@ IndexBuildScan(Relation parentRelation,
 	{
 		snapshot = SnapshotAny;
 		/* okay to ignore lazy VACUUMs here */
-		OldestXmin = GetOldestXmin(parentRelation->rd_rel->relisshared, true);
+		OldestXmin = GetOldestXmin(parentRelation, true);
 	}
 
 	if (RelationIsHeap(parentRelation))
@@ -2822,7 +2817,7 @@ IndexBuildAppendOnlyColScan(Relation parentRelation,
 	Assert(parentRelation->rd_att != NULL);
 	proj = palloc0(parentRelation->rd_att->natts * sizeof(bool));
 
-	GetAppendOnlyEntryAuxOids(RelationGetRelid(parentRelation), SnapshotNow,
+	GetAppendOnlyEntryAuxOids(RelationGetRelid(parentRelation), NULL,
 							  NULL,
 							  &blkdirrelid, &blkdiridxid,
 							  NULL, NULL);
@@ -3896,7 +3891,7 @@ reindex_relation(Oid relid, int flags)
 
 	/* Obtain the aoseg_relid and aoblkdir_relid if the relation is an AO table. */
 	if ((flags & REINDEX_REL_PROCESS_TOAST) && relIsAO)
-		GetAppendOnlyEntryAuxOids(relid, SnapshotNow,
+		GetAppendOnlyEntryAuxOids(relid, NULL,
 								  &aoseg_relid,
 								  &aoblkdir_relid, NULL,
 								  &aovisimap_relid, NULL);

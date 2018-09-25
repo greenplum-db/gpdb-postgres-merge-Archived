@@ -2653,7 +2653,7 @@ DelRoleDenials(const char *rolename, Oid roleid, List *dropintervals)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(roleid));
 	sscan = systable_beginscan(pg_auth_time_rel, InvalidOid,
-							   false, SnapshotNow, 1, &scankey);
+							   false, NULL, 1, &scankey);
 
 	while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
 	{

@@ -3809,7 +3809,7 @@ AlterType(AlterTypeStmt *stmt)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(typid));
 	scan = systable_beginscan(pgtypeenc, TypeEncodingTypidIndexId, true,
-							  SnapshotNow, 1, &scankey);
+							  NULL, 1, &scankey);
 
 	tup = systable_getnext(scan);
 	if (HeapTupleIsValid(tup))
@@ -3868,7 +3868,7 @@ remove_type_encoding(Oid typid)
 				ObjectIdGetDatum(typid));
 
 	sscan = systable_beginscan(rel, TypeEncodingTypidIndexId, true,
-							   SnapshotNow, 1, &scankey);
+							   NULL, 1, &scankey);
 	while((tuple = systable_getnext(sscan)) != NULL)
 	{
 		simple_heap_delete(rel, &tuple->t_self);

@@ -1609,7 +1609,7 @@ get_ao_distribution_oid(PG_FUNCTION_ARGS)
 					 errmsg("'%s' is not an append-only relation",
 							RelationGetRelationName(parentrel))));
 
-		GetAppendOnlyEntryAuxOids(RelationGetRelid(parentrel), SnapshotNow,
+		GetAppendOnlyEntryAuxOids(RelationGetRelid(parentrel), NULL,
 								  &segrelid, NULL, NULL, NULL, NULL);
 		Assert(OidIsValid(segrelid));
 
@@ -1796,7 +1796,7 @@ get_ao_distribution_name(PG_FUNCTION_ARGS)
 					 errmsg("'%s' is not an append-only relation",
 							RelationGetRelationName(parentrel))));
 
-		GetAppendOnlyEntryAuxOids(RelationGetRelid(parentrel), SnapshotNow,
+		GetAppendOnlyEntryAuxOids(RelationGetRelid(parentrel), NULL,
 								  &segrelid,
 								  NULL, NULL, NULL, NULL);
 		Assert(OidIsValid(segrelid));
