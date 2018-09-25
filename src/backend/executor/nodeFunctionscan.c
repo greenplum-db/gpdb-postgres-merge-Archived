@@ -566,6 +566,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		i++;
 	}
 
+	ExecAssignScanType(&scanstate->ss, scan_tupdesc);
+
 	/*
 	 * Initialize result tuple type and projection info.
 	 */

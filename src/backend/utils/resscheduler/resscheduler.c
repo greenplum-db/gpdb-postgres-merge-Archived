@@ -192,14 +192,6 @@ InitResQueues(void)
 	SysScanDesc sscan;
 	
 	Assert(ResScheduler);
-
-	/*
-	 * Need a resource owner to keep the heapam code happy.
-	 */
-	Assert(CurrentResourceOwner == NULL);
-
-	ResourceOwner owner = ResourceOwnerCreate(NULL, "InitQueues");
-	CurrentResourceOwner = owner;
 	
 	/**
 	 * The resqueue shared mem initialization must be serialized. Only the first session
@@ -220,8 +212,6 @@ InitResQueues(void)
 		LWLockRelease(ResQueueLock);
 		UnlockRelationOid(ResQueueCapabilityRelationId, RowExclusiveLock);
 		heap_close(relResqueue, AccessShareLock);
-		CurrentResourceOwner = NULL;
-		ResourceOwnerDelete(owner);
 		return;
 	}
 
@@ -269,9 +259,6 @@ InitResQueues(void)
 
 
 	elog(LOG,"initialized %d resource queues", numQueues);
-
-	CurrentResourceOwner = NULL;
-	ResourceOwnerDelete(owner);
 
 	return;
 }

@@ -4825,11 +4825,6 @@ PostgresMain(int argc, char *argv[],
 	SetProcessingMode(NormalProcessing);
 
 	/*
-	 * Initialize resource manager.
-	 */
-	InitResManager();
-
-	/*
 	 * Now all GUC states are fully set up.  Report them to client if
 	 * appropriate.
 	 */

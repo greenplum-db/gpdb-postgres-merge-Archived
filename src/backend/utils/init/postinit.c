@@ -72,6 +72,7 @@
 #include "utils/timeout.h"
 #include "utils/tqual.h"
 
+#include "utils/resource_manager.h"
 #include "utils/session_state.h"
 
 
@@ -1155,6 +1156,11 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			lookupSharedSnapshot("Reader qExec", "Writer qExec", gp_session_id);
 		}
 	}
+
+	/*
+	 * Initialize resource manager.
+	 */
+	InitResManager();
 
 	/* close the transaction we started above */
 	if (!bootstrap)
