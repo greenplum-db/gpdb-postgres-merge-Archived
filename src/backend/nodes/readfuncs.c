@@ -2102,6 +2102,8 @@ _readColumnDef(void)
 	READ_OID_FIELD(collOid);
 	READ_NODE_FIELD(constraints);
 	READ_NODE_FIELD(encoding);
+	READ_NODE_FIELD(fdwoptions);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }

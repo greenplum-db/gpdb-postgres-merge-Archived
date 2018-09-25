@@ -696,6 +696,7 @@ _outCreateStmt_common(StringInfo str, CreateStmt *node)
 	WRITE_INT_FIELD(parentOidCount);
 	WRITE_NODE_FIELD(ofTypename);
 	WRITE_NODE_FIELD(constraints);
+
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
 	WRITE_STRING_FIELD(tablespacename);
