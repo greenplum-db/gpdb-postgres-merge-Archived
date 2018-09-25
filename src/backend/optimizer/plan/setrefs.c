@@ -839,7 +839,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, tplan->scan.plan.targetlist, rtoffset);
 				tplan->scan.plan.qual =
 					fix_scan_list(root, tplan->scan.plan.qual, rtoffset);
-				tplan->function = (RangeTblFunction *) 
+				tplan->function = (RangeTblFunction *)
 					fix_scan_expr(root, (Node *) tplan->function, rtoffset);
 
 				return plan;

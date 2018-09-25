@@ -28,7 +28,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_proc definition.  cpp turns this into
+ *		pg_proc defrginition.  cpp turns this into
  *		typedef struct FormData_pg_proc
  * ----------------
  */
@@ -2591,8 +2591,6 @@ DESCR("aggregate transition function");
 DATA(insert OID = 3571 (  int4_avg_accum_inv   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1016 "1016 23" _null_ _null_ _null_ _null_ int4_avg_accum_inv _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 1964 (  int8_avg		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 1700 "1016" _null_ _null_ _null_ _null_	int8_avg _null_ _null_ _null_ ));
-DESCR("aggregate final function");
-DATA(insert OID = 3572 (  int2int4_sum	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 20 "1016" _null_ _null_ _null_ _null_ int2int4_sum _null_ _null_ _null_ ));
 DESCR("aggregate final function");
 DATA(insert OID = 3572 (  int2int4_sum	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 20 "1016" _null_ _null_ _null_ _null_ int2int4_sum _null_ _null_ _null_ ));
 DESCR("aggregate final function");
