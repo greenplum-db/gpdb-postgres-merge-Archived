@@ -130,16 +130,11 @@ max_prepared_transactions = 250		# can be 0 or more
 					# (change requires restart)
 # Note:  Increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
-<<<<<<< HEAD
-#work_mem = 32MB			# min 64kB
-#maintenance_work_mem = 64MB		# min 1MB
-=======
 # It is not advisable to set max_prepared_transactions nonzero unless you
 # actively intend to use prepared transactions.
 #work_mem = 4MB				# min 64kB
 #maintenance_work_mem = 64MB		# min 1MB
 #autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 #max_stack_depth = 2MB			# min 100kB
 #dynamic_shared_memory_type = posix	# the default is the first option
 					# supported by the operating system:
@@ -305,11 +300,7 @@ max_prepared_transactions = 250		# can be 0 or more
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-<<<<<<< HEAD
 #gp_motion_cost_per_row = 0.0  # (same) (if 0, 2*cpu_tuple_cost is used)
-=======
-#effective_cache_size = 4GB
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #effective_cache_size = 4MB
 
