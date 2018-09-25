@@ -1951,11 +1951,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
-			show_grouping_keys(planstate,
-							   ((Agg *) plan)->numCols,
-							   ((Agg *) plan)->grpColIdx,
-							   "Group Key",
-							   ancestors, es);
 			break;
 #if 0 /* Group node has been disabled in GPDB */
 		case T_Group:
@@ -2500,6 +2495,12 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 	}
 
 	ExplainPropertyList(qlabel, result, es);
+
+	/*
+	 * GPDB_90_MERGE_FIXME: handle rollup times printing
+	 * if (rollup_gs_times > 1)
+	 *	appendStringInfo(es->str, " (%d times)", rollup_gs_times);
+	 */
 }
 
 
