@@ -52,7 +52,6 @@ gp_statistics_estimate_reltuples_relpages_heap(Relation rel, float4 *reltuples, 
 	BlockNumber nblockstarget = (BlockNumber) gp_statistics_blocks_target; 
 	BlockNumber nblocksseen = 0;
 	int			j;		/* counter */
-	Snapshot	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	
 	/**
 	 * Ensure that the right kind of relation with the right kind of storage is passed to us.
@@ -72,6 +71,7 @@ gp_statistics_estimate_reltuples_relpages_heap(Relation rel, float4 *reltuples, 
 		return; 
 	}
 		
+	Snapshot	snapshot = RegisterSnapshot(GetLatestSnapshot());
 	for (j = 0; j < nblockstotal; j++)
 	{
 		/**
