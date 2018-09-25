@@ -126,10 +126,10 @@ gp_aovisimap(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
-Datum gp_aovisimap_hidden(PG_FUNCTION_ARGS);
+Datum gp_aovisimap_hidden_info(PG_FUNCTION_ARGS);
 
 Datum
-gp_aovisimap_hidden(PG_FUNCTION_ARGS)
+gp_aovisimap_hidden_info(PG_FUNCTION_ARGS)
 {
 	Oid			aoRelOid = PG_GETARG_OID(0);
 	Datum		values[3];

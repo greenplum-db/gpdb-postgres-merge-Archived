@@ -51,18 +51,12 @@ gp_aocsseg_history(PG_FUNCTION_ARGS);
 
 extern Datum
 gp_aovisimap(PG_FUNCTION_ARGS);
-extern Datum
-gp_aovisimap_name(PG_FUNCTION_ARGS);
 
 extern Datum
 gp_aovisimap_entry(PG_FUNCTION_ARGS);
-extern Datum
-gp_aovisimap_entry_name(PG_FUNCTION_ARGS);
 
 extern Datum
 gp_aovisimap_hidden_info(PG_FUNCTION_ARGS);
-extern Datum
-gp_aovisimap_hidden_info_name(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(gp_aoseg_history_wrapper);
 PG_FUNCTION_INFO_V1(gp_aoseg_name_wrapper);
@@ -70,11 +64,8 @@ PG_FUNCTION_INFO_V1(gp_aocsseg_name_wrapper);
 PG_FUNCTION_INFO_V1(gp_aocsseg_wrapper);
 PG_FUNCTION_INFO_V1(gp_aocsseg_history_wrapper);
 PG_FUNCTION_INFO_V1(gp_aovisimap_wrapper);
-PG_FUNCTION_INFO_V1(gp_aovisimap_name_wrapper);
 PG_FUNCTION_INFO_V1(gp_aovisimap_entry_wrapper);
-PG_FUNCTION_INFO_V1(gp_aovisimap_entry_name_wrapper);
 PG_FUNCTION_INFO_V1(gp_aovisimap_hidden_info_wrapper);
-PG_FUNCTION_INFO_V1(gp_aovisimap_hidden_info_name_wrapper);
 
 extern Datum
 gp_aoseg_history_wrapper(PG_FUNCTION_ARGS);
@@ -89,15 +80,9 @@ gp_aocsseg_history_wrapper(PG_FUNCTION_ARGS);
 extern Datum
 gp_aovisimap_wrapper(PG_FUNCTION_ARGS);
 extern Datum
-gp_aovisimap_name_wrapper(PG_FUNCTION_ARGS);
-extern Datum
 gp_aovisimap_entry_wrapper(PG_FUNCTION_ARGS);
 extern Datum
-gp_aovisimap_entry_name_wrapper(PG_FUNCTION_ARGS);
-extern Datum
 gp_aovisimap_hidden_info_wrapper(PG_FUNCTION_ARGS);
-extern Datum
-gp_aovisimap_hidden_info_name_wrapper(PG_FUNCTION_ARGS);
 
 /* ---------------------------------------------------------------------
  * Interface to gp_aoseg_history_wrapper function.
@@ -264,7 +249,7 @@ gp_aocsseg_history_wrapper(PG_FUNCTION_ARGS)
 /* 
  * Interface to gp_aovisimap_wrapper function.
  *
- * CREATE FUNCTION gp_aovisimap(oid) RETURNS TABLE 
+ * CREATE FUNCTION gp_aovisimap(regclass) RETURNS TABLE 
  * (tid tid, segno integer, row_num bigint) 
  * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_wrapper' LANGUAGE C STRICT;
  */
@@ -277,24 +262,9 @@ gp_aovisimap_wrapper(PG_FUNCTION_ARGS)
 }
 
 /* 
- * Interface to gp_aovisimap_name_wrapper function.
- *
- * CREATE FUNCTION gp_aovisimap_name(text) RETURNS TABLE 
- * (tid tid, segno integer, row_num bigint) 
- * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_name_wrapper' LANGUAGE C STRICT;
- */
-Datum
-gp_aovisimap_name_wrapper(PG_FUNCTION_ARGS)
-{
-	Datum returnValue = gp_aovisimap_name(fcinfo);
-
-	PG_RETURN_DATUM(returnValue);
-}
-
-/* 
  * Interface to gp_aovisimap_hidden_info_wrapper function.
  *
- * CREATE FUNCTION gp_aovisimap_hidden_info(oid) RETURNS TABLE 
+ * CREATE FUNCTION gp_aovisimap_hidden_info(regclass) RETURNS TABLE 
  * (segno integer, hidden_tupcount bigint, total_tupcount bigint) 
  * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_hidden_info_wrapper' LANGUAGE C STRICT;
  */
@@ -307,24 +277,9 @@ gp_aovisimap_hidden_info_wrapper(PG_FUNCTION_ARGS)
 }
 
 /* 
- * Interface to gp_aovisimap_hidden_info_name_wrapper function.
- *
- * CREATE FUNCTION gp_aovisimap_hidden_info_name(text) RETURNS TABLE 
- * (segno integer, hidden_tupcount bigint, total_tupcount bigint) 
- * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_hidden_info_name_wrapper' LANGUAGE C STRICT;
- */
-Datum
-gp_aovisimap_hidden_info_name_wrapper(PG_FUNCTION_ARGS)
-{
-	Datum returnValue = gp_aovisimap_hidden_info_name(fcinfo);
-
-	PG_RETURN_DATUM(returnValue);
-}
-
-/* 
  * Interface to gp_aovisimap_entry_wrapper function.
  *
- * CREATE FUNCTION gp_aovisimap_entry(oid) RETURNS TABLE 
+ * CREATE FUNCTION gp_aovisimap_entry(regclass) RETURNS TABLE 
  * (segno integer, hidden_tupcount bigint, total_tupcount bigint) 
  * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_entry_wrapper' LANGUAGE C STRICT;
  */
@@ -332,21 +287,6 @@ Datum
 gp_aovisimap_entry_wrapper(PG_FUNCTION_ARGS)
 {
 	Datum returnValue = gp_aovisimap_entry(fcinfo);
-
-	PG_RETURN_DATUM(returnValue);
-}
-
-/* 
- * Interface to gp_aovisimap_entry_name_wrapper function.
- *
- * CREATE FUNCTION gp_aovisimap_entry_name(text) RETURNS TABLE 
- * (segno integer, hidden_tupcount bigint, total_tupcount bigint) 
- * AS '$libdir/gp_ao_co_diagnostics.so', 'gp_aovisimap_entry_name_wrapper' LANGUAGE C STRICT;
- */
-Datum
-gp_aovisimap_entry_name_wrapper(PG_FUNCTION_ARGS)
-{
-	Datum returnValue = gp_aovisimap_entry_name(fcinfo);
 
 	PG_RETURN_DATUM(returnValue);
 }

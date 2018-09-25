@@ -1897,54 +1897,30 @@ AS '$libdir/gp_ao_co_diagnostics' , 'gp_aocsseg_history_wrapper'
 LANGUAGE C STRICT;
 GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aocsseg_history(oid) TO public;
 
-CREATE FUNCTION gp_toolkit.__gp_aovisimap(oid)
+CREATE FUNCTION gp_toolkit.__gp_aovisimap(regclass)
 RETURNS TABLE (tid tid,
     segno int,
     row_num bigint)
 AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_wrapper'
 LANGUAGE C IMMUTABLE;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap(oid) TO public;
+GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap(regclass) TO public;
 
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_name(text)
-RETURNS TABLE (tid tid,
-    segno integer,
-    row_num bigint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_name_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_name(text) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(oid)
+CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass)
 RETURNS TABLE (segno integer,
     hidden_tupcount bigint,
     total_tupcount bigint)
 AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_hidden_info_wrapper'
 LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(oid) TO public;
+GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_hidden_info(regclass) TO public;
 
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_hidden_info_name(text)
-RETURNS TABLE (segno integer,
-    hidden_tupcount bigint,
-    total_tupcount bigint)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_hidden_info_name_wrapper'
-LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_hidden_info_name(text) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_entry(oid)
+CREATE FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass)
 RETURNS TABLE(segno integer,
     first_row_num bigint,
     hidden_tupcount int,
     bitmap text)
 AS '$libdir/gp_ao_co_diagnostics','gp_aovisimap_entry_wrapper'
 LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_entry(oid) TO public;
-
-CREATE FUNCTION gp_toolkit.__gp_aovisimap_entry_name(text)
-RETURNS TABLE(segno integer,
-    first_row_num bigint,
-    hidden_tupcount int,
-    bitmap text)
-AS '$libdir/gp_ao_co_diagnostics', 'gp_aovisimap_entry_name_wrapper' LANGUAGE C STRICT;
-GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_entry_name(text) TO public;
+GRANT EXECUTE ON FUNCTION gp_toolkit.__gp_aovisimap_entry(regclass) TO public;
 
 CREATE FUNCTION gp_toolkit.__gp_aoseg_name(text)
 RETURNS TABLE (segno integer, eof bigint,
