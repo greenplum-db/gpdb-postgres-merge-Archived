@@ -467,17 +467,12 @@ DefineIndex(Oid relationId,
 	 * relation.  To avoid lock upgrade hazards, that lock should be at least
 	 * as strong as the one we take here.
 	 */
-<<<<<<< HEAD
 	if (RangeVarIsAppendOptimizedTable(stmt->relation))
 		heap_lockmode = ShareRowExclusiveLock;
 	else
 		heap_lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 
-	rel = heap_openrv(stmt->relation, heap_lockmode);
-=======
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
@@ -1233,7 +1228,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			attcollation = exprCollation(expr);
 
 			/*
-<<<<<<< HEAD
 			 * transformExpr() should have already rejected subqueries,
 			 * aggregates, and window functions, based on the EXPR_KIND_
 			 * for an index expression.
@@ -1241,9 +1235,6 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 
 			/*
 			 * Strip any top-level COLLATE clause.	This ensures that we treat
-=======
-			 * Strip any top-level COLLATE clause.  This ensures that we treat
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
 			while (IsA(expr, CollateExpr))
@@ -2033,7 +2024,9 @@ ReindexRelationList(List *relids)
 			stmt->kind = OBJECT_TABLE;
 
 			/* perform reindex locally */
-			if (!reindex_relation(relid, REINDEX_REL_PROCESS_TOAST))
+			if (!reindex_relation(relid,
+								  REINDEX_REL_PROCESS_TOAST |
+								  REINDEX_REL_CHECK_CONSTRAINTS))
 				ereport(NOTICE,
 					(errmsg("table \"%s\" has no indexes",
 							RelationGetRelationName(rel))));
@@ -2134,7 +2127,9 @@ ReindexTable(ReindexStmt *stmt)
 
 	if (Gp_role == GP_ROLE_EXECUTE)
 	{
-		reindex_relation(stmt->relid, REINDEX_REL_PROCESS_TOAST);
+		reindex_relation(stmt->relid,
+						 REINDEX_REL_PROCESS_TOAST |
+						 REINDEX_REL_CHECK_CONSTRAINTS);
 		return stmt->relid;
 	}
 
@@ -2142,7 +2137,6 @@ ReindexTable(ReindexStmt *stmt)
 	heapOid = RangeVarGetRelidExtended(stmt->relation, ShareLock, false, false,
 									   RangeVarCallbackOwnsTable, NULL);
 
-<<<<<<< HEAD
 	/*
 	 * Gather child partition relations.
 	 */
@@ -2205,14 +2199,6 @@ ReindexTable(ReindexStmt *stmt)
 	ReindexRelationList(relids);
 
 	MemoryContextDelete(private_context);
-=======
-	if (!reindex_relation(heapOid,
-						  REINDEX_REL_PROCESS_TOAST |
-						  REINDEX_REL_CHECK_CONSTRAINTS))
-		ereport(NOTICE,
-				(errmsg("table \"%s\" has no indexes",
-						relation->relname)));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	return heapOid;
 }
@@ -2319,31 +2305,7 @@ ReindexDatabase(ReindexStmt *stmt)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
-<<<<<<< HEAD
 	ReindexRelationList(relids);
-=======
-	/* Now reindex each rel in a separate transaction */
-	PopActiveSnapshot();
-	CommitTransactionCommand();
-	foreach(l, relids)
-	{
-		Oid			relid = lfirst_oid(l);
-
-		StartTransactionCommand();
-		/* functions in indexes may want a snapshot set */
-		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid,
-							 REINDEX_REL_PROCESS_TOAST |
-							 REINDEX_REL_CHECK_CONSTRAINTS))
-			ereport(NOTICE,
-					(errmsg("table \"%s.%s\" was reindexed",
-							get_namespace_name(get_rel_namespace(relid)),
-							get_rel_name(relid))));
-		PopActiveSnapshot();
-		CommitTransactionCommand();
-	}
-	StartTransactionCommand();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	MemoryContextDelete(private_context);
 
