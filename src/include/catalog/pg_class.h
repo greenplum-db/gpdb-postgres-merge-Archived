@@ -123,6 +123,7 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relpersistence	15
 #define Anum_pg_class_relkind			16
 #define Anum_pg_class_relstorage		17 /* GPDB specific */
+GPDB_COLUMN_DEFAULT(relstorage, h);
 #define Anum_pg_class_relnatts			18
 #define Anum_pg_class_relchecks			19
 #define Anum_pg_class_relhasoids		20
@@ -150,13 +151,13 @@ typedef FormData_pg_class *Form_pg_class;
  * Note: "3" in the relfrozenxid column stands for FirstNormalTransactionId;
  * similarly, "1" in relminmxid stands for FirstMultiXactId
  */
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r h 30 0 t f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f t n 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r h 21 0 f f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 0 PGUID 0 0 0 0 0 0 0 f f p r 21 0 f f f f f t n 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r h 29 0 t f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 0 PGUID 0 0 0 0 0 0 0 f f p r 29 0 t f f f f t n 3 1 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r h 30 0 t f f f f t 3 1 _null_ _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 0 PGUID 0 0 0 0 0 0 0 f f p r 30 0 t f f f f t n 3 1 _null_ _null_ ));
 DESCR("");
 
 
