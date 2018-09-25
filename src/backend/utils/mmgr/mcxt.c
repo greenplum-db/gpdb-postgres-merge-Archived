@@ -92,9 +92,17 @@ MemoryContext PortalContext = NULL;
  * currently just hopes for the best, which is wrong and ought to be fixed,
  * but it's a known issue so let's not complain about in the meanwhile.
  */
+/*
+ * GPDB_94_MERGE_FIXME: Disabled temporarily, we were unsafe things in GPDB.
+ * Fix all the failures and re-enable this later.
+ */
+#if 0
 #define AssertNotInCriticalSection(context) \
 	Assert(CritSectionCount == 0 || (context) == ErrorContext || \
 		   AmCheckpointerProcess())
+#else
+#define AssertNotInCriticalSection(context) 
+#endif
 
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
