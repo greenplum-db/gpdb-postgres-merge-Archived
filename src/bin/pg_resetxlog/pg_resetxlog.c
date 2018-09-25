@@ -64,6 +64,7 @@ static const char *progname;
 static uint32 set_xid_epoch = (uint32) -1;
 static TransactionId set_xid = 0;
 static Oid	set_oid = 0;
+static Oid	set_relfilenode = 0;
 static MultiXactId set_mxid = 0;
 static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
 static uint32 minXlogTli = 0;
@@ -92,20 +93,9 @@ main(int argc, char *argv[])
 	bool		force = false;
 	bool		binary_upgrade = false;
 	bool		noupdate = false;
-<<<<<<< HEAD
-	uint32		set_xid_epoch = (uint32) -1;
-	TransactionId set_xid = 0;
-	Oid			set_oid = 0;
-	Oid			set_relfilenode = 0;
 	MultiXactId set_mxid = 0;
 	MultiXactId set_oldestmxid = 0;
-	MultiXactOffset set_mxoff = (MultiXactOffset) -1;
-	uint32		minXlogTli = 0;
-	XLogSegNo	minXlogSegNo = 0;
 	uint32		data_checksum_version = (uint32) PG_DATA_CHECKSUM_VERSION + 1;
-=======
-	MultiXactId set_oldestmxid = 0;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	char	   *endptr;
 	char	   *endptr2;
 	char	   *DataDir;
@@ -784,6 +774,12 @@ PrintNewControlValues()
 	{
 		printf(_("NextOID:                              %u\n"),
 			   ControlFile.checkPointCopy.nextOid);
+	}
+
+	if (set_relfilenode != 0)
+	{
+		printf(_("NextRelfilenode:                      %u\n"),
+			   ControlFile.checkPointCopy.nextRelfilenode);
 	}
 
 	if (set_xid != 0)

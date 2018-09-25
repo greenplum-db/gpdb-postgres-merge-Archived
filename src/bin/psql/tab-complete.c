@@ -1,13 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2005-2010, Greenplum inc
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Copyright (c) 2000-2013, PostgreSQL Global Development Group
-=======
  * Copyright (c) 2000-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  *
  * src/bin/psql/tab-complete.c
  */
@@ -3755,11 +3751,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 
 			/*
 			 * When fetching relation names, suppress system catalogs unless
-<<<<<<< HEAD
-			 * the input-so-far begins with "pg_" or "gp_".	This is a compromise
-=======
-			 * the input-so-far begins with "pg_".  This is a compromise
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+			 * the input-so-far begins with "pg_" or "gp_".	 This is a compromise
 			 * between not offering system catalogs for completion at all, and
 			 * having them swamp the result when the input is just "p".
 			 */

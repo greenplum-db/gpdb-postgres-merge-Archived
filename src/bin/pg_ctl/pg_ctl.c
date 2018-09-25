@@ -469,22 +469,14 @@ start_postmaster(void)
 	 * the PID without having to rely on reading it back from the pidfile.
 	 */
 	if (log_file != NULL)
-<<<<<<< HEAD
 	{
-		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
-=======
-		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &",
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		snprintf(formatstr, MAXPGPATH, "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &",
 				 exec_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file);
 	}
 	else
-<<<<<<< HEAD
 	{
-		snprintf(formatstr, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
-=======
-		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s < \"%s\" 2>&1 &",
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		snprintf(formatstr, MAXPGPATH, "\"%s\" %s%s < \"%s\" 2>&1 &",
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 	}
 
