@@ -68,10 +68,4 @@ WDT     32400 D  # West Australian Daylight-Saving Time (not in IANA database)
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: West Samoa Time
-<<<<<<< HEAD
 WST     28800    # Western Standard Time (not in IANA database)
-=======
-WST     28800    # Western Standard Time (Australia)
-                 #     (Antarctica/Casey)
-                 #     (Australia/Perth)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

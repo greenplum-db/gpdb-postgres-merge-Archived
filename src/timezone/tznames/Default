@@ -614,7 +614,6 @@ NZDT    46800 D  # New Zealand Daylight Time
 NZST    43200    # New Zealand Standard Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)
-<<<<<<< HEAD
 PGT     36000    # Papua New Guinea Time (obsolete)
 PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati) (obsolete)
 PONT    39600    # Ponape Time (Micronesia) (obsolete)
@@ -628,28 +627,3 @@ VUT     39600    # Vanuata Time (obsolete)
 WAKT    43200    # Wake Time (obsolete)
 WFT     43200    # Wallis and Futuna Time (obsolete)
 YAPT    36000    # Yap Time (Micronesia) (not in IANA database)
-=======
-PGT     36000    # Papua New Guinea Time
-                 #     (Pacific/Port_Moresby)
-PHOT    46800    # Phoenix Islands Time (Kiribati)
-                 #     (Pacific/Enderbury)
-PONT    39600    # Ponape Time (Micronesia)
-                 #     (Pacific/Ponape)
-PWT     32400    # Palau Time
-                 #     (Pacific/Palau)
-TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
-                 #     (Pacific/Tahiti)
-TKT     46800    # Tokelau Time (caution: this used to mean -36000)
-                 #     (Pacific/Fakaofo)
-TOT     46800    # Tonga Time (not in zic)
-TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
-                 #     (Pacific/Truk)
-TVT     43200    # Tuvalu Time
-                 #     (Pacific/Funafuti)
-VUT     39600    # Vanuata Time (not in zic)
-WAKT    43200    # Wake Time
-                 #     (Pacific/Wake)
-WFT     43200    # Wallis and Futuna Time
-                 #     (Pacific/Wallis)
-YAPT    36000    # Yap Time (Micronesia) (not in zic)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

@@ -943,7 +943,6 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 	int			dims[MAXDIM];
 	int			lbs[MAXDIM];
 	int			currelem;
-	Datum		rv;
 	PyObject   *pyptr = plrv;
 	PyObject   *next;
 
