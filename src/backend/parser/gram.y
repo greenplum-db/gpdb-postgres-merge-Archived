@@ -3139,7 +3139,7 @@ alter_table_partition_id_spec:
 			 * just replacing RANK with IDENT creates a conflict with this
 			 * AexprConst rule:
 			 *
-			 * func_name '(' expr_list ')' Sconst
+			 * func_name '(' func_arg_list opt_sort_clause ')' Sconst
 			 *
 			 * I.e. after the parser has shifted "func_name '('", it doesn't
 			 * know whether there's the Sconst at the end, which implies an
@@ -3152,7 +3152,7 @@ alter_table_partition_id_spec:
 			 * code that func_name was RANK, and that the expr_list was a
 			 * NumericOnly.
  			 */
-           | FOR '(' func_name '(' func_arg_list ')' ')'
+           | FOR '(' func_name '(' func_arg_list opt_sort_clause ')' ')'
 				{
 					Node		   *arg;
 					Value		   *val;
@@ -3175,6 +3175,10 @@ alter_table_partition_id_spec:
 						parser_yyerror("syntax error");
 					val = &((A_Const *) arg)->val;
 					if (!IsA(val, Integer) && !IsA(val, Float))
+						parser_yyerror("syntax error");
+
+					/* we don't want a sort clause */
+					if ($6)
 						parser_yyerror("syntax error");
 
 					n = makeNode(AlterPartitionId);
