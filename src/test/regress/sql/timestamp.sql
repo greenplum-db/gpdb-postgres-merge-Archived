@@ -223,7 +223,6 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMP_TBL;
 
-<<<<<<< HEAD
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
 
@@ -269,6 +268,9 @@ SELECT '' AS to_timestamp_20, to_timestamp('5527', 'IIWID');
 
 SELECT '' AS to_timestamp_21, to_timestamp('2005364', 'IYYYIDDD');
 
+-- timestamp numeric fields constructor
+SELECT make_timestamp(2014,12,28,6,30,45.887);
+
 SET DateStyle TO DEFAULT;
 
 -- Make sure timeofdate() and current_time() are doing roughly the same thing
@@ -282,7 +284,3 @@ select '20090625123002.111111111111'::timestamp;
 -- should error out
 select '2009062512300.111111111111'::timestamp;
 select '200906251230021.111111111111'::timestamp;
-=======
--- timestamp numeric fields constructor
-SELECT make_timestamp(2014,12,28,6,30,45.887);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

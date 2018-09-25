@@ -826,18 +826,6 @@ WHERE a.aggfnoid = p.oid AND
     (pfn.proretset OR
      NOT binary_coercible(pfn.prorettype, p.prorettype) OR
      NOT binary_coercible(a.aggmtranstype, pfn.proargtypes[0]) OR
-<<<<<<< HEAD
-     CASE WHEN a.aggkind = 'n' THEN pfn.pronargs != 1
-     ELSE pfn.pronargs != p.pronargs + 1
-       OR (p.pronargs > 0 AND
-         NOT binary_coercible(p.proargtypes[0], pfn.proargtypes[1]))
-       OR (p.pronargs > 1 AND
-         NOT binary_coercible(p.proargtypes[1], pfn.proargtypes[2]))
-       OR (p.pronargs > 2 AND
-         NOT binary_coercible(p.proargtypes[2], pfn.proargtypes[3]))
-       -- we could carry the check further, but 3 args is enough for now
-     END);
-=======
      CASE WHEN a.aggmfinalextra THEN pfn.pronargs != p.pronargs + 1
           ELSE pfn.pronargs != a.aggnumdirectargs + 1 END
      OR (pfn.pronargs > 1 AND
@@ -848,7 +836,6 @@ WHERE a.aggfnoid = p.oid AND
          NOT binary_coercible(p.proargtypes[2], pfn.proargtypes[3]))
      -- we could carry the check further, but 3 args is enough for now
     );
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 -- If mtransfn is strict then either minitval should be non-NULL, or
 -- input type should match mtranstype so that the first non-null input
@@ -870,7 +857,6 @@ WHERE a.aggfnoid = p.oid AND
     a.aggminvtransfn = iptr.oid AND
     ptr.proisstrict != iptr.proisstrict;
 
-<<<<<<< HEAD
 -- Check that all combine functions have signature
 -- combine(transtype, transtype) returns transtype
 -- NOTE: use physically_coercible here, not binary_coercible, because
@@ -937,8 +923,6 @@ WHERE
     (a.aggcombinefn != b.aggcombinefn OR a.aggserialfn != b.aggserialfn
      OR a.aggdeserialfn != b.aggdeserialfn);
 
-=======
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 -- Cross-check aggsortop (if present) against pg_operator.
 -- We expect to find entries for bool_and, bool_or, every, max, and min.
 

@@ -151,15 +151,11 @@ COMMENT ON SEQUENCE sequence_test2 IS NULL;
 -- Test lastval()
 CREATE SEQUENCE seq;
 SELECT nextval('seq');
---SELECT lastval();
+SELECT lastval();
 SELECT setval('seq', 99);
-<<<<<<< HEAD
---SELECT lastval();
-=======
 SELECT lastval();
 DISCARD SEQUENCES;
 SELECT lastval();
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');
