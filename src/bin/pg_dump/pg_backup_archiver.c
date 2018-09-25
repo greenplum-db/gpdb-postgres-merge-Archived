@@ -3010,38 +3010,9 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "TYPE") == 0 ||
 		strcmp(type, "FOREIGN TABLE") == 0 ||
 		strcmp(type, "TEXT SEARCH DICTIONARY") == 0 ||
-<<<<<<< HEAD
-		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0)
-	{
-		appendPQExpBuffer(buf, "%s ", type);
-		if (te->namespace && te->namespace[0])	/* is null pre-7.3 */
-			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
-
-		/*
-		 * Pre-7.3 pg_dump would sometimes (not always) put a fmtId'd name
-		 * into te->tag for an index. This check is heuristic, so make its
-		 * scope as narrow as possible.
-		 */
-		if (AH->version < K_VERS_1_7 &&
-			te->tag[0] == '"' &&
-			te->tag[strlen(te->tag) - 1] == '"' &&
-			strcmp(type, "INDEX") == 0)
-			appendPQExpBuffer(buf, "%s", te->tag);
-		else
-			appendPQExpBuffer(buf, "%s", fmtId(te->tag));
-		return;
-	}
-
-	/* objects named by just a name */
-	if (strcmp(type, "DATABASE") == 0 ||
-		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||
-		strcmp(type, "SERVER") == 0 ||
-		strcmp(type, "USER MAPPING") == 0 ||
-=======
 		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0 ||
 	/* non-schema-specified objects */
 		strcmp(type, "DATABASE") == 0 ||
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		strcmp(type, "PROCEDURAL LANGUAGE") == 0 ||
 		strcmp(type, "SCHEMA") == 0 ||
 		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||

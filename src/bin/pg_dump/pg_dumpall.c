@@ -2,13 +2,9 @@
  *
  * pg_dumpall.c
  *
-<<<<<<< HEAD
  * Portions Copyright (c) 2006-2010, Greenplum inc.
  * Portions Copyright (c) 2012-Present Pivotal Software, Inc.
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
-=======
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * pg_dumpall forces all pg_dump output to be text, since it also outputs
@@ -429,13 +425,9 @@ main(int argc, char *argv[])
 	if (no_security_labels)
 		appendPQExpBufferStr(pgdumpopts, " --no-security-labels");
 	if (no_unlogged_table_data)
-<<<<<<< HEAD
-		appendPQExpBuffer(pgdumpopts, " --no-unlogged-table-data");
-	if (roles_only)
-		appendPQExpBuffer(pgdumpopts, " --roles-only");
-=======
 		appendPQExpBufferStr(pgdumpopts, " --no-unlogged-table-data");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	if (roles_only)
+		appendPQExpBufferStr(pgdumpopts, " --roles-only");
 
 	/*
 	 * If there was a database specified on the command line, use that,
@@ -1144,40 +1136,7 @@ dumpRoles(PGconn *conn)
 						  "ORDER BY 2",
 						  resq_col, resgroup_col, extauth_col, hdfs_col);
 	else
-<<<<<<< HEAD
 		error_unsupported_server_version(conn);
-=======
-		printfPQExpBuffer(buf,
-						  "SELECT 0, usename as rolname, "
-						  "usesuper as rolsuper, "
-						  "true as rolinherit, "
-						  "usesuper as rolcreaterole, "
-						  "usecreatedb as rolcreatedb, "
-						  "true as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, "
-						  "usename = current_user AS is_current_user "
-						  "FROM pg_shadow "
-						  "UNION ALL "
-						  "SELECT 0, groname as rolname, "
-						  "false as rolsuper, "
-						  "true as rolinherit, "
-						  "false as rolcreaterole, "
-						  "false as rolcreatedb, "
-						  "false as rolcanlogin, "
-						  "-1 as rolconnlimit, "
-						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false as rolreplication, "
-						  "null as rolcomment, false "
-						  "FROM pg_group "
-						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
-						  " WHERE usename = groname) "
-						  "ORDER BY 2");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	res = executeQuery(conn, buf->data);
 
@@ -1291,7 +1250,6 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, " VALID UNTIL '%s'",
 							  PQgetvalue(res, i, i_rolvaliduntil));
 
-<<<<<<< HEAD
 		if (resource_queues)
 		{
 			if (!PQgetisnull(res, i, i_rolqueuename))
@@ -1311,32 +1269,29 @@ dumpRoles(PGconn *conn)
 			/* we use the same privilege for gpfdist and gpfdists */
 			if (!PQgetisnull(res, i, i_rolcreaterextgpfd) &&
 				strcmp(PQgetvalue(res, i, i_rolcreaterextgpfd), "t") == 0)
-				appendPQExpBuffer(buf, " CREATEEXTTABLE (protocol='gpfdist', type='readable')");
+				appendPQExpBufferStr(buf, " CREATEEXTTABLE (protocol='gpfdist', type='readable')");
 
 			if (!PQgetisnull(res, i, i_rolcreatewextgpfd) &&
 				strcmp(PQgetvalue(res, i, i_rolcreatewextgpfd), "t") == 0)
-				appendPQExpBuffer(buf, " CREATEEXTTABLE (protocol='gpfdist', type='writable')");
+				appendPQExpBufferStr(buf, " CREATEEXTTABLE (protocol='gpfdist', type='writable')");
 
 			if (!PQgetisnull(res, i, i_rolcreaterexthttp) &&
 				strcmp(PQgetvalue(res, i, i_rolcreaterexthttp), "t") == 0)
-				appendPQExpBuffer(buf, " CREATEEXTTABLE (protocol='http')");
+				appendPQExpBufferStr(buf, " CREATEEXTTABLE (protocol='http')");
 
 			if (hdfs_auth)
 			{
 				if (!PQgetisnull(res, i, i_rolcreaterexthdfs) &&
 					strcmp(PQgetvalue(res, i, i_rolcreaterexthdfs), "t") == 0)
-					appendPQExpBuffer(buf, " CREATEEXTTABLE (protocol='gphdfs', type='readable')");
+					appendPQExpBufferStr(buf, " CREATEEXTTABLE (protocol='gphdfs', type='readable')");
 
 				if (!PQgetisnull(res, i, i_rolcreatewexthdfs) &&
 					strcmp(PQgetvalue(res, i, i_rolcreatewexthdfs), "t") == 0)
-					appendPQExpBuffer(buf, " CREATEEXTTABLE (protocol='gphdfs', type='writable')");
+					appendPQExpBufferStr(buf, " CREATEEXTTABLE (protocol='gphdfs', type='writable')");
 			}
 		}
 
-		appendPQExpBuffer(buf, ";\n");
-=======
 		appendPQExpBufferStr(buf, ";\n");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		if (!PQgetisnull(res, i, i_rolcomment))
 		{
