@@ -2039,91 +2039,7 @@ setup_collation(void)
 
 	PG_CMD_OPEN;
 
-<<<<<<< HEAD
 	//PG_CMD_PUTS("SELECT pg_import_system_collations( (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') ) ;\n\n");
-=======
-	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_collation ( "
-				"	collname name, "
-				"	locale name, "
-				"	encoding int) WITHOUT OIDS;\n");
-
-	while (fgets(localebuf, sizeof(localebuf), locale_a_handle))
-	{
-		size_t		len;
-		int			enc;
-		bool		skip;
-		char	   *quoted_locale;
-		char		alias[NAMEDATALEN];
-
-		len = strlen(localebuf);
-
-		if (len == 0 || localebuf[len - 1] != '\n')
-		{
-			if (debug)
-				fprintf(stderr, _("%s: locale name too long, skipped: \"%s\"\n"),
-						progname, localebuf);
-			continue;
-		}
-		localebuf[len - 1] = '\0';
-
-		/*
-		 * Some systems have locale names that don't consist entirely of ASCII
-		 * letters (such as "bokm&aring;l" or "fran&ccedil;ais").  This is
-		 * pretty silly, since we need the locale itself to interpret the
-		 * non-ASCII characters. We can't do much with those, so we filter
-		 * them out.
-		 */
-		skip = false;
-		for (i = 0; i < len; i++)
-		{
-			if (IS_HIGHBIT_SET(localebuf[i]))
-			{
-				skip = true;
-				break;
-			}
-		}
-		if (skip)
-		{
-			if (debug)
-				fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: \"%s\"\n"),
-						progname, localebuf);
-			continue;
-		}
-
-		enc = pg_get_encoding_from_locale(localebuf, debug);
-		if (enc < 0)
-		{
-			/* error message printed by pg_get_encoding_from_locale() */
-			continue;
-		}
-		if (!PG_VALID_BE_ENCODING(enc))
-			continue;			/* ignore locales for client-only encodings */
-		if (enc == PG_SQL_ASCII)
-			continue;			/* C/POSIX are already in the catalog */
-
-		count++;
-
-		quoted_locale = escape_quotes(localebuf);
-
-		PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
-					   quoted_locale, quoted_locale, enc);
-
-		/*
-		 * Generate aliases such as "en_US" in addition to "en_US.utf8" for
-		 * ease of use.  Note that collation names are unique per encoding
-		 * only, so this doesn't clash with "en_US" for LATIN1, say.
-		 */
-		if (normalize_locale_name(alias, localebuf))
-		{
-			char	   *quoted_alias = escape_quotes(alias);
-
-			PG_CMD_PRINTF3("INSERT INTO tmp_pg_collation VALUES (E'%s', E'%s', %d);\n",
-						   quoted_alias, quoted_locale, enc);
-			free(quoted_alias);
-		}
-		free(quoted_locale);
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* Add an SQL-standard name */
 	PG_CMD_PRINTF2("INSERT INTO pg_collation "
@@ -2135,31 +2051,6 @@ setup_collation(void)
 					", 'C'"
 					", 'C');\n\n", escape_quotes(username), PG_UTF8);
 
-<<<<<<< HEAD
-=======
-	/*
-	 * When copying collations to the final location, eliminate aliases that
-	 * conflict with an existing locale name for the same encoding.  For
-	 * example, "br_FR.iso88591" is normalized to "br_FR", both for encoding
-	 * LATIN1.  But the unnormalized locale "br_FR" already exists for LATIN1.
-	 * Prefer the alias that matches the OS locale name, else the first locale
-	 * name by sort order (arbitrary choice to be deterministic).
-	 *
-	 * Also, eliminate any aliases that conflict with pg_collation's
-	 * hard-wired entries for "C" etc.
-	 */
-	PG_CMD_PUTS("INSERT INTO pg_collation (collname, collnamespace, collowner, collencoding, collcollate, collctype) "
-				" SELECT DISTINCT ON (collname, encoding)"
-				"   collname, "
-				"   (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') AS collnamespace, "
-				"   (SELECT relowner FROM pg_class WHERE relname = 'pg_collation') AS collowner, "
-				"   encoding, locale, locale "
-				"  FROM tmp_pg_collation"
-				"  WHERE NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = tmp_pg_collation.collname)"
-	   "  ORDER BY collname, encoding, (collname = locale) DESC, locale;\n");
-
-	pclose(locale_a_handle);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	PG_CMD_CLOSE;
 	check_ok();
 }
