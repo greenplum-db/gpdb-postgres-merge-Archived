@@ -157,15 +157,12 @@ static BitmapAppendOnlyScan *make_bitmap_appendonlyscan(List *qptlist,
 						   List *bitmapqualorig,
 						   Index scanrelid,
 						   bool isAORow);
-static TableFunctionScan *make_tablefunction(List *qptlist, List *qpqual,
-				   Plan *subplan,
-				   Index scanrelid, Node *funcexpr, List *funccolnames,
-				   List *funccoltypes, List *funccoltypmods,
-				   List *funccolcollations, bytea *funcuserdata);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid, List *functions, bool funcordinality);
+static TableFunctionScan *make_tablefunction(List *qptlist, List *qpqual,
+				   Plan *subplan, Index scanrelid, RangeTblFunction *function);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
 				Index scanrelid, List *values_lists);
 static CteScan *make_ctescan(List *qptlist, List *qpqual,
@@ -2886,27 +2883,20 @@ create_tablefunction_plan(PlannerInfo *root,
 	Plan	   *subplan = best_path->parent->subplan;
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
-	Node	   *funcexpr;
-	bytea	   *funcuserdata;
+	RangeTblFunction *rtf;
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
 	Assert(best_path->parent->rtekind == RTE_TABLEFUNCTION);
-	funcexpr = rte->funcexpr;
-	funcuserdata = rte->funcuserdata;
+	Assert(list_length(rte->functions) == 1);
+	rtf = linitial(rte->functions);
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Create the TableFunctionScan plan */
-	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid,
-								   funcexpr,
-								   rte->eref->colnames,
-								   rte->funccoltypes,
-								   rte->funccoltypmods,
-								   rte->funccolcollations,
-								   funcuserdata);
+	tablefunc = make_tablefunction(tlist, scan_clauses, subplan, scan_relid, rtf);
 
 	/* Cost is determined largely by the cost of the underlying subplan */
 	copy_plan_costsize(&tablefunc->scan.plan, subplan);
@@ -4820,6 +4810,32 @@ make_functionscan(List *qptlist,
 	return node;
 }
 
+static TableFunctionScan *
+make_tablefunction(List *qptlist, List *qpqual, Plan *subplan,
+				   Index scanrelid, RangeTblFunction *function)
+{
+	TableFunctionScan *node = makeNode(TableFunctionScan);
+	Plan	   *plan = &node->scan.plan;
+
+	copy_plan_costsize(plan, subplan);  /* only care about copying size */
+
+	/* FIXME: fix costing */
+	plan->startup_cost  = subplan->startup_cost;
+	plan->total_cost    = subplan->total_cost;
+	plan->total_cost   += 2 * plan->plan_rows;
+
+	plan->qual			= qpqual;
+	plan->targetlist	= qptlist;
+	plan->righttree		= NULL;
+
+	/* Fill in information for the subplan */
+	plan->lefttree		 = subplan;
+	node->scan.scanrelid = scanrelid;
+	node->function = function;
+
+	return node;
+}
+
 static ValuesScan *
 make_valuesscan(List *qptlist,
 				List *qpqual,
@@ -6108,43 +6124,6 @@ make_windowagg(PlannerInfo *root, List *tlist,
 
 	return node;
 }
-
-static TableFunctionScan *
-make_tablefunction(List *qptlist, List *qpqual, Plan *subplan,
-				   Index scanrelid, Node *funcexpr, List *funccolnames,
-				   List *funccoltypes, List *funccoltypmods,
-				   List *funccolcollations, bytea *funcuserdata)
-{
-	TableFunctionScan *node = makeNode(TableFunctionScan);
-	Plan	   *plan = &node->scan.plan;
-
-	copy_plan_costsize(plan, subplan);  /* only care about copying size */
-
-	/* FIXME: fix costing */
-	plan->startup_cost  = subplan->startup_cost;
-	plan->total_cost    = subplan->total_cost;
-	plan->total_cost   += 2 * plan->plan_rows;
-
-	plan->qual			= qpqual;
-	plan->targetlist	= qptlist;
-	plan->righttree		= NULL;
-
-	/* Fill in information for the subplan */
-	plan->lefttree		 = subplan;
-	node->scan.scanrelid = scanrelid;
-
-	/* Fill in information about the function call */
-	node->funcexpr = funcexpr;
-	node->funccolnames = funccolnames;
-	node->funccoltypes = funccoltypes;
-	node->funccoltypmods = funccoltypmods;
-	node->funccolcollations = funccolcollations;
-	node->funcuserdata = funcuserdata;
-
-	return node;
-}
-
-
 
 /*
  * distinctList is a list of SortGroupClauses, identifying the targetlist items

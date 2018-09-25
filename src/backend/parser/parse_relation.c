@@ -1408,13 +1408,13 @@ addRangeTableEntryForFunction(ParseState *pstate,
 				/*
 				 * Describe functions have the signature  d(internal) => internal
 				 * where the parameter is the untransformed FuncExpr node and the result
-				 * is a tuple descriptor. Its context is RangeTblEntry which has
+				 * is a tuple descriptor. Its context is RangeTblFunction which has
 				 * funcuserdata field to store arbitrary binary data to transport
 				 * to executor.
 				 */
 				rtfunc->funcuserdata = NULL;
 				fmgr_info(funcDescribe, &flinfo);
-				InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rte, NULL);
+				InitFunctionCallInfoData(fcinfo, &flinfo, 1, InvalidOid, (Node *) rtfunc, NULL);
 				fcinfo.arg[0] = PointerGetDatum(funcexpr);
 				fcinfo.argnull[0] = false;
 

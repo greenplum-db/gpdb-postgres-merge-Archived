@@ -780,8 +780,7 @@ _copyTableFunctionScan(const TableFunctionScan *from)
 	TableFunctionScan	*newnode = makeNode(TableFunctionScan);
 
 	CopyScanFields((const Scan *) from, (Scan *) newnode);
-	COPY_NODE_FIELD(functions);
-	COPY_SCALAR_FIELD(funcordinality);
+	COPY_NODE_FIELD(function);
 
 	return newnode;
 }

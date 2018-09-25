@@ -732,13 +732,16 @@ typedef struct FunctionScan
 
 /* ----------------
  *      TableFunctionScan node
+ *
+ * This is similar to a FunctionScan, but we only support one function,
+ * and WITH ORDINALITY is not supported.
+ *
  * ----------------
  */
 typedef struct TableFunctionScan
 {
 	Scan		scan;
-	List	   *functions;		/* list of RangeTblFunction nodes */
-	bool		funcordinality; /* WITH ORDINALITY */
+	struct RangeTblFunction *function;
 } TableFunctionScan;
 
 /* ----------------

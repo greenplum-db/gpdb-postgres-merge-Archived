@@ -950,8 +950,7 @@ _outTableFunctionScan(StringInfo str, const TableFunctionScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_NODE_FIELD(functions);
-	WRITE_BOOL_FIELD(funcordinality);
+	WRITE_NODE_FIELD(function);
 }
 
 static void

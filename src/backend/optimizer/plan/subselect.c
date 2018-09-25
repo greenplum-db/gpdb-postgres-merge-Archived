@@ -2531,11 +2531,19 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 		case T_TableFunctionScan:
 			{
 				RangeTblEntry *rte;
+				RangeTblFunction *rtfunc;
 
 				rte = rt_fetch(((TableFunctionScan *) plan)->scan.scanrelid,
 							   root->parse->rtable);
 				Assert(rte->rtekind == RTE_TABLEFUNCTION);
-				finalize_primnode(rte->funcexpr, &context);
+				Assert(list_length(rte->functions) == 1);
+				rtfunc = (RangeTblFunction *) linitial(rte->functions);
+				finalize_primnode(rtfunc->funcexpr, &context);
+
+				/*
+				 * GPDB_94_MERGE_FIXME: should we do something about params in
+				 * the function expressions, like for FunctionScan nodes below?
+				 */
 			}
 			/* TableFunctionScan's lefttree is like SubqueryScan's subplan. */
 			context.paramids = bms_add_members(context.paramids,

@@ -1874,8 +1874,7 @@ _readTableFunctionScan(void)
 
 	readScanInfo((Scan *)local_node);
 
-	READ_NODE_FIELD(functions);
-	READ_BOOL_FIELD(funcordinality);
+	READ_NODE_FIELD(function);
 
 	READ_DONE();
 }

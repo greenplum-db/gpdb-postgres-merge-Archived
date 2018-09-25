@@ -256,6 +256,14 @@ static Node *replace_sirv_functions_mutator(Node *node, void *context)
 		/**
 		 * Find sirv functions in the range table entries and replace them
 		 */
+
+		// GPDB_94_MERGE_FIXME: replace_sirvf_rte() is broken, it needs to be refactored
+		// for the change that a FunctionScan node can now contain multiple RangeTblFunctions.
+		// However, this will be obsoleted/changed also by PR:
+		// https://github.com/greenplum-db/gpdb/pull/5477.
+		// Let's come back to this after that PR has been pushed and merged to the merge
+		// iteration branch
+#if 0
 		if (safe_to_replace_sirvf_rte(query))
 		{
 			for (int rteOffset = 0; rteOffset < list_length(query->rtable); rteOffset++)
@@ -263,7 +271,7 @@ static Node *replace_sirv_functions_mutator(Node *node, void *context)
 				replace_sirvf_rte(query, rteOffset + 1);
 			}
 		}
-
+#endif
 		return (Node *) query_tree_mutator(query, replace_sirv_functions_mutator, context, 0);
 	}
 
@@ -411,11 +419,24 @@ static bool single_row_query(Query *query)
 		{
 			case RTE_FUNCTION:
 			{
-				FuncExpr *fe = (FuncExpr *) rte->funcexpr;
-				if (fe->funcretset)
+				ListCell *lcrtfunc;
+
+				foreach(lcrtfunc, rte->functions)
 				{
-					/* SRF in FROM clause */
-					return false;
+					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lcrtfunc);
+
+					/*
+					 * This runs before const-evaluation, so the expressions should
+					 * be FuncExprs still. But better safe than sorry.
+					 */
+					if (!IsA(rtfunc->funcexpr, FuncExpr))
+						return false;
+
+					if (((FuncExpr *) rtfunc->funcexpr)->funcretset)
+					{
+						/* SRF in FROM clause */
+						return false;
+					}
 				}
 				break;
 			}
@@ -456,6 +477,7 @@ static bool safe_to_replace_sirvf_rte(Query *query)
  * with a sublink - this will eventually be turned into an initplan.
  * Conceptually, SELECT * FROM FOO(1) t1 is turned into SELECT * FROM (SELECT (SELECT FOO(1))) t1.
  */
+#if 0 // GPDB_94_MERGE_FIXME
 static void replace_sirvf_rte(Query *query, int rteIndex)
 {
 	Assert(query);
@@ -515,6 +537,7 @@ static void replace_sirvf_rte(Query *query, int rteIndex)
 	}
 
 }
+#endif
 
 /**
  * Context for mutator
