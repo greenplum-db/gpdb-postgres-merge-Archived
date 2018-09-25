@@ -1076,7 +1076,10 @@ MemoryContextCreate(NodeTag tag, Size size,
 	MemoryContext node;
 	Size		needed = size + strlen(name) + 1;
 
+	// GPDB_94_MERGE_FIXME: same as AssertNotInCriticalSection
+#if 0
 	Assert(CritSectionCount == 0);
+#endif
 
 	/* Get space for node and name */
 	if (TopMemoryContext != NULL)

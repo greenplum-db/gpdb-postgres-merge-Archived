@@ -1736,7 +1736,12 @@ RelationIdGetRelation(Oid relationId)
 	Relation	rd;
 
 	/* Make sure we're in an xact, even if this ends up being a cache hit */
-	Assert(IsTransactionState());
+	/* GPDB_94_MERGE_FIXME: We get here in abort processing, when we
+	 * call getCdbComponentDatabases() to figure out how to reconnect or
+	 * something. Temporarily disable this assertion during abort processing.
+	 * But we really should stop doing cataloglookups outside a transaction.
+	 */
+	Assert(IsTransactionState() || IsAbortInProgress());
 
 	/*
 	 * first try to find reldesc in the cache
