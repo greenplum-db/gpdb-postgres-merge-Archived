@@ -371,14 +371,8 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
 
 				/*
-<<<<<<< HEAD
 				 * If the parent relation is an AO/CO table, we have to find out
 				 * if this tuple is actually in the table.
-=======
-				 * If we are doing a recheck, we expect to find the tuple we
-				 * are rechecking.  It's not a duplicate, but we have to keep
-				 * scanning.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				 */
 				if (RelationIsAppendOptimized(heapRel))
 				{
@@ -408,7 +402,6 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * that satisfies SnapshotDirty.  This is necessary because we
 					 * have just a single index entry for the entire chain.
 					 */
-<<<<<<< HEAD
 					else if (heap_hot_search(&htid, heapRel, &SnapshotDirty, &all_dead))
 					{
 						TransactionId xwait;
@@ -516,16 +509,10 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						 * crucial. Be sure to mark the proper buffer dirty.
 						 */
 						if (nbuf != InvalidBuffer)
-							MarkBufferDirtyHint(nbuf);
+							MarkBufferDirtyHint(nbuf, true);
 						else
-							MarkBufferDirtyHint(buf);
+							MarkBufferDirtyHint(buf, true);
 					}
-=======
-					if (nbuf != InvalidBuffer)
-						MarkBufferDirtyHint(nbuf, true);
-					else
-						MarkBufferDirtyHint(buf, true);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				}
 			}
 		}
