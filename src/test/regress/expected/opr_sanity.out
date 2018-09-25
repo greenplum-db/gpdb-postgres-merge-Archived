@@ -139,10 +139,10 @@ WHERE p1.oid < p2.oid AND
      p1.pronargs != p2.pronargs);
  oid  |      proname      | oid  |       proname       
 ------+-------------------+------+---------------------
- 3212 | int2_matrix_accum | 3215 | float8_matrix_accum
- 3212 | int2_matrix_accum | 3214 | int8_matrix_accum
- 3213 | int4_matrix_accum | 3215 | float8_matrix_accum
- 3213 | int4_matrix_accum | 3214 | int8_matrix_accum
+ 6212 | int2_matrix_accum | 6215 | float8_matrix_accum
+ 6212 | int2_matrix_accum | 6214 | int8_matrix_accum
+ 6213 | int4_matrix_accum | 6215 | float8_matrix_accum
+ 6213 | int4_matrix_accum | 6214 | int8_matrix_accum
  5044 | gp_elog           | 5045 | gp_elog
 (5 rows)
 
