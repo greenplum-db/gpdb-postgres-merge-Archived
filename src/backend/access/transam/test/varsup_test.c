@@ -55,11 +55,11 @@ test_GetNewTransactionId_xid_stop_limit(void **state)
 
 	will_return(RecoveryInProgress, false);
 
-	expect_any(LWLockAcquire, lockid);
+	expect_any(LWLockAcquire, l);
 	expect_any(LWLockAcquire, mode);
-	will_be_called(LWLockAcquire);
+	will_return(LWLockAcquire, true);
 
-	expect_any(LWLockRelease, lockid);
+	expect_any(LWLockRelease, l);
 	will_be_called(LWLockRelease);
 
 	expect_any(get_database_name, dbid);
@@ -101,11 +101,11 @@ test_GetNewTransactionId_xid_warn_limit(void **state)
 
 	will_return(RecoveryInProgress, false);
 
-	expect_any(LWLockAcquire, lockid);
+	expect_any(LWLockAcquire, l);
 	expect_any(LWLockAcquire, mode);
-	will_be_called(LWLockAcquire);
+	will_return(LWLockAcquire, true);
 
-	expect_any(LWLockRelease, lockid);
+	expect_any(LWLockRelease, l);
 	will_be_called(LWLockRelease);
 
 	expect_any(get_database_name, dbid);
@@ -116,9 +116,9 @@ test_GetNewTransactionId_xid_warn_limit(void **state)
 	/*
 	 * verify rest of function logic, including assign MyProc->xid
 	 */
-	expect_any(LWLockAcquire, lockid);
+	expect_any(LWLockAcquire, l);
 	expect_any(LWLockAcquire, mode);
-	will_be_called(LWLockAcquire);
+	will_return(LWLockAcquire, true);
 
 	expect_any(ExtendCLOG, newestXact);
 	will_be_called(ExtendCLOG);
@@ -127,7 +127,7 @@ test_GetNewTransactionId_xid_warn_limit(void **state)
 	expect_any(DistributedLog_Extend, newestXact);
 	will_be_called(DistributedLog_Extend);
 
-	expect_any(LWLockRelease, lockid);
+	expect_any(LWLockRelease, l);
 	will_be_called(LWLockRelease);
 	
 	PG_TRY();
