@@ -1273,6 +1273,19 @@ AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt)
 		AlterTableInternal(lfirst_oid(l), cmds, false);
 	}
 
+	/*
+	 * If we are the QD, dispatch this command to all the QEs
+	 */
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		CdbDispatchUtilityStatement((Node *) stmt,
+									DF_CANCEL_ON_ERROR|
+									DF_WITH_SNAPSHOT|
+									DF_NEED_TWO_PHASE,
+									NIL,
+									NULL);
+	}
+
 	return new_tablespaceoid;
 }
 

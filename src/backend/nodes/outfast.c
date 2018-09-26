@@ -1240,6 +1240,19 @@ _outGpPolicy(StringInfo str, GpPolicy *node)
 	WRITE_INT_ARRAY(attrs, node->nattrs, AttrNumber);
 }
 
+static void
+_outAlterTableSpaceMoveStmt(StringInfo str, AlterTableSpaceMoveStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERTABLESPACEMOVESTMT");
+
+	WRITE_STRING_FIELD(orig_tablespacename);
+	WRITE_ENUM_FIELD(objtype, ObjectType);
+	WRITE_BOOL_FIELD(move_all);
+	WRITE_NODE_FIELD(roles);
+	WRITE_STRING_FIELD(new_tablespacename);
+	WRITE_BOOL_FIELD(nowait);
+}
+
 /*
  * _outNode -
  *	  converts a Node into binary string and append it to 'str'
@@ -2177,6 +2190,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DistributedBy:
 				_outDistributedBy(str, obj);
+				break;
+			case T_AlterTableSpaceMoveStmt:
+				_outAlterTableSpaceMoveStmt(str, obj);
 				break;
 			default:
 				elog(ERROR, "could not serialize unrecognized node type: %d",
