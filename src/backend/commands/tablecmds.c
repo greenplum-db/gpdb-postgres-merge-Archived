@@ -3846,6 +3846,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * optimised assuming the constraint holds true.
 				 */
 			case AT_DropConstraint:		/* as DROP INDEX */
+			case AT_DropConstraintRecurse:
 			case AT_DropNotNull:		/* may change some SQL plans */
 				cmd_lockmode = AccessExclusiveLock;
 				break;
