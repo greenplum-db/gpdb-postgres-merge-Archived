@@ -109,14 +109,10 @@ select avg(f1) from interval_tbl;
 select '4 millenniums 5 centuries 4 decades 1 year 4 months 4 days 17 minutes 31 seconds'::interval;
 
 -- test long interval output
-<<<<<<< HEAD
-select '100000000y 10mon -1000000000d -1000000000h -10min -10.000001s ago'::interval;
-=======
 -- Note: the actual maximum length of the interval output is longer,
 -- but we need the test to work for both integer and floating-point
 -- timestamps.
 select '100000000y 10mon -1000000000d -100000h -10min -10.000001s ago'::interval;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 -- test justify_hours() and justify_days()
 
