@@ -948,16 +948,14 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
-<<<<<<< HEAD
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
-=======
+
 --
 -- Check elimination of constant-NULL subexpressions
 --
 
 explain (costs off)
   select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237

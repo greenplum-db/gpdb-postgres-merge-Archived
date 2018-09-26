@@ -3014,30 +3014,18 @@ CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
 ANALYZE dupindexcols;
 EXPLAIN (COSTS OFF)
   SELECT count(*) FROM dupindexcols
-<<<<<<< HEAD
-    WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
+    WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
          ->  Aggregate
                ->  Bitmap Heap Scan on dupindexcols
-                     Recheck Cond: ((f1 > 'WA'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+                     Recheck Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
                      ->  Bitmap Index Scan on dupindexcols_i
-                           Index Cond: ((f1 > 'WA'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+                           Index Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-    WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
-                                                   QUERY PLAN                                                   
-----------------------------------------------------------------------------------------------------------------
- Aggregate
-   ->  Bitmap Heap Scan on dupindexcols
-         Recheck Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
-         ->  Bitmap Index Scan on dupindexcols_i
-               Index Cond: ((f1 >= 'WA'::text) AND (f1 <= 'ZZZ'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
-(5 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 SELECT count(*) FROM dupindexcols
   WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
@@ -3101,12 +3089,10 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
-<<<<<<< HEAD
 RESET enable_seqscan;
 RESET optimizer_enable_tablescan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
-=======
 --
 -- Check elimination of constant-NULL subexpressions
 --
@@ -3118,4 +3104,3 @@ explain (costs off)
    Index Cond: ((thousand = 1) AND (tenthous = 1001))
 (2 rows)
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
