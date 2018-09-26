@@ -1980,7 +1980,7 @@ parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
 	ScanKeyInit(&scankey[2], 3,
 				BTLessEqualStrategyNumber, F_INT2LE,
 				Int16GetDatum(ruleord));
-	sd = systable_beginscan_ordered(rel, irel, NULL, 3, 0);
+	sd = systable_beginscan_ordered(rel, irel, NULL, 3, scankey);
 	while (HeapTupleIsValid(tuple = systable_getnext_ordered(sd, BackwardScanDirection)))
 	{
 		Form_pg_partition_rule rule_desc;
