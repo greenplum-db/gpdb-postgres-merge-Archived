@@ -1239,6 +1239,7 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 	Var		   *var = NULL;
 	const char *attrname;
 	TargetEntry *tle;
+	Var 		*varSegid = NULL;
 
 	if (target_relation->rd_rel->relkind == RELKIND_RELATION ||
 		target_relation->rd_rel->relkind == RELKIND_MATVIEW)
@@ -1254,6 +1255,24 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 					  0);
 
 		attrname = "ctid";
+
+		/*
+		 * GPDB also needs gp_segment_id. ctid is only unique in the same
+		 * segment.
+		 */
+		Oid			reloid;
+		Oid			vartypeid;
+		int32		type_mod;
+		Oid			type_coll;
+
+		reloid = RelationGetRelid(target_relation);
+		get_atttypetypmodcoll(reloid, GpSegmentIdAttributeNumber, &vartypeid, &type_mod, &type_coll);
+		varSegid = makeVar(parsetree->resultRelation,
+						   GpSegmentIdAttributeNumber,
+						   vartypeid,
+						   type_mod,
+						   type_coll,
+						   0);
 	}
 	else if (target_relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
@@ -1309,6 +1328,16 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 							  list_length(parsetree->targetList) + 1,
 							  pstrdup(attrname),
 							  true);
+
+		parsetree->targetList = lappend(parsetree->targetList, tle);
+	}
+
+	if (varSegid)
+	{
+		tle = makeTargetEntry((Expr *) varSegid,
+							  list_length(parsetree->targetList) + 1,	/* resno */
+							  pstrdup("gp_segment_id"),	/* resname */
+							  true);					/* resjunk */
 
 		parsetree->targetList = lappend(parsetree->targetList, tle);
 	}
