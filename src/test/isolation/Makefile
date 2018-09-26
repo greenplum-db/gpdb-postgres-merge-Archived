@@ -67,19 +67,14 @@ clean distclean:
 maintainer-clean: distclean
 	rm -f specparse.c specscanner.c
 
-<<<<<<< HEAD
 installcheck: all gpdiff.pl gpstringsubs.pl
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --init-file=$(srcdir)/init_file --schedule=$(srcdir)/isolation_schedule
 
 # Version of the install check test that includes the prepared_transactions test
 # It only makes sense to run this if set up to use prepared transactions,
 # via the postgresql.conf.
 installcheck-prepared-txns: all
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
-=======
-installcheck: all
-	./pg_isolation_regress --psqldir='$(PSQLDIR)' $(EXTRA_REGRESS_OPTS) --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule prepared-transactions
 
 check: all
 	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) $(EXTRA_REGRESS_OPTS) --schedule=$(srcdir)/isolation_schedule
