@@ -254,7 +254,7 @@ DROP INDEX inet_idx1;
 -- check that gist index works correctly
 CREATE INDEX inet_idx2 ON inet_tbl using gist (i inet_ops);
 SET enable_seqscan TO off;
-SELECT * FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |        i         
 ----------------+------------------
  192.168.1.0/24 | 192.168.1.0/25
@@ -262,7 +262,7 @@ SELECT * FROM inet_tbl WHERE i << '192.168.1.0/24'::cidr ORDER BY i;
  192.168.1.0/26 | 192.168.1.226
 (3 rows)
 
-SELECT * FROM inet_tbl WHERE i <<= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <<= '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |        i         
 ----------------+------------------
  192.168.1.0/24 | 192.168.1.0/24
@@ -273,7 +273,7 @@ SELECT * FROM inet_tbl WHERE i <<= '192.168.1.0/24'::cidr ORDER BY i;
  192.168.1.0/26 | 192.168.1.226
 (6 rows)
 
-SELECT * FROM inet_tbl WHERE i && '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i && '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |        i         
 ----------------+------------------
  192.168.1.0/24 | 192.168.1.0/24
@@ -284,7 +284,7 @@ SELECT * FROM inet_tbl WHERE i && '192.168.1.0/24'::cidr ORDER BY i;
  192.168.1.0/26 | 192.168.1.226
 (6 rows)
 
-SELECT * FROM inet_tbl WHERE i >>= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >>= '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |        i         
 ----------------+------------------
  192.168.1.0/24 | 192.168.1.0/24
@@ -292,31 +292,31 @@ SELECT * FROM inet_tbl WHERE i >>= '192.168.1.0/24'::cidr ORDER BY i;
  192.168.1.0/24 | 192.168.1.255/24
 (3 rows)
 
-SELECT * FROM inet_tbl WHERE i >> '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >> '192.168.1.0/24'::cidr ORDER BY i,c;
  c | i 
 ---+---
 (0 rows)
 
-SELECT * FROM inet_tbl WHERE i < '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i < '192.168.1.0/24'::cidr ORDER BY i,c;
       c      |      i      
 -------------+-------------
  10.0.0.0/8  | 9.1.2.3/8
+ 10.0.0.0/8  | 10.1.2.3/8
+ 10.0.0.0/8  | 10.1.2.3/8
  10.0.0.0/32 | 10.1.2.3/8
- 10.0.0.0/8  | 10.1.2.3/8
- 10.0.0.0/8  | 10.1.2.3/8
  10.1.0.0/16 | 10.1.2.3/16
  10.1.2.0/24 | 10.1.2.3/24
  10.1.2.3/32 | 10.1.2.3
  10.0.0.0/8  | 11.1.2.3/8
 (8 rows)
 
-SELECT * FROM inet_tbl WHERE i <= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <= '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |       i        
 ----------------+----------------
  10.0.0.0/8     | 9.1.2.3/8
  10.0.0.0/8     | 10.1.2.3/8
- 10.0.0.0/32    | 10.1.2.3/8
  10.0.0.0/8     | 10.1.2.3/8
+ 10.0.0.0/32    | 10.1.2.3/8
  10.1.0.0/16    | 10.1.2.3/16
  10.1.2.0/24    | 10.1.2.3/24
  10.1.2.3/32    | 10.1.2.3
@@ -324,13 +324,13 @@ SELECT * FROM inet_tbl WHERE i <= '192.168.1.0/24'::cidr ORDER BY i;
  192.168.1.0/24 | 192.168.1.0/24
 (9 rows)
 
-SELECT * FROM inet_tbl WHERE i = '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i = '192.168.1.0/24'::cidr ORDER BY i,c;
        c        |       i        
 ----------------+----------------
  192.168.1.0/24 | 192.168.1.0/24
 (1 row)
 
-SELECT * FROM inet_tbl WHERE i >= '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i >= '192.168.1.0/24'::cidr ORDER BY i,c;
          c          |        i         
 --------------------+------------------
  192.168.1.0/24     | 192.168.1.0/24
@@ -344,7 +344,7 @@ SELECT * FROM inet_tbl WHERE i >= '192.168.1.0/24'::cidr ORDER BY i;
  10:23::8000/113    | 10:23::ffff
 (9 rows)
 
-SELECT * FROM inet_tbl WHERE i > '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i > '192.168.1.0/24'::cidr ORDER BY i,c;
          c          |        i         
 --------------------+------------------
  192.168.1.0/24     | 192.168.1.226/24
@@ -357,13 +357,13 @@ SELECT * FROM inet_tbl WHERE i > '192.168.1.0/24'::cidr ORDER BY i;
  10:23::8000/113    | 10:23::ffff
 (8 rows)
 
-SELECT * FROM inet_tbl WHERE i <> '192.168.1.0/24'::cidr ORDER BY i;
+SELECT * FROM inet_tbl WHERE i <> '192.168.1.0/24'::cidr ORDER BY i,c;
          c          |        i         
 --------------------+------------------
  10.0.0.0/8         | 9.1.2.3/8
  10.0.0.0/8         | 10.1.2.3/8
- 10.0.0.0/32        | 10.1.2.3/8
  10.0.0.0/8         | 10.1.2.3/8
+ 10.0.0.0/32        | 10.1.2.3/8
  10.1.0.0/16        | 10.1.2.3/16
  10.1.2.0/24        | 10.1.2.3/24
  10.1.2.3/32        | 10.1.2.3
