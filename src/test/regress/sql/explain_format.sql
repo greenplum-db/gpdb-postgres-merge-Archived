@@ -9,8 +9,10 @@
 -- s/\(slice\d+\)    /\(slice\)    /
 -- m/Work_mem: \d+\w bytes max\./
 -- s/Work_mem: \d+\w bytes max\. */Work_mem: ###K bytes max./
--- m/Total runtime: \d+\.\d+ ms/
--- s/Total runtime: \d+\.\d+ ms/Total runtime: ##.### ms/
+-- m/Execution time: \d+\.\d+ ms/
+-- s/Execution time: \d+\.\d+ ms/Execution time: ##.### ms/
+-- m/Planning time: \d+\.\d+ ms/
+-- s/Planning time: \d+\.\d+ ms/Planning time: ##.### ms/
 -- m/cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+/
 -- s/\(cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+\)/(cost=##.###..##.### rows=### width=###)/
 -- m/Peak memory: \d+\w? bytes\./
@@ -66,8 +68,8 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
 -- s/ Plan Width: \d+/ Plan Width: ##/
 -- m/ Time: \d+\.\d+/
 -- s/ Time: \d+\.\d+/ Time: ##.###/
--- m/Total Runtime: \d+\.\d+/
--- s/Total Runtime: \d+\.\d+/Total Runtime: ##.###/
+-- m/Execution Time: \d+\.\d+/
+-- s/Execution Time: \d+\.\d+/Execution Time: ##.###/
 -- m/Segments: \d+/
 -- s/Segments: \d+/Segments: #/
 -- m/PQO version \d+\.\d+\.\d+",?/
@@ -111,8 +113,8 @@ EXPLAIN (ANALYZE, FORMAT YAML) SELECT * from boxes LEFT JOIN apples ON apples.id
 -- s/"Plan Width": \d+,?/"Plan Width": ##,/
 -- m/ Time": \d+\.\d+,/
 -- s/ Time": \d+\.\d+,/ Time": ##.###,/
--- m/Total Runtime": \d+\.\d+,?/
--- s/Total Runtime": \d+\.\d+,?/Total Runtime": ##.###,/
+-- m/Execution Time": \d+\.\d+,?/
+-- s/Execution Time": \d+\.\d+,?/Execution Time": ##.###,/
 -- m/"Memory used": \d+,?/
 -- s/"Memory used": \d+,?/"Memory used": ####,/
 -- m/"Segments": \d+,/
