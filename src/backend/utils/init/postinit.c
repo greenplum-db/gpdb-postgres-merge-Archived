@@ -890,7 +890,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * backend startup by processing any options from the startup packet, and
 	 * we're done.
 	 */
-	if (am_walsender && !am_db_walsender)
+	if ((am_walsender && !am_db_walsender) || am_ftshandler)
 	{
 		/* process any options passed in the startup packet */
 		if (MyProcPort != NULL)
