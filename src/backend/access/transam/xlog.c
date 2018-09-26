@@ -9489,6 +9489,7 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 {
 	XLogSegNo	segno;
 	XLogRecPtr	keep;
+	bool setvalue = false;
 
 	XLByteToSeg(recptr, segno);
 	keep = XLogGetReplicationSlotMinimumLSN();
@@ -9501,6 +9502,7 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 			segno = 1;
 		else
 			segno = segno - wal_keep_segments;
+		setvalue = true;
 	}
 
 	/* then check whether slots limit removal further */
@@ -9514,10 +9516,11 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 			segno = 1;
 		else if (slotSegNo < segno)
 			segno = slotSegNo;
+		setvalue = true;
 	}
 
 	/* don't delete WAL segments newer than the calculated segment */
-	if (segno < *logSegNo)
+	if (setvalue && segno < *logSegNo)
 		*logSegNo = segno;
 }
 
