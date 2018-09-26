@@ -308,6 +308,8 @@ typedef struct PlannerInfo
 	int		   upd_del_replicated_table;
 	bool		is_split_update;	/* true if UPDATE that modifies
 									 * distribution key columns */
+	int			orig_result_relation; /* original target RTI, if changed during
+									   * planning */
 } PlannerInfo;
 
 /*

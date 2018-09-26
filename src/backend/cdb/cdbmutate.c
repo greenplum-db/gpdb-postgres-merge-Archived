@@ -105,8 +105,6 @@ static void add_slice_to_motion(Motion *motion,
 
 static Node *apply_motion_mutator(Node *node, ApplyMotionState *context);
 
-static AttrNumber find_segid_column(List *tlist, Index relid);
-
 static bool replace_shareinput_targetlists_walker(Node *node, PlannerInfo *root, bool fPop);
 
 static bool fixup_subplan_walker(Node *node, SubPlanWalkerContext *context);
@@ -1167,9 +1165,9 @@ request_explicit_motion(Plan *plan, Index resultRelationsIdx, List *rtable)
 	plan->flow->req_move = MOVEMENT_EXPLICIT;
 
 	/* find segid column in target list */
-	AttrNumber	segidColIdx = find_segid_column(plan->targetlist, resultRelationsIdx);
-
-	Assert(-1 != segidColIdx);
+	AttrNumber	segidColIdx = ExecFindJunkAttributeInTlist(plan->targetlist, "gp_segment_id");
+	if (segidColIdx == InvalidAttrNumber)
+		elog(ERROR, "could not find gp_segment_id column in target list");
 
 	plan->flow->segidColIdx = segidColIdx;
 }
@@ -1302,7 +1300,10 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
  * deleteColIdx which contains placeholder, and value will be corrected later
  */
 static void
-process_targetlist_for_splitupdate(TupleDesc resultDesc, Index resultRelationsIdx, List *targetlist,
+process_targetlist_for_splitupdate(TupleDesc resultDesc,
+								   Index resultRelationsIdx,
+								   Index oldResultRelationIdx,
+								   List *targetlist,
 								   List **splitUpdateTargetList, List **insertColIdx, List **deleteColIdx)
 {
 	int			attrIdx;
@@ -1330,22 +1331,18 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc, Index resultRelationsId
 		}
 		else
 		{
-			Var		   *origvar;
 			int			i;
 			ListCell   *lc;
 
 			Assert(exprType((Node *) tle->expr) == attr->atttypid);
 
-			origvar = (Var *) makeVar(resultRelationsIdx,
-							  attrIdx,
-							  attr->atttypid,
-							  attr->atttypmod,
-							  attr->attcollation,
-							  0);
-
-			splitVar = (Var *) copyObject((Node *) origvar);
-			splitVar->varnoold = splitVar->varno;
-			splitVar->varno = OUTER_VAR;
+			splitVar = (Var *) makeVar(OUTER_VAR,
+									   attrIdx,
+									   attr->atttypid,
+									   attr->atttypmod,
+									   attr->attcollation,
+									   0);
+			splitVar->varnoold = attrIdx;
 
 			splitTargetEntry = makeTargetEntry((Expr *) splitVar, tle->resno, tle->resname, tle->resjunk);
 			*splitUpdateTargetList = lappend(*splitUpdateTargetList, splitTargetEntry);
@@ -1358,10 +1355,17 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc, Index resultRelationsId
 			{
 				TargetEntry *ttle = (TargetEntry *) lfirst(lc);
 
-				if (equal(ttle->expr, origvar))
+				if (ttle->expr && IsA(ttle->expr, Var))
 				{
-					oldAttrIdx = i;
-					break;
+					Var		   *var = (Var *) ttle->expr;
+
+					if (var->varno == oldResultRelationIdx &&
+						var->varattno == attrIdx &&
+						var->varlevelsup == 0)
+					{
+						oldAttrIdx = i;
+						break;
+					}
 				}
 				i++;
 			}
@@ -1416,9 +1420,15 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc, Index resultRelationsId
  * From the plan above, the target foo.id is assigned as l.v + 1, and expand_targetlist()
  * ensured that the old value of id, is also available, even though it would not otherwise
  * be needed.
+ *
+ * 'result_relation' is the RTI of the UPDATE target relation. 'orig_result_relation'
+ * is the RTI of the source for old values. Usually they are the same, but if the UPDATE
+ * is on a security-barrier view, prepsecurity.c swaps the target for subquery scan, to
+ * enforce the barrier.
  */
 SplitUpdate *
-make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte, Index resultRelationsIdx)
+make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte,
+				 Index result_relation, Index orig_result_relation)
 {
 	AttrNumber		ctidColIdx = 0;
 	List			*deleteColIdx = NIL;
@@ -1447,7 +1457,10 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	 * values in the subplan's target list, and store their column indexes in
 	 * insertColIdx and deleteColIdx.
 	 */
-	process_targetlist_for_splitupdate(resultDesc, resultRelationsIdx, subplan->targetlist,
+	process_targetlist_for_splitupdate(resultDesc,
+									   result_relation,
+									   orig_result_relation,
+									   subplan->targetlist,
 									   &splitUpdateTargetList, &insertColIdx, &deleteColIdx);
 	ctidColIdx = find_ctid_attribute_check(subplan->targetlist);
 	if (resultRelation->rd_rel->relhasoids)
@@ -1496,42 +1509,6 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	mt->oid_col_idxes = lappend_int(mt->oid_col_idxes, oidColIdx);
 
 	return splitupdate;
-}
-
-/*
- * Find the index of the segid column of the requested relation (relid) in the
- * target list
- */
-static AttrNumber
-find_segid_column(List *tlist, Index relid)
-{
-	if (NIL == tlist)
-	{
-		return -1;
-	}
-
-	ListCell   *lcte = NULL;
-
-	foreach(lcte, tlist)
-	{
-		TargetEntry *te = (TargetEntry *) lfirst(lcte);
-
-		Var		   *var = (Var *) te->expr;
-
-		if (!IsA(var, Var))
-		{
-			continue;
-		}
-
-		if ((var->varno == relid && var->varattno == GpSegmentIdAttributeNumber) ||
-			(var->varnoold == relid && var->varoattno == GpSegmentIdAttributeNumber))
-		{
-			return te->resno;
-		}
-	}
-
-	/* no segid column found */
-	return -1;
 }
 
 

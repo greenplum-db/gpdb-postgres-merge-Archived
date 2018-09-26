@@ -6453,7 +6453,7 @@ make_modifytable(PlannerInfo *root,
 				 CmdType operation, bool canSetTag,
 				 List *resultRelations, List *subplans,
 				 List *withCheckOptionLists, List *returningLists,
-				 List *is_split_updates,
+				 List *orig_result_rtis,
 				 List *rowMarks, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
@@ -6489,7 +6489,7 @@ make_modifytable(PlannerInfo *root,
 	node->ctid_col_idxes = NIL;
 	node->oid_col_idxes = NIL;
 
-	adjust_modifytable_flow(root, node, is_split_updates);
+	adjust_modifytable_flow(root, node, orig_result_rtis);
 
 	/*
 	 * Compute cost as sum of subplan costs.
@@ -6571,7 +6571,7 @@ make_modifytable(PlannerInfo *root,
  * plans for that. Also set the Flow of the ModifyTable node itself.
  */
 static void
-adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_updates)
+adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *split_update_orig_rtis)
 {
 	/*
 	 * The input plans must be distributed correctly.
@@ -6680,11 +6680,11 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 	}
 	else if (node->operation == CMD_UPDATE || node->operation == CMD_DELETE)
 	{
-		forthree(lcr, node->resultRelations, lcp, node->plans, lci, is_split_updates)
+		forthree(lcr, node->resultRelations, lcp, node->plans, lci, split_update_orig_rtis)
 		{
 			int			rti = lfirst_int(lcr);
 			Plan	   *subplan = (Plan *) lfirst(lcp);
-			bool		is_split_update = lfirst_int(lci) ? true : false;
+			int			orig_result_rti = lfirst_int(lci);
 			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
 			GpPolicy   *targetPolicy;
 			GpPolicyType targetPolicyType;
@@ -6709,14 +6709,14 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 				 * e.g. because the input was eliminated by constraint
 				 * exclusion, we can skip it.
 				 */
-				if (is_split_update && !is_dummy_plan(subplan))
+				if (orig_result_rti && !is_dummy_plan(subplan))
 				{
 					List	   *hashExpr;
 					Plan	*new_subplan;
 
 					Assert(node->operation == CMD_UPDATE);
 
-					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte, rti);
+					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte, rti, orig_result_rti);
 					hashExpr = getExprListFromTargetList(new_subplan->targetlist,
 														 targetPolicy->nattrs,
 														 targetPolicy->attrs,
@@ -7136,8 +7136,8 @@ cdbpathtoplan_create_motion_plan(PlannerInfo *root,
 		List	   *hashExpr = cdbpathlocus_get_partkey_exprs(path->path.locus,
 															  path->path.parent->relids,
 															  subplan->targetlist);
-
-		Insist(hashExpr);
+		if (!hashExpr)
+			elog(ERROR, "could not find hash distribution key expressions in target list");
 
 		/**
          * If there are subplans in the hashExpr, push it down to lower level.

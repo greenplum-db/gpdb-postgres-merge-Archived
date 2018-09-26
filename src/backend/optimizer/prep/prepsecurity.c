@@ -99,6 +99,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			RangeTblEntry *newrte = copyObject(rte);
 
 			parse->rtable = lappend(parse->rtable, newrte);
+			root->orig_result_relation = parse->resultRelation;
 			parse->resultRelation = list_length(parse->rtable);
 
 			/*
