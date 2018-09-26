@@ -3854,6 +3854,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * Subcommands that may be visible to concurrent SELECTs
 				 */
 			case AT_DropColumn:	/* change visible to SELECT */
+			case AT_DropColumnRecurse:	/* change visible to SELECT */
 			case AT_AddColumnToView:	/* CREATE VIEW */
 			case AT_DropOids:	/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
