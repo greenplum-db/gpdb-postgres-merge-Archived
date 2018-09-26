@@ -258,6 +258,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	char	   *location = NULL;
 	Oid			ownerId;
 	Datum		newOptions;
+	List       *nonContentOptions = NIL;
 
 	/* Must be super user */
 	if (!superuser())
@@ -303,16 +304,10 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 								 errhint("Segment content IDs can be found in gp_segment_configuration table.")));
 				}
 				else if (contentId == GpIdentity.segindex)
-				{
 					location = pstrdup(strVal(defel->arg));
-					break;
-				}
 			}
 			else
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid segment specification"),
-						 errhint("Segment-level locations can be specified using \"contentX <path>\" where X is the content ID.")));
+				nonContentOptions = lappend(nonContentOptions, defel);
 		}
 	}
 
@@ -389,7 +384,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* Generate new proposed spcoptions (text array) */
 	newOptions = transformRelOptions((Datum) 0,
-									 stmt->options,
+									 nonContentOptions,
 									 NULL, NULL, false, false);
 	(void) tablespace_reloptions(newOptions, true);
 	if (newOptions != (Datum) 0)
