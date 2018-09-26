@@ -774,30 +774,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		if (list_length(f->fromlist) > 1)
 			*inner_join_rels = *qualscope;
 
-		/* Try to process any quals postponed by children. If they need further
-		 * postponement, add them to my output postponed_qual_list */
-		foreach(l, child_postponed_quals)
-		{
-			PostponedQual *pq = (PostponedQual *) lfirst(l);
-
-			if (bms_is_subset(pq->relids, *qualscope))
-			{
-				distribute_qual_to_rels(root, pq->qual,
-										false, below_outer_join, JOIN_INNER,
-										*qualscope, NULL, NULL, NULL,
-										NULL);
-				pfree(pq);
-			}
-			else
-			{
-				*postponed_qual_list = lappend(*postponed_qual_list, pq);
-			}
-		}
-		if (child_postponed_quals != NIL)
-		{
-			pfree(child_postponed_quals);
-		}
-
 		/*
 		 * Try to process any quals postponed by children.  If they need
 		 * further postponement, add them to my output postponed_qual_list.
@@ -994,30 +970,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		{
 			sjinfo = NULL;
 			ojscope = NULL;
-		}
-
-		/* Try to process any quals postponed by children. If they need
-		 * further postponement, add them to my output postponed_qual_list */
-		foreach(l, child_postponed_quals)
-		{
-			PostponedQual *pq = (PostponedQual *) lfirst(l);
-
-			if (bms_is_subset(pq->relids, *qualscope))
-			{
-				distribute_qual_to_rels(root, pq->qual,
-										false, below_outer_join, JOIN_INNER,
-										*qualscope, ojscope, nonnullable_rels, NULL,
-										NULL);
-				pfree(pq);
-			}
-			else
-			{
-				*postponed_qual_list = lappend(*postponed_qual_list, pq);
-			}
-		}
-		if (child_postponed_quals != NIL)
-		{
-			pfree(child_postponed_quals);
 		}
 
 		/* Process the JOIN's qual clauses */
