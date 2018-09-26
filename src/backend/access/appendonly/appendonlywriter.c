@@ -1701,6 +1701,8 @@ UpdateMasterAosegTotals(Relation parentrel, int segno, int64 tupcount, int64 mod
 	 */
 	aoHashEntry = AORelGetHashEntry(RelationGetRelid(parentrel));
 	aoHashEntry->relsegfiles[segno].tupsadded += tupcount;
+
+	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 

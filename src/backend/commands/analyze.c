@@ -29,6 +29,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
+#include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/cdbtm.h"
@@ -60,10 +61,12 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
+#include "utils/snapmgr.h"
 #include "utils/sortsupport.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
+
 
 /*
  * To avoid consuming too much memory during analysis and/or too much space
@@ -305,7 +308,23 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 		/* Regular table, so we'll use the regular row acquisition function */
 		acquirefunc = acquire_sample_rows_by_query;
 		/* Also get regular table's size */
-		relpages = RelationGetNumberOfBlocks(onerel);
+
+		if (RelationIsAoRows(onerel))
+		{
+			int64           totalbytes;
+
+			totalbytes = GetAOTotalBytes(onerel, GetActiveSnapshot());
+			relpages = RelationGuessNumberOfBlocks(totalbytes);
+		}
+		else if (RelationIsAoCols(onerel))
+		{
+			int64 totalBytes = GetAOCSTotalBytes(onerel, GetActiveSnapshot(), true);
+
+			relpages = RelationGuessNumberOfBlocks(totalBytes);
+		}
+		else
+			relpages = RelationGetNumberOfBlocks(onerel);
+
 	}
 	/*
 	 * GPDB_92_MERGE_FIXME: do_analyze_rel add a param AcquireSampleRowsFunc
