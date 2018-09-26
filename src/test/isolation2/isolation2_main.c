@@ -107,7 +107,7 @@ isolation_start_test(const char *testname,
 						   "%s ", launcher);
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 SYSTEMQUOTE "python ./sql_isolation_testcase.py --dbname=\"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 "python ./sql_isolation_testcase.py --dbname=\"%s\" < \"%s\" > \"%s\" 2>&1",
 			 dblist->str,
 			 infile,
 			 outfile);
