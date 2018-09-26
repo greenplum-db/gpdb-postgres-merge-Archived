@@ -937,7 +937,15 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				 * We should not be postponing any quals past an outer join.
 				 * If this Assert fires, pull_up_subqueries() messed up.
 				 */
-				Assert(j->jointype == JOIN_INNER);
+				/*
+				 * GPDB_94_MERGE_FIXME: In GPDB, SEMI JOIN may come here, since
+				 * GPDB pulls up correlated ANY_SUBLINK. Consider the query
+				 * below:
+				 *
+				 * select * from A where exists (select * from B where A.i in
+				 * (select C.i from C where C.i = B.i));
+				 */
+				Assert(j->jointype == JOIN_INNER || j->jointype == JOIN_SEMI);
 				*postponed_qual_list = lappend(*postponed_qual_list, pq);
 			}
 		}
