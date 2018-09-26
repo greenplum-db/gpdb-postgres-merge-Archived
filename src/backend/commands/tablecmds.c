@@ -3996,6 +3996,7 @@ AlterTableGetLockLevel(List *cmds)
 
 			case AT_ValidateConstraint: /* Uses MVCC in
 												 * getConstraints() */
+			case AT_ValidateConstraintRecurse:
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
