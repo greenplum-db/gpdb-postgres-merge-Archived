@@ -1741,7 +1741,12 @@ RelationIdGetRelation(Oid relationId)
 	 * something. Temporarily disable this assertion during abort processing.
 	 * But we really should stop doing cataloglookups outside a transaction.
 	 */
-	Assert(IsTransactionState() || IsAbortInProgress());
+	/* GPDB_94_MERGE_FIXME: We also get here in commit processing, when we
+	 * call getCdbComponentDatabases() to figure out how to reconnect or
+	 * something. Temporarily disable this assertion during commit processing.
+	 * But we really should stop doing cataloglookups outside a transaction.
+	 */
+	Assert(IsTransactionState() || IsAbortInProgress() || IsCommitInProgress());
 
 	/*
 	 * first try to find reldesc in the cache

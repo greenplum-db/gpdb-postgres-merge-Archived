@@ -231,6 +231,7 @@ extern void SetSharedTransactionId_writer(void);
 extern void SetSharedTransactionId_reader(TransactionId xid, CommandId cid);
 extern bool IsTransactionState(void);
 extern bool IsAbortInProgress(void);
+extern bool IsCommitInProgress(void);
 extern bool IsTransactionPreparing(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern void GetAllTransactionXids(
