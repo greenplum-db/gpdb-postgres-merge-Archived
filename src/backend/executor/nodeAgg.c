@@ -484,6 +484,10 @@ invoke_agg_trans_func(AggState *aggstate,
 	/*
 	 * OK to call the transition function
 	 */
+	InitFunctionCallInfoData(*fcinfo, transfn,
+							 numTransInputs + 1,
+							 peraggstate->aggCollation,
+							 (void *) funcctx, NULL);
 	fcinfo->arg[0] = transValue;
 	fcinfo->argnull[0] = *transValueIsNull;
 	fcinfo->isnull = false;		/* just in case transfn doesn't set it */
