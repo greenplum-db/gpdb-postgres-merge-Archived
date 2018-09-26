@@ -1263,6 +1263,7 @@ WHERE NOT (
   --   at least one of 4 and 6 must be given.
   -- SP-GiST has five support functions, all mandatory
   amname = 'btree' AND procnums @> '{1}' OR
+  amname = 'bitmap' AND procnums @> '{1}' OR
   amname = 'hash' AND procnums = '{1}' OR
   amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
   amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
@@ -1282,6 +1283,7 @@ SELECT * FROM (
 WHERE NOT (
   -- same per-AM rules as above
   amname = 'btree' AND procnums @> '{1}' OR
+  amname = 'bitmap' AND procnums @> '{1}' OR
   amname = 'hash' AND procnums = '{1}' OR
   amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
   amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
@@ -1316,7 +1318,7 @@ SELECT p1.amprocfamily, p1.amprocnum,
 	p2.oid, p2.proname,
 	p3.opfname
 FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
-WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
+WHERE p3.opfmethod IN (SELECT oid FROM pg_am WHERE amname IN ('btree', 'bitmap'))
     AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
     (CASE WHEN amprocnum = 1
           THEN prorettype != 'int4'::regtype OR proretset OR pronargs != 2
