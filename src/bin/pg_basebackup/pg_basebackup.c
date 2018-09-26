@@ -1738,17 +1738,16 @@ BaseBackup(void)
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
+	exclude_list = build_exclude_list(excludes, num_exclude);
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s",
 				 escaped_label,
 				 showprogress ? "PROGRESS" : "",
 				 includewal && !streamwal ? "WAL" : "",
 				 fastcheckpoint ? "FAST" : "",
 				 includewal ? "NOWAIT" : "",
-				 maxrate_clause ? maxrate_clause : "");
-
-	exclude_list = build_exclude_list(excludes, num_exclude);
-	char* tmp = psprintf("%s %s", basebkp, exclude_list);
+				 maxrate_clause ? maxrate_clause : "",
+				 exclude_list);
 
 	if (num_exclude != 0)
 		free(exclude_list);
@@ -2080,7 +2079,7 @@ main(int argc, char **argv)
 	}
 
 	num_exclude = 0;
-	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:wWvPE",
+	while ((c = getopt_long(argc, argv, "D:F:r:RT:xX:l:zZ:d:c:h:p:U:s:wWvPE:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
