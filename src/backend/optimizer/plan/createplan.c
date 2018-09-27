@@ -2892,6 +2892,11 @@ create_tablefunction_plan(PlannerInfo *root,
 	Assert(list_length(rte->functions) == 1);
 	rtf = linitial(rte->functions);
 
+	/*
+	 * GPDB_94_MERGE_FIXME: Is this a proper place to set rtf->funccolnames?
+	 */
+	rtf->funccolnames = lappend(rtf->funccolnames, rte->eref->colnames);
+
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
