@@ -6040,7 +6040,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	char *basepath;
 	int32 scancol; /* chosen column number to scan from */
 	ListCell *l;
-	Snapshot snapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot snapshot;
 
 	/*
 	 * only ADD COLUMN subcommand is supported at this time
@@ -6048,6 +6048,8 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	List *addColCmds = tab->subcmds[AT_PASS_ADD_COL];
 	if (addColCmds == NULL)
 		return false;
+
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	estate = CreateExecutorState();
 	foreach(l, tab->constraints)
