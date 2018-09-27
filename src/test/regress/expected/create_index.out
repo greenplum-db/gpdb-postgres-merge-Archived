@@ -3094,9 +3094,11 @@ RESET enable_bitmapscan;
 --
 explain (costs off)
   select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
-                      QUERY PLAN                      
-------------------------------------------------------
- Index Scan using tenk1_thous_tenthous on tenk1
-   Index Cond: ((thousand = 1) AND (tenthous = 1001))
-(2 rows)
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Index Scan using tenk1_thous_tenthous on tenk1
+         Index Cond: ((thousand = 1) AND (tenthous = 1001))
+ Optimizer: legacy query optimizer
+(4 rows)
 
