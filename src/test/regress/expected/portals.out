@@ -1036,12 +1036,7 @@ fetch all from c;
 (3 rows)
 
 move backward all in c;
+ERROR:  backward scan is not supported in this version of Greenplum Database
 fetch all from c;
-        q1        |        q2        
-------------------+------------------
-              123 |              456
-              123 | 4567890123456789
- 4567890123456789 |              123
-(3 rows)
-
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
 rollback;
