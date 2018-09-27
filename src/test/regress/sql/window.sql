@@ -287,8 +287,6 @@ FROM empsalary GROUP BY depname;
 -- cleanup
 DROP TABLE empsalary;
 
-<<<<<<< HEAD
-=======
 -- test user-defined window function with named args and default args
 CREATE FUNCTION nth_value_def(val anyelement, n integer = 1) RETURNS anyelement
   LANGUAGE internal WINDOW IMMUTABLE STRICT AS 'window_nth_value';
@@ -299,7 +297,6 @@ SELECT nth_value_def(n := 2, val := ten) OVER (PARTITION BY four), ten, four
 SELECT nth_value_def(ten) OVER (PARTITION BY four), ten, four
   FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten) s;
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 --
 -- Test the basic moving-aggregate machinery
 --
@@ -472,7 +469,6 @@ CREATE AGGREGATE sum_int_randomrestart (int4)
 	minvfunc = sum_int_randrestart_minvfunc
 );
 
-<<<<<<< HEAD
 -- In PostgreSQL, the 'vs' CTE is constructed using random() and
 -- generate_series(), but GPDB inlines CTEs even when they contain volatile
 -- expressions, causing incorrect results. That's a bug in GPDB, of course,
@@ -584,12 +580,6 @@ VALUES
  (98, 18),
  (99, 58),
 (100, 75)
-=======
-WITH
-vs AS (
-	SELECT i, (random() * 100)::int4 AS v
-	FROM generate_series(1, 100) AS i
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 ),
 sum_following AS (
 	SELECT i, SUM(v) OVER
