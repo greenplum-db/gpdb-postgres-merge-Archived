@@ -689,23 +689,15 @@ explain (costs off)
 ---------------------------------------------------------------------------
  HashAggregate
    Group Key: $0
-<<<<<<< HEAD
    InitPlan 1 (returns $0)  (slice2)
-=======
-   InitPlan 1 (returns $0)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
      ->  Limit
            ->  Gather Motion 3:1  (slice1; segments: 3)
                  Merge Key: tenk1.unique2
                  ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                        Index Cond: (unique2 IS NOT NULL)
    ->  Result
-<<<<<<< HEAD
  Optimizer: legacy query optimizer
 (10 rows)
-=======
-(7 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 select distinct max(unique2) from tenk1;
  max  
@@ -866,7 +858,6 @@ explain (costs off)
                             QUERY PLAN                             
 -------------------------------------------------------------------
  HashAggregate
-<<<<<<< HEAD
    Group Key: min((min(minmaxtest.f1))), max((max(minmaxtest.f1)))
    ->  Aggregate
          ->  Gather Motion 3:1  (slice1; segments: 3)
@@ -878,35 +869,6 @@ explain (costs off)
                            ->  Seq Scan on minmaxtest3
  Optimizer: legacy query optimizer
 (11 rows)
-=======
-   Group Key: $0, $1
-   InitPlan 1 (returns $0)
-     ->  Limit
-           ->  Merge Append
-                 Sort Key: minmaxtest.f1
-                 ->  Index Only Scan using minmaxtesti on minmaxtest
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
-                       Index Cond: (f1 IS NOT NULL)
-   InitPlan 2 (returns $1)
-     ->  Limit
-           ->  Merge Append
-                 Sort Key: minmaxtest_1.f1
-                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
-                       Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
-                       Index Cond: (f1 IS NOT NULL)
-   ->  Result
-(27 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 select distinct min(f1), max(f1) from minmaxtest;
  min | max 
