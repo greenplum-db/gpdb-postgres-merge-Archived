@@ -1528,15 +1528,11 @@ typedef struct
 
 
 /**************************************************************
- * get_ao_distribution_oid
- * get_ao_distribution_name
+ * get_ao_distribution
  *
- * given an AO table name or oid, show the total distribution
- * of rows across all segment databases in the system.
- *
- * TODO: for now these 2 functions are almost completely
- * duplicated. See how to factor out a common internal function
- * such as done in get_ao_compression_ratio below.
+ * given an AO table oid (or name, because it's a regclass
+ * argument), show the total distribution of rows across all
+ * segment databases in the system.
  **************************************************************/
 
 Datum
