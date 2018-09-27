@@ -1235,20 +1235,6 @@ select * from
   int8_tbl x cross join (int4_tbl x cross join lateral (select x.f1) ss);
 -- LATERAL can be used to put an aggregate into the FROM clause of its query
 select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;
-<<<<<<< HEAD
--- github issue 5370 cases
-drop table if exists t5370;
-drop table if exists t5370_2;
-create table t5370(id int,name text) distributed by(id);
-insert into t5370 select i,i from  generate_series(1,1000) i;
-create table t5370_2 as select * from t5370 distributed by (id);
-analyze t5370_2;
-analyze t5370;
-explain select * from t5370 a , t5370_2 b where a.name=b.name;
-
-drop table t5370;
-drop table t5370_2;
-=======
 
 -- check behavior of LATERAL in UPDATE/DELETE
 
@@ -1266,4 +1252,3 @@ update xx1 set x2 = f1 from xx1, lateral (select * from int4_tbl where f1 = x1) 
 delete from xx1 using (select * from int4_tbl where f1 = x1) ss;
 delete from xx1 using (select * from int4_tbl where f1 = xx1.x1) ss;
 delete from xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
