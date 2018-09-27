@@ -3156,18 +3156,18 @@ ExplainPropertyStringInfo(const char *qlabel, ExplainState *es, const char *fmt,
 	for (;;)
 	{
 		va_list		args;
-		bool		success;
+		int			needed;
 
 		/* Try to format the data. */
 		va_start(args, fmt);
-		success = appendStringInfoVA(&buf, fmt, args);
+		needed = appendStringInfoVA(&buf, fmt, args);
 		va_end(args);
 
-		if (success)
+		if (needed == 0)
 			break;
 
 		/* Double the buffer size and try again. */
-		enlargeStringInfo(&buf, buf.maxlen);
+		enlargeStringInfo(&buf, needed);
 	}
 
 	ExplainPropertyText(qlabel, buf.data, es);
