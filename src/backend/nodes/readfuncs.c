@@ -850,6 +850,7 @@ _readIndexStmt(void)
 
 	READ_STRING_FIELD(idxname);
 	READ_NODE_FIELD(relation);
+	READ_OID_FIELD(relationOid);
 	READ_STRING_FIELD(accessMethod);
 	READ_STRING_FIELD(tableSpace);
 	READ_NODE_FIELD(indexParams);

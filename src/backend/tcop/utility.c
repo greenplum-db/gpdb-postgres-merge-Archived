@@ -1511,6 +1511,13 @@ ProcessUtilitySlow(Node *parsetree,
 					 */
 					lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
 						: ShareLock;
+
+					/*
+					 * The QD might have looked up the OID of the base table
+					 * already, and stashed it in stmt->relid
+					 */
+					if (stmt->relationOid)
+						relid = stmt->relationOid;
 					relid =
 						RangeVarGetRelidExtended(stmt->relation, lockmode,
 												 false, false,
@@ -1529,7 +1536,12 @@ ProcessUtilitySlow(Node *parsetree,
 						IndexStmt  *stmt = (IndexStmt *) lfirst(lc);
 
 						/* ... and do it */
-						DefineIndex(relid,	/* OID of heap relation */
+						/*
+						 * transformIndexStmt() should've stored the heap
+						 * relation's OID in stmt-->relid
+						 */
+						Assert(OidIsValid(stmt->relationOid));
+						DefineIndex(stmt->relationOid,	/* OID of heap relation */
 								stmt,
 								InvalidOid,		/* no predefined OID */
 								false,	/* is_alter_table */

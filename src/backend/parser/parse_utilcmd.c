@@ -3052,6 +3052,13 @@ transformIndexStmt_recurse(Oid relid, IndexStmt *stmt, const char *queryString,
 	stmt = (IndexStmt *) copyObject(stmt);
 
 	/*
+	 * Remember the OID in the IndexStmt. This is important for any additional
+	 * IndexStmts we might create for the partitions, but let's fill it in for
+	 * the main index too, for completeness.
+	 */
+	stmt->relationOid = relid;
+
+	/*
 	 * Open the parent table with appropriate locking.	We must do this
 	 * because addRangeTableEntry() would acquire only AccessShareLock,
 	 * leaving DefineIndex() needing to do a lock upgrade with consequent risk
@@ -3116,10 +3123,15 @@ transformIndexStmt_recurse(Oid relid, IndexStmt *stmt, const char *queryString,
 
 			chidx = (IndexStmt *)copyObject((Node *)stmt);
 
-			/* now just update the relation and index name fields */
+			/*
+			 * Now just update the relation and index name fields. Also remember
+			 * the OID of the partition, so that the caller doesn't need to look
+			 * it up again.
+			 */
 			chidx->relation =
 				makeRangeVar(get_namespace_name(RelationGetNamespace(crel)),
 							 pstrdup(RelationGetRelationName(crel)), -1);
+			chidx->relationOid = relid;
 
 			elog(NOTICE, "building index for child partition \"%s\"",
 				 RelationGetRelationName(crel));
