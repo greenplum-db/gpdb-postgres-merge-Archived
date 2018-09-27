@@ -9245,50 +9245,50 @@ View definition:
           WHERE country.code = city.countrycode AND country.code = countrylanguage.countrycode
           GROUP BY country.code, country.name
         )
-        (         SELECT allcountrystats.city_cnt, 
-                    allcountrystats.lang_cnt, 
-                    allcountrystats.name, 
-                    denseregions."REGION_SURFACE_AREA", 
-                    longlivingregions."REGION_LIFETIME", 
-                    longlivingregions."REGION_POP", 
-                    longlivingregions.lang_count, 
-                    longlivingregions."REGION_GNP", 
-                    longlivingregions.region
-                   FROM longlivingregions, 
-                    denseregions, 
-                    allcountrystats, 
-                    country
-                  WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear >= 1800 AND country.indepyear <= 1850
-        UNION ALL 
-                 SELECT allcountrystats.city_cnt, 
-                    allcountrystats.lang_cnt, 
-                    allcountrystats.name, 
-                    denseregions."REGION_SURFACE_AREA", 
-                    longlivingregions."REGION_LIFETIME", 
-                    longlivingregions."REGION_POP", 
-                    longlivingregions.lang_count, 
-                    longlivingregions."REGION_GNP", 
-                    longlivingregions.region
-                   FROM longlivingregions, 
-                    denseregions, 
-                    allcountrystats, 
-                    country
-                  WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear >= 1850 AND country.indepyear <= 1900)
-UNION ALL 
-         SELECT allcountrystats.city_cnt, 
-            allcountrystats.lang_cnt, 
-            allcountrystats.name, 
-            denseregions."REGION_SURFACE_AREA", 
-            longlivingregions."REGION_LIFETIME", 
-            longlivingregions."REGION_POP", 
-            longlivingregions.lang_count, 
-            longlivingregions."REGION_GNP", 
-            longlivingregions.region
-           FROM longlivingregions, 
-            denseregions, 
-            allcountrystats, 
-            country
-          WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear > 1900;
+ SELECT allcountrystats.city_cnt,
+    allcountrystats.lang_cnt,
+    allcountrystats.name,
+    denseregions."REGION_SURFACE_AREA",
+    longlivingregions."REGION_LIFETIME",
+    longlivingregions."REGION_POP",
+    longlivingregions.lang_count,
+    longlivingregions."REGION_GNP",
+    longlivingregions.region
+   FROM longlivingregions,
+    denseregions,
+    allcountrystats,
+    country
+  WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear >= 1800 AND country.indepyear <= 1850
+UNION ALL
+ SELECT allcountrystats.city_cnt,
+    allcountrystats.lang_cnt,
+    allcountrystats.name,
+    denseregions."REGION_SURFACE_AREA",
+    longlivingregions."REGION_LIFETIME",
+    longlivingregions."REGION_POP",
+    longlivingregions.lang_count,
+    longlivingregions."REGION_GNP",
+    longlivingregions.region
+   FROM longlivingregions,
+    denseregions,
+    allcountrystats,
+    country
+  WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear >= 1850 AND country.indepyear <= 1900
+UNION ALL
+ SELECT allcountrystats.city_cnt,
+    allcountrystats.lang_cnt,
+    allcountrystats.name,
+    denseregions."REGION_SURFACE_AREA",
+    longlivingregions."REGION_LIFETIME",
+    longlivingregions."REGION_POP",
+    longlivingregions.lang_count,
+    longlivingregions."REGION_GNP",
+    longlivingregions.region
+   FROM longlivingregions,
+    denseregions,
+    allcountrystats,
+    country
+  WHERE longlivingregions.region = denseregions.region AND allcountrystats.code = country.code AND country.region = longlivingregions.region AND country.indepyear > 1900;
 
 select city_cnt,lang_cnt,name,region from view_with_shared_scans order by name LIMIT 50;
  city_cnt | lang_cnt |                 name                  |          region           
