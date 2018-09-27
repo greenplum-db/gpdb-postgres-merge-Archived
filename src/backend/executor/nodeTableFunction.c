@@ -381,7 +381,12 @@ ExecInitTableFunction(TableFunctionScan *node, EState *estate, int eflags)
 		case TYPEFUNC_SCALAR:
 		{
 			/* Scalar data type: Construct a tuple descriptor manually */
-			char	   *attname = strVal(linitial(rtfunc->funccolnames));
+			char	   *attname;
+
+			if (rtfunc->funccolnames)
+				attname = strVal(linitial(rtfunc->funccolnames));
+			else
+				attname = NULL;
 
 			resultdesc = CreateTemplateTupleDesc(1, false);
 			TupleDescInitEntry(resultdesc,

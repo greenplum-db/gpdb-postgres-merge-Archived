@@ -1391,6 +1391,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		/*
 		 * Handle dynamic type resolution for functions with DESCRIBE callbacks.
 		 */
+		/* GPDB_94_MERGE_FIXME: What happens if you have 'coldeflist', and a DESCRIBE callback? */
 		if (functypclass == TYPEFUNC_RECORD && IsA(funcexpr, FuncExpr))
 		{
 			FuncExpr *func = (FuncExpr *) funcexpr;
@@ -1434,6 +1435,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 					{
 						Form_pg_attribute attr = tupdesc->attrs[i];
 
+						rtfunc->funccolnames	= lappend(rtfunc->funccolnames,
+														  makeString(pstrdup(NameStr(attr->attname))));
 						rtfunc->funccoltypes	= lappend_oid(rtfunc->funccoltypes,
 														  attr->atttypid);
 						rtfunc->funccoltypmods = lappend_int(rtfunc->funccoltypmods,
