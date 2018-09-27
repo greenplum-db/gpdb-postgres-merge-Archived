@@ -324,7 +324,6 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 		}
 		else
 			relpages = RelationGetNumberOfBlocks(onerel);
-
 	}
 	/*
 	 * GPDB_92_MERGE_FIXME: do_analyze_rel add a param AcquireSampleRowsFunc

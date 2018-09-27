@@ -1963,8 +1963,24 @@ index_update_stats(Relation rel,
 
 	if (reltuples >= 0 && Gp_role != GP_ROLE_DISPATCH)
 	{
-		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
+		BlockNumber relpages;
 		BlockNumber relallvisible;
+
+		if (RelationIsAoRows(rel))
+		{
+			int64           totalbytes;
+
+			totalbytes = GetAOTotalBytes(rel, GetActiveSnapshot());
+			relpages = RelationGuessNumberOfBlocks(totalbytes);
+		}
+		else if (RelationIsAoCols(rel))
+		{
+			int64 totalBytes = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
+
+			relpages = RelationGuessNumberOfBlocks(totalBytes);
+		}
+		else
+			relpages = RelationGetNumberOfBlocks(rel);
 
 		if (rd_rel->relkind != RELKIND_INDEX)
 			relallvisible = visibilitymap_count(rel);
