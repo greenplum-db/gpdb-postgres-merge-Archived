@@ -346,13 +346,6 @@ select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
 select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
 
-<<<<<<< HEAD
--- checking proisstrict settings
-
-select '[{"a":1}]'::json->0->'b';
-select '[{"a":1}]'::json->1;
-select '[{"a":1}]'::json->1->'a';
-=======
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),
@@ -454,4 +447,9 @@ select * from json_to_record('{"a":1,"b":"foo","c":"bar"}',true)
 
 select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
     as x(a int, b text, c boolean);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+
+-- checking proisstrict settings
+
+select '[{"a":1}]'::json->0->'b';
+select '[{"a":1}]'::json->1;
+select '[{"a":1}]'::json->1->'a';

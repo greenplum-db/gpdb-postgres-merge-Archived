@@ -1068,27 +1068,6 @@ select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
  null \u0000 escape
 (1 row)
 
-<<<<<<< HEAD
--- checking proisstrict settings
-select '[{"a":1}]'::json->0->'b';
- ?column? 
-----------
- 
-(1 row)
-
-select '[{"a":1}]'::json->1;
- ?column? 
-----------
- 
-(1 row)
-
-select '[{"a":1}]'::json->1->'a';
- ?column? 
-----------
- 
-(1 row)
-
-=======
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),
@@ -1244,4 +1223,22 @@ select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","
  2 | bar | t
 (2 rows)
 
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+-- checking proisstrict settings
+select '[{"a":1}]'::json->0->'b';
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"a":1}]'::json->1;
+ ?column? 
+----------
+ 
+(1 row)
+
+select '[{"a":1}]'::json->1->'a';
+ ?column? 
+----------
+ 
+(1 row)
+
