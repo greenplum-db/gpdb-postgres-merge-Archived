@@ -2717,6 +2717,15 @@ _outTruncateStmt(StringInfo str, const TruncateStmt *node)
 }
 
 static void
+_outReplicaIdentityStmt(StringInfo str, const ReplicaIdentityStmt *node)
+{
+	WRITE_NODE_TYPE("REPLICAIDENTITYSTMT");
+
+	WRITE_CHAR_FIELD(identity_type);
+	WRITE_STRING_FIELD(name);
+}
+
+static void
 _outAlterTableStmt(StringInfo str, const AlterTableStmt *node)
 {
 	WRITE_NODE_TYPE("ALTERTABLESTMT");
@@ -5174,6 +5183,9 @@ _outNode(StringInfo str, const void *obj)
 				_outTruncateStmt(str, obj);
 				break;
 
+			case T_ReplicaIdentityStmt:
+				_outReplicaIdentityStmt(str, obj);
+				break;
 			case T_AlterTableStmt:
 				_outAlterTableStmt(str, obj);
 				break;

@@ -968,6 +968,17 @@ _readTruncateStmt(void)
 }
 #endif /* COMPILING_BINARY_FUNCS */
 
+static ReplicaIdentityStmt *
+_readReplicaIdentityStmt(void)
+{
+	READ_LOCALS(ReplicaIdentityStmt);
+
+	READ_CHAR_FIELD(identity_type);
+	READ_STRING_FIELD(name);
+
+	READ_DONE();
+}
+
 static AlterTableStmt *
 _readAlterTableStmt(void)
 {
@@ -3162,6 +3173,8 @@ parseNodeString(void)
 		return_value = _readReindexStmt();
 	else if (MATCHX("RENAMESTMT"))
 		return_value = _readRenameStmt();
+	else if (MATCHX("REPLICAIDENTITYSTMT"))
+		return_value = _readReplicaIdentityStmt();
 	else if (MATCHX("RULESTMT"))
 		return_value = _readRuleStmt();
 	else if (MATCHX("SEGFILEMAPNODE"))

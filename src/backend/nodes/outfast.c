@@ -1824,6 +1824,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TruncateStmt:
 				_outTruncateStmt(str, obj);
 				break;
+			case T_ReplicaIdentityStmt:
+				_outReplicaIdentityStmt(str, obj);
+				break;
 			case T_AlterTableStmt:
 				_outAlterTableStmt(str, obj);
 				break;

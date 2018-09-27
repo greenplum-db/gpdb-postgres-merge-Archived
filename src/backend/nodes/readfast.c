@@ -3470,6 +3470,9 @@ readNodeBinary(void)
 				return_value = _readTruncateStmt();
 				break;
 
+			case T_ReplicaIdentityStmt:
+				return_value = _readReplicaIdentityStmt();
+				break;
 			case T_AlterTableStmt:
 				return_value = _readAlterTableStmt();
 				break;
