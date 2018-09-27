@@ -1966,22 +1966,23 @@ index_update_stats(Relation rel,
 		BlockNumber relpages;
 		BlockNumber relallvisible;
 
-		if (RelationIsAoRows(rel))
+		if (RelationIsAoRows(rel) || RelationIsAoCols(rel))
 		{
 			int64           totalbytes;
+			Snapshot snapshot = RegisterSnapshot(GetLatestSnapshot());
 
-			totalbytes = GetAOTotalBytes(rel, GetActiveSnapshot());
+			if (RelationIsAoRows(rel))
+				totalbytes = GetAOTotalBytes(rel, snapshot);
+			else
+				totalbytes = GetAOCSTotalBytes(rel, snapshot, true);
+			UnregisterSnapshot(snapshot);
+
 			relpages = RelationGuessNumberOfBlocks(totalbytes);
-		}
-		else if (RelationIsAoCols(rel))
-		{
-			int64 totalBytes = GetAOCSTotalBytes(rel, GetActiveSnapshot(), true);
-
-			relpages = RelationGuessNumberOfBlocks(totalBytes);
 		}
 		else
 			relpages = RelationGetNumberOfBlocks(rel);
 
+		/* GPDB_94_MERGE_FIXME: Should we do something else here for AO tables? */
 		if (rd_rel->relkind != RELKIND_INDEX)
 			relallvisible = visibilitymap_count(rel);
 		else	/* don't bother for indexes */
