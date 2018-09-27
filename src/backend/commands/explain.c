@@ -2827,12 +2827,11 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 			break;
 		case T_FunctionScan:
-		case T_TableFunctionScan:
 			{
 				FunctionScan *fscan = (FunctionScan *) plan;
 
 				/* Assert it's on a RangeFunction */
-				Assert(rte->rtekind == RTE_FUNCTION || rte->rtekind == RTE_TABLEFUNCTION);
+				Assert(rte->rtekind == RTE_FUNCTION);
 
 				/*
 				 * If the expression is still a function call of a single
@@ -2843,6 +2842,35 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 				if (list_length(fscan->functions) == 1)
 				{
 					RangeTblFunction *rtfunc = (RangeTblFunction *) linitial(fscan->functions);
+
+					if (IsA(rtfunc->funcexpr, FuncExpr))
+					{
+						FuncExpr   *funcexpr = (FuncExpr *) rtfunc->funcexpr;
+						Oid			funcid = funcexpr->funcid;
+
+						objectname = get_func_name(funcid);
+						if (es->verbose)
+							namespace =
+								get_namespace_name(get_func_namespace(funcid));
+					}
+				}
+				objecttag = "Function Name";
+			}
+			break;
+		case T_TableFunctionScan:
+			{
+				TableFunctionScan *fscan = (TableFunctionScan *) plan;
+
+				/* Assert it's on a RangeFunction */
+				Assert(rte->rtekind == RTE_TABLEFUNCTION);
+
+				/*
+				 * Unlike in a FunctionScan, in a TableFunctionScan the call
+				 * should always be a a function call of a single function.
+				 * Get the real name of the function.
+				 */
+				{
+					RangeTblFunction *rtfunc = fscan->function;
 
 					if (IsA(rtfunc->funcexpr, FuncExpr))
 					{
