@@ -210,6 +210,8 @@ select definition from pg_views where viewname='vw_ord';
 
 drop view vw_ord;
 -- ordinality and multiple functions vs. rewind and reverse scan
+-- Backward scan not supported in GPDB, which makes this a lot less
+-- interesting than in PostgreSQL.
 begin;
 declare foo scroll cursor for select * from rows from(generate_series(1,5),generate_series(1,2)) with ordinality as g(i,j,o);
 fetch all from foo;
@@ -222,25 +224,11 @@ fetch all from foo;
  5 |   | 5
 (5 rows)
 
-fetch backward all from foo;
- i | j | o 
----+---+---
- 5 |   | 5
- 4 |   | 4
- 3 |   | 3
- 2 | 2 | 2
- 1 | 1 | 1
-(5 rows)
-
+--fetch backward all from foo;
 fetch all from foo;
  i | j | o 
 ---+---+---
- 1 | 1 | 1
- 2 | 2 | 2
- 3 |   | 3
- 4 |   | 4
- 5 |   | 5
-(5 rows)
+(0 rows)
 
 fetch next from foo;
  i | j | o 
@@ -252,79 +240,37 @@ fetch next from foo;
 ---+---+---
 (0 rows)
 
-fetch prior from foo;
+--fetch prior from foo;
+--fetch absolute 1 from foo;
+fetch next from foo;
  i | j | o 
 ---+---+---
- 5 |   | 5
-(1 row)
-
-fetch absolute 1 from foo;
- i | j | o 
----+---+---
- 1 | 1 | 1
-(1 row)
+(0 rows)
 
 fetch next from foo;
  i | j | o 
 ---+---+---
- 2 | 2 | 2
-(1 row)
+(0 rows)
 
 fetch next from foo;
  i | j | o 
 ---+---+---
- 3 |   | 3
-(1 row)
+(0 rows)
 
-fetch next from foo;
- i | j | o 
----+---+---
- 4 |   | 4
-(1 row)
-
-fetch prior from foo;
- i | j | o 
----+---+---
- 3 |   | 3
-(1 row)
-
-fetch prior from foo;
- i | j | o 
----+---+---
- 2 | 2 | 2
-(1 row)
-
-fetch prior from foo;
- i | j | o 
----+---+---
- 1 | 1 | 1
-(1 row)
-
+--fetch prior from foo;
+--fetch prior from foo;
+--fetch prior from foo;
 commit;
 -- function with implicit LATERAL
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
-<<<<<<< HEAD
 ERROR:  query plan with multiple segworker groups is not supported
 HINT:  likely caused by a function that reads or modifies data in a distributed table
 CONTEXT:  SQL function "foot" statement 1
-=======
- fooid | f2  | fooid | f2  
--------+-----+-------+-----
-     1 |  11 |     1 |  11
-     2 |  22 |     2 |  22
-     1 | 111 |     1 | 111
-(3 rows)
-
 -- function with implicit LATERAL and explicit ORDINALITY
 select * from foo2, foot(foo2.fooid) with ordinality as z(fooid,f2,ord) where foo2.f2 = z.f2;
- fooid | f2  | fooid | f2  | ord 
--------+-----+-------+-----+-----
-     1 |  11 |     1 |  11 |   1
-     2 |  22 |     2 |  22 |   1
-     1 | 111 |     1 | 111 |   2
-(3 rows)
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+ERROR:  query plan with multiple segworker groups is not supported
+HINT:  likely caused by a function that reads or modifies data in a distributed table
+CONTEXT:  SQL function "foot" statement 1
 -- function in subselect
 select * from foo2 where f2 in (select f2 from foot(foo2.fooid) z where z.fooid = foo2.fooid) ORDER BY 1,2;
 ERROR:  function cannot execute on a QE slice because it accesses relation "public.foo2"
@@ -414,7 +360,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- sql, proretset = t, prorettype = b
-CREATE FUNCTION getfoo3(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getfoo3(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getfoo3(1) AS t1;
  t1  
 -----
@@ -448,15 +394,8 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- sql, proretset = f, prorettype = c
-<<<<<<< HEAD
-DROP VIEW vw_getfoo;
-DROP FUNCTION getfoo(int);
-CREATE FUNCTION getfoo(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo(1) AS t1;
-=======
-CREATE FUNCTION getfoo4(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getfoo4(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getfoo4(1) AS t1;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  fooid | foosubid | fooname 
 -------+----------+---------
      1 |        1 | Joe
@@ -485,7 +424,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- sql, proretset = t, prorettype = c
-CREATE FUNCTION getfoo5(int) RETURNS setof foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getfoo5(int) RETURNS setof foo AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getfoo5(1) AS t1;
  fooid | foosubid | fooname 
 -------+----------+---------
@@ -519,15 +458,8 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- sql, proretset = f, prorettype = record
-<<<<<<< HEAD
-DROP VIEW vw_getfoo;
-DROP FUNCTION getfoo(int);
-CREATE FUNCTION getfoo(int) RETURNS RECORD AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
-SELECT * FROM getfoo(1) AS t1(fooid int, foosubid int, fooname text);
-=======
-CREATE FUNCTION getfoo6(int) RETURNS RECORD AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getfoo6(int) RETURNS RECORD AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getfoo6(1) AS t1(fooid int, foosubid int, fooname text);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  fooid | foosubid | fooname 
 -------+----------+---------
      1 |        1 | Joe
@@ -559,7 +491,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- sql, proretset = t, prorettype = record
-CREATE FUNCTION getfoo7(int) RETURNS setof record AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION getfoo7(int) RETURNS setof record AS 'SELECT * FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ;' LANGUAGE SQL;
 SELECT * FROM getfoo7(1) AS t1(fooid int, foosubid int, fooname text);
  fooid | foosubid | fooname 
 -------+----------+---------
@@ -626,15 +558,8 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- plpgsql, proretset = f, prorettype = c
-<<<<<<< HEAD
-DROP VIEW vw_getfoo;
-DROP FUNCTION getfoo(int);
-CREATE FUNCTION getfoo(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ; RETURN footup; END;' LANGUAGE plpgsql;
-SELECT * FROM getfoo(1) AS t1;
-=======
-CREATE FUNCTION getfoo9(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1; RETURN footup; END;' LANGUAGE plpgsql;
+CREATE FUNCTION getfoo9(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1 ORDER BY fooname DESC /* ORDER BY to force the Joe row to be returned */ ; RETURN footup; END;' LANGUAGE plpgsql;
 SELECT * FROM getfoo9(1) AS t1;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  fooid | foosubid | fooname 
 -------+----------+---------
      1 |        1 | Joe
@@ -725,99 +650,6 @@ DROP FUNCTION foot(int);
 DROP TABLE foo2;
 DROP TABLE foo;
 -- Rescan tests --
-<<<<<<< HEAD
-CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-INSERT INTO foorescan values(5000,1,'abc.5000.1');
-INSERT INTO foorescan values(5001,1,'abc.5001.1');
-INSERT INTO foorescan values(5002,1,'abc.5002.1');
-INSERT INTO foorescan values(5003,1,'abc.5003.1');
-INSERT INTO foorescan values(5004,1,'abc.5004.1');
-INSERT INTO foorescan values(5005,1,'abc.5005.1');
-INSERT INTO foorescan values(5006,1,'abc.5006.1');
-INSERT INTO foorescan values(5007,1,'abc.5007.1');
-INSERT INTO foorescan values(5008,1,'abc.5008.1');
-INSERT INTO foorescan values(5009,1,'abc.5009.1');
-INSERT INTO foorescan values(5000,2,'abc.5000.2');
-INSERT INTO foorescan values(5001,2,'abc.5001.2');
-INSERT INTO foorescan values(5002,2,'abc.5002.2');
-INSERT INTO foorescan values(5003,2,'abc.5003.2');
-INSERT INTO foorescan values(5004,2,'abc.5004.2');
-INSERT INTO foorescan values(5005,2,'abc.5005.2');
-INSERT INTO foorescan values(5006,2,'abc.5006.2');
-INSERT INTO foorescan values(5007,2,'abc.5007.2');
-INSERT INTO foorescan values(5008,2,'abc.5008.2');
-INSERT INTO foorescan values(5009,2,'abc.5009.2');
-INSERT INTO foorescan values(5000,3,'abc.5000.3');
-INSERT INTO foorescan values(5001,3,'abc.5001.3');
-INSERT INTO foorescan values(5002,3,'abc.5002.3');
-INSERT INTO foorescan values(5003,3,'abc.5003.3');
-INSERT INTO foorescan values(5004,3,'abc.5004.3');
-INSERT INTO foorescan values(5005,3,'abc.5005.3');
-INSERT INTO foorescan values(5006,3,'abc.5006.3');
-INSERT INTO foorescan values(5007,3,'abc.5007.3');
-INSERT INTO foorescan values(5008,3,'abc.5008.3');
-INSERT INTO foorescan values(5009,3,'abc.5009.3');
-INSERT INTO foorescan values(5000,4,'abc.5000.4');
-INSERT INTO foorescan values(5001,4,'abc.5001.4');
-INSERT INTO foorescan values(5002,4,'abc.5002.4');
-INSERT INTO foorescan values(5003,4,'abc.5003.4');
-INSERT INTO foorescan values(5004,4,'abc.5004.4');
-INSERT INTO foorescan values(5005,4,'abc.5005.4');
-INSERT INTO foorescan values(5006,4,'abc.5006.4');
-INSERT INTO foorescan values(5007,4,'abc.5007.4');
-INSERT INTO foorescan values(5008,4,'abc.5008.4');
-INSERT INTO foorescan values(5009,4,'abc.5009.4');
-INSERT INTO foorescan values(5000,5,'abc.5000.5');
-INSERT INTO foorescan values(5001,5,'abc.5001.5');
-INSERT INTO foorescan values(5002,5,'abc.5002.5');
-INSERT INTO foorescan values(5003,5,'abc.5003.5');
-INSERT INTO foorescan values(5004,5,'abc.5004.5');
-INSERT INTO foorescan values(5005,5,'abc.5005.5');
-INSERT INTO foorescan values(5006,5,'abc.5006.5');
-INSERT INTO foorescan values(5007,5,'abc.5007.5');
-INSERT INTO foorescan values(5008,5,'abc.5008.5');
-INSERT INTO foorescan values(5009,5,'abc.5009.5');
-CREATE FUNCTION foorescan(int,int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid >= $1 and fooid < $2 ;' LANGUAGE SQL;
---invokes ExecReScanFunctionScan
-SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM foorescan(5002,5004)) ORDER BY 1,2;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"  (entry db 127.0.0.1:15432 pid=29701)
-CONTEXT:  SQL function "foorescan" during startup
-CREATE VIEW vw_foorescan AS SELECT * FROM foorescan(5002,5004);
---invokes ExecReScanFunctionScan
-SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM vw_foorescan) ORDER BY 1,2;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"  (entry db 127.0.0.1:15432 pid=29701)
-CONTEXT:  SQL function "foorescan" during startup
-CREATE TABLE barrescan (fooid int primary key);
-INSERT INTO barrescan values(5003);
-INSERT INTO barrescan values(5004);
-INSERT INTO barrescan values(5005);
-INSERT INTO barrescan values(5006);
-INSERT INTO barrescan values(5007);
-INSERT INTO barrescan values(5008);
-CREATE FUNCTION foorescan(int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid = $1;' LANGUAGE SQL;
---invokes ExecReScanFunctionScan with chgParam != NULL
-SELECT f.* FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) ORDER BY 1,2;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"
-CONTEXT:  SQL function "foorescan" during startup
-SELECT b.fooid, max(f.foosubid) FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"
-CONTEXT:  SQL function "foorescan" during startup
-CREATE VIEW fooview1 AS SELECT f.* FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) ORDER BY 1,2;
-SELECT * FROM fooview1 AS fv WHERE fv.fooid = 5004;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"
-CONTEXT:  SQL function "foorescan" during startup
-CREATE VIEW fooview2 AS SELECT b.fooid, max(f.foosubid) AS maxsubid FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
-SELECT * FROM fooview2 AS fv WHERE fv.maxsubid = 5;
-ERROR:  function cannot execute on a QE slice because it accesses relation "public.foorescan"
-CONTEXT:  SQL function "foorescan" during startup
-DROP VIEW vw_foorescan;
-DROP VIEW fooview1;
-DROP VIEW fooview2;
-DROP FUNCTION foorescan(int,int);
-DROP FUNCTION foorescan(int);
-DROP TABLE foorescan;
-DROP TABLE barrescan;
-=======
 CREATE TEMPORARY SEQUENCE foo_rescan_seq1;
 CREATE TEMPORARY SEQUENCE foo_rescan_seq2;
 CREATE TYPE foo_rescan_t AS (i integer, s bigint);
@@ -1519,7 +1351,6 @@ DROP FUNCTION foo_sql(int,int);
 DROP FUNCTION foo_mat(int,int);
 DROP SEQUENCE foo_rescan_seq1;
 DROP SEQUENCE foo_rescan_seq2;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 --
 -- Test cases involving OUT parameters
 --
