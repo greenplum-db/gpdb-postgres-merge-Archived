@@ -3955,7 +3955,10 @@ _outRangeTblFunction(StringInfo str, const RangeTblFunction *node)
 	WRITE_NODE_FIELD(funccoltypes);
 	WRITE_NODE_FIELD(funccoltypmods);
 	WRITE_NODE_FIELD(funccolcollations);
-	/* funcuserdata is not serialized */
+	/* funcuserdata is only serialized in binary out/read functions */
+#ifdef COMPILING_BINARY_FUNCS
+	WRITE_BYTEA_FIELD(funcuserdata);
+#endif
 	WRITE_BITMAPSET_FIELD(funcparams);
 }
 

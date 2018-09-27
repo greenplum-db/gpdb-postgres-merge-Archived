@@ -2248,7 +2248,10 @@ _readRangeTblFunction(void)
 	READ_NODE_FIELD(funccoltypes);
 	READ_NODE_FIELD(funccoltypmods);
 	READ_NODE_FIELD(funccolcollations);
-	/* 'funcuserdata' is not serialized */
+	/* funcuserdata is only serialized in binary out/read functions */
+#ifdef COMPILING_BINARY_FUNCS
+	READ_BYTEA_FIELD(funcuserdata);
+#endif
 	READ_BITMAPSET_FIELD(funcparams);
 
 	READ_DONE();
