@@ -1637,11 +1637,8 @@ ORDER BY 1, 2, 3;
         403 |            1 | <
         403 |            1 | <<
         403 |            1 | ~<~
-<<<<<<< HEAD
-        403 |            2 | <<=
-=======
         403 |            2 | *<=
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+        403 |            2 | <<=
         403 |            2 | <=
         403 |            2 | ~<=~
         403 |            3 | *=
@@ -1694,22 +1691,10 @@ ORDER BY 1, 2, 3;
        2742 |            2 | @@@
        2742 |            3 | <@
        2742 |            4 | =
-<<<<<<< HEAD
-       7013 |            1 | <
-       7013 |            1 | ~<~
-       7013 |            2 | <=
-       7013 |            2 | ~<=~
-       7013 |            3 | =
-       7013 |            4 | >=
-       7013 |            4 | ~>=~
-       7013 |            5 | >
-       7013 |            5 | ~>~
-=======
        2742 |            7 | @>
        2742 |            9 | ?
        2742 |           10 | ?|
        2742 |           11 | ?&
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
        4000 |            1 | <<
        4000 |            1 | ~<~
        4000 |            2 | &<
@@ -1732,11 +1717,16 @@ ORDER BY 1, 2, 3;
        4000 |           15 | >
        4000 |           16 | @>
        4000 |           18 | =
-<<<<<<< HEAD
-(75 rows)
-=======
-(80 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+       7013 |            1 | <
+       7013 |            1 | ~<~
+       7013 |            2 | <=
+       7013 |            2 | ~<=~
+       7013 |            3 | =
+       7013 |            4 | >=
+       7013 |            4 | ~>=~
+       7013 |            5 | >
+       7013 |            5 | ~>~
+(93 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -1910,33 +1900,6 @@ WHERE NOT (
 (0 rows)
 
 -- Also, check if there are any pg_opclass entries that don't seem to have
-<<<<<<< HEAD
--- pg_amproc support.  Again, opclasses with an optional support proc have
--- to be checked specially.
-SELECT amname, opcname, count(*)
-FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-     LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-         amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname <> 'btree' AND am.amname <> 'gist' AND am.amname <> 'gin'
-GROUP BY amname, amsupport, opcname, amprocfamily
-HAVING count(*) != amsupport OR amprocfamily IS NULL;
- amname | opcname | count 
---------+---------+-------
-(0 rows)
-
-SELECT amname, opcname, count(*)
-FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-     LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-         amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname = 'btree' OR am.amname = 'gist' OR am.amname = 'gin'
-GROUP BY amname, amsupport, opcname, amprocfamily
-HAVING (count(*) != amsupport AND count(*) != amsupport - 1)
-    OR amprocfamily IS NULL;
- amname |   opcname    | count 
---------+--------------+-------
- gin    | _complex_ops |     1
-(1 row)
-=======
 -- pg_amproc support.
 SELECT * FROM (
   SELECT amname, opcname, array_agg(amprocnum ORDER BY amprocnum) as procnums
@@ -1957,7 +1920,6 @@ WHERE NOT (
  amname | opcname | procnums 
 --------+---------+----------
 (0 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
