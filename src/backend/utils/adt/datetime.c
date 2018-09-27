@@ -2726,7 +2726,7 @@ DecodeNumberField(int len, char *str, int fmask,
 	/* No decimal point and no complete date yet? */
 	if ((fmask & DTK_DATE_M) != DTK_DATE_M && !have_frac)
 	{
-		/* GPDB_94_MERGE_FIXME: Why does GPDB have this special case for this case?
+		/* GPDB_94_MERGE_FIXME: Why does GPDB have this special case for this case? */
 		/* yyyymmddhhmmss? */
 		if ((fmask & DTK_DATE_M) != DTK_DATE_M && 
 			(fmask & DTK_TIME_M) != DTK_TIME_M &&
