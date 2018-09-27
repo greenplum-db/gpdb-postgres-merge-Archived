@@ -432,13 +432,13 @@ where a.thousand = b.thousand
 --
 explain (verbose, costs off)
   select x, x from
-    (select (select now()) as x from (values(1),(2)) v(y)) ss;
+    (select (select current_database()) as x from (values(1),(2)) v(y)) ss;
 explain (verbose, costs off)
   select x, x from
     (select (select random()) as x from (values(1),(2)) v(y)) ss;
 explain (verbose, costs off)
   select x, x from
-    (select (select now() where y=y) as x from (values(1),(2)) v(y)) ss;
+    (select (select current_database() where y=y) as x from (values(1),(2)) v(y)) ss;
 explain (verbose, costs off)
   select x, x from
     (select (select random() where y=y) as x from (values(1),(2)) v(y)) ss;
