@@ -1971,13 +1971,13 @@ parruleord_open_gap(Oid partid, int16 level, Oid parent, int16 ruleord,
 	rel = heap_open(PartitionRuleRelationId, RowExclusiveLock);
 	irel = index_open(PartitionRuleParoidParparentruleParruleordIndexId, RowExclusiveLock);
 
-	ScanKeyInit(&scankey[0], 1,
+	ScanKeyInit(&scankey[0], Anum_pg_partition_rule_paroid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(partid));
-	ScanKeyInit(&scankey[1], 2,
+	ScanKeyInit(&scankey[1], Anum_pg_partition_rule_parparentrule,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(parent));
-	ScanKeyInit(&scankey[2], 3,
+	ScanKeyInit(&scankey[2], Anum_pg_partition_rule_parruleord,
 				BTLessEqualStrategyNumber, F_INT2LE,
 				Int16GetDatum(ruleord));
 	sd = systable_beginscan_ordered(rel, irel, NULL, 3, scankey);
