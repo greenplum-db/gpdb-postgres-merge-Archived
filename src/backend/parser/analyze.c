@@ -3674,7 +3674,7 @@ setQryDistributionPolicy(IntoClause *into, Query *qry)
 						MaxPolicyAttributeNumber)));
 
 	if (dist->ptype == POLICYTYPE_REPLICATED)
-		qry->intoPolicy = createReplicatedGpPolicy(NULL);
+		qry->intoPolicy = createReplicatedGpPolicy(NULL, dist->numsegments);
 	else
 	{
 		List	*policykeys = NIL;
@@ -3696,6 +3696,7 @@ setQryDistributionPolicy(IntoClause *into, Query *qry)
 			policykeys = lappend_int(policykeys, keyindex);
 		}
 
-		qry->intoPolicy = createHashPartitionedPolicy(NULL, policykeys);
+		qry->intoPolicy = createHashPartitionedPolicy(NULL, policykeys,
+													  dist->numsegments);
 	}
 }

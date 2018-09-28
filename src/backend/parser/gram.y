@@ -65,6 +65,7 @@
 #include "utils/datetime.h"
 #include "utils/numeric.h"
 #include "utils/xml.h"
+#include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 
 #include "utils/guc.h"
@@ -4684,6 +4685,7 @@ DistributedBy:   DISTRIBUTED BY  '(' columnListUnique ')'
 			{
 				DistributedBy *distributedBy = makeNode(DistributedBy);
 				distributedBy->ptype = POLICYTYPE_PARTITIONED;
+				distributedBy->numsegments = GP_POLICY_ALL_NUMSEGMENTS;
 				distributedBy->keys = $4;
 				$$ = (Node *)distributedBy;
 			}
@@ -4691,6 +4693,7 @@ DistributedBy:   DISTRIBUTED BY  '(' columnListUnique ')'
 			{
 				DistributedBy *distributedBy = makeNode(DistributedBy);
 				distributedBy->ptype = POLICYTYPE_PARTITIONED;
+				distributedBy->numsegments = Max(1, getgpsegmentCount());
 				distributedBy->keys = NIL;
 				$$ = (Node *)distributedBy;
 			}
@@ -4698,6 +4701,7 @@ DistributedBy:   DISTRIBUTED BY  '(' columnListUnique ')'
 			{
 				DistributedBy *distributedBy = makeNode(DistributedBy);
 				distributedBy->ptype = POLICYTYPE_REPLICATED;
+				distributedBy->numsegments = Max(1, getgpsegmentCount());
 				distributedBy->keys = NIL;
 				$$ = (Node *)distributedBy;
 			}

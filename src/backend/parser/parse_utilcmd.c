@@ -71,6 +71,7 @@
 #include "cdb/cdbhash.h"
 #include "cdb/cdbpartition.h"
 #include "cdb/partitionselection.h"
+#include "cdb/cdbutil.h"
 #include "cdb/cdbvars.h"
 #include "utils/guc.h"
 #include "utils/tqual.h"
@@ -1671,6 +1672,7 @@ transformCreateExternalStmt(CreateExternalStmt *stmt, const char *queryString)
 			stmt->distributedBy = makeNode(DistributedBy);
 			stmt->distributedBy->ptype = POLICYTYPE_PARTITIONED;
 			stmt->distributedBy->keys = NIL;
+			stmt->distributedBy->numsegments = GP_POLICY_ALL_NUMSEGMENTS;
 		}
 		else
 		{
@@ -1722,6 +1724,8 @@ transformDistributedBy(CreateStmtContext *cxt,
 {
 	ListCell	*keys = NULL;
 	List		*distrkeys = NIL;
+	/* By default tables should be distributed on ALL segments */
+	int			numsegments = GP_POLICY_ALL_NUMSEGMENTS;
 	int		numUniqueIndexes = 0;
 	Constraint	*uniqueindex = NULL;
 
@@ -1749,7 +1753,11 @@ transformDistributedBy(CreateStmtContext *cxt,
 		return distributedBy;
 	}
 
-	distrkeys = distributedBy ? distributedBy->keys : NIL;
+	if (distributedBy)
+	{
+		distrkeys = distributedBy->keys;
+		numsegments = distributedBy->numsegments;
+	}
 
 	/*
 	 * If distributedBy is NIL, the user did not explicitly say what he
@@ -1903,6 +1911,12 @@ transformDistributedBy(CreateStmtContext *cxt,
 				 elog(NOTICE, "Table has parent, setting distribution columns "
 					 "to match parent table");
 
+				/*
+				 * Inherited tables must have the same numsegments with
+				 * parent table.
+				 */
+				numsegments = oldTablePolicy->numsegments;
+
 				if (oldTablePolicy->nattrs > 0)
 				{
 					for (ia=0; ia<oldTablePolicy->nattrs; ia++)
@@ -1919,6 +1933,7 @@ transformDistributedBy(CreateStmtContext *cxt,
 					pfree(oldTablePolicy);
 					distributedBy = makeNode(DistributedBy);
 					distributedBy->ptype = POLICYTYPE_PARTITIONED;
+					distributedBy->numsegments = numsegments;
 					return distributedBy;
 				}
 			}
@@ -1932,17 +1947,25 @@ transformDistributedBy(CreateStmtContext *cxt,
 			elog(NOTICE, "Table doesn't have 'DISTRIBUTED BY' clause, "
 				 "defaulting to distribution columns from LIKE table");
 
+		/*
+		 * Distribution policy is inherited from the LIKE table, do the same
+		 * to numsegments.
+		 */
+		numsegments = likeDistributedBy->numsegments;
+
 		if (likeDistributedBy->ptype == POLICYTYPE_PARTITIONED &&
 			likeDistributedBy->keys == NIL)
 		{
 			distributedBy = makeNode(DistributedBy);
 			distributedBy->ptype = POLICYTYPE_PARTITIONED;
+			distributedBy->numsegments = numsegments;
 			return distributedBy;
 		}
 		else if (likeDistributedBy->ptype == POLICYTYPE_REPLICATED)
 		{
 			distributedBy = makeNode(DistributedBy);
 			distributedBy->ptype = POLICYTYPE_REPLICATED;
+			distributedBy->numsegments = numsegments;
 			return distributedBy;
 		}
 
@@ -1961,8 +1984,14 @@ transformDistributedBy(CreateStmtContext *cxt,
 				 errhint("Consider including the 'DISTRIBUTED BY' clause to determine the distribution of rows.")));
 		}
 		
+		/*
+		 * Create with default distribution policy and numsegments.
+		 */
+		numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+
 		distributedBy = makeNode(DistributedBy);
 		distributedBy->ptype = POLICYTYPE_PARTITIONED;
+		distributedBy->numsegments = numsegments;
 		return distributedBy;
 	}
 	else if (distrkeys == NIL)
@@ -2064,8 +2093,15 @@ transformDistributedBy(CreateStmtContext *cxt,
 			 */
 			if (!bQuiet)
 				elog(NOTICE, "Table doesn't have 'DISTRIBUTED BY' clause, and no column type is suitable for a distribution key. Creating a NULL policy entry.");
+
+			/*
+			 * Create with default distribution policy and numsegments.
+			 */
+			numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+
 			distributedBy = makeNode(DistributedBy);
 			distributedBy->ptype = POLICYTYPE_PARTITIONED;
+			distributedBy->numsegments = numsegments;
 			return distributedBy;
 		}
 	}
@@ -2233,10 +2269,13 @@ transformDistributedBy(CreateStmtContext *cxt,
 		}
 	}
 
+	Assert(numsegments > 0);
+
 	/* Form the resulting Distributed By clause */
 	distributedBy = makeNode(DistributedBy);
 	distributedBy->ptype = POLICYTYPE_PARTITIONED;
 	distributedBy->keys = distrkeys;
+	distributedBy->numsegments = numsegments;
 
 	return distributedBy;
 }
@@ -2278,14 +2317,15 @@ getPolicyForDistributedBy(DistributedBy *distributedBy, TupleDesc tupdesc)
 					elog(ERROR, "could not find DISTRIBUTED BY column \"%s\"", colname);
 			}
 
-			return createHashPartitionedPolicy(NULL, policykeys);;
+			return createHashPartitionedPolicy(NULL, policykeys,
+											   distributedBy->numsegments);;
 
 		case POLICYTYPE_ENTRY:
 			elog(ERROR, "unexpected entry distribution policy");
 			return NULL;
 
 		case POLICYTYPE_REPLICATED:
-			return createReplicatedGpPolicy(NULL);
+			return createReplicatedGpPolicy(NULL, distributedBy->numsegments);
 	}
 	elog(ERROR, "unrecognized policy type %d", distributedBy->ptype);
 	return NULL;
@@ -4179,6 +4219,7 @@ getLikeDistributionPolicy(TableLikeClause *e)
 		if (GpPolicyIsReplicated(oldTablePolicy))
 		{
 			likeDistributedBy->ptype = POLICYTYPE_REPLICATED;
+			likeDistributedBy->numsegments = oldTablePolicy->numsegments;
 			likeDistributedBy->keys = NIL;
 		}
 		else
@@ -4194,6 +4235,7 @@ getLikeDistributionPolicy(TableLikeClause *e)
 			}
 
 			likeDistributedBy->ptype = POLICYTYPE_PARTITIONED;
+			likeDistributedBy->numsegments = oldTablePolicy->numsegments;
 			likeDistributedBy->keys = keys;
 		}
 	}

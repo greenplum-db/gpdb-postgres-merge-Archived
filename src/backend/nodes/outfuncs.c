@@ -1906,6 +1906,7 @@ _outFlow(StringInfo str, const Flow *node)
 	WRITE_ENUM_FIELD(req_move, Movement);
 	WRITE_ENUM_FIELD(locustype, CdbLocusType);
 	WRITE_INT_FIELD(segindex);
+	WRITE_INT_FIELD(numsegments);
 
 	WRITE_NODE_FIELD(hashExpr);
 
@@ -2603,6 +2604,7 @@ _outDistributedBy(StringInfo str, const DistributedBy *node)
 	WRITE_NODE_TYPE("DISTRIBUTEDBY");
 
 	WRITE_ENUM_FIELD(ptype, GpPolicyType);
+	WRITE_INT_FIELD(numsegments);
 	WRITE_NODE_FIELD(keys);
 }
 

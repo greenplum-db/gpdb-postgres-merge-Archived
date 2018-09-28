@@ -2207,6 +2207,7 @@ _readFlow(void)
 	READ_ENUM_FIELD(req_move, Movement);
 	READ_ENUM_FIELD(locustype, CdbLocusType);
 	READ_INT_FIELD(segindex);
+	READ_INT_FIELD(numsegments);
 
 	READ_NODE_FIELD(hashExpr);
 	READ_NODE_FIELD(flow_before_req_move);
@@ -2760,6 +2761,7 @@ _readDistributedBy(void)
 	READ_LOCALS(DistributedBy);
 
 	READ_ENUM_FIELD(ptype, GpPolicyType);
+	READ_INT_FIELD(numsegments);
 	READ_NODE_FIELD(keys);
 
 	READ_DONE();
@@ -2950,6 +2952,8 @@ _readGpPolicy(void)
 	READ_LOCALS(GpPolicy);
 
 	READ_ENUM_FIELD(ptype, GpPolicyType);
+
+	READ_INT_FIELD(numsegments);
 
 	READ_INT_FIELD(nattrs);
 	READ_INT_ARRAY(attrs, local_node->nattrs, AttrNumber);

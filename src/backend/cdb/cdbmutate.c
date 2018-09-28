@@ -101,7 +101,8 @@ static int *makeDefaultSegIdxArray(int numSegs);
 
 static void add_slice_to_motion(Motion *motion,
 					MotionType motionType, List *hashExpr,
-					int numOutputSegs, int *outputSegIdx);
+					int numOutputSegs, int *outputSegIdx,
+					int numsegments);
 
 static Node *apply_motion_mutator(Node *node, ApplyMotionState *context);
 
@@ -147,7 +148,7 @@ directDispatchCalculateHash(Plan *plan, GpPolicy *targetPolicy)
 	ListCell   *cell = NULL;
 	bool		directDispatch;
 
-	h = makeCdbHash(GpIdentity.numsegments);
+	h = makeCdbHash(targetPolicy->numsegments);
 	cdbhashinit(h);
 
 	/*
@@ -233,6 +234,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 	ApplyMotionState state;
 	bool		needToAssignDirectDispatchContentIds = false;
 	bool		bringResultToDispatcher = false;
+	int			numsegments = GP_POLICY_ALL_NUMSEGMENTS;
 
 	/* Initialize mutator context. */
 
@@ -272,6 +274,13 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 				List	   *hashExpr;
 				ListCell   *exp1;
 
+				/*
+				 * In CTAS the source distribution policy is not inherited,
+				 * always set numsegments to ALL unless a DISTRIBUTED BY clause
+				 * is specified.
+				 */
+				numsegments = GP_POLICY_ALL_NUMSEGMENTS;
+
 				if (query->intoPolicy != NULL)
 				{
 					targetPolicy = query->intoPolicy;
@@ -282,7 +291,8 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 				}
 				else if (gp_create_table_random_default_distribution)
 				{
-					targetPolicy = createRandomPartitionedPolicy(NULL);
+					targetPolicy = createRandomPartitionedPolicy(NULL,
+																 numsegments);
 					ereport(NOTICE,
 							(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
 							 errmsg("Using default RANDOM distribution since no distribution was specified."),
@@ -403,7 +413,8 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 						}
 					}
 
-					targetPolicy = createHashPartitionedPolicy(NULL, policykeys);
+					targetPolicy = createHashPartitionedPolicy(NULL, policykeys,
+															   numsegments);
 
 					if (query->intoPolicy == NULL)
 					{
@@ -439,6 +450,12 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 
 				Assert(query->intoPolicy->ptype != POLICYTYPE_ENTRY);
 
+				/*
+				 * To copy data from old table to new table we must set
+				 * motion's dest numsegments the same as new table.
+				 */
+				numsegments = query->intoPolicy->numsegments;
+
 				if (GpPolicyIsReplicated(query->intoPolicy))
 				{
 					/*
@@ -458,7 +475,7 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 						/* do nothing */
 					}
 
-					if (!broadcastPlan(plan, false, false))
+					if (!broadcastPlan(plan, false, false, numsegments))
 						ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize that SELECT INTO yet")));
 
@@ -476,7 +493,8 @@ apply_motion(PlannerInfo *root, Plan *plan, Query *query)
 							targetPolicy->nattrs,
 							targetPolicy->attrs,
 							true);
-					if (!repartitionPlan(plan, false, false, hashExpr))
+
+					if (!repartitionPlan(plan, false, false, hashExpr, numsegments))
 						ereport(ERROR, (errcode(ERRCODE_GP_FEATURE_NOT_YET),
 									errmsg("Cannot parallelize that SELECT INTO yet")
 							       ));
@@ -746,17 +764,20 @@ apply_motion_mutator(Node *node, ApplyMotionState *context)
 
 			newnode = (Node *) make_union_motion(plan,
 												 flow->segindex,
-												 true /* useExecutorVarFormat */ );
+												 true /* useExecutorVarFormat */,
+												 flow->numsegments);
 			break;
 
 		case MOVEMENT_BROADCAST:
-			newnode = (Node *) make_broadcast_motion(plan, true /* useExecutorVarFormat */ );
+			newnode = (Node *) make_broadcast_motion(plan, true /* useExecutorVarFormat */,
+													 flow->numsegments);
 			break;
 
 		case MOVEMENT_REPARTITION:
 			newnode = (Node *) make_hashed_motion(plan,
 												  flow->hashExpr,
-												  true	/* useExecutorVarFormat */
+												  true	/* useExecutorVarFormat */,
+												  flow->numsegments
 				);
 			break;
 
@@ -875,8 +896,15 @@ assignMotionID(Node *newnode, ApplyMotionState *context, Node *oldnode)
 static void
 add_slice_to_motion(Motion *motion,
 					MotionType motionType, List *hashExpr,
-					int numOutputSegs, int *outputSegIdx)
+					int numOutputSegs, int *outputSegIdx,
+					int numsegments)
 {
+	Assert(numsegments > 0);
+	if (numsegments == __GP_POLICY_EVIL_NUMSEGMENTS)
+	{
+		Assert(!"what's the proper value of numsegments?");
+	}
+
 	/* sanity checks */
 	/* check numOutputSegs and outputSegIdx are in sync.  */
 	AssertEquivalent(numOutputSegs == 0, outputSegIdx == NULL);
@@ -934,7 +962,7 @@ add_slice_to_motion(Motion *motion,
 	switch (motion->motionType)
 	{
 		case MOTIONTYPE_HASH:
-			motion->plan.flow = makeFlow(FLOW_PARTITIONED);
+			motion->plan.flow = makeFlow(FLOW_PARTITIONED, numsegments);
 			motion->plan.flow->locustype = CdbLocusType_Hashed;
 			motion->plan.flow->hashExpr = copyObject(motion->hashExpr);
 			motion->numOutputSegs = getgpsegmentCount();
@@ -945,14 +973,14 @@ add_slice_to_motion(Motion *motion,
 			if (motion->numOutputSegs == 0)
 			{
 				/* broadcast */
-				motion->plan.flow = makeFlow(FLOW_REPLICATED);
+				motion->plan.flow = makeFlow(FLOW_REPLICATED, numsegments);
 				motion->plan.flow->locustype = CdbLocusType_Replicated;
 
 			}
 			else if (motion->numOutputSegs == 1)
 			{
 				/* Focus motion */
-				motion->plan.flow = makeFlow(FLOW_SINGLETON);
+				motion->plan.flow = makeFlow(FLOW_SINGLETON, numsegments);
 				motion->plan.flow->segindex = motion->outputSegIdx[0];
 				motion->plan.flow->locustype = (motion->plan.flow->segindex < 0) ?
 					CdbLocusType_Entry :
@@ -966,7 +994,7 @@ add_slice_to_motion(Motion *motion,
 			}
 			break;
 		case MOTIONTYPE_EXPLICIT:
-			motion->plan.flow = makeFlow(FLOW_PARTITIONED);
+			motion->plan.flow = makeFlow(FLOW_PARTITIONED, numsegments);
 
 			/*
 			 * TODO: antova - Nov 18, 2010; add a special locus type for
@@ -984,7 +1012,8 @@ add_slice_to_motion(Motion *motion,
 }
 
 Motion *
-make_union_motion(Plan *lefttree, int destSegIndex, bool useExecutorVarFormat)
+make_union_motion(Plan *lefttree, int destSegIndex,
+				  bool useExecutorVarFormat, int numsegments)
 {
 	Motion	   *motion;
 	int		   *outSegIdx = (int *) palloc(sizeof(int));
@@ -994,7 +1023,8 @@ make_union_motion(Plan *lefttree, int destSegIndex, bool useExecutorVarFormat)
 	motion = make_motion(NULL, lefttree,
 						 0, NULL, NULL, NULL, NULL, /* no ordering */
 						 useExecutorVarFormat);
-	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx);
+	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx,
+						numsegments);
 	return motion;
 }
 
@@ -1004,7 +1034,8 @@ make_sorted_union_motion(PlannerInfo *root,
 						 int numSortCols, AttrNumber *sortColIdx,
 						 Oid *sortOperators, Oid *collations, bool *nullsFirst,
 						 int destSegIndex,
-						 bool useExecutorVarFormat)
+						 bool useExecutorVarFormat,
+						 int numsegments)
 {
 	Motion	   *motion;
 	int		   *outSegIdx = (int *) palloc(sizeof(int));
@@ -1014,13 +1045,16 @@ make_sorted_union_motion(PlannerInfo *root,
 	motion = make_motion(root, lefttree,
 						 numSortCols, sortColIdx, sortOperators, collations, nullsFirst,
 						 useExecutorVarFormat);
-	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx);
+	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 1, outSegIdx,
+						numsegments);
 	return motion;
 }
 
 Motion *
 make_hashed_motion(Plan *lefttree,
-				   List *hashExpr, bool useExecutorVarFormat)
+				   List *hashExpr,
+				   bool useExecutorVarFormat,
+				   int numsegments)
 {
 	Motion	   *motion;
 	ListCell   *lc;
@@ -1039,12 +1073,14 @@ make_hashed_motion(Plan *lefttree,
 	motion = make_motion(NULL, lefttree,
 						 0, NULL, NULL, NULL, NULL, /* no ordering */
 						 useExecutorVarFormat);
-	add_slice_to_motion(motion, MOTIONTYPE_HASH, hashExpr, 0, NULL);
+	add_slice_to_motion(motion, MOTIONTYPE_HASH, hashExpr, 0, NULL,
+						numsegments);
 	return motion;
 }
 
 Motion *
-make_broadcast_motion(Plan *lefttree, bool useExecutorVarFormat)
+make_broadcast_motion(Plan *lefttree, bool useExecutorVarFormat,
+					  int numsegments)
 {
 	Motion	   *motion;
 
@@ -1052,7 +1088,7 @@ make_broadcast_motion(Plan *lefttree, bool useExecutorVarFormat)
 						 0, NULL, NULL, NULL, NULL, /* no ordering */
 						 useExecutorVarFormat);
 
-	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 0, NULL);
+	add_slice_to_motion(motion, MOTIONTYPE_FIXED, NULL, 0, NULL, numsegments);
 	return motion;
 }
 
@@ -1060,6 +1096,7 @@ Motion *
 make_explicit_motion(Plan *lefttree, AttrNumber segidColIdx, bool useExecutorVarFormat)
 {
 	Motion	   *motion;
+	int			numsegments;
 
 	motion = make_motion(NULL, lefttree,
 						 0, NULL, NULL, NULL, NULL, /* no ordering */
@@ -1069,7 +1106,13 @@ make_explicit_motion(Plan *lefttree, AttrNumber segidColIdx, bool useExecutorVar
 
 	motion->segidColIdx = segidColIdx;
 
-	add_slice_to_motion(motion, MOTIONTYPE_EXPLICIT, NULL, 0, NULL);
+	/*
+	 * For explicit motion data come back to the source segments,
+	 * so numsegments is also the same with source.
+	 */
+	numsegments = lefttree->flow->numsegments;
+
+	add_slice_to_motion(motion, MOTIONTYPE_EXPLICIT, NULL, 0, NULL, numsegments);
 	return motion;
 }
 
@@ -1502,7 +1545,7 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	splitupdate->plan.plan_width = subplan->plan_width;
 
 	/* We need a motion node above the SplitUpdate, so mark it as strewn */
-	mark_plan_strewn((Plan *) splitupdate);
+	mark_plan_strewn((Plan *) splitupdate, subplan->flow->numsegments);
 
 	mt->action_col_idxes = lappend_int(mt->action_col_idxes, actionColIdx);
 	mt->ctid_col_idxes = lappend_int(mt->ctid_col_idxes, ctidColIdx);

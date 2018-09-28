@@ -569,7 +569,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	if (Gp_role == GP_ROLE_DISPATCH && gp_session_id > -1)
 	{
 		/* Choose a segdb to which our singleton gangs should be dispatched. */
-		gp_singleton_segindex = gp_session_id % getgpsegmentCount();
+		/* FIXME: do not hard code to 0 */
+		gp_singleton_segindex = 0;
 	}
 
 	root->hasRecursion = hasRecursion;
@@ -1118,6 +1119,8 @@ inheritance_planner(PlannerInfo *root)
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
 	ListCell   *lc;
+	GpPolicy   *parentPolicy = NULL;
+	Oid			parentOid = InvalidOid;
 
 	/* MPP */
 	Plan	   *plan;
@@ -1150,6 +1153,17 @@ inheritance_planner(PlannerInfo *root)
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
 			continue;
+
+		if (!parentPolicy)
+		{
+			parentPolicy = GpPolicyFetch(NULL, appinfo->parent_reloid);
+			parentOid = appinfo->parent_reloid;
+
+			Assert(parentPolicy != NULL);
+			Assert(parentOid != InvalidOid);
+		}
+
+		Assert(parentOid == appinfo->parent_reloid);
 
 		/*
 		 * We need a working copy of the PlannerInfo so that we can control
@@ -1413,6 +1427,8 @@ inheritance_planner(PlannerInfo *root)
 		orig_result_rtis = lappend_int(orig_result_rtis, orig_result_rti);
 	}
 
+	Assert(parentPolicy != NULL);
+
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
 
@@ -1433,7 +1449,7 @@ inheritance_planner(PlannerInfo *root)
 									NULL);
 
 		if (Gp_role == GP_ROLE_DISPATCH)
-			mark_plan_general(plan);
+			mark_plan_general(plan, parentPolicy->numsegments);
 
 		return plan;
 	}
@@ -1600,7 +1616,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	gp_motion_cost_per_row :
 	2.0 * cpu_tuple_cost;
 
-	CdbPathLocus_MakeNull(&current_locus);
+	CdbPathLocus_MakeNull(&current_locus, __GP_POLICY_EVIL_NUMSEGMENTS);
 
 	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
 	if (parse->limitCount || parse->limitOffset)
@@ -2235,7 +2251,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				/* Hashed aggregation produces randomly-ordered results */
 				current_pathkeys = NIL;
-				CdbPathLocus_MakeNull(&current_locus);
+				CdbPathLocus_MakeNull(&current_locus, __GP_POLICY_EVIL_NUMSEGMENTS);
 			}
 			else if (!grpext && (parse->hasAggs || parse->groupClause))
 			{
@@ -2300,7 +2316,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												  0);
 				}
 
-				CdbPathLocus_MakeNull(&current_locus);
+				CdbPathLocus_MakeNull(&current_locus, __GP_POLICY_EVIL_NUMSEGMENTS);
 			}
 			else if (grpext && (parse->hasAggs || parse->groupClause))
 			{
@@ -2360,7 +2376,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 							make_pathkeys_for_sortclauses(root,
 														  parse->sortClause,
 														  result_plan->targetlist);
-					CdbPathLocus_MakeNull(&current_locus);
+					CdbPathLocus_MakeNull(&current_locus, __GP_POLICY_EVIL_NUMSEGMENTS);
 				}
 			}
 			else if (root->hasHavingQual)
@@ -2377,14 +2393,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * this routine to avoid having to generate the plan in the
 				 * first place.
 				 */
+				/* FIXME: numsegments, is policy needed? */
+
 				result_plan = (Plan *) make_result(root,
 												   tlist,
 												   parse->havingQual,
 												   NULL);
 				/* Result will be only one row anyway; no sort order */
 				current_pathkeys = NIL;
-				mark_plan_general(result_plan);
-				CdbPathLocus_MakeNull(&current_locus);
+				mark_plan_general(result_plan, GP_POLICY_ALL_NUMSEGMENTS);
+				CdbPathLocus_MakeNull(&current_locus, __GP_POLICY_EVIL_NUMSEGMENTS);
 			}
 		}						/* end of non-minmax-aggregate case */
 
@@ -2437,33 +2455,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 													  tlist,
 													  activeWindows);
 
+			/* Add any Vars needed to compute the distribution key. */
+			window_tlist = add_to_flat_tlist_junk(window_tlist,
+												  result_plan->flow->hashExpr,
+												  true /* resjunk */);
+
 			/*
 			 * The copyObject steps here are needed to ensure that each plan
 			 * node has a separately modifiable tlist.  (XXX wouldn't a
 			 * shallow list copy do for that?)
 			 */
-
-			// -- GPDB_93_MERGE_FIXME: do we stll need this code? Or should it be in
-			// make_windowInputTargetList ? 
-			foreach(l, activeWindows)
-			{
-				WindowClause *wc = (WindowClause *) lfirst(l);
-				List	   *extravars;
-
-				extravars = pull_var_clause(wc->startOffset,
-											PVC_REJECT_AGGREGATES,
-											PVC_INCLUDE_PLACEHOLDERS);
-				window_tlist = add_to_flat_tlist(window_tlist, extravars);
-
-				extravars = pull_var_clause(wc->endOffset,
-											PVC_REJECT_AGGREGATES,
-											PVC_INCLUDE_PLACEHOLDERS);
-				window_tlist = add_to_flat_tlist(window_tlist, extravars);
-			}
-			// --
-			window_tlist = add_to_flat_tlist_junk(window_tlist,
-												  result_plan->flow->hashExpr,
-												  true /* resjunk */);
 			result_plan->targetlist = (List *) copyObject(window_tlist);
 
 			foreach(l, activeWindows)
@@ -2528,7 +2529,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 						 * Change current_locus based on the new distribution
 						 * pathkeys.
 						 */
-						CdbPathLocus_MakeHashed(&current_locus, partition_dist_keys);
+						CdbPathLocus_MakeHashed(&current_locus, partition_dist_keys,
+												CdbPathLocus_NumSegments(current_locus));
 						need_gather_for_partitioning = false;
 					}
 				}
@@ -3113,7 +3115,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Repartition the subquery plan based on our distribution
 		 * requirements
 		 */
-		r = repartitionPlan(result_plan, false, false, exprList);
+		r = repartitionPlan(result_plan, false, false, exprList,
+							result_plan->flow->numsegments);
 		if (!r)
 		{
 			/*
@@ -4717,7 +4720,6 @@ make_windowInputTargetList(PlannerInfo *root,
 	List	   *flattenable_cols;
 	List	   *flattenable_vars;
 	ListCell   *lc;
-	Bitmapset  *firstOrderColRefs = NULL;
 
 	Assert(parse->hasWindowFuncs);
 
@@ -4730,7 +4732,6 @@ make_windowInputTargetList(PlannerInfo *root,
 	{
 		WindowClause *wc = (WindowClause *) lfirst(lc);
 		ListCell   *lc2;
-		bool		firstOrderCol = true;
 
 		foreach(lc2, wc->partitionClause)
 		{
@@ -4743,10 +4744,6 @@ make_windowInputTargetList(PlannerInfo *root,
 			SortGroupClause *sortcl = (SortGroupClause *) lfirst(lc2);
 
 			sgrefs = bms_add_member(sgrefs, sortcl->tleSortGroupRef);
-
-			if (firstOrderCol)
-				firstOrderColRefs = bms_add_member(firstOrderColRefs, sortcl->tleSortGroupRef);
-			firstOrderCol = false;
 		}
 	}
 
@@ -4774,9 +4771,6 @@ make_windowInputTargetList(PlannerInfo *root,
 		 * that such items can't contain window functions, so it's okay to
 		 * compute them below the WindowAgg nodes.)
 		 */
-		// GPDB_93_MERGE_FIXME: lost this condition:
-		// (bms_is_member(tle->ressortgroupref, firstOrderColRefs) ||
-		// Do we still need it?
 		if (tle->ressortgroupref != 0 &&
 			bms_is_member(tle->ressortgroupref, sgrefs))
 		{
@@ -4819,6 +4813,28 @@ make_windowInputTargetList(PlannerInfo *root,
 	/* clean up cruft */
 	list_free(flattenable_vars);
 	list_free(flattenable_cols);
+
+	/*
+	 * Add any Vars that appear in the start/end bounds. In PostgreSQL,
+	 * they're not allowed to contain any Vars of the same query level, but
+	 * we do allow it in GPDB. They shouldn't contain any aggregates, though.
+	 */
+	foreach(lc, activeWindows)
+	{
+		WindowClause *wc = (WindowClause *) lfirst(lc);
+
+		flattenable_vars = pull_var_clause(wc->startOffset,
+										   PVC_REJECT_AGGREGATES,
+										   PVC_INCLUDE_PLACEHOLDERS);
+		new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+		list_free(flattenable_vars);
+
+		flattenable_vars = pull_var_clause(wc->endOffset,
+										   PVC_REJECT_AGGREGATES,
+										   PVC_INCLUDE_PLACEHOLDERS);
+		new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+		list_free(flattenable_vars);
+	}
 
 	return new_tlist;
 }

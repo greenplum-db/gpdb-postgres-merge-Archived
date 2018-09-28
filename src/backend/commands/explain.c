@@ -870,7 +870,7 @@ elapsed_time(instr_time *starttime)
 }
 
 static void
-show_dispatch_info(Slice *slice, ExplainState *es)
+show_dispatch_info(Slice *slice, ExplainState *es, Plan *plan)
 {
 	int			segments;
 
@@ -895,6 +895,36 @@ show_dispatch_info(Slice *slice, ExplainState *es)
 			{
 				Assert(list_length(slice->directDispatch.contentIds) == 1);
 				segments = list_length(slice->directDispatch.contentIds);
+			}
+			else if (es->pstmt->planGen == PLANGEN_PLANNER)
+			{
+				/*
+				 * - for motion nodes we want to display the sender segments
+				 *   count, it can be fetched from lefttree;
+				 * - for non-motion nodes the segments count can be fetched
+				 *   from either lefttree or plan itself, they should be the
+				 *   same;
+				 * - there is also nodes like Hash that might have NULL
+				 *   plan->flow but non-NULL lefttree->flow, so we can use
+				 *   whichever that's available.
+				 */
+				if (plan->lefttree && plan->lefttree->flow)
+				{
+					if (plan->lefttree->flow->flotype == FLOW_SINGLETON)
+						segments = 1;
+					else
+						segments = plan->lefttree->flow->numsegments;
+				}
+				else
+				{
+					Assert(!IsA(plan, Motion));
+					Assert(plan->flow);
+
+					if (plan->flow->flotype == FLOW_SINGLETON)
+						segments = 1;
+					else
+						segments = plan->flow->numsegments;
+				}
 			}
 			else
 			{
@@ -1363,6 +1393,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			{
 				Motion	   *pMotion = (Motion *) plan;
 
+				Assert(plan->lefttree);
+				Assert(plan->lefttree->flow);
+
 				motion_snd = es->currentSlice->numGangMembersToBeActive;
 				motion_recv = 0;
 
@@ -1382,9 +1415,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 							sname = "Broadcast Motion";
 							motion_recv = getgpsegmentCount();
 						}
-						else if (plan->lefttree &&
-								 plan->lefttree->flow &&
-								 plan->lefttree->flow->locustype == CdbLocusType_Replicated)
+						else if (plan->lefttree->flow->locustype == CdbLocusType_Replicated)
 						{
 							sname = "Explicit Gather Motion";
 							scaleFactor = 1;
@@ -1403,6 +1434,41 @@ ExplainNode(PlanState *planstate, List *ancestors,
 						sname = "???";
 						break;
 				}
+
+				if (es->pstmt->planGen == PLANGEN_PLANNER)
+				{
+					Slice	   *slice = es->currentSlice;
+
+					if (slice->directDispatch.isDirectDispatch)
+					{
+						/* Special handling on direct dispatch */
+						Assert(list_length(slice->directDispatch.contentIds) == 1);
+						motion_snd = list_length(slice->directDispatch.contentIds);
+					}
+					else if (plan->lefttree->flow->flotype == FLOW_SINGLETON)
+					{
+						/* For SINGLETON we always display sender size as 1 */
+						motion_snd = 1;
+					}
+					else
+					{
+						/* Otherwise find out sender size from outer plan */
+						motion_snd = plan->lefttree->flow->numsegments;
+					}
+
+					if (pMotion->motionType == MOTIONTYPE_FIXED &&
+						pMotion->numOutputSegs != 0)
+					{
+						/* In Gather Motion always display receiver size as 1 */
+						motion_recv = 1;
+					}
+					else
+					{
+						/* Otherwise find out receiver size from plan */
+						motion_recv = plan->flow->numsegments;
+					}
+				}
+
 				pname = psprintf("%s %d:%d", sname, motion_snd, motion_recv);
 			}
 			break;
@@ -1461,7 +1527,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			 * *above* the Motion here. We will print the slice below the
 			 * Motion, below.
 			 */
-			show_dispatch_info(save_currentSlice, es);
+			show_dispatch_info(save_currentSlice, es, plan);
 			appendStringInfoChar(es->str, '\n');
 			es->indent++;
 		}
@@ -1480,7 +1546,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		 * to the slice below the Motion.)
 		 */
 		if (IsA(plan, Motion))
-			show_dispatch_info(es->currentSlice, es);
+			show_dispatch_info(es->currentSlice, es, plan);
 
 		es->indent++;
 	}
@@ -1501,7 +1567,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		if (plan_name)
 			ExplainPropertyText("Subplan Name", plan_name, es);
 
-		show_dispatch_info(es->currentSlice, es);
+		show_dispatch_info(es->currentSlice, es, plan);
 	}
 
 	switch (nodeTag(plan))
