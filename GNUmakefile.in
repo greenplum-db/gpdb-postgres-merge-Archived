@@ -17,10 +17,6 @@ all:
 	$(MAKE) -C contrib/fuzzystrmatch all
 	$(MAKE) -C contrib/extprotocol all	
 	$(MAKE) -C contrib/dblink all
-	$(MAKE) -C contrib/gp_sparse_vector all
-	$(MAKE) -C contrib/gp_distribution_policy all
-	$(MAKE) -C contrib/gp_inject_fault all
-	$(MAKE) -C contrib/gp_internal_tools all
 	$(MAKE) -C contrib/indexscan all
 	$(MAKE) -C contrib/pg_upgrade_support all
 #	$(MAKE) -C contrib/pg_upgrade all # GPDB_94_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
@@ -30,12 +26,13 @@ all:
 	$(MAKE) -C gpAux/extensions all
 	$(MAKE) -C gpAux/gpperfmon all
 	$(MAKE) -C gpAux/platform all
+	$(MAKE) -C gpcontrib all
 	+@echo "All of Greenplum Database successfully made. Ready to install."
 
 docs:
 	$(MAKE) -C doc all
 
-$(call recurse,world,doc src config contrib,all)
+$(call recurse,world,doc src config contrib gpcontrib,all)
 world:
 	+@echo "PostgreSQL, contrib, and documentation successfully made. Ready to install."
 
@@ -52,10 +49,6 @@ install:
 	$(MAKE) -C contrib/fuzzystrmatch $@
 	$(MAKE) -C contrib/extprotocol $@
 	$(MAKE) -C contrib/dblink $@
-	$(MAKE) -C contrib/gp_sparse_vector $@
-	$(MAKE) -C contrib/gp_distribution_policy $@
-	$(MAKE) -C contrib/gp_inject_fault $@
-	$(MAKE) -C contrib/gp_internal_tools $@
 	$(MAKE) -C contrib/indexscan $@ 
 	$(MAKE) -C contrib/pg_upgrade_support $@
 #	$(MAKE) -C contrib/pg_upgrade $@ # GPDB_94_MERGE_FIXME: Temporarily avoid compiling and installing pg_upgrade
@@ -66,25 +59,26 @@ install:
 	$(MAKE) -C gpAux/extensions $@
 	$(MAKE) -C gpAux/gpperfmon $@
 	$(MAKE) -C gpAux/platform $@
+	$(MAKE) -C gpcontrib $@
 	+@echo "Greenplum Database installation complete."
 
 install-docs:
 	$(MAKE) -C doc install
 
-$(call recurse,install-world,doc src config contrib,install)
+$(call recurse,install-world,doc src config contrib gpcontrib,install)
 install-world:
 	+@echo "PostgreSQL, contrib, and documentation installation complete."
 
 # build src/ before contrib/
 install-world-contrib-recurse: install-world-src-recurse
 
-$(call recurse,installdirs uninstall coverage,doc src config)
+$(call recurse,installdirs uninstall coverage,doc src config contrib gpcontrib)
 
-$(call recurse,distprep,doc src config contrib)
+$(call recurse,distprep,doc src config contrib gpcontrib)
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default
-$(call recurse,clean,doc contrib src config)
+$(call recurse,clean,doc contrib gpcontrib src config)
 clean:
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
@@ -104,6 +98,7 @@ distclean maintainer-clean:
 	$(MAKE) -C gpAux/gpperfmon $@
 	$(MAKE) -C gpAux/platform $@
 	$(MAKE) -C contrib $@
+	$(MAKE) -C gpcontrib $@
 	$(MAKE) -C config $@
 	$(MAKE) -C gpMgmt $@
 	$(MAKE) -C src $@
@@ -130,7 +125,7 @@ check check-tests: all
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
 
-$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib gpcontrib,check)
 
 # This is a top-level target that runs "all" regression test suites against
 # a running server. This is what the CI pipeline runs.
@@ -153,17 +148,15 @@ $(call recurse,installcheck-world, \
 			   contrib/indexscan \
 			   contrib/hstore \
 			   contrib/pgcrypto \
-			   contrib/gp_internal_tools \
-			   gpAux/extensions \
+			   gpcontrib \
 			   src/bin/ \
 			   gpMgmt/bin,installcheck)
 .PHONY: installcheck-gpcheckcat
 installcheck-world: installcheck-gpcheckcat
 installcheck-gpcheckcat:
 	gpcheckcat -A
-$(call recurse,installcheck-world,contrib/gp_replica_check,installcheck)
+$(call recurse,installcheck-world,gpcontrib/gp_replica_check,installcheck)
 $(call recurse,installcheck-world,contrib/pg_upgrade,check)
-
 
 # Run mock tests, that don't require a running server. Arguably these should
 # be part of [install]check-world, but we treat them more like part of
@@ -173,7 +166,7 @@ $(call recurse,installcheck-world,contrib/pg_upgrade,check)
 unittest-check:
 	$(MAKE) -C src/backend unittest-check
 	$(MAKE) -C src/bin unittest-check
-	$(MAKE) -C gpAux/extensions unittest-check
+	$(MAKE) -C gpcontrib unittest-check
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@

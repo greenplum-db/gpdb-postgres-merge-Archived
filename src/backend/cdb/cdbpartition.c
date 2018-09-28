@@ -8428,7 +8428,7 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  con->conislocal,
 									  con->coninhcount,
 									  false, /* conNoInherit */
-									  false /* is_internal */); /* GPDB_93_MERGE_FIXME: should this be considered internal? */
+									  true /* is_internal */);
 				break;
 			}
 
@@ -8483,7 +8483,7 @@ constraint_apply_mapped(HeapTuple tuple, AttrMap *map, Relation cand,
 									  con->conislocal,
 									  con->coninhcount,
 									  true, /* conNoInherit */
-									  false /* is_internal */); /* GPDB_93_MERGE_FIXME: should this be considered internal? */
+									  true /* is_internal */);
 
 				heap_close(frel, AccessExclusiveLock);
 				break;

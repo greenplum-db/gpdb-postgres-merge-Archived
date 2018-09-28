@@ -46,8 +46,6 @@ PG_MAJORVERSION = @PG_MAJORVERSION@
 GP_VERSION = @GP_VERSION_SHORT@
 GP_MAJORVERSION = @GP_MAJORVERSION@
 
-ADDON_DIR = @ADDON_DIR@
-
 # Support for VPATH builds
 vpath_build = @vpath_build@
 abs_top_srcdir = @abs_top_srcdir@
@@ -225,6 +223,7 @@ PTHREAD_CFLAGS		= @PTHREAD_CFLAGS@
 PTHREAD_LIBS		= @PTHREAD_LIBS@
 
 have_yaml 		= @have_yaml@
+with_zstd 		= @with_zstd@
 
 
 ##########################################################################

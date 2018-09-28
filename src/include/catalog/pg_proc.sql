@@ -277,16 +277,6 @@
 
  CREATE FUNCTION anytable_out(anytable) RETURNS cstring LANGUAGE internal IMMUTABLE STRICT AS 'anytable_out' WITH (OID=7055, DESCRIPTION="anytable type serialization output function");
 
- CREATE FUNCTION gp_quicklz_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'quicklz_constructor' WITH (OID=5076, DESCRIPTION="quicklz constructor");
-
- CREATE FUNCTION gp_quicklz_destructor(internal) RETURNS void LANGUAGE internal VOLATILE AS 'quicklz_destructor' WITH(OID=5077, DESCRIPTION="quicklz destructor");
-
- CREATE FUNCTION gp_quicklz_compress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'quicklz_compress' WITH(OID=5078, DESCRIPTION="quicklz compressor");
-
- CREATE FUNCTION gp_quicklz_decompress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'quicklz_decompress' WITH(OID=5079, DESCRIPTION="quicklz decompressor");
-
- CREATE FUNCTION gp_quicklz_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'quicklz_validator' WITH(OID=9925, DESCRIPTION="quicklz compression validator");
-
  CREATE FUNCTION gp_zlib_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'zlib_constructor' WITH (OID=9910, DESCRIPTION="zlib constructor");
 
  CREATE FUNCTION gp_zlib_destructor(internal) RETURNS void LANGUAGE internal VOLATILE AS 'zlib_destructor' WITH(OID=9911, DESCRIPTION="zlib destructor");
@@ -306,16 +296,6 @@
  CREATE FUNCTION gp_rle_type_decompress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'rle_type_decompress' WITH(OID=9917, DESCRIPTION="Type specific RLE decompressor");
 
  CREATE FUNCTION gp_rle_type_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'rle_type_validator' WITH(OID=9923, DESCRIPTION="Type speific RLE compression validator");
-
- CREATE FUNCTION gp_zstd_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'zstd_constructor' WITH (OID=7071, DESCRIPTION="zstd compressor and decompressor constructor");
-
- CREATE FUNCTION gp_zstd_destructor(internal) RETURNS void LANGUAGE internal VOLATILE AS 'zstd_destructor' WITH(OID=7072, DESCRIPTION="zstd compressor and decompressor destructor");
-
- CREATE FUNCTION gp_zstd_compress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_compress' WITH(OID=7073, DESCRIPTION="zstd compressor");
-
- CREATE FUNCTION gp_zstd_decompress(internal, int4, internal, int4, internal, internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_decompress' WITH(OID=7074, DESCRIPTION="zstd decompressor");
-
- CREATE FUNCTION gp_zstd_validator(internal) RETURNS void LANGUAGE internal IMMUTABLE AS 'zstd_validator' WITH(OID=7075, DESCRIPTION="zstdcompression validator");
 
  CREATE FUNCTION gp_dummy_compression_constructor(internal, internal, bool) RETURNS internal LANGUAGE internal VOLATILE AS 'dummy_compression_constructor' WITH (OID=7064, DESCRIPTION="Dummy compression destructor");
 

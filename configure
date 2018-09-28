@@ -676,7 +676,6 @@ apr_cflags
 apr_link_ld_libs
 apr_includes
 APR_1_CONFIG
-ADDON_DIR
 ZIC
 python_enable_shared
 python_additional_libs
@@ -9763,7 +9762,6 @@ program to use during the build." "$LINENO" 5
 fi
 
 
-
 ##
 ## Libraries
 ##
@@ -13735,7 +13733,7 @@ int
 main ()
 {
 
-return strncmp("2.75.", GPORCA_VERSION_STRING, 5);
+return strncmp("3.1.", GPORCA_VERSION_STRING, 4);
 
   ;
   return 0;
@@ -13745,7 +13743,7 @@ if ac_fn_cxx_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
 $as_echo "ok" >&6; }
 else
-  as_fn_error $? "Your ORCA version is expected to be 2.75.XXX" "$LINENO" 5
+  as_fn_error $? "Your ORCA version is expected to be 3.1.XXX" "$LINENO" 5
 
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \

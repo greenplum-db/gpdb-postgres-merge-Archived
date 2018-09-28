@@ -2647,7 +2647,7 @@ gpdb::GetComponentDatabases(void)
 	GP_WRAP_START;
 	{
 		/* catalog tables: gp_segment_config */
-		return getCdbComponentDatabases();
+		return cdbcomponent_getCdbComponents(true);
 	}
 	GP_WRAP_END;
 	return NULL;
@@ -2792,6 +2792,27 @@ gpdb::CdbHashConst
 	GP_WRAP_START;
 	{
 		return cdbhash_const(constant, num_segments);
+	}
+	GP_WRAP_END;
+	return 0;
+}
+
+// pick a segment randomly from a pool of segments using GPDB's hash function
+int32
+gpdb::CdbHashRandom
+	(
+	int num_segments
+	)
+{
+	GP_WRAP_START;
+	{
+		CdbHash    *pcdbhash = makeCdbHash(num_segments);
+
+		cdbhashinit(pcdbhash);
+
+		cdbhashnokey(pcdbhash);
+
+		return cdbhashreduce(pcdbhash);
 	}
 	GP_WRAP_END;
 	return 0;

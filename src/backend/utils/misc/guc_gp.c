@@ -144,9 +144,6 @@ bool		gp_appendonly_verify_write_block = false;
 bool		gp_appendonly_compaction = true;
 int			gp_appendonly_compaction_threshold = 0;
 bool		gp_heap_require_relhasoids_match = true;
-bool		Debug_appendonly_rezero_quicklz_compress_scratch = false;
-bool		Debug_appendonly_rezero_quicklz_decompress_scratch = false;
-bool		Debug_appendonly_guard_end_quicklz_scratch = false;
 bool		gp_local_distributed_cache_stats = false;
 bool		debug_xlog_record_read = false;
 bool		Debug_cancel_print = false;
@@ -388,6 +385,7 @@ bool		optimizer_enable_direct_dispatch;
 bool		optimizer_enable_hashjoin_redistribute_broadcast_children;
 bool		optimizer_enable_broadcast_nestloop_outer_child;
 bool		optimizer_enable_streaming_material;
+bool		optimizer_enable_gather_on_segment_for_dml;
 bool		optimizer_enable_assert_maxonerow;
 bool		optimizer_enable_constant_expression_evaluation;
 bool		optimizer_enable_bitmapscan;
@@ -1116,39 +1114,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_heap_require_relhasoids_match,
 		true,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"debug_appendonly_rezero_quicklz_compress_scratch", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Zero the QuickLZ scratch buffer before each append-only block that is being compressed."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&Debug_appendonly_rezero_quicklz_compress_scratch,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"debug_appendonly_guard_end_quicklz_scratch", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Put a guard area of all zeroes after the QuickLZ scratch buffers and verify it is still zero before and after compress and decompress operations."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&Debug_appendonly_guard_end_quicklz_scratch,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"debug_appendonly_rezero_quicklz_decompress_scratch", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Zero the QuickLZ scratch buffer before each append-only block that is being decompressed."),
-			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL
-		},
-		&Debug_appendonly_rezero_quicklz_decompress_scratch,
-		false,
 		NULL, NULL, NULL
 	},
 
@@ -2679,6 +2644,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"optimizer_enable_gather_on_segment_for_dml", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Enable DML optimization by enforcing a non-master gather in the optimizer."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&optimizer_enable_gather_on_segment_for_dml,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"optimizer_enforce_subplans", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Enforce correlated execution in the optimizer"),
 			NULL,
@@ -3615,7 +3590,7 @@ struct config_int ConfigureNamesInt_gp[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&gp_cached_gang_threshold,
-		5, 0, INT_MAX,
+		5, 1, INT_MAX,
 		NULL, NULL, NULL
 	},
 
