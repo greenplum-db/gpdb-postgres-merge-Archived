@@ -2766,6 +2766,28 @@ DecodeNumberField(int len, char *str, int fmask,
 			return DTK_DATE;
 		}
 	}
+	else if ((fmask & DTK_DATE_M) != DTK_DATE_M && 
+			 (fmask & DTK_TIME_M) != DTK_TIME_M)
+	{
+        	/* yyyymmddhhmmss? */ 
+        	if (len == 14) 
+        	{ 
+            		*tmask = DTK_DATE_M | DTK_TIME_M; 
+
+            		tm->tm_sec = atoi(str + 12); 
+            		*(str + 12) = '\0'; 
+            		tm->tm_min = atoi(str + 10); 
+            		*(str + 10) = '\0'; 
+            		tm->tm_hour = atoi(str + 8); 
+            		*(str + 8) = '\0'; 
+            		tm->tm_mday = atoi(str + 6); 
+            		*(str + 6) = '\0'; 
+            		tm->tm_mon = atoi(str + 4); 
+            		*(str + 4) = '\0'; 
+            		tm->tm_year = atoi(str + 0); 
+            		return DTK_DATE; 
+        	} 
+	}
 
 	/* not all time fields are specified? */
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
