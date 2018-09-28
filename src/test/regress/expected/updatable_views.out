@@ -139,13 +139,8 @@ SELECT table_name, column_name, is_updatable
 -- Read-only views
 DELETE FROM ro_view1;
 ERROR:  cannot delete from view "ro_view1"
-<<<<<<< HEAD
 DETAIL:  Views containing GROUP BY are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
-=======
-DETAIL:  Views containing DISTINCT are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 DELETE FROM ro_view2;
 ERROR:  cannot delete from view "ro_view2"
 DETAIL:  Views containing GROUP BY are not automatically updatable.
@@ -265,21 +260,10 @@ DELETE FROM rw_view16 WHERE a=-3; -- should be OK
 -- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view1"
-<<<<<<< HEAD
 DETAIL:  Views containing GROUP BY are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
-INSERT INTO ro_view18 VALUES (3, 'ROW 3');
-ERROR:  cannot insert into view "ro_view18"
-DETAIL:  Security-barrier views are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
-DELETE FROM ro_view19;
-ERROR:  cannot delete from view "ro_view19"
-=======
-DETAIL:  Views containing DISTINCT are not automatically updatable.
 HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 DELETE FROM ro_view18;
 ERROR:  cannot delete from view "ro_view18"
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 UPDATE ro_view19 SET max_value=1000;

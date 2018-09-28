@@ -768,15 +768,11 @@ drop table cchild;
 --
 -- Check that ruleutils are working
 --
-<<<<<<< HEAD
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' AND viewname <> 'pg_roles' AND viewname <> 'gp_pgdatabase' AND viewname <> 'pg_locks' AND viewname <> 'gp_max_external_files' AND viewname <> 'pg_resqueue_status' AND viewname <> 'pg_stat_resqueues' ORDER BY viewname;
-=======
 
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
 
-SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' AND viewname <> 'pg_roles' AND viewname <> 'gp_pgdatabase' AND viewname <> 'pg_locks' AND viewname <> 'gp_max_external_files' AND viewname <> 'pg_resqueue_status' AND viewname <> 'pg_stat_resqueues' ORDER BY viewname;
 
 SELECT tablename, rulename, definition FROM pg_rules
 	ORDER BY tablename, rulename;

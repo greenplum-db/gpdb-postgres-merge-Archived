@@ -24,7 +24,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
                       QUERY PLAN                      
 ------------------------------------------------------
  HashAggregate
-<<<<<<< HEAD
    Group Key: t.type
    ->  Redistribute Motion 3:3  (slice1; segments: 3)
          Hash Key: t.type
@@ -33,11 +32,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
                ->  Seq Scan on t
  Optimizer: legacy query optimizer
 (8 rows)
-=======
-   Group Key: type
-   ->  Seq Scan on t
-(3 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
 SELECT relispopulated FROM pg_class WHERE oid = 'tm'::regclass;
@@ -76,7 +70,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
    Sort Key: t.type
    ->  HashAggregate
          Group Key: t.type
-<<<<<<< HEAD
          ->  Redistribute Motion 3:3  (slice1; segments: 3)
                Hash Key: t.type
                ->  HashAggregate
@@ -84,10 +77,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
                      ->  Seq Scan on t
  Optimizer: legacy query optimizer
 (10 rows)
-=======
-         ->  Seq Scan on t
-(5 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
 SELECT * FROM tvm;
@@ -105,7 +94,6 @@ CREATE UNIQUE INDEX tvmm_pred ON tvmm (grandtot) WHERE grandtot < 0;
 CREATE VIEW tvv AS SELECT sum(totamt) AS grandtot FROM tv;
 EXPLAIN (costs off)
   CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
-<<<<<<< HEAD
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column(s) named 'grandtot' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
                                      QUERY PLAN                                     
@@ -125,15 +113,6 @@ HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sur
                                              ->  Seq Scan on t
  Optimizer: legacy query optimizer
 (14 rows)
-=======
-        QUERY PLAN         
----------------------------
- Aggregate
-   ->  HashAggregate
-         Group Key: t.type
-         ->  Seq Scan on t
-(4 rows)
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
 CREATE VIEW tvvmv AS SELECT * FROM tvvm;
@@ -425,16 +404,6 @@ CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM v_test2 UNION ALL SE
  moo      | integer |           | plain   |              | 
  ?column? | integer |           | plain   |              | 
 View definition:
-<<<<<<< HEAD
-         SELECT v_test2.moo, 
-            2 * v_test2.moo
-           FROM v_test2
-UNION ALL 
-         SELECT v_test2.moo, 
-            3 * v_test2.moo
-           FROM v_test2;
-Distributed by: (moo)
-=======
  SELECT v_test2.moo,
     2 * v_test2.moo
    FROM v_test2
@@ -442,7 +411,7 @@ UNION ALL
  SELECT v_test2.moo,
     3 * v_test2.moo
    FROM v_test2;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+Distributed by: (moo)
 
 CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;

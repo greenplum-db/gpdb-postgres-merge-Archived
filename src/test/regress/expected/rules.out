@@ -1271,12 +1271,9 @@ drop table cchild;
 --
 -- Check that ruleutils are working
 --
-<<<<<<< HEAD
 -- GPDB_84_MERGE_FIXME: fix this test and re-enable in parallel_schedule
-=======
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
 iexit| SELECT ih.name,
     ih.thepath,
