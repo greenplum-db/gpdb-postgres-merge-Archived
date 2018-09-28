@@ -337,7 +337,7 @@ bool
 saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 {
 #ifdef USE_READLINE
-	int			errnum;
+	int			errnum = 0;
 
 	/*
 	 * Suppressing the write attempt when HISTFILE is set to /dev/null may
