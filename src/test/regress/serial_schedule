@@ -100,10 +100,7 @@ test: security_label
 test: collate
 test: matview
 test: lock
-<<<<<<< HEAD
-=======
 test: replica_identity
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 test: alter_generic
 test: misc
 test: psql

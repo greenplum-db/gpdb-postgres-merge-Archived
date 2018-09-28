@@ -126,10 +126,6 @@ PGSERVICE="";         unset PGSERVICE
 PGSSLMODE="";         unset PGSSLMODE
 PGREQUIRESSL="";      unset PGREQUIRESSL
 PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
-<<<<<<< HEAD
-=======
-PGHOST="";            unset PGHOST
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 PGHOSTADDR="";        unset PGHOSTADDR
 
 # Select a non-conflicting port number, similarly to pg_regress.c
