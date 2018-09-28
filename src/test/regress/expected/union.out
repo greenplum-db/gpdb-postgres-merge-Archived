@@ -531,13 +531,18 @@ explain (costs off)
                    QUERY PLAN                   
 ------------------------------------------------
  Limit
-   ->  Merge Append
-         Sort Key: ((t1.a || t1.b))
-         ->  Index Scan using t1_ab_idx on t1
-         ->  Index Scan using t1c_ab_idx on t1c
-         ->  Index Scan using t2_pkey on t2
-         ->  Index Scan using t2c_pkey on t2c
-(7 rows)
+   ->  Gather Motion 3:1  (slice1; segments: 3)
+         Merge Key: ((t1.a || t1.b))
+         ->  Limit
+               ->  Sort
+                     Sort Key: ((t1.a || t1.b))
+                     ->  Append
+                           ->  Seq Scan on t1
+                           ->  Seq Scan on t1c
+                           ->  Seq Scan on t2
+                           ->  Seq Scan on t2c
+ Optimizer: legacy query optimizer
+(12 rows)
 
   SELECT * FROM
   (SELECT a || b AS ab FROM t1
@@ -683,16 +688,19 @@ explain (costs off)
 select * from
   (select * from t3 a union all select * from t3 b) ss
   join int4_tbl on f1 = expensivefunc(x);
-                         QUERY PLAN                         
-------------------------------------------------------------
- Nested Loop
-   ->  Seq Scan on int4_tbl
-   ->  Append
-         ->  Index Scan using t3i on t3 a
-               Index Cond: (expensivefunc(x) = int4_tbl.f1)
-         ->  Index Scan using t3i on t3 b
-               Index Cond: (expensivefunc(x) = int4_tbl.f1)
-(7 rows)
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   ->  Hash Join
+         Hash Cond: (int4_tbl.f1 = expensivefunc(a.x))
+         ->  Broadcast Motion 3:3  (slice1; segments: 3)
+               ->  Seq Scan on int4_tbl
+         ->  Hash
+               ->  Append
+                     ->  Seq Scan on t3 a
+                     ->  Seq Scan on t3 b
+ Optimizer: legacy query optimizer
+(10 rows)
 
 select * from
   (select * from t3 a union all select * from t3 b) ss
