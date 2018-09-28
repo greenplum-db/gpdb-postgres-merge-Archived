@@ -299,15 +299,11 @@ Options:\n\
   -U, --username=NAME           cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
   -V, --version                 display version information, then exit\n\
-<<<<<<< HEAD
       --mode=TYPE               designate node type to upgrade, \"segment\" or \"dispatcher\" (default \"segment\")\n\
       --progress                enable progress reporting\n\
       --remove-checksum         remove data checksums when creating new cluster\n\
       --add-checksum            add data checksumming to the new cluster\n\
-  -?, -h, --help                show this help, then exit\n\
-=======
   -?, --help                    show this help, then exit\n\
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\

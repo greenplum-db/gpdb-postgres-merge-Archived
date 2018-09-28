@@ -305,16 +305,10 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 			{
 				pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
 
-<<<<<<< HEAD
 				if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-					pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						   map->nspname, map->relname, old_file, new_file, msg);
+					pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+							 map->nspname, map->relname, old_file, new_file, msg);
 			}
-=======
-			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						 map->nspname, map->relname, old_file, new_file, msg);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		}
 		else
 		{

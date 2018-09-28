@@ -1,12 +1,8 @@
 /*
  *	pg_upgrade.h
  *
-<<<<<<< HEAD
- *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
- *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
-=======
  *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+ *	Portions Copyright (c) 2016-Present, Pivotal Software Inc
  *	contrib/pg_upgrade/pg_upgrade.h
  */
 
@@ -209,8 +205,9 @@ typedef struct
 	char		relstorage;
 	Oid			relfilenode;	/* relation relfile node */
 	/* relation tablespace path, or "" for the cluster default */
-<<<<<<< HEAD
-	char		tablespace[MAXPGPATH];
+	char	   *tablespace;
+	bool		nsp_alloc;
+	bool		tblsp_alloc;
 
 	RelType		reltype;
 
@@ -228,11 +225,6 @@ typedef struct
 	bool		has_numerics;
 	AttInfo	   *atts;
 	int			natts;
-=======
-	char	   *tablespace;
-	bool		nsp_alloc;
-	bool		tblsp_alloc;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } RelInfo;
 
 typedef struct
@@ -404,13 +396,9 @@ typedef struct
 	Oid			pg_database_oid;	/* OID of pg_database relation */
 	Oid			install_role_oid;		/* OID of connected role */
 	Oid			role_count;		/* number of roles defined in the cluster */
-<<<<<<< HEAD
-	char	   *tablespace_suffix;		/* directory specification */
+	const char *tablespace_suffix;		/* directory specification */
 
 	char	   *global_reserved_oids; /* OID preassign calls for shared objects */
-=======
-	const char *tablespace_suffix;		/* directory specification */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 } ClusterInfo;
 
 
@@ -604,14 +592,10 @@ void		check_pghost_envvar(void);
 /* util.c */
 
 char	   *quote_identifier(const char *s);
-<<<<<<< HEAD
 extern void appendShellString(PQExpBuffer buf, const char *str);
 extern void appendConnStrVal(PQExpBuffer buf, const char *str);
 extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
-int			get_user_info(char **user_name);
-=======
 int			get_user_info(char **user_name_p);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 void		check_ok(void);
 void
 report_status(eLogType type, const char *fmt,...)

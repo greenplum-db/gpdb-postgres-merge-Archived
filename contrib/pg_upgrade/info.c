@@ -99,18 +99,13 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		}
 
 		if (old_rel->reloid != new_rel->reloid)
-<<<<<<< HEAD
 		{
 			if (strcmp(new_rel->nspname, "pg_toast") == 0)
 				continue;
 			else
-				pg_log(PG_FATAL, "Mismatch of relation OID in database \"%s\": old OID %d (%s.%s), new OID %d (%s.%s)\n",
-					   old_db->db_name, old_rel->reloid, old_rel->nspname, old_rel->relname, new_rel->reloid, new_rel->nspname, new_rel->relname);
+				pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d (%s.%s), new OID %d (%s.%s)\n",
+						 old_db->db_name, old_rel->reloid, old_rel->nspname, old_rel->relname, new_rel->reloid, new_rel->nspname, new_rel->relname);
 		}
-=======
-			pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
-					 old_db->db_name, old_rel->reloid, new_rel->reloid);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		/*
 		 * TOAST table names initially match the heap pg_class oid. In
@@ -144,20 +139,10 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		old_relnum++;
 	}
 
-<<<<<<< HEAD
 	/* Did we fail to exhaust the old array? */
 	if (old_relnum != old_db->rel_arr.nrels)
-		pg_log(PG_FATAL, "old and new databases \"%s\" have a mismatched number of relations\n",
-			   old_db->db_name);
-=======
-	/*
-	 * Do this check after the loop so hopefully we will produce a clearer
-	 * error above
-	 */
-	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
 		pg_fatal("old and new databases \"%s\" have a different number of relations\n",
 				 old_db->db_name);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	*nmaps = num_maps;
 	return maps;
@@ -182,47 +167,26 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 * relation belongs to the default tablespace, hence relfiles should
 		 * exist in the data directories.
 		 */
-<<<<<<< HEAD
-		strlcpy(map->old_tablespace, old_data, sizeof(map->old_tablespace));
-		strlcpy(map->old_tablespace_suffix, "/base", sizeof(map->old_tablespace_suffix));
-=======
 		map->old_tablespace = old_data;
-		map->new_tablespace = new_data;
 		map->old_tablespace_suffix = "/base";
-		map->new_tablespace_suffix = "/base";
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
-<<<<<<< HEAD
-		strlcpy(map->old_tablespace, old_rel->tablespace, sizeof(map->old_tablespace));
-		strlcpy(map->old_tablespace_suffix, old_cluster.tablespace_suffix,
-				sizeof(map->old_tablespace_suffix));
+		map->old_tablespace = old_rel->tablespace;
+		map->old_tablespace_suffix = old_cluster.tablespace_suffix;
 	}
 
 	/* Do the same for new tablespaces */
 	if (strlen(new_rel->tablespace) == 0)
 	{
-		/*
-		 * relation belongs to the default tablespace, hence relfiles should
-		 * exist in the data directories.
-		 */
-		strlcpy(map->new_tablespace, new_data, sizeof(map->new_tablespace));
-		strlcpy(map->new_tablespace_suffix, "/base", sizeof(map->new_tablespace_suffix));
+		map->new_tablespace = new_data;
+		map->new_tablespace_suffix = "/base";
 	}
 	else
 	{
-		/* relation belongs to a tablespace, so use the tablespace location */
-		strlcpy(map->new_tablespace, new_rel->tablespace, sizeof(map->new_tablespace));
-		strlcpy(map->new_tablespace_suffix, new_cluster.tablespace_suffix,
-				sizeof(map->new_tablespace_suffix));
-=======
-		map->old_tablespace = old_rel->tablespace;
 		map->new_tablespace = new_rel->tablespace;
-		map->old_tablespace_suffix = old_cluster.tablespace_suffix;
 		map->new_tablespace_suffix = new_cluster.tablespace_suffix;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	map->old_db_oid = old_db->db_oid;
@@ -601,8 +565,18 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 */
 			tablespace = PQgetvalue(res, relnum, i_spclocation);
 
-<<<<<<< HEAD
-		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
+			/* Can we reuse the previous string allocation? */
+			if (last_tablespace && strcmp(tablespace, last_tablespace) == 0)
+				curr->tablespace = last_tablespace;
+			else
+			{
+				last_tablespace = curr->tablespace = pg_strdup(tablespace);
+				curr->tblsp_alloc = true;
+			}
+		}
+		else
+			/* A zero reltablespace oid indicates the database tablespace. */
+			curr->tablespace = dbinfo->db_tablespace;
 
 		/* Collect extra information about append-only tables */
 		relstorage = PQgetvalue(res, relnum, i_relstorage) [0];
@@ -961,20 +935,6 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		}
 		else
 			curr->gpdb4_heap_conversion_needed = false;
-=======
-			/* Can we reuse the previous string allocation? */
-			if (last_tablespace && strcmp(tablespace, last_tablespace) == 0)
-				curr->tablespace = last_tablespace;
-			else
-			{
-				last_tablespace = curr->tablespace = pg_strdup(tablespace);
-				curr->tblsp_alloc = true;
-			}
-		}
-		else
-			/* A zero reltablespace oid indicates the database tablespace. */
-			curr->tablespace = dbinfo->db_tablespace;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 	PQclear(res);
 

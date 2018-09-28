@@ -52,16 +52,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	va_list		ap;
 
 #ifdef WIN32
-<<<<<<< HEAD
-static DWORD       mainThreadId = 0;
-
-	/* We assume we are called from the primary thread first */
-	if (mainThreadId == 0)
-		mainThreadId = GetCurrentThreadId();
-#endif
-=======
 	static DWORD mainThreadId = 0;
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/* We assume we are called from the primary thread first */
 	if (mainThreadId == 0)
@@ -82,16 +73,6 @@ static DWORD       mainThreadId = 0;
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 
 #ifdef WIN32
-<<<<<<< HEAD
-	/*
-	 * For some reason, Windows issues a file-in-use error if we write data
-	 * to the log file from a non-primary thread just before we create a
-	 * subprocess that also writes to the same log file.  One fix is to
-	 * sleep for 100ms.  A cleaner fix is to write to the log file _after_
-	 * the subprocess has completed, so we do this only when writing from
-	 * a non-primary thread.  fflush(), running system() twice, and
-	 * pre-creating the file do not see to help.
-=======
 
 	/*
 	 * For some reason, Windows issues a file-in-use error if we write data to
@@ -101,7 +82,6 @@ static DWORD       mainThreadId = 0;
 	 * subprocess has completed, so we do this only when writing from a
 	 * non-primary thread.  fflush(), running system() twice, and pre-creating
 	 * the file do not see to help.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	 */
 	if (mainThreadId != GetCurrentThreadId())
 		result = system(cmd);
@@ -122,22 +102,14 @@ static DWORD       mainThreadId = 0;
 
 		for (iter = 0; iter < 4 && log == NULL; iter++)
 		{
-<<<<<<< HEAD
-			sleep(1);
-=======
 			pg_usleep(1000000); /* 1 sec */
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 			log = fopen(log_file, "a");
 		}
 	}
 #endif
 
 	if (log == NULL)
-<<<<<<< HEAD
-		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
-=======
 		pg_fatal("cannot write to log file %s\n", log_file);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 #ifdef WIN32
 	/* Are we printing "command:" before its output? */
@@ -191,11 +163,7 @@ static DWORD       mainThreadId = 0;
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
-<<<<<<< HEAD
-		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
-=======
 		pg_fatal("cannot write to log file %s\n", log_file);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	fprintf(log, "\n\n");
 	fclose(log);
 #endif

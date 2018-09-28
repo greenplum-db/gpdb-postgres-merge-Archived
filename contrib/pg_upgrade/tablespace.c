@@ -81,16 +81,9 @@ get_tablespace_paths(void)
 		 * Effectively, this is checking only for tables/indexes in
 		 * non-existent tablespace directories.  Databases located in
 		 * non-existent tablespaces already throw a backend error.
-<<<<<<< HEAD
-		 * Non-existent tablespace directories can occur when a data
-		 * directory that contains user tablespaces is moved as part
-		 * of pg_upgrade preparation and the symbolic links are not
-		 * updated.
-=======
 		 * Non-existent tablespace directories can occur when a data directory
 		 * that contains user tablespaces is moved as part of pg_upgrade
 		 * preparation and the symbolic links are not updated.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 		 */
 		if (stat(os_info.old_tablespaces[tblnum], &statBuf) != 0)
 		{
@@ -100,15 +93,6 @@ get_tablespace_paths(void)
 							  os_info.old_tablespaces[tblnum]);
 			else
 				report_status(PG_FATAL,
-<<<<<<< HEAD
-							  "cannot stat() tablespace directory \"%s\": %s\n",
-							  os_info.old_tablespaces[tblnum], getErrorText(errno));
-		}
-		if (!S_ISDIR(statBuf.st_mode))
-				report_status(PG_FATAL,
-							  "tablespace path \"%s\" is not a directory\n",
-							  os_info.old_tablespaces[tblnum]);
-=======
 						   "cannot stat() tablespace directory \"%s\": %s\n",
 					   os_info.old_tablespaces[tblnum], getErrorText(errno));
 		}
@@ -116,7 +100,6 @@ get_tablespace_paths(void)
 			report_status(PG_FATAL,
 						  "tablespace path \"%s\" is not a directory\n",
 						  os_info.old_tablespaces[tblnum]);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	}
 
 	PQclear(res);

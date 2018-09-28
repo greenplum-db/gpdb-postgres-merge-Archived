@@ -270,14 +270,9 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* removing ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
 
-<<<<<<< HEAD
 			p = strchr(p, '/');
 			if (p == NULL || strlen(p) <= 1)
-				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
-=======
-			if (op == NULL || strlen(op) <= 1)
 				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 			p++;				/* removing '/' char */
 			cluster->controldata.chkpnt_nxtxid = str2uint(p);
@@ -616,12 +611,7 @@ check_control_data(ControlData *oldctrl,
 		pg_fatal("old and new pg_controldata block sizes are invalid or do not match\n");
 
 	if (oldctrl->largesz == 0 || oldctrl->largesz != newctrl->largesz)
-<<<<<<< HEAD
-		pg_log(PG_FATAL,
-			   "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n");
-=======
-		pg_fatal("old and new pg_controldata maximum relation segement sizes are invalid or do not match\n");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		pg_fatal("old and new pg_controldata maximum relation segment sizes are invalid or do not match\n");
 
 	if (oldctrl->walsz == 0 || oldctrl->walsz != newctrl->walsz)
 		pg_fatal("old and new pg_controldata WAL block sizes are invalid or do not match\n");
@@ -646,12 +636,7 @@ check_control_data(ControlData *oldctrl,
 	 * 5.x?
 	 */
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
-<<<<<<< HEAD
-		pg_log(PG_WARNING,
-			   "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
-=======
 		pg_fatal("old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
 	{
@@ -671,30 +656,23 @@ check_control_data(ControlData *oldctrl,
 	 * upgrades where the checksum settings match, in Greenplum we can however
 	 * set or remove checksums during the upgrade.
 	 */
-<<<<<<< HEAD
 	if (oldctrl->data_checksum_version == 0 &&
 		newctrl->data_checksum_version != 0 &&
 		user_opts.checksum_mode != CHECKSUM_ADD)
-		pg_log(PG_FATAL, "old cluster does not use data checksums but the new one does\n");
+		pg_fatal("old cluster does not use data checksums but the new one does\n");
 	else if (oldctrl->data_checksum_version != 0 &&
 			 newctrl->data_checksum_version == 0 &&
 			 user_opts.checksum_mode != CHECKSUM_REMOVE)
-		pg_log(PG_FATAL, "old cluster uses data checksums but the new one does not\n");
+		pg_fatal("old cluster uses data checksums but the new one does not\n");
 	else if (oldctrl->data_checksum_version == newctrl->data_checksum_version &&
 			 user_opts.checksum_mode != CHECKSUM_NONE)
-		pg_log(PG_FATAL, "old and new cluster data checksum configuration match, cannot %s data checksums\n",
+		pg_fatal("old and new cluster data checksum configuration match, cannot %s data checksums\n",
 				 (user_opts.checksum_mode == CHECKSUM_ADD ? "add" : "remove"));
 	else if (oldctrl->data_checksum_version != 0 && user_opts.checksum_mode == CHECKSUM_ADD)
-		pg_log(PG_FATAL, "--add-checksum option not supported for old cluster which uses data checksums\n");
+		pg_fatal("--add-checksum option not supported for old cluster which uses data checksums\n");
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version
 			 && user_opts.checksum_mode == CHECKSUM_NONE)
-		pg_log(PG_FATAL, "old and new cluster pg_controldata checksum versions do not match\n");
-=======
-	if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
-	{
-		pg_fatal("old and new pg_controldata checksum versions are invalid or do not match\n");
-	}
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		pg_fatal("old and new cluster pg_controldata checksum versions do not match\n");
 }
 
 

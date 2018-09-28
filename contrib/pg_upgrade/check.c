@@ -17,11 +17,7 @@ static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
-<<<<<<< HEAD
 static bool equivalent_locale(int category, const char *loca, const char *locb);
-=======
-static bool equivalent_locale(const char *loca, const char *locb);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 static bool equivalent_encoding(const char *chara, const char *charb);
 static void check_is_super_user(ClusterInfo *cluster);
 static void check_proper_datallowconn(ClusterInfo *cluster);
@@ -149,18 +145,15 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 				old_8_3_create_sequence_script(&old_cluster);
 	}
 
-<<<<<<< HEAD
+	/* Pre-PG 9.4 had a different 'line' data type internal format */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
+		old_9_3_check_for_line_data_type_usage(&old_cluster);
+
 	/*
 	 * GPDB_90_MERGE_FIXME: does enabling this work, we don't really support
 	 * large objects but if this works it would be nice to minimize the diff
 	 * to upstream.
 	 */
-=======
-	/* Pre-PG 9.4 had a different 'line' data type internal format */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 903)
-		old_9_3_check_for_line_data_type_usage(&old_cluster);
-
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 	/* Pre-PG 9.0 had no large object permissions */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 		new_9_0_populate_pg_largeobject_metadata(&old_cluster, true);
@@ -333,7 +326,6 @@ check_cluster_versions(void)
 	 * upgrades
 	 */
 
-<<<<<<< HEAD
 	/*
 	 * Upgrading from anything older than an 8.2 based Greenplum is not
 	 * supported. TODO: This needs to be amended to check for the actual
@@ -341,21 +333,12 @@ check_cluster_versions(void)
 	 * this will cover most cases.
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 802)
-		pg_log(PG_FATAL, "This utility can only upgrade from Greenplum version 4.3.x and later.\n");
+		pg_fatal("This utility can only upgrade from Greenplum version 4.3.x and later.\n");
 
 	/* Only current PG version is supported as a target */
 	if (GET_MAJOR_VERSION(new_cluster.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))
-		pg_log(PG_FATAL, "This utility can only upgrade to Greenplum version %s.\n",
-			   PG_MAJORVERSION);
-=======
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 803)
-		pg_fatal("This utility can only upgrade from PostgreSQL version 8.3 and later.\n");
-
-	/* Only current PG version is supported as a target */
-	if (GET_MAJOR_VERSION(new_cluster.major_version) != GET_MAJOR_VERSION(PG_VERSION_NUM))
-		pg_fatal("This utility can only upgrade to PostgreSQL version %s.\n",
+		pg_fatal("This utility can only upgrade to Greenplum version %s.\n",
 				 PG_MAJORVERSION);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	/*
 	 * We can't allow downgrading because we use the target pg_dumpall, and
@@ -363,11 +346,7 @@ check_cluster_versions(void)
 	 * versions.
 	 */
 	if (old_cluster.major_version > new_cluster.major_version)
-<<<<<<< HEAD
-		pg_log(PG_FATAL, "This utility cannot be used to downgrade to older major Greenplum versions.\n");
-=======
-		pg_fatal("This utility cannot be used to downgrade to older major PostgreSQL versions.\n");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+		pg_fatal("This utility cannot be used to downgrade to older major Greenplum versions.\n");
 
 	/* get old and new binary versions */
 	get_bin_version(&old_cluster);
@@ -475,92 +454,15 @@ static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-<<<<<<< HEAD
 	if (!equivalent_locale(LC_COLLATE, oldctrl->lc_collate, newctrl->lc_collate))
-		pg_log(PG_FATAL,
-			   "lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_collate, newctrl->lc_collate);
-	if (!equivalent_locale(LC_CTYPE, oldctrl->lc_ctype, newctrl->lc_ctype))
-		pg_log(PG_FATAL,
-			   "lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_ctype, newctrl->lc_ctype);
-	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
-		pg_log(PG_FATAL,
-			   "encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->encoding, newctrl->encoding);
-=======
-	if (!equivalent_locale(oldctrl->lc_collate, newctrl->lc_collate))
 		pg_fatal("lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
 				 oldctrl->lc_collate, newctrl->lc_collate);
-	if (!equivalent_locale(oldctrl->lc_ctype, newctrl->lc_ctype))
+	if (!equivalent_locale(LC_CTYPE, oldctrl->lc_ctype, newctrl->lc_ctype))
 		pg_fatal("lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
 				 oldctrl->lc_ctype, newctrl->lc_ctype);
 	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
 		pg_fatal("encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
 				 oldctrl->encoding, newctrl->encoding);
-}
-
-/*
- * equivalent_locale()
- *
- * Best effort locale-name comparison.  Return false if we are not 100% sure
- * the locales are equivalent.
- */
-static bool
-equivalent_locale(const char *loca, const char *locb)
-{
-	const char *chara = strrchr(loca, '.');
-	const char *charb = strrchr(locb, '.');
-	int			lencmp;
-
-	/* If they don't both contain an encoding part, just do strcasecmp(). */
-	if (!chara || !charb)
-		return (pg_strcasecmp(loca, locb) == 0);
-
-	/*
-	 * Compare the encoding parts.  Windows tends to use code page numbers for
-	 * the encoding part, which equivalent_encoding() won't like, so accept if
-	 * the strings are case-insensitive equal; otherwise use
-	 * equivalent_encoding() to compare.
-	 */
-	if (pg_strcasecmp(chara + 1, charb + 1) != 0 &&
-		!equivalent_encoding(chara + 1, charb + 1))
-		return false;
-
-	/*
-	 * OK, compare the locale identifiers (e.g. en_US part of en_US.utf8).
-	 *
-	 * It's tempting to ignore non-alphanumeric chars here, but for now it's
-	 * not clear that that's necessary; just do case-insensitive comparison.
-	 */
-	lencmp = chara - loca;
-	if (lencmp != charb - locb)
-		return false;
-
-	return (pg_strncasecmp(loca, locb, lencmp) == 0);
-}
-
-/*
- * equivalent_encoding()
- *
- * Best effort encoding-name comparison.  Return true only if the encodings
- * are valid server-side encodings and known equivalent.
- *
- * Because the lookup in pg_valid_server_encoding() does case folding and
- * ignores non-alphanumeric characters, this will recognize many popular
- * variant spellings as equivalent, eg "utf8" and "UTF-8" will match.
- */
-static bool
-equivalent_encoding(const char *chara, const char *charb)
-{
-	int			enca = pg_valid_server_encoding(chara);
-	int			encb = pg_valid_server_encoding(charb);
-
-	if (enca < 0 || encb < 0)
-		return false;
-
-	return (enca == encb);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 }
 
 /*
@@ -895,12 +797,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-<<<<<<< HEAD
-			{
-				fprintf(script, RMDIR_CMD " \"%s%s%c%d\"\n",
-=======
-				fprintf(script, RMDIR_CMD " %s%c%d\n",
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
+				fprintf(script, RMDIR_CMD " \"%s%c%d\"\n",
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
 						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
 		}
@@ -1151,16 +1048,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								" %s "
 								" ) AND "
 								"		c.relnamespace = n.oid AND "
-<<<<<<< HEAD
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'",
+							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')",
 						GET_MAJOR_VERSION(old_cluster.major_version) == 802 ?
 							"0" :
 							"'pg_catalog.regconfig'::pg_catalog.regtype, "
 							"'pg_catalog.regdictionary'::pg_catalog.regtype ");
-=======
-							  "		n.nspname NOT IN ('pg_catalog', 'information_schema')");
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -1215,7 +1107,7 @@ get_bin_version(ClusterInfo *cluster)
 	int			pre_dot,
 				post_dot;
 
-	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/pg_ctl\" --version" SYSTEMQUOTE, cluster->bindir);
+	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
 
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
@@ -1228,13 +1120,8 @@ get_bin_version(ClusterInfo *cluster)
 	if (strchr(cmd_output, '\n') != NULL)
 		*strchr(cmd_output, '\n') = '\0';
 
-<<<<<<< HEAD
 	if (sscanf(cmd_output, "%*s %*s %*s %d.%d", &pre_dot, &post_dot) != 2)
-		pg_log(PG_FATAL, "could not get version from %s\n", cmd);
-=======
-	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) != 2)
 		pg_fatal("could not get version from %s\n", cmd);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
 }
@@ -1264,11 +1151,7 @@ get_canonical_locale_name(int category, const char *locale)
 	res = setlocale(category, locale);
 
 	if (!res)
-<<<<<<< HEAD
-		pg_log(PG_FATAL, "failed to get system locale name for \"%s\"\n", locale);
-=======
 		pg_fatal("failed to get system locale name for \"%s\"\n", locale);
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 
 	res = pg_strdup(res);
 

@@ -51,19 +51,13 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 				PQExpBufferData connectbuf;
 
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-<<<<<<< HEAD
-					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 
 				initPQExpBuffer(&connectbuf);
 				appendPsqlMetaConnect(&connectbuf, active_db->db_name);
 				fputs(connectbuf.data, script);
 				termPQExpBuffer(&connectbuf);
 
-=======
-					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
-				fprintf(script, "\\connect %s\n",
-						quote_identifier(active_db->db_name));
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 				fprintf(script,
 						"SELECT pg_catalog.lo_create(t.loid)\n"
 						"FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) AS t;\n");
