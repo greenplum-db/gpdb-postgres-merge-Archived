@@ -21,7 +21,6 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-<<<<<<< HEAD
 ALTER TABLE [ IF EXISTS ] [ONLY] name RENAME [COLUMN] column_name TO new_column_name
 
 ALTER TABLE [ IF EXISTS ] name RENAME TO new_name
@@ -58,6 +57,7 @@ where action is one of:
   ALTER [COLUMN] column_name RESET ( attribute_option [, ... ] )
   ADD table_constraint [ NOT VALID ]
   ADD table_constraint_using_index
+  ALTER CONSTRAINT constraint_name [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
   VALIDATE CONSTRAINT constraint_name
   DROP CONSTRAINT [ IF EXISTS ] constraint_name [RESTRICT | CASCADE]
   DISABLE TRIGGER [trigger_name | ALL | USER]
@@ -74,6 +74,7 @@ where action is one of:
   NOT OF
   OWNER TO new_owner
   SET TABLESPACE new_tablespace
+  REPLICA IDENTITY {DEFAULT | USING INDEX index_name | FULL | NOTHING}
 
 where partition_action is one of:
   ALTER DEFAULT PARTITION
@@ -133,63 +134,6 @@ Where column_reference_storage_directive is:
    COLUMN column_name ENCODING ( storage_directive [, ... ] ), ... 
  | DEFAULT COLUMN ENCODING ( storage_directive [, ... ] )
 
-=======
-ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
-ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
-ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-
-<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
-
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
-    ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
-    ALTER CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
-    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
-    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
-    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
-    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
-    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
-    DISABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
-    ENABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
-    ENABLE REPLICA RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
-    ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
-    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
-    SET WITHOUT CLUSTER
-    SET WITH OIDS
-    SET WITHOUT OIDS
-    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
-    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
-    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
-    OF <replaceable class="PARAMETER">type_name</replaceable>
-    NOT OF
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
-    REPLICA IDENTITY {DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING}
-
-<phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
-
-    [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-    { UNIQUE | PRIMARY KEY } USING INDEX <replaceable class="PARAMETER">index_name</replaceable>
-    [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 </synopsis>
  </refsynopsisdiv>
 

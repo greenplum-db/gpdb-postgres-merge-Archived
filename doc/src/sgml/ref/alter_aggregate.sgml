@@ -28,13 +28,8 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
 * |
-<<<<<<< HEAD
-[ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
-[ [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
-=======
 [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
 [ [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 </synopsis>
  </refsynopsisdiv>
 
@@ -84,8 +79,6 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
    </varlistentry>
 
    <varlistentry>
-<<<<<<< HEAD
-=======
     <term><replaceable class="parameter">argname</replaceable></term>
 
     <listitem>
@@ -99,7 +92,6 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
    </varlistentry>
 
    <varlistentry>
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
     <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
@@ -186,12 +178,8 @@ ALTER AGGREGATE mypercentile(float8 ORDER BY integer) SET SCHEMA myschema;
    This will work too:
 <programlisting>
 ALTER AGGREGATE mypercentile(float8, integer) SET SCHEMA myschema;
-<<<<<<< HEAD
-</programlisting></para>
-=======
 </programlisting>
   </para>
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
  </refsect1>
 
  <refsect1>

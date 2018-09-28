@@ -23,13 +23,8 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
-<<<<<<< HEAD
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
-  CAST (<replaceable>sourcetype</replaceable> AS <replaceable>target_type</replaceable>) |
-=======
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">relation_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
@@ -68,13 +63,8 @@ COMMENT ON
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 
 * |
-<<<<<<< HEAD
-[ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
-[ [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
-=======
 [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
 [ [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
 </synopsis>
  </refsynopsisdiv>
 
@@ -176,11 +166,7 @@ COMMENT ON
     <term><replaceable class="parameter">argname</replaceable></term>
     <listitem>
      <para>
-<<<<<<< HEAD
-      The name of a function argument.
-=======
       The name of a function or aggregate argument.
->>>>>>> ab76208e3df6841b3770edeece57d0f048392237
       Note that <command>COMMENT</command> does not actually pay
       any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
