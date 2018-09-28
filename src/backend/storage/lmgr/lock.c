@@ -1458,6 +1458,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	int			numLockModes = lockMethodTable->numLockModes;
 	LOCKMASK	otherLocks;
 	int			i;
+	int			mppSessionId;
 
 	/*
 	 * first check for global conflicts: If no locks conflict with my request,
@@ -1480,6 +1481,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	 * only lock types held by other sessions.
 	 */
 	otherLocks = 0;
+	mppSessionId = proclock->tag.myProc->mppSessionId;
 	for (i = 1; i <= numLockModes; i++)
 	{
 		int				ourHolding = 0;
@@ -1488,7 +1490,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 		 * If I'm not part of MPP session, consider I am only one process
 		 * in a session.
 		 */
-		if (MyProc->mppSessionId <= 0)
+		if (mppSessionId <= 0)
 		{
 			LOCKMASK	myLocks = proclock->holdMask;
 			if (myLocks & LOCKBIT_ON(i))
@@ -1512,7 +1514,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 				 * If processes in my session are holding the lock, mask
 				 * it out so that we won't be blocked by them.
 				 */
-				if (otherProc->mppSessionId == MyProc->mppSessionId &&
+				if (otherProc->mppSessionId == mppSessionId &&
 					otherProclock->holdMask & LOCKBIT_ON(i))
 					ourHolding++;
 
