@@ -669,6 +669,17 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		}
 
 		/*
+		 * Complain if the aggregate's arguments contain any aggregates;
+		 * nested agg functions are semantically nonsensical.  Aggregates in
+		 * the FILTER clause are detected in transformAggregateCall().
+		 */
+		if (contain_agg_clause((Node *) aggref->args) ||
+			contain_agg_clause((Node *) aggref->aggorder))
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("aggregate function calls cannot be nested")));
+
+		/*
 		 * We assume that the parser checked that there are no aggregates (of
 		 * this level anyway) in the aggregated arguments, direct arguments,
 		 * or filter clause.  Hence, we need not recurse into any of them. (If
