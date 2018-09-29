@@ -323,7 +323,7 @@ is_sirv_funcexpr(FuncExpr *fe)
 	if (contain_subplans((Node *) fe->args))
 		return false;	/* Must not contain sublinks */
 
-	if (!func_volatile(fe->funcid) == PROVOLATILE_VOLATILE)
+	if (func_volatile(fe->funcid) != PROVOLATILE_VOLATILE)
 		return false;	/* Must be a volatile function */
 
 	if (fe->funcresulttype == RECORDOID)
