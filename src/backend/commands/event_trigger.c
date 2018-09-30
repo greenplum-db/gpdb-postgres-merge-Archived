@@ -103,7 +103,7 @@ static event_trigger_support_data event_trigger_support[] = {
 
 	/* GPDB additions */
 	{"EXTERNAL TABLE", true},
-	{"PROTOCOL", false},
+	{"PROTOCOL", true},
 
 	{NULL, false}
 };
@@ -956,8 +956,8 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 
 		/* GPDB additions */
 		case OBJECT_EXTTABLE:
-			return true;
 		case OBJECT_EXTPROTOCOL:
+			return true;
 		case OBJECT_RESQUEUE:
 		case OBJECT_RESGROUP:
 			return false;
