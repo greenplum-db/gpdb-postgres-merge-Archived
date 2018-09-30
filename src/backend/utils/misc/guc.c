@@ -7152,7 +7152,10 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
 			if (stmt->is_local)
-				WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+				if (Gp_role != GP_ROLE_DISPATCH || IsBootstrapProcessingMode())
+					;
+				else
+					WarnNoTransactionChain(isTopLevel, "SET LOCAL");
 			(void) set_config_option(stmt->name,
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
