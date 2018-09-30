@@ -1254,6 +1254,16 @@ _outAlterTableSpaceMoveStmt(StringInfo str, AlterTableSpaceMoveStmt *node)
 	WRITE_BOOL_FIELD(nowait);
 }
 
+static void
+_outAlterTableSpaceOptionsStmt(StringInfo str, AlterTableSpaceOptionsStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERTABLESPACEOPTIONS");
+
+	WRITE_STRING_FIELD(tablespacename);
+	WRITE_NODE_FIELD(options);
+	WRITE_BOOL_FIELD(isReset);
+}
+
 /*
  * _outNode -
  *	  converts a Node into binary string and append it to 'str'
@@ -2197,6 +2207,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AlterTableSpaceMoveStmt:
 				_outAlterTableSpaceMoveStmt(str, obj);
+				break;
+			case T_AlterTableSpaceOptionsStmt:
+				_outAlterTableSpaceOptionsStmt(str, obj);
 				break;
 			default:
 				elog(ERROR, "could not serialize unrecognized node type: %d",
