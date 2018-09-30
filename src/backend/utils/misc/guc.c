@@ -7151,11 +7151,18 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 	{
 		case VAR_SET_VALUE:
 		case VAR_SET_CURRENT:
-			if (stmt->is_local)
-				if (Gp_role != GP_ROLE_DISPATCH || IsBootstrapProcessingMode())
-					;
-				else
-					WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+			/*
+			 * GPDB_94_MERGE_FIXME: Without these extra conditions, we were
+			 * getting a lot of these warnings. Before 9.4, there was no
+			 * warning on this in upstream either. I wonder if this is a proper
+			 * fix, or are we missing transaction blocks in QE nodes in some
+			 * cases?
+			 */
+			if (stmt->is_local &&
+				Gp_role != GP_ROLE_EXECUTE && !IsBootstrapProcessingMode())
+			{
+				WarnNoTransactionChain(isTopLevel, "SET LOCAL");
+			}
 			(void) set_config_option(stmt->name,
 									 ExtractSetVariableArgs(stmt),
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
