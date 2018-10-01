@@ -30,23 +30,14 @@ SELECT count(*) FROM gp_toolkit.__gp_aocsseg_name('toolkit_aocs_test');
 SELECT count(*) FROM gp_toolkit.__gp_aocsseg_history('toolkit_aocs_test'::regclass);
 SELECT count(*) FROM gp_toolkit.__gp_aoseg_history('toolkit_ao_test'::regclass);
 SELECT * FROM gp_toolkit.__gp_aovisimap('toolkit_ao_test'::regclass);
-SELECT * FROM gp_toolkit.__gp_aovisimap_name('toolkit_ao_test');
 SELECT count(*) FROM gp_toolkit.__gp_aovisimap_hidden_info('toolkit_ao_test'::regclass);
-SELECT count(*) FROM gp_toolkit.__gp_aovisimap_hidden_info_name('toolkit_ao_test');
 SELECT * FROM gp_toolkit.__gp_aovisimap_entry('toolkit_ao_test'::regclass);
-SELECT * FROM gp_toolkit.__gp_aovisimap_entry_name('toolkit_ao_test');
 SELECT count(*) FROM gp_toolkit.__gp_aoseg_name('toolkit_ao_test');
 
 -- The same, but on the segments.
 SELECT (t).* FROM (
   SELECT gp_toolkit.__gp_aovisimap('toolkit_ao_test'::regclass) AS t FROM gp_dist_random('gp_id')
 ) AS x;
-SELECT (t).* FROM (
-  SELECT gp_toolkit.__gp_aovisimap_name('toolkit_ao_test') AS t FROM gp_dist_random('gp_id')
-) AS x;
 SELECT (t).segno, (t).first_row_num, (t).hidden_tupcount >= 1 as hidden_tupcount_nonzero, (t).bitmap like '01%' as bitmap_starts_with_01 FROM (
   SELECT gp_toolkit.__gp_aovisimap_entry('toolkit_ao_test'::regclass) AS t FROM gp_dist_random('gp_id')
-) AS x;
-SELECT (t).segno, (t).first_row_num, (t).hidden_tupcount >= 1 as hidden_tupcount_nonzero, (t).bitmap like '01%' as bitmap_starts_with_01 FROM (
-  SELECT gp_toolkit.__gp_aovisimap_entry_name('toolkit_ao_test') AS t FROM gp_dist_random('gp_id')
 ) AS x;
