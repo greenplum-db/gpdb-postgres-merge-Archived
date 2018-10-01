@@ -125,7 +125,7 @@ isolation_start_test(const char *testname,
 }
 
 static void
-isolation_init(void)
+isolation_init(int argc, char **argv)
 {
 	/* set default regression database name */
 	add_stringlist_item(&dblist, "isolation2test");
