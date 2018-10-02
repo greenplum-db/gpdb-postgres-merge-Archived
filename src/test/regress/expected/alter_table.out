@@ -2025,19 +2025,19 @@ select * from my_locks order by 1;
 (0 rows)
 
 alter table alterlock2 add foreign key (f1) references alterlock (f1);
+WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
 select * from my_locks order by 1;
-     relname     |    max_lockmode     
------------------+---------------------
- alterlock       | AccessExclusiveLock
- alterlock2      | AccessExclusiveLock
- alterlock2_pkey | AccessShareLock
- alterlock_pkey  | AccessShareLock
-(4 rows)
+  relname   |    max_lockmode     
+------------+---------------------
+ alterlock  | AccessExclusiveLock
+ alterlock2 | AccessExclusiveLock
+(2 rows)
 
 rollback;
 begin;
 alter table alterlock2
 add constraint alterlock2nv foreign key (f1) references alterlock (f1) NOT VALID;
+WARNING:  Referential integrity (FOREIGN KEY) constraints are not supported in Greenplum Database, will not be enforced.
 select * from my_locks order by 1;
   relname   |    max_lockmode     
 ------------+---------------------
@@ -2049,13 +2049,10 @@ commit;
 begin;
 alter table alterlock2 validate constraint alterlock2nv;
 select * from my_locks order by 1;
-     relname     |       max_lockmode       
------------------+--------------------------
- alterlock       | RowShareLock
- alterlock2      | ShareUpdateExclusiveLock
- alterlock2_pkey | AccessShareLock
- alterlock_pkey  | AccessShareLock
-(4 rows)
+  relname   |       max_lockmode       
+------------+--------------------------
+ alterlock2 | ShareUpdateExclusiveLock
+(1 row)
 
 rollback;
 -- cleanup
