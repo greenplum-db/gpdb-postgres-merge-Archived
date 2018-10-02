@@ -1610,7 +1610,7 @@ init(bool is_no_vacuum)
 			"bid int not null,bbalance int,filler char(88)",
 			"bid int not null,bbalance int,filler char(88)",
 			1
-			, "tid"
+			, "bid"
 		}
 	};
 	static const char *const DDLINDEXes[] = {
