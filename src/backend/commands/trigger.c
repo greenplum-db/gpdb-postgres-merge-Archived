@@ -589,17 +589,27 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	
 	/*
-	 * Special for Greenplum Database: Ignore foreign keys for now
+	 * Special for Greenplum Database: Ignore foreign keys for now. Create
+	 * the triggers to back them as 'disabled'.
 	 */
-	if (OidIsValid(constraintOid) && (Gp_role == GP_ROLE_DISPATCH || Gp_role == GP_ROLE_EXECUTE))
+	char		tgenabled = TRIGGER_FIRES_ON_ORIGIN;
+	if (isInternal)
 	{
-		/*
-		 * Create the tigger as disabled 
-		 */
-		values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_DISABLED);
+		if (RI_FKey_trigger_type(funcoid))
+		{
+			tgenabled = TRIGGER_DISABLED;
+		}
+		else if (funcoid == F_UNIQUE_KEY_RECHECK)
+		{
+			/*
+			 * unique_key_recheck is used for deferrable unique constraints.
+			 * We do enforce unique constraints.
+			 */
+		}
+		else
+			elog(WARNING, "unrecognized internal trigger function %u", funcoid);
 	}
-	else
-		values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_FIRES_ON_ORIGIN);
+	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(tgenabled);
 	values[Anum_pg_trigger_tgisinternal - 1] = BoolGetDatum(isInternal);
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgconstrindid - 1] = ObjectIdGetDatum(indexOid);
