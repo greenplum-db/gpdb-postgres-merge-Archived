@@ -482,6 +482,7 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 			 * we don't need redo all that work later in the planner, when it's
 			 * time to actually create the ModifyTable, and SplitUpdate, node.
 			 */
+			root->is_split_update = true;
 			root->orig_result_relation = result_relation;
 		}
 	}
