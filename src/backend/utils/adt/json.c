@@ -1429,7 +1429,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			 * Don't call escape_json for a non-key if it's a valid JSON
 			 * number.
 			 */
-			if (IsValidJsonNumber(outputstr, strlen(outputstr)))
+			if (!key_scalar && IsValidJsonNumber(outputstr, strlen(outputstr)))
 				appendStringInfoString(result, outputstr);
 			else
 				escape_json(result, outputstr);
