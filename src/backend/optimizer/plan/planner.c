@@ -1430,10 +1430,10 @@ inheritance_planner(PlannerInfo *root)
 		 * If this subplan requires a Split Update, pass that information
 		 * back to the top.
 		 */
-		if (root->is_split_update)
+		if (subroot.is_split_update)
 		{
-			if (root->orig_result_relation)
-				orig_result_rti = root->orig_result_relation;
+			if (subroot.orig_result_relation)
+				orig_result_rti = subroot.orig_result_relation;
 			else
 				orig_result_rti = parse->resultRelation;
 		}
