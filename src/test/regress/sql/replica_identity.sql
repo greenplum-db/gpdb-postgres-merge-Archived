@@ -10,8 +10,10 @@ CREATE TABLE test_replica_identity (
 -- GPDB has a habit of naming the indexes that back constraints differently,
 -- at CREATE TABLE. Rename the constraints, and then rename them back. That
 -- renames the indexes to the same names they have in the upstream.
-ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_defer TO test_replica_identity_unique_defer_x;
-ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_defer_x TO test_replica_identity_unique_defer;
+ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_defer TO x;
+ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_defer;
+ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_nondefer TO x;
+ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_nondefer;
 
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 
