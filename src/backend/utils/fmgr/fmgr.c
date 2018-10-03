@@ -471,11 +471,6 @@ fetch_finfo_record(void *filehandle, char *funcname)
 		elog(ERROR, "null result from info function \"%s\"", infofuncname);
 	switch (inforec->api_version)
 	{
-		case 0:
-			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Old style C function (API version 0) are no longer supported by Greenplum")
-				       ));
-			break;
 		case 1:
 			/* OK, no additional fields to validate */
 			break;
