@@ -137,7 +137,6 @@ $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib gpcontrib
 # probably pull anything order-dependent out of recurse() and back into the
 # recipe body).
 # GPDB_94_MERGE_FIXME: We should stop listing each contrib module here separately.
-$(call recurse,installcheck-world,src/test/regress,installcheck-good)
 $(call recurse,installcheck-world, \
 			   src/test/ \
 			   src/pl \
