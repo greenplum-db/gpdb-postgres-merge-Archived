@@ -67,6 +67,7 @@ static Oid	set_oid = 0;
 static Oid	set_relfilenode = 0;
 static MultiXactId set_mxid = 0;
 static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
+static int32 set_data_checksum_version = -1;
 static uint32 minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 
@@ -93,9 +94,7 @@ main(int argc, char *argv[])
 	bool		force = false;
 	bool		binary_upgrade = false;
 	bool		noupdate = false;
-	MultiXactId set_mxid = 0;
 	MultiXactId set_oldestmxid = 0;
-	uint32		data_checksum_version = (uint32) PG_DATA_CHECKSUM_VERSION + 1;
 	char	   *endptr;
 	char	   *endptr2;
 	char	   *DataDir;
@@ -261,14 +260,14 @@ main(int argc, char *argv[])
 				break;
 
 			case 'k':
-				data_checksum_version = strtol(optarg, &endptr, 0);
+				set_data_checksum_version = strtol(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
 					fprintf(stderr, _("%s: invalid argument for option -k\n"), progname);
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				if (data_checksum_version > PG_DATA_CHECKSUM_VERSION)
+				if (set_data_checksum_version < 0 || set_data_checksum_version > PG_DATA_CHECKSUM_VERSION)
 				{
 					fprintf(stderr, _("%s: data_checksum_version (-k) must be within 0..%d\n"),
 					        progname, PG_DATA_CHECKSUM_VERSION);
@@ -406,10 +405,8 @@ main(int argc, char *argv[])
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
 
-	if (data_checksum_version <= PG_DATA_CHECKSUM_VERSION)
-	{
-		ControlFile.data_checksum_version = data_checksum_version;
-	}
+	if (set_data_checksum_version != -1)
+		ControlFile.data_checksum_version = (uint32) set_data_checksum_version;
 
 	/*
 	 * If we had to guess anything, and -f was not given, just print the
@@ -796,6 +793,12 @@ PrintNewControlValues()
 	{
 		printf(_("NextXID Epoch:                        %u\n"),
 			   ControlFile.checkPointCopy.nextXidEpoch);
+	}
+
+	if (set_data_checksum_version != -1)
+	{
+		printf(_("Data page checksum version:           %u\n"),
+			   ControlFile.data_checksum_version);
 	}
 }
 
