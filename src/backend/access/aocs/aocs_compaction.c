@@ -181,7 +181,7 @@ AOCSTruncateToEOF(Relation aorel)
 				segno;
 	LockAcquireResult acquireResult;
 	AOCSFileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(RelationIsAoCols(aorel));
 
@@ -286,7 +286,8 @@ AOCSMoveTuple(TupleTableSlot *slot,
 static bool
 AOCSSegmentFileFullCompaction(Relation aorel,
 							  AOCSInsertDesc insertDesc,
-							  AOCSFileSegInfo *fsinfo)
+							  AOCSFileSegInfo *fsinfo,
+							  Snapshot snapshot)
 {
 	const char *relname;
 	AppendOnlyVisimap visiMap;
@@ -303,7 +304,6 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	AOTupleId  *aoTupleId;
 	int64		tupleCount = 0;
 	int64		tuplePerPage = INT_MAX;
-	Snapshot	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoCols(aorel));
@@ -447,7 +447,7 @@ AOCSDrop(Relation aorel,
 				segno;
 	LockAcquireResult acquireResult;
 	AOCSFileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoCols(aorel));
@@ -535,7 +535,7 @@ AOCSCompact(Relation aorel,
 				segno;
 	LockAcquireResult acquireResult;
 	AOCSFileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(RelationIsAoCols(aorel));
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
@@ -603,9 +603,11 @@ AOCSCompact(Relation aorel,
 				 segno);
 
 		if (AppendOnlyCompaction_ShouldCompact(aorel,
-											   fsinfo->segno, fsinfo->total_tupcount, isFull))
+											   fsinfo->segno, fsinfo->total_tupcount, isFull,
+											   appendOnlyMetaDataSnapshot))
 		{
-			AOCSSegmentFileFullCompaction(aorel, insertDesc, fsinfo);
+			AOCSSegmentFileFullCompaction(aorel, insertDesc, fsinfo,
+										  appendOnlyMetaDataSnapshot);
 		}
 
 		pfree(fsinfo);

@@ -111,17 +111,16 @@ AppendOnlyCompaction_GetHideRatio(int64 hiddenTupcount, int64 totalTupcount)
  * Returns true iff the given segment file should be compacted.
  */
 bool
-AppendOnlyCompaction_ShouldCompact(
-								   Relation aoRelation,
+AppendOnlyCompaction_ShouldCompact(Relation aoRelation,
 								   int segno,
 								   int64 segmentTotalTupcount,
-								   bool isFull)
+								   bool isFull,
+								   Snapshot	appendOnlyMetaDataSnapshot)
 {
 	bool		result;
 	AppendOnlyVisimap visiMap;
 	int64		hiddenTupcount;
 	double		hideRatio;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(RelationIsAppendOptimized(aoRelation));
 
@@ -199,7 +198,6 @@ AppendOnlyCompaction_ShouldCompact(
 	}
 	AppendOnlyVisimap_Finish(&visiMap, ShareLock);
 
-	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 	return result;
 }
 
@@ -341,7 +339,8 @@ AppendOnlyThrowAwayTuple(Relation rel,
 static void
 AppendOnlySegmentFileFullCompaction(Relation aorel,
 									AppendOnlyInsertDesc insertDesc,
-									FileSegInfo *fsinfo)
+									FileSegInfo *fsinfo,
+									Snapshot	appendOnlyMetaDataSnapshot)
 {
 	const char *relname;
 	AppendOnlyVisimap visiMap;
@@ -357,7 +356,6 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	AOTupleId  *aoTupleId;
 	int64		tupleCount = 0;
 	int64		tuplePerPage = INT_MAX;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoRows(aorel));
@@ -473,8 +471,6 @@ AppendOnlySegmentFileFullCompaction(Relation aorel,
 	destroy_memtuple_binding(mt_bind);
 
 	appendonly_endscan(scanDesc);
-
-	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 }
 
 /*
@@ -522,7 +518,7 @@ AppendOnlyDrop(Relation aorel, List *compaction_segno)
 	int			i,
 				segno;
 	FileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(RelationIsAoRows(aorel));
@@ -593,7 +589,7 @@ AppendOnlyTruncateToEOF(Relation aorel)
 				segno;
 	LockAcquireResult acquireResult;
 	FileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(RelationIsAoRows(aorel));
 
@@ -681,7 +677,7 @@ AppendOnlyCompact(Relation aorel,
 	int			i,
 				segno;
 	FileSegInfo *fsinfo;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	Assert(Gp_role == GP_ROLE_EXECUTE || Gp_role == GP_ROLE_UTILITY);
 	Assert(insert_segno >= 0);
@@ -739,11 +735,13 @@ AppendOnlyCompact(Relation aorel,
 				 segno);
 
 		if (AppendOnlyCompaction_ShouldCompact(aorel,
-											   fsinfo->segno, fsinfo->total_tupcount, isFull))
+											   fsinfo->segno, fsinfo->total_tupcount, isFull,
+											   appendOnlyMetaDataSnapshot))
 		{
 			AppendOnlySegmentFileFullCompaction(aorel,
 												insertDesc,
-												fsinfo);
+												fsinfo,
+												appendOnlyMetaDataSnapshot);
 		}
 		pfree(fsinfo);
 	}

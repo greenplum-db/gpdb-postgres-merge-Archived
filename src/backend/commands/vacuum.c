@@ -2315,7 +2315,7 @@ vacuum_rel(Relation onerel, Oid relid, VacuumStmt *vacstmt, LOCKMODE lmode,
 	if (Gp_role == GP_ROLE_DISPATCH && vacstmt->appendonly_compaction_segno &&
 		RelationIsAppendOptimized(onerel))
 	{
-		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+		Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 		if (vacstmt->appendonly_phase == AOVAC_COMPACT)
 		{
@@ -2511,7 +2511,7 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 	else
 		vac_open_indexes(aoRelation, RowExclusiveLock, &nindexes, &Irel);
 
-	vacuumIndexState.appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	vacuumIndexState.appendOnlyMetaDataSnapshot = GetActiveSnapshot();
 
 	if (RelationIsAoRows(aoRelation))
 	{
@@ -2590,8 +2590,6 @@ vacuum_appendonly_indexes(Relation aoRelation, VacuumStmt *vacstmt)
 		}
 		pfree(segmentFileInfo);
 	}
-
-	UnregisterSnapshot(vacuumIndexState.appendOnlyMetaDataSnapshot);
 
 	vac_close_indexes(nindexes, Irel, NoLock);
 	return nindexes;

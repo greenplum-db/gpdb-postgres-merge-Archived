@@ -2621,7 +2621,7 @@ appendonly_insert_init(Relation rel, int segno, bool update_mode)
 	 * Writers uses this since they have exclusive access to the lock acquired
 	 * with LockRelationAppendOnlySegmentFile for the segment-file.
 	 */
-	aoInsertDesc->appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	aoInsertDesc->appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	aoInsertDesc->mt_bind = create_memtuple_binding(RelationGetDescr(rel));
 

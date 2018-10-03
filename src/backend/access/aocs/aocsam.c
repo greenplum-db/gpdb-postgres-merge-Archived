@@ -836,7 +836,7 @@ aocs_insert_init(Relation rel, int segno, bool update_mode)
 
 	desc = (AOCSInsertDesc) palloc0(sizeof(AOCSInsertDescData));
 	desc->aoi_rel = rel;
-	desc->appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	desc->appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	/*
 	 * Writers uses this since they have exclusive access to the lock acquired
@@ -1676,7 +1676,7 @@ aocs_delete_init(Relation rel)
 						   rel->rd_appendonly->visimaprelid,
 						   rel->rd_appendonly->visimapidxid,
 						   RowExclusiveLock,
-						   GetLatestSnapshot());
+						   GetCatalogSnapshot(InvalidOid));
 
 	AppendOnlyVisimapDelete_Init(&aoDeleteDesc->visiMapDelete,
 								 &aoDeleteDesc->visibilityMap);
@@ -1851,7 +1851,7 @@ aocs_addcol_newsegfile(AOCSAddColumnDesc desc,
 	int32		fileSegNo;
 	char		fn[MAXPGPATH];
 	int			i;
-	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	Snapshot	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	/* Column numbers of newly added columns start from here. */
 	AttrNumber	colno = desc->rel->rd_att->natts - desc->num_newcols;

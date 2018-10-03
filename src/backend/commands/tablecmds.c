@@ -6049,7 +6049,7 @@ ATAocsNoRewrite(AlteredTableInfo *tab)
 	if (addColCmds == NULL)
 		return false;
 
-	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	snapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 
 	estate = CreateExecutorState();
 	foreach(l, tab->constraints)

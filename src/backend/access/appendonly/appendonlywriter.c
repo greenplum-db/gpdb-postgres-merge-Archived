@@ -215,10 +215,7 @@ AORelCreateHashEntry(Oid relid)
 	 */
 	aorel = heap_open(relid, RowExclusiveLock);
 
-	/*
-	 * Use latest snapshot since we have an exclusive lock on the relation.
-	 */
-	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
+	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetCatalogSnapshot(InvalidOid));
 	if (RelationIsAoRows(aorel))
 	{
 		allfsinfo = GetAllFileSegInfo(aorel, appendOnlyMetaDataSnapshot, &total_segfiles);
