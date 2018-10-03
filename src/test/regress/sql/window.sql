@@ -307,11 +307,13 @@ DROP TABLE empsalary;
 CREATE FUNCTION nth_value_def(val anyelement, n integer = 1) RETURNS anyelement
   LANGUAGE internal WINDOW IMMUTABLE STRICT AS 'window_nth_value';
 
+-- GPDB: LIMIT 100 added, to force the result of the subquery to be ordered
+-- across all segments.
 SELECT nth_value_def(n := 2, val := ten) OVER (PARTITION BY four), ten, four
-  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten) s;
+  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten LIMIT 100) s;
 
 SELECT nth_value_def(ten) OVER (PARTITION BY four), ten, four
-  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten) s;
+  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten LIMIT 100) s;
 
 --
 -- Test the basic moving-aggregate machinery
