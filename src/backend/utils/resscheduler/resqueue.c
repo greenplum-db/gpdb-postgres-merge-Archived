@@ -1792,6 +1792,7 @@ BuildQueueStatusContext(QueueStatusContext *fctx)
 	numRecords = 0;
 	while ((queue = (ResQueueData *) hash_seq_search(&status)) != NULL)
 	{
+		QueueStatusRec *record = &fctx->record[numRecords];
 		int			j;
 		ResLimit	limits = NULL;
 		uint32		hashcode;
@@ -1801,44 +1802,29 @@ BuildQueueStatusContext(QueueStatusContext *fctx)
 		 */
 		limits = queue->limits;
 
-		fctx->record[i].queueid = queue->queueid;
+		record->queueid = queue->queueid;
 
 		for (j = 0; j < NUM_RES_LIMIT_TYPES; j++)
 		{
 			switch (limits[j].type)
 			{
 				case RES_COUNT_LIMIT:
-					{
-						fctx->record[numRecords].queuecountthreshold =
-							limits[j].threshold_value;
-
-						fctx->record[numRecords].queuecountvalue =
-							limits[j].current_value;
-					}
+					record->queuecountthreshold = limits[j].threshold_value;
+					record->queuecountvalue = limits[j].current_value;
 					break;
 
 				case RES_COST_LIMIT:
-					{
-						fctx->record[numRecords].queuecostthreshold =
-							limits[j].threshold_value;
-
-						fctx->record[numRecords].queuecostvalue =
-							limits[j].current_value;
-					}
+					record->queuecostthreshold = limits[j].threshold_value;
+					record->queuecostvalue = limits[j].current_value;
 					break;
 
 				case RES_MEMORY_LIMIT:
-					{
-						fctx->record[numRecords].queuememthreshold =
-							limits[j].threshold_value;
-
-						fctx->record[numRecords].queuememvalue =
-							limits[j].current_value;
-					}
+					record->queuememthreshold = limits[j].threshold_value;
+					record->queuememvalue =limits[j].current_value;
 					break;
 
 				default:
-					Assert(false && "Should never reach here!");
+					elog(ERROR, "unrecognized resource queue limit type: %d", limits[j].type);
 			}
 		}
 
@@ -1859,13 +1845,13 @@ BuildQueueStatusContext(QueueStatusContext *fctx)
 
 		if (!found || !lock)
 		{
-			fctx->record[i].queuewaiters = 0;
-			fctx->record[i].queueholders = 0;
+			record->queuewaiters = 0;
+			record->queueholders = 0;
 		}
 		else
 		{
-			fctx->record[i].queuewaiters = lock->nRequested - lock->nGranted;
-			fctx->record[i].queueholders = lock->nGranted;
+			record->queuewaiters = lock->nRequested - lock->nGranted;
+			record->queueholders = lock->nGranted;
 		}
 
 		numRecords++;
