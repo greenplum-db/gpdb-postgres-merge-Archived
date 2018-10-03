@@ -423,8 +423,6 @@ AOCSSegmentFileFullCompaction(Relation aorel,
 	aocs_endscan(scanDesc);
 	pfree(proj);
 
-	UnregisterSnapshot(snapshot);
-
 	return true;
 }
 
