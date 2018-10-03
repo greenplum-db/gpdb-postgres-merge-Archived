@@ -4278,20 +4278,19 @@ select * from
     lateral (select q1, coalesce(ss1.x,q2) as y from int8_tbl d) ss2
   ) on c.q2 = ss2.q1,
   lateral (select ss2.y) ss3;
-                                                                                QUERY PLAN                                                                                
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Nested Loop
-   Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint)), d.q1, (COALESCE(COALESCE(b.q2, 42::bigint), d.q2)), ((COALESCE(COALESCE(b.q2, 42::bigint), d.q2)))
-   ->  Gather Motion 3:1  (slice5; segments: 3)
-         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
+   Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint)), d.q1, (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)), ((COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)))
+   ->  Gather Motion 3:1  (slice4; segments: 3)
+         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
          ->  Hash Right Join
-               Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
+               Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
                Hash Cond: (d.q1 = c.q2)
-               ->  Redistribute Motion 3:3  (slice3; segments: 3)
-                     Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
-                     Hash Key: d.q1
-                     ->  Nested Loop
-                           Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
+               ->  Nested Loop
+                     Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+                     ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                           Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint))
                            ->  Hash Left Join
                                  Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint))
                                  Hash Cond: (a.q2 = b.q1)
@@ -4304,26 +4303,22 @@ select * from
                                        Output: b.q1, (COALESCE(b.q2, 42::bigint))
                                        ->  Seq Scan on public.int8_tbl b
                                              Output: b.q1, COALESCE(b.q2, 42::bigint)
-                           ->  Materialize
-                                 Output: d.q1, (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
-                                 ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                                       Output: d.q1, (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
-                                       ->  Seq Scan on public.int8_tbl d
-                                             Output: d.q1, COALESCE(COALESCE(b.q2, 42::bigint), d.q2)
+                     ->  Seq Scan on public.int8_tbl d
+                           Output: d.q1, COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)
                ->  Hash
                      Output: c.q1, c.q2
-                     ->  Redistribute Motion 3:3  (slice4; segments: 3)
+                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
                            Output: c.q1, c.q2
                            Hash Key: c.q2
                            ->  Seq Scan on public.int8_tbl c
                                  Output: c.q1, c.q2
    ->  Materialize
-         Output: ((COALESCE(COALESCE(b.q2, 42::bigint), d.q2)))
+         Output: ((COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)))
          ->  Result
-               Output: (COALESCE(COALESCE(b.q2, 42::bigint), d.q2))
+               Output: (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
  Optimizer: legacy query optimizer
  Settings: optimizer=off
-(43 rows)
+(38 rows)
 
 -- case that breaks the old ph_may_need optimization
 explain (verbose, costs off)
