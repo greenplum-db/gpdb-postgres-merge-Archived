@@ -685,8 +685,7 @@ SELECT user_relns() AS user_relns
  toyemp
  usr_define_type
  varchar_tbl
- xacttest
-(169 rows)
+(170 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 
