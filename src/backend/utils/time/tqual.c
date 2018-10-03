@@ -374,6 +374,22 @@ HeapTupleSatisfiesSelf(Relation relation, HeapTuple htup, Snapshot snapshot, Buf
 		if (TransactionIdDidCommit(xmax))
 			return false;
 		/* it must have aborted or crashed */
+		return true;
+	}
+
+	if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))
+	{
+		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+			return true;
+		return false;
+	}
+
+	if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmax(tuple)))
+		return true;
+
+	if (!TransactionIdDidCommit(HeapTupleHeaderGetRawXmax(tuple)))
+	{
+		/* it must have aborted or crashed */
 		SetHintBits(tuple, buffer, relation, HEAP_XMAX_INVALID,
 					InvalidTransactionId);
 		return true;
@@ -1105,7 +1121,7 @@ HeapTupleSatisfiesMVCC(Relation relation, HeapTuple htup, Snapshot snapshot,
 	if (!HeapTupleHeaderXminFrozen(tuple))
 	{
 		inSnapshot =
-			XidInMVCCSnapshot(HeapTupleHeaderGetXmin(tuple), snapshot,
+			XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot,
 						  ((tuple->t_infomask2 & HEAP_XMIN_DISTRIBUTED_SNAPSHOT_IGNORE) != 0),
 						  &setDistributedSnapshotIgnore);
 		if (setDistributedSnapshotIgnore)
