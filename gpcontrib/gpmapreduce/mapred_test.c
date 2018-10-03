@@ -11,10 +11,10 @@ PG_MODULE_MAGIC;
 extern Datum int4_accum(PG_FUNCTION_ARGS);
 extern Datum int8_add(PG_FUNCTION_ARGS);
 
-extern int tran(PG_FUNCTION_ARGS);
-extern int final(PG_FUNCTION_ARGS);
+extern Datum tran(PG_FUNCTION_ARGS);
+extern Datum final(PG_FUNCTION_ARGS);
 extern Datum retcomposite(PG_FUNCTION_ARGS);
-extern int cons(PG_FUNCTION_ARGS);
+extern Datum cons(PG_FUNCTION_ARGS);
 
 const char *accum_str = "gpmrdemo:int4_accum()";
 const char *add_str   = "gpmrdemo:int8_add()";
@@ -107,7 +107,8 @@ int8_add(PG_FUNCTION_ARGS)
 }
 
 
-int
+PG_FUNCTION_INFO_V1(tran);
+Datum
 tran(PG_FUNCTION_ARGS)
 {
 	int state = PG_GETARG_INT32(0);
@@ -116,20 +117,21 @@ tran(PG_FUNCTION_ARGS)
 	if (state > 0)
 		arg2 = state + arg2;
  
-	return arg2;
+	PG_RETURN_INT32(arg2);
 }
 
-int
+PG_FUNCTION_INFO_V1(cons);
+Datum
 cons(PG_FUNCTION_ARGS)
 {
-
 	int state = PG_GETARG_INT32(0);
 	int arg2 = PG_GETARG_INT32(1);
 
-	return arg2 + state;
+	PG_RETURN_INT32(arg2 + state);
 }
 
-int
+PG_FUNCTION_INFO_V1(final);
+Datum
 final(PG_FUNCTION_ARGS)
 {
 	int a = PG_GETARG_INT32(0);
