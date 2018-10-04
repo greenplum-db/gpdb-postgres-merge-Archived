@@ -31,7 +31,7 @@ test: delete-abort-savept
 #test: aborted-keyrevoke
 test: multixact-no-deadlock
 #test: multixact-no-forget
-test: propagate-lock-delete
+#test: propagate-lock-delete
 test: drop-index-concurrently-1
 test: alter-table-1
 test: timeouts
