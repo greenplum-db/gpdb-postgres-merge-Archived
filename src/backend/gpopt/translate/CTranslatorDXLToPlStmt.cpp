@@ -1256,6 +1256,7 @@ CTranslatorDXLToPlStmt::TranslateDXLTvf
 
 	ListCell *lc_target_entry = NULL;
 
+	rtfunc->funccolnames = NIL;
 	rtfunc->funccoltypes = NIL;
 	rtfunc->funccoltypmods = NIL;
 	rtfunc->funccolcollations = NIL;
@@ -1268,6 +1269,7 @@ CTranslatorDXLToPlStmt::TranslateDXLTvf
 		INT typ_mod = gpdb::ExprTypeMod((Node*) target_entry->expr);
 		Oid collation_type_oid = gpdb::TypeCollation(oid_type);
 
+		rtfunc->funccolnames = gpdb::LAppend(rtfunc->funccolnames, gpdb::MakeStringValue(target_entry->resname));
 		rtfunc->funccoltypes = gpdb::LAppendOid(rtfunc->funccoltypes, oid_type);
 		rtfunc->funccoltypmods = gpdb::LAppendInt(rtfunc->funccoltypmods, typ_mod);
 		// GPDB_91_MERGE_FIXME: collation
