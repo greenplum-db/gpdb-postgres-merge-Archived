@@ -2819,6 +2819,16 @@ describeOneTableDetails(const char *schemaname,
 							if ((*tgenabled == 'D' || *tgenabled == 'f') &&
 								*tgisinternal == 't')
 								list_trigger = true;
+
+							/*
+							 * Foreign keys are not enforced in GPDB. All foreign
+							 * key triggers are disabled, so let's not bother
+							 * listing them.
+							 */
+							tgdef = PQgetvalue(result, i, 1);
+							if (isGPDB() && strstr(tgdef, "RI_FKey_") != NULL)
+								list_trigger = false;
+
 							break;
 						case 3:
 							if (*tgenabled == 'A')
