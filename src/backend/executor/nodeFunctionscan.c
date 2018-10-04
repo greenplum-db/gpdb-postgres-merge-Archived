@@ -579,6 +579,28 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		SPI_ReserveMemory(((Plan *)node)->operatorMemKB * 1024L);
 	}
 
+	/*
+	 * If eflag contains EXEC_FLAG_REWIND or EXEC_FLAG_BACKWARD or EXEC_FLAG_MARK,
+	 * then this node is not eager free safe.
+	 */
+	scanstate->ss.ps.delayEagerFree =
+		((eflags & (EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) != 0);
+
+	/*
+	 * Also don't free eagerly, if there are multiple functions. If a ROWS
+	 * FROM() expression with multiple functions is used with a nested loop,
+	 * when the param changes, we might need to rescan some, but not all, of
+	 * the functions, depending on which function's arguments refer to the
+	 * params. In that case, we prefer to avoid the rescans for those
+	 * functions that we can.
+	 *
+	 * (In a nested loop with no params at all, the EXEC_FLAG_REWIND flag is
+	 * set. And in the case of a single function, the param must be used as
+	 * an arugment of that function, and we'll need to always rescan it.)
+	 */
+	if (nfuncs > 0)
+		scanstate->ss.ps.delayEagerFree = true;
+
 	return scanstate;
 }
 
