@@ -802,6 +802,13 @@ SELECT * FROM base_tbl;
 -- Neither local nor cascaded check options work with INSTEAD rules
 
 DROP TRIGGER rw_view1_trig ON rw_view1;
+
+-- GPDB: The previous tests don't work the same as in upstream. Reset the
+-- contents of the table to be the same as in upstream after this test, so
+-- that the tests that follow return the same results.
+delete from base_tbl;
+insert into base_tbl values (50, 10), (100, 10), (200, 10);
+
 CREATE RULE rw_view1_ins_rule AS ON INSERT TO rw_view1
   DO INSTEAD INSERT INTO base_tbl VALUES (NEW.a, 10);
 CREATE RULE rw_view1_upd_rule AS ON UPDATE TO rw_view1

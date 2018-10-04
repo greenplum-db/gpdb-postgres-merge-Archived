@@ -1582,32 +1582,43 @@ UPDATE rw_view1 SET a = a + 5; -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
 DETAIL:  Failing row contains (15).
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
-                          QUERY PLAN                           
----------------------------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Insert on base_tbl b
    ->  Result
-         SubPlan 1
-           ->  Index Only Scan using ref_tbl_pkey on ref_tbl r
-                 Index Cond: (a = b.a)
-         SubPlan 2
-           ->  Seq Scan on ref_tbl r_1
-(7 rows)
+         SubPlan 1  (slice0; segments: 1)
+           ->  Result
+                 Filter: (r.a = b.a)
+                 ->  Materialize
+                       ->  Seq Scan on ref_tbl r
+         SubPlan 2  (slice0; segments: 1)
+           ->  Materialize
+                 ->  Seq Scan on ref_tbl r_1
+ Optimizer: legacy query optimizer
+(11 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Update on base_tbl b
-   ->  Hash Semi Join
-         Hash Cond: (b.a = r.a)
-         ->  Seq Scan on base_tbl b
-         ->  Hash
-               ->  Seq Scan on ref_tbl r
-         SubPlan 1
-           ->  Index Only Scan using ref_tbl_pkey on ref_tbl r_1
-                 Index Cond: (a = b.a)
-         SubPlan 2
-           ->  Seq Scan on ref_tbl r_2
-(11 rows)
+   ->  Redistribute Motion 3:3  (slice1; segments: 3)
+         Hash Key: ((b.a + 5))
+         ->  Split
+               ->  Hash Join
+                     Hash Cond: (r.a = b.a)
+                     ->  Seq Scan on ref_tbl r
+                     ->  Hash
+                           ->  Seq Scan on base_tbl b
+         SubPlan 1  (slice1; segments: 3)
+           ->  Result
+                 Filter: (r_1.a = b.a)
+                 ->  Materialize
+                       ->  Seq Scan on ref_tbl r_1
+         SubPlan 2  (slice1; segments: 3)
+           ->  Materialize
+                 ->  Seq Scan on ref_tbl r_2
+ Optimizer: legacy query optimizer
+(18 rows)
 
 DROP TABLE base_tbl, ref_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
@@ -1630,8 +1641,7 @@ INSERT INTO rw_view1 VALUES (15, 20); -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
 DETAIL:  Failing row contains (15, 10).
 UPDATE rw_view1 SET a = 20, b = 30; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
-DETAIL:  Failing row contains (20, 10).
+ERROR:  UPDATE on distributed key column not allowed on relation with update triggers
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
 DROP FUNCTION base_tbl_trig_fn();
@@ -1658,37 +1668,43 @@ LANGUAGE plpgsql;
 CREATE TRIGGER rw_view1_trig
   INSTEAD OF INSERT OR UPDATE OR DELETE ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
+ERROR:  INSTEAD OF triggers are not supported in Greenplum
 CREATE VIEW rw_view2 AS
   SELECT * FROM rw_view1 WHERE a > 0 WITH LOCAL CHECK OPTION;
 INSERT INTO rw_view2 VALUES (-5); -- should fail
 ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
-DETAIL:  Failing row contains (-5).
+DETAIL:  Failing row contains (-5, null).
 INSERT INTO rw_view2 VALUES (5); -- ok
 INSERT INTO rw_view2 VALUES (50); -- ok, but not in view
 UPDATE rw_view2 SET a = a - 10; -- should fail
-ERROR:  new row violates WITH CHECK OPTION for view "rw_view2"
-DETAIL:  Failing row contains (-5).
 SELECT * FROM base_tbl;
- a  | b  
-----+----
-  5 | 10
- 50 | 10
+ a  | b 
+----+---
+  5 |  
+ 50 |  
 (2 rows)
 
 -- Check option won't cascade down to base view with INSTEAD OF triggers
 ALTER VIEW rw_view2 SET (check_option=cascaded);
 INSERT INTO rw_view2 VALUES (100); -- ok, but not in view (doesn't fail rw_view1's check)
+ERROR:  new row violates WITH CHECK OPTION for view "rw_view1"
+DETAIL:  Failing row contains (100, null).
 UPDATE rw_view2 SET a = 200 WHERE a = 5; -- ok, but not in view (doesn't fail rw_view1's check)
 SELECT * FROM base_tbl;
-  a  | b  
------+----
-  50 | 10
- 100 | 10
- 200 | 10
-(3 rows)
+ a  | b 
+----+---
+  5 |  
+ 50 |  
+(2 rows)
 
 -- Neither local nor cascaded check options work with INSTEAD rules
 DROP TRIGGER rw_view1_trig ON rw_view1;
+ERROR:  trigger "rw_view1_trig" for table "rw_view1" does not exist
+-- GPDB: The previous tests don't work the same as in upstream. Reset the
+-- contents of the table to be the same as in upstream after this test, so
+-- that the tests that follow return the same results.
+delete from base_tbl;
+insert into base_tbl values (50, 10), (100, 10), (200, 10);
 CREATE RULE rw_view1_ins_rule AS ON INSERT TO rw_view1
   DO INSTEAD INSERT INTO base_tbl VALUES (NEW.a, 10);
 CREATE RULE rw_view1_upd_rule AS ON UPDATE TO rw_view1
@@ -1811,13 +1827,15 @@ DELETE FROM rw_view1 WHERE NOT snoop(person);
 NOTICE:  snooped value: Tom
 NOTICE:  snooped value: Harry
 EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
-                  QUERY PLAN                   
------------------------------------------------
- Subquery Scan on rw_view1
-   Filter: snoop(rw_view1.person)
-   ->  Seq Scan on base_tbl
-         Filter: (visibility = 'public'::text)
-(4 rows)
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on rw_view1
+         Filter: snoop(rw_view1.person)
+         ->  Seq Scan on base_tbl
+               Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
+(6 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
                      QUERY PLAN                      
@@ -1889,15 +1907,17 @@ NOTICE:  snooped value: Tom
 NOTICE:  snooped value: Harry
 NOTICE:  snooped value: Harry
 EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
-                     QUERY PLAN                      
------------------------------------------------------
- Subquery Scan on rw_view2
-   Filter: snoop(rw_view2.person)
-   ->  Subquery Scan on rw_view1
-         Filter: snoop(rw_view1.person)
-         ->  Seq Scan on base_tbl
-               Filter: (visibility = 'public'::text)
-(6 rows)
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Gather Motion 3:1  (slice1; segments: 3)
+   ->  Subquery Scan on rw_view2
+         Filter: snoop(rw_view2.person)
+         ->  Subquery Scan on rw_view1
+               Filter: snoop(rw_view1.person)
+               ->  Seq Scan on base_tbl
+                     Filter: (visibility = 'public'::text)
+ Optimizer: legacy query optimizer
+(8 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
                         QUERY PLAN                         
@@ -1946,40 +1966,47 @@ SELECT * FROM rw_view1;
 (1 row)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Update on base_tbl base_tbl_1
    ->  Nested Loop
-         ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_1
-               Index Cond: (id = 1)
-         ->  Subquery Scan on base_tbl
-               Filter: snoop(base_tbl.data)
-               ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_2
-                     Index Cond: (id = 1)
-                     Filter: (NOT deleted)
-(9 rows)
+         ->  Seq Scan on base_tbl base_tbl_1
+               Filter: (id = 1)
+         ->  Materialize
+               ->  Subquery Scan on base_tbl
+                     Filter: snoop(base_tbl.data)
+                     ->  Seq Scan on base_tbl base_tbl_2
+                           Filter: ((NOT deleted) AND (id = 1))
+ Optimizer: legacy query optimizer
+(10 rows)
 
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 NOTICE:  snooped value: Row 1
 EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
-                        QUERY PLAN                         
------------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Insert on base_tbl
-   InitPlan 1 (returns $0)
-     ->  Index Only Scan using base_tbl_pkey on base_tbl t
-           Index Cond: (id = 2)
+   InitPlan 1 (returns $0)  (slice2)
+     ->  Gather Motion 3:1  (slice1; segments: 3)
+           ->  Seq Scan on base_tbl t
+                 Filter: (id = 2)
    ->  Result
          One-Time Filter: ($0 IS NOT TRUE)
+ Optimizer: legacy query optimizer
  
  Update on base_tbl
-   InitPlan 1 (returns $0)
-     ->  Index Only Scan using base_tbl_pkey on base_tbl t
-           Index Cond: (id = 2)
+   InitPlan 1 (returns $0)  (slice2)
+     ->  Limit
+           ->  Gather Motion 1:1  (slice1; segments: 1)
+                 ->  Limit
+                       ->  Seq Scan on base_tbl t
+                             Filter: (id = 2)
    ->  Result
          One-Time Filter: $0
-         ->  Index Scan using base_tbl_pkey on base_tbl
-               Index Cond: (id = 2)
-(15 rows)
+         ->  Seq Scan on base_tbl
+               Filter: (id = 2)
+ Optimizer: legacy query optimizer
+(21 rows)
 
 INSERT INTO rw_view1 VALUES (2, 'New row 2');
 SELECT * FROM base_tbl;
