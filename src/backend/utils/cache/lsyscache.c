@@ -1025,6 +1025,7 @@ get_atttypetypmodcoll(Oid relid, AttrNumber attnum,
         att_tup = SystemAttributeDefinition(attnum, true);
 	    *typid = att_tup->atttypid;
 	    *typmod = att_tup->atttypmod;
+		*collid = att_tup->attcollation;
         return;
     }
 
