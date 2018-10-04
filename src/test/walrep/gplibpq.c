@@ -127,7 +127,7 @@ test_receive_and_verify(PG_FUNCTION_ARGS)
 
 	/* For now hard-coding it to 1 */
 	startpointTLI = 1;
-	walrcv_startstreaming(startpointTLI, startpoint);
+	walrcv_startstreaming(startpointTLI, startpoint, NULL);
 
 	for (int i=0; i < NUM_RETRIES; i++)
 	{
@@ -355,7 +355,7 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 		walrcv_connect(conninfo);
 		/* For now hard-coding it to 1 */
 		startpointTLI = 1;
-		walrcv_startstreaming(startpointTLI, startpoint);
+		walrcv_startstreaming(startpointTLI, startpoint, NULL);
 
 		for (int i = 0; i < NUM_RETRIES; i++)
 		{
