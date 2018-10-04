@@ -455,11 +455,20 @@ DROP TABLE cursor;
 
 -- Check rewinding a cursor containing a stable function in LIMIT,
 -- per bug report in 8336843.9833.1399385291498.JavaMail.root@quick
+
+-- GPDB: ignore the result of the FETCH, because the order the rows
+-- arrive from the segments is arbitrary in GPDB. This test isn't
+-- very useful in GPDB anyway, as the bug that this was testing
+-- happened when rewinding the cursor, and GPDB doesn't support
+-- MOVE BACKWARD at all. But doesn't hurt to keep it to the extent
+-- we can, I guess..
 begin;
 create function nochange(int) returns int
   as 'select $1 limit 1' language sql stable;
 declare c cursor for select * from int8_tbl limit nochange(3);
+-- start_ignore
 fetch all from c;
+-- end_ignore
 move backward all in c;
 fetch all from c;
 rollback;
