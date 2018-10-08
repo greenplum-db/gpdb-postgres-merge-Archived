@@ -2643,26 +2643,28 @@ from nt3 as nt3
     ) as ss2
     on ss2.id = nt3.nt2_id
 where nt3.id = 1 and ss2.b3;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice3; segments: 3)
    ->  Hash Join
-         Hash Cond: (nt2.id = nt3.nt2_id)
-         ->  Redistribute Motion 3:3  (slice2; segments: 3)
-               Hash Key: 1
-               ->  Hash Join
-                     Hash Cond: (nt2.nt1_id = nt1.id)
-                     Join Filter: (nt2.b1 AND ((nt1.id IS NOT NULL)))
-                     ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                           Hash Key: nt2.nt1_id
-                           ->  Seq Scan on nt2
-                     ->  Hash
-                           ->  Seq Scan on nt1
+         Hash Cond: (nt3.nt2_id = nt2.id)
+         ->  Index Scan using nt3_pkey on nt3
+               Index Cond: (id = 1)
          ->  Hash
-               ->  Seq Scan on nt3
-                     Filter: (id = 1)
- Optimizer: legacy query optimizer
-(17 rows)
+               ->  Broadcast Motion 3:3  (slice2; segments: 3)
+                     ->  Result
+                           Filter: ((nt2.b1 AND ((NOT (nt1.id IS NULL)))))
+                           ->  Result
+                                 ->  Hash Left Join
+                                       Hash Cond: (nt2.nt1_id = nt1.id)
+                                       ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                                             Hash Key: nt2.nt1_id
+                                             ->  Table Scan on nt2
+                                       ->  Hash
+                                             ->  Result
+                                                   ->  Table Scan on nt1
+ Optimizer: PQO version 3.1.0
+(19 rows)
 
 select nt3.id
 from nt3 as nt3
@@ -2872,36 +2874,34 @@ where thousand = (q1 + q2);
 explain (costs off)
 select * from tenk1 a join tenk1 b on
   (a.unique1 = 1 and b.unique1 = 2) or (a.unique2 = 3 and b.hundred = 4);
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
    ->  Nested Loop
-         Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR ((a.unique2 = 3) AND (b.hundred = 4)))
-         ->  Seq Scan on tenk1 b
+         Join Filter: (((tenk1_1.unique1 = 1) AND (tenk1.unique1 = 2)) OR ((tenk1_1.unique2 = 3) AND (tenk1.hundred = 4)))
+         ->  Broadcast Motion 3:3  (slice1; segments: 3)
+               ->  Table Scan on tenk1 tenk1_1
+                     Filter: ((unique1 = 1) OR (unique2 = 3))
+         ->  Table Scan on tenk1
                Filter: ((unique1 = 2) OR (hundred = 4))
-         ->  Materialize
-               ->  Broadcast Motion 3:3  (slice1; segments: 3)
-                     ->  Seq Scan on tenk1 a
-                           Filter: ((unique1 = 1) OR (unique2 = 3))
- Optimizer: legacy query optimizer
-(10 rows)
+ Optimizer: PQO version 3.1.0
+(9 rows)
 
 explain (costs off)
 select * from tenk1 a join tenk1 b on
   (a.unique1 = 1 and b.unique1 = 2) or (a.unique2 = 3 and b.ten = 4);
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)
    ->  Nested Loop
-         Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR ((a.unique2 = 3) AND (b.ten = 4)))
-         ->  Seq Scan on tenk1 b
+         Join Filter: (((tenk1_1.unique1 = 1) AND (tenk1.unique1 = 2)) OR ((tenk1_1.unique2 = 3) AND (tenk1.ten = 4)))
+         ->  Broadcast Motion 3:3  (slice1; segments: 3)
+               ->  Table Scan on tenk1 tenk1_1
+                     Filter: ((unique1 = 1) OR (unique2 = 3))
+         ->  Table Scan on tenk1
                Filter: ((unique1 = 2) OR (ten = 4))
-         ->  Materialize
-               ->  Broadcast Motion 3:3  (slice1; segments: 3)
-                     ->  Seq Scan on tenk1 a
-                           Filter: ((unique1 = 1) OR (unique2 = 3))
- Optimizer: legacy query optimizer
-(10 rows)
+ Optimizer: PQO version 3.1.0
+(9 rows)
 
 --
 -- test placement of movable quals in a parameterized join tree
@@ -3171,26 +3171,30 @@ explain (costs off)
 select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
   from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
   where a.unique2 = 5530 and coalesce(b.twothousand, a.twothousand) = 44;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Gather Motion 3:1  (slice3; segments: 3)
-   ->  Hash Left Join
-         Hash Cond: (COALESCE(b.twothousand, a.twothousand) = c.unique2)
-         ->  Hash Right Join
-               Hash Cond: (b.thousand = a.unique1)
-               Filter: (COALESCE(b.twothousand, a.twothousand) = 44)
-               ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                     Hash Key: b.thousand
-                     ->  Seq Scan on tenk1 b
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice4; segments: 3)
+   ->  Result
+         ->  Hash Left Join
+               Hash Cond: (COALESCE(tenk1_1.twothousand, tenk1.twothousand) = tenk1_2.unique2)
+               ->  Redistribute Motion 3:3  (slice2; segments: 3)
+                     Hash Key: COALESCE(tenk1_1.twothousand, tenk1.twothousand)
+                     ->  Result
+                           Filter: (COALESCE(tenk1_1.twothousand, tenk1.twothousand) = 44)
+                           ->  Hash Left Join
+                                 Hash Cond: (tenk1.unique1 = tenk1_1.thousand)
+                                 ->  Index Scan using tenk1_unique2 on tenk1
+                                       Index Cond: (unique2 = 5530)
+                                 ->  Hash
+                                       ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                                             Hash Key: tenk1_1.thousand
+                                             ->  Table Scan on tenk1 tenk1_1
                ->  Hash
-                     ->  Index Scan using tenk1_unique2 on tenk1 a
-                           Index Cond: (unique2 = 5530)
-         ->  Hash
-               ->  Broadcast Motion 3:3  (slice2; segments: 3)
-                     ->  Index Scan using tenk1_unique2 on tenk1 c
-                           Index Cond: (unique2 = 44)
- Optimizer: legacy query optimizer
-(17 rows)
+                     ->  Redistribute Motion 3:3  (slice3; segments: 3)
+                           Hash Key: tenk1_2.unique2
+                           ->  Table Scan on tenk1 tenk1_2
+ Optimizer: PQO version 3.1.0
+(21 rows)
 
 select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
   from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
@@ -3215,32 +3219,36 @@ left join
    using (join_key)
   ) foo3
 using (join_key);
-                            QUERY PLAN                            
-------------------------------------------------------------------
- Hash Right Join
-   Output: "*VALUES*".column1, i1.f1, (666)
-   Hash Cond: (i1.f1 = "*VALUES*".column1)
-   ->  Gather Motion 3:1  (slice2; segments: 3)
-         Output: i1.f1, (666)
-         ->  Hash Right Join
-               Output: i1.f1, 666
-               Hash Cond: (i2.unique2 = i1.f1)
-               ->  Redistribute Motion 3:3  (slice1; segments: 3)
-                     Output: i2.unique2, i2.unique1
-                     Hash Key: i2.unique2
-                     ->  Seq Scan on public.tenk1 i2
-                           Output: i2.unique2, i2.unique1
-               ->  Hash
-                     Output: i1.f1
-                     ->  Seq Scan on public.int4_tbl i1
-                           Output: i1.f1
-   ->  Hash
-         Output: "*VALUES*".column1
-         ->  Values Scan on "*VALUES*"
-               Output: "*VALUES*".column1
- Optimizer: legacy query optimizer
- Settings: optimizer=off
-(23 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather Motion 3:1  (slice2; segments: 3)
+   Output: "Values".column1, int4_tbl.f1, "outer".bug_field
+   ->  Hash Left Join
+         Output: "Values".column1, int4_tbl.f1, "outer".bug_field
+         Hash Cond: ("Values".column1 = int4_tbl.f1)
+         ->  Result
+               Output: "Values".column1
+               ->  Values Scan on "Values"
+                     Output: "Values".column1
+         ->  Hash
+               Output: int4_tbl.f1, "outer".bug_field
+               ->  Hash Left Join
+                     Output: int4_tbl.f1, "outer".bug_field
+                     Hash Cond: (int4_tbl.f1 = tenk1.unique2)
+                     ->  Result
+                           Output: 666, int4_tbl.f1
+                           ->  Table Scan on public.int4_tbl
+                                 Output: int4_tbl.f1
+                     ->  Hash
+                           Output: tenk1.unique2
+                           ->  Redistribute Motion 3:3  (slice1; segments: 3)
+                                 Output: tenk1.unique2
+                                 Hash Key: tenk1.unique2
+                                 ->  Table Scan on public.tenk1
+                                       Output: tenk1.unique2
+ Optimizer: PQO version 3.1.0
+ Settings: optimizer=on
+(27 rows)
 
 select foo1.join_key as foo1_id, foo3.join_key AS foo3_id, bug_field from
   (values (0),(1)) foo1(join_key)
