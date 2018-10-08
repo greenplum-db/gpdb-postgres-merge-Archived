@@ -405,10 +405,6 @@ QUERY PLAN
         Average: 59000
         Workers: 3
         Maximum Memory Used: 59000
-      Virtual Memory: 
-        Average: 59000
-        Workers: 3
-        Maximum Memory Used: 59000
     - Slice: 2
       Executor Memory: 
         Average: 59000
@@ -803,11 +799,6 @@ QUERY PLAN
           "Maximum Memory Used": 12314,
         },
         "Global Peak Memory": {
-          "Average": 12314,
-          "Workers": 12314,
-          "Maximum Memory Used": 12314,
-        },
-        "Virtual Memory": {
           "Average": 12314,
           "Workers": 12314,
           "Maximum Memory Used": 12314,
@@ -1236,11 +1227,6 @@ QUERY PLAN
           <Workers>2</Workers>
           <Maximum-Memory-Used>4321</Maximum-Memory-Used>
         </Global-Peak-Memory>
-        <Virtual-Memory>
-          <Average>4321234123423</Average>
-          <Workers>64654</Workers>
-          <Maximum-Memory-Used>5432345</Maximum-Memory-Used>
-        </Virtual-Memory>
       </Slice>
       <Slice>
         <Slice>2</Slice>
