@@ -374,37 +374,16 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 		new_tlist = lappend(new_tlist, new_tle);
 	}
 
-	/*
-	 * The remaining tlist entries should be resjunk; append them all to the
-	 * end of the new tlist, making sure they have resnos higher than the last
-	 * real attribute.  (Note: although the rewriter already did such
-	 * renumbering, we have to do it again here in case we are doing an UPDATE
-	 * in a table with dropped columns, or an inheritance child table with
-	 * extra columns.)
-	 */
-	while (tlist_item)
-	{
-		TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
-
-		if (!old_tle->resjunk)
-			elog(ERROR, "targetlist is not sorted correctly");
-		/* Get the resno right, but don't copy unnecessarily */
-		if (old_tle->resno != attrno)
-		{
-			old_tle = flatCopyTargetEntry(old_tle);
-			old_tle->resno = attrno;
-		}
-		new_tlist = lappend(new_tlist, old_tle);
-		attrno++;
-		tlist_item = lnext(tlist_item);
-	}
 
 	/*
-	 * If an UPDATE can move the tuples from one segment to another,
-	 * we will need to create a Split Update node for it. The node is
-	 * created later in the planning, but if it's needed, we must
-	 * ensure that the target list contains all the original values,
-	 * because the Split Update needs them as input.
+	 * If an UPDATE can move the tuples from one segment to another, we will
+	 * need to create a Split Update node for it. The node is created later
+	 * in the planning, but if it's needed, we must ensure that the target
+	 * list contains all the original values of each distribution key column,
+	 * because the Split Update needs them as input. The old distribution
+	 * key columns come in the target list after all the new values, and
+	 * before the 'ctid' and other resjunk columns. (The logic in
+	 * process_targetlist_for_splitupdate() relies on that order.)
 	 */
 	if (command_type == CMD_UPDATE)
 	{
@@ -435,15 +414,16 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 			 * For each column that was changed, add the original column value
 			 * to the target list, if it's not there already.
 			 */
-			int			x;
+			int			i;
 
-			while ((x = bms_first_member(changed_cols)) >= 0)
+			for (i = 0; i < targetPolicy->nattrs; i++)
 			{
+				AttrNumber	keycolidx = targetPolicy->attrs[i];
 				Var		   *origvar;
-				Form_pg_attribute att_tup = rel->rd_att->attrs[x - 1];
+				Form_pg_attribute att_tup = rel->rd_att->attrs[keycolidx - 1];
 
 				origvar = makeVar(result_relation,
-								  x,
+								  keycolidx,
 								  att_tup->atttypid,
 								  att_tup->atttypmod,
 								  att_tup->attcollation,
@@ -483,8 +463,32 @@ expand_targetlist(PlannerInfo *root, List *tlist, int command_type,
 			 * time to actually create the ModifyTable, and SplitUpdate, node.
 			 */
 			root->is_split_update = true;
-			root->orig_result_relation = result_relation;
 		}
+	}
+
+	/*
+	 * The remaining tlist entries should be resjunk; append them all to the
+	 * end of the new tlist, making sure they have resnos higher than the last
+	 * real attribute.  (Note: although the rewriter already did such
+	 * renumbering, we have to do it again here in case we are doing an UPDATE
+	 * in a table with dropped columns, or an inheritance child table with
+	 * extra columns.)
+	 */
+	while (tlist_item)
+	{
+		TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
+
+		if (!old_tle->resjunk)
+			elog(ERROR, "targetlist is not sorted correctly");
+		/* Get the resno right, but don't copy unnecessarily */
+		if (old_tle->resno != attrno)
+		{
+			old_tle = flatCopyTargetEntry(old_tle);
+			old_tle->resno = attrno;
+		}
+		new_tlist = lappend(new_tlist, old_tle);
+		attrno++;
+		tlist_item = lnext(tlist_item);
 	}
 
 	heap_close(rel, NoLock);

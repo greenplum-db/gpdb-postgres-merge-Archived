@@ -1343,23 +1343,27 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
  * deleteColIdx which contains placeholder, and value will be corrected later
  */
 static void
-process_targetlist_for_splitupdate(TupleDesc resultDesc,
+process_targetlist_for_splitupdate(Relation resultRel,
 								   Index resultRelationsIdx,
-								   Index oldResultRelationIdx,
 								   List *targetlist,
 								   List **splitUpdateTargetList, List **insertColIdx, List **deleteColIdx)
 {
+	TupleDesc	resultDesc = RelationGetDescr(resultRel);
+	GpPolicy   *cdbpolicy = resultRel->rd_cdbpolicy;
 	int			attrIdx;
 	Var		   *splitVar;
 	TargetEntry	*splitTargetEntry;
+	ListCell   *lc;
 
+	lc = list_head(targetlist);
 	for (attrIdx = 1; attrIdx <= resultDesc->natts; ++attrIdx)
 	{
 		TargetEntry			*tle;
 		Form_pg_attribute	attr;
 		int			oldAttrIdx = -1;
 
-		tle = (TargetEntry *) list_nth(targetlist, attrIdx - 1);
+		tle = (TargetEntry *) lfirst(lc);
+		lc = lnext(lc);
 		Assert(tle);
 
 		attr = resultDesc->attrs[attrIdx - 1];
@@ -1369,13 +1373,10 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc,
 
 			splitTargetEntry = makeTargetEntry((Expr *) copyObject(tle->expr), tle->resno, tle->resname, tle->resjunk);
 			*splitUpdateTargetList = lappend(*splitUpdateTargetList, splitTargetEntry);
-
-			oldAttrIdx = attrIdx;
 		}
 		else
 		{
 			int			i;
-			ListCell   *lc;
 
 			Assert(exprType((Node *) tle->expr) == attr->atttypid);
 
@@ -1391,34 +1392,35 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc,
 			*splitUpdateTargetList = lappend(*splitUpdateTargetList, splitTargetEntry);
 
 			/*
-			 * Find the old value for this attribute from the target list.
+			 * Is this a distribution key column? If so, we will need its old value.
+			 * expand_targetlist() put the old values for distribution key columns in
+			 * the target list after the new column values.
 			 */
-			i = 1;
-			foreach(lc, targetlist)
+			for (i = 0; i < cdbpolicy->nattrs; i++)
 			{
-				TargetEntry *ttle = (TargetEntry *) lfirst(lc);
+				AttrNumber	keyattno = cdbpolicy->attrs[i];
 
-				if (ttle->expr && IsA(ttle->expr, Var))
+				if (keyattno == attrIdx)
 				{
-					Var		   *var = (Var *) ttle->expr;
+					TargetEntry *oldtle;
 
-					if (var->varno == oldResultRelationIdx &&
-						var->varattno == attrIdx &&
-						var->varlevelsup == 0)
-					{
-						oldAttrIdx = i;
-						break;
-					}
+					oldAttrIdx = resultDesc->natts + i + 1;
+
+					/* sanity checks. */
+					if (oldAttrIdx > list_length(targetlist))
+						elog(ERROR, "old value for attribute \"%s\" missing from split update input target list",
+							 NameStr(attr->attname));
+					oldtle = list_nth(targetlist, oldAttrIdx - 1);
+					if (exprType((Node *) oldtle->expr) != attr->atttypid)
+						elog(ERROR, "datatype mismatch for old value for attribute \"%s\" in split update input target list",
+							 NameStr(attr->attname));
+
+					break;
 				}
-				i++;
 			}
-		}
-
-		if (oldAttrIdx == -1)
-		{
-			/* expand_targetlist() should have ensured that this doesn't happen. */
-			elog(ERROR, "old value for attribute \"%s\" missing from split update input target list",
-				 NameStr(attr->attname));
+			/*
+			 * If oldAttrIdx is still -1, this is not a distribution key column.
+			 */
 		}
 
 		*insertColIdx = lappend_int(*insertColIdx, attrIdx);
@@ -1464,14 +1466,11 @@ process_targetlist_for_splitupdate(TupleDesc resultDesc,
  * ensured that the old value of id, is also available, even though it would not otherwise
  * be needed.
  *
- * 'result_relation' is the RTI of the UPDATE target relation. 'orig_result_relation'
- * is the RTI of the source for old values. Usually they are the same, but if the UPDATE
- * is on a security-barrier view, prepsecurity.c swaps the target for subquery scan, to
- * enforce the barrier.
+ * 'result_relation' is the RTI of the UPDATE target relation.
  */
 SplitUpdate *
 make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte,
-				 Index result_relation, Index orig_result_relation)
+				 Index result_relation)
 {
 	AttrNumber		ctidColIdx = 0;
 	List			*deleteColIdx = NIL;
@@ -1500,9 +1499,8 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	 * values in the subplan's target list, and store their column indexes in
 	 * insertColIdx and deleteColIdx.
 	 */
-	process_targetlist_for_splitupdate(resultDesc,
+	process_targetlist_for_splitupdate(resultRelation,
 									   result_relation,
-									   orig_result_relation,
 									   subplan->targetlist,
 									   &splitUpdateTargetList, &insertColIdx, &deleteColIdx);
 	ctidColIdx = find_ctid_attribute_check(subplan->targetlist);

@@ -870,7 +870,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			List	   *withCheckOptionLists;
 			List	   *returningLists;
 			List	   *rowMarks;
-			Index		orig_result_rti;
 
 			/*
 			 * Set up the WITH CHECK OPTION and RETURNING lists-of-lists, if
@@ -896,16 +895,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			else
 				rowMarks = root->rowMarks;
 
-			if (root->is_split_update)
-			{
-				if (root->orig_result_relation)
-					orig_result_rti = root->orig_result_relation;
-				else
-					orig_result_rti = parse->resultRelation;
-			}
-			else
-				orig_result_rti = 0;
-
 			plan = (Plan *) make_modifytable(root,
 											 parse->commandType,
 											 parse->canSetTag,
@@ -913,7 +902,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 											 list_make1(plan),
 											 withCheckOptionLists,
 											 returningLists,
-											 list_make1_int(orig_result_rti),
+											 list_make1_int(root->is_split_update),
 											 rowMarks,
 											 SS_assign_special_param(root));
 		}
@@ -1131,7 +1120,7 @@ inheritance_planner(PlannerInfo *root)
 	List	   *subplans = NIL;
 	List	   *resultRelations = NIL;
 	List	   *withCheckOptionLists = NIL;
-	List	   *orig_result_rtis = NIL;
+	List	   *is_split_updates = NIL;
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
 	ListCell   *lc;
@@ -1164,7 +1153,6 @@ inheritance_planner(PlannerInfo *root)
 		PlannerInfo subroot;
 		Plan	   *subplan;
 		Index		rti;
-		Index		orig_result_rti;
 
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
@@ -1430,17 +1418,7 @@ inheritance_planner(PlannerInfo *root)
 		 * If this subplan requires a Split Update, pass that information
 		 * back to the top.
 		 */
-		if (subroot.is_split_update)
-		{
-			if (subroot.orig_result_relation)
-				orig_result_rti = subroot.orig_result_relation;
-			else
-				orig_result_rti = parse->resultRelation;
-		}
-		else
-			orig_result_rti = 0;
-
-		orig_result_rtis = lappend_int(orig_result_rtis, orig_result_rti);
+		is_split_updates = lappend_int(is_split_updates, subroot.is_split_update);
 	}
 
 	Assert(parentPolicy != NULL);
@@ -1495,7 +1473,7 @@ inheritance_planner(PlannerInfo *root)
 									 subplans,
 									 withCheckOptionLists,
 									 returningLists,
-									 orig_result_rtis,
+									 is_split_updates,
 									 rowMarks,
 									 SS_assign_special_param(root));
 }
