@@ -107,7 +107,8 @@ normalize_query(Query *query)
 	{
 		for (int rteOffset = 0; rteOffset < list_length(res->rtable); rteOffset++)
 		{
-			replace_sirvf_rte(res, rteOffset + 1);
+			RangeTblEntry *rte = (RangeTblEntry *) list_nth(res->rtable, rteOffset);
+			replace_sirvf_rte(res, rte);
 		}
 	}
 
