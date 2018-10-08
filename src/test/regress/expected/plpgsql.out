@@ -5380,36 +5380,22 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5420,36 +5406,22 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 4 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 7 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5506,36 +5478,22 @@ $$ language plpgsql;
 select outer_outer_func(10);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
@@ -5546,36 +5504,22 @@ NOTICE:  outer_func() done
 select outer_outer_func(20);
 NOTICE:  calling down into outer_func()
 NOTICE:  calling down into inner_func()
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 10 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  ***PL/pgSQL function inner_func(integer) line 15 at GET DIAGNOSTICS
-DETAIL:  
-SQL statement "SELECT inner_func($1)"
 PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment***
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  lets make sure we didnt break anything
-CONTEXT:  SQL statement "SELECT inner_func($1)"
-PL/pgSQL function outer_func(integer) line 6 at assignment
-SQL statement "SELECT outer_func($1)"
+CONTEXT:  PL/pgSQL function outer_func(integer) line 6 at assignment
 PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  inner_func() done
-CONTEXT:  SQL statement "SELECT outer_func($1)"
-PL/pgSQL function outer_outer_func(integer) line 6 at assignment
+CONTEXT:  PL/pgSQL function outer_outer_func(integer) line 6 at assignment
 NOTICE:  outer_func() done
  outer_outer_func 
 ------------------
