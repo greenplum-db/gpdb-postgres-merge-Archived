@@ -1786,7 +1786,6 @@ $$
 LANGUAGE plpgsql STRICT IMMUTABLE LEAKPROOF;
 SELECT * FROM rw_view1 WHERE snoop(person);
 NOTICE:  snooped value: Tom
-NOTICE:  snooped value: Dick
 NOTICE:  snooped value: Harry
  person 
 --------
