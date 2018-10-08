@@ -640,24 +640,6 @@ static WALInsertLockPadded *WALInsertLocks = NULL;
  */
 static ControlFileData *ControlFile = NULL;
 
-typedef struct ControlFileWatch
-{
-	bool		watcherInitialized;
-	XLogRecPtr	current_checkPointLoc;		/* current last check point record ptr */
-	XLogRecPtr	current_prevCheckPointLoc;  /* current previous check point record ptr */
-	XLogRecPtr	current_checkPointCopy_redo;
-								/* current checkpointCopy value for
-								 * next RecPtr available when we began to
-								 * create CheckPoint (i.e. REDO start point) */
-
-} ControlFileWatch;
-
-
-/*
- * We keep the watcher in shared memory.
- */
-static ControlFileWatch *ControlFileWatcher = NULL;
-
 /*
  * Calculate the amount of space left on the page after 'endptr'. Beware
  * multiple evaluation!
@@ -826,9 +808,6 @@ static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
 static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		   int emode, bool fetching_ckpt);
-static void ControlFileWatcherSaveInitial(void);
-static void ControlFileWatcherCheckForChange(void);
-static bool XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc);
 static XLogRecPtr XLogInsert_Internal(RmgrId rmid, uint8 info, XLogRecData *rdata, TransactionId headerXid);
 static void CheckRecoveryConsistency(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
@@ -4429,64 +4408,6 @@ rescanLatestTimeLine(void)
 	return true;
 }
 
-static void
-ControlFileWatcherSaveInitial(void)
-{
-	ControlFileWatcher->current_checkPointLoc = ControlFile->checkPoint;
-	ControlFileWatcher->current_prevCheckPointLoc = ControlFile->prevCheckPoint;
-	ControlFileWatcher->current_checkPointCopy_redo = ControlFile->checkPointCopy.redo;
-
-	if (Debug_print_control_checkpoints)
-		elog(LOG,"pg_control checkpoint: initial values (checkpoint loc %s, previous loc %s, copy's redo loc %s)",
-			 XLogLocationToString_Long(ControlFile->checkPoint),
-			 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
-			 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo));
-
-	ControlFileWatcher->watcherInitialized = true;
-}
-
-static void
-ControlFileWatcherCheckForChange(void)
-{
-	XLogRecPtr  writeLoc;
-	XLogRecPtr  flushedLoc;
-
-	if (ControlFileWatcher->current_checkPointLoc != ControlFile->checkPoint ||
-		ControlFileWatcher->current_prevCheckPointLoc != ControlFile->prevCheckPoint ||
-		ControlFileWatcher->current_checkPointCopy_redo != ControlFile->checkPointCopy.redo)
-	{
-		ControlFileWatcher->current_checkPointLoc = ControlFile->checkPoint;
-		ControlFileWatcher->current_prevCheckPointLoc = ControlFile->prevCheckPoint;
-		ControlFileWatcher->current_checkPointCopy_redo = ControlFile->checkPointCopy.redo;
-
-		if (XLogGetWriteAndFlushedLoc(&writeLoc, &flushedLoc))
-		{
-			bool problem = (flushedLoc <= ControlFile->checkPoint);
-			if (problem)
-				elog(PANIC,"Checkpoint location %s for pg_control file is not flushed (write loc %s, flushed loc is %s)",
-				     XLogLocationToString_Long(ControlFile->checkPoint),
-				     XLogLocationToString2_Long(writeLoc),
-				     XLogLocationToString3_Long(flushedLoc));
-
-			if (Debug_print_control_checkpoints)
-				elog(LOG,"pg_control checkpoint: change (checkpoint loc %s, previous loc %s, copy's redo loc %s, write loc %s, flushed loc %s)",
-					 XLogLocationToString_Long(ControlFile->checkPoint),
-					 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
-					 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo),
-					 XLogLocationToString4_Long(writeLoc),
-					 XLogLocationToString5_Long(flushedLoc));
-		}
-		else
-		{
-			if (Debug_print_control_checkpoints)
-				elog(LOG,"pg_control checkpoint: change (checkpoint loc %s, previous loc %s, copy's redo loc %s)",
-					 XLogLocationToString_Long(ControlFile->checkPoint),
-					 XLogLocationToString2_Long(ControlFile->prevCheckPoint),
-					 XLogLocationToString3_Long(ControlFile->checkPointCopy.redo));
-		}
-	}
-}
-
 /*
  * I/O routines for pg_control
  *
@@ -4584,8 +4505,6 @@ WriteControlFile(void)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not close control file: %m")));
-
-	ControlFileWatcherSaveInitial();
 }
 
 static void
@@ -4780,29 +4699,6 @@ ReadControlFile(void)
 	/* Make the initdb settings visible as GUC variables, too */
 	SetConfigOption("data_checksums", DataChecksumsEnabled() ? "yes" : "no",
 					PGC_INTERNAL, PGC_S_OVERRIDE);
-
-	if (!ControlFileWatcher->watcherInitialized)
-	{
-		ControlFileWatcherSaveInitial();
-	}
-	else
-	{
-		ControlFileWatcherCheckForChange();
-	}
-}
-
-static bool
-XLogGetWriteAndFlushedLoc(XLogRecPtr *writeLoc, XLogRecPtr *flushedLoc)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
-
-	SpinLockAcquire(&xlogctl->info_lck);
-	*writeLoc = xlogctl->LogwrtResult.Write;
-	*flushedLoc = xlogctl->LogwrtResult.Flush;
-	SpinLockRelease(&xlogctl->info_lck);
-
-	return (writeLoc != 0);
 }
 
 void
@@ -4845,10 +4741,6 @@ UpdateControlFile(void)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not close control file: %m")));
-
-	Assert (ControlFileWatcher->watcherInitialized);
-	if (!InRecovery)
-		ControlFileWatcherCheckForChange();
 }
 
 /*
@@ -5006,23 +4898,19 @@ XLOGShmemSize(void)
 void
 XLOGShmemInit(void)
 {
-	bool		foundCFile,
-				foundXLog,
-				foundCFileWatcher;
+	bool		foundCFile, foundXLog;
 	char	   *allocptr;
 	int			i;
 
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
-	ControlFileWatcher = (ControlFileWatch *)
-		ShmemInitStruct("Control File Watcher", sizeof(ControlFileWatch), &foundCFileWatcher);
 	XLogCtl = (XLogCtlData *)
 		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 
-	if (foundCFile || foundXLog || foundCFileWatcher)
+	if (foundCFile || foundXLog)
 	{
 		/* both should be present or neither */
-		Assert(foundCFile && foundXLog && foundCFileWatcher);
+		Assert(foundCFile && foundXLog);
 		return;
 	}
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
@@ -5503,6 +5391,9 @@ XLogReadRecoveryCommandFile(int emode)
 				(errmsg("recovery command file \"%s\" request for standby mode not specified",
 						RECOVERY_COMMAND_FILE)));
 	}
+
+	/* Enable fetching from archive recovery area */
+	ArchiveRecoveryRequested = true;
 
 	FreeConfigVariables(head);
 }
@@ -6315,7 +6206,6 @@ StartupXLOG(void)
 	XLogRecord *record;
 	TransactionId oldestActiveXID;
 	bool		backupEndRequired = false;
-	bool		bgwriterLaunched = false;
 	bool		backupFromStandby = false;
 	DBState		dbstate_at_startup;
 	XLogReaderState *xlogreader;
@@ -6438,10 +6328,6 @@ StartupXLOG(void)
 			archiveCleanupCommand ? archiveCleanupCommand : "",
 			sizeof(XLogCtl->archiveCleanupCommand));
 
-	if (StandbyModeRequested)
-		ereport(LOG,
-				(errmsg("entering standby mode")));
-
 	if (ArchiveRecoveryRequested)
 	{
 		if (StandbyModeRequested)
@@ -6487,6 +6373,13 @@ StartupXLOG(void)
 	if (read_backup_label(&checkPointLoc, &backupEndRequired,
 						  &backupFromStandby))
 	{
+		/*
+		 * Archive recovery was requested, and thanks to the backup label
+		 * file, we know how far we need to replay to reach consistency. Enter
+		 * archive recovery directly.
+		 */
+		InArchiveRecovery = true;
+
 		/*
 		 * Currently, it is assumed that a backup file exists iff a base backup
 		 * has been performed and then the recovery.conf file is generated, thus
@@ -7474,7 +7367,7 @@ StartupXLOG(void)
 		writeTimeLineHistory(ThisTimeLineID, recoveryTargetTLI,
 							 EndRecPtr, "standby promoted");
 
-		XLogFileCopy(endLogSegNo, curFileTLI, endLogSegNo);
+		XLogFileCopy(endLogSegNo, xlogreader->readPageTLI, endLogSegNo);
 	}
 
 	/* Save the selected TimeLineID in shared memory, too */
@@ -7489,17 +7382,6 @@ StartupXLOG(void)
 	 */
 	if (ArchiveRecoveryRequested)
 		exitArchiveRecovery(xlogreader->readPageTLI, endLogSegNo);
-
-	/*
-	 * Recovery command file must be deleted during promotion to prevent
-	 * StartupXLOG from incorrectly concluding that we are still a standby.
-	 * This could happen if the promoted standby goes through a restart.
-	 */
-	if (ControlFile->state == DB_IN_STANDBY_PROMOTED)
-	{
-		elog(LOG, "pg_control state is DB_IN_STANDBY_PROMOTED hence renaming recovery file");
-		renameRecoveryFile();
-	}
 
 	/*
 	 * Prepare to write WAL starting at EndOfLog position, and init xlog
@@ -11622,22 +11504,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	 * values for "check trigger", "rescan timelines", and "sleep" states,
 	 * those actions are taken when reading from the previous source fails, as
 	 * part of advancing to the next state.
-	 *
-	 * GPDB_93_MERGE_FIXME: In GPDB, currently with no work load running on
-	 * primary, mirror goes in tight loop reading xlog files and switching
-	 * between XLOG_FROM_PG_XLOG to XLOG_FROM_STREAM and back to
-	 * XLOG_FROM_PG_XLOG. This causes 100% cpu utilization on mirror for idle
-	 * primaries. Intended behavior is wait in XLOG_FROM_STREAM for more xlog to
-	 * arrive and receive signal from walreceiver to move forward. So, to
-	 * suppress the behavior for now as GPDB doesn't support archive recovery,
-	 * nor anyone expects to drops xlog files into pg_xlog directory, adding
-	 * code to not move currentSource to XLOG_FROM_PG_XLOG. Once it reaches
-	 * XLOG_FROM_STREAM, stays in XLOG_FROM_STREAM and waits for walreceiver
-	 * correctly. Need to find why GPDB is facing this issue and not upstream.
-	 *
 	 *-------
 	 */
-	if (!InArchiveRecovery && currentSource != XLOG_FROM_STREAM)
+	if (!InArchiveRecovery)
 		currentSource = XLOG_FROM_PG_XLOG;
 	else if (currentSource == 0)
 		currentSource = XLOG_FROM_ARCHIVE;

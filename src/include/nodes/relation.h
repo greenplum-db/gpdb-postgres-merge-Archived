@@ -68,12 +68,13 @@ typedef struct AggClauseCosts
 	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
 	/* GPDB_94_MERGE_FIXME: does numPureOrderedAggs include WITHIN GROUP aggs? Should it? */
 	int			numPureOrderedAggs; /* CDB: number that use ORDER BY, not counting DISTINCT */
+	bool		hasNonCombine;	/* CDB: any agg func w/o a combine func? */
+	bool		hasNonSerial;	/* CDB: is any partial agg non-serializable? */
 	QualCost	transCost;		/* total per-input-row execution costs */
 	Cost		finalCost;		/* total per-aggregated-row costs */
 	Size		transitionSpace;	/* space for pass-by-ref transition data */
 
 	List   *dqaArgs;	/* CDB: List of distinct DQA argument exprs. */
-	bool	missing_combinefunc; /* CDB: any agg func w/o a prelim func? */
 } AggClauseCosts;
 
 
