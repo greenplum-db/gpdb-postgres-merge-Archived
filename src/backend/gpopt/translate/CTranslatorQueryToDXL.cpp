@@ -157,6 +157,8 @@ CTranslatorQueryToDXL::CTranslatorQueryToDXL
 	GPOS_ASSERT(NULL != query);
 	CheckSupportedCmdType(query);
 
+	CheckRangeTable(query);
+
 	// GPDB_94_MERGE_FIXME: WITH CHECK OPTION views are not supported yet.
 	// I'm not sure what would be needed to support them; maybe need to
 	// just pass through the withCheckOptions to the ModifyTable / DML node?
@@ -448,6 +450,34 @@ CTranslatorQueryToDXL::CheckSupportedCmdType
 		if (mapelem.m_cmd_type == query->commandType)
 		{
 			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, mapelem.m_cmd_name);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//	@function:
+//		CTranslatorQueryToDXL::CheckRangeTable
+//
+//	@doc:
+//		Check for supported stuff in range table, throws an exception
+//		if there is something that is not yet supported
+//---------------------------------------------------------------------------
+void
+CTranslatorQueryToDXL::CheckRangeTable
+	(
+	Query *query
+	)
+{
+	ListCell *lc;
+	ForEach (lc, query->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->security_barrier || rte->securityQuals)
+		{
+			GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
+			// otherwise ORCA most likely pushes potentially leaky filters down
+			GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("views with security_barrier ON"));
 		}
 	}
 }
@@ -3472,13 +3502,6 @@ CTranslatorQueryToDXL::TranslateDerivedTablesToDXL
 	ULONG current_query_level
 	)
 {
-
-	if (true == rte->security_barrier)
-	{
-		GPOS_ASSERT(RTE_SUBQUERY == rte->rtekind);
-		// otherwise ORCA most likely pushes potentially leaky filters down
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("views with security_barrier ON"));
-	}
 	Query *query_derived_tbl = rte->subquery;
 	GPOS_ASSERT(NULL != query_derived_tbl);
 
