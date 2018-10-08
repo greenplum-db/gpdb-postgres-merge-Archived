@@ -444,6 +444,7 @@ select exists(select * from nocolumns);
 
 --
 -- Check sane behavior with nested IN SubLinks
+-- GPDB_94_MERGE_FIXME: ORCA plan is correct but very pricy. Should we fallback to planner?
 --
 explain (verbose, costs off)
 select * from int4_tbl where
