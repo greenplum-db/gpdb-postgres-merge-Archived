@@ -156,7 +156,16 @@ CTranslatorQueryToDXL::CTranslatorQueryToDXL
 {
 	GPOS_ASSERT(NULL != query);
 	CheckSupportedCmdType(query);
-	
+
+	// GPDB_94_MERGE_FIXME: WITH CHECK OPTION views are not supported yet.
+	// I'm not sure what would be needed to support them; maybe need to
+	// just pass through the withCheckOptions to the ModifyTable / DML node?
+	if (query->withCheckOptions)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature,
+			   GPOS_WSZ_LIT("View with WITH CHECK OPTION"));
+	}
+
 	m_query_level_to_cte_map = GPOS_NEW(m_mp) HMUlCTEListEntry(m_mp);
 	m_dxl_cte_producers = GPOS_NEW(m_mp) CDXLNodeArray(m_mp);
 	m_cteid_at_current_query_level_map = GPOS_NEW(m_mp) UlongBoolHashMap(m_mp);
