@@ -1,7 +1,7 @@
 Parsed test spec with 4 sessions
 
 starting permutation: s2begin s1delete s1setfreezeminage s1vacuumfreeze s2select s1select s2abort s3select s1vacuumfreeze s3select
-step s2begin: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2begin: SET Debug_print_full_dtm=on; BEGIN ISOLATION LEVEL REPEATABLE READ;
 		 SELECT 123 AS "establish snapshot";
 establish snapshot
 
@@ -74,7 +74,7 @@ FrozenXid      InvalidXid     8              8
 FrozenXid      InvalidXid     9              9              
 
 starting permutation: s2begin s1insert s1setfreezeminage s1vacuumfreeze s2select s1select s2abort s2select s3select s1vacuumfreeze s2select s3select
-step s2begin: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2begin: SET Debug_print_full_dtm=on; BEGIN ISOLATION LEVEL REPEATABLE READ;
 		 SELECT 123 AS "establish snapshot";
 establish snapshot
 
