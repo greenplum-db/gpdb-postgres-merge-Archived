@@ -9,8 +9,10 @@
 -- s/\(slice\d+\)    /\(slice\)    /
 -- m/Work_mem: \d+\w bytes max\./
 -- s/Work_mem: \d+\w bytes max\. */Work_mem: ###K bytes max./
--- m/Total runtime: \d+\.\d+ ms/
--- s/Total runtime: \d+\.\d+ ms/Total runtime: ##.### ms/
+-- m/Execution time: \d+\.\d+ ms/
+-- s/Execution time: \d+\.\d+ ms/Execution time: ##.### ms/
+-- m/Planning time: \d+\.\d+ ms/
+-- s/Planning time: \d+\.\d+ ms/Planning time: ##.### ms/
 -- m/cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+/
 -- s/\(cost=\d+\.\d+\.\.\d+\.\d+ rows=\d+ width=\d+\)/(cost=##.###..##.### rows=### width=###)/
 -- m/Peak memory: \d+\w? bytes\./
@@ -57,6 +59,8 @@ EXPLAIN SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.apple_id LEFT 
                            Index Cond: (id = boxes.apple_id)
          ->  Index Scan using box_locations_pkey on box_locations  (cost=22.234..32.231 rows=1 width=0)
                Index Cond: (id = boxes.location_id)
+ Planning time: 290.435 ms
+ Optimizer: PQO version 3.1.0
 (15 rows)
 
 -- explain_processing_on
@@ -79,6 +83,7 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
                            Index Cond: (id = boxes.apple_id)
          ->  Index Scan using box_locations_pkey on box_locations  (cost=12.123..12.321 rows=32 width=321) (never executed)
                Index Cond: (id = boxes.location_id)
+ Planning time: 184.210 ms
    (slice0)    Executor memory: 386K bytes.  Peak memory: 42342K bytes.  Vmem reserved: 123432K bytes.
    (slice1)    Executor memory: 59K bytes avg x 3 workers, 59K bytes max (seg0).  Peak memory: 1234532 bytes avg x 2 workers, 123 bytes max (seg0).  Vmem reserved: 100 bytes avg x 3 workers, 123k bytes max (seg0).
    (slice2)    Executor memory: 1110K bytes avg x 3 workers, 1110K bytes max (seg0).  Peak memory: 543 bytes avg x 2 workers, 312 bytes max (seg0).  Vmem reserved: 1234243 bytes avg x 1 workers, 312 bytes max (seg0).
@@ -89,7 +94,7 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
  Memory used:  1280kB
  ORCA Memory used: peak 50kB  allocated 100kB  freed 0B
  Optimizer: PQO version 2.54.0
- Total runtime: 34.572 ms
+ Execution time: 34.572 ms
 (21 rows)
 
 -- explain_processing_on
@@ -110,8 +115,8 @@ EXPLAIN (ANALYZE) SELECT * from boxes LEFT JOIN apples ON apples.id = boxes.appl
 -- s/ Plan Width: \d+/ Plan Width: ##/
 -- m/ Time: \d+\.\d+/
 -- s/ Time: \d+\.\d+/ Time: ##.###/
--- m/Total Runtime: \d+\.\d+/
--- s/Total Runtime: \d+\.\d+/Total Runtime: ##.###/
+-- m/Execution Time: \d+\.\d+/
+-- s/Execution Time: \d+\.\d+/Execution Time: ##.###/
 -- m/Segments: \d+/
 -- s/Segments: \d+/Segments: #/
 -- m/PQO version \d+\.\d+\.\d+",?/
@@ -239,6 +244,7 @@ QUERY PLAN
             Plan Rows: 2
             Plan Width: 56
             Index Cond: "(id = boxes.location_id)"
+  Planning Time: 184.878
   Settings: 
     Optimizer: "PQO version 2.1.0"
 (1 row)
@@ -383,6 +389,7 @@ QUERY PLAN
             Actual Loops: 4
             Index Cond: "(id = boxes.location_id)"
             Rows Removed by Index Recheck: 0
+  Planning Time: 191.569
   Triggers: 
   Slice statistics: 
     - Slice: 0
@@ -438,7 +445,7 @@ QUERY PLAN
     ORCA Memory Used Freed: 12
   Settings: 
     Optimizer: "PQO version 1.2.3"
-  Total Runtime: 2.61
+  Execution Time: 2.61
 (1 row)
 -- explain_processing_on
 -- JSON Required replaces for costs and time changes
@@ -453,8 +460,8 @@ QUERY PLAN
 -- s/"Plan Width": \d+,?/"Plan Width": ##,/
 -- m/ Time": \d+\.\d+,/
 -- s/ Time": \d+\.\d+,/ Time": ##.###,/
--- m/Total Runtime": \d+\.\d+,?/
--- s/Total Runtime": \d+\.\d+,?/Total Runtime": ##.###,/
+-- m/Execution Time": \d+\.\d+,?/
+-- s/Execution Time": \d+\.\d+,?/Execution Time": ##.###,/
 -- m/"Memory used": \d+,?/
 -- s/"Memory used": \d+,?/"Memory used": ####,/
 -- m/"Segments": \d+,/
@@ -607,6 +614,7 @@ QUERY PLAN
         }
       ]
     },
+    "Planning Time": 248.603,
     "Settings": {
       "Optimizer": "PQO version 2.1.0"
     }
@@ -777,6 +785,7 @@ QUERY PLAN
         }
       ]
     },
+    "Planning Time": 216.771,
     "Triggers": [
     ],
     "Slice statistics": [
@@ -857,7 +866,7 @@ QUERY PLAN
     "Settings": {
       "Optimizer": "PQO version 1.2.3",
     },
-    "Total Runtime": 28.324
+    "Execution Time": 28.324
   }
 ]
 (1 row)
@@ -1034,6 +1043,7 @@ QUERY PLAN
         </Plan>
       </Plans>
     </Plan>
+    <Planning-Time>181.991</Planning-Time>
     <Settings>
       <Optimizer>PQO version 1.2.3</Optimizer>
     </Settings>
@@ -1204,6 +1214,7 @@ QUERY PLAN
         </Plan>
       </Plans>
     </Plan>
+    <Planning-Time>181.973</Planning-Time>
     <Triggers>
     </Triggers>
     <Slice-statistics>
@@ -1284,7 +1295,7 @@ QUERY PLAN
     <Settings>
       <Optimizer>PQO version 1.2.3</Optimizer>
     </Settings>
-    <Total-Runtime>24.8</Total-Runtime>
+    <Execution-Time>24.8</Execution-Time>
   </Query>
 </explain>
 (1 row)
