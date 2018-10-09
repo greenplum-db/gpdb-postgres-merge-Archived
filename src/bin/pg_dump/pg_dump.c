@@ -13977,6 +13977,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						Oid part_oid = atooid(PQgetvalue(partres, i, 0));
 
 						binary_upgrade_set_pg_class_oids(fout, q, part_oid, false);
+						binary_upgrade_set_type_oids_by_rel_oid(fout, q, part_oid);
 					}
 				}
 
