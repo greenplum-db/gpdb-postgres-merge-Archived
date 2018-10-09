@@ -5981,6 +5981,7 @@ GetCurrentDBState(void)
 static void
 UpdateCatalogForStandbyPromotion(void)
 {
+	GpRoleValue old_role;
 	/*
 	 * NOTE: The following initialization logic was borrowed from ftsprobe.
 	 */
@@ -6032,11 +6033,14 @@ UpdateCatalogForStandbyPromotion(void)
 	 */
 	InitBufferPoolBackend();
 
+	/* Start transaction locally */
+	old_role = Gp_role;
+	Gp_role = GP_ROLE_UTILITY;
+	StartTransactionCommand();
+	GetTransactionSnapshot();
+
 	/*
 	 * heap access requires the rel-cache.
-	 *
-	 * Pass 4 needs RelationCacheInitializePhase3() to do catalog
-	 * validation, after xlog replay is complete.
 	 */
 	RelationCacheInitialize();
 	InitCatalogCache();
@@ -6074,14 +6078,9 @@ UpdateCatalogForStandbyPromotion(void)
 	/*
 	 * Now, finally, update the catalog.
 	 */
-	GpRoleValue old_role = Gp_role;
 
 	/* I am privileged */
 	InitializeSessionUserIdStandalone();
-	/* Start transaction locally */
-	Gp_role = GP_ROLE_UTILITY;
-	StartTransactionCommand();
-	GetTransactionSnapshot();
 	gp_activate_standby();
 	/* close the transaction we started above */
 	CommitTransactionCommand();
