@@ -4029,7 +4029,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_PartSplit:
 			case AT_PartTruncate:
 			case AT_PartAddInternal:
-				cmd_lockmode = ShareUpdateExclusiveLock;
+				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 			default:			/* oops */
