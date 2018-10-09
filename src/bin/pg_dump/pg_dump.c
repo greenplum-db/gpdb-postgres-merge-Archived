@@ -51,6 +51,7 @@
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_magic_oid.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_largeobject.h"
@@ -3227,26 +3228,21 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	char	   *pg_class_relname;
 	Oid			pg_class_reltoastnamespace;
 	char	   *pg_class_reltoastname;
-	Oid			pg_class_reltidxnamespace;
 	char	   *pg_class_reltidxname;
 	Oid			pg_class_bmoid;
 	Oid			pg_class_bmidxoid;
 
-	/*
-	 * GPDB_94_MERGE_FIXME: Resolving conflict keeping gpdb version of
-	 * query. Seems upstream got rid of toast index in this query. Validate if
-	 * this logic can be simplified due to that version.
-	 */ 
 	appendPQExpBuffer(upgrade_query,
 					  "SELECT c.reltoastrelid, t.relnamespace AS toast_relnamespace, t.relname AS toast_relname, "
 					  "       c.relnamespace, c.relname, "
-					  "       i.indexrelid, ti.relnamespace AS tidx_relnamespace, ti.relname AS tidx_relname, "
+					  "       i.indexrelid, ti.relname AS tidx_relname, "
 					  "       bi.oid AS bmoid, bidx.oid AS bmidxoid "
-					  "FROM pg_catalog.pg_class c LEFT JOIN "
-					  "pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
-					  "LEFT JOIN pg_catalog.pg_class ti ON (i.indrelid = ti.oid) "
-					  "LEFT OUTER JOIN pg_catalog.pg_class bi ON (bi.relname = 'pg_bm_%u'::text) "
-					  "LEFT OUTER JOIN pg_catalog.pg_class bidx ON (bidx.relname = 'pg_bm_%u_index'::text) "
+					  "FROM pg_catalog.pg_class c "
+					  "LEFT JOIN pg_catalog.pg_class t ON (c.reltoastrelid = t.oid) "
+					  "LEFT JOIN pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
+					  "LEFT JOIN pg_catalog.pg_class ti ON (i.indexrelid = ti.oid) "
+					  "LEFT JOIN pg_catalog.pg_class bi ON (bi.relname = 'pg_bm_%u'::text) "
+					  "LEFT JOIN pg_catalog.pg_class bidx ON (bidx.relname = 'pg_bm_%u_index'::text) "
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid, pg_class_oid, pg_class_oid);
 
@@ -3260,7 +3256,6 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	pg_class_relname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relname"));
 	pg_class_reltoastnamespace = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "toast_relnamespace")));
 	pg_class_reltoastname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "toast_relname"));
-	pg_class_reltidxnamespace = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "tidx_relnamespace")));
 	pg_class_reltidxname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "tidx_relname"));
 	pg_class_bmoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "bmoid")));
 	pg_class_bmidxoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "bmidxoid")));
@@ -3293,7 +3288,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT binary_upgrade.set_next_index_pg_class_oid('%u'::pg_catalog.oid , '%u'::pg_catalog.oid, $$%s$$::text);\n",
-								  pg_index_indexrelid, pg_class_reltidxnamespace, pg_class_reltidxname);
+								  pg_index_indexrelid, pg_class_reltoastnamespace, pg_class_reltidxname);
 		}
 	}
 	else
