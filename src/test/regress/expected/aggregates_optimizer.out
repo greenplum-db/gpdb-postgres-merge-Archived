@@ -484,7 +484,6 @@ SELECT
   BOOL_AND(NOT b2) AS "f",
   BOOL_AND(NOT b3) AS "t"
 FROM bool_test;
-INFO:  GPORCA failed to produce a plan, falling back to planner
  f | t | f | n | f | t 
 ---+---+---+---+---+---
  f | t | f |   | f | t
@@ -498,7 +497,6 @@ SELECT
   EVERY(NOT b2) AS "f",
   EVERY(NOT b3) AS "t"
 FROM bool_test;
-INFO:  GPORCA failed to produce a plan, falling back to planner
  f | t | f | n | f | t 
 ---+---+---+---+---+---
  f | t | f |   | f | t
@@ -512,7 +510,6 @@ SELECT
   BOOL_OR(NOT b2)  AS "f",
   BOOL_OR(NOT b3)  AS "t"
 FROM bool_test;
-INFO:  GPORCA failed to produce a plan, falling back to planner
  t | t | f | n | f | t 
 ---+---+---+---+---+---
  t | t | f |   | f | t
