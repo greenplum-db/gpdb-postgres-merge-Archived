@@ -2311,27 +2311,47 @@ SELECT * FROM v1 WHERE b=8;
  9 | 8 | t111 | t11d
 (4 rows)
 
-DELETE FROM v1 WHERE snoop(a) AND leakproof(a); -- should not delete everything, just where a>5
-NOTICE:  snooped value: 7  (seg0 slice2 127.0.0.1:40000 pid=27862)
-NOTICE:  snooped value: 6  (seg1 slice2 127.0.0.1:40001 pid=27863)
-NOTICE:  snooped value: 9  (seg1 slice2 127.0.0.1:40001 pid=27863)
-NOTICE:  snooped value: 10  (seg1 slice2 127.0.0.1:40001 pid=27863)
-NOTICE:  snooped value: 9  (seg1 slice2 127.0.0.1:40001 pid=27863)
-NOTICE:  snooped value: 6  (seg1 slice4 127.0.0.1:40001 pid=27851)
-NOTICE:  snooped value: 7  (seg0 slice4 127.0.0.1:40000 pid=27850)
-NOTICE:  snooped value: 9  (seg1 slice4 127.0.0.1:40001 pid=27851)
-NOTICE:  snooped value: 10  (seg1 slice4 127.0.0.1:40001 pid=27851)
-NOTICE:  snooped value: 9  (seg1 slice4 127.0.0.1:40001 pid=27851)
-NOTICE:  snooped value: 6  (seg1 slice6 127.0.0.1:40001 pid=27875)
-NOTICE:  snooped value: 7  (seg0 slice6 127.0.0.1:40000 pid=27874)
-NOTICE:  snooped value: 9  (seg1 slice6 127.0.0.1:40001 pid=27875)
-NOTICE:  snooped value: 10  (seg1 slice6 127.0.0.1:40001 pid=27875)
-NOTICE:  snooped value: 9  (seg1 slice6 127.0.0.1:40001 pid=27875)
-NOTICE:  snooped value: 6  (seg1 slice8 127.0.0.1:40001 pid=27887)
-NOTICE:  snooped value: 7  (seg0 slice8 127.0.0.1:40000 pid=27886)
-NOTICE:  snooped value: 9  (seg1 slice8 127.0.0.1:40001 pid=27887)
-NOTICE:  snooped value: 10  (seg1 slice8 127.0.0.1:40001 pid=27887)
-NOTICE:  snooped value: 9  (seg1 slice8 127.0.0.1:40001 pid=27887)
+-- Like snoop() function, but doesn't print the actual value, as long
+-- as it's >= 5. This is used in GPDB in lieu of the snoop() function,
+-- because the order the NOTICEs for different rows arrive from the
+-- segments is not deterministic in GPDB. By omitting the value, we
+-- make the output the same regardless of the row order, as long as
+-- all the values are > 5, as they should if the security barrier view
+-- works correctly.
+CREATE FUNCTION snoop_five(int4)
+RETURNS boolean AS
+$$
+BEGIN
+  IF $1 <= 5 THEN
+    RAISE NOTICE 'snooped value: %', $1;
+  ELSE
+    RAISE NOTICE 'snooped a value that''s above 5';
+  END IF;
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql COST 0.000001;
+DELETE FROM v1 WHERE snoop_five(a) AND leakproof(a); -- should not delete everything, just where a>5
+NOTICE:  snooped a value that's above 5  (seg0 slice4 127.0.0.1:40000 pid=17181)
+NOTICE:  snooped a value that's above 5  (seg0 slice2 127.0.0.1:40000 pid=17193)
+NOTICE:  snooped a value that's above 5  (seg1 slice2 127.0.0.1:40001 pid=17194)
+NOTICE:  snooped a value that's above 5  (seg1 slice6 127.0.0.1:40001 pid=17206)
+NOTICE:  snooped a value that's above 5  (seg1 slice6 127.0.0.1:40001 pid=17206)
+NOTICE:  snooped a value that's above 5  (seg1 slice6 127.0.0.1:40001 pid=17206)
+NOTICE:  snooped a value that's above 5  (seg1 slice6 127.0.0.1:40001 pid=17206)
+NOTICE:  snooped a value that's above 5  (seg0 slice6 127.0.0.1:40000 pid=17205)
+NOTICE:  snooped a value that's above 5  (seg1 slice4 127.0.0.1:40001 pid=17182)
+NOTICE:  snooped a value that's above 5  (seg1 slice8 127.0.0.1:40001 pid=17218)
+NOTICE:  snooped a value that's above 5  (seg1 slice4 127.0.0.1:40001 pid=17182)
+NOTICE:  snooped a value that's above 5  (seg1 slice8 127.0.0.1:40001 pid=17218)
+NOTICE:  snooped a value that's above 5  (seg1 slice2 127.0.0.1:40001 pid=17194)
+NOTICE:  snooped a value that's above 5  (seg1 slice8 127.0.0.1:40001 pid=17218)
+NOTICE:  snooped a value that's above 5  (seg1 slice4 127.0.0.1:40001 pid=17182)
+NOTICE:  snooped a value that's above 5  (seg1 slice8 127.0.0.1:40001 pid=17218)
+NOTICE:  snooped a value that's above 5  (seg1 slice2 127.0.0.1:40001 pid=17194)
+NOTICE:  snooped a value that's above 5  (seg1 slice4 127.0.0.1:40001 pid=17182)
+NOTICE:  snooped a value that's above 5  (seg1 slice2 127.0.0.1:40001 pid=17194)
+NOTICE:  snooped a value that's above 5  (seg0 slice8 127.0.0.1:40000 pid=17217)
 TABLE t1; -- verify all a<=5 are intact
  a | b |  c   
 ---+---+------

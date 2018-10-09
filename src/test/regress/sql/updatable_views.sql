@@ -992,7 +992,28 @@ UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 
 SELECT * FROM v1 WHERE b=8;
 
-DELETE FROM v1 WHERE snoop(a) AND leakproof(a); -- should not delete everything, just where a>5
+-- Like snoop() function, but doesn't print the actual value, as long
+-- as it's >= 5. This is used in GPDB in lieu of the snoop() function,
+-- because the order the NOTICEs for different rows arrive from the
+-- segments is not deterministic in GPDB. By omitting the value, we
+-- make the output the same regardless of the row order, as long as
+-- all the values are > 5, as they should if the security barrier view
+-- works correctly.
+CREATE FUNCTION snoop_five(int4)
+RETURNS boolean AS
+$$
+BEGIN
+  IF $1 <= 5 THEN
+    RAISE NOTICE 'snooped value: %', $1;
+  ELSE
+    RAISE NOTICE 'snooped a value that''s above 5';
+  END IF;
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql COST 0.000001;
+
+DELETE FROM v1 WHERE snoop_five(a) AND leakproof(a); -- should not delete everything, just where a>5
 
 TABLE t1; -- verify all a<=5 are intact
 
