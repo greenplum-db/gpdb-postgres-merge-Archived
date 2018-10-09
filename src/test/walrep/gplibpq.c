@@ -13,6 +13,7 @@
 #include "cdb/cdbappendonlyxlog.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
+#include "utils/pg_lsn.h"
 
 PG_MODULE_MAGIC;
 
@@ -57,22 +58,6 @@ PG_FUNCTION_INFO_V1(test_send);
 PG_FUNCTION_INFO_V1(test_receive_and_verify);
 PG_FUNCTION_INFO_V1(test_xlog_ao);
 
-static void
-string_to_xlogrecptr(text *location, XLogRecPtr *rec)
-{
-	uint32 hi, lo;
-	char *locationstr = DatumGetCString(
-		DirectFunctionCall1(textout,
-							PointerGetDatum(location)));
-
-	if (sscanf(locationstr, "%X/%X", &hi, &lo) != 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not parse transaction log location \"%s\"",
-						locationstr)));
-	*rec = ((uint64) hi) << 32 | lo;
-}
-
 Datum
 test_connect(PG_FUNCTION_ARGS)
 {
@@ -114,16 +99,11 @@ test_send(PG_FUNCTION_ARGS)
 Datum
 test_receive_and_verify(PG_FUNCTION_ARGS)
 {
-	text	   *start_location = PG_GETARG_TEXT_P(0);
-	text       *end_location = PG_GETARG_TEXT_P(1);
-	XLogRecPtr startpoint;
-	XLogRecPtr endpoint;
+	XLogRecPtr startpoint = PG_GETARG_LSN(0);
+	XLogRecPtr endpoint = PG_GETARG_LSN(1);
 	char   *buf;
 	int     len;
 	TimeLineID  startpointTLI;
-
-	string_to_xlogrecptr(start_location, &startpoint);
-	string_to_xlogrecptr(end_location, &endpoint);
 
 	/* For now hard-coding it to 1 */
 	startpointTLI = 1;
@@ -341,15 +321,12 @@ test_xlog_ao(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = (void *) aorecordresults;
 
 		char         *conninfo = TextDatumGetCString(PG_GETARG_DATUM(0));
-		text         *start_location = PG_GETARG_TEXT_P(1);
-
-		XLogRecPtr    startpoint;
+		XLogRecPtr    startpoint = PG_GETARG_LSN(1);
 		TimeLineID  startpointTLI;
 		char         *buf;
 		int           len;
 		uint32        xrecoff;
 
-		string_to_xlogrecptr(start_location, &startpoint);
 		xrecoff = (uint32)startpoint;
 
 		walrcv_connect(conninfo);
