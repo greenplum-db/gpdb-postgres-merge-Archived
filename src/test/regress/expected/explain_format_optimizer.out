@@ -815,11 +815,6 @@ QUERY PLAN
           "Average": 12314,
           "Workers": 12314,
           "Maximum Memory Used": 12314,
-        },
-        "Virtual Memory": {
-          "Average": 12314,
-          "Workers": 12314,
-          "Maximum Memory Used": 12314,
         }
       },
       {
@@ -1240,11 +1235,6 @@ QUERY PLAN
           <Workers>2</Workers>
           <Maximum-Memory-Used>4321</Maximum-Memory-Used>
         </Global-Peak-Memory>
-        <Virtual-Memory>
-          <Average>4321234123423</Average>
-          <Workers>64654</Workers>
-          <Maximum-Memory-Used>5432345</Maximum-Memory-Used>
-        </Virtual-Memory>
       </Slice>
       <Slice>
         <Slice>3</Slice>
