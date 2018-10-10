@@ -339,7 +339,8 @@ GlobalDeadLockDetectorMain(int argc, char *argv[])
 
 	memset(&portbuf, 0, sizeof(portbuf));
 	MyProcPort = &portbuf;
-	MyProcPort->user_name = GetUserNameFromId(GetAuthenticatedUserId());
+	MyProcPort->user_name = MemoryContextStrdup(TopMemoryContext,
+												GetUserNameFromId(GetAuthenticatedUserId()));
 	MyProcPort->database_name = knownDatabase;
 
 	/* close the transaction we started above */
