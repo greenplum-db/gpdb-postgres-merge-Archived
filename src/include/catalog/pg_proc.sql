@@ -179,7 +179,7 @@
 
  CREATE FUNCTION gp_execution_dbid() RETURNS int4 LANGUAGE internal VOLATILE AS 'gp_execution_dbid' WITH (OID=6068, DESCRIPTION="dbid executing function");
 
- CREATE FUNCTION get_ao_distribution(IN reloid regclass, OUT segmentid int4, OUT tupcount int8) RETURNS SETOF pg_catalog.record LANGUAGE internal VOLATILE READS SQL DATA AS 'get_ao_distribution' WITH (OID=7169, DESCRIPTION="show append only table tuple distribution across segment databases");
+ CREATE FUNCTION get_ao_distribution(IN rel regclass, OUT segmentid int4, OUT tupcount int8) RETURNS SETOF pg_catalog.record LANGUAGE internal VOLATILE READS SQL DATA AS 'get_ao_distribution' WITH (OID=7169, DESCRIPTION="show append only table tuple distribution across segment databases");
 
  CREATE FUNCTION get_ao_compression_ratio(regclass) RETURNS float8 LANGUAGE internal VOLATILE STRICT READS SQL DATA AS 'get_ao_compression_ratio' WITH (OID=7171, DESCRIPTION="show append only table compression ratio");
 

@@ -44,10 +44,7 @@ extern Datum
 gp_aocsseg(PG_FUNCTION_ARGS);
 
 extern Datum
-gp_aoseg_name(PG_FUNCTION_ARGS);
-
-extern Datum
-gp_aocsseg_name(PG_FUNCTION_ARGS);
+gp_aoseg(PG_FUNCTION_ARGS);
 
 extern Datum
 gp_aocsseg_history(PG_FUNCTION_ARGS);
@@ -68,8 +65,7 @@ extern Datum
 gp_get_ao_entry_from_cache(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(gp_aoseg_history_wrapper);
-PG_FUNCTION_INFO_V1(gp_aoseg_name_wrapper);
-PG_FUNCTION_INFO_V1(gp_aocsseg_name_wrapper);
+PG_FUNCTION_INFO_V1(gp_aoseg_wrapper);
 PG_FUNCTION_INFO_V1(gp_aocsseg_wrapper);
 PG_FUNCTION_INFO_V1(gp_aocsseg_history_wrapper);
 PG_FUNCTION_INFO_V1(gp_aovisimap_wrapper);
@@ -81,9 +77,9 @@ PG_FUNCTION_INFO_V1(gp_get_ao_entry_from_cache);
 extern Datum
 gp_aoseg_history_wrapper(PG_FUNCTION_ARGS);
 extern Datum
-gp_aoseg_name_wrapper(PG_FUNCTION_ARGS);
+gp_aoseg_wrapper(PG_FUNCTION_ARGS);
 extern Datum
-gp_aocsseg_name_wrapper(PG_FUNCTION_ARGS);
+gp_aocsseg_wrapper(PG_FUNCTION_ARGS);
 extern Datum
 gp_aocsseg_wrapper(PG_FUNCTION_ARGS);
 extern Datum
@@ -139,7 +135,7 @@ gp_aoseg_history_wrapper(PG_FUNCTION_ARGS)
  * It can be invoked by creating a function via psql that references it.
  * For example,
  *
- * CREATE FUNCTION get_gp_aocsseg(oid)
+ * CREATE FUNCTION get_gp_aocsseg(regclass)
  *   RETURNS TABLE ( gp_tid tid
  *                 , segno integer
  *                 , column_num smallint
@@ -162,43 +158,13 @@ gp_aocsseg_wrapper(PG_FUNCTION_ARGS)
 }
 
 /* ---------------------------------------------------------------------
- * Interface to gp_aocsseg_name_wrapper function.
+ * Interface to gp_aoseg_wrapper function.
  *
- * The gp_aocsseg_wrapper function is a wrapper around the gp_aocsseg function.
+ * The gp_wrapper function is a wrapper around the gp_aoseg function.
  * It can be invoked by creating a function via psql that references it.
  * For example,
  *
- * CREATE FUNCTION get_gp_aocsseg_name(text)
- *   RETURNS TABLE ( gp_tid tid
- *                 , segno integer
- *                 , column_num smallint
- *                 , physical_segno integer
- *                 , tupcount bigint
- *                 , eof bigint
- *                 , eof_uncompressed bigint
- *                 , modcount bigint
- *                 , state smallint
- *                 )
- *   AS '$libdir/gp_ao_co_diagnostics', 'gp_aocsseg_name_wrapper' LANGUAGE C STRICT;
- *
- */
-Datum
-gp_aocsseg_name_wrapper(PG_FUNCTION_ARGS)
-{
-  Datum returnValue = gp_aocsseg_name(fcinfo);
-
-  PG_RETURN_DATUM(returnValue);
-}
-
-
-/* ---------------------------------------------------------------------
- * Interface to gp_aoseg_name_wrapper function.
- *
- * The gp_aocsseg_wrapper function is a wrapper around the gp_aocsseg function.
- * It can be invoked by creating a function via psql that references it.
- * For example,
- *
- * CREATE FUNCTION get_gp_aoseg_name(text)
+ * CREATE FUNCTION get_gp_aoseg(regclass)
  *   RETURNS TABLE ( 
  *                 segno integer
  *                 , eof bigint
@@ -208,13 +174,13 @@ gp_aocsseg_name_wrapper(PG_FUNCTION_ARGS)
  *                 , modcount bigint
  *                 , state smallint
  *                 )
- *   AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_name_wrapper' LANGUAGE C STRICT;
+ *   AS '$libdir/gp_ao_co_diagnostics', 'gp_aoseg_wrapper' LANGUAGE C STRICT;
  *
  */
 Datum
-gp_aoseg_name_wrapper(PG_FUNCTION_ARGS)
+gp_aoseg_wrapper(PG_FUNCTION_ARGS)
 {
-  Datum returnValue = gp_aoseg_name(fcinfo);
+  Datum returnValue = gp_aoseg(fcinfo);
 
   PG_RETURN_DATUM(returnValue);
 }

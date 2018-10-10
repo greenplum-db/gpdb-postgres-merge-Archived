@@ -46,6 +46,7 @@
 #include "utils/numeric.h"
 #include "utils/visibility_summary.h"
 
+static float8 aorow_compression_ratio_internal(Relation parentrel);
 static void UpdateFileSegInfo_internal(Relation parentrel,
 						   int segno,
 						   int64 eof,
@@ -55,7 +56,6 @@ static void UpdateFileSegInfo_internal(Relation parentrel,
 						   int64 modcount_added,
 						   FileSegInfoState newState);
 static FileSegInfo **GetAllFileSegInfo_pg_aoseg_rel(char *relationName, Relation pg_aoseg_rel, Snapshot appendOnlyMetaDataSnapshot, int *totalsegs);
-static Datum aorow_compression_ratio_internal(Relation parentrel);
 
 
 /* ------------------------------------------------------------------------
@@ -1148,7 +1148,7 @@ gp_aoseg_history(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
-static Datum
+static int64
 gp_update_aorow_master_stats_internal(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 {
 	StringInfoData sqlstmt;
@@ -1307,25 +1307,20 @@ gp_update_aorow_master_stats_internal(Relation parentrel, Snapshot appendOnlyMet
 
 	pfree(sqlstmt.data);
 
-	PG_RETURN_INT64(total_count);
+	return total_count;
 }
 
-PG_FUNCTION_INFO_V1(gp_aoseg_name);
+PG_FUNCTION_INFO_V1(gp_aoseg);
 
-extern Datum gp_aoseg_name(PG_FUNCTION_ARGS);
+extern Datum gp_aoseg(PG_FUNCTION_ARGS);
 
 /*
- * UDF to get aoseg information by relation name
+ * UDF to get aoseg information by relation OID/name
  */
 Datum
-gp_aoseg_name(PG_FUNCTION_ARGS)
+gp_aoseg(PG_FUNCTION_ARGS)
 {
-	int			aoRelOid;
-	RangeVar   *parentrv;
-	text	   *relname = PG_GETARG_TEXT_P(0);
-
-	parentrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	aoRelOid = RangeVarGetRelid(parentrv, NoLock, false);
+	Oid			aoRelOid = PG_GETARG_OID(0);
 
 	typedef struct Context
 	{
@@ -1488,7 +1483,7 @@ gp_update_ao_master_stats(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	parentrel;
-	Datum		returnDatum;
+	int64		result;
 	Snapshot	appendOnlyMetaDataSnapshot;
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
@@ -1504,18 +1499,16 @@ gp_update_ao_master_stats(PG_FUNCTION_ARGS)
 
 	appendOnlyMetaDataSnapshot = RegisterSnapshot(GetLatestSnapshot());
 	if (RelationIsAoRows(parentrel))
-	{
-		returnDatum = gp_update_aorow_master_stats_internal(parentrel, appendOnlyMetaDataSnapshot);
-	}
+		result = gp_update_aorow_master_stats_internal(parentrel, appendOnlyMetaDataSnapshot);
 	else
 	{
-		returnDatum = gp_update_aocol_master_stats_internal(parentrel, appendOnlyMetaDataSnapshot);
+		result = gp_update_aocol_master_stats_internal(parentrel, appendOnlyMetaDataSnapshot);
 	}
 	UnregisterSnapshot(appendOnlyMetaDataSnapshot);
 
 	heap_close(parentrel, RowExclusiveLock);
 
-	return returnDatum;
+	PG_RETURN_INT64(result);
 }
 
 typedef struct
@@ -1530,14 +1523,13 @@ typedef struct
 /**************************************************************
  * get_ao_distribution
  *
- * given an AO table oid (or name, because it's a regclass
- * argument), show the total distribution of rows across all
- * segment databases in the system.
+ * given an AO table name or oid, show the total distribution
+ * of rows across all segment databases in the system.
  **************************************************************/
-
 Datum
 get_ao_distribution(PG_FUNCTION_ARGS)
 {
+	Oid			relid = PG_GETARG_OID(0);
 	FuncCallContext *funcctx;
 	MemoryContext oldcontext;
 	AclResult	aclresult;
@@ -1546,7 +1538,6 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 	Relation	parentrel;
 	Relation	aosegrel;
 	int			ret;
-	Oid			relid = PG_GETARG_OID(0);
 
 	Assert(Gp_role == GP_ROLE_DISPATCH);
 
@@ -1713,9 +1704,8 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 /**************************************************************
  * get_ao_compression_ratio
  *
- * Given an append-only oid (or name, since the argument is
- * regclass), calculate the effective compression ratio for
- * this append only table stored data.
+ * Given an append-only table oid or name calculate the effective
+ * compression ratio for this append only table stored data.
  * If this info is not available (pre 3.3 created tables) then
  * return -1.
  **************************************************************/
@@ -1724,7 +1714,9 @@ get_ao_compression_ratio(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	parentrel;
-	Datum		returnDatum;
+	float8		result;
+
+	Assert(Gp_role == GP_ROLE_DISPATCH);
 
 	/* open the parent (main) relation */
 	parentrel = heap_open(relid, AccessShareLock);
@@ -1736,23 +1728,18 @@ get_ao_compression_ratio(PG_FUNCTION_ARGS)
 						RelationGetRelationName(parentrel))));
 
 	if (RelationIsAoRows(parentrel))
-	{
-		returnDatum = aorow_compression_ratio_internal(parentrel);
-	}
+		result = aorow_compression_ratio_internal(parentrel);
 	else
-	{
-		returnDatum = aocol_compression_ratio_internal(parentrel);
-	}
+		result = aocol_compression_ratio_internal(parentrel);
 
 	heap_close(parentrel, AccessShareLock);
 
-	return returnDatum;
+	PG_RETURN_FLOAT8(result);
 }
 
-static Datum
+static float8
 aorow_compression_ratio_internal(Relation parentrel)
 {
-
 	StringInfoData sqlstmt;
 	Relation	aosegrel;
 	bool		connected = false;
@@ -1824,7 +1811,7 @@ aorow_compression_ratio_internal(Relation parentrel)
 			if (NULL == attr1 || NULL == attr2)
 			{
 				SPI_finish();
-				PG_RETURN_FLOAT8(1);
+				return 1;
 			}
 
 			if (scanint8(attr1, true, &eof) &&
@@ -1860,7 +1847,7 @@ aorow_compression_ratio_internal(Relation parentrel)
 
 	pfree(sqlstmt.data);
 
-	PG_RETURN_FLOAT8(compress_ratio);
+	return compress_ratio;
 }
 
 void

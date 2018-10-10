@@ -1291,8 +1291,7 @@ gp_aocsseg_internal(PG_FUNCTION_ARGS, Oid aocsRelOid)
 
 PG_FUNCTION_INFO_V1(gp_aocsseg);
 
-extern Datum
-			gp_aocsseg(PG_FUNCTION_ARGS);
+extern Datum gp_aocsseg(PG_FUNCTION_ARGS);
 
 Datum
 gp_aocsseg(PG_FUNCTION_ARGS)
@@ -1302,31 +1301,9 @@ gp_aocsseg(PG_FUNCTION_ARGS)
 	return gp_aocsseg_internal(fcinfo, aocsRelOid);
 }
 
-PG_FUNCTION_INFO_V1(gp_aocsseg_name);
-
-extern Datum
-			gp_aocsseg_name(PG_FUNCTION_ARGS);
-
-/*
- * UDF to get aocsseg information by relation name
- */
-Datum
-gp_aocsseg_name(PG_FUNCTION_ARGS)
-{
-	int			aocsRelOid;
-	RangeVar   *parentrv;
-	text	   *relname = PG_GETARG_TEXT_P(0);
-
-	parentrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	aocsRelOid = RangeVarGetRelid(parentrv, NoLock, false);
-
-	return gp_aocsseg_internal(fcinfo, aocsRelOid);
-}
-
 PG_FUNCTION_INFO_V1(gp_aocsseg_history);
 
-extern Datum
-			gp_aocsseg_history(PG_FUNCTION_ARGS);
+extern Datum gp_aocsseg_history(PG_FUNCTION_ARGS);
 
 Datum
 gp_aocsseg_history(PG_FUNCTION_ARGS)
@@ -1525,7 +1502,7 @@ gp_aocsseg_history(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
-Datum
+int64
 gp_update_aocol_master_stats_internal(Relation parentrel, Snapshot appendOnlyMetaDataSnapshot)
 {
 	StringInfoData sqlstmt;
@@ -1707,10 +1684,10 @@ gp_update_aocol_master_stats_internal(Relation parentrel, Snapshot appendOnlyMet
 
 	pfree(sqlstmt.data);
 
-	PG_RETURN_INT64(total_count);
+	return total_count;
 }
 
-Datum
+float8
 aocol_compression_ratio_internal(Relation parentrel)
 {
 	StringInfoData sqlstmt;
@@ -1832,7 +1809,7 @@ aocol_compression_ratio_internal(Relation parentrel)
 
 	pfree(sqlstmt.data);
 
-	PG_RETURN_FLOAT8(compress_ratio);
+	return compress_ratio;
 }
 
 /**

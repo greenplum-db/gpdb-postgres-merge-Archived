@@ -277,9 +277,23 @@ static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 								Oid pg_type_ns_oid, char *pg_type_name);
 static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
+static bool binary_upgrade_set_type_oids_for_ao(Archive *fout,
+								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid,
+								 char *ao_aux_typname);
+static bool binary_upgrade_set_type_oids_by_rel_oid_impl(Archive *fout,
+								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid,
+								 char *typname_override);
 static void binary_upgrade_set_pg_class_oids(Archive *fout,
 								 PQExpBuffer upgrade_buffer,
 								 Oid pg_class_oid, bool is_index);
+static void binary_upgrade_set_pg_class_oids_for_ao(Archive *fout,
+								 PQExpBuffer upgrade_buffer,
+								 Oid pg_class_oid, bool is_index,
+								 char *ao_aux_relname);
+static void binary_upgrade_set_pg_class_oids_impl(Archive *fout,
+								 PQExpBuffer upgrade_buffer,
+								 Oid pg_class_oid, bool is_index,
+								 char *relname_override);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer);
 static char *get_synchronized_snapshot(Archive *fout);
@@ -3156,10 +3170,29 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	destroyPQExpBuffer(upgrade_query);
 }
 
+/*
+ * GPDB: the implementation of this function has moved below, to
+ * binary_upgrade_set_type_oids_by_rel_oid_impl(), so that we can handle some of
+ * the annoyances of append-only tables without having to modify upstream
+ * callers.
+ *
+ * When dumping the types for an AO auxiliary table during binary upgrade, use
+ * binary_upgrade_set_type_oids_for_ao() instead.
+ */
 static bool
 binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 										PQExpBuffer upgrade_buffer,
 										Oid pg_rel_oid)
+{
+	return binary_upgrade_set_type_oids_by_rel_oid_impl(fout, upgrade_buffer,
+														pg_rel_oid, NULL);
+}
+
+static bool
+binary_upgrade_set_type_oids_by_rel_oid_impl(Archive *fout,
+											 PQExpBuffer upgrade_buffer,
+											 Oid pg_rel_oid,
+											 char *typname_override)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	PGresult   *upgrade_res;
@@ -3172,7 +3205,7 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 	appendPQExpBuffer(upgrade_query,
 					  "SELECT c.reltype AS crel, t.reltype AS trel, "
 					  "       ct.typnamespace, ct.typname, "
-					  "       tt.typnamespace AS trelns, tt.typname AS trelname "
+					  "       tt.typnamespace AS trelns "
 					  "FROM pg_catalog.pg_class c "
 					  "LEFT JOIN pg_catalog.pg_class t ON "
 					  "  (c.reltoastrelid = t.oid) "
@@ -3185,7 +3218,14 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
 	pg_type_nsoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typnamespace")));
-	pg_type_name = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typname"));
+	if (typname_override)
+	{
+		pg_type_name = typname_override;
+	}
+	else
+	{
+		pg_type_name = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typname"));
+	}
 
 	binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
 											 pg_type_oid, pg_type_nsoid, pg_type_name);
@@ -3197,13 +3237,19 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 											PQfnumber(upgrade_res, "trel")));
 		Oid			pg_type_toast_nsoid = atooid(PQgetvalue(upgrade_res, 0,
 											PQfnumber(upgrade_res, "trelns")));
-		char	   *pg_type_toast_name = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "trelname"));
 
+		/*
+		 * GPDB: note that we compose the toast table name using the relation
+		 * OID, rather than using whatever name was in the old cluster. Some
+		 * operations can cause the old TOAST table name not to match its
+		 * owner's OID, but the new cluster will be using the correct name, and
+		 * it's the new cluster's name that we have to use in preassignment.
+		 */
 		appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT binary_upgrade.set_next_toast_pg_type_oid('%u'::pg_catalog.oid, "
-						  "'%u'::pg_catalog.oid, $$%s$$::text);\n\n",
-						  pg_type_toast_oid, pg_type_toast_nsoid, pg_type_toast_name);
+						  "'%u'::pg_catalog.oid, $$pg_toast_%u$$::text);\n\n",
+						  pg_type_toast_oid, pg_type_toast_nsoid, pg_rel_oid);
 
 		toast_set = true;
 	}
@@ -3214,16 +3260,75 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 	return toast_set;
 }
 
+/*
+ * A version of binary_upgrade_set_type_oids_by_rel_oid() that allows the caller
+ * to override the expected name of the AO auxiliary table. This is necessary
+ * because the new database will name the aux tables based on the owning table's
+ * OID, but the old database's aux table names may be out of sync with that OID
+ * due to certain DML commands, and there is no DDL that allows us to specify
+ * the names of the aux tables.
+ */
+static bool
+binary_upgrade_set_type_oids_for_ao(Archive *fout,
+									PQExpBuffer upgrade_buffer,
+									Oid pg_rel_oid,
+									char *ao_aux_typname)
+{
+	if (!ao_aux_typname)
+		exit_horribly(NULL, "binary_upgrade_set_type_oids_for_ao() requires an AO auxiliary type name");
+
+	return binary_upgrade_set_type_oids_by_rel_oid_impl(fout, upgrade_buffer,
+														pg_rel_oid, ao_aux_typname);
+}
+
+static void
+create_ao_relname(char *dst, size_t len, const char *prefix, Oid auxoid)
+{
+	size_t actual = snprintf(dst, len, "%s_%u", prefix, auxoid);
+
+	if (actual >= len)
+		exit_horribly(NULL, "create_ao_relname: destination buffer is too short");
+}
+
+static void
+create_ao_idxname(char *dst, size_t len, const char *prefix, Oid auxoid)
+{
+	size_t actual = snprintf(dst, len, "%s_%u_index", prefix, auxoid);
+
+	if (actual >= len)
+		exit_horribly(NULL, "create_ao_idxname: destination buffer is too short");
+}
+
+/*
+ * GPDB: the implementation of this function has moved below, to
+ * binary_upgrade_set_pg_class_oids_impl(), so that we can handle some of the
+ * annoyances of append-only tables without having to modify upstream callers.
+ *
+ * When dumping an AO auxiliary table during binary upgrade, use
+ * binary_upgrade_set_pg_class_oids_for_ao() instead.
+ */
 static void
 binary_upgrade_set_pg_class_oids(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 								 bool is_index)
 {
+	binary_upgrade_set_pg_class_oids_impl(fout, upgrade_buffer, pg_class_oid,
+										  is_index,
+										  /* this is not an AO table, use the old relname */
+										  NULL);
+}
+
+static void
+binary_upgrade_set_pg_class_oids_impl(Archive *fout,
+									  PQExpBuffer upgrade_buffer,
+									  Oid pg_class_oid,
+									  bool is_index,
+									  char *relname_override)
+{
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	PGresult   *upgrade_res;
 	Oid			pg_class_reltoastrelid;
 	Oid			pg_index_indexrelid;
-
 	Oid			pg_class_relnamespace;
 	char	   *pg_class_relname;
 	Oid			pg_class_reltoastnamespace;
@@ -3231,18 +3336,28 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	char	   *pg_class_reltidxname;
 	Oid			pg_class_bmoid;
 	Oid			pg_class_bmidxoid;
+	Oid			ao_segrelid = InvalidOid;
+	Oid			ao_blkdirrelid = InvalidOid;
+	Oid			ao_blkdiridxid = InvalidOid;
+	Oid			ao_visimaprelid = InvalidOid;
+	Oid			ao_visimapidxid = InvalidOid;
+	bool		ao_columnstore = false;
 
 	appendPQExpBuffer(upgrade_query,
 					  "SELECT c.reltoastrelid, t.relnamespace AS toast_relnamespace, t.relname AS toast_relname, "
 					  "       c.relnamespace, c.relname, "
 					  "       i.indexrelid, ti.relname AS tidx_relname, "
-					  "       bi.oid AS bmoid, bidx.oid AS bmidxoid "
+					  "       bi.oid AS bmoid, bidx.oid AS bmidxoid, "
+					  "       pgao.segrelid, pgao.columnstore, "
+					  "       pgao.blkdirrelid, pgao.blkdiridxid, "
+					  "       pgao.visimaprelid, pgao.visimapidxid "
 					  "FROM pg_catalog.pg_class c "
 					  "LEFT JOIN pg_catalog.pg_class t ON (c.reltoastrelid = t.oid) "
 					  "LEFT JOIN pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
 					  "LEFT JOIN pg_catalog.pg_class ti ON (i.indexrelid = ti.oid) "
 					  "LEFT JOIN pg_catalog.pg_class bi ON (bi.relname = 'pg_bm_%u'::text) "
 					  "LEFT JOIN pg_catalog.pg_class bidx ON (bidx.relname = 'pg_bm_%u_index'::text) "
+					  "LEFT JOIN pg_catalog.pg_appendonly pgao ON (c.oid = pgao.relid) "
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid, pg_class_oid, pg_class_oid);
 
@@ -3253,12 +3368,29 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 
 	/* Greenplum specific values */
 	pg_class_relnamespace = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relnamespace")));
-	pg_class_relname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relname"));
+	if (relname_override)
+	{
+		pg_class_relname = relname_override;
+	}
+	else
+	{
+		pg_class_relname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "relname"));
+	}
 	pg_class_reltoastnamespace = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "toast_relnamespace")));
 	pg_class_reltoastname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "toast_relname"));
 	pg_class_reltidxname = PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "tidx_relname"));
 	pg_class_bmoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "bmoid")));
 	pg_class_bmidxoid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "bmidxoid")));
+
+	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "segrelid")))
+	{
+		ao_segrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "segrelid")));
+		ao_columnstore = (PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "columnstore"))[0] == 't');
+		ao_blkdirrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "blkdirrelid")));
+		ao_blkdiridxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "blkdiridxid")));
+		ao_visimaprelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "visimaprelid")));
+		ao_visimapidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "visimapidxid")));
+	}
 
 	appendPQExpBufferStr(upgrade_buffer,
 				   "\n-- For binary upgrade, must preserve pg_class oids\n");
@@ -3279,16 +3411,58 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 			 * loaded with wide data.  By setting the TOAST oid we force
 			 * creation of the TOAST heap and TOAST index by the backend so we
 			 * can cleanly copy the files during binary upgrade.
+			 *
+			 * GPDB: note that we compose the toast table name using the
+			 * relation OID, rather than using whatever name was in the old
+			 * cluster. Some operations can cause the old TOAST table name not
+			 * to match its owner's OID, but the new cluster will be using the
+			 * correct name, and it's the new cluster's name that we have to use
+			 * in preassignment.
 			 */
 
 			appendPQExpBuffer(upgrade_buffer,
-							  "SELECT binary_upgrade.set_next_toast_pg_class_oid('%u'::pg_catalog.oid, '%u'::pg_catalog.oid, $$%s$$::text);\n",
-							  pg_class_reltoastrelid, pg_class_reltoastnamespace, pg_class_reltoastname);
+							  "SELECT binary_upgrade.set_next_toast_pg_class_oid('%u'::pg_catalog.oid, '%u'::pg_catalog.oid, $$pg_toast_%u$$::text);\n",
+							  pg_class_reltoastrelid, pg_class_reltoastnamespace, pg_class_oid);
 
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,
-							  "SELECT binary_upgrade.set_next_index_pg_class_oid('%u'::pg_catalog.oid , '%u'::pg_catalog.oid, $$%s$$::text);\n",
-								  pg_index_indexrelid, pg_class_reltoastnamespace, pg_class_reltidxname);
+							  "SELECT binary_upgrade.set_next_index_pg_class_oid('%u'::pg_catalog.oid , '%u'::pg_catalog.oid, $$pg_toast_%u_index$$::text);\n",
+								  pg_index_indexrelid, pg_class_reltoastnamespace, pg_class_oid);
+		}
+
+		/* Set up any AO auxiliary tables with preallocated OIDs as well. */
+		if (OidIsValid(ao_segrelid))
+		{
+			/*
+			 * Adjust the names of all pg_aoseg aux tables to match what they
+			 * will be in the new cluster, using the OID of the owning table. In
+			 * many cases these will be the same as the ones in the old cluster,
+			 * but not always.
+			 */
+			char ao_relname[64];
+			const char *aoseg_prefix = ao_columnstore ? "pg_aocsseg" : "pg_aoseg";
+
+			create_ao_relname(ao_relname, sizeof(ao_relname), aoseg_prefix, pg_class_oid);
+			binary_upgrade_set_pg_class_oids_for_ao(fout, upgrade_buffer, ao_segrelid, false, ao_relname);
+			binary_upgrade_set_type_oids_for_ao(fout, upgrade_buffer, ao_segrelid, ao_relname);
+
+			/* blkdir is optional. */
+			if (OidIsValid(ao_blkdirrelid))
+			{
+				create_ao_relname(ao_relname, sizeof(ao_relname), "pg_aoblkdir", pg_class_oid);
+				binary_upgrade_set_pg_class_oids_for_ao(fout, upgrade_buffer, ao_blkdirrelid, false, ao_relname);
+				binary_upgrade_set_type_oids_for_ao(fout, upgrade_buffer, ao_blkdirrelid, ao_relname);
+
+				create_ao_idxname(ao_relname, sizeof(ao_relname), "pg_aoblkdir", pg_class_oid);
+				binary_upgrade_set_pg_class_oids_for_ao(fout, upgrade_buffer, ao_blkdiridxid, true, ao_relname);
+			}
+
+			create_ao_relname(ao_relname, sizeof(ao_relname), "pg_aovisimap", pg_class_oid);
+			binary_upgrade_set_pg_class_oids_for_ao(fout, upgrade_buffer, ao_visimaprelid, false, ao_relname);
+			binary_upgrade_set_type_oids_for_ao(fout, upgrade_buffer, ao_visimaprelid, ao_relname);
+
+			create_ao_idxname(ao_relname, sizeof(ao_relname), "pg_aovisimap", pg_class_oid);
+			binary_upgrade_set_pg_class_oids_for_ao(fout, upgrade_buffer, ao_visimapidxid, true, ao_relname);
 		}
 	}
 	else
@@ -3314,6 +3488,25 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 
 	PQclear(upgrade_res);
 	destroyPQExpBuffer(upgrade_query);
+}
+
+/*
+ * A version of binary_upgrade_set_pg_class_oids() that allows the caller to
+ * override the expected name of the AO auxiliary table. See the notes for
+ * binary_upgrade_set_type_oids_for_ao() for the rationale.
+ * */
+static void
+binary_upgrade_set_pg_class_oids_for_ao(Archive *fout,
+										PQExpBuffer upgrade_buffer,
+										Oid pg_class_oid,
+										bool is_index,
+										char *ao_aux_relname)
+{
+	if (!ao_aux_relname)
+		exit_horribly(NULL, "binary_upgrade_set_pg_class_oids_for_ao() requires an AO auxiliary relname");
+
+	binary_upgrade_set_pg_class_oids_impl(fout, upgrade_buffer, pg_class_oid,
+										  is_index, ao_aux_relname);
 }
 
 /*

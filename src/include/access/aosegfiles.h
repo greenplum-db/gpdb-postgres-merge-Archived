@@ -173,9 +173,7 @@ extern void FreeAllSegFileInfo(FileSegInfo **allSegInfo,
 				   int totalSegFiles);
 
 extern Datum gp_update_ao_master_stats(PG_FUNCTION_ARGS);
-
 extern Datum get_ao_distribution(PG_FUNCTION_ARGS);
-
 extern Datum get_ao_compression_ratio(PG_FUNCTION_ARGS);
 
 #endif							/* AOSEGFILES_H */
