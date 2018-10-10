@@ -87,7 +87,6 @@ FOREIGN_KEY(relowner REFERENCES pg_authid(oid));
 FOREIGN_KEY(relam REFERENCES pg_am(oid));
 FOREIGN_KEY(reltablespace REFERENCES pg_tablespace(oid));
 FOREIGN_KEY(reltoastrelid REFERENCES pg_class(oid));
-FOREIGN_KEY(reltoastidxid REFERENCES pg_class(oid));
 
 /* Size of fixed part of pg_class tuples, not counting var-length fields */
 #define CLASS_TUPLE_SIZE \
