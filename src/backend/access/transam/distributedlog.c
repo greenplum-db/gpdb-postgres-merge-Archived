@@ -297,8 +297,18 @@ DistributedLog_GetOldestXmin(TransactionId oldestLocalXmin)
 	}
 	LWLockRelease(DistributedLogControlLock);
 
-	Assert(TransactionIdFollowsOrEquals(oldestLocalXmin, result));
 	elogif(Debug_print_full_dtm, LOG, "oldestXmin is '%d'", result);
+	/*
+	 * In CI intermittently assert is seen. To help debug the issue, just for
+	 * debug builds PANIC instead.
+	 */
+#ifdef USE_ASSERT_CHECKING
+	if (!TransactionIdFollowsOrEquals(oldestLocalXmin, result))
+		elog(PANIC, "calculated oldest xmin %d among distributed snapshots follows the local xmin %d",
+			 result, oldestLocalXmin);
+#endif
+
+
 
 	return result;
 }
