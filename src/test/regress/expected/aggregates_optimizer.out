@@ -1755,6 +1755,7 @@ drop table bytea_test_table;
 -- FILTER tests
 select min(unique1) filter (where unique1 > 100) from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Aggregate functions with FILTER
  min 
 -----
  101
@@ -1763,6 +1764,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select ten, sum(distinct four) filter (where four::text ~ '123') from onek a
 group by ten;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Aggregate functions with FILTER
  ten | sum 
 -----+-----
    0 |    
@@ -1781,6 +1783,7 @@ select ten, sum(distinct four) filter (where four > 10) from onek a
 group by ten
 having exists (select 1 from onek b where sum(distinct a.four) = b.four);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Aggregate functions with FILTER
  ten | sum 
 -----+-----
    0 |    
@@ -1793,6 +1796,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select max(foo COLLATE "C") filter (where (bar collate "POSIX") > '0')
 from (values ('a', 'b')) AS v(foo,bar);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Non-default collation
  max 
 -----
  a
@@ -1812,6 +1816,7 @@ select (select count(*) filter (where outer_c <> 0)
         from (values (1)) t0(inner_c))
 from (values (2),(3)) t1(outer_c); -- outer query is aggregation query
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Query-to-DXL Translation: Aggregate functions with outer references entry found due to incorrect normalization of query
  count 
 -------
      2
@@ -1821,6 +1826,7 @@ select (select count(inner_c) filter (where outer_c <> 0)
         from (values (1)) t0(inner_c))
 from (values (2),(3)) t1(outer_c); -- inner query is aggregation query
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Aggregate functions with FILTER
  count 
 -------
      1
@@ -1832,6 +1838,7 @@ select
      filter (where o.unique1 < 10))
 from tenk1 o;					-- outer query is aggregation query
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Query-to-DXL Translation: Aggregate functions with outer references entry found due to incorrect normalization of query
  max  
 ------
  9998
@@ -1841,6 +1848,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select sum(unique1) FILTER (WHERE
   unique1 IN (SELECT unique1 FROM onek where unique1 < 100)) FROM tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Aggregate functions with FILTER
  sum  
 ------
  4950
@@ -1851,7 +1859,9 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b) filter (where a > 1)
     from (values (1,3,'foo'),(0,null,null),(2,2,'bar'),(3,1,'baz')) v(a,b,c),
     generate_series(1,2) i;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: ROW EXPRESSION
 CONTEXT:  SQL function "aggfns_trans" during startup
           aggfns           
 ---------------------------
@@ -1864,6 +1874,7 @@ from generate_series(1,5) x,
      (values (0::float8),(0.1),(0.25),(0.4),(0.5),(0.6),(0.75),(0.9),(1)) v(p)
 group by p order by p;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
   p   | percentile_cont 
 ------+-----------------
     0 |               1
@@ -1900,6 +1911,7 @@ LINE 1: select p, percentile_cont(p,p)
                   ^
 select percentile_cont(0.5) within group (order by b) from aggtest;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percentile_cont  
 ------------------
  53.4485001564026
@@ -1907,6 +1919,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select percentile_cont(0.5) within group (order by b), sum(b) from aggtest;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percentile_cont  |   sum   
 ------------------+---------
  53.4485001564026 | 431.773
@@ -1914,6 +1927,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select percentile_cont(0.5) within group (order by thousand) from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percentile_cont 
 -----------------
            499.5
@@ -1921,6 +1935,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select percentile_disc(0.5) within group (order by thousand) from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percentile_disc 
 -----------------
              499
@@ -1929,6 +1944,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select rank(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  rank 
 ------
     5
@@ -1937,6 +1953,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select cume_dist(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  cume_dist 
 -----------
      0.875
@@ -1945,6 +1962,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percent_rank(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4),(5)) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percent_rank 
 --------------
           0.5
@@ -1953,6 +1971,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select dense_rank(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  dense_rank 
 ------------
           3
@@ -1961,6 +1980,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percentile_disc(array[0,0.1,0.25,0.5,0.75,0.9,1]) within group (order by thousand)
 from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
       percentile_disc       
 ----------------------------
  {0,99,249,499,749,899,999}
@@ -1969,6 +1989,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percentile_cont(array[0,0.25,0.5,0.75,1]) within group (order by thousand)
 from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
        percentile_cont       
 -----------------------------
  {0,249.75,499.5,749.25,999}
@@ -1977,6 +1998,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percentile_disc(array[[null,1,0.5],[0.75,0.25,null]]) within group (order by thousand)
 from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
          percentile_disc         
 ---------------------------------
  {{NULL,999,499},{749,249,NULL}}
@@ -1985,6 +2007,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percentile_cont(array[0,1,0.25,0.75,0.5,1]) within group (order by x)
 from generate_series(1,6) x;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
     percentile_cont    
 -----------------------
  {1,6,2.25,4.75,3.5,6}
@@ -1992,6 +2015,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select ten, mode() within group (order by string4) from tenk1 group by ten;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  ten |  mode  
 -----+--------
    0 | HHHHxx
@@ -2009,6 +2033,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select percentile_disc(array[0.25,0.5,0.75]) within group (order by x)
 from unnest('{fred,jim,fred,jack,jill,fred,jill,jim,jim,sheila,jim,sheila}'::text[]) u(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percentile_disc 
 -----------------
  {fred,jill,jim}
@@ -2018,6 +2043,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
   from (values ('fred'),('jim')) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  Feature not supported by the Pivotal Query Optimizer: Non-default collation
  pg_collation_for 
 ------------------
  "POSIX"
@@ -2027,6 +2053,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 select test_rank(3) within group (order by x)
 from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  test_rank 
 -----------
          5
@@ -2034,6 +2061,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select test_percentile_disc(0.5) within group (order by thousand) from tenk1;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  test_percentile_disc 
 ----------------------
                   499
@@ -2079,6 +2107,7 @@ LINE 1: ...adam'::text collate "C") within group (order by x collate "P...
 -- hypothetical-set type unification successes:
 select rank('adam'::varchar) within group (order by x) from (values ('fred'),('jim')) v(x);
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  rank 
 ------
     1
@@ -2086,6 +2115,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 
 select rank('3') within group (order by x) from generate_series(1,5) x;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  rank 
 ------
     3
@@ -2094,6 +2124,7 @@ INFO:  GPORCA failed to produce a plan, falling back to planner
 -- divide by zero check
 select percent_rank(0) within group (order by x) from generate_series(1,0) x;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  percent_rank 
 --------------
             0
@@ -2121,6 +2152,7 @@ select pg_get_viewdef('aggordview1');
 
 select * from aggordview1 order by ten;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Ordered aggregates not supported in DXL
  ten | p50 | px  | rank 
 -----+-----+-----+------
    0 | 490 |     |  101
@@ -2139,6 +2171,7 @@ drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Query Parameter not supported in DXL
 CONTEXT:  SQL function "least_accum" during startup
      least_agg     
 -------------------
@@ -2147,6 +2180,7 @@ CONTEXT:  SQL function "least_accum" during startup
 
 select least_agg(variadic array[q1,q2]) from int8_tbl;
 INFO:  GPORCA failed to produce a plan, falling back to planner
+DETAIL:  GPDB Expression type: Query Parameter not supported in DXL
 CONTEXT:  SQL function "least_accum" during startup
      least_agg     
 -------------------
