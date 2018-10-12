@@ -97,7 +97,7 @@ setup(TransactionId nextXid)
 	DistributedLogCtl->shared->page_buffer[0] = &pages[0];
 	memset(pages, 0x7f, sizeof(pages));
 
-	expect_value(LWLockAcquire, lockid, DistributedLogControlLock);
+	expect_value(LWLockAcquire, l, DistributedLogControlLock);
 	expect_value(LWLockAcquire, mode, LW_EXCLUSIVE);
 	will_be_called(LWLockAcquire);
 
@@ -111,7 +111,7 @@ setup(TransactionId nextXid)
 	expect_value(SimpleLruReadPage, xid, nextXid);
 	will_return(SimpleLruReadPage, 0);
 
-	expect_value(LWLockRelease, lockid, DistributedLogControlLock);
+	expect_value(LWLockRelease, l, DistributedLogControlLock);
 	will_be_called(LWLockRelease);
 }
 
