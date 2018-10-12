@@ -34,13 +34,6 @@ extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern char *reverse_name(char *string);
 extern int	oldstyle_length(int n, text *t);
 
-/*
- * GPDB_94_MERGE_FIXME: test_atomic_ops was backported from 9.5. This prototype
- * doesn't appear in the upstream version, because the PG_FUNCTION_INFO_V1()
- * macro includes it since 9.4.
- */
-extern Datum test_atomic_ops(PG_FUNCTION_ARGS);
-
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
