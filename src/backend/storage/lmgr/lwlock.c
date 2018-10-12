@@ -1225,7 +1225,6 @@ LWLockRelease(LWLock *l)
 	PGPROC	   *head;
 	PGPROC	   *proc;
 	int			i;
-	bool		saveExclusive;
 
 	PRINT_LWDEBUG("LWLockRelease", lock);
 
@@ -1240,13 +1239,6 @@ LWLockRelease(LWLock *l)
 	}
 	if (i < 0)
 		elog(ERROR, "lock %s %d is not held", T_NAME(l), T_ID(l));
-
-	saveExclusive = held_lwlocks_exclusive[i];
-	if (InterruptHoldoffCount <= 0)
-		elog(PANIC, "upon entering lock release, the interrupt holdoff count is bad (%d) for release of lock %p (%s)", 
-			 InterruptHoldoffCount,
-			 lock, /* GPDB_94_MERGE_FIXME: can we have a human-readable name for the lock somehow? */
-			 (saveExclusive ? "Exclusive" : "Shared"));
 
 	num_held_lwlocks--;
 	for (; i < num_held_lwlocks; i++)
@@ -1367,11 +1359,6 @@ LWLockRelease(LWLock *l)
 	/*
 	 * Now okay to allow cancel/die interrupts.
 	 */
-	if (InterruptHoldoffCount <= 0)
-		elog(PANIC, "upon exiting lock release, the interrupt holdoff count is bad (%d) for release of lock %p (%s)", 
-			 InterruptHoldoffCount,
-			 lock, /* GPDB_94_MERGE_FIXME: can we have a human-readable name for the lock somehow? */
-			 (saveExclusive ? "Exclusive" : "Shared"));
 	RESUME_INTERRUPTS();
 }
 
