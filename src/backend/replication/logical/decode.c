@@ -132,7 +132,17 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
+		case RM_BITMAP_ID:
+		case RM_DISTRIBUTEDLOG_ID:
 			break;
+
+		case RM_APPEND_ONLY_ID:
+			/*
+			 * GPDB_94_MERGE_FIXME: logical decoding hasn't been implemented for
+			 * append-only tables yet.
+			 */
+			break;
+
 		case RM_NEXT_ID:
 			elog(ERROR, "unexpected RM_NEXT_ID rmgr_id: %u", (RmgrIds) buf.record.xl_rmid);
 	}
