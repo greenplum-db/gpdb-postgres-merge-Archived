@@ -1004,18 +1004,6 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 	/* The tlist will be installed later, since we have no RelOptInfo */
 	Assert(best_path->path.parent == NULL);
 	tlist = NIL;
-	/* GDPB_94_MERGE_FIXME: This assertion was replaced with the below
-	 * in GPDB. I don't understand why. I tried putting the assertion
-	 * back, once we get to run the regression tests again, we'll
-	 * probably find out why. Or if everything works, then we can
-	 * just keep the assertion.
-	 */
-#if 0
-	if (best_path->path.parent)
-		tlist = build_relation_tlist(best_path->path.parent);
-	else
-		tlist = NIL;			/* will be filled in later */
-#endif
 
 	/* best_path->quals is just bare clauses */
 
