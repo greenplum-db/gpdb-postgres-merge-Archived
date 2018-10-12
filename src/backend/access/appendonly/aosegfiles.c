@@ -1586,9 +1586,9 @@ get_ao_distribution(PG_FUNCTION_ARGS)
 		 */
 		aosegrel = heap_open(segrelid, AccessShareLock);
 
-		/* GPDB_94_MERGE_FIXME: quoting. This should be refactored to dispatch
-		 * the query directly to each segment, and not rely on gp_dist_random(),
-		 * like was done to the functions in dbsize.c
+		/*
+		 * NOTE: we don't need quoting here. The aux AO segment heap table's name
+		 * should follow the pattern "pg_asoeg.pg_aoseg_<oid>".
 		 */
 		sqlstmt = psprintf("select gp_segment_id,sum(tupcount)::bigint "
 						   "from gp_dist_random('%s.%s') "
