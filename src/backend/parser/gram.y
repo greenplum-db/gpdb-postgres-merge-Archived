@@ -15592,6 +15592,7 @@ unreserved_keyword:
 			| FAMILY
 			| FIELDS
 			| FILL
+			| FILTER
 			| FIRST_P
 			| FORCE
 			| FORMAT
@@ -16256,7 +16257,6 @@ reserved_keyword:
 			| EXCLUDE 
 			| FALSE_P
 			| FETCH
-			| FILTER
 			| FOLLOWING
 			| FOR
 			| FOREIGN
