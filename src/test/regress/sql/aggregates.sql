@@ -751,7 +751,15 @@ select ten,
   from tenk1
  group by ten order by ten;
 
+-- start_ignore
+-- pg_get_viewdef() runs some internal queries on catalogs, and we don't want
+-- fallback notices about those.
+reset optimizer_trace_fallback;
+-- end_ignore
 select pg_get_viewdef('aggordview1');
+-- start_ignore
+SET optimizer_trace_fallback to on;
+-- end_ignore
 select * from aggordview1 order by ten;
 drop view aggordview1;
 
