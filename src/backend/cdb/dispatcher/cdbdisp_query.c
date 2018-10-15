@@ -41,8 +41,6 @@
 
 #include "cdb/cdbdisp.h"
 #include "cdb/cdbdisp_query.h"
-#include "cdb/cdbdisp_thread.h" /* for CdbDispatchCmdThreads and
-								 * DispatchCommandParms */
 #include "cdb/cdbdisp_dtx.h"	/* for qdSerializeDtxContextInfo() */
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbcopy.h"
@@ -863,6 +861,7 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		plantree_len +
 		params_len +
 		sddesc_len +
+		sizeof(GpIdentity.numsegments) +
 		sizeof(resgroupInfo.len) +
 		resgroupInfo.len;
 
@@ -972,6 +971,11 @@ buildGpQueryString(DispatchCommandQueryParms *pQueryParms,
 		memcpy(pos, sddesc, sddesc_len);
 		pos += sddesc_len;
 	}
+
+	/* FIXME: this could be retired with the per-table numsegments */
+	tmp = htonl(GpIdentity.numsegments);
+	memcpy(pos, &tmp, sizeof(GpIdentity.numsegments));
+	pos += sizeof(GpIdentity.numsegments);
 
 	tmp = htonl(resgroupInfo.len);
 	memcpy(pos, &tmp, sizeof(resgroupInfo.len));

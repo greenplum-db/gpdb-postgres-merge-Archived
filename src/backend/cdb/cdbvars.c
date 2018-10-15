@@ -36,6 +36,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "cdb/memquota.h"
+#include "postmaster/fts.h"
 
 /*
  * ----------------
@@ -82,9 +83,6 @@ bool		verify_gpfdists_cert; /* verifies gpfdist's certificate */
 int			gp_external_max_segs;	/* max segdbs per gpfdist/gpfdists URI */
 
 int			gp_safefswritesize; /* set for safe AO writes in non-mature fs */
-
-int			gp_connections_per_thread;	/* How many libpq connections are
-										 * handled in each thread */
 
 int			gp_cached_gang_threshold;	/* How many gangs to keep around from
 										 * stmt to stmt. */
@@ -553,26 +551,6 @@ assign_gp_role(const char *newval, void *extra)
 
 
 /*
- * Assign hook routine for "gp_connections_per_thread" option.  This variable has context
- * PGC_SUSET so that is can only be set by a superuser via the SET command.
- * (It can also be set in config file, but not inside of PGOPTIONS.)
- *
- * See src/backend/util/misc/guc.c for option definition.
- */
-void
-assign_gp_connections_per_thread(int newval, void *extra)
-{
-#if FALSE
-	elog(DEBUG1, "assign_gp_connections_per_thread: gp_connections_per_thread=%s, newval=%d",
-		 show_gp_connections_per_thread(), newval);
-#endif
-
-	cdbdisp_setAsync(newval == 0);
-	cdbgang_setAsync(newval == 0);
-	gp_connections_per_thread = newval;
-}
-
-/*
  * Show hook routine for "gp_session_role" option.
  *
  * See src/backend/util/misc/guc.c for option definition.
@@ -788,4 +766,48 @@ Datum
 gp_execution_dbid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(GpIdentity.dbid);
+}
+
+/*
+ * Get new numsegments from Shared Memory and update GpIdentity
+ * If the value has changed return true.
+ * This function must only be called by QD or QE process.
+ */
+bool
+updateGpIdentityNumsegments(void)
+{
+	/*
+	 * New segments can be added to the cluster when there are in-progress
+	 * transactions, however the new segments should not be visible to them.
+	 * So GpIdentity.numsegments should only be updated outside transactions.
+	 */
+	Assert(MyProc);
+	if (Gp_role == GP_ROLE_DISPATCH && MyProc->lxid == InvalidOid)
+	{
+		uint32 newnumsegments = FtsGetTotalSegments();
+		if (newnumsegments > GpIdentity.numsegments)
+		{
+			GpIdentity.numsegments = newnumsegments;
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
+ * Same as updateGpIdentityNumsegments, for system process.
+ */
+bool
+updateSystemProcessGpIdentityNumsegments(void)
+{
+	if (Gp_role == GP_ROLE_DISPATCH)
+	{
+		uint32 newnumsegments = FtsGetTotalSegments();
+		if (newnumsegments > GpIdentity.numsegments)
+		{
+			GpIdentity.numsegments = newnumsegments;
+			return true;
+		}
+	}
+	return false;
 }
