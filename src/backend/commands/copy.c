@@ -974,12 +974,6 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 						   "psql's \\copy command also works for anyone.")));
 	}
 
-	/* GPDB_91_MERGE_FIXME: why not ? */
-	if (stmt->is_program && stmt->filename == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("STDIN/STDOUT not allowed with PROGRAM")));
-
 	if (stmt->relation)
 	{
 		RangeTblEntry  *rte;
