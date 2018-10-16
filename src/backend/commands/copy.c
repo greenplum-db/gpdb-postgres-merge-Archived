@@ -2763,7 +2763,7 @@ CopyTo(CopyState cstate)
 				gp_session_id % GpIdentity.numsegments != GpIdentity.segindex)
 		{
 			MemoryContextDelete(cstate->rowcontext);
-			return 0; /* GPDB_91_MERGE_FIXME: does this make sense? */
+			return 0;
 		}
 
 		foreach(lc, target_rels)
