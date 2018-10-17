@@ -145,16 +145,26 @@ main(int argc, char **argv)
 	/* New now using xids of the old system */
 
 	/* -- NEW -- */
+	start_postmaster(&new_cluster, true);
+
 	if (user_opts.segment_mode == DISPATCHER)
 	{
-		start_postmaster(&new_cluster, true);
-
 		prepare_new_databases();
 
 		create_new_objects();
-
-		stop_postmaster(false);
 	}
+
+	/*
+	 * In a segment, the data directory already contains all the objects,
+	 * because the segment is initialized by taking a physical copy of the
+	 * upgraded QD data directory. The auxiliary AO tables - containing
+	 * information about the segment files, are different in each server,
+	 * however. So we still need to restore those separately on each
+	 * server.
+	 */
+	restore_aosegment_tables();
+
+	stop_postmaster(false);
 
 	/*
 	 * Most failures happen in create_new_objects(), which has completed at
@@ -431,13 +441,20 @@ prepare_new_cluster(void)
 	 * It would make more sense to freeze after loading the schema, but that
 	 * would cause us to lose the frozenids restored by the load. We use
 	 * --analyze so autovacuum doesn't update statistics later
+	 *
+	 * GPDB: after we've copied the master data directory to the segments,
+	 * AO tables can't be analyzed because their aoseg tuple counts don't match
+	 * those on disk. We therefore skip this step for segments.
 	 */
-	prep_status("Analyzing all rows in the new cluster");
-	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" %s --all --analyze %s",
-			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-			  log_opts.verbose ? "--verbose" : "");
-	check_ok();
+	if (user_opts.segment_mode == DISPATCHER)
+	{
+		prep_status("Analyzing all rows in the new cluster");
+		exec_prog(UTILITY_LOG_FILE, NULL, true,
+				  "PGOPTIONS='-c gp_session_role=utility' \"%s/vacuumdb\" %s --all --analyze %s",
+				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+				  log_opts.verbose ? "--verbose" : "");
+		check_ok();
+	}
 
 	/*
 	 * We do freeze after analyze so pg_statistic is also frozen. template0 is
@@ -561,8 +578,6 @@ create_new_objects(void)
 
 	end_progress_output();
 	check_ok();
-
-	restore_aosegment_tables();
 
 	/*
 	 * We don't have minmxids for databases or relations in pre-9.3
