@@ -2019,8 +2019,7 @@ CopyDispatchOnSegment(CopyState cstate, const CopyStmt *stmt)
 	CdbPgResults pgresults = {0};
 	int			i;
 	uint64		processed = 0;
-	int			rejected = 0; /* GPDB_91_MERGE_FIXME: should be uint64! */
-
+	uint64		rejected = 0;
 	dispatchStmt = copyObject((Node *) stmt);
 
 	/* add in partitions for dispatch */
@@ -4046,7 +4045,7 @@ CopyFrom(CopyState cstate)
 		if (cstate->cdbsreh)
 		{
 			/* emit a NOTICE with number of rejected rows */
-			int			total_rejected = 0;
+			uint64		total_rejected = 0;
 			int total_rejected_from_qd = cstate->cdbsreh->rejectcount;
 
 			/*
