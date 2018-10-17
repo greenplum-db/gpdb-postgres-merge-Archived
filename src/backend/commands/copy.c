@@ -5389,13 +5389,6 @@ SendCopyFromForwardedTuple(CopyState cstate,
 					int32		len;
 					char	   *ptr;
 
-					/*
-					 * GPDB_91_MERGE_FIXME: do we need to worry about toasted datums here?
-					 * In theory, I suppose you could have a default value that gets evaluated
-					 * in the master, and the default value comes from another table as a toast
-					 * pointer.
-					 */
-
 					/* For simplicity, varlen's are always transmitted in "long" format */
 					len = VARSIZE(values[i]);
 					ptr = VARDATA_ANY(values[i]);
