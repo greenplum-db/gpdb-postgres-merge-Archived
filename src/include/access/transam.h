@@ -110,6 +110,8 @@ typedef struct VariableCacheData
 	 */
 	TransactionId latestCompletedXid;	/* newest XID that has committed or
 										 * aborted */
+	TransactionId latestCompletedDxid;	/* newest distributed XID that has
+										   committed or aborted */
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
@@ -158,5 +160,8 @@ extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
 extern void AdvanceObjectId(Oid newOid);
 extern Oid	GetNewSegRelfilenode(void);
+extern bool OidFollowsNextOid(Oid id);
 
 #endif   /* TRAMSAM_H */
+
+

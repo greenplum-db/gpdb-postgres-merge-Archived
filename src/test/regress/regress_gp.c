@@ -98,6 +98,14 @@ extern Datum gp_execute_on_server(PG_FUNCTION_ARGS);
 /* Check shared buffer cache for a database Oid */
 extern Datum check_shared_buffer_cache_for_dboid(PG_FUNCTION_ARGS);
 
+/* oid wraparound tests */
+extern Datum gp_set_next_oid(PG_FUNCTION_ARGS);
+extern Datum gp_get_next_oid(PG_FUNCTION_ARGS);
+
+/* Broken output function, for testing */
+extern Datum broken_int4out(PG_FUNCTION_ARGS);
+
+
 /* Triggers */
 
 typedef struct
@@ -2043,4 +2051,46 @@ check_shared_buffer_cache_for_dboid(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(false);
+}
+
+PG_FUNCTION_INFO_V1(gp_set_next_oid);
+Datum
+gp_set_next_oid(PG_FUNCTION_ARGS)
+{
+	Oid new_oid = PG_GETARG_OID(0);
+
+	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+
+	ShmemVariableCache->nextOid = new_oid;
+
+	LWLockRelease(OidGenLock);
+
+	PG_RETURN_VOID();
+}
+
+PG_FUNCTION_INFO_V1(gp_get_next_oid);
+Datum
+gp_get_next_oid(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_OID(ShmemVariableCache->nextOid);
+}
+
+/*
+ * This is like int4out, but throws an error on '1234'.
+ *
+ * Used in the error handling test in 'gpcopy'.
+ */
+PG_FUNCTION_INFO_V1(broken_int4out);
+Datum
+broken_int4out(PG_FUNCTION_ARGS)
+{
+	int32		arg = PG_GETARG_INT32(0);
+
+	if (arg == 1234)
+		ereport(ERROR,
+				(errcode(ERRCODE_FAULT_INJECT),
+				 errmsg("testing failure in output function"),
+				 errdetail("The trigger value was 1234")));
+
+	return DirectFunctionCall1(int4out, Int32GetDatum(arg));
 }
