@@ -583,7 +583,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							  "INSERT INTO info_rels "
 							  "SELECT indexrelid, ind.indrelid, 0::oid "
 							  "FROM info_rels i JOIN pg_catalog.pg_index ind "
-							  "     ON ind.indrelid = i.toastheap "
+							  "     ON ind.indrelid = i.reloid "
 							  "WHERE indisvalid AND i.toastheap != %u", InvalidOid));
 
 	snprintf(query, sizeof(query),
