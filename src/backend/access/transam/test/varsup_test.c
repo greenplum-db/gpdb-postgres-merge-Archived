@@ -145,11 +145,11 @@ test_GetNewTransactionId_xid_warn_limit(void **state)
 static void
 should_acquire_and_release_oid_gen_lock()
 {
-	expect_value(LWLockAcquire, lockid, OidGenLock);
+	expect_value(LWLockAcquire, l, OidGenLock);
 	expect_value(LWLockAcquire, mode, LW_EXCLUSIVE);
 	will_be_called(LWLockAcquire);
 
-	expect_value(LWLockRelease, lockid, OidGenLock);
+	expect_value(LWLockRelease, l, OidGenLock);
 	will_be_called(LWLockRelease);
 }
 
