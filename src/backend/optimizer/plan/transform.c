@@ -105,9 +105,12 @@ normalize_query(Query *query)
 	 */
 	if (safe_to_replace_sirvf_rte(res))
 	{
-		for (int rteOffset = 0; rteOffset < list_length(res->rtable); rteOffset++)
+		ListCell *lc;
+
+		foreach(lc, res->rtable)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) list_nth(res->rtable, rteOffset);
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
 			replace_sirvf_rte(res, rte);
 		}
 	}
