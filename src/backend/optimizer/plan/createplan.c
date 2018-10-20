@@ -6716,7 +6716,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 		{
 			int			rti = lfirst_int(lcr);
 			Plan	   *subplan = (Plan *) lfirst(lcp);
-			bool		is_split_update = (bool) lfirst_int(lci);
+			bool		is_split_update = lfirst_int(lci) ? true : false;
 			RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
 			GpPolicy   *targetPolicy;
 			GpPolicyType targetPolicyType;
@@ -6766,7 +6766,7 @@ adjust_modifytable_flow(PlannerInfo *root, ModifyTable *node, List *is_split_upd
 								 errmsg("Cannot update distribution key columns in utility mode")));
 					}
 
-					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte, rti);
+					new_subplan = (Plan *) make_splitupdate(root, (ModifyTable *) node, subplan, rte);
 					hashExpr = getExprListFromTargetList(new_subplan->targetlist,
 														 targetPolicy->nattrs,
 														 targetPolicy->attrs,

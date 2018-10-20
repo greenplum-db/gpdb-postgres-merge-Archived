@@ -1343,9 +1343,7 @@ copy_junk_attributes(List *src, List **dest, AttrNumber startAttrIdx)
  * deleteColIdx which contains placeholder, and value will be corrected later
  */
 static void
-process_targetlist_for_splitupdate(Relation resultRel,
-								   Index resultRelationsIdx,
-								   List *targetlist,
+process_targetlist_for_splitupdate(Relation resultRel, List *targetlist,
 								   List **splitUpdateTargetList, List **insertColIdx, List **deleteColIdx)
 {
 	TupleDesc	resultDesc = RelationGetDescr(resultRel);
@@ -1469,8 +1467,7 @@ process_targetlist_for_splitupdate(Relation resultRel,
  * 'result_relation' is the RTI of the UPDATE target relation.
  */
 SplitUpdate *
-make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte,
-				 Index result_relation)
+make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntry *rte)
 {
 	AttrNumber		ctidColIdx = 0;
 	List			*deleteColIdx = NIL;
@@ -1500,10 +1497,10 @@ make_splitupdate(PlannerInfo *root, ModifyTable *mt, Plan *subplan, RangeTblEntr
 	 * insertColIdx and deleteColIdx.
 	 */
 	process_targetlist_for_splitupdate(resultRelation,
-									   result_relation,
 									   subplan->targetlist,
 									   &splitUpdateTargetList, &insertColIdx, &deleteColIdx);
 	ctidColIdx = find_ctid_attribute_check(subplan->targetlist);
+
 	if (resultRelation->rd_rel->relhasoids)
 		oidColIdx = find_oid_attribute_check(subplan->targetlist);
 
