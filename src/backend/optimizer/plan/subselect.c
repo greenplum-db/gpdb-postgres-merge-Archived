@@ -2837,11 +2837,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			break;
 
 		case T_Hash:
-<<<<<<< HEAD
-		case T_Agg:
 		case T_ExternalScan:
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		case T_Material:
 		case T_Sort:
 		case T_ShareInputScan:
