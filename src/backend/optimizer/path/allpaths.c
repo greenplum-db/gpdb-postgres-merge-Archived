@@ -46,11 +46,10 @@
 #include "cdb/cdbmutate.h"		/* cdbmutate_warn_ctid_without_segid */
 #include "cdb/cdbpath.h"		/* cdbpath_rows() */
 
-<<<<<<< HEAD
 // TODO: these planner gucs need to be refactored into PlannerConfig.
 bool		gp_enable_sort_limit = FALSE;
 bool		gp_enable_sort_distinct = FALSE;
-=======
+
 /* results of subquery_is_pushdown_safe */
 typedef struct pushdown_safety_info
 {
@@ -58,11 +57,6 @@ typedef struct pushdown_safety_info
 	bool		unsafeVolatile; /* don't push down volatile quals */
 	bool		unsafeLeaky;	/* don't push down leaky quals */
 } pushdown_safety_info;
-
-/* These parameters are set by GUC */
-bool		enable_geqo = false;	/* just in case GUC doesn't set it */
-int			geqo_threshold;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* Hook for plugins to replace standard_join_search() */
 join_search_hook_type join_search_hook = NULL;
@@ -118,15 +112,9 @@ static bool recurse_pushdown_safe(Node *setOp, Query *topquery,
 static void check_output_expressions(Query *subquery,
 						 pushdown_safety_info *safetyInfo);
 static void compare_tlist_datatypes(List *tlist, List *colTypes,
-<<<<<<< HEAD
-						bool *unsafeColumns);
-static bool qual_is_pushdown_safe(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual,
-					  bool *unsafeColumns);
-=======
 						pushdown_safety_info *safetyInfo);
-static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
+static bool qual_is_pushdown_safe(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual,
 					  pushdown_safety_info *safetyInfo);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void subquery_push_qual(Query *subquery,
 				   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
@@ -763,10 +751,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Accumulate size information from each live child.
 		 */
-<<<<<<< HEAD
-
-		if (childrel->rows > 0)
-=======
 		Assert(childrel->rows > 0);
 
 		parent_rows += childrel->rows;
@@ -782,7 +766,6 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		forboth(parentvars, rel->reltargetlist,
 				childvars, childrel->reltargetlist)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Node	   *childvar = (Node *) lfirst(childvars);
@@ -1309,7 +1292,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 {
 	Query	   *subquery = rte->subquery;
 	Relids		required_outer;
-	pushdown_safety_info safetyInfo;
 	double		tuple_fraction;
 	PlannerInfo *subroot;
 	List	   *pathkeys;
@@ -1331,55 +1313,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	required_outer = rel->lateral_relids;
 
-	/*
-	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
-	 * flags as needed while recursing.  In particular, we need a workspace
-	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set TRUE if we find that output column i of the subquery is
-	 * unsafe to use in a pushed-down qual.
-	 */
-	memset(&safetyInfo, 0, sizeof(safetyInfo));
-	safetyInfo.unsafeColumns = (bool *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
 
-<<<<<<< HEAD
 	forceDistRand = rte->forceDistRandom;
 
 	/* CDB: Could be a preplanned subquery from window_planner. */
 	if (rte->subquery_plan == NULL)
-=======
-	/*
-	 * If the subquery has the "security_barrier" flag, it means the subquery
-	 * originated from a view that must enforce row-level security.  Then we
-	 * must not push down quals that contain leaky functions.  (Ideally this
-	 * would be checked inside subquery_is_pushdown_safe, but since we don't
-	 * currently pass the RTE to that function, we must do it here.)
-	 */
-	safetyInfo.unsafeLeaky = rte->security_barrier;
-
-	/*
-	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become WHERE or HAVING
-	 * quals of the subquery itself.  This transformation is useful because it
-	 * may allow us to generate a better plan for the subquery than evaluating
-	 * all the subquery output rows and then filtering them.
-	 *
-	 * There are several cases where we cannot push down clauses. Restrictions
-	 * involving the subquery are checked by subquery_is_pushdown_safe().
-	 * Restrictions on individual clauses are checked by
-	 * qual_is_pushdown_safe().  Also, we don't want to push down
-	 * pseudoconstant clauses; better to have the gating node above the
-	 * subquery.
-	 *
-	 * Non-pushed-down clauses will get evaluated as qpquals of the
-	 * SubqueryScan node.
-	 *
-	 * XXX Are there any cases where we want to make a policy decision not to
-	 * push down a pushable qual, because it'd result in a worse plan?
-	 */
-	if (rel->baserestrictinfo != NIL &&
-		subquery_is_pushdown_safe(subquery, subquery, &safetyInfo))
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	{
 		/*
 		 * push down quals if possible. Note subquery might be
@@ -1408,26 +1346,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Const	   *cnst = (Const *) subquery->limitCount;
 
-<<<<<<< HEAD
 			if (cnst->consttype == INT8OID &&
 				DatumGetInt64(cnst->constvalue) <= 1)
 				rel->onerow = true;
-=======
-			if (!rinfo->pseudoconstant &&
-				qual_is_pushdown_safe(subquery, rti, clause, &safetyInfo))
-			{
-				/* Push it down */
-				subquery_push_qual(subquery, rte, rti, clause);
-			}
-			else
-			{
-				/* Keep it in the upper query */
-				upperrestrictlist = lappend(upperrestrictlist, rinfo);
-			}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 
-<<<<<<< HEAD
 		/*
 		 * We can safely pass the outer tuple_fraction down to the subquery if the
 		 * outer level has no joining, aggregation, or sorting to do. Otherwise
@@ -1443,9 +1366,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			tuple_fraction = 0.0;	/* default case */
 		else
 			tuple_fraction = root->tuple_fraction;
-=======
-	pfree(safetyInfo.unsafeColumns);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/* Generate the plan for the subquery */
 		config = CopyPlannerConfig(root->config);
@@ -2139,17 +2059,33 @@ static Query *
 push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 				   RangeTblEntry *rte, Index rti, Query *subquery)
 {
-	bool	   *differentTypes;
+	pushdown_safety_info safetyInfo;
 
 	/* Nothing to do here if it doesn't have qual at all */
 	if (rel->baserestrictinfo == NIL)
 		return subquery;
 
-	/* We need a workspace for keeping track of set-op type coercions */
-	differentTypes = (bool *)
+	/*
+	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
+	 * flags as needed while recursing.  In particular, we need a workspace
+	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
+	 * will be set TRUE if we find that output column i of the subquery is
+	 * unsafe to use in a pushed-down qual.
+	 */
+	memset(&safetyInfo, 0, sizeof(safetyInfo));
+	safetyInfo.unsafeColumns = (bool *)
 		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
 
-	if (subquery_is_pushdown_safe(subquery, subquery, differentTypes))
+	/*
+	 * If the subquery has the "security_barrier" flag, it means the subquery
+	 * originated from a view that must enforce row-level security.  Then we
+	 * must not push down quals that contain leaky functions.  (Ideally this
+	 * would be checked inside subquery_is_pushdown_safe, but since we don't
+	 * currently pass the RTE to that function, we must do it here.)
+	 */
+	safetyInfo.unsafeLeaky = rte->security_barrier;
+
+	if (subquery_is_pushdown_safe(subquery, subquery, &safetyInfo))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
@@ -2161,9 +2097,7 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 			Node	   *clause = (Node *) rinfo->clause;
 
 			if (!rinfo->pseudoconstant &&
-				(!rte->security_barrier ||
-				 !contain_leaky_functions(clause)) &&
-				qual_is_pushdown_safe(subquery, rte, rti, clause, differentTypes))
+				qual_is_pushdown_safe(subquery, rte, rti, clause, &safetyInfo))
 			{
 				/* Push it down */
 				subquery_push_qual(subquery, rte, rti, clause);
@@ -2177,7 +2111,7 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
 		rel->baserestrictinfo = upperrestrictlist;
 	}
 
-	pfree(differentTypes);
+	pfree(safetyInfo.unsafeColumns);
 
 	return subquery;
 }
@@ -2200,19 +2134,6 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
  * 3. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
  * quals into it, because that could change the results.
  *
-<<<<<<< HEAD
- * 4. Do not push down quals if the subquery is a grouping extension
- * query, since this may change the meaning of the query.
- *
- * In addition, we make several checks on the subquery's output columns
- * to see if it is safe to reference them in pushed-down quals.  If output
- * column k is found to be unsafe to reference, we set unsafeColumns[k] to
- * TRUE, but we don't reject the subquery overall since column k might
- * not be referenced by some/all quals.  The unsafeColumns[] array will be
- * consulted later by qual_is_pushdown_safe().  It's better to do it this
- * way than to make the checks directly in qual_is_pushdown_safe(), because
- * when the subquery involves set operations we have to check the output
-=======
  * 4. If the subquery uses DISTINCT, we cannot push volatile quals into it.
  * This is because upper-level quals should semantically be evaluated only
  * once per distinct row, not once per original row, and if the qual is
@@ -2220,6 +2141,9 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
  * does not apply to other forms of aggregation such as GROUP BY, because
  * when those are present we push into HAVING not WHERE, so that the quals
  * are still applied after aggregation.)
+ *
+ * 5. Do not push down quals if the subquery is a grouping extension
+ * query, since this may change the meaning of the query.
  *
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
@@ -2229,7 +2153,6 @@ push_down_restrict(PlannerInfo *root, RelOptInfo *rel,
  * consulted later by qual_is_pushdown_safe().  It's better to do it this way
  * than to make the checks directly in qual_is_pushdown_safe(), because when
  * the subquery involves set operations we have to check the output
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * expressions in each arm of the set op.
  *
  * Note: pushing quals into a DISTINCT subquery is theoretically dubious:
@@ -2576,13 +2499,8 @@ qual_is_pushdown_safe_set_operation(Query *query, RangeTblEntry *rte, Index rti,
  * found to be unsafe to reference by subquery_is_pushdown_safe().
  */
 static bool
-<<<<<<< HEAD
 qual_is_pushdown_safe(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual,
-					  bool *unsafeColumns)
-=======
-qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 					  pushdown_safety_info *safetyInfo)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	bool		safe = true;
 	List	   *vars;
