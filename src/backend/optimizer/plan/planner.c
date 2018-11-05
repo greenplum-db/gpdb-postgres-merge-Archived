@@ -1126,7 +1126,8 @@ inheritance_planner(PlannerInfo *root)
 	List	   *returningLists = NIL;
 	List	   *rowMarks;
 	ListCell   *lc;
-<<<<<<< HEAD
+	Index		rti;
+
 	GpPolicy   *parentPolicy = NULL;
 	Oid			parentOid = InvalidOid;
 
@@ -1134,9 +1135,6 @@ inheritance_planner(PlannerInfo *root)
 	Plan	   *plan;
 	CdbLocusType append_locustype = CdbLocusType_Null;
 	bool		locus_ok = TRUE;
-=======
-	Index		rti;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * We generate a modified instance of the original Query for each target
@@ -1161,7 +1159,10 @@ inheritance_planner(PlannerInfo *root)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 
-		if (rte->rtekind == RTE_SUBQUERY)
+		/*
+		 * GPDB_94_STABLE_MERGE_FIXME: Is CTE handled right here?
+		 */
+		if (rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
 			subqueryRTindexes = bms_add_member(subqueryRTindexes, rti);
 		rti++;
 	}
@@ -1294,7 +1295,6 @@ inheritance_planner(PlannerInfo *root)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(lr);
 
-<<<<<<< HEAD
 				/*
 				 * In GPDB CTEs are treated much more like subqueries than in
 				 * upstream. As a result, we will generally plan a separate
@@ -1309,10 +1309,7 @@ inheritance_planner(PlannerInfo *root)
 				 * shared scan here? Is there a way to treat it similarly with
 				 * gp_cte_sharing turned on?
 				 */
-				if (rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
-=======
 				if (bms_is_member(rti, subqueryRTindexes))
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				{
 					Index		newrti;
 
