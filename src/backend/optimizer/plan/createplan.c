@@ -5928,7 +5928,6 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->grpColIdx = grpColIdx;
 	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;
-<<<<<<< HEAD
 	if (aggcosts)
 		node->transSpace = aggcosts->transitionSpace;
 	else
@@ -5940,9 +5939,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->rollupGSTimes = rollupGSTimes;
 	node->lastAgg = false;
 	node->streaming = streaming;
-=======
 	node->aggParams = NULL;		/* SS_finalize_plan() will fill this */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 
