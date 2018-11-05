@@ -5,6 +5,7 @@ CREATE TABLE test_replica_identity (
        nonkey text,
        CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
        CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
+<<<<<<< HEAD
 ) distributed by (keya);
 -- GPDB has a habit of naming the indexes that back constraints differently,
 -- at CREATE TABLE. Rename the constraints, and then rename them back. That
@@ -13,9 +14,13 @@ ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_defer;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT test_replica_identity_unique_nondefer TO x;
 ALTER TABLE test_replica_identity RENAME CONSTRAINT x TO test_replica_identity_unique_nondefer;
+=======
+) WITH OIDS;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 CREATE TABLE test_replica_identity_othertable (id serial primary key);
 CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
 CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
+CREATE UNIQUE INDEX test_replica_identity_oid_idx ON test_replica_identity (oid);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
 CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
 ERROR:  hash indexes are not supported
@@ -95,13 +100,16 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
     "test_replica_identity_keyab" btree (keya, keyb)
 Distributed by: (keya)
 
--- succeed, nondeferrable unique constraint over nonullable cols
+-- succeed, oid unique index
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_oid_idx;
+-- succeed, nondeferrable unique constraint over nonnullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_nondefer;
 -- succeed unique index over nonnullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab_key;
@@ -125,6 +133,7 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb) REPLICA IDENTITY
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
@@ -173,12 +182,17 @@ Indexes:
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
     "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
     "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_oid_idx" UNIQUE, btree (oid)
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
     "test_replica_identity_keyab" btree (keya, keyb)
 Replica Identity: FULL
+<<<<<<< HEAD
 Distributed by: (keya)
+=======
+Has OIDs: yes
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;

@@ -696,10 +696,68 @@ SELECT cursor_to_xml('xc'::refcursor, 5, false, true, '');
  
 (1 row)
 
+<<<<<<< HEAD
 MOVE FIRST IN xc;
 ERROR:  backward scan is not supported in this version of Greenplum Database
 SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
 ERROR:  portal "xc" cannot be run
+=======
+SELECT cursor_to_xmlschema('xc'::refcursor, false, true, '');
+                                     cursor_to_xmlschema                                      
+----------------------------------------------------------------------------------------------
+ <xsd:schema                                                                                 +
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema">                                           +
+                                                                                             +
+ <xsd:simpleType name="INTEGER">                                                             +
+   <xsd:restriction base="xsd:int">                                                          +
+     <xsd:maxInclusive value="2147483647"/>                                                  +
+     <xsd:minInclusive value="-2147483648"/>                                                 +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:simpleType name="UDT.regression.pg_catalog.text">                                      +
+   <xsd:restriction base="xsd:string">                                                       +
+   </xsd:restriction>                                                                        +
+ </xsd:simpleType>                                                                           +
+                                                                                             +
+ <xsd:complexType name="RowType">                                                            +
+   <xsd:sequence>                                                                            +
+     <xsd:element name="a" type="INTEGER" minOccurs="0"></xsd:element>                       +
+     <xsd:element name="b" type="UDT.regression.pg_catalog.text" minOccurs="0"></xsd:element>+
+   </xsd:sequence>                                                                           +
+ </xsd:complexType>                                                                          +
+                                                                                             +
+ <xsd:element name="row" type="RowType"/>                                                    +
+                                                                                             +
+ </xsd:schema>
+(1 row)
+
+MOVE BACKWARD ALL IN xc;
+SELECT cursor_to_xml('xc'::refcursor, 5, true, false, '');
+                         cursor_to_xml                         
+---------------------------------------------------------------
+ <table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">+
+                                                              +
+ <row>                                                        +
+   <a>-1</a>                                                  +
+   <b xsi:nil="true"/>                                        +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>1</a>                                                   +
+   <b>one</b>                                                 +
+ </row>                                                       +
+                                                              +
+ <row>                                                        +
+   <a>2</a>                                                   +
+   <b>two</b>                                                 +
+ </row>                                                       +
+                                                              +
+ </table>                                                     +
+ 
+(1 row)
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 SELECT cursor_to_xmlschema('xc'::refcursor, true, false, '');
                                       cursor_to_xmlschema                                       
 ------------------------------------------------------------------------------------------------

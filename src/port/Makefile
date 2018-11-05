@@ -30,7 +30,11 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
+<<<<<<< HEAD
 OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chklocale.o dirmod.o erand48.o fls.o inet_net_ntop.o \
+=======
+OBJS = $(LIBOBJS) chklocale.o erand48.o fls.o inet_net_ntop.o \
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	noblock.o path.o pgcheckdir.o pg_crc.o pgmkdirp.o pgsleep.o \
 	pgstrcasecmp.o pqsignal.o \
 	qsort.o qsort_arg.o quotes.o sprompt.o tar.o thread.o
@@ -51,6 +55,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgport.a'
 
 libpgport.a: $(OBJS)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
@@ -65,6 +70,7 @@ pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_SSE42)
 #
 
 libpgport_srv.a: $(OBJS_SRV)
+	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
 # Because this uses its own compilation rule, it doesn't use the

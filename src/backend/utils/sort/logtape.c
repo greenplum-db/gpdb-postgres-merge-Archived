@@ -239,12 +239,16 @@ ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 			!ExecWorkFile_Write(lts->pfile, buffer, BLCKSZ))
 	{
 		ereport(ERROR,
-		/* XXX is it okay to assume errno is correct? */
 				(errcode_for_file_access(),
+<<<<<<< HEAD
 				 errmsg("could not write block " INT64_FORMAT  " of temporary file: %m",
 						blocknum),
 				 errhint("Perhaps out of disk space?")));
 	}
+=======
+				 errmsg("could not write block %ld of temporary file: %m",
+						blocknum)));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /*
@@ -261,7 +265,6 @@ ltsReadBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 			ExecWorkFile_Read(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
 	{
 		ereport(ERROR,
-		/* XXX is it okay to assume errno is correct? */
 				(errcode_for_file_access(),
 				 errmsg("could not read block " INT64_FORMAT  " of temporary file: %m",
 						blocknum)));

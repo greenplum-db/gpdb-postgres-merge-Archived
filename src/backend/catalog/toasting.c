@@ -260,12 +260,42 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	/*
 	 * Check to see whether the table actually needs a TOAST table.
-	 *
-	 * If an update-in-place toast relfilenode is specified, force toast file
-	 * creation even if it seems not to need one.
 	 */
+<<<<<<< HEAD
 	if (!needs_toast_table(rel) && !IsBinaryUpgrade)
 		return false;
+=======
+	if (!IsBinaryUpgrade)
+	{
+		/* Normal mode, normal check */
+		if (!needs_toast_table(rel))
+			return false;
+	}
+	else
+	{
+		/*
+		 * In binary-upgrade mode, create a TOAST table if and only if
+		 * pg_upgrade told us to (ie, a TOAST table OID has been provided).
+		 *
+		 * This indicates that the old cluster had a TOAST table for the
+		 * current table.  We must create a TOAST table to receive the old
+		 * TOAST file, even if the table seems not to need one.
+		 *
+		 * Contrariwise, if the old cluster did not have a TOAST table, we
+		 * should be able to get along without one even if the new version's
+		 * needs_toast_table rules suggest we should have one.  There is a lot
+		 * of daylight between where we will create a TOAST table and where
+		 * one is really necessary to avoid failures, so small cross-version
+		 * differences in the when-to-create heuristic shouldn't be a problem.
+		 * If we tried to create a TOAST table anyway, we would have the
+		 * problem that it might take up an OID that will conflict with some
+		 * old-cluster table we haven't seen yet.
+		 */
+		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
+			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
+			return false;
+	}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * If requested check lockmode is sufficient. This is a cross check in

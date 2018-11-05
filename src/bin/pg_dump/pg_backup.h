@@ -89,6 +89,9 @@ struct Archive
 	/* info needed for string escaping */
 	int			encoding;		/* libpq code for client_encoding */
 	bool		std_strings;	/* standard_conforming_strings */
+
+	/* other important stuff */
+	char	   *searchpath;		/* search_path to set during restore */
 	char	   *use_role;		/* Issue SET ROLE to this */
 
 	/* error handling */
@@ -138,7 +141,7 @@ typedef struct _restoreOptions
 	SimpleStringList tableNames;
 
 	int			useDB;
-	char	   *dbname;
+	char	   *dbname;			/* subject to expand_dbname */
 	char	   *pgport;
 	char	   *pghost;
 	char	   *username;
@@ -151,6 +154,7 @@ typedef struct _restoreOptions
 	bool		single_txn;
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
+	int			binary_upgrade;
 } RestoreOptions;
 
 typedef void (*SetupWorkerPtr) (Archive *AH, RestoreOptions *ropt);

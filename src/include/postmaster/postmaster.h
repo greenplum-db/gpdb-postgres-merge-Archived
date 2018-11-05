@@ -16,7 +16,7 @@
 /* GUC options */
 extern bool EnableSSL;
 extern int	ReservedBackends;
-extern int	PostPortNumber;
+extern PGDLLIMPORT int PostPortNumber;
 extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;
 extern char *Unix_socket_directories;
@@ -45,11 +45,15 @@ extern int	postmaster_alive_fds[2];
 #define POSTMASTER_FD_OWN		1		/* kept open by postmaster only */
 #endif
 
+<<<<<<< HEAD
 #define POSTMASTER_IN_STARTUP_MSG "the database system is starting up"
 #define POSTMASTER_IN_RECOVERY_MSG "the database system is in recovery mode"
 #define POSTMASTER_IN_RECOVERY_DETAIL_MSG "last replayed record at"
 
 extern const char *progname;
+=======
+extern PGDLLIMPORT const char *progname;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 extern void PostmasterMain(int argc, char *argv[]) __attribute__((noreturn));
 extern void ClosePostmasterPorts(bool am_syslogger);

@@ -25,10 +25,15 @@ LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses -lcurl -lssl
 
 
 # don't include subdirectory-path-dependent -I and -L switches
+<<<<<<< HEAD
 STD_CPPFLAGS := $(filter-out -I%,$(CPPFLAGS))
 STD_CFLAGS := $(filter-out -I%,$(CFLAGS))
 STD_LDFLAGS := $(filter-out -L%,$(LDFLAGS))
 STD_LIBS := $(filter-out -L%,$(LIBS))
+=======
+STD_CPPFLAGS := $(filter-out -I$(top_srcdir)/src/include -I$(top_builddir)/src/include,$(CPPFLAGS))
+STD_LDFLAGS := $(filter-out -L$(top_builddir)/src/common -L$(top_builddir)/src/port,$(LDFLAGS))
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 override CPPFLAGS += -DVAL_CONFIGURE="\"$(configure_args)\""
 override CPPFLAGS += -DVAL_CC="\"$(CC)\""

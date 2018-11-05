@@ -72,9 +72,13 @@ struct BufFile
 	ResourceOwner resowner;
 
 	int			nbytes;			/* total # of valid bytes in buffer */
+<<<<<<< HEAD
 	int64		maxoffset;		/* maximum offset that this file has reached, for disk usage */
 
 	char	   *buffer;			/* CDB: -> buffer */
+=======
+	PGAlignedBlock buffer;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 };
 
 static BufFile *makeBufFile(File firstfile);
@@ -251,12 +255,19 @@ BufFileLoadBuffer(BufFile *file, void* buffer, size_t bufsize)
 	/*
 	 * Read whatever we can get, up to a full bufferload.
 	 */
+<<<<<<< HEAD
 	nb = FileRead(file->file, buffer, (int)bufsize);
 	if (nb < 0)
 	{
 		elog(ERROR, "could not read from temporary file: %m");
 	}
 
+=======
+	file->nbytes = FileRead(thisfile, file->buffer.data, sizeof(file->buffer));
+	if (file->nbytes < 0)
+		file->nbytes = 0;
+	file->offsets[file->curFile] += file->nbytes;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	/* we choose not to advance curOffset here */
 
 	pgBufferUsage.temp_blks_read++;
@@ -304,8 +315,17 @@ BufFileDumpBuffer(BufFile *file, const void* buffer, Size nbytes)
 			}
 			elog(ERROR, "could not write %d bytes to temporary file: %m", (int)bytestowrite);
 		}
+<<<<<<< HEAD
 		file->offset += wrote;
 		wpos += wrote;
+=======
+		bytestowrite = FileWrite(thisfile, file->buffer.data + wpos, bytestowrite);
+		if (bytestowrite <= 0)
+			return;				/* failed to write */
+		file->offsets[file->curFile] += bytestowrite;
+		file->curOffset += bytestowrite;
+		wpos += bytestowrite;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		pgBufferUsage.temp_blks_written++;
 	}
@@ -379,7 +399,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 
 		Assert(nthistime > 0);
 
-		memcpy(ptr, file->buffer + file->pos, nthistime);
+		memcpy(ptr, file->buffer.data + file->pos, nthistime);
 
 		file->pos += nthistime;
 		ptr = (void *) ((char *) ptr + nthistime);
@@ -449,7 +469,7 @@ BufFileWrite(BufFile *file, const void *ptr, size_t size)
 			nthistime = size;
 		Assert(nthistime > 0);
 
-		memcpy(file->buffer + file->pos, ptr, nthistime);
+		memcpy(file->buffer.data + file->pos, ptr, nthistime);
 
 		file->dirty = true;
 		file->pos += (int) nthistime;

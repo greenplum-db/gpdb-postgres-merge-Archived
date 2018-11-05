@@ -52,6 +52,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 									 old_db->rel_arr.nrels);
 
 	/*
+<<<<<<< HEAD
 	 * Each of the RelInfo arrays should be sorted by OID.  Scan through them
 	 * and match them up.  If we fail to match everything, we'll abort, but
 	 * first print as much info as we can about mismatches.
@@ -113,6 +114,55 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			}
 			new_relnum++;
 			continue;
+=======
+	 * The old database shouldn't have more relations than the new one.
+	 * We force the new cluster to have a TOAST table if the old table
+	 * had one.
+	 */
+	if (old_db->rel_arr.nrels > new_db->rel_arr.nrels)
+		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
+				 old_db->db_name);
+
+	/* Drive the loop using new_relnum, which might be higher. */
+	for (old_relnum = new_relnum = 0; new_relnum < new_db->rel_arr.nrels;
+		 new_relnum++)
+	{
+		RelInfo    *old_rel;
+		RelInfo    *new_rel = &new_db->rel_arr.rels[new_relnum];
+
+		/*
+		 * It is possible that the new cluster has a TOAST table for a table
+		 * that didn't need one in the old cluster, e.g. 9.0 to 9.1 changed the
+		 * NUMERIC length computation.  Therefore, if we have a TOAST table
+		 * in the new cluster that doesn't match, skip over it and continue
+		 * processing.  It is possible this TOAST table used an OID that was
+		 * reserved in the old cluster, but we have no way of testing that,
+		 * and we would have already gotten an error at the new cluster schema
+		 * creation stage.  Fortunately, since we only restore the OID counter
+		 * after schema restore, and restore in OID order via pg_dump, a
+		 * conflict would only happen if the new TOAST table had a very low
+		 * OID.  However, TOAST tables created long after initial table
+		 * creation can have any OID, particularly after OID wraparound.
+		 */
+		if (old_relnum == old_db->rel_arr.nrels)
+		{
+			if (strcmp(new_rel->nspname, "pg_toast") == 0)
+				continue;
+			else
+				pg_fatal("Extra non-TOAST relation found in database \"%s\": new OID %d\n",
+						 old_db->db_name, new_rel->reloid);
+		}
+
+		old_rel = &old_db->rel_arr.rels[old_relnum];
+
+		if (old_rel->reloid != new_rel->reloid)
+		{
+			if (strcmp(new_rel->nspname, "pg_toast") == 0)
+				continue;
+			else
+				pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
+						 old_db->db_name, old_rel->reloid, new_rel->reloid);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 
 		/*
@@ -168,11 +218,19 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 								old_rel, new_rel, maps + num_maps);
 		num_maps++;
 		old_relnum++;
+<<<<<<< HEAD
 		new_relnum++;
 	}
 
 	if (!all_matched)
 		pg_fatal("Failed to match up old and new tables in database \"%s\"\n",
+=======
+	}
+
+	/* Did we fail to exhaust the old array? */
+	if (old_relnum != old_db->rel_arr.nrels)
+		pg_fatal("old and new databases \"%s\" have a mismatched number of relations\n",
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				 old_db->db_name);
 
 	*nmaps = num_maps;
@@ -518,7 +576,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	}
 
 	/*
-	 * pg_largeobject contains user data that does not appear in pg_dumpall
+	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * --schema-only output, so we have to copy that system table heap and
 	 * index.  We could grab the pg_largeobject oids from template1, but it is
 	 * easy to treat it as a normal table. Order by oid so we can join old/new

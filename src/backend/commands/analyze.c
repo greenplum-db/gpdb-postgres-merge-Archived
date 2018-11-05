@@ -135,8 +135,13 @@ static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+<<<<<<< HEAD
 			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
 			   bool inh, int elevel);
+=======
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, bool in_outer_xact, int elevel);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -174,7 +179,8 @@ static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **att
  *	analyze_rel() -- analyze one relation
  */
 void
-analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
+analyze_rel(Oid relid, VacuumStmt *vacstmt,
+			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
 	bool		optimizerBackup;
 
@@ -382,15 +388,21 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
+<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
 		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
+=======
+	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+				   false, in_outer_xact, elevel);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, true, elevel);
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+					   true, in_outer_xact, elevel);
 
 	/* MPP-6929: metadata tracking */
 	if (!vacuumStatement_IsTemporary(onerel) && (Gp_role == GP_ROLE_DISPATCH))
@@ -435,8 +447,13 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
  */
 static void
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+<<<<<<< HEAD
 			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
 			   bool inh, int elevel)
+=======
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, bool in_outer_xact, int elevel)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	int			attr_cnt,
 				tcnt,
@@ -504,10 +521,14 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	/*
 	 * Determine which columns to analyze
 	 *
-	 * Note that system attributes are never analyzed.
+	 * Note that system attributes are never analyzed, so we just reject them
+	 * at the lookup stage.  We also reject duplicate column mentions.  (We
+	 * could alternatively ignore duplicates, but analyzing a column twice
+	 * won't work; we'd end up making a conflicting update in pg_statistic.)
 	 */
 	if (vacstmt->va_cols != NIL)
 	{
+		Bitmapset  *unique_cols = NULL;
 		ListCell   *le;
 
 		vacattrstats = (VacAttrStats **) palloc(list_length(vacstmt->va_cols) *
@@ -523,6 +544,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 					errmsg("column \"%s\" of relation \"%s\" does not exist",
 						   col, RelationGetRelationName(onerel))));
+			if (bms_is_member(i, unique_cols))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" appears more than once",
+								col, RelationGetRelationName(onerel))));
+			unique_cols = bms_add_member(unique_cols, i);
+
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -878,6 +906,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+<<<<<<< HEAD
 							false /* isvacuum */);
 	else
 	{
@@ -890,6 +919,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							InvalidMultiXactId,
 							false /* isvacuum */);
 	}
+=======
+							in_outer_xact);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -935,17 +967,24 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
+<<<<<<< HEAD
 								false /* isvacuum */);
+=======
+								in_outer_xact);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 	}
 
 	/*
 	 * Report ANALYZE to the stats collector, too.  However, if doing
 	 * inherited stats we shouldn't report, because the stats collector only
-	 * tracks per-table stats.
+	 * tracks per-table stats.  Reset the changes_since_analyze counter only
+	 * if we analyzed all columns; otherwise, there is still work for
+	 * auto-analyze to do.
 	 */
 	if (!inh)
-		pgstat_report_analyze(onerel, totalrows, totaldeadrows);
+		pgstat_report_analyze(onerel, totalrows, totaldeadrows,
+							  (vacstmt->va_cols == NIL));
 
 	/* If this isn't part of VACUUM ANALYZE, let index AMs do cleanup */
 	if (!(vacstmt->options & VACOPT_VACUUM))
@@ -1067,6 +1106,8 @@ compute_index_stats(Relation onerel, double totalrows,
 		for (rowno = 0; rowno < numrows; rowno++)
 		{
 			HeapTuple	heapTuple = rows[rowno];
+
+			vacuum_delay_point();
 
 			/*
 			 * Reset the per-tuple context each time, to reclaim any cruft
@@ -1623,19 +1664,22 @@ acquire_sample_rows(Relation onerel, int elevel,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total numbers of rows in relation.  For live rows, use
-	 * vac_estimate_reltuples; for dead rows, we have no source of old
-	 * information, so we have to assume the density is the same in unseen
-	 * pages as in the pages we scanned.
+	 * Estimate total numbers of live and dead rows in relation, extrapolating
+	 * on the assumption that the average tuple density in pages we didn't
+	 * scan is the same as in the pages we did scan.  Since what we scanned is
+	 * a random sample of the pages in the relation, this should be a good
+	 * assumption.
 	 */
-	*totalrows = vac_estimate_reltuples(onerel, true,
-										totalblocks,
-										bs.m,
-										liverows);
 	if (bs.m > 0)
+	{
+		*totalrows = floor((liverows / bs.m) * totalblocks + 0.5);
 		*totaldeadrows = floor((deadrows / bs.m) * totalblocks + 0.5);
+	}
 	else
+	{
+		*totalrows = 0.0;
 		*totaldeadrows = 0.0;
+	}
 
 	/*
 	 * Emit some interesting relation info
@@ -2979,8 +3023,11 @@ compute_minimal_stats(VacAttrStatsP stats,
 
 		if (nmultiple == 0)
 		{
-			/* If we found no repeated values, assume it's a unique column */
-			stats->stadistinct = -1.0;
+			/*
+			 * If we found no repeated non-null values, assume it's a unique
+			 * column; but be sure to discount for any nulls we found.
+			 */
+			stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 		}
 		else if (track_cnt < track_max && toowide_cnt == 0 &&
 				 nmultiple == track_cnt)
@@ -3431,8 +3478,11 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 		if (nmultiple == 0)
 		{
-			/* If we found no repeated values, assume it's a unique column */
-			stats->stadistinct = -1.0;
+			/*
+			 * If we found no repeated non-null values, assume it's a unique
+			 * column; but be sure to discount for any nulls we found.
+			 */
+			stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 		}
 		else if (toowide_cnt == 0 && nmultiple == ndistinct)
 		{
@@ -3757,7 +3807,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 		else
 			stats->stawidth = stats->attrtype->typlen;
 		/* Assume all too-wide values are distinct, so it's a unique column */
-		stats->stadistinct = -1.0;
+		stats->stadistinct = -1.0 * (1.0 - stats->stanullfrac);
 	}
 	else if (null_cnt > 0)
 	{

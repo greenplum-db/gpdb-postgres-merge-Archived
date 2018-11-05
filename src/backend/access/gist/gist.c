@@ -558,7 +558,12 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		}
 
 		stack->page = (Page) BufferGetPage(stack->buffer);
+<<<<<<< HEAD
 		stack->lsn = BufferGetLSNAtomic(stack->buffer);
+=======
+		stack->lsn = xlocked ?
+			PageGetLSN(stack->page) : BufferGetLSNAtomic(stack->buffer);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
 
 		/*
@@ -1264,6 +1269,23 @@ gistSplit(Relation r,
 	GistSplitVector v;
 	int			i;
 	SplitedPageLayout *res = NULL;
+
+	/* this should never recurse very deeply, but better safe than sorry */
+	check_stack_depth();
+
+	/* there's no point in splitting an empty page */
+	Assert(len > 0);
+
+	/*
+	 * If a single tuple doesn't fit on a page, no amount of splitting will
+	 * help.
+	 */
+	if (len == 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   IndexTupleSize(itup[0]), GiSTPageSize,
+				   RelationGetRelationName(r))));
 
 	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 	memset(v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);

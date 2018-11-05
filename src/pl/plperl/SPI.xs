@@ -9,16 +9,17 @@
 
 /* this must be first: */
 #include "postgres.h"
-#include "mb/pg_wchar.h"       /* for GetDatabaseEncoding */
 
 /* Defined by Perl */
 #undef _
 
 /* perl stuff */
+#define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
 #include "plperl_helpers.h"
 
 
+<<<<<<< HEAD
 /*
  * Interface routine to catch ereports and punt them to Perl
  */
@@ -47,6 +48,8 @@ do_plperl_return_next(SV *sv)
 }
 
 
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 MODULE = PostgreSQL::InServer::SPI PREFIX = spi_
 
 PROTOTYPES: ENABLE
@@ -76,7 +79,7 @@ void
 spi_return_next(rv)
 	SV *rv;
 	CODE:
-		do_plperl_return_next(rv);
+		plperl_return_next(rv);
 
 SV *
 spi_spi_query(sv)

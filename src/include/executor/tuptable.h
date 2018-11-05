@@ -428,8 +428,18 @@ ExecCopyGenericTuple(TupleTableSlot *slot)
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot);
 
+<<<<<<< HEAD
 extern void ExecModifyMemTuple(TupleTableSlot *slot, Datum *values, bool *isnull, bool *doRepl);
 
 #endif /* !FRONTEND */
+=======
+/* in access/common/heaptuple.c */
+extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
+extern void slot_getallattrs(TupleTableSlot *slot);
+extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
+extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
+extern bool slot_getsysattr(TupleTableSlot *slot, int attnum,
+				Datum *value, bool *isnull);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 #endif   /* TUPTABLE_H */

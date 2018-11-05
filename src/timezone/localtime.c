@@ -1,3 +1,5 @@
+/* Convert timestamp from pg_time_t to struct pg_tm.  */
+
 /*
  * This file is in the public domain, so clarified as of
  * 1996-06-05 by Arthur David Olson.
@@ -26,15 +28,15 @@
 #ifndef WILDABBR
 /*
  * Someone might make incorrect use of a time zone abbreviation:
- *	1.  They might reference tzname[0] before calling tzset (explicitly
+ *	1.	They might reference tzname[0] before calling tzset (explicitly
  *		or implicitly).
- *	2.  They might reference tzname[1] before calling tzset (explicitly
+ *	2.	They might reference tzname[1] before calling tzset (explicitly
  *		or implicitly).
- *	3.  They might reference tzname[1] after setting to a time zone
+ *	3.	They might reference tzname[1] after setting to a time zone
  *		in which Daylight Saving Time is never observed.
- *	4.  They might reference tzname[0] after setting to a time zone
+ *	4.	They might reference tzname[0] after setting to a time zone
  *		in which Standard Time is never observed.
- *	5.  They might reference tm.TM_ZONE after calling offtime.
+ *	5.	They might reference tm.TM_ZONE after calling offtime.
  * What's best to do in the above cases is open to debate;
  * for now, we just set things up so that in any of the five cases
  * WILDABBR is used. Another possibility: initialize tzname[0] to the
@@ -54,7 +56,11 @@ static const char gmt[] = "GMT";
  * PG: We cache the result of trying to load the TZDEFRULES zone here.
  * tzdefrules_loaded is 0 if not tried yet, +1 if good, -1 if failed.
  */
+<<<<<<< HEAD
 static struct state tzdefrules_s;
+=======
+static struct state *tzdefrules_s = NULL;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static int	tzdefrules_loaded = 0;
 
 /*
@@ -117,7 +123,11 @@ init_ttinfo(struct ttinfo *s, int32 gmtoff, bool isdst, int abbrind)
 }
 
 static int32
+<<<<<<< HEAD
 detzcode(const char *codep)
+=======
+detzcode(const char *const codep)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	int32		result;
 	int			i;
@@ -143,7 +153,11 @@ detzcode(const char *codep)
 }
 
 static int64
+<<<<<<< HEAD
 detzcode64(const char *codep)
+=======
+detzcode64(const char *const codep)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	uint64		result;
 	int			i;
@@ -151,11 +165,19 @@ detzcode64(const char *codep)
 	int64		halfmaxval = one << (64 - 2);
 	int64		maxval = halfmaxval - 1 + halfmaxval;
 	int64		minval = -TWOS_COMPLEMENT(int64) -maxval;
+<<<<<<< HEAD
 
 	result = codep[0] & 0x7f;
 	for (i = 1; i < 8; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
 
+=======
+
+	result = codep[0] & 0x7f;
+	for (i = 1; i < 8; ++i)
+		result = (result << 8) | (codep[i] & 0xff);
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (codep[0] & 0x80)
 	{
 		/*
@@ -258,8 +280,18 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		int32		charcnt = detzcode(up->tzhead.tzh_charcnt);
 		char const *p = up->buf + tzheadsize;
 
+<<<<<<< HEAD
 		if (!(0 <= leapcnt && leapcnt < TZ_MAX_LEAPS
 			  && 0 < typecnt && typecnt < TZ_MAX_TYPES
+=======
+		/*
+		 * Although tzfile(5) currently requires typecnt to be nonzero,
+		 * support future formats that may allow zero typecnt in files that
+		 * have a TZ string and no transitions.
+		 */
+		if (!(0 <= leapcnt && leapcnt < TZ_MAX_LEAPS
+			  && 0 <= typecnt && typecnt < TZ_MAX_TYPES
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			  && 0 <= timecnt && timecnt < TZ_MAX_TIMES
 			  && 0 <= charcnt && charcnt < TZ_MAX_CHARS
 			  && (ttisstdcnt == typecnt || ttisstdcnt == 0)
@@ -416,8 +448,12 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		struct state *ts = &lsp->u.st;
 
 		up->buf[nread - 1] = '\0';
+<<<<<<< HEAD
 		if (tzparse(&up->buf[1], ts, false)
 			&& ts->typecnt == 2)
+=======
+		if (tzparse(&up->buf[1], ts, false))
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{
 			/*
 			 * Attempt to reuse existing abbreviations. Without this,
@@ -430,7 +466,11 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			int			gotabbr = 0;
 			int			charcnt = sp->charcnt;
 
+<<<<<<< HEAD
 			for (i = 0; i < 2; i++)
+=======
+			for (i = 0; i < ts->typecnt; i++)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			{
 				char	   *tsabbr = ts->chars + ts->ttis[i].tt_abbrind;
 				int			j;
@@ -455,7 +495,11 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 					}
 				}
 			}
+<<<<<<< HEAD
 			if (gotabbr == 2)
+=======
+			if (gotabbr == ts->typecnt)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			{
 				sp->charcnt = charcnt;
 
@@ -470,7 +514,12 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 					sp->timecnt--;
 
 				for (i = 0; i < ts->timecnt; i++)
+<<<<<<< HEAD
 					if (sp->ats[sp->timecnt - 1] < ts->ats[i])
+=======
+					if (sp->timecnt == 0
+						|| sp->ats[sp->timecnt - 1] < ts->ats[i])
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 						break;
 				while (i < ts->timecnt
 					   && sp->timecnt < TZ_MAX_TIMES)
@@ -481,11 +530,18 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 					sp->timecnt++;
 					i++;
 				}
+<<<<<<< HEAD
 				sp->ttis[sp->typecnt++] = ts->ttis[0];
 				sp->ttis[sp->typecnt++] = ts->ttis[1];
+=======
+				for (i = 0; i < ts->typecnt; i++)
+					sp->ttis[sp->typecnt++] = ts->ttis[i];
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			}
 		}
 	}
+	if (sp->typecnt == 0)
+		return EINVAL;
 	if (sp->timecnt > 1)
 	{
 		for (i = 1; i < sp->timecnt; ++i)
@@ -507,6 +563,21 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	}
 
 	/*
+<<<<<<< HEAD
+=======
+	 * Infer sp->defaulttype from the data.  Although this default type is
+	 * always zero for data from recent tzdb releases, things are trickier for
+	 * data from tzdb 2018e or earlier.
+	 *
+	 * The first set of heuristics work around bugs in 32-bit data generated
+	 * by tzdb 2013c or earlier.  The workaround is for zones like
+	 * Australia/Macquarie where timestamps before the first transition have a
+	 * time type that is not the earliest standard-time type.  See:
+	 * https://mm.icann.org/pipermail/tz/2013-May/019368.html
+	 */
+
+	/*
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * If type 0 is unused in transitions, it's the type to use for early
 	 * times.
 	 */
@@ -529,6 +600,14 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	}
 
 	/*
+<<<<<<< HEAD
+=======
+	 * The next heuristics are for data generated by tzdb 2018e or earlier,
+	 * for zones like EST5EDT where the first transition is to DST.
+	 */
+
+	/*
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * If no result yet, find the first standard type. If there is none, punt
 	 * to type zero.
 	 */
@@ -542,7 +621,18 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 				break;
 			}
 	}
+<<<<<<< HEAD
 	sp->defaulttype = i;
+=======
+
+	/*
+	 * A simple 'sp->defaulttype = 0;' would suffice here if we didn't have to
+	 * worry about 2018e-or-earlier data.  Even simpler would be to remove the
+	 * defaulttype member and just use 0 in its place.
+	 */
+	sp->defaulttype = i;
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return 0;
 }
 
@@ -601,10 +691,11 @@ static const int year_lengths[2] = {
 };
 
 /*
- * Given a pointer into a time zone string, scan until a character that is not
- * a valid character in a zone name is found. Return a pointer to that
- * character.
+ * Given a pointer into a timezone string, scan until a character that is not
+ * a valid character in a time zone abbreviation is found.
+ * Return a pointer to that character.
  */
+
 static const char *
 getzname(const char *strp)
 {
@@ -617,15 +708,17 @@ getzname(const char *strp)
 }
 
 /*
- * Given a pointer into an extended time zone string, scan until the ending
- * delimiter of the zone name is located. Return a pointer to the delimiter.
+ * Given a pointer into an extended timezone string, scan until the ending
+ * delimiter of the time zone abbreviation is located.
+ * Return a pointer to the delimiter.
  *
  * As with getzname above, the legal character set is actually quite
  * restricted, with other characters producing undefined results.
  * We don't do any checking here; checking is done later in common-case code.
  */
+
 static const char *
-getqzname(const char *strp, int delim)
+getqzname(const char *strp, const int delim)
 {
 	int			c;
 
@@ -635,13 +728,14 @@ getqzname(const char *strp, int delim)
 }
 
 /*
- * Given a pointer into a time zone string, extract a number from that string.
+ * Given a pointer into a timezone string, extract a number from that string.
  * Check that the number is within a specified range; if it is not, return
  * NULL.
  * Otherwise, return a pointer to the first character not part of the number.
  */
+
 static const char *
-getnum(const char *strp, int *nump, int min, int max)
+getnum(const char *strp, int *const nump, const int min, const int max)
 {
 	char		c;
 	int			num;
@@ -663,14 +757,19 @@ getnum(const char *strp, int *nump, int min, int max)
 }
 
 /*
- * Given a pointer into a time zone string, extract a number of seconds,
+ * Given a pointer into a timezone string, extract a number of seconds,
  * in hh[:mm[:ss]] form, from the string.
  * If any error occurs, return NULL.
  * Otherwise, return a pointer to the first character not part of the number
  * of seconds.
  */
+
 static const char *
+<<<<<<< HEAD
 getsecs(const char *strp, int32 *secsp)
+=======
+getsecs(const char *strp, int32 *const secsp)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	int			num;
 
@@ -704,13 +803,18 @@ getsecs(const char *strp, int32 *secsp)
 }
 
 /*
- * Given a pointer into a time zone string, extract an offset, in
+ * Given a pointer into a timezone string, extract an offset, in
  * [+-]hh[:mm[:ss]] form, from the string.
  * If any error occurs, return NULL.
  * Otherwise, return a pointer to the first character not part of the time.
  */
+
 static const char *
+<<<<<<< HEAD
 getoffset(const char *strp, int32 *offsetp)
+=======
+getoffset(const char *strp, int32 *const offsetp)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	bool		neg = false;
 
@@ -730,13 +834,18 @@ getoffset(const char *strp, int32 *offsetp)
 }
 
 /*
- * Given a pointer into a time zone string, extract a rule in the form
+ * Given a pointer into a timezone string, extract a rule in the form
  * date[/time]. See POSIX section 8 for the format of "date" and "time".
  * If a valid rule is not found, return NULL.
  * Otherwise, return a pointer to the first character not part of the rule.
  */
+
 static const char *
+<<<<<<< HEAD
 getrule(const char *strp, struct rule *rulep)
+=======
+getrule(const char *strp, struct rule *const rulep)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	if (*strp == 'J')
 	{
@@ -795,9 +904,16 @@ getrule(const char *strp, struct rule *rulep)
  * Given a year, a rule, and the offset from UT at the time that rule takes
  * effect, calculate the year-relative time that rule takes effect.
  */
+<<<<<<< HEAD
 static int32
 transtime(int year, const struct rule *rulep,
 		  int32 offset)
+=======
+
+static int32
+transtime(const int year, const struct rule *const rulep,
+		  const int32 offset)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	bool		leapyear;
 	int32		value;
@@ -908,6 +1024,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 	stdname = name;
 	if (lastditch)
 	{
+<<<<<<< HEAD
 		/*
 		 * This is intentionally somewhat different from the IANA code.  We do
 		 * not want to invoke tzload() in the lastditch case: we can't assume
@@ -922,6 +1039,12 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		stdoffset = 0;
 		sp->goback = sp->goahead = false;	/* simulate failed tzload() */
 		load_ok = false;
+=======
+		/* Unlike IANA, don't assume name is exactly "GMT" */
+		stdlen = strlen(name);	/* length of standard zone name */
+		name += stdlen;
+		stdoffset = 0;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 	else
 	{
@@ -945,6 +1068,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return false;
+<<<<<<< HEAD
 		charcnt = stdlen + 1;
 		if (sizeof sp->chars < charcnt)
 			return false;
@@ -966,6 +1090,25 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 	}
 	if (!load_ok)
 		sp->leapcnt = 0;		/* so, we're off a little */
+=======
+	}
+	charcnt = stdlen + 1;
+	if (sizeof sp->chars < charcnt)
+		return false;
+
+	/*
+	 * The IANA code always tries tzload(TZDEFRULES) here.  We do not want to
+	 * do that; it would be bad news in the lastditch case, where we can't
+	 * assume pg_open_tzfile() is sane yet.  Moreover, the only reason to do
+	 * it unconditionally is to absorb the TZDEFRULES zone's leap second info,
+	 * which we don't want to do anyway.  Without that, we only need to load
+	 * TZDEFRULES if the zone name specifies DST but doesn't incorporate a
+	 * POSIX-style transition date rule, which is not a common case.
+	 */
+	sp->goback = sp->goahead = false;	/* simulate failed tzload() */
+	sp->leapcnt = 0;			/* intentionally assume no leap seconds */
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (*name != '\0')
 	{
 		if (*name == '<')
@@ -981,7 +1124,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		{
 			dstname = name;
 			name = getzname(name);
-			dstlen = name - dstname;	/* length of DST zone name */
+			dstlen = name - dstname;	/* length of DST abbr. */
 		}
 		if (!dstlen)
 			return false;
@@ -996,8 +1139,43 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		}
 		else
 			dstoffset = stdoffset - SECSPERHOUR;
+<<<<<<< HEAD
 		if (*name == '\0' && !load_ok)
 			name = TZDEFRULESTRING;
+=======
+		if (*name == '\0')
+		{
+			/*
+			 * The POSIX zone name does not provide a transition-date rule.
+			 * Here we must load the TZDEFRULES zone, if possible, to serve as
+			 * source data for the transition dates.  Unlike the IANA code, we
+			 * try to cache the data so it's only loaded once.
+			 */
+			if (tzdefrules_loaded == 0)
+			{
+				/* Allocate on first use */
+				if (tzdefrules_s == NULL)
+					tzdefrules_s = (struct state *) malloc(sizeof(struct state));
+				if (tzdefrules_s != NULL)
+				{
+					if (tzload(TZDEFRULES, NULL, tzdefrules_s, false) == 0)
+						tzdefrules_loaded = 1;
+					else
+						tzdefrules_loaded = -1;
+					/* In any case, we ignore leap-second data from the file */
+					tzdefrules_s->leapcnt = 0;
+				}
+			}
+			load_ok = (tzdefrules_loaded > 0);
+			if (load_ok)
+				memcpy(sp, tzdefrules_s, sizeof(struct state));
+			else
+			{
+				/* If we can't load TZDEFRULES, fall back to hard-wired rule */
+				name = TZDEFRULESTRING;
+			}
+		}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		if (*name == ',' || *name == ';')
 		{
 			struct rule start;
@@ -1023,8 +1201,13 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			/*
 			 * Two transitions per year, from EPOCH_YEAR forward.
 			 */
+<<<<<<< HEAD
 			init_ttinfo(&sp->ttis[0], -dstoffset, true, stdlen + 1);
 			init_ttinfo(&sp->ttis[1], -stdoffset, false, 0);
+=======
+			init_ttinfo(&sp->ttis[0], -stdoffset, false, 0);
+			init_ttinfo(&sp->ttis[1], -dstoffset, true, stdlen + 1);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			sp->defaulttype = 0;
 			timecnt = 0;
 			janfirst = 0;
@@ -1073,28 +1256,48 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 					if (!increment_overflow_time
 						(&sp->ats[timecnt],
 						 janoffset + starttime))
+<<<<<<< HEAD
 						sp->types[timecnt++] = reversed;
 					else if (janoffset)
 						sp->defaulttype = reversed;
+=======
+						sp->types[timecnt++] = !reversed;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					sp->ats[timecnt] = janfirst;
 					if (!increment_overflow_time
 						(&sp->ats[timecnt],
 						 janoffset + endtime))
 					{
+<<<<<<< HEAD
 						sp->types[timecnt++] = !reversed;
 						yearlim = year + YEARSPERREPEAT + 1;
 					}
 					else if (janoffset)
 						sp->defaulttype = !reversed;
+=======
+						sp->types[timecnt++] = reversed;
+						yearlim = year + YEARSPERREPEAT + 1;
+					}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				}
 				if (increment_overflow_time
 					(&janfirst, janoffset + yearsecs))
 					break;
 				janoffset = 0;
+<<<<<<< HEAD
 			}
 			sp->timecnt = timecnt;
 			if (!timecnt)
 				sp->typecnt = 1;	/* Perpetual DST.  */
+=======
+			}
+			sp->timecnt = timecnt;
+			if (!timecnt)
+			{
+				sp->ttis[0] = sp->ttis[1];
+				sp->typecnt = 1;	/* Perpetual DST.  */
+			}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			else if (YEARSPERREPEAT < year - yearbeg)
 				sp->goback = sp->goahead = true;
 		}
@@ -1163,7 +1366,6 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 					 * otherwise, add the standard time offset to the
 					 * transition time.
 					 */
-
 					/*
 					 * Transitions from DST to DDST will effectively disappear
 					 * since POSIX provides for only one DST offset.
@@ -1217,7 +1419,11 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 }
 
 static void
+<<<<<<< HEAD
 gmtload(struct state *sp)
+=======
+gmtload(struct state *const sp)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	if (tzload(gmt, NULL, sp, true) != 0)
 		tzparse(gmt, sp, true);
@@ -1232,7 +1438,11 @@ gmtload(struct state *sp)
  */
 static struct pg_tm *
 localsub(struct state const *sp, pg_time_t const *timep,
+<<<<<<< HEAD
 		 struct pg_tm *tmp)
+=======
+		 struct pg_tm *const tmp)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	const struct ttinfo *ttisp;
 	int			i;
@@ -1300,6 +1510,11 @@ localsub(struct state const *sp, pg_time_t const *timep,
 	}
 	ttisp = &sp->ttis[i];
 
+	/*
+	 * To get (wrong) behavior that's compatible with System V Release 2.0
+	 * you'd replace the statement below with t += ttisp->tt_gmtoff;
+	 * timesub(&t, 0L, sp, tmp);
+	 */
 	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	if (result)
 	{
@@ -1322,12 +1537,19 @@ pg_localtime(const pg_time_t *timep, const pg_tz *tz)
  *
  * Except we have a private "struct state" for GMT, so no sp is passed in.
  */
+
 static struct pg_tm *
+<<<<<<< HEAD
 gmtsub(pg_time_t const *timep, int32 offset, struct pg_tm *tmp)
+=======
+gmtsub(pg_time_t const *timep, int32 offset,
+	   struct pg_tm *tmp)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	struct pg_tm *result;
 
 	/* GMT timezone state data is kept here */
+<<<<<<< HEAD
 	static struct state gmtmem;
 	static bool gmt_is_set = false;
 #define gmtptr		(&gmtmem)
@@ -1335,8 +1557,19 @@ gmtsub(pg_time_t const *timep, int32 offset, struct pg_tm *tmp)
 	if (!gmt_is_set)
 	{
 		gmt_is_set = true;
+=======
+	static struct state *gmtptr = NULL;
+
+	if (gmtptr == NULL)
+	{
+		/* Allocate on first use */
+		gmtptr = (struct state *) malloc(sizeof(struct state));
+		if (gmtptr == NULL)
+			return NULL;		/* errno should be set by malloc */
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		gmtload(gmtptr);
 	}
+
 	result = timesub(timep, offset, gmtptr, tmp);
 
 	/*
@@ -1361,6 +1594,13 @@ pg_gmtime(const pg_time_t *timep)
  * Return the number of leap years through the end of the given year
  * where, to make the math easy, the answer for year zero is defined as zero.
  */
+
+static int
+leaps_thru_end_of_nonneg(int y)
+{
+	return y / 4 - y / 100 + y / 400;
+}
+
 static int
 leaps_thru_end_of_nonneg(int y)
 {

@@ -45,11 +45,13 @@ else
 PTHREAD_LIBS=-lpthread
 endif
 
-SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
+SHLIB_LINK_INTERNAL = -L../pgtypeslib -lpgtypes $(libpq)
+SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)
 SHLIB_PREREQS = submake-libpq submake-pgtypeslib
 
 SHLIB_EXPORTS = exports.txt
 
+<<<<<<< HEAD
 SHLIB_EXPORTS = exports.txt
 
 ifeq ($(PORTNAME), win32)
@@ -57,6 +59,8 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder
 endif
 
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 PKG_CONFIG_REQUIRES_PRIVATE = libpq libpgtypes
 
 all: all-lib

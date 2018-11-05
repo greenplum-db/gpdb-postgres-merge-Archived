@@ -145,6 +145,7 @@ select 100 @< 4;
  f
 (1 row)
 
+<<<<<<< HEAD
 select * from T_pkey1 order by key1 using @<, key2;
  key1 | key2 | txt 
 ------+------+-----
@@ -154,6 +155,27 @@ select * from T_pkey2 order by key1 using @<, key2;
  key1 | key2 | txt 
 ------+------+-----
 (0 rows)
+=======
+select * from T_pkey1 order by key1 using @<, key2 collate "C";
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | should work                             
+    1 | key1-1               | test key                                
+    1 | key1-2               | test key                                
+    1 | key1-3               | test key                                
+    2 | key2-3               | test key                                
+    2 | key2-9               | test key                                
+(6 rows)
+
+select * from T_pkey2 order by key1 using @<, key2 collate "C";
+ key1 |         key2         |                   txt                    
+------+----------------------+------------------------------------------
+    1 | KEY1-3               | test key                                
+    1 | KEY1-9               | test key                                
+    2 | KEY2-3               | test key                                
+    2 | KEY2-9               | test key                                
+(4 rows)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 -- show dump of trigger data
 insert into trigger_test values(1,'insert');

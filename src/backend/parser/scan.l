@@ -39,6 +39,7 @@
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
 }
+<<<<<<< HEAD
 
 %{
 #define unify_version(a,b,c) ((a<<16)+(b<<8)+c)
@@ -55,8 +56,10 @@ int base_yyget_debug  (void);
 void base_yyset_debug (int  bdebug );
 int base_yylex_destroy  (void);
 #endif
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
-
+%{
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
@@ -860,20 +863,33 @@ other			.
 					 * to forbid operator names like '?-' that could not be
 					 * sequences of SQL operators.
 					 */
-					while (nchars > 1 &&
-						   (yytext[nchars-1] == '+' ||
-							yytext[nchars-1] == '-'))
+					if (nchars > 1 &&
+						(yytext[nchars - 1] == '+' ||
+						 yytext[nchars - 1] == '-'))
 					{
 						int		ic;
 
-						for (ic = nchars-2; ic >= 0; ic--)
+						for (ic = nchars - 2; ic >= 0; ic--)
 						{
-							if (strchr("~!@#^&|`?%", yytext[ic]))
+							char c = yytext[ic];
+							if (c == '~' || c == '!' || c == '@' ||
+								c == '#' || c == '^' || c == '&' ||
+								c == '|' || c == '`' || c == '?' ||
+								c == '%')
 								break;
 						}
-						if (ic >= 0)
-							break; /* found a char that makes it OK */
-						nchars--; /* else remove the +/-, and check again */
+						if (ic < 0)
+						{
+							/*
+							 * didn't find a qualifying character, so remove
+							 * all trailing [+-]
+							 */
+							do {
+								nchars--;
+							} while (nchars > 1 &&
+								 (yytext[nchars - 1] == '+' ||
+								  yytext[nchars - 1] == '-'));
+						}
 					}
 
 					SET_YYLLOC();
@@ -1411,7 +1427,15 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 		}
 	}
 
+	/* unfinished surrogate pair? */
+	if (pair_first)
+	{
+		ADVANCE_YYLLOC(in - litbuf + 3);				/* 3 for U&" */
+		yyerror("invalid Unicode surrogate pair");
+	}
+
 	*out = '\0';
+
 	/*
 	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
 	 * codes; but it's probably not worth the trouble, since this isn't

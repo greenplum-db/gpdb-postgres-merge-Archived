@@ -279,6 +279,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			ipd = ginReadTuple(btree->ginstate, scanEntry->attnum, itup, &nipd);
 			tbm_add_tuples(scanEntry->matchBitmap, ipd, nipd, false);
 			scanEntry->predictNumberResult += GinGetNPosting(itup);
+			pfree(ipd);
 		}
 
 		/*
@@ -542,19 +543,30 @@ startScan(IndexScanDesc scan)
 		 * supposition isn't true), that total result will not more than
 		 * minimal predictNumberResult.
 		 */
+		bool		reduce = true;
 
 		for (i = 0; i < so->totalentries; i++)
+		{
 			if (so->entries[i]->predictNumberResult <= so->totalentries * GinFuzzySearchLimit)
-				return;
-
-		for (i = 0; i < so->totalentries; i++)
-			if (so->entries[i]->predictNumberResult > so->totalentries * GinFuzzySearchLimit)
+			{
+				reduce = false;
+				break;
+			}
+		}
+		if (reduce)
+		{
+			for (i = 0; i < so->totalentries; i++)
 			{
 				so->entries[i]->predictNumberResult /= so->totalentries;
 				so->entries[i]->reduceResult = TRUE;
 			}
+		}
 	}
 
+	/*
+	 * Now that we have the estimates for the entry frequencies, finish
+	 * initializing the scan keys.
+	 */
 	for (i = 0; i < so->nkeys; i++)
 		startScanKey(ginstate, so, so->keys + i);
 }
@@ -1758,15 +1770,19 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 }
 
 
-#define GinIsNewKey(s)		( ((GinScanOpaque) scan->opaque)->keys == NULL )
 #define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes )
 
 Datum
 gingetbitmap(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+<<<<<<< HEAD
 	Node 	   *n = (Node *) PG_GETARG_POINTER(1);
 	TIDBitmap  *tbm;
+=======
+	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
+	GinScanOpaque so = (GinScanOpaque) scan->opaque;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	int64		ntids;
 	ItemPointerData iptr;
 	bool		recheck;
@@ -1782,8 +1798,8 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	/*
 	 * Set up the scan keys, and check for unsatisfiable query.
 	 */
-	if (GinIsNewKey(scan))
-		ginNewScanKey(scan);
+	ginFreeScanKeys(so); /* there should be no keys yet, but just to be sure */
+	ginNewScanKey(scan);
 
 	if (GinIsVoidRes(scan))
 		PG_RETURN_POINTER(tbm);

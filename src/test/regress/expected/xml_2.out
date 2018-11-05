@@ -451,7 +451,11 @@ LINE 1: SELECT '<>' IS NOT DOCUMENT;
 DETAIL:  line 1: StartTag: invalid element name
 <>
  ^
+<<<<<<< HEAD
 SELECT xmlagg(data order by id) FROM xmltest;
+=======
+SELECT xmlagg(data) FROM xmltest;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
                 xmlagg                
 --------------------------------------
  <value>one</value><value>two</value>
@@ -463,10 +467,17 @@ SELECT xmlagg(data) FROM xmltest WHERE id > 10;
  
 (1 row)
 
+<<<<<<< HEAD
 SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name) order by name)) FROM emp;
                                                            xmlelement                                                           
 --------------------------------------------------------------------------------------------------------------------------------
  <employees><name>bill</name><name>cim</name><name>jeff</name><name>linda</name><name>sam</name><name>sharon</name></employees>
+=======
+SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
+                                                           xmlelement                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ <employees><name>sharon</name><name>sam</name><name>bill</name><name>jeff</name><name>cim</name><name>linda</name></employees>
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 (1 row)
 
 -- Check mapping SQL identifier to XML name
@@ -635,6 +646,44 @@ SELECT xpath('/nosuchtag', '<root/>');
  {}
 (1 row)
 
+<<<<<<< HEAD
+=======
+-- Round-trip non-ASCII data through xpath().
+DO $$
+DECLARE
+  xml_declaration text := '<?xml version="1.0" encoding="ISO-8859-1"?>';
+  degree_symbol text;
+  res xml[];
+BEGIN
+  -- Per the documentation, except when the server encoding is UTF8, xpath()
+  -- may not work on non-ASCII data.  The untranslatable_character and
+  -- undefined_function traps below, currently dead code, will become relevant
+  -- if we remove this limitation.
+  IF current_setting('server_encoding') <> 'UTF8' THEN
+    RAISE LOG 'skip: encoding % unsupported for xpath',
+      current_setting('server_encoding');
+    RETURN;
+  END IF;
+
+  degree_symbol := convert_from('\xc2b0', 'UTF8');
+  res := xpath('text()', (xml_declaration ||
+    '<x>' || degree_symbol || '</x>')::xml);
+  IF degree_symbol <> res[1]::text THEN
+    RAISE 'expected % (%), got % (%)',
+      degree_symbol, convert_to(degree_symbol, 'UTF8'),
+      res[1], convert_to(res[1]::text, 'UTF8');
+  END IF;
+EXCEPTION
+  -- character with byte sequence 0xc2 0xb0 in encoding "UTF8" has no equivalent in encoding "LATIN8"
+  WHEN untranslatable_character
+  -- default conversion function for encoding "UTF8" to "MULE_INTERNAL" does not exist
+  OR undefined_function
+  -- unsupported XML feature
+  OR feature_not_supported THEN
+    RAISE LOG 'skip: %', SQLERRM;
+END
+$$;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 -- Test xmlexists and xpath_exists
 SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
  xmlexists 
@@ -886,7 +935,10 @@ CONTEXT:  SQL function "xpath" statement 1
 -- throw an error, only a warning.
 SELECT xpath('/*', '<relativens xmlns=''relative''/>');
 WARNING:  line 1: xmlns: URI relative is not absolute
+<<<<<<< HEAD
 DETAIL:  
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 <relativens xmlns='relative'/>
                             ^
 CONTEXT:  SQL function "xpath" statement 1

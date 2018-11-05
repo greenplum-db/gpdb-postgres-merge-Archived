@@ -1,3 +1,5 @@
+/* Compile .zi time zone data into TZif binary files.  */
+
 /*
  * This file is in the public domain, so clarified as of
  * 2006-07-17 by Arthur David Olson.
@@ -10,10 +12,13 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+<<<<<<< HEAD
 #include <time.h>
 
 #include <limits.h>
 #include <locale.h>
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include <time.h>
 
 #include "pg_getopt.h"
@@ -23,6 +28,14 @@
 
 #define	ZIC_VERSION_PRE_2013 '2'
 #define	ZIC_VERSION	'3'
+<<<<<<< HEAD
+=======
+
+#define PG_INT32_MIN	(-0x7FFFFFFF-1)
+#define PG_INT32_MAX	(0x7FFFFFFF)
+#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 typedef int64 zic_t;
 #define ZIC_MIN PG_INT64_MIN
@@ -122,11 +135,22 @@ struct zone
 
 extern int	link(const char *fromname, const char *toname);
 
+<<<<<<< HEAD
 static void memory_exhausted(const char *msg) pg_attribute_noreturn();
 static void verror(const char *string, va_list args) pg_attribute_printf(1, 0);
 static void error(const char *string,...) pg_attribute_printf(1, 2);
 static void warning(const char *string,...) pg_attribute_printf(1, 2);
 static void usage(FILE *stream, int status) pg_attribute_noreturn();
+=======
+static void memory_exhausted(const char *msg) __attribute__((noreturn));
+static void verror(const char *string, va_list args)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 0)));
+static void error(const char *string,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+static void warning(const char *string,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+static void usage(FILE *stream, int status) __attribute__((noreturn));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void addtt(zic_t starttime, int type);
 static int	addtype(zic_t, char const *, bool, bool, bool);
 static void leapadd(zic_t, bool, int, int);
@@ -134,8 +158,12 @@ static void adjleap(void);
 static void associate(void);
 static void dolink(const char *, const char *, bool);
 static char **getfields(char *buf);
+<<<<<<< HEAD
 static zic_t gethms(const char *string, const char *errstring,
 	   bool);
+=======
+static zic_t gethms(const char *string, const char *errstring);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static zic_t getstdoff(char *, bool *);
 static void infile(const char *filename);
 static void inleap(char **fields, int nfields);
@@ -166,6 +194,7 @@ enum
 PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1};
 
 /* If true, work around a bug in Qt 5.6.1 and earlier, which mishandles
+<<<<<<< HEAD
    tz binary files whose POSIX-TZ-style strings contain '<'; see
    QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
    workaround will no longer be needed when Qt 5.6.1 and earlier are
@@ -173,6 +202,17 @@ PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1};
 enum
 {
 WORK_AROUND_QTBUG_53071 = true};
+=======
+   TZif files whose POSIX-TZ-style strings contain '<'; see
+   QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
+   workaround will no longer be needed when Qt 5.6.1 and earlier are
+   obsolete, say in the year 2021.  */
+#ifndef WORK_AROUND_QTBUG_53071
+enum
+{
+WORK_AROUND_QTBUG_53071 = true};
+#endif
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 static int	charcnt;
 static bool errors;
@@ -215,7 +255,7 @@ static int	typecnt;
 #define ZF_RULE		3
 #define ZF_FORMAT	4
 #define ZF_TILYEAR	5
-#define ZF_TILMONTH 6
+#define ZF_TILMONTH	6
 #define ZF_TILDAY	7
 #define ZF_TILTIME	8
 #define ZONE_MINFIELDS	5
@@ -228,12 +268,12 @@ static int	typecnt;
 #define ZFC_GMTOFF	0
 #define ZFC_RULE	1
 #define ZFC_FORMAT	2
-#define ZFC_TILYEAR 3
+#define ZFC_TILYEAR	3
 #define ZFC_TILMONTH	4
 #define ZFC_TILDAY	5
-#define ZFC_TILTIME 6
-#define ZONEC_MINFIELDS 3
-#define ZONEC_MAXFIELDS 7
+#define ZFC_TILTIME	6
+#define ZONEC_MINFIELDS	3
+#define ZONEC_MAXFIELDS	7
 
 /*
  * Which files are which on a Rule line.
@@ -248,7 +288,7 @@ static int	typecnt;
 #define RF_TOD		7
 #define RF_STDOFF	8
 #define RF_ABBRVAR	9
-#define RULE_FIELDS 10
+#define RULE_FIELDS	10
 
 /*
  * Which fields are which on a Link line.
@@ -256,7 +296,7 @@ static int	typecnt;
 
 #define LF_FROM		1
 #define LF_TO		2
-#define LINK_FIELDS 3
+#define LINK_FIELDS	3
 
 /*
  * Which fields are which on a Leap line.
@@ -268,7 +308,7 @@ static int	typecnt;
 #define LP_TIME		4
 #define LP_CORR		5
 #define LP_ROLL		6
-#define LEAP_FIELDS 7
+#define LEAP_FIELDS	7
 
 /*
  * Year synonyms.
@@ -539,12 +579,23 @@ close_file(FILE *stream, char const *dir, char const *name)
 static void
 usage(FILE *stream, int status)
 {
+<<<<<<< HEAD
 	(void) fprintf(stream, _("%s: usage is %s \
 [ --version ] [ --help ] [ -v ] [ -P ] [ -l localtime ] [ -p posixrules ] \\\n\
 \t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n\
 \n\
 Report bugs to %s.\n"),
 				   progname, progname, PACKAGE_BUGREPORT);
+=======
+	fprintf(stream,
+			_("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -P ] \\\n"
+			  "\t[ -l localtime ] [ -p posixrules ] [ -d directory ] \\\n"
+			  "\t[ -t localtime-link ] [ -L leapseconds ] [ filename ... ]\n\n"
+			  "Report bugs to %s.\n"),
+			progname, progname, PACKAGE_BUGREPORT);
+	if (status == EXIT_SUCCESS)
+		close_file(stream, NULL, NULL);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	exit(status);
 }
 
@@ -949,6 +1000,7 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 		}
 		free(linkalloc);
 		if (symlink_errno == 0)
+<<<<<<< HEAD
 		{
 			if (link_errno != ENOTSUP)
 				warning(_("symbolic link used because hard link failed: %s"),
@@ -957,6 +1009,16 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 		else
 #endif							/* HAVE_SYMLINK */
 		{
+=======
+		{
+			if (link_errno != ENOTSUP)
+				warning(_("symbolic link used because hard link failed: %s"),
+						strerror(link_errno));
+		}
+		else
+#endif							/* HAVE_SYMLINK */
+		{
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			FILE	   *fp,
 					   *tp;
 			int			c;
@@ -965,6 +1027,7 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 			if (!fp)
 			{
 				char const *e = strerror(errno);
+<<<<<<< HEAD
 
 				fprintf(stderr, _("%s: Can't read %s/%s: %s\n"),
 						progname, directory, fromfield, e);
@@ -975,6 +1038,18 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 			{
 				char const *e = strerror(errno);
 
+=======
+
+				fprintf(stderr, _("%s: Can't read %s/%s: %s\n"),
+						progname, directory, fromfield, e);
+				exit(EXIT_FAILURE);
+			}
+			tp = fopen(tofield, "wb");
+			if (!tp)
+			{
+				char const *e = strerror(errno);
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				fprintf(stderr, _("%s: Can't create %s/%s: %s\n"),
 						progname, directory, tofield, e);
 				exit(EXIT_FAILURE);
@@ -999,6 +1074,7 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 
 static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
+<<<<<<< HEAD
 
 /*
  * Estimated time of the Big Bang, in seconds since the POSIX epoch.
@@ -1058,6 +1134,25 @@ itsdir(char const *name)
 		char	   *nameslashdot = emalloc(n + 3);
 		bool		dir;
 
+=======
+
+/* Return true if NAME is a directory.  */
+static bool
+itsdir(char const *name)
+{
+	struct stat st;
+	int			res = stat(name, &st);
+#ifdef S_ISDIR
+	if (res == 0)
+		return S_ISDIR(st.st_mode) != 0;
+#endif
+	if (res == 0 || errno == EOVERFLOW)
+	{
+		size_t		n = strlen(name);
+		char	   *nameslashdot = emalloc(n + 3);
+		bool		dir;
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		memcpy(nameslashdot, name, n);
 		strcpy(&nameslashdot[n], &"/."[!(n && name[n - 1] != '/')]);
 		dir = stat(nameslashdot, &st) == 0 || errno == EOVERFLOW;
@@ -1283,8 +1378,14 @@ infile(const char *name)
  * A null string maps to zero.
  * Call error with errstring and return zero on errors.
  */
+<<<<<<< HEAD
 static zic_t
 gethms(char const *string, char const *errstring, bool signable)
+=======
+
+static zic_t
+gethms(char const *string, char const *errstring)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	/* PG: make hh be int not zic_t to avoid sscanf portability issues */
 	int			hh;
@@ -1301,9 +1402,7 @@ gethms(char const *string, char const *errstring, bool signable)
 
 	if (string == NULL || *string == '\0')
 		return 0;
-	if (!signable)
-		sign = 1;
-	else if (*string == '-')
+	if (*string == '-')
 	{
 		sign = -1;
 		++string;
@@ -1386,7 +1485,11 @@ getstdoff(char *field, bool *isdst)
 				break;
 		}
 	}
+<<<<<<< HEAD
 	stdoff = gethms(field, _("invalid saved time"), true);
+=======
+	stdoff = gethms(field, _("invalid saved time"));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	*isdst = dst < 0 ? stdoff != 0 : dst;
 	return stdoff;
 }
@@ -1401,10 +1504,29 @@ inrule(char **fields, int nfields)
 		error(_("wrong number of fields on Rule line"));
 		return;
 	}
-	if (*fields[RF_NAME] == '\0')
+	switch (*fields[RF_NAME])
 	{
-		error(_("nameless rule"));
-		return;
+		case '\0':
+		case ' ':
+		case '\f':
+		case '\n':
+		case '\r':
+		case '\t':
+		case '\v':
+		case '+':
+		case '-':
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			error(_("Invalid rule name \"%s\""), fields[RF_NAME]);
+			return;
 	}
 	r.r_filename = filename;
 	r.r_linenum = linenum;
@@ -1509,7 +1631,11 @@ inzsub(char **fields, int nfields, bool iscont)
 	}
 	z.z_filename = filename;
 	z.z_linenum = linenum;
+<<<<<<< HEAD
 	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid UT offset"), true);
+=======
+	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid UT offset"));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if ((cp = strchr(fields[i_format], '%')) != NULL)
 	{
 		if ((*++cp != 's' && *cp != 'z') || strchr(cp, '%')
@@ -1651,7 +1777,11 @@ inleap(char **fields, int nfields)
 		return;
 	}
 	t = dayoff * SECSPERDAY;
+<<<<<<< HEAD
 	tod = gethms(fields[LP_TIME], _("invalid time of day"), false);
+=======
+	tod = gethms(fields[LP_TIME], _("invalid time of day"));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	cp = fields[LP_CORR];
 	{
 		bool		positive;
@@ -1759,7 +1889,11 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 				break;
 		}
 	}
+<<<<<<< HEAD
 	rp->r_tod = gethms(dp, _("invalid time of day"), false);
+=======
+	rp->r_tod = gethms(dp, _("invalid time of day"));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	free(dp);
 
 	/*
@@ -1937,14 +2071,53 @@ atcomp(const void *avp, const void *bvp)
 	return (a < b) ? -1 : (a > b);
 }
 
+<<<<<<< HEAD
 static bool
 is32(const zic_t x)
+=======
+static void
+swaptypes(int i, int j)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
-	return x == ((zic_t) ((int32) x));
+	{
+		zic_t		t = gmtoffs[i];
+
+		gmtoffs[i] = gmtoffs[j];
+		gmtoffs[j] = t;
+	}
+	{
+		char		t = isdsts[i];
+
+		isdsts[i] = isdsts[j];
+		isdsts[j] = t;
+	}
+	{
+		unsigned char t = abbrinds[i];
+
+		abbrinds[i] = abbrinds[j];
+		abbrinds[j] = t;
+	}
+	{
+		bool		t = ttisstds[i];
+
+		ttisstds[i] = ttisstds[j];
+		ttisstds[j] = t;
+	}
+	{
+		bool		t = ttisgmts[i];
+
+		ttisgmts[i] = ttisgmts[j];
+		ttisgmts[j] = t;
+	}
 }
 
 static void
+<<<<<<< HEAD
 writezone(const char *const name, const char *const string, char version)
+=======
+writezone(const char *const name, const char *const string, char version,
+		  int defaulttype)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	FILE	   *fp;
 	ptrdiff_t	i,
@@ -1960,7 +2133,16 @@ writezone(const char *const name, const char *const string, char version)
 	zic_t		one = 1;
 	zic_t		y2038_boundary = one << 31;
 	ptrdiff_t	nats = timecnt + WORK_AROUND_QTBUG_53071;
+<<<<<<< HEAD
 	zic_t	   *ats = emalloc(size_product(nats, sizeof *ats + 1));
+=======
+
+	/*
+	 * Allocate the ATS and TYPES arrays via a single malloc, as this is a bit
+	 * faster.
+	 */
+	zic_t	   *ats = emalloc(MAXALIGN(size_product(nats, sizeof *ats + 1)));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	void	   *typesptr = ats + nats;
 	unsigned char *types = typesptr;
 
@@ -1979,6 +2161,7 @@ writezone(const char *const name, const char *const string, char version)
 
 		toi = 0;
 		fromi = 0;
+<<<<<<< HEAD
 		while (fromi < timecnt && attypes[fromi].at < early_time)
 			++fromi;
 		for (; fromi < timecnt; ++fromi)
@@ -1987,6 +2170,14 @@ writezone(const char *const name, const char *const string, char version)
 							 gmtoffs[attypes[toi - 1].type]) <=
 							(attypes[toi - 1].at +
 							 gmtoffs[attypes[toi - 2].type])))
+=======
+		for (; fromi < timecnt; ++fromi)
+		{
+			if (toi != 0 && ((attypes[fromi].at +
+							  gmtoffs[attypes[toi - 1].type]) <=
+							 (attypes[toi - 1].at + gmtoffs[toi == 1 ? 0
+															: attypes[toi - 2].type])))
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			{
 				attypes[toi - 1].type =
 					attypes[fromi].type;
@@ -2049,19 +2240,45 @@ writezone(const char *const name, const char *const string, char version)
 	}
 
 	/*
+	 * Work around QTBUG-53071 for timestamps less than y2038_boundary - 1, by
+	 * inserting a no-op transition at time y2038_boundary - 1. This works
+	 * only for timestamps before the boundary, which should be good enough in
+	 * practice as QTBUG-53071 should be long-dead by 2038.  Do this after
+	 * correcting for leap seconds, as the idea is to insert a transition just
+	 * before 32-bit pg_time_t rolls around, and this occurs at a slightly
+	 * different moment if transitions are leap-second corrected.
+	 */
+	if (WORK_AROUND_QTBUG_53071 && timecnt != 0
+		&& ats[timecnt - 1] < y2038_boundary - 1 && strchr(string, '<'))
+	{
+		ats[timecnt] = y2038_boundary - 1;
+		types[timecnt] = types[timecnt - 1];
+		timecnt++;
+	}
+
+	/*
 	 * Figure out 32-bit-limited starts and counts.
 	 */
 	timecnt32 = timecnt;
 	timei32 = 0;
 	leapcnt32 = leapcnt;
 	leapi32 = 0;
-	while (timecnt32 > 0 && !is32(ats[timecnt32 - 1]))
+	while (0 < timecnt32 && PG_INT32_MAX < ats[timecnt32 - 1])
 		--timecnt32;
-	while (timecnt32 > 0 && !is32(ats[timei32]))
+	while (1 < timecnt32 && ats[timei32] < PG_INT32_MIN
+		   && ats[timei32 + 1] <= PG_INT32_MIN)
 	{
+		/*
+		 * Discard too-low transitions, except keep any last too-low
+		 * transition if no transition is exactly at PG_INT32_MIN. The kept
+		 * transition will be output as an PG_INT32_MIN "transition"
+		 * appropriate for buggy 32-bit clients that do not use time type 0
+		 * for timestamps before the first transition; see below.
+		 */
 		--timecnt32;
 		++timei32;
 	}
+<<<<<<< HEAD
 
 	/*
 	 * Output an INT32_MIN "transition" if appropriate; see below.
@@ -2072,8 +2289,11 @@ writezone(const char *const name, const char *const string, char version)
 		++timecnt32;
 	}
 	while (leapcnt32 > 0 && !is32(trans[leapcnt32 - 1]))
+=======
+	while (0 < leapcnt32 && PG_INT32_MAX < trans[leapcnt32 - 1])
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		--leapcnt32;
-	while (leapcnt32 > 0 && !is32(trans[leapi32]))
+	while (0 < leapcnt32 && trans[leapi32] < PG_INT32_MIN)
 	{
 		--leapcnt32;
 		++leapi32;
@@ -2118,7 +2338,12 @@ writezone(const char *const name, const char *const string, char version)
 		int			thisleapi,
 					thisleapcnt,
 					thisleaplim;
+<<<<<<< HEAD
 		int			writetype[TZ_MAX_TYPES];
+=======
+		int			old0;
+		char		omittype[TZ_MAX_TYPES];
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		int			typemap[TZ_MAX_TYPES];
 		int			thistypecnt;
 		char		thischars[TZ_MAX_CHARS];
@@ -2146,6 +2371,7 @@ writezone(const char *const name, const char *const string, char version)
 			error(_("too many transition times"));
 		thistimelim = thistimei + thistimecnt;
 		thisleaplim = thisleapi + thisleapcnt;
+<<<<<<< HEAD
 		for (i = 0; i < typecnt; ++i)
 			writetype[i] = thistimecnt == timecnt;
 		if (thistimecnt == 0)
@@ -2222,19 +2448,92 @@ writezone(const char *const name, const char *const string, char version)
 				writetype[type] = true;
 			}
 		}
+=======
+		memset(omittype, true, typecnt);
+		omittype[defaulttype] = false;
+		for (i = thistimei; i < thistimelim; i++)
+			omittype[types[i]] = false;
+
+		/*
+		 * Reorder types to make DEFAULTTYPE type 0. Use TYPEMAP to swap OLD0
+		 * and DEFAULTTYPE so that DEFAULTTYPE appears as type 0 in the output
+		 * instead of OLD0.  TYPEMAP also omits unused types.
+		 */
+		old0 = strlen(omittype);
+		swaptypes(old0, defaulttype);
+
+#ifndef LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH
+
+		/*
+		 * For some pre-2011 systems: if the last-to-be-written standard (or
+		 * daylight) type has an offset different from the most recently used
+		 * offset, append an (unused) copy of the most recently used type (to
+		 * help get global "altzone" and "timezone" variables set correctly).
+		 */
+		{
+			int			mrudst,
+						mrustd,
+						hidst,
+						histd,
+						type;
+
+			hidst = histd = mrudst = mrustd = -1;
+			for (i = thistimei; i < thistimelim; ++i)
+				if (isdsts[types[i]])
+					mrudst = types[i];
+				else
+					mrustd = types[i];
+			for (i = old0; i < typecnt; i++)
+				if (!omittype[i])
+				{
+					if (isdsts[i])
+						hidst = i;
+					else
+						histd = i;
+				}
+			if (hidst >= 0 && mrudst >= 0 && hidst != mrudst &&
+				gmtoffs[hidst] != gmtoffs[mrudst])
+			{
+				isdsts[mrudst] = -1;
+				type = addtype(gmtoffs[mrudst],
+							   &chars[abbrinds[mrudst]],
+							   true,
+							   ttisstds[mrudst],
+							   ttisgmts[mrudst]);
+				isdsts[mrudst] = 1;
+				omittype[type] = false;
+			}
+			if (histd >= 0 && mrustd >= 0 && histd != mrustd &&
+				gmtoffs[histd] != gmtoffs[mrustd])
+			{
+				isdsts[mrustd] = -1;
+				type = addtype(gmtoffs[mrustd],
+							   &chars[abbrinds[mrustd]],
+							   false,
+							   ttisstds[mrustd],
+							   ttisgmts[mrustd]);
+				isdsts[mrustd] = 0;
+				omittype[type] = false;
+			}
+		}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #endif							/* !defined
 								 * LEAVE_SOME_PRE_2011_SYSTEMS_IN_THE_LURCH */
 		thistypecnt = 0;
-		for (i = 0; i < typecnt; ++i)
-			typemap[i] = writetype[i] ? thistypecnt++ : -1;
+		for (i = old0; i < typecnt; i++)
+			if (!omittype[i])
+				typemap[i == old0 ? defaulttype
+						: i == defaulttype ? old0 : i]
+					= thistypecnt++;
+
 		for (i = 0; i < sizeof indmap / sizeof indmap[0]; ++i)
 			indmap[i] = -1;
 		thischarcnt = 0;
-		for (i = 0; i < typecnt; ++i)
+		for (i = old0; i < typecnt; i++)
 		{
 			char	   *thisabbr;
 
-			if (!writetype[i])
+			if (omittype[i])
 				continue;
 			if (indmap[abbrinds[i]] >= 0)
 				continue;
@@ -2269,6 +2568,7 @@ writezone(const char *const name, const char *const string, char version)
 		DO(tzh_typecnt);
 		DO(tzh_charcnt);
 #undef DO
+<<<<<<< HEAD
 		for (i = thistimei; i < thistimelim; ++i)
 			if (pass == 1)
 
@@ -2286,6 +2586,18 @@ writezone(const char *const name, const char *const string, char version)
 					(i == thistimelim - 1 || ats[i + 1] > print_cutoff))
 				{
 					unsigned char tm = typemap[types[i]];
+=======
+
+		/* PG: print current timezone abbreviations if requested */
+		if (print_abbrevs && pass == 2)
+		{
+			/* Print "type" data for periods ending after print_cutoff */
+			for (i = thistimei; i < thistimelim; ++i)
+			{
+				if (i == thistimelim - 1 || ats[i + 1] > print_cutoff)
+				{
+					unsigned char tm = types[i];
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					char	   *thisabbrev = &thischars[indmap[abbrinds[tm]]];
 
 					/* filter out assorted junk entries */
@@ -2297,6 +2609,36 @@ writezone(const char *const name, const char *const string, char version)
 								isdsts[tm] ? "\tD" : "");
 				}
 			}
+<<<<<<< HEAD
+=======
+			/* Print the default type if we have no transitions at all */
+			if (thistimei >= thistimelim)
+			{
+				unsigned char tm = defaulttype;
+				char	   *thisabbrev = &thischars[indmap[abbrinds[tm]]];
+
+				/* filter out assorted junk entries */
+				if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
+					strcmp(thisabbrev, "zzz") != 0)
+					fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
+							thisabbrev,
+							gmtoffs[tm],
+							isdsts[tm] ? "\tD" : "");
+			}
+		}
+
+		for (i = thistimei; i < thistimelim; ++i)
+			if (pass == 1)
+
+				/*
+				 * Output an PG_INT32_MIN "transition" if appropriate; see
+				 * above.
+				 */
+				puttzcode(((ats[i] < PG_INT32_MIN) ?
+						   PG_INT32_MIN : ats[i]), fp);
+			else
+				puttzcode64(ats[i], fp);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		for (i = thistimei; i < thistimelim; ++i)
 		{
 			unsigned char uc;
@@ -2304,8 +2646,13 @@ writezone(const char *const name, const char *const string, char version)
 			uc = typemap[types[i]];
 			fwrite(&uc, sizeof uc, 1, fp);
 		}
+<<<<<<< HEAD
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
+=======
+		for (i = old0; i < typecnt; i++)
+			if (!omittype[i])
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			{
 				puttzcode(gmtoffs[i], fp);
 				putc(isdsts[i], fp);
@@ -2348,12 +2695,22 @@ writezone(const char *const name, const char *const string, char version)
 				puttzcode64(todo, fp);
 			puttzcode(corr[i], fp);
 		}
+<<<<<<< HEAD
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
 				putc(ttisstds[i], fp);
 		for (i = 0; i < typecnt; ++i)
 			if (writetype[i])
 				putc(ttisgmts[i], fp);
+=======
+		for (i = old0; i < typecnt; i++)
+			if (!omittype[i])
+				putc(ttisstds[i], fp);
+		for (i = old0; i < typecnt; i++)
+			if (!omittype[i])
+				putc(ttisgmts[i], fp);
+		swaptypes(old0, defaulttype);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 	fprintf(fp, "\n%s\n", string);
 	close_file(fp, directory, name);
@@ -2759,6 +3116,10 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	zic_t		one = 1;
 	zic_t		y2038_boundary = one << 31;
 	zic_t		max_year0;
+<<<<<<< HEAD
+=======
+	int			defaulttype = -1;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	max_abbr_len = 2 + max_format_len + max_abbrvar_len;
 	max_envvar_len = 2 * max_abbr_len + 5 * 9;
@@ -2903,7 +3264,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				usestart = false;
 			}
 			else
+<<<<<<< HEAD
 				addtt(early_time, type);
+=======
+				defaulttype = type;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 		else
 			for (year = min_year; year <= max_year; ++year)
@@ -3034,6 +3399,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 					offset = oadd(zp->z_gmtoff, rp->r_stdoff);
 					type = addtype(offset, ab, rp->r_isdst,
 								   rp->r_todisstd, rp->r_todisgmt);
+<<<<<<< HEAD
+=======
+					if (defaulttype < 0 && !rp->r_isdst)
+						defaulttype = type;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 					if (rp->r_hiyear == ZIC_MAX
 						&& !(0 <= lastatmax
 							 && ktime < attypes[lastatmax].at))
@@ -3052,11 +3422,15 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			if (*startbuf == '\0')
 				error(_("cannot determine time zone abbreviation to use just after until time"));
 			else
-				addtt(starttime,
-					  addtype(startoff, startbuf,
-							  startoff != zp->z_gmtoff,
-							  startttisstd,
-							  startttisgmt));
+			{
+				bool		isdst = startoff != zp->z_gmtoff;
+
+				type = addtype(startoff, startbuf, isdst,
+							   startttisstd, startttisgmt);
+				if (defaulttype < 0 && !isdst)
+					defaulttype = type;
+				addtt(starttime, type);
+			}
 		}
 
 		/*
@@ -3073,6 +3447,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				starttime = tadd(starttime, -gmtoff);
 		}
 	}
+<<<<<<< HEAD
+=======
+	if (defaulttype < 0)
+		defaulttype = 0;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (0 <= lastatmax)
 		attypes[lastatmax].dontmerge = true;
 	if (do_extend)
@@ -3102,7 +3481,11 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			attypes[timecnt - 1].dontmerge = true;
 		}
 	}
+<<<<<<< HEAD
 	writezone(zpfirst->z_name, envvar, version);
+=======
+	writezone(zpfirst->z_name, envvar, version, defaulttype);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	free(startbuf);
 	free(ab);
 	free(envvar);
@@ -3111,6 +3494,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 static void
 addtt(zic_t starttime, int type)
 {
+<<<<<<< HEAD
 	if (starttime <= early_time
 		|| (timecnt == 1 && attypes[0].at < early_time))
 	{
@@ -3126,6 +3510,8 @@ addtt(zic_t starttime, int type)
 		timecnt = 0;
 		type = 0;
 	}
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	attypes = growalloc(attypes, sizeof *attypes, timecnt, &timecnt_alloc);
 	attypes[timecnt].at = starttime;
 	attypes[timecnt].dontmerge = false;
@@ -3363,7 +3749,11 @@ is_alpha(char a)
 }
 
 /* If A is an uppercase character in the C locale, return its lowercase
+<<<<<<< HEAD
  * counterpart.  Otherwise, return A.  */
+=======
+   counterpart.  Otherwise, return A.  */
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static char
 lowerit(char a)
 {
@@ -3630,6 +4020,18 @@ rpytime(const struct rule *rp, zic_t wantedy)
 	dayoff = 0;
 	m = TM_JANUARY;
 	y = EPOCH_YEAR;
+	if (y < wantedy)
+	{
+		wantedy -= y;
+		dayoff = (wantedy / YEARSPERREPEAT) * (SECSPERREPEAT / SECSPERDAY);
+		wantedy %= YEARSPERREPEAT;
+		wantedy += y;
+	}
+	else if (wantedy < 0)
+	{
+		dayoff = (wantedy / YEARSPERREPEAT) * (SECSPERREPEAT / SECSPERDAY);
+		wantedy %= YEARSPERREPEAT;
+	}
 	while (wantedy != y)
 	{
 		if (wantedy > y)
@@ -3708,7 +4110,10 @@ will not work with pre-2004 versions of zic"));
 	if (dayoff > max_time / SECSPERDAY)
 		return max_time;
 	t = (zic_t) dayoff * SECSPERDAY;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	return tadd(t, rp->r_tod);
 }
 

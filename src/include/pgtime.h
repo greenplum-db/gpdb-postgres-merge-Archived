@@ -60,6 +60,7 @@ extern int pg_next_dst_boundary(const pg_time_t *timep,
 					 int *after_isdst,
 					 const pg_tz *tz);
 extern bool pg_interpret_timezone_abbrev(const char *abbrev,
+<<<<<<< HEAD
                              const pg_time_t *timep,
                              long int *gmtoff,
                              int *isdst,
@@ -67,13 +68,24 @@ extern bool pg_interpret_timezone_abbrev(const char *abbrev,
 extern size_t pg_strftime(char *s, size_t max, const char *format,
 			const struct pg_tm * tm);
 
+=======
+							 const pg_time_t *timep,
+							 long int *gmtoff,
+							 int *isdst,
+							 const pg_tz *tz);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
 extern bool pg_tz_acceptable(pg_tz *tz);
 
+/* these functions are in strftime.c */
+
+extern size_t pg_strftime(char *s, size_t max, const char *format,
+			const struct pg_tm * tm);
+
 /* these functions and variables are in pgtz.c */
 
-extern pg_tz *session_timezone;
+extern PGDLLIMPORT pg_tz *session_timezone;
 extern pg_tz *log_timezone;
 
 extern void pg_timezone_initialize(void);

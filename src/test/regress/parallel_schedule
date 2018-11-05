@@ -137,6 +137,7 @@ test: event_trigger
 # ----------
 # Another group of parallel tests
 # ----------
+<<<<<<< HEAD
 test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb indirect_toast
 
 # Output of the 'combocid' test contains ctid and cmin values, which will
@@ -147,6 +148,9 @@ test: select_views portals_p2 cluster dependency guc bitmapops tsearch tsdicts f
 # multiple UNIQUE constraints, which is not supported in GPDB.
 #test: foreign_key
 
+=======
+test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 # ----------
 # Another group of parallel tests
 # NB: temp.sql does a reconnect which transiently uses 2 connections,

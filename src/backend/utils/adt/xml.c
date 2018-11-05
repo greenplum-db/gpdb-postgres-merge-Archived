@@ -143,11 +143,16 @@ static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 			   pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
-static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
+static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
 static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-					   ArrayBuildState **astate);
+					   ArrayBuildState **astate,
+					   PgXmlErrorContext *xmlerrcxt);
 #endif   /* USE_LIBXML */
 
+static void xmldata_root_element_start(StringInfo result, const char *eltname,
+						   const char *xmlschema, const char *targetns,
+						   bool top_level);
+static void xmldata_root_element_end(StringInfo result, const char *eltname);
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
 					  const char *xmlschema, bool nulls, bool tableforest,
 					  const char *targetns, bool top_level);
@@ -2389,6 +2394,12 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 
 	initStringInfo(&result);
 
+	if (!tableforest)
+	{
+		xmldata_root_element_start(&result, "table", NULL, targetns, true);
+		appendStringInfoChar(&result, '\n');
+	}
+
 	SPI_connect();
 	portal = SPI_cursor_find(name);
 	if (portal == NULL)
@@ -2402,6 +2413,9 @@ cursor_to_xml(PG_FUNCTION_ARGS)
 								  tableforest, targetns, true);
 
 	SPI_finish();
+
+	if (!tableforest)
+		xmldata_root_element_end(&result, "table");
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(&result));
 }
@@ -3606,7 +3620,7 @@ SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result, char *tablename,
  * return value otherwise)
  */
 static text *
-xml_xmlnodetoxmltype(xmlNodePtr cur)
+xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 {
 	xmltype    *result;
 
@@ -3624,7 +3638,13 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		 */
 		cur_copy = xmlCopyNode(cur, 1);
 
+<<<<<<< HEAD
 		Assert(cur_copy != NULL);
+=======
+		if (cur_copy == NULL)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
+						"could not copy node");
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		PG_TRY();
 		{
@@ -3680,7 +3700,8 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
  */
 static int
 xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-					   ArrayBuildState **astate)
+					   ArrayBuildState **astate,
+					   PgXmlErrorContext *xmlerrcxt)
 {
 	int			result = 0;
 	Datum		datum;
@@ -3702,7 +3723,8 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 
 					for (i = 0; i < result; i++)
 					{
-						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
+						datum = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i],
+																	 xmlerrcxt));
 						*astate = accumArrayResult(*astate, datum,
 												   false, XMLOID,
 												   CurrentMemoryContext);
@@ -3774,6 +3796,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	int32		xpath_len;
 	xmlChar    *string;
 	xmlChar    *xpath_expr;
+	size_t		xmldecl_len = 0;
 	int			i;
 	int			ndim;
 	Datum	   *ns_names_uris;
@@ -3834,6 +3857,16 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
+	/*
+	 * In a UTF8 database, skip any xml declaration, which might assert
+	 * another encoding.  Ignore parse_xml_decl() failure, letting
+	 * xmlCtxtReadMemory() report parse errors.  Documentation disclaims
+	 * xpath() support for non-ASCII data in non-UTF8 databases, so leave
+	 * those scenarios bug-compatible with historical behavior.
+	 */
+	if (GetDatabaseEncoding() == PG_UTF8)
+		parse_xml_decl(string, &xmldecl_len, NULL, NULL, NULL);
+
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
@@ -3848,7 +3881,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		if (ctxt == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
-		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
+		doc = xmlCtxtReadMemory(ctxt, (char *) string + xmldecl_len,
+								len - xmldecl_len, NULL, NULL, 0);
 		if (doc == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"could not parse XML document");
@@ -3906,9 +3940,9 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		 * Extract the results as requested.
 		 */
 		if (res_nitems != NULL)
-			*res_nitems = xml_xpathobjtoxmlarray(xpathobj, astate);
+			*res_nitems = xml_xpathobjtoxmlarray(xpathobj, astate, xmlerrcxt);
 		else
-			(void) xml_xpathobjtoxmlarray(xpathobj, astate);
+			(void) xml_xpathobjtoxmlarray(xpathobj, astate, xmlerrcxt);
 	}
 	PG_CATCH();
 	{

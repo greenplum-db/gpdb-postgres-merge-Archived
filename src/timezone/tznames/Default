@@ -181,6 +181,12 @@ PDT    -25200 D  # Pacific Daylight Time
                  #     (America/Whitehorse)
 PMDT    -7200 D  # Pierre & Miquelon Daylight Time (obsolete)
 PMST   -10800    # Pierre & Miquelon Standard Time (obsolete)
+<<<<<<< HEAD
+=======
+# CONFLICT! PST is not unique
+# Other timezones:
+#  - PST: Philippine Standard Time
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 PST    -28800    # Pacific Standard Time
                  #     (America/Dawson)
                  #     (America/Los_Angeles)

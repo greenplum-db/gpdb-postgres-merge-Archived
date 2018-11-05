@@ -52,7 +52,14 @@ ecpg: $(OBJS) | submake-libpgport
 ../ecpglib/typename.o: ../ecpglib/typename.c
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
+<<<<<<< HEAD
 preproc.h: preproc.c ;
+=======
+# See notes in src/backend/parser/Makefile about the following two rules
+preproc.h: preproc.c
+	touch $@
+
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 preproc.c: BISONFLAGS += -d
 
 preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type

@@ -38,9 +38,14 @@
 #define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
 #define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
 #define BM_CHECKPOINT_NEEDED	(1 << 7)		/* must write for checkpoint */
+<<<<<<< HEAD
 #define BM_PERMANENT			(1 << 8)		/* permanent relation (neither
 												 * unlogged, or init fork) */
 #define BM_TEMP					(1 << 9)		/* temporary relation */
+=======
+#define BM_PERMANENT			(1 << 8)		/* permanent relation (not
+												 * unlogged, or init fork) */
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 typedef bits16 BufFlags;
 

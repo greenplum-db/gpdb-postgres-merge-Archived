@@ -23,6 +23,8 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
+#include <signal.h>
+
 #include "pgtime.h"				/* for pg_time_t */
 
 
@@ -53,6 +55,10 @@
  * will be held off until CHECK_FOR_INTERRUPTS() is done outside any
  * HOLD_INTERRUPTS() ... RESUME_INTERRUPTS() section.
  *
+ * There is also a mechanism to prevent query cancel interrupts, while still
+ * allowing die interrupts: HOLD_CANCEL_INTERRUPTS() and
+ * RESUME_CANCEL_INTERRUPTS().
+ *
  * Special mechanisms are used to let an interrupt be accepted when we are
  * waiting for a lock or when we are waiting for command input (but, of
  * course, only if the interrupt holdoff counter is zero).  See the
@@ -79,15 +85,22 @@ extern PGDLLIMPORT volatile bool QueryCancelPending;
 extern PGDLLIMPORT volatile bool QueryCancelCleanup; /* GPDB only */
 extern PGDLLIMPORT volatile bool QueryFinishPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
+extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
 extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern PGDLLIMPORT volatile bool ImmediateInterruptOK;
+<<<<<<< HEAD
 extern PGDLLIMPORT volatile bool ImmediateDieOK;
 extern PGDLLIMPORT volatile bool TermSignalReceived;
 extern PGDLLIMPORT volatile int32 InterruptHoldoffCount;
 extern PGDLLIMPORT volatile int32 CritSectionCount;
+=======
+extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
+extern PGDLLIMPORT volatile uint32 QueryCancelHoldoffCount;
+extern PGDLLIMPORT volatile uint32 CritSectionCount;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(const char* filename, int lineno);
@@ -163,12 +176,24 @@ do { \
 	InterruptHoldoffCount--; \
 } while(0)
 
+<<<<<<< HEAD
 #define START_CRIT_SECTION() \
 do { \
 	if (CritSectionCount < 0) \
 		elog(PANIC, "Start critical section count is bad (%d)", CritSectionCount); \
 	CritSectionCount++; \
 } while(0)
+=======
+#define HOLD_CANCEL_INTERRUPTS()  (QueryCancelHoldoffCount++)
+
+#define RESUME_CANCEL_INTERRUPTS() \
+do { \
+	Assert(QueryCancelHoldoffCount > 0); \
+	QueryCancelHoldoffCount--; \
+} while(0)
+
+#define START_CRIT_SECTION()  (CritSectionCount++)
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 #define END_CRIT_SECTION() \
 do { \
@@ -196,15 +221,21 @@ extern PGDLLIMPORT bool IsUnderPostmaster;
 extern bool IsBackgroundWorker;
 extern bool IsBinaryUpgrade;
 
-extern bool ExitOnAnyError;
+extern PGDLLIMPORT bool ExitOnAnyError;
 
 extern PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
+<<<<<<< HEAD
 extern int	MaxBackends;
 extern int	MaxConnections;
 extern int	max_worker_processes;
 extern int gp_workfile_max_entries;
+=======
+extern PGDLLIMPORT int MaxBackends;
+extern PGDLLIMPORT int MaxConnections;
+extern PGDLLIMPORT int max_worker_processes;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
@@ -293,8 +324,12 @@ extern PGDLLIMPORT int IntervalStyle;
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
+<<<<<<< HEAD
 extern bool allowSystemTableMods;
 extern PGDLLIMPORT int planner_work_mem;
+=======
+extern PGDLLIMPORT bool allowSystemTableMods;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
 extern PGDLLIMPORT int statement_mem;
@@ -332,6 +367,9 @@ typedef char *pg_stack_base_t;
 extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
+extern bool stack_is_too_deep(void);
+
+extern void PostgresSigHupHandler(SIGNAL_ARGS);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
@@ -511,6 +549,7 @@ extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,
 					 const char *socketDir);
 extern void TouchSocketLockFiles(void);
 extern void AddToDataDirLockFile(int target_line, const char *str);
+extern bool RecheckDataDirLockFile(void);
 extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_session_preload_libraries(void);

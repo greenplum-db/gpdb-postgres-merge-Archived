@@ -15,14 +15,16 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"       /* for byteain & byteaout */
-#include "mb/pg_wchar.h"       /* for GetDatabaseEncoding */
+
 /* Defined by Perl */
 #undef _
 
 /* perl stuff */
+#define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
 #include "plperl_helpers.h"
 
+<<<<<<< HEAD
 /*
  * Implementation of plperl's elog() function
  *
@@ -62,6 +64,8 @@ do_util_elog(int level, SV *msg)
 	}
 	PG_END_TRY();
 }
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 static text *
 sv2text(SV *sv)
@@ -105,7 +109,7 @@ util_elog(level, msg)
             level = ERROR;
         if (level < DEBUG5)
             level = DEBUG5;
-        do_util_elog(level, msg);
+        plperl_util_elog(level, msg);
 
 SV *
 util_quote_literal(sv)

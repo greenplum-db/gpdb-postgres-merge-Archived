@@ -44,14 +44,29 @@ VACUUM (ANALYZE, FULL) vactst;
 
 CREATE TABLE vaccluster (i INT PRIMARY KEY);
 ALTER TABLE vaccluster CLUSTER ON vaccluster_pkey;
+<<<<<<< HEAD
 INSERT INTO vaccluster SELECT i FROM vactst;
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 CLUSTER vaccluster;
+
+CREATE FUNCTION do_analyze() RETURNS VOID VOLATILE LANGUAGE SQL
+	AS 'ANALYZE pg_am';
+CREATE FUNCTION wrap_do_analyze(c INT) RETURNS INT IMMUTABLE LANGUAGE SQL
+	AS 'SELECT $1 FROM do_analyze()';
+CREATE INDEX ON vaccluster(wrap_do_analyze(i));
+INSERT INTO vaccluster VALUES (1), (2);
+ANALYZE vaccluster;
 
 VACUUM FULL pg_am;
 VACUUM FULL pg_class;
 VACUUM FULL pg_database;
 VACUUM FULL vaccluster;
 VACUUM FULL vactst;
+
+-- check behavior with duplicate column mentions
+VACUUM ANALYZE vaccluster(i,i);
+ANALYZE vaccluster(i,i);
 
 DROP TABLE vaccluster;
 DROP TABLE vactst;

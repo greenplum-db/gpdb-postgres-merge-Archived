@@ -49,6 +49,7 @@ CREATE FUNCTION equipment_named_ambiguous_2b(hobby text)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where equipment_r.hobby = hobby'
    LANGUAGE SQL;
+<<<<<<< HEAD
 CREATE FUNCTION user_relns()
    RETURNS setof name
    AS 'select relname
@@ -81,6 +82,28 @@ CREATE FUNCTION oldstyle_length(int4, text)
    RETURNS int4
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C READS SQL DATA;
+=======
+CREATE FUNCTION pt_in_widget(point, widget)
+   RETURNS bool
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C STRICT;
+CREATE FUNCTION overpaid(emp)
+   RETURNS bool
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C STRICT;
+CREATE FUNCTION interpt_pp(path, path)
+   RETURNS point
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C STRICT;
+CREATE FUNCTION reverse_name(name)
+   RETURNS name
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C STRICT;
+CREATE FUNCTION oldstyle_length(int4, text)
+   RETURNS int4
+   AS '@libdir@/regress@DLSUFFIX@'
+   LANGUAGE C;  -- intentionally not strict
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 --
 -- Function dynamic loading
 --

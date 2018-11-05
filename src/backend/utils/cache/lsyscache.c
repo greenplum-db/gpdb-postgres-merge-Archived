@@ -3322,6 +3322,7 @@ get_attnullfrac(Oid relid, AttrNumber attnum)
  * that have been provided by a stats hook and didn't really come from
  * pg_statistic.
  *
+<<<<<<< HEAD
  * sslot: pointer to output area (typically, a local variable in the caller).
  * statstuple: pg_statistic tuple to be examined.
  * reqkind: STAKIND code for desired statistics slot kind.
@@ -3348,6 +3349,25 @@ get_attnullfrac(Oid relid, AttrNumber attnum)
  *
  * If it's desirable to call free_attstatsslot when get_attstatsslot might
  * not have been called, memset'ing sslot to zeroes will allow that.
+=======
+ * statstuple: pg_statistic tuple to be examined.
+ * atttype: type OID of slot's stavalues (can be InvalidOid if values == NULL).
+ * atttypmod: typmod of slot's stavalues (can be 0 if values == NULL).
+ * reqkind: STAKIND code for desired statistics slot kind.
+ * reqop: STAOP value wanted, or InvalidOid if don't care.
+ * actualop: if not NULL, *actualop receives the actual STAOP value.
+ * values, nvalues: if not NULL, the slot's stavalues are extracted.
+ * numbers, nnumbers: if not NULL, the slot's stanumbers are extracted.
+ *
+ * If assigned, values and numbers are set to point to palloc'd arrays.
+ * If the stavalues datatype is pass-by-reference, the values referenced by
+ * the values array are themselves palloc'd.  The palloc'd stuff can be
+ * freed by calling free_attstatsslot.
+ *
+ * Note: at present, atttype/atttypmod aren't actually used here at all.
+ * But the caller must have the correct (or at least binary-compatible)
+ * type ID to pass to free_attstatsslot later.
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  */
 bool
 get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
@@ -3481,6 +3501,12 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 /*
  * free_attstatsslot
  *		Free data allocated by get_attstatsslot
+<<<<<<< HEAD
+=======
+ *
+ * atttype is the type of the individual values in values[].
+ * It need be valid only if values != NULL.
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  */
 void
 free_attstatsslot(AttStatsSlot *sslot)

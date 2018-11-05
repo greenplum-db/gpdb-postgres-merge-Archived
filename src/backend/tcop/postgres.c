@@ -166,13 +166,6 @@ char	   *register_stack_base_ptr = NULL;
 #endif
 
 /*
- * Flag to mark SIGHUP. Whenever the main loop comes around it
- * will reread the configuration file. (Better than doing the
- * reading in the signal handler, ey?)
- */
-static volatile sig_atomic_t got_SIGHUP = false;
-
-/*
  * Flag to keep track of whether we have started a transaction.
  * For extended query protocol this has to be remembered across messages.
  */
@@ -264,7 +257,6 @@ static bool IsTransactionExitStmt(Node *parsetree);
 static bool IsTransactionExitStmtList(List *parseTrees);
 static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
-static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
 static bool CheckDebugDtmActionSqlCommandTag(const char *sqlCommandTag);
 static bool CheckDebugDtmActionProtocol(DtxProtocolCommand dtxProtocolCommand,
@@ -438,6 +430,8 @@ SocketBackend(StringInfo inBuf)
 	/*
 	 * Get message type code from the frontend.
 	 */
+	HOLD_CANCEL_INTERRUPTS();
+	pq_startmsgread();
 	qtype = pq_getbyte();
 
 	if (qtype == EOF)			/* frontend disconnected */
@@ -529,8 +523,30 @@ SocketBackend(StringInfo inBuf)
 			break;
 
 		case 'F':				/* fastpath function call */
-			/* we let fastpath.c cope with old-style input of this */
 			doing_extended_query_message = false;
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+			{
+				if (GetOldFunctionMessage(inBuf))
+				{
+					if (IsTransactionState())
+						ereport(COMMERROR,
+								(errcode(ERRCODE_CONNECTION_FAILURE),
+								 errmsg("unexpected EOF on client connection with an open transaction")));
+					else
+					{
+						/*
+						 * Can't send DEBUG log messages to client at this
+						 * point. Since we're disconnecting right away, we
+						 * don't need to restore whereToSendOutput.
+						 */
+						whereToSendOutput = DestNone;
+						ereport(DEBUG1,
+								(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST),
+							 errmsg("unexpected EOF on client connection")));
+					}
+					return EOF;
+				}
+			}
 			break;
 
 		case 'X':				/* terminate */
@@ -602,6 +618,9 @@ SocketBackend(StringInfo inBuf)
 		if (pq_getmessage(inBuf, 0))
 			return EOF;			/* suitable message already logged */
 	}
+	else
+		pq_endmsgread();
+	RESUME_CANCEL_INTERRUPTS();
 
 	return qtype;
 }
@@ -660,7 +679,7 @@ prepare_for_client_read(void)
 		EnableCatchupInterrupt();
 		EnableClientWaitTimeoutInterrupt();
 
-		/* Allow cancel/die interrupts to be processed while waiting */
+		/* Allow die interrupts to be processed while waiting */
 		ImmediateInterruptOK = true;
 
 		/* And don't forget to detect one that already arrived */
@@ -1002,7 +1021,7 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
 
 	foreach(query_list, querytrees)
 	{
-		Query	   *query = (Query *) lfirst(query_list);
+		Query	   *query = castNode(Query, lfirst(query_list));
 		Node	   *stmt;
 
 		if (query->commandType == CMD_UTILITY)
@@ -3357,6 +3376,7 @@ quickdie_impl()
 		whereToSendOutput = DestNone;
 
 	/*
+<<<<<<< HEAD
 	 * We DO NOT want to run proc_exit() callbacks -- we're here because
 	 * shared memory may be corrupted, so we don't want to try to clean up our
 	 * transaction.  Just nail the windows shut and get out of town.  Now that
@@ -3369,12 +3389,49 @@ quickdie_impl()
 	/*
 	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+=======
+	 * Notify the client before exiting, to give a clue on what happened.
+	 *
+	 * It's dubious to call ereport() from a signal handler.  It is certainly
+	 * not async-signal safe.  But it seems better to try, than to disconnect
+	 * abruptly and leave the client wondering what happened.  It's remotely
+	 * possible that we crash or hang while trying to send the message, but
+	 * receiving a SIGQUIT is a sign that something has already gone badly
+	 * wrong, so there's not much to lose.  Assuming the postmaster is still
+	 * running, it will SIGKILL us soon if we get stuck for some reason.
+	 *
+	 * Ideally this should be ereport(FATAL), but then we'd not get control
+	 * back...
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_CRASH_SHUTDOWN),
+			 errmsg("terminating connection because of crash of another server process"),
+	errdetail("The postmaster has commanded this server process to roll back"
+			  " the current transaction and exit, because another"
+			  " server process exited abnormally and possibly corrupted"
+			  " shared memory."),
+			 errhint("In a moment you should be able to reconnect to the"
+					 " database and repeat your command.")));
+
+	/*
+	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
+	 * because shared memory may be corrupted, so we don't want to try to
+	 * clean up our transaction.  Just nail the windows shut and get out of
+	 * town.  The callbacks wouldn't be safe to run from a signal handler,
+	 * anyway.
+	 *
+	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
+	 * a system reset cycle if someone sends a manual SIGQUIT to a random
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	_exit(2);
 }
 
@@ -3405,9 +3462,10 @@ die(SIGNAL_ARGS)
 			(*cancel_pending_hook)();
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately
 		 */
+<<<<<<< HEAD
 		if ((ImmediateInterruptOK || ImmediateDieOK) &&
 			InterruptHoldoffCount == 0 && CritSectionCount == 0)
 		{
@@ -3434,6 +3492,10 @@ die(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
+=======
+		if (ImmediateInterruptOK)
+			ProcessInterrupts();
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3465,9 +3527,10 @@ StatementCancelHandler(SIGNAL_ARGS)
 			(*cancel_pending_hook)();
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately
 		 */
+<<<<<<< HEAD
 		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
 			CritSectionCount == 0)
 		{
@@ -3480,6 +3543,10 @@ StatementCancelHandler(SIGNAL_ARGS)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
+=======
+		if (ImmediateInterruptOK)
+			ProcessInterrupts();
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3552,13 +3619,19 @@ FloatExceptionHandler(SIGNAL_ARGS)
 					   "invalid operation, such as division by zero.")));
 }
 
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-SigHupHandler(SIGNAL_ARGS)
+/*
+ * SIGHUP: set flag to re-read config file at next convenient time.
+ *
+ * Sets the ConfigReloadPending flag, which should be checked at convenient
+ * places inside main loops. (Better than doing the reading in the signal
+ * handler, ey?)
+ */
+void
+PostgresSigHupHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	got_SIGHUP = true;
+	ConfigReloadPending = true;
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
@@ -3674,9 +3747,10 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			RecoveryConflictRetryable = false;
 
 		/*
-		 * If it's safe to interrupt, and we're waiting for input or a lock,
-		 * service the interrupt immediately
+		 * If we're waiting for input or a lock so that it's safe to
+		 * interrupt, service the interrupt immediately.
 		 */
+<<<<<<< HEAD
 		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
 			CritSectionCount == 0)
 		{
@@ -3689,6 +3763,10 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
+=======
+		if (ImmediateInterruptOK)
+			ProcessInterrupts();
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/*
@@ -3717,17 +3795,22 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 void
 ProcessInterrupts(const char* filename, int lineno)
 {
-	/* OK to accept interrupt now? */
+	/* OK to accept any interrupts now? */
 	if (InterruptHoldoffCount != 0 || CritSectionCount != 0)
 		return;
 
 	InterruptPending = false;
+
 	if (ProcDiePending)
 	{
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+<<<<<<< HEAD
 		ImmediateDieOK = false;		/* prevent re-entry */
+=======
+		LockErrorCleanup();
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
 		DisableClientWaitTimeoutInterrupt();
@@ -3779,6 +3862,7 @@ ProcessInterrupts(const char* filename, int lineno)
 	{
 		QueryCancelPending = false;		/* lost connection trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		LockErrorCleanup();
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
 		DisableClientWaitTimeoutInterrupt();
@@ -3788,14 +3872,60 @@ ProcessInterrupts(const char* filename, int lineno)
 				(errcode(ERRCODE_CONNECTION_FAILURE),
 				 errmsg("connection to client lost")));
 	}
+
+	/*
+	 * If a recovery conflict happens while we are waiting for input from the
+	 * client, the client is presumably just sitting idle in a transaction,
+	 * preventing recovery from making progress.  Terminate the connection to
+	 * dislodge it.
+	 */
+	if (RecoveryConflictPending && DoingCommandRead)
+	{
+		QueryCancelPending = false;			/* this trumps QueryCancel */
+		ImmediateInterruptOK = false;		/* not idle anymore */
+		RecoveryConflictPending = false;
+		LockErrorCleanup();
+		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
+		pgstat_report_recovery_conflict(RecoveryConflictReason);
+		ereport(FATAL,
+				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+				 errmsg("terminating connection due to conflict with recovery"),
+				 errdetail_recovery_conflict(),
+				 errhint("In a moment you should be able to reconnect to the"
+						 " database and repeat your command.")));
+	}
+
 	if (QueryCancelPending)
 	{
+<<<<<<< HEAD
 		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
+=======
+		bool		lock_timeout_occurred;
+		bool		stmt_timeout_occurred;
+
+		/*
+		 * Don't allow query cancel interrupts while reading input from the
+		 * client, because we might lose sync in the FE/BE protocol.  (Die
+		 * interrupts are OK, because we won't read any further messages from
+		 * the client in that case.)
+		 */
+		if (QueryCancelHoldoffCount != 0)
+		{
+			/*
+			 * Re-arm InterruptPending so that we process the cancel request
+			 * as soon as we're done reading the message.
+			 */
+			InterruptPending = true;
+			return;
+		}
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		QueryCancelPending = false;
 		if (ClientAuthInProgress)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			/* As in quickdie, don't risk sending to client during auth */
@@ -3808,21 +3938,35 @@ ProcessInterrupts(const char* filename, int lineno)
 
 		/*
 		 * If LOCK_TIMEOUT and STATEMENT_TIMEOUT indicators are both set, we
-		 * prefer to report the former; but be sure to clear both.
+		 * need to clear both, so always fetch both.
 		 */
-		if (get_timeout_indicator(LOCK_TIMEOUT, true))
+		lock_timeout_occurred = get_timeout_indicator(LOCK_TIMEOUT, true);
+		stmt_timeout_occurred = get_timeout_indicator(STATEMENT_TIMEOUT, true);
+
+		/*
+		 * If both were set, we want to report whichever timeout completed
+		 * earlier; this ensures consistent behavior if the machine is slow
+		 * enough that the second timeout triggers before we get here.  A tie
+		 * is arbitrarily broken in favor of reporting a lock timeout.
+		 */
+		if (lock_timeout_occurred && stmt_timeout_occurred &&
+			get_timeout_finish_time(STATEMENT_TIMEOUT) < get_timeout_finish_time(LOCK_TIMEOUT))
+			lock_timeout_occurred = false;		/* report stmt timeout */
+
+		if (lock_timeout_occurred)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
-			(void) get_timeout_indicator(STATEMENT_TIMEOUT, true);
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("canceling statement due to lock timeout")));
 		}
-		if (get_timeout_indicator(STATEMENT_TIMEOUT, true))
+		if (stmt_timeout_occurred)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
@@ -3832,6 +3976,7 @@ ProcessInterrupts(const char* filename, int lineno)
 		if (IsAutoVacuumWorkerProcess())
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
@@ -3842,21 +3987,14 @@ ProcessInterrupts(const char* filename, int lineno)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
 			RecoveryConflictPending = false;
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			pgstat_report_recovery_conflict(RecoveryConflictReason);
-			if (DoingCommandRead)
-				ereport(FATAL,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("terminating connection due to conflict with recovery"),
-						 errdetail_recovery_conflict(),
-				 errhint("In a moment you should be able to reconnect to the"
-						 " database and repeat your command.")));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+			ereport(ERROR,
+					(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 				 errmsg("canceling statement due to conflict with recovery"),
-						 errdetail_recovery_conflict()));
+					 errdetail_recovery_conflict()));
 		}
 
 		/*
@@ -3867,6 +4005,7 @@ ProcessInterrupts(const char* filename, int lineno)
 		if (!DoingCommandRead)
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
+			LockErrorCleanup();
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 
@@ -4045,15 +4184,32 @@ restore_stack_base(pg_stack_base_t base)
 }
 
 /*
- * check_stack_depth: check for excessively deep recursion
+ * check_stack_depth/stack_is_too_deep: check for excessively deep recursion
  *
  * This should be called someplace in any recursive routine that might possibly
  * recurse deep enough to overflow the stack.  Most Unixen treat stack
  * overflow as an unrecoverable SIGSEGV, so we want to error out ourselves
  * before hitting the hardware limit.
+ *
+ * check_stack_depth() just throws an error summarily.  stack_is_too_deep()
+ * can be used by code that wants to handle the error condition itself.
  */
 void
 check_stack_depth(void)
+{
+	if (stack_is_too_deep())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
+				 errmsg("stack depth limit exceeded"),
+				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
+			  "after ensuring the platform's stack depth limit is adequate.",
+						 max_stack_depth)));
+	}
+}
+
+bool
+stack_is_too_deep(void)
 {
 	char		stack_top_loc;
 	long		stack_depth;
@@ -4079,14 +4235,7 @@ check_stack_depth(void)
 	 */
 	if (stack_depth > max_stack_depth_bytes &&
 		stack_base_ptr != NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-			  "after ensuring the platform's stack depth limit is adequate.",
-						 max_stack_depth)));
-	}
+		return true;
 
 	/*
 	 * On IA64 there is a separate "register" stack that requires its own
@@ -4101,15 +4250,10 @@ check_stack_depth(void)
 
 	if (stack_depth > max_stack_depth_bytes &&
 		register_stack_base_ptr != NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
-				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter \"max_stack_depth\" (currently %dkB), "
-			  "after ensuring the platform's stack depth limit is adequate.",
-						 max_stack_depth)));
-	}
+		return true;
 #endif   /* IA64 */
+
+	return false;
 }
 
 /* GUC check hook for max_stack_depth */
@@ -4613,6 +4757,14 @@ PostgresMain(int argc, char *argv[],
 		MyProcPid = getpid();
 
 		MyStartTime = time(NULL);
+
+		/*
+		 * Initialize random() for the first time, like PostmasterMain()
+		 * would.  In a regular IsUnderPostmaster backend, BackendRun()
+		 * computes a high-entropy seed before any user query.  Fewer distinct
+		 * initial seeds can occur here.
+		 */
+		srandom((unsigned int) (MyProcPid ^ MyStartTime));
 	}
 
 #ifndef WIN32
@@ -4702,8 +4854,8 @@ PostgresMain(int argc, char *argv[],
 		WalSndSignals();
 	else
 	{
-		pqsignal(SIGHUP, SigHupHandler);		/* set flag to read config
-												 * file */
+		pqsignal(SIGHUP, PostgresSigHupHandler);		/* set flag to read config
+														 * file */
 		pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
 		pqsignal(SIGTERM, die); /* cancel current query and exit */
 
@@ -5014,12 +5166,27 @@ PostgresMain(int argc, char *argv[],
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
 
+<<<<<<< HEAD
 		/* When QE error in creating extension, we must reset CurrentExtensionObject */
 		creating_extension = false;
 		CurrentExtensionObject = InvalidOid;
 
 		/* Inform Vmem tracker that the current process has finished cleanup */
 		RunawayCleaner_RunawayCleanupDoneForProcess(false /* ignoredCleanup */);
+=======
+		/*
+		 * If an error occurred while we were reading a message from the
+		 * client, we have potentially lost track of where the previous
+		 * message ends and the next one begins.  Even though we have
+		 * otherwise recovered from the error, we cannot safely read any more
+		 * messages from the client, so there isn't much we can do with the
+		 * connection anymore.
+		 */
+		if (pq_is_reading_msg())
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("terminating connection because protocol sync was lost")));
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
@@ -5084,6 +5251,12 @@ PostgresMain(int argc, char *argv[],
 		 * queries
 		 */
 		IdleTracker_DeactivateProcess();
+
+		/*
+		 * Also consider releasing our catalog snapshot if any, so that it's
+		 * not preventing advance of global xmin while we wait for the client.
+		 */
+		InvalidateCatalogSnapshotConditionally();
 
 		/*
 		 * (1) If we've reached idle state, tell the frontend we're ready for
@@ -5167,16 +5340,23 @@ PostgresMain(int argc, char *argv[],
 
 		/*
 		 * (4) disable async signal conditions again.
+		 *
+		 * Query cancel is supposed to be a no-op when there is no query in
+		 * progress, so if a query cancel arrived while we were idle, just
+		 * reset QueryCancelPending. ProcessInterrupts() has that effect when
+		 * it's called when DoingCommandRead is set, so check for interrupts
+		 * before resetting DoingCommandRead.
 		 */
+		CHECK_FOR_INTERRUPTS();
 		DoingCommandRead = false;
 
 		/*
 		 * (5) check for any other interesting events that happened while we
 		 * slept.
 		 */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
@@ -5537,6 +5717,7 @@ PostgresMain(int argc, char *argv[],
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
 
+<<<<<<< HEAD
 				if (HandleFunctionRequest(&input_message) == EOF)
 				{
 					/*
@@ -5550,6 +5731,9 @@ PostgresMain(int argc, char *argv[],
 
 					proc_exit(0);
 				}
+=======
+				HandleFunctionRequest(&input_message);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 				/* commit the function-invocation transaction */
 				finish_xact_command();

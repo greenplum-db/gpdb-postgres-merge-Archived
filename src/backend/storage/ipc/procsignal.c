@@ -20,6 +20,11 @@
 #include "cdb/cdbvars.h"
 #include "commands/async.h"
 #include "miscadmin.h"
+<<<<<<< HEAD
+=======
+#include "replication/walsender.h"
+#include "storage/latch.h"
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/proc.h"
@@ -311,6 +316,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if (CheckProcSignal(PROCSIG_WALSND_INIT_STOPPING))
+		HandleWalSndInitStopping();
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_DATABASE))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_DATABASE);

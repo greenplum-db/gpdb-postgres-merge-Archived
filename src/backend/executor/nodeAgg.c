@@ -2548,8 +2548,65 @@ void
 ExecReScanAgg(AggState *node)
 {
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
+<<<<<<< HEAD
 
 	ExecEagerFreeAgg(node);
+=======
+	Agg		   *aggnode = (Agg *) node->ss.ps.plan;
+	int			aggno;
+
+	node->agg_done = false;
+
+	node->ss.ps.ps_TupFromTlist = false;
+
+	if (aggnode->aggstrategy == AGG_HASHED)
+	{
+		/*
+		 * In the hashed case, if we haven't yet built the hash table then we
+		 * can just return; nothing done yet, so nothing to undo. If subnode's
+		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
+		 * else no reason to re-scan it at all.
+		 */
+		if (!node->table_filled)
+			return;
+
+		/*
+		 * If we do have the hash table, and the subplan does not have any
+		 * parameter changes, and none of our own parameter changes affect
+		 * input expressions of the aggregated functions, then we can just
+		 * rescan the existing hash table; no need to build it again.
+		 */
+		if (node->ss.ps.lefttree->chgParam == NULL &&
+			!bms_overlap(node->ss.ps.chgParam, aggnode->aggParams))
+		{
+			ResetTupleHashIterator(node->hashtable, &node->hashiter);
+			return;
+		}
+	}
+
+	/* Make sure we have closed any open tuplesorts */
+	for (aggno = 0; aggno < node->numaggs; aggno++)
+	{
+		AggStatePerAgg peraggstate = &node->peragg[aggno];
+
+		if (peraggstate->sortstate)
+			tuplesort_end(peraggstate->sortstate);
+		peraggstate->sortstate = NULL;
+	}
+
+	/* We don't need to ReScanExprContext here; ExecReScan already did it */
+
+	/* Release first tuple of group, if we have made a copy */
+	if (node->grp_firstTuple != NULL)
+	{
+		heap_freetuple(node->grp_firstTuple);
+		node->grp_firstTuple = NULL;
+	}
+
+	/* Forget current agg values */
+	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
+	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Release all temp storage. Note that with AGG_HASHED, the hash table is
@@ -2560,6 +2617,7 @@ ExecReScanAgg(AggState *node)
 	 */
 	MemoryContextResetAndDeleteChildren(node->aggcontext);
 
+<<<<<<< HEAD
 	/* Re-initialize some variables */
 	node->agg_done = false;
 
@@ -2571,6 +2629,15 @@ ExecReScanAgg(AggState *node)
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
 	if (!IS_HASHAGG(node))
+=======
+	if (aggnode->aggstrategy == AGG_HASHED)
+	{
+		/* Rebuild an empty hash table */
+		build_hash_table(node);
+		node->table_filled = false;
+	}
+	else
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	{
 		/*
 		 * Reset the per-group state (in particular, mark transvalues null)

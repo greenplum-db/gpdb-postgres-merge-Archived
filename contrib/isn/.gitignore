@@ -1,1 +1,8 @@
+<<<<<<< HEAD
 /isn.sql
+=======
+# Generated subdirectories
+/log/
+/results/
+/tmp_check/
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d

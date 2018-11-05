@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # GPDB_91_MERGE_FIXME: GPDB acquires ExclusiveLock for update and delete SQL
 # statements.  This invalidates most of the isolation tests from upstream below.
 # E.g. an UPDATE step executed by isolationtester never returns because another
@@ -26,14 +27,55 @@
 #test: eval-plan-qual
 #test: lock-update-delete
 #test: lock-update-traversal
+=======
+test: read-write-unique
+test: read-write-unique-2
+test: read-write-unique-3
+test: read-write-unique-4
+test: simple-write-skew
+test: receipt-report
+test: temporal-range-integrity
+test: project-manager
+test: classroom-scheduling
+test: total-cash
+test: referential-integrity
+test: ri-trigger
+test: partial-index
+test: two-ids
+test: multiple-row-versions
+test: index-only-scan
+test: fk-contention
+test: fk-deadlock
+test: fk-deadlock2
+test: eval-plan-qual
+test: lock-update-delete
+test: lock-update-traversal
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 test: delete-abort-savept
 #test: delete-abort-savept-2
 #test: aborted-keyrevoke
 test: multixact-no-deadlock
+<<<<<<< HEAD
 #test: multixact-no-forget
 #test: propagate-lock-delete
+=======
+test: multixact-no-forget
+test: lock-committed-update
+test: lock-committed-keyupdate
+test: update-locked-tuple
+test: propagate-lock-delete
+test: tuplelock-conflict
+test: freeze-the-dead
+test: nowait
+test: nowait-2
+test: nowait-3
+test: nowait-4
+test: nowait-5
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 test: drop-index-concurrently-1
+test: multiple-cic
 test: alter-table-1
+test: alter-table-4
 test: timeouts
 
 #test: prepared-transactions

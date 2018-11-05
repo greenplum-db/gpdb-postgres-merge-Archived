@@ -54,6 +54,7 @@ no rows returned for \gset
 \unset FETCH_COUNT
 -- show all pset options
 \pset
+<<<<<<< HEAD
 Border style (border) is 1.
 Target width (columns) unset.
 Expanded display (expanded) is off.
@@ -68,3 +69,21 @@ Record separator (recordsep) is <newline>.
 Table attributes (tableattr) unset.
 Title (title) unset.
 Tuples only (tuples_only) is off.
+=======
+border         1
+columns        0
+expanded       off
+fieldsep       '|'
+fieldsep_zero  off
+footer         on
+format         aligned
+linestyle      ascii
+null           ''
+numericlocale  off
+pager          1
+recordsep      '\n'
+recordsep_zero off
+tableattr      
+title          
+tuples_only    off
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d

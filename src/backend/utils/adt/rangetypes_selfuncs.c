@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
@@ -73,6 +74,7 @@ default_range_selectivity(Oid operator)
 			return 0.005;
 
 		case OID_RANGE_CONTAINS_ELEM_OP:
+		case OID_RANGE_ELEM_CONTAINED_OP:
 
 			/*
 			 * "range @> elem" is more or less identical to a scalar
@@ -86,6 +88,8 @@ default_range_selectivity(Oid operator)
 		case OID_RANGE_GREATER_EQUAL_OP:
 		case OID_RANGE_LEFT_OP:
 		case OID_RANGE_RIGHT_OP:
+		case OID_RANGE_OVERLAPS_LEFT_OP:
+		case OID_RANGE_OVERLAPS_RIGHT_OP:
 			/* these are similar to regular scalar inequalities */
 			return DEFAULT_INEQ_SEL;
 
@@ -109,7 +113,7 @@ rangesel(PG_FUNCTION_ARGS)
 	Node	   *other;
 	bool		varonleft;
 	Selectivity selec;
-	TypeCacheEntry *typcache;
+	TypeCacheEntry *typcache = NULL;
 	RangeType  *constrange = NULL;
 
 	/*
@@ -186,18 +190,27 @@ rangesel(PG_FUNCTION_ARGS)
 			constrange = range_serialize(typcache, &lower, &upper, false);
 		}
 	}
-	else
+	else if (operator == OID_RANGE_ELEM_CONTAINED_OP)
 	{
-		typcache = range_get_typcache(fcinfo, ((Const *) other)->consttype);
+		/*
+		 * Here, the Var is the elem, not the range.  For now we just punt and
+		 * return the default estimate.  In future we could disassemble the
+		 * range constant and apply scalarineqsel ...
+		 */
+	}
+	else if (((Const *) other)->consttype == vardata.vartype)
+	{
+		/* Both sides are the same range type */
+		typcache = range_get_typcache(fcinfo, vardata.vartype);
 
-		if (((Const *) other)->consttype == vardata.vartype)
-			constrange = DatumGetRangeType(((Const *) other)->constvalue);
+		constrange = DatumGetRangeType(((Const *) other)->constvalue);
 	}
 
 	/*
 	 * If we got a valid constant on one side of the operator, proceed to
 	 * estimate using statistics. Otherwise punt and return a default constant
-	 * estimate.
+	 * estimate.  Note that calc_rangesel need not handle
+	 * OID_RANGE_ELEM_CONTAINED_OP.
 	 */
 	if (constrange)
 		selec = calc_rangesel(typcache, &vardata, constrange, operator);
@@ -232,6 +245,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		null_frac = stats->stanullfrac;
 
 		/* Try to get fraction of empty ranges */
+<<<<<<< HEAD
 		if (get_attstatsslot(&sslot, vardata->statsTuple,
 							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
 							 InvalidOid,
@@ -241,6 +255,20 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 				elog(ERROR, "invalid empty fraction statistic");	/* shouldn't happen */
 			empty_frac = sslot.numbers[0];
 			free_attstatsslot(&sslot);
+=======
+		if (get_attstatsslot(vardata->statsTuple,
+							 FLOAT8OID, -1,
+							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
+							 InvalidOid,
+							 NULL,
+							 NULL, NULL,
+							 &numbers, &nnumbers))
+		{
+			if (nnumbers != 1)
+				elog(ERROR, "invalid empty fraction statistic");		/* shouldn't happen */
+			empty_frac = numbers[0];
+			free_attstatsslot(FLOAT8OID, NULL, 0, numbers, nnumbers);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 		else
 		{
@@ -268,31 +296,37 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		 */
 		switch (operator)
 		{
+				/* these return false if either argument is empty */
 			case OID_RANGE_OVERLAP_OP:
 			case OID_RANGE_OVERLAPS_LEFT_OP:
 			case OID_RANGE_OVERLAPS_RIGHT_OP:
 			case OID_RANGE_LEFT_OP:
 			case OID_RANGE_RIGHT_OP:
-				/* these return false if either argument is empty */
+				/* nothing is less than an empty range */
+			case OID_RANGE_LESS_OP:
 				selec = 0.0;
 				break;
 
+				/* only empty ranges can be contained by an empty range */
 			case OID_RANGE_CONTAINED_OP:
+				/* only empty ranges are <= an empty range */
 			case OID_RANGE_LESS_EQUAL_OP:
-			case OID_RANGE_GREATER_EQUAL_OP:
-
-				/*
-				 * these return true when both args are empty, false if only
-				 * one is empty
-				 */
 				selec = empty_frac;
 				break;
 
-			case OID_RANGE_CONTAINS_OP:
 				/* everything contains an empty range */
+			case OID_RANGE_CONTAINS_OP:
+				/* everything is >= an empty range */
+			case OID_RANGE_GREATER_EQUAL_OP:
 				selec = 1.0;
 				break;
 
+				/* all non-empty ranges are > an empty range */
+			case OID_RANGE_GREATER_OP:
+				selec = 1.0 - empty_frac;
+				break;
+
+				/* an element cannot be empty */
 			case OID_RANGE_CONTAINS_ELEM_OP:
 			default:
 				elog(ERROR, "unexpected operator %u", operator);
@@ -354,6 +388,11 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	AttStatsSlot hslot;
 	AttStatsSlot lslot;
 	int			nhist;
+<<<<<<< HEAD
+=======
+	Datum	   *length_hist_values = NULL;
+	int			length_nhist = 0;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	RangeBound *hist_lower;
 	RangeBound *hist_upper;
 	int			i;
@@ -361,6 +400,15 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	RangeBound	const_upper;
 	bool		empty;
 	double		hist_selec;
+
+	/* Can't use the histogram with insecure range support functions */
+	if (!statistic_proc_security_check(vardata,
+									   typcache->rng_cmp_proc_finfo.fn_oid))
+		return -1;
+	if (OidIsValid(typcache->rng_subdiff_finfo.fn_oid) &&
+		!statistic_proc_security_check(vardata,
+									   typcache->rng_subdiff_finfo.fn_oid))
+		return -1;
 
 	/* Try to get histogram of ranges */
 	if (!(HeapTupleIsValid(vardata->statsTuple) &&
@@ -390,20 +438,40 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		operator == OID_RANGE_CONTAINED_OP)
 	{
 		if (!(HeapTupleIsValid(vardata->statsTuple) &&
+<<<<<<< HEAD
 			  get_attstatsslot(&lslot, vardata->statsTuple,
 							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
 							   InvalidOid,
 							   ATTSTATSSLOT_VALUES)))
 		{
 			free_attstatsslot(&hslot);
+=======
+			  get_attstatsslot(vardata->statsTuple,
+							   FLOAT8OID, -1,
+							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
+							   InvalidOid,
+							   NULL,
+							   &length_hist_values, &length_nhist,
+							   NULL, NULL)))
+		{
+			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			return -1.0;
 		}
 
 		/* check that it's a histogram, not just a dummy entry */
+<<<<<<< HEAD
 		if (lslot.nvalues < 2)
 		{
 			free_attstatsslot(&lslot);
 			free_attstatsslot(&hslot);
+=======
+		if (length_nhist < 2)
+		{
+			free_attstatsslot(FLOAT8OID,
+							  length_hist_values, length_nhist, NULL, 0);
+			free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			return -1.0;
 		}
 	}
@@ -444,13 +512,13 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		case OID_RANGE_GREATER_OP:
 			hist_selec =
 				1 - calc_hist_selectivity_scalar(typcache, &const_lower,
-												 hist_lower, nhist, true);
+												 hist_lower, nhist, false);
 			break;
 
 		case OID_RANGE_GREATER_EQUAL_OP:
 			hist_selec =
 				1 - calc_hist_selectivity_scalar(typcache, &const_lower,
-												 hist_lower, nhist, false);
+												 hist_lower, nhist, true);
 			break;
 
 		case OID_RANGE_LEFT_OP:
@@ -516,7 +584,7 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			{
 				/*
 				 * Lower bound no longer matters. Just estimate the fraction
-				 * with an upper bound <= const uppert bound
+				 * with an upper bound <= const upper bound
 				 */
 				hist_selec =
 					calc_hist_selectivity_scalar(typcache, &const_upper,
@@ -543,8 +611,14 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			break;
 	}
 
+<<<<<<< HEAD
 	free_attstatsslot(&lslot);
 	free_attstatsslot(&hslot);
+=======
+	free_attstatsslot(FLOAT8OID,
+					  length_hist_values, length_nhist, NULL, 0);
+	free_attstatsslot(vardata->atttype, hist_values, nhist, NULL, 0);
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	return hist_selec;
 }

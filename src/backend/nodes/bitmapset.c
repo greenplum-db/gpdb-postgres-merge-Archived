@@ -890,6 +890,7 @@ bms_join(Bitmapset *a, Bitmapset *b)
 	return result;
 }
 
+<<<<<<< HEAD
 /*----------
  * bms_first_from - find first member of a set, starting at given index
  *
@@ -936,6 +937,9 @@ bms_first_from(const Bitmapset *a, int x)
 }
 
 /*----------
+=======
+/*
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * bms_first_member - find and remove first member of a set
  *
  * Returns -1 if set is empty.  NB: set is destructively modified!
@@ -943,11 +947,11 @@ bms_first_from(const Bitmapset *a, int x)
  * This is intended as support for iterating through the members of a set.
  * The typical pattern is
  *
- *			tmpset = bms_copy(inputset);
- *			while ((x = bms_first_member(tmpset)) >= 0)
+ *			while ((x = bms_first_member(inputset)) >= 0)
  *				process member x;
- *			bms_free(tmpset);
- *----------
+ *
+ * CAUTION: this destroys the content of "inputset".  If the set must
+ * not be modified, use bms_next_member instead.
  */
 int
 bms_first_member(Bitmapset *a)
@@ -971,6 +975,64 @@ bms_first_member(Bitmapset *a)
 		}
 	}
 	return -1;
+}
+
+/*
+ * bms_next_member - find next member of a set
+ *
+ * Returns smallest member greater than "prevbit", or -2 if there is none.
+ * "prevbit" must NOT be less than -1, or the behavior is unpredictable.
+ *
+ * This is intended as support for iterating through the members of a set.
+ * The typical pattern is
+ *
+ *			x = -1;
+ *			while ((x = bms_next_member(inputset, x)) >= 0)
+ *				process member x;
+ *
+ * Notice that when there are no more members, we return -2, not -1 as you
+ * might expect.  The rationale for that is to allow distinguishing the
+ * loop-not-started state (x == -1) from the loop-completed state (x == -2).
+ * It makes no difference in simple loop usage, but complex iteration logic
+ * might need such an ability.
+ */
+int
+bms_next_member(const Bitmapset *a, int prevbit)
+{
+	int			nwords;
+	int			wordnum;
+	bitmapword	mask;
+
+	if (a == NULL)
+		return -2;
+	nwords = a->nwords;
+	prevbit++;
+	mask = (~(bitmapword) 0) << BITNUM(prevbit);
+	for (wordnum = WORDNUM(prevbit); wordnum < nwords; wordnum++)
+	{
+		bitmapword	w = a->words[wordnum];
+
+		/* ignore bits before prevbit */
+		w &= mask;
+
+		if (w != 0)
+		{
+			int			result;
+
+			result = wordnum * BITS_PER_BITMAPWORD;
+			while ((w & 255) == 0)
+			{
+				w >>= 8;
+				result += 8;
+			}
+			result += rightmost_one_pos[w & 255];
+			return result;
+		}
+
+		/* in subsequent words, consider all bits */
+		mask = (~(bitmapword) 0);
+	}
+	return -2;
 }
 
 /*

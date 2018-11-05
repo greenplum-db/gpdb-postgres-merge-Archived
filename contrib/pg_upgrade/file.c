@@ -41,7 +41,11 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 #else
 		if (CopyFile(src, dst, !force) == 0)
 #endif
+<<<<<<< HEAD
 			return getErrorText(errno);
+=======
+			return getErrorText();
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		else
 			return NULL;
 	}
@@ -125,7 +129,7 @@ linkAndUpdateFile(pageCnvCtx *pageConverter,
 		return "Cannot in-place update this cluster, page-by-page conversion is required";
 
 	if (pg_link_file(src, dst) == -1)
-		return getErrorText(errno);
+		return getErrorText();
 	else
 		return NULL;
 }
@@ -223,7 +227,7 @@ check_hard_link(void)
 	{
 		pg_fatal("Could not create hard link between old and new data directories: %s\n"
 				 "In link mode the old and new data directories must be on the same file system volume.\n",
-				 getErrorText(errno));
+				 getErrorText());
 	}
 	unlink(new_link_file);
 }

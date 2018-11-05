@@ -1,7 +1,11 @@
 use strict;
 use warnings;
 use TestLib;
+<<<<<<< HEAD
 use Test::More tests => 18;
+=======
+use Test::More tests => 23;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -29,4 +33,26 @@ issues_sql_like(
 issues_sql_like(
 	[ 'vacuumdb', '-Z', 'postgres' ],
 	qr/statement: ANALYZE;/,
-	'vacuumdb -z');
+	'vacuumdb -Z');
+command_ok([qw(vacuumdb -Z --table=pg_am dbname=template1)],
+	'vacuumdb with connection string');
+
+command_fails([qw(vacuumdb -Zt pg_am;ABORT postgres)],
+	'trailing command in "-t", without COLUMNS');
+# Unwanted; better if it failed.
+command_ok([qw(vacuumdb -Zt pg_am(amname);ABORT postgres)],
+	'trailing command in "-t", with COLUMNS');
+
+psql('postgres', q|
+  CREATE TABLE "need""q(uot" (")x" text);
+
+  CREATE FUNCTION f0(int) RETURNS int LANGUAGE SQL AS 'SELECT $1 * $1';
+  CREATE FUNCTION f1(int) RETURNS int LANGUAGE SQL AS 'SELECT f0($1)';
+  CREATE TABLE funcidx (x int);
+  INSERT INTO funcidx VALUES (0),(1),(2),(3);
+  CREATE INDEX i0 ON funcidx ((f1(x)));
+|);
+command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
+	'column list');
+command_fails([qw|vacuumdb -Zt funcidx postgres|],
+	'unqualifed name via functional index');

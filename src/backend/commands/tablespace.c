@@ -80,7 +80,6 @@
 #include "commands/seclabel.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
-#include "commands/user.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
@@ -441,6 +440,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	/* We keep the lock on pg_tablespace until commit */
 	heap_close(rel, NoLock);
 
+<<<<<<< HEAD
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
 		CdbDispatchUtilityStatement((Node *) stmt,
@@ -457,13 +457,15 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 						   "CREATE", "TABLESPACE");
 	}
 
+=======
+	return tablespaceoid;
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #else							/* !HAVE_SYMLINK */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
+	return InvalidOid;			/* keep compiler quiet */
 #endif   /* HAVE_SYMLINK */
-
-	return tablespaceoid;
 }
 
 /*
@@ -573,6 +575,13 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * but we can't tell them apart from important data files that we
 		 * mustn't delete.  So instead, we force a checkpoint which will clean
 		 * out any lingering files, and try again.
+		 *
+		 * XXX On Windows, an unlinked file persists in the directory listing
+		 * until no process retains an open handle for the file.  The DDL
+		 * commands that schedule files for unlink send invalidation messages
+		 * directing other PostgreSQL processes to close the files.  DROP
+		 * TABLESPACE should not give up on the tablespace becoming empty
+		 * until all relevant invalidation processing is complete.
 		 */
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 		if (!destroy_tablespace_directories(tablespaceoid, false))
@@ -1110,6 +1119,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 }
 
 /*
+<<<<<<< HEAD
  * Alter table space move
  *
  * Allows a user to move all of their objects in a given tablespace in the
@@ -1301,6 +1311,8 @@ AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt)
 }
 
 /*
+=======
+>>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
  * Routines for handling the GUC variable 'default_tablespace'.
  */
 
