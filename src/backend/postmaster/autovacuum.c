@@ -589,7 +589,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetConfigOption("default_transaction_isolation", "read committed",
 					PGC_SUSET, PGC_S_OVERRIDE);
 
-<<<<<<< HEAD
 
 /*
  * In GPDB, we only want an autovacuum worker to start once we know
@@ -603,13 +602,10 @@ AutoVacLauncherMain(int argc, char *argv[])
  * worker will continue to signal for a new launcher.
  */
 #if 0
-	/* in emergency mode, just start a worker and go away */
-=======
 	/*
 	 * In emergency mode, just start a worker (unless shutdown was requested)
 	 * and go away.
 	 */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (!AutoVacuumingActive())
 	{
 		if (!got_SIGTERM)
