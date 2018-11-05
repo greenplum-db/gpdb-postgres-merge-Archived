@@ -49,12 +49,8 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 List *restrictlist,
 					 JoinType jointype, SpecialJoinInfo *sjinfo,
 					 SemiAntiJoinFactors *semifactors,
-<<<<<<< HEAD
-					 Relids param_source_rels, Relids extra_lateral_rels,
+					 Relids param_source_rels,
 					 List *redistribution_clauses /*CDB*/);
-=======
-					 Relids param_source_rels);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static List *select_mergejoin_clauses(PlannerInfo *root,
 						 RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
@@ -257,11 +253,8 @@ add_paths_to_joinrel(PlannerInfo *root,
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, jointype,
 							 sjinfo, &semifactors,
-<<<<<<< HEAD
-							 param_source_rels, extra_lateral_rels,
+							 param_source_rels,
 							 redistribution_clauses);
-=======
-							 param_source_rels);
 }
 
 /*
@@ -1209,13 +1202,8 @@ hash_inner_and_outer(PlannerInfo *root,
 					 JoinType jointype,
 					 SpecialJoinInfo *sjinfo,
 					 SemiAntiJoinFactors *semifactors,
-<<<<<<< HEAD
 					 Relids param_source_rels,
-					 Relids extra_lateral_rels,
 					 List *redistribution_clauses     /*CDB*/)
-=======
-					 Relids param_source_rels)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *hashclauses;
