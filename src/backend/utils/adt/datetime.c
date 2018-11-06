@@ -267,12 +267,7 @@ static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
 /*
  * strtoint --- just like strtol, but returns int not long
  */
-<<<<<<< HEAD
-static inline int strtoi(const char *nptr, char **endptr, __attribute__((unused)) int base)
-=======
-static int
-strtoint(const char *nptr, char **endptr, int base)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+static inline int strtoint(const char *nptr, char **endptr, __attribute__((unused)) int base)
 {
 	/* Assume base = 10 */
 	/* Assume number will not be larger than int32 */
