@@ -2808,18 +2808,12 @@ float8_numeric(PG_FUNCTION_ARGS)
 	if (isnan(val))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-<<<<<<< HEAD
-	snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, val);
-=======
 	if (isinf(val))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert infinity to numeric")));
 
 	snprintf(buf, sizeof(buf), "%.*g", DBL_DIG, val);
-
-	init_var(&result);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Assume we need not worry about leading/trailing spaces */
 	(void) init_var_from_str(buf, buf, &result);
@@ -2877,18 +2871,12 @@ float4_numeric(PG_FUNCTION_ARGS)
 	if (isnan(val))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-<<<<<<< HEAD
-	snprintf(buf, sizeof(buf), "%.*g", FLT_DIG, val);
-=======
 	if (isinf(val))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert infinity to numeric")));
 
 	snprintf(buf, sizeof(buf), "%.*g", FLT_DIG, val);
-
-	init_var(&result);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Assume we need not worry about leading/trailing spaces */
 	(void) init_var_from_str(buf, buf, &result);
