@@ -506,12 +506,8 @@ static bool ServiceStartable(PMSubProc *subProc);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
-<<<<<<< HEAD
-static void processCancelRequest(Port *port, void *pkt, MsgType code);
-=======
 static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
-static void processCancelRequest(Port *port, void *pkt);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+static void processCancelRequest(Port *port, void *pkt, MsgType code);
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
@@ -1901,11 +1897,8 @@ ServerLoop(void)
 	{
 		fd_set		rmask;
 		int			selres;
-<<<<<<< HEAD
 		int			s;
-=======
 		time_t		now;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/*
 		 * Wait for a connection request to arrive.
@@ -2413,7 +2406,16 @@ retry1:
 					   errmsg("invalid value for parameter \"replication\""),
 							 errhint("Valid values are: false, 0, true, 1, database.")));
 			}
-<<<<<<< HEAD
+			else if (strncmp(nameptr, "_pq_.", 5) == 0)
+			{
+				/*
+				 * Any option beginning with _pq_. is reserved for use as a
+				 * protocol-level option, but at present no such options are
+				 * defined.
+				 */
+				unrecognized_protocol_options =
+					lappend(unrecognized_protocol_options, pstrdup(nameptr));
+			}
 			else if (strcmp(nameptr, GPCONN_TYPE) == 0)
 			{
 				if (strcmp(valptr, GPCONN_TYPE_FTS) == 0)
@@ -2465,17 +2467,6 @@ retry1:
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for option: \"%s\"", GPCONN_TYPE)));
-=======
-			else if (strncmp(nameptr, "_pq_.", 5) == 0)
-			{
-				/*
-				 * Any option beginning with _pq_. is reserved for use as a
-				 * protocol-level option, but at present no such options are
-				 * defined.
-				 */
-				unrecognized_protocol_options =
-					lappend(unrecognized_protocol_options, pstrdup(nameptr));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			}
 			else
 			{
@@ -4783,11 +4774,7 @@ BackendInitialize(Port *port)
 	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
 	 * timeout while trying to collect the startup packet.  Otherwise the
 	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
-<<<<<<< HEAD
-	 * buggy client blocks a backend during authentication. XXX it follows that
-=======
 	 * buggy client fails to send the packet promptly.  XXX it follows that
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * the remainder of this function must tolerate losing control at any
 	 * instant.  Likewise, any pg_on_exit_callback registered before or during
 	 * this function must be prepared to execute at any instant between here
@@ -5778,8 +5765,9 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER))
 	{
 		/* Startup Process wants us to start the walreceiver process. */
-<<<<<<< HEAD
-		WalReceiverPID = StartWalReceiver();
+		/* Start immediately if possible, else remember request for later. */
+		WalReceiverRequested = true;
+		MaybeStartWalReceiver();
 
 		/* wal receiver has been launched */
 		pm_launch_walreceiver = true;
@@ -5789,11 +5777,6 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_FTS) && FTSSubProc->pid != 0)
 	{
 		signal_child(FTSSubProc->pid, SIGINT);
-=======
-		/* Start immediately if possible, else remember request for later. */
-		WalReceiverRequested = true;
-		MaybeStartWalReceiver();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE) &&
