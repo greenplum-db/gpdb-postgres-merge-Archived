@@ -135,13 +135,8 @@ static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-<<<<<<< HEAD
 			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
-			   bool inh, int elevel);
-=======
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -172,7 +167,7 @@ static void analyzeEstimateReltuplesRelpages(Oid relationOid, float4 *relTuples,
 static void analyzeEstimateIndexpages(Relation onerel, Relation indrel, BlockNumber *indexPages, int elevel);
 
 static void analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
-					 BufferAccessStrategy bstrategy);
+			bool in_outer_xact, BufferAccessStrategy bstrategy);
 static void acquire_hll_by_query(Relation onerel, int nattrs, VacAttrStats **attrstats, int elevel);
 
 /*
@@ -194,7 +189,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 
 	PG_TRY();
 	{
-		analyze_rel_internal(relid, vacstmt, bstrategy);
+		analyze_rel_internal(relid, vacstmt, in_outer_xact, bstrategy);
 	}
 	/* Clean up in case of error. */
 	PG_CATCH();
@@ -210,7 +205,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 }
 
 static void
-analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
+analyze_rel_internal(Oid relid, VacuumStmt *vacstmt,
+			bool in_outer_xact, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 	int			elevel;
@@ -388,14 +384,10 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
 	 * Skip this for partitioned tables. A partitioned table, i.e. the
 	 * "root partition", doesn't contain any rows.
 	 */
-<<<<<<< HEAD
 	PartStatus ps = rel_part_status(relid);
 	if (!(ps == PART_STATUS_ROOT || ps == PART_STATUS_INTERIOR))
-		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
-=======
-	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
-				   false, in_outer_xact, elevel);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages,
+					   false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -447,13 +439,8 @@ analyze_rel_internal(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrat
  */
 static void
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-<<<<<<< HEAD
 			   AcquireSampleRowsByQueryFunc acquirefunc, BlockNumber relpages,
-			   bool inh, int elevel)
-=======
-			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
 			   bool inh, bool in_outer_xact, int elevel)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	int			attr_cnt,
 				tcnt,
@@ -906,7 +893,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
-<<<<<<< HEAD
+							in_outer_xact,
 							false /* isvacuum */);
 	else
 	{
@@ -917,11 +904,9 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							onerel->rd_rel->relhasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
+							in_outer_xact,
 							false /* isvacuum */);
 	}
-=======
-							in_outer_xact);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -967,11 +952,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
-<<<<<<< HEAD
+								in_outer_xact,
 								false /* isvacuum */);
-=======
-								in_outer_xact);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 	}
 

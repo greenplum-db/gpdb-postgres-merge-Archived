@@ -851,16 +851,11 @@ report_triggers(ResultRelInfo *rInfo, bool show_relname, ExplainState *es)
 				appendStringInfo(es->str, " for constraint %s", conname);
 			if (show_relname)
 				appendStringInfo(es->str, " on %s", relname);
-<<<<<<< HEAD
-			appendStringInfo(es->str, ": time=%.3f calls=%.ld\n",
-							 1000.0 * instr->total, instr->ntuples);
-=======
 			if (es->timing)
-				appendStringInfo(es->str, ": time=%.3f calls=%.0f\n",
+				appendStringInfo(es->str, ": time=%.3f calls=%.ld\n",
 								 1000.0 * instr->total, instr->ntuples);
 			else
-				appendStringInfo(es->str, ": calls=%.0f\n", instr->ntuples);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+				appendStringInfo(es->str, ": calls=%.ld\n", instr->ntuples);
 		}
 		else
 		{
