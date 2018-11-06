@@ -184,13 +184,8 @@ calculate_database_size(Oid dbOid)
 			strcmp(direntry->d_name, "..") == 0)
 			continue;
 
-<<<<<<< HEAD
-		snprintf(pathname, MAXPGPATH, "pg_tblspc/%s/%s/%u",
-				 direntry->d_name, tablespace_version_directory(), dbOid);
-=======
 		snprintf(pathname, sizeof(pathname), "pg_tblspc/%s/%s/%u",
-				 direntry->d_name, TABLESPACE_VERSION_DIRECTORY, dbOid);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+				 direntry->d_name, tablespace_version_directory(), dbOid);
 		totalsize += db_dir_size(pathname);
 	}
 
