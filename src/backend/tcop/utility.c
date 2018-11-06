@@ -1708,13 +1708,12 @@ ProcessUtilitySlow(Node *parsetree,
 				AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
 				break;
 
-<<<<<<< HEAD
 			case T_AlterTypeStmt:
 				AlterType((AlterTypeStmt *) parsetree);
-=======
+				break;
+
 			case T_AlterTableMoveAllStmt:
 				AlterTableMoveAll((AlterTableMoveAllStmt *) parsetree);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 				break;
 
 			case T_DropStmt:
