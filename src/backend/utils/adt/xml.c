@@ -3638,13 +3638,9 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 		 */
 		cur_copy = xmlCopyNode(cur, 1);
 
-<<<<<<< HEAD
-		Assert(cur_copy != NULL);
-=======
 		if (cur_copy == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not copy node");
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		PG_TRY();
 		{

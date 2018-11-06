@@ -5738,12 +5738,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		if (tzp)
 		{
 			/* Apply the timezone change */
-<<<<<<< HEAD
-			struct pg_tm tm;
- 			fsec_t		fsec = 0;
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),

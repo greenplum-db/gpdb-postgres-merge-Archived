@@ -708,12 +708,8 @@ PGLC_localeconv(void)
  * pg_strftime(), which isn't locale-aware and does not need to be replaced.
  */
 static size_t
-<<<<<<< HEAD
-strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm *tm)
-=======
 strftime_win32(char *dst, size_t dstlen,
 			   const char *format, const struct tm * tm)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 {
 	size_t		len;
 	wchar_t		wformat[8];		/* formats used below need 3 bytes */

@@ -289,15 +289,10 @@ RI_FKey_check(TriggerData *trigdata)
 	 * and lock on the buffer to call HeapTupleSatisfiesVisibility.  Caller
 	 * should be holding pin, but not lock.
 	 */
-<<<<<<< HEAD
-	Assert(new_row_buf != InvalidBuffer);
-	if (!HeapTupleSatisfiesVisibility( /* relation = ??? */ NULL, new_row, SnapshotSelf, new_row_buf))
-=======
 	LockBuffer(new_row_buf, BUFFER_LOCK_SHARE);
-	if (!HeapTupleSatisfiesVisibility(new_row, SnapshotSelf, new_row_buf))
+	if (!HeapTupleSatisfiesVisibility(NULL, new_row, SnapshotSelf, new_row_buf))
 	{
 		LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		return PointerGetDatum(NULL);
 	}
 	LockBuffer(new_row_buf, BUFFER_LOCK_UNLOCK);

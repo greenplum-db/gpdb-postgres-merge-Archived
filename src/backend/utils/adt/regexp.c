@@ -1205,17 +1205,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 		splitctx->next_match++;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * We don't call cleanup_regexp_matches here; it would try to pfree the
-	 * input string, which we didn't copy.  The space is not in a long-lived
-	 * memory context anyway.
-	 */
-
 	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
-=======
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */
