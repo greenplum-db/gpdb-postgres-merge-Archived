@@ -16,13 +16,7 @@
 
 #include <limits.h>
 
-<<<<<<< HEAD
-#include "fmgr.h"
-#include "funcapi.h"
-#include "miscadmin.h"
-=======
 #include "access/htup_details.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -2277,12 +2271,8 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 	ReleaseTupleDesc(tupdesc);
 
-<<<<<<< HEAD
-	hash_destroy(json_hash);
-=======
 	if (json_hash)
 		hash_destroy(json_hash);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(rettuple));
 }
@@ -2776,26 +2766,12 @@ populate_recordset_object_start(void *state)
 	if (lex_level == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-<<<<<<< HEAD
-				 errmsg("cannot call json_populate_recordset on an object")));
-
-	/* Nested objects, if allowed, require no special processing */
-	if (lex_level > 1)
-	{
-		if (!_state->use_json_as_text)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot call json_populate_recordset with nested objects")));
-		return;
-	}
-=======
 				 errmsg("cannot call %s on an object",
 						_state->function_name)));
 
 	/* Nested objects require no special processing */
 	if (lex_level > 1)
 		return;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Object at level 1: set up a new hash table for this object */
 	memset(&ctl, 0, sizeof(ctl));
