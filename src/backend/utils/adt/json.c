@@ -58,13 +58,8 @@ typedef enum					/* type categories for datum_to_json */
 	JSONTYPE_BOOL,				/* boolean (built-in types only) */
 	JSONTYPE_NUMERIC,			/* numeric (ditto) */
 	JSONTYPE_DATE,				/* we use special formatting for datetimes */
-<<<<<<< HEAD
-	JSONTYPE_TIMESTAMP,         /* we use special formatting for timestamp */
-	JSONTYPE_TIMESTAMPTZ,       /* ... and timestamptz */
-=======
 	JSONTYPE_TIMESTAMP,
 	JSONTYPE_TIMESTAMPTZ,
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	JSONTYPE_JSON,				/* JSON itself (and JSONB) */
 	JSONTYPE_ARRAY,				/* array */
 	JSONTYPE_COMPOSITE,			/* composite */
