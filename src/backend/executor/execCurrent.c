@@ -27,15 +27,10 @@
 
 
 static char *fetch_cursor_param_value(ExprContext *econtext, int paramId);
-<<<<<<< HEAD
 #ifdef NOT_USED
-static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
-#endif /* NOT_USED */
-=======
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid,
 				 bool *pending_rescan);
-
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+#endif /* NOT_USED */
 
 /*
  * execCurrentOf
@@ -605,15 +600,11 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			 */
 		case T_ResultState:
 		case T_LimitState:
-<<<<<<< HEAD
 		case T_MotionState:
-			return search_plan_tree(node->lefttree, table_oid);
-=======
 			result = search_plan_tree(node->lefttree,
 									  table_oid,
 									  pending_rescan);
 			break;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 			/*
 			 * SubqueryScan too, but it keeps the child in a different place
