@@ -3376,44 +3376,6 @@ quickdie_impl()
 		whereToSendOutput = DestNone;
 
 	/*
-<<<<<<< HEAD
-	 * We DO NOT want to run proc_exit() callbacks -- we're here because
-	 * shared memory may be corrupted, so we don't want to try to clean up our
-	 * transaction.  Just nail the windows shut and get out of town.  Now that
-	 * there's an atexit callback to prevent third-party code from breaking
-	 * things by calling exit() directly, we have to reset the callbacks
-	 * explicitly to make this work as intended.
-	 */
-	on_exit_reset();
-
-	/*
-	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
-	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
-=======
-	 * Notify the client before exiting, to give a clue on what happened.
-	 *
-	 * It's dubious to call ereport() from a signal handler.  It is certainly
-	 * not async-signal safe.  But it seems better to try, than to disconnect
-	 * abruptly and leave the client wondering what happened.  It's remotely
-	 * possible that we crash or hang while trying to send the message, but
-	 * receiving a SIGQUIT is a sign that something has already gone badly
-	 * wrong, so there's not much to lose.  Assuming the postmaster is still
-	 * running, it will SIGKILL us soon if we get stuck for some reason.
-	 *
-	 * Ideally this should be ereport(FATAL), but then we'd not get control
-	 * back...
-	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_CRASH_SHUTDOWN),
-			 errmsg("terminating connection because of crash of another server process"),
-	errdetail("The postmaster has commanded this server process to roll back"
-			  " the current transaction and exit, because another"
-			  " server process exited abnormally and possibly corrupted"
-			  " shared memory."),
-			 errhint("In a moment you should be able to reconnect to the"
-					 " database and repeat your command.")));
-
-	/*
 	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
 	 * because shared memory may be corrupted, so we don't want to try to
 	 * clean up our transaction.  Just nail the windows shut and get out of
@@ -3422,16 +3384,11 @@ quickdie_impl()
 	 *
 	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
 	 * a system reset cycle if someone sends a manual SIGQUIT to a random
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
-<<<<<<< HEAD
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	_exit(2);
 }
 
@@ -3465,9 +3422,7 @@ die(SIGNAL_ARGS)
 		 * If we're waiting for input or a lock so that it's safe to
 		 * interrupt, service the interrupt immediately
 		 */
-<<<<<<< HEAD
-		if ((ImmediateInterruptOK || ImmediateDieOK) &&
-			InterruptHoldoffCount == 0 && CritSectionCount == 0)
+		if (ImmediateInterruptOK || ImmediateDieOK)
 		{
 			if (ImmediateDieOK && !DoingPqReading)
 			{
@@ -3482,20 +3437,8 @@ die(SIGNAL_ARGS)
 				whereToSendOutput = DestNone;
 			}
 
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			DisableClientWaitTimeoutInterrupt();
-			InterruptHoldoffCount--;
 			ProcessInterrupts(__FILE__, __LINE__);
 		}
-=======
-		if (ImmediateInterruptOK)
-			ProcessInterrupts();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3530,23 +3473,8 @@ StatementCancelHandler(SIGNAL_ARGS)
 		 * If we're waiting for input or a lock so that it's safe to
 		 * interrupt, service the interrupt immediately
 		 */
-<<<<<<< HEAD
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
-		{
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			InterruptHoldoffCount--;
-			ProcessInterrupts(__FILE__, __LINE__);
-		}
-=======
 		if (ImmediateInterruptOK)
-			ProcessInterrupts();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			ProcessInterrupts(__FILE__, __LINE__);
 	}
 
 	/* If we're still here, waken anything waiting on the process latch */
@@ -3750,23 +3678,8 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 		 * If we're waiting for input or a lock so that it's safe to
 		 * interrupt, service the interrupt immediately.
 		 */
-<<<<<<< HEAD
-		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
-			CritSectionCount == 0)
-		{
-			/* bump holdoff count to make ProcessInterrupts() a no-op */
-			/* until we are done getting ready for it */
-			InterruptHoldoffCount++;
-			LockErrorCleanup(); /* prevent CheckDeadLock from running */
-			DisableNotifyInterrupt();
-			DisableCatchupInterrupt();
-			InterruptHoldoffCount--;
-			ProcessInterrupts(__FILE__, __LINE__);
-		}
-=======
 		if (ImmediateInterruptOK)
-			ProcessInterrupts();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+			ProcessInterrupts(__FILE__, __LINE__);
 	}
 
 	/*
@@ -3798,7 +3711,6 @@ ProcessInterrupts(const char* filename, int lineno)
 	/* OK to accept any interrupts now? */
 	if (InterruptHoldoffCount != 0 || CritSectionCount != 0)
 		return;
-
 	InterruptPending = false;
 
 	if (ProcDiePending)
@@ -3806,11 +3718,8 @@ ProcessInterrupts(const char* filename, int lineno)
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
-<<<<<<< HEAD
 		ImmediateDieOK = false;		/* prevent re-entry */
-=======
 		LockErrorCleanup();
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
 		DisableClientWaitTimeoutInterrupt();
@@ -3898,11 +3807,10 @@ ProcessInterrupts(const char* filename, int lineno)
 
 	if (QueryCancelPending)
 	{
-<<<<<<< HEAD
-		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
-=======
 		bool		lock_timeout_occurred;
 		bool		stmt_timeout_occurred;
+
+		elog(LOG,"Process interrupt for 'query cancel pending' (%s:%d)", filename, lineno);
 
 		/*
 		 * Don't allow query cancel interrupts while reading input from the
@@ -3919,7 +3827,6 @@ ProcessInterrupts(const char* filename, int lineno)
 			InterruptPending = true;
 			return;
 		}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		QueryCancelPending = false;
 		if (ClientAuthInProgress)
@@ -5166,14 +5073,13 @@ PostgresMain(int argc, char *argv[],
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
 
-<<<<<<< HEAD
 		/* When QE error in creating extension, we must reset CurrentExtensionObject */
 		creating_extension = false;
 		CurrentExtensionObject = InvalidOid;
 
 		/* Inform Vmem tracker that the current process has finished cleanup */
 		RunawayCleaner_RunawayCleanupDoneForProcess(false /* ignoredCleanup */);
-=======
+
 		/*
 		 * If an error occurred while we were reading a message from the
 		 * client, we have potentially lost track of where the previous
@@ -5186,7 +5092,6 @@ PostgresMain(int argc, char *argv[],
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("terminating connection because protocol sync was lost")));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
@@ -5717,23 +5622,7 @@ PostgresMain(int argc, char *argv[],
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
 
-<<<<<<< HEAD
-				if (HandleFunctionRequest(&input_message) == EOF)
-				{
-					/*
-					 * lost frontend connection during F message input
-					 *
-					 * Reset whereToSendOutput to prevent ereport from
-					 * attempting to send any more messages to client.
-					 */
-					if (whereToSendOutput == DestRemote)
-						whereToSendOutput = DestNone;
-
-					proc_exit(0);
-				}
-=======
 				HandleFunctionRequest(&input_message);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 				/* commit the function-invocation transaction */
 				finish_xact_command();
