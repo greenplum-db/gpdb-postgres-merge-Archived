@@ -63,12 +63,9 @@
 #include "commands/trigger.h"
 #include "executor/execDML.h"
 #include "executor/execdebug.h"
-<<<<<<< HEAD
 #include "executor/execUtils.h"
 #include "executor/instrument.h"
-=======
 #include "executor/nodeSubplan.h"
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #include "foreign/fdwapi.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -145,10 +142,13 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
 
-<<<<<<< HEAD
 static void FillSliceGangInfo(Slice *slice);
 static void FillSliceTable(EState *estate, PlannedStmt *stmt);
-=======
+
+static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
+static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
+static void AdjustReplicatedTableCounts(EState *estate);
+
 /*
  * Note that this macro also exists in commands/trigger.c.  There does not
  * appear to be any good header to put it into, given the structures that
@@ -159,11 +159,6 @@ static void FillSliceTable(EState *estate, PlannedStmt *stmt);
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->modifiedCols)
 
 /* end of local decls */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
-
-static PartitionNode *BuildPartitionNodeFromRoot(Oid relid);
-static void InitializeQueryPartsMetadata(PlannedStmt *plannedstmt, EState *estate);
-static void AdjustReplicatedTableCounts(EState *estate);
 
 /*
  * For a partitioned insert target only:  
@@ -3243,13 +3238,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
 
-<<<<<<< HEAD
-		if (slot->PRIVATE_tts_isnull[i])
-			val = "null";
-		else
-=======
 		if (!table_perm)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		{
 			/*
 			 * No table-level SELECT, so need to make sure they either have
@@ -3264,11 +3253,6 @@ ExecBuildSlotValueDescription(Oid reloid,
 			{
 				column_perm = any_perm = true;
 
-<<<<<<< HEAD
-			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-							  &foutoid, &typisvarlena);
-			val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
-=======
 				if (write_comma_collist)
 					appendStringInfoString(&collist, ", ");
 				else
@@ -3276,12 +3260,11 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 				appendStringInfoString(&collist, NameStr(tupdesc->attrs[i]->attname));
 			}
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		}
 
 		if (table_perm || column_perm)
 		{
-			if (slot->tts_isnull[i])
+			if (slot->PRIVATE_tts_isnull[i])
 				val = "null";
 			else
 			{
@@ -3290,7 +3273,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 
 				getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
 								  &foutoid, &typisvarlena);
-				val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
+				val = OidOutputFunctionCall(foutoid, slot->PRIVATE_tts_values[i]);
 			}
 
 			if (write_comma)
@@ -3876,12 +3859,9 @@ EvalPlanQualFetchRowMarks(EPQState *epqstate)
 			/* build a temporary HeapTuple control structure */
 			tuple.t_len = HeapTupleHeaderGetDatumLength(td);
 			ItemPointerSetInvalid(&(tuple.t_self));
-<<<<<<< HEAD
-=======
 			/* relation might be a foreign table, if so provide tableoid */
 			tuple.t_tableOid = getrelid(erm->rti,
 										epqstate->estate->es_range_table);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			tuple.t_data = td;
 
 			/* copy and store tuple */
