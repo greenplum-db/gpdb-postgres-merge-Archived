@@ -47,17 +47,13 @@
 #include "cdb/memquota.h"
 #include "parser/analyze.h"
 
-<<<<<<< HEAD
-uint64		SPI_processed = 0;
-=======
 /*
  * These global variables are part of the API for various SPI functions
  * (a horrible API choice, but it's too late now).  To reduce the risk of
  * interference between different SPI callers, we save and restore them
  * when entering/exiting a SPI nesting level.
  */
-uint32		SPI_processed = 0;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+uint64		SPI_processed = 0;
 Oid			SPI_lastoid = InvalidOid;
 SPITupleTable *SPI_tuptable = NULL;
 int			SPI_result = 0;

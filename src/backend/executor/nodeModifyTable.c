@@ -405,10 +405,10 @@ ExecInsert(TupleTableSlot *parentslot,
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
-<<<<<<< HEAD
-=======
+#if 0
 		/* FDW might have changed tuple */
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecMaterializeSlot(slot); //GPDB_94_STABLE_MERGE_FIXME: Why GPDB removes this?
+#endif
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
@@ -416,7 +416,6 @@ ExecInsert(TupleTableSlot *parentslot,
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		newId = InvalidOid;
 	}
 	else
@@ -1276,17 +1275,16 @@ ExecUpdate(ItemPointer tupleid,
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
 
+#if 0
 		/* FDW might have changed tuple */
-<<<<<<< HEAD
-=======
-		tuple = ExecMaterializeSlot(slot);
+		tuple = ExecMaterializeSlot(slot); //GPDB_94_STABLE_MERGE_FIXME: Why GPDB removes this?
+#endif
 
 		/*
 		 * AFTER ROW Triggers or RETURNING expressions might reference the
 		 * tableoid column, so initialize t_tableOid before evaluating them.
 		 */
 		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	}
 	else
 	{

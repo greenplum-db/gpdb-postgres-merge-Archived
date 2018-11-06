@@ -28,11 +28,8 @@
 #include "cdb/cdbvars.h"
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
-<<<<<<< HEAD
 #include "optimizer/var.h"              /* CDB: contain_var_reference() */
 #include "parser/parsetree.h"
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);

@@ -71,13 +71,9 @@ ExecSubPlan(SubPlanState *node,
 			ExprDoneCond *isDone)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
-<<<<<<< HEAD
-	Datum		result;
-=======
 	EState	   *estate = node->planstate->state;
 	ScanDirection dir = estate->es_direction;
 	Datum		retval;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* Set default values for result flags: non-null, not a set result */
 	*isNull = false;
@@ -90,20 +86,9 @@ ExecSubPlan(SubPlanState *node,
 	if (subplan->setParam != NIL)
 		elog(ERROR, "cannot set parent params from subquery");
 
-<<<<<<< HEAD
 	/* Remember that we're recursing into a sub-plan */
 	node->planstate->state->currentSubplanLevel++;
 
-	/* Select appropriate evaluation strategy */
-	if (subplan->useHashTable)
-		result = ExecHashSubPlan(node, econtext, isNull);
-	else
-		result = ExecScanSubPlan(node, econtext, isNull);
-
-	node->planstate->state->currentSubplanLevel--;
-
-	return result;
-=======
 	/* Force forward-scan mode for evaluation */
 	estate->es_direction = ForwardScanDirection;
 
@@ -116,8 +101,9 @@ ExecSubPlan(SubPlanState *node,
 	/* restore scan direction */
 	estate->es_direction = dir;
 
+	node->planstate->state->currentSubplanLevel--;
+
 	return retval;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 }
 
 /*

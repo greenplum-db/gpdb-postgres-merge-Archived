@@ -359,6 +359,13 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 												ALLOCSET_DEFAULT_INITSIZE,
 												ALLOCSET_DEFAULT_MAXSIZE);
 
+	/* CDB */ /* track temp buf file allocations in separate context */
+	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
+											 "hbbfcxt",
+											 ALLOCSET_DEFAULT_MINSIZE,
+											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_DEFAULT_MAXSIZE);
+
 	/* Allocate data that will live for the life of the hashjoin */
 
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
@@ -389,35 +396,6 @@ ExecHashTableCreate(HashState *hashState, HashJoinState *hjstate, List *hashOper
 		i++;
 	}
 
-<<<<<<< HEAD
-	/*
-	 * Create temporary memory contexts in which to keep the hashtable working
-	 * storage.  See notes in executor/hashjoin.h.
-	 */
-	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
-											   "HashTableContext",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-
-	hashtable->batchCxt = AllocSetContextCreate(hashtable->hashCxt,
-												"HashBatchContext",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* CDB */ /* track temp buf file allocations in separate context */
-	hashtable->bfCxt = AllocSetContextCreate(CurrentMemoryContext,
-											 "hbbfcxt",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* Allocate data that will live for the life of the hashjoin */
-	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
-
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (nbatch > 1)
 	{
 		/*
@@ -551,11 +529,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 * sufficient.  The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem nor MaxAllocSize.
 	 */
-<<<<<<< HEAD
-	max_pointers = (operatorMemKB * 1024L) / sizeof(void *);
-	/* also ensure we avoid integer overflow in nbatch and nbuckets */
-=======
-	max_pointers = (work_mem * 1024L) / sizeof(HashJoinTuple);
+	max_pointers = (operatorMemKB * 1024L) / sizeof(HashJoinTuple);
 	max_pointers = Min(max_pointers, MaxAllocSize / sizeof(HashJoinTuple));
 	/* If max_pointers isn't a power of 2, must round it down to one */
 	mppow2 = 1L << my_log2(max_pointers);
@@ -564,7 +538,6 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 	/* Also ensure we avoid integer overflow in nbatch and nbuckets */
 	/* (this step is redundant given the current value of MaxAllocSize) */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	max_pointers = Min(max_pointers, INT_MAX / 2);
 
 	if (inner_rel_bytes > hash_table_bytes)
@@ -673,25 +646,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		nbatch = 1;
 	}
 
-<<<<<<< HEAD
-=======
-	/*
-	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
-	 * be real small, by starting the search at 2^10.  (Note: above we made
-	 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
-	 * overflow, nor can the final shift to recalculate nbuckets.)
-	 */
-	i = 10;
-	while ((1 << i) < nbuckets)
-		i++;
-	nbuckets = (1 << i);
-
 	Assert(nbuckets > 0);
 	Assert(nbatch > 0);
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
 }
