@@ -52,12 +52,9 @@ NZST    43200    # New Zealand Standard Time
 PGT     36000    # Papua New Guinea Time (obsolete)
 PHOT    Pacific/Enderbury  # Phoenix Islands Time (Kiribati) (obsolete)
 PONT    39600    # Ponape Time (Micronesia) (obsolete)
-<<<<<<< HEAD
-=======
 # CONFLICT! PST is not unique
 # Other timezones:
 #  - PST: Philippine Standard Time
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 PST    -28800    # Pacific Standard Time
                  #     (America/Dawson)
                  #     (America/Los_Angeles)

@@ -158,13 +158,10 @@ PKT     18000    # Pakistan Time
                  #     (Asia/Karachi)
 PKST    21600 D  # Pakistan Summer Time
                  #     (Asia/Karachi)
-<<<<<<< HEAD
-=======
 # CONFLICT! PST is not unique
 # Other timezones:
 #  - PST: Pacific Standard Time (America)
 PST     28800    # Philippine Standard Time
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 QYZT    21600    # Kizilorda Time (obsolete)
 SAKST   Asia/Sakhalin  # Sakhalin Summer Time (obsolete)
 SAKT    Asia/Sakhalin  # Sakhalin Time (obsolete)
