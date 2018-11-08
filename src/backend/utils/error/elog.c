@@ -537,12 +537,9 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
 	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
-<<<<<<< HEAD
-	edata->omit_location = true;
-=======
 	/* initialize context_domain the same way (see set_errcontext_domain()) */
 	edata->context_domain = edata->domain;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	edata->omit_location = true;
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 	{

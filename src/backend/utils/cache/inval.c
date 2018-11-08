@@ -185,16 +185,8 @@ static int	maxSharedInvalidMessagesArray;
  * syscache are linked into a list pointed to by syscache_callback_links[id].
  * The link values are syscache_callback_list[] index plus 1, or 0 for none.
  */
-<<<<<<< HEAD
-/*
- * MAX_SYSCACHE_CALLBACKS has been bumped up in GPDB, because ORCA registers
- * a lot of callbacks.
- */
-#define MAX_SYSCACHE_CALLBACKS (32 + 20)
-=======
 
 #define MAX_SYSCACHE_CALLBACKS 64
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 #define MAX_RELCACHE_CALLBACKS 10
 
 static struct SYSCACHECALLBACK

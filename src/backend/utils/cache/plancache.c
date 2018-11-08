@@ -663,17 +663,12 @@ RevalidateCachedQuery(CachedPlanSource *plansource, IntoClause *intoClause)
 		snapshot_set = true;
 	}
 
-	rawtree = copyObject(plansource->raw_parse_tree);
-
 	/*
 	 * Run parse analysis and rule rewriting.  The parser tends to scribble on
 	 * its input, so we must copy the raw parse tree to prevent corruption of
 	 * the cache.
 	 */
-<<<<<<< HEAD
-=======
 	rawtree = copyObject(plansource->raw_parse_tree);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 	if (rawtree == NULL)
 		tlist = NIL;
 	else if (plansource->parserSetup != NULL)
