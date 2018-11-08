@@ -240,15 +240,9 @@ ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-<<<<<<< HEAD
 				 errmsg("could not write block " INT64_FORMAT  " of temporary file: %m",
-						blocknum),
-				 errhint("Perhaps out of disk space?")));
-	}
-=======
-				 errmsg("could not write block %ld of temporary file: %m",
 						blocknum)));
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	}
 }
 
 /*
