@@ -39,25 +39,6 @@
 #include "parser/scansup.h"
 #include "mb/pg_wchar.h"
 }
-<<<<<<< HEAD
-
-%{
-#define unify_version(a,b,c) ((a<<16)+(b<<8)+c)
-#if unify_version(YY_FLEX_MAJOR_VERSION,YY_FLEX_MINOR_VERSION,YY_FLEX_SUBMINOR_VERSION) < unify_version(2,5,35)
-int base_yyget_lineno  (void);
-FILE *base_yyget_in  (void);
-FILE *base_yyget_out  (void);
-int base_yyget_leng  (void);
-char *base_yyget_text  (void);
-void base_yyset_lineno (int  line_number );
-void base_yyset_in (FILE *  in_str );
-void base_yyset_out (FILE *  out_str );
-int base_yyget_debug  (void);
-void base_yyset_debug (int  bdebug );
-int base_yylex_destroy  (void);
-#endif
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 %{
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
