@@ -14,11 +14,7 @@ the PostgreSQL License is provided below:
 PostgreSQL Database Management System
 (formerly known as Postgres, then as Postgres95)
 
-<<<<<<< HEAD
-Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
-=======
 Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 Portions Copyright (c) 1994, The Regents of the University of California
 

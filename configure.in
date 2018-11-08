@@ -17,16 +17,14 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-<<<<<<< HEAD
+GPDB_90_MERGE_FIXME: the upstream is AC_INIT([PostgreSQL], [9.4.19], [pgsql-bugs@postgresql.org])
+Do we need to modify these three line?
 dnl The PACKAGE_VERSION from upstream PostgreSQL is maintained in the
 dnl PG_PACKAGE_VERSION variable, when merging make sure to update this
 dnl variable with the merge conflict from the AC_INIT() statement.
 AC_INIT([Greenplum Database], [6.0.0-alpha.0], [support@greenplum.org])
 [PG_PACKAGE_VERSION=9.4beta1]
 AC_SUBST(PG_PACKAGE_VERSION)
-=======
-AC_INIT([PostgreSQL], [9.4.19], [pgsql-bugs@postgresql.org])
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 dnl m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 dnl Untested combinations of 'autoconf' and PostgreSQL versions are not
@@ -480,7 +478,6 @@ else
   fi
 fi
 
-<<<<<<< HEAD
 # For GPDB, Use C99, rather than C89, compile rules
 #
 #
@@ -581,11 +578,9 @@ else
 fi
 AC_SUBST(PG_CRC32C_OBJS)
 
-=======
 # CFLAGS we determined above will be added back at the end
 user_CFLAGS=$CFLAGS
 CFLAGS=""
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 # set CFLAGS_VECTOR from the environment, if available
 if test "$ac_env_CFLAGS_VECTOR_set" = set; then
@@ -728,7 +723,6 @@ choke me
 @%:@endif], [], [AC_MSG_ERROR([do not put -ffast-math in CFLAGS])])
 fi
 
-<<<<<<< HEAD
 # Since PostgreSQL is written in pure C, all the tests in this file
 # add necessary flags to CFLAGS only. We have some C++ code in
 # src/backend/gpopt, so we must also configure CXXFLAGS in the same way.
@@ -750,7 +744,6 @@ for cflag in $CFLAGS; do
   PGAC_PROG_CXX_CXXFLAGS_OPT($cflag)
 done
 
-=======
 # Defend against clang being used on x86-32 without SSE2 enabled.  As current
 # versions of clang do not understand -fexcess-precision=standard, the use of
 # x87 floating point operations leads to problems like isinf possibly returning
@@ -768,7 +761,6 @@ choke me
 ])], [],
 [AC_MSG_ERROR([Compiling PostgreSQL with clang, on 32bit x86, requires SSE2 support. Use -msse2 or use gcc.])])
 fi
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 AC_PROG_CPP
 AC_SUBST(GCC)
@@ -1397,13 +1389,8 @@ if test "$with_openssl" = yes ; then
      AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
      AC_CHECK_LIB(ssl,    SSL_new, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
   else
-<<<<<<< HEAD
-     AC_SEARCH_LIBS(CRYPTO_new_ex_data, eay32 crypto, [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
-     AC_SEARCH_LIBS(SSL_new, ssleay32 ssl, [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
-=======
      AC_SEARCH_LIBS(CRYPTO_new_ex_data, [eay32 crypto], [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
      AC_SEARCH_LIBS(SSL_new, [ssleay32 ssl], [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
   fi
   AC_CHECK_FUNCS([SSL_get_current_compression])
   # Functions introduced in OpenSSL 1.1.0. We used to check for
@@ -1416,14 +1403,11 @@ if test "$with_openssl" = yes ; then
   # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
   # function was removed.
   AC_CHECK_FUNCS([CRYPTO_lock])
-<<<<<<< HEAD
 fi
 
 if test "$with_rt" = yes ; then
   AC_CHECK_LIB(rt, clock_gettime, [],
                 [AC_MSG_WARN([Realtime library not found])])
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 fi
 
 if test "$with_pam" = yes ; then
@@ -1850,14 +1834,10 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-<<<<<<< HEAD
 # net-snmp has the same problem..
 LIBS=`echo "$LIBS" | sed -e 's/-lnetsnmp//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
-=======
 AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate pstat pthread_is_threaded_np readlink setproctitle setsid shm_open sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -2525,15 +2505,11 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PERL"; then
     AC_MSG_ERROR([Perl not found])
   fi
-<<<<<<< HEAD
   # Check for necessary modules
   AX_PROG_PERL_MODULES(IPC::Run, ,
     AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
 fi
-=======
-fi
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 # Thread testing
 
 # We have to run the thread test near the end so we have all our symbols
