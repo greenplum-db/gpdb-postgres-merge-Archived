@@ -1552,16 +1552,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 				&ondisk->builder,
 				sizeof(SnapBuild));
 
-<<<<<<< HEAD
-	/* copy running xacts */
-	sz = sizeof(TransactionId) * builder->running.xcnt_space;
-	memcpy(ondisk_c, builder->running.xip, sz);
-	COMP_CRC32C(ondisk->checksum, ondisk_c, sz);
-	ondisk_c += sz;
-=======
 	/* there shouldn't be any running xacts */
 	Assert(builder->was_running.was_xcnt == 0);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* copy committed xacts */
 	sz = sizeof(TransactionId) * builder->committed.xcnt;
@@ -1744,11 +1736,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 				 errmsg("could not read file \"%s\", read %d of %d: %m",
 						path, readBytes, (int) sz)));
 	}
-<<<<<<< HEAD
-	COMP_CRC32C(checksum, ondisk.builder.running.xip, sz);
-=======
-	COMP_CRC32(checksum, ondisk.builder.was_running.was_xip, sz);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	COMP_CRC32C(checksum, ondisk.builder.was_running.was_xip, sz);
 
 	/* restore committed xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;

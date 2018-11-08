@@ -140,14 +140,11 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogRecord *record)
 		case RM_GIST_ID:
 		case RM_SEQ_ID:
 		case RM_SPGIST_ID:
-<<<<<<< HEAD
 		case RM_BITMAP_ID:
 		case RM_DISTRIBUTEDLOG_ID:
-=======
 			/* just deal with xid, and done */
 			ReorderBufferProcessXid(ctx->reorder, record->xl_xid,
 									buf.origptr);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			break;
 
 		case RM_APPEND_ONLY_ID:
@@ -857,12 +854,8 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			 */
 #if 0
 			tuple->tuple.t_tableOid = InvalidOid;
-<<<<<<< HEAD
 #endif
-			tuple->tuple.t_data = &tuple->header;
-=======
 
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 			tuple->tuple.t_len = datalen
 				+ offsetof(HeapTupleHeaderData, t_bits);
 
@@ -919,11 +912,7 @@ DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple)
 	/* we can only figure this out after reassembling the transactions */
 #if 0
 	tuple->tuple.t_tableOid = InvalidOid;
-<<<<<<< HEAD
 #endif
-	tuple->tuple.t_data = &tuple->header;
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	/* data is not stored aligned, copy to aligned storage */
 	memcpy((char *) &xlhdr,

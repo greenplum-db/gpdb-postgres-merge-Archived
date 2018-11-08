@@ -189,13 +189,9 @@ static bool WalSndCaughtUpWithinRange = false;
 
 
 /* Flags set by signal handlers for later service in main loop */
-<<<<<<< HEAD
 static volatile sig_atomic_t got_SIGHUP = false;
-volatile sig_atomic_t walsender_ready_to_stop = false;
-=======
 static volatile sig_atomic_t got_SIGUSR2 = false;
 static volatile sig_atomic_t got_STOPPING = false;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /*
  * This is set while we are streaming. When not set
@@ -1904,13 +1900,8 @@ WalSndLoop(WalSndSendDataCallback send_data)
 	 */
 	for (;;)
 	{
-<<<<<<< HEAD
-		TimestampTz now;
-
 		SIMPLE_FAULT_INJECTOR(WalSenderLoop);
 
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.

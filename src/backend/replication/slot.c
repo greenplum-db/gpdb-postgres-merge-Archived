@@ -1016,15 +1016,9 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	}
 
 	cp.magic = SLOT_MAGIC;
-<<<<<<< HEAD
 	INIT_CRC32C(cp.checksum);
-	cp.version = 1;
-	cp.length = ReplicationSlotOnDiskDynamicSize;
-=======
-	INIT_CRC32(cp.checksum);
 	cp.version = SLOT_VERSION;
 	cp.length = ReplicationSlotOnDiskV2Size;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 	SpinLockAcquire(&slot->mutex);
 
@@ -1032,16 +1026,10 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 
 	SpinLockRelease(&slot->mutex);
 
-<<<<<<< HEAD
 	COMP_CRC32C(cp.checksum,
-			   (char *) (&cp) + ReplicationSlotOnDiskConstantSize,
-			   ReplicationSlotOnDiskDynamicSize);
-=======
-	COMP_CRC32(cp.checksum,
 				(char *) (&cp) + SnapBuildOnDiskNotChecksummedSize,
 				SnapBuildOnDiskChecksummedSize);
-	FIN_CRC32(cp.checksum);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	FIN_CRC32C(cp.checksum);
 
 	errno = 0;
 	if ((write(fd, &cp, sizeof(cp))) != sizeof(cp))
@@ -1225,20 +1213,12 @@ RestoreSlotFromDisk(const char *name)
 
 	CloseTransientFile(fd);
 
-<<<<<<< HEAD
-	/* now verify the CRC32 */
+	/* now verify the CRC */
 	INIT_CRC32C(checksum);
 	COMP_CRC32C(checksum,
-			   (char *) &cp + ReplicationSlotOnDiskConstantSize,
-			   ReplicationSlotOnDiskDynamicSize);
-=======
-	/* now verify the CRC */
-	INIT_CRC32(checksum);
-	COMP_CRC32(checksum,
 			   (char *) &cp + SnapBuildOnDiskNotChecksummedSize,
 			   SnapBuildOnDiskChecksummedSize);
-	FIN_CRC32(checksum);
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+	FIN_CRC32C(checksum);
 
 	if (!EQ_CRC32C(checksum, cp.checksum))
 		ereport(PANIC,
