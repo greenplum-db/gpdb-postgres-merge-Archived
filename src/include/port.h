@@ -433,16 +433,12 @@ extern void srandom(unsigned int seed);
 /* thread.h */
 extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
-<<<<<<< HEAD
 #if !defined(WIN32) || defined(__CYGWIN__)
 // Obsolete -- use pqGetpwuid() instead.
 extern struct passwd * get_gp_passwdptr(void);
 #endif
 
 #if !defined(WIN32) || defined(__CYGWIN__)
-=======
-#ifndef WIN32
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
 		   size_t buflen, struct passwd ** result);
 #endif

@@ -91,16 +91,11 @@ extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern PGDLLIMPORT volatile bool ImmediateInterruptOK;
-<<<<<<< HEAD
 extern PGDLLIMPORT volatile bool ImmediateDieOK;
 extern PGDLLIMPORT volatile bool TermSignalReceived;
 extern PGDLLIMPORT volatile int32 InterruptHoldoffCount;
+extern PGDLLIMPORT volatile int32 QueryCancelHoldoffCount;
 extern PGDLLIMPORT volatile int32 CritSectionCount;
-=======
-extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern PGDLLIMPORT volatile uint32 QueryCancelHoldoffCount;
-extern PGDLLIMPORT volatile uint32 CritSectionCount;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(const char* filename, int lineno);
@@ -176,24 +171,28 @@ do { \
 	InterruptHoldoffCount--; \
 } while(0)
 
-<<<<<<< HEAD
+#define HOLD_CANCEL_INTERRUPTS() \
+do{ \
+    if (QueryCancelHoldoffCount < 0) \
+        elog(PANIC, "Hold cancel interrupt holdoff count is bad (%d)", QueryCancelHoldoffCount); \
+    QueryCancelHoldoffCount++; \
+} while(0)
+
+#define RESUME_CANCEL_INTERRUPTS() \
+do { \
+    if (QueryCancelHoldoffCount <= 0) \
+        elog(PANIC, "Resume cancel interrupt holdoff count is bad (%d)", QueryCancelHoldoffCount); \
+    QueryCancelHoldoffCount--; \
+} while(0)
+
+#define START_CRIT_SECTION()  (CritSectionCount++)
+
 #define START_CRIT_SECTION() \
 do { \
 	if (CritSectionCount < 0) \
 		elog(PANIC, "Start critical section count is bad (%d)", CritSectionCount); \
 	CritSectionCount++; \
 } while(0)
-=======
-#define HOLD_CANCEL_INTERRUPTS()  (QueryCancelHoldoffCount++)
-
-#define RESUME_CANCEL_INTERRUPTS() \
-do { \
-	Assert(QueryCancelHoldoffCount > 0); \
-	QueryCancelHoldoffCount--; \
-} while(0)
-
-#define START_CRIT_SECTION()  (CritSectionCount++)
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 #define END_CRIT_SECTION() \
 do { \
@@ -226,16 +225,10 @@ extern PGDLLIMPORT bool ExitOnAnyError;
 extern PGDLLIMPORT char *DataDir;
 
 extern PGDLLIMPORT int NBuffers;
-<<<<<<< HEAD
-extern int	MaxBackends;
-extern int	MaxConnections;
-extern int	max_worker_processes;
-extern int gp_workfile_max_entries;
-=======
 extern PGDLLIMPORT int MaxBackends;
 extern PGDLLIMPORT int MaxConnections;
 extern PGDLLIMPORT int max_worker_processes;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+extern int gp_workfile_max_entries;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
@@ -324,12 +317,8 @@ extern PGDLLIMPORT int IntervalStyle;
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
-<<<<<<< HEAD
-extern bool allowSystemTableMods;
-extern PGDLLIMPORT int planner_work_mem;
-=======
 extern PGDLLIMPORT bool allowSystemTableMods;
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
+extern PGDLLIMPORT int planner_work_mem;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT int maintenance_work_mem;
 extern PGDLLIMPORT int statement_mem;

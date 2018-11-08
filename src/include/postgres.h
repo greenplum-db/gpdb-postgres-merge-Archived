@@ -140,15 +140,11 @@ typedef struct
 	char		va_data[1];		/* Data begins here */
 } varattrib_1b;
 
-<<<<<<< HEAD
 /* NOT Like Postgres! ...In GPDB, We waste a few bytes of padding, and don't always set the va_len_1be to anything */
 /* GPDB_94_MERGE_FIXME: The va_len_1be field was changed to va_tag in PostgreSQL 9.4.
  * There were comments here that va_len_1be was ignored in GPDB. Does this change to
  * va_tag work correctly with pg_upgrade in GPDB?
  */
-=======
-/* TOAST pointers are a subset of varattrib_1b with an identifying tag byte */
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 typedef struct
 {
 	uint8		va_header;		/* Always 0x80  */
@@ -373,12 +369,9 @@ typedef Datum *DatumPtr;
 static inline bool DatumGetBool(Datum d) { return ((bool)d) != 0; }
 static inline Datum BoolGetDatum(bool b) { return (b ? 1 : 0); } 
 
-<<<<<<< HEAD
-static inline char DatumGetChar(Datum d) { return (char) d; } 
+static inline char DatumGetChar(Datum d) { return (char) d; }
 static inline Datum CharGetDatum(char c) { return (Datum) c; } 
-=======
 #define DatumGetBool(X) ((bool) (GET_1_BYTE(X) != 0))
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 static inline int8 DatumGetInt8(Datum d) { return (int8) d; } 
 static inline Datum Int8GetDatum(int8 i8) { return (Datum) i8; }

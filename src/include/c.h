@@ -302,7 +302,6 @@ typedef unsigned long long int uint64;
 #define SIZE_MAX (0xFFFFFFFFU)
 #endif
 #endif
-<<<<<<< HEAD
 
 /*
  * stdint.h limits aren't guaranteed to be present and aren't guaranteed to
@@ -320,8 +319,6 @@ typedef unsigned long long int uint64;
 #define PG_INT64_MIN    (-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
 #define PG_INT64_MAX    INT64CONST(0x7FFFFFFFFFFFFFFF)
 #define PG_UINT64_MAX   UINT64CONST(0xFFFFFFFFFFFFFFFF)
-=======
->>>>>>> 8bc709b37411ba7ad0fd0f1f79c354714424af3d
 
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES
